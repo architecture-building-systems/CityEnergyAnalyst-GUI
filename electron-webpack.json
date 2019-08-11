@@ -1,0 +1,10 @@
+{
+  "whiteListedModules": [
+    "react-hot-loader",
+    "react-redux",
+    "connected-react-router"
+  ],
+  "renderer": {
+    "webpackConfig": "webpack.renderer.js"
+  }
+}
