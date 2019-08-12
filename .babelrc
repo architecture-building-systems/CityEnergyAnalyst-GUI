@@ -1,5 +1,9 @@
 {
   "presets": ["@babel/preset-env", "@babel/preset-react"],
 
-  "plugins": ["react-hot-loader/babel", ["import", { "libraryName": "antd" }]]
+  "plugins": [
+    "react-hot-loader/babel",
+    "@babel/plugin-proposal-class-properties",
+    ["import", { "libraryName": "antd" }]
+  ]
 }

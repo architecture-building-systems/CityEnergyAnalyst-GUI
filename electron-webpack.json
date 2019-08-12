@@ -2,7 +2,8 @@
   "whiteListedModules": [
     "react-hot-loader",
     "react-redux",
-    "connected-react-router"
+    "connected-react-router",
+    "react-map-gl"
   ],
   "renderer": {
     "webpackConfig": "webpack.renderer.js"

@@ -1,11 +1,13 @@
-/// app.js
 import React from 'react';
 import DeckGL from '@deck.gl/react';
 import { LineLayer } from '@deck.gl/layers';
-import { StaticMap } from 'react-map-gl';
+import ReactMapGL, {
+  _MapContext as MapContext,
+  NavigationControl
+} from 'react-map-gl';
 
 // Set your mapbox access token here
-const MAPBOX_ACCESS_TOKEN =
+const MAPBOX_TOKEN =
   'pk.eyJ1IjoicmV5ZXJ5IiwiYSI6ImNqdzFpcHFlYzA5cDg0OW54eWVmMXVlZHQifQ.gg7RvCVARsrSxq8NjKYsSA';
 
 // Initial viewport settings
@@ -28,15 +30,18 @@ const data = [
 class InputEditor extends React.Component {
   render() {
     const layers = [new LineLayer({ id: 'line-layer', data })];
-
     return (
-      <DeckGL
-        initialViewState={initialViewState}
-        controller={true}
-        layers={layers}
-      >
-        <StaticMap mapboxApiAccessToken={MAPBOX_ACCESS_TOKEN} />
-      </DeckGL>
+      <div style={{ height: '30%', width: '100%' }}>
+        <DeckGL
+          initialViewState={initialViewState}
+          controller={true}
+          layers={layers}
+          ContextProvider={MapContext.Provider}
+        >
+          <NavigationControl />
+          <ReactMapGL mapboxApiAccessToken={MAPBOX_TOKEN} />
+        </DeckGL>
+      </div>
     );
   }
 }

@@ -89,7 +89,7 @@ const SideNav = () => {
           </Menu.Item>
           <Menu.Item key="test">
             <span>Test123</span>
-            <Link to="/test" />
+            <Link to={routes.INPUT_EDITOR} />
           </Menu.Item>
         </SubMenu>
         <ToolsMenu />
