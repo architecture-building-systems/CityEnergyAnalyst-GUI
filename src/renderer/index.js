@@ -10,10 +10,8 @@ render(<App store={store} history={history} />, document.getElementById('app'));
 
 if (module.hot) {
   module.hot.accept('./containers/App', () => {
-    // eslint-disable-next-line global-require
-    const NextApp = require('./containers/App').default;
     render(
-      <NextApp store={store} history={history} />,
+      <App store={store} history={history} />,
       document.getElementById('app')
     );
   });
