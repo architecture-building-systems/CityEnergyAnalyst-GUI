@@ -1,6 +1,6 @@
 'use strict';
 
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import * as path from 'path';
 import { format as formatUrl } from 'url';
 
@@ -46,6 +46,10 @@ function createMainWindow() {
   return window;
 }
 
+/**
+ * Add event listeners...
+ */
+
 // quit application when all windows are closed
 app.on('window-all-closed', () => {
   // on macOS it is common for applications to stay open until the user explicitly quits
@@ -65,6 +69,22 @@ app.on('activate', () => {
 app.on('ready', () => {
   mainWindow = createMainWindow();
 });
+
+/**
+ * Add IPC listeners...
+ */
+
+ipcMain.on('open-path-dialog', (event, id, options) => {
+  dialog.showOpenDialog(mainWindow, options, path => {
+    if (path) {
+      event.sender.send('selected-path', id, path);
+    }
+  });
+});
+
+/**
+ * Hot Loader
+ */
 
 if (module.hot) {
   module.hot.accept();
