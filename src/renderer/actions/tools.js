@@ -30,7 +30,6 @@ export const fetchToolList = () => {
             return response.data;
           })
           .catch(error => {
-            console.log(error);
             dispatch({
               type: RECEIVE_TOOLLIST,
               payload: {

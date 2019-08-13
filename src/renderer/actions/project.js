@@ -17,7 +17,7 @@ export const getProject = () => {
         dispatch({
           type: GET_PROJECT,
           payload: {
-            error: { message: error.response.data }
+            error
           }
         });
       });

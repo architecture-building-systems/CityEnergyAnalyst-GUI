@@ -33,6 +33,7 @@ const HomePage = () => {
           <Switch>
             <Route path={`${routes.TOOLS}/:script`} component={Tool} />
             <Route path={routes.INPUT_EDITOR} component={InputEditor} />
+            <Route path="/placeholder" component={PlaceHolder} />
           </Switch>
         </Content>
         <Footer style={{ textAlign: 'center' }}>
@@ -41,6 +42,10 @@ const HomePage = () => {
       </Layout>
     </Layout>
   );
+};
+
+const PlaceHolder = () => {
+  return <div>PlaceHolder</div>;
 };
 
 export default HomePage;

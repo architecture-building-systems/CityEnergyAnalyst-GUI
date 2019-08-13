@@ -63,15 +63,7 @@ const SideNav = () => {
         >
           <Menu.Item key="projectOverview">
             <span>Project Overview</span>
-            <Link to={routes.HOME} />
-          </Menu.Item>
-          <Menu.Item key="openProject">
-            <span>Open Project</span>
-            <Link to={routes.HOME} />
-          </Menu.Item>
-          <Menu.Item key="openScenario">
-            <span>Open Scenario</span>
-            <Link to={routes.HOME} />
+            <Link to="/placeholder" />
           </Menu.Item>
         </SubMenu>
         <SubMenu
@@ -88,7 +80,7 @@ const SideNav = () => {
             <Link to="/test" />
           </Menu.Item>
           <Menu.Item key="test">
-            <span>Test123</span>
+            <span>Test Map</span>
             <Link to={routes.INPUT_EDITOR} />
           </Menu.Item>
         </SubMenu>
