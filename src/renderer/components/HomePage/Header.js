@@ -22,7 +22,7 @@ const Header = () => {
         position: 'fixed',
         padding: 0,
         width: '100%',
-        zIndex: 999,
+        zIndex: 7,
         boxShadow: '0 3px 4px -6px black'
       }}
     >

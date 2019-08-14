@@ -1,3 +1,8 @@
+#app {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .trigger {
   font-size: 18px;
   line-height: 64px;
