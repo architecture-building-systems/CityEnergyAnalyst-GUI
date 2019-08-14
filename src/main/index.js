@@ -11,6 +11,10 @@ let mainWindow;
 
 function createMainWindow() {
   const window = new BrowserWindow({
+    minWidth: 600,
+    minHeight: 300,
+    frame: false,
+    titleBarStyle: 'hidden', // or 'customButtonsOnHover',
     webPreferences: { nodeIntegration: true }
   });
 
