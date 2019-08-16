@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import ReactMapGL, { _MapContext as MapContext } from 'react-map-gl';
 
@@ -63,16 +63,44 @@ const initialViewState = {
 };
 
 const Map = props => {
-  const { layers, style } = props;
+  const { layers, bbox, style } = props;
+  const mapRef = useRef();
+  const [viewState, setViewState] = useState(initialViewState);
+
+  useEffect(() => {
+    if (bbox) {
+      let cameraOptions = mapRef.current.cameraForBounds(
+        [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+        {
+          maxZoom: 18
+        }
+      );
+      setViewState({
+        ...viewState,
+        zoom: cameraOptions.zoom,
+        latitude: cameraOptions.center.lat,
+        longitude: cameraOptions.center.lng
+      });
+    }
+  }, [bbox]);
+
+  const _onViewStateChange = ({ viewState }) => {
+    setViewState(viewState);
+  };
+
   return (
     <div style={style}>
       <DeckGL
-        initialViewState={initialViewState}
+        viewState={viewState}
         controller={true}
         layers={layers}
         ContextProvider={MapContext.Provider}
+        onViewStateChange={_onViewStateChange}
       >
-        <ReactMapGL mapStyle={LIGHT_MAP} />
+        <ReactMapGL
+          ref={ref => (mapRef.current = ref && ref.getMap())}
+          mapStyle={LIGHT_MAP}
+        />
       </DeckGL>
     </div>
   );
