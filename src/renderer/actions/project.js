@@ -5,7 +5,7 @@ export const GET_PROJECT = 'GET_PROJECT';
 export const getProject = () => {
   return dispatch => {
     return axios
-      .get(`http://localhost:5000/api/project`)
+      .get(`http://localhost:5050/api/project`)
       .then(response => {
         dispatch({
           type: GET_PROJECT,
