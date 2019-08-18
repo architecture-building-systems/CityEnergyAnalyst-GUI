@@ -10,14 +10,18 @@ const InputEditor = () => {
   const [layers, setLayers] = useState([]);
   const [bbox, setBbox] = useState();
   useEffect(() => {
+    let promises = [
+      axios.get('http://localhost:5050/api/inputs/building-properties'),
+      axios.get('http://localhost:5050/api/inputs/others/streets/geojson')
+    ];
+    promises = promises.map(promise =>
+      promise.catch(error => console.log(error))
+    );
     axios
-      .all([
-        axios.get('http://localhost:5050/api/inputs/building-properties'),
-        axios.get('http://localhost:5050/api/inputs/others/streets/geojson')
-      ])
+      .all(promises)
       .then(
-        axios.spread(function(building, streets) {
-          _render(building.data, streets.data);
+        axios.spread((buildings, streets) => {
+          _render(buildings.data, streets.data);
         })
       )
       .catch(error => console.log(error));
