@@ -55,9 +55,9 @@ const LIGHT_MAP = {
 
 // Initial viewport settings
 const initialViewState = {
-  longitude: -122.41669,
-  latitude: 37.7853,
-  zoom: 13,
+  longitude: 0,
+  latitude: 0,
+  zoom: 0,
   pitch: 0,
   bearing: 0
 };
@@ -72,14 +72,16 @@ const Map = props => {
       let cameraOptions = mapRef.current.cameraForBounds(
         [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
         {
-          maxZoom: 18
+          maxZoom: 18,
+          padding: 30
         }
       );
       setViewState({
         ...viewState,
         zoom: cameraOptions.zoom,
         latitude: cameraOptions.center.lat,
-        longitude: cameraOptions.center.lng
+        longitude: cameraOptions.center.lng,
+        transitionDuration: 3000
       });
     }
   }, [bbox]);
