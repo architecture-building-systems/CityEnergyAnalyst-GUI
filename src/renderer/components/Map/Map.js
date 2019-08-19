@@ -5,9 +5,10 @@ import ReactMapGL, { _MapContext as MapContext } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import inputEndpoints from '../../constants/inputEndpoints';
 import axios from 'axios';
+import { Spin } from 'antd';
 
 // Initial viewport settings
-const initialViewState = {
+const defaultViewState = {
   longitude: 0,
   latitude: 0,
   zoom: 0,
@@ -15,45 +16,74 @@ const initialViewState = {
   bearing: 0
 };
 
-const Map = ({ style, layerList }) => {
-  const mapRef = useRef();
-  const [viewState, setViewState] = useState(initialViewState);
-  const [layers, setLayers] = useState([]);
+export const useGeoJson = layerList => {
   const [data, setData] = useState();
 
   useEffect(() => {
     let promises = layerList.map(type => {
-      return axios.get(inputEndpoints[type]).catch(error => console.log(error));
+      return axios
+        .get(inputEndpoints[type])
+        .catch(error => console.log(error.response.data));
     });
     axios
       .all(promises)
       .then(results => {
         let _data = {};
         for (var i = 0; i < layerList.length; i++) {
-          if (results[i].status === 200) {
+          if (results[i] && results[i].status === 200) {
             _data[layerList[i]] = results[i].data;
           }
         }
-        setData(_data);
+        Object.keys(_data).length && setData(_data);
       })
       .catch(error => console.log(error));
   }, []);
 
-  useEffect(() => {
-    if (data) {
-      setCameraOptions(data.zone.bbox);
-      renderLayers();
-    }
-  }, [data]);
+  return data;
+};
 
-  const renderLayers = () => {
+const Map = ({ style, data, children }) => {
+  const getInitialViewState = () => {
+    if (data && typeof data.zone !== 'undefined') {
+      let bbox = data.zone.bbox;
+      return {
+        ...defaultViewState,
+        longitude: (bbox[0] + bbox[2]) / 2,
+        latitude: (bbox[1] + bbox[3]) / 2,
+        zoom: 15
+      };
+    }
+    return defaultViewState;
+  };
+  return (
+    <div style={style}>
+      {data ? (
+        <DeckGLMap data={data} initialViewState={getInitialViewState()}>
+          {children}
+        </DeckGLMap>
+      ) : (
+        <Spin />
+      )}
+    </div>
+  );
+};
+
+const DeckGLMap = ({ data, children, initialViewState }) => {
+  const mapRef = useRef();
+  const [viewState, setViewState] = useState(initialViewState);
+  const [layers, setLayers] = useState(renderLayers);
+
+  function renderLayers() {
     let _layers = [];
     if (typeof data.zone !== 'undefined') {
       _layers.push(
         new GeoJsonLayer({
           id: 'zone',
           data: data.zone,
-          filled: true
+          filled: true,
+          extruded: true,
+
+          getElevation: f => f.properties['height_ag']
         })
       );
     }
@@ -62,7 +92,10 @@ const Map = ({ style, layerList }) => {
         new GeoJsonLayer({
           id: 'district',
           data: data.district,
-          filled: true
+          filled: true,
+          extruded: true,
+
+          getElevation: f => f.properties['height_ag']
         })
       );
     }
@@ -74,8 +107,8 @@ const Map = ({ style, layerList }) => {
         })
       );
     }
-    setLayers(_layers);
-  };
+    return _layers;
+  }
 
   const setCameraOptions = bbox => {
     let cameraOptions = mapRef.current.cameraForBounds(
@@ -99,20 +132,19 @@ const Map = ({ style, layerList }) => {
   };
 
   return (
-    <div style={style}>
-      <DeckGL
-        viewState={viewState}
-        controller={true}
-        layers={layers}
-        ContextProvider={MapContext.Provider}
-        onViewStateChange={_onViewStateChange}
-      >
-        <ReactMapGL
-          ref={ref => (mapRef.current = ref && ref.getMap())}
-          mapStyle={mapStyles.LIGHT_MAP}
-        />
-      </DeckGL>
-    </div>
+    <DeckGL
+      viewState={viewState}
+      controller={true}
+      layers={layers}
+      ContextProvider={MapContext.Provider}
+      onViewStateChange={_onViewStateChange}
+    >
+      <ReactMapGL
+        ref={ref => (mapRef.current = ref && ref.getMap())}
+        mapStyle={mapStyles.LIGHT_MAP}
+      />
+      {children}
+    </DeckGL>
   );
 };
 

@@ -1,7 +1,6 @@
 import { hot } from 'react-hot-loader/root';
 import TitleBar from 'frameless-titlebar';
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { Switch, Route } from 'react-router';
 import { ConnectedRouter } from 'connected-react-router';

@@ -29,7 +29,8 @@ module.exports = {
     'no-console': process.env.NODE_ENV === 'production' ? 2 : 0,
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
     // allow spreading out properties from an object without warnings
-    'no-unused-vars': [1, { ignoreRestSiblings: true }],
+    // 'no-unused-vars': [1, { ignoreRestSiblings: true }],
+    'no-unused-vars': 'off',
     'react/prop-types': 'off'
   }
 };
