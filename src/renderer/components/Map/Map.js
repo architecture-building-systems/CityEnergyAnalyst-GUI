@@ -1,10 +1,16 @@
 import React, { useRef, useEffect, useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
-import ReactMapGL, { _MapContext as MapContext } from 'react-map-gl';
+import ReactMapGL, {
+  _MapContext as MapContext,
+  NavigationControl
+} from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import { Spin } from 'antd';
 import { bbox as calculateBBox, helpers } from '@turf/turf';
+import inputEndpoints from '../../constants/inputEndpoints';
+import axios from 'axios';
+import { Toggle3DControl, ToggleMapStyleControl } from './MapButtons';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -32,19 +38,27 @@ const Map = ({ style, data, children }) => {
 const DeckGLMap = ({ data, children, initialViewState }) => {
   const mapRef = useRef(null);
   const [viewState, setViewState] = useState(initialViewState);
-  const [layers, setLayers] = useState(renderLayers);
+  const [extruded, setExtruded] = useState(false);
+  const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
 
-  function renderLayers() {
+  const renderLayers = () => {
     let _layers = [];
     if (typeof data.zone !== 'undefined') {
       _layers.push(
         new GeoJsonLayer({
           id: 'zone',
           data: data.zone,
+          opacity: 0.5,
+          wireframe: true,
           filled: true,
-          extruded: true,
+          extruded: extruded,
 
-          getElevation: f => f.properties['height_ag']
+          getElevation: f => f.properties['height_ag'],
+          getFillColor: [255, 0, 0],
+
+          pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 0, 128]
         })
       );
     }
@@ -53,10 +67,17 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
         new GeoJsonLayer({
           id: 'district',
           data: data.district,
+          opacity: 0.5,
+          wireframe: true,
           filled: true,
-          extruded: true,
+          extruded: extruded,
 
-          getElevation: f => f.properties['height_ag']
+          getElevation: f => f.properties['height_ag'],
+          getFillColor: [255, 0, 0],
+
+          pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 0, 128]
         })
       );
     }
@@ -69,7 +90,8 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
       );
     }
     return _layers;
-  }
+  };
+
   const _onViewStateChange = ({ viewState }) => {
     setViewState(viewState);
   };
@@ -77,6 +99,7 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
   const onLoad = () => {
     const map = mapRef.current.getMap();
 
+    // Calculate camera options
     let points = [];
     if (typeof data.zone !== 'undefined') {
       let bbox = data.zone.bbox;
@@ -100,23 +123,56 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
   };
 
   return (
-    <>
+    <React.Fragment>
       <DeckGL
         viewState={viewState}
         controller={true}
-        layers={layers}
+        layers={renderLayers()}
         ContextProvider={MapContext.Provider}
         onViewStateChange={_onViewStateChange}
       >
         <ReactMapGL
           ref={mapRef}
-          mapStyle={mapStyles.LIGHT_MAP}
+          mapStyle={mapStyles[mapStyle]}
           onLoad={onLoad}
         />
+        <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
+          <NavigationControl />
+          <br />
+          <Toggle3DControl callback={setExtruded} />
+          <br />
+          <ToggleMapStyleControl callback={setMapStyle} />
+        </div>
       </DeckGL>
       {children}
-    </>
+    </React.Fragment>
   );
+};
+
+export const useGeoJsons = layerList => {
+  const [geojsons, setGeoJsons] = useState();
+
+  useEffect(() => {
+    let promises = layerList.map(type => {
+      return axios.get(inputEndpoints[type]).catch(error => {
+        return console.log(error.response.data);
+      });
+    });
+    axios
+      .all(promises)
+      .then(results => {
+        let _data = {};
+        for (var i = 0; i < layerList.length; i++) {
+          if (results[i] && results[i].status === 200) {
+            _data[layerList[i]] = results[i].data;
+          }
+        }
+        setGeoJsons(_data);
+      })
+      .catch(error => console.log(error));
+  }, []);
+
+  return [geojsons, setGeoJsons];
 };
 
 export default Map;
