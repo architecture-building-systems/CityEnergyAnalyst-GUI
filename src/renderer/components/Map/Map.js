@@ -6,6 +6,7 @@ import mapStyles from '../../constants/mapStyles';
 import inputEndpoints from '../../constants/inputEndpoints';
 import axios from 'axios';
 import { Spin } from 'antd';
+import { bbox as calculateBbox, helpers } from '@turf/turf';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -42,6 +43,17 @@ export const useGeoJson = layerList => {
   return data;
 };
 
+const getBbox = data => {
+  let bbox = data.zone.bbox;
+  let points = [[bbox[0], bbox[1]], [bbox[2], bbox[3]]];
+  if (typeof data.district !== 'undefined') {
+    let bbox = data.district.bbox;
+    points.push(...[[bbox[0], bbox[1]], [bbox[2], bbox[3]]]);
+  }
+  points = helpers.multiPoint(points);
+  return calculateBbox(points);
+};
+
 const Map = ({ style, data, children }) => {
   const getInitialViewState = () => {
     if (data && typeof data.zone !== 'undefined') {
@@ -58,7 +70,7 @@ const Map = ({ style, data, children }) => {
   return (
     <div style={style}>
       {data ? (
-        <DeckGLMap data={data} initialViewState={getInitialViewState()}>
+        <DeckGLMap data={data} initialViewState={defaultViewState}>
           {children}
         </DeckGLMap>
       ) : (
@@ -69,7 +81,7 @@ const Map = ({ style, data, children }) => {
 };
 
 const DeckGLMap = ({ data, children, initialViewState }) => {
-  const mapRef = useRef();
+  const mapRef = useRef(null);
   const [viewState, setViewState] = useState(initialViewState);
   const [layers, setLayers] = useState(renderLayers);
 
@@ -109,42 +121,47 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
     }
     return _layers;
   }
-
-  const setCameraOptions = bbox => {
-    let cameraOptions = mapRef.current.cameraForBounds(
-      [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-      {
-        maxZoom: 18,
-        padding: 30
-      }
-    );
-    setViewState({
-      ...viewState,
-      zoom: cameraOptions.zoom,
-      latitude: cameraOptions.center.lat,
-      longitude: cameraOptions.center.lng,
-      transitionDuration: 1500
-    });
-  };
-
   const _onViewStateChange = ({ viewState }) => {
     setViewState(viewState);
   };
 
+  const onLoad = () => {
+    const map = mapRef.current.getMap();
+    if (data && typeof data.zone !== 'undefined') {
+      let bbox = getBbox(data);
+      let cameraOptions = map.cameraForBounds(
+        [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+        {
+          maxZoom: 18,
+          padding: 100
+        }
+      );
+      setViewState({
+        ...viewState,
+        zoom: cameraOptions.zoom,
+        latitude: cameraOptions.center.lat,
+        longitude: cameraOptions.center.lng
+      });
+    }
+  };
+
   return (
-    <DeckGL
-      viewState={viewState}
-      controller={true}
-      layers={layers}
-      ContextProvider={MapContext.Provider}
-      onViewStateChange={_onViewStateChange}
-    >
-      <ReactMapGL
-        ref={ref => (mapRef.current = ref && ref.getMap())}
-        mapStyle={mapStyles.LIGHT_MAP}
-      />
+    <>
+      <DeckGL
+        viewState={viewState}
+        controller={true}
+        layers={layers}
+        ContextProvider={MapContext.Provider}
+        onViewStateChange={_onViewStateChange}
+      >
+        <ReactMapGL
+          ref={mapRef}
+          mapStyle={mapStyles.LIGHT_MAP}
+          onLoad={onLoad}
+        />
+      </DeckGL>
       {children}
-    </DeckGL>
+    </>
   );
 };
 
