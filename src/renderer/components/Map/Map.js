@@ -6,7 +6,7 @@ import mapStyles from '../../constants/mapStyles';
 import inputEndpoints from '../../constants/inputEndpoints';
 import axios from 'axios';
 import { Spin } from 'antd';
-import { bbox as calculateBbox, helpers } from '@turf/turf';
+import { bbox as calculateBBox, helpers } from '@turf/turf';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -43,30 +43,19 @@ export const useGeoJson = layerList => {
   return data;
 };
 
-const getBbox = data => {
-  let bbox = data.zone.bbox;
-  let points = [[bbox[0], bbox[1]], [bbox[2], bbox[3]]];
-  if (typeof data.district !== 'undefined') {
-    let bbox = data.district.bbox;
-    points.push(...[[bbox[0], bbox[1]], [bbox[2], bbox[3]]]);
-  }
-  points = helpers.multiPoint(points);
-  return calculateBbox(points);
-};
-
 const Map = ({ style, data, children }) => {
-  const getInitialViewState = () => {
-    if (data && typeof data.zone !== 'undefined') {
-      let bbox = data.zone.bbox;
-      return {
-        ...defaultViewState,
-        longitude: (bbox[0] + bbox[2]) / 2,
-        latitude: (bbox[1] + bbox[3]) / 2,
-        zoom: 15
-      };
-    }
-    return defaultViewState;
-  };
+  // const getInitialViewState = () => {
+  //   if (data && typeof data.zone !== 'undefined') {
+  //     let bbox = data.zone.bbox;
+  //     return {
+  //       ...defaultViewState,
+  //       longitude: (bbox[0] + bbox[2]) / 2,
+  //       latitude: (bbox[1] + bbox[3]) / 2,
+  //       zoom: 15
+  //     };
+  //   }
+  //   return defaultViewState;
+  // };
   return (
     <div style={style}>
       {data ? (
@@ -127,22 +116,28 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
 
   const onLoad = () => {
     const map = mapRef.current.getMap();
+
+    let points = [];
     if (data && typeof data.zone !== 'undefined') {
-      let bbox = getBbox(data);
-      let cameraOptions = map.cameraForBounds(
-        [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-        {
-          maxZoom: 18,
-          padding: 100
-        }
-      );
-      setViewState({
-        ...viewState,
-        zoom: cameraOptions.zoom,
-        latitude: cameraOptions.center.lat,
-        longitude: cameraOptions.center.lng
-      });
+      let bbox = data.zone.bbox;
+      points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
     }
+    if (typeof data.district !== 'undefined') {
+      let bbox = data.district.bbox;
+      points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
+    }
+    console.log(helpers.multiPoint(points));
+    let bbox = calculateBBox(helpers.multiPoint(points));
+    let cameraOptions = map.cameraForBounds(bbox, {
+      maxZoom: 18,
+      padding: 30
+    });
+    setViewState({
+      ...viewState,
+      zoom: cameraOptions.zoom,
+      latitude: cameraOptions.center.lat,
+      longitude: cameraOptions.center.lng
+    });
   };
 
   return (
