@@ -3,8 +3,6 @@ import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import ReactMapGL, { _MapContext as MapContext } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
-import inputEndpoints from '../../constants/inputEndpoints';
-import axios from 'axios';
 import { Spin } from 'antd';
 import { bbox as calculateBBox, helpers } from '@turf/turf';
 
@@ -17,45 +15,7 @@ const defaultViewState = {
   bearing: 0
 };
 
-export const useGeoJson = layerList => {
-  const [data, setData] = useState();
-
-  useEffect(() => {
-    let promises = layerList.map(type => {
-      return axios
-        .get(inputEndpoints[type])
-        .catch(error => console.log(error.response.data));
-    });
-    axios
-      .all(promises)
-      .then(results => {
-        let _data = {};
-        for (var i = 0; i < layerList.length; i++) {
-          if (results[i] && results[i].status === 200) {
-            _data[layerList[i]] = results[i].data;
-          }
-        }
-        Object.keys(_data).length && setData(_data);
-      })
-      .catch(error => console.log(error));
-  }, []);
-
-  return data;
-};
-
 const Map = ({ style, data, children }) => {
-  // const getInitialViewState = () => {
-  //   if (data && typeof data.zone !== 'undefined') {
-  //     let bbox = data.zone.bbox;
-  //     return {
-  //       ...defaultViewState,
-  //       longitude: (bbox[0] + bbox[2]) / 2,
-  //       latitude: (bbox[1] + bbox[3]) / 2,
-  //       zoom: 15
-  //     };
-  //   }
-  //   return defaultViewState;
-  // };
   return (
     <div style={style}>
       {data ? (
@@ -118,7 +78,7 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
     const map = mapRef.current.getMap();
 
     let points = [];
-    if (data && typeof data.zone !== 'undefined') {
+    if (typeof data.zone !== 'undefined') {
       let bbox = data.zone.bbox;
       points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
     }
@@ -126,7 +86,6 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
       let bbox = data.district.bbox;
       points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
     }
-    console.log(helpers.multiPoint(points));
     let bbox = calculateBBox(helpers.multiPoint(points));
     let cameraOptions = map.cameraForBounds(bbox, {
       maxZoom: 18,
