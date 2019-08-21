@@ -66,24 +66,13 @@ const SideNav = () => {
             <Link to="/placeholder" />
           </Menu.Item>
         </SubMenu>
-        <SubMenu
-          key="inputEditor"
-          title={
-            <span>
-              <Icon type="edit" />
-              <span>Input Editor</span>
-            </span>
-          }
-        >
-          <Menu.Item key="buildingProperties">
-            <span>Building Properties</span>
-            <Link to="/test" />
-          </Menu.Item>
-          <Menu.Item key="test">
-            <span>Test Map</span>
-            <Link to={routes.INPUT_EDITOR} />
-          </Menu.Item>
-        </SubMenu>
+        <Menu.Item key="inputEditor">
+          <span>
+            <Icon type="edit" />
+            <span>Input Editor</span>
+          </span>
+          <Link to={routes.INPUT_EDITOR} />
+        </Menu.Item>
         <ToolsMenu />
       </Menu>
     </Sider>
