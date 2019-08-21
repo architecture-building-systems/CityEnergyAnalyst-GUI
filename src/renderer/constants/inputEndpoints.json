@@ -1,7 +1,7 @@
 {
-  "zone": "http://localhost:5050/api/inputs/zone/geojson",
-  "district": "http://localhost:5050/api/inputs/district/geojson",
+  "zone": "http://localhost:5050/api/inputs/building-properties/zone/geojson",
+  "district": "http://localhost:5050/api/inputs/building-properties/district/geojson",
   "streets": "http://localhost:5050/api/inputs/others/streets/geojson",
-  "dh_network": "http://localhost:5050/api/inputs/others/networks/DH/geojson",
-  "dc_network": "http://localhost:5050/api/inputs/others/networks/DC/geojson"
+  "dh": "http://localhost:5050/api/inputs/others/dh/geojson",
+  "dc": "http://localhost:5050/api/inputs/others/dc/geojson"
 }

@@ -6,11 +6,17 @@ import ReactMapGL, {
   NavigationControl
 } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
-import { Spin } from 'antd';
-import { bbox as calculateBBox, helpers } from '@turf/turf';
+import { Spin, Icon } from 'antd';
+import {
+  bbox as calcBBox,
+  area as calcArea,
+  length as calcLength,
+  helpers
+} from '@turf/turf';
 import inputEndpoints from '../../constants/inputEndpoints';
 import axios from 'axios';
 import { Toggle3DControl, ToggleMapStyleControl } from './MapButtons';
+import './Map.css';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -23,20 +29,24 @@ const defaultViewState = {
 
 const Map = ({ style, data, children }) => {
   return (
-    <div style={style}>
-      {data ? (
-        <DeckGLMap data={data} initialViewState={defaultViewState}>
-          {children}
-        </DeckGLMap>
-      ) : (
-        <Spin />
-      )}
-    </div>
+    <Spin
+      spinning={!data}
+      indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+      tip="Loading Map..."
+    >
+      <div style={style}>
+        {data && (
+          <DeckGLMap data={data} initialViewState={defaultViewState}>
+            {children}
+          </DeckGLMap>
+        )}
+      </div>
+    </Spin>
   );
 };
 
 const DeckGLMap = ({ data, children, initialViewState }) => {
-  const mapRef = useRef(null);
+  const mapRef = useRef();
   const [viewState, setViewState] = useState(initialViewState);
   const [extruded, setExtruded] = useState(false);
   const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
@@ -54,11 +64,13 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
           extruded: extruded,
 
           getElevation: f => f.properties['height_ag'],
-          getFillColor: [255, 0, 0],
+          getFillColor: [0, 0, 255],
 
           pickable: true,
           autoHighlight: true,
-          highlightColor: [255, 255, 0, 128]
+          highlightColor: [255, 255, 0, 128],
+
+          onHover: updateTooltip
         })
       );
     }
@@ -77,7 +89,9 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
 
           pickable: true,
           autoHighlight: true,
-          highlightColor: [255, 255, 0, 128]
+          highlightColor: [255, 255, 0, 128],
+
+          onHover: updateTooltip
         })
       );
     }
@@ -85,15 +99,69 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
       _layers.push(
         new GeoJsonLayer({
           id: 'streets',
-          data: data.streets
+          data: data.streets,
+          getLineColor: [0, 255, 0],
+          getLineWidth: 1,
+
+          pickable: true,
+          autoHighlight: true,
+
+          onHover: updateTooltip
+        })
+      );
+    }
+    if (typeof data.dc !== 'undefined') {
+      _layers.push(
+        new GeoJsonLayer({
+          id: 'dc',
+          data: data.dc,
+          stroked: false,
+          filled: true,
+
+          getLineColor: [0, 0, 255],
+          getFillColor: f => nodeFillColor(f.properties['Type']),
+          getLineWidth: 3,
+          getRadius: 3,
+
+          pickable: true,
+          autoHighlight: true,
+
+          onHover: updateTooltip
+        })
+      );
+    }
+    if (typeof data.dh !== 'undefined') {
+      _layers.push(
+        new GeoJsonLayer({
+          id: 'dh',
+          data: data.dh,
+          stroked: false,
+          filled: true,
+
+          getLineColor: [255, 0, 0],
+          getFillColor: f => nodeFillColor(f.properties['Type']),
+          getLineWidth: 3,
+          getRadius: 3,
+
+          pickable: true,
+          autoHighlight: true,
+
+          onHover: updateTooltip
         })
       );
     }
     return _layers;
   };
 
-  const _onViewStateChange = ({ viewState }) => {
+  const onViewStateChange = ({ viewState }) => {
     setViewState(viewState);
+  };
+
+  const onDragStart = (info, event) => {
+    let dToggleButton = document.getElementById('3d-button');
+    if (event.rightButton && !extruded) {
+      dToggleButton.click();
+    }
   };
 
   const onLoad = () => {
@@ -109,7 +177,7 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
       let bbox = data.district.bbox;
       points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
     }
-    let bbox = calculateBBox(helpers.multiPoint(points));
+    let bbox = calcBBox(helpers.multiPoint(points));
     let cameraOptions = map.cameraForBounds(bbox, {
       maxZoom: 18,
       padding: 30
@@ -129,7 +197,8 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
         controller={true}
         layers={renderLayers()}
         ContextProvider={MapContext.Provider}
-        onViewStateChange={_onViewStateChange}
+        onViewStateChange={onViewStateChange}
+        onDragStart={onDragStart}
       >
         <ReactMapGL
           ref={mapRef}
@@ -139,15 +208,63 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
           <NavigationControl />
           <br />
-          <Toggle3DControl callback={setExtruded} />
+          <Toggle3DControl
+            callback={setExtruded}
+            viewstate={viewState}
+            setviewstate={setViewState}
+          />
           <br />
           <ToggleMapStyleControl callback={setMapStyle} />
         </div>
       </DeckGL>
+      <div id="map-tooltip"></div>
       {children}
     </React.Fragment>
   );
 };
+
+function updateTooltip({ x, y, object, layer }) {
+  const tooltip = document.getElementById('map-tooltip');
+  if (object) {
+    tooltip.style.top = `${y}px`;
+    tooltip.style.left = `${x}px`;
+    let innerHTML = '';
+    let properties = object.properties;
+
+    if (layer.id === 'zone' || layer.id === 'district') {
+      Object.keys(properties).forEach(key => {
+        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
+      });
+      let area = calcArea(object);
+      innerHTML +=
+        `<br><div><b>area</b>: ${Math.round(area * 1000) /
+          1000}m<sup>2</sup></div>` +
+        `<div><b>volume</b>: ${Math.round(
+          area * properties['height_ag'] * 1000
+        ) / 1000}m<sup>3</sup></div>`;
+    } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
+      if (typeof !properties.Building !== 'undefined') {
+        let length = calcLength(object) * 1000;
+        innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) /
+          1000}m</div>`;
+      }
+    } else {
+      Object.keys(properties).forEach(key => {
+        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
+      });
+    }
+
+    tooltip.innerHTML = innerHTML;
+  } else {
+    tooltip.innerHTML = '';
+  }
+}
+
+function nodeFillColor(type) {
+  if (type === 'NONE') return [100, 100, 100];
+  if (type === 'CONSUMER') return [255, 255, 255];
+  if (type === 'PLANT') return [0, 0, 0];
+}
 
 export const useGeoJsons = layerList => {
   const [geojsons, setGeoJsons] = useState();

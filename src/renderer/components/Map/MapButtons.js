@@ -17,15 +17,18 @@ export class Toggle3DControl extends BaseControl {
 
   state = { is3D: false };
 
-  //   _updateViewport(opts) {
-  //     const { viewport } = this._context;
-  //     const onViewportChange = this._context.onViewportChange;
-  //     const viewState = { ...viewport, ...opts };
-  //     onViewportChange(viewState);
-  //   }
+  _updateViewport(opts) {
+    const { viewstate, setviewstate } = this.props;
+    setviewstate({ ...viewstate, ...opts });
+  }
 
   _onToggle3D = () => {
     let { is3D } = this.state;
+    if (is3D) {
+      this._updateViewport({ pitch: 0, bearing: 0, transitionDuration: 300 });
+    } else {
+      this._updateViewport({ pitch: 45, transitionDuration: 300 });
+    }
     this.props.callback(!is3D);
     this.setState({ is3D: !is3D });
   };
@@ -34,6 +37,8 @@ export class Toggle3DControl extends BaseControl {
     return createElement('button', {
       key: type,
       className: `mapboxgl-ctrl-icon mapboxgl-ctrl-${type}`,
+      id: '3d-button',
+      'data-extruded': type === '3d',
       type: 'button',
       title: label,
       onClick: callback

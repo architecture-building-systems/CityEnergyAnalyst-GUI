@@ -1,43 +1,58 @@
 import React, { useEffect, useState } from 'react';
-import Map, { useGeoJsons } from '../Map/Map';
+import Map from '../Map/Map';
+import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInputData } from '../../actions/inputEditor';
-import axios from 'axios';
+import { Tabs } from 'antd';
 
-const MAP_STYLE = { height: '500px', width: '100%', position: 'relative' };
+const MAP_STYLE = {
+  height: '500px',
+  width: '100%',
+  position: 'relative',
+  background: 'rgba(0, 0, 0, 0.05)'
+};
 
 const InputEditor = () => {
-  // const dispatch = useDispatch();
-  // const { isFetching, data } = useSelector(state => state.inputData);
-  // const geojsons = isFetching ? null : data ? data.geojsons : null;
-
-  // useEffect(() => {
-  //   dispatch(fetchInputData());
-  // }, []);
-  const [geojsons, setGeoJsons] = useGeoJsons(['zone', 'district', 'streets']);
-  const [data, setData] = useState();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    axios
-      .get('http://localhost:5050/api/inputs/building-properties')
-      .then(response => {
-        return setData(response.data);
-      })
-      .catch(error => {
-        return console.log(error.response.data);
-      });
+    dispatch(fetchInputData());
   }, []);
 
   return (
     <div>
-      <Map style={MAP_STYLE} data={geojsons} />
-      <InputTable setData={setData} />
+      <InputMap />
+      <br />
+      <InputTable />
     </div>
   );
 };
 
+const InputMap = () => {
+  const { geojsons, isFetchingInputData } = useSelector(
+    state => state.inputData
+  );
+
+  return <Map style={MAP_STYLE} data={isFetchingInputData ? null : geojsons} />;
+};
+
 const InputTable = () => {
-  return <div>Test</div>;
+  const { order, isFetchingInputData } = useSelector(state => state.inputData);
+  const [tab, setTab] = useState('zone');
+
+  const { TabPane } = Tabs;
+  if (isFetchingInputData || !order) return null;
+  const TabPanes = order.map(key => {
+    return <TabPane key={key} tab={key} />;
+  });
+  return (
+    <div>
+      <Tabs defaultActiveKey={tab} onChange={setTab}>
+        {TabPanes}
+      </Tabs>
+      <Table tab={tab} />
+    </div>
+  );
 };
 
 export default InputEditor;
