@@ -1,10 +1,10 @@
 import React from 'react';
 import { ipcRenderer } from 'electron';
-import { Form, Input, Icon, Switch, Select, Divider } from 'antd';
+import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
 
-const parameter = (param, getFieldDecorator) => {
+const parameter = (param, form) => {
   const { name, type, value, help } = param;
-
+  const { getFieldDecorator, setFieldsValue } = form;
   const openDialog = () => {
     const options =
       type === 'PathParameter'
@@ -16,7 +16,7 @@ const parameter = (param, getFieldDecorator) => {
   let input = [];
 
   if (['IntegerParameter', 'RealParameter'].includes(type)) {
-    const stringValue = value ? value.toString() : '';
+    const stringValue = value !== null ? value.toString() : '';
     const regex =
       type === 'IntegerParameter'
         ? /^(?:[1-9][0-9]*|0)$/
@@ -91,6 +91,21 @@ const parameter = (param, getFieldDecorator) => {
         {choice}
       </Option>
     ));
+
+    const selectAll = e => {
+      e.preventDefault();
+      setFieldsValue({
+        [name]: choices
+      });
+    };
+
+    const unselectAll = e => {
+      e.preventDefault();
+      setFieldsValue({
+        [name]: []
+      });
+    };
+
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
@@ -101,6 +116,21 @@ const parameter = (param, getFieldDecorator) => {
             style={{ width: '100%' }}
             placeholder="Nothing Selected"
             showArrow
+            maxTagCount={10}
+            dropdownRender={menu => (
+              <div>
+                <div style={{ padding: '8px', textAlign: 'center' }}>
+                  <Button onMouseDown={selectAll} style={{ width: '45%' }}>
+                    Select All
+                  </Button>
+                  <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
+                    Unselect All
+                  </Button>
+                </div>
+                <Divider style={{ margin: '4px 0' }} />
+                {menu}
+              </div>
+            )}
           >
             {Options}
           </Select>

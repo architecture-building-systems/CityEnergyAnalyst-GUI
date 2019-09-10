@@ -5,6 +5,7 @@ import sider from './homepage';
 import project from './project';
 import { toolList, toolParams, toolSaving } from './tools';
 import inputData from './inputEditor';
+import dashboard from './dashboard';
 
 export default function createRootReducer(history) {
   return combineReducers({
@@ -14,6 +15,7 @@ export default function createRootReducer(history) {
     toolList,
     toolParams,
     toolSaving,
-    inputData
+    inputData,
+    dashboard
   });
 }

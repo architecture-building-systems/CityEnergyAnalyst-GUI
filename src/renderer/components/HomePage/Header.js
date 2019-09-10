@@ -27,7 +27,7 @@ const Header = () => {
       }}
     >
       <Icon
-        className="trigger"
+        className="trigger menu-toggle"
         type={collapsed ? 'menu-unfold' : 'menu-fold'}
         onClick={() => dispatch(setCollapsed(!collapsed))}
       />

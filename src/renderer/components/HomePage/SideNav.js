@@ -74,6 +74,13 @@ const SideNav = () => {
           <Link to={routes.INPUT_EDITOR} />
         </Menu.Item>
         <ToolsMenu />
+        <Menu.Item key="dashboard">
+          <span>
+            <Icon type="bar-chart" />
+            <span>Dashboard</span>
+          </span>
+          <Link to={routes.DASHBOARD} />
+        </Menu.Item>
       </Menu>
     </Sider>
   );

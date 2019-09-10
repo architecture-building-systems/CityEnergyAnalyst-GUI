@@ -168,26 +168,26 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
     const map = mapRef.current.getMap();
 
     // Calculate camera options
-    let points = [];
-    if (typeof data.zone !== 'undefined') {
-      let bbox = data.zone.bbox;
-      points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
-    }
-    if (typeof data.district !== 'undefined') {
-      let bbox = data.district.bbox;
-      points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
-    }
-    let bbox = calcBBox(helpers.multiPoint(points));
-    let cameraOptions = map.cameraForBounds(bbox, {
-      maxZoom: 18,
-      padding: 30
-    });
-    setViewState({
-      ...viewState,
-      zoom: cameraOptions.zoom,
-      latitude: cameraOptions.center.lat,
-      longitude: cameraOptions.center.lng
-    });
+    // let points = [];
+    // if (typeof data.zone !== 'undefined') {
+    //   let bbox = data.zone.bbox;
+    //   points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
+    // }
+    // if (typeof data.district !== 'undefined') {
+    //   let bbox = data.district.bbox;
+    //   points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
+    // }
+    // let bbox = calcBBox(helpers.multiPoint(points));
+    // let cameraOptions = map.cameraForBounds(bbox, {
+    //   maxZoom: 18,
+    //   padding: 30
+    // });
+    // setViewState({
+    //   ...viewState,
+    //   zoom: cameraOptions.zoom,
+    //   latitude: cameraOptions.center.lat,
+    //   longitude: cameraOptions.center.lng
+    // });
   };
 
   return (
@@ -206,7 +206,7 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
           onLoad={onLoad}
         />
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
-          <NavigationControl />
+          <NavigationControl showZoom={false} />
           <br />
           <Toggle3DControl
             callback={setExtruded}
