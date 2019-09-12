@@ -13,10 +13,25 @@ const MAP_STYLE = {
 };
 
 const InputEditor = () => {
+  return (
+    <iframe
+      src="http://localhost:5050/inputs/building-properties?div=true"
+      height={980}
+      width="100%"
+      scrolling="no"
+      frameBorder="false"
+    />
+  );
+};
+
+const InputEditorReact = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchInputData());
+    return () => {
+      dispatch(resetInputData());
+    };
   }, []);
 
   return (
