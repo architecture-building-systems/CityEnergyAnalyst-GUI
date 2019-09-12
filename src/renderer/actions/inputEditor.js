@@ -1,10 +1,21 @@
 import axios from 'axios';
 import inputEndpoints from '../constants/inputEndpoints';
 
+export const RESET_INPUTDATA = 'RESET_INPUTDATA';
 export const REQUEST_INPUTDATA = 'REQUEST_INPUTDATA';
 export const RECEIVE_INPUTDATA = 'RECEIVE_INPUTDATA';
 export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
+export const SET_SELECTED = 'SET_SELECTED';
+
+export const resetInputData = () => ({
+  type: RESET_INPUTDATA
+});
+
+export const setSelected = selected => ({
+  type: SET_SELECTED,
+  payload: { selected }
+});
 
 export const fetchInputData = () => {
   return dispatch => {
@@ -22,10 +33,14 @@ export const fetchInputData = () => {
         return response.data;
       })
       .catch(error => {
+        const message =
+          typeof error.code === 'undefined'
+            ? error.message
+            : error.data.message;
         dispatch({
           type: RECEIVE_INPUTDATA,
           payload: {
-            error: { message: error.response.data.message },
+            error: message,
             isFetchingInputData: false
           }
         });
