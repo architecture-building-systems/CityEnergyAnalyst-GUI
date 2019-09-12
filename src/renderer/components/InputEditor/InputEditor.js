@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Map from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchInputData } from '../../actions/inputEditor';
+import { fetchInputData, resetInputData } from '../../actions/inputEditor';
 import { Tabs } from 'antd';
 
 const MAP_STYLE = {
@@ -29,22 +29,27 @@ const InputEditor = () => {
 };
 
 const InputMap = () => {
-  const { geojsons, isFetchingInputData } = useSelector(
+  const { geojsons, colors, isFetchingInputData, error } = useSelector(
     state => state.inputData
   );
 
-  return <Map style={MAP_STYLE} data={isFetchingInputData ? null : geojsons} />;
+  if (error) return <div>{error}</div>;
+  return (
+    <Map
+      style={MAP_STYLE}
+      data={geojsons}
+      colors={colors}
+      loading={isFetchingInputData}
+    />
+  );
 };
 
 const InputTable = () => {
-  const { order, isFetchingInputData } = useSelector(state => state.inputData);
+  const { order } = useSelector(state => state.inputData);
   const [tab, setTab] = useState('zone');
 
-  const { TabPane } = Tabs;
-  if (isFetchingInputData || !order) return null;
-  const TabPanes = order.map(key => {
-    return <TabPane key={key} tab={key} />;
-  });
+  if (!order) return null;
+  const TabPanes = order.map(key => <Tabs.TabPane key={key} tab={key} />);
   return (
     <div>
       <Tabs defaultActiveKey={tab} onChange={setTab}>

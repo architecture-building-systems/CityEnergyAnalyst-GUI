@@ -12,14 +12,19 @@ const toggleMapStyleDefaultProps = Object.assign({}, BaseControl.defaultProps, {
   showButton: true
 });
 
+const resetCameraDefaultProps = Object.assign({}, BaseControl.defaultProps, {
+  className: '',
+  showButton: true
+});
+
 export class Toggle3DControl extends BaseControl {
   static defaultProps = toggle3DDefaultProps;
 
   state = { is3D: false };
 
   _updateViewport(opts) {
-    const { viewstate, setviewstate } = this.props;
-    setviewstate({ ...viewstate, ...opts });
+    const { viewState, setViewState } = this.props;
+    setViewState({ ...viewState, ...opts });
   }
 
   _onToggle3D = () => {
@@ -101,6 +106,48 @@ export class ToggleMapStyleControl extends BaseControl {
           this._onToggleMapStyle
         )
       ]
+    );
+  }
+}
+
+export class ResetCameraControl extends BaseControl {
+  static defaultProps = resetCameraDefaultProps;
+
+  _updateViewport(opts) {
+    const { viewState, setViewState } = this.props;
+    setViewState({ ...viewState, ...opts });
+  }
+
+  _onResetCamera = () => {
+    const { cameraOptions } = this.props;
+    this._updateViewport({
+      zoom: cameraOptions.zoom,
+      latitude: cameraOptions.center.lat,
+      longitude: cameraOptions.center.lng
+    });
+  };
+
+  _renderButton(type, label, callback) {
+    return createElement('button', {
+      key: type,
+      className: `mapboxgl-ctrl-icon mapboxgl-ctrl-${type}`,
+      type: 'button',
+      title: label,
+      onClick: callback
+    });
+  }
+
+  _render() {
+    const { className, showButton } = this.props;
+    if (!showButton) return null;
+
+    return createElement(
+      'div',
+      {
+        className: `mapboxgl-ctrl mapboxgl-ctrl-group ${className}`,
+        ref: this._containerRef
+      },
+      [this._renderButton('reset-camera', 'Reset Camera', this._onResetCamera)]
     );
   }
 }

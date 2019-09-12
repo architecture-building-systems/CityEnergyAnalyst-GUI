@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import ReactMapGL, {
@@ -15,7 +16,12 @@ import {
 } from '@turf/turf';
 import inputEndpoints from '../../constants/inputEndpoints';
 import axios from 'axios';
-import { Toggle3DControl, ToggleMapStyleControl } from './MapButtons';
+import {
+  Toggle3DControl,
+  ToggleMapStyleControl,
+  ResetCameraControl
+} from './MapButtons';
+import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
 // Initial viewport settings
@@ -27,31 +33,52 @@ const defaultViewState = {
   bearing: 0
 };
 
-const Map = ({ style, data, children }) => {
+const Map = ({ style, data, colors, loading }) => {
+  if (loading)
+    return (
+      <Spin
+        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        tip="Loading Map..."
+      >
+        <div style={style}></div>
+      </Spin>
+    );
+  if (!data) return null;
   return (
-    <Spin
-      spinning={!data}
-      indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
-      tip="Loading Map..."
-    >
-      <div style={style}>
-        {data && (
-          <DeckGLMap data={data} initialViewState={defaultViewState}>
-            {children}
-          </DeckGLMap>
-        )}
-      </div>
-    </Spin>
+    <div style={style}>
+      <DeckGLMap
+        data={data}
+        colors={colors}
+        initialViewState={defaultViewState}
+      />
+    </div>
   );
 };
 
-const DeckGLMap = ({ data, children, initialViewState }) => {
+const DeckGLMap = ({ data, colors, initialViewState }) => {
   const mapRef = useRef();
+  const cameraOptions = useRef();
+  const glRef = useRef();
+  const selectedLayer = useRef();
+  const dispatch = useDispatch();
+  const selected = useSelector(state => state.inputData.selected);
+  const connectedBuildings = useSelector(
+    state => state.inputData.connected_buildings
+  );
+  const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(initialViewState);
   const [extruded, setExtruded] = useState(false);
+  const [visibility, setVisibility] = useState({
+    zone: !!data.zone,
+    district: !!data.district,
+    dc: !!data.dc,
+    dh: !!data.dh && !data.dc,
+    network: true
+  });
   const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
 
   const renderLayers = () => {
+    const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
     if (typeof data.zone !== 'undefined') {
       _layers.push(
@@ -62,15 +89,27 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
           wireframe: true,
           filled: true,
           extruded: extruded,
+          visible: visibility.zone,
 
           getElevation: f => f.properties['height_ag'],
-          getFillColor: [0, 0, 255],
+          getFillColor: f =>
+            buildingColor(
+              f.properties['Name'],
+              'zone',
+              colors,
+              connectedBuildings[network_type],
+              selected
+            ),
+          updateTriggers: {
+            getFillColor: selected
+          },
 
           pickable: true,
           autoHighlight: true,
           highlightColor: [255, 255, 0, 128],
 
-          onHover: updateTooltip
+          onHover: updateTooltip,
+          onClick: onClick
         })
       );
     }
@@ -83,15 +122,27 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
           wireframe: true,
           filled: true,
           extruded: extruded,
+          visible: visibility.district,
 
           getElevation: f => f.properties['height_ag'],
-          getFillColor: [255, 0, 0],
+          getFillColor: f =>
+            buildingColor(
+              f.properties['Name'],
+              'district',
+              colors,
+              connectedBuildings[network_type],
+              selected
+            ),
+          updateTriggers: {
+            getFillColor: selected
+          },
 
           pickable: true,
           autoHighlight: true,
           highlightColor: [255, 255, 0, 128],
 
-          onHover: updateTooltip
+          onHover: updateTooltip,
+          onClick: onClick
         })
       );
     }
@@ -117,9 +168,10 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
           data: data.dc,
           stroked: false,
           filled: true,
+          visible: visibility.dc && visibility.network,
 
-          getLineColor: [0, 0, 255],
-          getFillColor: f => nodeFillColor(f.properties['Type']),
+          getLineColor: colors.dc,
+          getFillColor: f => nodeFillColor(f.properties['Type'], colors, 'dc'),
           getLineWidth: 3,
           getRadius: 3,
 
@@ -137,9 +189,10 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
           data: data.dh,
           stroked: false,
           filled: true,
+          visible: visibility.dh && visibility.network,
 
-          getLineColor: [255, 0, 0],
-          getFillColor: f => nodeFillColor(f.properties['Type']),
+          getLineColor: colors.dh,
+          getFillColor: f => nodeFillColor(f.properties['Type'], colors, 'dh'),
           getLineWidth: 3,
           getRadius: 3,
 
@@ -168,37 +221,73 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
     const map = mapRef.current.getMap();
 
     // Calculate camera options
-    // let points = [];
-    // if (typeof data.zone !== 'undefined') {
-    //   let bbox = data.zone.bbox;
-    //   points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
-    // }
-    // if (typeof data.district !== 'undefined') {
-    //   let bbox = data.district.bbox;
-    //   points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
-    // }
-    // let bbox = calcBBox(helpers.multiPoint(points));
-    // let cameraOptions = map.cameraForBounds(bbox, {
-    //   maxZoom: 18,
-    //   padding: 30
-    // });
-    // setViewState({
-    //   ...viewState,
-    //   zoom: cameraOptions.zoom,
-    //   latitude: cameraOptions.center.lat,
-    //   longitude: cameraOptions.center.lng
-    // });
+    let points = [];
+    ['zone', 'district'].map(layer => {
+      if (typeof data[layer] !== 'undefined') {
+        let bbox = data[layer].bbox;
+        points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
+      }
+    });
+    let bbox = calcBBox(helpers.multiPoint(points));
+    cameraOptions.current = map.cameraForBounds(bbox, {
+      maxZoom: 18,
+      padding: 30
+    });
+    setViewState({
+      ...viewState,
+      zoom: cameraOptions.current.zoom,
+      latitude: cameraOptions.current.center.lat,
+      longitude: cameraOptions.current.center.lng
+    });
   };
+
+  const onClick = ({ object, layer }, event) => {
+    if (layer.id !== selectedLayer.current) {
+      dispatch(setSelected([object.properties['Name']]));
+      selectedLayer.current = layer.id;
+    } else {
+      let index = -1;
+      let newSelected = [...selected];
+      if (event.srcEvent.ctrlKey && event.leftButton) {
+        index = newSelected.findIndex(x => x === object.properties['Name']);
+        if (index !== -1) {
+          newSelected.splice(index, 1);
+          dispatch(setSelected(newSelected));
+        } else {
+          newSelected.push(object.properties['Name']);
+          dispatch(setSelected(newSelected));
+        }
+      } else {
+        dispatch(setSelected([object.properties['Name']]));
+      }
+    }
+  };
+
+  useEffect(
+    // Clear WebGL context
+    () => () => {
+      if (glRef.current) {
+        const extension = glRef.current.getExtension('WEBGL_lose_context');
+        if (extension) extension.loseContext();
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    setLayers(renderLayers());
+  }, [visibility, extruded, selected]);
 
   return (
     <React.Fragment>
       <DeckGL
         viewState={viewState}
         controller={true}
-        layers={renderLayers()}
+        layers={layers}
         ContextProvider={MapContext.Provider}
         onViewStateChange={onViewStateChange}
         onDragStart={onDragStart}
+        onWebGLInitialized={gl => (glRef.current = gl)}
       >
         <ReactMapGL
           ref={mapRef}
@@ -207,29 +296,127 @@ const DeckGLMap = ({ data, children, initialViewState }) => {
         />
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
           <NavigationControl showZoom={false} />
-          <br />
           <Toggle3DControl
             callback={setExtruded}
-            viewstate={viewState}
-            setviewstate={setViewState}
+            viewState={viewState}
+            setViewState={setViewState}
           />
-          <br />
+          <ResetCameraControl
+            cameraOptions={cameraOptions.current}
+            viewState={viewState}
+            setViewState={setViewState}
+          />
           <ToggleMapStyleControl callback={setMapStyle} />
         </div>
       </DeckGL>
+      <NetworkToggle data={data} setVisibility={setVisibility} />
+      <LayerToggle data={data} setVisibility={setVisibility} />
       <div id="map-tooltip"></div>
-      {children}
     </React.Fragment>
+  );
+};
+
+const NetworkToggle = ({ data, setVisibility }) => {
+  const handleChange = e => {
+    const { value } = e.target;
+    setVisibility(oldValue => ({
+      ...oldValue,
+      dc: value === 'dc',
+      dh: value === 'dh'
+    }));
+  };
+  return (
+    <div className="network-toggle">
+      <span>Network Type:</span>
+      {data.dc && (
+        <label className="map-plot-label network-label">
+          <input
+            type="radio"
+            name="network-type"
+            value="dc"
+            onChange={handleChange}
+            defaultChecked
+          />
+          District Cooling
+        </label>
+      )}
+      {data.dh && (
+        <label className="map-plot-label network-label">
+          <input
+            type="radio"
+            name="network-type"
+            value="dh"
+            onChange={handleChange}
+            defaultChecked={!data.dc}
+          />
+          District Heating
+        </label>
+      )}
+      {!data.dc && !data.dh && 'No networks found'}
+    </div>
+  );
+};
+
+const LayerToggle = ({ data, setVisibility }) => {
+  const handleChange = e => {
+    const { value, checked } = e.target;
+    setVisibility(oldValue => ({ ...oldValue, [value]: checked }));
+  };
+  return (
+    <div id="layers-group">
+      {data.zone && (
+        <span className="layer-toggle">
+          <label className="map-plot-label">
+            <input
+              type="checkbox"
+              name="layer-toggle"
+              value="zone"
+              onChange={handleChange}
+              defaultChecked
+            />
+            Zone
+          </label>
+        </span>
+      )}
+      {data.district && (
+        <span className="layer-toggle">
+          <label className="map-plot-label">
+            <input
+              type="checkbox"
+              name="layer-toggle"
+              value="district"
+              onChange={handleChange}
+              defaultChecked
+            />
+            District
+          </label>
+        </span>
+      )}
+      {(data.dh || data.dc) && (
+        <span className="layer-toggle">
+          <label className="map-plot-label">
+            <input
+              type="checkbox"
+              name="layer-toggle"
+              value="network"
+              onChange={handleChange}
+              defaultChecked
+            />
+            Network
+          </label>
+        </span>
+      )}
+    </div>
   );
 };
 
 function updateTooltip({ x, y, object, layer }) {
   const tooltip = document.getElementById('map-tooltip');
   if (object) {
+    const { properties } = object;
     tooltip.style.top = `${y}px`;
     tooltip.style.left = `${x}px`;
     let innerHTML = '';
-    let properties = object.properties;
 
     if (layer.id === 'zone' || layer.id === 'district') {
       Object.keys(properties).forEach(key => {
@@ -242,8 +429,12 @@ function updateTooltip({ x, y, object, layer }) {
         `<div><b>volume</b>: ${Math.round(
           area * properties['height_ag'] * 1000
         ) / 1000}m<sup>3</sup></div>`;
-    } else if (layer.id === 'dc_networks' || layer.id === 'dh_networks') {
-      if (typeof !properties.Building !== 'undefined') {
+    } else if (layer.id === 'dc' || layer.id === 'dh') {
+      Object.keys(properties).forEach(key => {
+        if (key !== 'Building' && properties[key] === 'NONE') return null;
+        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
+      });
+      if (typeof properties['Buildings'] !== 'undefined') {
         let length = calcLength(object) * 1000;
         innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) /
           1000}m</div>`;
@@ -260,11 +451,30 @@ function updateTooltip({ x, y, object, layer }) {
   }
 }
 
-function nodeFillColor(type) {
-  if (type === 'NONE') return [100, 100, 100];
-  if (type === 'CONSUMER') return [255, 255, 255];
-  if (type === 'PLANT') return [0, 0, 0];
-}
+const nodeFillColor = (type, colors, network) => {
+  if (type === 'NONE') {
+    return network === 'dc' ? colors.dc : colors.dh;
+  } else if (type === 'CONSUMER') {
+    return [255, 255, 255];
+  } else if (type === 'PLANT') {
+    return [0, 0, 0];
+  }
+};
+
+const buildingColor = (
+  buildingName,
+  layer,
+  colors,
+  connectedBuildings,
+  selected
+) => {
+  if (selected.includes(buildingName)) {
+    return [255, 255, 0, 255];
+  }
+  if (layer === 'district') return colors.district;
+  if (connectedBuildings.includes(buildingName)) return colors.dh;
+  return colors.disconnected;
+};
 
 export const useGeoJsons = layerList => {
   const [geojsons, setGeoJsons] = useState();

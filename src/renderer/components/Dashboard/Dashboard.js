@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef
+} from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Button, Select } from 'antd';
 import axios from 'axios';
@@ -166,16 +172,21 @@ const DashSelect = React.memo(({ dashIndex, setDashIndex, dashboardNames }) => {
 });
 
 const usePlotDependencies = () => {
+  const deckRef = useRef();
   const [isMounted, setIsMounted] = useState(false);
   const PlotDependencies = [
     ['script', 'https://cdn.plot.ly/plotly-latest.min.js'],
-    // ['script', 'https://unpkg.com/deck.gl@latest/dist.min.js'],
+    ['script', 'https://unpkg.com/deck.gl@latest/dist.min.js'],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],
     ['script', 'https://npmcdn.com/@turf/turf/turf.min.js'],
-    ['script', 'https://code.jquery.com/jquery-3.3.1.min.js'],
+    ['script', 'https://code.jquery.com/jquery-3.4.1.min.js'],
     [
       'script',
       'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js'
+    ],
+    [
+      'link',
+      'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap-grid.min.css'
     ]
   ];
 
@@ -189,11 +200,15 @@ const usePlotDependencies = () => {
   const mountNodes = (tag, url) => {
     const element = document.createElement(tag);
     element.setAttribute(tag === 'script' ? 'src' : 'href', url);
-    document.body.appendChild(element);
+    tag === 'link' && element.setAttribute('rel', 'stylesheet');
+    document.body.prepend(element);
     return element;
   };
 
   useEffect(() => {
+    // Store original deck reference
+    deckRef.current = window.deck;
+    window.deck = null;
     window.addEventListener('resize', resizePlots);
     menuToggle.addEventListener('click', resizePlots);
     const scripts = PlotDependencies.map(dependency =>
@@ -202,6 +217,7 @@ const usePlotDependencies = () => {
     setIsMounted(true);
 
     return () => {
+      window.deck = deckRef.current;
       window.removeEventListener('resize', resizePlots);
       menuToggle.removeEventListener('click', resizePlots);
       scripts.map(dependency => dependency.remove());
