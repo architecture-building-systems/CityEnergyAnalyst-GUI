@@ -9,7 +9,6 @@ import routes from '../constants/routes';
 import HomePage from './HomePage';
 
 import { getStatic } from '@/utils/static';
-import { githubTemplate } from '@/utils/menu';
 
 class App extends Component {
   render() {
@@ -18,7 +17,6 @@ class App extends Component {
       <React.Fragment>
         <TitleBar
           icon={getStatic('logo.png')}
-          menu={githubTemplate}
           theme={{
             barTheme: 'dark',
             menuDimItems: false,
