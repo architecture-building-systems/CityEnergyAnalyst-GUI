@@ -29,11 +29,14 @@ export const Plot = ({ index, dashIndex, data, style }) => {
   useEffect(() => {
     let mounted = true;
     const source = axios.CancelToken.source();
-    axios
-      .get(`http://localhost:5050/plots/div/${dashIndex}/${index}`, {
-        cancelToken: source.token
-      })
-      .then(response => {
+    const fetch = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5050/plots/div/${dashIndex}/${index}`,
+          {
+            cancelToken: source.token
+          }
+        );
         if (mounted)
           setDiv(() => {
             let script = null;
@@ -46,10 +49,12 @@ export const Plot = ({ index, dashIndex, data, style }) => {
             }).filter(node => node.type === 'div' || node.type === 'style');
             return { content, script };
           });
-      })
-      .catch(_error => {
-        setError(_error.response);
-      });
+      } catch (err) {
+        setError(err.response);
+      }
+    };
+
+    fetch();
 
     return () => {
       // Cancel the request if it is not completed
