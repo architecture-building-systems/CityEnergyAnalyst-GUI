@@ -1,0 +1,7 @@
+{
+  "zone": "http://localhost:5050/api/inputs/building-properties/zone/geojson",
+  "district": "http://localhost:5050/api/inputs/building-properties/district/geojson",
+  "streets": "http://localhost:5050/api/inputs/others/streets/geojson",
+  "dh": "http://localhost:5050/api/inputs/others/dh/geojson",
+  "dc": "http://localhost:5050/api/inputs/others/dc/geojson"
+}

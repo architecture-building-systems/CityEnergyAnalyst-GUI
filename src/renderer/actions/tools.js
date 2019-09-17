@@ -21,7 +21,7 @@ export const fetchToolList = () => {
           payload: { isFetching: true, error: null }
         });
         return axios
-          .get(`http://localhost:5000/api/tools`)
+          .get(`http://localhost:5050/api/tools`)
           .then(response => {
             dispatch({
               type: RECEIVE_TOOLLIST,
@@ -50,7 +50,7 @@ export const fetchToolParams = tool => {
       payload: { isFetching: true, error: null }
     });
     return axios
-      .get(`http://localhost:5000/api/tools/${tool}`)
+      .get(`http://localhost:5050/api/tools/${tool}`)
       .then(response => {
         dispatch({
           type: RECEIVE_TOOLPARAMS,
@@ -77,7 +77,7 @@ export const saveToolParams = (tool, params) => {
       payload: { isSaving: true, error: null }
     });
     return axios
-      .post(`http://localhost:5000/api/tools/${tool}/save-config`, params)
+      .post(`http://localhost:5050/api/tools/${tool}/save-config`, params)
       .then(response => {
         dispatch({
           type: SAVING_TOOLPARAMS,
@@ -104,7 +104,7 @@ export const setDefaultToolParams = tool => {
       payload: { isSaving: true, error: null }
     });
     return axios
-      .post(`http://localhost:5000/api/tools/${tool}/default`)
+      .post(`http://localhost:5050/api/tools/${tool}/default`)
       .then(response => {
         dispatch({
           type: SAVING_TOOLPARAMS,

@@ -1,5 +1,6 @@
 {
   "HOME": "/",
   "TOOLS": "/tools",
-  "INPUT_EDITOR": "/input-editor"
+  "INPUT_EDITOR": "/input-editor",
+  "DASHBOARD": "/dashboard"
 }

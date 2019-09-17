@@ -5,6 +5,7 @@ import SideNav from '../components/HomePage/SideNav';
 import Header from '../components/HomePage/Header';
 import Tool from '../components/Tools/Tool';
 import InputEditor from '../components/InputEditor/InputEditor';
+import Dashboard from '../components/Dashboard/Dashboard';
 
 import routes from '../constants/routes';
 
@@ -24,7 +25,7 @@ const HomePage = () => {
         <Content
           style={{
             margin: '24px 16px',
-            marginTop: 96,
+            marginTop: 88,
             padding: 24,
             background: '#fff',
             minHeight: 'fit-content'
@@ -34,6 +35,7 @@ const HomePage = () => {
             <Route path={`${routes.TOOLS}/:script`} component={Tool} />
             <Route path={routes.INPUT_EDITOR} component={InputEditor} />
             <Route path="/placeholder" component={PlaceHolder} />
+            <Route path={routes.DASHBOARD} component={Dashboard} />
           </Switch>
         </Content>
         <Footer style={{ textAlign: 'center' }}>

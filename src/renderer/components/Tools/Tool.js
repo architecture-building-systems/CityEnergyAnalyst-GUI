@@ -68,22 +68,19 @@ const Tool = ({ match }) => {
 };
 
 const ToolForm = props => {
-  const { parameters, categoricalParameters, script } = props;
-  const {
-    form: { getFieldDecorator, setFieldsValue, validateFields }
-  } = props;
+  const { parameters, categoricalParameters, script, form } = props;
   const dispatch = useDispatch();
 
   useEffect(() => {
     ipcRenderer.on('selected-path', (event, id, path) => {
-      setFieldsValue({ [id]: path[0] });
+      form.setFieldsValue({ [id]: path[0] });
     });
     return () => ipcRenderer.removeAllListeners(['selected-path']);
   }, []);
 
   const getForm = () => {
     let out = {};
-    validateFields((err, values) => {
+    form.validateFields((err, values) => {
       if (!err) {
         const index = parameters.findIndex(x => x.type === 'ScenarioParameter');
         let scenario = {};
@@ -102,7 +99,7 @@ const ToolForm = props => {
   if (parameters) {
     toolParams = parameters.map(param => {
       if (param.type === 'ScenarioParameter') return null;
-      return parameter(param, getFieldDecorator);
+      return parameter(param, form);
     });
   }
 
@@ -113,7 +110,7 @@ const ToolForm = props => {
     const categories = Object.keys(categoricalParameters).map(category => {
       const { Panel } = Collapse;
       const Parameters = categoricalParameters[category].map(param =>
-        parameter(param, getFieldDecorator)
+        parameter(param, form)
       );
       return (
         <Panel header={category} key={category}>

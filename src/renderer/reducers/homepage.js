@@ -1,6 +1,6 @@
 import { SET_COLLAPSED } from '../actions/homepage';
 
-const sider = (state = { collapsed: false }, { type, payload }) => {
+const sider = (state = { collapsed: true }, { type, payload }) => {
   switch (type) {
     case SET_COLLAPSED:
       return { ...state, ...payload };

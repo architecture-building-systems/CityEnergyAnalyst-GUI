@@ -4,6 +4,8 @@ import { connectRouter } from 'connected-react-router';
 import sider from './homepage';
 import project from './project';
 import { toolList, toolParams, toolSaving } from './tools';
+import inputData from './inputEditor';
+import dashboard from './dashboard';
 
 export default function createRootReducer(history) {
   return combineReducers({
@@ -12,6 +14,8 @@ export default function createRootReducer(history) {
     project,
     toolList,
     toolParams,
-    toolSaving
+    toolSaving,
+    inputData,
+    dashboard
   });
 }
