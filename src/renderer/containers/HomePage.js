@@ -7,6 +7,7 @@ import Tool from '../components/Tools/Tool';
 import InputEditor from '../components/InputEditor/InputEditor';
 import Dashboard from '../components/Dashboard/Dashboard';
 import Project from '../components/Project/Project';
+import StatusBar from '../components/StatusBar/StatusBar';
 
 import routes from '../constants/routes';
 
@@ -14,37 +15,37 @@ const { Footer, Content } = Layout;
 
 const HomePage = () => {
   return (
-    <Layout>
-      <SideNav />
-      <Layout
-        style={{
-          height: 'calc(100vh - 28px)',
-          minWidth: 500
-        }}
-      >
-        <Header />
-        <Content
+    <React.Fragment>
+      <Layout>
+        <SideNav />
+        <Layout
           style={{
-            margin: '24px 16px',
-            marginTop: 88,
-            padding: 24,
-            background: '#fff',
-            minHeight: 'fit-content'
+            height: 'calc(100vh - 52px)',
+            minWidth: 500
           }}
         >
-          <Switch>
-            <Route path={`${routes.TOOLS}/:script`} component={Tool} />
-            <Route path={routes.INPUT_EDITOR} component={InputEditor} />
-            <Route path="/placeholder" component={PlaceHolder} />
-            <Route path={routes.DASHBOARD} component={Dashboard} />
-            <Route path={routes.PROJECT} component={Project} />
-          </Switch>
-        </Content>
-        <Footer style={{ textAlign: 'center' }}>
-          Ant Design ©2018 Created by Ant UED
-        </Footer>
+          <Header />
+          <Content
+            style={{
+              margin: '24px 16px',
+              marginTop: 88,
+              padding: 24,
+              background: '#fff',
+              minHeight: 'fit-content'
+            }}
+          >
+            <Switch>
+              <Route path={`${routes.TOOLS}/:script`} component={Tool} />
+              <Route path={routes.INPUT_EDITOR} component={InputEditor} />
+              <Route path="/placeholder" component={PlaceHolder} />
+              <Route path={routes.DASHBOARD} component={Dashboard} />
+              <Route path={routes.PROJECT_OVERVIEW} component={Project} />
+            </Switch>
+          </Content>
+        </Layout>
       </Layout>
-    </Layout>
+      <StatusBar />
+    </React.Fragment>
   );
 };
 
