@@ -8,7 +8,7 @@ const { Header: AntHeader } = Layout;
 
 const Header = () => {
   const { collapsed } = useSelector(state => state.sider);
-  // const { name, scenario } = useSelector(state => state.project);
+  const { name, scenario } = useSelector(state => state.project.info);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -18,6 +18,7 @@ const Header = () => {
   return (
     <AntHeader
       style={{
+        display: 'flex',
         background: '#fff',
         position: 'fixed',
         padding: 0,
@@ -31,8 +32,15 @@ const Header = () => {
         type={collapsed ? 'menu-unfold' : 'menu-fold'}
         onClick={() => dispatch(setCollapsed(!collapsed))}
       />
-      <div style={{ float: 'right' }}>
-        <h3>Project:</h3>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}
+      >
+        <text style={{ lineHeight: 'initial' }}>Project: {name}</text>
+        <text style={{ lineHeight: 'initial' }}>Scenario: {scenario}</text>
       </div>
     </AntHeader>
   );
