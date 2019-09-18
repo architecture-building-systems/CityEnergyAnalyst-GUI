@@ -14,6 +14,7 @@ class App extends Component {
     return (
       <React.Fragment>
         <TitleBar
+          app="City Energy Analyst"
           theme={{
             barTheme: 'dark',
             menuDimItems: false,
