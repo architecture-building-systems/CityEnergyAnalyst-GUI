@@ -66,23 +66,40 @@ const SideNav = () => {
             <Link to={routes.PROJECT_OVERVIEW} />
           </Menu.Item>
         </SubMenu>
-        <Menu.Item key="inputEditor">
-          <span>
-            <Icon type="edit" />
-            <span>Input Editor</span>
-          </span>
-          <Link to={routes.INPUT_EDITOR} />
-        </Menu.Item>
-        <ToolsMenu />
-        <Menu.Item key="dashboard">
-          <span>
-            <Icon type="bar-chart" />
-            <span>Dashboard</span>
-          </span>
-          <Link to={routes.DASHBOARD} />
-        </Menu.Item>
+
+        <ScenarioMenuItem>
+          <Menu.Item key="inputEditor">
+            <span>
+              <Icon type="edit" />
+              <span>Input Editor</span>
+            </span>
+            <Link to={routes.INPUT_EDITOR} />
+          </Menu.Item>
+        </ScenarioMenuItem>
+
+        <ScenarioMenuItem>
+          <ToolsMenu />
+        </ScenarioMenuItem>
+
+        <ScenarioMenuItem>
+          <Menu.Item key="dashboard">
+            <span>
+              <Icon type="bar-chart" />
+              <span>Dashboard</span>
+            </span>
+            <Link to={routes.DASHBOARD} />
+          </Menu.Item>
+        </ScenarioMenuItem>
       </Menu>
     </Sider>
+  );
+};
+
+const ScenarioMenuItem = ({ children, ...props }) => {
+  const { scenario } = useSelector(state => state.project.info);
+  if (scenario === '') return null;
+  return React.Children.map(children, child =>
+    React.cloneElement(child, { ...props })
   );
 };
 
