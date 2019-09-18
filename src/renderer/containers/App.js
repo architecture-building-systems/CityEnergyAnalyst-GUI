@@ -8,15 +8,12 @@ import { ConnectedRouter } from 'connected-react-router';
 import routes from '../constants/routes';
 import HomePage from './HomePage';
 
-import { getStatic } from '@/utils/static';
-
 class App extends Component {
   render() {
     const { store, history } = this.props;
     return (
       <React.Fragment>
         <TitleBar
-          icon={getStatic('logo.png')}
           theme={{
             barTheme: 'dark',
             menuDimItems: false,
