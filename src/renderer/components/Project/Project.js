@@ -1,74 +1,148 @@
-import React, { useState, useEffect } from 'react';
-import { useAsyncData } from '../../utils/hooks';
-import { Card, Icon, Row, Col, Button, Popconfirm } from 'antd';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { push } from 'connected-react-router';
+import { ipcRenderer, shell } from 'electron';
+import path from 'path';
+import { Card, Icon, Row, Col, Button, Popconfirm, Tag } from 'antd';
 import axios from 'axios';
+import { useAsyncData } from '../../utils/hooks';
+import { getProject } from '../../actions/project';
+import routes from '../../constants/routes';
+import './Project.css';
 
 const Project = () => {
-  const [fetch, setFetchProject] = useState(false);
-  const [project, isLoading] = useAsyncData(
-    'http://localhost:5050/api/project',
-    {
-      name: null,
-      scenario: null,
-      scenarios: []
-    },
-    [fetch]
-  );
+  const { isFetching, error, info } = useSelector(state => state.project);
+  const dispatch = useDispatch();
 
-  const fetchProject = () => {
-    setFetchProject(x => !x);
+  const openDialog = () => {
+    ipcRenderer.send('open-path-dialog', name, {
+      properties: ['openDirectory']
+    });
   };
 
-  if (isLoading) return 'Loading';
-  const { name, scenario, scenarios } = project;
+  useEffect(() => {
+    dispatch(getProject());
+  }, []);
+
+  useEffect(() => {
+    ipcRenderer.on('selected-path', async (event, id, path) => {
+      try {
+        const resp = await axios.put(`http://localhost:5050/api/project/`, {
+          path: path[0]
+        });
+        console.log(resp.data);
+        dispatch(getProject());
+      } catch (err) {
+        console.log(err.response);
+      }
+    });
+    return () => ipcRenderer.removeAllListeners(['selected-path']);
+  }, []);
+
+  if (error) return 'error';
+  const { name, scenario, scenarios } = info;
 
   return (
     <div>
       <Card
-        title={<h2 style={{ display: 'inline' }}>{name}</h2>}
+        title={
+          <React.Fragment>
+            <h2>{name}</h2>
+            <div className="cea-project-option-icons">
+              <Icon type="plus" />
+              <Icon type="folder-open" onClick={openDialog} />
+              <Icon
+                type="sync"
+                onClick={() => {
+                  dispatch(getProject());
+                }}
+                spin={isFetching}
+              />
+            </div>
+          </React.Fragment>
+        }
         bordered={false}
       >
         <Button type="primary" style={{ display: 'block', marginLeft: 'auto' }}>
           New Scenario
         </Button>
-        {scenarios.map(scenario => (
+        {!scenarios.length ? (
+          <div>No scenarios found</div>
+        ) : scenario === '' ? (
+          <div>No scenario currently selected</div>
+        ) : (
           <ScenarioCard
-            key={scenario}
+            key={`${name}-${scenario}`}
             scenario={scenario}
-            fetchProject={fetchProject}
+            projectPath={info.path}
+            current={true}
           />
-        ))}
+        )}
+        {scenarios.map(_scenario =>
+          _scenario !== scenario ? (
+            <ScenarioCard
+              key={_scenario}
+              scenario={_scenario}
+              projectPath={info.path}
+            />
+          ) : null
+        )}
       </Card>
     </div>
   );
 };
 
-const ScenarioCard = ({ scenario, fetchProject }) => {
-  const [image, isLoading, error] = useAsyncData(
-    `http://localhost:5050/api/project/${scenario}/image`
-  );
+// const NewProject
 
-  const onConfirm = async () => {
+const ScenarioCard = ({ scenario, projectPath, current = false }) => {
+  const [image, isLoading, error] = useAsyncData(
+    `http://localhost:5050/api/project/scenario/${scenario}/image`
+  );
+  const dispatch = useDispatch();
+
+  const deleteScenario = async () => {
     try {
       const resp = await axios.delete(
-        `http://localhost:5050/api/project/${scenario}`
+        `http://localhost:5050/api/project/scenario/${scenario}`
       );
       console.log(resp.data);
-      fetchProject();
+      dispatch(getProject());
     } catch (err) {
       console.log(err.response);
     }
   };
 
+  const changeScenario = async (goToEditor = false) => {
+    try {
+      const resp = await axios.put(`http://localhost:5050/api/project/`, {
+        scenario
+      });
+      console.log(resp.data);
+      await dispatch(getProject());
+      goToEditor && dispatch(push(routes.INPUT_EDITOR));
+    } catch (err) {
+      console.log(err.response);
+    }
+  };
+
+  const openFolder = () => {
+    shell.openItem(path.join(projectPath, scenario));
+  };
+
   return (
     <Card
-      title={scenario}
+      title={
+        <React.Fragment>
+          <span>{scenario} </span>
+          {current ? <Tag>Current</Tag> : null}
+        </React.Fragment>
+      }
       style={{ marginTop: 16 }}
       type="inner"
       actions={[
         <Popconfirm
           title="Are you sure delete this scenario?"
-          onConfirm={onConfirm}
+          onConfirm={deleteScenario}
           okText="Yes"
           cancelText="No"
           key="delete"
@@ -76,7 +150,8 @@ const ScenarioCard = ({ scenario, fetchProject }) => {
           <Icon type="delete" />
         </Popconfirm>,
         <Icon type="edit" key="edit" />,
-        <Icon type="folder-open" key="open" />
+        <Icon type="folder" key="folder" onClick={openFolder} />,
+        <Icon type="select" key="select" onClick={() => changeScenario()} />
       ]}
     >
       <Row>
@@ -93,7 +168,11 @@ const ScenarioCard = ({ scenario, fetchProject }) => {
             {isLoading ? null : error ? (
               'Unable to generate image'
             ) : (
-              <img src={`data:image/png;base64,${image.image}`} />
+              <img
+                className="cea-scenario-preview-image"
+                src={`data:image/png;base64,${image.image}`}
+                onClick={() => changeScenario(true)}
+              />
             )}
           </div>
         </Col>
