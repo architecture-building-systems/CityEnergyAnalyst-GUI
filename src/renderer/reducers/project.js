@@ -1,8 +1,22 @@
-import { GET_PROJECT } from '../actions/project';
+import {
+  GET_PROJECT,
+  GET_PROJECT_FAILED,
+  GET_PROJECT_SUCCESS
+} from '../actions/project';
 
-const project = (state = {}, { type, payload }) => {
+const initialState = {
+  info: { name: '', scenario: '', scenarios: [] },
+  isFetching: false,
+  error: null
+};
+
+const project = (state = initialState, { type, payload }) => {
   switch (type) {
     case GET_PROJECT:
+      return { ...state, ...payload };
+    case GET_PROJECT_SUCCESS:
+      return { ...state, ...payload };
+    case GET_PROJECT_FAILED:
       return { ...state, ...payload };
     default:
       return state;
