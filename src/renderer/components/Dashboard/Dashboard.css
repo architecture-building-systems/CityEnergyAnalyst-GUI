@@ -2,6 +2,7 @@
   display: flex;
   flex-wrap: wrap;
 }
+
 .row.display-flex > [class*='col-'] {
   display: flex;
   flex-direction: column;
@@ -12,12 +13,21 @@
 .plot-widget {
   min-width: 450px;
 }
+
 .ant-card-body a {
   color: #1890ff;
 }
 
 label.ant-radio-wrapper {
   margin-bottom: 20px;
+}
+
+.cea-dashboard-title-button-group {
+  display: inline-block;
+}
+
+.cea-dashboard-title-button-group button {
+  margin: 5px;
 }
 
 .grid-1-image {

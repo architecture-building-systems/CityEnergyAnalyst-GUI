@@ -83,7 +83,7 @@ const Dashboard = () => {
             setDashIndex={handleSelect}
             dashboardNames={dashboardNames}
           />
-          <span>
+          <div className="cea-dashboard-title-button-group">
             <Button
               type="primary"
               icon="plus"
@@ -116,7 +116,7 @@ const Dashboard = () => {
             >
               Delete Dashboard
             </Button>
-          </span>
+          </div>
         </div>
         <div id="cea-dashboard-layout">
           {layout === 'row' ? (
