@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { Button, Card, Menu, Tooltip, Icon, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
@@ -45,6 +46,7 @@ export const Plot = ({ index, dashIndex, data, style }) => {
                 if (domNode.type === 'script' && domNode.children[0]) {
                   script = domNode.children[0].data;
                 }
+                console.log(domNode);
               }
             }).filter(node => node.type === 'div' || node.type === 'style');
             return { content, script };
@@ -186,7 +188,17 @@ const LoadingPlot = ({ plotStyle }) => {
 
 const ErrorPlot = ({ error }) => {
   console.log(error.status);
-  if (error.status === 404) return parser(error.data);
+  if (error.status === 404)
+    return parser(error.data, {
+      replace: function(domNode) {
+        if (domNode.type === 'tag' && domNode.name === 'a') {
+          console.log(domNode);
+          return (
+            <Link to={domNode.attribs.href}>{domNode.children[0].data}</Link>
+          );
+        }
+      }
+    });
   if (error.status === 500)
     return (
       <React.Fragment>
