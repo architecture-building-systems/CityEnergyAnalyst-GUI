@@ -46,7 +46,6 @@ export const Plot = ({ index, dashIndex, data, style }) => {
                 if (domNode.type === 'script' && domNode.children[0]) {
                   script = domNode.children[0].data;
                 }
-                console.log(domNode);
               }
             }).filter(node => node.type === 'div' || node.type === 'style');
             return { content, script };
@@ -192,7 +191,6 @@ const ErrorPlot = ({ error }) => {
     return parser(error.data, {
       replace: function(domNode) {
         if (domNode.type === 'tag' && domNode.name === 'a') {
-          console.log(domNode);
           return (
             <Link to={domNode.attribs.href}>{domNode.children[0].data}</Link>
           );
