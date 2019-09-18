@@ -11,10 +11,6 @@ const Header = () => {
   const { name, scenario } = useSelector(state => state.project.info);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(getProject());
-  }, []);
-
   return (
     <AntHeader
       style={{
