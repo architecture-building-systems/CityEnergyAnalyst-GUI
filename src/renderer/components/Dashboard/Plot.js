@@ -11,7 +11,7 @@ import {
 } from '../../actions/dashboard';
 
 const defaultPlotStyle = {
-  height: 'calc(50vh - 125px)',
+  height: 'calc(50vh - 180px)',
   minHeight: 300,
   margin: 5
 };
@@ -190,10 +190,16 @@ const ErrorPlot = ({ error }) => {
   if (error.status === 500)
     return (
       <React.Fragment>
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: 'center', margin: 20 }}>
           <h3>Something went wrong!</h3>
         </div>
-        <pre style={{ height: 200, fontSize: 10, overflow: 'auto' }}>
+        <pre
+          style={{
+            height: '70%',
+            fontSize: 10,
+            overflow: 'auto'
+          }}
+        >
           {error.data}
         </pre>
       </React.Fragment>
