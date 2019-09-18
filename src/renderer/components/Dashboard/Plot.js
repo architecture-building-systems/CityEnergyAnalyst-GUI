@@ -101,7 +101,11 @@ export const Plot = ({ index, dashIndex, data, style }) => {
         </React.Fragment>
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
-      bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
+      bodyStyle={{
+        height: plotStyle.height,
+        minHeight: plotStyle.minHeight,
+        overflow: 'auto'
+      }}
       size="small"
     >
       {div ? (
@@ -175,7 +179,7 @@ const LoadingPlot = ({ plotStyle }) => {
       indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
       tip="Loading Plot..."
     >
-      <div style={{ height: plotStyle.height }} />
+      <div style={{ height: `calc(${plotStyle.height} - 24px)` }} />
     </Spin>
   );
 };
