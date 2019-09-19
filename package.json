@@ -1,5 +1,5 @@
 {
-  "name": "electron-webpack-quick-start",
+  "name": "city-energy-analyst",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -50,5 +50,8 @@
     "prettier": "^1.18.2",
     "redux-logger": "^3.0.6",
     "webpack": "~4.35.3"
+  },
+  "build": {
+    "productName": "CityEnergyAnalyst"
   }
 }
