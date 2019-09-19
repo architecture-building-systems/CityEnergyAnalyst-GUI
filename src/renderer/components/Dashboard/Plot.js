@@ -104,8 +104,7 @@ export const Plot = ({ index, dashIndex, data, style }) => {
       style={{ ...plotStyle, height: '', minHeight: '' }}
       bodyStyle={{
         height: plotStyle.height,
-        minHeight: plotStyle.minHeight,
-        overflow: 'auto'
+        minHeight: plotStyle.minHeight
       }}
       size="small"
     >
@@ -180,7 +179,7 @@ const LoadingPlot = ({ plotStyle }) => {
       indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
       tip="Loading Plot..."
     >
-      <div style={{ height: `calc(${plotStyle.height} - 24px)` }} />
+      <div style={{ height: plotStyle.height }} />
     </Spin>
   );
 };
@@ -188,15 +187,21 @@ const LoadingPlot = ({ plotStyle }) => {
 const ErrorPlot = ({ error }) => {
   console.log(error.status);
   if (error.status === 404)
-    return parser(error.data, {
-      replace: function(domNode) {
-        if (domNode.type === 'tag' && domNode.name === 'a') {
-          return (
-            <Link to={domNode.attribs.href}>{domNode.children[0].data}</Link>
-          );
-        }
-      }
-    });
+    return (
+      <div style={{ height: '100%', overflow: 'auto' }}>
+        {parser(error.data, {
+          replace: function(domNode) {
+            if (domNode.type === 'tag' && domNode.name === 'a') {
+              return (
+                <Link to={domNode.attribs.href}>
+                  {domNode.children[0].data}
+                </Link>
+              );
+            }
+          }
+        })}
+      </div>
+    );
   if (error.status === 500)
     return (
       <React.Fragment>
