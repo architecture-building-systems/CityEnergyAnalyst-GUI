@@ -94,7 +94,7 @@ ipcMain.on('open-project', event => {
     },
     path => {
       if (path) {
-        event.sender.send('project-path', path);
+        event.sender.send('selected-project', path);
       }
     }
   );
