@@ -580,8 +580,6 @@ export const ModalEditParameters = React.memo(() => {
 });
 
 const ParamsForm = Form.create()(({ parameters, form }) => {
-  const { getFieldDecorator } = form;
-
   return (
     <Form layout="horizontal">
       {parameters
