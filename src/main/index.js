@@ -86,6 +86,20 @@ ipcMain.on('open-path-dialog', (event, id, options) => {
   });
 });
 
+ipcMain.on('open-project', event => {
+  dialog.showOpenDialog(
+    mainWindow,
+    {
+      properties: ['openDirectory']
+    },
+    path => {
+      if (path) {
+        event.sender.send('project-path', path);
+      }
+    }
+  );
+});
+
 /**
  * Hot Loader
  */

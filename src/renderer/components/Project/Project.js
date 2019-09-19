@@ -15,9 +15,7 @@ const Project = () => {
   const dispatch = useDispatch();
 
   const openDialog = () => {
-    ipcRenderer.send('open-path-dialog', name, {
-      properties: ['openDirectory']
-    });
+    ipcRenderer.send('open-project');
   };
 
   useEffect(() => {
@@ -25,7 +23,7 @@ const Project = () => {
   }, []);
 
   useEffect(() => {
-    ipcRenderer.on('selected-path', async (event, id, path) => {
+    ipcRenderer.on('selected-project', async (event, path) => {
       try {
         const resp = await axios.put(`http://localhost:5050/api/project/`, {
           path: path[0]
@@ -36,7 +34,7 @@ const Project = () => {
         console.log(err.response);
       }
     });
-    return () => ipcRenderer.removeAllListeners(['selected-path']);
+    return () => ipcRenderer.removeAllListeners(['selected-project']);
   }, []);
 
   if (error) return 'error';
