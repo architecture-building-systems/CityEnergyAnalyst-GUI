@@ -72,7 +72,6 @@ const Project = () => {
           <div>No scenario currently selected</div>
         ) : (
           <ScenarioCard
-            key={`${name}-${scenario}`}
             scenario={scenario}
             projectPath={info.path}
             current={true}
@@ -81,7 +80,7 @@ const Project = () => {
         {scenarios.map(_scenario =>
           _scenario !== scenario ? (
             <ScenarioCard
-              key={_scenario}
+              key={`${name}-${_scenario}`}
               scenario={_scenario}
               projectPath={info.path}
             />
