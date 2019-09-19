@@ -1,5 +1,6 @@
 import React from 'react';
 import { ipcRenderer } from 'electron';
+import fs from 'fs';
 import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
 
 const parameter = (param, form) => {
@@ -44,7 +45,18 @@ const parameter = (param, form) => {
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
-          initialValue: value
+          initialValue: value,
+          rules: [
+            {
+              validator: (rule, value, callback) => {
+                if (!fs.existsSync(value)) {
+                  callback('Path does not exist');
+                } else {
+                  callback();
+                }
+              }
+            }
+          ]
         })(
           <Input
             addonAfter={
