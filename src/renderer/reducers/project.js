@@ -17,7 +17,7 @@ const project = (state = initialState, { type, payload }) => {
     case GET_PROJECT_SUCCESS:
       return { ...state, ...payload };
     case GET_PROJECT_FAILED:
-      return { ...state, ...payload };
+      return { ...state, ...initialState, ...payload };
     default:
       return state;
   }
