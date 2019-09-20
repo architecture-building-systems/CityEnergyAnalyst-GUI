@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron';
 import fs from 'fs';
 import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
 
-const parameter = (param, form) => {
+const parameter = (param, form, config = {}) => {
   const { name, type, value, help } = param;
   const { getFieldDecorator, setFieldsValue } = form;
   const openDialog = () => {
@@ -37,7 +37,8 @@ const parameter = (param, form) => {
                 return regex.test(num) ? Number(num) : NaN;
               }
             }
-          ]
+          ],
+          ...config
         })(<Input />)}
       </React.Fragment>
     );
@@ -56,7 +57,8 @@ const parameter = (param, form) => {
                 }
               }
             }
-          ]
+          ],
+          ...config
         })(
           <Input
             addonAfter={
@@ -91,7 +93,8 @@ const parameter = (param, form) => {
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
-          initialValue: value
+          initialValue: value,
+          ...config
         })(<Select>{Options}</Select>)}
       </React.Fragment>
     );
@@ -121,7 +124,8 @@ const parameter = (param, form) => {
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
-          initialValue: value
+          initialValue: value,
+          ...config
         })(
           <Select
             mode="multiple"
@@ -160,7 +164,8 @@ const parameter = (param, form) => {
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
-          initialValue: value
+          initialValue: value,
+          ...config
         })(
           <Select
             dropdownRender={menu => (
@@ -187,7 +192,8 @@ const parameter = (param, form) => {
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
-          initialValue: value
+          initialValue: value,
+          ...config
         })(<Switch defaultChecked={value} />)}
       </React.Fragment>
     );
@@ -195,7 +201,8 @@ const parameter = (param, form) => {
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
-          initialValue: value
+          initialValue: value,
+          ...config
         })(<Input />)}
       </React.Fragment>
     );
