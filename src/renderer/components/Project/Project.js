@@ -1,27 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { ipcRenderer, shell } from 'electron';
 import path from 'path';
-import { Card, Icon, Row, Col, Button, Popconfirm, Tag } from 'antd';
+import fs from 'fs';
+import {
+  Card,
+  Icon,
+  Row,
+  Col,
+  Button,
+  Popconfirm,
+  Tag,
+  Modal,
+  Form
+} from 'antd';
 import axios from 'axios';
 import { useAsyncData } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
+import parameter from '../Tools/parameter';
 import './Project.css';
 
 const Project = () => {
   const { isFetching, error, info } = useSelector(state => state.project);
+  const [isProjectModalVisible, setProjectModalVisible] = useState(false);
   const dispatch = useDispatch();
 
-  const openDialog = () => {
-    ipcRenderer.send('open-project');
-  };
-
+  // Get Project Details on mount
   useEffect(() => {
     dispatch(getProject());
   }, []);
 
+  // Setup ipcRenderer listener
   useEffect(() => {
     ipcRenderer.on('selected-project', async (event, path) => {
       try {
@@ -37,7 +48,6 @@ const Project = () => {
     return () => ipcRenderer.removeAllListeners(['selected-project']);
   }, []);
 
-  if (error) return 'error';
   const { name, scenario, scenarios } = info;
 
   return (
@@ -45,10 +55,13 @@ const Project = () => {
       <Card
         title={
           <React.Fragment>
-            <h2>{name}</h2>
+            <h2>{error || name === '' ? 'No Project found' : name}</h2>
             <div className="cea-project-option-icons">
-              <Icon type="plus" />
-              <Icon type="folder-open" onClick={openDialog} />
+              <Icon type="plus" onClick={() => setModalVisible(true)} />
+              <Icon
+                type="folder-open"
+                onClick={() => ipcRenderer.send('open-project')}
+              />
               <Icon
                 type="sync"
                 onClick={() => {
@@ -85,11 +98,118 @@ const Project = () => {
           ) : null
         )}
       </Card>
+      <ModalNewProject
+        visible={isProjectModalVisible}
+        setVisible={setProjectModalVisible}
+        project={info}
+        changeProject={() => dispatch(getProject())}
+      />
     </div>
   );
 };
 
-// const NewProject
+const ModalNewProject = ({ visible, setVisible, project, changeProject }) => {
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const formRef = useRef();
+
+  const handleOk = e => {
+    formRef.current.validateFields(async (err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        console.log('Received values of form: ', values);
+        try {
+          const createProject = await axios.post(
+            `http://localhost:5050/api/project/`,
+            values
+          );
+          console.log(createProject.data);
+          setConfirmLoading(false);
+          const updateProject = await axios.put(
+            `http://localhost:5050/api/project/`,
+            {
+              path: path.join(values.path, values.name)
+            }
+          );
+          console.log(updateProject.data);
+          changeProject();
+          setVisible(false);
+        } catch (err) {
+          console.log(err.response);
+          setConfirmLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleCancel = e => {
+    setVisible(false);
+  };
+
+  useEffect(() => {
+    !visible && formRef.current && formRef.current.resetFields();
+  }, [visible]);
+
+  return (
+    <Modal
+      title="Create new Project"
+      visible={visible}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+    >
+      <NewProjectForm ref={formRef} project={project} />
+    </Modal>
+  );
+};
+
+const NewProjectForm = Form.create()(({ form, project }) => {
+  useEffect(() => {
+    ipcRenderer.on('selected-path', (event, id, path) => {
+      form.setFieldsValue({ [id]: path[0] });
+    });
+    return () => ipcRenderer.removeAllListeners(['selected-path']);
+  }, []);
+  return (
+    <Form layout="horizontal">
+      {parameter(
+        {
+          type: 'InputParameter',
+          name: 'name',
+          value: '',
+          help: 'Name of new Project'
+        },
+        form,
+        {
+          rules: [
+            { required: true },
+            {
+              validator: (rule, value, callback) => {
+                if (
+                  value.length != 0 &&
+                  fs.existsSync(path.join(form.getFieldValue('path'), value))
+                ) {
+                  callback('Folder with name already exists in path');
+                } else {
+                  callback();
+                }
+              }
+            }
+          ]
+        }
+      )}
+      {parameter(
+        {
+          type: 'PathParameter',
+          name: 'path',
+          value: path.dirname(project.path),
+          help: 'Path of new Project'
+        },
+        form
+      )}
+    </Form>
+  );
+});
 
 const ScenarioCard = ({ scenario, projectPath, current = false }) => {
   const [image, isLoading, error] = useAsyncData(
