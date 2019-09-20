@@ -6,7 +6,7 @@ import path from 'path';
 import axios from 'axios';
 import parameter from '../Tools/parameter';
 
-const NewProjectModal = ({ visible, setVisible, project, changeProject }) => {
+const NewProjectModal = ({ visible, setVisible, project, reloadProject }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 
@@ -29,7 +29,7 @@ const NewProjectModal = ({ visible, setVisible, project, changeProject }) => {
             }
           );
           console.log(updateProject.data);
-          changeProject();
+          reloadProject();
           setVisible(false);
         } catch (err) {
           console.log(err.response);

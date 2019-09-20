@@ -14,14 +14,19 @@ import './Project.css';
 const Project = () => {
   const { isFetching, error, info } = useSelector(state => state.project);
   const [isProjectModalVisible, setProjectModalVisible] = useState(false);
+  const [isScenarioModalVisible, setScenarioModalVisible] = useState(false);
   const dispatch = useDispatch();
+
+  const reloadProject = () => {
+    dispatch(getProject());
+  };
 
   // Get Project Details on mount
   useEffect(() => {
-    dispatch(getProject());
+    reloadProject();
   }, []);
 
-  // Setup ipcRenderer listener
+  // Setup ipcRenderer listener for open project
   useEffect(() => {
     ipcRenderer.on('selected-project', async (event, path) => {
       try {
@@ -29,7 +34,7 @@ const Project = () => {
           path: path[0]
         });
         console.log(resp.data);
-        dispatch(getProject());
+        reloadProject();
       } catch (err) {
         console.log(err.response);
       }
@@ -51,13 +56,7 @@ const Project = () => {
                 type="folder-open"
                 onClick={() => ipcRenderer.send('open-project')}
               />
-              <Icon
-                type="sync"
-                onClick={() => {
-                  dispatch(getProject());
-                }}
-                spin={isFetching}
-              />
+              <Icon type="sync" onClick={reloadProject} spin={isFetching} />
             </div>
           </React.Fragment>
         }
@@ -91,7 +90,8 @@ const Project = () => {
         visible={isProjectModalVisible}
         setVisible={setProjectModalVisible}
         project={info}
-        changeProject={() => dispatch(getProject())}
+        reloadProject={reloadProject}
+      />
       />
     </div>
   );
