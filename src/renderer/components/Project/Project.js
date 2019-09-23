@@ -9,6 +9,7 @@ import { useAsyncData } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 import NewProjectModal from './NewProjectModal';
+import NewScenarioModal from './NewScenarioModal';
 import './Project.css';
 
 const Project = () => {
@@ -62,7 +63,11 @@ const Project = () => {
         }
         bordered={false}
       >
-        <Button type="primary" style={{ display: 'block', marginLeft: 'auto' }}>
+        <Button
+          type="primary"
+          style={{ display: 'block', marginLeft: 'auto' }}
+          onClick={() => setScenarioModalVisible(true)}
+        >
           New Scenario
         </Button>
         {!scenarios.length ? (
@@ -92,6 +97,11 @@ const Project = () => {
         project={info}
         reloadProject={reloadProject}
       />
+      <NewScenarioModal
+        visible={isScenarioModalVisible}
+        setVisible={setScenarioModalVisible}
+        project={info}
+        reloadProject={reloadProject}
       />
     </div>
   );
