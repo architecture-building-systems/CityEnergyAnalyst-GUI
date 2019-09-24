@@ -25,7 +25,7 @@ const NewScenarioModal = ({ visible, setVisible, project, reloadProject }) => {
   const handleOk = e => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
-        setConfirmLoading(true);
+        // setConfirmLoading(true);
         console.log('Received values of form: ', values);
         // try {
         //   setConfirmLoading(false);
@@ -300,12 +300,22 @@ const ScenarioMap = ({ form }) => {
     });
   };
 
+  const setGeojson = data => {
+    form.setFieldsValue({ geojson: data });
+  };
+
   return (
     <Card>
       <Form.Item>
         {form.getFieldDecorator('geojson', {
-          initialValue: ''
-        })(<Input />)}
+          initialValue: '',
+          rules: [
+            {
+              required: form.getFieldValue('tools').includes('zone'),
+              message: 'Create a polygon'
+            }
+          ]
+        })(<Input style={{ display: 'none' }} />)}
       </Form.Item>
       <h2>Select an area in the map for the zone file</h2>
       <small> Navigate to an area using a location or coordinates. </small>
@@ -340,7 +350,7 @@ const ScenarioMap = ({ form }) => {
       </Form.Item>
 
       <div style={{ position: 'relative', height: 450 }}>
-        <EditableMap location={location} />
+        <EditableMap location={location} outputGeojson={setGeojson} />
       </div>
     </Card>
   );
