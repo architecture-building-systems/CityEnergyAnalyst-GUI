@@ -10,6 +10,11 @@ module.exports = function(config) {
           test: /\.js$/,
           include: /node_modules\/react-dom/,
           use: ['react-hot-loader/webpack']
+        },
+        {
+          test: /\.mjs$/,
+          include: /node_modules/,
+          type: 'javascript/auto'
         }
       ]
     }
