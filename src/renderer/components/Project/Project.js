@@ -65,10 +65,13 @@ const Project = () => {
       >
         <Button
           type="primary"
-          style={{ display: 'block', marginLeft: 'auto' }}
+          style={{
+            display: 'block',
+            width: '100%'
+          }}
           onClick={() => setScenarioModalVisible(true)}
         >
-          New Scenario
+          + Create New Scenario
         </Button>
         {!scenarios.length ? (
           <div>No scenarios found</div>
