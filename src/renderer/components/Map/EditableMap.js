@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import DeckGL from '@deck.gl/react';
 import ReactMapGL, {
   _MapContext as MapContext,
@@ -6,6 +7,8 @@ import ReactMapGL, {
 } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import { EditableGeoJsonLayer } from 'nebula.gl';
+import { Button } from 'antd';
+import './EditableMap.css';
 
 const defaultViewState = {
   longitude: 0,
@@ -20,11 +23,15 @@ const EMPTY_FEATURE = {
   features: []
 };
 
-const EditableMap = ({ location = defaultViewState, outputGeojson = null }) => {
+const EditableMap = ({
+  location = defaultViewState,
+  geojson = null,
+  outputGeojson = null
+}) => {
   const [viewState, setViewState] = useState(defaultViewState);
   const [mode, setMode] = useState('view');
   const [selectedFeatureIndexes, setSelected] = useState([]);
-  const [data, setData] = useState(EMPTY_FEATURE);
+  const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const hasData = data.features.length;
 
   const layer = new EditableGeoJsonLayer({
@@ -88,11 +95,28 @@ const EditableMap = ({ location = defaultViewState, outputGeojson = null }) => {
 
   return (
     <React.Fragment>
-      <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
-        <button onClick={changeToDraw}>Draw</button>
-        <button onClick={changeToEdit}>
+      <div
+        id="edit-map-buttons"
+        style={{
+          position: 'absolute',
+          right: 0,
+          padding: 10,
+          display: 'none',
+          zIndex: 5
+        }}
+      >
+        <Button
+          type={mode === 'drawPolygon' ? 'primary' : 'default'}
+          onClick={changeToDraw}
+        >
+          Draw
+        </Button>
+        <Button
+          type={mode === 'modify' ? 'primary' : 'default'}
+          onClick={changeToEdit}
+        >
           {mode !== 'modify' ? 'Edit' : 'Done'}
-        </button>
+        </Button>
       </div>
       <DeckGL
         viewState={viewState}
@@ -101,7 +125,12 @@ const EditableMap = ({ location = defaultViewState, outputGeojson = null }) => {
         ContextProvider={MapContext.Provider}
         onViewStateChange={onViewStateChange}
       >
-        <ReactMapGL mapStyle={mapStyles.LIGHT_MAP} />
+        <ReactMapGL
+          mapStyle={mapStyles.LIGHT_MAP}
+          onLoad={() => {
+            document.getElementById('edit-map-buttons').style.display = 'block';
+          }}
+        />
       </DeckGL>
     </React.Fragment>
   );
