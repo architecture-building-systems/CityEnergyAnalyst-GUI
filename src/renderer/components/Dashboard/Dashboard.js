@@ -176,7 +176,12 @@ const usePlotDependencies = () => {
   const [isMounted, setIsMounted] = useState(false);
   const PlotDependencies = [
     ['script', 'https://cdn.plot.ly/plotly-latest.min.js'],
-    ['script', 'https://unpkg.com/deck.gl@latest/dist.min.js'],
+    [
+      'script',
+      `https://unpkg.com/deck.gl@${
+        window.deck ? window.deck.version : 'latest'
+      }/dist.min.js`
+    ],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],
     ['script', 'https://npmcdn.com/@turf/turf/turf.min.js'],
     ['script', 'https://code.jquery.com/jquery-3.4.1.min.js'],
