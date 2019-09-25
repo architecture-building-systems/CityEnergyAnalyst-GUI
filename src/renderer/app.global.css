@@ -3,6 +3,11 @@
   overflow: hidden;
 }
 
+#cea-title-bar {
+  position: relative;
+  z-index: 9999;
+}
+
 .trigger {
   font-size: 18px;
   line-height: 64px;

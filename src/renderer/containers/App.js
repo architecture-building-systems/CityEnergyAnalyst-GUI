@@ -13,16 +13,18 @@ class App extends Component {
     const { store, history } = this.props;
     return (
       <React.Fragment>
-        <TitleBar
-          app="City Energy Analyst"
-          theme={{
-            barTheme: 'dark',
-            menuDimItems: false,
-            showIconDarwin: false,
-            barBackgroundColor: 'rgb(36, 37, 38)',
-            barColor: 'rgb(230, 230, 230)'
-          }}
-        />
+        <div id="cea-title-bar">
+          <TitleBar
+            app="City Energy Analyst"
+            theme={{
+              barTheme: 'dark',
+              menuDimItems: false,
+              showIconDarwin: false,
+              barBackgroundColor: 'rgb(36, 37, 38)',
+              barColor: 'rgb(230, 230, 230)'
+            }}
+          />
+        </div>
         <Provider store={store}>
           <ConnectedRouter history={history}>
             <Switch>
