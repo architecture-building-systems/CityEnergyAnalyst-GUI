@@ -55,7 +55,11 @@ const EditableMap = ({
   };
 
   const changeToDraw = () => {
-    setMode('drawPolygon');
+    if (mode !== 'drawPolygon') {
+      setMode('drawPolygon');
+    } else {
+      setMode('view');
+    }
   };
 
   const changeToEdit = () => {
@@ -66,14 +70,15 @@ const EditableMap = ({
     }
   };
 
+  const deletePolygon = () => {
+    setData(EMPTY_FEATURE);
+  };
+
   useEffect(() => {
     location && setViewState({ ...viewState, ...location });
   }, [location]);
 
   useEffect(() => {
-    if (mode === 'drawPolygon') {
-      setData(EMPTY_FEATURE);
-    }
     if (mode === 'modify') {
       if (hasData) {
         setSelected([0]);
@@ -108,14 +113,23 @@ const EditableMap = ({
         <Button
           type={mode === 'drawPolygon' ? 'primary' : 'default'}
           onClick={changeToDraw}
+          disabled={hasData}
         >
           Draw
         </Button>
         <Button
           type={mode === 'modify' ? 'primary' : 'default'}
           onClick={changeToEdit}
+          disabled={!hasData}
         >
           {mode !== 'modify' ? 'Edit' : 'Done'}
+        </Button>
+        <Button
+          type="danger"
+          onClick={deletePolygon}
+          disabled={!hasData || mode === 'modify'}
+        >
+          Delete
         </Button>
       </div>
       <DeckGL
