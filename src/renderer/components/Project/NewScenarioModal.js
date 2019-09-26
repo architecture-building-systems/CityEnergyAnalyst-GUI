@@ -555,7 +555,16 @@ const ScenarioImportDataForm = ({ form, visible }) => {
               }
             />
           )}
-          <Icon type="minus-circle-o" onClick={() => removeField(key)} />
+          <Icon
+            type="minus-circle-o"
+            onClick={() => removeField(key)}
+            style={{
+              position: 'relative',
+              top: 4,
+              color: '#ff4d4f',
+              fontSize: 24
+            }}
+          />
         </Form.Item>
       ))}
     </div>
