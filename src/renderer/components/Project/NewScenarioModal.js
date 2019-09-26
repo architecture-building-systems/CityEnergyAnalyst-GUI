@@ -16,31 +16,41 @@ import {
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import parameter from '../Tools/parameter';
 import EditableMap from '../Map/EditableMap';
 import ToolModal from './ToolModal';
-import { setSelected } from '../../actions/inputEditor';
+import CreatingScenarioModal from './CreatingScenarioModal';
 
 const NewScenarioModal = ({ visible, setVisible, project, reloadProject }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const formRef = useRef();
 
   const handleOk = e => {
-    formRef.current.validateFields(async (err, values) => {
-      if (!err) {
-        // setConfirmLoading(true);
-        console.log('Received values of form: ', values);
-        // try {
-        //   setConfirmLoading(false);
-        //   reloadProject();
-        //   formRef.current.resetFields();
-        //   setVisible(false);
-        // } catch (err) {
-        //   console.log(err.response);
-        //   setConfirmLoading(false);
-        // }
+    formRef.current.validateFieldsAndScroll(
+      { scroll: { offsetTop: 60 } },
+      async (err, values) => {
+        if (!err) {
+          setConfirmLoading(true);
+          setModalVisible(true);
+          console.log('Received values of form: ', values);
+          try {
+            const resp = await axios.post(
+              'http://localhost:5050/api/project/scenario/',
+              values
+            );
+            console.log(resp.data);
+            setModalVisible(false);
+            setConfirmLoading(false);
+            handleCancel();
+            reloadProject();
+          } catch (err) {
+            console.log(err.response);
+            setModalVisible(false);
+            setConfirmLoading(false);
+          }
+        }
       }
-    });
+    );
   };
 
   const handleCancel = e => {
@@ -59,6 +69,10 @@ const NewScenarioModal = ({ visible, setVisible, project, reloadProject }) => {
       okText="Create"
     >
       <NewScenarioForm ref={formRef} project={project} />
+      <CreatingScenarioModal
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
     </Modal>
   );
 };
