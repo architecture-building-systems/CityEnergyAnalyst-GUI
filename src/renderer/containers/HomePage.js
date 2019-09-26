@@ -3,7 +3,7 @@ import { Route, Switch } from 'react-router-dom';
 import { Layout } from 'antd';
 import SideNav from '../components/HomePage/SideNav';
 import Header from '../components/HomePage/Header';
-import Tool from '../components/Tools/Tool';
+import { ToolRoute } from '../components/Tools/Tool';
 import InputEditor from '../components/InputEditor/InputEditor';
 import Dashboard from '../components/Dashboard/Dashboard';
 import Project from '../components/Project/Project';
@@ -35,7 +35,7 @@ const HomePage = () => {
             }}
           >
             <Switch>
-              <Route path={`${routes.TOOLS}/:script`} component={Tool} />
+              <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
               <Route path={routes.INPUT_EDITOR} component={InputEditor} />
               <Route path="/placeholder" component={PlaceHolder} />
               <Route path={routes.DASHBOARD} component={Dashboard} />
