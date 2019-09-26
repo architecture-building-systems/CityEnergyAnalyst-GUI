@@ -10,13 +10,16 @@ import {
   Col,
   Select,
   Icon,
-  Card
+  Card,
+  Button
 } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import parameter from '../Tools/parameter';
 import EditableMap from '../Map/EditableMap';
+import ToolModal from './ToolModal';
+import { setSelected } from '../../actions/inputEditor';
 
 const NewScenarioModal = ({ visible, setVisible, project, reloadProject }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -130,9 +133,16 @@ const NewScenarioForm = Form.create()(({ form, project }) => {
 });
 
 const ScenarioGenerateDataForm = ({ form, visible }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTool, setSelectedTool] = useState(null);
   const tools = form.getFieldValue('tools') || [];
   const zoneChecked = tools.includes('zone');
   const districtChecked = tools.includes('district');
+
+  const showModal = tool => {
+    setSelectedTool(tool);
+    setModalVisible(true);
+  };
 
   const handleChange = checkedValue => {
     if (!checkedValue.includes('zone')) {
@@ -172,7 +182,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
               <Row>
                 <Checkbox value="zone">Zone</Checkbox>
                 <Icon type="info-circle" />
-                <Icon type="setting" />
+                <Icon type="setting" onClick={() => showModal('zone-helper')} />
               </Row>
               <small>- Query zone geometry from Open Street Maps.</small>
             </div>
@@ -183,7 +193,10 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   District
                 </Checkbox>
                 <Icon type="info-circle" />
-                <Icon type="setting" />
+                <Icon
+                  type="setting"
+                  onClick={() => showModal('district-helper')}
+                />
                 <small
                   style={{
                     color: 'red',
@@ -202,7 +215,10 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   Streets
                 </Checkbox>
                 <Icon type="info-circle" />
-                <Icon type="setting" />
+                <Icon
+                  type="setting"
+                  onClick={() => showModal('streets-helper')}
+                />
                 <small
                   style={{
                     color: 'red',
@@ -221,7 +237,10 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   Terrain
                 </Checkbox>
                 <Icon type="info-circle" />
-                <Icon type="setting" />
+                <Icon
+                  type="setting"
+                  onClick={() => showModal('terrain-helper')}
+                />
                 <small
                   style={{
                     color: 'red',
@@ -238,7 +257,10 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
               <Row>
                 <Checkbox value="weather">Weather</Checkbox>
                 <Icon type="info-circle" />
-                <Icon type="setting" />
+                <Icon
+                  type="setting"
+                  onClick={() => showModal('weather-helper')}
+                />
               </Row>
               <small>- Set the weather file for the scenario.</small>
             </div>
@@ -254,6 +276,11 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
       >
         <ScenarioMap form={form} />
       </div>
+      <ToolModal
+        tool={selectedTool}
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
     </div>
   );
 };
