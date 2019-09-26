@@ -335,17 +335,6 @@ const ScenarioMap = ({ form }) => {
 
   return (
     <Card>
-      <Form.Item>
-        {form.getFieldDecorator('geojson', {
-          initialValue: '',
-          rules: [
-            {
-              required: form.getFieldValue('tools').includes('zone'),
-              message: 'Create a polygon'
-            }
-          ]
-        })(<Input style={{ display: 'none' }} />)}
-      </Form.Item>
       <h2>Select an area in the map for the zone file</h2>
       <small> Navigate to an area using a location or coordinates. </small>
 
@@ -378,9 +367,27 @@ const ScenarioMap = ({ form }) => {
         })(<LatLongInput onClick={goToLocation} />)}
       </Form.Item>
 
-      <div style={{ position: 'relative', height: 450 }}>
-        <EditableMap location={location} outputGeojson={setGeojson} />
-      </div>
+      <Form.Item>
+        {form.getFieldDecorator('geojson', {
+          initialValue: null,
+          rules: [
+            {
+              required: form.getFieldValue('tools').includes('zone'),
+              message: 'Create a polygon'
+            }
+          ]
+        })(<Input style={{ display: 'none' }} />)}
+      </Form.Item>
+
+      {form.getFieldValue('tools').includes('zone') && (
+        <div style={{ position: 'relative', height: 450 }}>
+          <EditableMap
+            location={location}
+            geojson={form.getFieldValue('geojson')}
+            outputGeojson={setGeojson}
+          />
+        </div>
+      )}
     </Card>
   );
 };
@@ -459,13 +466,98 @@ const ScenarioCopyDataForm = ({ form, visible, project }) => {
 };
 
 const ScenarioImportDataForm = ({ form, visible }) => {
+  const fileExtensions = {
+    zone: ['.shp'],
+    district: ['.shp'],
+    streets: ['.shp'],
+    terrain: ['.tiff'],
+    occupancy: ['.dbf'],
+    age: ['.dbf']
+  };
+  form.getFieldDecorator('fields', { initialValue: [] });
+  const fields = form.getFieldValue('fields');
+  const fileChoices = Object.keys(fileExtensions).filter(
+    fileType => !fields.includes(fileType)
+  );
+  const [selectFile, setSelected] = useState([]);
+
+  const addField = value => {
+    const newFields = fields.concat(value);
+    setSelected([]);
+    form.setFieldsValue({
+      fields: newFields
+    });
+  };
+
+  const removeField = k => {
+    form.setFieldsValue({
+      fields: fields.filter(key => key !== k)
+    });
+  };
+
+  const openDialog = name => {
+    ipcRenderer.send('open-path-dialog', name, { properties: ['openFile'] });
+  };
+
+  const vaildFile = (fileType, filePath) => {
+    if (!fileExtensions[fileType].includes(path.extname(filePath)))
+      return false;
+    return true;
+  };
+
   return (
     <div
       style={{
         display: visible ? 'block' : 'none'
       }}
     >
-      Import
+      <Select
+        placeholder="Select a file type that you want to import"
+        value={selectFile}
+        style={{ width: 300 }}
+        onChange={value => addField(value)}
+      >
+        {fileChoices.map(choice => (
+          <Select.Option key={choice} value={choice}>
+            {choice}
+          </Select.Option>
+        ))}
+      </Select>
+
+      {fields.map((key, index) => (
+        <Form.Item key={key} label={key}>
+          {form.getFieldDecorator(`files[${key}]`, {
+            rules: [
+              {
+                validator: (rule, value, callback) => {
+                  console.log('validate');
+                  if (!fs.existsSync(value)) {
+                    callback('Path does not exist');
+                  } else if (!vaildFile(key, value)) {
+                    callback(`Select a vaild ${key} file`);
+                  } else {
+                    callback();
+                  }
+                }
+              }
+            ]
+          })(
+            <Input
+              style={{ width: '60%', marginRight: 8 }}
+              addonAfter={
+                <button
+                  type="button"
+                  style={{ height: '30px', width: '50px' }}
+                  onClick={() => openDialog(`files[${key}]`)}
+                >
+                  <Icon type="ellipsis" />
+                </button>
+              }
+            />
+          )}
+          <Icon type="minus-circle-o" onClick={() => removeField(key)} />
+        </Form.Item>
+      ))}
     </div>
   );
 };
