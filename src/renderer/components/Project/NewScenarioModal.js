@@ -275,13 +275,15 @@ const ScenarioMap = ({ form }) => {
         `https://nominatim.openstreetmap.org/?format=json&q=${address}&limit=1`
       );
       if (resp.data) {
-        form.setFieldsValue({
-          latlong: {
-            lat: resp.data[0].lat,
-            long: resp.data[0].lon
-          }
-        });
-        goToLocation();
+        form.setFieldsValue(
+          {
+            latlong: {
+              lat: resp.data[0].lat,
+              long: resp.data[0].lon
+            }
+          },
+          goToLocation
+        );
       }
     } catch (err) {
       console.log(err);

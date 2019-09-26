@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import DeckGL from '@deck.gl/react';
 import ReactMapGL, {
   _MapContext as MapContext,
@@ -75,7 +74,10 @@ const EditableMap = ({
   };
 
   useEffect(() => {
-    location && setViewState({ ...viewState, ...location });
+    setTimeout(
+      () => setViewState(viewState => ({ ...viewState, ...location })),
+      0
+    );
   }, [location]);
 
   useEffect(() => {
@@ -110,33 +112,32 @@ const EditableMap = ({
           zIndex: 5
         }}
       >
-        <Button
-          type={mode === 'drawPolygon' ? 'primary' : 'default'}
-          onClick={changeToDraw}
-          disabled={hasData}
-        >
-          Draw
-        </Button>
-        <Button
-          type={mode === 'modify' ? 'primary' : 'default'}
-          onClick={changeToEdit}
-          disabled={!hasData}
-        >
-          {mode !== 'modify' ? 'Edit' : 'Done'}
-        </Button>
-        <Button
-          type="danger"
-          onClick={deletePolygon}
-          disabled={!hasData || mode === 'modify'}
-        >
-          Delete
-        </Button>
+        {hasData ? null : (
+          <Button
+            type={mode === 'drawPolygon' ? 'primary' : 'default'}
+            onClick={changeToDraw}
+          >
+            Draw
+          </Button>
+        )}
+        {!hasData ? null : (
+          <Button
+            type={mode === 'modify' ? 'primary' : 'default'}
+            onClick={changeToEdit}
+          >
+            {mode !== 'modify' ? 'Edit' : 'Done'}
+          </Button>
+        )}
+        {!hasData || mode === 'modify' ? null : (
+          <Button type="danger" onClick={deletePolygon}>
+            Delete
+          </Button>
+        )}
       </div>
       <DeckGL
         viewState={viewState}
-        controller={true}
+        controller={{ doubleClickZoom: false, dragRotate: false }}
         layers={[layer]}
-        ContextProvider={MapContext.Provider}
         onViewStateChange={onViewStateChange}
       >
         <ReactMapGL
