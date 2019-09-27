@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import DeckGL from '@deck.gl/react';
-import ReactMapGL, {
-  _MapContext as MapContext,
-  NavigationControl
-} from 'react-map-gl';
+import ReactMapGL from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import { EditableGeoJsonLayer } from 'nebula.gl';
 import { Button } from 'antd';
@@ -29,7 +26,6 @@ const EditableMap = ({
 }) => {
   const [viewState, setViewState] = useState(defaultViewState);
   const [mode, setMode] = useState('view');
-  const [selectedFeatureIndexes, setSelected] = useState([]);
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const hasData = data.features.length;
 
@@ -37,7 +33,7 @@ const EditableMap = ({
     id: 'geojson-layer',
     data: data,
     mode: mode,
-    selectedFeatureIndexes: selectedFeatureIndexes,
+    selectedFeatureIndexes: [0],
 
     onEdit: ({ updatedData }) => {
       if (mode === 'drawPolygon') {
@@ -79,16 +75,6 @@ const EditableMap = ({
       0
     );
   }, [location]);
-
-  useEffect(() => {
-    if (mode === 'modify') {
-      if (hasData) {
-        setSelected([0]);
-      } else {
-        setSelected([]);
-      }
-    }
-  }, [mode]);
 
   useEffect(() => {
     if (outputGeojson) {
