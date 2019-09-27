@@ -484,7 +484,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     zone: ['.shp'],
     district: ['.shp'],
     streets: ['.shp'],
-    terrain: ['.tiff'],
+    terrain: ['.tif'],
     occupancy: ['.dbf'],
     age: ['.dbf']
   };
