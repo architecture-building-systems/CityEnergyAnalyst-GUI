@@ -112,7 +112,9 @@ const Project = () => {
 
 const ScenarioCard = ({ scenario, projectPath, current = false }) => {
   const [image, isLoading, error] = useAsyncData(
-    `http://localhost:5050/api/project/scenario/${scenario}/image`
+    `http://localhost:5050/api/project/scenario/${scenario}/image`,
+    null,
+    [scenario]
   );
   const dispatch = useDispatch();
 
