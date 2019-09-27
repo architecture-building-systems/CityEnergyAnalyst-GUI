@@ -31,6 +31,7 @@ const ToolModal = ({ tool, visible, setVisible }) => {
 
     return (
       <React.Fragment>
+        <Button onClick={hideModal}>Back</Button>
         <Button type="primary" onClick={saveToConfig}>
           Save to Config
         </Button>
