@@ -11,7 +11,9 @@ import {
   Select,
   Icon,
   Card,
-  Button
+  Button,
+  Dropdown,
+  Menu
 } from 'antd';
 import fs from 'fs';
 import path from 'path';
@@ -480,26 +482,48 @@ const ScenarioCopyDataForm = ({ form, visible, project }) => {
 };
 
 const ScenarioImportDataForm = ({ form, visible }) => {
-  const fileExtensions = {
-    zone: ['.shp'],
-    district: ['.shp'],
-    streets: ['.shp'],
-    terrain: ['.tif'],
-    occupancy: ['.dbf'],
-    age: ['.dbf']
+  const inputFiles = {
+    zone: {
+      extension: ['.shp'],
+      placeholder: 'Path to geometry of the zone',
+      help: ''
+    },
+    district: {
+      extension: ['.shp'],
+      placeholder: 'Path to geometry of surroundings',
+      help: ''
+    },
+    streets: {
+      extension: ['.shp'],
+      placeholder: 'Path to street geometry',
+      help: ''
+    },
+    terrain: {
+      extension: ['.tif'],
+      placeholder: 'Path to the digital elevation model',
+      help: ''
+    },
+    occupancy: {
+      extension: ['.dbf'],
+      placeholder: 'Path to occupancy database',
+      help: 'Leave empty for CEA to create one for you'
+    },
+    age: {
+      extension: ['.dbf'],
+      placeholder: 'Path to age database',
+      help: 'Leave empty for CEA to create one for you'
+    }
   };
   form.getFieldDecorator('fields', {
     initialValue: ['zone', 'age', 'occupancy']
   });
   const fields = form.getFieldValue('fields');
-  const fileChoices = Object.keys(fileExtensions).filter(
+  const fileChoices = Object.keys(inputFiles).filter(
     fileType => !fields.includes(fileType)
   );
-  const [selectFile, setSelected] = useState([]);
 
   const addField = value => {
     const newFields = fields.concat(value);
-    setSelected([]);
     form.setFieldsValue({
       fields: newFields
     });
@@ -511,13 +535,22 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     });
   };
 
-  const openDialog = name => {
-    ipcRenderer.send('open-path-dialog', name, { properties: ['openFile'] });
+  const openDialog = (id, file) => {
+    ipcRenderer.send('open-path-dialog', id, {
+      properties: ['openFile'],
+      filters: [
+        {
+          name: `${file} file`,
+          extensions: inputFiles[file].extension.map(fileExtension =>
+            fileExtension.substr(1)
+          )
+        }
+      ]
+    });
   };
 
+  // Check if file is valid
   const vaildFile = (fileType, filePath) => {
-    if (!fileExtensions[fileType].includes(path.extname(filePath)))
-      return false;
     return true;
   };
 
@@ -527,44 +560,55 @@ const ScenarioImportDataForm = ({ form, visible }) => {
         display: visible ? 'block' : 'none'
       }}
     >
-      <Select
-        placeholder="Select a file type that you want to import"
-        value={selectFile}
-        style={{ width: 300 }}
-        onChange={value => addField(value)}
+      <Dropdown
+        overlay={
+          <Menu>
+            {fileChoices.map(choice => (
+              <Menu.Item key={choice} onClick={() => addField(choice)}>
+                {choice}
+              </Menu.Item>
+            ))}
+          </Menu>
+        }
+        trigger={['click']}
       >
-        {fileChoices.map(choice => (
-          <Select.Option key={choice} value={choice}>
-            {choice}
-          </Select.Option>
-        ))}
-      </Select>
+        <Button>
+          Select additional files that you want to import <Icon type="down" />
+        </Button>
+      </Dropdown>
 
       {fields.map((key, index) => (
         <Form.Item key={key} label={key}>
           {form.getFieldDecorator(`files[${key}]`, {
+            initialValue: '',
             rules: [
-              {
-                validator: (rule, value, callback) => {
-                  console.log('validate');
-                  if (!fs.existsSync(value)) {
-                    callback('Path does not exist');
-                  } else if (!vaildFile(key, value)) {
-                    callback(`Select a vaild ${key} file`);
-                  } else {
-                    callback();
+              { required: visible && key === 'zone' },
+              visible
+                ? {
+                    validator: (rule, value, callback) => {
+                      if (!fs.existsSync(value)) {
+                        if (
+                          ['zone', 'age', 'occupancy'].includes(key) &&
+                          value === ''
+                        ) {
+                          callback();
+                        } else callback('Path does not exist');
+                      } else if (!vaildFile(key, value))
+                        callback(`Select a vaild ${key} file`);
+                      else callback();
+                    }
                   }
-                }
-              }
+                : {}
             ]
           })(
             <Input
               style={{ width: '60%', marginRight: 8 }}
+              placeholder={inputFiles[key].placeholder}
               addonAfter={
                 <button
                   type="button"
                   style={{ height: '30px', width: '50px' }}
-                  onClick={() => openDialog(`files[${key}]`)}
+                  onClick={() => openDialog(`files[${key}]`, key)}
                 >
                   <Icon type="ellipsis" />
                 </button>
@@ -583,6 +627,9 @@ const ScenarioImportDataForm = ({ form, visible }) => {
               }}
             />
           )}
+          <small style={{ display: 'block', lineHeight: 'normal' }}>
+            {inputFiles[key].help}
+          </small>
         </Form.Item>
       ))}
     </div>
