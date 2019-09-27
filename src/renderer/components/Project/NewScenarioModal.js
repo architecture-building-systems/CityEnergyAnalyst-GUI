@@ -80,7 +80,7 @@ const NewScenarioModal = ({ visible, setVisible, project, reloadProject }) => {
 const NewScenarioForm = Form.create()(({ form, project }) => {
   useEffect(() => {
     ipcRenderer.on('selected-path', (event, id, path) => {
-      form.setFieldsValue({ [id]: path[0] });
+      form.setFieldsValue({ [id]: path[0] }, () => form.validateFields([id]));
     });
     return () => ipcRenderer.removeAllListeners(['selected-path']);
   }, []);
