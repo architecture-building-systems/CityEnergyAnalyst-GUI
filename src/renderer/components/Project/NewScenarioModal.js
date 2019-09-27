@@ -488,7 +488,9 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     occupancy: ['.dbf'],
     age: ['.dbf']
   };
-  form.getFieldDecorator('fields', { initialValue: [] });
+  form.getFieldDecorator('fields', {
+    initialValue: ['zone', 'age', 'occupancy']
+  });
   const fields = form.getFieldValue('fields');
   const fileChoices = Object.keys(fileExtensions).filter(
     fileType => !fields.includes(fileType)
@@ -569,16 +571,18 @@ const ScenarioImportDataForm = ({ form, visible }) => {
               }
             />
           )}
-          <Icon
-            type="minus-circle-o"
-            onClick={() => removeField(key)}
-            style={{
-              position: 'relative',
-              top: 4,
-              color: '#ff4d4f',
-              fontSize: 24
-            }}
-          />
+          {['zone', 'age', 'occupancy'].includes(key) ? null : (
+            <Icon
+              type="minus-circle-o"
+              onClick={() => removeField(key)}
+              style={{
+                position: 'relative',
+                top: 4,
+                color: '#ff4d4f',
+                fontSize: 24
+              }}
+            />
+          )}
         </Form.Item>
       ))}
     </div>
