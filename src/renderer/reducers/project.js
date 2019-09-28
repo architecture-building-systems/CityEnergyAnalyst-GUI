@@ -5,7 +5,7 @@ import {
 } from '../actions/project';
 
 const initialState = {
-  info: { name: '', scenario: '', scenarios: [] },
+  info: { name: '', path: '', scenario: '', scenarios: [] },
   isFetching: false,
   error: null
 };

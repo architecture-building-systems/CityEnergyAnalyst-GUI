@@ -29,15 +29,17 @@ const Project = () => {
 
   // Setup ipcRenderer listener for open project
   useEffect(() => {
-    ipcRenderer.on('selected-project', async (event, path) => {
-      try {
-        const resp = await axios.put(`http://localhost:5050/api/project/`, {
-          path: path[0]
-        });
-        console.log(resp.data);
-        reloadProject();
-      } catch (err) {
-        console.log(err.response);
+    ipcRenderer.on('selected-project', async (event, _path) => {
+      if (info.path !== _path) {
+        try {
+          const resp = await axios.put(`http://localhost:5050/api/project/`, {
+            path: _path
+          });
+          console.log(resp.data);
+          reloadProject();
+        } catch (err) {
+          console.log(err.response);
+        }
       }
     });
     return () => ipcRenderer.removeAllListeners(['selected-project']);

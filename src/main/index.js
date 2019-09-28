@@ -93,8 +93,8 @@ ipcMain.on('open-project', event => {
       properties: ['openDirectory']
     },
     path => {
-      if (path) {
-        event.sender.send('selected-project', path);
+      if (path && path.length) {
+        event.sender.send('selected-project', path[0]);
       }
     }
   );
