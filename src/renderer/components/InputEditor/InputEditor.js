@@ -3,7 +3,8 @@ import Map from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInputData, resetInputData } from '../../actions/inputEditor';
-import { Tabs } from 'antd';
+import { Tabs, Icon } from 'antd';
+import CenterSpinner from '../HomePage/CenterSpinner';
 
 const MAP_STYLE = {
   height: '500px',
@@ -13,14 +14,30 @@ const MAP_STYLE = {
 };
 
 const InputEditor = () => {
+  const [loaded, setLoaded] = useState(false);
+
+  const onLoad = () => {
+    setLoaded(true);
+  };
+
   return (
-    <iframe
-      src="http://localhost:5050/inputs/building-properties?div=true"
-      height={980}
-      width="100%"
-      scrolling="no"
-      frameBorder="false"
-    />
+    <React.Fragment>
+      {loaded ? null : (
+        <CenterSpinner
+          indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+          tip="Reading input files"
+        />
+      )}
+      <iframe
+        style={{ display: loaded ? 'block' : 'none' }}
+        src="http://localhost:5050/inputs/building-properties?div=true"
+        height={980}
+        width="100%"
+        scrolling="no"
+        frameBorder="false"
+        onLoad={onLoad}
+      />
+    </React.Fragment>
   );
 };
 
