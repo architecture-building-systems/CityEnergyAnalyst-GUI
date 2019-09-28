@@ -3,17 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { ipcRenderer, shell } from 'electron';
 import path from 'path';
-import {
-  Card,
-  Icon,
-  Row,
-  Col,
-  Button,
-  Popconfirm,
-  Tag,
-  Dropdown,
-  Menu
-} from 'antd';
+import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
 import axios from 'axios';
 import { useAsyncData } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
@@ -132,15 +122,21 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
   const dispatch = useDispatch();
 
-  const editMenu = (
-    <Menu>
-      <Menu.Item key="rename" onClick={() => setRenameModalVisible(true)}>
-        Rename
-      </Menu.Item>
-      <Menu.Divider />
-      <Menu.Item key="delete">Delete</Menu.Item>
-    </Menu>
-  );
+  const showConfirm = () => {
+    Modal.confirm({
+      title: `Are you sure you want to delete this scenario?`,
+      content: (
+        <div>
+          <p>{scenario}</p>
+          <i>(This operation cannot be reversed)</i>
+        </div>
+      ),
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: () => deleteScenario()
+    });
+  };
 
   const deleteScenario = async () => {
     try {
@@ -170,6 +166,18 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
   const openFolder = () => {
     shell.openItem(path.join(projectPath, scenario));
   };
+
+  const editMenu = (
+    <Menu>
+      <Menu.Item key="rename" onClick={() => setRenameModalVisible(true)}>
+        Rename
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="delete" onClick={showConfirm}>
+        Delete
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <Card
