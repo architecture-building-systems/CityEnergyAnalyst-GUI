@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import Map from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
+import { Prompt } from 'react-router';
 import { fetchInputData, resetInputData } from '../../actions/inputEditor';
-import { Tabs, Icon } from 'antd';
+import { Tabs, Icon, Modal } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
+import NavigationPrompt from './NavigationPrompt';
 
 const MAP_STYLE = {
   height: '500px',
@@ -15,13 +17,41 @@ const MAP_STYLE = {
 
 const InputEditor = () => {
   const [loaded, setLoaded] = useState(false);
+  const [unsaved, setUnsaved] = useState(false);
 
   const onLoad = () => {
     setLoaded(true);
   };
 
+  const receiveMessage = event => {
+    setUnsaved(event.data);
+  };
+
+  useEffect(() => {
+    window.addEventListener('message', receiveMessage);
+    return () => window.removeEventListener('message', receiveMessage);
+  });
+
   return (
     <React.Fragment>
+      <NavigationPrompt when={unsaved}>
+        {(isOpen, onConfirm, onCancel) => (
+          <Modal
+            centered
+            closable={false}
+            visible={isOpen}
+            onOk={onConfirm}
+            onCancel={onCancel}
+          >
+            There are still unsaved changes.
+            <br />
+            <i>(Any unsaved changes will be discarded)</i>
+            <br />
+            <br />
+            Are you sure you want to navigate away?
+          </Modal>
+        )}
+      </NavigationPrompt>
       {loaded ? null : (
         <CenterSpinner
           indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
