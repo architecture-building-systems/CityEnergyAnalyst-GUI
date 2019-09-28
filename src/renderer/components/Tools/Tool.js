@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ipcRenderer } from 'electron';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -8,7 +8,8 @@ import {
   Form,
   Collapse,
   Button,
-  Spin as AntSpin
+  Spin as AntSpin,
+  Icon
 } from 'antd';
 import axios from 'axios';
 import {
@@ -28,6 +29,7 @@ const Tool = ({ script, formButtons = ToolFormButtons }) => {
   const {
     category,
     label,
+    description,
     parameters,
     categorical_parameters: categoricalParameters
   } = params;
@@ -56,7 +58,8 @@ const Tool = ({ script, formButtons = ToolFormButtons }) => {
     <div>
       <Spin>
         <h1>{category}</h1>
-        <h2>{label}</h2>
+        <h2 style={{ display: 'inline' }}>{label}</h2>
+        <small> - {description}</small>
         <Divider />
         <div>
           <ToolForm
