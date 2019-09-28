@@ -5,3 +5,7 @@
 .cea-project-option-icons .anticon {
   margin: 0 10px;
 }
+
+.scenario-edit-button > div > div > .ant-dropdown {
+  z-index: 5;
+}

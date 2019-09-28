@@ -3,13 +3,24 @@ import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { ipcRenderer, shell } from 'electron';
 import path from 'path';
-import { Card, Icon, Row, Col, Button, Popconfirm, Tag } from 'antd';
+import {
+  Card,
+  Icon,
+  Row,
+  Col,
+  Button,
+  Popconfirm,
+  Tag,
+  Dropdown,
+  Menu
+} from 'antd';
 import axios from 'axios';
 import { useAsyncData } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 import NewProjectModal from './NewProjectModal';
 import NewScenarioModal from './NewScenarioModal';
+import RenameScenarioModal from './RenameScenarioModal';
 import './Project.css';
 
 const Project = () => {
@@ -76,9 +87,11 @@ const Project = () => {
           + Create New Scenario
         </Button>
         {!scenarios.length ? (
-          <div>No scenarios found</div>
+          <p style={{ textAlign: 'center', margin: 20 }}>No scenarios found</p>
         ) : scenario === '' ? (
-          <div>No scenario currently selected</div>
+          <p style={{ textAlign: 'center', margin: 20 }}>
+            No scenario currently selected
+          </p>
         ) : (
           <ScenarioCard
             scenario={scenario}
@@ -113,10 +126,21 @@ const Project = () => {
 const ScenarioCard = ({ scenario, projectPath, current = false }) => {
   const [image, isLoading, error] = useAsyncData(
     `http://localhost:5050/api/project/scenario/${scenario}/image`,
-    null,
+    { image: null },
     [scenario]
   );
+  const [isRenameModalVisible, setRenameModalVisible] = useState(false);
   const dispatch = useDispatch();
+
+  const editMenu = (
+    <Menu>
+      <Menu.Item key="rename" onClick={() => setRenameModalVisible(true)}>
+        Rename
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="delete">Delete</Menu.Item>
+    </Menu>
+  );
 
   const deleteScenario = async () => {
     try {
@@ -130,14 +154,14 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
     }
   };
 
-  const changeScenario = async (goToEditor = false) => {
+  const changeScenario = async () => {
     try {
       const resp = await axios.put(`http://localhost:5050/api/project/`, {
         scenario
       });
       console.log(resp.data);
       await dispatch(getProject());
-      goToEditor && dispatch(push(routes.INPUT_EDITOR));
+      dispatch(push(routes.INPUT_EDITOR));
     } catch (err) {
       console.log(err.response);
     }
@@ -155,22 +179,30 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
           {current ? <Tag>Current</Tag> : null}
         </React.Fragment>
       }
+      extra={
+        <React.Fragment>
+          <span id={`${scenario}-edit-button`} className="scenario-edit-button">
+            <Dropdown
+              overlay={editMenu}
+              trigger={['click']}
+              getPopupContainer={() => {
+                return document.getElementById(`${scenario}-edit-button`);
+              }}
+            >
+              <Button>
+                Edit <Icon type="down" />
+              </Button>
+            </Dropdown>
+          </span>
+          {current ? null : (
+            <Button type="primary" onClick={changeScenario}>
+              Open
+            </Button>
+          )}
+        </React.Fragment>
+      }
       style={{ marginTop: 16 }}
       type="inner"
-      actions={[
-        <Popconfirm
-          title="Are you sure delete this scenario?"
-          onConfirm={deleteScenario}
-          okText="Yes"
-          cancelText="No"
-          key="delete"
-        >
-          <Icon type="delete" />
-        </Popconfirm>,
-        <Icon type="edit" key="edit" />,
-        <Icon type="folder" key="folder" onClick={openFolder} />,
-        <Icon type="select" key="select" onClick={() => changeScenario()} />
-      ]}
     >
       <Row>
         <Col span={6}>
@@ -189,12 +221,18 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
               <img
                 className="cea-scenario-preview-image"
                 src={`data:image/png;base64,${image.image}`}
-                onClick={() => changeScenario(true)}
+                onClick={changeScenario}
               />
             )}
           </div>
         </Col>
       </Row>
+      <RenameScenarioModal
+        scenario={scenario}
+        projectPath={projectPath}
+        visible={isRenameModalVisible}
+        setVisible={setRenameModalVisible}
+      />
     </Card>
   );
 };
