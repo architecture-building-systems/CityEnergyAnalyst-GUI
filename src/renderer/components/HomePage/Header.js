@@ -35,8 +35,14 @@ const Header = () => {
           justifyContent: 'center'
         }}
       >
-        <text style={{ lineHeight: 'initial' }}>Project: {name}</text>
-        <text style={{ lineHeight: 'initial' }}>Scenario: {scenario}</text>
+        <span style={{ lineHeight: 'initial' }}>
+          <i>Current Project: </i>
+          <b>{name}</b>
+        </span>
+        <span style={{ lineHeight: 'initial' }}>
+          <i>Scenario: </i>
+          <b>{scenario}</b>
+        </span>
       </div>
     </AntHeader>
   );
