@@ -11,7 +11,9 @@ const StatusBar = () => {
         color: 'white',
         backgroundColor: '#1890ff',
         display: 'flex',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        position: 'fixed',
+        zIndex: 9999
       }}
     >
       <div className="cea-ticker" style={{ margin: '0 10px' }}>
