@@ -127,14 +127,14 @@ const NewScenarioForm = Form.create()(({ form, project }) => {
             <Radio value="generate" style={{ display: 'block' }}>
               Generate new input files using tools
             </Radio>
-            <Radio value="copy" style={{ display: 'block' }}>
-              Copy input folder from another scenario in the project
-            </Radio>
-            {project.scenarios.length && (
-              <Radio value="import" style={{ display: 'block' }}>
-                Import input files
+            {project.scenarios.length ? (
+              <Radio value="copy" style={{ display: 'block' }}>
+                Copy input folder from another scenario in the project
               </Radio>
-            )}
+            ) : null}
+            <Radio value="import" style={{ display: 'block' }}>
+              Import input files
+            </Radio>
           </Radio.Group>
         )}
       </Form.Item>
