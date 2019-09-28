@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { ipcRenderer } from 'electron';
 import {
   Modal,
@@ -18,14 +19,20 @@ import {
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import { getProject } from '../../actions/project';
 import EditableMap from '../Map/EditableMap';
 import ToolModal from './ToolModal';
 import CreatingScenarioModal from './CreatingScenarioModal';
 
-const NewScenarioModal = ({ visible, setVisible, project, reloadProject }) => {
+const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const formRef = useRef();
+  const dispatch = useDispatch();
+
+  const reloadProject = () => {
+    dispatch(getProject());
+  };
 
   const handleOk = e => {
     formRef.current.validateFieldsAndScroll(

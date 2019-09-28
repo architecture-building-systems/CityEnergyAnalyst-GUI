@@ -1,14 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { ipcRenderer } from 'electron';
 import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import { getProject } from '../../actions/project';
 import parameter from '../Tools/parameter';
 
-const NewProjectModal = ({ visible, setVisible, project, reloadProject }) => {
+const NewProjectModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
+  const dispatch = useDispatch();
+
+  const reloadProject = () => {
+    dispatch(getProject());
+  };
 
   const handleOk = e => {
     formRef.current.validateFields(async (err, values) => {

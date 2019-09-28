@@ -98,13 +98,11 @@ const Project = () => {
         visible={isProjectModalVisible}
         setVisible={setProjectModalVisible}
         project={info}
-        reloadProject={reloadProject}
       />
       <NewScenarioModal
         visible={isScenarioModalVisible}
         setVisible={setScenarioModalVisible}
         project={info}
-        reloadProject={reloadProject}
       />
     </div>
   );
