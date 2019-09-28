@@ -69,6 +69,7 @@ const NewProjectModal = ({ visible, setVisible, project }) => {
 };
 
 const NewProjectForm = Form.create()(({ form, project }) => {
+  // FIXME: ipc listener clash
   useEffect(() => {
     ipcRenderer.on('selected-path', (event, id, path) => {
       form.setFieldsValue({ [id]: path[0] });

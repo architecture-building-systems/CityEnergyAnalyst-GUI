@@ -87,6 +87,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
 };
 
 const NewScenarioForm = Form.create()(({ form, project }) => {
+  // FIXME: ipc listener clash
   useEffect(() => {
     ipcRenderer.on('selected-path', (event, id, path) => {
       form.setFieldsValue({ [id]: path[0] }, () => form.validateFields([id]));
