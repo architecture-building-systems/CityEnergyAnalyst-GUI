@@ -13,10 +13,6 @@ const NewProjectModal = ({ visible, setVisible, project }) => {
   const formRef = useRef();
   const dispatch = useDispatch();
 
-  const reloadProject = () => {
-    dispatch(getProject());
-  };
-
   const handleOk = e => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
@@ -28,7 +24,6 @@ const NewProjectModal = ({ visible, setVisible, project }) => {
             values
           );
           console.log(createProject.data);
-          setConfirmLoading(false);
           const updateProject = await axios.put(
             `http://localhost:5050/api/project/`,
             {
@@ -36,7 +31,7 @@ const NewProjectModal = ({ visible, setVisible, project }) => {
             }
           );
           console.log(updateProject.data);
-          reloadProject();
+          dispatch(getProject());
           setVisible(false);
         } catch (err) {
           console.log(err.response);

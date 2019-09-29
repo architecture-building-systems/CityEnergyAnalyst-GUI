@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { push } from 'connected-react-router';
 import { ipcRenderer } from 'electron';
 import {
   Modal,
@@ -20,6 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { getProject } from '../../actions/project';
+import routes from '../../constants/routes';
 import EditableMap from '../Map/EditableMap';
 import ToolModal from './ToolModal';
 import CreatingScenarioModal from './CreatingScenarioModal';
@@ -57,10 +59,6 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
               values
             );
             console.log(resp.data);
-            setModalVisible(false);
-            setConfirmLoading(false);
-            handleCancel();
-            reloadProject();
             changeScenario(values.name);
           } catch (err) {
             console.log(err.response);

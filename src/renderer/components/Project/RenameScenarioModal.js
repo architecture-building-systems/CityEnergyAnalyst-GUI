@@ -32,7 +32,6 @@ const RenameScenarioModal = ({
             values
           );
           console.log(resp.data);
-          setConfirmLoading(false);
           reloadProject();
           setVisible(false);
         } catch (err) {
