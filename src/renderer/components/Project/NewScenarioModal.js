@@ -403,15 +403,9 @@ const ScenarioMap = ({ form }) => {
         })(<Input style={{ display: 'none' }} />)}
       </Form.Item>
 
-      {form.getFieldValue('tools').includes('zone') && (
-        <div style={{ position: 'relative', height: 450 }}>
-          <EditableMap
-            location={location}
-            geojson={form.getFieldValue('geojson')}
-            outputGeojson={setGeojson}
-          />
-        </div>
-      )}
+      <div style={{ position: 'relative', height: 450 }}>
+        <EditableMap location={location} outputGeojson={setGeojson} />
+      </div>
     </Card>
   );
 };

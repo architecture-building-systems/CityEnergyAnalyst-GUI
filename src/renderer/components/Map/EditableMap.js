@@ -19,14 +19,10 @@ const EMPTY_FEATURE = {
   features: []
 };
 
-const EditableMap = ({
-  location = defaultViewState,
-  geojson = null,
-  outputGeojson = null
-}) => {
+const EditableMap = ({ location = defaultViewState, outputGeojson = null }) => {
   const [viewState, setViewState] = useState(defaultViewState);
   const [mode, setMode] = useState('view');
-  const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
+  const [data, setData] = useState(EMPTY_FEATURE);
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
   const hasData = data.features.length;
 
