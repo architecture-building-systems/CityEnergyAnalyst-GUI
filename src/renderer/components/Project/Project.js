@@ -123,7 +123,8 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
   const dispatch = useDispatch();
 
   const showConfirm = () => {
-    Modal.confirm({
+    let secondsToGo = 3;
+    const modal = Modal.confirm({
       title: `Are you sure you want to delete this scenario?`,
       content: (
         <div>
@@ -135,12 +136,27 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
           </p>
         </div>
       ),
-      okText: 'DELETE',
+      okText: `DELETE (${secondsToGo})`,
       okType: 'danger',
+      okButtonProps: { disabled: true },
       cancelText: 'Cancel',
       onOk: () => deleteScenario(),
       centered: true
     });
+
+    const timer = setInterval(() => {
+      secondsToGo -= 1;
+      modal.update({
+        okText: `DELETE (${secondsToGo})`
+      });
+    }, 1000);
+    setTimeout(() => {
+      clearInterval(timer);
+      modal.update({
+        okButtonProps: { disabled: false },
+        okText: 'DELETE'
+      });
+    }, secondsToGo * 1000);
   };
 
   const deleteScenario = async () => {
