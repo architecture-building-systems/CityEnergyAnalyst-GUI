@@ -4,7 +4,7 @@ import ReactMapGL from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import { EditableGeoJsonLayer } from 'nebula.gl';
 import { Button } from 'antd';
-import './EditableMap.css';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const defaultViewState = {
   longitude: 0,
