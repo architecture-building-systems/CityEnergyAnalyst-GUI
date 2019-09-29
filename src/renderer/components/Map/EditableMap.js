@@ -27,17 +27,19 @@ const EditableMap = ({
   const [viewState, setViewState] = useState(defaultViewState);
   const [mode, setMode] = useState('view');
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
+  const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
   const hasData = data.features.length;
 
   const layer = new EditableGeoJsonLayer({
     id: 'geojson-layer',
     data: data,
     mode: mode,
-    selectedFeatureIndexes: [0],
+    selectedFeatureIndexes: selectedFeatureIndexes,
 
     onEdit: ({ updatedData }) => {
       if (mode === 'drawPolygon') {
         setMode('view');
+        setSelectedFeatureIndexes([0]);
       }
       setData(updatedData);
     },
@@ -67,6 +69,7 @@ const EditableMap = ({
 
   const deletePolygon = () => {
     setData(EMPTY_FEATURE);
+    setSelectedFeatureIndexes([]);
   };
 
   useEffect(() => {
