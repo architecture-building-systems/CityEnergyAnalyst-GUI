@@ -127,14 +127,19 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
       title: `Are you sure you want to delete this scenario?`,
       content: (
         <div>
-          <p>{scenario}</p>
-          <i>(This operation cannot be reversed)</i>
+          <p>
+            <b>{scenario}</b>
+          </p>
+          <p>
+            <i>(This operation cannot be reversed)</i>
+          </p>
         </div>
       ),
-      okText: 'Yes',
+      okText: 'DELETE',
       okType: 'danger',
-      cancelText: 'No',
-      onOk: () => deleteScenario()
+      cancelText: 'Cancel',
+      onOk: () => deleteScenario(),
+      centered: true
     });
   };
 
@@ -173,7 +178,7 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
         Rename
       </Menu.Item>
       <Menu.Divider />
-      <Menu.Item key="delete" onClick={showConfirm}>
+      <Menu.Item key="delete" onClick={showConfirm} style={{ color: 'red' }}>
         Delete
       </Menu.Item>
     </Menu>
