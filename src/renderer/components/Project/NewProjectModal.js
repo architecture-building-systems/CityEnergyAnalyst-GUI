@@ -50,18 +50,16 @@ const NewProjectModal = ({ visible, setVisible, project }) => {
     setVisible(false);
   };
 
-  useEffect(() => {
-    !visible && formRef.current && formRef.current.resetFields();
-  }, [visible]);
-
   return (
     <Modal
       title="Create new Project"
       visible={visible}
       width={800}
+      okText="Create"
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
+      destroyOnClose
     >
       <NewProjectForm ref={formRef} project={project} />
     </Modal>

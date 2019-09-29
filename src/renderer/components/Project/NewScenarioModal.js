@@ -64,7 +64,6 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
 
   const handleCancel = e => {
     setVisible(false);
-    formRef.current.resetFields();
   };
 
   return (
@@ -76,6 +75,8 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       okText="Create"
+      maskClosable={false}
+      destroyOnClose
     >
       <NewScenarioForm ref={formRef} project={project} />
       <CreatingScenarioModal

@@ -47,10 +47,6 @@ const RenameScenarioModal = ({
     setVisible(false);
   };
 
-  useEffect(() => {
-    !visible && formRef.current && formRef.current.resetFields();
-  }, [visible]);
-
   return (
     <Modal
       title="Rename Scenario"
@@ -59,6 +55,8 @@ const RenameScenarioModal = ({
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
+      centered
+      destroyOnClose
     >
       <h2>Current Name: {scenario}</h2>
       <RenameScenarioForm ref={formRef} projectPath={projectPath} />
