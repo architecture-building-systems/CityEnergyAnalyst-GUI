@@ -193,8 +193,9 @@ const parameter = (param, form, config = {}) => {
       <React.Fragment>
         {getFieldDecorator(name, {
           initialValue: value,
+          valuePropName: 'checked',
           ...config
-        })(<Switch defaultChecked={value} />)}
+        })(<Switch />)}
       </React.Fragment>
     );
   } else {
