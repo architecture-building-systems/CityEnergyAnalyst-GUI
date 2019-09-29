@@ -30,8 +30,17 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const formRef = useRef();
   const dispatch = useDispatch();
 
-  const reloadProject = () => {
-    dispatch(getProject());
+  const changeScenario = async scenario => {
+    try {
+      const resp = await axios.put(`http://localhost:5050/api/project/`, {
+        scenario
+      });
+      console.log(resp.data);
+      await dispatch(getProject());
+      dispatch(push(routes.INPUT_EDITOR));
+    } catch (err) {
+      console.log(err.response);
+    }
   };
 
   const handleOk = e => {
@@ -52,6 +61,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
             setConfirmLoading(false);
             handleCancel();
             reloadProject();
+            changeScenario(values.name);
           } catch (err) {
             console.log(err.response);
             setModalVisible(false);
