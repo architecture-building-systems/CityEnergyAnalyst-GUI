@@ -17,6 +17,7 @@ import {
   saveToolParams,
   setDefaultToolParams
 } from '../../actions/tools';
+import { createJob } from '../../actions/jobs';
 import parameter from './parameter';
 
 export const ToolRoute = ({ match }) => {
@@ -107,21 +108,7 @@ const ToolForm = Form.create()(
     const withFormFunctions = FormButtons => props => {
       if (FormButtons === null) return null;
 
-      const runScript = async (script, parameters) => {
-        try {
-          const resp = await axios.post(
-            'http://localhost:5050/server/jobs/new',
-            {
-              script,
-              parameters
-            }
-          );
-          console.log(resp);
-          await axios.post(`http://localhost:5050/tools/start/${resp.data.id}`);
-        } catch (err) {
-          console.log(err);
-        }
-      };
+      const runScript = () => dispatch(createJob(script, getForm()));
 
       const saveParams = () => dispatch(saveToolParams(script, getForm()));
 
