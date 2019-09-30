@@ -1,0 +1,51 @@
+import axios from 'axios';
+
+export const CREATE_JOB = 'CREATE_JOB';
+export const CREATE_JOB_SUCCESS = 'CREATE_JOB_SUCCESS';
+export const CREATE_JOB_FAILED = 'CREATE_JOB_FAILED';
+
+export const createJob = (script, parameters) => {
+  return async dispatch => {
+    dispatch({ type: CREATE_JOB });
+    try {
+      const job_info = await axios.post(
+        `http://localhost:5050/server/jobs/new`,
+        { script, parameters }
+      );
+      dispatch({ type: CREATE_JOB_SUCCESS, payload: job_info.data });
+      dispatch(startJob(job_info.data.id));
+    } catch (error) {
+      dispatch({ type: CREATE_JOB_FAILED, payload: error });
+    }
+  };
+};
+
+export const START_JOB = 'START_JOB';
+export const START_JOB_SUCCESS = 'START_JOB_SUCCESS';
+export const START_JOB_FAILED = 'START_JOB_FAILED';
+
+export const startJob = jobID => {
+  return async dispatch => {
+    dispatch({ type: START_JOB });
+    try {
+      const job = await axios.post(
+        `http://localhost:5050/tools/start/${jobID}`
+      );
+      dispatch({ type: START_JOB_SUCCESS, payload: job.data });
+    } catch (error) {
+      dispatch({ type: START_JOB_FAILED, payload: error });
+    }
+  };
+};
+
+export const UPDATE_JOB = 'UPDATE_JOB';
+
+export const updateJob = job => {
+  return { type: UPDATE_JOB, payload: job };
+};
+
+export const DISMISS_JOB = 'DISMISS_JOB';
+
+export const dismissJob = id => {
+  return { type: DISMISS_JOB, payload: id };
+};
