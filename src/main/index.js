@@ -1,13 +1,17 @@
 'use strict';
 
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import * as path from 'path';
 import { format as formatUrl } from 'url';
+import menu from './menu';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow;
+
+// Add Menu to application
+Menu.setApplicationMenu(menu);
 
 function createMainWindow() {
   const window = new BrowserWindow({
