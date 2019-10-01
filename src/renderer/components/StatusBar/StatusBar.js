@@ -65,52 +65,6 @@ const JobListPopover = () => {
   const jobs = useSelector(state => state.jobs);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(fetchJobs());
-  }, []);
-
-  return jobs ? (
-    <Popover
-      overlayClassName="cea-job-list-popover"
-      placement="topRight"
-      title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
-      content={<JobListPopoverContent jobs={jobs} setVisible={setVisible} />}
-      visible={visible}
-    >
-      <StatusBarButton onClick={() => setVisible(visible => !visible)}>
-        <Icon
-          className="cea-job-list-popover-collapse"
-          type="tool"
-          theme="filled"
-        />
-        <span style={{ marginLeft: 5 }}>{Object.keys(jobs).length}</span>
-      </StatusBarButton>
-    </Popover>
-  ) : null;
-};
-
-const JobListPopoverTitle = ({ jobs, setVisible }) => {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        {!Object.keys(jobs).length ? 'No Jobs Running' : 'Current Jobs'}
-      </div>
-      <Icon
-        type="down"
-        style={{ fontSize: 10, alignSelf: 'center' }}
-        onClick={() => setVisible(false)}
-      />
-    </div>
-  );
-};
-
-const JobListPopoverContent = ({ jobs, setVisible }) => {
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const jobArray = Object.keys(jobs);
-
-  const dispatch = useDispatch();
   const openNotification = (type, { id, script }) => {
     const title = <i>{`jobID: ${id} - ${script}`}</i>;
     const message = {
@@ -155,6 +109,50 @@ const JobListPopoverContent = ({ jobs, setVisible }) => {
       dispatch(updateJob(job));
     });
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchJobs());
+  }, []);
+
+  return jobs ? (
+    <Popover
+      overlayClassName="cea-job-list-popover"
+      placement="topRight"
+      title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
+      content={<JobListPopoverContent jobs={jobs} setVisible={setVisible} />}
+      visible={visible}
+    >
+      <StatusBarButton onClick={() => setVisible(visible => !visible)}>
+        <Icon
+          className="cea-job-list-popover-collapse"
+          type="tool"
+          theme="filled"
+        />
+        <span style={{ marginLeft: 5 }}>{Object.keys(jobs).length}</span>
+      </StatusBarButton>
+    </Popover>
+  ) : null;
+};
+
+const JobListPopoverTitle = ({ jobs, setVisible }) => {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div>
+        {!Object.keys(jobs).length ? 'No Jobs Running' : 'Current Jobs'}
+      </div>
+      <Icon
+        type="down"
+        style={{ fontSize: 10, alignSelf: 'center' }}
+        onClick={() => setVisible(false)}
+      />
+    </div>
+  );
+};
+
+const JobListPopoverContent = ({ jobs, setVisible }) => {
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const jobArray = Object.keys(jobs);
 
   return (
     <div style={{ maxHeight: 350 }}>
