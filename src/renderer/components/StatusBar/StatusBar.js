@@ -39,8 +39,8 @@ const EventLogger = () => {
         .map(x => x.trim())
         .filter(x => x.length > 0);
       let last_line = lines[lines.length - 1];
-
-      setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
+      last_line &&
+        setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
     });
 
     socket.on('cea-worker-success', job_info => {
