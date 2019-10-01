@@ -79,6 +79,7 @@ const parameter = (param, form, config = {}) => {
     [
       'ChoiceParameter',
       'PlantNodeParameter',
+      'RegionParameter',
       'ScenarioNameParameter',
       'SingleBuildingParameter'
     ].includes(type)
