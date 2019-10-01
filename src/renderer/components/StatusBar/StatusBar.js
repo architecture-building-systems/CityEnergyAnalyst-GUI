@@ -141,7 +141,6 @@ const JobListPopoverContent = ({ jobs, setVisible }) => {
   useEffect(() => {
     socket.on('cea-job-created', job => {
       openNotification('created', job);
-      dispatch(updateJob(job));
     });
     socket.on('cea-worker-started', job => {
       openNotification('info', job);
