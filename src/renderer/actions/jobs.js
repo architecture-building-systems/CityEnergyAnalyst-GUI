@@ -1,5 +1,21 @@
 import axios from 'axios';
 
+export const FETCH_JOBS = 'FETCH_JOBS';
+export const FETCH_JOBS_SUCCESS = 'FETCH_JOBS_SUCCESS';
+export const FETCH_JOBS_FAILED = 'FETCH_JOBS_FAILED';
+
+export const fetchJobs = () => {
+  return async dispatch => {
+    dispatch({ type: FETCH_JOBS });
+    try {
+      const jobs = await axios.get(`http://localhost:5050/server/jobs/list`);
+      dispatch({ type: FETCH_JOBS_SUCCESS, payload: jobs.data });
+    } catch (error) {
+      dispatch({ type: FETCH_JOBS_FAILED, payload: error });
+    }
+  };
+};
+
 export const CREATE_JOB = 'CREATE_JOB';
 export const CREATE_JOB_SUCCESS = 'CREATE_JOB_SUCCESS';
 export const CREATE_JOB_FAILED = 'CREATE_JOB_FAILED';

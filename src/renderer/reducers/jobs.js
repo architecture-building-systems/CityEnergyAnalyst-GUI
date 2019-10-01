@@ -1,4 +1,6 @@
 import {
+  FETCH_JOBS_SUCCESS,
+  FETCH_JOBS_FAILED,
   CREATE_JOB_SUCCESS,
   CREATE_JOB_FAILED,
   START_JOB_SUCCESS,
@@ -6,19 +8,31 @@ import {
   UPDATE_JOB
 } from '../actions/jobs';
 
-const initialState = {};
+const initialState = null;
 
-const transformPayload = payload => {
+const transformInitialPayload = payload => {
+  const out = {};
+  payload.forEach(job => {
+    const { id, ...props } = job;
+    out[id] = props;
+  });
+  return out;
+};
+
+const transformJobPayload = payload => {
   const { id, ...props } = payload;
   return { [id]: { ...props } };
 };
 
 const jobs = (state = initialState, { type, payload }) => {
   switch (type) {
+    case FETCH_JOBS_SUCCESS:
+      return transformInitialPayload(payload);
     case CREATE_JOB_SUCCESS:
     case UPDATE_JOB:
       console.log(payload);
-      return { ...state, ...transformPayload(payload) };
+      return { ...state, ...transformJobPayload(payload) };
+    case FETCH_JOBS_FAILED:
     case CREATE_JOB_FAILED:
     case START_JOB_SUCCESS:
     case START_JOB_FAILED:
