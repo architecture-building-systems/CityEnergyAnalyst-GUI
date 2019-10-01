@@ -51,7 +51,7 @@ const EventLogger = () => {
       console.log('cea-worker-error: job_info:', job_info);
       setMessage(`jobID: ${job_info.id} - error`);
     });
-  });
+  }, []);
 
   return (
     <StatusBarButton>
