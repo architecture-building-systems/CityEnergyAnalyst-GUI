@@ -11,9 +11,7 @@ const socket = io('http://localhost:5050');
 const StatusBar = () => {
   return (
     <div id="cea-status-bar-container">
-      <div id="cea-status-bar-left">
-        <EventLogger />
-      </div>
+      <div id="cea-status-bar-left"></div>
       <div id="cea-status-bar-right">
         <JobListPopover />
       </div>
@@ -29,7 +27,7 @@ const StatusBarButton = ({ children, ...props }) => {
   );
 };
 
-const EventLogger = () => {
+const JobOutputLogger = () => {
   const [message, setMessage] = useState('Nothing happening...');
 
   useEffect(() => {
@@ -54,9 +52,9 @@ const EventLogger = () => {
   }, []);
 
   return (
-    <StatusBarButton>
-      <div>{message}</div>
-    </StatusBarButton>
+    <React.Fragment>
+      <span>{message}</span>
+    </React.Fragment>
   );
 };
 
@@ -123,12 +121,13 @@ const JobListPopover = () => {
       visible={visible}
     >
       <StatusBarButton onClick={() => setVisible(visible => !visible)}>
+        <JobOutputLogger />
         <Icon
           className="cea-job-list-popover-collapse"
           type="tool"
           theme="filled"
+          style={{ marginLeft: 5 }}
         />
-        <span style={{ marginLeft: 5 }}>{Object.keys(jobs).length}</span>
       </StatusBarButton>
     </Popover>
   ) : null;
