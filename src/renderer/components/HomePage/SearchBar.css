@@ -7,21 +7,19 @@
   overflow: auto;
 }
 
-.cea-search-category {
-  border-bottom: 1px solid #f1f1f1;
-}
-
 .cea-search-category-title {
   user-select: none;
   padding: 5px;
+  background-color: #f1f1f1;
 }
 
 .cea-search-item {
   padding: 12px;
+  border-bottom: 1px solid #f1f1f1;
 }
 
 .cea-search-item:hover {
-  background-color: #eeeeee;
+  background-color: #dddddd;
   cursor: pointer;
 }
 
