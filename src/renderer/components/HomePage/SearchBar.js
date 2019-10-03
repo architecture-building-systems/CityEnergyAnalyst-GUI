@@ -33,12 +33,9 @@ const SearchBar = () => {
     setValue(event.target.value);
   };
 
-  const onBlur = () => {
-    setVisible(false);
-  };
-
   useEffect(() => {
-    value.length > 1 && setVisible(true);
+    if (value.length > 0) setVisible(true);
+    else setVisible(false);
   }, [value]);
 
   return (
@@ -47,7 +44,6 @@ const SearchBar = () => {
         placeholder="Glossary Search"
         suffix={<Icon type="search" />}
         onChange={handleChange}
-        onBlur={onBlur}
       />
       <div className="cea-search-dropdown">
         {visible &&
