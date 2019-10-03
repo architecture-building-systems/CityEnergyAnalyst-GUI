@@ -28,7 +28,7 @@ const StatusBarButton = ({ children, ...props }) => {
 };
 
 const JobOutputLogger = () => {
-  const [message, setMessage] = useState('Nothing happening...');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     socket.on('cea-worker-message', data => {
@@ -51,9 +51,11 @@ const JobOutputLogger = () => {
     });
   }, []);
 
+  if (message.length < 1) return null;
+
   return (
     <React.Fragment>
-      <span>{message}</span>
+      <span style={{ margin: '0 5px' }}>{message}</span>
     </React.Fragment>
   );
 };
@@ -126,7 +128,6 @@ const JobListPopover = () => {
           className="cea-job-list-popover-collapse"
           type="tool"
           theme="filled"
-          style={{ marginLeft: 5 }}
         />
       </StatusBarButton>
     </Popover>
