@@ -165,25 +165,4 @@ const ScenarioMenuItem = ({ children, ...props }) => {
   );
 };
 
-// <Menu
-//   theme="dark"
-//   mode="inline"
-//   style={{ marginTop: 60 }} //, position: 'absolute', bottom: 200 }}
-// >
-//   <SubMenu
-//     key="help"
-//     title={
-//       <span>
-//         <Icon type="info-circle" />
-//         <span>Help</span>
-//       </span>
-//     }
-//   >
-//     <Menu.Item key="Help">
-//       <Icon type="read" />
-//       <span>Docs</span>
-//     </Menu.Item>
-//   </SubMenu>
-// </Menu>
-
 export default SideNav;
