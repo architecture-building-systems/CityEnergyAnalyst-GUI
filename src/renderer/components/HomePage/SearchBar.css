@@ -1,0 +1,30 @@
+.cea-search-dropdown {
+  line-height: normal;
+  margin-top: -10px;
+  max-height: 200px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: auto;
+}
+
+.cea-search-category {
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.cea-search-category-title {
+  user-select: none;
+  padding: 5px;
+}
+
+.cea-search-item {
+  padding: 12px;
+}
+
+.cea-search-item:hover {
+  background-color: #eeeeee;
+  cursor: pointer;
+}
+
+.cea-search-description {
+  margin: 5px 0;
+}

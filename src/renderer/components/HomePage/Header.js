@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Layout, Icon } from 'antd';
+import SearchBar from './Searchbar';
 import { setCollapsed } from '../../actions/homepage';
 import { getProject } from '../../actions/project';
 
@@ -13,6 +14,7 @@ const Header = () => {
 
   return (
     <AntHeader
+      className="cea-home-header"
       style={{
         display: 'flex',
         background: '#fff',
@@ -28,7 +30,7 @@ const Header = () => {
         type={collapsed ? 'menu-unfold' : 'menu-fold'}
         onClick={() => dispatch(setCollapsed(!collapsed))}
       />
-      <div
+      <span
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -43,7 +45,8 @@ const Header = () => {
           <i>Scenario: </i>
           <b>{scenario}</b>
         </span>
-      </div>
+      </span>
+      <SearchBar />
     </AntHeader>
   );
 };
