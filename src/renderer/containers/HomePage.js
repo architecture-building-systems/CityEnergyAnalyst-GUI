@@ -8,10 +8,11 @@ import InputEditor from '../components/InputEditor/InputEditor';
 import Dashboard from '../components/Dashboard/Dashboard';
 import Project from '../components/Project/Project';
 import StatusBar from '../components/StatusBar/StatusBar';
+import Landing from '../components/Landing/Landing';
 
 import routes from '../constants/routes';
 
-const { Footer, Content } = Layout;
+const { Content } = Layout;
 
 const HomePage = () => {
   return (
@@ -35,11 +36,11 @@ const HomePage = () => {
             }}
           >
             <Switch>
-              <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
-              <Route path={routes.INPUT_EDITOR} component={InputEditor} />
-              <Route path="/placeholder" component={PlaceHolder} />
-              <Route path={routes.DASHBOARD} component={Dashboard} />
               <Route path={routes.PROJECT_OVERVIEW} component={Project} />
+              <Route path={routes.INPUT_EDITOR} component={InputEditor} />
+              <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
+              <Route path={routes.DASHBOARD} component={Dashboard} />
+              <Route path={routes.HOME} component={Landing} />
             </Switch>
           </Content>
         </Layout>
@@ -47,10 +48,6 @@ const HomePage = () => {
       <StatusBar />
     </React.Fragment>
   );
-};
-
-const PlaceHolder = () => {
-  return <div>PlaceHolder</div>;
 };
 
 export default HomePage;
