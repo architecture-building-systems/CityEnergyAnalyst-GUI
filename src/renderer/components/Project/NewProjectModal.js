@@ -8,7 +8,12 @@ import axios from 'axios';
 import { getProject } from '../../actions/project';
 import parameter from '../Tools/parameter';
 
-const NewProjectModal = ({ visible, setVisible, project }) => {
+const NewProjectModal = ({
+  visible,
+  setVisible,
+  project,
+  onSuccess = () => {}
+}) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const dispatch = useDispatch();
@@ -31,7 +36,7 @@ const NewProjectModal = ({ visible, setVisible, project }) => {
             }
           );
           console.log(updateProject.data);
-          dispatch(getProject());
+          onSuccess();
           setVisible(false);
         } catch (err) {
           console.log(err.response);
