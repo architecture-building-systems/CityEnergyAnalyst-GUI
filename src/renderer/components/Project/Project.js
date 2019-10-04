@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { ipcRenderer, shell } from 'electron';
+import { shell } from 'electron';
 import path from 'path';
 import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
 import axios from 'axios';
-import { useAsyncData } from '../../utils/hooks';
+import { useAsyncData, useOpenProjectDialog } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 import NewProjectModal from './NewProjectModal';
@@ -23,28 +23,26 @@ const Project = () => {
     dispatch(getProject());
   };
 
+  const openDialog = useOpenProjectDialog(async _path => {
+    if (info.path !== _path) {
+      try {
+        const resp = await axios.put(`http://localhost:5050/api/project/`, {
+          path: _path
+        });
+        console.log(resp.data);
+        reloadProject();
+      } catch (err) {
+        console.log(err.response);
+      }
+    }
+  });
+
   // Get Project Details on mount
   useEffect(() => {
     reloadProject();
   }, []);
 
   // Setup ipcRenderer listener for open project
-  useEffect(() => {
-    ipcRenderer.on('selected-project', async (event, _path) => {
-      if (info.path !== _path) {
-        try {
-          const resp = await axios.put(`http://localhost:5050/api/project/`, {
-            path: _path
-          });
-          console.log(resp.data);
-          reloadProject();
-        } catch (err) {
-          console.log(err.response);
-        }
-      }
-    });
-    return () => ipcRenderer.removeAllListeners(['selected-project']);
-  }, []);
 
   const { name, scenario, scenarios } = info;
 
@@ -56,10 +54,7 @@ const Project = () => {
             <h2>{error || name === '' ? 'No Project found' : name}</h2>
             <div className="cea-project-option-icons">
               <Icon type="plus" onClick={() => setProjectModalVisible(true)} />
-              <Icon
-                type="folder-open"
-                onClick={() => ipcRenderer.send('open-project')}
-              />
+              <Icon type="folder-open" onClick={openDialog} />
               <Icon type="sync" onClick={reloadProject} spin={isFetching} />
             </div>
           </React.Fragment>

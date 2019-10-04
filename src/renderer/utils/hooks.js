@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ipcRenderer } from 'electron';
 import axios from 'axios';
 
 export const useAsyncData = (
@@ -27,4 +28,15 @@ export const useAsyncData = (
   }, [...dependecies]);
 
   return [data, isLoading, error];
+};
+
+export const useOpenProjectDialog = (callback = () => {}) => {
+  useEffect(() => {
+    ipcRenderer.on('selected-project', async (event, _path) => {
+      callback(_path);
+    });
+    return () => ipcRenderer.removeAllListeners(['selected-project']);
+  }, []);
+
+  return () => ipcRenderer.send('open-project');
 };
