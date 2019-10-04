@@ -39,7 +39,7 @@ const SearchBar = () => {
   }, [value]);
 
   return (
-    <div style={{ width: 350, marginLeft: 50 }}>
+    <div style={{ marginLeft: 50 }}>
       <Input
         placeholder="Glossary Search"
         suffix={<Icon type="search" />}

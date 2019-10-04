@@ -10,6 +10,7 @@ const { Header: AntHeader } = Layout;
 const Header = () => {
   const { collapsed } = useSelector(state => state.sider);
   const { name, scenario } = useSelector(state => state.project.info);
+  const { pathname } = useSelector(state => state.router.location);
   const dispatch = useDispatch();
 
   return (
@@ -17,6 +18,7 @@ const Header = () => {
       className="cea-home-header"
       style={{
         display: 'flex',
+        justifyContent: 'space-between',
         background: '#fff',
         position: 'fixed',
         padding: 0,
@@ -25,28 +27,38 @@ const Header = () => {
         boxShadow: '0 3px 4px -6px black'
       }}
     >
-      <Icon
-        className="trigger menu-toggle"
-        type={collapsed ? 'menu-unfold' : 'menu-fold'}
-        onClick={() => dispatch(setCollapsed(!collapsed))}
-      />
-      <span
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center'
-        }}
+      <div className="cea-home-header-left" style={{ display: 'flex' }}>
+        <Icon
+          className="trigger menu-toggle"
+          type={collapsed ? 'menu-unfold' : 'menu-fold'}
+          onClick={() => dispatch(setCollapsed(!collapsed))}
+        />
+        {pathname !== '/' && (
+          <span
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              lineHeight: 'initial'
+            }}
+          >
+            <span>
+              <i>Current Project: </i>
+              <b>{name}</b>
+            </span>
+            <span>
+              <i>Scenario: </i>
+              <b>{scenario}</b>
+            </span>
+          </span>
+        )}
+      </div>
+      <div
+        className="cea-home-header-right"
+        style={{ width: '30%', marginRight: collapsed ? 125 : 300 }}
       >
-        <span style={{ lineHeight: 'initial' }}>
-          <i>Current Project: </i>
-          <b>{name}</b>
-        </span>
-        <span style={{ lineHeight: 'initial' }}>
-          <i>Scenario: </i>
-          <b>{scenario}</b>
-        </span>
-      </span>
-      <SearchBar />
+        <SearchBar />
+      </div>
     </AntHeader>
   );
 };

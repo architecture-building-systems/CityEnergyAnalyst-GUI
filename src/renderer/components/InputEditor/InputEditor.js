@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Map from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
-import { Prompt } from 'react-router';
 import { fetchInputData, resetInputData } from '../../actions/inputEditor';
 import { Tabs, Icon, Modal } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
