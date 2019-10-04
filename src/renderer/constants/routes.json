@@ -3,5 +3,5 @@
   "TOOLS": "/tools",
   "INPUT_EDITOR": "/input-editor",
   "DASHBOARD": "/dashboard",
-  "PROJECT_OVERVIEW": "/"
+  "PROJECT_OVERVIEW": "/project"
 }
