@@ -5,11 +5,12 @@ import { Link } from 'react-router-dom';
 import { Layout, Menu, Icon } from 'antd';
 import { setCollapsed } from '../../actions/homepage';
 import ToolsMenu from './ToolsMenu';
-import logo from './cea-logo.png';
 import routes from '../../constants/routes';
+import { getStatic } from '../../utils/static';
 
 const { Sider } = Layout;
 const { SubMenu } = Menu;
+const logo = getStatic('cea-logo.png');
 
 const SideNav = () => {
   const { collapsed } = useSelector(state => state.sider);
