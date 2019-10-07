@@ -21,8 +21,7 @@ const HomePage = () => {
         <SideNav />
         <Layout
           style={{
-            height: 'calc(100vh - 52px)',
-            minWidth: 500
+            height: 'calc(100vh - 52px)'
           }}
         >
           <Header />
