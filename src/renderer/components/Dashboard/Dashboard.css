@@ -1,6 +1,7 @@
 .row.display-flex {
   display: flex;
   flex-wrap: wrap;
+  margin: unset;
 }
 
 .row.display-flex > [class*='col-'] {
@@ -20,6 +21,10 @@
 
 label.ant-radio-wrapper {
   margin-bottom: 20px;
+}
+
+#cea-dashboard-content {
+  margin: -18px -18px;
 }
 
 .cea-dashboard-title-button-group {

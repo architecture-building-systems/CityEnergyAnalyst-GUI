@@ -12,7 +12,7 @@ import {
 } from '../../actions/dashboard';
 
 const defaultPlotStyle = {
-  height: 'calc(50vh - 180px)',
+  height: 'calc(50vh - 160px)',
   minHeight: 300,
   margin: 5
 };
