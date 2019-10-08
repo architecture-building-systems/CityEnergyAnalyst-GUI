@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { ipcRenderer } from 'electron';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Skeleton,
@@ -8,10 +7,8 @@ import {
   Form,
   Collapse,
   Button,
-  Spin as AntSpin,
-  Icon
+  Spin as AntSpin
 } from 'antd';
-import axios from 'axios';
 import {
   fetchToolParams,
   saveToolParams,
@@ -78,13 +75,6 @@ const Tool = ({ script, formButtons = ToolFormButtons }) => {
 const ToolForm = Form.create()(
   ({ parameters, categoricalParameters, script, formButtons, form }) => {
     const dispatch = useDispatch();
-
-    useEffect(() => {
-      ipcRenderer.on('selected-path', (event, id, path) => {
-        form.setFieldsValue({ [id]: path[0] });
-      });
-      return () => ipcRenderer.removeAllListeners(['selected-path']);
-    }, []);
 
     const getForm = () => {
       let out = {};

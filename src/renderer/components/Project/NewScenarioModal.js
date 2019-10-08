@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { ipcRenderer } from 'electron';
+import { remote } from 'electron';
 import {
   Modal,
   Form,
@@ -96,14 +96,6 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
 };
 
 const NewScenarioForm = Form.create()(({ form, project }) => {
-  // FIXME: ipc listener clash
-  useEffect(() => {
-    ipcRenderer.on('selected-path', (event, id, path) => {
-      form.setFieldsValue({ [id]: path[0] }, () => form.validateFields([id]));
-    });
-    return () => ipcRenderer.removeAllListeners(['selected-path']);
-  }, []);
-
   return (
     <Form>
       <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
@@ -553,7 +545,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
   };
 
   const openDialog = (id, file) => {
-    ipcRenderer.send('open-path-dialog', id, {
+    const options = {
       properties: ['openFile'],
       filters: [
         {
@@ -563,6 +555,11 @@ const ScenarioImportDataForm = ({ form, visible }) => {
           )
         }
       ]
+    };
+    remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
+      if (paths.length) {
+        form.setFieldsValue({ [id]: paths[0] });
+      }
     });
   };
 

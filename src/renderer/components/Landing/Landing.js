@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
+import { remote } from 'electron';
 import { Button, Icon } from 'antd';
 import axios from 'axios';
 import { getStatic } from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
-import { useOpenProjectDialog } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 
@@ -24,17 +24,28 @@ const Landing = () => {
     dispatch(push(routes.PROJECT_OVERVIEW));
   };
 
-  const openDialog = useOpenProjectDialog(async _path => {
-    try {
-      const resp = await axios.put(`http://localhost:5050/api/project/`, {
-        path: _path
-      });
-      console.log(resp.data);
-      goToProjectPage();
-    } catch (err) {
-      console.log(err.response);
-    }
-  });
+  const openDialog = () => {
+    const options = {
+      properties: ['openDirectory']
+    };
+    remote.dialog.showOpenDialog(
+      remote.getCurrentWindow(),
+      options,
+      async paths => {
+        if (paths.length) {
+          try {
+            const resp = await axios.put(`http://localhost:5050/api/project/`, {
+              path: paths[0]
+            });
+            console.log(resp.data);
+            goToProjectPage();
+          } catch (err) {
+            console.log(err.response);
+          }
+        }
+      }
+    );
+  };
 
   return (
     <React.Fragment>

@@ -1,11 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { ipcRenderer } from 'electron';
+import React, { useState, useRef } from 'react';
 import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { getProject } from '../../actions/project';
 import parameter from '../Tools/parameter';
 
 const NewProjectModal = ({
@@ -16,7 +13,6 @@ const NewProjectModal = ({
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
-  const dispatch = useDispatch();
 
   const handleOk = e => {
     formRef.current.validateFields(async (err, values) => {
@@ -67,13 +63,6 @@ const NewProjectModal = ({
 };
 
 const NewProjectForm = Form.create()(({ form, project }) => {
-  // FIXME: ipc listener clash
-  useEffect(() => {
-    ipcRenderer.on('selected-path', (event, id, path) => {
-      form.setFieldsValue({ [id]: path[0] });
-    });
-    return () => ipcRenderer.removeAllListeners(['selected-path']);
-  }, []);
   return (
     <Form layout="horizontal">
       {parameter(

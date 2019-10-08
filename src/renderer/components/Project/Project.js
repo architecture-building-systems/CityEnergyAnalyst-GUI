@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { shell } from 'electron';
+import { shell, remote } from 'electron';
 import path from 'path';
 import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
 import axios from 'axios';
-import { useAsyncData, useOpenProjectDialog } from '../../utils/hooks';
+import { useAsyncData } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 import NewProjectModal from './NewProjectModal';
@@ -23,26 +23,38 @@ const Project = () => {
     dispatch(getProject());
   };
 
-  const openDialog = useOpenProjectDialog(async _path => {
-    if (info.path !== _path) {
-      try {
-        const resp = await axios.put(`http://localhost:5050/api/project/`, {
-          path: _path
-        });
-        console.log(resp.data);
-        reloadProject();
-      } catch (err) {
-        console.log(err.response);
+  const openDialog = () => {
+    const options = {
+      properties: ['openDirectory']
+    };
+    remote.dialog.showOpenDialog(
+      remote.getCurrentWindow(),
+      options,
+      async paths => {
+        if (paths.length) {
+          if (info.path !== paths[0]) {
+            try {
+              const resp = await axios.put(
+                `http://localhost:5050/api/project/`,
+                {
+                  path: paths[0]
+                }
+              );
+              console.log(resp.data);
+              reloadProject();
+            } catch (err) {
+              console.log(err.response);
+            }
+          }
+        }
       }
-    }
-  });
+    );
+  };
 
   // Get Project Details on mount
   useEffect(() => {
     reloadProject();
   }, []);
-
-  // Setup ipcRenderer listener for open project
 
   const { name, scenario, scenarios } = info;
 

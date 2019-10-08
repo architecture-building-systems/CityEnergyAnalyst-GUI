@@ -75,27 +75,6 @@ app.on('activate', () => {
 
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
-  mainWindow = createMainWindow();
-});
-
-/**
- * Add IPC listeners...
- */
-
-ipcMain.on('open-path-dialog', (event, id, options) => {
-  dialog.showOpenDialog(mainWindow, options, path => {
-    if (path) {
-      event.sender.send('selected-path', id, path);
-    }
-  });
-});
-
-ipcMain.on('open-project', event => {
-  dialog.showOpenDialog(
-    mainWindow,
-    {
-      properties: ['openDirectory']
-    },
     path => {
       if (path && path.length) {
         event.sender.send('selected-project', path[0]);

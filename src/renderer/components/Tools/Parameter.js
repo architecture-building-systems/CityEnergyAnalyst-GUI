@@ -1,5 +1,5 @@
 import React from 'react';
-import { ipcRenderer } from 'electron';
+import { remote } from 'electron';
 import fs from 'fs';
 import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
 
@@ -11,7 +11,11 @@ const parameter = (param, form, config = {}) => {
       type === 'PathParameter'
         ? { properties: ['openDirectory'] }
         : { properties: ['openFile'] };
-    ipcRenderer.send('open-path-dialog', name, options);
+    remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
+      if (paths.length) {
+        form.setFieldsValue({ [name]: paths[0] });
+      }
+    });
   };
 
   let input = [];
