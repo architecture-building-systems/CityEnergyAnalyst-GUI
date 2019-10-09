@@ -77,7 +77,7 @@ const ToolForm = Form.create()(
     const dispatch = useDispatch();
 
     const getForm = () => {
-      let out = {};
+      let out = null;
       form.validateFields((err, values) => {
         if (!err) {
           const index = parameters.findIndex(
@@ -98,9 +98,15 @@ const ToolForm = Form.create()(
     const withFormFunctions = FormButtons => props => {
       if (FormButtons === null) return null;
 
-      const runScript = () => dispatch(createJob(script, getForm()));
+      const runScript = () => {
+        const values = getForm();
+        values && dispatch(createJob(script, values));
+      };
 
-      const saveParams = () => dispatch(saveToolParams(script, getForm()));
+      const saveParams = () => {
+        const values = getForm();
+        values && dispatch(saveToolParams(script, values));
+      };
 
       const setDefault = () => dispatch(setDefaultToolParams(script));
 
