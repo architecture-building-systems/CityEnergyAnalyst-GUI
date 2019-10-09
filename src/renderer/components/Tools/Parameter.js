@@ -170,6 +170,7 @@ const parameter = (param, form, config = {}) => {
       <React.Fragment>
         {getFieldDecorator(name, {
           initialValue: value,
+          rules: [{ required: true }],
           ...config
         })(
           <Select
