@@ -16,9 +16,11 @@ const ToolModal = ({ tool, visible, setVisible }) => {
     });
 
     const saveToConfig = async () => {
-      await saveParams();
-      if (error === null) {
-        message.success('Settings saved to config', hideModal);
+      if (getForm()) {
+        await saveParams();
+        if (error === null) {
+          message.success('Settings saved to config');
+        }
       }
     };
 
@@ -49,6 +51,7 @@ const ToolModal = ({ tool, visible, setVisible }) => {
       footer={false}
       onCancel={hideModal}
       closable={false}
+      destroyOnClose
     >
       <div id="cea-tool-modal">
         <Tool script={tool} formButtons={formButtons}></Tool>
