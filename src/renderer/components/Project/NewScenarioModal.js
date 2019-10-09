@@ -206,7 +206,6 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
             <div style={{ margin: 10 }}>
               <Row>
                 <Checkbox value="zone">Zone</Checkbox>
-                <Icon type="info-circle" />
                 <Icon type="setting" onClick={() => showModal('zone-helper')} />
               </Row>
               <small>- Query zone geometry from Open Street Maps.</small>
@@ -217,7 +216,6 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="district" disabled={!zoneChecked}>
                   District
                 </Checkbox>
-                <Icon type="info-circle" />
                 <Icon
                   type="setting"
                   onClick={() => showModal('district-helper')}
@@ -225,6 +223,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <small
                   style={{
                     color: 'red',
+                    marginLeft: 10,
                     display: zoneChecked ? 'none' : ''
                   }}
                 >
@@ -239,7 +238,6 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="streets" disabled={!districtChecked}>
                   Streets
                 </Checkbox>
-                <Icon type="info-circle" />
                 <Icon
                   type="setting"
                   onClick={() => showModal('streets-helper')}
@@ -247,6 +245,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <small
                   style={{
                     color: 'red',
+                    marginLeft: 10,
                     display: districtChecked ? 'none' : ''
                   }}
                 >
@@ -261,7 +260,6 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="terrain" disabled={!districtChecked}>
                   Terrain
                 </Checkbox>
-                <Icon type="info-circle" />
                 <Icon
                   type="setting"
                   onClick={() => showModal('terrain-helper')}
@@ -269,6 +267,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <small
                   style={{
                     color: 'red',
+                    marginLeft: 10,
                     display: districtChecked ? 'none' : ''
                   }}
                 >
@@ -281,7 +280,6 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
             <div style={{ margin: 10 }}>
               <Row>
                 <Checkbox value="weather">Weather</Checkbox>
-                <Icon type="info-circle" />
                 <Icon
                   type="setting"
                   onClick={() => showModal('weather-helper')}
