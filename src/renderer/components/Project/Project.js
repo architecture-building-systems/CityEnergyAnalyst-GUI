@@ -64,10 +64,25 @@ const Project = () => {
         title={
           <React.Fragment>
             <h2>{error || name === '' ? 'No Project found' : name}</h2>
-            <div className="cea-project-option-icons">
-              <Icon type="plus" onClick={() => setProjectModalVisible(true)} />
-              <Icon type="folder-open" onClick={openDialog} />
-              <Icon type="sync" onClick={reloadProject} spin={isFetching} />
+            <div className="cea-project-options">
+              <Button
+                icon="plus"
+                size="small"
+                onClick={() => setProjectModalVisible(true)}
+              >
+                Create Project
+              </Button>
+              <Button icon="folder-open" size="small" onClick={openDialog}>
+                Open Project
+              </Button>
+              <Button
+                icon="sync"
+                size="small"
+                onClick={reloadProject}
+                loading={isFetching}
+              >
+                Refresh
+              </Button>
             </div>
           </React.Fragment>
         }

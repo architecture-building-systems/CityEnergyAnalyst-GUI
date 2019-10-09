@@ -2,8 +2,8 @@
   cursor: pointer;
 }
 
-.cea-project-option-icons .anticon {
-  margin: 0 10px;
+.cea-project-options button {
+  margin-right: 10px;
 }
 
 .scenario-edit-button > div > div > .ant-dropdown {
