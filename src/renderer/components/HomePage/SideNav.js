@@ -113,6 +113,17 @@ const SideNav = () => {
             }
           >
             <Menu.Item
+              key="blog-tutorials"
+              onClick={() =>
+                shell.openExternal('https://cityenergyanalyst.com/blog-1')
+              }
+            >
+              <span>
+                <Icon type="read" />
+                <span>Blog Tutorials</span>
+              </span>
+            </Menu.Item>
+            <Menu.Item
               key="documentation"
               onClick={() =>
                 shell.openExternal(
