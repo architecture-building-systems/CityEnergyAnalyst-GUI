@@ -1,4 +1,4 @@
-# cea-electron
+# City Energy Analyst Dashboard
 
 This is the new interface of CEA in Electron.
 
