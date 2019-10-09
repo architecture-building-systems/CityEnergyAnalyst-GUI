@@ -170,13 +170,6 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
   };
 
   const handleChange = checkedValue => {
-    if (!checkedValue.includes('zone')) {
-      setTimeout(() => {
-        form.setFieldsValue({
-          tools: checkedValue.filter(element => element === 'weather')
-        });
-      }, 0);
-    }
     if (!checkedValue.includes('district')) {
       setTimeout(() => {
         form.setFieldsValue({
@@ -200,13 +193,22 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
         wrapperCol={{ span: 11, offset: 1 }}
       >
         {form.getFieldDecorator('tools', {
-          initialValue: []
+          initialValue: ['zone']
         })(
           <Checkbox.Group onChange={handleChange}>
             <div style={{ margin: 10 }}>
               <Row>
-                <Checkbox value="zone">Zone</Checkbox>
+                <Checkbox value="zone" disabled>
+                  Zone
+                </Checkbox>
                 <Icon type="setting" onClick={() => showModal('zone-helper')} />
+                <small
+                  style={{
+                    marginLeft: 10
+                  }}
+                >
+                  *Selected by default
+                </small>
               </Row>
               <small>- Query zone geometry from Open Street Maps.</small>
             </div>
