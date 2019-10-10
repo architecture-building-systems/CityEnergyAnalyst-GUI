@@ -4,7 +4,7 @@ import { push } from 'connected-react-router';
 import { remote } from 'electron';
 import { Button, Icon } from 'antd';
 import axios from 'axios';
-import { getStatic } from '../../utils/static';
+import getStatic from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';

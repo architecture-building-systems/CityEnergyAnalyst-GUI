@@ -6,7 +6,7 @@ import { Layout, Menu, Icon } from 'antd';
 import { setCollapsed } from '../../actions/homepage';
 import ToolsMenu from './ToolsMenu';
 import routes from '../../constants/routes';
-import { getStatic } from '../../utils/static';
+import getStatic from '../../utils/static';
 
 const { Sider } = Layout;
 const { SubMenu } = Menu;
