@@ -31,7 +31,7 @@ export const ModalNewDashboard = React.memo(
           setConfirmLoading(true);
           console.log('Received values of form: ', values);
           axios
-            .post(`http://localhost:5050/api/dashboard/new`, values)
+            .post(`http://localhost:5050/api/dashboards/`, values)
             .then(response => {
               if (response) {
                 console.log(response.data);
@@ -139,7 +139,7 @@ export const ModalDuplicateDashboard = React.memo(
           setConfirmLoading(true);
           console.log('Received values of form: ', values);
           axios
-            .post(`http://localhost:5050/api/dashboard/duplicate`, {
+            .post(`http://localhost:5050/api/dashboards/duplicate`, {
               ...values,
               dashboard_index: dashIndex
             })
@@ -226,10 +226,7 @@ export const ModalSetScenario = React.memo(({ dashIndex }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .post(
-            `http://localhost:5050/api/dashboard/set-scenario/${dashIndex}`,
-            values
-          )
+          .patch(`http://localhost:5050/api/dashboards/${dashIndex}`, values)
           .then(response => {
             if (response) {
               console.log(response.data);
@@ -297,7 +294,7 @@ export const ModalDeleteDashboard = React.memo(
     const handleOk = e => {
       setConfirmLoading(true);
       axios
-        .post(`http://localhost:5050/api/dashboard/delete/${dashIndex}`)
+        .delete(`http://localhost:5050/api/dashboards/${dashIndex}`)
         .then(response => {
           if (response) {
             console.log(response.data);
@@ -347,8 +344,8 @@ export const ModalAddPlot = React.memo(() => {
   const handleOk = e => {
     setConfirmLoading(true);
     axios
-      .post(
-        `http://localhost:5050/api/dashboard/add-plot/${dashIndex}/${index}`,
+      .put(
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}`,
         values
       )
       .then(response => {
@@ -372,7 +369,7 @@ export const ModalAddPlot = React.memo(() => {
   useEffect(() => {
     if (visible) {
       axios
-        .get('http://localhost:5050/api/dashboard/plot-categories')
+        .get('http://localhost:5050/api/dashboards/plot-categories')
         .then(response => {
           setCategories(response.data);
         });
@@ -407,8 +404,8 @@ export const ModalChangePlot = React.memo(() => {
   const handleOk = e => {
     setConfirmLoading(true);
     axios
-      .post(
-        `http://localhost:5050/api/dashboard/change-plot/${dashIndex}/${index}`,
+      .put(
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}`,
         values
       )
       .then(response => {
@@ -432,7 +429,7 @@ export const ModalChangePlot = React.memo(() => {
   useEffect(() => {
     if (visible) {
       axios
-        .get('http://localhost:5050/api/dashboard/plot-categories')
+        .get('http://localhost:5050/api/dashboards/plot-categories')
         .then(response => {
           setCategories(response.data);
         });
@@ -524,8 +521,8 @@ export const ModalEditParameters = React.memo(() => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .post(
-            `http://localhost:5050/api/dashboard/plot-parameters/${dashIndex}/${index}`,
+          .put(
+            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}/parameters`,
             values
           )
           .then(response => {
@@ -552,7 +549,7 @@ export const ModalEditParameters = React.memo(() => {
     if (visible) {
       axios
         .get(
-          `http://localhost:5050/api/dashboard/plot-parameters/${dashIndex}/${index}`
+          `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}/parameters`
         )
         .then(response => {
           setParameters(response.data);
@@ -598,8 +595,8 @@ export const ModalDeletePlot = React.memo(() => {
   const handleOk = e => {
     setConfirmLoading(true);
     axios
-      .post(
-        `http://localhost:5050/api/dashboard/delete-plot/${dashIndex}/${index}`
+      .delete(
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}`
       )
       .then(response => {
         if (response) {

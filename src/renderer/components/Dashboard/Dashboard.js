@@ -62,7 +62,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (fetchingDashboards) {
-      axios.get('http://localhost:5050/api/dashboard/').then(response => {
+      axios.get('http://localhost:5050/api/dashboards/').then(response => {
         setDashboards(response.data);
         dispatch(fetchDashboards(false));
       });
