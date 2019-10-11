@@ -6,7 +6,8 @@
     "react-map-gl",
     "react-router",
     "react-router-dom",
-    "nebula.gl"
+    "nebula.gl",
+    "react-spring"
   ],
   "renderer": {
     "webpackConfig": "webpack.renderer.js"
