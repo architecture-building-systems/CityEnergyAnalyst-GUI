@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { shell, remote } from 'electron';
@@ -15,12 +15,20 @@ import './Project.css';
 
 const Project = () => {
   const { isFetching, error, info } = useSelector(state => state.project);
+  const activeScenario = useRef();
   const [isProjectModalVisible, setProjectModalVisible] = useState(false);
   const [isScenarioModalVisible, setScenarioModalVisible] = useState(false);
+  const [isRenameModalVisible, setRenameModalVisible] = useState(false);
+
   const dispatch = useDispatch();
 
   const reloadProject = () => {
     dispatch(getProject());
+  };
+
+  const showRenameModal = scenario => {
+    activeScenario.current = scenario;
+    setRenameModalVisible(true);
   };
 
   const openDialog = () => {
@@ -109,6 +117,7 @@ const Project = () => {
             scenario={scenario}
             projectPath={info.path}
             current={true}
+            showRenameModal={showRenameModal}
           />
         )}
         {scenarios.map(_scenario =>
@@ -117,6 +126,7 @@ const Project = () => {
               key={`${name}-${_scenario}`}
               scenario={_scenario}
               projectPath={info.path}
+              showRenameModal={showRenameModal}
             />
           ) : null
         )}
@@ -132,17 +142,27 @@ const Project = () => {
         setVisible={setScenarioModalVisible}
         project={info}
       />
+      <RenameScenarioModal
+        scenario={activeScenario.current}
+        projectPath={info.path}
+        visible={isRenameModalVisible}
+        setVisible={setRenameModalVisible}
+      />
     </div>
   );
 };
 
-const ScenarioCard = ({ scenario, projectPath, current = false }) => {
+const ScenarioCard = ({
+  scenario,
+  projectPath,
+  showRenameModal,
+  current = false
+}) => {
   const [image, isLoading, error] = useAsyncData(
     `http://localhost:5050/api/project/scenario/${scenario}/image`,
     { image: null },
     [scenario]
   );
-  const [isRenameModalVisible, setRenameModalVisible] = useState(false);
   const dispatch = useDispatch();
 
   const showConfirm = () => {
@@ -213,7 +233,7 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
 
   const editMenu = (
     <Menu>
-      <Menu.Item key="rename" onClick={() => setRenameModalVisible(true)}>
+      <Menu.Item key="rename" onClick={() => showRenameModal(scenario)}>
         Rename
       </Menu.Item>
       <Menu.Divider />
@@ -279,12 +299,6 @@ const ScenarioCard = ({ scenario, projectPath, current = false }) => {
           </div>
         </Col>
       </Row>
-      <RenameScenarioModal
-        scenario={scenario}
-        projectPath={projectPath}
-        visible={isRenameModalVisible}
-        setVisible={setRenameModalVisible}
-      />
     </Card>
   );
 };
