@@ -325,63 +325,7 @@ export const ModalDeleteDashboard = ({
   );
 };
 
-export const ModalAddPlot = ({ fetchDashboards, dashIndex, activePlotRef }) => {
-  const [categories, setCategories] = useState(null);
-  const [confirmLoading, setConfirmLoading] = useState(false);
-  const { modals, setModalVisible, visible } = useContext(ModalContext);
-  const [values, setValues] = useState({ category: null, plot_id: null });
-
-  const handleValue = useCallback(values => setValues(values), []);
-
-  const handleOk = e => {
-    setConfirmLoading(true);
-    axios
-      .put(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
-        values
-      )
-      .then(response => {
-        if (response) {
-          console.log(response.data);
-          fetchDashboards();
-          setConfirmLoading(false);
-          setModalVisible(modals.addPlot, false);
-        }
-      })
-      .catch(error => {
-        setConfirmLoading(false);
-        console.log(error.response);
-      });
-  };
-
-  const handleCancel = e => {
-    setModalVisible(modals.newDashboard, false);
-  };
-
-  useEffect(() => {
-    axios
-      .get('http://localhost:5050/api/dashboards/plot-categories')
-      .then(response => {
-        setCategories(response.data);
-      });
-  }, []);
-
-  return (
-    <Modal
-      title="Add plot"
-      visible={visible.addPlot}
-      width={800}
-      onOk={handleOk}
-      onCancel={handleCancel}
-      okButtonProps={{ disabled: categories === null }}
-      confirmLoading={confirmLoading}
-    >
-      <CategoriesForm categories={categories} setValues={handleValue} />
-    </Modal>
-  );
-};
-
-export const ModalChangePlot = ({
+const modalAddPlotTemplate = type => ({
   fetchDashboards,
   dashIndex,
   activePlotRef
@@ -405,7 +349,10 @@ export const ModalChangePlot = ({
           console.log(response.data);
           fetchDashboards();
           setConfirmLoading(false);
-          setModalVisible(modals.changePlot, false);
+          setModalVisible(
+            type === 'add' ? modals.addPlot : modals.changePlot,
+            false
+          );
         }
       })
       .catch(error => {
@@ -415,7 +362,7 @@ export const ModalChangePlot = ({
   };
 
   const handleCancel = e => {
-    setModalVisible(modals.changePlot, false);
+    setModalVisible(type === 'add' ? modals.addPlot : modals.changePlot, false);
   };
 
   useEffect(() => {
@@ -428,8 +375,8 @@ export const ModalChangePlot = ({
 
   return (
     <Modal
-      title="Change Plot"
-      visible={visible.changePlot}
+      title={type === 'add' ? 'Add Plot' : 'Change Plot'}
+      visible={type === 'add' ? visible.addPlot : visible.changePlot}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -440,6 +387,9 @@ export const ModalChangePlot = ({
     </Modal>
   );
 };
+
+export const ModalAddPlot = modalAddPlotTemplate('add');
+export const ModalChangePlot = modalAddPlotTemplate('change');
 
 const CategoriesForm = Form.create()(({ categories, setValues }) => {
   if (categories === null) return null;
