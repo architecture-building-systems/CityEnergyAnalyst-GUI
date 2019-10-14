@@ -5,7 +5,6 @@ import sider from './homepage';
 import project from './project';
 import { toolList, toolParams, toolSaving } from './tools';
 import inputData from './inputEditor';
-import dashboard from './dashboard';
 import jobs from './jobs';
 
 export default function createRootReducer(history) {
@@ -17,7 +16,6 @@ export default function createRootReducer(history) {
     toolParams,
     toolSaving,
     inputData,
-    dashboard,
     jobs
   });
 }
