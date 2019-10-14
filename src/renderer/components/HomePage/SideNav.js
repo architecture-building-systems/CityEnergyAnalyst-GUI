@@ -66,13 +66,15 @@ const SideNav = () => {
           selectedKeys={[selectedKey]}
           style={{ width: '100%' }}
         >
-          <Menu.Item key={routes.PROJECT_OVERVIEW}>
-            <span>
-              <Icon type="project" />
-              <span>Project Overview</span>
-            </span>
-            <Link to={routes.PROJECT_OVERVIEW} />
-          </Menu.Item>
+          {selectedKey !== '/' && (
+            <Menu.Item key={routes.PROJECT_OVERVIEW}>
+              <span>
+                <Icon type="project" />
+                <span>Project Overview</span>
+              </span>
+              <Link to={routes.PROJECT_OVERVIEW} />
+            </Menu.Item>
+          )}
 
           <ScenarioMenuItem key={routes.INPUT_EDITOR}>
             <Menu.Item>
