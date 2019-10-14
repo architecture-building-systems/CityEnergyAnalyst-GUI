@@ -1,79 +1,76 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useContext
+} from 'react';
 import { Modal, Form, Select, Input, Radio } from 'antd';
 import axios from 'axios';
-import {
-  fetchDashboards,
-  setModalSetScenarioVisibility,
-  setModalNewDashboardVisibility,
-  setModalDuplicateDashboardVisibility,
-  setModalAddPlotVisibility,
-  setModalEditParametersVisibility,
-  setModalDeletePlotVisibility,
-  setModalChangePlotVisibility,
-  setModalDeleteDashboardVisibility
-} from '../../actions/dashboard';
 import parameter from '../Tools/parameter';
+import { ModalContext } from '../../utils/ModalManager';
 
 const { Option } = Select;
 
-export const ModalNewDashboard = React.memo(
-  ({ setDashIndex, dashboardNames }) => {
-    const [confirmLoading, setConfirmLoading] = useState(false);
-    const [newDashIndex, setNewDashIndex] = useState(null);
-    const visible = useSelector(state => state.dashboard.showModalNewDashboard);
-    const formRef = useRef();
-    const dispatch = useDispatch();
+export const ModalNewDashboard = ({
+  fetchDashboards,
+  setDashIndex,
+  dashboardNames
+}) => {
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [newDashIndex, setNewDashIndex] = useState(null);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
+  const formRef = useRef();
 
-    const handleOk = e => {
-      formRef.current.validateFields((err, values) => {
-        if (!err) {
-          setConfirmLoading(true);
-          console.log('Received values of form: ', values);
-          axios
-            .post(`http://localhost:5050/api/dashboards/`, values)
-            .then(response => {
-              if (response) {
-                console.log(response.data);
-                dispatch(fetchDashboards(true));
-                setConfirmLoading(false);
-                dispatch(setModalNewDashboardVisibility(false));
-                setNewDashIndex(response.data.new_dashboard_index);
-              }
-            })
-            .catch(error => {
+  const handleOk = e => {
+    formRef.current.validateFields((err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        console.log('Received values of form: ', values);
+        axios
+          .post(`http://localhost:5050/api/dashboards/`, values)
+          .then(response => {
+            if (response) {
+              console.log(response.data);
+              fetchDashboards();
               setConfirmLoading(false);
-              console.log(error.response);
-            });
-        }
-      });
-    };
-
-    const handleCancel = e => {
-      dispatch(setModalNewDashboardVisibility(false));
-    };
-
-    useEffect(() => {
-      if (newDashIndex !== null) {
-        setDashIndex(newDashIndex);
-        setNewDashIndex(null);
+              setModalVisible(modals.newDashboard, false);
+              setNewDashIndex(response.data.new_dashboard_index);
+            }
+          })
+          .catch(error => {
+            setConfirmLoading(false);
+            console.log(error.response);
+          });
       }
-    }, [dashboardNames]);
+    });
+  };
 
-    return (
-      <Modal
-        title="New Dashboard"
-        visible={visible}
-        width={800}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        confirmLoading={confirmLoading}
-      >
-        {visible ? <DashForm ref={formRef} /> : null}
-      </Modal>
-    );
-  }
-);
+  const handleCancel = e => {
+    setModalVisible(modals.newDashboard, false);
+  };
+
+  useEffect(() => {
+    if (newDashIndex !== null) {
+      setDashIndex(newDashIndex);
+      setNewDashIndex(null);
+    }
+  }, [dashboardNames]);
+
+  return (
+    <Modal
+      title="New Dashboard"
+      visible={visible.newDashboard}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+      destroyOnClose
+    >
+      <DashForm ref={formRef} />
+    </Modal>
+  );
+};
 
 const DashForm = Form.create()(({ form }) => {
   const { getFieldDecorator } = form;
@@ -123,73 +120,72 @@ const DashForm = Form.create()(({ form }) => {
   );
 });
 
-export const ModalDuplicateDashboard = React.memo(
-  ({ dashIndex, setDashIndex, dashboardNames }) => {
-    const [confirmLoading, setConfirmLoading] = useState(false);
-    const [newDashIndex, setNewDashIndex] = useState(null);
-    const visible = useSelector(
-      state => state.dashboard.showModalDuplicateDashboard
-    );
-    const formRef = useRef();
-    const dispatch = useDispatch();
+export const ModalDuplicateDashboard = ({
+  fetchDashboards,
+  dashIndex,
+  setDashIndex,
+  dashboardNames
+}) => {
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [newDashIndex, setNewDashIndex] = useState(null);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
+  const formRef = useRef();
 
-    const handleOk = e => {
-      formRef.current.validateFields((err, values) => {
-        if (!err) {
-          setConfirmLoading(true);
-          console.log('Received values of form: ', values);
-          axios
-            .post(`http://localhost:5050/api/dashboards/duplicate`, {
-              ...values,
-              dashboard_index: dashIndex
-            })
-            .then(response => {
-              if (response) {
-                console.log(response.data);
-                dispatch(fetchDashboards(true));
-                setConfirmLoading(false);
-                dispatch(setModalDuplicateDashboardVisibility(false));
-                setNewDashIndex(response.data.new_dashboard_index);
-              }
-            })
-            .catch(error => {
+  const handleOk = e => {
+    formRef.current.validateFields((err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        console.log('Received values of form: ', values);
+        axios
+          .post(`http://localhost:5050/api/dashboards/duplicate`, {
+            ...values,
+            dashboard_index: dashIndex
+          })
+          .then(response => {
+            if (response) {
+              console.log(response.data);
+              fetchDashboards();
               setConfirmLoading(false);
-              console.log(error.response);
-            });
-        }
-      });
-    };
-
-    const handleCancel = e => {
-      dispatch(setModalDuplicateDashboardVisibility(false));
-    };
-
-    useEffect(() => {
-      if (newDashIndex !== null) {
-        setDashIndex(newDashIndex);
-        setNewDashIndex(null);
+              setModalVisible(modals.duplicateDashboard, false);
+              setNewDashIndex(response.data.new_dashboard_index);
+            }
+          })
+          .catch(error => {
+            setConfirmLoading(false);
+            console.log(error.response);
+          });
       }
-    }, [dashboardNames]);
+    });
+  };
 
-    return (
-      <Modal
-        title="Duplicate Dashboard"
-        visible={visible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        confirmLoading={confirmLoading}
-      >
-        {visible ? (
-          <DashDuplicateForm
-            ref={formRef}
-            dashIndex={dashIndex}
-            dashboardNames={dashboardNames}
-          />
-        ) : null}
-      </Modal>
-    );
-  }
-);
+  const handleCancel = e => {
+    setModalVisible(modals.duplicateDashboard, false);
+  };
+
+  useEffect(() => {
+    if (newDashIndex !== null) {
+      setDashIndex(newDashIndex);
+      setNewDashIndex(null);
+    }
+  }, [dashboardNames]);
+
+  return (
+    <Modal
+      title="Duplicate Dashboard"
+      visible={visible.duplicateDashboard}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+      destroyOnClose
+    >
+      <DashDuplicateForm
+        ref={formRef}
+        dashIndex={dashIndex}
+        dashboardNames={dashboardNames}
+      />
+    </Modal>
+  );
+};
 
 const DashDuplicateForm = Form.create()(
   ({ form, dashIndex, dashboardNames }) => {
@@ -213,12 +209,11 @@ const DashDuplicateForm = Form.create()(
   }
 );
 
-export const ModalSetScenario = React.memo(({ dashIndex }) => {
+export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
   const [scenarios, setScenarios] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const visible = useSelector(state => state.dashboard.showModalSetScenario);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
-  const dispatch = useDispatch();
 
   const handleOk = e => {
     formRef.current.validateFields((err, values) => {
@@ -230,9 +225,9 @@ export const ModalSetScenario = React.memo(({ dashIndex }) => {
           .then(response => {
             if (response) {
               console.log(response.data);
-              dispatch(fetchDashboards(true));
+              fetchDashboards();
               setConfirmLoading(false);
-              dispatch(setModalSetScenarioVisibility(false));
+              setModalVisible(modals.setScenario, false);
             }
           })
           .catch(error => {
@@ -244,11 +239,11 @@ export const ModalSetScenario = React.memo(({ dashIndex }) => {
   };
 
   const handleCancel = e => {
-    dispatch(setModalSetScenarioVisibility(false));
+    setModalVisible(modals.setScenario, false);
   };
 
   useEffect(() => {
-    if (visible) {
+    if (visible.setScenario) {
       axios.get('http://localhost:5050/api/project/').then(response => {
         const { scenario, scenarios } = response.data;
         setScenarios({
@@ -260,12 +255,12 @@ export const ModalSetScenario = React.memo(({ dashIndex }) => {
         });
       });
     } else setScenarios(null);
-  }, [visible]);
+  }, [visible.setScenario]);
 
   return (
     <Modal
       title="Set Scenario"
-      visible={visible}
+      visible={visible.setScenario}
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
@@ -273,7 +268,7 @@ export const ModalSetScenario = React.memo(({ dashIndex }) => {
       <SetScenarioForm ref={formRef} scenarios={scenarios} />
     </Modal>
   );
-});
+};
 
 const SetScenarioForm = Form.create()(({ form, scenarios }) => {
   return (
@@ -283,77 +278,25 @@ const SetScenarioForm = Form.create()(({ form, scenarios }) => {
   );
 });
 
-export const ModalDeleteDashboard = React.memo(
-  ({ dashIndex, setDashIndex }) => {
-    const [confirmLoading, setConfirmLoading] = useState(false);
-    const visible = useSelector(
-      state => state.dashboard.showModalDeleteDashboard
-    );
-    const dispatch = useDispatch();
-
-    const handleOk = e => {
-      setConfirmLoading(true);
-      axios
-        .delete(`http://localhost:5050/api/dashboards/${dashIndex}`)
-        .then(response => {
-          if (response) {
-            console.log(response.data);
-            setDashIndex(0);
-            dispatch(fetchDashboards(true));
-            setConfirmLoading(false);
-            dispatch(setModalDeleteDashboardVisibility(false));
-          }
-        })
-        .catch(error => {
-          setConfirmLoading(false);
-          console.log(error.response);
-        });
-    };
-
-    const handleCancel = e => {
-      dispatch(setModalDeleteDashboardVisibility(false));
-    };
-
-    return (
-      <Modal
-        title="Delete Dashboard"
-        visible={visible}
-        width={800}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        confirmLoading={confirmLoading}
-        okText="Delete"
-        okButtonProps={{ type: 'danger' }}
-      >
-        Are you sure you want to delete this dashboard?
-      </Modal>
-    );
-  }
-);
-
-export const ModalAddPlot = React.memo(() => {
-  const [categories, setCategories] = useState(null);
+export const ModalDeleteDashboard = ({
+  fetchDashboards,
+  dashIndex,
+  setDashIndex
+}) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const [values, setValues] = useState({ category: null, plot_id: null });
-  const visible = useSelector(state => state.dashboard.showModalAddPlot);
-  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
-  const dispatch = useDispatch();
-
-  const handleValue = useCallback(values => setValues(values), []);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
 
   const handleOk = e => {
     setConfirmLoading(true);
     axios
-      .put(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}`,
-        values
-      )
+      .delete(`http://localhost:5050/api/dashboards/${dashIndex}`)
       .then(response => {
         if (response) {
           console.log(response.data);
-          dispatch(fetchDashboards(true));
+          setDashIndex(0);
+          fetchDashboards();
           setConfirmLoading(false);
-          dispatch(setModalAddPlotVisibility(false));
+          setModalVisible(modals.deleteDashboard, false);
         }
       })
       .catch(error => {
@@ -363,23 +306,70 @@ export const ModalAddPlot = React.memo(() => {
   };
 
   const handleCancel = e => {
-    dispatch(setModalAddPlotVisibility(false));
+    setModalVisible(modals.deleteDashboard, false);
+  };
+
+  return (
+    <Modal
+      title="Delete Dashboard"
+      visible={visible.deleteDashboard}
+      width={800}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      confirmLoading={confirmLoading}
+      okText="Delete"
+      okButtonProps={{ type: 'danger' }}
+    >
+      Are you sure you want to delete this dashboard?
+    </Modal>
+  );
+};
+
+export const ModalAddPlot = ({ fetchDashboards, dashIndex, activePlotRef }) => {
+  const [categories, setCategories] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
+  const [values, setValues] = useState({ category: null, plot_id: null });
+
+  const handleValue = useCallback(values => setValues(values), []);
+
+  const handleOk = e => {
+    setConfirmLoading(true);
+    axios
+      .put(
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+        values
+      )
+      .then(response => {
+        if (response) {
+          console.log(response.data);
+          fetchDashboards();
+          setConfirmLoading(false);
+          setModalVisible(modals.addPlot, false);
+        }
+      })
+      .catch(error => {
+        setConfirmLoading(false);
+        console.log(error.response);
+      });
+  };
+
+  const handleCancel = e => {
+    setModalVisible(modals.newDashboard, false);
   };
 
   useEffect(() => {
-    if (visible) {
-      axios
-        .get('http://localhost:5050/api/dashboards/plot-categories')
-        .then(response => {
-          setCategories(response.data);
-        });
-    } else setCategories(null);
-  }, [visible]);
+    axios
+      .get('http://localhost:5050/api/dashboards/plot-categories')
+      .then(response => {
+        setCategories(response.data);
+      });
+  }, []);
 
   return (
     <Modal
       title="Add plot"
-      visible={visible}
+      visible={visible.addPlot}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -389,15 +379,17 @@ export const ModalAddPlot = React.memo(() => {
       <CategoriesForm categories={categories} setValues={handleValue} />
     </Modal>
   );
-});
+};
 
-export const ModalChangePlot = React.memo(() => {
+export const ModalChangePlot = ({
+  fetchDashboards,
+  dashIndex,
+  activePlotRef
+}) => {
   const [categories, setCategories] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
   const [values, setValues] = useState({ category: null, plot_id: null });
-  const visible = useSelector(state => state.dashboard.showModalChangePlot);
-  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
-  const dispatch = useDispatch();
 
   const handleValue = useCallback(values => setValues(values), []);
 
@@ -405,15 +397,15 @@ export const ModalChangePlot = React.memo(() => {
     setConfirmLoading(true);
     axios
       .put(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}`,
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
         values
       )
       .then(response => {
         if (response) {
           console.log(response.data);
-          dispatch(fetchDashboards(true));
+          fetchDashboards();
           setConfirmLoading(false);
-          dispatch(setModalChangePlotVisibility(false));
+          setModalVisible(modals.changePlot, false);
         }
       })
       .catch(error => {
@@ -423,23 +415,21 @@ export const ModalChangePlot = React.memo(() => {
   };
 
   const handleCancel = e => {
-    dispatch(setModalChangePlotVisibility(false));
+    setModalVisible(modals.changePlot, false);
   };
 
   useEffect(() => {
-    if (visible) {
-      axios
-        .get('http://localhost:5050/api/dashboards/plot-categories')
-        .then(response => {
-          setCategories(response.data);
-        });
-    } else setCategories(null);
-  }, [visible]);
+    axios
+      .get('http://localhost:5050/api/dashboards/plot-categories')
+      .then(response => {
+        setCategories(response.data);
+      });
+  }, []);
 
   return (
     <Modal
       title="Change Plot"
-      visible={visible}
+      visible={visible.changePlot}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -449,7 +439,7 @@ export const ModalChangePlot = React.memo(() => {
       <CategoriesForm categories={categories} setValues={handleValue} />
     </Modal>
   );
-});
+};
 
 const CategoriesForm = Form.create()(({ categories, setValues }) => {
   if (categories === null) return null;
@@ -507,13 +497,15 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
   );
 });
 
-export const ModalEditParameters = React.memo(() => {
+export const ModalEditParameters = ({
+  fetchDashboards,
+  dashIndex,
+  activePlotRef
+}) => {
   const [parameters, setParameters] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const visible = useSelector(state => state.dashboard.showModalEditParameters);
-  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
-  const dispatch = useDispatch();
 
   const handleOk = e => {
     formRef.current.validateFields((err, values) => {
@@ -522,15 +514,15 @@ export const ModalEditParameters = React.memo(() => {
         console.log('Received values of form: ', values);
         axios
           .put(
-            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}/parameters`,
+            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
             values
           )
           .then(response => {
             if (response) {
               console.log(response.data);
-              dispatch(fetchDashboards(true));
+              fetchDashboards();
               setConfirmLoading(false);
-              dispatch(setModalEditParametersVisibility(false));
+              setModalVisible(modals.editParameters, false);
             }
           })
           .catch(error => {
@@ -542,39 +534,35 @@ export const ModalEditParameters = React.memo(() => {
   };
 
   const handleCancel = e => {
-    dispatch(setModalEditParametersVisibility(false));
+    setModalVisible(modals.editParameters, false);
   };
 
   useEffect(() => {
-    if (visible) {
+    if (visible.editParameters)
       axios
         .get(
-          `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}/parameters`
+          `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`
         )
         .then(response => {
           setParameters(response.data);
         });
-    }
-  }, [dashIndex, index]);
-
-  useEffect(() => {
-    setParameters(null);
-  }, [visible]);
+  }, [visible.editParameters]);
 
   return (
     <Modal
       title="Edit plot parameters"
-      visible={visible}
+      visible={visible.editParameters}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
       okButtonProps={{ disabled: parameters === null }}
       confirmLoading={confirmLoading}
+      destroyOnClose
     >
       <ParamsForm ref={formRef} parameters={parameters} />
     </Modal>
   );
-});
+};
 
 const ParamsForm = Form.create()(({ parameters, form }) => {
   return (
@@ -586,24 +574,26 @@ const ParamsForm = Form.create()(({ parameters, form }) => {
   );
 });
 
-export const ModalDeletePlot = React.memo(() => {
+export const ModalDeletePlot = ({
+  fetchDashboards,
+  dashIndex,
+  activePlotRef
+}) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const visible = useSelector(state => state.dashboard.showModalDeletePlot);
-  const { dashIndex, index } = useSelector(state => state.dashboard.activePlot);
-  const dispatch = useDispatch();
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
 
   const handleOk = e => {
     setConfirmLoading(true);
     axios
       .delete(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${index}`
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`
       )
       .then(response => {
         if (response) {
           console.log(response.data);
-          dispatch(fetchDashboards(true));
+          fetchDashboards();
           setConfirmLoading(false);
-          dispatch(setModalDeletePlotVisibility(false));
+          setModalVisible(modals.deletePlot, false);
         }
       })
       .catch(error => {
@@ -613,13 +603,13 @@ export const ModalDeletePlot = React.memo(() => {
   };
 
   const handleCancel = e => {
-    dispatch(setModalDeletePlotVisibility(false));
+    setModalVisible(modals.deletePlot, false);
   };
 
   return (
     <Modal
       title="Delete plot"
-      visible={visible}
+      visible={visible.deletePlot}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -630,4 +620,4 @@ export const ModalDeletePlot = React.memo(() => {
       Are you sure you want to delete this plot?
     </Modal>
   );
-});
+};

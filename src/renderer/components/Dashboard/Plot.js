@@ -1,15 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Menu, Tooltip, Icon, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
-import {
-  setModalEditParametersVisibility,
-  setModalDeletePlotVisibility,
-  setModalChangePlotVisibility,
-  setModalAddPlotVisibility
-} from '../../actions/dashboard';
+import { ModalContext } from '../../utils/ModalManager';
 
 const defaultPlotStyle = {
   height: 'calc(50vh - 160px)',
@@ -17,7 +11,7 @@ const defaultPlotStyle = {
   margin: 5
 };
 
-export const Plot = ({ index, dashIndex, data, style }) => {
+export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
 
@@ -98,7 +92,7 @@ export const Plot = ({ index, dashIndex, data, style }) => {
               <PlotLegendToggle divID={div.content[0].props.id} />
             ) : null
           ) : null}
-          <EditMenu dashIndex={dashIndex} index={index} />
+          <EditMenu index={index} activePlotRef={activePlotRef} />
         </React.Fragment>
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
@@ -137,17 +131,21 @@ const PlotLegendToggle = ({ divID }) => {
   );
 };
 
-const EditMenu = React.memo(({ dashIndex, index }) => {
-  const dispatch = useDispatch();
+const EditMenu = React.memo(({ index, activePlotRef }) => {
+  const { modals, setModalVisible } = useContext(ModalContext);
 
-  const showModalEditParameters = () =>
-    dispatch(setModalEditParametersVisibility(true, dashIndex, index));
-
-  const showModalChangePlot = () =>
-    dispatch(setModalChangePlotVisibility(true, dashIndex, index));
-
-  const showModalDeletePlot = () =>
-    dispatch(setModalDeletePlotVisibility(true, dashIndex, index));
+  const showModalEditParameters = () => {
+    setModalVisible(modals.editParameters, true);
+    activePlotRef.current = index;
+  };
+  const showModalChangePlot = () => {
+    setModalVisible(modals.changePlot, true);
+    activePlotRef.current = index;
+  };
+  const showModalDeletePlot = () => {
+    setModalVisible(modals.deletePlot, true);
+    activePlotRef.current = index;
+  };
 
   const menu = (
     <Menu>
@@ -222,10 +220,13 @@ const ErrorPlot = ({ error }) => {
   return null;
 };
 
-export const EmptyPlot = ({ style, dashIndex, index }) => {
-  const dispatch = useDispatch();
-  const showModalAddPlot = () =>
-    dispatch(setModalAddPlotVisibility(true, dashIndex, index));
+export const EmptyPlot = ({ style, index, activePlotRef }) => {
+  const { modals, setModalVisible } = useContext(ModalContext);
+
+  const showModalAddPlot = () => {
+    setModalVisible(modals.addPlot, true);
+    activePlotRef.current = index;
+  };
 
   const plotStyle = { ...defaultPlotStyle, ...style };
 

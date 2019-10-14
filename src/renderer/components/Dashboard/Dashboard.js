@@ -1,11 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef
-} from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import { Button, Select } from 'antd';
 import axios from 'axios';
 import {
@@ -18,56 +11,28 @@ import {
   ModalNewDashboard,
   ModalSetScenario
 } from './Modals';
+import { ModalContext, ModalManager } from '../../utils/ModalManager';
 import { RowLayout, GridLayout } from './Layouts';
-import {
-  setModalDeleteDashboardVisibility,
-  setModalDuplicateDashboardVisibility,
-  setModalNewDashboardVisibility,
-  setModalSetScenarioVisibility,
-  fetchDashboards
-} from '../../actions/dashboard';
 import './Dashboard.css';
 
 const { Option } = Select;
+const modals = {
+  addPlot: 'addPlot',
+  changePlot: 'changePlot',
+  deleteDashboard: 'deleteDashboard',
+  deletePlot: 'deletePlot',
+  duplicateDashboard: 'duplicateDashboard',
+  editParameters: 'editParameters',
+  newDashboard: 'newDashboard',
+  setScenario: 'setScenario'
+};
 
 const Dashboard = () => {
-  const fetchingDashboards = useSelector(
-    state => state.dashboard.fetchingDashboards
-  );
-  const [dashboards, setDashboards] = useState([]);
   const [dashIndex, setDashIndex] = useState(0);
-  const dispatch = useDispatch();
-
-  const showModalNewDashboard = () =>
-    dispatch(setModalNewDashboardVisibility(true));
-
-  const showModalDuplicateDashboard = () =>
-    dispatch(setModalDuplicateDashboardVisibility(true));
-
-  const showModalSetScenario = () =>
-    dispatch(setModalSetScenarioVisibility(true));
-
-  const showModalDeleteDashboard = () =>
-    dispatch(setModalDeleteDashboardVisibility(true));
-
+  const [dashboards, fetchDashboards] = useDashboardData();
   const dependenciesMounted = usePlotDependencies();
 
-  const handleSelect = useCallback(index => {
-    setDashIndex(index);
-  }, []);
-
-  useEffect(() => {
-    !fetchingDashboards && dispatch(fetchDashboards(true));
-  }, []);
-
-  useEffect(() => {
-    if (fetchingDashboards) {
-      axios.get('http://localhost:5050/api/dashboards/').then(response => {
-        setDashboards(response.data);
-        dispatch(fetchDashboards(false));
-      });
-    }
-  }, [fetchingDashboards]);
+  const activePlotRef = useRef(0);
 
   if (!dashboards.length || !dependenciesMounted) return null;
 
@@ -75,81 +40,78 @@ const Dashboard = () => {
   const dashboardNames = dashboards.map(dashboard => dashboard.name);
 
   return (
-    <React.Fragment>
+    <ModalManager modals={modals}>
       <div id="cea-dashboard-content" style={{ minHeight: '100%' }}>
         <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
           <DashSelect
             dashIndex={dashIndex}
-            setDashIndex={handleSelect}
+            setDashIndex={setDashIndex}
             dashboardNames={dashboardNames}
           />
-          <div className="cea-dashboard-title-button-group">
-            <Button
-              type="primary"
-              icon="plus"
-              size="small"
-              onClick={showModalNewDashboard}
-            >
-              New Dashboard
-            </Button>
-            <Button
-              type="primary"
-              icon="copy"
-              size="small"
-              onClick={showModalDuplicateDashboard}
-            >
-              Duplicate Dashboard
-            </Button>
-            <Button
-              type="primary"
-              icon="edit"
-              size="small"
-              onClick={showModalSetScenario}
-            >
-              Set Scenario
-            </Button>
-            <Button
-              type="danger"
-              icon="delete"
-              size="small"
-              onClick={showModalDeleteDashboard}
-            >
-              Delete Dashboard
-            </Button>
-          </div>
+          <DashButtons />
         </div>
         <div id="cea-dashboard-layout">
           {layout === 'row' ? (
-            <RowLayout dashIndex={dashIndex} plots={plots} />
+            <RowLayout
+              dashIndex={dashIndex}
+              plots={plots}
+              activePlotRef={activePlotRef}
+            />
           ) : (
             <GridLayout
               dashIndex={dashIndex}
               plots={plots}
               grid_width={dashboards[dashIndex].grid_width}
+              activePlotRef={activePlotRef}
             />
           )}
         </div>
       </div>
       <ModalNewDashboard
-        setDashIndex={handleSelect}
+        fetchDashboards={fetchDashboards}
+        setDashIndex={setDashIndex}
         dashboardNames={dashboardNames}
       />
       <ModalDuplicateDashboard
+        fetchDashboards={fetchDashboards}
         dashIndex={dashIndex}
-        setDashIndex={handleSelect}
+        setDashIndex={setDashIndex}
         dashboardNames={dashboardNames}
       />
-      <ModalSetScenario dashIndex={dashIndex} />
-      <ModalDeleteDashboard dashIndex={dashIndex} setDashIndex={handleSelect} />
-      <ModalAddPlot />
-      <ModalChangePlot />
-      <ModalEditParameters />
-      <ModalDeletePlot />
-    </React.Fragment>
+      <ModalSetScenario
+        fetchDashboards={fetchDashboards}
+        dashIndex={dashIndex}
+      />
+      <ModalDeleteDashboard
+        fetchDashboards={fetchDashboards}
+        dashIndex={dashIndex}
+        setDashIndex={setDashIndex}
+      />
+      <ModalAddPlot
+        activePlotRef={activePlotRef}
+        dashIndex={dashIndex}
+        fetchDashboards={fetchDashboards}
+      />
+      <ModalChangePlot
+        activePlotRef={activePlotRef}
+        dashIndex={dashIndex}
+        fetchDashboards={fetchDashboards}
+      />
+      <ModalEditParameters
+        activePlotRef={activePlotRef}
+        dashIndex={dashIndex}
+        fetchDashboards={fetchDashboards}
+      />
+      <ModalDeletePlot
+        activePlotRef={activePlotRef}
+        dashIndex={dashIndex}
+        fetchDashboards={fetchDashboards}
+      />
+    </ModalManager>
   );
 };
 
-const DashSelect = React.memo(({ dashIndex, setDashIndex, dashboardNames }) => {
+const DashSelect = ({ dashIndex, setDashIndex, dashboardNames }) => {
   const dashList = useMemo(
     () =>
       dashboardNames.map((name, index) => (
@@ -162,14 +124,70 @@ const DashSelect = React.memo(({ dashIndex, setDashIndex, dashboardNames }) => {
 
   return (
     <Select
-      value={dashboardNames[dashIndex]}
+      value={dashIndex}
       style={{ width: 200, marginRight: 20 }}
       onChange={value => setDashIndex(value)}
     >
       {dashList}
     </Select>
   );
-});
+};
+
+const DashButtons = () => {
+  const { setModalVisible, modals } = useContext(ModalContext);
+  return (
+    <div className="cea-dashboard-title-button-group">
+      <Button
+        type="primary"
+        icon="plus"
+        size="small"
+        onClick={() => setModalVisible(modals.newDashboard, true)}
+      >
+        New Dashboard
+      </Button>
+      <Button
+        type="primary"
+        icon="copy"
+        size="small"
+        onClick={() => setModalVisible(modals.duplicateDashboard, true)}
+      >
+        Duplicate Dashboard
+      </Button>
+      <Button
+        type="primary"
+        icon="edit"
+        size="small"
+        onClick={() => setModalVisible(modals.setScenario, true)}
+      >
+        Set Scenario
+      </Button>
+      <Button
+        type="danger"
+        icon="delete"
+        size="small"
+        onClick={() => setModalVisible(modals.deleteDashboard, true)}
+      >
+        Delete Dashboard
+      </Button>
+    </div>
+  );
+};
+
+const useDashboardData = () => {
+  const [dashboards, setDashboards] = useState([]);
+  const fetchDashboards = async () => {
+    try {
+      const resp = await axios.get('http://localhost:5050/api/dashboards/');
+      setDashboards(resp.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchDashboards();
+  }, []);
+  return [dashboards, fetchDashboards];
+};
 
 const usePlotDependencies = () => {
   const deckRef = useRef();

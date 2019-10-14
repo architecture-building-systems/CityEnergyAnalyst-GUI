@@ -1,14 +1,15 @@
-import React from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useContext } from 'react';
 import { Button, Row, Col, Affix } from 'antd';
-import { setModalAddPlotVisibility } from '../../actions/dashboard';
-import { Plot, EmptyPlot, LoadingPlot } from './Plot';
+import { Plot, EmptyPlot } from './Plot';
+import { ModalContext } from '../../utils/ModalManager';
 
-export const RowLayout = ({ dashIndex, plots }) => {
-  const dispatch = useDispatch();
+export const RowLayout = ({ dashIndex, plots, activePlotRef }) => {
+  const { modals, setModalVisible } = useContext(ModalContext);
 
-  const showModalAddPlot = () =>
-    dispatch(setModalAddPlotVisibility(true, dashIndex, plots.length));
+  const showModalAddPlot = () => {
+    setModalVisible(modals.addPlot, true);
+    activePlotRef.current = plots.length;
+  };
 
   return (
     <React.Fragment>
@@ -16,14 +17,23 @@ export const RowLayout = ({ dashIndex, plots }) => {
         plots.map((data, index) => (
           <Row key={`${dashIndex}-${index}-${data.hash}`}>
             <Col>
-              <Plot index={index} dashIndex={dashIndex} data={data} />
+              <Plot
+                index={index}
+                dashIndex={dashIndex}
+                data={data}
+                activePlotRef={activePlotRef}
+              />
             </Col>
           </Row>
         ))
       ) : (
         <Row>
           <Col>
-            <EmptyPlot dashIndex={dashIndex} index={0} />
+            <EmptyPlot
+              dashIndex={dashIndex}
+              index={0}
+              activePlotRef={activePlotRef}
+            />
           </Col>
         </Row>
       )}
@@ -44,7 +54,7 @@ export const RowLayout = ({ dashIndex, plots }) => {
   );
 };
 
-export const GridLayout = ({ dashIndex, plots, grid_width }) => {
+export const GridLayout = ({ dashIndex, plots, grid_width, activePlotRef }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
   return (
@@ -57,9 +67,18 @@ export const GridLayout = ({ dashIndex, plots, grid_width }) => {
             key={`${dashIndex}-${index}-${data.hash}`}
           >
             {data.plot !== 'empty' ? (
-              <Plot index={index} dashIndex={dashIndex} data={data} />
+              <Plot
+                index={index}
+                dashIndex={dashIndex}
+                data={data}
+                activePlotRef={activePlotRef}
+              />
             ) : (
-              <EmptyPlot dashIndex={dashIndex} index={index} />
+              <EmptyPlot
+                dashIndex={dashIndex}
+                index={index}
+                activePlotRef={activePlotRef}
+              />
             )}
           </div>
         ))}
