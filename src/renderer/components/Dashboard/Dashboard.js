@@ -29,7 +29,7 @@ const modals = {
 
 const Dashboard = () => {
   const [dashIndex, setDashIndex] = useState(0);
-  const [dashboards, fetchDashboards] = useDashboardData();
+  const { dashboards, fetchDashboards, categories } = useDashboardData();
   const dependenciesMounted = usePlotDependencies();
 
   const activePlotRef = useRef(0);
@@ -91,11 +91,13 @@ const Dashboard = () => {
         activePlotRef={activePlotRef}
         dashIndex={dashIndex}
         fetchDashboards={fetchDashboards}
+        categories={categories}
       />
       <ModalChangePlot
         activePlotRef={activePlotRef}
         dashIndex={dashIndex}
         fetchDashboards={fetchDashboards}
+        categories={categories}
       />
       <ModalEditParameters
         activePlotRef={activePlotRef}
@@ -175,6 +177,8 @@ const DashButtons = () => {
 
 const useDashboardData = () => {
   const [dashboards, setDashboards] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   const fetchDashboards = async () => {
     try {
       const resp = await axios.get('http://localhost:5050/api/dashboards/');
@@ -183,10 +187,22 @@ const useDashboardData = () => {
       console.log(error);
     }
   };
+  const fetchCategories = async () => {
+    try {
+      const resp = await axios.get(
+        'http://localhost:5050/api/dashboards/plot-categories'
+      );
+      setCategories(resp.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchDashboards();
+    fetchCategories();
   }, []);
-  return [dashboards, fetchDashboards];
+  return { dashboards, fetchDashboards, categories };
 };
 
 const usePlotDependencies = () => {
