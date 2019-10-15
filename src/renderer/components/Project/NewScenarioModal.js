@@ -397,7 +397,7 @@ const ScenarioMap = ({ form }) => {
           initialValue: null,
           rules: [
             {
-              required: form.getFieldValue('tools').includes('zone'),
+              required: form.getFieldValue('input-data') === 'generate',
               message: 'Create a polygon'
             }
           ]
