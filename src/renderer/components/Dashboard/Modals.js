@@ -1,11 +1,5 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useContext
-} from 'react';
-import { Modal, Form, Select, Input, Radio } from 'antd';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { Modal, Form, Select, Input, Radio, Button } from 'antd';
 import axios from 'axios';
 import parameter from '../Tools/parameter';
 import { ModalContext } from '../../utils/ModalManager';
@@ -325,71 +319,141 @@ export const ModalDeleteDashboard = ({
   );
 };
 
-const modalAddPlotTemplate = type => ({
+const ModalAddPlotTemplate = ({
+  title,
+  modal,
   fetchDashboards,
   dashIndex,
-  activePlotRef
+  activePlotRef,
+  categories
 }) => {
-  const [categories, setCategories] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const { modals, setModalVisible, visible } = useContext(ModalContext);
-  const [values, setValues] = useState({ category: null, plot_id: null });
+  const [page, setPage] = useState(0);
+  const [category, setCategory] = useState({ category: null, plot_id: null });
+  const [parameters, setParameters] = useState(null);
+  const formRef = useRef();
 
-  const handleValue = useCallback(values => setValues(values), []);
+  const { setModalVisible, visible } = useContext(ModalContext);
+
+  const nextPage = () => setPage(oldValue => oldValue + 1);
+  const prevPage = () => setPage(oldValue => oldValue - 1);
+  const getParameters = async () => {
+    try {
+      const params = await axios.get(
+        `http://localhost:5050/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`
+      );
+      console.log(params.data);
+      setParameters(params.data);
+      nextPage();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleOk = e => {
-    setConfirmLoading(true);
-    axios
-      .put(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
-        values
-      )
-      .then(response => {
-        if (response) {
-          console.log(response.data);
-          fetchDashboards();
-          setConfirmLoading(false);
-          setModalVisible(
-            type === 'add' ? modals.addPlot : modals.changePlot,
-            false
-          );
-        }
-      })
-      .catch(error => {
-        setConfirmLoading(false);
-        console.log(error.response);
-      });
+    formRef.current.validateFields((err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        console.log('Received values of form: ', values);
+        axios
+          .put(
+            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+            { ...category, parameters: values }
+          )
+          .then(response => {
+            if (response) {
+              console.log(response.data);
+              fetchDashboards();
+              setConfirmLoading(false);
+              setModalVisible(modal, false);
+            }
+          })
+          .catch(error => {
+            setConfirmLoading(false);
+            console.log(error.response);
+          });
+      }
+    });
   };
 
   const handleCancel = e => {
-    setModalVisible(type === 'add' ? modals.addPlot : modals.changePlot, false);
+    setModalVisible(modal, false);
   };
 
   useEffect(() => {
-    axios
-      .get('http://localhost:5050/api/dashboards/plot-categories')
-      .then(response => {
-        setCategories(response.data);
-      });
-  }, []);
+    if (!visible[modal]) {
+      setPage(0);
+    }
+  }, [visible[modal]]);
 
   return (
     <Modal
-      title={type === 'add' ? 'Add Plot' : 'Change Plot'}
-      visible={type === 'add' ? visible.addPlot : visible.changePlot}
-      width={800}
-      onOk={handleOk}
+      title={title}
+      visible={visible[modal]}
       onCancel={handleCancel}
-      okButtonProps={{ disabled: categories === null }}
-      confirmLoading={confirmLoading}
+      width={800}
+      footer={[
+        <Button
+          key="cancel"
+          onClick={handleCancel}
+          style={{ display: page == 0 ? 'inline' : 'none' }}
+        >
+          Cancel
+        </Button>,
+        <Button
+          key="next"
+          type="primary"
+          style={{ display: page == 0 ? 'inline' : 'none' }}
+          onClick={getParameters}
+        >
+          Next
+        </Button>,
+        <Button
+          key="back"
+          style={{ display: page == 1 ? 'inline' : 'none' }}
+          onClick={prevPage}
+        >
+          Back
+        </Button>,
+        <Button
+          key="ok"
+          type="primary"
+          onClick={handleOk}
+          loading={confirmLoading}
+          disabled={page !== 1}
+        >
+          Ok
+        </Button>
+      ]}
+      destroyOnClose
     >
-      <CategoriesForm categories={categories} setValues={handleValue} />
+      <div style={{ display: page == 0 ? 'block' : 'none' }}>
+        <CategoriesForm categories={categories} setValues={setCategory} />
+      </div>
+      <div style={{ display: page == 1 ? 'block' : 'none' }}>
+        <ParamsForm ref={formRef} parameters={parameters} />
+      </div>
     </Modal>
   );
 };
 
-export const ModalAddPlot = modalAddPlotTemplate('add');
-export const ModalChangePlot = modalAddPlotTemplate('change');
+export const ModalAddPlot = props => {
+  const { modals } = useContext(ModalContext);
+  return (
+    <ModalAddPlotTemplate title="Add Plot" modal={modals.addPlot} {...props} />
+  );
+};
+
+export const ModalChangePlot = props => {
+  const { modals } = useContext(ModalContext);
+  return (
+    <ModalAddPlotTemplate
+      title="Change Plot"
+      modal={modals.changePlot}
+      {...props}
+    />
+  );
+};
 
 const CategoriesForm = Form.create()(({ categories, setValues }) => {
   if (categories === null) return null;
@@ -464,8 +528,8 @@ export const ModalEditParameters = ({
         console.log('Received values of form: ', values);
         axios
           .put(
-            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
-            values
+            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+            { parameters: values }
           )
           .then(response => {
             if (response) {
@@ -488,7 +552,7 @@ export const ModalEditParameters = ({
   };
 
   useEffect(() => {
-    if (visible.editParameters)
+    if (visible.editParameters) {
       axios
         .get(
           `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`
@@ -496,6 +560,7 @@ export const ModalEditParameters = ({
         .then(response => {
           setParameters(response.data);
         });
+    } else setParameters(null);
   }, [visible.editParameters]);
 
   return (
