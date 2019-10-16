@@ -3,7 +3,6 @@ import path from 'path';
 import axios from 'axios';
 
 let cea;
-const CEA_URL = process.env.CEA_URL;
 
 export function createCEAProcess(callback) {
   // For windows
@@ -40,7 +39,7 @@ export function createCEAProcess(callback) {
 
 export async function isCEAAlive() {
   try {
-    const resp = await axios.get(`${CEA_URL}/server/alive`);
+    const resp = await axios.get(`${process.env.CEA_URL}/server/alive`);
     return resp.status == 200;
   } catch (error) {
     console.log(error);
