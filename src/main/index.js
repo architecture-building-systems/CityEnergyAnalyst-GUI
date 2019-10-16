@@ -112,19 +112,16 @@ function createSplashWindow() {
  */
 
 app.on('will-quit', event => {
-  // Do not shutdown CEA server when in development
-  if (!isDevelopment) {
-    event.preventDefault();
-    const shutdown = async () => {
-      try {
-        const resp = await axios.post(`${CEA_URL}/server/shutdown`);
-        resp.status == 200 && app.exit();
-      } catch (error) {
-        dialog.showMessageBox({ message: error });
-      }
-    };
-    shutdown();
-  }
+  event.preventDefault();
+  const shutdown = async () => {
+    try {
+      const resp = await axios.post(`${CEA_URL}/server/shutdown`);
+      resp.status == 200 && app.exit();
+    } catch (error) {
+      dialog.showMessageBox({ message: error });
+    }
+  };
+  shutdown();
 });
 
 // quit application when all windows are closed
