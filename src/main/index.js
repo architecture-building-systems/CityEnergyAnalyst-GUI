@@ -79,16 +79,17 @@ function createSplashWindow() {
     webPreferences: { nodeIntegration: true }
   });
 
-  window.once('ready-to-show', async () => {
+  window.once('ready-to-show', () => {
     window.show();
 
     // Check if CEA server is already running, only start if not
-    const alive = isCEAAlive();
-    if (alive) mainWindow = createMainWindow();
-    else
-      createCEAProcess(() => {
-        mainWindow = createMainWindow();
-      });
+    isCEAAlive().then(alive => {
+      if (alive) mainWindow = createMainWindow();
+      else
+        createCEAProcess(() => {
+          mainWindow = createMainWindow();
+        });
+    });
   });
 
   if (isDevelopment) {
