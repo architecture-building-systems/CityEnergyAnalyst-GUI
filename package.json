@@ -1,12 +1,17 @@
 {
-  "name": "city-energy-analyst",
-  "version": "0.0.0",
+  "name": "city-energy-analyst-dashboard",
+  "description": "Official Dashboard interface of the CIty Energy Analyst tool",
+  "version": "2.24.0-beta.1",
+  "author": "CEA team",
+  "homepage": "http://www.cityenergyanalyst.com",
+  "repository": "github:architecture-building-systems/CityEnergyAnalyst-Dashboard",
   "license": "MIT",
   "scripts": {
     "dev": "electron-webpack dev",
     "compile": "electron-webpack",
     "dist": "yarn compile && electron-builder",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
+    "release": "yarn dist build -p always",
     "lint": "yarn eslint .",
     "lint:fix": "yarn eslint . --fix"
   },
@@ -56,6 +61,9 @@
     "webpack": "~4.35.3"
   },
   "build": {
-    "productName": "CityEnergyAnalyst"
+    "productName": "CityEnergyAnalyst",
+    "win": {
+      "target": "7z"
+    }
   }
 }
