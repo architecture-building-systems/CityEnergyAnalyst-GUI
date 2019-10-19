@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { shell } from 'electron';
 import { Icon, Input } from 'antd';
 import axios from 'axios';
@@ -27,15 +27,19 @@ const useGlossaryData = () => {
 const SearchBar = () => {
   const data = useGlossaryData();
   const [value, setValue] = useState('');
-  const [visible, setVisible] = useState(false);
+  const [output, setOutput] = useState('');
+  const timeoutRef = useRef();
 
   const handleChange = event => {
     setValue(event.target.value);
   };
 
   useEffect(() => {
-    if (value.length > 0) setVisible(true);
-    else setVisible(false);
+    clearTimeout(timeoutRef.current);
+    if (!value.trim()) setOutput('');
+    timeoutRef.current = setTimeout(() => {
+      setOutput(value);
+    }, 300);
   }, [value]);
 
   return (
@@ -46,14 +50,14 @@ const SearchBar = () => {
         onChange={handleChange}
       />
       <div className="cea-search-dropdown">
-        {visible &&
+        {output !== '' &&
           data.map(category => (
             <SearchCategory key={category.script} category={category}>
               {category.variables
                 .filter(
                   variable =>
                     variable.VARIABLE.toLowerCase().indexOf(
-                      value.toLowerCase()
+                      output.toLowerCase()
                     ) !== -1
                 )
                 .map(variable => (
