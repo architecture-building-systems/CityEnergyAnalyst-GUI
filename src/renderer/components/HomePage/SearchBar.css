@@ -17,10 +17,19 @@
   padding: 12px;
   border-bottom: 1px solid #f1f1f1;
 }
+.cea-search-item.empty {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .cea-search-item:hover {
   background-color: #dddddd;
   cursor: pointer;
+}
+
+.cea-search-item.empty:hover {
+  cursor: default;
 }
 
 .cea-search-description {

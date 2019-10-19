@@ -35,11 +35,11 @@ const SearchBar = () => {
     setValue(event.target.value);
   };
 
-  const handleFocus = event => {
+  const handleFocus = () => {
     setVisible(true);
   };
 
-  const handleBlur = event => {
+  const handleBlur = () => {
     setTimeout(() => setVisible(false), 100);
   };
 
@@ -48,7 +48,7 @@ const SearchBar = () => {
     if (!value.trim()) setOutput('');
     timeoutRef.current = setTimeout(() => {
       setOutput(value);
-    }, 300);
+    }, 500);
   }, [value]);
 
   return (
@@ -62,34 +62,55 @@ const SearchBar = () => {
         onBlur={handleBlur}
       />
       <div className="cea-search-dropdown">
-        {visible &&
-          output !== '' &&
-          data.map(category => (
-            <SearchCategory key={category.script} category={category}>
-              {category.variables
-                .filter(
-                  variable =>
-                    variable.VARIABLE.toLowerCase().indexOf(
-                      output.toLowerCase()
-                    ) !== -1
-                )
-                .map(variable => (
-                  <SearchItem
-                    key={`${category.script}-${variable.FILE_NAME}-${variable.VARIABLE}`}
-                    category={category.script}
-                    item={variable}
-                    setValue={setValue}
-                  />
-                ))}
-            </SearchCategory>
-          ))}
+        <SearchResults
+          data={data}
+          output={output}
+          visible={visible}
+          setValue={setValue}
+        />
       </div>
     </div>
   );
 };
 
+const SearchResults = ({ data, output, visible, setValue }) => {
+  if (!visible || output == '') return null;
+
+  const results = data
+    .map(category => {
+      const variables = category.variables.filter(
+        variable =>
+          variable.VARIABLE.toLowerCase().indexOf(output.toLowerCase()) !== -1
+      );
+      return variables.length ? (
+        <SearchCategory key={category.script} category={category}>
+          {variables.map(variable => (
+            <SearchItem
+              key={`${category.script}-${variable.FILE_NAME}-${variable.VARIABLE}`}
+              category={category.script}
+              item={variable}
+              setValue={setValue}
+            />
+          ))}
+        </SearchCategory>
+      ) : null;
+    })
+    .filter(category => !!category);
+
+  return results.length ? (
+    results
+  ) : (
+    <div className="cea-search-item empty">
+      No results found for
+      <b>
+        <i>{` ${output}`}</i>
+      </b>
+    </div>
+  );
+};
+
 const SearchCategory = ({ category, children }) => {
-  return children.length ? (
+  return (
     <div key={category.script} className="cea-search-category">
       <div className="cea-search-category-title">
         <b>
@@ -98,7 +119,7 @@ const SearchCategory = ({ category, children }) => {
       </div>
       {children}
     </div>
-  ) : null;
+  );
 };
 
 const SearchItem = ({ category, item, setValue }) => {
