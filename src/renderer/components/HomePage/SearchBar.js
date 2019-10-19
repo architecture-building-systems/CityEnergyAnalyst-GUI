@@ -28,10 +28,19 @@ const SearchBar = () => {
   const data = useGlossaryData();
   const [value, setValue] = useState('');
   const [output, setOutput] = useState('');
+  const [visible, setVisible] = useState(false);
   const timeoutRef = useRef();
 
   const handleChange = event => {
     setValue(event.target.value);
+  };
+
+  const handleFocus = event => {
+    setVisible(true);
+  };
+
+  const handleBlur = event => {
+    setTimeout(() => setVisible(false), 100);
   };
 
   useEffect(() => {
@@ -47,10 +56,14 @@ const SearchBar = () => {
       <Input
         placeholder="Glossary Search"
         suffix={<Icon type="search" />}
+        value={value}
         onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
       />
       <div className="cea-search-dropdown">
-        {output !== '' &&
+        {visible &&
+          output !== '' &&
           data.map(category => (
             <SearchCategory key={category.script} category={category}>
               {category.variables
@@ -65,6 +78,7 @@ const SearchBar = () => {
                     key={`${category.script}-${variable.FILE_NAME}-${variable.VARIABLE}`}
                     category={category.script}
                     item={variable}
+                    setValue={setValue}
                   />
                 ))}
             </SearchCategory>
@@ -87,7 +101,7 @@ const SearchCategory = ({ category, children }) => {
   ) : null;
 };
 
-const SearchItem = ({ category, item }) => {
+const SearchItem = ({ category, item, setValue }) => {
   const openUrl = () => {
     const type = category === 'input' ? 'input' : 'output';
     shell.openExternal(
@@ -95,6 +109,7 @@ const SearchItem = ({ category, item }) => {
         item.VARIABLE
       }#${item.LOCATOR_METHOD.split('_').join('-')}`
     );
+    setValue(item.VARIABLE);
   };
 
   return (
