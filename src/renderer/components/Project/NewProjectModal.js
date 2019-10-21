@@ -14,7 +14,7 @@ const NewProjectModal = ({
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 
-  const handleOk = e => {
+  const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
         setConfirmLoading(true);

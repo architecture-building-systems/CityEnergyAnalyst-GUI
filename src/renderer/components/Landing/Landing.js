@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { remote } from 'electron';
 import { Button, Icon } from 'antd';
-import axios from 'axios';
 import getStatic from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
+import OpenProjectModal from '../Project/OpenProjectModal';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 
 const logo = getStatic('cea-logo.png');
 
 const Landing = () => {
-  const [visible, setVisible] = useState(false);
+  const { info } = useSelector(state => state.project);
+  const [visibleNew, setNewVisible] = useState(false);
+  const [visibleOpen, setOpenVisible] = useState(false);
   const dispatch = useDispatch();
   const rootPath =
     require('os').platform == 'win32'
@@ -24,33 +25,11 @@ const Landing = () => {
     dispatch(push(routes.PROJECT_OVERVIEW));
   };
 
-  const openDialog = () => {
-    const options = {
-      properties: ['openDirectory']
-    };
-    remote.dialog.showOpenDialog(
-      remote.getCurrentWindow(),
-      options,
-      async paths => {
-        if (paths.length) {
-          try {
-            const resp = await axios.put(`http://localhost:5050/api/project/`, {
-              path: paths[0]
-            });
-            console.log(resp.data);
-            goToProjectPage();
-          } catch (err) {
-            console.log(err.response);
-          }
-        }
-      }
-    );
-  };
   // Get Project Details on mount
   useEffect(() => {
     dispatch(getProject());
   }, []);
-
+  console.log(info);
   return (
     <React.Fragment>
       <div
@@ -69,7 +48,7 @@ const Landing = () => {
         <Button
           type="primary"
           style={{ width: 300, margin: 24 }}
-          onClick={() => setVisible(true)}
+          onClick={() => setNewVisible(true)}
         >
           <Icon type="plus" />
           New Project
@@ -77,16 +56,22 @@ const Landing = () => {
         <Button
           type="primary"
           style={{ width: 300, margin: 24 }}
-          onClick={openDialog}
+          onClick={() => setOpenVisible(true)}
         >
           <Icon type="folder-open" />
           Open Project
         </Button>
       </div>
       <NewProjectModal
-        visible={visible}
-        setVisible={setVisible}
+        visible={visibleNew}
+        setVisible={setNewVisible}
         project={{ path: require('path').join(rootPath, 'null') }}
+        onSuccess={goToProjectPage}
+      />
+      <OpenProjectModal
+        visible={visibleOpen}
+        setVisible={setOpenVisible}
+        project={info}
         onSuccess={goToProjectPage}
       />
     </React.Fragment>
