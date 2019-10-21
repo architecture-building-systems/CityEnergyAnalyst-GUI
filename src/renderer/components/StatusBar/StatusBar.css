@@ -56,3 +56,7 @@
 .ant-notification {
   z-index: 1050;
 }
+
+.ant-notification:hover {
+  cursor: pointer;
+}
