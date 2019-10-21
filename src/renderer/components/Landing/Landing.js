@@ -20,7 +20,7 @@ const Landing = () => {
       : '/';
 
   const goToProjectPage = async () => {
-    await dispatch(getProject);
+    await dispatch(getProject());
     dispatch(push(routes.PROJECT_OVERVIEW));
   };
 
