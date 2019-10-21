@@ -59,11 +59,6 @@ const Project = () => {
     );
   };
 
-  // Get Project Details on mount
-  useEffect(() => {
-    reloadProject();
-  }, []);
-
   const { name, scenario, scenarios } = info;
 
   return (

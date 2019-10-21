@@ -46,6 +46,10 @@ const Landing = () => {
       }
     );
   };
+  // Get Project Details on mount
+  useEffect(() => {
+    dispatch(getProject());
+  }, []);
 
   return (
     <React.Fragment>
