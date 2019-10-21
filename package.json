@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-dashboard",
   "description": "Official Dashboard interface of the CIty Energy Analyst tool",
-  "version": "2.24.0-beta.1",
+  "version": "2.24.0",
   "author": "CEA team",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-Dashboard",
