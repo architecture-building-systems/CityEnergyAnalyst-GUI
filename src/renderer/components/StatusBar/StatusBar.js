@@ -73,7 +73,7 @@ const JobListPopover = () => {
           {title} has been <b>created</b>
         </div>
       ),
-      info: (
+      started: (
         <div>
           {title} has <b>started</b>
         </div>
@@ -85,11 +85,15 @@ const JobListPopover = () => {
       ),
       error: <div>{title} has encounted an error</div>
     };
-    notification[type !== 'created' ? type : 'info']({
+
+    const config = {
       key: id,
       message: message[type],
-      top: 64
-    });
+      placement: 'bottomRight',
+    if (type === 'started')
+      notification.open({ ...config, icon: <Icon type="loading" /> });
+    else if (type === 'created') notification['info'](config);
+    else notification[type](config);
   };
 
   useEffect(() => {
@@ -97,7 +101,7 @@ const JobListPopover = () => {
       openNotification('created', job);
     });
     socket.on('cea-worker-started', job => {
-      openNotification('info', job);
+      openNotification('started', job);
       dispatch(updateJob(job));
     });
     socket.on('cea-worker-success', job => {

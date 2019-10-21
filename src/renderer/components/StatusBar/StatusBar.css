@@ -52,3 +52,7 @@
   background-color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
 }
+
+.ant-notification {
+  z-index: 1050;
+}
