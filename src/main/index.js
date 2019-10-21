@@ -72,6 +72,7 @@ function createSplashWindow() {
   const window = new BrowserWindow({
     height: 300,
     width: 500,
+    resizable: false,
     show: false,
     frame: false,
     backgroundColor: '#2e2c29',
