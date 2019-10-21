@@ -86,7 +86,7 @@ function createSplashWindow() {
     isCEAAlive().then(alive => {
       if (alive) mainWindow = createMainWindow();
       else
-        createCEAProcess(() => {
+        createCEAProcess(window, () => {
           mainWindow = createMainWindow();
         });
     });

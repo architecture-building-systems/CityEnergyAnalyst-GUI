@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import { app, dialog } from 'electron';
 
 let cea;
 
-export function createCEAProcess(callback) {
+export function createCEAProcess(BrowserWindow, callback) {
   // For windows
   if (process.platform === 'win32') {
     let scriptPath = path.join(
@@ -32,7 +33,21 @@ export function createCEAProcess(callback) {
     console.log(data.toString('utf8'));
   });
 
-  checkCEAStarted(callback);
+  // Show Error message box when CEA encounters any error on startup
+  cea.stderr.on('data', showStartupError);
+  function showStartupError(message) {
+    dialog.showMessageBox(BrowserWindow, {
+      type: 'error',
+      title: 'CEA Error',
+      message: message.toString('utf8')
+    });
+  }
+
+  checkCEAStarted(() => {
+    // Remove Error message box listener after successful startup
+    cea.stderr.removeListener('data', showStartupError);
+    callback();
+  });
 
   return cea;
 }
@@ -42,7 +57,7 @@ export async function isCEAAlive() {
     const resp = await axios.get(`${process.env.CEA_URL}/server/alive`);
     return resp.status == 200;
   } catch (error) {
-    console.log(error);
+    console.log(error.response || 'No Response');
     return false;
   }
 }
