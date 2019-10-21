@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { shell, remote } from 'electron';
+import { shell } from 'electron';
 import path from 'path';
 import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
 import axios from 'axios';
@@ -9,6 +9,7 @@ import { useAsyncData } from '../../utils/hooks';
 import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 import NewProjectModal from './NewProjectModal';
+import OpenProjectModal from './OpenProjectModal';
 import NewScenarioModal from './NewScenarioModal';
 import RenameScenarioModal from './RenameScenarioModal';
 import './Project.css';
@@ -16,7 +17,8 @@ import './Project.css';
 const Project = () => {
   const { isFetching, error, info } = useSelector(state => state.project);
   const activeScenario = useRef();
-  const [isProjectModalVisible, setProjectModalVisible] = useState(false);
+  const [isNewModalVisible, setNewModalVisible] = useState(false);
+  const [isOpenModalVisible, setOpenModalVisible] = useState(false);
   const [isScenarioModalVisible, setScenarioModalVisible] = useState(false);
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
 
@@ -31,34 +33,6 @@ const Project = () => {
     setRenameModalVisible(true);
   };
 
-  const openDialog = () => {
-    const options = {
-      properties: ['openDirectory']
-    };
-    remote.dialog.showOpenDialog(
-      remote.getCurrentWindow(),
-      options,
-      async paths => {
-        if (paths.length) {
-          if (info.path !== paths[0]) {
-            try {
-              const resp = await axios.put(
-                `http://localhost:5050/api/project/`,
-                {
-                  path: paths[0]
-                }
-              );
-              console.log(resp.data);
-              reloadProject();
-            } catch (err) {
-              console.log(err.response);
-            }
-          }
-        }
-      }
-    );
-  };
-
   const { name, scenario, scenarios } = info;
 
   return (
@@ -71,11 +45,15 @@ const Project = () => {
               <Button
                 icon="plus"
                 size="small"
-                onClick={() => setProjectModalVisible(true)}
+                onClick={() => setNewModalVisible(true)}
               >
                 Create Project
               </Button>
-              <Button icon="folder-open" size="small" onClick={openDialog}>
+              <Button
+                icon="folder-open"
+                size="small"
+                onClick={() => setOpenModalVisible(true)}
+              >
                 Open Project
               </Button>
               <Button
@@ -127,8 +105,14 @@ const Project = () => {
         )}
       </Card>
       <NewProjectModal
-        visible={isProjectModalVisible}
-        setVisible={setProjectModalVisible}
+        visible={isNewModalVisible}
+        setVisible={setNewModalVisible}
+        project={info}
+        onSuccess={reloadProject}
+      />
+      <OpenProjectModal
+        visible={isOpenModalVisible}
+        setVisible={setOpenModalVisible}
         project={info}
         onSuccess={reloadProject}
       />

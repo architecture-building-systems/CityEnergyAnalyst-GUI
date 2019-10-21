@@ -29,7 +29,7 @@ const Landing = () => {
   useEffect(() => {
     dispatch(getProject());
   }, []);
-  console.log(info);
+
   return (
     <React.Fragment>
       <div
