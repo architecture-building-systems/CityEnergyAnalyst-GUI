@@ -14,6 +14,7 @@ import {
 import { ModalContext, ModalManager } from '../../utils/ModalManager';
 import { RowLayout, GridLayout } from './Layouts';
 import './Dashboard.css';
+import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 const { Option } = Select;
 const modals = {
@@ -266,4 +267,4 @@ const usePlotDependencies = () => {
   return isMounted;
 };
 
-export default Dashboard;
+export default withErrorBoundary(Dashboard);

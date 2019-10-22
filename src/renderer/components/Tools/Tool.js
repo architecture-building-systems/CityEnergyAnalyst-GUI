@@ -16,12 +16,13 @@ import {
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
 import parameter from './parameter';
+import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
 };
 
-const Tool = ({ script, formButtons = ToolFormButtons }) => {
+const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
   const { isFetching, error, params } = useSelector(state => state.toolParams);
   const dispatch = useDispatch();
   const {
@@ -70,7 +71,7 @@ const Tool = ({ script, formButtons = ToolFormButtons }) => {
       </Spin>
     </div>
   );
-};
+});
 
 const ToolForm = Form.create()(
   ({ parameters, categoricalParameters, script, formButtons, form }) => {

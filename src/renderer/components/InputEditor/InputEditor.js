@@ -6,6 +6,7 @@ import { fetchInputData, resetInputData } from '../../actions/inputEditor';
 import { Tabs, Icon, Modal } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
+import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 const MAP_STYLE = {
   height: '500px',
@@ -121,4 +122,4 @@ const InputTable = () => {
   );
 };
 
-export default InputEditor;
+export default withErrorBoundary(InputEditor);
