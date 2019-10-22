@@ -34,18 +34,28 @@ export function createCEAProcess(BrowserWindow, callback) {
   });
 
   // Show Error message box when CEA encounters any error on startup
-  cea.stderr.on('data', showStartupError);
-  function showStartupError(message) {
+  let startupError = '';
+  cea.stderr.on('data', saveStartupError);
+  cea.on('exit', showStartupError);
+
+  function saveStartupError(message) {
+    startupError += message.toString('utf8');
+  }
+  function showStartupError() {
     dialog.showMessageBox(BrowserWindow, {
       type: 'error',
       title: 'CEA Error',
-      message: message.toString('utf8')
+      message: 'CEA has encounted an error on startup',
+      detail: startupError,
+      buttons: 'Exit CEA'
     });
+    app.exit();
   }
 
   checkCEAStarted(() => {
     // Remove Error message box listener after successful startup
-    cea.stderr.removeListener('data', showStartupError);
+    cea.stderr.removeListener('data', saveStartupError);
+    cea.removeListener('exit', showStartupError);
     callback();
   });
 
