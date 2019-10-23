@@ -4,6 +4,7 @@ import { createHashHistory } from 'history';
 import { routerMiddleware, routerActions } from 'connected-react-router';
 import { createLogger } from 'redux-logger';
 import createRootReducer from '../reducers';
+import httpMiddleware from './httpMiddleware';
 
 const history = createHashHistory();
 
@@ -13,6 +14,9 @@ const configureStore = initialState => {
   // Redux Configuration
   const middleware = [];
   const enhancers = [];
+
+  // Http Middleware
+  middleware.push(httpMiddleware);
 
   // Thunk Middleware
   middleware.push(thunk);
