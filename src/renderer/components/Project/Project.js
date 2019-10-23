@@ -24,6 +24,11 @@ const Project = () => {
 
   const dispatch = useDispatch();
 
+  // Get Project Details on mount
+  useEffect(() => {
+    dispatch(getProject());
+  }, []);
+
   const reloadProject = () => {
     dispatch(getProject());
   };

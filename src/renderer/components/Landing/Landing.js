@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { Button, Icon } from 'antd';
+import axios from 'axios';
 import getStatic from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
@@ -10,25 +11,40 @@ import routes from '../../constants/routes';
 
 const logo = getStatic('cea-logo.png');
 
+const useProjectInfo = initialValue => {
+  const [info, setInfo] = useState(initialValue);
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const resp = await axios.get('http://localhost:5050/api/project/');
+        setInfo(resp.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchInfo();
+  }, []);
+
+  return info;
+};
+
 const Landing = () => {
-  const { info } = useSelector(state => state.project);
   const [visibleNew, setNewVisible] = useState(false);
   const [visibleOpen, setOpenVisible] = useState(false);
   const dispatch = useDispatch();
+
   const rootPath =
     require('os').platform == 'win32'
       ? process.cwd().split(require('path').sep)[0]
       : '/';
 
+  const projectInfo = useProjectInfo({ path: rootPath });
+
   const goToProjectPage = async () => {
     await dispatch(getProject());
     dispatch(push(routes.PROJECT_OVERVIEW));
   };
-
-  // Get Project Details on mount
-  useEffect(() => {
-    dispatch(getProject());
-  }, []);
 
   return (
     <React.Fragment>
@@ -71,7 +87,7 @@ const Landing = () => {
       <OpenProjectModal
         visible={visibleOpen}
         setVisible={setOpenVisible}
-        project={info}
+        project={projectInfo}
         onSuccess={goToProjectPage}
       />
     </React.Fragment>
