@@ -1,6 +1,7 @@
 import {
   REQUEST_INPUTDATA,
-  RECEIVE_INPUTDATA,
+  REQUEST_INPUTDATA_SUCCESS,
+  REQUEST_INPUTDATA_FAILED,
   REQUEST_MAPDATA,
   RECEIVE_MAPDATA,
   RESET_INPUTDATA,
@@ -8,25 +9,25 @@ import {
 } from '../actions/inputEditor';
 
 const initialState = {
-  isFetchingInputData: false,
-  isFetchingMapData: false,
-  error: null
+  selected: [],
+  error: null,
+  status: ''
 };
 
 const inputData = (state = initialState, { type, payload }) => {
   switch (type) {
     case REQUEST_INPUTDATA:
-      return { ...payload, selected: [] };
-    case RECEIVE_INPUTDATA:
-      return { ...state, ...payload };
+      return { ...state, status: 'fetching' };
+    case REQUEST_INPUTDATA_SUCCESS:
+      return { ...state, ...payload, status: 'received' };
+    case REQUEST_INPUTDATA_FAILED:
+      return { ...state, status: 'failed', error: payload };
+    case SET_SELECTED:
     case REQUEST_MAPDATA:
-      return { ...state, ...payload };
     case RECEIVE_MAPDATA:
       return { ...state, ...payload };
     case RESET_INPUTDATA:
       return initialState;
-    case SET_SELECTED:
-      return { ...state, ...payload };
     default:
       return state;
   }

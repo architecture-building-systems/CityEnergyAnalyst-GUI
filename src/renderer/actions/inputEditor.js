@@ -1,52 +1,24 @@
 import axios from 'axios';
 import inputEndpoints from '../constants/inputEndpoints';
+import { httpAction } from '../store/httpMiddleware';
 
 export const RESET_INPUTDATA = 'RESET_INPUTDATA';
 export const REQUEST_INPUTDATA = 'REQUEST_INPUTDATA';
-export const RECEIVE_INPUTDATA = 'RECEIVE_INPUTDATA';
+export const REQUEST_INPUTDATA_SUCCESS = 'REQUEST_INPUTDATA_SUCCESS';
+export const REQUEST_INPUTDATA_FAILED = 'REQUEST_INPUTDATA_FAILED';
 export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
 
-export const resetInputData = () => ({
-  type: RESET_INPUTDATA
-});
+export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
 export const setSelected = selected => ({
   type: SET_SELECTED,
   payload: { selected }
 });
 
-export const fetchInputData = () => {
-  return dispatch => {
-    dispatch({
-      type: REQUEST_INPUTDATA,
-      payload: { isFetchingInputData: true, error: null }
-    });
-    return axios
-      .get('http://localhost:5050/api/inputs/all-inputs')
-      .then(response => {
-        dispatch({
-          type: RECEIVE_INPUTDATA,
-          payload: { ...response.data, isFetchingInputData: false }
-        });
-        return response.data;
-      })
-      .catch(error => {
-        const message =
-          typeof error.code === 'undefined'
-            ? error.message
-            : error.data.message;
-        dispatch({
-          type: RECEIVE_INPUTDATA,
-          payload: {
-            error: message,
-            isFetchingInputData: false
-          }
-        });
-      });
-  };
-};
+export const fetchInputData = () =>
+  httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
 
 export const fetchMapData = () => {
   const layerList = Object.keys(inputEndpoints);
