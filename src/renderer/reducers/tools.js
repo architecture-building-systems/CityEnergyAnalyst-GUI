@@ -1,34 +1,43 @@
 import {
   REQUEST_TOOLLIST,
-  RECEIVE_TOOLLIST,
+  REQUEST_TOOLLIST_SUCCESS,
+  REQUEST_TOOLLIST_FAILED,
   REQUEST_TOOLPARAMS,
-  RECEIVE_TOOLPARAMS,
+  REQUEST_TOOLPARAMS_SUCCESS,
+  REQUEST_TOOLPARAMS_FAILED,
+  RESET_TOOLPARAMS,
   SAVING_TOOLPARAMS
 } from '../actions/tools';
 
 export const toolList = (
-  state = { isFetching: false, error: null, tools: {} },
+  state = { status: '', error: null, tools: {} },
   { type, payload }
 ) => {
   switch (type) {
     case REQUEST_TOOLLIST:
-      return { ...state, ...payload };
-    case RECEIVE_TOOLLIST:
-      return { ...state, ...payload };
+      return { ...state, status: 'fetching', error: null };
+    case REQUEST_TOOLLIST_SUCCESS:
+      return { ...state, ...state, tools: payload, status: 'received' };
+    case REQUEST_TOOLLIST_FAILED:
+      return { ...state, status: 'failed', error: payload };
     default:
       return state;
   }
 };
 
 export const toolParams = (
-  state = { isFetching: false, error: null, params: {} },
+  state = { status: '', error: null, params: {} },
   { type, payload }
 ) => {
   switch (type) {
     case REQUEST_TOOLPARAMS:
-      return { ...state, ...payload };
-    case RECEIVE_TOOLPARAMS:
-      return { ...state, ...payload };
+      return { ...state, status: 'fetching', error: null };
+    case REQUEST_TOOLPARAMS_SUCCESS:
+      return { ...state, params: payload, status: 'received' };
+    case REQUEST_TOOLPARAMS_FAILED:
+      return { ...state, status: 'failed', error: payload };
+    case RESET_TOOLPARAMS:
+      return { status: '', error: null, params: {} };
     default:
       return state;
   }
