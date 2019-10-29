@@ -159,7 +159,9 @@ const TableButtons = ({ selected, tabulator }) => {
     dispatch(setSelected([]));
   };
 
-  const deleteSelected = () => {};
+  const deleteSelected = () => {
+    dispatch(deleteBuildings([...selected]));
+  };
 
   return (
     <div>

@@ -45,9 +45,9 @@ export const updateInputData = (
   payload: { table, buildings, properties }
 });
 
-export const deleteBuildings = (table = '', buildings = []) => ({
+export const deleteBuildings = (buildings = []) => ({
   type: DELETE_BUILDINGS,
-  payload: { table, buildings }
+  payload: { buildings }
 });
 
 export const fetchMapData = () => {

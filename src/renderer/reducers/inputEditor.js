@@ -49,21 +49,22 @@ function updateGeoJsonProperty(geojsons, table, building, property) {
   };
 }
 
-function deleteBuildings(state, table, buildings) {
+function deleteBuildings(state, buildings) {
   let { geojsons, tables } = state;
   for (const building of buildings) {
-    if (table != 'district') {
+    const isZoneBuilding = tables.zone[building];
+    if (isZoneBuilding) {
       // Delete building from every table that is not district
-      for (const _table in tables) {
-        if (_table != 'district') {
-          delete tables[_table][building];
-          tables = { ...tables, [_table]: { ...tables[_table] } };
+      for (const table in tables) {
+        if (table != 'district') {
+          delete tables[table][building];
+          tables = { ...tables, [table]: { ...tables[table] } };
         }
       }
       // Delete building from zone geojson
       geojsons = deleteGeoJsonFeature(geojsons, 'zone', building);
     } else {
-      delete tables[table][building];
+      delete tables.district[building];
       geojsons = deleteGeoJsonFeature(geojsons, 'district', building);
     }
   }
@@ -103,7 +104,8 @@ const inputData = (state = initialState, { type, payload }) => {
     case DELETE_BUILDINGS:
       return {
         ...state,
-        ...deleteBuildings(state, payload.table, payload.buildings)
+        selected: initialState.selected,
+        ...deleteBuildings(state, payload.buildings)
       };
     case SET_SELECTED:
     case REQUEST_MAPDATA:
