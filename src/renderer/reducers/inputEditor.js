@@ -8,6 +8,7 @@ import {
   SET_SELECTED,
   UPDATE_INPUTDATA,
   DELETE_BUILDINGS,
+  DISCARD_INPUTDATA_CHANGES
 } from '../actions/inputEditor';
 
 const initialState = {
@@ -108,6 +109,8 @@ const inputData = (state = initialState, { type, payload }) => {
     case REQUEST_MAPDATA:
     case RECEIVE_MAPDATA:
       return { ...state, ...payload };
+    case DISCARD_INPUTDATA_CHANGES:
+      return { ...state, changes: initialState.changes };
     case RESET_INPUTDATA:
       return initialState;
     default:

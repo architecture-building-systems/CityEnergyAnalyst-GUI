@@ -11,6 +11,7 @@ export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
 export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
 export const DELETE_BUILDINGS = 'DELETE_BUILDINGS';
+export const DISCARD_INPUTDATA_CHANGES = 'DISCARD_INPUTDATA_CHANGES';
 
 export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
@@ -21,6 +22,19 @@ export const setSelected = selected => ({
 
 export const fetchInputData = () =>
   httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
+
+export const discardChanges = (callback = () => {}) => dispatch => {
+  dispatch(
+    httpAction({
+      url: '/inputs/all-inputs',
+      type: REQUEST_INPUTDATA,
+      onSuccess: () => {
+        dispatch({ type: DISCARD_INPUTDATA_CHANGES });
+        callback();
+      }
+    })
+  );
+};
 
 export const updateInputData = (
   table = '',
@@ -35,8 +49,6 @@ export const deleteBuildings = (table = '', buildings = []) => ({
   type: DELETE_BUILDINGS,
   payload: { table, buildings }
 });
-
-export const discardChanges = () => ({ type: DISCARD_INPUTDATA_CHANGES });
 
 export const fetchMapData = () => {
   const layerList = Object.keys(inputEndpoints);
