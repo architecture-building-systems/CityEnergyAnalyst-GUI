@@ -9,6 +9,7 @@ export const REQUEST_INPUTDATA_FAILED = 'REQUEST_INPUTDATA_FAILED';
 export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
+export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
 
 export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
@@ -19,6 +20,15 @@ export const setSelected = selected => ({
 
 export const fetchInputData = () =>
   httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
+
+export const updateInputData = (
+  table = '',
+  buildings = [],
+  properties = []
+) => ({
+  type: UPDATE_INPUTDATA,
+  payload: { table, buildings, properties }
+});
 
 export const fetchMapData = () => {
   const layerList = Object.keys(inputEndpoints);
