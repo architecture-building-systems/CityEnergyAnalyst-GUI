@@ -10,6 +10,7 @@ export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
 export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
+export const DELETE_BUILDINGS = 'DELETE_BUILDINGS';
 
 export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
@@ -29,6 +30,13 @@ export const updateInputData = (
   type: UPDATE_INPUTDATA,
   payload: { table, buildings, properties }
 });
+
+export const deleteBuildings = (table = '', buildings = []) => ({
+  type: DELETE_BUILDINGS,
+  payload: { table, buildings }
+});
+
+export const discardChanges = () => ({ type: DISCARD_INPUTDATA_CHANGES });
 
 export const fetchMapData = () => {
   const layerList = Object.keys(inputEndpoints);

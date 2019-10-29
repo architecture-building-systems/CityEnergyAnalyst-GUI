@@ -6,7 +6,8 @@ import {
   RECEIVE_MAPDATA,
   RESET_INPUTDATA,
   SET_SELECTED,
-  UPDATE_INPUTDATA
+  UPDATE_INPUTDATA,
+  DELETE_BUILDINGS,
 } from '../actions/inputEditor';
 
 const initialState = {
@@ -17,6 +18,7 @@ const initialState = {
 };
 
 const buildingGeometries = ['zone', 'district'];
+
 function updateData(state, table, buildings, properties) {
   let { geojsons, tables } = state;
   for (const building of buildings) {
@@ -32,16 +34,50 @@ function updateData(state, table, buildings, properties) {
 }
 
 function updateGeoJsonProperty(geojsons, table, building, property) {
-  const buildingIndex = geojsons[table].features.findIndex(
+  const _building = geojsons[table].features.find(
     feature => feature.properties.Name == building
   );
-  geojsons[table].features[buildingIndex].properties = {
-    ...geojsons[table].features[buildingIndex].properties,
-    [property.property]: Number(property.value)
-  };
+  if (_building)
+    _building.properties = {
+      ..._building.properties,
+      [property.property]: Number(property.value)
+    };
   return {
     ...geojsons,
     [table]: { ...geojsons[table], features: geojsons[table].features }
+  };
+}
+
+function deleteBuildings(state, table, buildings) {
+  let { geojsons, tables } = state;
+  for (const building of buildings) {
+    if (table != 'district') {
+      // Delete building from every table that is not district
+      for (const _table in tables) {
+        if (_table != 'district') {
+          delete tables[_table][building];
+          tables = { ...tables, [_table]: { ...tables[_table] } };
+        }
+      }
+      // Delete building from zone geojson
+      geojsons = deleteGeoJsonFeature(geojsons, 'zone', building);
+    } else {
+      delete tables[table][building];
+      geojsons = deleteGeoJsonFeature(geojsons, 'district', building);
+    }
+  }
+  return { geojsons, tables };
+}
+
+function deleteGeoJsonFeature(geojsons, table, building) {
+  return {
+    ...geojsons,
+    [table]: {
+      ...geojsons[table],
+      features: geojsons[table].features.filter(
+        feature => feature.properties.Name != building
+      )
+    }
   };
 }
 
@@ -53,7 +89,7 @@ const inputData = (state = initialState, { type, payload }) => {
       return { ...state, ...payload, status: 'received' };
     case REQUEST_INPUTDATA_FAILED:
       return { ...state, status: 'failed', error: payload };
-    case UPDATE_INPUTDATA: {
+    case UPDATE_INPUTDATA:
       return {
         ...state,
         ...updateData(
@@ -63,7 +99,11 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.properties
         )
       };
-    }
+    case DELETE_BUILDINGS:
+      return {
+        ...state,
+        ...deleteBuildings(state, payload.table, payload.buildings)
+      };
     case SET_SELECTED:
     case REQUEST_MAPDATA:
     case RECEIVE_MAPDATA:
