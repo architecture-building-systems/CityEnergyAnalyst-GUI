@@ -71,6 +71,7 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
   const [visibility, setVisibility] = useState({
     zone: !!data.zone,
     district: !!data.district,
+    streets: !!data.streets,
     dc: !!data.dc,
     dh: !!data.dh && !data.dc,
     network: true
@@ -80,7 +81,7 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
   const renderLayers = () => {
     const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
-    if (typeof data.zone !== 'undefined') {
+    if (data.zone) {
       _layers.push(
         new GeoJsonLayer({
           id: 'zone',
@@ -113,7 +114,7 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
         })
       );
     }
-    if (typeof data.district !== 'undefined') {
+    if (data.district) {
       _layers.push(
         new GeoJsonLayer({
           id: 'district',
@@ -146,13 +147,14 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
         })
       );
     }
-    if (typeof data.streets !== 'undefined') {
+    if (data.streets) {
       _layers.push(
         new GeoJsonLayer({
           id: 'streets',
           data: data.streets,
           getLineColor: [0, 255, 0],
           getLineWidth: 1,
+          visible: visibility.streets,
 
           pickable: true,
           autoHighlight: true,
@@ -161,7 +163,7 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
         })
       );
     }
-    if (typeof data.dc !== 'undefined') {
+    if (data.dc) {
       _layers.push(
         new GeoJsonLayer({
           id: 'dc',
@@ -182,7 +184,7 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
         })
       );
     }
-    if (typeof data.dh !== 'undefined') {
+    if (data.dh) {
       _layers.push(
         new GeoJsonLayer({
           id: 'dh',
@@ -223,7 +225,7 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
     // Calculate camera options
     let points = [];
     ['zone', 'district'].map(layer => {
-      if (typeof data[layer] !== 'undefined') {
+      if (data[layer]) {
         let bbox = data[layer].bbox;
         points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
       }
@@ -276,7 +278,11 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
 
   useEffect(() => {
     setLayers(renderLayers());
-  }, [visibility, extruded, selected]);
+  }, [data, visibility, extruded, selected]);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
 
   return (
     <React.Fragment>
@@ -352,7 +358,7 @@ const NetworkToggle = ({ data, setVisibility }) => {
           District Heating
         </label>
       )}
-      {!data.dc && !data.dh && 'No networks found'}
+      {!data.dc && !data.dh && <div>No networks found</div>}
     </div>
   );
 };
@@ -389,6 +395,20 @@ const LayerToggle = ({ data, setVisibility }) => {
               defaultChecked
             />
             District
+          </label>
+        </span>
+      )}
+      {data.streets && (
+        <span className="layer-toggle">
+          <label className="map-plot-label">
+            <input
+              type="checkbox"
+              name="layer-toggle"
+              value="streets"
+              onChange={handleChange}
+              defaultChecked
+            />
+            Streets
           </label>
         </span>
       )}
@@ -434,7 +454,7 @@ function updateTooltip({ x, y, object, layer }) {
         if (key !== 'Building' && properties[key] === 'NONE') return null;
         innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
       });
-      if (typeof properties['Buildings'] !== 'undefined') {
+      if (properties['Buildings']) {
         let length = calcLength(object) * 1000;
         innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) /
           1000}m</div>`;
