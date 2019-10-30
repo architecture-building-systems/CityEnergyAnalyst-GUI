@@ -24,7 +24,17 @@ function updateData(state, table, buildings, properties) {
   let { geojsons, tables } = state;
   for (const building of buildings) {
     for (const property of properties) {
-      tables[table][building][property.property] = property.value;
+      tables = {
+        ...tables,
+        [table]: {
+          ...tables[table],
+          [building]: {
+            ...tables[table][building],
+            [property.property]: property.value
+          }
+        }
+      };
+
       // Update building properties of geojsons
       if (buildingGeometries.includes(table)) {
         geojsons = updateGeoJsonProperty(geojsons, table, building, property);
