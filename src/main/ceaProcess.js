@@ -47,7 +47,7 @@ export function createCEAProcess(BrowserWindow, callback) {
       title: 'CEA Error',
       message: 'CEA has encounted an error on startup',
       detail: startupError,
-      buttons: 'Exit CEA'
+      buttons: ['Exit CEA']
     });
     app.exit();
   }
