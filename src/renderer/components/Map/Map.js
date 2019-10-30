@@ -99,7 +99,8 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
               'zone',
               colors,
               connectedBuildings[network_type],
-              selected
+              selected,
+              network_type
             ),
           updateTriggers: {
             getFillColor: selected
@@ -132,7 +133,8 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
               'district',
               colors,
               connectedBuildings[network_type],
-              selected
+              selected,
+              network_type
             ),
           updateTriggers: {
             getFillColor: selected
@@ -279,10 +281,6 @@ const DeckGLMap = ({ data, colors, initialViewState }) => {
   useEffect(() => {
     setLayers(renderLayers());
   }, [data, visibility, extruded, selected]);
-
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
 
   return (
     <React.Fragment>
@@ -486,13 +484,14 @@ const buildingColor = (
   layer,
   colors,
   connectedBuildings,
-  selected
+  selected,
+  network_type
 ) => {
   if (selected.includes(buildingName)) {
     return [255, 255, 0, 255];
   }
   if (layer === 'district') return colors.district;
-  if (connectedBuildings.includes(buildingName)) return colors.dh;
+  if (connectedBuildings.includes(buildingName)) return colors[network_type];
   return colors.disconnected;
 };
 
