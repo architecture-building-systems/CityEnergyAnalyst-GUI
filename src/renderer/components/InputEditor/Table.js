@@ -11,7 +11,8 @@ const useTableData = tab => {
   const tables = useSelector(state => state.inputData.tables);
   const columns = useSelector(state => state.inputData.columns);
 
-  const [data, setData] = useState({ data: [], columnDef: [] });
+  const [data, setData] = useState([]);
+  const [columnDef, setColumnDef] = useState([]);
 
   const dispatch = useDispatch();
 
@@ -54,10 +55,15 @@ const useTableData = tab => {
     });
 
   useEffect(() => {
-    setData({ data: getData(), columnDef: getColumnDef() });
+    setColumnDef(getColumnDef());
+    setData(getData());
   }, [tab]);
 
-  return [data.data, data.columnDef];
+  useEffect(() => {
+    setData(getData());
+  }, [tables[tab]]);
+
+  return [data, columnDef];
 };
 
 const Table = ({ tab }) => {
@@ -78,12 +84,12 @@ const Table = ({ tab }) => {
       validationFailed: cell => {
         cell.cancelEdit();
       },
-      cellEdited: data => {
+      cellEdited: cell => {
         dispatch(
           updateInputData(
             tableRef.current,
-            [data.getData()['Name']],
-            [{ property: data.getField(), value: data.getValue() }]
+            [cell.getData()['Name']],
+            [{ property: cell.getField(), value: cell.getValue() }]
           )
         );
       },
@@ -98,13 +104,20 @@ const Table = ({ tab }) => {
 
   useEffect(() => {
     if (tabulator.current) {
+      tabulator.current.setData([]);
       tabulator.current.setColumns(columnDef);
-      tabulator.current.setData(data);
       tabulator.current.setSort('Name', 'asc');
-      tabulator.current.deselectRow();
-      tabulator.current.selectRow(selected);
     }
-  }, [data, columnDef]);
+  }, [columnDef]);
+
+  useEffect(() => {
+    if (tabulator.current) {
+      if (!tabulator.current.getData().length) {
+        tabulator.current.setData(data);
+        tabulator.current.selectRow(selected);
+      } else tabulator.current.updateData(data);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (tabulator.current) {
