@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Card, Button } from 'antd';
-import { setSelected, updateInputData } from '../../actions/inputEditor';
+import {
+  setSelected,
+  updateInputData,
+  deleteBuildings,
+  discardChanges
+} from '../../actions/inputEditor';
 import routes from '../../constants/routes';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -129,31 +134,42 @@ const Table = ({ tab }) => {
   }, [selected]);
 
   return (
-    <Card
-      headStyle={{ backgroundColor: '#f1f1f1' }}
-      size="small"
-      extra={
-        <TableButtons
-          selected={selected}
-          tabulator={tabulator}
-          tableRef={tableRef}
-        />
-      }
-    >
-      <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
-      {!data.length ? (
-        <div>
-          Input file could not be found. You can create the file using the
-          <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>tool.
-        </div>
-      ) : null}
-    </Card>
+    <React.Fragment>
+      <Card
+        headStyle={{ backgroundColor: '#f1f1f1' }}
+        size="small"
+        extra={
+          <TableButtons selected={selected} tabulator={tabulator} table={tab} />
+        }
+      >
+        <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
+        {!data.length ? (
+          <div>
+            Input file could not be found. You can create the file using the
+            <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
+            tool.
+          </div>
+        ) : null}
+      </Card>
+      <Button>Save</Button>
+      <Button
+        onClick={() => dispatch(discardChanges(() => console.log('discarded')))}
+      >
+        Discard Changes
+      </Button>
+    </React.Fragment>
   );
 };
 
-const TableButtons = ({ selected, tabulator }) => {
-  const dispatch = useDispatch();
+const TableButtons = ({ selected, tabulator, table }) => {
   const [filterToggle, setFilterToggle] = useState(false);
+  const [selectedInTable, setSelectedInTable] = useState(true);
+  const data = useSelector(state => state.inputData.tables[table]);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    setSelectedInTable(Object.keys(data).includes(selected[0]));
+  }, [table, selected]);
 
   const selectAll = () => {
     dispatch(setSelected(tabulator.current.getData().map(data => data.Name)));
@@ -185,9 +201,9 @@ const TableButtons = ({ selected, tabulator }) => {
       >
         Filter on Selection
       </Button>
-      {selected.length ? (
+      {selectedInTable ? (
         <React.Fragment>
-          <Button>Edit Selection</Button>
+          <Button onClick={editSelected}>Edit Selection</Button>
           <Button onClick={clearSelected}>Clear Selection</Button>
           <Button type="danger" onClick={deleteSelected}>
             Delete Selection
