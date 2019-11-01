@@ -53,7 +53,7 @@ const useTableData = tab => {
         columnDef.editor = 'input';
         columnDef.validator =
           columns[tab][column].type === 'str' ? 'string' : 'numeric';
-        columnDef.minWidth = 150;
+        columnDef.minWidth = 100;
         // Hack to allow editing when double clicking
         columnDef.cellDblClick = () => {};
       }
@@ -197,11 +197,14 @@ const ChangesSummary = ({ changes }) => {
           <b>DELETE:</b>
           {Object.keys(changes.delete).map(table => (
             <div key={table}>
-              <b>{table}</b>
-              <br />
-              {changes.delete[table].map(building => (
-                <div key={building}>{building}</div>
-              ))}
+              <u>
+                <b>{table}</b>
+              </u>
+              <div>
+                {changes.delete[table].reduce(
+                  (out, building) => `${out}, ${building}`
+                )}
+              </div>
               <br />
             </div>
           ))}
@@ -212,16 +215,19 @@ const ChangesSummary = ({ changes }) => {
           <b>UPDATE:</b>
           {Object.keys(changes.update).map(table => (
             <div key={table}>
-              <b>{table}</b>
-              <br />
+              <u>
+                <b>{table}</b>
+              </u>
               {Object.keys(changes.update[table]).map(building => (
                 <div key={building}>
                   {building}
                   {Object.keys(changes.update[table][building]).map(
                     property => (
                       <div key={property}>
-                        {`${property}: 
-                          ${changes.update[table][building][property].newValue}`}
+                        <i>{property}</i>
+                        {`: ${changes.update[table][building][property].oldValue}
+                        → 
+                        ${changes.update[table][building][property].newValue}`}
                       </div>
                     )
                   )}
