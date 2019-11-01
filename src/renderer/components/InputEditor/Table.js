@@ -136,6 +136,26 @@ const Table = ({ tab }) => {
     }
   }, [selected]);
 
+  const saveChanges = () => {
+    Modal.confirm({
+      title: 'Save these changes?',
+      content: (
+        <details>
+          <summary>Show changes</summary>
+          <ChangesSummary changes={changes} />
+        </details>
+      ),
+      centered: true,
+      okText: 'SAVE',
+      okType: 'primary',
+      cancelText: 'Cancel',
+      async onOk() {
+        // eslint-disable-next-line no-undef
+        // await new Promise(resolve => dispatch(discardChanges(() => resolve())));
+      }
+    });
+  };
+
   const _discardChanges = () => {
     Modal.confirm({
       title: 'This will discard all unsaved changes.',
@@ -174,7 +194,7 @@ const Table = ({ tab }) => {
           </div>
         ) : null}
       </Card>
-      <Button style={{ margin: 5 }} disabled={noChanges}>
+      <Button style={{ margin: 5 }} disabled={noChanges} onClick={saveChanges}>
         Save
       </Button>
       <Button
