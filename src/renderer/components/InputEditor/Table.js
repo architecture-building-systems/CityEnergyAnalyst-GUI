@@ -8,6 +8,7 @@ import {
   deleteBuildings,
   discardChanges
 } from '../../actions/inputEditor';
+import EditSelectedModal from './EditSelectedModal';
 import routes from '../../constants/routes';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -210,6 +211,12 @@ const TableButtons = ({ selected, tabulator, table }) => {
           </Button>
         </React.Fragment>
       ) : null}
+      <EditSelectedModal
+        visible={modalVisible}
+        setVisible={setModalVisible}
+        inputTable={tabulator.current}
+        table={table}
+      />
     </div>
   );
 };

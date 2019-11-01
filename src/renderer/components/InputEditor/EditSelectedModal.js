@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Modal, Button, Form, Input } from 'antd';
+import { Modal, Form, Input } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { updateInputData } from '../../actions/inputEditor';
 
@@ -41,18 +41,20 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
       onCancel={handleCancel}
       destroyOnClose
     >
-      <details style={{ padding: 15 }}>
-        <summary>Selected Data Table</summary>
+      <div style={{ overflow: 'auto', maxHeight: 400 }}>
+        <InputDataForm ref={formRef} inputTable={inputTable} table={table} />
+      </div>
+      <details style={{ marginTop: 15 }}>
+        <summary>Show selected data table</summary>
         <Table inputTable={inputTable} />
       </details>
-      <InputDataForm ref={formRef} inputTable={inputTable} table={table} />
     </Modal>
   );
 };
 
 const Table = ({ inputTable }) => {
   return (
-    <div style={{ overflow: 'auto' }}>
+    <div style={{ overflow: 'auto', maxHeight: 200 }}>
       <table>
         <tr>
           {inputTable.getColumnDefinitions().map(columnDef => (
@@ -61,14 +63,17 @@ const Table = ({ inputTable }) => {
             </th>
           ))}
         </tr>
-        {inputTable.getSelectedData().map(data => {
-          const row = inputTable.getColumnDefinitions().map(columnDef => (
-            <td style={{ padding: '0 15px' }} key={columnDef.title}>
-              {data[columnDef.title]}
-            </td>
-          ));
-          return <tr key={data.Name}>{row}</tr>;
-        })}
+        {inputTable
+          .getSelectedData()
+          .sort((a, b) => (a.Name > b.Name ? 1 : -1))
+          .map(data => {
+            const row = inputTable.getColumnDefinitions().map(columnDef => (
+              <td style={{ padding: '0 15px' }} key={columnDef.title}>
+                {data[columnDef.title]}
+              </td>
+            ));
+            return <tr key={data.Name}>{row}</tr>;
+          })}
       </table>
     </div>
   );
