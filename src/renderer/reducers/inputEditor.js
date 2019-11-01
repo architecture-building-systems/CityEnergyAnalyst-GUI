@@ -62,7 +62,10 @@ function updateData(state, table, buildings, properties) {
           ...tables[table],
           [building]: {
             ...tables[table][building],
-            [property]: value
+            [property]: value,
+            ...(tables[table][building].REFERENCE
+              ? { REFERENCE: 'User - Input' }
+              : {})
           }
         }
       };
@@ -83,7 +86,8 @@ function updateGeoJsonProperty(geojsons, table, building, property) {
   if (_building)
     _building.properties = {
       ..._building.properties,
-      [property.property]: Number(property.value)
+      [property.property]: Number(property.value),
+      ...(_building.properties.REFERENCE ? { REFERENCE: 'User - Input' } : {})
     };
   return {
     ...geojsons,
