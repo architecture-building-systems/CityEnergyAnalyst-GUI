@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, Button } from 'antd';
+import { Card, Button, Modal } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -74,7 +74,9 @@ const useTableData = tab => {
 
 const Table = ({ tab }) => {
   const [data, columnDef] = useTableData(tab);
-  const selected = useSelector(state => state.inputData.selected);
+  const { selected, changes } = useSelector(state => state.inputData);
+  const noChanges =
+    !Object.keys(changes.update).length && !Object.keys(changes.delete).length;
   const dispatch = useDispatch();
   const tableRef = useRef(tab);
   const tabulator = useRef(null);
@@ -134,6 +136,26 @@ const Table = ({ tab }) => {
     }
   }, [selected]);
 
+  const _discardChanges = () => {
+    Modal.confirm({
+      title: 'This will discard all unsaved changes.',
+      content: (
+        <details>
+          <summary>Show changes</summary>
+          <ChangesSummary changes={changes} />
+        </details>
+      ),
+      centered: true,
+      okText: 'DISCARD',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      async onOk() {
+        // eslint-disable-next-line no-undef
+        await new Promise(resolve => dispatch(discardChanges(() => resolve())));
+      }
+    });
+  };
+
   return (
     <React.Fragment>
       <Card
@@ -152,9 +174,14 @@ const Table = ({ tab }) => {
           </div>
         ) : null}
       </Card>
-      <Button>Save</Button>
+      <Button style={{ margin: 5 }} disabled={noChanges}>
+        Save
+      </Button>
       <Button
-        onClick={() => dispatch(discardChanges(() => console.log('discarded')))}
+        style={{ margin: 5 }}
+        type="danger"
+        disabled={noChanges}
+        onClick={_discardChanges}
       >
         Discard Changes
       </Button>
@@ -162,9 +189,57 @@ const Table = ({ tab }) => {
   );
 };
 
+const ChangesSummary = ({ changes }) => {
+  return (
+    <div style={{ overflow: 'auto', maxHeight: 400 }}>
+      {Object.keys(changes.delete).length ? (
+        <div>
+          <b>DELETE:</b>
+          {Object.keys(changes.delete).map(table => (
+            <div key={table}>
+              <b>{table}</b>
+              <br />
+              {changes.delete[table].map(building => (
+                <div key={building}>{building}</div>
+              ))}
+              <br />
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {Object.keys(changes.update).length ? (
+        <div>
+          <b>UPDATE:</b>
+          {Object.keys(changes.update).map(table => (
+            <div key={table}>
+              <b>{table}</b>
+              <br />
+              {Object.keys(changes.update[table]).map(building => (
+                <div key={building}>
+                  {building}
+                  {Object.keys(changes.update[table][building]).map(
+                    property => (
+                      <div key={property}>
+                        {`${property}: 
+                          ${changes.update[table][building][property].newValue}`}
+                      </div>
+                    )
+                  )}
+                </div>
+              ))}
+              <br />
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 const TableButtons = ({ selected, tabulator, table }) => {
   const [filterToggle, setFilterToggle] = useState(false);
   const [selectedInTable, setSelectedInTable] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const data = useSelector(state => state.inputData.tables[table]);
   const dispatch = useDispatch();
 
@@ -190,7 +265,30 @@ const TableButtons = ({ selected, tabulator, table }) => {
   };
 
   const deleteSelected = () => {
-    dispatch(deleteBuildings([...selected]));
+    Modal.confirm({
+      title: 'Are you sure delete these buildings?',
+      content: (
+        <div>
+          <i style={{ fontSize: '1vw' }}>
+            This will delete the following buildings from every table:
+          </i>
+          <div style={{ overflow: 'auto', maxHeight: 200, margin: 10 }}>
+            {selected.reduce((out, building) => `${out}, ${building}`)}
+          </div>
+        </div>
+      ),
+      centered: true,
+      okText: 'DELETE',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk() {
+        dispatch(deleteBuildings([...selected]));
+      }
+    });
+  };
+
+  const editSelected = () => {
+    setModalVisible(true);
   };
 
   return (
