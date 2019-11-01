@@ -42,8 +42,11 @@ function updateData(state, table, buildings, properties) {
         if (changes.update[table][building][property].oldValue == value) {
           delete changes.update[table][building][property];
           // Delete update building entry if it is empty
-          if (!Object.keys(changes.update[table][building]).length)
+          if (!Object.keys(changes.update[table][building]).length) {
             delete changes.update[table][building];
+            if (!Object.keys(changes.update[table]).length)
+              delete changes.update[table];
+          }
         } else changes.update[table][building][property].newValue = value;
       } else {
         // Store old and new value
