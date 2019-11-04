@@ -1,8 +1,5 @@
 import React, { useRef, useState } from 'react';
-import remote from 'electron';
 import { Modal, Form } from 'antd';
-import fs from 'fs';
-import path from 'path';
 import axios from 'axios';
 import parameter from '../Tools/parameter';
 
