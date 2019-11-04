@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Map from '../Map/Map';
+import DeckGLMap from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInputData, resetInputData } from '../../actions/inputEditor';
-import { Tabs, Modal } from 'antd';
+import { Tabs, Modal, Icon } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -17,7 +17,7 @@ const MAP_STYLE = {
 };
 
 const InputEditor = () => {
-  const { error } = useSelector(state => state.inputData);
+  const { status, error } = useSelector(state => state.inputData);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -29,6 +29,13 @@ const InputEditor = () => {
   }, []);
 
   if (error) return <div>Error encountered</div>;
+  if (status == 'fetching')
+    return (
+      <CenterSpinner
+        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        tip="Reading Input Files..."
+      />
+    );
 
   return (
     <div>
@@ -40,18 +47,13 @@ const InputEditor = () => {
 };
 
 const InputMap = () => {
-  const { geojsons, colors, status, error } = useSelector(
-    state => state.inputData
-  );
+  const { geojsons, colors } = useSelector(state => state.inputData);
 
-  if (error) return <div>Error encountered</div>;
+  if (!geojsons) return null;
   return (
-    <Map
-      style={MAP_STYLE}
-      data={geojsons}
-      colors={colors}
-      loading={status == 'fetching' && !geojsons}
-    />
+    <div style={MAP_STYLE}>
+      {geojsons ? <DeckGLMap data={geojsons} colors={colors} /> : null}
+    </div>
   );
 };
 

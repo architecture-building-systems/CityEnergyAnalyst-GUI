@@ -7,7 +7,6 @@ import ReactMapGL, {
   NavigationControl
 } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
-import { Spin, Icon } from 'antd';
 import {
   bbox as calcBBox,
   area as calcArea,
@@ -33,29 +32,7 @@ const defaultViewState = {
   bearing: 0
 };
 
-const Map = ({ style, data, colors, loading }) => {
-  if (loading)
-    return (
-      <Spin
-        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
-        tip="Loading Map..."
-      >
-        <div style={style}></div>
-      </Spin>
-    );
-  if (!data) return null;
-  return (
-    <div style={style}>
-      <DeckGLMap
-        data={data}
-        colors={colors}
-        initialViewState={defaultViewState}
-      />
-    </div>
-  );
-};
-
-const DeckGLMap = ({ data, colors, initialViewState }) => {
+const DeckGLMap = ({ data, colors, initialViewState = defaultViewState }) => {
   const mapRef = useRef();
   const cameraOptions = useRef();
   const glRef = useRef();
@@ -521,4 +498,4 @@ export const useGeoJsons = layerList => {
   return [geojsons, setGeoJsons];
 };
 
-export default Map;
+export default DeckGLMap;
