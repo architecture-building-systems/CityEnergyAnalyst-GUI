@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import Map from '../Map/Map';
+import DeckGLMap from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInputData, resetInputData } from '../../actions/inputEditor';
-import { Tabs, Icon, Modal } from 'antd';
+import { Tabs, Modal, Icon } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
+import './InputEditor.css';
 
 const MAP_STYLE = {
   height: '500px',
@@ -16,93 +17,43 @@ const MAP_STYLE = {
 };
 
 const InputEditor = () => {
-  const [loaded, setLoaded] = useState(false);
-  const [unsaved, setUnsaved] = useState(false);
-
-  const onLoad = () => {
-    setLoaded(true);
-  };
-
-  const receiveMessage = event => {
-    setUnsaved(event.data);
-  };
-
-  useEffect(() => {
-    window.addEventListener('message', receiveMessage);
-    return () => window.removeEventListener('message', receiveMessage);
-  });
-
-  return (
-    <React.Fragment>
-      <NavigationPrompt when={unsaved}>
-        {(isOpen, onConfirm, onCancel) => (
-          <Modal
-            centered
-            closable={false}
-            visible={isOpen}
-            onOk={onConfirm}
-            onCancel={onCancel}
-          >
-            There are still unsaved changes.
-            <br />
-            <i>(Any unsaved changes will be discarded)</i>
-            <br />
-            <br />
-            Are you sure you want to navigate away?
-          </Modal>
-        )}
-      </NavigationPrompt>
-      {loaded ? null : (
-        <CenterSpinner
-          indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
-          tip="Reading input files"
-        />
-      )}
-      <iframe
-        style={{ display: loaded ? 'block' : 'none' }}
-        src="http://localhost:5050/inputs/building-properties?div=true"
-        height={980}
-        width="100%"
-        scrolling="no"
-        frameBorder="false"
-        onLoad={onLoad}
-      />
-    </React.Fragment>
-  );
-};
-
-const InputEditorReact = () => {
+  const { status, error } = useSelector(state => state.inputData);
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchInputData());
+    // Reset input data state on umount
     return () => {
       dispatch(resetInputData());
     };
   }, []);
 
+  if (error) return <div>Error encountered</div>;
+  if (status == 'fetching')
+    return (
+      <CenterSpinner
+        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        tip="Reading Input Files..."
+      />
+    );
+
   return (
     <div>
       <InputMap />
-      <br />
       <InputTable />
+      <InputNavigationPrompt />
     </div>
   );
 };
 
 const InputMap = () => {
-  const { geojsons, colors, isFetchingInputData, error } = useSelector(
-    state => state.inputData
-  );
+  const { geojsons, colors } = useSelector(state => state.inputData);
 
-  if (error) return <div>{error}</div>;
+  if (!geojsons) return null;
   return (
-    <Map
-      style={MAP_STYLE}
-      data={geojsons}
-      colors={colors}
-      loading={isFetchingInputData}
-    />
+    <div style={MAP_STYLE}>
+      {geojsons ? <DeckGLMap data={geojsons} colors={colors} /> : null}
+    </div>
   );
 };
 
@@ -113,12 +64,48 @@ const InputTable = () => {
   if (!order) return null;
   const TabPanes = order.map(key => <Tabs.TabPane key={key} tab={key} />);
   return (
-    <div>
-      <Tabs defaultActiveKey={tab} onChange={setTab}>
+    <div className="cea-input-editor" style={{ margin: '10px 0' }}>
+      <Tabs
+        className="cea-input-editor-tabs"
+        size="small"
+        activeKey={tab}
+        onChange={setTab}
+      >
         {TabPanes}
       </Tabs>
-      <Table tab={tab} />
+      <div className="cea-input-editor-table">
+        <Table tab={tab} />
+      </div>
     </div>
+  );
+};
+
+const InputNavigationPrompt = () => {
+  const { changes } = useSelector(state => state.inputData);
+
+  return (
+    <NavigationPrompt
+      when={
+        Object.keys(changes.update).length || Object.keys(changes.delete).length
+      }
+    >
+      {(isOpen, onConfirm, onCancel) => (
+        <Modal
+          centered
+          closable={false}
+          visible={isOpen}
+          onOk={onConfirm}
+          onCancel={onCancel}
+        >
+          There are still unsaved changes.
+          <br />
+          <i>(Any unsaved changes will be discarded)</i>
+          <br />
+          <br />
+          Are you sure you want to navigate away?
+        </Modal>
+      )}
+    </NavigationPrompt>
   );
 };
 

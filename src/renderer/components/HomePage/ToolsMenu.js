@@ -9,7 +9,7 @@ import routes from '../../constants/routes';
 const { SubMenu } = Menu;
 
 const ToolsMenu = props => {
-  const { isFetching, error, tools } = useSelector(state => state.toolList);
+  const { status, tools } = useSelector(state => state.toolList);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -17,9 +17,9 @@ const ToolsMenu = props => {
   }, []);
 
   let toolMenu = null;
-  if (isFetching) {
+  if (status == 'fetching') {
     toolMenu = <Menu.Item key="no-tools">Fetching Tools...</Menu.Item>;
-  } else if (error) {
+  } else if (status == 'failed') {
     toolMenu = <Menu.Item key="no-tools">Error Fetching Tools</Menu.Item>;
   } else if (Object.keys(tools).length) {
     const toolCategoryList = Object.keys(tools).map(category => {

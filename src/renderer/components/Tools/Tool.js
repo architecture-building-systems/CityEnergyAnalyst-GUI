@@ -12,7 +12,8 @@ import {
 import {
   fetchToolParams,
   saveToolParams,
-  setDefaultToolParams
+  setDefaultToolParams,
+  resetToolParams
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
 import parameter from './parameter';
@@ -23,7 +24,7 @@ export const ToolRoute = ({ match }) => {
 };
 
 const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
-  const { isFetching, error, params } = useSelector(state => state.toolParams);
+  const { status, error, params } = useSelector(state => state.toolParams);
   const dispatch = useDispatch();
   const {
     category,
@@ -35,17 +36,24 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
 
   useEffect(() => {
     dispatch(fetchToolParams(script));
+    return () => dispatch(resetToolParams());
   }, [script]);
 
-  if (isFetching) return <Skeleton active />;
-  if (error) {
+  if (status == 'fetching') return <Skeleton active />;
+  if (status == 'failed') {
     return (
       <Result
         status="warning"
-        title="Something went wrong:"
+        title="Something went wrong with CEA"
         extra={
-          <div>
-            <pre>{error.message}</pre>
+          <div style={{ textAlign: 'left' }}>
+            Error Message:
+            <pre>{error.data && error.data.message}</pre>
+            <details>
+              <pre style={{ backgroundColor: '#f1f1f1', margin: 10 }}>
+                {error.data && error.data.trace}
+              </pre>
+            </details>
           </div>
         }
       />

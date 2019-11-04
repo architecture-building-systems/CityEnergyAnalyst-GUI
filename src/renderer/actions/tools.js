@@ -1,10 +1,17 @@
 import axios from 'axios';
+import { httpAction } from '../store/httpMiddleware';
 
 export const REQUEST_TOOLLIST = 'REQUEST_TOOLLIST';
-export const RECEIVE_TOOLLIST = 'RECEIVE_TOOLLIST';
+export const REQUEST_TOOLLIST_SUCCESS = 'REQUEST_TOOLLIST_SUCCESS';
+export const REQUEST_TOOLLIST_FAILED = 'REQUEST_TOOLLIST_FAILED';
+
 export const REQUEST_TOOLPARAMS = 'REQUEST_TOOLPARAMS';
-export const RECEIVE_TOOLPARAMS = 'RECEIVE_TOOLPARAMS';
+export const REQUEST_TOOLPARAMS_SUCCESS = 'REQUEST_TOOLPARAMS_SUCCESS';
+export const REQUEST_TOOLPARAMS_FAILED = 'REQUEST_TOOLPARAMS_FAILED';
+export const RESET_TOOLPARAMS = 'RESET_TOOLPARAMS';
+
 export const SET_TOOLPARAMS = 'SET_TOOLPARAMS';
+
 export const SAVING_TOOLPARAMS = 'SAVING_TOOLPARAMS';
 
 function shouldFetchToolList(state) {
@@ -13,62 +20,17 @@ function shouldFetchToolList(state) {
 }
 
 export const fetchToolList = () => {
-  return (_dispatch, getState) => {
+  return (dispatch, getState) => {
     if (shouldFetchToolList(getState())) {
-      return _dispatch(dispatch => {
-        dispatch({
-          type: REQUEST_TOOLLIST,
-          payload: { isFetching: true, error: null }
-        });
-        return axios
-          .get(`http://localhost:5050/api/tools`)
-          .then(response => {
-            dispatch({
-              type: RECEIVE_TOOLLIST,
-              payload: { tools: response.data, isFetching: false }
-            });
-            return response.data;
-          })
-          .catch(error => {
-            dispatch({
-              type: RECEIVE_TOOLLIST,
-              payload: {
-                error: { message: error },
-                isFetching: false
-              }
-            });
-          });
-      });
+      dispatch(httpAction({ url: `/tools/`, type: REQUEST_TOOLLIST }));
     }
   };
 };
 
-export const fetchToolParams = tool => {
-  return dispatch => {
-    dispatch({
-      type: REQUEST_TOOLPARAMS,
-      payload: { isFetching: true, error: null }
-    });
-    return axios
-      .get(`http://localhost:5050/api/tools/${tool}`)
-      .then(response => {
-        dispatch({
-          type: RECEIVE_TOOLPARAMS,
-          payload: { params: response.data, isFetching: false }
-        });
-        return response.data;
-      })
-      .catch(error => {
-        dispatch({
-          type: RECEIVE_TOOLPARAMS,
-          payload: {
-            error: { message: error.response.data },
-            isFetching: false
-          }
-        });
-      });
-  };
-};
+export const fetchToolParams = tool =>
+  httpAction({ url: `/tools/${tool}`, type: REQUEST_TOOLPARAMS });
+
+export const resetToolParams = () => ({ type: RESET_TOOLPARAMS });
 
 export const saveToolParams = (tool, params) => {
   return dispatch => {

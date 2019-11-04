@@ -1,52 +1,77 @@
 import axios from 'axios';
 import inputEndpoints from '../constants/inputEndpoints';
+import { httpAction } from '../store/httpMiddleware';
 
 export const RESET_INPUTDATA = 'RESET_INPUTDATA';
 export const REQUEST_INPUTDATA = 'REQUEST_INPUTDATA';
-export const RECEIVE_INPUTDATA = 'RECEIVE_INPUTDATA';
+export const REQUEST_INPUTDATA_SUCCESS = 'REQUEST_INPUTDATA_SUCCESS';
+export const REQUEST_INPUTDATA_FAILED = 'REQUEST_INPUTDATA_FAILED';
 export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
+export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
+export const DELETE_BUILDINGS = 'DELETE_BUILDINGS';
+export const SAVE_INPUTDATA = 'SAVE_INPUTDATA';
+export const SAVE_INPUTDATA_SUCCESS = 'SAVE_INPUTDATA_SUCCESS';
+export const SAVE_INPUTDATA_FAILED = 'SAVE_INPUTDATA_FAILED';
+export const DISCARD_INPUTDATA_CHANGES = 'DISCARD_INPUTDATA_CHANGES';
+export const DISCARD_INPUTDATA_CHANGES_SUCCESS =
+  'DISCARD_INPUTDATA_CHANGES_SUCCESS';
+export const DISCARD_INPUTDATA_CHANGES_FAILED =
+  'DISCARD_INPUTDATA_CHANGES_FAILED';
 
-export const resetInputData = () => ({
-  type: RESET_INPUTDATA
-});
+export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
 export const setSelected = selected => ({
   type: SET_SELECTED,
   payload: { selected }
 });
 
-export const fetchInputData = () => {
-  return dispatch => {
-    dispatch({
-      type: REQUEST_INPUTDATA,
-      payload: { isFetchingInputData: true, error: null }
-    });
-    return axios
-      .get('http://localhost:5050/api/inputs/all-inputs')
-      .then(response => {
-        dispatch({
-          type: RECEIVE_INPUTDATA,
-          payload: { ...response.data, isFetchingInputData: false }
-        });
-        return response.data;
+export const fetchInputData = () =>
+  httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
+
+export const saveChanges = () => (dispatch, getState) =>
+  // eslint-disable-next-line no-undef
+  new Promise((resolve, reject) => {
+    const { tables, geojsons, crs } = getState().inputData;
+    dispatch(
+      httpAction({
+        url: '/inputs/all-inputs',
+        method: 'PUT',
+        type: SAVE_INPUTDATA,
+        data: { tables, geojsons, crs },
+        onSuccess: data => resolve(data),
+        onFailure: error => reject(error)
       })
-      .catch(error => {
-        const message =
-          typeof error.code === 'undefined'
-            ? error.message
-            : error.data.message;
-        dispatch({
-          type: RECEIVE_INPUTDATA,
-          payload: {
-            error: message,
-            isFetchingInputData: false
-          }
-        });
-      });
-  };
-};
+    );
+  });
+
+export const discardChanges = () => dispatch =>
+  // eslint-disable-next-line no-undef
+  new Promise((resolve, reject) => {
+    dispatch(
+      httpAction({
+        url: '/inputs/all-inputs',
+        type: DISCARD_INPUTDATA_CHANGES,
+        onSuccess: data => resolve(data),
+        onFailure: error => reject(error)
+      })
+    );
+  });
+
+export const updateInputData = (
+  table = '',
+  buildings = [],
+  properties = []
+) => ({
+  type: UPDATE_INPUTDATA,
+  payload: { table, buildings, properties }
+});
+
+export const deleteBuildings = (buildings = []) => ({
+  type: DELETE_BUILDINGS,
+  payload: { buildings }
+});
 
 export const fetchMapData = () => {
   const layerList = Object.keys(inputEndpoints);
