@@ -52,7 +52,7 @@ const Splash = () => {
           draggable="false"
         />
       </animated.div>
-      <h1 style={{ margin: 20, color: 'white' }}>City Enegry Analyst</h1>
+      <h1 style={{ margin: 20, color: 'white' }}>City Energy Analyst</h1>
       <small>{message}</small>
     </div>
   );
