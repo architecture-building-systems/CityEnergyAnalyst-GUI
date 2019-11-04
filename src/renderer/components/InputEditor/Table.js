@@ -170,8 +170,7 @@ const Table = ({ tab }) => {
       okType: 'danger',
       cancelText: 'Cancel',
       async onOk() {
-        // eslint-disable-next-line no-undef
-        await new Promise(resolve => dispatch(discardChanges(() => resolve())));
+        await dispatch(discardChanges());
       }
     });
   };

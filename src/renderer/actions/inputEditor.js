@@ -26,18 +26,6 @@ export const setSelected = selected => ({
 export const fetchInputData = () =>
   httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
 
-export const discardChanges = (callback = () => {}) => dispatch => {
-  dispatch(
-    httpAction({
-      url: '/inputs/all-inputs',
-      type: REQUEST_INPUTDATA,
-      onSuccess: () => {
-        dispatch({ type: DISCARD_INPUTDATA_CHANGES });
-        callback();
-      }
-    })
-  );
-};
 export const saveChanges = () => (dispatch, getState) =>
   // eslint-disable-next-line no-undef
   new Promise((resolve, reject) => {
@@ -54,6 +42,21 @@ export const saveChanges = () => (dispatch, getState) =>
     );
   });
 
+export const discardChanges = () => dispatch =>
+  // eslint-disable-next-line no-undef
+  new Promise((resolve, reject) => {
+    dispatch(
+      httpAction({
+        url: '/inputs/all-inputs',
+        type: REQUEST_INPUTDATA,
+        onSuccess: data => {
+          dispatch({ type: DISCARD_INPUTDATA_CHANGES });
+          resolve(data);
+        },
+        onFailure: error => reject(error)
+      })
+    );
+  });
 
 export const updateInputData = (
   table = '',
