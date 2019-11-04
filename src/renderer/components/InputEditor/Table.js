@@ -6,7 +6,8 @@ import {
   setSelected,
   updateInputData,
   deleteBuildings,
-  discardChanges
+  discardChanges,
+  saveChanges
 } from '../../actions/inputEditor';
 import EditSelectedModal from './EditSelectedModal';
 import routes from '../../constants/routes';
@@ -136,7 +137,7 @@ const Table = ({ tab }) => {
     }
   }, [selected]);
 
-  const saveChanges = () => {
+  const _saveChanges = () => {
     Modal.confirm({
       title: 'Save these changes?',
       content: (
@@ -150,8 +151,7 @@ const Table = ({ tab }) => {
       okType: 'primary',
       cancelText: 'Cancel',
       async onOk() {
-        // eslint-disable-next-line no-undef
-        // await new Promise(resolve => dispatch(discardChanges(() => resolve())));
+        await dispatch(saveChanges()).then(data => console.log(data));
       }
     });
   };
@@ -194,7 +194,7 @@ const Table = ({ tab }) => {
           </div>
         ) : null}
       </Card>
-      <Button style={{ margin: 5 }} disabled={noChanges} onClick={saveChanges}>
+      <Button style={{ margin: 5 }} disabled={noChanges} onClick={_saveChanges}>
         Save
       </Button>
       <Button

@@ -11,6 +11,9 @@ export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
 export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
 export const DELETE_BUILDINGS = 'DELETE_BUILDINGS';
+export const SAVE_INPUTDATA = 'SAVE_INPUTDATA';
+export const SAVE_INPUTDATA_SUCCESS = 'SAVE_INPUTDATA_SUCCESS';
+export const SAVE_INPUTDATA_FAILED = 'SAVE_INPUTDATA_FAILED';
 export const DISCARD_INPUTDATA_CHANGES = 'DISCARD_INPUTDATA_CHANGES';
 
 export const resetInputData = () => ({ type: RESET_INPUTDATA });
@@ -35,6 +38,22 @@ export const discardChanges = (callback = () => {}) => dispatch => {
     })
   );
 };
+export const saveChanges = () => (dispatch, getState) =>
+  // eslint-disable-next-line no-undef
+  new Promise((resolve, reject) => {
+    const { tables, geojsons, crs } = getState().inputData;
+    dispatch(
+      httpAction({
+        url: '/inputs/all-inputs',
+        method: 'PUT',
+        type: SAVE_INPUTDATA,
+        data: { tables, geojsons, crs },
+        onSuccess: data => resolve(data),
+        onFailure: error => reject(error)
+      })
+    );
+  });
+
 
 export const updateInputData = (
   table = '',
