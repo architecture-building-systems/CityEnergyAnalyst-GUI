@@ -9,7 +9,7 @@ import {
   UPDATE_INPUTDATA,
   DELETE_BUILDINGS,
   SAVE_INPUTDATA_SUCCESS,
-  DISCARD_INPUTDATA_CHANGES
+  DISCARD_INPUTDATA_CHANGES_SUCCESS
 } from '../actions/inputEditor';
 
 const initialState = {
@@ -171,8 +171,9 @@ const inputData = (state = initialState, { type, payload }) => {
     case REQUEST_MAPDATA:
     case RECEIVE_MAPDATA:
       return { ...state, ...payload };
+    case DISCARD_INPUTDATA_CHANGES_SUCCESS:
+      return { ...state, ...payload, changes: { update: {}, delete: {} } };
     case SAVE_INPUTDATA_SUCCESS:
-    case DISCARD_INPUTDATA_CHANGES:
       return { ...state, changes: { update: {}, delete: {} } };
     case RESET_INPUTDATA:
       return { ...initialState, changes: { update: {}, delete: {} } };

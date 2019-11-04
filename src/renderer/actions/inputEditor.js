@@ -15,6 +15,10 @@ export const SAVE_INPUTDATA = 'SAVE_INPUTDATA';
 export const SAVE_INPUTDATA_SUCCESS = 'SAVE_INPUTDATA_SUCCESS';
 export const SAVE_INPUTDATA_FAILED = 'SAVE_INPUTDATA_FAILED';
 export const DISCARD_INPUTDATA_CHANGES = 'DISCARD_INPUTDATA_CHANGES';
+export const DISCARD_INPUTDATA_CHANGES_SUCCESS =
+  'DISCARD_INPUTDATA_CHANGES_SUCCESS';
+export const DISCARD_INPUTDATA_CHANGES_FAILED =
+  'DISCARD_INPUTDATA_CHANGES_FAILED';
 
 export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
@@ -48,11 +52,8 @@ export const discardChanges = () => dispatch =>
     dispatch(
       httpAction({
         url: '/inputs/all-inputs',
-        type: REQUEST_INPUTDATA,
-        onSuccess: data => {
-          dispatch({ type: DISCARD_INPUTDATA_CHANGES });
-          resolve(data);
-        },
+        type: DISCARD_INPUTDATA_CHANGES,
+        onSuccess: data => resolve(data),
         onFailure: error => reject(error)
       })
     );
