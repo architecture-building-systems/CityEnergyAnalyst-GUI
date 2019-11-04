@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
@@ -7,12 +7,7 @@ import ReactMapGL, {
   NavigationControl
 } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
-import {
-  bbox as calcBBox,
-  area as calcArea,
-  length as calcLength,
-  helpers
-} from '@turf/turf';
+import { area as calcArea, length as calcLength } from '@turf/turf';
 import inputEndpoints from '../../constants/inputEndpoints';
 import axios from 'axios';
 import {
@@ -32,8 +27,20 @@ const defaultViewState = {
   bearing: 0
 };
 
-const DeckGLMap = ({ data, colors, initialViewState = defaultViewState }) => {
-  const mapRef = useRef();
+function useRefWithCallback(callback) {
+  const ref = useRef(null);
+  const setRef = useCallback(node => {
+    if (node) {
+      callback(node);
+    }
+    ref.current = node;
+  }, []);
+
+  return [setRef];
+}
+
+const DeckGLMap = ({ data, colors }) => {
+  const [mapRef] = useRefWithCallback(calcCameraOptions);
   const cameraOptions = useRef();
   const glRef = useRef();
   const selectedLayer = useRef();
@@ -43,7 +50,7 @@ const DeckGLMap = ({ data, colors, initialViewState = defaultViewState }) => {
     state => state.inputData.connected_buildings
   );
   const [layers, setLayers] = useState([]);
-  const [viewState, setViewState] = useState(initialViewState);
+  const [viewState, setViewState] = useState(defaultViewState);
   const [extruded, setExtruded] = useState(false);
   const [visibility, setVisibility] = useState({
     zone: !!data.zone,
@@ -54,6 +61,22 @@ const DeckGLMap = ({ data, colors, initialViewState = defaultViewState }) => {
     network: true
   });
   const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
+
+  function calcCameraOptions(node) {
+    const map = node.getMap();
+    if (data.zone) {
+      const bbox = data.zone.bbox;
+      cameraOptions.current = map.cameraForBounds(bbox, {
+        maxZoom: 20
+      });
+      setViewState({
+        ...viewState,
+        zoom: cameraOptions.current.zoom,
+        latitude: cameraOptions.current.center.lat,
+        longitude: cameraOptions.current.center.lng
+      });
+    }
+  }
 
   const renderLayers = () => {
     const network_type = visibility.dc ? 'dc' : 'dh';
@@ -198,30 +221,6 @@ const DeckGLMap = ({ data, colors, initialViewState = defaultViewState }) => {
     }
   };
 
-  const onLoad = () => {
-    const map = mapRef.current.getMap();
-
-    // Calculate camera options
-    let points = [];
-    ['zone', 'district'].map(layer => {
-      if (data[layer]) {
-        let bbox = data[layer].bbox;
-        points.push([bbox[0], bbox[1]], [bbox[2], bbox[3]]);
-      }
-    });
-    let bbox = calcBBox(helpers.multiPoint(points));
-    cameraOptions.current = map.cameraForBounds(bbox, {
-      maxZoom: 18,
-      padding: 30
-    });
-    setViewState({
-      ...viewState,
-      zoom: cameraOptions.current.zoom,
-      latitude: cameraOptions.current.center.lat,
-      longitude: cameraOptions.current.center.lng
-    });
-  };
-
   const onClick = ({ object, layer }, event) => {
     if (layer.id !== selectedLayer.current) {
       dispatch(setSelected([object.properties['Name']]));
@@ -270,11 +269,7 @@ const DeckGLMap = ({ data, colors, initialViewState = defaultViewState }) => {
         onDragStart={onDragStart}
         onWebGLInitialized={gl => (glRef.current = gl)}
       >
-        <ReactMapGL
-          ref={mapRef}
-          mapStyle={mapStyles[mapStyle]}
-          onLoad={onLoad}
-        />
+        <ReactMapGL ref={mapRef} mapStyle={mapStyles[mapStyle]} />
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
           <NavigationControl showZoom={false} />
           <Toggle3DControl
