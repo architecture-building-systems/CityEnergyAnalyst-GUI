@@ -187,8 +187,14 @@ const Table = ({ tab }) => {
         <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
         {!data.length ? (
           <div>
-            Input file could not be found. You can create the file using the
-            <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
+            Input file could not be found. You can create the file using
+            {tab == 'district' ? (
+              <Link to={`${routes.TOOLS}/distict-helper`}>
+                {' distict-helper '}
+              </Link>
+            ) : (
+              <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
+            )}
             tool.
           </div>
         ) : null}
