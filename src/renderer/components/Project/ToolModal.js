@@ -11,8 +11,7 @@ const ToolModal = ({ tool, visible, setVisible }) => {
 
   const formButtons = ({ getForm, saveParams, setDefault }) => {
     message.config({
-      getContainer: () => document.getElementById('cea-tool-modal'),
-      top: 50
+      top: 120
     });
 
     const saveToConfig = async () => {

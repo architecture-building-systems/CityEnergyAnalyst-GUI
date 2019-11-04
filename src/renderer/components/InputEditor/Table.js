@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, Button, Modal } from 'antd';
+import { Card, Button, Modal, message } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -151,7 +151,18 @@ const Table = ({ tab }) => {
       okType: 'primary',
       cancelText: 'Cancel',
       async onOk() {
-        await dispatch(saveChanges()).then(data => console.log(data));
+        await dispatch(saveChanges())
+          .then(data => {
+            console.log(data);
+            message.config({
+              top: 120
+            });
+            message.success('Changes Saved!');
+          })
+          .catch(error => {
+            console.log(error);
+            message.error('Something went wrong.', 0);
+          });
       }
     });
   };
@@ -170,7 +181,15 @@ const Table = ({ tab }) => {
       okType: 'danger',
       cancelText: 'Cancel',
       async onOk() {
-        await dispatch(discardChanges());
+        await dispatch(discardChanges())
+          .then(data => {
+            console.log(data);
+            message.info('Unsaved changes have been discarded.');
+          })
+          .catch(error => {
+            console.log(error);
+            message.error('Something went wrong.', 0);
+          });
       }
     });
   };
