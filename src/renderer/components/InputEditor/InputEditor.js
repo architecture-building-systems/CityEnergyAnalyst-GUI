@@ -28,7 +28,7 @@ const InputEditor = () => {
     };
   }, []);
 
-  if (error) return <div>Error encountered</div>;
+  if (error) return <AsyncError error={error} />;
   if (status == 'fetching')
     return (
       <CenterSpinner
@@ -106,6 +106,18 @@ const InputNavigationPrompt = () => {
         </Modal>
       )}
     </NavigationPrompt>
+  );
+};
+
+const AsyncError = ({ error, style = {} }) => {
+  return (
+    <div style={style}>
+      <h2>Something went wrong.</h2>
+      <div>ERROR MESSAGE: {error.data ? error.data.message : 'NOT FOUND'}</div>
+      <details style={{ whiteSpace: 'pre-wrap' }}>
+        {error.data ? error.data.trace : 'UNKNOWN ERROR'}
+      </details>
+    </div>
   );
 };
 
