@@ -3,7 +3,7 @@
 import { app, BrowserWindow, dialog, Menu } from 'electron';
 import path from 'path';
 import { format as formatUrl } from 'url';
-import { createCEAProcess, isCEAAlive } from './ceaProcess';
+import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
 import menu from './menu';
 import axios from 'axios';
 
@@ -73,6 +73,7 @@ function createSplashWindow() {
     height: 300,
     width: 500,
     resizable: false,
+    maximizable: false,
     show: false,
     frame: false,
     backgroundColor: '#2e2c29',
@@ -102,6 +103,7 @@ function createSplashWindow() {
   }
 
   window.on('closed', () => {
+    !mainWindow && killCEAProcess();
     splashWindow = null;
   });
 
@@ -117,10 +119,10 @@ app.on('will-quit', event => {
   const shutdown = async () => {
     try {
       const resp = await axios.post(`${CEA_URL}/server/shutdown`);
-      resp.status == 200 && app.exit();
     } catch (error) {
-      dialog.showMessageBox({ message: error });
+      console.log(error);
     }
+    app.exit();
   };
   shutdown();
 });

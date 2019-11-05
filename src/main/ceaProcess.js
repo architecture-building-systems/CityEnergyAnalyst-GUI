@@ -4,6 +4,8 @@ import axios from 'axios';
 import { app, dialog } from 'electron';
 
 let cea;
+let timeout;
+let interval;
 
 export function createCEAProcess(BrowserWindow, callback) {
   // For windows
@@ -62,6 +64,16 @@ export function createCEAProcess(BrowserWindow, callback) {
   return cea;
 }
 
+// Kill process and stop all timed events
+export function killCEAProcess() {
+  if (cea) {
+    cea.removeAllListeners('exit');
+    process.kill(cea.pid);
+  }
+  interval && clearInterval(interval);
+  timeout && clearTimeout(timeout);
+}
+
 export async function isCEAAlive() {
   try {
     const resp = await axios.get(`${process.env.CEA_URL}/server/alive`);
@@ -73,7 +85,6 @@ export async function isCEAAlive() {
 }
 
 function checkCEAStarted(callback) {
-  let timeout;
   const runCallbackOnce = (() => {
     let executed = false;
     return () => {
@@ -85,7 +96,7 @@ function checkCEAStarted(callback) {
   })();
 
   // Check every 1 seconds
-  const interval = setInterval(async () => {
+  interval = setInterval(async () => {
     const alive = await isCEAAlive();
     if (alive) {
       clearInterval(interval);
