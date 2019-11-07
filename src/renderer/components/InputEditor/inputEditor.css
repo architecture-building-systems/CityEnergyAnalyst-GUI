@@ -5,3 +5,7 @@
 .cea-input-editor-table .ant-card-body {
   padding: 0;
 }
+
+.cea-input-editor-table {
+  min-height: 300px;
+}

@@ -8,6 +8,7 @@ import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './InputEditor.css';
+import ScheduleEditor from './ScheduleEditor';
 
 const MAP_STYLE = {
   height: '500px',
@@ -62,7 +63,9 @@ const InputTable = () => {
   const [tab, setTab] = useState('zone');
 
   if (!order) return null;
-  const TabPanes = order.map(key => <Tabs.TabPane key={key} tab={key} />);
+  const TabPanes = [...order, 'schedules'].map(key => (
+    <Tabs.TabPane key={key} tab={key} />
+  ));
   return (
     <div className="cea-input-editor" style={{ margin: '10px 0' }}>
       <Tabs
@@ -70,11 +73,12 @@ const InputTable = () => {
         size="small"
         activeKey={tab}
         onChange={setTab}
+        animated={false}
       >
         {TabPanes}
       </Tabs>
       <div className="cea-input-editor-table">
-        <Table tab={tab} />
+        {tab != 'schedules' ? <Table tab={tab} /> : <ScheduleEditor />}
       </div>
     </div>
   );
