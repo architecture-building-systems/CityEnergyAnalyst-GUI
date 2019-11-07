@@ -39,10 +39,12 @@ const useTableData = tab => {
   };
 
   const getData = () =>
-    Object.keys(tables[tab]).map(row => ({
-      Name: row,
-      ...tables[tab][row]
-    }));
+    Object.keys(tables[tab])
+      .sort((a, b) => (a > b ? 1 : -1))
+      .map(row => ({
+        Name: row,
+        ...tables[tab][row]
+      }));
 
   const getColumnDef = () =>
     Object.keys(columns[tab]).map(column => {
@@ -115,7 +117,6 @@ const Table = ({ tab }) => {
     if (tabulator.current) {
       tabulator.current.setData([]);
       tabulator.current.setColumns(columnDef);
-      tabulator.current.setSort('Name', 'asc');
     }
   }, [columnDef]);
 
@@ -161,6 +162,9 @@ const Table = ({ tab }) => {
           })
           .catch(error => {
             console.log(error);
+            message.config({
+              top: 120
+            });
             message.error('Something went wrong.', 0);
           });
       }
@@ -290,11 +294,12 @@ const TableButtons = ({ selected, tabulator, table }) => {
   const [filterToggle, setFilterToggle] = useState(false);
   const [selectedInTable, setSelectedInTable] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const data = useSelector(state => state.inputData.tables[table]);
+  const data = useSelector(state => state.inputData.tables);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    setSelectedInTable(Object.keys(data).includes(selected[0]));
+    const tableData = data[table] || {};
+    setSelectedInTable(Object.keys(tableData).includes(selected[0]));
   }, [table, selected]);
 
   const selectAll = () => {
