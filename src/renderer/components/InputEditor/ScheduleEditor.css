@@ -1,0 +1,45 @@
+.cea-schedule-container {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  /* grid-template-rows: 80px auto 80px; */
+  grid-template-rows: 300px;
+}
+
+.cea-schedule-buildings {
+  grid-column: 1/2;
+  grid-row: 1/-1;
+}
+
+.cea-schedule-container .ant-spin-container {
+  height: 100%;
+}
+
+.cea-schedule-test {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 0 minmax(0, 1fr);
+  grid-template-rows: 60px 1fr auto;
+}
+
+.cea-schedule-year {
+  grid-column: 2/-1;
+  grid-row: 1/2;
+}
+
+.cea-schedule-data {
+  grid-column: 2/-1;
+  grid-row: 2/3;
+  margin-top: 20px;
+}
+
+.cea-schedule-tabs {
+  grid-column: 2/-1;
+  grid-row: 3/-1;
+}
+
+.cea-schedule-no-data {
+  grid-column: 1/-1;
+  grid-row: 1/-1;
+  height: 100%;
+  width: 100%;
+}
