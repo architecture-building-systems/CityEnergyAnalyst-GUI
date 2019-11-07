@@ -2,6 +2,8 @@ import {
   REQUEST_INPUTDATA,
   REQUEST_INPUTDATA_SUCCESS,
   REQUEST_INPUTDATA_FAILED,
+  REQUEST_BUILDINGSCHEDULE_SUCCESS,
+  REQUEST_BUILDINGSCHEDULE_FAILED,
   REQUEST_MAPDATA,
   RECEIVE_MAPDATA,
   RESET_INPUTDATA,
@@ -151,6 +153,8 @@ const inputData = (state = initialState, { type, payload }) => {
       return { ...state, ...payload, status: 'received' };
     case REQUEST_INPUTDATA_FAILED:
       return { ...state, status: 'failed', error: payload };
+    case REQUEST_BUILDINGSCHEDULE_SUCCESS:
+      return { ...state, schedules: { ...state.schedules, ...payload } };
     case UPDATE_INPUTDATA:
       return {
         ...state,

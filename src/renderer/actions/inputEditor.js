@@ -6,6 +6,11 @@ export const RESET_INPUTDATA = 'RESET_INPUTDATA';
 export const REQUEST_INPUTDATA = 'REQUEST_INPUTDATA';
 export const REQUEST_INPUTDATA_SUCCESS = 'REQUEST_INPUTDATA_SUCCESS';
 export const REQUEST_INPUTDATA_FAILED = 'REQUEST_INPUTDATA_FAILED';
+export const REQUEST_BUILDINGSCHEDULE = 'REQUEST_BUILDINGSCHEDULE';
+export const REQUEST_BUILDINGSCHEDULE_SUCCESS =
+  'REQUEST_BUILDINGSCHEDULE_SUCCESS';
+export const REQUEST_BUILDINGSCHEDULE_FAILED =
+  'REQUEST_BUILDINGSCHEDULE_FAILED';
 export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
@@ -45,6 +50,44 @@ export const saveChanges = () => (dispatch, getState) =>
       })
     );
   });
+
+export const fetchBuildingSchedule = buildings => (dispatch, getState) => {
+  const toFetch = buildings.filter(
+    building => !Object.keys(getState().inputData.schedules).includes(building)
+  );
+  if (toFetch.length) {
+    dispatch({ type: REQUEST_BUILDINGSCHEDULE });
+    let errors = {};
+    const promises = buildings.map(building =>
+      axios
+        .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
+        .then(resp => {
+          return { [building]: resp.data };
+        })
+        .catch(error => {
+          errors[building] = error.response.data;
+        })
+    );
+    // eslint-disable-next-line no-undef
+    return Promise.all(promises).then(values => {
+      if (Object.keys(errors).length) {
+        throw errors;
+      } else {
+        let out = {};
+        for (const schedule of values) {
+          const building = Object.keys(schedule)[0];
+          out[building] = schedule[building];
+        }
+        dispatch({
+          type: REQUEST_BUILDINGSCHEDULE_SUCCESS,
+          payload: out
+        });
+      }
+    });
+  }
+  // eslint-disable-next-line no-undef
+  return Promise.resolve();
+};
 
 export const discardChanges = () => dispatch =>
   // eslint-disable-next-line no-undef
