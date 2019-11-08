@@ -211,9 +211,9 @@ const Table = ({ tab }) => {
         {!data.length ? (
           <div>
             Input file could not be found. You can create the file using
-            {tab == 'district' ? (
-              <Link to={`${routes.TOOLS}/distict-helper`}>
-                {' distict-helper '}
+            {tab == 'surroundings' ? (
+              <Link to={`${routes.TOOLS}/surroundings-helper`}>
+                {' surroundings-helper '}
               </Link>
             ) : (
               <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
