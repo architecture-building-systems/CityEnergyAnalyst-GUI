@@ -162,7 +162,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
   const [selectedTool, setSelectedTool] = useState(null);
   const tools = form.getFieldValue('tools') || [];
   const zoneChecked = tools.includes('zone');
-  const districtChecked = tools.includes('district');
+  const surroundingsChecked = tools.includes('surroundings');
 
   const showModal = tool => {
     setSelectedTool(tool);
@@ -170,7 +170,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
   };
 
   const handleChange = checkedValue => {
-    if (!checkedValue.includes('district')) {
+    if (!checkedValue.includes('surroundings')) {
       setTimeout(() => {
         form.setFieldsValue({
           tools: checkedValue.filter(
@@ -215,12 +215,12 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
 
             <div style={{ margin: 10 }}>
               <Row>
-                <Checkbox value="district" disabled={!zoneChecked}>
-                  District
+                <Checkbox value="surroundings" disabled={!zoneChecked}>
+                  Surroundings
                 </Checkbox>
                 <Icon
                   type="setting"
-                  onClick={() => showModal('district-helper')}
+                  onClick={() => showModal('surroundings-helper')}
                 />
                 <small
                   style={{
@@ -232,12 +232,14 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   *Requires zone file.
                 </small>
               </Row>
-              <small>- Query district geometry from Open Street Maps.</small>
+              <small>
+                - Query Surroundings geometry from Open Street Maps.
+              </small>
             </div>
 
             <div style={{ margin: 10 }}>
               <Row>
-                <Checkbox value="streets" disabled={!districtChecked}>
+                <Checkbox value="streets" disabled={!surroundingsChecked}>
                   Streets
                 </Checkbox>
                 <Icon
@@ -248,10 +250,10 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   style={{
                     color: 'red',
                     marginLeft: 10,
-                    display: districtChecked ? 'none' : ''
+                    display: surroundingsChecked ? 'none' : ''
                   }}
                 >
-                  *Requires zone and district file.
+                  *Requires zone and surroundings file.
                 </small>
               </Row>
               <small>- Query streets geometry from Open Street Maps.</small>
@@ -259,7 +261,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
 
             <div style={{ margin: 10 }}>
               <Row>
-                <Checkbox value="terrain" disabled={!districtChecked}>
+                <Checkbox value="terrain" disabled={!surroundingsChecked}>
                   Terrain
                 </Checkbox>
                 <Icon
@@ -270,10 +272,10 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   style={{
                     color: 'red',
                     marginLeft: 10,
-                    display: districtChecked ? 'none' : ''
+                    display: surroundingsChecked ? 'none' : ''
                   }}
                 >
-                  *Requires zone and district file.
+                  *Requires zone and surroundings file.
                 </small>
               </Row>
               <small>- Creates a fixed elevation terrain file.</small>
@@ -497,7 +499,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
       placeholder: 'Path to geometry of the zone',
       help: ''
     },
-    district: {
+    surroundings: {
       extension: ['.shp'],
       placeholder: 'Path to geometry of surroundings',
       help: ''

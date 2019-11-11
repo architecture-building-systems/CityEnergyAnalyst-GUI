@@ -21,7 +21,7 @@ const initialState = {
   status: ''
 };
 
-const buildingGeometries = ['zone', 'district'];
+const buildingGeometries = ['zone', 'surroundings'];
 
 function createNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') {
@@ -103,7 +103,7 @@ function deleteBuildings(state, buildings) {
   const isZoneBuilding = !!tables.zone[buildings[0]];
 
   // Track delete changes
-  const layer = isZoneBuilding ? 'zone' : 'district';
+  const layer = isZoneBuilding ? 'zone' : 'surroundings';
   changes.delete[layer] = changes.delete[layer] || [];
   changes.delete[layer].push(...buildings);
 
@@ -116,9 +116,9 @@ function deleteBuildings(state, buildings) {
     }
 
     if (isZoneBuilding) {
-      // Delete building from every table that is not district
+      // Delete building from every table that is not surroundings
       for (const table in tables) {
-        if (table != 'district') {
+        if (table != 'surroundings') {
           delete tables[table][building];
           tables = { ...tables, [table]: { ...tables[table] } };
         }
@@ -126,8 +126,8 @@ function deleteBuildings(state, buildings) {
       // Delete building from zone geojson
       geojsons = deleteGeoJsonFeature(geojsons, 'zone', building);
     } else {
-      delete tables.district[building];
-      geojsons = deleteGeoJsonFeature(geojsons, 'district', building);
+      delete tables.surroundings[building];
+      geojsons = deleteGeoJsonFeature(geojsons, 'surroundings', building);
     }
   }
   return { geojsons, tables, changes };

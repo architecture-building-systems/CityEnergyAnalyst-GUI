@@ -54,7 +54,7 @@ const DeckGLMap = ({ data, colors }) => {
   const [extruded, setExtruded] = useState(false);
   const [visibility, setVisibility] = useState({
     zone: !!data.zone,
-    district: !!data.district,
+    surroundings: !!data.surroundings,
     streets: !!data.streets,
     dc: !!data.dc,
     dh: !!data.dh && !data.dc,
@@ -115,22 +115,22 @@ const DeckGLMap = ({ data, colors }) => {
         })
       );
     }
-    if (data.district) {
+    if (data.surroundings) {
       _layers.push(
         new GeoJsonLayer({
-          id: 'district',
-          data: data.district,
+          id: 'surroundings',
+          data: data.surroundings,
           opacity: 0.5,
           wireframe: true,
           filled: true,
           extruded: extruded,
-          visible: visibility.district,
+          visible: visibility.surroundings,
 
           getElevation: f => f.properties['height_ag'],
           getFillColor: f =>
             buildingColor(
               f.properties['Name'],
-              'district',
+              'surroundings',
               colors,
               connectedBuildings[network_type],
               selected,
@@ -354,17 +354,17 @@ const LayerToggle = ({ data, setVisibility }) => {
           </label>
         </span>
       )}
-      {data.district && (
+      {data.surroundings && (
         <span className="layer-toggle">
           <label className="map-plot-label">
             <input
               type="checkbox"
               name="layer-toggle"
-              value="district"
+              value="surroundings"
               onChange={handleChange}
               defaultChecked
             />
-            District
+            Surroundings
           </label>
         </span>
       )}
@@ -408,7 +408,7 @@ function updateTooltip({ x, y, object, layer }) {
     tooltip.style.left = `${x}px`;
     let innerHTML = '';
 
-    if (layer.id === 'zone' || layer.id === 'district') {
+    if (layer.id === 'zone' || layer.id === 'surroundings') {
       Object.keys(properties).forEach(key => {
         innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
       });
@@ -462,7 +462,7 @@ const buildingColor = (
   if (selected.includes(buildingName)) {
     return [255, 255, 0, 255];
   }
-  if (layer === 'district') return colors.district;
+  if (layer === 'surroundings') return colors.surroundings;
   if (connectedBuildings.includes(buildingName)) return colors[network_type];
   return colors.disconnected;
 };
