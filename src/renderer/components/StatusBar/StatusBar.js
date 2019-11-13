@@ -246,15 +246,22 @@ const JobInfoCard = ({
           <StateIcon state={job.state} />
           <b>{`jobID: ${id} - ${job.script}`}</b>
         </div>
-        <Button
-          size="small"
-          onClick={() => {
-            setSelectedJob({ id, ...job });
-            setModalVisible(true);
-          }}
-        >
-          More Info
-        </Button>
+        <div>
+          {job.state < 2 && (
+            <Button size="small" onClick={() => cancelCeaJob({ id, ...job })}>
+              Cancel
+            </Button>
+          )}
+          <Button
+            size="small"
+            onClick={() => {
+              setSelectedJob({ id, ...job });
+              setModalVisible(true);
+            }}
+          >
+            More Info
+          </Button>
+        </div>
       </div>
       <div>
         <div>
@@ -336,9 +343,6 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         >
           {message}
         </pre>
-        <Button type="danger" onClick={() => cancelCeaJob(job)}>
-          Cancel
-        </Button>
       </div>
     </Modal>
   );
@@ -346,7 +350,6 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
 
 const cancelCeaJob = job => {
   axios.post(`http://localhost:5050/server/jobs/cancel/${job.id}`);
-  console.log(`job canceled ${job.id} with cancelCeaJob onClick event`);
 };
 
 export default StatusBar;
