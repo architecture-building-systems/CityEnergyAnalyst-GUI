@@ -5,7 +5,8 @@ import {
   CREATE_JOB_FAILED,
   START_JOB_SUCCESS,
   START_JOB_FAILED,
-  UPDATE_JOB
+  UPDATE_JOB,
+  DISMISS_JOB
 } from '../actions/jobs';
 
 const initialState = null;
@@ -30,6 +31,9 @@ const jobs = (state = initialState, { type, payload }) => {
       return transformInitialPayload(payload);
     case CREATE_JOB_SUCCESS:
     case UPDATE_JOB:
+      console.log(payload);
+      return { ...state, ...transformJobPayload(payload) };
+    case DISMISS_JOB:
       console.log(payload);
       return { ...state, ...transformJobPayload(payload) };
     case FETCH_JOBS_FAILED:

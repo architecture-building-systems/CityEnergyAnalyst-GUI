@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Icon, Popover, notification, Button, Modal } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { fetchJobs, updateJob } from '../../actions/jobs';
+import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
 import './StatusBar.css';
 
 const socket = io('http://localhost:5050');
@@ -49,6 +49,11 @@ const JobOutputLogger = () => {
       console.log('cea-worker-error: job_info:', job_info);
       setMessage(`jobID: ${job_info.id} - error`);
     });
+
+    socket.on('cea-worker-canceled', job_info => {
+      console.log('cea-worker-canceled: job_info', job_info);
+      setMessage(`jobID: ${job_info.id} - canceled`);
+    });
   }, []);
 
   if (message.length < 1) return null;
@@ -83,6 +88,11 @@ const JobListPopover = () => {
           {title} has <b>completed</b>
         </div>
       ),
+      canceled: (
+        <div>
+          {title} was <b>canceled</b> by user
+        </div>
+      ),
       error: <div>{title} has encounted an error</div>
     };
 
@@ -98,7 +108,10 @@ const JobListPopover = () => {
     if (type === 'started')
       notification.open({ ...config, icon: <Icon type="loading" /> });
     else if (type === 'created') notification['info'](config);
-    else notification[type](config);
+    else if (type === 'canceled') notification['info'](config);
+    else {
+      notification[type](config);
+    }
   };
 
   useEffect(() => {
@@ -112,6 +125,10 @@ const JobListPopover = () => {
     socket.on('cea-worker-success', job => {
       openNotification('success', job);
       dispatch(updateJob(job));
+    });
+    socket.on('cea-worker-canceled', job => {
+      openNotification('canceled', job);
+      dispatch(dismissJob(job));
     });
     socket.on('cea-worker-error', job => {
       openNotification('error', job);
@@ -196,7 +213,7 @@ const JobInfoCard = ({
   setModalVisible,
   setSelectedJob
 }) => {
-  const JOB_STATES = ['Pending', 'Running...', 'Success', 'ERROR'];
+  const JOB_STATES = ['Pending', 'Running...', 'Success', 'ERROR', 'Canceled'];
 
   const StateIcon = ({ state }) => {
     switch (state) {
@@ -213,6 +230,10 @@ const JobInfoCard = ({
       case 3:
         return (
           <Icon type="exclamation-circle" style={{ color: 'red', margin: 5 }} />
+        );
+      case 4:
+        return (
+          <Icon type="close-circle" style={{ color: 'grey', margin: 5 }} />
         );
       default:
         return null;
@@ -315,9 +336,17 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         >
           {message}
         </pre>
+        <Button type="danger" onClick={() => cancelCeaJob(job)}>
+          Cancel
+        </Button>
       </div>
     </Modal>
   );
+};
+
+const cancelCeaJob = job => {
+  axios.post(`http://localhost:5050/server/jobs/cancel/${job.id}`);
+  console.log(`job canceled ${job.id} with cancelCeaJob onClick event`);
 };
 
 export default StatusBar;

@@ -62,6 +62,10 @@ export const updateJob = job => {
 
 export const DISMISS_JOB = 'DISMISS_JOB';
 
-export const dismissJob = id => {
-  return { type: DISMISS_JOB, payload: id };
+export const dismissJob = job => {
+  console.log('in dismissJob');
+  return dispatch => {
+    console.log(`cancelling job ${job.id}`);
+    dispatch({ type: DISMISS_JOB, payload: job });
+  };
 };
