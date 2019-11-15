@@ -1,10 +1,10 @@
 {
-  "name": "city-energy-analyst-dashboard",
-  "description": "Official Dashboard interface of the CIty Energy Analyst tool",
-  "version": "2.25.2",
+  "name": "city-energy-analyst-gui",
+  "description": "Official GUI of the City Energy Analyst tool",
+  "version": "2.26a0",
   "author": "CEA team",
   "homepage": "http://www.cityenergyanalyst.com",
-  "repository": "github:architecture-building-systems/CityEnergyAnalyst-Dashboard",
+  "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
   "license": "MIT",
   "scripts": {
     "dev": "electron-webpack dev",
