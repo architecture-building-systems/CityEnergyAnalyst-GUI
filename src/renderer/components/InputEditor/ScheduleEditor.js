@@ -4,9 +4,8 @@ import { fetchBuildingSchedule, setSelected } from '../../actions/inputEditor';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './ScheduleEditor.css';
-import CenterSpinner from '../HomePage/CenterSpinner';
 import { months_short } from '../../constants/months';
-import { Tabs, Spin, Modal, Button, Card } from 'antd';
+import { Tabs, Spin, Button, Card } from 'antd';
 
 const ScheduleEditor = () => {
   const { selected, tables } = useSelector(state => state.inputData);
@@ -33,6 +32,7 @@ const ScheduleEditor = () => {
     }
   };
 
+  // Initialize table
   useEffect(() => {
     tabulator.current = new Tabulator(divRef.current, {
       data: buildings.map(building => ({ Name: building })),
@@ -83,10 +83,7 @@ const ScheduleEditor = () => {
           <div className="cea-schedule-test">
             {buildings.includes(selected[0]) ? (
               Object.keys(errors).length ? (
-                <div
-                  className="cea-schedule-no-data"
-                  style={{ overflow: 'auto' }}
-                >
+                <div className="cea-schedule-error">
                   ERRORS FOUND:
                   {Object.keys(errors).map(building => (
                     <div

@@ -40,6 +40,14 @@
 .cea-schedule-no-data {
   grid-column: 1/-1;
   grid-row: 1/-1;
+  margin: auto;
+}
+
+.cea-schedule-error {
+  grid-column: 1/-1;
+  grid-row: 1/-1;
+  overflow: auto;
+  text-align: center;
   height: 100%;
   width: 100%;
 }
