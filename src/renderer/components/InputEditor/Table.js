@@ -223,6 +223,9 @@ const Table = ({ tab }) => {
         await dispatch(discardChanges())
           .then(data => {
             console.log(data);
+            message.config({
+              top: 120
+            });
             message.info('Unsaved changes have been discarded.');
           })
           .catch(error => {
