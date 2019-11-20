@@ -8,7 +8,7 @@ import { months_short } from '../../constants/months';
 import { Tabs, Spin, Button, Card } from 'antd';
 
 const ScheduleEditor = () => {
-  const { selected, tables } = useSelector(state => state.inputData);
+  const { selected, tables, schedules } = useSelector(state => state.inputData);
   const [tab, setTab] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -91,13 +91,21 @@ const ScheduleEditor = () => {
               ) : (
                 <React.Fragment>
                   <div className="cea-schedule-year">
-                    <YearTable selected={selected} />
+                    <YearTable selected={selected} schedules={schedules} />
                   </div>
                   <div className="cea-schedule-data">
-                    <DataTable selected={selected} tab={tab} />
+                    <DataTable
+                      selected={selected}
+                      tab={tab}
+                      schedules={schedules}
+                    />
                   </div>
                   <div className="cea-schedule-tabs">
-                    <ScheduleTab tab={tab} setTab={setTab} />
+                    <ScheduleTab
+                      tab={tab}
+                      setTab={setTab}
+                      schedules={schedules}
+                    />
                   </div>
                 </React.Fragment>
               )
@@ -115,17 +123,10 @@ const ScheduleEditor = () => {
   );
 };
 
-const DataTable = ({ selected, tab }) => {
-  const { schedules } = useSelector(state => state.inputData);
+const DataTable = ({ selected, tab, schedules }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
-
-  const parseData = (building, tab) => {
-    const buildingSchedule = schedules[building];
-    if (!buildingSchedule || !tab) return [];
-    const days = buildingSchedule.SCHEDULES[tab];
-    return Object.keys(days).map(day => ({ DAY: day, ...days[day] }));
-  };
+  const tooltipsRef = useRef({ selected, schedules, tab });
 
   useEffect(() => {
     tabulator.current = new Tabulator(divRef.current, {
@@ -136,25 +137,48 @@ const DataTable = ({ selected, tab }) => {
         ...[...Array(24).keys()].map(i => ({
           title: i.toString(),
           field: i.toString(),
-          headerSort: false
+          headerSort: false,
+          formatter: cell => {
+            const value = cell.getValue();
+            if (value == 'DIFF') {
+              cell.getElement().style.fontWeight = 'bold';
+              cell.getElement().style.fontStyle = 'italic';
+            }
+            return value;
+          }
         }))
       ],
       layoutColumnsOnNewData: true,
-      layout: 'fitDataFill'
+      layout: 'fitDataFill',
+      tooltips: cell => {
+        if (cell.getValue() == 'DIFF') {
+          let out = '';
+          for (const building of tooltipsRef.current.selected) {
+            out += `${building} - ${
+              tooltipsRef.current.schedules[building].SCHEDULES[
+                tooltipsRef.current.tab
+              ][cell.getData().DAY][cell.getField()]
+            }\n`;
+          }
+          return out;
+        }
+      }
     });
   }, []);
 
   useEffect(() => {
-    tabulator.current && tabulator.current.setData(parseData(selected[0], tab));
+    tooltipsRef.current = { selected, schedules, tab };
+    tabulator.current &&
+      tabulator.current.setData(parseData(schedules, selected, tab));
   }, [selected, schedules, tab]);
 
   return <div ref={divRef} />;
 };
 
-const YearTable = ({ selected }) => {
-  const { schedules } = useSelector(state => state.inputData);
+const YearTable = ({ selected, schedules }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
+  const tooltipsRef = useRef({ selected, schedules });
 
   useEffect(() => {
     console.log('render year');
@@ -166,10 +190,31 @@ const YearTable = ({ selected }) => {
         ...[...Array(12).keys()].map(i => ({
           title: months_short[i],
           field: i.toString(),
-          headerSort: false
+          headerSort: false,
+          formatter: cell => {
+            const value = cell.getValue();
+            if (value == 'DIFF') {
+              cell.getElement().style.fontWeight = 'bold';
+              cell.getElement().style.fontStyle = 'italic';
+            }
+            return value;
+          }
         }))
       ],
-      layout: 'fitDataFill'
+      layout: 'fitDataFill',
+      tooltips: cell => {
+        if (cell.getValue() == 'DIFF') {
+          let out = '';
+          for (const building of tooltipsRef.current.selected) {
+            out += `${building} - ${
+              tooltipsRef.current.schedules[building].MONTHLY_MULTIPLIER[
+                cell.getField()
+              ]
+            }\n`;
+          }
+          return out;
+        }
+      }
     });
 
     const redrawTable = () => {
@@ -183,6 +228,7 @@ const YearTable = ({ selected }) => {
   }, []);
 
   useEffect(() => {
+    tooltipsRef.current = { selected, schedules };
     tabulator.current &&
       tabulator.current.setData(parseYearData(schedules, selected));
   }, [schedules, selected]);
@@ -190,8 +236,7 @@ const YearTable = ({ selected }) => {
   return <div ref={divRef} />;
 };
 
-const ScheduleTab = ({ tab, setTab }) => {
-  const { schedules } = useSelector(state => state.inputData);
+const ScheduleTab = ({ tab, setTab, schedules }) => {
   const TabPanes = getScheduleTypes(schedules).map(schedule => (
     <Tabs.TabPane tab={schedule} key={schedule} />
   ));
@@ -252,13 +297,31 @@ const parseYearData = (schedules, selected) => {
     !selected.every(building => Object.keys(schedules).includes(building))
   )
     return [];
+  let out = [];
   for (const building of selected) {
     const buildingSchedule = schedules[building].MONTHLY_MULTIPLIER;
+    out = diffArray(out, buildingSchedule);
   }
+  console.log(out);
+  return [{ name: 'MONTHLY_MULTIPLIER', ...out }];
+};
 
-  return [
-    { name: 'MONTHLY_MULTIPLIER', ...schedules[selected[0]].MONTHLY_MULTIPLIER }
-  ];
+const parseData = (schedules, selected, tab) => {
+  if (
+    !tab ||
+    !selected.length ||
+    !selected.every(building => Object.keys(schedules).includes(building))
+  )
+    return [];
+  let out = {};
+  for (const building of selected) {
+    const days = schedules[building].SCHEDULES[tab];
+    for (const day of Object.keys(days)) {
+      out[day] = diffArray(out[day], days[day]);
+    }
+  }
+  console.log(out);
+  return Object.keys(out).map(day => ({ DAY: day, ...out[day] }));
 };
 
 const getScheduleTypes = schedules => {
@@ -270,6 +333,14 @@ const getScheduleTypes = schedules => {
     console.log(error);
     return [];
   }
+};
+
+const diffArray = (first, second) => {
+  if (typeof first == 'undefined' || !first.length) return second;
+  return first.map((value, index) => {
+    if (value == second[index]) return value;
+    return 'DIFF';
+  });
 };
 
 export default ScheduleEditor;
