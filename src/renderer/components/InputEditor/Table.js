@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, Button, Modal, message } from 'antd';
+import { Card, Button, Modal, message, Tooltip } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -19,7 +20,7 @@ const useTableData = tab => {
   const columns = useSelector(state => state.inputData.columns);
 
   const [data, setData] = useState([]);
-  const [columnDef, setColumnDef] = useState([]);
+  const [columnDef, setColumnDef] = useState({ columns: [], description: [] });
 
   const dispatch = useDispatch();
 
@@ -46,8 +47,13 @@ const useTableData = tab => {
         ...tables[tab][row]
       }));
 
-  const getColumnDef = () =>
-    Object.keys(columns[tab]).map(column => {
+  const getColumnDef = () => {
+    let description = [];
+    let _columns = Object.keys(columns[tab]).map(column => {
+      description.push({
+        description: columns[tab][column].description,
+        unit: columns[tab][column].unit
+      });
       let columnDef = { title: column, field: column };
       if (column === 'Name') {
         columnDef.frozen = true;
@@ -62,7 +68,8 @@ const useTableData = tab => {
       }
       return columnDef;
     });
-
+    return { columns: _columns, description: description };
+  };
   useEffect(() => {
     setColumnDef(getColumnDef());
     setData(getData());
@@ -89,7 +96,7 @@ const Table = ({ tab }) => {
     tabulator.current = new Tabulator(divRef.current, {
       data: data,
       index: 'Name',
-      columns: columnDef,
+      columns: columnDef.columns,
       layout: 'fitDataFill',
       height: '300px',
       validationFailed: cell => {
@@ -116,7 +123,7 @@ const Table = ({ tab }) => {
   useEffect(() => {
     if (tabulator.current) {
       tabulator.current.setData([]);
-      tabulator.current.setColumns(columnDef);
+      tabulator.current.setColumns(columnDef.columns);
     }
   }, [columnDef]);
 
@@ -125,6 +132,34 @@ const Table = ({ tab }) => {
       if (!tabulator.current.getData().length) {
         tabulator.current.setData(data);
         tabulator.current.selectRow(selected);
+        // Add tooltips to column headers on new data
+        document
+          .querySelectorAll('.tabulator-col-content')
+          .forEach((col, index) => {
+            const { description, unit } = columnDef.description[index];
+            ReactDOM.render(
+              <Tooltip
+                title={
+                  description && (
+                    <div>
+                      {description}
+                      <br />
+                      {unit}
+                    </div>
+                  )
+                }
+                getPopupContainer={() => {
+                  return document.getElementsByClassName('ant-card-body')[0];
+                }}
+              >
+                <div className="tabulator-col-title">
+                  {columnDef.columns[index].title}
+                </div>
+                <div className="tabulator-arrow"></div>
+              </Tooltip>,
+              col
+            );
+          });
       } else tabulator.current.updateData(data);
     }
   }, [data]);
