@@ -46,25 +46,22 @@ const ScheduleEditor = () => {
   }, []);
 
   useEffect(() => {
+    tabulator.current && tabulator.current.deselectRow();
     if (buildings.includes(selected[0])) {
-      if (tabulator.current) {
-        tabulator.current.deselectRow();
-        tabulator.current.selectRow(selected);
-        tabulator.current.getFilters().length &&
-          tabulator.current.setFilter('Name', 'in', selected);
-      }
-      if (selected.length) {
-        setLoading(true);
-        dispatch(fetchBuildingSchedule(selected))
-          .catch(error => {
-            console.log(error);
-            setErrors(error);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }
-    } else tabulator.current && tabulator.current.deselectRow();
+      tabulator.current && tabulator.current.selectRow(selected);
+      setLoading(true);
+      dispatch(fetchBuildingSchedule(selected))
+        .catch(error => {
+          console.log(error);
+          setErrors(error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+    tabulator.current &&
+      tabulator.current.getFilters().length &&
+      tabulator.current.setFilter('Name', 'in', selected);
   }, [selected]);
 
   if (!buildings.length) return <div>No buildings found</div>;
