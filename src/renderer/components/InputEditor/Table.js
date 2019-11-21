@@ -167,7 +167,7 @@ const ChangesSummary = ({ changes }) => {
                     property => (
                       <div key={property}>
                         <i>{property}</i>
-                        {`: ${changes.update[table][building][property].oldValue}
+                        {` : ${changes.update[table][building][property].oldValue}
                         → 
                         ${changes.update[table][building][property].newValue}`}
                       </div>

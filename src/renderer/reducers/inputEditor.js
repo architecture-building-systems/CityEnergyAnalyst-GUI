@@ -32,32 +32,48 @@ function createNestedProp(obj, prop, ...rest) {
   return createNestedProp(obj[prop], ...rest);
 }
 
+function updateChanges(
+  changes,
+  table,
+  building,
+  property,
+  storedValue,
+  newValue
+) {
+  if (createNestedProp(changes.update, table, building, property, 'oldValue')) {
+    // Delete update if newValue equals oldValue else update newValue
+    if (changes.update[table][building][property].oldValue == newValue) {
+      delete changes.update[table][building][property];
+      // Delete update building entry if it is empty
+      if (!Object.keys(changes.update[table][building]).length) {
+        delete changes.update[table][building];
+        if (!Object.keys(changes.update[table]).length)
+          delete changes.update[table];
+      }
+    } else changes.update[table][building][property].newValue = newValue;
+  } else {
+    // Store old and new value
+    changes.update[table][building][property] = {
+      oldValue: storedValue,
+      newValue: newValue
+    };
+  }
+}
+
 function updateData(state, table, buildings, properties) {
   let { geojsons, tables, changes } = state;
   for (const building of buildings) {
-    for (const _property of properties) {
-      const { property, value } = _property;
+    for (const propertyObj of properties) {
+      const { property, value } = propertyObj;
       // Track update changes
-      if (
-        createNestedProp(changes.update, table, building, property, 'oldValue')
-      ) {
-        // Delete update if newValue equals oldValue else update newValue
-        if (changes.update[table][building][property].oldValue == value) {
-          delete changes.update[table][building][property];
-          // Delete update building entry if it is empty
-          if (!Object.keys(changes.update[table][building]).length) {
-            delete changes.update[table][building];
-            if (!Object.keys(changes.update[table]).length)
-              delete changes.update[table];
-          }
-        } else changes.update[table][building][property].newValue = value;
-      } else {
-        // Store old and new value
-        changes.update[table][building][property] = {
-          oldValue: tables[table][building][property],
-          newValue: value
-        };
-      }
+      updateChanges(
+        changes,
+        table,
+        building,
+        property,
+        tables[table][building][property],
+        value
+      );
 
       tables = {
         ...tables,
@@ -75,7 +91,12 @@ function updateData(state, table, buildings, properties) {
 
       // Update building properties of geojsons
       if (buildingGeometries.includes(table)) {
-        geojsons = updateGeoJsonProperty(geojsons, table, building, _property);
+        geojsons = updateGeoJsonProperty(
+          geojsons,
+          table,
+          building,
+          propertyObj
+        );
       }
     }
   }
