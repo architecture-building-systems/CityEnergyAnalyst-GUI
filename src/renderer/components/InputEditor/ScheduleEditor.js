@@ -56,6 +56,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
       tabulator.current.replaceData(
         buildings.sort().map(building => ({ Name: building }))
       );
+    tabulator.current.selectRow(selected);
     tabulator.current.redraw();
   }, [tables]);
 
@@ -156,6 +157,9 @@ const DataTable = ({ selected, tab, schedules }) => {
           }
         }))
       ],
+      validationFailed: cell => {
+        cell.cancelEdit();
+      },
       cellEdited: cell => {
         formatCellStyle(cell);
         dispatch(
@@ -205,7 +209,6 @@ const YearTable = ({ selected, schedules }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log('render year');
     tabulator.current = new Tabulator(divRef.current, {
       data: [],
       index: 'name',
@@ -216,6 +219,7 @@ const YearTable = ({ selected, schedules }) => {
           field: i.toString(),
           headerSort: false,
           editor: 'input',
+          validator: ['max:1', 'min:0'],
           // Hack to allow editing when double clicking
           cellDblClick: () => {},
           formatter: cell => {
@@ -224,6 +228,9 @@ const YearTable = ({ selected, schedules }) => {
           }
         }))
       ],
+      validationFailed: cell => {
+        cell.cancelEdit();
+      },
       cellEdited: cell => {
         formatCellStyle(cell);
         dispatch(
