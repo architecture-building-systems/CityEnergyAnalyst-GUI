@@ -347,7 +347,9 @@ const TableEditor = ({ tab, selected, tabulator }) => {
               col
             );
           });
-      } else tabulator.current.replaceData(data);
+      } else if (tabulator.current.getData().length == data.length) {
+        tabulator.current.updateData(data);
+      } else tabulator.current.setData(data);
     }
   }, [data]);
 

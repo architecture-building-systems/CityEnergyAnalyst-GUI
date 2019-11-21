@@ -192,7 +192,7 @@ const DataTable = ({ selected, tab, schedules }) => {
       tab &&
       selected.length &&
       selected.every(building => Object.keys(schedules).includes(building)) &&
-      tabulator.current.setData(parseData(schedules, selected, tab));
+      tabulator.current.updateOrAddData(parseData(schedules, selected, tab));
   }, [selected, schedules, tab]);
 
   return <div ref={divRef} />;
@@ -265,7 +265,7 @@ const YearTable = ({ selected, schedules }) => {
     tabulator.current &&
       selected.length &&
       selected.every(building => Object.keys(schedules).includes(building)) &&
-      tabulator.current.setData(parseYearData(schedules, selected));
+      tabulator.current.updateOrAddData(parseYearData(schedules, selected));
   }, [schedules, selected]);
 
   return <div ref={divRef} />;
@@ -304,7 +304,6 @@ const parseYearData = (schedules, selected) => {
     const buildingSchedule = schedules[building].MONTHLY_MULTIPLIER;
     out = diffArray(out, buildingSchedule);
   }
-  console.log(out);
   return [{ name: 'MONTHLY_MULTIPLIER', ...out }];
 };
 
@@ -316,7 +315,6 @@ const parseData = (schedules, selected, tab) => {
       out[day] = diffArray(out[day], days[day]);
     }
   }
-  console.log(out);
   return Object.keys(out).map(day => ({ DAY: day, ...out[day] }));
 };
 
