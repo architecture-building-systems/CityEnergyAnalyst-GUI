@@ -15,6 +15,8 @@ export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
 export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
+export const UPDATE_YEARSCHEDULE = 'UPDATE_YEARSCHEDULE';
+export const UPDATE_DAYSCHEDULE = 'UPDATE_DAYSCHEDULE';
 export const DELETE_BUILDINGS = 'DELETE_BUILDINGS';
 export const SAVE_INPUTDATA = 'SAVE_INPUTDATA';
 export const SAVE_INPUTDATA_SUCCESS = 'SAVE_INPUTDATA_SUCCESS';
@@ -109,6 +111,22 @@ export const updateInputData = (
 ) => ({
   type: UPDATE_INPUTDATA,
   payload: { table, buildings, properties }
+});
+
+export const updateYearSchedule = (buildings = [], month = '', value = 0) => ({
+  type: UPDATE_YEARSCHEDULE,
+  payload: { buildings, month, value }
+});
+
+export const updateDaySchedule = (
+  buildings = [],
+  tab = '',
+  day = '',
+  hour = 0,
+  value = ''
+) => ({
+  type: UPDATE_DAYSCHEDULE,
+  payload: { buildings, tab, day, hour, value }
 });
 
 export const deleteBuildings = (buildings = []) => ({

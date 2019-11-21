@@ -9,10 +9,13 @@ import {
   RESET_INPUTDATA,
   SET_SELECTED,
   UPDATE_INPUTDATA,
+  UPDATE_YEARSCHEDULE,
+  UPDATE_DAYSCHEDULE,
   DELETE_BUILDINGS,
   SAVE_INPUTDATA_SUCCESS,
   DISCARD_INPUTDATA_CHANGES_SUCCESS
 } from '../actions/inputEditor';
+import { months_short } from '../constants/months';
 
 const initialState = {
   selected: [],
@@ -166,6 +169,64 @@ function deleteGeoJsonFeature(geojsons, table, building) {
   };
 }
 
+function updateDaySchedule(state, buildings, tab, day, hour, value) {
+  let { schedules, changes } = state;
+  for (const building of buildings) {
+    // Track update changes
+    updateChanges(
+      changes,
+      'schedules',
+      building,
+      `${tab}_${day}_${hour}`,
+      schedules[building].SCHEDULES[tab][day][Number(hour)],
+      value
+    );
+
+    let daySchedule = schedules[building].SCHEDULES[tab][day];
+    daySchedule[Number(hour)] = value;
+    schedules = {
+      ...schedules,
+      [building]: {
+        ...schedules[building],
+        SCHEDULES: {
+          ...schedules[building].SCHEDULES,
+          [tab]: {
+            ...schedules[building].SCHEDULES[tab],
+            [day]: daySchedule
+          }
+        }
+      }
+    };
+  }
+  return { schedules };
+}
+
+function updateYearSchedule(state, buildings, month, value) {
+  let { schedules, changes } = state;
+  for (const building of buildings) {
+    // Track update changes
+    updateChanges(
+      changes,
+      'schedules',
+      building,
+      `MONTHLY_MULTIPLIER_${months_short[month]}`,
+      schedules[building].MONTHLY_MULTIPLIER[month],
+      value
+    );
+
+    let monthSchedule = schedules[building].MONTHLY_MULTIPLIER;
+    monthSchedule[month] = value;
+    schedules = {
+      ...schedules,
+      [building]: {
+        ...schedules[building],
+        MONTHLY_MULTIPLIER: monthSchedule
+      }
+    };
+  }
+  return { schedules };
+}
+
 const inputData = (state = initialState, { type, payload }) => {
   switch (type) {
     case REQUEST_INPUTDATA:
@@ -184,6 +245,28 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.table,
           payload.buildings,
           payload.properties
+        )
+      };
+    case UPDATE_YEARSCHEDULE:
+      return {
+        ...state,
+        ...updateYearSchedule(
+          state,
+          payload.buildings,
+          payload.month,
+          payload.value
+        )
+      };
+    case UPDATE_DAYSCHEDULE:
+      return {
+        ...state,
+        ...updateDaySchedule(
+          state,
+          payload.buildings,
+          payload.tab,
+          payload.day,
+          payload.hour,
+          payload.value
         )
       };
     case DELETE_BUILDINGS:
