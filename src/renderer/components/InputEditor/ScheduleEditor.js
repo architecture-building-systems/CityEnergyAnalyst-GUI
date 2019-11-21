@@ -1,20 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchBuildingSchedule, setSelected } from '../../actions/inputEditor';
+import {
+  fetchBuildingSchedule,
+  setSelected,
+  updateDaySchedule,
+  updateYearSchedule
+} from '../../actions/inputEditor';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './ScheduleEditor.css';
 import { months_short } from '../../constants/months';
-import { Tabs, Spin, Button, Card } from 'antd';
+import { Tabs, Spin } from 'antd';
 
-const ScheduleEditor = () => {
-  const { selected, tables, schedules } = useSelector(state => state.inputData);
+const ScheduleEditor = ({ selected, schedules, tabulator }) => {
+  const { tables } = useSelector(state => state.inputData);
   const [tab, setTab] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const buildings = Object.keys(tables.zone || {});
   const dispatch = useDispatch();
-  const tabulator = useRef(null);
   const divRef = useRef(null);
 
   const selectRow = (e, cell) => {
@@ -34,16 +38,26 @@ const ScheduleEditor = () => {
 
   // Initialize table
   useEffect(() => {
+    const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
-      data: buildings.map(building => ({ Name: building })),
+      data: buildings.sort().map(building => ({ Name: building })),
       index: 'Name',
       columns: [{ title: 'Name', field: 'Name' }],
       layout: 'fitColumns',
       height: '300px',
       cellClick: selectRow
     });
-    tabulator.current.setSort('Name', 'asc');
+    filtered && tabulator.current.setFilter('Name', 'in', selected);
   }, []);
+
+  useEffect(() => {
+    const buildings = Object.keys(tables.zone || {});
+    tabulator.current &&
+      tabulator.current.replaceData(
+        buildings.sort().map(building => ({ Name: building }))
+      );
+    tabulator.current.redraw();
+  }, [tables]);
 
   useEffect(() => {
     tabulator.current && tabulator.current.deselectRow();
@@ -67,59 +81,53 @@ const ScheduleEditor = () => {
   if (!buildings.length) return <div>No buildings found</div>;
 
   return (
-    <Card
-      headStyle={{ backgroundColor: '#f1f1f1' }}
-      size="small"
-      extra={<TableButtons selected={selected} tabulator={tabulator} />}
-    >
-      <div className="cea-schedule-container">
-        <div className="cea-schedule-buildings">
-          <div ref={divRef} />
-        </div>
-        <Spin spinning={loading}>
-          <div className="cea-schedule-test">
-            {buildings.includes(selected[0]) ? (
-              Object.keys(errors).length ? (
-                <div className="cea-schedule-error">
-                  ERRORS FOUND:
-                  {Object.keys(errors).map(building => (
-                    <div
-                      key={building}
-                    >{`${building}: ${errors[building].message}`}</div>
-                  ))}
-                </div>
-              ) : (
-                <React.Fragment>
-                  <div className="cea-schedule-year">
-                    <YearTable selected={selected} schedules={schedules} />
-                  </div>
-                  <div className="cea-schedule-data">
-                    <DataTable
-                      selected={selected}
-                      tab={tab}
-                      schedules={schedules}
-                    />
-                  </div>
-                  <div className="cea-schedule-tabs">
-                    <ScheduleTab
-                      tab={tab}
-                      setTab={setTab}
-                      schedules={schedules}
-                    />
-                  </div>
-                </React.Fragment>
-              )
-            ) : (
-              <div className="cea-schedule-no-data">
-                {selected.length
-                  ? 'Selected buildings do not have a schedule'
-                  : 'No building selected'}
-              </div>
-            )}
-          </div>
-        </Spin>
+    <div className="cea-schedule-container">
+      <div className="cea-schedule-buildings">
+        <div ref={divRef} />
       </div>
-    </Card>
+      <Spin spinning={loading}>
+        <div className="cea-schedule-test">
+          {buildings.includes(selected[0]) ? (
+            Object.keys(errors).length ? (
+              <div className="cea-schedule-error">
+                ERRORS FOUND:
+                {Object.keys(errors).map(building => (
+                  <div
+                    key={building}
+                  >{`${building}: ${errors[building].message}`}</div>
+                ))}
+              </div>
+            ) : (
+              <React.Fragment>
+                <div className="cea-schedule-year">
+                  <YearTable selected={selected} schedules={schedules} />
+                </div>
+                <div className="cea-schedule-data">
+                  <DataTable
+                    selected={selected}
+                    tab={tab}
+                    schedules={schedules}
+                  />
+                </div>
+                <div className="cea-schedule-tabs">
+                  <ScheduleTab
+                    tab={tab}
+                    setTab={setTab}
+                    schedules={schedules}
+                  />
+                </div>
+              </React.Fragment>
+            )
+          ) : (
+            <div className="cea-schedule-no-data">
+              {selected.length
+                ? 'Selected buildings do not have a schedule'
+                : 'No building selected'}
+            </div>
+          )}
+        </div>
+      </Spin>
+    </div>
   );
 };
 
@@ -127,6 +135,7 @@ const DataTable = ({ selected, tab, schedules }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
   const tooltipsRef = useRef({ selected, schedules, tab });
+  const dispatch = useDispatch();
 
   useEffect(() => {
     tabulator.current = new Tabulator(divRef.current, {
@@ -138,22 +147,33 @@ const DataTable = ({ selected, tab, schedules }) => {
           title: i.toString(),
           field: i.toString(),
           headerSort: false,
+          editor: 'input',
+          // Hack to allow editing when double clicking
+          cellDblClick: () => {},
           formatter: cell => {
-            const value = cell.getValue();
-            if (value == 'DIFF') {
-              cell.getElement().style.fontWeight = 'bold';
-              cell.getElement().style.fontStyle = 'italic';
-            }
-            return value;
+            formatCellStyle(cell);
+            return cell.getValue();
           }
         }))
       ],
+      cellEdited: cell => {
+        formatCellStyle(cell);
+        dispatch(
+          updateDaySchedule(
+            tooltipsRef.current.selected,
+            tooltipsRef.current.tab,
+            cell.getData().DAY,
+            cell.getField(),
+            cell.getValue()
+          )
+        );
+      },
       layoutColumnsOnNewData: true,
       layout: 'fitDataFill',
       tooltips: cell => {
         if (cell.getValue() == 'DIFF') {
           let out = '';
-          for (const building of tooltipsRef.current.selected) {
+          for (const building of tooltipsRef.current.selected.sort()) {
             out += `${building} - ${
               tooltipsRef.current.schedules[building].SCHEDULES[
                 tooltipsRef.current.tab
@@ -169,6 +189,9 @@ const DataTable = ({ selected, tab, schedules }) => {
   useEffect(() => {
     tooltipsRef.current = { selected, schedules, tab };
     tabulator.current &&
+      tab &&
+      selected.length &&
+      selected.every(building => Object.keys(schedules).includes(building)) &&
       tabulator.current.setData(parseData(schedules, selected, tab));
   }, [selected, schedules, tab]);
 
@@ -179,11 +202,12 @@ const YearTable = ({ selected, schedules }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
   const tooltipsRef = useRef({ selected, schedules });
+  const dispatch = useDispatch();
 
   useEffect(() => {
     console.log('render year');
     tabulator.current = new Tabulator(divRef.current, {
-      data: parseYearData(schedules, selected),
+      data: [],
       index: 'name',
       columns: [
         { title: '', field: 'name', headerSort: false },
@@ -191,21 +215,30 @@ const YearTable = ({ selected, schedules }) => {
           title: months_short[i],
           field: i.toString(),
           headerSort: false,
+          editor: 'input',
+          // Hack to allow editing when double clicking
+          cellDblClick: () => {},
           formatter: cell => {
-            const value = cell.getValue();
-            if (value == 'DIFF') {
-              cell.getElement().style.fontWeight = 'bold';
-              cell.getElement().style.fontStyle = 'italic';
-            }
-            return value;
+            formatCellStyle(cell);
+            return cell.getValue();
           }
         }))
       ],
+      cellEdited: cell => {
+        formatCellStyle(cell);
+        dispatch(
+          updateYearSchedule(
+            tooltipsRef.current.selected,
+            cell.getField(),
+            cell.getValue()
+          )
+        );
+      },
       layout: 'fitDataFill',
       tooltips: cell => {
         if (cell.getValue() == 'DIFF') {
           let out = '';
-          for (const building of tooltipsRef.current.selected) {
+          for (const building of tooltipsRef.current.selected.sort()) {
             out += `${building} - ${
               tooltipsRef.current.schedules[building].MONTHLY_MULTIPLIER[
                 cell.getField()
@@ -230,6 +263,8 @@ const YearTable = ({ selected, schedules }) => {
   useEffect(() => {
     tooltipsRef.current = { selected, schedules };
     tabulator.current &&
+      selected.length &&
+      selected.every(building => Object.keys(schedules).includes(building)) &&
       tabulator.current.setData(parseYearData(schedules, selected));
   }, [schedules, selected]);
 
@@ -253,50 +288,17 @@ const ScheduleTab = ({ tab, setTab, schedules }) => {
   );
 };
 
-const TableButtons = ({ selected, tabulator }) => {
-  const [filterToggle, setFilterToggle] = useState(false);
-  const dispatch = useDispatch();
-
-  const selectAll = () => {
-    dispatch(setSelected(tabulator.current.getData().map(data => data.Name)));
-  };
-
-  const filterSelected = () => {
-    if (filterToggle) {
-      tabulator.current.clearFilter();
-    } else {
-      tabulator.current.setFilter('Name', 'in', selected);
-    }
-    tabulator.current.redraw();
-    setFilterToggle(oldValue => !oldValue);
-  };
-
-  const clearSelected = () => {
-    dispatch(setSelected([]));
-  };
-
-  return (
-    <div>
-      <Button onClick={selectAll}>Select All</Button>
-      <Button
-        type={filterToggle ? 'primary' : 'default'}
-        onClick={filterSelected}
-      >
-        Filter on Selection
-      </Button>
-      {selected.length ? (
-        <Button onClick={clearSelected}>Clear Selection</Button>
-      ) : null}
-    </div>
-  );
+const formatCellStyle = cell => {
+  if (cell.getValue() == 'DIFF') {
+    cell.getElement().style.fontWeight = 'bold';
+    cell.getElement().style.fontStyle = 'italic';
+  } else {
+    cell.getElement().style.fontWeight = 'normal';
+    cell.getElement().style.fontStyle = 'normal';
+  }
 };
 
 const parseYearData = (schedules, selected) => {
-  if (
-    !selected.length ||
-    !selected.every(building => Object.keys(schedules).includes(building))
-  )
-    return [];
   let out = [];
   for (const building of selected) {
     const buildingSchedule = schedules[building].MONTHLY_MULTIPLIER;
@@ -307,12 +309,6 @@ const parseYearData = (schedules, selected) => {
 };
 
 const parseData = (schedules, selected, tab) => {
-  if (
-    !tab ||
-    !selected.length ||
-    !selected.every(building => Object.keys(schedules).includes(building))
-  )
-    return [];
   let out = {};
   for (const building of selected) {
     const days = schedules[building].SCHEDULES[tab];
