@@ -199,6 +199,10 @@ const DataTable = ({ selected, tab, schedules }) => {
       tabulator.current.updateOrAddData(parseData(schedules, selected, tab));
   }, [selected, schedules, tab]);
 
+  useEffect(() => {
+    tabulator.current.redraw(true);
+  }, [selected, tab]);
+
   return <div ref={divRef} />;
 };
 
