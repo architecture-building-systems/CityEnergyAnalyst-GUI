@@ -391,16 +391,20 @@ const useTableData = tab => {
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
-    const selectedRows = cell
-      .getTable()
-      .getSelectedData()
-      .map(data => data.Name);
-    if (cell.getRow().isSelected()) {
-      dispatch(
-        setSelected(selectedRows.filter(name => name !== row.getIndex()))
-      );
+    if (!e.ctrlKey) {
+      dispatch(setSelected([row.getIndex()]));
     } else {
-      dispatch(setSelected([...selectedRows, row.getIndex()]));
+      const selectedRows = cell
+        .getTable()
+        .getSelectedData()
+        .map(data => data.Name);
+      if (cell.getRow().isSelected()) {
+        dispatch(
+          setSelected(selectedRows.filter(name => name !== row.getIndex()))
+        );
+      } else {
+        dispatch(setSelected([...selectedRows, row.getIndex()]));
+      }
     }
   };
 
