@@ -145,7 +145,7 @@ const DataTable = ({ selected, tab, schedules }) => {
       columns: [
         { title: 'DAY \\ HOUR', field: 'DAY', width: 100, headerSort: false },
         ...[...Array(24).keys()].map(i => ({
-          title: i.toString(),
+          title: (i + 1).toString(),
           field: i.toString(),
           headerSort: false,
           editor: 'input',
