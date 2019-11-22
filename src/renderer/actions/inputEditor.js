@@ -40,13 +40,13 @@ export const fetchInputData = () =>
 export const saveChanges = () => (dispatch, getState) =>
   // eslint-disable-next-line no-undef
   new Promise((resolve, reject) => {
-    const { tables, geojsons, crs } = getState().inputData;
+    const { tables, geojsons, crs, schedules } = getState().inputData;
     dispatch(
       httpAction({
         url: '/inputs/all-inputs',
         method: 'PUT',
         type: SAVE_INPUTDATA,
-        data: { tables, geojsons, crs },
+        data: { tables, geojsons, crs, schedules },
         onSuccess: data => resolve(data),
         onFailure: error => reject(error)
       })
@@ -97,18 +97,25 @@ export const fetchBuildingSchedule = (buildings, fetchAll = false) => (
   return Promise.resolve();
 };
 
-export const discardChanges = () => dispatch =>
+export const discardChanges = () => (dispatch, getState) =>
   // eslint-disable-next-line no-undef
-  new Promise((resolve, reject) => {
-    dispatch(
-      httpAction({
-        url: '/inputs/all-inputs',
-        type: DISCARD_INPUTDATA_CHANGES,
-        onSuccess: data => resolve(data),
-        onFailure: error => reject(error)
-      })
-    );
-  });
+  Promise.all([
+    // eslint-disable-next-line no-undef
+    new Promise((resolve, reject) => {
+      dispatch(
+        httpAction({
+          url: '/inputs/all-inputs',
+          type: DISCARD_INPUTDATA_CHANGES,
+          onSuccess: data => resolve(data),
+          onFailure: error => reject(error)
+        })
+      );
+    }),
+    fetchBuildingSchedule(Object.keys(getState().inputData.schedules), true)(
+      dispatch,
+      getState
+    )
+  ]);
 
 export const updateInputData = (
   table = '',
