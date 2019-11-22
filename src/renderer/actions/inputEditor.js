@@ -53,48 +53,35 @@ export const saveChanges = () => (dispatch, getState) =>
     );
   });
 
-export const fetchBuildingSchedule = (buildings, fetchAll = false) => (
-  dispatch,
-  getState
-) => {
-  const toFetch = fetchAll
-    ? buildings
-    : buildings.filter(
-        building =>
-          !Object.keys(getState().inputData.schedules).includes(building)
-      );
-  if (toFetch.length) {
-    dispatch({ type: REQUEST_BUILDINGSCHEDULE });
-    let errors = {};
-    const promises = toFetch.map(building =>
-      axios
-        .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
-        .then(resp => {
-          return { [building]: resp.data };
-        })
-        .catch(error => {
-          errors[building] = error.response.data;
-        })
-    );
-    // eslint-disable-next-line no-undef
-    return Promise.all(promises).then(values => {
-      if (Object.keys(errors).length) {
-        throw errors;
-      } else {
-        let out = {};
-        for (const schedule of values) {
-          const building = Object.keys(schedule)[0];
-          out[building] = schedule[building];
-        }
-        dispatch({
-          type: REQUEST_BUILDINGSCHEDULE_SUCCESS,
-          payload: out
-        });
-      }
-    });
-  }
+export const fetchBuildingSchedule = buildings => dispatch => {
+  dispatch({ type: REQUEST_BUILDINGSCHEDULE });
+  let errors = {};
+  const promises = buildings.map(building =>
+    axios
+      .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
+      .then(resp => {
+        return { [building]: resp.data };
+      })
+      .catch(error => {
+        errors[building] = error.response.data;
+      })
+  );
   // eslint-disable-next-line no-undef
-  return Promise.resolve();
+  return Promise.all(promises).then(values => {
+    if (Object.keys(errors).length) {
+      throw errors;
+    } else {
+      let out = {};
+      for (const schedule of values) {
+        const building = Object.keys(schedule)[0];
+        out[building] = schedule[building];
+      }
+      dispatch({
+        type: REQUEST_BUILDINGSCHEDULE_SUCCESS,
+        payload: out
+      });
+    }
+  });
 };
 
 export const discardChanges = () => (dispatch, getState) =>
@@ -111,7 +98,7 @@ export const discardChanges = () => (dispatch, getState) =>
         })
       );
     }),
-    fetchBuildingSchedule(Object.keys(getState().inputData.schedules), true)(
+    fetchBuildingSchedule(Object.keys(getState().inputData.schedules))(
       dispatch,
       getState
     )
