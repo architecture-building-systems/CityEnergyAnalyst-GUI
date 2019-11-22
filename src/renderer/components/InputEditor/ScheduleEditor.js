@@ -20,6 +20,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
   const buildings = Object.keys(tables.zone || {});
   const dispatch = useDispatch();
   const divRef = useRef(null);
+  const timeoutRef = useRef();
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
@@ -64,15 +65,23 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     tabulator.current && tabulator.current.deselectRow();
     if (buildings.includes(selected[0])) {
       tabulator.current && tabulator.current.selectRow(selected);
-      setLoading(true);
-      dispatch(fetchBuildingSchedule(selected))
-        .catch(error => {
-          console.log(error);
-          setErrors(error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      const missingSchedules = selected.filter(
+        building => !Object.keys(schedules).includes(building)
+      );
+      if (missingSchedules.length) {
+        setLoading(true);
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          dispatch(fetchBuildingSchedule(missingSchedules))
+            .catch(error => {
+              console.log(error);
+              setErrors(error);
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        }, 1000);
+      }
     }
     tabulator.current &&
       tabulator.current.getFilters().length &&
