@@ -101,13 +101,18 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
             ) : (
               <React.Fragment>
                 <div className="cea-schedule-year">
-                  <YearTable selected={selected} schedules={schedules} />
+                  <YearTable
+                    selected={selected}
+                    schedules={schedules}
+                    loading={loading}
+                  />
                 </div>
                 <div className="cea-schedule-data">
                   <DataTable
                     selected={selected}
                     tab={tab}
                     schedules={schedules}
+                    loading={loading}
                   />
                 </div>
                 <div className="cea-schedule-tabs">
@@ -132,7 +137,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
   );
 };
 
-const DataTable = ({ selected, tab, schedules }) => {
+const DataTable = ({ selected, tab, schedules, loading }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
   const tooltipsRef = useRef({ selected, schedules, tab });
@@ -192,21 +197,20 @@ const DataTable = ({ selected, tab, schedules }) => {
 
   useEffect(() => {
     tooltipsRef.current = { selected, schedules, tab };
-    tabulator.current &&
-      tab &&
-      selected.length &&
+    tab &&
       selected.every(building => Object.keys(schedules).includes(building)) &&
       tabulator.current.updateOrAddData(parseData(schedules, selected, tab));
   }, [selected, schedules, tab]);
 
   useEffect(() => {
-    tabulator.current.redraw(true);
-  }, [selected, tab]);
+    selected.every(building => Object.keys(schedules).includes(building)) &&
+      tabulator.current.redraw(true);
+  }, [selected, tab, loading]);
 
   return <div ref={divRef} />;
 };
 
-const YearTable = ({ selected, schedules }) => {
+const YearTable = ({ selected, schedules, loading }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
   const tooltipsRef = useRef({ selected, schedules });
@@ -273,11 +277,14 @@ const YearTable = ({ selected, schedules }) => {
 
   useEffect(() => {
     tooltipsRef.current = { selected, schedules };
-    tabulator.current &&
-      selected.length &&
-      selected.every(building => Object.keys(schedules).includes(building)) &&
+    selected.every(building => Object.keys(schedules).includes(building)) &&
       tabulator.current.updateOrAddData(parseYearData(schedules, selected));
   }, [schedules, selected]);
+
+  useEffect(() => {
+    selected.every(building => Object.keys(schedules).includes(building)) &&
+      tabulator.current.redraw(true);
+  }, [selected, loading]);
 
   return <div ref={divRef} />;
 };
