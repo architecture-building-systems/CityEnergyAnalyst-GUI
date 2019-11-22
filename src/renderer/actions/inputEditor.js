@@ -53,14 +53,20 @@ export const saveChanges = () => (dispatch, getState) =>
     );
   });
 
-export const fetchBuildingSchedule = buildings => (dispatch, getState) => {
-  const toFetch = buildings.filter(
-    building => !Object.keys(getState().inputData.schedules).includes(building)
-  );
+export const fetchBuildingSchedule = (buildings, fetchAll = false) => (
+  dispatch,
+  getState
+) => {
+  const toFetch = fetchAll
+    ? buildings
+    : buildings.filter(
+        building =>
+          !Object.keys(getState().inputData.schedules).includes(building)
+      );
   if (toFetch.length) {
     dispatch({ type: REQUEST_BUILDINGSCHEDULE });
     let errors = {};
-    const promises = buildings.map(building =>
+    const promises = toFetch.map(building =>
       axios
         .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
         .then(resp => {
