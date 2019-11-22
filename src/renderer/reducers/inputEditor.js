@@ -177,13 +177,13 @@ function updateDaySchedule(state, buildings, tab, day, hour, value) {
       changes,
       'schedules',
       building,
-      `${tab}_${day}_${hour}`,
-      schedules[building].SCHEDULES[tab][day][Number(hour)],
+      `${tab}_${day}_${hour + 1}`,
+      schedules[building].SCHEDULES[tab][day][hour],
       value
     );
 
     let daySchedule = schedules[building].SCHEDULES[tab][day];
-    daySchedule[Number(hour)] = value;
+    daySchedule[hour] = value;
     schedules = {
       ...schedules,
       [building]: {

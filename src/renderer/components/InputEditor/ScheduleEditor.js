@@ -181,7 +181,7 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
             tooltipsRef.current.selected,
             tooltipsRef.current.tab,
             cell.getData().DAY,
-            cell.getField(),
+            Number(cell.getField()),
             cell.getValue()
           )
         );
