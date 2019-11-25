@@ -409,16 +409,19 @@ function updateTooltip({ x, y, object, layer }) {
     let innerHTML = '';
 
     if (layer.id === 'zone' || layer.id === 'surroundings') {
-      Object.keys(properties).forEach(key => {
-        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-      });
-      let area = calcArea(object);
-      innerHTML +=
-        `<br><div><b>area</b>: ${Math.round(area * 1000) /
-          1000}m<sup>2</sup></div>` +
-        `<div><b>volume</b>: ${Math.round(
-          area * properties['height_ag'] * 1000
-        ) / 1000}m<sup>3</sup></div>`;
+      innerHTML += `<div><b>Name</b>: ${properties.Name}</div><br />`;
+      Object.keys(properties)
+        .sort()
+        .forEach(key => {
+          if (key != 'Name')
+            innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
+        });
+      let area = Math.round(calcArea(object) * 1000) / 1000;
+      innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
+      if (layer.id === 'zone')
+        innerHTML += `<div><b>GFA</b>: ${Math.round(
+          (properties['floors_ag'] + properties['floors_bg']) * area * 1000
+        ) / 1000}m<sup>2</sup></div>`;
     } else if (layer.id === 'dc' || layer.id === 'dh') {
       Object.keys(properties).forEach(key => {
         if (key !== 'Building' && properties[key] === 'NONE') return null;
