@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, Button, Modal, message, Tooltip } from 'antd';
+import { Card, Button, Modal, message, Tooltip, Icon } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -27,6 +27,14 @@ const Table = ({ tab }) => {
       <Card
         headStyle={{ backgroundColor: '#f1f1f1' }}
         size="small"
+        title={
+          <Tooltip
+            placement="right"
+            title="You can select multiple buildings in the table and the map by holding down the `Ctrl` key"
+          >
+            <Icon type="info-circle" />
+          </Tooltip>
+        }
         extra={
           <TableButtons selected={selected} tabulator={tabulator} tab={tab} />
         }
