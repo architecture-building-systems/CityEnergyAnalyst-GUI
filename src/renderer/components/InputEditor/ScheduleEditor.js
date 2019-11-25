@@ -72,6 +72,8 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     tabulator.current && tabulator.current.deselectRow();
     if (buildings.includes(selected[0])) {
       tabulator.current && tabulator.current.selectRow(selected);
+      setLoading(false);
+      clearTimeout(timeoutRef.current);
       const missingSchedules = selected.filter(
         building => !Object.keys(schedules).includes(building)
       );
@@ -87,9 +89,6 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
               setLoading(false);
             });
         }, 1000);
-      } else {
-        clearTimeout(timeoutRef.current);
-        setLoading(false);
       }
     }
     tabulator.current &&
