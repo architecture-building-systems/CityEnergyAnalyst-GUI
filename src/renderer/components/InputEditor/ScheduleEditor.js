@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import interpolate from 'color-interpolate';
 import {
   fetchBuildingSchedule,
   setSelected,
@@ -11,6 +12,8 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import './ScheduleEditor.css';
 import { months_short } from '../../constants/months';
 import { Tabs, Spin } from 'antd';
+
+const colormap = interpolate(['white', '#006ad5']);
 
 const ScheduleEditor = ({ selected, schedules, tabulator }) => {
   const { tables } = useSelector(state => state.inputData);
@@ -322,13 +325,31 @@ const ScheduleTab = ({ tab, setTab, schedules }) => {
 };
 
 const formatCellStyle = cell => {
-  if (cell.getValue() == 'DIFF') {
+  const states = ['OFF', 'SETBACK', 'SETPOINT'];
+  const value = cell.getValue();
+  if (value == 'DIFF') {
     cell.getElement().style.fontWeight = 'bold';
     cell.getElement().style.fontStyle = 'italic';
   } else {
+    if (!isNaN(value)) {
+      cell.getElement().style.backgroundColor = addRGBAlpha(
+        colormap(value),
+        0.5
+      );
+    } else if (states.includes(value)) {
+      cell.getElement().style.backgroundColor = addRGBAlpha(
+        colormap(states.indexOf(value) / (states.length - 1)),
+        0.5
+      );
+    }
     cell.getElement().style.fontWeight = 'normal';
     cell.getElement().style.fontStyle = 'normal';
   }
+};
+
+const addRGBAlpha = (color, opacity) => {
+  const rgb = color.replace(/[^\d,]/g, '').split(',');
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity}`;
 };
 
 const parseYearData = (schedules, selected) => {
