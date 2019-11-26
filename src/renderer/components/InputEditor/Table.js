@@ -400,7 +400,7 @@ const useTableData = tab => {
   const selectRow = (e, cell) => {
     const row = cell.getRow();
     if (!e.ctrlKey) {
-      dispatch(setSelected([row.getIndex()]));
+      !cell.getRow().isSelected() && dispatch(setSelected([row.getIndex()]));
     } else {
       const selectedRows = cell
         .getTable()
