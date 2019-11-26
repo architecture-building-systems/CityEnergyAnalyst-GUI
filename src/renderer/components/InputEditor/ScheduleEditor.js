@@ -27,13 +27,15 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
+    const selectedRows = cell
+      .getTable()
+      .getSelectedData()
+      .map(data => data.Name);
     if (!e.ctrlKey) {
-      !cell.getRow().isSelected() && dispatch(setSelected([row.getIndex()]));
+      (selectedRows.length !== [row.getIndex()].length ||
+        !cell.getRow().isSelected()) &&
+        dispatch(setSelected([row.getIndex()]));
     } else {
-      const selectedRows = cell
-        .getTable()
-        .getSelectedData()
-        .map(data => data.Name);
       if (cell.getRow().isSelected()) {
         dispatch(
           setSelected(selectedRows.filter(name => name !== row.getIndex()))
