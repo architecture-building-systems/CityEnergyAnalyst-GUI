@@ -26,13 +26,31 @@ const initialState = {
 
 const buildingGeometries = ['zone', 'surroundings'];
 
+function checkNestedProp(obj, prop, ...rest) {
+  if (typeof obj[prop] == 'undefined') return false;
+  if (rest.length === 0) return true;
+  return checkNestedProp(obj[prop], ...rest);
+}
+
 function createNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') {
     obj[prop] = {};
-    if (rest.length === 0) return false;
   }
   if (rest.length === 0) return true;
   return createNestedProp(obj[prop], ...rest);
+}
+
+function deleteNestedProp(obj, prop, ...rest) {
+  if (rest.length === 0) {
+    delete obj[prop];
+    return true;
+  }
+  if (deleteNestedProp(obj[prop], ...rest)) {
+    if (!Object.keys(obj[prop]).length) {
+      delete obj[prop];
+      return true;
+    }
+  }
 }
 
 function updateChanges(
@@ -43,23 +61,21 @@ function updateChanges(
   storedValue,
   newValue
 ) {
-  if (createNestedProp(changes.update, table, building, property, 'oldValue')) {
+  // Check if update entry exists
+  if (checkNestedProp(changes.update, table, building, property)) {
     // Delete update if newValue equals oldValue else update newValue
-    if (changes.update[table][building][property].oldValue == newValue) {
-      delete changes.update[table][building][property];
-      // Delete update building entry if it is empty
-      if (!Object.keys(changes.update[table][building]).length) {
-        delete changes.update[table][building];
-        if (!Object.keys(changes.update[table]).length)
-          delete changes.update[table];
-      }
-    } else changes.update[table][building][property].newValue = newValue;
+    if (changes.update[table][building][property].oldValue == newValue)
+      deleteNestedProp(changes.update, table, building, property);
+    else changes.update[table][building][property].newValue = newValue;
   } else {
-    // Store old and new value
-    changes.update[table][building][property] = {
-      oldValue: storedValue,
-      newValue: newValue
-    };
+    // Create update entry if newValue is not equal storedValue
+    if (storedValue != newValue) {
+      createNestedProp(changes.update, table, building, property);
+      changes.update[table][building][property] = {
+        oldValue: storedValue,
+        newValue: newValue
+      };
+    }
   }
 }
 
