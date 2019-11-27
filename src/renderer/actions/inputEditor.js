@@ -15,6 +15,8 @@ export const REQUEST_MAPDATA = 'REQUEST_MAPDATA';
 export const RECEIVE_MAPDATA = 'RECEIVE_MAPDATA';
 export const SET_SELECTED = 'SET_SELECTED';
 export const UPDATE_INPUTDATA = 'UPDATE_INPUTDATA';
+export const UPDATE_YEARSCHEDULE = 'UPDATE_YEARSCHEDULE';
+export const UPDATE_DAYSCHEDULE = 'UPDATE_DAYSCHEDULE';
 export const DELETE_BUILDINGS = 'DELETE_BUILDINGS';
 export const SAVE_INPUTDATA = 'SAVE_INPUTDATA';
 export const SAVE_INPUTDATA_SUCCESS = 'SAVE_INPUTDATA_SUCCESS';
@@ -38,69 +40,69 @@ export const fetchInputData = () =>
 export const saveChanges = () => (dispatch, getState) =>
   // eslint-disable-next-line no-undef
   new Promise((resolve, reject) => {
-    const { tables, geojsons, crs } = getState().inputData;
+    const { tables, geojsons, crs, schedules } = getState().inputData;
     dispatch(
       httpAction({
         url: '/inputs/all-inputs',
         method: 'PUT',
         type: SAVE_INPUTDATA,
-        data: { tables, geojsons, crs },
+        data: { tables, geojsons, crs, schedules },
         onSuccess: data => resolve(data),
         onFailure: error => reject(error)
       })
     );
   });
 
-export const fetchBuildingSchedule = buildings => (dispatch, getState) => {
-  const toFetch = buildings.filter(
-    building => !Object.keys(getState().inputData.schedules).includes(building)
+export const fetchBuildingSchedule = buildings => dispatch => {
+  dispatch({ type: REQUEST_BUILDINGSCHEDULE });
+  let errors = {};
+  const promises = buildings.map(building =>
+    axios
+      .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
+      .then(resp => {
+        return { [building]: resp.data };
+      })
+      .catch(error => {
+        errors[building] = error.response.data;
+      })
   );
-  if (toFetch.length) {
-    dispatch({ type: REQUEST_BUILDINGSCHEDULE });
-    let errors = {};
-    const promises = buildings.map(building =>
-      axios
-        .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
-        .then(resp => {
-          return { [building]: resp.data };
-        })
-        .catch(error => {
-          errors[building] = error.response.data;
-        })
-    );
-    // eslint-disable-next-line no-undef
-    return Promise.all(promises).then(values => {
-      if (Object.keys(errors).length) {
-        throw errors;
-      } else {
-        let out = {};
-        for (const schedule of values) {
-          const building = Object.keys(schedule)[0];
-          out[building] = schedule[building];
-        }
-        dispatch({
-          type: REQUEST_BUILDINGSCHEDULE_SUCCESS,
-          payload: out
-        });
-      }
-    });
-  }
   // eslint-disable-next-line no-undef
-  return Promise.resolve();
+  return Promise.all(promises).then(values => {
+    if (Object.keys(errors).length) {
+      throw errors;
+    } else {
+      let out = {};
+      for (const schedule of values) {
+        const building = Object.keys(schedule)[0];
+        out[building] = schedule[building];
+      }
+      dispatch({
+        type: REQUEST_BUILDINGSCHEDULE_SUCCESS,
+        payload: out
+      });
+    }
+  });
 };
 
-export const discardChanges = () => dispatch =>
+export const discardChanges = () => (dispatch, getState) =>
   // eslint-disable-next-line no-undef
-  new Promise((resolve, reject) => {
-    dispatch(
-      httpAction({
-        url: '/inputs/all-inputs',
-        type: DISCARD_INPUTDATA_CHANGES,
-        onSuccess: data => resolve(data),
-        onFailure: error => reject(error)
-      })
-    );
-  });
+  Promise.all([
+    // eslint-disable-next-line no-undef
+    new Promise((resolve, reject) => {
+      dispatch(
+        httpAction({
+          url: '/inputs/all-inputs',
+          type: DISCARD_INPUTDATA_CHANGES,
+          onSuccess: data => resolve(data),
+          onFailure: error => reject(error)
+        })
+      );
+    }),
+    fetchBuildingSchedule(Object.keys(getState().inputData.schedules))(
+      dispatch,
+      getState
+    )
+  ]);
 
 export const updateInputData = (
   table = '',
@@ -109,6 +111,22 @@ export const updateInputData = (
 ) => ({
   type: UPDATE_INPUTDATA,
   payload: { table, buildings, properties }
+});
+
+export const updateYearSchedule = (buildings = [], month = '', value = 0) => ({
+  type: UPDATE_YEARSCHEDULE,
+  payload: { buildings, month, value }
+});
+
+export const updateDaySchedule = (
+  buildings = [],
+  tab = '',
+  day = '',
+  hour = 0,
+  value = ''
+) => ({
+  type: UPDATE_DAYSCHEDULE,
+  payload: { buildings, tab, day, hour, value }
 });
 
 export const deleteBuildings = (buildings = []) => ({

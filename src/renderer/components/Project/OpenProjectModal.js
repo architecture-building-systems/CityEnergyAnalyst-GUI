@@ -27,6 +27,7 @@ const OpenProjectModal = ({
           setVisible(false);
         } catch (err) {
           console.log(err.response);
+        } finally {
           setConfirmLoading(false);
         }
       }

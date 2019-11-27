@@ -8,7 +8,6 @@ import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './InputEditor.css';
-import ScheduleEditor from './ScheduleEditor';
 
 const MAP_STYLE = {
   height: '500px',
@@ -78,7 +77,7 @@ const InputTable = () => {
         {TabPanes}
       </Tabs>
       <div className="cea-input-editor-table">
-        {tab != 'schedules' ? <Table tab={tab} /> : <ScheduleEditor />}
+        <Table tab={tab} />
       </div>
     </div>
   );

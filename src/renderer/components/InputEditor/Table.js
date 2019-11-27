@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, Button, Modal, message } from 'antd';
+import { Card, Button, Modal, message, Tooltip, Icon } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -13,130 +14,50 @@ import EditSelectedModal from './EditSelectedModal';
 import routes from '../../constants/routes';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
-
-const useTableData = tab => {
-  const tables = useSelector(state => state.inputData.tables);
-  const columns = useSelector(state => state.inputData.columns);
-
-  const [data, setData] = useState([]);
-  const [columnDef, setColumnDef] = useState([]);
-
-  const dispatch = useDispatch();
-
-  const selectRow = (e, cell) => {
-    const row = cell.getRow();
-    const selectedRows = cell
-      .getTable()
-      .getSelectedData()
-      .map(data => data.Name);
-    if (cell.getRow().isSelected()) {
-      dispatch(
-        setSelected(selectedRows.filter(name => name !== row.getIndex()))
-      );
-    } else {
-      dispatch(setSelected([...selectedRows, row.getIndex()]));
-    }
-  };
-
-  const getData = () =>
-    Object.keys(tables[tab])
-      .sort((a, b) => (a > b ? 1 : -1))
-      .map(row => ({
-        Name: row,
-        ...tables[tab][row]
-      }));
-
-  const getColumnDef = () =>
-    Object.keys(columns[tab]).map(column => {
-      let columnDef = { title: column, field: column };
-      if (column === 'Name') {
-        columnDef.frozen = true;
-        columnDef.cellClick = selectRow;
-      } else if (column !== 'REFERENCE') {
-        columnDef.editor = 'input';
-        columnDef.validator =
-          columns[tab][column].type === 'str' ? 'string' : 'numeric';
-        columnDef.minWidth = 100;
-        // Hack to allow editing when double clicking
-        columnDef.cellDblClick = () => {};
-      }
-      return columnDef;
-    });
-
-  useEffect(() => {
-    setColumnDef(getColumnDef());
-    setData(getData());
-  }, [tab]);
-
-  useEffect(() => {
-    setData(getData());
-  }, [tables[tab]]);
-
-  return [data, columnDef];
-};
+import ScheduleEditor from './ScheduleEditor';
 
 const Table = ({ tab }) => {
-  const [data, columnDef] = useTableData(tab);
-  const { selected, changes } = useSelector(state => state.inputData);
+  const { selected, changes, schedules } = useSelector(
+    state => state.inputData
+  );
+  const tabulator = useRef(null);
+
+  return (
+    <React.Fragment>
+      <Card
+        headStyle={{ backgroundColor: '#f1f1f1' }}
+        size="small"
+        title={
+          <Tooltip
+            placement="right"
+            title="You can select multiple buildings in the table and the map by holding down the `Ctrl` key"
+          >
+            <Icon type="info-circle" />
+          </Tooltip>
+        }
+        extra={
+          <TableButtons selected={selected} tabulator={tabulator} tab={tab} />
+        }
+      >
+        {tab == 'schedules' ? (
+          <ScheduleEditor
+            tabulator={tabulator}
+            selected={selected}
+            schedules={schedules}
+          />
+        ) : (
+          <TableEditor tabulator={tabulator} tab={tab} selected={selected} />
+        )}
+      </Card>
+      <InputEditorButtons changes={changes} />
+    </React.Fragment>
+  );
+};
+
+const InputEditorButtons = ({ changes }) => {
+  const dispatch = useDispatch();
   const noChanges =
     !Object.keys(changes.update).length && !Object.keys(changes.delete).length;
-  const dispatch = useDispatch();
-  const tableRef = useRef(tab);
-  const tabulator = useRef(null);
-  const divRef = useRef(null);
-
-  useEffect(() => {
-    tabulator.current = new Tabulator(divRef.current, {
-      data: data,
-      index: 'Name',
-      columns: columnDef,
-      layout: 'fitDataFill',
-      height: '300px',
-      validationFailed: cell => {
-        cell.cancelEdit();
-      },
-      cellEdited: cell => {
-        dispatch(
-          updateInputData(
-            tableRef.current,
-            [cell.getData()['Name']],
-            [{ property: cell.getField(), value: cell.getValue() }]
-          )
-        );
-      },
-      placeholder: '<div>No matching records found.</div>'
-    });
-  }, []);
-
-  // Keep reference of current table name
-  useEffect(() => {
-    tableRef.current = tab;
-  }, [tab]);
-
-  useEffect(() => {
-    if (tabulator.current) {
-      tabulator.current.setData([]);
-      tabulator.current.setColumns(columnDef);
-    }
-  }, [columnDef]);
-
-  useEffect(() => {
-    if (tabulator.current) {
-      if (!tabulator.current.getData().length) {
-        tabulator.current.setData(data);
-        tabulator.current.selectRow(selected);
-      } else tabulator.current.updateData(data);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (tabulator.current) {
-      tabulator.current.deselectRow();
-      tabulator.current.selectRow(selected);
-      tabulator.current.getFilters().length &&
-        tabulator.current.setFilter('Name', 'in', selected);
-    }
-  }, [selected]);
 
   const _saveChanges = () => {
     Modal.confirm({
@@ -188,6 +109,9 @@ const Table = ({ tab }) => {
         await dispatch(discardChanges())
           .then(data => {
             console.log(data);
+            message.config({
+              top: 120
+            });
             message.info('Unsaved changes have been discarded.');
           })
           .catch(error => {
@@ -200,28 +124,6 @@ const Table = ({ tab }) => {
 
   return (
     <React.Fragment>
-      <Card
-        headStyle={{ backgroundColor: '#f1f1f1' }}
-        size="small"
-        extra={
-          <TableButtons selected={selected} tabulator={tabulator} table={tab} />
-        }
-      >
-        <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
-        {!data.length ? (
-          <div>
-            Input file could not be found. You can create the file using
-            {tab == 'surroundings' ? (
-              <Link to={`${routes.TOOLS}/surroundings-helper`}>
-                {' surroundings-helper '}
-              </Link>
-            ) : (
-              <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
-            )}
-            tool.
-          </div>
-        ) : null}
-      </Card>
       <Button style={{ margin: 5 }} disabled={noChanges} onClick={_saveChanges}>
         Save
       </Button>
@@ -273,7 +175,7 @@ const ChangesSummary = ({ changes }) => {
                     property => (
                       <div key={property}>
                         <i>{property}</i>
-                        {`: ${changes.update[table][building][property].oldValue}
+                        {` : ${changes.update[table][building][property].oldValue}
                         → 
                         ${changes.update[table][building][property].newValue}`}
                       </div>
@@ -290,7 +192,7 @@ const ChangesSummary = ({ changes }) => {
   );
 };
 
-const TableButtons = ({ selected, tabulator, table }) => {
+const TableButtons = ({ selected, tabulator, tab }) => {
   const [filterToggle, setFilterToggle] = useState(false);
   const [selectedInTable, setSelectedInTable] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -298,9 +200,9 @@ const TableButtons = ({ selected, tabulator, table }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const tableData = data[table] || {};
+    const tableData = data[tab] || tab == 'schedules' ? data['zone'] : {};
     setSelectedInTable(Object.keys(tableData).includes(selected[0]));
-  }, [table, selected]);
+  }, [tab, selected]);
 
   const selectAll = () => {
     dispatch(setSelected(tabulator.current.getData().map(data => data.Name)));
@@ -312,6 +214,7 @@ const TableButtons = ({ selected, tabulator, table }) => {
     } else {
       tabulator.current.setFilter('Name', 'in', selected);
     }
+    tabulator.current.redraw();
     setFilterToggle(oldValue => !oldValue);
   };
 
@@ -357,7 +260,9 @@ const TableButtons = ({ selected, tabulator, table }) => {
       </Button>
       {selectedInTable ? (
         <React.Fragment>
-          <Button onClick={editSelected}>Edit Selection</Button>
+          {tab != 'schedules' && (
+            <Button onClick={editSelected}>Edit Selection</Button>
+          )}
           <Button onClick={clearSelected}>Clear Selection</Button>
           <Button type="danger" onClick={deleteSelected}>
             Delete Selection
@@ -368,10 +273,190 @@ const TableButtons = ({ selected, tabulator, table }) => {
         visible={modalVisible}
         setVisible={setModalVisible}
         inputTable={tabulator.current}
-        table={table}
+        table={tab}
       />
     </div>
   );
+};
+
+const TableEditor = ({ tab, selected, tabulator }) => {
+  const [data, columnDef] = useTableData(tab);
+  const dispatch = useDispatch();
+  const divRef = useRef(null);
+  const tableRef = useRef(tab);
+
+  useEffect(() => {
+    const filtered = tabulator.current && tabulator.current.getFilters().length;
+    tabulator.current = new Tabulator(divRef.current, {
+      data: data,
+      index: 'Name',
+      columns: columnDef.columns,
+      layout: 'fitDataFill',
+      height: '300px',
+      validationFailed: cell => {
+        cell.cancelEdit();
+      },
+      cellEdited: cell => {
+        dispatch(
+          updateInputData(
+            tableRef.current,
+            [cell.getData()['Name']],
+            [{ property: cell.getField(), value: cell.getValue() }]
+          )
+        );
+      },
+      placeholder: '<div>No matching records found.</div>'
+    });
+    filtered && tabulator.current.setFilter('Name', 'in', selected);
+  }, []);
+
+  // Keep reference of current table name
+  useEffect(() => {
+    tableRef.current = tab;
+  }, [tab]);
+
+  useEffect(() => {
+    if (tabulator.current) {
+      tabulator.current.setData([]);
+      tabulator.current.setColumns(columnDef.columns);
+    }
+  }, [columnDef]);
+
+  useEffect(() => {
+    if (tabulator.current) {
+      if (!tabulator.current.getData().length) {
+        tabulator.current.setData(data);
+        tabulator.current.selectRow(selected);
+        // Add tooltips to column headers on new data
+        document
+          .querySelectorAll('.tabulator-col-content')
+          .forEach((col, index) => {
+            const { description, unit } = columnDef.description[index];
+            ReactDOM.render(
+              <Tooltip
+                title={
+                  description && (
+                    <div>
+                      {description}
+                      <br />
+                      {unit}
+                    </div>
+                  )
+                }
+                getPopupContainer={() => {
+                  return document.getElementsByClassName('ant-card-body')[0];
+                }}
+              >
+                <div className="tabulator-col-title">
+                  {columnDef.columns[index].title}
+                </div>
+                <div className="tabulator-arrow"></div>
+              </Tooltip>,
+              col
+            );
+          });
+      } else if (tabulator.current.getData().length == data.length) {
+        tabulator.current.updateData(data);
+      } else tabulator.current.setData(data);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (tabulator.current) {
+      tabulator.current.deselectRow();
+      tabulator.current.selectRow(selected);
+      tabulator.current.getFilters().length &&
+        tabulator.current.setFilter('Name', 'in', selected);
+    }
+  }, [selected]);
+
+  return (
+    <React.Fragment>
+      <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
+      {!data.length ? (
+        <div>
+          Input file could not be found. You can create the file using
+          {tab == 'surroundings' ? (
+            <Link to={`${routes.TOOLS}/surroundings-helper`}>
+              {' surroundings-helper '}
+            </Link>
+          ) : (
+            <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
+          )}
+          tool.
+        </div>
+      ) : null}
+    </React.Fragment>
+  );
+};
+
+const useTableData = tab => {
+  const { columns, tables } = useSelector(state => state.inputData);
+  const [data, setData] = useState([]);
+  const [columnDef, setColumnDef] = useState({ columns: [], description: [] });
+
+  const dispatch = useDispatch();
+
+  const selectRow = (e, cell) => {
+    const row = cell.getRow();
+    if (!e.ctrlKey) {
+      dispatch(setSelected([row.getIndex()]));
+    } else {
+      const selectedRows = cell
+        .getTable()
+        .getSelectedData()
+        .map(data => data.Name);
+      if (cell.getRow().isSelected()) {
+        dispatch(
+          setSelected(selectedRows.filter(name => name !== row.getIndex()))
+        );
+      } else {
+        dispatch(setSelected([...selectedRows, row.getIndex()]));
+      }
+    }
+  };
+
+  const getData = () =>
+    Object.keys(tables[tab])
+      .sort()
+      .map(row => ({
+        Name: row,
+        ...tables[tab][row]
+      }));
+
+  const getColumnDef = () => {
+    let description = [];
+    let _columns = Object.keys(columns[tab]).map(column => {
+      description.push({
+        description: columns[tab][column].description,
+        unit: columns[tab][column].unit
+      });
+      let columnDef = { title: column, field: column };
+      if (column === 'Name') {
+        columnDef.frozen = true;
+        columnDef.cellClick = selectRow;
+      } else if (column !== 'REFERENCE') {
+        columnDef.editor = 'input';
+        columnDef.validator =
+          columns[tab][column].type === 'str' ? 'string' : 'numeric';
+        columnDef.minWidth = 100;
+        // Hack to allow editing when double clicking
+        columnDef.cellDblClick = () => {};
+      }
+      return columnDef;
+    });
+    return { columns: _columns, description: description };
+  };
+  useEffect(() => {
+    setColumnDef(getColumnDef());
+    setData(getData());
+  }, [tab]);
+
+  useEffect(() => {
+    setData(getData());
+  }, [tables[tab]]);
+
+  return [data, columnDef];
 };
 
 export default Table;

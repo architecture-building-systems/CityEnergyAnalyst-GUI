@@ -9,10 +9,13 @@ import {
   RESET_INPUTDATA,
   SET_SELECTED,
   UPDATE_INPUTDATA,
+  UPDATE_YEARSCHEDULE,
+  UPDATE_DAYSCHEDULE,
   DELETE_BUILDINGS,
   SAVE_INPUTDATA_SUCCESS,
   DISCARD_INPUTDATA_CHANGES_SUCCESS
 } from '../actions/inputEditor';
+import { months_short } from '../constants/months';
 
 const initialState = {
   selected: [],
@@ -32,32 +35,48 @@ function createNestedProp(obj, prop, ...rest) {
   return createNestedProp(obj[prop], ...rest);
 }
 
+function updateChanges(
+  changes,
+  table,
+  building,
+  property,
+  storedValue,
+  newValue
+) {
+  if (createNestedProp(changes.update, table, building, property, 'oldValue')) {
+    // Delete update if newValue equals oldValue else update newValue
+    if (changes.update[table][building][property].oldValue == newValue) {
+      delete changes.update[table][building][property];
+      // Delete update building entry if it is empty
+      if (!Object.keys(changes.update[table][building]).length) {
+        delete changes.update[table][building];
+        if (!Object.keys(changes.update[table]).length)
+          delete changes.update[table];
+      }
+    } else changes.update[table][building][property].newValue = newValue;
+  } else {
+    // Store old and new value
+    changes.update[table][building][property] = {
+      oldValue: storedValue,
+      newValue: newValue
+    };
+  }
+}
+
 function updateData(state, table, buildings, properties) {
   let { geojsons, tables, changes } = state;
   for (const building of buildings) {
-    for (const _property of properties) {
-      const { property, value } = _property;
+    for (const propertyObj of properties) {
+      const { property, value } = propertyObj;
       // Track update changes
-      if (
-        createNestedProp(changes.update, table, building, property, 'oldValue')
-      ) {
-        // Delete update if newValue equals oldValue else update newValue
-        if (changes.update[table][building][property].oldValue == value) {
-          delete changes.update[table][building][property];
-          // Delete update building entry if it is empty
-          if (!Object.keys(changes.update[table][building]).length) {
-            delete changes.update[table][building];
-            if (!Object.keys(changes.update[table]).length)
-              delete changes.update[table];
-          }
-        } else changes.update[table][building][property].newValue = value;
-      } else {
-        // Store old and new value
-        changes.update[table][building][property] = {
-          oldValue: tables[table][building][property],
-          newValue: value
-        };
-      }
+      updateChanges(
+        changes,
+        table,
+        building,
+        property,
+        tables[table][building][property],
+        value
+      );
 
       tables = {
         ...tables,
@@ -75,7 +94,12 @@ function updateData(state, table, buildings, properties) {
 
       // Update building properties of geojsons
       if (buildingGeometries.includes(table)) {
-        geojsons = updateGeoJsonProperty(geojsons, table, building, _property);
+        geojsons = updateGeoJsonProperty(
+          geojsons,
+          table,
+          building,
+          propertyObj
+        );
       }
     }
   }
@@ -145,6 +169,64 @@ function deleteGeoJsonFeature(geojsons, table, building) {
   };
 }
 
+function updateDaySchedule(state, buildings, tab, day, hour, value) {
+  let { schedules, changes } = state;
+  for (const building of buildings) {
+    // Track update changes
+    updateChanges(
+      changes,
+      'schedules',
+      building,
+      `${tab}_${day}_${hour + 1}`,
+      schedules[building].SCHEDULES[tab][day][hour],
+      value
+    );
+
+    let daySchedule = schedules[building].SCHEDULES[tab][day];
+    daySchedule[hour] = value;
+    schedules = {
+      ...schedules,
+      [building]: {
+        ...schedules[building],
+        SCHEDULES: {
+          ...schedules[building].SCHEDULES,
+          [tab]: {
+            ...schedules[building].SCHEDULES[tab],
+            [day]: daySchedule
+          }
+        }
+      }
+    };
+  }
+  return { schedules };
+}
+
+function updateYearSchedule(state, buildings, month, value) {
+  let { schedules, changes } = state;
+  for (const building of buildings) {
+    // Track update changes
+    updateChanges(
+      changes,
+      'schedules',
+      building,
+      `MONTHLY_MULTIPLIER_${months_short[month]}`,
+      schedules[building].MONTHLY_MULTIPLIER[month],
+      value
+    );
+
+    let monthSchedule = schedules[building].MONTHLY_MULTIPLIER;
+    monthSchedule[month] = value;
+    schedules = {
+      ...schedules,
+      [building]: {
+        ...schedules[building],
+        MONTHLY_MULTIPLIER: monthSchedule
+      }
+    };
+  }
+  return { schedules };
+}
+
 const inputData = (state = initialState, { type, payload }) => {
   switch (type) {
     case REQUEST_INPUTDATA:
@@ -163,6 +245,28 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.table,
           payload.buildings,
           payload.properties
+        )
+      };
+    case UPDATE_YEARSCHEDULE:
+      return {
+        ...state,
+        ...updateYearSchedule(
+          state,
+          payload.buildings,
+          payload.month,
+          payload.value
+        )
+      };
+    case UPDATE_DAYSCHEDULE:
+      return {
+        ...state,
+        ...updateDaySchedule(
+          state,
+          payload.buildings,
+          payload.tab,
+          payload.day,
+          payload.hour,
+          payload.value
         )
       };
     case DELETE_BUILDINGS:
