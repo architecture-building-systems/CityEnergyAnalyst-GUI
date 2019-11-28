@@ -332,16 +332,18 @@ const formatCellStyle = cell => {
     cell.getElement().style.fontWeight = 'bold';
     cell.getElement().style.fontStyle = 'italic';
   } else {
-    if (!isNaN(value)) {
+    if (!isNaN(value) && value != 0) {
       cell.getElement().style.backgroundColor = addRGBAlpha(
         colormap(value),
         0.5
       );
-    } else if (states.includes(value)) {
+    } else if (states.includes(value) && states.indexOf(value) != 0) {
       cell.getElement().style.backgroundColor = addRGBAlpha(
         colormap(states.indexOf(value) / (states.length - 1)),
         0.5
       );
+    } else {
+      cell.getElement().style.backgroundColor = '';
     }
     cell.getElement().style.fontWeight = 'normal';
     cell.getElement().style.fontStyle = 'normal';
