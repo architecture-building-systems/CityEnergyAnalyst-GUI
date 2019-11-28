@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Modal, Form, Input } from 'antd';
+import { Modal, Form, Input, Select } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { updateInputData } from '../../actions/inputEditor';
 
@@ -12,9 +12,9 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         let updates = [];
+        console.log(values);
         for (const prop in values) {
-          values[prop] !== null &&
-            updates.push({ property: prop, value: values[prop] });
+          values[prop] && updates.push({ property: prop, value: values[prop] });
         }
         dispatch(
           updateInputData(
@@ -81,44 +81,21 @@ const Table = ({ inputTable }) => {
 
 const InputDataForm = Form.create()(({ form, inputTable, table }) => {
   const { columns } = useSelector(state => state.inputData);
-  const typeMap = { str: 'string', int: 'integer', float: 'float' };
-  const checkNumeric = (value, type) => {
-    if (type == 'str') return value;
-    if (value === null) return 0;
-    const regex =
-      type === 'int' ? /^(?:[1-9][0-9]*|0)$/ : /^(?:[1-9][0-9]*|0)(\.\d+)?$/;
-    return regex.test(value) ? Number(value) : NaN;
-  };
-
   return (
     <Form>
       {inputTable.getColumnDefinitions().map(columnDef => {
-        if (columnDef.title != 'Name' && columnDef.title != 'REFERENCE')
+        const { title } = columnDef;
+        if (title != 'Name' && title != 'REFERENCE')
           return (
             <Form.Item
-              key={columnDef.title}
-              label={columnDef.title}
+              key={title}
+              label={title}
               labelCol={{ span: 6 }}
               wrapperCol={{ span: 11, offset: 1 }}
             >
-              {form.getFieldDecorator(columnDef.title, {
-                initialValue: null,
-                rules: [
-                  {
-                    type:
-                      typeMap[columns[table][columnDef.title].type] == 'string'
-                        ? 'string'
-                        : 'number',
-                    message: `${columnDef.title} is not a ${
-                      typeMap[columns[table][columnDef.title].type]
-                    }`,
-                    transform: value =>
-                      checkNumeric(value, columns[table][columnDef.title].type)
-                  }
-                ]
-              })(<Input placeholder="unchanged" />)}
+              {createFormItem(form, title, columns[table][title])}
               <small style={{ display: 'block', lineHeight: 'normal' }}>
-                {columns[table][columnDef.title].description}
+                {columns[table][title].description}
               </small>
             </Form.Item>
           );
@@ -126,5 +103,62 @@ const InputDataForm = Form.create()(({ form, inputTable, table }) => {
     </Form>
   );
 });
+
+const createFormItem = (form, title, columnInfo) => {
+  const { type, choices, constraints } = columnInfo;
+
+  if (type == 'choice') {
+    const Options = choices.map(({ value, label }) => (
+      <Select.Option key={value} value={value}>
+        {`${value} : ${label}`}
+      </Select.Option>
+    ));
+    return form.getFieldDecorator(title)(
+      <Select placeholder="unchanged" allowClear={true}>
+        {Options}
+      </Select>
+    );
+  }
+
+  const typeMap = {
+    str: 'string',
+    int: 'integer',
+    float: 'float',
+    year: 'integer'
+  };
+  const checkNumeric = (value, type) => {
+    if (type == 'str') return value;
+    if (value === null || value == '') return 0;
+    const regex =
+      type === 'int' ? /^(?:[1-9][0-9]*|0)$/ : /^(?:[1-9][0-9]*|0)(\.\d+)?$/;
+    return regex.test(value) ? Number(value) : NaN;
+  };
+
+  return form.getFieldDecorator(title, {
+    initialValue: null,
+    rules: [
+      {
+        type: typeMap[type] == 'string' ? 'string' : 'number',
+        message: `${title} is not a ${typeMap[type]}`,
+        transform: value => checkNumeric(value, type)
+      },
+      {
+        validator: (rule, value, callback) => {
+          try {
+            if (typeof constraints != 'undefined') {
+              if (typeof constraints.max != 'undefined') {
+                if (type != 'str' && value > constraints.max)
+                  return new Error(`Max value: ${constraints.max}`);
+              }
+            }
+            callback();
+          } catch (err) {
+            callback(err);
+          }
+        }
+      }
+    ]
+  })(<Input placeholder="unchanged" />);
+};
 
 export default EditSelectedModal;
