@@ -201,8 +201,8 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const tableData = data[tab] || tab == 'schedules' ? data['zone'] : {};
-    setSelectedInTable(Object.keys(tableData).includes(selected[0]));
+    const typeOfBuilding = tab != 'surroundings' ? 'zone' : 'surroundings';
+    setSelectedInTable(Object.keys(data[typeOfBuilding]).includes(selected[0]));
   }, [tab, selected]);
 
   const selectAll = () => {
