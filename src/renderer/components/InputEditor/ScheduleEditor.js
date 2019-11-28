@@ -214,6 +214,37 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
     });
   }, []);
 
+  // Update column definitions for input validation
+  useEffect(() => {
+    const columnDefs = tabulator.current.getColumnDefinitions();
+    tabulator.current.setColumns(
+      columnDefs.map(def => {
+        if (def.field == 'DAY') {
+          return def;
+        }
+        if (tab == 'HEATING' || tab == 'COOLING') {
+          return {
+            ...def,
+            editor: 'select',
+            editorParams: {
+              values: ['OFF', 'SETBACK', 'SETPOINT']
+            },
+            validator: null,
+            mutatorEdit: null
+          };
+        }
+        return {
+          ...def,
+          // 2 decimal places
+          editor: 'input',
+          editorParams: null,
+          validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
+          mutatorEdit: value => Number(Math.round(value + 'e2') + 'e-2')
+        };
+      })
+    );
+  }, [tab]);
+
   useEffect(() => {
     tooltipsRef.current = { selected, schedules, tab };
     tab &&
@@ -246,7 +277,7 @@ const YearTable = ({ selected, schedules, loading }) => {
           field: i.toString(),
           headerSort: false,
           editor: 'input',
-          validator: ['max:1', 'min:0'],
+          validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
           // Hack to allow editing when double clicking
           cellDblClick: () => {},
           formatter: cell => {

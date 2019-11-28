@@ -15,6 +15,7 @@ import routes from '../../constants/routes';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
+import { shell } from 'electron';
 
 const Table = ({ tab }) => {
   const { selected, changes, schedules } = useSelector(
@@ -123,7 +124,7 @@ const InputEditorButtons = ({ changes }) => {
   };
 
   return (
-    <React.Fragment>
+    <div style={{ marginTop: 10 }}>
       <Button style={{ margin: 5 }} disabled={noChanges} onClick={_saveChanges}>
         Save
       </Button>
@@ -135,7 +136,7 @@ const InputEditorButtons = ({ changes }) => {
       >
         Discard Changes
       </Button>
-    </React.Fragment>
+    </div>
   );
 };
 
@@ -284,6 +285,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
   const dispatch = useDispatch();
   const divRef = useRef(null);
   const tableRef = useRef(tab);
+  const columnDescriptionRef = useRef();
 
   useEffect(() => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
@@ -294,6 +296,20 @@ const TableEditor = ({ tab, selected, tabulator }) => {
       layout: 'fitDataFill',
       height: '300px',
       validationFailed: cell => {
+        const field = cell.getField();
+        const { type, constraints } = columnDescriptionRef.current[field];
+        const content = (
+          <span>
+            <b>{field}</b> must be of type <i>{type}</i>.
+            {constraints ? (
+              <div>constraints: {JSON.stringify(constraints)}</div>
+            ) : null}
+          </span>
+        );
+        message.config({
+          top: 120
+        });
+        message.error(content);
         cell.cancelEdit();
       },
       cellEdited: cell => {
@@ -319,6 +335,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
     if (tabulator.current) {
       tabulator.current.setData([]);
       tabulator.current.setColumns(columnDef.columns);
+      columnDescriptionRef.current = columnDef.description;
     }
   }, [columnDef]);
 
@@ -331,7 +348,12 @@ const TableEditor = ({ tab, selected, tabulator }) => {
         document
           .querySelectorAll('.tabulator-col-content')
           .forEach((col, index) => {
-            const { description, unit } = columnDef.description[index];
+            const {
+              description,
+              unit,
+              type,
+              path: _path
+            } = columnDef.description[columnDef.columns[index].title];
             ReactDOM.render(
               <Tooltip
                 title={
@@ -340,6 +362,17 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                       {description}
                       <br />
                       {unit}
+                      <br />
+                      {type == 'choice' && (
+                        <p
+                          className="cea-input-editor-col-header-link"
+                          onClick={() => {
+                            shell.openItem(_path);
+                          }}
+                        >
+                          Open File
+                        </p>
+                      )}
                     </div>
                   )
                 }
@@ -427,27 +460,76 @@ const useTableData = tab => {
       }));
 
   const getColumnDef = () => {
-    let description = [];
     let _columns = Object.keys(columns[tab]).map(column => {
-      description.push({
-        description: columns[tab][column].description,
-        unit: columns[tab][column].unit
-      });
       let columnDef = { title: column, field: column };
-      if (column === 'Name') {
-        columnDef.frozen = true;
-        columnDef.cellClick = selectRow;
-      } else if (column !== 'REFERENCE') {
-        columnDef.editor = 'input';
-        columnDef.validator =
-          columns[tab][column].type === 'str' ? 'string' : 'numeric';
-        columnDef.minWidth = 100;
-        // Hack to allow editing when double clicking
-        columnDef.cellDblClick = () => {};
+      switch (column) {
+        case 'REFERENCE':
+          return columnDef;
+        case 'Name':
+          return { ...columnDef, frozen: true, cellClick: selectRow };
+        default: {
+          const dataType = columns[tab][column].type;
+          columnDef = {
+            ...columnDef,
+            minWidth: 100,
+            // Hack to allow editing when double clicking
+            cellDblClick: () => {}
+          };
+          switch (dataType) {
+            case 'int':
+            case 'year':
+              return {
+                ...columnDef,
+                editor: 'input',
+                validator: ['required', 'regex:^(?:[1-9][0-9]*|0)$'],
+                mutatorEdit: value => Number(value)
+              };
+            case 'float':
+              return {
+                ...columnDef,
+                editor: 'input',
+                validator: [
+                  'required',
+                  'regex:^(?:[1-9][0-9]*|0)?(\\.\\d+)?$',
+                  ...(columns[tab][column].constraints
+                    ? Object.keys(columns[tab][column].constraints).map(
+                        constraint =>
+                          `${constraint}:${columns[tab][column].constraints[constraint]}`
+                      )
+                    : [])
+                ],
+                mutatorEdit: value => Number(value)
+              };
+            case 'date':
+              return {
+                ...columnDef,
+                editor: 'input',
+                validator: ['required', 'string']
+              };
+            case 'str':
+              return {
+                ...columnDef,
+                editor: 'input',
+                validator: ['required', 'string']
+              };
+            case 'choice':
+              return {
+                ...columnDef,
+                editor: 'select',
+                editorParams: {
+                  values: columns[tab][column].choices,
+                  listItemFormatter: (value, label) => {
+                    return `${value} : ${label}`;
+                  }
+                }
+              };
+            default:
+              return columnDef;
+          }
+        }
       }
-      return columnDef;
     });
-    return { columns: _columns, description: description };
+    return { columns: _columns, description: columns[tab] };
   };
   useEffect(() => {
     setColumnDef(getColumnDef());
