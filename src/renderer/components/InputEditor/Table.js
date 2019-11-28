@@ -481,7 +481,7 @@ const useTableData = tab => {
               return {
                 ...columnDef,
                 editor: 'input',
-                validator: ['required', 'regex:^(?:[1-9][0-9]*|0)$'],
+                validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
                 mutatorEdit: value => Number(value)
               };
             case 'float':
@@ -490,7 +490,7 @@ const useTableData = tab => {
                 editor: 'input',
                 validator: [
                   'required',
-                  'regex:^(?:[1-9][0-9]*|0)?(\\.\\d+)?$',
+                  'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
                   ...(columns[tab][column].constraints
                     ? Object.keys(columns[tab][column].constraints).map(
                         constraint =>

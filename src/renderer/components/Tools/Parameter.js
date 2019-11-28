@@ -24,8 +24,8 @@ const parameter = (param, form, config = {}) => {
     const stringValue = value !== null ? value.toString() : '';
     const regex =
       type === 'IntegerParameter'
-        ? /^(?:[1-9][0-9]*|0)$/
-        : /^(?:[1-9][0-9]*|0)(\.\d+)?$/;
+        ? /^([1-9][0-9]*|0)$/
+        : /^([1-9][0-9]*|0)(\.\d+)?$/;
     input = (
       <React.Fragment>
         {getFieldDecorator(name, {
