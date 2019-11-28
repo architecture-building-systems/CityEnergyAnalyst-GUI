@@ -504,7 +504,11 @@ const useTableData = tab => {
               return {
                 ...columnDef,
                 editor: 'input',
-                validator: ['required', 'string']
+                validator: [
+                  'required',
+                  'regex:^[0-3][0-9]\\|[0-1][0-9]$',
+                  { type: simpleDateVal }
+                ]
               };
             case 'str':
               return {
@@ -541,6 +545,12 @@ const useTableData = tab => {
   }, [tables[tab]]);
 
   return [data, columnDef];
+};
+
+const simpleDateVal = (cell, value, parameters) => {
+  const [date, month] = value.split('|').map(number => Number(number));
+  const daysInMonths = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return daysInMonths[month] >= date;
 };
 
 export default Table;
