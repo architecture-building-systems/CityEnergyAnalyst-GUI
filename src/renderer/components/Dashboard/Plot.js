@@ -89,7 +89,10 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
         <React.Fragment>
           {div ? (
             div.content.length === 1 ? (
-              <PlotLegendToggle divID={div.content[0].props.id} />
+              <React.Fragment>
+                <PlotLegendToggle divID={div.content[0].props.id} />
+                <InputFiles index={index} activePlotRef={activePlotRef} />
+              </React.Fragment>
             ) : null
           ) : null}
           <EditMenu index={index} activePlotRef={activePlotRef} />
@@ -127,6 +130,20 @@ const PlotLegendToggle = ({ divID }) => {
         onClick={toggleLegends}
         style={{ color: showLegend ? '#1890ff' : 'grey' }}
       />
+    </Tooltip>
+  );
+};
+
+const InputFiles = ({ index, activePlotRef }) => {
+  const { modals, setModalVisible } = useContext(ModalContext);
+  const showModalInputFiles = () => {
+    setModalVisible(modals.inputFiles, true);
+    activePlotRef.current = index;
+  };
+
+  return (
+    <Tooltip title="Show input file location">
+      <Icon type="container" theme="twoTone" onClick={showModalInputFiles} />
     </Tooltip>
   );
 };

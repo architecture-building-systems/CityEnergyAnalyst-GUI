@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Modal, Form, Select, Input, Radio, Button } from 'antd';
+import {
+  Modal,
+  Form,
+  Select,
+  Input,
+  Radio,
+  Button,
+  Skeleton,
+  Icon
+} from 'antd';
 import axios from 'axios';
 import parameter from '../Tools/parameter';
 import { ModalContext } from '../../utils/ModalManager';
+import { shell } from 'electron';
 
 const { Option } = Select;
 
@@ -633,6 +643,74 @@ export const ModalDeletePlot = ({
       okButtonProps={{ type: 'danger' }}
     >
       Are you sure you want to delete this plot?
+    </Modal>
+  );
+};
+
+export const ModalInputFiles = ({ dashIndex, activePlotRef }) => {
+  const [loading, setLoading] = useState(true);
+  const [fileLocations, setFileLocations] = useState({});
+  const { modals, setModalVisible, visible } = useContext(ModalContext);
+  const handleCancel = () => setModalVisible(modals.inputFiles, false);
+
+  useEffect(() => {
+    const fetchFileLocations = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(
+          `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/input-files`
+        );
+        let out = {};
+        for (const fileLocation of data) {
+          const path = require('path');
+          const parentFolder = path.dirname(fileLocation);
+          if (typeof out[parentFolder] == 'undefined') out[parentFolder] = [];
+          out[parentFolder].push(path.basename(fileLocation));
+        }
+        setFileLocations(out);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (visible.inputFiles) fetchFileLocations();
+    else setFileLocations({});
+  }, [visible]);
+
+  return (
+    <Modal
+      title="Input File Locations"
+      visible={visible.inputFiles}
+      width={800}
+      onCancel={handleCancel}
+      footer={null}
+      destroyOnClose
+    >
+      {loading ? (
+        <Skeleton />
+      ) : (
+        Object.keys(fileLocations).map(folderLocation => (
+          <div key={folderLocation}>
+            <Icon type="folder" />
+            <b style={{ margin: 5 }}>{folderLocation}</b>
+            <a onClick={() => shell.openItem(folderLocation)}>Open Folder</a>
+            <ul>
+              {fileLocations[folderLocation].map(file => (
+                <li key={file}>
+                  <a
+                    onClick={() =>
+                      shell.openItem(require('path').join(folderLocation, file))
+                    }
+                  >
+                    {file}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
     </Modal>
   );
 };

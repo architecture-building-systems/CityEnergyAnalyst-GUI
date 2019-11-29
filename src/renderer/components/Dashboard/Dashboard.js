@@ -9,7 +9,8 @@ import {
   ModalDuplicateDashboard,
   ModalEditParameters,
   ModalNewDashboard,
-  ModalSetScenario
+  ModalSetScenario,
+  ModalInputFiles
 } from './Modals';
 import { ModalContext, ModalManager } from '../../utils/ModalManager';
 import { RowLayout, GridLayout } from './Layouts';
@@ -25,7 +26,8 @@ const modals = {
   duplicateDashboard: 'duplicateDashboard',
   editParameters: 'editParameters',
   newDashboard: 'newDashboard',
-  setScenario: 'setScenario'
+  setScenario: 'setScenario',
+  inputFiles: 'inputFiles'
 };
 
 const Dashboard = () => {
@@ -110,6 +112,7 @@ const Dashboard = () => {
         dashIndex={dashIndex}
         fetchDashboards={fetchDashboards}
       />
+      <ModalInputFiles activePlotRef={activePlotRef} dashIndex={dashIndex} />
     </ModalManager>
   );
 };
