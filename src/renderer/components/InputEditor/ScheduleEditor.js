@@ -27,13 +27,15 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
+    const selectedRows = cell
+      .getTable()
+      .getSelectedData()
+      .map(data => data.Name);
     if (!e.ctrlKey) {
-      dispatch(setSelected([row.getIndex()]));
+      (selectedRows.length !== [row.getIndex()].length ||
+        !cell.getRow().isSelected()) &&
+        dispatch(setSelected([row.getIndex()]));
     } else {
-      const selectedRows = cell
-        .getTable()
-        .getSelectedData()
-        .map(data => data.Name);
       if (cell.getRow().isSelected()) {
         dispatch(
           setSelected(selectedRows.filter(name => name !== row.getIndex()))
@@ -212,6 +214,37 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
     });
   }, []);
 
+  // Update column definitions for input validation
+  useEffect(() => {
+    const columnDefs = tabulator.current.getColumnDefinitions();
+    tabulator.current.setColumns(
+      columnDefs.map(def => {
+        if (def.field == 'DAY') {
+          return def;
+        }
+        if (tab == 'HEATING' || tab == 'COOLING') {
+          return {
+            ...def,
+            editor: 'select',
+            editorParams: {
+              values: ['OFF', 'SETBACK', 'SETPOINT']
+            },
+            validator: null,
+            mutatorEdit: null
+          };
+        }
+        return {
+          ...def,
+          // 2 decimal places
+          editor: 'input',
+          editorParams: null,
+          validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
+          mutatorEdit: value => Number(Math.round(value + 'e2') + 'e-2')
+        };
+      })
+    );
+  }, [tab]);
+
   useEffect(() => {
     tooltipsRef.current = { selected, schedules, tab };
     tab &&
@@ -244,7 +277,7 @@ const YearTable = ({ selected, schedules, loading }) => {
           field: i.toString(),
           headerSort: false,
           editor: 'input',
-          validator: ['max:1', 'min:0'],
+          validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
           // Hack to allow editing when double clicking
           cellDblClick: () => {},
           formatter: cell => {
@@ -330,16 +363,18 @@ const formatCellStyle = cell => {
     cell.getElement().style.fontWeight = 'bold';
     cell.getElement().style.fontStyle = 'italic';
   } else {
-    if (!isNaN(value)) {
+    if (!isNaN(value) && value != 0) {
       cell.getElement().style.backgroundColor = addRGBAlpha(
         colormap(value),
         0.5
       );
-    } else if (states.includes(value)) {
+    } else if (states.includes(value) && states.indexOf(value) != 0) {
       cell.getElement().style.backgroundColor = addRGBAlpha(
         colormap(states.indexOf(value) / (states.length - 1)),
         0.5
       );
+    } else {
+      cell.getElement().style.backgroundColor = '';
     }
     cell.getElement().style.fontWeight = 'normal';
     cell.getElement().style.fontStyle = 'normal';
