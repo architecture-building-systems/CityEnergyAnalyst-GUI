@@ -89,7 +89,10 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
         <React.Fragment>
           {div ? (
             div.content.length === 1 ? (
-              <PlotLegendToggle divID={div.content[0].props.id} />
+              <React.Fragment>
+                <PlotLegendToggle divID={div.content[0].props.id} />
+                <InputFiles index={index} activePlotRef={activePlotRef} />
+              </React.Fragment>
             ) : null
           ) : null}
           <EditMenu index={index} activePlotRef={activePlotRef} />
@@ -125,8 +128,22 @@ const PlotLegendToggle = ({ divID }) => {
       <Icon
         type="unordered-list"
         onClick={toggleLegends}
-        style={{ color: showLegend ? '#1890ff' : 'grey', margin: '0 5px' }}
+        style={{ color: showLegend ? '#1890ff' : 'grey' }}
       />
+    </Tooltip>
+  );
+};
+
+const InputFiles = ({ index, activePlotRef }) => {
+  const { modals, setModalVisible } = useContext(ModalContext);
+  const showModalInputFiles = () => {
+    setModalVisible(modals.inputFiles, true);
+    activePlotRef.current = index;
+  };
+
+  return (
+    <Tooltip title="Show input file location">
+      <Icon type="container" theme="twoTone" onClick={showModalInputFiles} />
     </Tooltip>
   );
 };
@@ -165,7 +182,7 @@ const EditMenu = React.memo(({ index, activePlotRef }) => {
   return (
     <React.Fragment>
       <Dropdown overlay={menu} trigger={['click']}>
-        <Icon type="edit" theme="twoTone" style={{ margin: '0 5px' }} />
+        <Icon type="edit" theme="twoTone" />
       </Dropdown>
     </React.Fragment>
   );
