@@ -80,7 +80,8 @@ const SearchResults = ({ data, output, visible, setValue }) => {
     .map(category => {
       const variables = category.variables.filter(
         variable =>
-          variable.VARIABLE.toLowerCase().indexOf(output.toLowerCase()) !== -1
+          variable.VARIABLE.length != 0 &&
+          variable.VARIABLE.toLowerCase().indexOf(input.toLowerCase()) == 0
       );
       return variables.length ? (
         <SearchCategory key={category.script} category={category}>
