@@ -12,7 +12,7 @@ const parameter = (param, form, config = {}) => {
         ? { properties: ['openDirectory'] }
         : { properties: ['openFile'] };
     remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
-      if (paths.length) {
+      if (paths && paths.length) {
         form.setFieldsValue({ [name]: paths[0] });
       }
     });
