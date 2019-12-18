@@ -62,14 +62,12 @@ const SearchBar = () => {
         onBlur={handleBlur}
       />
       {visible && input.length ? (
-        <div className="cea-search-dropdown">
-          <SearchResults
-            data={data}
-            input={input}
-            visible={visible}
-            setValue={setValue}
-          />
-        </div>
+        <SearchResults
+          data={data}
+          input={input}
+          visible={visible}
+          setValue={setValue}
+        />
       ) : null}
     </div>
   );
@@ -85,7 +83,8 @@ const SearchResults = ({ data, input, setValue }) => {
       );
       if (!variables.length) return null;
       return (
-        <SearchCategory key={category.script} category={category}>
+        <div key={category.script} className="cea-search-category">
+          <div className="cea-search-category-title">{category.script}</div>
           {variables.map(variable => (
             <SearchItem
               key={`${category.script}-${variable.FILE_NAME}-${variable.VARIABLE}`}
@@ -94,55 +93,48 @@ const SearchResults = ({ data, input, setValue }) => {
               setValue={setValue}
             />
           ))}
-        </SearchCategory>
+        </div>
       );
     })
     .filter(category => !!category);
 
-  return results.length ? (
-    results
-  ) : (
-    <div className="cea-search-item empty">
-      No results found for
-      <b>
-        <i>{` ${input}`}</i>
-      </b>
-    </div>
-  );
-};
-
-const SearchCategory = ({ category, children }) => {
   return (
-    <div key={category.script} className="cea-search-category">
-      <div className="cea-search-category-title">
-        <b>
-          <i>{category.script}</i>
-        </b>
-      </div>
-      {children}
+    <div className="cea-search-dropdown">
+      {results.length ? (
+        results
+      ) : (
+        <div className="cea-search-item empty">
+          No results found for
+          <b>
+            <i>{` ${input}`}</i>
+          </b>
+        </div>
+      )}
     </div>
   );
 };
 
 const SearchItem = ({ category, item, setValue }) => {
+  const { VARIABLE, UNIT, DESCRIPTION, FILE_NAME, LOCATOR_METHOD } = item;
   const openUrl = () => {
-    const type = category === 'input' ? 'input' : 'output';
     shell.openExternal(
-      `${DOCS_URL}${type}_methods.html?highlight=${
-        item.VARIABLE
-      }#${item.LOCATOR_METHOD.split('_').join('-')}`
+      `${DOCS_URL}${
+        category === 'inputs' ? 'input' : 'output'
+      }_methods.html?highlight=${VARIABLE}#${LOCATOR_METHOD.split('_').join(
+        '-'
+      )}`
     );
-    setValue(item.VARIABLE);
+    setValue(VARIABLE);
   };
 
   return (
     <div className="cea-search-item" onClick={openUrl}>
       <div>
-        <b>{item.VARIABLE}</b>
-        <small> - {item.UNIT}</small>
+        <b>{VARIABLE}</b>
+        <small> - {UNIT}</small>
       </div>
-      <div className="cea-search-description">{item.DESCRIPTION}</div>
-      <small style={{ wordBreak: 'break-all' }}>{item.FILE_NAME}</small>
+      <div className="cea-search-description">{DESCRIPTION}</div>
+      <small style={{ wordBreak: 'break-all' }}>{FILE_NAME}</small>
     </div>
   );
 };
