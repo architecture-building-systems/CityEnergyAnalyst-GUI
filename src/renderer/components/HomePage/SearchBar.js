@@ -27,7 +27,7 @@ const useGlossaryData = () => {
 const SearchBar = () => {
   const data = useGlossaryData();
   const [value, setValue] = useState('');
-  const [output, setOutput] = useState('');
+  const [input, setInput] = useState('');
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef();
 
@@ -45,9 +45,9 @@ const SearchBar = () => {
 
   useEffect(() => {
     clearTimeout(timeoutRef.current);
-    if (!value.trim()) setOutput('');
+    if (!value.trim()) setInput('');
     timeoutRef.current = setTimeout(() => {
-      setOutput(value);
+      setInput(value);
     }, 500);
   }, [value]);
 
@@ -61,21 +61,21 @@ const SearchBar = () => {
         onFocus={handleFocus}
         onBlur={handleBlur}
       />
-      <div className="cea-search-dropdown">
-        <SearchResults
-          data={data}
-          output={output}
-          visible={visible}
-          setValue={setValue}
-        />
-      </div>
+      {visible && input.length ? (
+        <div className="cea-search-dropdown">
+          <SearchResults
+            data={data}
+            input={input}
+            visible={visible}
+            setValue={setValue}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };
 
-const SearchResults = ({ data, output, visible, setValue }) => {
-  if (!visible || output == '') return null;
-
+const SearchResults = ({ data, input, setValue }) => {
   const results = data
     .map(category => {
       const variables = category.variables.filter(
@@ -83,7 +83,8 @@ const SearchResults = ({ data, output, visible, setValue }) => {
           variable.VARIABLE.length != 0 &&
           variable.VARIABLE.toLowerCase().indexOf(input.toLowerCase()) == 0
       );
-      return variables.length ? (
+      if (!variables.length) return null;
+      return (
         <SearchCategory key={category.script} category={category}>
           {variables.map(variable => (
             <SearchItem
@@ -94,7 +95,7 @@ const SearchResults = ({ data, output, visible, setValue }) => {
             />
           ))}
         </SearchCategory>
-      ) : null;
+      );
     })
     .filter(category => !!category);
 
@@ -104,7 +105,7 @@ const SearchResults = ({ data, output, visible, setValue }) => {
     <div className="cea-search-item empty">
       No results found for
       <b>
-        <i>{` ${output}`}</i>
+        <i>{` ${input}`}</i>
       </b>
     </div>
   );
