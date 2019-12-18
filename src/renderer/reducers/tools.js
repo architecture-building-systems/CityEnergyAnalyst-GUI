@@ -43,7 +43,10 @@ export const toolParams = (
   }
 };
 
-export const toolSaving = (state = { isSaving: false }, { type, payload }) => {
+export const toolSaving = (
+  state = { isSaving: false, error: null },
+  { type, payload }
+) => {
   switch (type) {
     case SAVING_TOOLPARAMS:
       return { ...state, ...payload };
