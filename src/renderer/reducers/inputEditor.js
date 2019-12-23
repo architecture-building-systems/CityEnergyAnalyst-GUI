@@ -16,6 +16,7 @@ import {
   DISCARD_INPUTDATA_CHANGES_SUCCESS
 } from '../actions/inputEditor';
 import { months_short } from '../constants/months';
+import { checkNestedProp, deleteNestedProp, createNestedProp } from '../utils';
 
 const initialState = {
   selected: [],
@@ -25,33 +26,6 @@ const initialState = {
 };
 
 const buildingGeometries = ['zone', 'surroundings'];
-
-function checkNestedProp(obj, prop, ...rest) {
-  if (typeof obj[prop] == 'undefined') return false;
-  if (rest.length === 0) return true;
-  return checkNestedProp(obj[prop], ...rest);
-}
-
-function createNestedProp(obj, prop, ...rest) {
-  if (typeof obj[prop] == 'undefined') {
-    obj[prop] = {};
-  }
-  if (rest.length === 0) return true;
-  return createNestedProp(obj[prop], ...rest);
-}
-
-function deleteNestedProp(obj, prop, ...rest) {
-  if (rest.length === 0) {
-    delete obj[prop];
-    return true;
-  }
-  if (deleteNestedProp(obj[prop], ...rest)) {
-    if (!Object.keys(obj[prop]).length) {
-      delete obj[prop];
-      return true;
-    }
-  }
-}
 
 function updateChanges(
   changes,
