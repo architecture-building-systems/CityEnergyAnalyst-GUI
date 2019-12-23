@@ -7,6 +7,7 @@ import { Tabs, Modal, Icon } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
+import { AsyncError } from '../../utils';
 import './InputEditor.css';
 
 const MAP_STYLE = {
@@ -109,18 +110,6 @@ const InputNavigationPrompt = () => {
         </Modal>
       )}
     </NavigationPrompt>
-  );
-};
-
-const AsyncError = ({ error, style = {} }) => {
-  return (
-    <div style={style}>
-      <h2>Something went wrong.</h2>
-      <div>ERROR MESSAGE: {error.data ? error.data.message : 'NOT FOUND'}</div>
-      <details style={{ whiteSpace: 'pre-wrap' }}>
-        {error.data ? error.data.trace : 'UNKNOWN ERROR'}
-      </details>
-    </div>
   );
 };
 
