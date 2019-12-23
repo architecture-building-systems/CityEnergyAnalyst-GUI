@@ -1,6 +1,6 @@
 'use strict';
 
-import { app, BrowserWindow, dialog, Menu } from 'electron';
+import { app, BrowserWindow, Menu } from 'electron';
 import path from 'path';
 import { format as formatUrl } from 'url';
 import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
@@ -119,6 +119,7 @@ app.on('will-quit', event => {
   const shutdown = async () => {
     try {
       const resp = await axios.post(`${CEA_URL}/server/shutdown`);
+      console.log(resp);
     } catch (error) {
       console.log(error);
     }

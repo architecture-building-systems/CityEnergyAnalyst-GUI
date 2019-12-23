@@ -104,7 +104,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
         </Button>
       </Dropdown>
 
-      {fields.map((key, index) => (
+      {fields.map(key => (
         <Form.Item key={key} label={key}>
           {form.getFieldDecorator(`files[${key}]`, {
             initialValue: '',

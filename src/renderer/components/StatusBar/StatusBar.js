@@ -145,7 +145,7 @@ const JobListPopover = () => {
       overlayClassName="cea-job-list-popover"
       placement="topRight"
       title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
-      content={<JobListPopoverContent jobs={jobs} setVisible={setVisible} />}
+      content={<JobListPopoverContent jobs={jobs} />}
       visible={visible}
     >
       <StatusBarButton onClick={() => setVisible(visible => !visible)}>
@@ -175,7 +175,7 @@ const JobListPopoverTitle = ({ jobs, setVisible }) => {
   );
 };
 
-const JobListPopoverContent = ({ jobs, setVisible }) => {
+const JobListPopoverContent = ({ jobs }) => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const jobArray = Object.keys(jobs);
@@ -189,7 +189,6 @@ const JobListPopoverContent = ({ jobs, setVisible }) => {
             key={id}
             id={id}
             job={jobs[id]}
-            setPopoverVisible={setVisible}
             setModalVisible={setModalVisible}
             setSelectedJob={setSelectedJob}
           />
@@ -206,13 +205,7 @@ const JobListPopoverContent = ({ jobs, setVisible }) => {
   );
 };
 
-const JobInfoCard = ({
-  id,
-  job,
-  setPopoverVisible,
-  setModalVisible,
-  setSelectedJob
-}) => {
+const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
   const JOB_STATES = ['Pending', 'Running...', 'Success', 'ERROR', 'Canceled'];
 
   const StateIcon = ({ state }) => {
