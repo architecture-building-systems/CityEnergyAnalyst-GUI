@@ -6,7 +6,7 @@ import parameter from '../Tools/parameter';
 const OpenProjectModal = ({
   visible,
   setVisible,
-  project,
+  projectPath,
   onSuccess = () => {}
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -49,19 +49,19 @@ const OpenProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <OpenProjectForm ref={formRef} project={project} />
+      <OpenProjectForm ref={formRef} projectPath={projectPath} />
     </Modal>
   );
 };
 
-const OpenProjectForm = Form.create()(({ form, project }) => {
+const OpenProjectForm = Form.create()(({ form, projectPath }) => {
   return (
     <Form>
       {parameter(
         {
           type: 'PathParameter',
           name: 'path',
-          value: project.path,
+          value: projectPath,
           help: 'Path of Project'
         },
         form

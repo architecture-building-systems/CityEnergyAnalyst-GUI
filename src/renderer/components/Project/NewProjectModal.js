@@ -8,7 +8,7 @@ import parameter from '../Tools/parameter';
 const NewProjectModal = ({
   visible,
   setVisible,
-  project,
+  projectPath,
   onSuccess = () => {}
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -58,12 +58,12 @@ const NewProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm ref={formRef} project={project} />
+      <NewProjectForm ref={formRef} projectPath={projectPath} />
     </Modal>
   );
 };
 
-const NewProjectForm = Form.create()(({ form, project }) => {
+const NewProjectForm = Form.create()(({ form, projectPath }) => {
   return (
     <Form layout="horizontal">
       {parameter(
@@ -96,7 +96,7 @@ const NewProjectForm = Form.create()(({ form, project }) => {
         {
           type: 'PathParameter',
           name: 'path',
-          value: path.dirname(project.path),
+          value: path.dirname(projectPath),
           help: 'Path of new Project'
         },
         form
