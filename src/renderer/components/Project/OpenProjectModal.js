@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Form } from 'antd';
 import axios from 'axios';
-import parameter from '../Tools/parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
 
 const OpenProjectModal = ({
   visible,
@@ -57,15 +57,13 @@ const OpenProjectModal = ({
 const OpenProjectForm = Form.create()(({ form, projectPath }) => {
   return (
     <Form>
-      {parameter(
-        {
-          type: 'PathParameter',
-          name: 'path',
-          value: projectPath,
-          help: 'Path of Project'
-        },
-        form
-      )}
+      <FormItemWrapper
+        form={form}
+        name="path"
+        initialValue={projectPath}
+        help="Path of Project"
+        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+      />
     </Form>
   );
 });

@@ -10,9 +10,9 @@ import {
   Icon
 } from 'antd';
 import axios from 'axios';
-import parameter from '../Tools/parameter';
 import { ModalContext } from '../../utils/ModalManager';
 import { shell } from 'electron';
+import Parameter from '../Tools/parameter';
 
 const { Option } = Select;
 
@@ -277,7 +277,11 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
 const SetScenarioForm = Form.create()(({ form, scenarios }) => {
   return (
     <Form layout="horizontal">
-      {scenarios ? parameter(scenarios, form) : 'Fetching Data...'}
+      {scenarios ? (
+        <Parameter form={form} parameter={form} />
+      ) : (
+        'Fetching Data...'
+      )}
     </Form>
   );
 });
@@ -592,9 +596,15 @@ export const ModalEditParameters = ({
 const ParamsForm = Form.create()(({ parameters, form }) => {
   return (
     <Form layout="horizontal">
-      {parameters
-        ? parameters.map(param => parameter(param, form))
-        : 'Fetching Data...'}
+      {parameters ? (
+        <React.Fragment>
+          {parameters.map(param => (
+            <Parameter key={param.name} form={form} parameter={param} />
+          ))}
+        </React.Fragment>
+      ) : (
+        'Fetching Data...'
+      )}
     </Form>
   );
 });

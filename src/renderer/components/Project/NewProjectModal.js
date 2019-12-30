@@ -3,7 +3,7 @@ import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import parameter from '../Tools/parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
 
 const NewProjectModal = ({
   visible,
@@ -66,41 +66,34 @@ const NewProjectModal = ({
 const NewProjectForm = Form.create()(({ form, projectPath }) => {
   return (
     <Form layout="horizontal">
-      {parameter(
-        {
-          type: 'InputParameter',
-          name: 'name',
-          value: '',
-          help: 'Name of new Project'
-        },
-        form,
-        {
-          rules: [
-            { required: true },
-            {
-              validator: (rule, value, callback) => {
-                if (
-                  value.length != 0 &&
-                  fs.existsSync(path.join(form.getFieldValue('path'), value))
-                ) {
-                  callback('Folder with name already exists in path');
-                } else {
-                  callback();
-                }
+      <FormItemWrapper
+        form={form}
+        name="name"
+        initialValue=""
+        help="Name of new Project"
+        required={true}
+        rules={[
+          {
+            validator: (rule, value, callback) => {
+              if (
+                value.length != 0 &&
+                fs.existsSync(path.join(form.getFieldValue('path'), value))
+              ) {
+                callback('Folder with name already exists in path');
+              } else {
+                callback();
               }
             }
-          ]
-        }
-      )}
-      {parameter(
-        {
-          type: 'PathParameter',
-          name: 'path',
-          value: path.dirname(projectPath),
-          help: 'Path of new Project'
-        },
-        form
-      )}
+          }
+        ]}
+      />
+      <FormItemWrapper
+        form={form}
+        name="path"
+        initialValue={path.dirname(projectPath)}
+        help="Path of new Project"
+        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+      />
     </Form>
   );
 });

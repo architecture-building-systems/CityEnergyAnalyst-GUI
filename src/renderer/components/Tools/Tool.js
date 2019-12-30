@@ -16,7 +16,7 @@ import {
   resetToolParams
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
-import parameter from './parameter';
+import Parameter from './parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 export const ToolRoute = ({ match }) => {
@@ -134,7 +134,7 @@ const ToolForm = Form.create()(
     if (parameters) {
       toolParams = parameters.map(param => {
         if (param.type === 'ScenarioParameter') return null;
-        return parameter(param, form);
+        return <Parameter key={param.name} form={form} parameter={param} />;
       });
     }
 
@@ -144,9 +144,9 @@ const ToolForm = Form.create()(
     } else {
       const categories = Object.keys(categoricalParameters).map(category => {
         const { Panel } = Collapse;
-        const Parameters = categoricalParameters[category].map(param =>
-          parameter(param, form)
-        );
+        const Parameters = categoricalParameters[category].map(param => (
+          <Parameter key={param.name} form={form} parameter={param} />
+        ));
         return (
           <Panel header={category} key={category}>
             {Parameters}

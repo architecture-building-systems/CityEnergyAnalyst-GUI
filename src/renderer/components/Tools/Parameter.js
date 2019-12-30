@@ -3,20 +3,9 @@ import { remote } from 'electron';
 import fs from 'fs';
 import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
 
-const parameter = (param, form, config = {}) => {
-  const { name, type, value, choices, help } = param;
+const Parameter = ({ parameter, form }) => {
+  const { name, type, value, choices, help } = parameter;
   const { setFieldsValue } = form;
-  const openDialog = () => {
-    const options =
-      type === 'PathParameter'
-        ? { properties: ['openDirectory'] }
-        : { properties: ['openFile'] };
-    remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
-      if (paths && paths.length) {
-        form.setFieldsValue({ [name]: paths[0] });
-      }
-    });
-  };
 
   switch (type) {
     case 'IntegerParameter':
@@ -30,23 +19,20 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={stringValue}
+          initialValue={stringValue}
           help={help}
-          config={{
-            rules: [
-              {
-                type: 'number',
-                message: `Please enter an ${
-                  type === 'IntegerParameter' ? 'integer' : 'float'
-                }`,
-                transform: num => {
-                  if (num === '') return 0;
-                  return regex.test(num) ? Number(num) : NaN;
-                }
+          rules={[
+            {
+              type: 'number',
+              message: `Please enter an ${
+                type === 'IntegerParameter' ? 'integer' : 'float'
+              }`,
+              transform: num => {
+                if (num === '') return 0;
+                return regex.test(num) ? Number(num) : NaN;
               }
-            ],
-            ...config
-          }}
+            }
+          ]}
           inputComponent={<Input />}
         />
       );
@@ -57,36 +43,20 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={value}
+          initialValue={value}
           help={help}
-          config={{
-            rules: [
-              {
-                validator: (rule, value, callback) => {
-                  if (!fs.existsSync(value)) {
-                    callback('Path does not exist');
-                  } else {
-                    callback();
-                  }
+          rules={[
+            {
+              validator: (rule, value, callback) => {
+                if (!fs.existsSync(value)) {
+                  callback('Path does not exist');
+                } else {
+                  callback();
                 }
               }
-            ],
-            ...config
-          }}
-          inputComponent={
-            <Input
-              addonAfter={
-                <button
-                  className={type}
-                  type="button"
-                  style={{ height: '30px', width: '50px' }}
-                  onClick={openDialog}
-                >
-                  <Icon type="ellipsis" />
-                </button>
-              }
-            />
-          }
+            }
+          ]}
+          inputComponent={<OpenDialogInput form={form} type={type} />}
         />
       );
     }
@@ -99,9 +69,19 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={value}
+          initialValue={value}
           help={help}
-          config={config}
+          rules={[
+            {
+              validator: (rule, value, callback) => {
+                if (!choices.includes(value)) {
+                  callback(`${value} is not a valid choice`);
+                } else {
+                  callback();
+                }
+              }
+            }
+          ]}
           inputComponent={
             <Select>
               {choices.map(choice => (
@@ -133,9 +113,24 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={value}
+          initialValue={value}
           help={help}
-          config={config}
+          rules={[
+            {
+              validator: (rule, value, callback) => {
+                const invalidChoices = value.filter(
+                  choice => !choices.includes(choice)
+                );
+                if (invalidChoices.length) {
+                  callback(
+                    `${invalidChoices.join(', ')} are not valid choices`
+                  );
+                } else {
+                  callback();
+                }
+              }
+            }
+          ]}
           inputComponent={
             <Select
               mode="multiple"
@@ -169,7 +164,7 @@ const parameter = (param, form, config = {}) => {
       );
     }
     case 'WeatherPathParameter': {
-      const { choices } = param;
+      const { choices } = parameter;
       const { Option } = Select;
       const Options = Object.keys(choices).map(choice => (
         <Option key={choice} value={choices[choice]}>
@@ -180,9 +175,8 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={value}
+          initialValue={value}
           help={help}
-          config={config}
           inputComponent={
             <Select
               dropdownRender={menu => (
@@ -191,7 +185,7 @@ const parameter = (param, form, config = {}) => {
                   <Divider style={{ margin: '4px 0' }} />
                   <div
                     style={{ padding: '8px', cursor: 'pointer' }}
-                    onMouseDown={openDialog}
+                    onMouseDown={() => openDialog(form, type, name)}
                     role="button"
                     tabIndex={0}
                   >
@@ -211,11 +205,10 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={value}
+          initialValue={value}
           help={help}
           config={{
-            valuePropName: 'checked',
-            ...config
+            valuePropName: 'checked'
           }}
           inputComponent={<Switch />}
         />
@@ -225,22 +218,22 @@ const parameter = (param, form, config = {}) => {
         <FormItemWrapper
           form={form}
           name={name}
-          value={value}
+          initialValue={value}
           help={help}
-          config={config}
-          inputComponent={<Input />}
         />
       );
   }
 };
 
-const FormItemWrapper = ({
+export const FormItemWrapper = ({
   form,
   name,
-  value,
+  initialValue,
   help,
+  required = false,
+  rules = [],
   config,
-  inputComponent
+  inputComponent = <Input />
 }) => {
   return (
     <Form.Item
@@ -250,7 +243,8 @@ const FormItemWrapper = ({
       key={name}
     >
       {form.getFieldDecorator(name, {
-        initialValue: value,
+        initialValue,
+        rules: [{ required: required }, ...rules],
         ...config
       })(inputComponent)}
       <br />
@@ -259,4 +253,35 @@ const FormItemWrapper = ({
   );
 };
 
-export default parameter;
+export const OpenDialogInput = ({ form, type, ...props }) => {
+  console.log(props);
+  return (
+    <Input
+      addonAfter={
+        <button
+          className={type}
+          type="button"
+          style={{ height: '30px', width: '50px' }}
+          onClick={() => openDialog(form, type, props.id)}
+        >
+          <Icon type="ellipsis" />
+        </button>
+      }
+      {...props}
+    />
+  );
+};
+
+const openDialog = (form, type, name) => {
+  const options =
+    type === 'PathParameter'
+      ? { properties: ['openDirectory'] }
+      : { properties: ['openFile'] };
+  remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
+    if (paths && paths.length) {
+      form.setFieldsValue({ [name]: paths[0] });
+    }
+  });
+};
+
+export default Parameter;
