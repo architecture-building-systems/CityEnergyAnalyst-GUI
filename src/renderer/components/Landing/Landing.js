@@ -81,13 +81,13 @@ const Landing = () => {
       <NewProjectModal
         visible={visibleNew}
         setVisible={setNewVisible}
-        project={{ path: require('path').join(rootPath, 'null') }}
+        projectPath={require('path').join(rootPath, 'null')}
         onSuccess={goToProjectPage}
       />
       <OpenProjectModal
         visible={visibleOpen}
         setVisible={setOpenVisible}
-        project={projectInfo}
+        projectPath={projectInfo.path}
         onSuccess={goToProjectPage}
       />
     </React.Fragment>
