@@ -6,7 +6,6 @@ import axios from 'axios';
 import getStatic from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
-import { getProject } from '../../actions/project';
 import routes from '../../constants/routes';
 
 const logo = getStatic('cea-logo.png');
@@ -42,7 +41,6 @@ const Landing = () => {
   const projectInfo = useProjectInfo({ path: rootPath });
 
   const goToProjectPage = async () => {
-    await dispatch(getProject());
     dispatch(push(routes.PROJECT_OVERVIEW));
   };
 
