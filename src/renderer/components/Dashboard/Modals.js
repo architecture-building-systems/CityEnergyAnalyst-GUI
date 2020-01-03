@@ -342,6 +342,7 @@ const ModalAddPlotTemplate = ({
   categories
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [category, setCategory] = useState({ category: null, plot_id: null });
   const [parameters, setParameters] = useState(null);
@@ -351,14 +352,14 @@ const ModalAddPlotTemplate = ({
 
   const nextPage = () => setPage(oldValue => oldValue + 1);
   const prevPage = () => setPage(oldValue => oldValue - 1);
-  const getParameters = async () => {
+  const getParameters = async scenario => {
     try {
       const params = await axios.get(
-        `http://localhost:5050/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`
+        `http://localhost:5050/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`,
+        scenario ? { params: { scenario } } : {}
       );
       console.log(params.data);
       setParameters(params.data);
-      nextPage();
     } catch (error) {
       console.log(error);
     }
@@ -417,8 +418,14 @@ const ModalAddPlotTemplate = ({
         <Button
           key="next"
           type="primary"
+          loading={loading}
           style={{ display: page == 0 ? 'inline' : 'none' }}
-          onClick={getParameters}
+          onClick={async () => {
+            setLoading(true);
+            await getParameters();
+            setLoading(false);
+            nextPage();
+          }}
         >
           Next
         </Button>,
@@ -445,7 +452,11 @@ const ModalAddPlotTemplate = ({
         <CategoriesForm categories={categories} setValues={setCategory} />
       </div>
       <div style={{ display: page == 1 ? 'block' : 'none' }}>
-        <ParamsForm ref={formRef} parameters={parameters} />
+        <ParamsForm
+          ref={formRef}
+          parameters={parameters}
+          getParameters={getParameters}
+        />
       </div>
     </Modal>
   );
@@ -534,6 +545,18 @@ export const ModalEditParameters = ({
   const [confirmLoading, setConfirmLoading] = useState(false);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
+  const getParameters = async scenario => {
+    try {
+      const params = await axios.get(
+        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
+        scenario ? { params: { scenario } } : {}
+      );
+      console.log(params.data);
+      setParameters(params.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleOk = e => {
     formRef.current.validateFields((err, values) => {
@@ -567,13 +590,7 @@ export const ModalEditParameters = ({
 
   useEffect(() => {
     if (visible.editParameters) {
-      axios
-        .get(
-          `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`
-        )
-        .then(response => {
-          setParameters(response.data);
-        });
+      getParameters();
     } else setParameters(null);
   }, [visible.editParameters]);
 
@@ -588,12 +605,26 @@ export const ModalEditParameters = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <ParamsForm ref={formRef} parameters={parameters} />
+      <ParamsForm
+        ref={formRef}
+        parameters={parameters}
+        getParameters={getParameters}
+      />
     </Modal>
   );
 };
 
-const ParamsForm = Form.create()(({ parameters, form }) => {
+const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
+  const scenario = form.getFieldValue('scenario-name');
+  const handleScenarioChange = async scenario => {
+    await getParameters(scenario);
+    form.validateFields((errors, values) => {});
+  };
+  useEffect(() => {
+    if (scenario) {
+      handleScenarioChange(scenario);
+    }
+  }, [scenario]);
   return (
     <Form layout="horizontal">
       {parameters ? (
