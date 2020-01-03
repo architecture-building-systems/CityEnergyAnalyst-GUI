@@ -123,7 +123,11 @@ const Parameter = ({ parameter, form }) => {
                 );
                 if (invalidChoices.length) {
                   callback(
-                    `${invalidChoices.join(', ')} are not valid choices`
+                    `${invalidChoices.join(', ')} ${
+                      invalidChoices.length > 1
+                        ? 'are not valid choices'
+                        : 'is not a valid choice'
+                    }`
                   );
                 } else {
                   callback();
