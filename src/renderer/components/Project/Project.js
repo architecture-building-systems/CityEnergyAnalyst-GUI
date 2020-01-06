@@ -4,6 +4,7 @@ import { push } from 'connected-react-router';
 import { Card, Button } from 'antd';
 import { getProject } from '../../actions/project';
 import axios from 'axios';
+import { remote } from 'electron';
 import NewProjectModal from './NewProjectModal';
 import OpenProjectModal from './OpenProjectModal';
 import NewScenarioModal from './NewScenarioModal';
@@ -90,7 +91,11 @@ const NewProjectButton = ({ projectPath, onSuccess }) => {
       <NewProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        initialValue={require('path').dirname(projectPath)}
+        initialValue={
+          projectPath
+            ? require('path').dirname(projectPath)
+            : remote.app.getPath('home')
+        }
         onSuccess={onSuccess}
       />
     </React.Fragment>

@@ -75,7 +75,11 @@ const Landing = () => {
       <NewProjectModal
         visible={visibleNew}
         setVisible={setNewVisible}
-        initialValue={require('path').dirname(projectPath)}
+        initialValue={
+          projectPath
+            ? require('path').dirname(projectPath)
+            : remote.app.getPath('home')
+        }
         onSuccess={goToProjectPage}
       />
       <OpenProjectModal
