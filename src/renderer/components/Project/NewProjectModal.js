@@ -8,7 +8,7 @@ import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
 const NewProjectModal = ({
   visible,
   setVisible,
-  projectPath,
+  initialValue,
   onSuccess = () => {}
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -58,12 +58,12 @@ const NewProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm ref={formRef} projectPath={projectPath} />
+      <NewProjectForm ref={formRef} initialValue={initialValue} />
     </Modal>
   );
 };
 
-const NewProjectForm = Form.create()(({ form, projectPath }) => {
+const NewProjectForm = Form.create()(({ form, initialValue }) => {
   return (
     <Form layout="horizontal">
       <FormItemWrapper
@@ -90,7 +90,7 @@ const NewProjectForm = Form.create()(({ form, projectPath }) => {
       <FormItemWrapper
         form={form}
         name="path"
-        initialValue={path.dirname(projectPath)}
+        initialValue={initialValue}
         help="Path of new Project"
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />

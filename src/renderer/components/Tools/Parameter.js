@@ -258,7 +258,6 @@ export const FormItemWrapper = ({
 };
 
 export const OpenDialogInput = ({ form, type, ...props }) => {
-  console.log(props);
   return (
     <Input
       addonAfter={

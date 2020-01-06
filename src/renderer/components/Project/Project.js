@@ -90,7 +90,7 @@ const NewProjectButton = ({ projectPath, onSuccess }) => {
       <NewProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        projectPath={projectPath}
+        initialValue={require('path').dirname(projectPath)}
         onSuccess={onSuccess}
       />
     </React.Fragment>
@@ -112,7 +112,7 @@ const OpenProjectButton = ({ projectPath, onSuccess }) => {
       <OpenProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        projectPath={projectPath}
+        initialValue={projectPath}
         onSuccess={onSuccess}
       />
     </React.Fragment>

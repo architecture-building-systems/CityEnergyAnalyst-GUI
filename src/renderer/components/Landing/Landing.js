@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { Button, Icon } from 'antd';
 import axios from 'axios';
+import { remote } from 'electron';
 import getStatic from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
@@ -33,12 +34,7 @@ const Landing = () => {
   const [visibleOpen, setOpenVisible] = useState(false);
   const dispatch = useDispatch();
 
-  const rootPath =
-    require('os').platform == 'win32'
-      ? process.cwd().split(require('path').sep)[0]
-      : '/';
-
-  const projectInfo = useProjectInfo({ path: rootPath });
+  const { path: projectPath } = useProjectInfo({ path: null });
 
   const goToProjectPage = async () => {
     dispatch(push(routes.PROJECT_OVERVIEW));
@@ -79,13 +75,13 @@ const Landing = () => {
       <NewProjectModal
         visible={visibleNew}
         setVisible={setNewVisible}
-        projectPath={require('path').join(rootPath, 'null')}
+        initialValue={require('path').dirname(projectPath)}
         onSuccess={goToProjectPage}
       />
       <OpenProjectModal
         visible={visibleOpen}
         setVisible={setOpenVisible}
-        projectPath={projectInfo.path}
+        initialValue={projectPath}
         onSuccess={goToProjectPage}
       />
     </React.Fragment>
