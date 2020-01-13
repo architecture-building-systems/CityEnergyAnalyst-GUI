@@ -27,7 +27,7 @@ const useGlossaryData = () => {
 const SearchBar = () => {
   const data = useGlossaryData();
   const [value, setValue] = useState('');
-  const [output, setOutput] = useState('');
+  const [input, setInput] = useState('');
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef();
 
@@ -45,9 +45,9 @@ const SearchBar = () => {
 
   useEffect(() => {
     clearTimeout(timeoutRef.current);
-    if (!value.trim()) setOutput('');
+    if (!value.trim()) setInput('');
     timeoutRef.current = setTimeout(() => {
-      setOutput(value);
+      setInput(value);
     }, 500);
   }, [value]);
 
@@ -61,29 +61,30 @@ const SearchBar = () => {
         onFocus={handleFocus}
         onBlur={handleBlur}
       />
-      <div className="cea-search-dropdown">
+      {visible && input.length ? (
         <SearchResults
           data={data}
-          output={output}
+          input={input}
           visible={visible}
           setValue={setValue}
         />
-      </div>
+      ) : null}
     </div>
   );
 };
 
-const SearchResults = ({ data, output, visible, setValue }) => {
-  if (!visible || output == '') return null;
-
+const SearchResults = ({ data, input, setValue }) => {
   const results = data
     .map(category => {
       const variables = category.variables.filter(
         variable =>
-          variable.VARIABLE.toLowerCase().indexOf(output.toLowerCase()) !== -1
+          variable.VARIABLE.length != 0 &&
+          variable.VARIABLE.toLowerCase().indexOf(input.toLowerCase()) == 0
       );
-      return variables.length ? (
-        <SearchCategory key={category.script} category={category}>
+      if (!variables.length) return null;
+      return (
+        <div key={category.script} className="cea-search-category">
+          <div className="cea-search-category-title">{category.script}</div>
           {variables.map(variable => (
             <SearchItem
               key={`${category.script}-${variable.FILE_NAME}-${variable.VARIABLE}`}
@@ -92,55 +93,48 @@ const SearchResults = ({ data, output, visible, setValue }) => {
               setValue={setValue}
             />
           ))}
-        </SearchCategory>
-      ) : null;
+        </div>
+      );
     })
     .filter(category => !!category);
 
-  return results.length ? (
-    results
-  ) : (
-    <div className="cea-search-item empty">
-      No results found for
-      <b>
-        <i>{` ${output}`}</i>
-      </b>
-    </div>
-  );
-};
-
-const SearchCategory = ({ category, children }) => {
   return (
-    <div key={category.script} className="cea-search-category">
-      <div className="cea-search-category-title">
-        <b>
-          <i>{category.script}</i>
-        </b>
-      </div>
-      {children}
+    <div className="cea-search-dropdown">
+      {results.length ? (
+        results
+      ) : (
+        <div className="cea-search-item empty">
+          No results found for
+          <b>
+            <i>{` ${input}`}</i>
+          </b>
+        </div>
+      )}
     </div>
   );
 };
 
 const SearchItem = ({ category, item, setValue }) => {
+  const { VARIABLE, UNIT, DESCRIPTION, FILE_NAME, LOCATOR_METHOD } = item;
   const openUrl = () => {
-    const type = category === 'input' ? 'input' : 'output';
     shell.openExternal(
-      `${DOCS_URL}${type}_methods.html?highlight=${
-        item.VARIABLE
-      }#${item.LOCATOR_METHOD.split('_').join('-')}`
+      `${DOCS_URL}${
+        category === 'inputs' ? 'input' : 'output'
+      }_methods.html?highlight=${VARIABLE}#${LOCATOR_METHOD.split('_').join(
+        '-'
+      )}`
     );
-    setValue(item.VARIABLE);
+    setValue(VARIABLE);
   };
 
   return (
     <div className="cea-search-item" onClick={openUrl}>
       <div>
-        <b>{item.VARIABLE}</b>
-        <small> - {item.UNIT}</small>
+        <b>{VARIABLE}</b>
+        <small> - {UNIT}</small>
       </div>
-      <div className="cea-search-description">{item.DESCRIPTION}</div>
-      <small style={{ wordBreak: 'break-all' }}>{item.FILE_NAME}</small>
+      <div className="cea-search-description">{DESCRIPTION}</div>
+      <small style={{ wordBreak: 'break-all' }}>{FILE_NAME}</small>
     </div>
   );
 };

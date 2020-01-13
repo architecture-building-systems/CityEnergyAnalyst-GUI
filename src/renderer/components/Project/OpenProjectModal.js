@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Form } from 'antd';
 import axios from 'axios';
-import parameter from '../Tools/parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
 
 const OpenProjectModal = ({
   visible,
   setVisible,
-  project,
+  initialValue,
   onSuccess = () => {}
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -49,23 +49,21 @@ const OpenProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <OpenProjectForm ref={formRef} project={project} />
+      <OpenProjectForm ref={formRef} initialValue={initialValue} />
     </Modal>
   );
 };
 
-const OpenProjectForm = Form.create()(({ form, project }) => {
+const OpenProjectForm = Form.create()(({ form, initialValue }) => {
   return (
     <Form>
-      {parameter(
-        {
-          type: 'PathParameter',
-          name: 'path',
-          value: project.path,
-          help: 'Path of Project'
-        },
-        form
-      )}
+      <FormItemWrapper
+        form={form}
+        name="path"
+        initialValue={initialValue}
+        help="Path of Project"
+        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+      />
     </Form>
   );
 });

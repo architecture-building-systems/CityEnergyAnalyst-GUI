@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Skeleton,
@@ -16,7 +16,7 @@ import {
   resetToolParams
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
-import parameter from './parameter';
+import Parameter from './parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 export const ToolRoute = ({ match }) => {
@@ -84,6 +84,7 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
 const ToolForm = Form.create()(
   ({ parameters, categoricalParameters, script, formButtons, form }) => {
     const dispatch = useDispatch();
+    const [activeKey, setActiveKey] = useState([]);
 
     const getForm = () => {
       let out = null;
@@ -99,6 +100,23 @@ const ToolForm = Form.create()(
             ...values
           };
           console.log('Received values of form: ', out);
+        } // Expand collapsed categories if errors are found inside
+        else if (categoricalParameters) {
+          let categoriesWithErrors = [];
+          for (const parameterName in err) {
+            for (const category in categoricalParameters) {
+              if (
+                typeof categoricalParameters[category].find(
+                  x => x.name === parameterName
+                ) !== 'undefined'
+              ) {
+                categoriesWithErrors.push(category);
+                break;
+              }
+            }
+          }
+          categoriesWithErrors.length &&
+            setActiveKey(oldValue => oldValue.concat(categoriesWithErrors));
         }
       });
       return out;
@@ -134,26 +152,28 @@ const ToolForm = Form.create()(
     if (parameters) {
       toolParams = parameters.map(param => {
         if (param.type === 'ScenarioParameter') return null;
-        return parameter(param, form);
+        return <Parameter key={param.name} form={form} parameter={param} />;
       });
     }
 
     let categoricalParams = null;
-    if (!categoricalParameters || !Object.keys(categoricalParameters).length) {
-      categoricalParams = null;
-    } else {
+    if (categoricalParameters && Object.keys(categoricalParameters).length) {
       const categories = Object.keys(categoricalParameters).map(category => {
         const { Panel } = Collapse;
-        const Parameters = categoricalParameters[category].map(param =>
-          parameter(param, form)
-        );
+        const Parameters = categoricalParameters[category].map(param => (
+          <Parameter key={param.name} form={form} parameter={param} />
+        ));
         return (
-          <Panel header={category} key={category}>
+          <Panel header={category} key={category} forceRender>
             {Parameters}
           </Panel>
         );
       });
-      categoricalParams = <Collapse>{categories}</Collapse>;
+      categoricalParams = (
+        <Collapse activeKey={activeKey} onChange={setActiveKey}>
+          {categories}
+        </Collapse>
+      );
     }
 
     return (

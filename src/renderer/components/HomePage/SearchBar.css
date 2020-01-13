@@ -8,6 +8,8 @@
 }
 
 .cea-search-category-title {
+  font-style: italic;
+  font-weight: bold;
   user-select: none;
   padding: 5px;
   background-color: #f1f1f1;

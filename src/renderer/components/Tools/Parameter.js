@@ -3,34 +3,25 @@ import { remote } from 'electron';
 import fs from 'fs';
 import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
 
-const parameter = (param, form, config = {}) => {
-  const { name, type, value, help } = param;
-  const { getFieldDecorator, setFieldsValue } = form;
-  const openDialog = () => {
-    const options =
-      type === 'PathParameter'
-        ? { properties: ['openDirectory'] }
-        : { properties: ['openFile'] };
-    remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
-      if (paths.length) {
-        form.setFieldsValue({ [name]: paths[0] });
-      }
-    });
-  };
+const Parameter = ({ parameter, form }) => {
+  const { name, type, value, choices, help } = parameter;
+  const { setFieldsValue } = form;
 
-  let input = [];
-
-  if (['IntegerParameter', 'RealParameter'].includes(type)) {
-    const stringValue = value !== null ? value.toString() : '';
-    const regex =
-      type === 'IntegerParameter'
-        ? /^([1-9][0-9]*|0)$/
-        : /^([1-9][0-9]*|0)(\.\d+)?$/;
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: stringValue,
-          rules: [
+  switch (type) {
+    case 'IntegerParameter':
+    case 'RealParameter': {
+      const stringValue = value !== null ? value.toString() : '';
+      const regex =
+        type === 'IntegerParameter'
+          ? /^([1-9][0-9]*|0)$/
+          : /^([1-9][0-9]*|0)(\.\d+)?$/;
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={stringValue}
+          help={help}
+          rules={[
             {
               type: 'number',
               message: `Please enter an ${
@@ -41,17 +32,20 @@ const parameter = (param, form, config = {}) => {
                 return regex.test(num) ? Number(num) : NaN;
               }
             }
-          ],
-          ...config
-        })(<Input />)}
-      </React.Fragment>
-    );
-  } else if (['PathParameter', 'FileParameter'].includes(type)) {
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: value,
-          rules: [
+          ]}
+          inputComponent={<Input />}
+        />
+      );
+    }
+    case 'PathParameter':
+    case 'FileParameter': {
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          rules={[
             {
               validator: (rule, value, callback) => {
                 if (!fs.existsSync(value)) {
@@ -61,160 +55,190 @@ const parameter = (param, form, config = {}) => {
                 }
               }
             }
-          ],
-          ...config
-        })(
-          <Input
-            addonAfter={
-              <button
-                className={type}
-                type="button"
-                style={{ height: '30px', width: '50px' }}
-                onClick={openDialog}
-              >
-                <Icon type="ellipsis" />
-              </button>
+          ]}
+          inputComponent={<OpenDialogInput form={form} type={type} />}
+        />
+      );
+    }
+    case 'ChoiceParameter':
+    case 'PlantNodeParameter':
+    case 'RegionParameter':
+    case 'ScenarioNameParameter':
+    case 'SingleBuildingParameter':
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          rules={[
+            {
+              validator: (rule, value, callback) => {
+                if (!choices.includes(value)) {
+                  callback(`${value} is not a valid choice`);
+                } else {
+                  callback();
+                }
+              }
             }
-          />
-        )}
-      </React.Fragment>
-    );
-  } else if (
-    [
-      'ChoiceParameter',
-      'PlantNodeParameter',
-      'RegionParameter',
-      'ScenarioNameParameter',
-      'SingleBuildingParameter'
-    ].includes(type)
-  ) {
-    const { choices } = param;
-    const { Option } = Select;
-    const Options = choices.map(choice => (
-      <Option key={choice} value={choice}>
-        {choice}
-      </Option>
-    ));
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: value,
-          ...config
-        })(<Select>{Options}</Select>)}
-      </React.Fragment>
-    );
-  } else if (['MultiChoiceParameter', 'BuildingsParameter'].includes(type)) {
-    const { choices } = param;
-    const { Option } = Select;
-    const Options = choices.map(choice => (
-      <Option key={choice} value={choice}>
-        {choice}
-      </Option>
-    ));
+          ]}
+          inputComponent={
+            <Select>
+              {choices.map(choice => (
+                <Select.Option key={choice} value={choice}>
+                  {choice}
+                </Select.Option>
+              ))}
+            </Select>
+          }
+        />
+      );
+    case 'MultiChoiceParameter':
+    case 'BuildingsParameter': {
+      const selectAll = e => {
+        e.preventDefault();
+        setFieldsValue({
+          [name]: choices
+        });
+      };
 
-    const selectAll = e => {
-      e.preventDefault();
-      setFieldsValue({
-        [name]: choices
-      });
-    };
+      const unselectAll = e => {
+        e.preventDefault();
+        setFieldsValue({
+          [name]: []
+        });
+      };
 
-    const unselectAll = e => {
-      e.preventDefault();
-      setFieldsValue({
-        [name]: []
-      });
-    };
-
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: value,
-          ...config
-        })(
-          <Select
-            mode="multiple"
-            style={{ width: '100%' }}
-            placeholder="Nothing Selected"
-            showArrow
-            maxTagCount={10}
-            dropdownRender={menu => (
-              <div>
-                <div style={{ padding: '8px', textAlign: 'center' }}>
-                  <Button onMouseDown={selectAll} style={{ width: '45%' }}>
-                    Select All
-                  </Button>
-                  <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
-                    Unselect All
-                  </Button>
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          rules={[
+            {
+              validator: (rule, value, callback) => {
+                const invalidChoices = value.filter(
+                  choice => !choices.includes(choice)
+                );
+                if (invalidChoices.length) {
+                  callback(
+                    `${invalidChoices.join(', ')} ${
+                      invalidChoices.length > 1
+                        ? 'are not valid choices'
+                        : 'is not a valid choice'
+                    }`
+                  );
+                } else {
+                  callback();
+                }
+              }
+            }
+          ]}
+          inputComponent={
+            <Select
+              mode="multiple"
+              style={{ width: '100%' }}
+              placeholder="Nothing Selected"
+              showArrow
+              maxTagCount={10}
+              dropdownRender={menu => (
+                <div>
+                  <div style={{ padding: '8px', textAlign: 'center' }}>
+                    <Button onMouseDown={selectAll} style={{ width: '45%' }}>
+                      Select All
+                    </Button>
+                    <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
+                      Unselect All
+                    </Button>
+                  </div>
+                  <Divider style={{ margin: '4px 0' }} />
+                  {menu}
                 </div>
-                <Divider style={{ margin: '4px 0' }} />
-                {menu}
-              </div>
-            )}
-          >
-            {Options}
-          </Select>
-        )}
-      </React.Fragment>
-    );
-  } else if (type === 'WeatherPathParameter') {
-    const { choices } = param;
-    const { Option } = Select;
-    const Options = Object.keys(choices).map(choice => (
-      <Option key={choice} value={choices[choice]}>
-        {choice}
-      </Option>
-    ));
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: value,
-          rules: [{ required: true }],
-          ...config
-        })(
-          <Select
-            dropdownRender={menu => (
-              <div>
-                {menu}
-                <Divider style={{ margin: '4px 0' }} />
-                <div
-                  style={{ padding: '8px', cursor: 'pointer' }}
-                  onMouseDown={openDialog}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <Icon type="plus" /> Browse for weather file
+              )}
+            >
+              {choices.map(choice => (
+                <Select.Option key={choice} value={choice}>
+                  {choice}
+                </Select.Option>
+              ))}
+            </Select>
+          }
+        />
+      );
+    }
+    case 'WeatherPathParameter': {
+      const { choices } = parameter;
+      const { Option } = Select;
+      const Options = Object.keys(choices).map(choice => (
+        <Option key={choice} value={choices[choice]}>
+          {choice}
+        </Option>
+      ));
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          inputComponent={
+            <Select
+              dropdownRender={menu => (
+                <div>
+                  {menu}
+                  <Divider style={{ margin: '4px 0' }} />
+                  <div
+                    style={{ padding: '8px', cursor: 'pointer' }}
+                    onMouseDown={() => openDialog(form, type, name)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <Icon type="plus" /> Browse for weather file
+                  </div>
                 </div>
-              </div>
-            )}
-          >
-            {Options}
-          </Select>
-        )}
-      </React.Fragment>
-    );
-  } else if (type === 'BooleanParameter') {
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: value,
-          valuePropName: 'checked',
-          ...config
-        })(<Switch />)}
-      </React.Fragment>
-    );
-  } else {
-    input = (
-      <React.Fragment>
-        {getFieldDecorator(name, {
-          initialValue: value,
-          ...config
-        })(<Input />)}
-      </React.Fragment>
-    );
+              )}
+            >
+              {Options}
+            </Select>
+          }
+        />
+      );
+    }
+    case 'BooleanParameter':
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          config={{
+            valuePropName: 'checked'
+          }}
+          inputComponent={<Switch />}
+        />
+      );
+    default:
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+        />
+      );
   }
+};
 
+export const FormItemWrapper = ({
+  form,
+  name,
+  initialValue,
+  help,
+  required = false,
+  rules = [],
+  config,
+  inputComponent = <Input />
+}) => {
   return (
     <Form.Item
       label={name}
@@ -222,11 +246,45 @@ const parameter = (param, form, config = {}) => {
       wrapperCol={{ span: 11, offset: 1 }}
       key={name}
     >
-      {input}
+      {form.getFieldDecorator(name, {
+        initialValue,
+        rules: [{ required: required }, ...rules],
+        ...config
+      })(inputComponent)}
       <br />
       <small style={{ display: 'block', lineHeight: 'normal' }}>{help}</small>
     </Form.Item>
   );
 };
 
-export default parameter;
+export const OpenDialogInput = ({ form, type, ...props }) => {
+  return (
+    <Input
+      addonAfter={
+        <button
+          className={type}
+          type="button"
+          style={{ height: '30px', width: '50px' }}
+          onClick={() => openDialog(form, type, props.id)}
+        >
+          <Icon type="ellipsis" />
+        </button>
+      }
+      {...props}
+    />
+  );
+};
+
+const openDialog = (form, type, name) => {
+  const options =
+    type === 'PathParameter'
+      ? { properties: ['openDirectory'] }
+      : { properties: ['openFile'] };
+  remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
+    if (paths && paths.length) {
+      form.setFieldsValue({ [name]: paths[0] });
+    }
+  });
+};
+
+export default Parameter;

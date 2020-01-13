@@ -3,12 +3,12 @@ import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import parameter from '../Tools/parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
 
 const NewProjectModal = ({
   visible,
   setVisible,
-  project,
+  initialValue,
   onSuccess = () => {}
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -58,49 +58,42 @@ const NewProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm ref={formRef} project={project} />
+      <NewProjectForm ref={formRef} initialValue={initialValue} />
     </Modal>
   );
 };
 
-const NewProjectForm = Form.create()(({ form, project }) => {
+const NewProjectForm = Form.create()(({ form, initialValue }) => {
   return (
     <Form layout="horizontal">
-      {parameter(
-        {
-          type: 'InputParameter',
-          name: 'name',
-          value: '',
-          help: 'Name of new Project'
-        },
-        form,
-        {
-          rules: [
-            { required: true },
-            {
-              validator: (rule, value, callback) => {
-                if (
-                  value.length != 0 &&
-                  fs.existsSync(path.join(form.getFieldValue('path'), value))
-                ) {
-                  callback('Folder with name already exists in path');
-                } else {
-                  callback();
-                }
+      <FormItemWrapper
+        form={form}
+        name="name"
+        initialValue=""
+        help="Name of new Project"
+        required={true}
+        rules={[
+          {
+            validator: (rule, value, callback) => {
+              if (
+                value.length != 0 &&
+                fs.existsSync(path.join(form.getFieldValue('path'), value))
+              ) {
+                callback('Folder with name already exists in path');
+              } else {
+                callback();
               }
             }
-          ]
-        }
-      )}
-      {parameter(
-        {
-          type: 'PathParameter',
-          name: 'path',
-          value: path.dirname(project.path),
-          help: 'Path of new Project'
-        },
-        form
-      )}
+          }
+        ]}
+      />
+      <FormItemWrapper
+        form={form}
+        name="path"
+        initialValue={initialValue}
+        help="Path of new Project"
+        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+      />
     </Form>
   );
 });

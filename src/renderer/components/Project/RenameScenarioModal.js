@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { getProject } from '../../actions/project';
-import parameter from '../Tools/parameter';
+import { FormItemWrapper } from '../Tools/parameter';
 
 const RenameScenarioModal = ({
   scenario,
@@ -73,32 +73,27 @@ const RenameScenarioForm = Form.create()(({ form, projectPath }) => {
 
   return (
     <Form layout="horizontal">
-      {parameter(
-        {
-          type: 'InputParameter',
-          name: 'name',
-          value: '',
-          help: 'New Scenario Name'
-        },
-        form,
-        {
-          rules: [
-            { required: true },
-            {
-              validator: (rule, value, callback) => {
-                if (
-                  value.length != 0 &&
-                  checkName(projectPath, form.getFieldValue('name'))
-                ) {
-                  callback('Scenario with name already exists in the project');
-                } else {
-                  callback();
-                }
+      <FormItemWrapper
+        form={form}
+        name="name"
+        initialValue=""
+        help="New Scenario Name"
+        required={true}
+        rules={[
+          {
+            validator: (rule, value, callback) => {
+              if (
+                value.length != 0 &&
+                checkName(projectPath, form.getFieldValue('name'))
+              ) {
+                callback('Scenario with name already exists in the project');
+              } else {
+                callback();
               }
             }
-          ]
-        }
-      )}
+          }
+        ]}
+      />
     </Form>
   );
 });

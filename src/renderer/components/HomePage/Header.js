@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Layout, Icon } from 'antd';
 import SearchBar from './Searchbar';
 import { setCollapsed } from '../../actions/homepage';
-import { getProject } from '../../actions/project';
 
 const { Header: AntHeader } = Layout;
 

@@ -19,6 +19,9 @@ const ToolModal = ({ tool, visible, setVisible }) => {
         await saveParams();
         if (error === null) {
           message.success('Settings saved to config');
+          hideModal();
+        } else {
+          message.error('Something went wrong');
         }
       }
     };
@@ -32,12 +35,12 @@ const ToolModal = ({ tool, visible, setVisible }) => {
 
     return (
       <React.Fragment>
-        <Button onClick={hideModal}>Back</Button>
-        <Button type="primary" onClick={saveToConfig}>
-          Save to Config
-        </Button>
+        <Button onClick={hideModal}>Cancel</Button>
         <Button type="primary" onClick={saveDefault}>
-          Default
+          Load default settings
+        </Button>
+        <Button type="primary" onClick={saveToConfig}>
+          Save & Close
         </Button>
       </React.Fragment>
     );

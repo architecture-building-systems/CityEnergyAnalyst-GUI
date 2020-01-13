@@ -1,290 +1,197 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { shell } from 'electron';
-import path from 'path';
-import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
-import axios from 'axios';
-import { useAsyncData } from '../../utils/hooks';
+import { Card, Button } from 'antd';
 import { getProject } from '../../actions/project';
-import routes from '../../constants/routes';
+import axios from 'axios';
+import { remote } from 'electron';
 import NewProjectModal from './NewProjectModal';
 import OpenProjectModal from './OpenProjectModal';
 import NewScenarioModal from './NewScenarioModal';
-import RenameScenarioModal from './RenameScenarioModal';
+import ScenarioCard from './ScenarioCard';
+import routes from '../../constants/routes';
 import './Project.css';
 
 const Project = () => {
   const { isFetching, error, info } = useSelector(state => state.project);
-  const activeScenario = useRef();
-  const [isNewModalVisible, setNewModalVisible] = useState(false);
-  const [isOpenModalVisible, setOpenModalVisible] = useState(false);
-  const [isScenarioModalVisible, setScenarioModalVisible] = useState(false);
-  const [isRenameModalVisible, setRenameModalVisible] = useState(false);
+  const fetchProject = useFetchProject();
 
-  const dispatch = useDispatch();
+  const { name, path: projectPath, scenario, scenarios } = info;
+  const projectExists = !error && name !== '';
+  const projectTitle = projectExists ? name : 'No Project found';
 
   // Get Project Details on mount
   useEffect(() => {
-    dispatch(getProject());
+    fetchProject();
   }, []);
 
-  const reloadProject = () => {
-    dispatch(getProject());
-  };
-
-  const showRenameModal = scenario => {
-    activeScenario.current = scenario;
-    setRenameModalVisible(true);
-  };
-
-  const { name, scenario, scenarios } = info;
-
   return (
-    <div>
+    <div className="cea-project">
       <Card
+        bordered={false}
         title={
-          <React.Fragment>
-            <h2>{error || name === '' ? 'No Project found' : name}</h2>
+          <div className="cea-project-title-bar">
+            <h2>{projectTitle}</h2>
             <div className="cea-project-options">
-              <Button
-                icon="plus"
-                size="small"
-                onClick={() => setNewModalVisible(true)}
-              >
-                Create Project
-              </Button>
-              <Button
-                icon="folder-open"
-                size="small"
-                onClick={() => setOpenModalVisible(true)}
-              >
-                Open Project
-              </Button>
+              <NewProjectButton
+                projectPath={projectPath}
+                onSuccess={fetchProject}
+              />
+              <OpenProjectButton
+                projectPath={projectPath}
+                onSuccess={fetchProject}
+              />
               <Button
                 icon="sync"
                 size="small"
-                onClick={reloadProject}
+                onClick={fetchProject}
                 loading={isFetching}
               >
                 Refresh
               </Button>
             </div>
-          </React.Fragment>
+          </div>
         }
-        bordered={false}
       >
-        <Button
-          type="primary"
-          style={{
-            display: 'block',
-            width: '100%'
-          }}
-          onClick={() => setScenarioModalVisible(true)}
-        >
-          + Create New Scenario
-        </Button>
-        {!scenarios.length ? (
-          <p style={{ textAlign: 'center', margin: 20 }}>No scenarios found</p>
-        ) : scenario === '' ? (
-          <p style={{ textAlign: 'center', margin: 20 }}>
-            No scenario currently selected
-          </p>
-        ) : (
-          <ScenarioCard
-            scenario={scenario}
-            projectPath={info.path}
-            current={true}
-            showRenameModal={showRenameModal}
-          />
-        )}
-        {scenarios.map(_scenario =>
-          _scenario !== scenario ? (
-            <ScenarioCard
-              key={`${name}-${_scenario}`}
-              scenario={_scenario}
-              projectPath={info.path}
-              showRenameModal={showRenameModal}
-            />
-          ) : null
+        {projectExists && (
+          <React.Fragment>
+            <NewScenarioButton project={info} />
+            {!scenarios.length ? (
+              <p style={{ textAlign: 'center', margin: 20 }}>
+                No scenarios found
+              </p>
+            ) : scenario === '' ? (
+              <p style={{ textAlign: 'center', margin: 20 }}>
+                No scenario currently selected
+              </p>
+            ) : null}
+            {scenarios.map(_scenario => (
+              <ScenarioCard
+                key={`${name}-${_scenario}`}
+                scenario={_scenario}
+                projectPath={projectPath}
+                active={_scenario == scenario}
+              />
+            ))}
+          </React.Fragment>
         )}
       </Card>
-      <NewProjectModal
-        visible={isNewModalVisible}
-        setVisible={setNewModalVisible}
-        project={info}
-        onSuccess={reloadProject}
-      />
-      <OpenProjectModal
-        visible={isOpenModalVisible}
-        setVisible={setOpenModalVisible}
-        project={info}
-        onSuccess={reloadProject}
-      />
-      <NewScenarioModal
-        visible={isScenarioModalVisible}
-        setVisible={setScenarioModalVisible}
-        project={info}
-      />
-      <RenameScenarioModal
-        scenario={activeScenario.current}
-        projectPath={info.path}
-        visible={isRenameModalVisible}
-        setVisible={setRenameModalVisible}
-      />
     </div>
   );
 };
 
-const ScenarioCard = ({
-  scenario,
-  projectPath,
-  showRenameModal,
-  current = false
-}) => {
-  const [image, isLoading, error] = useAsyncData(
-    `http://localhost:5050/api/project/scenario/${scenario}/image`,
-    { image: null },
-    [scenario]
-  );
-  const dispatch = useDispatch();
-
-  const showConfirm = () => {
-    let secondsToGo = 3;
-    const modal = Modal.confirm({
-      title: `Are you sure you want to delete this scenario?`,
-      content: (
-        <div>
-          <p>
-            <b>{scenario}</b>
-          </p>
-          <p>
-            <i>(This operation cannot be reversed)</i>
-          </p>
-        </div>
-      ),
-      okText: `DELETE (${secondsToGo})`,
-      okType: 'danger',
-      okButtonProps: { disabled: true },
-      cancelText: 'Cancel',
-      onOk: () => deleteScenario(),
-      centered: true
-    });
-
-    const timer = setInterval(() => {
-      secondsToGo -= 1;
-      modal.update({
-        okText: `DELETE (${secondsToGo})`
-      });
-    }, 1000);
-    setTimeout(() => {
-      clearInterval(timer);
-      modal.update({
-        okButtonProps: { disabled: false },
-        okText: 'DELETE'
-      });
-    }, secondsToGo * 1000);
-  };
-
-  const deleteScenario = async () => {
-    try {
-      const resp = await axios.delete(
-        `http://localhost:5050/api/project/scenario/${scenario}`
-      );
-      console.log(resp.data);
-      dispatch(getProject());
-    } catch (err) {
-      console.log(err.response);
-    }
-  };
-
-  const changeScenario = async () => {
-    try {
-      const resp = await axios.put(`http://localhost:5050/api/project/`, {
-        scenario
-      });
-      console.log(resp.data);
-      await dispatch(getProject());
-      dispatch(push(routes.INPUT_EDITOR));
-    } catch (err) {
-      console.log(err.response);
-    }
-  };
-
-  const openFolder = () => {
-    shell.openItem(path.join(projectPath, scenario));
-  };
-
-  const editMenu = (
-    <Menu>
-      <Menu.Item key="rename" onClick={() => showRenameModal(scenario)}>
-        Rename
-      </Menu.Item>
-      <Menu.Divider />
-      <Menu.Item key="delete" onClick={showConfirm} style={{ color: 'red' }}>
-        Delete
-      </Menu.Item>
-    </Menu>
-  );
+const NewProjectButton = ({ projectPath, onSuccess }) => {
+  const [isModalVisible, setModalVisible] = useState(false);
 
   return (
-    <Card
-      title={
-        <React.Fragment>
-          <span>{scenario} </span>
-          {current ? <Tag>Current</Tag> : null}
-        </React.Fragment>
-      }
-      extra={
-        <React.Fragment>
-          <span id={`${scenario}-edit-button`} className="scenario-edit-button">
-            <Dropdown
-              overlay={editMenu}
-              trigger={['click']}
-              getPopupContainer={() => {
-                return document.getElementById(`${scenario}-edit-button`);
-              }}
-            >
-              <Button>
-                Edit <Icon type="down" />
-              </Button>
-            </Dropdown>
-          </span>
-          {current ? null : (
-            <Button type="primary" onClick={changeScenario}>
-              Open
-            </Button>
-          )}
-        </React.Fragment>
-      }
-      style={{ marginTop: 16 }}
-      type="inner"
-    >
-      <Row>
-        <Col span={6}>
-          <div
-            style={{
-              width: 256,
-              height: 160,
-              backgroundColor: '#eee',
-              textAlign: 'center',
-              textJustify: 'center'
-            }}
-          >
-            {isLoading ? null : error ? (
-              'Unable to generate image'
-            ) : (
-              <img
-                className="cea-scenario-preview-image"
-                src={`data:image/png;base64,${image.image}`}
-                onClick={changeScenario}
-              />
-            )}
-          </div>
-        </Col>
-      </Row>
-    </Card>
+    <React.Fragment>
+      <Button icon="plus" size="small" onClick={() => setModalVisible(true)}>
+        Create Project
+      </Button>
+      <NewProjectModal
+        visible={isModalVisible}
+        setVisible={setModalVisible}
+        initialValue={
+          projectPath
+            ? require('path').dirname(projectPath)
+            : remote.app.getPath('home')
+        }
+        onSuccess={onSuccess}
+      />
+    </React.Fragment>
   );
+};
+
+const OpenProjectButton = ({ projectPath, onSuccess }) => {
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  return (
+    <React.Fragment>
+      <Button
+        icon="folder-open"
+        size="small"
+        onClick={() => setModalVisible(true)}
+      >
+        Open Project
+      </Button>
+      <OpenProjectModal
+        visible={isModalVisible}
+        setVisible={setModalVisible}
+        initialValue={projectPath}
+        onSuccess={onSuccess}
+      />
+    </React.Fragment>
+  );
+};
+
+const NewScenarioButton = ({ project }) => {
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  return (
+    <React.Fragment>
+      <Button
+        type="primary"
+        style={{
+          display: 'block',
+          width: '100%'
+        }}
+        onClick={() => setModalVisible(true)}
+      >
+        + Create New Scenario
+      </Button>
+      <NewScenarioModal
+        visible={isModalVisible}
+        setVisible={setModalVisible}
+        project={project}
+      />
+    </React.Fragment>
+  );
+};
+
+export const changeScenario = async (scenario, onSuccess = () => {}) => {
+  try {
+    const resp = await axios.put(`http://localhost:5050/api/project/`, {
+      scenario
+    });
+    console.log(resp.data);
+    onSuccess();
+  } catch (err) {
+    console.log(err.response);
+  }
+};
+
+export const deleteScenario = async (scenario, onSuccess = () => {}) => {
+  try {
+    const resp = await axios.delete(
+      `http://localhost:5050/api/project/scenario/${scenario}`
+    );
+    console.log(resp.data);
+    onSuccess();
+  } catch (err) {
+    console.log(err.response);
+  }
+};
+
+export const useOpenScenario = () => {
+  const fetchProject = useFetchProject();
+  const goToInputEditor = useChangeRoute(routes.INPUT_EDITOR);
+  return scenario => {
+    changeScenario(scenario, async () => {
+      // Fetch new project info first before going to input editor
+      await fetchProject();
+      goToInputEditor();
+    });
+  };
+};
+
+export const useChangeRoute = route => {
+  const dispatch = useDispatch();
+  return () => dispatch(push(route));
+};
+
+export const useFetchProject = () => {
+  const dispatch = useDispatch();
+  return () => dispatch(getProject());
 };
 
 export default Project;

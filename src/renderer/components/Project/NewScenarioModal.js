@@ -1,51 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { useDispatch } from 'react-redux';
-import { push } from 'connected-react-router';
-import { remote } from 'electron';
-import {
-  Modal,
-  Form,
-  Radio,
-  Input,
-  Checkbox,
-  Row,
-  Col,
-  Select,
-  Icon,
-  Card,
-  Button,
-  Dropdown,
-  Menu
-} from 'antd';
+import { Modal, Form, Radio, Input } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { getProject } from '../../actions/project';
-import routes from '../../constants/routes';
-import EditableMap from '../Map/EditableMap';
-import ToolModal from './ToolModal';
+import { useOpenScenario } from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
+import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
+import ScenarioCopyDataForm from './ScenarioCopyDataForm';
+import ScenarioImportDataForm from './ScenarioImportDataForm';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [error, setError] = useState(null);
   const formRef = useRef();
-  const dispatch = useDispatch();
+  const openScenario = useOpenScenario();
 
-  const changeScenario = async scenario => {
-    try {
-      const resp = await axios.put(`http://localhost:5050/api/project/`, {
-        scenario
-      });
-      console.log(resp.data);
-      await dispatch(getProject());
-      dispatch(push(routes.INPUT_EDITOR));
-    } catch (err) {
-      console.log(err.response);
-    }
-  };
-
-  const handleOk = e => {
+  const createScenario = e => {
+    setError(null);
     formRef.current.validateFieldsAndScroll(
       { scroll: { offsetTop: 60 } },
       async (err, values) => {
@@ -59,10 +31,11 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
               values
             );
             console.log(resp.data);
-            changeScenario(values.name);
+            openScenario(values.name);
           } catch (err) {
             console.log(err.response);
-            setModalVisible(false);
+            setError(err.response);
+          } finally {
             setConfirmLoading(false);
           }
         }
@@ -79,7 +52,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
       title="Create new Scenario"
       visible={visible}
       width={800}
-      onOk={handleOk}
+      onOk={createScenario}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       okText="Create"
@@ -90,12 +63,16 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
       <CreatingScenarioModal
         visible={modalVisible}
         setVisible={setModalVisible}
+        error={error}
+        createScenario={createScenario}
       />
     </Modal>
   );
 };
 
 const NewScenarioForm = Form.create()(({ form, project }) => {
+  const choice = form.getFieldValue('input-data');
+
   return (
     <Form>
       <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
@@ -140,516 +117,15 @@ const NewScenarioForm = Form.create()(({ form, project }) => {
         )}
       </Form.Item>
 
-      <ScenarioGenerateDataForm
-        form={form}
-        visible={form.getFieldValue('input-data') === 'generate'}
-      />
+      <ScenarioGenerateDataForm form={form} visible={choice === 'generate'} />
       <ScenarioCopyDataForm
         form={form}
-        visible={form.getFieldValue('input-data') === 'copy'}
+        visible={choice === 'copy'}
         project={project}
       />
-      <ScenarioImportDataForm
-        form={form}
-        visible={form.getFieldValue('input-data') === 'import'}
-      />
+      <ScenarioImportDataForm form={form} visible={choice === 'import'} />
     </Form>
   );
 });
-
-const ScenarioGenerateDataForm = ({ form, visible }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedTool, setSelectedTool] = useState(null);
-  const tools = form.getFieldValue('tools') || [];
-  const zoneChecked = tools.includes('zone');
-  const surroundingsChecked = tools.includes('surroundings');
-
-  const showModal = tool => {
-    setSelectedTool(tool);
-    setModalVisible(true);
-  };
-
-  const handleChange = checkedValue => {
-    if (!checkedValue.includes('surroundings')) {
-      setTimeout(() => {
-        form.setFieldsValue({
-          tools: checkedValue.filter(
-            element => element === 'weather' || element === 'zone'
-          )
-        });
-      }, 0);
-    }
-  };
-
-  return (
-    <div
-      style={{
-        display: visible ? 'block' : 'none'
-      }}
-    >
-      <Form.Item
-        label="Data Mangement Tools"
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 11, offset: 1 }}
-      >
-        {form.getFieldDecorator('tools', {
-          initialValue: ['zone']
-        })(
-          <Checkbox.Group onChange={handleChange}>
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="zone" disabled>
-                  Zone
-                </Checkbox>
-                <Icon type="setting" onClick={() => showModal('zone-helper')} />
-                <small
-                  style={{
-                    marginLeft: 10
-                  }}
-                >
-                  *Selected by default
-                </small>
-              </Row>
-              <small>- Query zone geometry from Open Street Maps.</small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="surroundings" disabled={!zoneChecked}>
-                  Surroundings
-                </Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('surroundings-helper')}
-                />
-                <small
-                  style={{
-                    color: 'red',
-                    marginLeft: 10,
-                    display: zoneChecked ? 'none' : ''
-                  }}
-                >
-                  *Requires zone file.
-                </small>
-              </Row>
-              <small>
-                - Query Surroundings geometry from Open Street Maps.
-              </small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="streets" disabled={!surroundingsChecked}>
-                  Streets
-                </Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('streets-helper')}
-                />
-                <small
-                  style={{
-                    color: 'red',
-                    marginLeft: 10,
-                    display: surroundingsChecked ? 'none' : ''
-                  }}
-                >
-                  *Requires zone and surroundings file.
-                </small>
-              </Row>
-              <small>- Query streets geometry from Open Street Maps.</small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="terrain" disabled={!surroundingsChecked}>
-                  Terrain
-                </Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('terrain-helper')}
-                />
-                <small
-                  style={{
-                    color: 'red',
-                    marginLeft: 10,
-                    display: surroundingsChecked ? 'none' : ''
-                  }}
-                >
-                  *Requires zone and surroundings file.
-                </small>
-              </Row>
-              <small>- Creates a fixed elevation terrain file.</small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="weather">Weather</Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('weather-helper')}
-                />
-              </Row>
-              <small>- Set the weather file for the scenario.</small>
-            </div>
-          </Checkbox.Group>
-        )}
-      </Form.Item>
-      <div
-        style={{
-          display: form.getFieldValue('tools').includes('zone')
-            ? 'block'
-            : 'none'
-        }}
-      >
-        <ScenarioMap form={form} />
-      </div>
-      <ToolModal
-        tool={selectedTool}
-        visible={modalVisible}
-        setVisible={setModalVisible}
-      />
-    </div>
-  );
-};
-
-const ScenarioMap = ({ form }) => {
-  const [location, setLocation] = useState();
-  const checkLatLong = (rule, value, callback) => {
-    const regex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
-    if (regex.test(`${value.lat},${value.long}`)) {
-      callback();
-    } else {
-      callback('Please enter valid latitude/longitude coordinates');
-    }
-  };
-  const getLatLong = async () => {
-    const address = form.getFieldValue('location');
-    try {
-      const resp = await axios.get(
-        `https://nominatim.openstreetmap.org/?format=json&q=${address}&limit=1`
-      );
-      if (resp.data) {
-        form.setFieldsValue(
-          {
-            latlong: {
-              lat: resp.data[0].lat,
-              long: resp.data[0].lon
-            }
-          },
-          goToLocation
-        );
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const goToLocation = () => {
-    form.validateFields(['latlong'], (err, values) => {
-      if (!err) {
-        setLocation({
-          latitude: parseFloat(values.latlong.lat),
-          longitude: parseFloat(values.latlong.long),
-          zoom: 16
-        });
-      }
-    });
-  };
-
-  const setGeojson = data => {
-    form.setFieldsValue({ geojson: data });
-  };
-
-  return (
-    <Card>
-      <h2>Select an area in the map for the zone file</h2>
-      <small> Navigate to an area using a location or coordinates. </small>
-
-      <Form.Item>
-        <Row>
-          <h4>Location</h4>
-          {form.getFieldDecorator('location', {
-            initialValue: ''
-          })(
-            <Input
-              onPressEnter={getLatLong}
-              addonAfter={
-                <button
-                  type="button"
-                  style={{ height: 30, width: 50 }}
-                  onClick={getLatLong}
-                >
-                  Go
-                </button>
-              }
-            />
-          )}
-        </Row>
-      </Form.Item>
-
-      <Form.Item>
-        {form.getFieldDecorator('latlong', {
-          initialValue: { lat: 0, long: 0 },
-          rules: [{ validator: checkLatLong }]
-        })(<LatLongInput onClick={goToLocation} />)}
-      </Form.Item>
-
-      <Form.Item>
-        {form.getFieldDecorator('geojson', {
-          initialValue: null,
-          rules: [
-            {
-              required: form.getFieldValue('input-data') === 'generate',
-              message: 'Create a polygon'
-            }
-          ]
-        })(<Input style={{ display: 'none' }} />)}
-      </Form.Item>
-
-      {form.getFieldValue('tools').includes('zone') && (
-        <div style={{ position: 'relative', height: 450 }}>
-          <EditableMap
-            location={location}
-            geojson={form.getFieldValue('geojson')}
-            outputGeojson={setGeojson}
-          />
-        </div>
-      )}
-    </Card>
-  );
-};
-
-const LatLongInput = React.forwardRef(
-  ({ value = {}, onChange, onClick = null }, ref) => {
-    const triggerChange = changedValue => {
-      if (onChange) {
-        onChange({ ...value, ...changedValue });
-      }
-    };
-
-    return (
-      <Row gutter={16} ref={ref}>
-        <Col span={12}>
-          <h4>Latitude</h4>
-          <Input
-            value={'lat' in value ? value.lat : null}
-            onChange={e => {
-              triggerChange({ lat: e.target.value });
-            }}
-            onPressEnter={onClick}
-          />
-        </Col>
-        <Col span={12}>
-          <h4>Longitude</h4>
-          <Input
-            value={'long' in value ? value.long : null}
-            onChange={e => {
-              triggerChange({ long: e.target.value });
-            }}
-            onPressEnter={onClick}
-            addonAfter={
-              <button
-                type="button"
-                style={{ height: 30, width: 50 }}
-                onClick={onClick}
-              >
-                Go
-              </button>
-            }
-          />
-        </Col>
-      </Row>
-    );
-  }
-);
-
-const ScenarioCopyDataForm = ({ form, visible, project }) => {
-  const { Option } = Select;
-  return (
-    <div
-      style={{
-        display: visible ? 'block' : 'none'
-      }}
-    >
-      <Form.Item
-        label="Scenarios in Project"
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 11, offset: 1 }}
-      >
-        {form.getFieldDecorator('copy-scenario', {
-          initialValue: project.scenarios[0]
-        })(
-          <Select>
-            {project.scenarios.map((scenario, index) => (
-              <Option key={index} value={scenario}>
-                {scenario}
-              </Option>
-            ))}
-          </Select>
-        )}
-      </Form.Item>
-    </div>
-  );
-};
-
-const ScenarioImportDataForm = ({ form, visible }) => {
-  const inputFiles = {
-    zone: {
-      extension: ['.shp'],
-      placeholder: 'Path to geometry of the zone',
-      help: ''
-    },
-    surroundings: {
-      extension: ['.shp'],
-      placeholder: 'Path to geometry of surroundings',
-      help: ''
-    },
-    streets: {
-      extension: ['.shp'],
-      placeholder: 'Path to street geometry',
-      help: ''
-    },
-    terrain: {
-      extension: ['.tif'],
-      placeholder: 'Path to the digital elevation model',
-      help: ''
-    },
-    occupancy: {
-      extension: ['.dbf'],
-      placeholder: 'Path to occupancy database',
-      help: 'Leave empty for CEA to create one for you'
-    },
-    age: {
-      extension: ['.dbf'],
-      placeholder: 'Path to age database',
-      help: 'Leave empty for CEA to create one for you'
-    }
-  };
-  form.getFieldDecorator('fields', {
-    initialValue: ['zone', 'age', 'occupancy']
-  });
-  const fields = form.getFieldValue('fields');
-  const fileChoices = Object.keys(inputFiles).filter(
-    fileType => !fields.includes(fileType)
-  );
-
-  const addField = value => {
-    const newFields = fields.concat(value);
-    form.setFieldsValue({
-      fields: newFields
-    });
-  };
-
-  const removeField = k => {
-    form.setFieldsValue({
-      fields: fields.filter(key => key !== k)
-    });
-  };
-
-  const openDialog = (id, file) => {
-    const options = {
-      properties: ['openFile'],
-      filters: [
-        {
-          name: `${file} file`,
-          extensions: inputFiles[file].extension.map(fileExtension =>
-            fileExtension.substr(1)
-          )
-        }
-      ]
-    };
-    remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
-      if (paths.length) {
-        form.setFieldsValue({ [id]: paths[0] });
-      }
-    });
-  };
-
-  // Check if file is valid
-  const vaildFile = (fileType, filePath) => {
-    return true;
-  };
-
-  return (
-    <div
-      style={{
-        display: visible ? 'block' : 'none'
-      }}
-    >
-      <Dropdown
-        overlay={
-          <Menu>
-            {fileChoices.map(choice => (
-              <Menu.Item key={choice} onClick={() => addField(choice)}>
-                {choice}
-              </Menu.Item>
-            ))}
-          </Menu>
-        }
-        trigger={['click']}
-      >
-        <Button>
-          Select additional files that you want to import <Icon type="down" />
-        </Button>
-      </Dropdown>
-
-      {fields.map((key, index) => (
-        <Form.Item key={key} label={key}>
-          {form.getFieldDecorator(`files[${key}]`, {
-            initialValue: '',
-            rules: [
-              { required: visible && key === 'zone' },
-              visible
-                ? {
-                    validator: (rule, value, callback) => {
-                      if (!fs.existsSync(value)) {
-                        if (
-                          ['zone', 'age', 'occupancy'].includes(key) &&
-                          value === ''
-                        ) {
-                          callback();
-                        } else callback('Path does not exist');
-                      } else if (!vaildFile(key, value))
-                        callback(`Select a vaild ${key} file`);
-                      else callback();
-                    }
-                  }
-                : {}
-            ]
-          })(
-            <Input
-              style={{ width: '60%', marginRight: 8 }}
-              placeholder={inputFiles[key].placeholder}
-              addonAfter={
-                <button
-                  type="button"
-                  style={{ height: '30px', width: '50px' }}
-                  onClick={() => openDialog(`files[${key}]`, key)}
-                >
-                  <Icon type="ellipsis" />
-                </button>
-              }
-            />
-          )}
-          {['zone', 'age', 'occupancy'].includes(key) ? null : (
-            <Icon
-              type="minus-circle-o"
-              onClick={() => removeField(key)}
-              style={{
-                position: 'relative',
-                top: 4,
-                color: '#ff4d4f',
-                fontSize: 24
-              }}
-            />
-          )}
-          <small style={{ display: 'block', lineHeight: 'normal' }}>
-            {inputFiles[key].help}
-          </small>
-        </Form.Item>
-      ))}
-    </div>
-  );
-};
 
 export default NewScenarioModal;
