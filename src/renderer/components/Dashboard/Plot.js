@@ -17,6 +17,28 @@ export const PlotRoute = ({ match }) => {
   const { index, dashIndex } = match.params;
   const [data, setData] = useState(null);
   const dependenciesMounted = usePlotDependencies();
+  const SimplePlot = ({ dashIndex, index, data }) => {
+    const [div, error] = useFetchPlotDiv(dashIndex, index, data);
+    return (
+      <div
+        style={{
+          height: '100vh',
+          padding: 20,
+          display: 'grid',
+          gridTemplate: 'auto minmax(0, 1fr) / minmax(0, 1fr)'
+        }}
+      >
+        <div style={{ gridRow: '1/2' }}>
+          <h3>
+            {data.title} - {data.parameters['scenario-name']}
+          </h3>
+        </div>
+        <div style={{ gridRow: '2/-1' }}>
+          {div ? div.content : error ? <ErrorPlot error={error} /> : null}
+        </div>
+      </div>
+    );
+  };
 
   // Get plot data from ipc
   useEffect(() => {
@@ -30,34 +52,18 @@ export const PlotRoute = ({ match }) => {
 
   return (
     <div>
-      {dependenciesMounted && data && (
-        <Plot
-          dashIndex={dashIndex}
-          index={index}
-          data={data}
-          style={{ height: '90vh' }}
-          windowed={true}
-        />
+      {dependenciesMounted && data ? (
+        <SimplePlot dashIndex={dashIndex} index={index} data={data} />
+      ) : (
+        <LoadingPlot plotStyle={{ height: '100vh' }} />
       )}
     </div>
   );
 };
 
-export const Plot = ({
-  index,
-  dashIndex,
-  data,
-  style,
-  activePlotRef = 0,
-  windowed = false
-}) => {
+const useFetchPlotDiv = (dashIndex, index, hash) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
-
-  const plotStyle = { ...defaultPlotStyle, ...style };
-
-  // TODO: Maybe find a better solution
-  const hash = `cea-react-${data.hash}`;
 
   // Get plot div
   useEffect(() => {
@@ -96,7 +102,9 @@ export const Plot = ({
       source.cancel();
 
       // Clean up script node if it is mounted
-      let script = document.querySelector(`script[data-id=script-${hash}]`);
+      let script = document.querySelector(
+        `script[data-id=script-cea-react-${hash}]`
+      );
       if (script) script.remove();
     };
   }, []);
@@ -105,11 +113,25 @@ export const Plot = ({
   useEffect(() => {
     if (div) {
       var _script = document.createElement('script');
-      _script.dataset.id = `script-${hash}`;
+      _script.dataset.id = `script-cea-react-${hash}`;
       document.body.appendChild(_script);
       _script.append(div.script);
     }
   }, [div]);
+
+  return [div, error];
+};
+
+export const Plot = ({
+  index,
+  dashIndex,
+  data,
+  style,
+  activePlotRef = 0,
+  windowed = false
+}) => {
+  const plotStyle = { ...defaultPlotStyle, ...style };
+  const [div, error] = useFetchPlotDiv(dashIndex, index, data.hash);
 
   return (
     <Card
@@ -281,7 +303,7 @@ const EditMenu = React.memo(({ index, activePlotRef }) => {
   );
 });
 
-const LoadingPlot = ({ plotStyle }) => {
+const LoadingPlot = ({ plotStyle = defaultPlotStyle }) => {
   return (
     <Spin
       indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
