@@ -8,6 +8,7 @@ import { ConnectedRouter } from 'connected-react-router';
 import routes from '../constants/routes';
 import HomePage from './HomePage';
 import Splash from '../components/Splash/Splash';
+import { PlotRoute } from '../components/Dashboard/Plot';
 
 class App extends Component {
   render() {
@@ -17,6 +18,11 @@ class App extends Component {
         <ConnectedRouter history={history}>
           <Switch>
             <Route exact path={routes.SPLASH} component={Splash} />
+            <Route
+              exact
+              path={`${routes.PLOT}/:dashIndex/:index`}
+              component={PlotRoute}
+            />
             <Route path={routes.HOME}>
               <div id="cea-title-bar">
                 <TitleBar
