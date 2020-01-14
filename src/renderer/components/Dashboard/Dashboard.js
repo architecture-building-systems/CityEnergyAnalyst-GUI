@@ -209,7 +209,7 @@ const useDashboardData = () => {
   return { dashboards, fetchDashboards, categories };
 };
 
-const usePlotDependencies = () => {
+export const usePlotDependencies = () => {
   const deckRef = useRef();
   const [isMounted, setIsMounted] = useState(false);
   const PlotDependencies = [
@@ -240,10 +240,26 @@ const usePlotDependencies = () => {
       window.Plotly.Plots.resize(plot.id);
     }
   };
-  const mountNodes = (tag, url) => {
+  // Use promise to check if script is loaded
+  const scriptLoadedListener = element =>
+    // eslint-disable-next-line
+    new Promise((resolve, reject) => {
+      const scriptLoaded = () => {
+        element.removeEventListener('load', scriptLoaded);
+        resolve();
+      };
+      element.addEventListener('load', scriptLoaded);
+    });
+  const mountNodes = (tag, url, scriptPromises) => {
     const element = document.createElement(tag);
-    element.setAttribute(tag === 'script' ? 'src' : 'href', url);
-    tag === 'link' && element.setAttribute('rel', 'stylesheet');
+    if (tag === 'script') {
+      element.setAttribute('src', url);
+      scriptPromises.push(scriptLoadedListener(element));
+    }
+    if (tag === 'link') {
+      element.setAttribute('href', url);
+      element.setAttribute('rel', 'stylesheet');
+    }
     document.body.prepend(element);
     return element;
   };
@@ -253,16 +269,21 @@ const usePlotDependencies = () => {
     deckRef.current = window.deck;
     window.deck = null;
     window.addEventListener('resize', resizePlots);
-    menuToggle.addEventListener('click', resizePlots);
+    menuToggle && menuToggle.addEventListener('click', resizePlots);
+    let scriptPromises = [];
     const scripts = PlotDependencies.map(dependency =>
-      mountNodes(...dependency)
+      mountNodes(...dependency, scriptPromises)
     );
-    setIsMounted(true);
+    // eslint-disable-next-line
+    Promise.all(scriptPromises).then(values => {
+      // Return true only once all scripts have been loaded
+      setIsMounted(true);
+    });
 
     return () => {
       window.deck = deckRef.current;
       window.removeEventListener('resize', resizePlots);
-      menuToggle.removeEventListener('click', resizePlots);
+      menuToggle && menuToggle.removeEventListener('click', resizePlots);
       scripts.map(dependency => dependency.remove());
     };
   }, []);
