@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { remote, ipcRenderer } from 'electron';
 import { Button, Card, Menu, Tooltip, Icon, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
+import { usePlotDependencies } from './Dashboard';
 
 const defaultPlotStyle = {
   height: 'calc(50vh - 160px)',
@@ -11,7 +13,44 @@ const defaultPlotStyle = {
   margin: 5
 };
 
-export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
+export const PlotRoute = ({ match }) => {
+  const { index, dashIndex } = match.params;
+  const [data, setData] = useState(null);
+  const dependenciesMounted = usePlotDependencies();
+
+  // Get plot data from ipc
+  useEffect(() => {
+    ipcRenderer.once(`plot-data-${dashIndex}-${index}`, function(
+      event,
+      plotData
+    ) {
+      setData(plotData);
+    });
+  }, []);
+
+  return (
+    <div>
+      {dependenciesMounted && data && (
+        <Plot
+          dashIndex={dashIndex}
+          index={index}
+          data={data}
+          style={{ height: '90vh' }}
+          windowed={true}
+        />
+      )}
+    </div>
+  );
+};
+
+export const Plot = ({
+  index,
+  dashIndex,
+  data,
+  style,
+  activePlotRef = 0,
+  windowed = false
+}) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
 
@@ -81,6 +120,9 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
             <React.Fragment>
               <span> - </span>
               <small>{data.parameters['scenario-name']}</small>
+              {!windowed && (
+                <OpenInWindow index={index} dashIndex={dashIndex} data={data} />
+              )}
             </React.Fragment>
           )}
         </div>
@@ -91,11 +133,15 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
             div.content.length === 1 ? (
               <React.Fragment>
                 <PlotLegendToggle divID={div.content[0].props.id} />
-                <InputFiles index={index} activePlotRef={activePlotRef} />
+                {!windowed && (
+                  <InputFiles index={index} activePlotRef={activePlotRef} />
+                )}
               </React.Fragment>
             ) : null
           ) : null}
-          <EditMenu index={index} activePlotRef={activePlotRef} />
+          {!windowed && (
+            <EditMenu index={index} activePlotRef={activePlotRef} />
+          )}
         </React.Fragment>
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
@@ -144,6 +190,53 @@ const InputFiles = ({ index, activePlotRef }) => {
   return (
     <Tooltip title="Show input file location">
       <Icon type="container" theme="twoTone" onClick={showModalInputFiles} />
+    </Tooltip>
+  );
+};
+
+const OpenInWindow = ({ index, dashIndex, data }) => {
+  const openNewWindow = () => {
+    let win = new remote.BrowserWindow({
+      width: 800,
+      height: 600,
+      title: `City Energy Analyst - ${data.title} - ${
+        data.parameters['scenario-name']
+      }`,
+      titleBarStyle: 'hidden',
+      webPreferences: { nodeIntegration: true }
+    });
+    // win.removeMenu();
+    win.on('closed', () => {
+      win = null;
+    });
+
+    win.webContents.on('did-finish-load', () => {
+      win.webContents.send(`plot-data-${dashIndex}-${index}`, data);
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      win.loadURL(
+        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/#/plot/${dashIndex}/${index}`
+      );
+    } else {
+      win.loadURL(`file://${__dirname}/index.html#/plot/${dashIndex}/${index}`);
+    }
+  };
+
+  return (
+    <Tooltip title="Open in new window">
+      <Icon
+        component={() => (
+          <svg viewBox="0 0 1091 1000" width="1em" height="1em">
+            <path
+              d="M1091 0v636H818v364H0V364h273V0h818zM818 545h182V182H364v182h454v181zM91 909h636V545H91v364z"
+              fill="#1890ff"
+            />
+          </svg>
+        )}
+        style={{ margin: '0 10px' }}
+        onClick={openNewWindow}
+      />
     </Tooltip>
   );
 };
@@ -200,7 +293,6 @@ const LoadingPlot = ({ plotStyle }) => {
 };
 
 const ErrorPlot = ({ error }) => {
-  console.log(error.status);
   if (error.status === 404)
     return (
       <div style={{ height: '100%', overflow: 'auto' }}>
