@@ -4,6 +4,5 @@
   "INPUT_EDITOR": "/input-editor",
   "DASHBOARD": "/dashboard",
   "PROJECT_OVERVIEW": "/project",
-  "SPLASH": "/splash",
-  "PLOT": "/plot"
+  "SPLASH": "/splash"
 }

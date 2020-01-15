@@ -1,64 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { remote, ipcRenderer } from 'electron';
+import { remote } from 'electron';
 import { Button, Card, Menu, Tooltip, Icon, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
-import { usePlotDependencies } from './Dashboard';
 
 const defaultPlotStyle = {
   height: 'calc(50vh - 160px)',
   minHeight: 300,
   margin: 5
-};
-
-export const PlotRoute = ({ match }) => {
-  const { index, dashIndex } = match.params;
-  const [data, setData] = useState(null);
-  const dependenciesMounted = usePlotDependencies();
-  const SimplePlot = ({ dashIndex, index, data }) => {
-    const [div, error] = useFetchPlotDiv(dashIndex, index, data);
-    return (
-      <div
-        style={{
-          height: '100vh',
-          padding: 20,
-          display: 'grid',
-          gridTemplate: 'auto minmax(0, 1fr) / minmax(0, 1fr)'
-        }}
-      >
-        <div style={{ gridRow: '1/2' }}>
-          <h3>
-            {data.title} - {data.parameters['scenario-name']}
-          </h3>
-        </div>
-        <div style={{ gridRow: '2/-1' }}>
-          {div ? div.content : error ? <ErrorPlot error={error} /> : null}
-        </div>
-      </div>
-    );
-  };
-
-  // Get plot data from ipc
-  useEffect(() => {
-    ipcRenderer.once(`plot-data-${dashIndex}-${index}`, function(
-      event,
-      plotData
-    ) {
-      setData(plotData);
-    });
-  }, []);
-
-  return (
-    <div>
-      {dependenciesMounted && data ? (
-        <SimplePlot dashIndex={dashIndex} index={index} data={data} />
-      ) : (
-        <LoadingPlot plotStyle={{ height: '100vh' }} />
-      )}
-    </div>
-  );
 };
 
 const useFetchPlotDiv = (dashIndex, index, hash) => {
@@ -122,14 +73,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
   return [div, error];
 };
 
-export const Plot = ({
-  index,
-  dashIndex,
-  data,
-  style,
-  activePlotRef = 0,
-  windowed = false
-}) => {
+export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
   const plotStyle = { ...defaultPlotStyle, ...style };
   const [div, error] = useFetchPlotDiv(dashIndex, index, data.hash);
 
@@ -142,8 +86,13 @@ export const Plot = ({
             <React.Fragment>
               <span> - </span>
               <small>{data.parameters['scenario-name']}</small>
-              {!windowed && (
-                <OpenInWindow index={index} dashIndex={dashIndex} data={data} />
+              {div && div.content && (
+                <OpenInWindow
+                  index={index}
+                  dashIndex={dashIndex}
+                  data={data}
+                  div={div}
+                />
               )}
             </React.Fragment>
           )}
@@ -151,19 +100,13 @@ export const Plot = ({
       }
       extra={
         <React.Fragment>
-          {div ? (
-            div.content.length === 1 ? (
-              <React.Fragment>
-                <PlotLegendToggle divID={div.content[0].props.id} />
-                {!windowed && (
-                  <InputFiles index={index} activePlotRef={activePlotRef} />
-                )}
-              </React.Fragment>
-            ) : null
-          ) : null}
-          {!windowed && (
-            <EditMenu index={index} activePlotRef={activePlotRef} />
+          {div && div.content && (
+            <React.Fragment>
+              <PlotLegendToggle divID={div.content[0].props.id} />
+              <InputFiles index={index} activePlotRef={activePlotRef} />
+            </React.Fragment>
           )}
+          <EditMenu index={index} activePlotRef={activePlotRef} />
         </React.Fragment>
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
@@ -216,33 +159,19 @@ const InputFiles = ({ index, activePlotRef }) => {
   );
 };
 
-const OpenInWindow = ({ index, dashIndex, data }) => {
+const OpenInWindow = ({ index, dashIndex }) => {
   const openNewWindow = () => {
     let win = new remote.BrowserWindow({
+      title: 'City Energy Analyst | Loading Plot...',
       width: 800,
       height: 600,
-      title: `City Energy Analyst - ${data.title} - ${
-        data.parameters['scenario-name']
-      }`,
       titleBarStyle: 'hidden',
       webPreferences: { nodeIntegration: true }
     });
-    // win.removeMenu();
     win.on('closed', () => {
       win = null;
     });
-
-    win.webContents.on('did-finish-load', () => {
-      win.webContents.send(`plot-data-${dashIndex}-${index}`, data);
-    });
-
-    if (process.env.NODE_ENV !== 'production') {
-      win.loadURL(
-        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/#/plot/${dashIndex}/${index}`
-      );
-    } else {
-      win.loadURL(`file://${__dirname}/index.html#/plot/${dashIndex}/${index}`);
-    }
+    win.loadURL(`http://localhost:5050/plots/plot/${dashIndex}/${index}`);
   };
 
   return (
