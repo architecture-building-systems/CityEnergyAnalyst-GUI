@@ -168,10 +168,11 @@ const OpenInWindow = ({ index, dashIndex }) => {
       titleBarStyle: 'hidden',
       webPreferences: { nodeIntegration: true }
     });
+    win.removeMenu();
     win.on('closed', () => {
       win = null;
     });
-    // Triggers when 'Download Plot' is clicked
+    // Triggers savePage when 'Export to File' is clicked
     win.webContents.on('did-navigate-in-page', () => {
       remote.dialog.showSaveDialog(
         win,
@@ -191,7 +192,6 @@ const OpenInWindow = ({ index, dashIndex }) => {
         }
       );
     });
-
     win.loadURL(`http://localhost:5050/plots/plot/${dashIndex}/${index}`);
   };
 
