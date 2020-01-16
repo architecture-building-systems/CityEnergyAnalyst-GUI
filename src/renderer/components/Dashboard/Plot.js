@@ -171,6 +171,27 @@ const OpenInWindow = ({ index, dashIndex }) => {
     win.on('closed', () => {
       win = null;
     });
+    // Triggers when 'Download Plot' is clicked
+    win.webContents.on('did-navigate-in-page', () => {
+      remote.dialog.showSaveDialog(
+        win,
+        {
+          defaultPath: win.getTitle().split(' | ')[1],
+          filters: [
+            {
+              name: 'HTML',
+              extensions: ['html']
+            }
+          ]
+        },
+        outputPath => {
+          win.webContents.savePage(outputPath, 'HTMLOnly', error => {
+            if (!error) console.log('Save page successfully');
+          });
+        }
+      );
+    });
+
     win.loadURL(`http://localhost:5050/plots/plot/${dashIndex}/${index}`);
   };
 
