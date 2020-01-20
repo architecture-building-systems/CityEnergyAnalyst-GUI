@@ -221,16 +221,7 @@ export const usePlotDependencies = () => {
       }/dist.min.js`
     ],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],
-    ['script', 'https://npmcdn.com/@turf/turf/turf.min.js'],
-    ['script', 'https://code.jquery.com/jquery-3.4.1.min.js'],
-    [
-      'script',
-      'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js'
-    ],
-    [
-      'link',
-      'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap-grid.min.css'
-    ]
+    ['script', 'https://npmcdn.com/@turf/turf/turf.min.js']
   ];
 
   const menuToggle = document.querySelector('.menu-toggle');
@@ -252,14 +243,8 @@ export const usePlotDependencies = () => {
     });
   const mountNodes = (tag, url, scriptPromises) => {
     const element = document.createElement(tag);
-    if (tag === 'script') {
-      element.setAttribute('src', url);
-      scriptPromises.push(scriptLoadedListener(element));
-    }
-    if (tag === 'link') {
-      element.setAttribute('href', url);
-      element.setAttribute('rel', 'stylesheet');
-    }
+    element.setAttribute('src', url);
+    scriptPromises.push(scriptLoadedListener(element));
     document.body.prepend(element);
     return element;
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { remote } from 'electron';
 import { Button, Card, Menu, Tooltip, Icon, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
@@ -11,14 +12,9 @@ const defaultPlotStyle = {
   margin: 5
 };
 
-export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
+const useFetchPlotDiv = (dashIndex, index, hash) => {
   const [div, setDiv] = useState(null);
   const [error, setError] = useState(null);
-
-  const plotStyle = { ...defaultPlotStyle, ...style };
-
-  // TODO: Maybe find a better solution
-  const hash = `cea-react-${data.hash}`;
 
   // Get plot div
   useEffect(() => {
@@ -57,7 +53,9 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
       source.cancel();
 
       // Clean up script node if it is mounted
-      let script = document.querySelector(`script[data-id=script-${hash}]`);
+      let script = document.querySelector(
+        `script[data-id=script-cea-react-${hash}]`
+      );
       if (script) script.remove();
     };
   }, []);
@@ -66,11 +64,18 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
   useEffect(() => {
     if (div) {
       var _script = document.createElement('script');
-      _script.dataset.id = `script-${hash}`;
+      _script.dataset.id = `script-cea-react-${hash}`;
       document.body.appendChild(_script);
       _script.append(div.script);
     }
   }, [div]);
+
+  return [div, error];
+};
+
+export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
+  const plotStyle = { ...defaultPlotStyle, ...style };
+  const [div, error] = useFetchPlotDiv(dashIndex, index, data.hash);
 
   return (
     <Card
@@ -81,20 +86,26 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef }) => {
             <React.Fragment>
               <span> - </span>
               <small>{data.parameters['scenario-name']}</small>
+              {div && div.content && (
+                <OpenInWindow
+                  index={index}
+                  dashIndex={dashIndex}
+                  data={data}
+                  div={div}
+                />
+              )}
             </React.Fragment>
           )}
         </div>
       }
       extra={
         <React.Fragment>
-          {div ? (
-            div.content.length === 1 ? (
-              <React.Fragment>
-                <PlotLegendToggle divID={div.content[0].props.id} />
-                <InputFiles index={index} activePlotRef={activePlotRef} />
-              </React.Fragment>
-            ) : null
-          ) : null}
+          {div && div.content && (
+            <React.Fragment>
+              <PlotLegendToggle divID={div.content[0].props.id} />
+              <InputFiles index={index} activePlotRef={activePlotRef} />
+            </React.Fragment>
+          )}
           <EditMenu index={index} activePlotRef={activePlotRef} />
         </React.Fragment>
       }
@@ -148,6 +159,60 @@ const InputFiles = ({ index, activePlotRef }) => {
   );
 };
 
+const OpenInWindow = ({ index, dashIndex }) => {
+  const openNewWindow = () => {
+    let win = new remote.BrowserWindow({
+      title: 'City Energy Analyst | Loading Plot...',
+      width: 800,
+      height: 600,
+      titleBarStyle: 'hidden',
+      webPreferences: { nodeIntegration: true }
+    });
+    win.removeMenu();
+    win.on('closed', () => {
+      win = null;
+    });
+    // Triggers savePage when 'Export to File' is clicked
+    win.webContents.on('did-navigate-in-page', () => {
+      remote.dialog.showSaveDialog(
+        win,
+        {
+          defaultPath: win.getTitle().split(' | ')[1],
+          filters: [
+            {
+              name: 'HTML',
+              extensions: ['html']
+            }
+          ]
+        },
+        outputPath => {
+          win.webContents.savePage(outputPath, 'HTMLOnly', error => {
+            if (!error) console.log('Save page successfully');
+          });
+        }
+      );
+    });
+    win.loadURL(`http://localhost:5050/plots/plot/${dashIndex}/${index}`);
+  };
+
+  return (
+    <Tooltip title="Open in new window">
+      <Icon
+        component={() => (
+          <svg viewBox="0 0 1091 1000" width="1em" height="1em">
+            <path
+              d="M1091 0v636H818v364H0V364h273V0h818zM818 545h182V182H364v182h454v181zM91 909h636V545H91v364z"
+              fill="#1890ff"
+            />
+          </svg>
+        )}
+        style={{ margin: '0 10px' }}
+        onClick={openNewWindow}
+      />
+    </Tooltip>
+  );
+};
+
 const EditMenu = React.memo(({ index, activePlotRef }) => {
   const { modals, setModalVisible } = useContext(ModalContext);
 
@@ -188,7 +253,7 @@ const EditMenu = React.memo(({ index, activePlotRef }) => {
   );
 });
 
-const LoadingPlot = ({ plotStyle }) => {
+const LoadingPlot = ({ plotStyle = defaultPlotStyle }) => {
   return (
     <Spin
       indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
@@ -200,7 +265,6 @@ const LoadingPlot = ({ plotStyle }) => {
 };
 
 const ErrorPlot = ({ error }) => {
-  console.log(error.status);
   if (error.status === 404)
     return (
       <div style={{ height: '100%', overflow: 'auto' }}>

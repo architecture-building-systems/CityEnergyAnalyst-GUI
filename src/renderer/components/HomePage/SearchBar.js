@@ -40,7 +40,7 @@ const SearchBar = () => {
   };
 
   const handleBlur = () => {
-    setTimeout(() => setVisible(false), 100);
+    setTimeout(() => setVisible(false), 300);
   };
 
   useEffect(() => {
