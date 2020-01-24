@@ -3,7 +3,12 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'path';
 import { format as formatUrl } from 'url';
-import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
+import {
+  createCEAProcess,
+  isCEAAlive,
+  killCEAProcess,
+  getCEAVersion
+} from './ceaProcess';
 import menu from './menu';
 import axios from 'axios';
 
@@ -84,6 +89,9 @@ function createSplashWindow() {
 
   window.once('ready-to-show', () => {
     window.show();
+
+    // Check CEA version number
+    getCEAVersion();
 
     // Check if CEA server is already running, only start if not
     isCEAAlive().then(alive => {

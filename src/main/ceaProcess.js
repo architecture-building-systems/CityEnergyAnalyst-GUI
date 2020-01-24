@@ -1,29 +1,57 @@
-import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { app, dialog } from 'electron';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 let cea;
 let timeout;
 let interval;
+let ceaPath = getCEAPath();
+global.ceaVersion = null;
+global.guiVersion = isDevelopment
+  ? require('../../package.json').version
+  : app.getVersion();
+const versionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(?:0|[1-9]\d*)([0-9A-Za-z-]+)?/;
+
+function getCEAPath() {
+  let _path;
+  if (isDevelopment) {
+    if (process.platform === 'win32') {
+      // NOTE: Assuming that CEA is cloned in Default Installation path
+      // Default Installation
+      _path = path.join(
+        process.env.USERPROFILE,
+        'Documents',
+        'CityEnergyAnalyst'
+      );
+    }
+  } else {
+    // Get path relative to installed electron app
+    _path = path.join(path.dirname(process.execPath), '/../');
+  }
+  return _path;
+}
+
+export function getCEAVersion() {
+  // For windows
+  if (process.platform === 'win32') {
+    let pythonPath = path.join(ceaPath, 'Dependencies', 'Python', 'python.exe');
+    const ceaOutput = require('child_process').spawnSync(
+      pythonPath,
+      ['-m', 'cea.interfaces.cli.cli', '--version'],
+      { encoding: 'utf8' }
+    );
+    if (ceaOutput.stdout) {
+      global.ceaVersion = ceaOutput.stdout.match(versionRegex)[0];
+    }
+  }
+}
 
 export function createCEAProcess(BrowserWindow, callback) {
   // For windows
   if (process.platform === 'win32') {
-    let scriptPath = path.join(
-      path.dirname(process.execPath),
-      '/../',
-      'dashboard.bat'
-    );
-    // Fallback to default install path
-    if (!fs.existsSync(scriptPath))
-      scriptPath = path.join(
-        process.env.USERPROFILE,
-        'Documents',
-        'CityEnergyAnalyst',
-        'dashboard.bat'
-      );
-    console.log(scriptPath);
+    let scriptPath = path.join(ceaPath, 'dashboard.bat');
     cea = require('child_process').spawn('cmd.exe', ['/c', scriptPath]);
   }
 
