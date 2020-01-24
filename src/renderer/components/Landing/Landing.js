@@ -10,6 +10,7 @@ import OpenProjectModal from '../Project/OpenProjectModal';
 import routes from '../../constants/routes';
 
 const logo = getStatic('cea-logo.png');
+const ceaVersion = remote.getGlobal('ceaVersion');
 
 const useProjectInfo = initialValue => {
   const [info, setInfo] = useState(initialValue);
@@ -51,10 +52,11 @@ const Landing = () => {
       >
         <img
           src={logo}
-          style={{ width: '15%', minWidth: 100 }}
+          style={{ width: '15%', minWidth: 100, margin: 30 }}
           alt="CEA Logo"
         />
-        <h2 style={{ fontSize: '2em', margin: 30 }}>City Energy Analyst</h2>
+        <h2 style={{ fontSize: '2em' }}>City Energy Analyst</h2>
+        {ceaVersion ? <h3>{`Version ${ceaVersion}`}</h3> : null}
         <Button
           type="primary"
           style={{ width: 300, margin: 24 }}
