@@ -1,17 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Icon, Popover, notification, Button, Modal } from 'antd';
+import { Icon, Popover, notification, Button, Modal, Badge } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
 import './StatusBar.css';
+import { remote } from 'electron';
+import { fetchOnlineVersion, versionCompare } from '../../utils';
 
 const socket = io('http://localhost:5050');
+
+const ceaVersion = remote.getGlobal('ceaVersion');
 
 const StatusBar = () => {
   return (
     <div id="cea-status-bar-container">
-      <div id="cea-status-bar-left"></div>
+      <div id="cea-status-bar-left">
+        <VersionChecker />
+      </div>
       <div id="cea-status-bar-right">
         <JobListPopover />
       </div>
@@ -24,6 +30,51 @@ const StatusBarButton = ({ children, ...props }) => {
     <div {...props} className="cea-status-bar-button">
       {children}
     </div>
+  );
+};
+
+const VersionChecker = () => {
+  const [fetchingVersion, setFetchingVersion] = useState(false);
+  const [onlineVersion, setOnlineVersion] = useState(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  const getOnlineVersion = async () => {
+    try {
+      setFetchingVersion(true);
+      setOnlineVersion(null);
+      const version = await fetchOnlineVersion();
+      setOnlineVersion(version);
+      setFetchingVersion(false);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    getOnlineVersion();
+  }, []);
+
+  useEffect(() => {
+    if (onlineVersion) {
+      setUpdateAvailable(versionCompare(onlineVersion, ceaVersion));
+    }
+  }, [onlineVersion]);
+
+  return (
+    <StatusBarButton onClick={() => getOnlineVersion()}>
+      {fetchingVersion ? (
+        <Icon type="loading" />
+      ) : updateAvailable ? (
+        <Badge status="success" />
+      ) : null}
+      <span>{`CEA v${ceaVersion} | ${
+        fetchingVersion
+          ? 'Checking for updates...'
+          : updateAvailable
+          ? `v${onlineVersion} update available`
+          : 'No updates available'
+      }`}</span>
+    </StatusBarButton>
   );
 };
 
