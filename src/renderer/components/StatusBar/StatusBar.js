@@ -56,7 +56,7 @@ const VersionChecker = () => {
 
   useEffect(() => {
     if (onlineVersion) {
-      setUpdateAvailable(versionCompare(onlineVersion, ceaVersion));
+      setUpdateAvailable(versionCompare(onlineVersion, ceaVersion) === 1);
     }
   }, [onlineVersion]);
 
