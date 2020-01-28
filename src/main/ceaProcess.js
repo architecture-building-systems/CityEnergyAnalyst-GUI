@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import axios from 'axios';
 import { app, dialog } from 'electron';
 
@@ -16,19 +17,17 @@ const versionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(?:0|[1-9]\d*)([0-9A-Za-z-]+)?
 
 function getCEAPath() {
   let _path;
-  if (isDevelopment) {
-    if (process.platform === 'win32') {
-      // NOTE: Assuming that CEA is cloned in Default Installation path
-      // Default Installation
-      _path = path.join(
-        process.env.USERPROFILE,
-        'Documents',
-        'CityEnergyAnalyst'
-      );
+  if (process.platform === 'win32') {
+    // Check if Default installation path for windows exists
+    _path = path.join(
+      process.env.USERPROFILE,
+      'Documents',
+      'CityEnergyAnalyst'
+    );
+    if (!fs.existsSync(path.join(_path, 'dashboard.bat'))) {
+      // Try relative path of app
+      _path = path.join(path.dirname(process.execPath), '/../');
     }
-  } else {
-    // Get path relative to installed electron app
-    _path = path.join(path.dirname(process.execPath), '/../');
   }
   return _path;
 }
