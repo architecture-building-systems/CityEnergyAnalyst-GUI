@@ -63,7 +63,7 @@ const VersionChecker = () => {
   return (
     <StatusBarButton onClick={() => getOnlineVersion()}>
       {fetchingVersion ? (
-        <Icon type="loading" />
+        <Icon type="sync" spin style={{ marginRight: 5 }} />
       ) : updateAvailable ? (
         <Badge status="success" />
       ) : null}
