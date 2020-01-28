@@ -90,9 +90,6 @@ function createSplashWindow() {
   window.once('ready-to-show', () => {
     window.show();
 
-    // Check CEA version number
-    getCEAVersion();
-
     // Check if CEA server is already running, only start if not
     isCEAAlive().then(alive => {
       if (alive) mainWindow = createMainWindow();
@@ -154,6 +151,8 @@ app.on('activate', () => {
 
 // create splash BrowserWindow when electron is ready
 app.on('ready', () => {
+  // Get CEA version number
+  getCEAVersion();
   splashWindow = createSplashWindow();
 });
 

@@ -16,23 +16,35 @@ global.guiVersion = isDevelopment
 const versionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(?:0|[1-9]\d*)([0-9A-Za-z-]+)?/;
 
 function getCEAPath() {
-  let _path;
   if (process.platform === 'win32') {
-    // Check if Default installation path for windows exists
-    _path = path.join(
+    // Default installation path for windows
+    const defaultPath = path.join(
       process.env.USERPROFILE,
       'Documents',
       'CityEnergyAnalyst'
     );
-    if (!fs.existsSync(path.join(_path, 'dashboard.bat'))) {
-      // Try relative path of app
-      _path = path.join(path.dirname(process.execPath), '/../');
+    // Parent directory of app folder
+    const relativePath = path.join(path.dirname(process.execPath), '/../');
+    if (fs.existsSync(path.join(defaultPath, 'dashboard.bat'))) {
+      return defaultPath;
+    } else if (fs.existsSync(path.join(relativePath, 'dashboard.bat'))) {
+      return relativePath;
     }
+    // Return null if unable to find path
+    return null;
   }
-  return _path;
 }
 
 export function getCEAVersion() {
+  if (ceaPath === null) {
+    const resp = dialog.showMessageBox({
+      type: 'error',
+      title: 'Could not find CEA path',
+      message: 'Make sure CEA is installed correctly.',
+      buttons: ['Exit CEA']
+    });
+    app.exit();
+  }
   // For windows
   if (process.platform === 'win32') {
     let pythonPath = path.join(ceaPath, 'Dependencies', 'Python', 'python.exe');
