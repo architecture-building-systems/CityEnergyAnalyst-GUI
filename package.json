@@ -40,6 +40,7 @@
     "react-spring": "^8.0.27",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
+    "serialize-javascript": "2.1.1",
     "socket.io-client": "^2.3.0",
     "source-map-support": "^0.5.12",
     "tabulator-tables": "^4.4.1"
