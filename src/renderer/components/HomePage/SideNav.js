@@ -76,6 +76,15 @@ const SideNav = () => {
             </Menu.Item>
           )}
 
+          <ScenarioMenuItem key={routes.DATABASE_EDITOR}>
+            <Menu.Item>
+              <span>
+                <Icon type="database" />
+                <span>Database Editor</span>
+              </span>
+              <Link to={routes.DATABASE_EDITOR} />
+            </Menu.Item>
+          </ScenarioMenuItem>
           <ScenarioMenuItem key={routes.INPUT_EDITOR}>
             <Menu.Item>
               <span>

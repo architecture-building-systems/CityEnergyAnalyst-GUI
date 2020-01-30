@@ -9,6 +9,7 @@ import Dashboard from '../components/Dashboard/Dashboard';
 import Project from '../components/Project/Project';
 import StatusBar from '../components/StatusBar/StatusBar';
 import Landing from '../components/Landing/Landing';
+import DatabaseEditor from '../components/DatabaseEditor/DatabaseEditor';
 
 import routes from '../constants/routes';
 
@@ -39,7 +40,8 @@ const HomePage = () => {
               <Route path={routes.INPUT_EDITOR} component={InputEditor} />
               <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
               <Route path={routes.DASHBOARD} component={Dashboard} />
-              <Route path={routes.HOME} component={Landing} />
+              <Route path={routes.DATABASE_EDITOR} component={DatabaseEditor} />
+              <Route exact path={routes.HOME} component={Landing} />
             </Switch>
           </Content>
         </Layout>
