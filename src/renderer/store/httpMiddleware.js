@@ -9,7 +9,8 @@ export const httpAction = ({
   headers = [],
   onSuccess = data => {},
   onFailure = error => {},
-  editPayload = data => {}
+  payload = {},
+  editPayload = payload => {}
 }) => ({
   HTTP_ACTION: {
     type,
@@ -20,6 +21,7 @@ export const httpAction = ({
     headers,
     onSuccess,
     onFailure,
+    payload,
     editPayload
   }
 });
@@ -35,6 +37,7 @@ const httpMiddleware = ({ dispatch, getState }) => next => action => {
     headers,
     onSuccess,
     onFailure,
+    payload,
     editPayload
   } = action.HTTP_ACTION;
   const dataOrParams = ['GET', 'DELETE'].includes(method) ? 'params' : 'data';
@@ -52,23 +55,25 @@ const httpMiddleware = ({ dispatch, getState }) => next => action => {
       dispatch({ type: type + '_SUCCESS', payload: editPayload(data) || data });
       onSuccess(data);
     } catch (error) {
+      const errorPayload =
+        // Received response out of 2xx range
+        error.response
+          ? error.response
+          : // The request was made but no response was received
+          error.request
+          ? error.request
+          : // Something happened in setting up the request that triggered an Error
+            error;
+      console.log(editPayload());
       dispatch({
         type: type + '_FAILED',
-        payload:
-          // Received response out of 2xx range
-          error.response
-            ? error.response
-            : // The request was made but no response was received
-            error.request
-            ? error.request
-            : // Something happened in setting up the request that triggered an Error
-              error
+        payload: editPayload(errorPayload) || errorPayload
       });
       onFailure(error);
     }
   };
 
-  dispatch({ type: type });
+  dispatch({ type: type, payload });
   fetch();
 };
 
