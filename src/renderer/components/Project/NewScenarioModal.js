@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Modal, Form, Radio, Input } from 'antd';
+import React, { useState, useRef, useEffect } from 'react';
+import { Modal, Form, Radio, Input, Select } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
@@ -8,6 +8,8 @@ import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioCopyDataForm from './ScenarioCopyDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
+import Parameter from '../Tools/Parameter';
+import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -15,6 +17,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [error, setError] = useState(null);
   const formRef = useRef();
   const openScenario = useOpenScenario();
+  const databaseParameter = useFetchDatabasePathParameter();
 
   const createScenario = e => {
     setError(null);
@@ -59,7 +62,11 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
       maskClosable={false}
       destroyOnClose
     >
-      <NewScenarioForm ref={formRef} project={project} />
+      <NewScenarioForm
+        ref={formRef}
+        project={project}
+        databaseParameter={databaseParameter}
+      />
       <CreatingScenarioModal
         visible={modalVisible}
         setVisible={setModalVisible}
@@ -70,62 +77,93 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   );
 };
 
-const NewScenarioForm = Form.create()(({ form, project }) => {
-  const choice = form.getFieldValue('input-data');
+const NewScenarioForm = Form.create()(
+  ({ form, project, databaseParameter }) => {
+    const choice = form.getFieldValue('input-data');
 
-  return (
-    <Form>
-      <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
-        {form.getFieldDecorator('name', {
-          initialValue: '',
-          rules: [
-            { required: true },
-            {
-              validator: (rule, value, callback) => {
-                if (
-                  value.length != 0 &&
-                  fs.existsSync(path.join(project.path, value))
-                ) {
-                  callback('Scenario with name already exists in project');
-                } else {
-                  callback();
+    return (
+      <Form>
+        <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
+          {form.getFieldDecorator('name', {
+            initialValue: '',
+            rules: [
+              { required: true },
+              {
+                validator: (rule, value, callback) => {
+                  if (
+                    value.length != 0 &&
+                    fs.existsSync(path.join(project.path, value))
+                  ) {
+                    callback('Scenario with name already exists in project');
+                  } else {
+                    callback();
+                  }
                 }
               }
-            }
-          ]
-        })(<Input placeholder="Name of new Scenario" />)}
-      </Form.Item>
+            ]
+          })(<Input placeholder="Name of new Scenario" />)}
+        </Form.Item>
 
-      <h2>Input Data</h2>
-      <Form.Item>
-        {form.getFieldDecorator('input-data', {
-          initialValue: 'generate'
-        })(
-          <Radio.Group>
-            <Radio value="generate" style={{ display: 'block' }}>
-              Generate new input files using tools
-            </Radio>
-            {project.scenarios.length ? (
-              <Radio value="copy" style={{ display: 'block' }}>
-                Copy input folder from another scenario in the project
-              </Radio>
-            ) : null}
-            <Radio value="import" style={{ display: 'block' }}>
-              Import input files
-            </Radio>
-          </Radio.Group>
+        <h2>Database</h2>
+        {databaseParameter !== null && (
+          <Parameter form={form} parameter={databaseParameter} />
         )}
-      </Form.Item>
 
-      <ScenarioGenerateDataForm form={form} visible={choice === 'generate'} />
-      <ScenarioCopyDataForm
-        form={form}
-        visible={choice === 'copy'}
-        project={project}
-      />
-      <ScenarioImportDataForm form={form} visible={choice === 'import'} />
-    </Form>
-  );
-});
+        <h2>Input Data</h2>
+        <Form.Item>
+          {form.getFieldDecorator('input-data', {
+            initialValue: 'generate'
+          })(
+            <Radio.Group>
+              <Radio value="generate" style={{ display: 'block' }}>
+                Generate new input files using tools
+              </Radio>
+              {project.scenarios.length ? (
+                <Radio value="copy" style={{ display: 'block' }}>
+                  Copy input folder from another scenario in the project
+                </Radio>
+              ) : null}
+              <Radio value="import" style={{ display: 'block' }}>
+                Import input files
+              </Radio>
+            </Radio.Group>
+          )}
+        </Form.Item>
 
-export default NewScenarioModal;
+        <ScenarioGenerateDataForm form={form} visible={choice === 'generate'} />
+        <ScenarioCopyDataForm
+          form={form}
+          visible={choice === 'copy'}
+          project={project}
+        />
+        <ScenarioImportDataForm form={form} visible={choice === 'import'} />
+      </Form>
+    );
+  }
+);
+
+const useFetchDatabasePathParameter = () => {
+  const [parameter, setParameter] = useState(null);
+  useEffect(() => {
+    const fetchParameter = async () => {
+      try {
+        const resp = await axios.get(
+          'http://localhost:5050/api/tools/data-initializer'
+        );
+        setParameter(
+          resp.data.parameters[
+            resp.data.parameters.findIndex(
+              p => p.type === 'DatabasePathParameter'
+            )
+          ]
+        );
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchParameter();
+  }, []);
+  return parameter;
+};
+
+export default withErrorBoundary(NewScenarioModal);
