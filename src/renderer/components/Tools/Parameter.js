@@ -62,7 +62,6 @@ const Parameter = ({ parameter, form }) => {
     }
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
-    case 'RegionParameter':
     case 'ScenarioNameParameter':
     case 'SingleBuildingParameter':
       return (
@@ -167,6 +166,44 @@ const Parameter = ({ parameter, form }) => {
         />
       );
     }
+    case 'DatabasePathParameter': {
+      const { choices } = parameter;
+      const { Option } = Select;
+      const Options = Object.keys(choices).map(choice => (
+        <Option key={choice} value={choices[choice]}>
+          {choice}
+        </Option>
+      ));
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          inputComponent={
+            <Select
+              dropdownRender={menu => (
+                <div>
+                  {menu}
+                  <Divider style={{ margin: '4px 0' }} />
+                  <div
+                    style={{ padding: '8px', cursor: 'pointer' }}
+                    onMouseDown={() => openDialog(form, 'PathParameter', name)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <Icon type="plus" /> Browse for databases path
+                  </div>
+                </div>
+              )}
+            >
+              {Options}
+            </Select>
+          }
+        />
+      );
+    }
+
     case 'WeatherPathParameter': {
       const { choices } = parameter;
       const { Option } = Select;
@@ -236,7 +273,7 @@ export const FormItemWrapper = ({
   help,
   required = false,
   rules = [],
-  config,
+  config = {},
   inputComponent = <Input />
 }) => {
   return (
@@ -247,7 +284,7 @@ export const FormItemWrapper = ({
       key={name}
     >
       {form.getFieldDecorator(name, {
-        initialValue,
+        ...(typeof initialValue === 'undefined' ? {} : { initialValue }),
         rules: [{ required: required }, ...rules],
         ...config
       })(inputComponent)}
