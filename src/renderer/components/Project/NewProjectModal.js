@@ -3,7 +3,7 @@ import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 
 const NewProjectModal = ({
   visible,

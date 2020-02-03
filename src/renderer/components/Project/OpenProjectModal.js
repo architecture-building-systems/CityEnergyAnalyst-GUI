@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Form } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 
 const OpenProjectModal = ({
   visible,
