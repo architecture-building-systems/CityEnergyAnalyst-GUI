@@ -23,11 +23,11 @@ const OpenProjectModal = ({
             values
           );
           console.log(openProject.data);
-          onSuccess();
           setVisible(false);
+          setConfirmLoading(false);
+          onSuccess();
         } catch (err) {
           console.log(err.response);
-        } finally {
           setConfirmLoading(false);
         }
       }

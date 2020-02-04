@@ -32,11 +32,11 @@ const NewProjectModal = ({
             }
           );
           console.log(updateProject.data);
-          onSuccess();
+          setConfirmLoading(false);
           setVisible(false);
+          onSuccess();
         } catch (err) {
           console.log(err.response);
-        } finally {
           setConfirmLoading(false);
         }
       }
