@@ -6,6 +6,7 @@ import project from './project';
 import { toolList, toolParams, toolSaving } from './tools';
 import inputData from './inputEditor';
 import jobs from './jobs';
+import databaseData from './databaseEditor';
 
 export default function createRootReducer(history) {
   return combineReducers({
@@ -16,6 +17,7 @@ export default function createRootReducer(history) {
     toolParams,
     toolSaving,
     inputData,
-    jobs
+    jobs,
+    databaseData
   });
 }
