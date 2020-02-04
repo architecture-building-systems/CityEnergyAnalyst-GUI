@@ -294,23 +294,25 @@ export const FormItemWrapper = ({
   );
 };
 
-export const OpenDialogInput = ({ form, type, ...props }) => {
+export const OpenDialogInput = React.forwardRef((props, ref) => {
+  const { form, type, id, ...rest } = props;
   return (
     <Input
+      ref={ref}
       addonAfter={
         <button
           className={type}
           type="button"
           style={{ height: '30px', width: '50px' }}
-          onClick={() => openDialog(form, type, props.id)}
+          onClick={() => openDialog(form, type, id)}
         >
           <Icon type="ellipsis" />
         </button>
       }
-      {...props}
+      {...rest}
     />
   );
-};
+});
 
 const openDialog = (form, type, name) => {
   const options =
