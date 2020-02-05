@@ -35,6 +35,16 @@ export const fetchDatabase = db => dispatch => {
   fetchAll();
 };
 
+export const FETCH_DATABASE_GLOSSARY = 'FETCH_DATABASE_GLOSSARY';
+export const FETCH_DATABASE_GLOSSARY_SUCCESS =
+  'FETCH_DATABASE_GLOSSARY_SUCCESS';
+export const FETCH_DATABASE_GLOSSARY_FAILED = 'FETCH_DATABASE_GLOSSARY_FAILED';
+export const fetchDatabaseGlossary = () =>
+  httpAction({
+    type: FETCH_DATABASE_GLOSSARY,
+    url: 'http://localhost:5050/api/glossary/'
+  });
+
 export const UPDATE_DATABASE_VALIDATION = 'UPDATE_DATABASE_VALIDATION';
 export const updateDatabaseValidation = validation => dispatch => {
   dispatch({ type: UPDATE_DATABASE_VALIDATION, payload: { validation } });
