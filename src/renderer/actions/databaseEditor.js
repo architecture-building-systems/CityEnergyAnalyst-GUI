@@ -1,44 +1,34 @@
 import { httpAction } from '../store/httpMiddleware';
 import axios from 'axios';
 
+const fetchDBData = async db => {
+  const resp = await axios.get(
+    `http://localhost:5050/api/inputs/databases/${db}`
+  );
+  return resp.data;
+};
+const fetchDBSchema = async db => {
+  const resp = await axios.get(
+    `http://localhost:5050/api/databases/schema/${db}`
+  );
+  return resp.data;
+};
+
 export const FETCH_DATABASE = 'FETCH_DATABASE';
 export const FETCH_DATABASE_SUCCESS = 'FETCH_DATABASE_SUCCESS';
-export const FETCH_DATABASE_FAILED = 'FETCH_DATABASE_FAILED';
-
+export const FETCH_DATABASE_FAILURE = 'FETCH_DATABASE_FAILURE';
 export const fetchDatabase = db => dispatch => {
-  //   dispatch(
-  //     httpAction({
-  //       url: `/inputs/databases/${db}`,
-  //       type: FETCH_DATABASE,
-  //       payload: { db },
-  //       editPayload: data => ({ data, db })
-  //     })
-  //   );
-
-  const fetchDBData = async () => {
-    const resp = await axios.get(
-      `http://localhost:5050/api/inputs/databases/${db}`
-    );
-    return resp.data;
-  };
-  const fetchDBSchema = async () => {
-    const resp = await axios.get(
-      `http://localhost:5050/api/databases/schema/${db}`
-    );
-    return resp.data;
-  };
-
   const fetchAll = async () => {
     try {
       dispatch({ type: FETCH_DATABASE, payload: { db } });
       // eslint-disable-next-line
-      const values = await Promise.all([fetchDBData(), fetchDBSchema()]);
+      const values = await Promise.all([fetchDBData(db), fetchDBSchema(db)]);
       dispatch({
         type: FETCH_DATABASE_SUCCESS,
         payload: { data: values[0], schema: values[1], db }
       });
     } catch (err) {
-      dispatch({ type: FETCH_DATABASE_FAILED, payload: { data: err } });
+      dispatch({ type: FETCH_DATABASE_FAILURE, payload: { db, data: err } });
     }
   };
 
