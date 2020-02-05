@@ -3,13 +3,14 @@ import { Modal, Form, Radio, Input, Select } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { useOpenScenario } from './Project';
+import { useOpenScenario, useFetchProject, useChangeRoute } from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioCopyDataForm from './ScenarioCopyDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
 import Parameter from '../Tools/Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
+import routes from '../../constants/routes';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -17,6 +18,8 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [error, setError] = useState(null);
   const formRef = useRef();
   const openScenario = useOpenScenario();
+  const fetchProject = useFetchProject();
+  const goToDBEditor = useChangeRoute(routes.DATABASE_EDITOR);
   const databaseParameter = useFetchDatabasePathParameter();
 
   const createScenario = e => {
@@ -34,7 +37,12 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
               values
             );
             console.log(resp.data);
-            openScenario(values.name);
+            if (values['databases-path'] !== 'create') {
+              openScenario(values.name);
+            } else {
+              await fetchProject();
+              goToDBEditor();
+            }
           } catch (err) {
             console.log(err.response);
             setError(err.response);
@@ -150,13 +158,14 @@ const useFetchDatabasePathParameter = () => {
         const resp = await axios.get(
           'http://localhost:5050/api/tools/data-initializer'
         );
-        setParameter(
+        const dbPathParam =
           resp.data.parameters[
             resp.data.parameters.findIndex(
               p => p.type === 'DatabasePathParameter'
             )
-          ]
-        );
+          ];
+        dbPathParam.choices['Create your own database later'] = 'create';
+        setParameter(dbPathParam);
       } catch (err) {
         console.log(err);
       }
