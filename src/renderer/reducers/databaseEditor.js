@@ -8,25 +8,29 @@ import {
   FETCH_DATABASE_GLOSSARY_SUCCESS
 } from '../actions/databaseEditor';
 import { combineReducers } from 'redux';
+import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
 
 const updateValidation = (state, validation) => {
-  const { isValid, ...props } = validation;
-  const index = state.findIndex(
-    o => props.id === o.id && props.row === o.row && props.column === o.column
-  );
-  index !== -1 && state.splice(index, 1);
-  if (!isValid) {
-    state.push(props);
+  const { isValid, database, sheet, column, row, value } = validation;
+  // Check if invalid value exists in store
+  if (checkNestedProp(state, database, sheet, column, row)) {
+    // Remove value if it is corrected else add it to store
+    if (isValid) deleteNestedProp(state, database, sheet, column, row);
+    else state[database][sheet][column][row] = value;
+    // Add to store if value does not exist
+  } else {
+    createNestedProp(state, database, sheet, column, row);
+    state[database][sheet][column][row] = value;
   }
-  return [...state];
+  return { ...state };
 };
 
-const databaseValidation = (state = [], { type, payload }) => {
+const databaseValidation = (state = {}, { type, payload }) => {
   switch (type) {
     case UPDATE_DATABASE_VALIDATION:
       return updateValidation(state, payload.validation);
     case RESET_DATABASE_STATE:
-      return [];
+      return {};
     default:
       return state;
   }
