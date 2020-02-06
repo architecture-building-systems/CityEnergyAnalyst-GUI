@@ -223,17 +223,13 @@ const Sheet = ({ databaseName, sheetName, sheetData, schema }) => {
 
   return (
     <div className="cea-database-editor-sheet">
-      <span>Sheet Functions</span>
-      <TableButtons tableRef={tableRef} sheetData={sheetData} />
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}`}
         data={sheetData}
-        persistentState={true}
         colHeaders={colHeaders}
         rowHeaders={true}
         columns={columns}
-        contextMenu={true}
         stretchH="all"
         height={500}
       />
@@ -305,12 +301,10 @@ const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
         ref={tableRef}
         id={`${databaseName}-${sheetName}`}
         data={[yearData]}
-        persistentState={true}
         rowHeaders="MONTHLY_MULTIPLIER"
         rowHeaderWidth={180}
         colHeaders={colHeaders}
         columns={columns}
-        contextMenu={true}
         // stretchH="all"
         height={70}
       />
@@ -338,12 +332,10 @@ const SchedulesDataTable = ({
         ref={tableRef}
         id={`${databaseName}-${sheetName}-${scheduleType}`}
         data={tableData}
-        persistentState={true}
         rowHeaders={rowHeaders}
         rowHeaderWidth={80}
         colHeaders={colHeaders}
         columns={columns}
-        contextMenu={true}
         // stretchH="all"
         height={120}
       />
