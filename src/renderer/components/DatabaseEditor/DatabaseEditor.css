@@ -2,6 +2,11 @@
   margin-right: 0;
 }
 
+.cea-database-editor-header {
+  display: flex;
+  justify-content: space-between;
+}
+
 /* .cea-database-editor-schedules-sheet {
   height: 500px;
 }
