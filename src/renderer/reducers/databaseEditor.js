@@ -13,14 +13,14 @@ import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
 const updateValidation = (state, validation) => {
   const { isValid, database, sheet, column, row, value } = validation;
   // Check if invalid value exists in store
-  if (checkNestedProp(state, database, sheet, column, row)) {
+  if (checkNestedProp(state, database, sheet, row, column)) {
     // Remove value if it is corrected else add it to store
-    if (isValid) deleteNestedProp(state, database, sheet, column, row);
-    else state[database][sheet][column][row] = value;
+    if (isValid) deleteNestedProp(state, database, sheet, row, column);
+    else state[database][sheet][row][column] = value;
     // Add to store if value does not exist
   } else {
-    createNestedProp(state, database, sheet, column, row);
-    state[database][sheet][column][row] = value;
+    createNestedProp(state, database, sheet, row, column);
+    state[database][sheet][row][column] = value;
   }
   return { ...state };
 };
