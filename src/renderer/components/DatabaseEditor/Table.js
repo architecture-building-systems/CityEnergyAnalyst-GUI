@@ -27,28 +27,24 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
     const rowHeaders = tableInstance.getRowHeader();
 
     const afterValidate = (isValid, value, row, prop, source) => {
-      // Only dispatch to redux during edit, undo, redo
+      // Do not dispatch if validated manually
       switch (source) {
-        case 'edit':
-        case 'UndoRedo.undo':
-        case 'UndoRedo.redo':
-          {
-            const col =
-              typeof colHeaders[prop] !== 'undefined' ? colHeaders[prop] : prop;
-            dispatch(
-              updateDatabaseValidation({
-                database,
-                sheet,
-                isValid,
-                row: rowHeaders[row],
-                column: col,
-                value
-              })
-            );
-          }
+        case 'validateCells':
           break;
-        default:
-          break;
+        default: {
+          const col =
+            typeof colHeaders[prop] !== 'undefined' ? colHeaders[prop] : prop;
+          dispatch(
+            updateDatabaseValidation({
+              database,
+              sheet,
+              isValid,
+              row: rowHeaders[row],
+              column: col,
+              value
+            })
+          );
+        }
       }
     };
 
