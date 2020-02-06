@@ -27,27 +27,46 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
 
     tableInstance.updateSettings({
       afterValidate: (isValid, value, row, prop, source) => {
-        const col =
-          typeof colHeaders[prop] !== 'undefined' ? colHeaders[prop] : prop;
-        console.log(tableID, isValid, rowHeaders[row], col, value);
-        dispatch(
-          updateDatabaseValidation({
-            id: tableID,
-            isValid,
-            row: rowHeaders[row],
-            column: col,
-            value
-          })
-        );
+        // Only dispatch to redux during edit, undo, redo
+        switch (source) {
+          case 'edit':
+          case 'UndoRedo.undo':
+          case 'UndoRedo.redo':
+            {
+              const col =
+                typeof colHeaders[prop] !== 'undefined'
+                  ? colHeaders[prop]
+                  : prop;
+              dispatch(
+                updateDatabaseValidation({
+                  database,
+                  sheet,
+                  isValid,
+                  row: rowHeaders[row],
+                  column: col,
+                  value
+                })
+              );
+            }
+            break;
+          default:
+            break;
+        }
       },
       afterChange: (changes, source) => {
-        if (source !== 'loadData') {
-          const _changes = changes.map(change => {
-            const [row, prop, oldVal, newVal] = change;
-            const col =
-              typeof colHeaders[prop] !== 'undefined' ? colHeaders[prop] : prop;
-            console.log(tableID, rowHeaders[row], col, oldVal, newVal);
-          });
+        switch (source) {
+          // Do nothing when loading data
+          case 'loadData':
+            break;
+          default: {
+            // const _changes = changes.map(change => {
+            //   const [row, prop, oldVal, newVal] = change;
+            //   const col =
+            //     typeof colHeaders[prop] !== 'undefined'
+            //       ? colHeaders[prop]
+            //       : prop;
+            // });
+          }
         }
       }
     });
