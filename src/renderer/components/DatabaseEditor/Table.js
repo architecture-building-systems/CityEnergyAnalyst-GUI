@@ -15,13 +15,12 @@ const Table = React.forwardRef((props, ref) => {
   );
 });
 
-export const useTableUpdateRedux = tableRef => {
+export const useTableUpdateRedux = (tableRef, database, sheet) => {
   const dispatch = useDispatch();
   const updateRedux = () => {
     dispatch(updateDatabaseState());
   };
   useEffect(() => {
-    const tableID = tableRef.current.id;
     const tableInstance = tableRef.current.hotInstance;
     const colHeaders = tableInstance.getColHeader();
     const rowHeaders = tableInstance.getRowHeader();
