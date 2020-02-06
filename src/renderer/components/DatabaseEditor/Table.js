@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
@@ -20,57 +20,63 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
   const updateRedux = () => {
     dispatch(updateDatabaseState());
   };
+
   useEffect(() => {
     const tableInstance = tableRef.current.hotInstance;
     const colHeaders = tableInstance.getColHeader();
     const rowHeaders = tableInstance.getRowHeader();
 
-    tableInstance.updateSettings({
-      afterValidate: (isValid, value, row, prop, source) => {
-        // Only dispatch to redux during edit, undo, redo
-        switch (source) {
-          case 'edit':
-          case 'UndoRedo.undo':
-          case 'UndoRedo.redo':
-            {
-              const col =
-                typeof colHeaders[prop] !== 'undefined'
-                  ? colHeaders[prop]
-                  : prop;
-              dispatch(
-                updateDatabaseValidation({
-                  database,
-                  sheet,
-                  isValid,
-                  row: rowHeaders[row],
-                  column: col,
-                  value
-                })
-              );
-            }
-            break;
-          default:
-            break;
-        }
-      },
-      afterChange: (changes, source) => {
-        switch (source) {
-          // Do nothing when loading data
-          case 'loadData':
-            break;
-          default: {
-            // const _changes = changes.map(change => {
-            //   const [row, prop, oldVal, newVal] = change;
-            //   const col =
-            //     typeof colHeaders[prop] !== 'undefined'
-            //       ? colHeaders[prop]
-            //       : prop;
-            // });
+    const afterValidate = (isValid, value, row, prop, source) => {
+      // Only dispatch to redux during edit, undo, redo
+      switch (source) {
+        case 'edit':
+        case 'UndoRedo.undo':
+        case 'UndoRedo.redo':
+          {
+            const col =
+              typeof colHeaders[prop] !== 'undefined' ? colHeaders[prop] : prop;
+            dispatch(
+              updateDatabaseValidation({
+                database,
+                sheet,
+                isValid,
+                row: rowHeaders[row],
+                column: col,
+                value
+              })
+            );
           }
+          break;
+        default:
+          break;
+      }
+    };
+
+    const afterChange = (changes, source) => {
+      switch (source) {
+        // Do nothing when loading data
+        case 'loadData':
+          break;
+        default: {
+          // const _changes = changes.map(change => {
+          //   const [row, prop, oldVal, newVal] = change;
+          //   const col =
+          //     typeof colHeaders[prop] !== 'undefined'
+          //       ? colHeaders[prop]
+          //       : prop;
+          // });
         }
       }
-    });
-  }, []);
+    };
+
+    Handsontable.hooks.add('afterValidate', afterValidate, tableInstance);
+    Handsontable.hooks.add('afterChange', afterChange, tableInstance);
+    return () => {
+      Handsontable.hooks.remove('afterValidate', afterValidate, tableInstance);
+      Handsontable.hooks.remove('afterChange', afterChange, tableInstance);
+    };
+  }, [sheet]);
+
   return updateRedux;
 };
 
