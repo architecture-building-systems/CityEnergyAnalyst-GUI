@@ -1,38 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import { Tabs, Icon, Button, Modal } from 'antd';
+import { Tabs, Icon, Button, Modal, Menu } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import './DatabaseEditor.css';
 import {
-  fetchDatabase,
   resetDatabaseState,
-  fetchDatabaseGlossary
+  initDatabaseState
 } from '../../actions/databaseEditor';
 import Table, { TableButtons, useTableUpdateRedux } from './Table';
+import { Route, Switch, useParams } from 'react-router-dom';
 import { months_short } from '../../constants/months';
 import { AsyncError } from '../../utils';
 import routes from '../../constants/routes';
 import { useChangeRoute } from '../Project/Project';
-
-const useFetchDatabaseCategories = () => {
-  const [dbCategories, setDBCategories] = useState({});
-
-  useEffect(() => {
-    const fetchDBCategories = async () => {
-      try {
-        const resp = await axios.get('http://localhost:5050/api/databases/');
-        setDBCategories(resp.data.databases);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    fetchDBCategories();
-  }, []);
-
-  return dbCategories;
-};
 
 const useDatabaseGlossary = columns => {
   const dbGlossary = useSelector(state => state.databaseEditor.glossary);
@@ -148,7 +130,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
         <div>
           <h2>Changes Saved!</h2>
           <Button type="primary" onClick={goToScript}>
-            Run Archetypes Mapper
+            Go to Archetypes Mapper
           </Button>
           <Button onClick={hideModal}>Back</Button>
         </div>
@@ -159,23 +141,13 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
 
 const DatabaseEditor = () => {
   const [valid, checkDBPathValidity] = useValidateDatabasePath();
-  const dbCategories = useFetchDatabaseCategories();
-  const dispatch = useDispatch();
   const goToScript = useChangeRoute(`${routes.TOOLS}/data-initializer`);
-
-  // Reset Database state on unmount
-  useEffect(() => {
-    dispatch(fetchDatabaseGlossary());
-    return () => {
-      dispatch(resetDatabaseState());
-    };
-  }, []);
 
   if (valid === null)
     return (
       <CenterSpinner
         indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
-        tip="Looking for Databases..."
+        tip="Verifying Databases..."
       />
     );
 
@@ -187,30 +159,71 @@ const DatabaseEditor = () => {
           <Button type="primary" onClick={goToScript}>
             Assign Database
           </Button>
+          <Button type="primary" onClick={goToScript}>
+            Export Database
+          </Button>
         </div>
       </div>
-
-      {valid ? (
-        <React.Fragment>
-          <div className="cea-database-editor-content">
-            <ValidationErrors databaseCategories={dbCategories} />
-            <DatabaseCategoryTabs databaseCategories={dbCategories} />
+      <div className="cea-database-editor-content">
+        {valid ? (
+          <DatabaseContentContainer />
+        ) : (
+          <div>
+            <div>Could not find or validate databases. Try assigning one</div>
+            <Button onClick={checkDBPathValidity}>Try Again</Button>
           </div>
+        )}
+      </div>
+      <div className="cea-database-editor-footer"></div>
+    </div>
+  );
+};
 
-          <div className="cea-database-editor-footer"></div>
-        </React.Fragment>
-      ) : (
-        <div>
-          <div>Could not find or validate databases. Try assigning one</div>
-          <Button onClick={checkDBPathValidity}>Try Again</Button>
-        </div>
-      )}
+const DatabaseContentContainer = () => {
+  const { status, error } = useSelector(state => state.databaseEditor.status);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(initDatabaseState());
+
+    // Reset Database state on unmount
+    return () => {
+      dispatch(resetDatabaseState());
+    };
+  }, []);
+
+  if (status === 'fetching')
+    return (
+      <CenterSpinner
+        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        tip="Reading Databases..."
+      />
+    );
+  if (status === 'failed') return <div>{JSON.stringify(error)}</div>;
+
+  if (status !== 'success') return null;
+
+  return <DatabaseContent />;
+};
+
+const DatabaseContent = () => {
+  return (
+    <div>
+      <DatabaseTabs />
+      <Switch>
+        <Route path={`${routes.DATABASE_EDITOR}/:category/:name`}>
+          <DatabaseContainer />
+        </Route>
+        <Route path={routes.DATABASE_EDITOR}>
+          <div>Select a database</div>
+        </Route>
+      </Switch>
     </div>
   );
 };
 
 const SaveDatabaseButton = () => {
-  const databaseData = useSelector(state => state.databaseEditor.data);
+  const databasesData = useSelector(state => state.databaseEditor.data);
   const databaseValidation = useSelector(
     state => state.databaseEditor.validation
   );
@@ -227,9 +240,10 @@ const SaveDatabaseButton = () => {
   const saveDB = async () => {
     setModalVisible(true);
     try {
+      console.log(databasesData);
       const resp = await axios.put(
         'http://localhost:5050/api/inputs/databases',
-        databaseData
+        databasesData
       );
       console.log(resp.data);
       setSuccess(true);
@@ -256,66 +270,80 @@ const SaveDatabaseButton = () => {
   );
 };
 
-const DatabaseCategoryTabs = ({ databaseCategories }) => {
-  return (
-    <div>
-      <h1>Database Category</h1>
-      <Tabs
-        className="cea-database-editor-tabs"
-        size="small"
-        tabPosition="left"
-        animated={false}
-      >
-        {Object.keys(databaseCategories).map(dbCategory => (
-          <Tabs.TabPane key={dbCategory} tab={dbCategory.toUpperCase()}>
-            <h1>Databases</h1>
-            <DatabaseNameTabs databaseNames={databaseCategories[dbCategory]} />
-          </Tabs.TabPane>
-        ))}
-      </Tabs>
-    </div>
-  );
-};
+const DatabaseTabs = () => {
+  const data = useSelector(state => state.databaseEditor.data);
+  const [selectedKey, setSelected] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [visible, setVisible] = useState(false);
 
-const DatabaseNameTabs = ({ databaseNames }) => {
-  return (
-    <div>
-      <Tabs className="cea-database-editor-tabs" size="small" animated={false}>
-        {databaseNames.map(dbName => (
-          <Tabs.TabPane key={dbName} tab={dbName}>
-            <DatabaseContainer databaseName={dbName} />
-          </Tabs.TabPane>
-        ))}
-      </Tabs>
-    </div>
-  );
-};
+  const goToDatabase = useChangeRoute(`${routes.DATABASE_EDITOR}/${location}`);
 
-const DatabaseContainer = ({ databaseName }) => {
-  const databaseData = useSelector(
-    state => state.databaseEditor.data[databaseName]
-  );
-  const dispatch = useDispatch();
+  const handleOk = () => {
+    setVisible(false);
+    setLocation(selectedKey);
+  };
+
+  const handleCancel = () => {
+    setVisible(false);
+    setSelected(location);
+  };
 
   useEffect(() => {
-    dispatch(fetchDatabase(databaseName));
-  }, []);
+    if (selectedKey !== location) setVisible(true);
+  }, [selectedKey]);
 
-  if (typeof databaseData === 'undefined' || databaseData.status === 'fetching')
-    return (
-      <CenterSpinner
-        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
-        tip="Reading Database..."
-      />
-    );
-  if (databaseData.status === 'failed')
-    return <div>{JSON.stringify(databaseData.error)}</div>;
+  useEffect(() => {
+    // Prevent going to /database-editor/null on mount
+    if (location !== null) goToDatabase();
+  }, [location]);
+
+  return (
+    <div>
+      <Menu
+        mode="horizontal"
+        onClick={({ key }) => {
+          if (location === null) setLocation(key);
+          else setSelected(key);
+        }}
+        selectedKeys={location !== null ? [location] : []}
+      >
+        {Object.keys(data).map(category => (
+          <Menu.SubMenu key={category} title={category.toUpperCase()}>
+            {Object.keys(data[category]).map(name => (
+              <Menu.Item key={`${category}/${name}`}>{name}</Menu.Item>
+            ))}
+          </Menu.SubMenu>
+        ))}
+      </Menu>
+      <Modal
+        centered
+        closable={false}
+        visible={visible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        There are still unsaved changes.
+        <br />
+        <i>(Any unsaved changes will be discarded)</i>
+        <br />
+        <br />
+        Are you sure you want to navigate away?
+      </Modal>
+    </div>
+  );
+};
+
+const DatabaseContainer = () => {
+  const data = useSelector(state => state.databaseEditor.data);
+  const schema = useSelector(state => state.databaseEditor.schema);
+  const { category, name } = useParams();
+
   return (
     <div>
       <Database
-        name={databaseName}
-        data={databaseData.data}
-        schema={databaseData.schema}
+        name={name}
+        data={data[category][name]}
+        schema={schema[category][name]}
       />
       <SaveDatabaseButton />
     </div>
@@ -323,45 +351,53 @@ const DatabaseContainer = ({ databaseName }) => {
 };
 
 const Database = ({ name, data, schema }) => {
-  const [selectedSheet, setSelected] = useState(Object.keys(data)[0]);
-
   return (
-    <div>
-      <Tabs
-        className="cea-database-editor-tabs"
-        type="card"
-        activeKey={selectedSheet}
-        onChange={setSelected}
-      >
+    <div className="cea-database-editor-database">
+      <h2>{name}</h2>
+      <Tabs className="cea-database-editor-tabs" type="card">
         {Object.keys(data).map(sheetName => (
-          <Tabs.TabPane key={sheetName} tab={sheetName} />
+          <Tabs.TabPane key={sheetName} tab={sheetName}>
+            {name !== 'schedules' ? (
+              <DatabaseTable
+                databaseName={name}
+                sheetName={sheetName}
+                sheetData={data[sheetName]}
+                schema={schema[sheetName]}
+              />
+            ) : (
+              <SchedulesTable
+                databaseName={name}
+                sheetName={sheetName}
+                sheetData={data[sheetName]}
+                schema={schema[sheetName]}
+              />
+            )}
+          </Tabs.TabPane>
         ))}
       </Tabs>
-      {name !== 'schedules' ? (
-        <DatabaseTable
-          databaseName={name}
-          sheetName={selectedSheet}
-          sheetData={data[selectedSheet]}
-          schema={schema[selectedSheet]}
-        />
-      ) : (
-        <SchedulesTable
-          databaseName={name}
-          sheetName={selectedSheet}
-          sheetData={data[selectedSheet]}
-          schema={schema[selectedSheet]}
-        />
-      )}
     </div>
   );
 };
 
-const useTableSchema = (schema, tableData) => {
+const useTableSchema = (schema, sheetName, tableData) => {
   const colHeaders = Object.keys(tableData[0]);
   const columns = colHeaders.map(key => {
     if (schema[key]['types_found']) {
-      if (['long', 'float', 'int'].includes(schema[key]['types_found'][0]))
-        return { data: key, type: 'numeric' };
+      if (['long', 'float', 'int'].includes(schema[key]['types_found'][0])) {
+        if (['heating', 'cooling'].includes(sheetName))
+          return {
+            data: key,
+            type: 'numeric',
+            validator: (value, callback) => {
+              if (value === 'NA' || !isNaN(value)) {
+                callback(true);
+              } else {
+                callback(false);
+              }
+            }
+          };
+        else return { data: key, type: 'numeric' };
+      }
     }
     return { data: key };
   });
@@ -391,24 +427,26 @@ const ColumnGlossary = ({ colHeaders }) => {
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   const tableRef = useRef(null);
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const { columns, colHeaders } = useTableSchema(schema, sheetData);
+  const { columns, colHeaders } = useTableSchema(schema, sheetName, sheetData);
 
-  //  Revalidate cells on sheet change
+  // Validate cells on mount
   useEffect(() => {
     tableRef.current.hotInstance.validateCells();
-  }, [sheetName]);
+  }, []);
 
   return (
     <div className="cea-database-editor-sheet">
+      <TableButtons tableRef={tableRef} sheetData={sheetData} />
       <Table
         ref={tableRef}
         id={databaseName}
         data={sheetData}
+        contextMenu={true}
         colHeaders={colHeaders}
         rowHeaders={true}
         columns={columns}
         stretchH="all"
-        height={500}
+        height={400}
       />
     </div>
   );
