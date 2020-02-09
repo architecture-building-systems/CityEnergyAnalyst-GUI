@@ -35,6 +35,30 @@ export const fetchDatabase = db => dispatch => {
   fetchAll();
 };
 
+export const FETCH_ALL_DATABASES = 'FETCH_ALL_DATABASES';
+export const FETCH_ALL_DATABASES_SUCCESS = 'FETCH_ALL_DATABASES_SUCCESS';
+export const FETCH_ALL_DATABASES_FAILURE = 'FETCH_ALL_DATABASES_FAILURE';
+export const fetchAllDatabases = () => dispatch => {
+  const fetchAll = async () => {
+    try {
+      dispatch({ type: FETCH_ALL_DATABASES });
+      // eslint-disable-next-line
+      const values = await Promise.all([
+        fetchDBData('all'),
+        fetchDBSchema('all')
+      ]);
+      dispatch({
+        type: FETCH_ALL_DATABASES_SUCCESS,
+        payload: { data: values[0], schema: values[1] }
+      });
+    } catch (err) {
+      dispatch({ type: FETCH_ALL_DATABASES_FAILURE, payload: { data: err } });
+    }
+  };
+
+  fetchAll();
+};
+
 export const FETCH_DATABASE_GLOSSARY = 'FETCH_DATABASE_GLOSSARY';
 export const FETCH_DATABASE_GLOSSARY_SUCCESS =
   'FETCH_DATABASE_GLOSSARY_SUCCESS';
