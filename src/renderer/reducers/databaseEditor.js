@@ -33,7 +33,7 @@ const databaseValidation = (state = {}, { type, payload }) => {
         if (isValid) deleteNestedProp(state, database, sheet, row, column);
         else state[database][sheet][row][column] = value;
         // Add to store if value does not exist
-      } else {
+      } else if (!isValid) {
         createNestedProp(state, database, sheet, row, column);
         state[database][sheet][row][column] = value;
       }
