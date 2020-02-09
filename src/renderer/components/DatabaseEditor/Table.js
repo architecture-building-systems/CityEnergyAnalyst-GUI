@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
@@ -76,9 +76,62 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
   return updateRedux;
 };
 
+export const useTableUndoRedo = tableRef => {
+  const [undoAvailable, setUndo] = useState(false);
+  const [redoAvailable, setRedo] = useState(false);
+
+  const undo = () => {
+    tableRef.current.hotInstance.undo();
+  };
+  const redo = () => {
+    tableRef.current.hotInstance.redo();
+  };
+
+  useEffect(() => {
+    const tableInstance = tableRef.current.hotInstance;
+    const checkUndo = () => {
+      setUndo(tableInstance.isUndoAvailable());
+    };
+    const checkRedo = () => {
+      setRedo(tableInstance.isRedoAvailable());
+    };
+
+    // Enable oberserveChanges for `change` event
+    tableInstance.updateSettings({
+      observeChanges: true
+    });
+
+    // Use `afterChangesObserverd instead of `afterChange`
+    // to observe changes to number of rows
+    Handsontable.hooks.add(
+      'afterChangesObserved',
+      [checkUndo, checkRedo],
+      tableInstance
+    );
+
+    // Handsontable.hooks.add(
+    //   'afterChange',
+    //   [checkUndo, checkRedo],
+    //   tableRef.current.hotInstance
+    // );
+  }, []);
+
+  return {
+    undoAvailable,
+    redoAvailable,
+    undo,
+    redo
+  };
+};
+
 export const TableButtons = ({ tableRef }) => {
+  const { undoAvailable, redoAvailable, undo, redo } = useTableUndoRedo(
+    tableRef
+  );
+
   return (
-    <div>
+    <div style={{ margin: 10 }}>
+      <p>Sheet Functions</p>
       <Button
         size="small"
         onClick={() => {
@@ -86,6 +139,12 @@ export const TableButtons = ({ tableRef }) => {
         }}
       >
         Add Row
+      </Button>
+      <Button size="small" icon="undo" disabled={!undoAvailable} onClick={undo}>
+        Undo
+      </Button>
+      <Button size="small" icon="redo" disabled={!redoAvailable} onClick={redo}>
+        Redo
       </Button>
     </div>
   );
