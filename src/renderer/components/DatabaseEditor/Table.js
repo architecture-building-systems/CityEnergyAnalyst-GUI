@@ -23,8 +23,6 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
 
   useEffect(() => {
     const tableInstance = tableRef.current.hotInstance;
-    const colHeaders = tableInstance.getColHeader();
-    const rowHeaders = tableInstance.getRowHeader();
 
     const afterValidate = (isValid, value, row, prop, source) => {
       // Do not dispatch if validated manually
@@ -32,15 +30,16 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
         case 'validateCells':
           break;
         default: {
-          const col =
-            typeof colHeaders[prop] !== 'undefined' ? colHeaders[prop] : prop;
+          const colHeader = tableInstance.getColHeader(prop) || prop;
+          const rowHeader = tableInstance.getRowHeader(row) || row;
+
           dispatch(
             updateDatabaseValidation({
               database,
               sheet,
               isValid,
-              row: rowHeaders[row],
-              column: col,
+              row: rowHeader,
+              column: colHeader,
               value
             })
           );
