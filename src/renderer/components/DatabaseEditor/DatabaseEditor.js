@@ -9,7 +9,8 @@ import './DatabaseEditor.css';
 import {
   resetDatabaseState,
   initDatabaseState,
-  setDatabaseTabs
+  setDatabaseTabs,
+  resetDatabaseChanges
 } from '../../actions/databaseEditor';
 import Table, { TableButtons, useTableUpdateRedux } from './Table';
 import { months_short } from '../../constants/months';
@@ -248,6 +249,7 @@ const SaveDatabaseButton = () => {
   const databaseValidation = useSelector(
     state => state.databaseEditor.validation
   );
+  const dispatch = useDispatch();
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -268,6 +270,7 @@ const SaveDatabaseButton = () => {
       );
       console.log(resp.data);
       setSuccess(true);
+      dispatch(resetDatabaseChanges());
     } catch (err) {
       console.log(err.response);
       setError(err.response);

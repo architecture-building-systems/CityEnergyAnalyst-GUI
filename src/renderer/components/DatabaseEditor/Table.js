@@ -5,7 +5,8 @@ import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import {
   updateDatabaseState,
-  updateDatabaseValidation
+  updateDatabaseValidation,
+  updateDatabaseChanges
 } from '../../actions/databaseEditor';
 import { Button } from 'antd';
 
@@ -60,6 +61,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
           //       ? colHeaders[prop]
           //       : prop;
           // });
+          dispatch(updateDatabaseChanges(changes));
         }
       }
     };

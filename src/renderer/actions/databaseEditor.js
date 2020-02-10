@@ -66,30 +66,6 @@ export const fetchDatabaseGlossary = () => async dispatch => {
   }
 };
 
-// export const FETCH_ALL_DATABASES = 'FETCH_ALL_DATABASES';
-// export const FETCH_ALL_DATABASES_SUCCESS = 'FETCH_ALL_DATABASES_SUCCESS';
-// export const FETCH_ALL_DATABASES_FAILURE = 'FETCH_ALL_DATABASES_FAILURE';
-// export const fetchAllDatabases = () => dispatch => {
-//   const fetchAll = async () => {
-//     try {
-//       dispatch({ type: FETCH_ALL_DATABASES });
-//       // eslint-disable-next-line
-//       const values = await Promise.all([
-//         fetchDBData('all'),
-//         fetchDBSchema('all')
-//       ]);
-//       dispatch({
-//         type: FETCH_ALL_DATABASES_SUCCESS,
-//         payload: { data: values[0], schema: values[1] }
-//       });
-//     } catch (err) {
-//       dispatch({ type: FETCH_ALL_DATABASES_FAILURE, payload: { data: err } });
-//     }
-//   };
-
-//   fetchAll();
-// };
-
 export const UPDATE_DATABASE_VALIDATION = 'UPDATE_DATABASE_VALIDATION';
 export const updateDatabaseValidation = validation => ({
   type: UPDATE_DATABASE_VALIDATION,
@@ -102,8 +78,8 @@ export const updateDatabaseChanges = change => ({
   payload: change
 });
 
-export const UPDATE_DATABASE_STATE = 'UPDATE_DATABASE_STATE';
-export const updateDatabaseState = () => ({ type: UPDATE_DATABASE_STATE });
+export const RESET_DATABASE_CHANGES = 'RESET_DATABASE_CHANGES';
+export const resetDatabaseChanges = () => ({ type: RESET_DATABASE_CHANGES });
 
 export const RESET_DATABASE_STATE = 'RESET_DATABASE_STATE';
 export const resetDatabaseState = () => ({ type: RESET_DATABASE_STATE });

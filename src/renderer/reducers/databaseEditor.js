@@ -1,5 +1,5 @@
 import {
-  UPDATE_DATABASE_STATE,
+  UPDATE_DATABASE_CHANGES,
   RESET_DATABASE_STATE,
   FETCH_DATABASE_DATA_SUCCESS,
   UPDATE_DATABASE_VALIDATION,
@@ -10,7 +10,8 @@ import {
   INIT_DATABASE_STATE_SUCCESS,
   FETCH_DATABASE_DATA_FAILURE,
   FETCH_DATABASE_SCHEMA_FAILURE,
-  FETCH_DATABASE_GLOSSARY_FAILURE
+  FETCH_DATABASE_GLOSSARY_FAILURE,
+  RESET_DATABASE_CHANGES
 } from '../actions/databaseEditor';
 import { combineReducers } from 'redux';
 import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
@@ -56,9 +57,6 @@ const databaseGlossary = (state = [], { type, payload }) => {
 
 const databaseData = (state = {}, { type, payload }) => {
   switch (type) {
-    case UPDATE_DATABASE_STATE:
-      console.log(payload);
-      return state;
     case FETCH_DATABASE_DATA_SUCCESS:
       return payload;
     case RESET_DATABASE_STATE:
@@ -110,13 +108,26 @@ const databaseTabs = (
   }
 };
 
+const databaseChanges = (state = [], { type, payload }) => {
+  switch (type) {
+    case UPDATE_DATABASE_CHANGES:
+      return [...state, payload];
+    case RESET_DATABASE_CHANGES:
+    case RESET_DATABASE_STATE:
+      return [];
+    default:
+      return state;
+  }
+};
+
 const databaseEditor = combineReducers({
   status: databaseStatus,
   validation: databaseValidation,
   data: databaseData,
   schema: databaseSchema,
   glossary: databaseGlossary,
-  tabs: databaseTabs
+  tabs: databaseTabs,
+  changes: databaseChanges
 });
 
 export default databaseEditor;
