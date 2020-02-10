@@ -92,7 +92,6 @@ const ValidationErrors = ({ databaseName }) => {
 
 const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
   const goToScript = useChangeRoute(`${routes.TOOLS}/data-helper`);
-  const [showExportModal, setExportModal] = useState(false);
   return (
     <Modal
       visible={visible}
@@ -109,14 +108,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
             <Button key="back" onClick={hideModal}>
               Back
             </Button>,
-            <Button
-              key="export"
-              onClick={() => {
-                setExportModal(true);
-              }}
-            >
-              Export Database
-            </Button>,
+            <ExportDatabaseButton key="export" />,
             <Button key="script" type="primary" onClick={goToScript}>
               Go to Archetypes Mapper
             </Button>
@@ -146,10 +138,6 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
           </p>
         </div>
       )}
-      <ExportDatabaseModal
-        visible={showExportModal}
-        setVisible={setExportModal}
-      />
     </Modal>
   );
 };
@@ -171,6 +159,7 @@ const DatabaseEditor = () => {
       <div className="cea-database-editor-header">
         <h2>Database Editor</h2>
         <div>
+          <ExportDatabaseButton />
           <Button type="primary" onClick={goToScript}>
             Assign Database
           </Button>
@@ -227,6 +216,29 @@ const DatabaseContent = () => {
   );
 };
 
+const ExportDatabaseButton = () => {
+  const databaseValidation = useSelector(
+    state => state.databaseEditor.validation
+  );
+  const [modalVisible, setModalVisible] = useState(false);
+  return (
+    <React.Fragment>
+      <Button
+        disabled={!!Object.keys(databaseValidation).length}
+        onClick={() => {
+          setModalVisible(true);
+        }}
+      >
+        Export Database
+      </Button>
+      <ExportDatabaseModal
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
+    </React.Fragment>
+  );
+};
+
 const SaveDatabaseButton = () => {
   const databasesData = useSelector(state => state.databaseEditor.data);
   const databaseValidation = useSelector(
@@ -258,7 +270,7 @@ const SaveDatabaseButton = () => {
     }
   };
   return (
-    <div>
+    <React.Fragment>
       <Button
         disabled={!!Object.keys(databaseValidation).length}
         onClick={saveDB}
@@ -271,7 +283,7 @@ const SaveDatabaseButton = () => {
         error={error}
         success={success}
       />
-    </div>
+    </React.Fragment>
   );
 };
 
