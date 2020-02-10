@@ -55,49 +55,37 @@ const useValidateDatabasePath = () => {
   return [valid, checkDBPathValidity];
 };
 
-const ValidationErrors = ({ databaseCategories }) => {
+const ValidationErrors = ({ databaseName }) => {
   const validation = useSelector(state => state.databaseEditor.validation);
+  if (typeof validation[databaseName] === 'undefined') return null;
 
   return (
-    <div>
-      {Object.keys(validation).length ? (
-        <div
-          style={{ border: '2px solid red', maxHeight: 200, overflow: 'auto' }}
-        >
-          <h1>Errors Found:</h1>
-          {Object.keys(validation).map(database => {
-            const sheets = validation[database];
-            const dbCategory = Object.keys(databaseCategories)
-              .find(key => databaseCategories[key].includes(database))
-              .toUpperCase();
-            return (
-              <div key={database} style={{ marginBottom: 10 }}>
-                <b
-                  style={{
-                    display: 'block'
-                  }}
-                >
-                  {`${dbCategory} - ${database}`}
-                </b>
-                {Object.keys(sheets).map(sheet => {
-                  const rows = sheets[sheet];
-                  return (
-                    <div key={sheet}>
-                      {Object.keys(rows).map(row => (
-                        <div
-                          key={row}
-                        >{`Sheet: ${sheet} Row: ${row} Col: ${Object.keys(
-                          rows[row]
-                        ).join(', ')}`}</div>
-                      ))}
+    <div style={{ margin: 10 }}>
+      <Alert
+        message="Errors Found in Database"
+        description={
+          <div>
+            {Object.keys(validation[databaseName]).map(sheet => {
+              const rows = validation[databaseName][sheet];
+              return (
+                <div key={sheet}>
+                  {Object.keys(rows).map(row => (
+                    <div key={row}>
+                      <i>Sheet: </i>
+                      <b>{sheet} </b>
+                      <i>Row: </i>
+                      <b>{row} </b>
+                      <i>Columns: </i>
+                      <b>{Object.keys(rows[row]).join(', ')}</b>
                     </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        }
+        type="error"
+      />
     </div>
   );
 };
@@ -330,6 +318,7 @@ const Database = ({ name, data, schema }) => {
   return (
     <div className="cea-database-editor-database">
       <h2>{name}</h2>
+      <ValidationErrors databaseName={name} />
       <Tabs className="cea-database-editor-tabs" type="card">
         {Object.keys(data).map(sheetName => (
           <Tabs.TabPane key={sheetName} tab={sheetName}>
@@ -417,7 +406,6 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
         ref={tableRef}
         id={databaseName}
         data={sheetData}
-        contextMenu={true}
         colHeaders={colHeaders}
         rowHeaders={true}
         columns={columns}
