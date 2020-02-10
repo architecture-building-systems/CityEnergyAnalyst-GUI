@@ -1,4 +1,3 @@
-import { httpAction } from '../store/httpMiddleware';
 import axios from 'axios';
 
 export const INIT_DATABASE_STATE = 'INIT_DATABASE_STATE';

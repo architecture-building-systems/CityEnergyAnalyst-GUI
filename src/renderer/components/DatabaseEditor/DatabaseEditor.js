@@ -12,7 +12,6 @@ import {
   setDatabaseTabs
 } from '../../actions/databaseEditor';
 import Table, { TableButtons, useTableUpdateRedux } from './Table';
-import { Route, Switch, useParams } from 'react-router-dom';
 import { months_short } from '../../constants/months';
 import { AsyncError } from '../../utils';
 import routes from '../../constants/routes';
