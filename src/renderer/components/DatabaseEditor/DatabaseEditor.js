@@ -217,10 +217,14 @@ const DatabaseContent = () => {
 };
 
 const ExportDatabaseButton = () => {
+  const { status } = useSelector(state => state.databaseEditor.status);
   const databaseValidation = useSelector(
     state => state.databaseEditor.validation
   );
   const [modalVisible, setModalVisible] = useState(false);
+
+  if (status !== 'success') return null;
+
   return (
     <React.Fragment>
       <Button
