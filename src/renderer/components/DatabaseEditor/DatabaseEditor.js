@@ -201,7 +201,7 @@ const DatabaseContentContainer = () => {
         tip="Reading Databases..."
       />
     );
-  if (status === 'failed') return <div>{JSON.stringify(error)}</div>;
+  if (status === 'failed') return <AsyncError error={error} />;
 
   if (status !== 'success') return null;
 

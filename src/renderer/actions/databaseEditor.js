@@ -2,14 +2,18 @@ import axios from 'axios';
 
 export const INIT_DATABASE_STATE = 'INIT_DATABASE_STATE';
 export const INIT_DATABASE_STATE_SUCCESS = 'INIT_DATABASE_STATE_SUCCESS';
-export const initDatabaseState = () => async dispatch => {
+export const initDatabaseState = () => async (dispatch, getState) => {
   dispatch({ type: INIT_DATABASE_STATE });
   // eslint-disable-next-line
   return Promise.all([
     dispatch(fetchDatabaseData('all')),
     dispatch(fetchDatabaseSchema('all')),
     dispatch(fetchDatabaseGlossary())
-  ]).then(() => dispatch({ type: INIT_DATABASE_STATE_SUCCESS }));
+  ]).then(() => {
+    const { status } = getState().databaseEditor.status;
+    if (status !== 'failed')
+      return dispatch({ type: INIT_DATABASE_STATE_SUCCESS });
+  });
 };
 
 export const FETCH_DATABASE_DATA = 'FETCH_DATABASE_DATA';
@@ -26,7 +30,10 @@ export const fetchDatabaseData = db => async dispatch => {
       payload: data
     });
   } catch (err) {
-    return dispatch({ type: FETCH_DATABASE_DATA_FAILURE, payload: err });
+    return dispatch({
+      type: FETCH_DATABASE_DATA_FAILURE,
+      payload: err.response || err
+    });
   }
 };
 
@@ -44,7 +51,10 @@ export const fetchDatabaseSchema = db => async dispatch => {
       payload: data
     });
   } catch (err) {
-    return dispatch({ type: FETCH_DATABASE_SCHEMA_FAILURE, payload: err });
+    return dispatch({
+      type: FETCH_DATABASE_SCHEMA_FAILURE,
+      payload: err.response || err
+    });
   }
 };
 
@@ -62,7 +72,10 @@ export const fetchDatabaseGlossary = () => async dispatch => {
       payload: data
     });
   } catch (err) {
-    return dispatch({ type: FETCH_DATABASE_GLOSSARY_FAILURE, payload: err });
+    return dispatch({
+      type: FETCH_DATABASE_GLOSSARY_FAILURE,
+      payload: err.response || err
+    });
   }
 };
 
