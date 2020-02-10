@@ -310,7 +310,16 @@ const DatabaseTabs = () => {
           </Menu.SubMenu>
         ))}
       </Menu>
-      <Modal centered closable={false} visible={visible} onOk={handleOk}>
+      <Modal
+        centered
+        closable={false}
+        visible={visible}
+        footer={[
+          <Button key="back" onClick={handleOk}>
+            Go Back
+          </Button>
+        ]}
+      >
         There are still errors in this database.
         <br />
         You would need to fix the errors before navigating to another database
