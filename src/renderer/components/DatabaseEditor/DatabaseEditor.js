@@ -92,7 +92,7 @@ const ValidationErrors = ({ databaseName }) => {
 };
 
 const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
-  const goToScript = useChangeRoute(`${routes.TOOLS}/data-helper`);
+  const goToScript = useChangeRoute(`${routes.TOOLS}/archetypes-mapper`);
   return (
     <Modal
       visible={visible}
