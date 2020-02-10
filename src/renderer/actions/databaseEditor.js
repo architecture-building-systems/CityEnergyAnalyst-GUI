@@ -102,14 +102,8 @@ export const updateDatabaseState = () => ({ type: UPDATE_DATABASE_STATE });
 export const RESET_DATABASE_STATE = 'RESET_DATABASE_STATE';
 export const resetDatabaseState = () => ({ type: RESET_DATABASE_STATE });
 
-export const SET_DATABASE_CATAGORY_TAB = 'SET_DATABASE_CATAGORY_TAB';
-export const setDatabaseCatagoryTab = catagory => ({
-  type: SET_DATABASE_CATAGORY_TAB,
-  payload: catagory
-});
-
-export const SET_DATABASE_NAME_TAB = 'SET_DATABASE_NAME_TAB';
-export const setDatabaseNameTab = name => ({
-  type: SET_DATABASE_NAME_TAB,
-  payload: name
+export const SET_DATABASE_TABS = 'SET_DATABASE_TABS';
+export const setDatabaseTabs = (category, name) => ({
+  type: SET_DATABASE_TABS,
+  payload: { category, name }
 });

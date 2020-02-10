@@ -7,7 +7,8 @@ import CenterSpinner from '../HomePage/CenterSpinner';
 import './DatabaseEditor.css';
 import {
   resetDatabaseState,
-  initDatabaseState
+  initDatabaseState,
+  setDatabaseTabs
 } from '../../actions/databaseEditor';
 import Table, { TableButtons, useTableUpdateRedux } from './Table';
 import { Route, Switch, useParams } from 'react-router-dom';
@@ -210,14 +211,7 @@ const DatabaseContent = () => {
   return (
     <div>
       <DatabaseTabs />
-      <Switch>
-        <Route path={`${routes.DATABASE_EDITOR}/:category/:name`}>
-          <DatabaseContainer />
-        </Route>
-        <Route path={routes.DATABASE_EDITOR}>
-          <div>Select a database</div>
-        </Route>
-      </Switch>
+      <DatabaseContainer />
     </div>
   );
 };
@@ -272,40 +266,30 @@ const SaveDatabaseButton = () => {
 
 const DatabaseTabs = () => {
   const data = useSelector(state => state.databaseEditor.data);
+  const validation = useSelector(state => state.databaseEditor.validation);
+  const dispatch = useDispatch();
   const [selectedKey, setSelected] = useState(null);
-  const [location, setLocation] = useState(null);
   const [visible, setVisible] = useState(false);
-
-  const goToDatabase = useChangeRoute(`${routes.DATABASE_EDITOR}/${location}`);
 
   const handleOk = () => {
     setVisible(false);
-    setLocation(selectedKey);
-  };
-
-  const handleCancel = () => {
-    setVisible(false);
-    setSelected(location);
   };
 
   useEffect(() => {
-    if (selectedKey !== location) setVisible(true);
+    if (selectedKey !== null)
+      dispatch(setDatabaseTabs(...selectedKey.split('/')));
   }, [selectedKey]);
-
-  useEffect(() => {
-    // Prevent going to /database-editor/null on mount
-    if (location !== null) goToDatabase();
-  }, [location]);
 
   return (
     <div>
       <Menu
         mode="horizontal"
         onClick={({ key }) => {
-          if (location === null) setLocation(key);
+          if (selectedKey !== key && Object.keys(validation).length)
+            setVisible(true);
           else setSelected(key);
         }}
-        selectedKeys={location !== null ? [location] : []}
+        selectedKeys={selectedKey !== null ? [selectedKey] : []}
       >
         {Object.keys(data).map(category => (
           <Menu.SubMenu key={category} title={category.toUpperCase()}>
@@ -315,19 +299,10 @@ const DatabaseTabs = () => {
           </Menu.SubMenu>
         ))}
       </Menu>
-      <Modal
-        centered
-        closable={false}
-        visible={visible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        There are still unsaved changes.
+      <Modal centered closable={false} visible={visible} onOk={handleOk}>
+        There are still errors in this database.
         <br />
-        <i>(Any unsaved changes will be discarded)</i>
-        <br />
-        <br />
-        Are you sure you want to navigate away?
+        You would need to fix the errors before navigating to another database
       </Modal>
     </div>
   );
@@ -336,7 +311,8 @@ const DatabaseTabs = () => {
 const DatabaseContainer = () => {
   const data = useSelector(state => state.databaseEditor.data);
   const schema = useSelector(state => state.databaseEditor.schema);
-  const { category, name } = useParams();
+  const { category, name } = useSelector(state => state.databaseEditor.tabs);
+  if (name === null) return <div>Select a database</div>;
 
   return (
     <div>
