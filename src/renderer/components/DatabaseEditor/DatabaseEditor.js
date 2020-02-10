@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import { Tabs, Icon, Button, Modal, Menu } from 'antd';
+import { Tabs, Icon, Button, Modal, Menu, Alert } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import CenterSpinner from '../HomePage/CenterSpinner';
+import ExportDatabaseModal from './ExportDatabaseModel';
 import './DatabaseEditor.css';
 import {
   resetDatabaseState,
@@ -92,23 +93,44 @@ const ValidationErrors = ({ databaseName }) => {
 
 const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
   const goToScript = useChangeRoute(`${routes.TOOLS}/data-helper`);
+  const [showExportModal, setExportModal] = useState(false);
   return (
     <Modal
       visible={visible}
       width={800}
-      footer={false}
       onCancel={hideModal}
       closable={false}
       maskClosable={false}
       destroyOnClose={true}
+      footer={
+        error ? (
+          <Button onClick={hideModal}>Back</Button>
+        ) : success ? (
+          [
+            <Button key="back" onClick={hideModal}>
+              Back
+            </Button>,
+            <Button
+              key="export"
+              onClick={() => {
+                setExportModal(true);
+              }}
+            >
+              Export Database
+            </Button>,
+            <Button key="script" type="primary" onClick={goToScript}>
+              Go to Archetypes Mapper
+            </Button>
+          ]
+        ) : null
+      }
     >
       {error ? (
         <div>
           <AsyncError error={error} />
-          <p>Changes were not saved</p>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={hideModal}>Cancel</Button>
-          </div>
+          <b>
+            <i>Changes were not saved</i>
+          </b>
         </div>
       ) : !success ? (
         <div>
@@ -118,12 +140,17 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
       ) : (
         <div>
           <h2>Changes Saved!</h2>
-          <Button type="primary" onClick={goToScript}>
-            Go to Archetypes Mapper
-          </Button>
-          <Button onClick={hideModal}>Back</Button>
+          <p>You can now export this database to a desired path.</p>
+          <p>
+            Remember to run <i>Archetypes Mapper</i> to map properties from this
+            database to your geometries.
+          </p>
         </div>
       )}
+      <ExportDatabaseModal
+        visible={showExportModal}
+        setVisible={setExportModal}
+      />
     </Modal>
   );
 };
@@ -147,9 +174,6 @@ const DatabaseEditor = () => {
         <div>
           <Button type="primary" onClick={goToScript}>
             Assign Database
-          </Button>
-          <Button type="primary" onClick={goToScript}>
-            Export Database
           </Button>
         </div>
       </div>

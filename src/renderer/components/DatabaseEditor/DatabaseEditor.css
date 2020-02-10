@@ -7,8 +7,16 @@
   justify-content: space-between;
 }
 
+.cea-database-editor-header button {
+  margin-left: 10px;
+}
+
 .cea-database-editor-database {
   margin: 20px;
+}
+
+.cea-database-editor-saving-modal-footer button {
+  margin-left: 10px;
 }
 
 /* .cea-database-editor-schedules-sheet {
