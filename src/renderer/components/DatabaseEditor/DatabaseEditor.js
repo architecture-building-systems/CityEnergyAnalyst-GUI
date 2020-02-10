@@ -249,6 +249,7 @@ const SaveDatabaseButton = () => {
   const databaseValidation = useSelector(
     state => state.databaseEditor.validation
   );
+  const databaseChanges = useSelector(state => state.databaseEditor.changes);
   const dispatch = useDispatch();
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
@@ -279,7 +280,10 @@ const SaveDatabaseButton = () => {
   return (
     <React.Fragment>
       <Button
-        disabled={!!Object.keys(databaseValidation).length}
+        // Disable button if there are validation errors or if there are no changes to data
+        disabled={
+          !!Object.keys(databaseValidation).length || !databaseChanges.length
+        }
         onClick={saveDB}
       >
         Save Databases
