@@ -102,6 +102,18 @@ const ExportForm = Form.create()(({ form }) => {
         initialValue=""
         help="Path to export Database"
         required={true}
+        rules={[
+          {
+            validator: (rule, value, callback) => {
+              console.log(path.resolve(value));
+              if (path.resolve(value) !== value) {
+                callback('Path entered is invalid');
+              } else {
+                callback();
+              }
+            }
+          }
+        ]}
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />
     </Form>

@@ -62,6 +62,18 @@ const OpenProjectForm = Form.create()(({ form, initialValue }) => {
         name="path"
         initialValue={initialValue}
         help="Path of Project"
+        rules={[
+          {
+            validator: (rule, value, callback) => {
+              console.log(path.resolve(value));
+              if (path.resolve(value) !== value) {
+                callback('Path entered is invalid');
+              } else {
+                callback();
+              }
+            }
+          }
+        ]}
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />
     </Form>
