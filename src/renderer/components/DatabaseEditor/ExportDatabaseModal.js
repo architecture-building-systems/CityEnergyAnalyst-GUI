@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { Modal, Form, message } from 'antd';
+import { Modal, Form, message, Alert } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { useSelector } from 'react-redux';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
+  const databaseChanges = useSelector(state => state.databaseEditor.changes);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 
@@ -52,6 +54,18 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
       confirmLoading={confirmLoading}
       destroyOnClose
     >
+      {!!databaseChanges.length && (
+        <div style={{ marginBottom: 30 }}>
+          <Alert
+            message="ATTENTION"
+            type="warning"
+            showIcon
+            description="There seems to be unsaved changes. These changes will only be present
+        in the exported database and not in the current one if they are not
+        saved. It is advised to save these changes before proceeding."
+          />
+        </div>
+      )}
       <ExportForm ref={formRef} />
     </Modal>
   );
