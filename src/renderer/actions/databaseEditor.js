@@ -81,6 +81,9 @@ export const updateDatabaseChanges = change => ({
 export const RESET_DATABASE_CHANGES = 'RESET_DATABASE_CHANGES';
 export const resetDatabaseChanges = () => ({ type: RESET_DATABASE_CHANGES });
 
+export const UPDATE_DATABASE_STATE = 'UPDATE_DATABASE_STATE';
+export const updateDatabaseState = () => ({ type: UPDATE_DATABASE_STATE });
+
 export const RESET_DATABASE_STATE = 'RESET_DATABASE_STATE';
 export const resetDatabaseState = () => ({ type: RESET_DATABASE_STATE });
 
