@@ -18,14 +18,7 @@ import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
 const databaseValidation = (state = {}, { type, payload }) => {
   switch (type) {
     case UPDATE_DATABASE_VALIDATION: {
-      const {
-        isValid,
-        database,
-        sheet,
-        column,
-        row,
-        value
-      } = payload.validation;
+      const { isValid, database, sheet, column, row, value } = payload;
       // Check if invalid value exists in store
       if (checkNestedProp(state, database, sheet, row, column)) {
         // Remove value if it is corrected else add it to store

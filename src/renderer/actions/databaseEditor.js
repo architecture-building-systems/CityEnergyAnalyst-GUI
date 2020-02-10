@@ -91,9 +91,16 @@ export const fetchDatabaseGlossary = () => async dispatch => {
 // };
 
 export const UPDATE_DATABASE_VALIDATION = 'UPDATE_DATABASE_VALIDATION';
-export const updateDatabaseValidation = validation => dispatch => {
-  dispatch({ type: UPDATE_DATABASE_VALIDATION, payload: { validation } });
-};
+export const updateDatabaseValidation = validation => ({
+  type: UPDATE_DATABASE_VALIDATION,
+  payload: validation
+});
+
+export const UPDATE_DATABASE_CHANGES = 'UPDATE_DATABASE_CHANGES';
+export const updateDatabaseChanges = change => ({
+  type: UPDATE_DATABASE_CHANGES,
+  payload: change
+});
 
 export const UPDATE_DATABASE_STATE = 'UPDATE_DATABASE_STATE';
 export const updateDatabaseState = () => ({ type: UPDATE_DATABASE_STATE });
