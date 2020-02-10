@@ -541,7 +541,11 @@ const SchedulesDataTable = ({
   data
 }) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
+  const updateRedux = useTableUpdateRedux(
+    tableRef,
+    databaseName,
+    `${sheetName}-${scheduleType}`
+  );
   const rowHeaders = Object.keys(data);
   const tableData = rowHeaders.map(row => data[row]);
   const colHeaders = Object.keys(tableData[0]).map(i => Number(i) + 1);
