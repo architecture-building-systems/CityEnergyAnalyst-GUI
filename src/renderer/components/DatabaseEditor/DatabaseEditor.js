@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Tabs, Icon, Button, Modal, Menu, Alert } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import CenterSpinner from '../HomePage/CenterSpinner';
-import ExportDatabaseModal from './ExportDatabaseModel';
+import ExportDatabaseModal from './ExportDatabaseModal';
 import './DatabaseEditor.css';
 import {
   resetDatabaseState,
