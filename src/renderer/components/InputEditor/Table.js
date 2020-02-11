@@ -414,7 +414,9 @@ const TableEditor = ({ tab, selected, tabulator }) => {
               {' surroundings-helper '}
             </Link>
           ) : (
-            <Link to={`${routes.TOOLS}/data-helper`}>{' data-helper '}</Link>
+            <Link to={`${routes.TOOLS}/archetypes-mapper`}>
+              {' archetypes-mapper '}
+            </Link>
           )}
           tool.
         </div>
