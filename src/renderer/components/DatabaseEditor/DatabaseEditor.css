@@ -2,9 +2,26 @@
   margin-right: 0;
 }
 
+.cea-database-editor {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+}
+
 .cea-database-editor-header {
   display: flex;
   justify-content: space-between;
+  grid-row: 1/2;
+}
+
+.cea-database-editor-content {
+  grid-row: 2/3;
+}
+
+.cea-database-editor-footer {
+  grid-row: 3/-1;
 }
 
 .cea-database-editor-header button {
@@ -18,15 +35,3 @@
 .cea-database-editor-saving-modal-footer button {
   margin-left: 10px;
 }
-
-/* .cea-database-editor-schedules-sheet {
-  height: 500px;
-}
-
-.cea-database-editor-schedule-year {
-  height: 70px;
-}
-
-.cea-database-editor-schedule-data {
-  height: 120px;
-} */

@@ -4,7 +4,7 @@ import {
   FETCH_DATABASE_DATA_SUCCESS,
   UPDATE_DATABASE_VALIDATION,
   FETCH_DATABASE_GLOSSARY_SUCCESS,
-  SET_DATABASE_TABS,
+  SET_ACTIVE_DATABASE,
   FETCH_DATABASE_SCHEMA_SUCCESS,
   INIT_DATABASE_STATE,
   INIT_DATABASE_STATE_SUCCESS,
@@ -99,7 +99,7 @@ const databaseTabs = (
   { type, payload }
 ) => {
   switch (type) {
-    case SET_DATABASE_TABS:
+    case SET_ACTIVE_DATABASE:
       return { category: payload.category, name: payload.name };
     case RESET_DATABASE_STATE:
       return { category: null, name: null };

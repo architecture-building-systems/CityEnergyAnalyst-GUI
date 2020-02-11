@@ -9,7 +9,7 @@ import './DatabaseEditor.css';
 import {
   resetDatabaseState,
   initDatabaseState,
-  setDatabaseTabs,
+  setActiveDatabase,
   resetDatabaseChanges
 } from '../../actions/databaseEditor';
 import Table, { TableButtons, useTableUpdateRedux } from './Table';
@@ -168,7 +168,7 @@ const DatabaseEditor = () => {
       </div>
       <div className="cea-database-editor-content">
         {valid ? (
-          <DatabaseContentContainer />
+          <DatabaseContent />
         ) : (
           <div>
             <div>Could not find or validate databases. Try assigning one</div>
@@ -181,7 +181,7 @@ const DatabaseEditor = () => {
   );
 };
 
-const DatabaseContentContainer = () => {
+const DatabaseContent = () => {
   const { status, error } = useSelector(state => state.databaseEditor.status);
   const dispatch = useDispatch();
 
@@ -205,15 +205,11 @@ const DatabaseContentContainer = () => {
 
   if (status !== 'success') return null;
 
-  return <DatabaseContent />;
-};
-
-const DatabaseContent = () => {
   return (
-    <div>
+    <React.Fragment>
       <DatabaseTabs />
       <DatabaseContainer />
-    </div>
+    </React.Fragment>
   );
 };
 
@@ -311,11 +307,11 @@ const DatabaseTabs = () => {
 
   useEffect(() => {
     if (selectedKey !== null)
-      dispatch(setDatabaseTabs(...selectedKey.split('/')));
+      dispatch(setActiveDatabase(...selectedKey.split('/')));
   }, [selectedKey]);
 
   return (
-    <div>
+    <div className="cea-database-editor-database-menu">
       <Menu
         mode="horizontal"
         onClick={({ key }) => {
@@ -355,10 +351,10 @@ const DatabaseContainer = () => {
   const data = useSelector(state => state.databaseEditor.data);
   const schema = useSelector(state => state.databaseEditor.schema);
   const { category, name } = useSelector(state => state.databaseEditor.tabs);
-  if (name === null) return <div>Select a database</div>;
+  if (name === null) return <h3 style={{ margin: 20 }}>Select a database</h3>;
 
   return (
-    <div>
+    <div className="cea-database-editor-database-container">
       <Database
         name={name}
         data={data[category][name]}

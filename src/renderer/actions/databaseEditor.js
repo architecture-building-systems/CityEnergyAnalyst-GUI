@@ -100,8 +100,8 @@ export const updateDatabaseState = () => ({ type: UPDATE_DATABASE_STATE });
 export const RESET_DATABASE_STATE = 'RESET_DATABASE_STATE';
 export const resetDatabaseState = () => ({ type: RESET_DATABASE_STATE });
 
-export const SET_DATABASE_TABS = 'SET_DATABASE_TABS';
-export const setDatabaseTabs = (category, name) => ({
-  type: SET_DATABASE_TABS,
+export const SET_ACTIVE_DATABASE = 'SET_ACTIVE_DATABASE';
+export const setActiveDatabase = (category, name) => ({
+  type: SET_ACTIVE_DATABASE,
   payload: { category, name }
 });
