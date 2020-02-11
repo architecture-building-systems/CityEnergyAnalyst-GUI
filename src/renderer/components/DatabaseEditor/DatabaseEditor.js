@@ -395,7 +395,7 @@ const Database = ({ name, data, schema }) => {
   );
 };
 
-const useTableSchema = (schema, sheetName, tableData) => {
+const getTableSchema = (schema, sheetName, tableData) => {
   const colHeaders = Object.keys(tableData[0]);
   const columns = colHeaders.map(key => {
     if (schema[key]['types_found']) {
@@ -443,7 +443,7 @@ const ColumnGlossary = ({ colHeaders }) => {
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   const tableRef = useRef(null);
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const { columns, colHeaders } = useTableSchema(schema, sheetName, sheetData);
+  const { columns, colHeaders } = getTableSchema(schema, sheetName, sheetData);
 
   // Validate cells on mount
   useEffect(() => {
