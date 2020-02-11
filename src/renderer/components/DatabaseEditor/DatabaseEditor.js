@@ -569,11 +569,10 @@ const SchedulesDataTable = ({
   const tableData = rowHeaders.map(row => data[row]);
   const colHeaders = Object.keys(tableData[0]).map(i => Number(i) + 1);
   const columns = Object.keys(colHeaders).map(key => {
-    let col = { data: key };
-    if (!isNaN(tableData[0][key])) {
-      col['type'] = 'numeric';
-    }
-    return col;
+    // FIXME: Temp solution
+    if (['HEATING', 'COOLING'].includes(scheduleType)) {
+      return { data: key };
+    } else return { data: key, type: 'numeric' };
   });
 
   //  Revalidate cells on sheet and type change
