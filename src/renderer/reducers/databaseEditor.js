@@ -94,7 +94,7 @@ const databaseStatus = (state = { status: null }, { type, payload }) => {
   }
 };
 
-const databaseTabs = (
+const databaseMenu = (
   state = { category: null, name: null },
   { type, payload }
 ) => {
@@ -126,7 +126,7 @@ const databaseEditor = combineReducers({
   data: databaseData,
   schema: databaseSchema,
   glossary: databaseGlossary,
-  tabs: databaseTabs,
+  menu: databaseMenu,
   changes: databaseChanges
 });
 

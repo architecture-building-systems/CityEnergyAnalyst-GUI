@@ -350,8 +350,8 @@ const DatabaseTabs = () => {
 const DatabaseContainer = () => {
   const data = useSelector(state => state.databaseEditor.data);
   const schema = useSelector(state => state.databaseEditor.schema);
-  const { category, name } = useSelector(state => state.databaseEditor.tabs);
   if (name === null) return <h3 style={{ margin: 20 }}>Select a database</h3>;
+  const { category, name } = useSelector(state => state.databaseEditor.menu);
 
   return (
     <div className="cea-database-editor-database-container">
