@@ -298,7 +298,9 @@ const DatabaseTabs = () => {
   const data = useSelector(state => state.databaseEditor.data);
   const validation = useSelector(state => state.databaseEditor.validation);
   const dispatch = useDispatch();
-  const [selectedKey, setSelected] = useState(null);
+  const [selectedKey, setSelected] = useState(
+    `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`
+  );
   const [visible, setVisible] = useState(false);
 
   const handleOk = () => {
@@ -306,8 +308,7 @@ const DatabaseTabs = () => {
   };
 
   useEffect(() => {
-    if (selectedKey !== null)
-      dispatch(setActiveDatabase(...selectedKey.split('/')));
+    dispatch(setActiveDatabase(...selectedKey.split(':')));
   }, [selectedKey]);
 
   return (
@@ -315,16 +316,17 @@ const DatabaseTabs = () => {
       <Menu
         mode="horizontal"
         onClick={({ key }) => {
-          if (selectedKey !== key && Object.keys(validation).length)
+          // Show modal if changing database and there are validation errors
+          if (selectedKey !== key && !!Object.keys(validation).length)
             setVisible(true);
           else setSelected(key);
         }}
-        selectedKeys={selectedKey !== null ? [selectedKey] : []}
+        selectedKeys={[selectedKey]}
       >
         {Object.keys(data).map(category => (
           <Menu.SubMenu key={category} title={category.toUpperCase()}>
             {Object.keys(data[category]).map(name => (
-              <Menu.Item key={`${category}/${name}`}>{name}</Menu.Item>
+              <Menu.Item key={`${category}:${name}`}>{name}</Menu.Item>
             ))}
           </Menu.SubMenu>
         ))}
