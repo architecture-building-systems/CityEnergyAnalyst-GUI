@@ -105,8 +105,7 @@ const ExportForm = Form.create()(({ form }) => {
         rules={[
           {
             validator: (rule, value, callback) => {
-              console.log(path.resolve(value));
-              if (path.resolve(value) !== value) {
+              if (value.length !== 0 && path.resolve(value) !== value) {
                 callback('Path entered is invalid');
               } else {
                 callback();
