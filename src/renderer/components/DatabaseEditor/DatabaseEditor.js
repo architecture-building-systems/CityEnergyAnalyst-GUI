@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { Tabs, Icon, Button, Modal, Menu, Alert } from 'antd';
@@ -17,21 +18,7 @@ import { months_short } from '../../constants/months';
 import { AsyncError } from '../../utils';
 import routes from '../../constants/routes';
 import { useChangeRoute } from '../Project/Project';
-
-const useDatabaseGlossary = columns => {
-  const dbGlossary = useSelector(state => state.databaseEditor.glossary);
-  const [tableGlossary, setTableGlossary] = useState([]);
-
-  useEffect(() => {
-    setTableGlossary(
-      columns
-        .map(col => dbGlossary.find(variable => col === variable.VARIABLE))
-        .filter(obj => typeof obj !== 'undefined')
-    );
-  }, [columns]);
-
-  return tableGlossary;
-};
+import Handsontable from 'handsontable';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -426,24 +413,53 @@ const getTableSchema = (schema, sheetName, tableData) => {
   return { columns, colHeaders };
 };
 
-const ColumnGlossary = ({ colHeaders }) => {
-  const glossary = useDatabaseGlossary(colHeaders);
-
-  return (
-    <React.Fragment>
-      {glossary.length !== 0 && (
-        <details>
-          <summary>Column Glossary</summary>
-          {glossary.map(variable => (
-            <div key={variable.VARIABLE}>
-              <b>{variable.VARIABLE}</b>
-              {` - ${variable.DESCRIPTION} / ${variable.UNIT}`}
-            </div>
-          ))}
-        </details>
-      )}
-    </React.Fragment>
+const ColumnGlossary = ({ tableRef, colHeaders }) => {
+  const tooltipRef = useRef();
+  const dbGlossary = useSelector(state => state.databaseEditor.glossary);
+  const [tableGlossary, setTableGlossary] = useState([]);
+  const tooltipPrompt = (
+    <p className="cea-database-editor-column-tooltip">
+      <i>Hover over column headers to see their description.</i>
+    </p>
   );
+
+  useEffect(() => {
+    setTableGlossary(
+      colHeaders
+        .map(col => dbGlossary.find(variable => col === variable.VARIABLE))
+        .filter(obj => typeof obj !== 'undefined')
+    );
+  }, []);
+
+  useEffect(() => {
+    if (tableGlossary.length) {
+      ReactDOM.render(tooltipPrompt, tooltipRef.current);
+      const tableInstance = tableRef.current.hotInstance;
+      Handsontable.hooks.add(
+        'afterOnCellMouseOver',
+        (e, coords, td) => {
+          if (coords.row == -1 && coords.col != -1) {
+            if (typeof tableGlossary[coords.col] !== 'undefined') {
+              const { VARIABLE, DESCRIPTION, UNIT } = tableGlossary[coords.col];
+              ReactDOM.render(
+                <p className="cea-database-editor-column-tooltip">
+                  <b>{VARIABLE}</b>
+                  {' : '}
+                  <i>{DESCRIPTION}</i>
+                  {' / UNIT: '}
+                  <span>{UNIT}</span>
+                </p>,
+                tooltipRef.current
+              );
+            }
+          }
+        },
+        tableInstance
+      );
+    }
+  }, [tableGlossary]);
+
+  return <div ref={tooltipRef}></div>;
 };
 
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
@@ -459,6 +475,7 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   return (
     <div className="cea-database-editor-sheet">
       <TableButtons tableRef={tableRef} sheetData={sheetData} />
+      <ColumnGlossary tableRef={tableRef} colHeaders={colHeaders} />
       <Table
         ref={tableRef}
         id={databaseName}
