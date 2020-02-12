@@ -352,8 +352,12 @@ const DatabaseTabs = () => {
 const DatabaseContainer = () => {
   const data = useSelector(state => state.databaseEditor.data);
   const schema = useSelector(state => state.databaseEditor.schema);
-  if (name === null) return <h3 style={{ margin: 20 }}>Select a database</h3>;
   const { category, name } = useSelector(state => state.databaseEditor.menu);
+  if (
+    !Object.keys(data).includes(category) ||
+    !Object.keys(data[category]).includes(name)
+  )
+    return <div>{`${category}-${name} database not found`}</div>;
 
   return (
     <div className="cea-database-editor-database-container">
