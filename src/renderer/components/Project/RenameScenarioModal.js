@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { getProject } from '../../actions/project';
-import { FormItemWrapper } from '../Tools/parameter';
+import { FormItemWrapper } from '../Tools/Parameter';
 
 const RenameScenarioModal = ({
   scenario,

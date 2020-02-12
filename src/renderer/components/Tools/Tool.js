@@ -16,7 +16,7 @@ import {
   resetToolParams
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
-import Parameter from './parameter';
+import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 export const ToolRoute = ({ match }) => {

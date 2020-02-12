@@ -1,16 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { Modal, Form } from 'antd';
+import { Modal, Form, message, Alert } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { useSelector } from 'react-redux';
 
-const NewProjectModal = ({
-  visible,
-  setVisible,
-  initialValue,
-  onSuccess = () => {}
-}) => {
+const ExportDatabaseModal = ({ visible, setVisible }) => {
+  const databaseChanges = useSelector(state => state.databaseEditor.changes);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 
@@ -20,24 +17,23 @@ const NewProjectModal = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         try {
-          const createProject = await axios.post(
-            `http://localhost:5050/api/project/`,
+          const resp = axios.put(
+            'http://localhost:5050/api/inputs/databases/copy',
             values
           );
-          console.log(createProject.data);
-          const updateProject = await axios.put(
-            `http://localhost:5050/api/project/`,
-            {
-              path: path.join(values.path, values.name)
-            }
-          );
-          console.log(updateProject.data);
           setConfirmLoading(false);
           setVisible(false);
-          onSuccess();
+          message.config({
+            top: 120
+          });
+          message.success('Database succesfully exported');
         } catch (err) {
           console.log(err.response);
           setConfirmLoading(false);
+          message.config({
+            top: 120
+          });
+          message.error('Something went wrong.');
         }
       }
     });
@@ -49,34 +45,47 @@ const NewProjectModal = ({
 
   return (
     <Modal
-      title="Create new Project"
+      title="Export current Database"
       visible={visible}
       width={800}
-      okText="Create"
+      okText="Export"
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm ref={formRef} initialValue={initialValue} />
+      {!!databaseChanges.length && (
+        <div style={{ marginBottom: 30 }}>
+          <Alert
+            message="ATTENTION"
+            type="warning"
+            showIcon
+            description="There seems to be unsaved changes. These changes will only be present
+        in the exported database and not in the current one if they are not
+        saved. It is advised to save these changes before proceeding."
+          />
+        </div>
+      )}
+      <ExportForm ref={formRef} />
     </Modal>
   );
 };
 
-const NewProjectForm = Form.create()(({ form, initialValue }) => {
+const ExportForm = Form.create()(({ form }) => {
   return (
     <Form layout="horizontal">
       <FormItemWrapper
         form={form}
         name="name"
         initialValue=""
-        help="Name of new Project"
+        help="Name of Database"
         required={true}
         rules={[
           {
             validator: (rule, value, callback) => {
               if (
                 value.length != 0 &&
+                form.getFieldValue('path').length != 0 &&
                 fs.existsSync(path.join(form.getFieldValue('path'), value))
               ) {
                 callback('Folder with name already exists in path');
@@ -90,8 +99,9 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
       <FormItemWrapper
         form={form}
         name="path"
-        initialValue={initialValue}
-        help="Path of new Project"
+        initialValue=""
+        help="Path to export Database"
+        required={true}
         rules={[
           {
             validator: (rule, value, callback) => {
@@ -109,4 +119,4 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
   );
 });
 
-export default NewProjectModal;
+export default ExportDatabaseModal;

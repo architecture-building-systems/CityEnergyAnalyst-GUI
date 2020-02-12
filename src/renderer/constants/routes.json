@@ -1,6 +1,7 @@
 {
   "HOME": "/",
   "TOOLS": "/tools",
+  "DATABASE_EDITOR": "/database-editor",
   "INPUT_EDITOR": "/input-editor",
   "DASHBOARD": "/dashboard",
   "PROJECT_OVERVIEW": "/project",

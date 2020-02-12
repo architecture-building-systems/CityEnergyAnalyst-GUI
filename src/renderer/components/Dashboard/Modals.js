@@ -12,7 +12,7 @@ import {
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
 import { shell } from 'electron';
-import Parameter from '../Tools/parameter';
+import Parameter from '../Tools/Parameter';
 
 const { Option } = Select;
 

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@handsontable/react": "^3.1.2",
     "@turf/turf": "^5.1.6",
     "antd": "^3.21.3",
     "axios": "^0.19.0",
@@ -26,6 +27,7 @@
     "deck.gl": "^7.2.2",
     "electron-updater": "^4.1.2",
     "frameless-titlebar": "^1.0.8",
+    "handsontable": "^7.3.0",
     "history": "^4.9.0",
     "html-react-parser": "^0.9.1",
     "luma.gl": "^7.2.0",

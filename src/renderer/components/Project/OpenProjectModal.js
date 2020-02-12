@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Form } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/parameter';
+import path from 'path';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 
 const OpenProjectModal = ({
   visible,
@@ -23,11 +24,11 @@ const OpenProjectModal = ({
             values
           );
           console.log(openProject.data);
-          onSuccess();
           setVisible(false);
+          setConfirmLoading(false);
+          onSuccess();
         } catch (err) {
           console.log(err.response);
-        } finally {
           setConfirmLoading(false);
         }
       }
@@ -62,6 +63,17 @@ const OpenProjectForm = Form.create()(({ form, initialValue }) => {
         name="path"
         initialValue={initialValue}
         help="Path of Project"
+        rules={[
+          {
+            validator: (rule, value, callback) => {
+              if (value.length !== 0 && path.resolve(value) !== value) {
+                callback('Path entered is invalid');
+              } else {
+                callback();
+              }
+            }
+          }
+        ]}
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />
     </Form>
