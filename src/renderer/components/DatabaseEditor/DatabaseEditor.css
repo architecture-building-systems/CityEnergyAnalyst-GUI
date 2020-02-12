@@ -1,5 +1,6 @@
 .cea-database-editor-tabs .ant-tabs-nav .ant-tabs-tab {
   margin-right: 0;
+  user-select: none;
 }
 
 .cea-database-editor {

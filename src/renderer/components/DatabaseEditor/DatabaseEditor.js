@@ -252,7 +252,6 @@ const SaveDatabaseButton = () => {
         'http://localhost:5050/api/inputs/databases',
         databasesData
       );
-      console.log(resp.data);
       setSuccess(true);
       dispatch(resetDatabaseChanges());
     } catch (err) {
@@ -391,9 +390,14 @@ const Database = ({ name, data, schema }) => {
 const getTableSchema = (schema, sheetName, tableData) => {
   const colHeaders = Object.keys(tableData[0]);
   const columns = colHeaders.map(key => {
-    if (schema[key]['types_found']) {
+    // Try to infer type from schema, else load default
+    if (
+      typeof schema[key] !== 'undefined' &&
+      Array.isArray(schema[key]['types_found'])
+    ) {
       if (['long', 'float', 'int'].includes(schema[key]['types_found'][0])) {
-        if (['heating', 'cooling'].includes(sheetName))
+        // Accept 'NA' values for air_conditioning_systems
+        if (['HEATING', 'COOLING'].includes(sheetName))
           return {
             data: key,
             type: 'numeric',
@@ -406,9 +410,14 @@ const getTableSchema = (schema, sheetName, tableData) => {
             }
           };
         else return { data: key, type: 'numeric' };
-      }
+      } else return { data: key };
+    } else {
+      console.error(`Could not find \`${key}\` in schema`, {
+        sheetName,
+        schema
+      });
+      return { data: key };
     }
-    return { data: key };
   });
   return { columns, colHeaders };
 };
