@@ -11,9 +11,7 @@ import {
 import { Button } from 'antd';
 
 const Table = React.forwardRef((props, ref) => {
-  return (
-    <HotTable ref={ref} licenseKey="non-commercial-and-evaluation" {...props} />
-  );
+  return <HotTable ref={ref} {...props} />;
 });
 
 export const useTableUpdateRedux = (tableRef, database, sheet) => {
