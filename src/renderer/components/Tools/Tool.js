@@ -130,9 +130,8 @@ const ToolForm = Form.create()(
         values && dispatch(createJob(script, values));
       };
 
-      const saveParams = () => {
-        const values = getForm();
-        values && dispatch(saveToolParams(script, values));
+      const saveParams = params => {
+        params && dispatch(saveToolParams(script, params));
       };
 
       const setDefault = () => dispatch(setDefaultToolParams(script));
@@ -189,13 +188,18 @@ const ToolForm = Form.create()(
   }
 );
 
-const ToolFormButtons = ({ runScript, saveParams, setDefault }) => {
+const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
   return (
     <React.Fragment>
       <Button type="primary" onClick={runScript}>
         Run Script
       </Button>
-      <Button type="primary" onClick={saveParams}>
+      <Button
+        type="primary"
+        onClick={() => {
+          saveParams(getForm());
+        }}
+      >
         Save to Config
       </Button>
       <Button type="primary" onClick={setDefault}>

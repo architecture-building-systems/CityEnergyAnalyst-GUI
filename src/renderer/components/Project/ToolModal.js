@@ -15,8 +15,10 @@ const ToolModal = ({ tool, visible, setVisible }) => {
     });
 
     const saveToConfig = async () => {
-      if (getForm()) {
-        await saveParams();
+      let values = getForm();
+      if (values) {
+        const { scenario, ...params } = values;
+        await saveParams(params);
         if (error === null) {
           message.success('Settings saved to config');
           hideModal();
