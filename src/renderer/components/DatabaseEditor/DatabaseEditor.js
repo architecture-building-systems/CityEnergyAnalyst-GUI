@@ -369,6 +369,7 @@ const DatabaseContainer = () => {
         <ValidationErrors databaseName={name} />
         {name === 'schedules' ? (
           <SchedulesDatabase
+            name={name}
             data={data[category][name]}
             schema={schema[category][name]}
           />
