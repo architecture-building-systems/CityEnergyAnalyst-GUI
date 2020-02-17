@@ -11,7 +11,8 @@ import {
   FETCH_DATABASE_DATA_FAILURE,
   FETCH_DATABASE_SCHEMA_FAILURE,
   FETCH_DATABASE_GLOSSARY_FAILURE,
-  RESET_DATABASE_CHANGES
+  RESET_DATABASE_CHANGES,
+  COPY_SCHEDULE_DATA
 } from '../actions/databaseEditor';
 import { combineReducers } from 'redux';
 import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
@@ -61,6 +62,20 @@ const databaseData = (state = {}, { type, payload }) => {
       return payload;
     case RESET_DATABASE_STATE:
       return {};
+    // FIXME: Hardcoded location of schedules database
+    case COPY_SCHEDULE_DATA:
+      return {
+        ...state,
+        archetypes: {
+          ...state.archetypes,
+          schedules: {
+            ...state.archetypes.schedules,
+            [payload.name]: {
+              ...state.archetypes.schedules[payload.copy]
+            }
+          }
+        }
+      };
     default:
       return state;
   }
