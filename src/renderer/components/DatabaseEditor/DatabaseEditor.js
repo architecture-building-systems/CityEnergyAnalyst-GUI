@@ -11,7 +11,8 @@ import {
   resetDatabaseState,
   initDatabaseState,
   setActiveDatabase,
-  resetDatabaseChanges
+  resetDatabaseChanges,
+  copyScheduleData
 } from '../../actions/databaseEditor';
 import Table, { TableButtons, useTableUpdateRedux } from './Table';
 import { months_short } from '../../constants/months';
@@ -19,19 +20,23 @@ import { AsyncError } from '../../utils';
 import routes from '../../constants/routes';
 import { useChangeRoute } from '../Project/Project';
 import Handsontable from 'handsontable';
+import NewScheduleModal from './NewScheduleModal';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
+  const [error, setError] = useState(null);
 
   const checkDBPathValidity = async () => {
     try {
       setValid(null);
+      setError(null);
       const resp = await axios.get(
         'http://localhost:5050/api/inputs/databases/check'
       );
       setValid(true);
     } catch (err) {
-      console.log(err);
+      if (err.response) setError(err.response.data.message);
+      else setError('Could not read and verify databases.');
       setValid(false);
     }
   };
@@ -40,7 +45,7 @@ const useValidateDatabasePath = () => {
     checkDBPathValidity();
   }, []);
 
-  return [valid, checkDBPathValidity];
+  return [valid, error, checkDBPathValidity];
 };
 
 const ValidationErrors = ({ databaseName }) => {
@@ -131,7 +136,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
 };
 
 const DatabaseEditor = () => {
-  const [valid, checkDBPathValidity] = useValidateDatabasePath();
+  const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
   const goToScript = useChangeRoute(`${routes.TOOLS}/data-initializer`);
 
   if (valid === null)
@@ -158,7 +163,13 @@ const DatabaseEditor = () => {
           <DatabaseContent />
         ) : (
           <div>
-            <div>Could not find or validate databases. Try assigning one</div>
+            <div style={{ margin: 20 }}>
+              <p>
+                Could not find or validate databases. Try assigning a new
+                database
+              </p>
+              {error !== null && <details>{error}</details>}
+            </div>
             <Button onClick={checkDBPathValidity}>Try Again</Button>
           </div>
         )}
@@ -347,11 +358,38 @@ const DatabaseContainer = () => {
 
   return (
     <div className="cea-database-editor-database-container">
-      <Database
-        name={name}
-        data={data[category][name]}
-        schema={schema[category][name]}
-      />
+      {category === 'archetypes' && (
+        <div style={{ margin: 10 }}>
+          <Alert
+            message={
+              <div>
+                If you want to add a new <i>archetype</i>, you would need to
+                include it in all sheets of <b>CONSTRUCTION</b> and create its
+                schedule in <b>SCHEDULES</b>
+              </div>
+            }
+            type="info"
+            showIcon
+          />
+        </div>
+      )}
+      <div className="cea-database-editor-database">
+        <h2>{name}</h2>
+        <ValidationErrors databaseName={name} />
+        {name === 'SCHEDULES' ? (
+          <SchedulesDatabase
+            name={name}
+            data={data[category][name]}
+            schema={schema[category][name]}
+          />
+        ) : (
+          <Database
+            name={name}
+            data={data[category][name]}
+            schema={schema[category][name]}
+          />
+        )}
+      </div>
       <SaveDatabaseButton />
     </div>
   );
@@ -359,31 +397,85 @@ const DatabaseContainer = () => {
 
 const Database = ({ name, data, schema }) => {
   return (
-    <div className="cea-database-editor-database">
-      <h2>{name}</h2>
-      <ValidationErrors databaseName={name} />
-      <Tabs className="cea-database-editor-tabs" type="card">
-        {Object.keys(data).map(sheetName => (
-          <Tabs.TabPane key={sheetName} tab={sheetName}>
-            {name !== 'schedules' ? (
-              <DatabaseTable
-                databaseName={name}
-                sheetName={sheetName}
-                sheetData={data[sheetName]}
-                schema={schema[sheetName]}
-              />
-            ) : (
-              <SchedulesTable
-                databaseName={name}
-                sheetName={sheetName}
-                sheetData={data[sheetName]}
-                schema={schema[sheetName]}
-              />
-            )}
+    <Tabs className="cea-database-editor-tabs" type="card">
+      {Object.keys(data).map(sheetName => (
+        <Tabs.TabPane key={sheetName} tab={sheetName}>
+          <DatabaseTable
+            databaseName={name}
+            sheetName={sheetName}
+            sheetData={data[sheetName]}
+            schema={schema[sheetName]}
+          />
+        </Tabs.TabPane>
+      ))}
+    </Tabs>
+  );
+};
+
+const SchedulesDatabase = ({ name, data, schema }) => {
+  const scheduleNames = Object.keys(data);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedKey, setSelected] = useState(scheduleNames[0]);
+  const [panes, setPanes] = useState(scheduleNames);
+  const dispatch = useDispatch();
+
+  const showModal = () => {
+    setModalVisible(true);
+  };
+
+  const onEdit = (targetKey, action) => {
+    if (action === 'remove') {
+      Modal.confirm({
+        title: `Do you want to delete ${targetKey} schedule?`,
+        content: 'This action cannot be undone.',
+        onOk() {
+          setSelected(null);
+          setPanes(oldValue => oldValue.filter(pane => pane != targetKey));
+        }
+      });
+    }
+  };
+
+  const addSchedule = values => {
+    const { name, copy } = values;
+    dispatch(copyScheduleData(name, copy));
+    setPanes(oldValue => [...oldValue, name]);
+    setSelected(name);
+  };
+
+  return (
+    <React.Fragment>
+      <Tabs
+        className="cea-database-editor-tabs"
+        type="editable-card"
+        onEdit={onEdit}
+        hideAdd
+        activeKey={selectedKey}
+        onChange={setSelected}
+        tabBarExtraContent={
+          <Button onClick={showModal}>Add new Archetype Schedule</Button>
+        }
+      >
+        {panes.map(pane => (
+          <Tabs.TabPane key={pane} tab={pane}>
+            <SchedulesTable
+              databaseName={name}
+              sheetName={pane}
+              sheetData={data[pane]}
+              schema={schema[pane]}
+            />
           </Tabs.TabPane>
         ))}
       </Tabs>
-    </div>
+      <NewScheduleModal
+        scheduleNames={scheduleNames}
+        onSuccess={values => {
+          addSchedule(values);
+        }}
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
+    </React.Fragment>
   );
 };
 

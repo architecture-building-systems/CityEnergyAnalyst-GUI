@@ -79,6 +79,12 @@ export const fetchDatabaseGlossary = () => async dispatch => {
   }
 };
 
+export const COPY_SCHEDULE_DATA = 'COPY_SCHEDULE_DATA';
+export const copyScheduleData = (name, copy) => ({
+  type: COPY_SCHEDULE_DATA,
+  payload: { name, copy }
+});
+
 export const UPDATE_DATABASE_VALIDATION = 'UPDATE_DATABASE_VALIDATION';
 export const updateDatabaseValidation = validation => ({
   type: UPDATE_DATABASE_VALIDATION,

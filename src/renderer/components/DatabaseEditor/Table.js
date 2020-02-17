@@ -59,7 +59,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
           //       ? colHeaders[prop]
           //       : prop;
           // });
-          dispatch(updateDatabaseChanges(changes));
+          dispatch(updateDatabaseChanges({ database, sheet, changes }));
         }
       }
     };
