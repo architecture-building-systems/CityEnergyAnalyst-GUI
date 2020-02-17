@@ -349,6 +349,21 @@ const DatabaseContainer = () => {
 
   return (
     <div className="cea-database-editor-database-container">
+      {category === 'archetypes' && (
+        <div style={{ margin: 10 }}>
+          <Alert
+            message={
+              <div>
+                If you want to add a new <i>archetype</i>, you would need to
+                include it in all sheets of <b>construction_properties</b> and
+                create its schedule in <b>schedules</b>
+              </div>
+            }
+            type="info"
+            showIcon
+          />
+        </div>
+      )}
       <div className="cea-database-editor-database">
         <h2>{name}</h2>
         <ValidationErrors databaseName={name} />
