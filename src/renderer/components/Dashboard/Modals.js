@@ -451,13 +451,15 @@ const ModalAddPlotTemplate = ({
       <div style={{ display: page == 0 ? 'block' : 'none' }}>
         <CategoriesForm categories={categories} setValues={setCategory} />
       </div>
-      <div style={{ display: page == 1 ? 'block' : 'none' }}>
-        <ParamsForm
-          ref={formRef}
-          parameters={parameters}
-          getParameters={getParameters}
-        />
-      </div>
+      {page == 1 && (
+        <div>
+          <ParamsForm
+            ref={formRef}
+            parameters={parameters}
+            getParameters={getParameters}
+          />
+        </div>
+      )}
     </Modal>
   );
 };
