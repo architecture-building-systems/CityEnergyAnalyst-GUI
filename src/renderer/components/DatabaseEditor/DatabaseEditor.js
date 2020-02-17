@@ -364,8 +364,8 @@ const DatabaseContainer = () => {
             message={
               <div>
                 If you want to add a new <i>archetype</i>, you would need to
-                include it in all sheets of <b>construction_properties</b> and
-                create its schedule in <b>schedules</b>
+                include it in all sheets of <b>CONSTRUCTION</b> and create its
+                schedule in <b>SCHEDULES</b>
               </div>
             }
             type="info"
@@ -376,7 +376,7 @@ const DatabaseContainer = () => {
       <div className="cea-database-editor-database">
         <h2>{name}</h2>
         <ValidationErrors databaseName={name} />
-        {name === 'schedules' ? (
+        {name === 'SCHEDULES' ? (
           <SchedulesDatabase
             name={name}
             data={data[category][name]}
