@@ -64,6 +64,8 @@ const Parameter = ({ parameter, form }) => {
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
     case 'SingleBuildingParameter':
+    case 'GenerationParameter':
+    case 'SystemParameter':
       return (
         <FormItemWrapper
           form={form}
@@ -73,7 +75,13 @@ const Parameter = ({ parameter, form }) => {
           rules={[
             {
               validator: (rule, value, callback) => {
-                if (!choices.includes(value)) {
+                if (choices.length < 1) {
+                  if (type === 'GenerationParameter')
+                    callback('No generations found. Run optimization first.');
+                  else callback('There are no valid choices for this input');
+                } else if (value == null) {
+                  callback('Select a choice');
+                } else if (!choices.includes(value)) {
                   callback(`${value} is not a valid choice`);
                 } else {
                   callback();
@@ -82,7 +90,7 @@ const Parameter = ({ parameter, form }) => {
             }
           ]}
           inputComponent={
-            <Select>
+            <Select disabled={!choices.length}>
               {choices.map(choice => (
                 <Select.Option key={choice} value={choice}>
                   {choice}
@@ -93,7 +101,8 @@ const Parameter = ({ parameter, form }) => {
         />
       );
     case 'MultiChoiceParameter':
-    case 'BuildingsParameter': {
+    case 'BuildingsParameter':
+    case 'MultiSystemParameter': {
       const selectAll = e => {
         e.preventDefault();
         setFieldsValue({
