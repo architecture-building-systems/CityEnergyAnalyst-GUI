@@ -24,16 +24,19 @@ import NewScheduleModal from './NewScheduleModal';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
+  const [error, setError] = useState(null);
 
   const checkDBPathValidity = async () => {
     try {
       setValid(null);
+      setError(null);
       const resp = await axios.get(
         'http://localhost:5050/api/inputs/databases/check'
       );
       setValid(true);
     } catch (err) {
-      console.log(err);
+      if (err.response) setError(err.response.data.message);
+      else setError('Could not read and verify databases.');
       setValid(false);
     }
   };
@@ -42,7 +45,7 @@ const useValidateDatabasePath = () => {
     checkDBPathValidity();
   }, []);
 
-  return [valid, checkDBPathValidity];
+  return [valid, error, checkDBPathValidity];
 };
 
 const ValidationErrors = ({ databaseName }) => {
@@ -133,7 +136,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
 };
 
 const DatabaseEditor = () => {
-  const [valid, checkDBPathValidity] = useValidateDatabasePath();
+  const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
   const goToScript = useChangeRoute(`${routes.TOOLS}/data-initializer`);
 
   if (valid === null)
@@ -160,7 +163,13 @@ const DatabaseEditor = () => {
           <DatabaseContent />
         ) : (
           <div>
-            <div>Could not find or validate databases. Try assigning one</div>
+            <div style={{ margin: 20 }}>
+              <p>
+                Could not find or validate databases. Try assigning a new
+                database
+              </p>
+              {error !== null && <details>{error}</details>}
+            </div>
             <Button onClick={checkDBPathValidity}>Try Again</Button>
           </div>
         )}
