@@ -6,10 +6,12 @@ import Table, { TableButtons, useTableUpdateRedux } from './Table';
 import ColumnGlossary from './ColumnGlossary';
 
 const Database = ({ name, data, schema }) => {
+  const sheetNames = Object.keys(data);
+
   return (
     <Tabs className="cea-database-editor-tabs" type="card">
-      {Object.keys(data).map(sheetName => (
-        <Tabs.TabPane key={sheetName} tab={sheetName}>
+      {sheetNames.map(sheetName => (
+        <Tabs.TabPane key={`${name}-${sheetName}`} tab={sheetName}>
           <DatabaseTable
             databaseName={name}
             sheetName={sheetName}
