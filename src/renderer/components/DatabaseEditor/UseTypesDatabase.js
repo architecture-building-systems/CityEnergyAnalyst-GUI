@@ -1,94 +1,110 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { Tabs, Button, Modal } from 'antd';
+import { Tabs, Button, Modal, Select } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
-import { copyScheduleData } from '../../actions/databaseEditor';
 import Table, { useTableUpdateRedux } from './Table';
 import { months_short } from '../../constants/months';
-import NewScheduleModal from './NewScheduleModal';
+import { useChangeRoute } from '../Project/Project';
+import routes from '../../constants/routes';
 
 const UseTypesDatabase = ({ name, data, schema }) => {
   const useTypes = Object.keys(data['SCHEDULES']);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedKey, setSelected] = useState(useTypes[0]);
-  const [panes, setPanes] = useState(useTypes);
+  const [selectedType, setSelected] = useState(useTypes[0]);
+  const [choices, setChoices] = useState(useTypes);
+  const goToScript = useChangeRoute(`${routes.TOOLS}/create-mixed-use-type`);
   const dispatch = useDispatch();
-
-  const showModal = () => {
-    setModalVisible(true);
-  };
-
-  const onEdit = (targetKey, action) => {
-    if (action === 'remove') {
-      Modal.confirm({
-        title: `Do you want to delete ${targetKey} schedule?`,
-        content: 'This action cannot be undone.',
-        onOk() {
-          setSelected(null);
-          setPanes(oldValue => oldValue.filter(pane => pane != targetKey));
-        }
-      });
-    }
-  };
-
-  const addSchedule = values => {
-    const { name, copy } = values;
-    dispatch(copyScheduleData(name, copy));
-    setPanes(oldValue => [...oldValue, name]);
-    setSelected(name);
-  };
 
   return (
     <React.Fragment>
-      <Tabs
-        className="cea-database-editor-tabs"
-        type="editable-card"
-        onEdit={onEdit}
-        hideAdd
-        activeKey={selectedKey}
-        onChange={setSelected}
-        tabBarExtraContent={
-          <Button onClick={showModal}>Add new Use-Type</Button>
-        }
-      >
-        {panes.map(pane => (
-          <Tabs.TabPane key={pane} tab={pane}>
-            <SchedulesTable
-              databaseName={name}
-              sheetName={pane}
-              sheetData={data['SCHEDULES'][pane]}
-              schema={schema}
-            />
-          </Tabs.TabPane>
-        ))}
-      </Tabs>
-      <NewScheduleModal
-        scheduleNames={useTypes}
-        onSuccess={values => {
-          addSchedule(values);
-        }}
-        visible={modalVisible}
-        setVisible={setModalVisible}
+      <div className="cea-database-editor-use-types">
+        <Select
+          onSelect={setSelected}
+          value={selectedType}
+          style={{ width: 250 }}
+        >
+          {choices.map(choice => (
+            <Select.Option key={choice} value={choice}>
+              {choice}
+            </Select.Option>
+          ))}
+        </Select>
+        <Button onClick={goToScript}>Add new Use-Type</Button>
+      </div>
+      <UseTypesTable
+        databaseName={name}
+        useTypeName={selectedType}
+        useTypeData={data}
+        schema={schema}
       />
     </React.Fragment>
   );
 };
 
-const SchedulesTable = ({ databaseName, sheetName, sheetData, schema }) => {
+const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
   return (
-    <div className="cea-database-editor-schedules-sheet">
-      <p>Yearly/Month</p>
+    <div className="cea-database-editor-use-types">
+      <div>
+        <b>METADATA:</b> {useTypeData['SCHEDULES'][useTypeName]['METADATA']}
+      </div>
+      <h3>Properties</h3>
+      {Object.keys(useTypeData['USE_TYPE_PROPERTIES']).map(property => (
+        <UseTypePropertyTable
+          key={`${useTypeName}-${property}`}
+          databaseName={databaseName}
+          sheetName={useTypeName}
+          property={property}
+          propertyData={
+            useTypeData['USE_TYPE_PROPERTIES'][property][useTypeName]
+          }
+        />
+      ))}
+      <h3>Schedules</h3>
       <SchedulesYearTable
         databaseName={databaseName}
-        sheetName={sheetName}
-        yearData={sheetData['MONTHLY_MULTIPLIER']}
+        sheetName={useTypeName}
+        yearData={useTypeData['SCHEDULES'][useTypeName]['MONTHLY_MULTIPLIER']}
       />
-      <p>Day/Hour</p>
       <SchedulesTypeTab
         databaseName={databaseName}
-        sheetName={sheetName}
-        scheduleData={sheetData['SCHEDULES']}
+        sheetName={useTypeName}
+        scheduleData={useTypeData['SCHEDULES'][useTypeName]['SCHEDULES']}
+      />
+    </div>
+  );
+};
+
+const UseTypePropertyTable = ({
+  databaseName,
+  sheetName,
+  property,
+  propertyData
+}) => {
+  const tableRef = useRef();
+  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
+  const colHeaders = Object.keys(propertyData);
+  const columns = colHeaders.map(key => ({
+    data: key,
+    type: 'numeric'
+  }));
+
+  //  Revalidate cells on sheet change
+  useEffect(() => {
+    tableRef.current.hotInstance.validateCells();
+  }, [sheetName]);
+
+  return (
+    <div className={`cea-database-editor-schedule-${property}`}>
+      <Table
+        ref={tableRef}
+        id={`${databaseName}-${sheetName}-${property}`}
+        data={[propertyData]}
+        rowHeaders={property}
+        rowHeaderWidth={180}
+        colHeaders={colHeaders}
+        columns={columns}
+        // stretchH="all"
+        height={70}
       />
     </div>
   );
@@ -146,6 +162,7 @@ const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
 
   return (
     <div className="cea-database-editor-schedule-year">
+      <p>Yearly/Month</p>
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}-year`}
@@ -190,6 +207,7 @@ const SchedulesDataTable = ({
 
   return (
     <div className="cea-database-editor-schedule-data">
+      <p>Day/Hour</p>
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}-data`}
