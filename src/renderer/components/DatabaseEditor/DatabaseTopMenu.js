@@ -36,7 +36,9 @@ const DatabaseTopMenu = () => {
         {Object.keys(data).map(category => (
           <Menu.SubMenu key={category} title={category.toUpperCase()}>
             {Object.keys(data[category]).map(name => (
-              <Menu.Item key={`${category}:${name}`}>{name}</Menu.Item>
+              <Menu.Item key={`${category}:${name}`}>
+                {name.replace('_', '-')}
+              </Menu.Item>
             ))}
           </Menu.SubMenu>
         ))}

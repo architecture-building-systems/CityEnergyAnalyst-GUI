@@ -215,7 +215,7 @@ const DatabaseContainer = () => {
   return (
     <div className="cea-database-editor-database-container">
       <div className="cea-database-editor-database">
-        <h2>{name}</h2>
+        <h2>{name.replace('_', '-')}</h2>
         <ValidationErrors databaseName={name} />
         {name === 'USE_TYPES' ? (
           <UseTypesDatabase
