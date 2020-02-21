@@ -25,19 +25,14 @@ const ScenarioImportDataForm = ({ form, visible }) => {
       placeholder: 'Path to the digital elevation model',
       help: ''
     },
-    occupancy: {
+    typology: {
       extension: ['.dbf'],
-      placeholder: 'Path to occupancy database',
-      help: 'Leave empty for CEA to create one for you'
-    },
-    age: {
-      extension: ['.dbf'],
-      placeholder: 'Path to age database',
+      placeholder: 'Path to typology database',
       help: 'Leave empty for CEA to create one for you'
     }
   };
   form.getFieldDecorator('fields', {
-    initialValue: ['zone', 'age', 'occupancy']
+    initialValue: ['zone', 'typology']
   });
   const fields = form.getFieldValue('fields');
   const fileChoices = Object.keys(inputFiles).filter(
@@ -115,7 +110,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
                     validator: (rule, value, callback) => {
                       if (!fs.existsSync(value)) {
                         if (
-                          ['zone', 'age', 'occupancy'].includes(key) &&
+                          ['zone', 'typology'].includes(key) &&
                           value === ''
                         ) {
                           callback();
@@ -142,7 +137,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
               }
             />
           )}
-          {['zone', 'age', 'occupancy'].includes(key) ? null : (
+          {['zone', 'typology'].includes(key) ? null : (
             <Icon
               type="minus-circle-o"
               onClick={() => removeField(key)}
