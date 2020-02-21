@@ -6,7 +6,6 @@ import axios from 'axios';
 import { useOpenScenario, useFetchProject, useChangeRoute } from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
-import ScenarioCopyDataForm from './ScenarioCopyDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
 import Parameter from '../Tools/Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -126,11 +125,6 @@ const NewScenarioForm = Form.create()(
               <Radio value="generate" style={{ display: 'block' }}>
                 Generate new input files using tools
               </Radio>
-              {project.scenarios.length ? (
-                <Radio value="copy" style={{ display: 'block' }}>
-                  Copy input folder from another scenario in the project
-                </Radio>
-              ) : null}
               <Radio value="import" style={{ display: 'block' }}>
                 Import input files
               </Radio>
@@ -139,11 +133,6 @@ const NewScenarioForm = Form.create()(
         </Form.Item>
 
         <ScenarioGenerateDataForm form={form} visible={choice === 'generate'} />
-        <ScenarioCopyDataForm
-          form={form}
-          visible={choice === 'copy'}
-          project={project}
-        />
         <ScenarioImportDataForm form={form} visible={choice === 'import'} />
       </Form>
     );
@@ -164,7 +153,6 @@ const useFetchDatabasePathParameter = () => {
               p => p.type === 'DatabasePathParameter'
             )
           ];
-        dbPathParam.choices['Create your own database later'] = 'create';
         setParameter(dbPathParam);
       } catch (err) {
         console.log(err);
