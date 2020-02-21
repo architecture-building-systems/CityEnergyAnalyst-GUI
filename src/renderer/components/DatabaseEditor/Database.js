@@ -55,11 +55,23 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
 const getTableSchema = (schema, sheetName, tableData) => {
   const colHeaders = Object.keys(tableData[0]);
   const columns = colHeaders.map(key => {
+    if (['code', 'Code', 'STANDARD'].includes(key))
+      return { data: key, readOnly: true };
     // Try to infer type from schema, else load default
     if (
       typeof schema[key] !== 'undefined' &&
       Array.isArray(schema[key]['types_found'])
     ) {
+      if (
+        typeof schema[key]['choice'] != 'undefined' &&
+        typeof schema[key]['choice']['values'] != 'undefined'
+      ) {
+        return {
+          data: key,
+          type: 'dropdown',
+          source: schema[key]['choice']['values']
+        };
+      }
       if (['long', 'float', 'int'].includes(schema[key]['types_found'][0])) {
         // Accept 'NA' values for air_conditioning_systems
         if (['HEATING', 'COOLING'].includes(sheetName))
