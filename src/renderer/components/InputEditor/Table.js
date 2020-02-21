@@ -525,6 +525,7 @@ const useTableData = tab => {
                 editorParams: {
                   values: columns[tab][column].choices,
                   listItemFormatter: (value, label) => {
+                    if (!label) return value;
                     return `${value} : ${label}`;
                   }
                 }
