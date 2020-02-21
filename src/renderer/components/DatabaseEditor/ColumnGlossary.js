@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { useSelector } from 'react-redux';
 import './DatabaseEditor.css';
 import Handsontable from 'handsontable';
+import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 const ColumnGlossary = ({ tableRef, colHeaders }) => {
   const tooltipRef = useRef();
@@ -53,4 +54,4 @@ const ColumnGlossary = ({ tableRef, colHeaders }) => {
   return <div ref={tooltipRef}></div>;
 };
 
-export default ColumnGlossary;
+export default withErrorBoundary(ColumnGlossary);
