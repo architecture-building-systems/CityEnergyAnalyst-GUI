@@ -36,7 +36,11 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
 
   return (
     <div className="cea-database-editor-sheet">
-      <TableButtons tableRef={tableRef} sheetData={sheetData} />
+      <TableButtons
+        tableRef={tableRef}
+        databaseName={databaseName}
+        sheetName={sheetName}
+      />
       <ColumnGlossary tableRef={tableRef} colHeaders={colHeaders} />
       <Table
         ref={tableRef}

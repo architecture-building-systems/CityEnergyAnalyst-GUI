@@ -123,7 +123,11 @@ export const useTableUndoRedo = tableRef => {
   };
 };
 
-export const TableButtons = ({ tableRef }) => {
+// TODO: This is hardcoded, change to use schema
+const restricted_databases = ['FEEDSTOCKS'];
+const restricted_sheets = ['HEX'];
+
+export const TableButtons = ({ tableRef, databaseName, sheetName }) => {
   const { undoAvailable, redoAvailable, undo, redo } = useTableUndoRedo(
     tableRef
   );
@@ -131,14 +135,17 @@ export const TableButtons = ({ tableRef }) => {
   return (
     <div style={{ margin: 10 }}>
       <p>Sheet Functions</p>
-      <Button
-        size="small"
-        onClick={() => {
-          tableRef.current.hotInstance.alter('insert_row');
-        }}
-      >
-        Add Row
-      </Button>
+      {!restricted_databases.includes(databaseName) &&
+        !restricted_sheets.includes(sheetName) && (
+          <Button
+            size="small"
+            onClick={() => {
+              tableRef.current.hotInstance.alter('insert_row');
+            }}
+          >
+            Add Row
+          </Button>
+        )}
       <Button size="small" icon="undo" disabled={!undoAvailable} onClick={undo}>
         Undo
       </Button>
