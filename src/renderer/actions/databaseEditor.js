@@ -11,7 +11,7 @@ export const initDatabaseState = () => async (dispatch, getState) => {
     dispatch(fetchDatabaseGlossary())
   ]).then(() => {
     const { status } = getState().databaseEditor.status;
-    if (status !== 'failed')
+    if (status == 'fetching' && status !== 'failed')
       return dispatch({ type: INIT_DATABASE_STATE_SUCCESS });
   });
 };
