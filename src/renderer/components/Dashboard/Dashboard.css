@@ -1,14 +1,26 @@
-.row.display-flex {
-  display: flex;
-  flex-wrap: wrap;
-  margin: unset;
+.cea-dashboard-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(33%, 1fr));
+  grid-auto-flow: dense;
 }
 
-.row.display-flex > [class*='col-'] {
-  display: flex;
-  flex-direction: column;
-  padding: unset;
-  flex-grow: 1;
+.cea-dashboard-grid-item.span-2 {
+  grid-column: span 2;
+}
+
+.cea-dashboard-grid-item.span-3 {
+  grid-column: span 3;
+}
+
+@media screen and (max-width: 1350px) {
+  .cea-dashboard-grid-container {
+    display: grid;
+    grid-template-columns: 100%;
+  }
+  .cea-dashboard-grid-item.span-2,
+  .cea-dashboard-grid-item.span-3 {
+    grid-column: span 1;
+  }
 }
 
 .plot-widget {

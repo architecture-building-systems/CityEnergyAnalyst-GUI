@@ -58,31 +58,28 @@ export const GridLayout = ({ dashIndex, plots, grid_width, activePlotRef }) => {
   if (!plots.length) return <h1>No plots found</h1>;
 
   return (
-    <React.Fragment>
-      <div className="row display-flex">
-        {plots.map((data, index) => (
-          <div
-            className={`col-lg-${grid_width[index] *
-              4} col-md-12 col-sm-12 col-xs-12 plot-widget`}
-            key={`${dashIndex}-${index}-${data.hash}`}
-          >
-            {data.plot !== 'empty' ? (
-              <Plot
-                index={index}
-                dashIndex={dashIndex}
-                data={data}
-                activePlotRef={activePlotRef}
-              />
-            ) : (
-              <EmptyPlot
-                dashIndex={dashIndex}
-                index={index}
-                activePlotRef={activePlotRef}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </React.Fragment>
+    <div className="cea-dashboard-grid-container">
+      {plots.map((data, index) => (
+        <div
+          key={`${dashIndex}-${index}-${data.hash}`}
+          className={`cea-dashboard-grid-item span-${grid_width[index]}`}
+        >
+          {data.plot !== 'empty' ? (
+            <Plot
+              index={index}
+              dashIndex={dashIndex}
+              data={data}
+              activePlotRef={activePlotRef}
+            />
+          ) : (
+            <EmptyPlot
+              dashIndex={dashIndex}
+              index={index}
+              activePlotRef={activePlotRef}
+            />
+          )}
+        </div>
+      ))}
+    </div>
   );
 };
