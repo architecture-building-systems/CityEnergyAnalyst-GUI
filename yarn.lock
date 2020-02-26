@@ -725,6 +725,14 @@
     "@babel/helper-create-regexp-features-plugin" "^7.8.3"
     "@babel/helper-plugin-utils" "^7.8.3"
 
+"@babel/polyfill@^7.8.3":
+  version "7.8.3"
+  resolved "https://registry.yarnpkg.com/@babel/polyfill/-/polyfill-7.8.3.tgz#2333fc2144a542a7c07da39502ceeeb3abe4debd"
+  integrity sha512-0QEgn2zkCzqGIkSWWAEmvxD7e00Nm9asTtQvi7HdlYvMhjy/J38V/1Y9ode0zEJeIuxAI0uftiAzqc7nVeWUGg==
+  dependencies:
+    core-js "^2.6.5"
+    regenerator-runtime "^0.13.2"
+
 "@babel/preset-env@^7.5.3":
   version "7.8.4"
   resolved "https://registry.yarnpkg.com/@babel/preset-env/-/preset-env-7.8.4.tgz#9dac6df5f423015d3d49b6e9e5fa3413e4a72c4e"
@@ -4201,7 +4209,7 @@ core-js@^1.0.0:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
   integrity sha1-ZSKUwUZR2yj6k70tX/KYOk8IxjY=
 
-core-js@^2.4.0:
+core-js@^2.4.0, core-js@^2.6.5:
   version "2.6.11"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.11.tgz#38831469f9922bded8ee21c9dc46985e0399308c"
   integrity sha512-5wjnpaT/3dV+XB4borEsnAYQchn00XSgTAWKDkEqv+K8KevjbzmofK6hfJ9TZIlpj2N0xQpazy7PiRQiWHqzWg==
@@ -6184,10 +6192,10 @@ handle-thing@^2.0.0:
   resolved "https://registry.yarnpkg.com/handle-thing/-/handle-thing-2.0.0.tgz#0e039695ff50c93fc288557d696f3c1dc6776754"
   integrity sha512-d4sze1JNC454Wdo2fkuyzCr6aHcbL6PGGuFAz0Li/NcOm1tCHGnWDRmJP85dh9IhQErTc2svWFEX5xHIOo//kQ==
 
-handsontable@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/handsontable/-/handsontable-6.0.0.tgz#e6773dd5b19f17af016f0d0e2ab983c1c39a8382"
-  integrity sha512-kIXxEIyUtbJdSriSPvy/ZSlmBy0ifw2LUOyWehQWUJ5u5liz0tJgk233sCsT4itkgK6s2e2di/mfT/TQWgtknA==
+handsontable@6.2.2:
+  version "6.2.2"
+  resolved "https://registry.yarnpkg.com/handsontable/-/handsontable-6.2.2.tgz#f1250f3f374abdf7d4a0080950482d3edeea8f07"
+  integrity sha512-Z/sQa51OMHH4RoeBJeANYJMJYmx5SR+/xP8JCh5mzKJnAMKoQWF1zONPNgNCFZ/LdKFmI0f34XKtU0GHW0MG/Q==
   dependencies:
     moment "2.20.1"
     numbro "^2.0.6"
