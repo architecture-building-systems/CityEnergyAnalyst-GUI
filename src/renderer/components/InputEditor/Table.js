@@ -521,6 +521,7 @@ const useTableData = tab => {
             case 'choice':
               return {
                 ...columnDef,
+                minWidth: 170,
                 editor: 'select',
                 editorParams: {
                   values: columns[tab][column].choices,

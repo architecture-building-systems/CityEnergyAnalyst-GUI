@@ -16,18 +16,17 @@
     "lint:fix": "yarn eslint . --fix"
   },
   "dependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@handsontable/react": "^3.1.2",
     "@turf/turf": "^5.1.6",
     "antd": "^3.21.3",
-    "axios": "^0.19.0",
+    "axios": "0.19.0",
     "babel-plugin-import": "^1.12.0",
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
     "deck.gl": "^7.2.2",
     "electron-updater": "^4.1.2",
     "frameless-titlebar": "^1.0.8",
-    "handsontable": "6.0.0",
+    "handsontable": "6.2.2",
     "history": "^4.9.0",
     "html-react-parser": "^0.9.1",
     "luma.gl": "^7.2.0",
@@ -47,7 +46,10 @@
     "tabulator-tables": "^4.4.1"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-proposal-optional-chaining": "^7.8.3",
     "@babel/preset-react": "^7.0.0",
+    "@babel/polyfill": "^7.8.3",
     "electron": "^5.0.9",
     "electron-builder": "^21.2.0",
     "electron-webpack": "^2.7.4",

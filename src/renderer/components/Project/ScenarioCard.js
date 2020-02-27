@@ -37,7 +37,11 @@ const ScenarioCard = ({ scenario, projectPath, active }) => {
 };
 
 const ScenarioImage = ({ scenario, onClick = () => {} }) => {
-  const [image, isLoading, error] = useAsyncData(
+  const [
+    image,
+    isLoading,
+    error
+  ] = useAsyncData(
     `http://localhost:5050/api/project/scenario/${scenario}/image`,
     { image: null },
     [scenario]

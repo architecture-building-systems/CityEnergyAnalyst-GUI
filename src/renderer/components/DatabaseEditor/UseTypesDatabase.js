@@ -196,8 +196,13 @@ const SchedulesDataTable = ({
   const columns = Object.keys(colHeaders).map(key => {
     // FIXME: Temp solution
     if (['HEATING', 'COOLING'].includes(scheduleType)) {
-      return { data: key };
-    } else return { data: key, type: 'numeric' };
+      return {
+        data: key,
+        type: 'dropdown',
+        source: ['OFF', 'SETBACK', 'SETPOINT']
+      };
+    } else
+      return { data: key, type: 'numeric', validator: fractionFloatValidator };
   });
 
   //  Revalidate cells on sheet and type change
@@ -216,8 +221,9 @@ const SchedulesDataTable = ({
         rowHeaderWidth={80}
         colHeaders={colHeaders}
         columns={columns}
+        colWidths={['HEATING', 'COOLING'].includes(scheduleType) ? 90 : 50}
+        height={190}
         // stretchH="all"
-        height={120}
       />
     </div>
   );
