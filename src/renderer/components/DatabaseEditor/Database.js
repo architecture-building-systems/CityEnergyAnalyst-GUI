@@ -80,7 +80,7 @@ const getTableSchema = (schema, sheetName, tableData, data) => {
       typeof schema[key]['primary'] != 'undefined' &&
       schema[key]['primary']
     ) {
-      return { data: key, unique: true, readOnly: true };
+      return { data: key, unique: true };
     }
 
     // Return dropdown if column is a choice
