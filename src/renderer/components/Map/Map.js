@@ -42,7 +42,6 @@ function useRefWithCallback(callback) {
 const DeckGLMap = ({ data, colors }) => {
   const [mapRef] = useRefWithCallback(calcCameraOptions);
   const cameraOptions = useRef();
-  const glRef = useRef();
   const selectedLayer = useRef();
   const dispatch = useDispatch();
   const selected = useSelector(state => state.inputData.selected);
@@ -243,17 +242,6 @@ const DeckGLMap = ({ data, colors }) => {
     }
   };
 
-  useEffect(
-    // Clear WebGL context
-    () => () => {
-      if (glRef.current) {
-        const extension = glRef.current.getExtension('WEBGL_lose_context');
-        if (extension) extension.loseContext();
-      }
-    },
-    []
-  );
-
   useEffect(() => {
     setLayers(renderLayers());
   }, [data, visibility, extruded, selected]);
@@ -267,7 +255,7 @@ const DeckGLMap = ({ data, colors }) => {
         ContextProvider={MapContext.Provider}
         onViewStateChange={onViewStateChange}
         onDragStart={onDragStart}
-        onWebGLInitialized={gl => (glRef.current = gl)}
+        useDevicePixels={false}
       >
         <ReactMapGL ref={mapRef} mapStyle={mapStyles[mapStyle]} />
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
