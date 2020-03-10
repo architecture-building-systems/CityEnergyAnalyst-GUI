@@ -406,22 +406,31 @@ const TableEditor = ({ tab, selected, tabulator }) => {
   return (
     <React.Fragment>
       <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
-      {!data.length ? (
-        <div>
-          Input file could not be found. You can create the file using
-          {tab == 'surroundings' ? (
-            <Link to={`${routes.TOOLS}/surroundings-helper`}>
-              {' surroundings-helper '}
-            </Link>
-          ) : (
-            <Link to={`${routes.TOOLS}/archetypes-mapper`}>
-              {' archetypes-mapper '}
-            </Link>
-          )}
-          tool.
-        </div>
-      ) : null}
+      {!data.length && <ScriptSuggestion tab={tab} />}
     </React.Fragment>
+  );
+};
+
+// FIXME: Could get info from backend instead of hardcoding
+const ScriptSuggestion = ({ tab }) => {
+  return (
+    <div>
+      Input file could not be found. You can create the file using
+      {tab == 'typology' ? (
+        <Link to={`${routes.TOOLS}/database-migrator`}>
+          {' database-migrator '}
+        </Link>
+      ) : tab == 'surroundings' ? (
+        <Link to={`${routes.TOOLS}/surroundings-helper`}>
+          {' surroundings-helper '}
+        </Link>
+      ) : (
+        <Link to={`${routes.TOOLS}/archetypes-mapper`}>
+          {' archetypes-mapper '}
+        </Link>
+      )}
+      tool.
+    </div>
   );
 };
 
