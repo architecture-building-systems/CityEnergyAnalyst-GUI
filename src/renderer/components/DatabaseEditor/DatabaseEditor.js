@@ -64,8 +64,8 @@ const DatabaseEditor = () => {
         <h2>Database Editor</h2>
         <div>
           <ExportDatabaseButton />
-          <Button type="primary" onClick={goToScript}>
-            Assign Database
+          <Button type="primary" icon="import" onClick={goToScript}>
+            Import Database
           </Button>
         </div>
       </div>
@@ -75,11 +75,15 @@ const DatabaseEditor = () => {
         ) : (
           <div>
             <div style={{ margin: 20 }}>
-              <p>
-                Could not find or validate databases. Try assigning a new
+              <h3>
+                Could not find or validate input databases. Try importing a new
                 database
-              </p>
-              {error !== null && <details>{error}</details>}
+              </h3>
+              {error !== null && (
+                <details>
+                  <pre>{error}</pre>
+                </details>
+              )}
             </div>
             <Button onClick={checkDBPathValidity}>Try Again</Button>
           </div>
@@ -134,6 +138,7 @@ export const ExportDatabaseButton = () => {
   return (
     <React.Fragment>
       <Button
+        icon="upload"
         disabled={!!Object.keys(databaseValidation).length}
         onClick={() => {
           setModalVisible(true);
@@ -190,7 +195,7 @@ const SaveDatabaseButton = () => {
         }
         onClick={saveDB}
       >
-        Save Databases
+        Save Changes
       </Button>
       <SavingDatabaseModal
         visible={modalVisible}
