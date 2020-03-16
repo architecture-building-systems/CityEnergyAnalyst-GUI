@@ -42,10 +42,14 @@ const UseTypesDatabase = ({ name, data, schema }) => {
 };
 
 const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
+  const { METADATA, MONTHLY_MULTIPLIER, ...others } = useTypeData['SCHEDULES'][
+    useTypeName
+  ];
+  console.log(schema);
   return (
     <div className="cea-database-editor-use-types">
       <div>
-        <b>METADATA:</b> {useTypeData['SCHEDULES'][useTypeName]['METADATA']}
+        <b>METADATA:</b> {METADATA[0].metadata}
       </div>
       <h3>Properties</h3>
       {Object.keys(useTypeData['USE_TYPE_PROPERTIES']).map(property => (
@@ -54,21 +58,19 @@ const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
           databaseName={databaseName}
           sheetName={useTypeName}
           property={property}
-          propertyData={
-            useTypeData['USE_TYPE_PROPERTIES'][property][useTypeName]
-          }
+          propertyData={useTypeData['USE_TYPE_PROPERTIES'][property]}
         />
       ))}
       <h3>Schedules</h3>
       <SchedulesYearTable
         databaseName={databaseName}
         sheetName={useTypeName}
-        yearData={useTypeData['SCHEDULES'][useTypeName]['MONTHLY_MULTIPLIER']}
+        yearData={MONTHLY_MULTIPLIER[0]}
       />
       <SchedulesTypeTab
         databaseName={databaseName}
         sheetName={useTypeName}
-        scheduleData={useTypeData['SCHEDULES'][useTypeName]['SCHEDULES']}
+        scheduleData={others}
       />
     </div>
   );
@@ -80,9 +82,10 @@ const UseTypePropertyTable = ({
   property,
   propertyData
 }) => {
+  const tableData = propertyData.find(data => data.code == sheetName);
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const colHeaders = Object.keys(propertyData);
+  const colHeaders = Object.keys(tableData).filter(col => col !== 'code');
   const columns = colHeaders.map(key => ({
     data: key,
     type: 'numeric'
@@ -98,7 +101,7 @@ const UseTypePropertyTable = ({
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}-${property}`}
-        data={[propertyData]}
+        data={[tableData]}
         rowHeaders={property}
         rowHeaderWidth={180}
         colHeaders={colHeaders}
@@ -148,9 +151,9 @@ const fractionFloatValidator = (value, callback) => {
 const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const colHeaders = Object.keys(yearData).map(i => months_short[i]);
-  const columns = Object.keys(colHeaders).map(key => ({
-    data: Number(key),
+  const colHeaders = Object.keys(yearData).map(i => months_short[i - 1]);
+  const columns = Object.keys(yearData).map(key => ({
+    data: key,
     type: 'numeric',
     validator: fractionFloatValidator
   }));
@@ -190,10 +193,9 @@ const SchedulesDataTable = ({
     databaseName,
     `${sheetName}-${scheduleType}`
   );
-  const rowHeaders = Object.keys(data);
-  const tableData = rowHeaders.map(row => data[row]);
-  const colHeaders = Object.keys(tableData[0]).map(i => Number(i) + 1);
-  const columns = Object.keys(colHeaders).map(key => {
+  const rowHeaders = data.map(row => row['DAY']);
+  const colHeaders = Object.keys(data[0]).filter(col => col !== 'DAY');
+  const columns = colHeaders.map(key => {
     // FIXME: Temp solution
     if (['HEATING', 'COOLING'].includes(scheduleType)) {
       return {
@@ -216,7 +218,7 @@ const SchedulesDataTable = ({
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}-data`}
-        data={tableData}
+        data={data}
         rowHeaders={rowHeaders}
         rowHeaderWidth={80}
         colHeaders={colHeaders}
