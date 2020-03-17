@@ -3,6 +3,9 @@ import { Form, Checkbox, Row, Icon, Card, Input, Col } from 'antd';
 import axios from 'axios';
 import EditableMap from '../Map/EditableMap';
 import ToolModal from './ToolModal';
+import { calcPolyArea } from '../Map/EditableMap';
+
+const MAX_AREA_SIZE = 100;
 
 const ScenarioGenerateDataForm = ({ form, visible }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -159,16 +162,30 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
   );
 };
 
+const checkLatLong = (rule, value, callback) => {
+  const regex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+  if (regex.test(`${value.lat},${value.long}`)) {
+    callback();
+  } else {
+    callback('Please enter valid latitude/longitude coordinates');
+  }
+};
+
+const checkArea = (rule, value, callback) => {
+  if (rule.required && !value)
+    callback('Create a polygon by selecting an area in the map.');
+  if (calcPolyArea(value) > MAX_AREA_SIZE) {
+    callback(
+      `Area is above ${MAX_AREA_SIZE} km2. CEA would not be able to extract information from that size. Try a smaller area.`
+    );
+  } else {
+    callback();
+  }
+};
+
 const ScenarioMap = ({ form }) => {
   const [location, setLocation] = useState();
-  const checkLatLong = (rule, value, callback) => {
-    const regex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
-    if (regex.test(`${value.lat},${value.long}`)) {
-      callback();
-    } else {
-      callback('Please enter valid latitude/longitude coordinates');
-    }
-  };
+
   const getLatLong = async () => {
     const address = form.getFieldValue('location');
     try {
@@ -247,7 +264,7 @@ const ScenarioMap = ({ form }) => {
           rules: [
             {
               required: form.getFieldValue('input-data') === 'generate',
-              message: 'Create a polygon'
+              validator: checkArea
             }
           ]
         })(<Input style={{ display: 'none' }} />)}
