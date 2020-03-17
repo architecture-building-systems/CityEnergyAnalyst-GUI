@@ -4,9 +4,9 @@ import { Tabs, Button, Modal, Select } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
 import Table, { useTableUpdateRedux } from './Table';
-import { months_short } from '../../constants/months';
 import { useChangeRoute } from '../Project/Project';
 import routes from '../../constants/routes';
+import { getTableSchema } from './Database';
 
 const UseTypesDatabase = ({ name, data, schema }) => {
   const useTypes = Object.keys(data['SCHEDULES']);
@@ -45,7 +45,6 @@ const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
   const { METADATA, MONTHLY_MULTIPLIER, ...others } = useTypeData['SCHEDULES'][
     useTypeName
   ];
-  console.log(schema);
   return (
     <div className="cea-database-editor-use-types">
       <div>
@@ -59,18 +58,21 @@ const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
           sheetName={useTypeName}
           property={property}
           propertyData={useTypeData['USE_TYPE_PROPERTIES'][property]}
+          schema={schema[property]}
         />
       ))}
       <h3>Schedules</h3>
       <SchedulesYearTable
         databaseName={databaseName}
         sheetName={useTypeName}
-        yearData={MONTHLY_MULTIPLIER[0]}
+        yearData={MONTHLY_MULTIPLIER}
+        schema={schema['MONTHLY_MULTIPLIER']}
       />
       <SchedulesTypeTab
         databaseName={databaseName}
         sheetName={useTypeName}
         scheduleData={others}
+        schema={schema}
       />
     </div>
   );
@@ -80,16 +82,19 @@ const UseTypePropertyTable = ({
   databaseName,
   sheetName,
   property,
-  propertyData
+  propertyData,
+  schema
 }) => {
-  const tableData = propertyData.find(data => data.code == sheetName);
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const colHeaders = Object.keys(tableData).filter(col => col !== 'code');
-  const columns = colHeaders.map(key => ({
-    data: key,
-    type: 'numeric'
-  }));
+  const tableData = [propertyData.find(data => data.code == sheetName)];
+  const { columns, colHeaders } = getTableSchema(
+    schema,
+    sheetName,
+    tableData,
+    null,
+    Object.keys(tableData[0]).filter(row => row !== 'code')
+  );
 
   //  Revalidate cells on sheet change
   useEffect(() => {
@@ -101,7 +106,7 @@ const UseTypePropertyTable = ({
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}-${property}`}
-        data={[tableData]}
+        data={tableData}
         rowHeaders={property}
         rowHeaderWidth={180}
         colHeaders={colHeaders}
@@ -113,7 +118,12 @@ const UseTypePropertyTable = ({
   );
 };
 
-const SchedulesTypeTab = ({ databaseName, sheetName, scheduleData }) => {
+const SchedulesTypeTab = ({
+  databaseName,
+  sheetName,
+  scheduleData,
+  schema
+}) => {
   const [selectedType, setSelected] = useState(Object.keys(scheduleData)[0]);
   return (
     <div>
@@ -122,6 +132,7 @@ const SchedulesTypeTab = ({ databaseName, sheetName, scheduleData }) => {
         sheetName={sheetName}
         scheduleType={selectedType}
         data={scheduleData[selectedType]}
+        schema={schema[selectedType]}
       />
       <Tabs
         className="cea-database-editor-tabs"
@@ -139,24 +150,15 @@ const SchedulesTypeTab = ({ databaseName, sheetName, scheduleData }) => {
   );
 };
 
-const fractionFloatValidator = (value, callback) => {
-  try {
-    if (Number(value) >= 0 && Number(value) <= 1) callback(true);
-    else callback(false);
-  } catch (error) {
-    callback(false);
-  }
-};
-
-const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
+const SchedulesYearTable = ({ databaseName, sheetName, yearData, schema }) => {
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const colHeaders = Object.keys(yearData).map(i => months_short[i - 1]);
-  const columns = Object.keys(yearData).map(key => ({
-    data: key,
-    type: 'numeric',
-    validator: fractionFloatValidator
-  }));
+  const { columns, colHeaders } = getTableSchema(
+    schema,
+    sheetName,
+    yearData,
+    null
+  );
 
   //  Revalidate cells on sheet change
   useEffect(() => {
@@ -169,8 +171,8 @@ const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
       <Table
         ref={tableRef}
         id={`${databaseName}-${sheetName}-year`}
-        data={[yearData]}
-        rowHeaders="MONTHLY_MULTIPLIER"
+        data={yearData}
+        rowHeaders={['MONTHLY_MULTIPLIER']}
         rowHeaderWidth={180}
         colHeaders={colHeaders}
         columns={columns}
@@ -185,7 +187,8 @@ const SchedulesDataTable = ({
   databaseName,
   sheetName,
   scheduleType,
-  data
+  data,
+  schema
 }) => {
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(
@@ -194,18 +197,13 @@ const SchedulesDataTable = ({
     `${sheetName}-${scheduleType}`
   );
   const rowHeaders = data.map(row => row['DAY']);
-  const colHeaders = Object.keys(data[0]).filter(col => col !== 'DAY');
-  const columns = colHeaders.map(key => {
-    // FIXME: Temp solution
-    if (['HEATING', 'COOLING'].includes(scheduleType)) {
-      return {
-        data: key,
-        type: 'dropdown',
-        source: ['OFF', 'SETBACK', 'SETPOINT']
-      };
-    } else
-      return { data: key, type: 'numeric', validator: fractionFloatValidator };
-  });
+  const { columns, colHeaders } = getTableSchema(
+    schema,
+    sheetName,
+    data,
+    null,
+    Object.keys(data[0]).filter(col => col !== 'DAY')
+  );
 
   //  Revalidate cells on sheet and type change
   useEffect(() => {

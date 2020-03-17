@@ -63,11 +63,19 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   );
 };
 
-const getTableSchema = (schema, sheetName, tableData, data) => {
-  const colHeaders = Object.keys(tableData[0]);
-  const columns = colHeaders.map(key => {
+export const getTableSchema = (
+  schema,
+  sheetName,
+  tableData,
+  data,
+  colHeaders
+) => {
+  const _colHeaders = colHeaders || Object.keys(tableData[0]);
+  const columns = _colHeaders.map(key => {
+    const column_schema = schema['columns'][key];
+
     // Try to infer type from schema, else load default
-    if (typeof schema['columns'][key] === 'undefined') {
+    if (typeof column_schema === 'undefined') {
       console.error(`Could not find \`${key}\` in schema`, {
         sheetName,
         schema
@@ -77,33 +85,35 @@ const getTableSchema = (schema, sheetName, tableData, data) => {
 
     // Set read only for primary keys
     if (
-      typeof schema['columns'][key]['primary'] != 'undefined' &&
-      schema['columns'][key]['primary']
+      typeof column_schema['primary'] != 'undefined' &&
+      column_schema['primary']
     ) {
       return { data: key, unique: true };
     }
 
+    const choice_prop = column_schema['choice'];
+
     // Return dropdown if column is a choice
-    if (typeof schema['columns'][key]['choice'] != 'undefined') {
+    if (typeof choice_prop != 'undefined') {
       // Return list of values if found
-      if (typeof schema['columns'][key]['choice']['values'] != 'undefined')
+      if (typeof choice_prop['values'] != 'undefined')
         return {
           data: key,
           type: 'dropdown',
-          source: schema['columns'][key]['choice']['values']
+          source: choice_prop['values']
         };
       // Get list from data
-      if (typeof schema['columns'][key]['choice']['lookup'] != 'undefined') {
-        const { database_category, database_name, sheet, column } = schema[
-          'columns'
-        ][key]['choice']['lookup'];
+      if (typeof choice_prop['lookup'] != 'undefined') {
+        const { database_category, database_name, sheet, column } = choice_prop[
+          'lookup'
+        ];
         const lookup = data[database_category][database_name][sheet];
         const choices = lookup.map(row => row[column]);
         return { data: key, type: 'dropdown', source: choices };
       }
     }
 
-    if (['long', 'float', 'int'].includes(schema['columns'][key]['type'])) {
+    if (['long', 'float', 'int'].includes(column_schema['type'])) {
       // Accept 'NA' values for air_conditioning_systems
       if (['HEATING', 'COOLING'].includes(sheetName))
         return {
@@ -117,14 +127,24 @@ const getTableSchema = (schema, sheetName, tableData, data) => {
             }
           }
         };
-      else return { data: key, type: 'numeric' };
-    } else if (schema['columns'][key]['type'] == 'boolean')
+      else
+        return {
+          data: key,
+          type: 'numeric',
+          validator: (value, callback) => {
+            const min = column_schema['min'];
+            const max = column_schema['max'];
+            if (typeof min != 'undefined' && value < min) callback(false);
+            else if (typeof max != 'undefined' && value > max) callback(false);
+            else callback(true);
+          }
+        };
+    } else if (column_schema['type'] == 'boolean')
       return { data: key, type: 'dropdown', source: [true, false] };
 
     return { data: key };
   });
-  console.log(columns);
-  return { columns, colHeaders };
+  return { columns, colHeaders: _colHeaders };
 };
 
 export default withErrorBoundary(Database);
