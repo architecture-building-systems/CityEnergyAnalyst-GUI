@@ -226,13 +226,13 @@ const DatabaseContainer = () => {
           <UseTypesDatabase
             name={name}
             data={data[category][name]}
-            schema={schema[category][name]}
+            schema={schema[name]}
           />
         ) : (
           <Database
             name={name}
             data={data[category][name]}
-            schema={schema[category][name]}
+            schema={schema[name]}
           />
         )}
       </div>

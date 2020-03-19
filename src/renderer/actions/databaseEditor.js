@@ -6,8 +6,8 @@ export const initDatabaseState = () => async (dispatch, getState) => {
   dispatch({ type: INIT_DATABASE_STATE });
   // eslint-disable-next-line
   return Promise.all([
-    dispatch(fetchDatabaseData('all')),
-    dispatch(fetchDatabaseSchema('all')),
+    dispatch(fetchDatabaseData()),
+    dispatch(fetchDatabaseSchema()),
     dispatch(fetchDatabaseGlossary())
   ]).then(() => {
     const { status } = getState().databaseEditor.status;
@@ -19,11 +19,11 @@ export const initDatabaseState = () => async (dispatch, getState) => {
 export const FETCH_DATABASE_DATA = 'FETCH_DATABASE_DATA';
 export const FETCH_DATABASE_DATA_SUCCESS = 'FETCH_DATABASE_DATA_SUCCESS';
 export const FETCH_DATABASE_DATA_FAILURE = 'FETCH_DATABASE_DATA_FAILURE';
-export const fetchDatabaseData = db => async dispatch => {
+export const fetchDatabaseData = () => async dispatch => {
   try {
     dispatch({ type: FETCH_DATABASE_DATA });
     const { data } = await axios.get(
-      `http://localhost:5050/api/inputs/databases/${db}`
+      `http://localhost:5050/api/inputs/databases`
     );
     return dispatch({
       type: FETCH_DATABASE_DATA_SUCCESS,
@@ -40,11 +40,11 @@ export const fetchDatabaseData = db => async dispatch => {
 export const FETCH_DATABASE_SCHEMA = 'FETCH_DATABASE_SCHEMA';
 export const FETCH_DATABASE_SCHEMA_SUCCESS = 'FETCH_DATABASE_SCHEMA_SUCCESS';
 export const FETCH_DATABASE_SCHEMA_FAILURE = 'FETCH_DATABASE_SCHEMA_FAILURE';
-export const fetchDatabaseSchema = db => async dispatch => {
+export const fetchDatabaseSchema = () => async dispatch => {
   try {
     dispatch({ type: FETCH_DATABASE_SCHEMA });
     const { data } = await axios.get(
-      `http://localhost:5050/api/databases/schema/${db}`
+      `http://localhost:5050/api/databases/schema`
     );
     return dispatch({
       type: FETCH_DATABASE_SCHEMA_SUCCESS,

@@ -29,7 +29,9 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
         case 'validateCells':
           break;
         default: {
-          const colHeader = tableInstance.getColHeader(prop) || prop;
+          const colHeader = tableInstance.getColHeader(
+            tableInstance.propToCol(prop)
+          );
           const rowHeader = tableInstance.getRowHeader(row) || row;
 
           dispatch(
