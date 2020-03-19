@@ -271,7 +271,6 @@ const DeckGLMap = ({ data, colors }) => {
       >
         <ReactMapGL ref={mapRef} mapStyle={mapStyles[mapStyle]} />
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
-          <NavigationControl showZoom={false} />
           <Toggle3DControl
             callback={setExtruded}
             viewState={viewState}
