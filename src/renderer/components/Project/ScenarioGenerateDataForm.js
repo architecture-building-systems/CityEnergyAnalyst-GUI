@@ -176,7 +176,7 @@ const checkArea = (rule, value, callback) => {
     callback('Create a polygon by selecting an area in the map.');
   if (calcPolyArea(value) > MAX_AREA_SIZE) {
     callback(
-      `Area is above ${MAX_AREA_SIZE} km2. CEA would not be able to extract information from that size. Try a smaller area.`
+      `Area selected is above ${MAX_AREA_SIZE} km2. CEA would not be able to extract information from that size due to the bandwidth limitation of Open Street Maps API. Try selecting a smaller area.`
     );
   } else {
     callback();
