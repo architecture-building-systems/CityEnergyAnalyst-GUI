@@ -45,7 +45,7 @@ export const startJob = jobID => {
     dispatch({ type: START_JOB });
     try {
       const job = await axios.post(
-        `http://localhost:5050/tools/start/${jobID}`
+        `http://localhost:5050/server/jobs/start/${jobID}`
       );
       dispatch({ type: START_JOB_SUCCESS, payload: job.data });
     } catch (error) {
