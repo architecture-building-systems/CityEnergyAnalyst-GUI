@@ -6,6 +6,7 @@ import { EditableGeoJsonLayer } from 'nebula.gl';
 import { Button } from 'antd';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './EditableMap.css';
+import { area as calcArea, polygon } from '@turf/turf';
 
 const defaultViewState = {
   longitude: 0,
@@ -20,6 +21,16 @@ const EMPTY_FEATURE = {
   features: []
 };
 
+export const calcPolyArea = geojson => {
+  const poly = geojson.features[0]?.geometry?.coordinates;
+  if (typeof poly === 'undefined') return 0;
+  const site = polygon(geojson.features[0].geometry.coordinates);
+  // convert area from m^2 to km^2
+  const area = (calcArea(site) / 1000000).toFixed(2);
+
+  return area;
+};
+
 const EditableMap = ({
   location = defaultViewState,
   geojson = null,
@@ -29,7 +40,7 @@ const EditableMap = ({
   const [mode, setMode] = useState('view');
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
-  const hasData = data.features.length;
+  const hasData = !!data.features.length;
 
   const layer = new EditableGeoJsonLayer({
     id: 'geojson-layer',
@@ -92,6 +103,20 @@ const EditableMap = ({
 
   return (
     <React.Fragment>
+      {hasData && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            padding: 10,
+            zIndex: 5,
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            fontWeight: 600
+          }}
+        >
+          {`Selected Area: ${calcPolyArea(data)} km2`}
+        </div>
+      )}
       <div
         id="edit-map-buttons"
         style={{
