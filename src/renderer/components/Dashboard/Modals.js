@@ -13,6 +13,7 @@ import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
 import { shell } from 'electron';
 import Parameter from '../Tools/Parameter';
+import path from 'path';
 
 const { Option } = Select;
 
@@ -690,11 +691,81 @@ export const ModalDeletePlot = ({
   );
 };
 
-export const ModalInputFiles = ({ dashIndex, activePlotRef }) => {
+const groupFilesOnParent = fileList => {
+  let out = {};
+  for (const fileLocation of fileList) {
+    const parentFolder = path.dirname(fileLocation);
+    const fileName = path.basename(fileLocation);
+    if (typeof out[parentFolder] == 'undefined') out[parentFolder] = [];
+    out[parentFolder].push(fileName);
+  }
+  return out;
+};
+
+const FileList = ({ folderPath, filePaths }) => {
+  const fileList = filePaths.map(file => (
+    <li key={file}>
+      <a onClick={() => shell.openItem(path.join(folderPath, file))}>{file}</a>
+    </li>
+  ));
+
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <Icon type="folder" />
+      <b style={{ margin: 5 }}>{folderPath}</b>
+      <a onClick={() => shell.openItem(folderPath)}>Open Folder</a>
+      {filePaths.length > 3 ? (
+        <details style={{ margin: 10 }}>
+          <summary>Show files</summary>
+          <div style={{ margin: 10, maxHeight: 200, overflow: 'auto' }}>
+            <ul>{fileList}</ul>
+          </div>
+        </details>
+      ) : (
+        <ul>{fileList}</ul>
+      )}
+    </div>
+  );
+};
+
+const PlotFilesList = ({ inputs, data }) => {
+  const inputFolders = Object.keys(inputs);
+  const dataFolders = Object.keys(data);
+  return (
+    <div>
+      {inputFolders.length ? (
+        <div>
+          <h2>Input Files</h2>
+          {inputFolders.map(inputFolder => (
+            <FileList
+              key={inputFolder}
+              folderPath={inputFolder}
+              filePaths={inputs[inputFolder]}
+            />
+          ))}
+        </div>
+      ) : null}
+      {dataFolders.length ? (
+        <div>
+          <h2>Data Files</h2>
+          {dataFolders.map(dataFolder => (
+            <FileList
+              key={dataFolder}
+              folderPath={dataFolder}
+              filePaths={data[dataFolder]}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
   const [loading, setLoading] = useState(true);
-  const [fileLocations, setFileLocations] = useState({});
+  const [fileLocations, setFileLocations] = useState(null);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
-  const handleCancel = () => setModalVisible(modals.inputFiles, false);
+  const handleCancel = () => setModalVisible(modals.plotFiles, false);
 
   useEffect(() => {
     const fetchFileLocations = async () => {
@@ -703,28 +774,24 @@ export const ModalInputFiles = ({ dashIndex, activePlotRef }) => {
         const { data } = await axios.get(
           `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/input-files`
         );
-        let out = {};
-        for (const fileLocation of data) {
-          const path = require('path');
-          const parentFolder = path.dirname(fileLocation);
-          if (typeof out[parentFolder] == 'undefined') out[parentFolder] = [];
-          out[parentFolder].push(path.basename(fileLocation));
-        }
-        setFileLocations(out);
+        setFileLocations({
+          inputs: groupFilesOnParent(data.inputs),
+          data: groupFilesOnParent(data.data)
+        });
       } catch (err) {
         console.log(err);
       } finally {
         setLoading(false);
       }
     };
-    if (visible.inputFiles) fetchFileLocations();
-    else setFileLocations({});
+    if (visible.plotFiles) fetchFileLocations();
+    else setFileLocations(null);
   }, [visible]);
 
   return (
     <Modal
-      title="Input File Locations"
-      visible={visible.inputFiles}
+      title="Plot Data Files"
+      visible={visible.plotFiles}
       width={800}
       onCancel={handleCancel}
       footer={null}
@@ -732,27 +799,13 @@ export const ModalInputFiles = ({ dashIndex, activePlotRef }) => {
     >
       {loading ? (
         <Skeleton />
+      ) : fileLocations ? (
+        <PlotFilesList
+          inputs={fileLocations.inputs}
+          data={fileLocations.data}
+        />
       ) : (
-        Object.keys(fileLocations).map(folderLocation => (
-          <div key={folderLocation}>
-            <Icon type="folder" />
-            <b style={{ margin: 5 }}>{folderLocation}</b>
-            <a onClick={() => shell.openItem(folderLocation)}>Open Folder</a>
-            <ul>
-              {fileLocations[folderLocation].map(file => (
-                <li key={file}>
-                  <a
-                    onClick={() =>
-                      shell.openItem(require('path').join(folderLocation, file))
-                    }
-                  >
-                    {file}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+        <div>Files not found</div>
       )}
     </Modal>
   );

@@ -147,14 +147,14 @@ const PlotLegendToggle = ({ divID }) => {
 
 const InputFiles = ({ index, activePlotRef }) => {
   const { modals, setModalVisible } = useContext(ModalContext);
-  const showModalInputFiles = () => {
-    setModalVisible(modals.inputFiles, true);
+  const showModalPlotFiles = () => {
+    setModalVisible(modals.plotFiles, true);
     activePlotRef.current = index;
   };
 
   return (
-    <Tooltip title="Show input file location">
-      <Icon type="container" theme="twoTone" onClick={showModalInputFiles} />
+    <Tooltip title="Show plot data files">
+      <Icon type="file-text" theme="twoTone" onClick={showModalPlotFiles} />
     </Tooltip>
   );
 };
