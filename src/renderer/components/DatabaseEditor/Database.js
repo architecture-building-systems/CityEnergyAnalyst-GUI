@@ -48,7 +48,11 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
         databaseName={databaseName}
         sheetName={sheetName}
       />
-      <ColumnGlossary tableRef={tableRef} colHeaders={colHeaders} />
+      <ColumnGlossary
+        tableRef={tableRef}
+        colHeaders={colHeaders}
+        filter={variable => variable.WORKSHEET == sheetName}
+      />
       <Table
         ref={tableRef}
         id={databaseName}
