@@ -7,10 +7,10 @@ export const httpAction = ({
   method = 'GET',
   data = null,
   headers = [],
-  onSuccess = data => {},
-  onFailure = error => {},
+  onSuccess = (data) => {},
+  onFailure = (error) => {},
   payload = {},
-  editPayload = payload => {}
+  editPayload = (payload) => {},
 }) => ({
   HTTP_ACTION: {
     type,
@@ -22,11 +22,11 @@ export const httpAction = ({
     onSuccess,
     onFailure,
     payload,
-    editPayload
-  }
+    editPayload,
+  },
 });
 
-const httpMiddleware = ({ dispatch, getState }) => next => action => {
+const httpMiddleware = ({ dispatch, getState }) => (next) => (action) => {
   if (!action.HTTP_ACTION) return next(action);
   const {
     type,
@@ -38,7 +38,7 @@ const httpMiddleware = ({ dispatch, getState }) => next => action => {
     onSuccess,
     onFailure,
     payload,
-    editPayload
+    editPayload,
   } = action.HTTP_ACTION;
   const dataOrParams = ['GET', 'DELETE'].includes(method) ? 'params' : 'data';
   const axiosOptions = {
@@ -46,7 +46,7 @@ const httpMiddleware = ({ dispatch, getState }) => next => action => {
     url,
     method,
     headers,
-    [dataOrParams]: data
+    [dataOrParams]: data,
   };
 
   const fetch = async () => {
@@ -67,7 +67,7 @@ const httpMiddleware = ({ dispatch, getState }) => next => action => {
       console.log(editPayload());
       dispatch({
         type: type + '_FAILED',
-        payload: editPayload(errorPayload) || errorPayload
+        payload: editPayload(errorPayload) || errorPayload,
       });
       onFailure(error);
     }

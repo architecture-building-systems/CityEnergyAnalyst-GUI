@@ -5,8 +5,8 @@ import './DatabaseEditor.css';
 import { setActiveDatabase } from '../../actions/databaseEditor';
 
 const DatabaseTopMenu = () => {
-  const data = useSelector(state => state.databaseEditor.data);
-  const validation = useSelector(state => state.databaseEditor.validation);
+  const data = useSelector((state) => state.databaseEditor.data);
+  const validation = useSelector((state) => state.databaseEditor.validation);
   const dispatch = useDispatch();
   const [selectedKey, setSelected] = useState(
     `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`
@@ -33,9 +33,9 @@ const DatabaseTopMenu = () => {
         }}
         selectedKeys={[selectedKey]}
       >
-        {Object.keys(data).map(category => (
+        {Object.keys(data).map((category) => (
           <Menu.SubMenu key={category} title={category.toUpperCase()}>
-            {Object.keys(data[category]).map(name => (
+            {Object.keys(data[category]).map((name) => (
               <Menu.Item key={`${category}:${name}`}>
                 {name.replace('_', '-')}
               </Menu.Item>
@@ -50,7 +50,7 @@ const DatabaseTopMenu = () => {
         footer={[
           <Button key="back" onClick={handleOk}>
             Go Back
-          </Button>
+          </Button>,
         ]}
       >
         There are still errors in this database.

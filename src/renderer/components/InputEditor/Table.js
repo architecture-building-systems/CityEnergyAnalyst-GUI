@@ -8,7 +8,7 @@ import {
   updateInputData,
   deleteBuildings,
   discardChanges,
-  saveChanges
+  saveChanges,
 } from '../../actions/inputEditor';
 import EditSelectedModal from './EditSelectedModal';
 import routes from '../../constants/routes';
@@ -19,7 +19,7 @@ import { shell } from 'electron';
 
 const Table = ({ tab }) => {
   const { selected, changes, schedules } = useSelector(
-    state => state.inputData
+    (state) => state.inputData
   );
   const tabulator = useRef(null);
 
@@ -75,21 +75,21 @@ const InputEditorButtons = ({ changes }) => {
       cancelText: 'Cancel',
       async onOk() {
         await dispatch(saveChanges())
-          .then(data => {
+          .then((data) => {
             console.log(data);
             message.config({
-              top: 120
+              top: 120,
             });
             message.success('Changes Saved!');
           })
-          .catch(error => {
+          .catch((error) => {
             console.log(error);
             message.config({
-              top: 120
+              top: 120,
             });
             message.error('Something went wrong.', 0);
           });
-      }
+      },
     });
   };
 
@@ -108,18 +108,18 @@ const InputEditorButtons = ({ changes }) => {
       cancelText: 'Cancel',
       async onOk() {
         await dispatch(discardChanges())
-          .then(data => {
+          .then((data) => {
             console.log(data);
             message.config({
-              top: 120
+              top: 120,
             });
             message.info('Unsaved changes have been discarded.');
           })
-          .catch(error => {
+          .catch((error) => {
             console.log(error);
             message.error('Something went wrong.', 0);
           });
-      }
+      },
     });
   };
 
@@ -146,7 +146,7 @@ const ChangesSummary = ({ changes }) => {
       {Object.keys(changes.delete).length ? (
         <div>
           <b>DELETE:</b>
-          {Object.keys(changes.delete).map(table => (
+          {Object.keys(changes.delete).map((table) => (
             <div key={table}>
               <u>
                 <b>{table}</b>
@@ -164,16 +164,16 @@ const ChangesSummary = ({ changes }) => {
       {Object.keys(changes.update).length ? (
         <div>
           <b>UPDATE:</b>
-          {Object.keys(changes.update).map(table => (
+          {Object.keys(changes.update).map((table) => (
             <div key={table}>
               <u>
                 <b>{table}</b>
               </u>
-              {Object.keys(changes.update[table]).map(building => (
+              {Object.keys(changes.update[table]).map((building) => (
                 <div key={building}>
                   {building}
                   {Object.keys(changes.update[table][building]).map(
-                    property => (
+                    (property) => (
                       <div key={property}>
                         <i>{property}</i>
                         {` : ${changes.update[table][building][property].oldValue}
@@ -197,7 +197,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   const [filterToggle, setFilterToggle] = useState(false);
   const [selectedInTable, setSelectedInTable] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const data = useSelector(state => state.inputData.tables);
+  const data = useSelector((state) => state.inputData.tables);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -206,7 +206,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   }, [tab, selected]);
 
   const selectAll = () => {
-    dispatch(setSelected(tabulator.current.getData().map(data => data.Name)));
+    dispatch(setSelected(tabulator.current.getData().map((data) => data.Name)));
   };
 
   const filterSelected = () => {
@@ -216,7 +216,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
       tabulator.current.setFilter('Name', 'in', selected);
     }
     tabulator.current.redraw();
-    setFilterToggle(oldValue => !oldValue);
+    setFilterToggle((oldValue) => !oldValue);
   };
 
   const clearSelected = () => {
@@ -242,7 +242,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
       cancelText: 'Cancel',
       onOk() {
         dispatch(deleteBuildings([...selected]));
-      }
+      },
     });
   };
 
@@ -295,7 +295,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
       columns: columnDef.columns,
       layout: 'fitDataFill',
       height: '300px',
-      validationFailed: cell => {
+      validationFailed: (cell) => {
         const field = cell.getField();
         const { type, constraints } = columnDescriptionRef.current[field];
         const content = (
@@ -307,12 +307,12 @@ const TableEditor = ({ tab, selected, tabulator }) => {
           </span>
         );
         message.config({
-          top: 120
+          top: 120,
         });
         message.error(content);
         cell.cancelEdit();
       },
-      cellEdited: cell => {
+      cellEdited: (cell) => {
         dispatch(
           updateInputData(
             tableRef.current,
@@ -321,7 +321,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
           )
         );
       },
-      placeholder: '<div>No matching records found.</div>'
+      placeholder: '<div>No matching records found.</div>',
     });
     filtered && tabulator.current.setFilter('Name', 'in', selected);
   }, []);
@@ -352,7 +352,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
               description,
               unit,
               type,
-              path: _path
+              path: _path,
             } = columnDef.description[columnDef.columns[index].title];
             ReactDOM.render(
               <Tooltip
@@ -434,8 +434,8 @@ const ScriptSuggestion = ({ tab }) => {
   );
 };
 
-const useTableData = tab => {
-  const { columns, tables } = useSelector(state => state.inputData);
+const useTableData = (tab) => {
+  const { columns, tables } = useSelector((state) => state.inputData);
   const [data, setData] = useState([]);
   const [columnDef, setColumnDef] = useState({ columns: [], description: [] });
 
@@ -446,7 +446,7 @@ const useTableData = tab => {
     const selectedRows = cell
       .getTable()
       .getSelectedData()
-      .map(data => data.Name);
+      .map((data) => data.Name);
     if (!e.ctrlKey) {
       (selectedRows.length !== [row.getIndex()].length ||
         !cell.getRow().isSelected()) &&
@@ -454,7 +454,7 @@ const useTableData = tab => {
     } else {
       if (cell.getRow().isSelected()) {
         dispatch(
-          setSelected(selectedRows.filter(name => name !== row.getIndex()))
+          setSelected(selectedRows.filter((name) => name !== row.getIndex()))
         );
       } else {
         dispatch(setSelected([...selectedRows, row.getIndex()]));
@@ -465,13 +465,13 @@ const useTableData = tab => {
   const getData = () =>
     Object.keys(tables[tab])
       .sort()
-      .map(row => ({
+      .map((row) => ({
         Name: row,
-        ...tables[tab][row]
+        ...tables[tab][row],
       }));
 
   const getColumnDef = () => {
-    let _columns = Object.keys(columns[tab]).map(column => {
+    let _columns = Object.keys(columns[tab]).map((column) => {
       let columnDef = { title: column, field: column };
       switch (column) {
         case 'REFERENCE':
@@ -484,7 +484,7 @@ const useTableData = tab => {
             ...columnDef,
             minWidth: 100,
             // Hack to allow editing when double clicking
-            cellDblClick: () => {}
+            cellDblClick: () => {},
           };
           switch (dataType) {
             case 'int':
@@ -493,7 +493,7 @@ const useTableData = tab => {
                 ...columnDef,
                 editor: 'input',
                 validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
-                mutatorEdit: value => Number(value)
+                mutatorEdit: (value) => Number(value),
               };
             case 'float':
               return {
@@ -504,12 +504,12 @@ const useTableData = tab => {
                   'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
                   ...(columns[tab][column].constraints
                     ? Object.keys(columns[tab][column].constraints).map(
-                        constraint =>
+                        (constraint) =>
                           `${constraint}:${columns[tab][column].constraints[constraint]}`
                       )
-                    : [])
+                    : []),
                 ],
-                mutatorEdit: value => Number(value)
+                mutatorEdit: (value) => Number(value),
               };
             case 'date':
               return {
@@ -518,14 +518,14 @@ const useTableData = tab => {
                 validator: [
                   'required',
                   'regex:^[0-3][0-9]\\|[0-1][0-9]$',
-                  { type: simpleDateVal }
-                ]
+                  { type: simpleDateVal },
+                ],
               };
             case 'str':
               return {
                 ...columnDef,
                 editor: 'input',
-                validator: ['required', 'string']
+                validator: ['required', 'string'],
               };
             case 'choice':
               return {
@@ -537,8 +537,8 @@ const useTableData = tab => {
                   listItemFormatter: (value, label) => {
                     if (!label) return value;
                     return `${value} : ${label}`;
-                  }
-                }
+                  },
+                },
               };
             default:
               return columnDef;
@@ -561,7 +561,7 @@ const useTableData = tab => {
 };
 
 const simpleDateVal = (cell, value, parameters) => {
-  const [date, month] = value.split('|').map(number => Number(number));
+  const [date, month] = value.split('|').map((number) => Number(number));
   const daysInMonths = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   return daysInMonths[month] >= date;
 };

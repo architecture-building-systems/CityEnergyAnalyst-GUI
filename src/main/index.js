@@ -27,7 +27,7 @@ function createMainWindow() {
     show: false, // starts hidden until page is loaded
     frame: false,
     titleBarStyle: 'hidden', // or 'customButtonsOnHover',
-    webPreferences: { nodeIntegration: true }
+    webPreferences: { nodeIntegration: true },
   });
 
   window.webContents.on('did-frame-finish-load', () => {
@@ -49,7 +49,7 @@ function createMainWindow() {
       formatUrl({
         pathname: path.join(__dirname, 'index.html'),
         protocol: 'file',
-        slashes: true
+        slashes: true,
       })
     );
   }
@@ -79,14 +79,14 @@ function createSplashWindow() {
     frame: false,
     backgroundColor: '#2e2c29',
     titleBarStyle: 'hidden',
-    webPreferences: { nodeIntegration: true }
+    webPreferences: { nodeIntegration: true },
   });
 
   window.once('ready-to-show', () => {
     window.show();
 
     // Check if CEA server is already running, only start if not
-    isCEAAlive().then(alive => {
+    isCEAAlive().then((alive) => {
       if (alive) mainWindow = createMainWindow();
       else
         createCEAProcess(window, () => {
@@ -115,7 +115,7 @@ function createSplashWindow() {
  * Add event listeners...
  */
 
-app.on('will-quit', event => {
+app.on('will-quit', (event) => {
   event.preventDefault();
   const shutdown = async () => {
     try {

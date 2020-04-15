@@ -5,24 +5,24 @@ export const GET_PROJECT_SUCCESS = 'GET_PROJECT_SUCCESS';
 export const GET_PROJECT_FAILED = 'GET_PROJECT_FAILED';
 
 export const getProject = () => {
-  return dispatch => {
+  return (dispatch) => {
     dispatch({
       type: GET_PROJECT,
-      payload: { isFetching: true, error: null }
+      payload: { isFetching: true, error: null },
     });
     return axios
       .get(`http://localhost:5050/api/project`)
-      .then(response => {
+      .then((response) => {
         dispatch({
           type: GET_PROJECT_SUCCESS,
-          payload: { isFetching: false, info: response.data }
+          payload: { isFetching: false, info: response.data },
         });
         return response.data;
       })
-      .catch(error => {
+      .catch((error) => {
         dispatch({
           type: GET_PROJECT_FAILED,
-          payload: { isFetching: false, error }
+          payload: { isFetching: false, error },
         });
       });
   };

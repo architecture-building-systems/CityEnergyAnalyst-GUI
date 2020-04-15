@@ -9,7 +9,7 @@ import { ModalContext } from '../../utils/ModalManager';
 const defaultPlotStyle = {
   height: 'calc(50vh - 160px)',
   minHeight: 300,
-  margin: 5
+  margin: 5,
 };
 
 const useFetchPlotDiv = (dashIndex, index, hash) => {
@@ -25,19 +25,19 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
         const response = await axios.get(
           `http://localhost:5050/plots/div/${dashIndex}/${index}`,
           {
-            cancelToken: source.token
+            cancelToken: source.token,
           }
         );
         if (mounted)
           setDiv(() => {
             let script = null;
             let content = parser(response.data, {
-              replace: function(domNode) {
+              replace: function (domNode) {
                 if (domNode.type === 'script' && domNode.children[0]) {
                   script = domNode.children[0].data;
                 }
-              }
-            }).filter(node => node.type === 'div' || node.type === 'style');
+              },
+            }).filter((node) => node.type === 'div' || node.type === 'style');
             return { content, script };
           });
       } catch (err) {
@@ -112,7 +112,7 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
       style={{ ...plotStyle, height: '', minHeight: '' }}
       bodyStyle={{
         height: plotStyle.height,
-        minHeight: plotStyle.minHeight
+        minHeight: plotStyle.minHeight,
       }}
       size="small"
     >
@@ -166,7 +166,7 @@ const OpenInWindow = ({ index, dashIndex }) => {
       width: 800,
       height: 600,
       titleBarStyle: 'hidden',
-      webPreferences: { nodeIntegration: true }
+      webPreferences: { nodeIntegration: true },
     });
     win.removeMenu();
     win.on('closed', () => {
@@ -181,12 +181,12 @@ const OpenInWindow = ({ index, dashIndex }) => {
           filters: [
             {
               name: 'HTML',
-              extensions: ['html']
-            }
-          ]
+              extensions: ['html'],
+            },
+          ],
         },
-        outputPath => {
-          win.webContents.savePage(outputPath, 'HTMLOnly', error => {
+        (outputPath) => {
+          win.webContents.savePage(outputPath, 'HTMLOnly', (error) => {
             if (!error) console.log('Save page successfully');
           });
         }
@@ -269,7 +269,7 @@ const ErrorPlot = ({ error }) => {
     return (
       <div style={{ height: '100%', overflow: 'auto' }}>
         {parser(error.data, {
-          replace: function(domNode) {
+          replace: function (domNode) {
             if (domNode.type === 'tag' && domNode.name === 'a') {
               return (
                 <Link to={domNode.attribs.href}>
@@ -277,7 +277,7 @@ const ErrorPlot = ({ error }) => {
                 </Link>
               );
             }
-          }
+          },
         })}
       </div>
     );
@@ -291,7 +291,7 @@ const ErrorPlot = ({ error }) => {
           style={{
             height: '70%',
             fontSize: 10,
-            overflow: 'auto'
+            overflow: 'auto',
           }}
         >
           {error.data}

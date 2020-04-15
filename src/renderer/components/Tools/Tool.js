@@ -7,13 +7,13 @@ import {
   Form,
   Collapse,
   Button,
-  Spin as AntSpin
+  Spin as AntSpin,
 } from 'antd';
 import {
   fetchToolParams,
   saveToolParams,
   setDefaultToolParams,
-  resetToolParams
+  resetToolParams,
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
 import Parameter from './Parameter';
@@ -24,14 +24,14 @@ export const ToolRoute = ({ match }) => {
 };
 
 const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
-  const { status, error, params } = useSelector(state => state.toolParams);
+  const { status, error, params } = useSelector((state) => state.toolParams);
   const dispatch = useDispatch();
   const {
     category,
     label,
     description,
     parameters,
-    categorical_parameters: categoricalParameters
+    categorical_parameters: categoricalParameters,
   } = params;
 
   useEffect(() => {
@@ -91,13 +91,13 @@ const ToolForm = Form.create()(
       form.validateFields((err, values) => {
         if (!err) {
           const index = parameters.findIndex(
-            x => x.type === 'ScenarioParameter'
+            (x) => x.type === 'ScenarioParameter'
           );
           let scenario = {};
           if (index >= 0) scenario = { scenario: parameters[index].value };
           out = {
             ...scenario,
-            ...values
+            ...values,
           };
           console.log('Received values of form: ', out);
         } // Expand collapsed categories if errors are found inside
@@ -107,7 +107,7 @@ const ToolForm = Form.create()(
             for (const category in categoricalParameters) {
               if (
                 typeof categoricalParameters[category].find(
-                  x => x.name === parameterName
+                  (x) => x.name === parameterName
                 ) !== 'undefined'
               ) {
                 categoriesWithErrors.push(category);
@@ -116,13 +116,13 @@ const ToolForm = Form.create()(
             }
           }
           categoriesWithErrors.length &&
-            setActiveKey(oldValue => oldValue.concat(categoriesWithErrors));
+            setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
         }
       });
       return out;
     };
 
-    const withFormFunctions = FormButtons => props => {
+    const withFormFunctions = (FormButtons) => (props) => {
       if (FormButtons === null) return null;
 
       const runScript = () => {
@@ -130,7 +130,7 @@ const ToolForm = Form.create()(
         values && dispatch(createJob(script, values));
       };
 
-      const saveParams = params => {
+      const saveParams = (params) => {
         params && dispatch(saveToolParams(script, params));
       };
 
@@ -149,7 +149,7 @@ const ToolForm = Form.create()(
 
     let toolParams = null;
     if (parameters) {
-      toolParams = parameters.map(param => {
+      toolParams = parameters.map((param) => {
         if (param.type === 'ScenarioParameter') return null;
         return <Parameter key={param.name} form={form} parameter={param} />;
       });
@@ -157,9 +157,9 @@ const ToolForm = Form.create()(
 
     let categoricalParams = null;
     if (categoricalParameters && Object.keys(categoricalParameters).length) {
-      const categories = Object.keys(categoricalParameters).map(category => {
+      const categories = Object.keys(categoricalParameters).map((category) => {
         const { Panel } = Collapse;
-        const Parameters = categoricalParameters[category].map(param => (
+        const Parameters = categoricalParameters[category].map((param) => (
           <Parameter key={param.name} form={form} parameter={param} />
         ));
         return (
@@ -210,7 +210,7 @@ const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
 };
 
 const Spin = ({ children }) => {
-  const { isSaving } = useSelector(state => state.toolSaving);
+  const { isSaving } = useSelector((state) => state.toolSaving);
   return <AntSpin spinning={isSaving}>{children}</AntSpin>;
 };
 

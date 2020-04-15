@@ -26,7 +26,7 @@ class App extends Component {
                     menuDimItems: false,
                     showIconDarwin: false,
                     barBackgroundColor: 'rgb(36, 37, 38)',
-                    barColor: 'rgb(230, 230, 230)'
+                    barColor: 'rgb(230, 230, 230)',
                   }}
                 />
               </div>

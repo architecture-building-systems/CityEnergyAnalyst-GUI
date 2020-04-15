@@ -13,7 +13,7 @@ export const ModalManager = ({ modals, children }) => {
   }
 
   const setModalVisible = (modal, visible) => {
-    setVisible(oldValue => ({ ...oldValue, [modal]: visible }));
+    setVisible((oldValue) => ({ ...oldValue, [modal]: visible }));
   };
 
   return (
@@ -21,7 +21,7 @@ export const ModalManager = ({ modals, children }) => {
       value={{
         modals: modals,
         visible: visible,
-        setModalVisible: setModalVisible
+        setModalVisible: setModalVisible,
       }}
     >
       {children}

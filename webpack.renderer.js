@@ -1,5 +1,5 @@
 const merge = require('webpack-merge');
-module.exports = function(config) {
+module.exports = function (config) {
   config.entry.renderer.unshift(
     ...(process.env.PLAIN_HMR ? [] : ['react-hot-loader/patch'])
   );
@@ -9,15 +9,15 @@ module.exports = function(config) {
         {
           test: /\.js$/,
           include: /node_modules\/react-dom/,
-          use: ['react-hot-loader/webpack']
+          use: ['react-hot-loader/webpack'],
         },
         {
           test: /\.mjs$/,
           include: /node_modules/,
-          type: 'javascript/auto'
-        }
-      ]
-    }
+          type: 'javascript/auto',
+        },
+      ],
+    },
   });
 
   return config;

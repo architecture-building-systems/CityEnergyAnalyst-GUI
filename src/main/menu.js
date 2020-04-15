@@ -16,15 +16,15 @@ const template = [
             { role: 'hideothers' },
             { role: 'unhide' },
             { type: 'separator' },
-            { role: 'quit' }
-          ]
-        }
+            { role: 'quit' },
+          ],
+        },
       ]
     : []),
   // { role: 'fileMenu' }
   {
     label: 'File',
-    submenu: [isMac ? { role: 'close' } : { role: 'quit' }]
+    submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
   },
   // { role: 'editMenu' }
   {
@@ -44,11 +44,11 @@ const template = [
             { type: 'separator' },
             {
               label: 'Speech',
-              submenu: [{ role: 'startspeaking' }, { role: 'stopspeaking' }]
-            }
+              submenu: [{ role: 'startspeaking' }, { role: 'stopspeaking' }],
+            },
           ]
-        : [{ role: 'delete' }, { type: 'separator' }, { role: 'selectAll' }])
-    ]
+        : [{ role: 'delete' }, { type: 'separator' }, { role: 'selectAll' }]),
+    ],
   },
   // { role: 'viewMenu' }
   {
@@ -62,8 +62,8 @@ const template = [
       { role: 'zoomin' },
       { role: 'zoomout' },
       { type: 'separator' },
-      { role: 'togglefullscreen' }
-    ]
+      { role: 'togglefullscreen' },
+    ],
   },
   // { role: 'windowMenu' }
   {
@@ -76,10 +76,10 @@ const template = [
             { type: 'separator' },
             { role: 'front' },
             { type: 'separator' },
-            { role: 'window' }
+            { role: 'window' },
           ]
-        : [{ role: 'close' }])
-    ]
+        : [{ role: 'close' }]),
+    ],
   },
   {
     role: 'help',
@@ -89,10 +89,10 @@ const template = [
         click: async () => {
           const { shell } = require('electron');
           await shell.openExternal('https://electronjs.org');
-        }
-      }
-    ]
-  }
+        },
+      },
+    ],
+  },
 ];
 
 const menu = Menu.buildFromTemplate(template);

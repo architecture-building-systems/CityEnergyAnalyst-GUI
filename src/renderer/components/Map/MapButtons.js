@@ -4,17 +4,17 @@ import './MapButtons.css';
 
 const toggle3DDefaultProps = Object.assign({}, BaseControl.defaultProps, {
   className: '',
-  showButton: true
+  showButton: true,
 });
 
 const toggleMapStyleDefaultProps = Object.assign({}, BaseControl.defaultProps, {
   className: '',
-  showButton: true
+  showButton: true,
 });
 
 const resetCameraDefaultProps = Object.assign({}, BaseControl.defaultProps, {
   className: '',
-  showButton: true
+  showButton: true,
 });
 
 export class Toggle3DControl extends BaseControl {
@@ -46,7 +46,7 @@ export class Toggle3DControl extends BaseControl {
       'data-extruded': type === '3d',
       type: 'button',
       title: label,
-      onClick: callback
+      onClick: callback,
     });
   }
 
@@ -61,7 +61,7 @@ export class Toggle3DControl extends BaseControl {
       'div',
       {
         className: `mapboxgl-ctrl mapboxgl-ctrl-group ${className}`,
-        ref: this._containerRef
+        ref: this._containerRef,
       },
       [this._renderButton(type, 'Toggle 3D', this._onToggle3D)]
     );
@@ -85,7 +85,7 @@ export class ToggleMapStyleControl extends BaseControl {
       className: `mapboxgl-ctrl-icon mapboxgl-ctrl-${type}`,
       type: 'button',
       title: label,
-      onClick: callback
+      onClick: callback,
     });
   }
 
@@ -97,14 +97,14 @@ export class ToggleMapStyleControl extends BaseControl {
       'div',
       {
         className: `mapboxgl-ctrl mapboxgl-ctrl-group ${className}`,
-        ref: this._containerRef
+        ref: this._containerRef,
       },
       [
         this._renderButton(
           'map-style',
           'Toggle Map Style',
           this._onToggleMapStyle
-        )
+        ),
       ]
     );
   }
@@ -123,7 +123,7 @@ export class ResetCameraControl extends BaseControl {
     this._updateViewport({
       zoom: cameraOptions.zoom,
       latitude: cameraOptions.center.lat,
-      longitude: cameraOptions.center.lng
+      longitude: cameraOptions.center.lng,
     });
   };
 
@@ -133,7 +133,7 @@ export class ResetCameraControl extends BaseControl {
       className: `mapboxgl-ctrl-icon mapboxgl-ctrl-${type}`,
       type: 'button',
       title: label,
-      onClick: callback
+      onClick: callback,
     });
   }
 
@@ -145,7 +145,7 @@ export class ResetCameraControl extends BaseControl {
       'div',
       {
         className: `mapboxgl-ctrl mapboxgl-ctrl-group ${className}`,
-        ref: this._containerRef
+        ref: this._containerRef,
       },
       [this._renderButton('reset-camera', 'Reset Camera', this._onResetCamera)]
     );

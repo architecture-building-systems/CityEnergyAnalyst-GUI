@@ -6,7 +6,7 @@ const NewScheduleModal = ({
   scheduleNames,
   onSuccess,
   visible,
-  setVisible
+  setVisible,
 }) => {
   const formRef = useRef();
 
@@ -20,7 +20,7 @@ const NewScheduleModal = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setVisible(false);
   };
 
@@ -58,8 +58,8 @@ const NewProjectForm = Form.create()(({ form, scheduleNames }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
       />
       <FormItemWrapper
@@ -69,7 +69,7 @@ const NewProjectForm = Form.create()(({ form, scheduleNames }) => {
         help="Copy from existing schedule"
         inputComponent={
           <Select disabled={!scheduleNames.length}>
-            {scheduleNames.map(name => (
+            {scheduleNames.map((name) => (
               <Select.Option key={name} value={name}>
                 {name}
               </Select.Option>

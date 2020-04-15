@@ -40,7 +40,7 @@ const ScenarioImage = ({ scenario, onClick = () => {} }) => {
   const [
     image,
     isLoading,
-    error
+    error,
   ] = useAsyncData(
     `http://localhost:5050/api/project/scenario/${scenario}/image`,
     { image: null },
@@ -54,7 +54,7 @@ const ScenarioImage = ({ scenario, onClick = () => {} }) => {
         height: 160,
         backgroundColor: '#eee',
         textAlign: 'center',
-        textJustify: 'center'
+        textJustify: 'center',
       }}
     >
       {isLoading ? (
@@ -95,20 +95,20 @@ const EditScenarioMenu = ({ scenario, projectPath }) => {
       okButtonProps: { disabled: true },
       cancelText: 'Cancel',
       onOk: () => deleteScenario(scenario, () => fetchProject()),
-      centered: true
+      centered: true,
     });
 
     const timer = setInterval(() => {
       secondsToGo -= 1;
       modal.update({
-        okText: `DELETE (${secondsToGo})`
+        okText: `DELETE (${secondsToGo})`,
       });
     }, 1000);
     setTimeout(() => {
       clearInterval(timer);
       modal.update({
         okButtonProps: { disabled: false },
-        okText: 'DELETE'
+        okText: 'DELETE',
       });
     }, secondsToGo * 1000);
   };

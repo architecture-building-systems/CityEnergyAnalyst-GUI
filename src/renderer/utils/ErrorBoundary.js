@@ -9,7 +9,7 @@ export default class DefaultErrorBoundary extends Component {
   componentDidCatch = (error, errorInfo) =>
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
 
   render() {
@@ -39,7 +39,7 @@ export const withErrorBoundary = (
     componentDidCatch = (error, errorInfo) => {
       this.setState({
         error: error,
-        errorInfo: errorInfo
+        errorInfo: errorInfo,
       });
       onError(error, errorInfo);
     };

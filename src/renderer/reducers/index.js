@@ -18,6 +18,6 @@ export default function createRootReducer(history) {
     toolSaving,
     inputData,
     jobs,
-    databaseEditor
+    databaseEditor,
   });
 }

@@ -10,7 +10,7 @@ import {
   ModalEditParameters,
   ModalNewDashboard,
   ModalSetScenario,
-  ModalPlotFiles
+  ModalPlotFiles,
 } from './Modals';
 import { ModalContext, ModalManager } from '../../utils/ModalManager';
 import { RowLayout, GridLayout } from './Layouts';
@@ -27,7 +27,7 @@ const modals = {
   editParameters: 'editParameters',
   newDashboard: 'newDashboard',
   setScenario: 'setScenario',
-  plotFiles: 'plotFiles'
+  plotFiles: 'plotFiles',
 };
 
 const Dashboard = () => {
@@ -40,7 +40,7 @@ const Dashboard = () => {
   if (!dashboards.length || !dependenciesMounted) return null;
 
   const { layout, plots } = dashboards[dashIndex];
-  const dashboardNames = dashboards.map(dashboard => dashboard.name);
+  const dashboardNames = dashboards.map((dashboard) => dashboard.name);
 
   return (
     <ModalManager modals={modals}>
@@ -132,7 +132,7 @@ const DashSelect = ({ dashIndex, setDashIndex, dashboardNames }) => {
     <Select
       value={dashIndex}
       style={{ width: 200, marginRight: 20 }}
-      onChange={value => setDashIndex(value)}
+      onChange={(value) => setDashIndex(value)}
     >
       {dashList}
     </Select>
@@ -218,10 +218,10 @@ export const usePlotDependencies = () => {
       'script',
       `https://unpkg.com/deck.gl@${
         window.deck ? window.deck.version : 'latest'
-      }/dist.min.js`
+      }/dist.min.js`,
     ],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],
-    ['script', 'https://npmcdn.com/@turf/turf/turf.min.js']
+    ['script', 'https://npmcdn.com/@turf/turf/turf.min.js'],
   ];
 
   const menuToggle = document.querySelector('.menu-toggle');
@@ -232,7 +232,7 @@ export const usePlotDependencies = () => {
     }
   };
   // Use promise to check if script is loaded
-  const scriptLoadedListener = element =>
+  const scriptLoadedListener = (element) =>
     // eslint-disable-next-line
     new Promise((resolve, reject) => {
       const scriptLoaded = () => {
@@ -256,7 +256,7 @@ export const usePlotDependencies = () => {
     window.addEventListener('resize', resizePlots);
     menuToggle && menuToggle.addEventListener('click', resizePlots);
     let scriptPromises = [];
-    const scripts = PlotDependencies.map(dependency =>
+    const scripts = PlotDependencies.map((dependency) =>
       mountNodes(...dependency, scriptPromises)
     );
     // eslint-disable-next-line
@@ -269,7 +269,7 @@ export const usePlotDependencies = () => {
       window.deck = deckRef.current;
       window.removeEventListener('resize', resizePlots);
       menuToggle && menuToggle.removeEventListener('click', resizePlots);
-      scripts.map(dependency => dependency.remove());
+      scripts.map((dependency) => dependency.remove());
     };
   }, []);
 

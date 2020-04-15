@@ -9,7 +9,7 @@ import './DatabaseEditor.css';
 import {
   resetDatabaseState,
   initDatabaseState,
-  resetDatabaseChanges
+  resetDatabaseChanges,
 } from '../../actions/databaseEditor';
 import { AsyncError } from '../../utils';
 import routes from '../../constants/routes';
@@ -95,7 +95,7 @@ const DatabaseEditor = () => {
 };
 
 const DatabaseContent = () => {
-  const { status, error } = useSelector(state => state.databaseEditor.status);
+  const { status, error } = useSelector((state) => state.databaseEditor.status);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -127,9 +127,9 @@ const DatabaseContent = () => {
 };
 
 export const ExportDatabaseButton = () => {
-  const { status } = useSelector(state => state.databaseEditor.status);
+  const { status } = useSelector((state) => state.databaseEditor.status);
   const databaseValidation = useSelector(
-    state => state.databaseEditor.validation
+    (state) => state.databaseEditor.validation
   );
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -155,11 +155,11 @@ export const ExportDatabaseButton = () => {
 };
 
 const SaveDatabaseButton = () => {
-  const databasesData = useSelector(state => state.databaseEditor.data);
+  const databasesData = useSelector((state) => state.databaseEditor.data);
   const databaseValidation = useSelector(
-    state => state.databaseEditor.validation
+    (state) => state.databaseEditor.validation
   );
-  const databaseChanges = useSelector(state => state.databaseEditor.changes);
+  const databaseChanges = useSelector((state) => state.databaseEditor.changes);
   const dispatch = useDispatch();
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
@@ -208,9 +208,9 @@ const SaveDatabaseButton = () => {
 };
 
 const DatabaseContainer = () => {
-  const data = useSelector(state => state.databaseEditor.data);
-  const schema = useSelector(state => state.databaseEditor.schema);
-  const { category, name } = useSelector(state => state.databaseEditor.menu);
+  const data = useSelector((state) => state.databaseEditor.data);
+  const schema = useSelector((state) => state.databaseEditor.schema);
+  const { category, name } = useSelector((state) => state.databaseEditor.menu);
   if (
     !Object.keys(data).includes(category) ||
     !Object.keys(data[category]).includes(name)

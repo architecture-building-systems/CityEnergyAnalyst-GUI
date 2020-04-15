@@ -27,11 +27,11 @@ const Parameter = ({ parameter, form }) => {
               message: `Please enter an ${
                 type === 'IntegerParameter' ? 'integer' : 'float'
               }`,
-              transform: num => {
+              transform: (num) => {
                 if (num === '') return 0;
                 return regex.test(num) ? Number(num) : NaN;
-              }
-            }
+              },
+            },
           ]}
           inputComponent={<Input />}
         />
@@ -53,8 +53,8 @@ const Parameter = ({ parameter, form }) => {
                 } else {
                   callback();
                 }
-              }
-            }
+              },
+            },
           ]}
           inputComponent={<OpenDialogInput form={form} type={type} />}
         />
@@ -86,12 +86,12 @@ const Parameter = ({ parameter, form }) => {
                 } else {
                   callback();
                 }
-              }
-            }
+              },
+            },
           ]}
           inputComponent={
             <Select disabled={!choices.length}>
-              {choices.map(choice => (
+              {choices.map((choice) => (
                 <Select.Option key={choice} value={choice}>
                   {choice}
                 </Select.Option>
@@ -103,17 +103,17 @@ const Parameter = ({ parameter, form }) => {
     case 'MultiChoiceParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter': {
-      const selectAll = e => {
+      const selectAll = (e) => {
         e.preventDefault();
         setFieldsValue({
-          [name]: choices
+          [name]: choices,
         });
       };
 
-      const unselectAll = e => {
+      const unselectAll = (e) => {
         e.preventDefault();
         setFieldsValue({
-          [name]: []
+          [name]: [],
         });
       };
 
@@ -127,7 +127,7 @@ const Parameter = ({ parameter, form }) => {
             {
               validator: (rule, value, callback) => {
                 const invalidChoices = value.filter(
-                  choice => !choices.includes(choice)
+                  (choice) => !choices.includes(choice)
                 );
                 if (invalidChoices.length) {
                   callback(
@@ -140,8 +140,8 @@ const Parameter = ({ parameter, form }) => {
                 } else {
                   callback();
                 }
-              }
-            }
+              },
+            },
           ]}
           inputComponent={
             <Select
@@ -150,7 +150,7 @@ const Parameter = ({ parameter, form }) => {
               placeholder="Nothing Selected"
               showArrow
               maxTagCount={10}
-              dropdownRender={menu => (
+              dropdownRender={(menu) => (
                 <div>
                   <div style={{ padding: '8px', textAlign: 'center' }}>
                     <Button onMouseDown={selectAll} style={{ width: '45%' }}>
@@ -165,7 +165,7 @@ const Parameter = ({ parameter, form }) => {
                 </div>
               )}
             >
-              {choices.map(choice => (
+              {choices.map((choice) => (
                 <Select.Option key={choice} value={choice}>
                   {choice}
                 </Select.Option>
@@ -178,7 +178,7 @@ const Parameter = ({ parameter, form }) => {
     case 'DatabasePathParameter': {
       const { choices } = parameter;
       const { Option } = Select;
-      const Options = Object.keys(choices).map(choice => (
+      const Options = Object.keys(choices).map((choice) => (
         <Option key={choice} value={choices[choice]}>
           {choice}
         </Option>
@@ -191,7 +191,7 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           inputComponent={
             <Select
-              dropdownRender={menu => (
+              dropdownRender={(menu) => (
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
@@ -216,7 +216,7 @@ const Parameter = ({ parameter, form }) => {
     case 'WeatherPathParameter': {
       const { choices } = parameter;
       const { Option } = Select;
-      const Options = Object.keys(choices).map(choice => (
+      const Options = Object.keys(choices).map((choice) => (
         <Option key={choice} value={choices[choice]}>
           {choice}
         </Option>
@@ -229,7 +229,7 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           inputComponent={
             <Select
-              dropdownRender={menu => (
+              dropdownRender={(menu) => (
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
@@ -258,7 +258,7 @@ const Parameter = ({ parameter, form }) => {
           initialValue={value}
           help={help}
           config={{
-            valuePropName: 'checked'
+            valuePropName: 'checked',
           }}
           inputComponent={<Switch />}
         />
@@ -283,7 +283,7 @@ export const FormItemWrapper = ({
   required = false,
   rules = [],
   config = {},
-  inputComponent = <Input />
+  inputComponent = <Input />,
 }) => {
   return (
     <Form.Item
@@ -295,7 +295,7 @@ export const FormItemWrapper = ({
       {form.getFieldDecorator(name, {
         ...(typeof initialValue === 'undefined' ? {} : { initialValue }),
         rules: [{ required: required }, ...rules],
-        ...config
+        ...config,
       })(inputComponent)}
       <br />
       <small style={{ display: 'block', lineHeight: 'normal' }}>{help}</small>
@@ -328,7 +328,7 @@ const openDialog = (form, type, name) => {
     type === 'PathParameter'
       ? { properties: ['openDirectory'] }
       : { properties: ['openFile'] };
-  remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
+  remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, (paths) => {
     if (paths && paths.length) {
       form.setFieldsValue({ [name]: paths[0] });
     }

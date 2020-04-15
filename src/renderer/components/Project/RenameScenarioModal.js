@@ -11,7 +11,7 @@ const RenameScenarioModal = ({
   scenario,
   projectPath,
   visible,
-  setVisible
+  setVisible,
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
@@ -21,7 +21,7 @@ const RenameScenarioModal = ({
     dispatch(getProject());
   };
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -42,7 +42,7 @@ const RenameScenarioModal = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setVisible(false);
   };
 
@@ -67,7 +67,7 @@ const RenameScenarioForm = Form.create()(({ form, projectPath }) => {
   const checkName = (projectPath, name) => {
     const dirs = fs
       .readdirSync(projectPath)
-      .filter(f => fs.statSync(path.join(projectPath, f)).isDirectory());
+      .filter((f) => fs.statSync(path.join(projectPath, f)).isDirectory());
     return dirs.includes(name);
   };
 
@@ -90,8 +90,8 @@ const RenameScenarioForm = Form.create()(({ form, projectPath }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
       />
     </Form>

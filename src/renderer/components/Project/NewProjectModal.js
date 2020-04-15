@@ -9,7 +9,7 @@ const NewProjectModal = ({
   visible,
   setVisible,
   initialValue,
-  onSuccess = () => {}
+  onSuccess = () => {},
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
@@ -28,7 +28,7 @@ const NewProjectModal = ({
           const updateProject = await axios.put(
             `http://localhost:5050/api/project/`,
             {
-              path: path.join(values.path, values.name)
+              path: path.join(values.path, values.name),
             }
           );
           console.log(updateProject.data);
@@ -43,7 +43,7 @@ const NewProjectModal = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setVisible(false);
   };
 
@@ -83,8 +83,8 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
       />
       <FormItemWrapper
@@ -100,8 +100,8 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />

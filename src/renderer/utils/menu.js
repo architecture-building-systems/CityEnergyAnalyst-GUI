@@ -14,7 +14,7 @@ export const defaultTemplate = [
         after: '2',
         click: (item, win, e) => {
           e.menuBar.setKeyById(item.id, 'enabled', !item.enabled);
-        }
+        },
       },
       {
         id: '2',
@@ -32,7 +32,7 @@ export const defaultTemplate = [
                 click: (item, win, e) => {
                   document.querySelector('html').style.background =
                     'rgb(240,240,240)';
-                }
+                },
               },
               {
                 label: 'Dark',
@@ -41,7 +41,7 @@ export const defaultTemplate = [
                 click: (item, win, e) => {
                   document.querySelector('html').style.background =
                     'rgb(64,64,64)';
-                }
+                },
               },
               {
                 label: 'Black',
@@ -50,12 +50,12 @@ export const defaultTemplate = [
                 click: (item, win, e) => {
                   document.querySelector('html').style.background =
                     'rgb(0,0,0)';
-                }
-              }
-            ]
+                },
+              },
+            ],
           },
           {
-            label: 'Random 2'
+            label: 'Random 2',
           },
           {
             label: 'Random 3',
@@ -64,44 +64,44 @@ export const defaultTemplate = [
                 label: 'Random 4',
                 submenu: [
                   {
-                    label: 'Random 7'
+                    label: 'Random 7',
                   },
                   {
-                    label: 'Random 8'
+                    label: 'Random 8',
                   },
                   {
-                    label: 'Random 9'
+                    label: 'Random 9',
                   },
                   {
-                    label: 'Random 10'
-                  }
-                ]
+                    label: 'Random 10',
+                  },
+                ],
               },
               {
-                label: 'Random 5'
+                label: 'Random 5',
               },
               {
-                label: 'Random 6'
-              }
-            ]
-          }
-        ]
+                label: 'Random 6',
+              },
+            ],
+          },
+        ],
       },
       {
         id: '4',
         label: 'Not visible',
-        visible: false
+        visible: false,
       },
       {
         id: '3',
         label: 'Arguments',
         click: (item, win, e) => {
           console.log(item, win, e);
-        }
+        },
       },
       {
         id: '5',
-        label: 'Really Long Menu Label that should be truncated'
+        label: 'Really Long Menu Label that should be truncated',
       },
       { type: 'separator' },
       {
@@ -109,13 +109,13 @@ export const defaultTemplate = [
         accelerator: 'CommandOrControl+Y',
         click: (item, win, e) => {
           ipcRenderer.send('Test');
-        }
+        },
       },
       {
         label: 'Open Dev Tools',
         click: (item, win, e) => {
           win.openDevTools();
-        }
+        },
       },
       {
         label: 'Resizable',
@@ -123,7 +123,7 @@ export const defaultTemplate = [
         checked: true,
         click: (item, win, e) => {
           win.setResizable(item.checked);
-        }
+        },
       },
       {
         label: 'Unchecked',
@@ -131,15 +131,15 @@ export const defaultTemplate = [
         checked: false,
         click: (item, win, e) => {
           win.setResizable(item.checked);
-        }
+        },
       },
       {
         label: 'Quit',
         click: () => {
           window.close();
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   {
     id: '2',
@@ -152,7 +152,7 @@ export const defaultTemplate = [
         checked: false,
         click: (item, win, e) => {
           document.querySelector('html').style.background = 'rgb(240,240,240)';
-        }
+        },
       },
       {
         label: 'Dark',
@@ -160,7 +160,7 @@ export const defaultTemplate = [
         checked: true,
         click: (item, win, e) => {
           document.querySelector('html').style.background = 'rgb(64,64,64)';
-        }
+        },
       },
       {
         label: 'Black',
@@ -168,9 +168,9 @@ export const defaultTemplate = [
         checked: false,
         click: (item, win, e) => {
           document.querySelector('html').style.background = 'rgb(0,0,0)';
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   {
     label: 'Disabled',
@@ -182,9 +182,9 @@ export const defaultTemplate = [
         checked: false,
         click: (item, win, e) => {
           document.querySelector('html').style.background = 'rgb(240,240,240)';
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   {
     label: 'Help',
@@ -193,112 +193,112 @@ export const defaultTemplate = [
         label: 'Homepage',
         click: () => {
           openExternal('https://github.com/Cristian006/frameless-titlebar');
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   {
     label: 'Scrollable',
     submenu: [
       {
-        label: 'Random 1'
+        label: 'Random 1',
       },
       {
-        label: 'Random 2'
+        label: 'Random 2',
       },
       {
-        label: 'Random 3'
+        label: 'Random 3',
       },
       {
-        label: 'Random 4'
+        label: 'Random 4',
       },
       {
-        label: 'Random 5'
+        label: 'Random 5',
       },
       {
-        label: 'Random 6'
+        label: 'Random 6',
       },
       {
-        label: 'Random 7'
+        label: 'Random 7',
       },
       {
-        label: 'Random 8'
+        label: 'Random 8',
       },
       {
-        label: 'Random 9'
+        label: 'Random 9',
       },
       {
-        label: 'Random 10'
+        label: 'Random 10',
       },
       {
-        label: 'Random 11'
+        label: 'Random 11',
       },
       {
-        label: 'Random 12'
+        label: 'Random 12',
       },
       {
-        label: 'Random 13'
+        label: 'Random 13',
       },
       {
-        label: 'Random 14'
+        label: 'Random 14',
       },
       {
-        label: 'Random 15'
+        label: 'Random 15',
       },
       {
-        label: 'Random 16'
+        label: 'Random 16',
       },
       {
-        label: 'Random 17'
+        label: 'Random 17',
       },
       {
-        label: 'Random 18'
+        label: 'Random 18',
       },
       {
-        label: 'Random 19'
+        label: 'Random 19',
       },
       {
-        label: 'Random 20'
-      }
-    ]
-  }
+        label: 'Random 20',
+      },
+    ],
+  },
 ];
 
 const Edit = [
   {
     label: 'Undo',
-    accelerator: 'Ctrl+Z'
+    accelerator: 'Ctrl+Z',
   },
   {
     label: 'Redo',
-    accelerator: 'Ctrl+Y'
+    accelerator: 'Ctrl+Y',
   },
   {
-    type: 'separator'
+    type: 'separator',
   },
   {
     label: 'Cut',
-    accelerator: 'Ctrl+X'
+    accelerator: 'Ctrl+X',
   },
   {
     label: 'Copy',
-    accelerator: 'Ctrl+C'
+    accelerator: 'Ctrl+C',
   },
   {
     label: 'Paste',
-    accelerator: 'Ctrl+V'
+    accelerator: 'Ctrl+V',
   },
   {
     label: 'Paste and Match Style',
-    accelerator: 'Ctrl+Shift+V'
+    accelerator: 'Ctrl+Shift+V',
   },
   {
-    label: 'Delete'
+    label: 'Delete',
   },
   {
     label: 'Select all',
-    accelerator: 'Ctrl+A'
-  }
+    accelerator: 'Ctrl+A',
+  },
 ];
 
 export const githubTemplate = [
@@ -307,54 +307,54 @@ export const githubTemplate = [
     submenu: [
       {
         label: 'New repository',
-        accelerator: 'Ctrl+N'
+        accelerator: 'Ctrl+N',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
         label: 'Add local repository',
-        accelerator: 'Ctrl+O'
+        accelerator: 'Ctrl+O',
       },
       {
         label: 'Clone repository',
-        accelerator: 'Ctrl+Shift+O'
+        accelerator: 'Ctrl+Shift+O',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
         label: 'Options',
-        accelerator: 'Ctrl+,'
+        accelerator: 'Ctrl+,',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        label: 'Exit'
-      }
-    ]
+        label: 'Exit',
+      },
+    ],
   },
   {
     label: 'Edit',
-    submenu: Edit
+    submenu: Edit,
   },
   {
     label: 'View',
-    submenu: []
+    submenu: [],
   },
   {
     label: 'Repository',
-    submenu: []
+    submenu: [],
   },
   {
     label: 'Branch',
-    submenu: []
+    submenu: [],
   },
   {
     label: 'Help',
-    submenu: []
-  }
+    submenu: [],
+  },
 ];
 
 export const signalTemplate = [
@@ -362,86 +362,86 @@ export const signalTemplate = [
     label: 'File',
     submenu: [
       {
-        label: 'Preferences...'
+        label: 'Preferences...',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        label: 'Exit'
-      }
-    ]
+        label: 'Exit',
+      },
+    ],
   },
   {
     label: 'Edit',
-    submenu: Edit
+    submenu: Edit,
   },
   {
     label: 'View',
     submenu: [
       {
         label: 'Actual Size',
-        accelerator: 'Ctrl+0'
+        accelerator: 'Ctrl+0',
       },
       {
         label: 'Zoom In',
-        accelerator: 'Ctrl+Shift+='
+        accelerator: 'Ctrl+Shift+=',
       },
       {
         label: 'Zoom Out',
-        accelerator: 'CtrlCtrl+-'
+        accelerator: 'CtrlCtrl+-',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
         label: 'Toggle Full Screen',
-        accelerator: 'F11'
+        accelerator: 'F11',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        label: 'Debug Log'
+        label: 'Debug Log',
       },
       {
         label: 'Toggle Developer Tools',
-        accelerator: 'Ctrl+Shift+I'
-      }
-    ]
+        accelerator: 'Ctrl+Shift+I',
+      },
+    ],
   },
   {
     label: 'Window',
     submenu: [
       {
         label: 'Minimize',
-        accelerator: 'Ctrl+M'
-      }
-    ]
+        accelerator: 'Ctrl+M',
+      },
+    ],
   },
   {
     label: 'Help',
     submenu: [
       {
-        label: 'Go to Release Notes'
+        label: 'Go to Release Notes',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        label: 'Go to Forums'
+        label: 'Go to Forums',
       },
       {
-        label: 'Report An Issue'
+        label: 'Report An Issue',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        label: 'About Signal Desktop'
-      }
-    ]
-  }
+        label: 'About Signal Desktop',
+      },
+    ],
+  },
 ];
 
 export const slackTemplate = [
@@ -451,68 +451,68 @@ export const slackTemplate = [
     submenu: [
       {
         label: 'Preferences',
-        accelerator: 'Ctrl+,'
+        accelerator: 'Ctrl+,',
       },
       {
         label: 'Close',
-        accelerator: 'Ctrl+W'
+        accelerator: 'Ctrl+W',
       },
       {
         label: 'Quit Slack',
-        accelerator: 'Ctrl+Q'
-      }
-    ]
+        accelerator: 'Ctrl+Q',
+      },
+    ],
   },
   {
     label: 'Edit',
     submenu: [
       {
         label: 'Undo',
-        accelerator: 'Ctrl+Z'
+        accelerator: 'Ctrl+Z',
       },
       {
         label: 'Redo',
-        accelerator: 'Ctrl+Y'
+        accelerator: 'Ctrl+Y',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
         label: 'Cut',
-        accelerator: 'Ctrl+X'
+        accelerator: 'Ctrl+X',
       },
       {
         label: 'Copy',
-        accelerator: 'Ctrl+C'
+        accelerator: 'Ctrl+C',
       },
       {
         label: 'Paste',
-        accelerator: 'Ctrl+V'
+        accelerator: 'Ctrl+V',
       },
       {
         label: 'Paste and Match Style',
-        accelerator: 'Ctrl+Shift+V'
+        accelerator: 'Ctrl+Shift+V',
       },
       {
-        label: 'Delete'
+        label: 'Delete',
       },
       {
         label: 'Select all',
-        accelerator: 'Ctrl+A'
-      }
-    ]
+        accelerator: 'Ctrl+A',
+      },
+    ],
   },
   {
-    label: 'View'
+    label: 'View',
   },
   {
-    label: 'History'
+    label: 'History',
   },
   {
-    label: 'Window'
+    label: 'Window',
   },
   {
     label: 'Help',
-    accelerator: 'Ctrl+H'
-  }
+    accelerator: 'Ctrl+H',
+  },
 ];

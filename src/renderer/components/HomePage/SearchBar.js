@@ -31,7 +31,7 @@ const SearchBar = () => {
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef();
 
-  const handleChange = event => {
+  const handleChange = (event) => {
     setValue(event.target.value);
   };
 
@@ -75,9 +75,9 @@ const SearchBar = () => {
 
 const SearchResults = ({ data, input, setValue }) => {
   const results = data
-    .map(category => {
+    .map((category) => {
       const variables = category.variables.filter(
-        variable =>
+        (variable) =>
           variable.VARIABLE.length != 0 &&
           variable.VARIABLE.toLowerCase().indexOf(input.toLowerCase()) == 0
       );
@@ -85,7 +85,7 @@ const SearchResults = ({ data, input, setValue }) => {
       return (
         <div key={category.script} className="cea-search-category">
           <div className="cea-search-category-title">{category.script}</div>
-          {variables.map(variable => (
+          {variables.map((variable) => (
             <SearchItem
               key={`${category.script}-${variable.FILE_NAME}-${variable.VARIABLE}`}
               category={category.script}
@@ -96,7 +96,7 @@ const SearchResults = ({ data, input, setValue }) => {
         </div>
       );
     })
-    .filter(category => !!category);
+    .filter((category) => !!category);
 
   return (
     <div className="cea-search-dropdown">

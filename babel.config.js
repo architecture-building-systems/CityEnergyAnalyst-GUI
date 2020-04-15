@@ -6,7 +6,7 @@ const developmentPlugins = [require('react-hot-loader/babel')];
 
 const productionPlugins = [];
 
-module.exports = api => {
+module.exports = (api) => {
   const development = api.env(developmentEnvironments);
 
   return {
@@ -14,7 +14,7 @@ module.exports = api => {
     plugins: [
       require('@babel/plugin-proposal-class-properties'),
       ['import', { libraryName: 'antd', style: 'css' }],
-      ...(development ? developmentPlugins : productionPlugins)
-    ]
+      ...(development ? developmentPlugins : productionPlugins),
+    ],
   };
 };

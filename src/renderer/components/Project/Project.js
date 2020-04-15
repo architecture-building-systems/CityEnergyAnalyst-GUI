@@ -13,7 +13,7 @@ import routes from '../../constants/routes';
 import './Project.css';
 
 const Project = () => {
-  const { isFetching, error, info } = useSelector(state => state.project);
+  const { isFetching, error, info } = useSelector((state) => state.project);
   const fetchProject = useFetchProject();
 
   const { name, path: projectPath, scenario, scenarios } = info;
@@ -65,7 +65,7 @@ const Project = () => {
                 No scenario currently selected
               </p>
             ) : null}
-            {scenarios.map(_scenario => (
+            {scenarios.map((_scenario) => (
               <ScenarioCard
                 key={`${name}-${_scenario}`}
                 scenario={_scenario}
@@ -133,7 +133,7 @@ const NewScenarioButton = ({ project }) => {
         type="primary"
         style={{
           display: 'block',
-          width: '100%'
+          width: '100%',
         }}
         onClick={() => setModalVisible(true)}
       >
@@ -151,7 +151,7 @@ const NewScenarioButton = ({ project }) => {
 export const changeScenario = async (scenario, onSuccess = () => {}) => {
   try {
     const resp = await axios.put(`http://localhost:5050/api/project/`, {
-      scenario
+      scenario,
     });
     console.log(resp.data);
     onSuccess();
@@ -175,7 +175,7 @@ export const deleteScenario = async (scenario, onSuccess = () => {}) => {
 export const useOpenScenario = () => {
   const fetchProject = useFetchProject();
   const goToInputEditor = useChangeRoute(routes.INPUT_EDITOR);
-  return scenario => {
+  return (scenario) => {
     changeScenario(scenario, async () => {
       // Fetch new project info first before going to input editor
       await fetchProject();
@@ -184,7 +184,7 @@ export const useOpenScenario = () => {
   };
 };
 
-export const useChangeRoute = route => {
+export const useChangeRoute = (route) => {
   const dispatch = useDispatch();
   return () => dispatch(push(route));
 };

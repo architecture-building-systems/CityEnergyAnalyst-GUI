@@ -8,7 +8,7 @@ const OpenProjectModal = ({
   visible,
   setVisible,
   initialValue,
-  onSuccess = () => {}
+  onSuccess = () => {},
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
@@ -71,8 +71,8 @@ const OpenProjectForm = Form.create()(({ form, initialValue }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />

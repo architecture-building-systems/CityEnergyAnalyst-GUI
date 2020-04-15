@@ -31,26 +31,26 @@ const JobOutputLogger = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    socket.on('cea-worker-message', data => {
+    socket.on('cea-worker-message', (data) => {
       let lines = data.message
         .split(/\r?\n/)
-        .map(x => x.trim())
-        .filter(x => x.length > 0);
+        .map((x) => x.trim())
+        .filter((x) => x.length > 0);
       let last_line = lines[lines.length - 1];
       last_line &&
         setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
     });
 
-    socket.on('cea-worker-success', job_info => {
+    socket.on('cea-worker-success', (job_info) => {
       setMessage(`jobID: ${job_info.id} - completed`);
     });
 
-    socket.on('cea-worker-error', job_info => {
+    socket.on('cea-worker-error', (job_info) => {
       console.log('cea-worker-error: job_info:', job_info);
       setMessage(`jobID: ${job_info.id} - error`);
     });
 
-    socket.on('cea-worker-canceled', job_info => {
+    socket.on('cea-worker-canceled', (job_info) => {
       console.log('cea-worker-canceled: job_info', job_info);
       setMessage(`jobID: ${job_info.id} - canceled`);
     });
@@ -67,7 +67,7 @@ const JobOutputLogger = () => {
 
 const JobListPopover = () => {
   const [visible, setVisible] = useState(false);
-  const jobs = useSelector(state => state.jobs);
+  const jobs = useSelector((state) => state.jobs);
   const dispatch = useDispatch();
 
   const openNotification = (type, { id, script }) => {
@@ -93,7 +93,7 @@ const JobListPopover = () => {
           {title} was <b>canceled</b> by user
         </div>
       ),
-      error: <div>{title} has encounted an error</div>
+      error: <div>{title} has encounted an error</div>,
     };
 
     const config = {
@@ -103,7 +103,7 @@ const JobListPopover = () => {
       onClick: () => {
         notification.close(id);
         setVisible(true);
-      }
+      },
     };
     if (type === 'started')
       notification.open({ ...config, icon: <Icon type="loading" /> });
@@ -115,22 +115,22 @@ const JobListPopover = () => {
   };
 
   useEffect(() => {
-    socket.on('cea-job-created', job => {
+    socket.on('cea-job-created', (job) => {
       openNotification('created', job);
     });
-    socket.on('cea-worker-started', job => {
+    socket.on('cea-worker-started', (job) => {
       openNotification('started', job);
       dispatch(updateJob(job));
     });
-    socket.on('cea-worker-success', job => {
+    socket.on('cea-worker-success', (job) => {
       openNotification('success', job);
       dispatch(updateJob(job));
     });
-    socket.on('cea-worker-canceled', job => {
+    socket.on('cea-worker-canceled', (job) => {
       openNotification('canceled', job);
       dispatch(dismissJob(job));
     });
-    socket.on('cea-worker-error', job => {
+    socket.on('cea-worker-error', (job) => {
       openNotification('error', job);
       dispatch(updateJob(job));
     });
@@ -148,7 +148,7 @@ const JobListPopover = () => {
       content={<JobListPopoverContent jobs={jobs} />}
       visible={visible}
     >
-      <StatusBarButton onClick={() => setVisible(visible => !visible)}>
+      <StatusBarButton onClick={() => setVisible((visible) => !visible)}>
         <JobOutputLogger />
         <Icon
           className="cea-job-list-popover-collapse"
@@ -268,7 +268,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           style={{
             padding: 5,
             fontSize: 11,
-            backgroundColor: '#f1f1f1'
+            backgroundColor: '#f1f1f1',
           }}
         >
           {JSON.stringify(job.parameters, null, 2)}
@@ -283,9 +283,9 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   const isFirst = useRef(true);
   const listenerFuncRef = useRef(null);
 
-  const message_appender = data => {
+  const message_appender = (data) => {
     if (data.jobid == job.id) {
-      setMessage(message => message.concat(data.message));
+      setMessage((message) => message.concat(data.message));
     }
   };
 
@@ -331,7 +331,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
             height: '90%',
             overflow: 'auto',
             fontSize: 12,
-            whiteSpace: 'pre-wrap'
+            whiteSpace: 'pre-wrap',
           }}
         >
           {message}
@@ -341,7 +341,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   );
 };
 
-const cancelCeaJob = job => {
+const cancelCeaJob = (job) => {
   axios.post(`http://localhost:5050/server/jobs/cancel/${job.id}`);
 };
 

@@ -23,7 +23,7 @@ const UseTypesDatabase = ({ name, data, schema }) => {
           value={selectedType}
           style={{ width: 250 }}
         >
-          {choices.map(choice => (
+          {choices.map((choice) => (
             <Select.Option key={choice} value={choice}>
               {choice}
             </Select.Option>
@@ -51,7 +51,7 @@ const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
         <b>METADATA:</b> {METADATA[0].metadata}
       </div>
       <h3>Properties</h3>
-      {Object.keys(useTypeData['USE_TYPE_PROPERTIES']).map(property => (
+      {Object.keys(useTypeData['USE_TYPE_PROPERTIES']).map((property) => (
         <UseTypePropertyTable
           key={`${useTypeName}-${property}`}
           databaseName={databaseName}
@@ -83,17 +83,17 @@ const UseTypePropertyTable = ({
   sheetName,
   property,
   propertyData,
-  schema
+  schema,
 }) => {
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const tableData = [propertyData.find(data => data.code == sheetName)];
+  const tableData = [propertyData.find((data) => data.code == sheetName)];
   const { columns, colHeaders } = getTableSchema(
     schema,
     sheetName,
     tableData,
     null,
-    Object.keys(tableData[0]).filter(row => row !== 'code')
+    Object.keys(tableData[0]).filter((row) => row !== 'code')
   );
 
   //  Revalidate cells on sheet change
@@ -122,7 +122,7 @@ const SchedulesTypeTab = ({
   databaseName,
   sheetName,
   scheduleData,
-  schema
+  schema,
 }) => {
   const [selectedType, setSelected] = useState(Object.keys(scheduleData)[0]);
   return (
@@ -142,7 +142,7 @@ const SchedulesTypeTab = ({
         activeKey={selectedType}
         onChange={setSelected}
       >
-        {Object.keys(scheduleData).map(scheduleType => (
+        {Object.keys(scheduleData).map((scheduleType) => (
           <Tabs.TabPane key={scheduleType} tab={scheduleType}></Tabs.TabPane>
         ))}
       </Tabs>
@@ -188,7 +188,7 @@ const SchedulesDataTable = ({
   sheetName,
   scheduleType,
   data,
-  schema
+  schema,
 }) => {
   const tableRef = useRef();
   const updateRedux = useTableUpdateRedux(
@@ -196,13 +196,13 @@ const SchedulesDataTable = ({
     databaseName,
     `${sheetName}-${scheduleType}`
   );
-  const rowHeaders = data.map(row => row['DAY']);
+  const rowHeaders = data.map((row) => row['DAY']);
   const { columns, colHeaders } = getTableSchema(
     schema,
     sheetName,
     data,
     null,
-    Object.keys(data[0]).filter(col => col !== 'DAY')
+    Object.keys(data[0]).filter((col) => col !== 'DAY')
   );
 
   //  Revalidate cells on sheet and type change

@@ -15,7 +15,7 @@ const useLoadingMessages = () => {
 const usePulse = () => {
   const [pulse, setPulse] = useState(true);
   useEffect(() => {
-    setInterval(() => setPulse(oldValue => !oldValue), 800);
+    setInterval(() => setPulse((oldValue) => !oldValue), 800);
   }, []);
   return pulse;
 };
@@ -36,13 +36,13 @@ const Splash = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        userSelect: 'none'
+        userSelect: 'none',
       }}
     >
       <animated.div
         style={{
           width: 100,
-          transform: props.scale.interpolate(x => `scale(${x})`)
+          transform: props.scale.interpolate((x) => `scale(${x})`),
         }}
       >
         <img

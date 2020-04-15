@@ -5,7 +5,7 @@ import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
 
 const ValidationErrors = ({ databaseName }) => {
-  const validation = useSelector(state => state.databaseEditor.validation);
+  const validation = useSelector((state) => state.databaseEditor.validation);
   if (typeof validation[databaseName] === 'undefined') return null;
 
   return (
@@ -14,11 +14,11 @@ const ValidationErrors = ({ databaseName }) => {
         message="Errors Found in Database"
         description={
           <div>
-            {Object.keys(validation[databaseName]).map(sheet => {
+            {Object.keys(validation[databaseName]).map((sheet) => {
               const rows = validation[databaseName][sheet];
               return (
                 <div key={sheet}>
-                  {Object.keys(rows).map(row => (
+                  {Object.keys(rows).map((row) => (
                     <div key={row}>
                       <i>Sheet: </i>
                       <b>{sheet} </b>

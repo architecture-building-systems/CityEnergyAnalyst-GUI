@@ -27,11 +27,11 @@ export function createCEAProcess(BrowserWindow, callback) {
     cea = require('child_process').spawn('cmd.exe', ['/c', scriptPath]);
   }
 
-  cea.stdout.on('data', function(data) {
+  cea.stdout.on('data', function (data) {
     console.log(data.toString('utf8'));
   });
 
-  cea.stderr.on('data', function(data) {
+  cea.stderr.on('data', function (data) {
     console.log(data.toString('utf8'));
   });
 
@@ -49,7 +49,7 @@ export function createCEAProcess(BrowserWindow, callback) {
       title: 'CEA Error',
       message: 'CEA has encounted an error on startup',
       detail: startupError,
-      buttons: ['Exit CEA']
+      buttons: ['Exit CEA'],
     });
     app.exit();
   }

@@ -9,7 +9,7 @@ const CenterSpinner = ({ style = {}, ...props }) => {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
-        ...style
+        ...style,
       }}
     >
       <Spin {...props} />
