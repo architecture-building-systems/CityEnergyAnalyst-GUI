@@ -44,7 +44,8 @@ const databaseGlossary = (state = [], { type, payload }) => {
   switch (type) {
     case FETCH_DATABASE_GLOSSARY_SUCCESS:
       try {
-        return payload.find(script => script.script === 'inputs').variables;
+        return payload.find(script => script.script === 'data_initializer')
+          .variables;
       } catch (err) {
         console.log(err);
         return [];

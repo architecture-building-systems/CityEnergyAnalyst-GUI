@@ -5,7 +5,7 @@ import './DatabaseEditor.css';
 import Handsontable from 'handsontable';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
-const ColumnGlossary = ({ tableRef, colHeaders }) => {
+const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
   const tooltipRef = useRef();
   const dbGlossary = useSelector(state => state.databaseEditor.glossary);
   const [tableGlossary, setTableGlossary] = useState([]);
@@ -16,9 +16,13 @@ const ColumnGlossary = ({ tableRef, colHeaders }) => {
   );
 
   useEffect(() => {
+    const _dbGlossary =
+      typeof filter === 'function'
+        ? dbGlossary.filter(variable => filter(variable))
+        : dbGlossary;
     setTableGlossary(
       colHeaders
-        .map(col => dbGlossary.find(variable => col === variable.VARIABLE))
+        .map(col => _dbGlossary.find(variable => col === variable.VARIABLE))
         .filter(obj => typeof obj !== 'undefined')
     );
   }, []);

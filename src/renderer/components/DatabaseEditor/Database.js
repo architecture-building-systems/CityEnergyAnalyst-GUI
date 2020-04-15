@@ -48,7 +48,11 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
         databaseName={databaseName}
         sheetName={sheetName}
       />
-      <ColumnGlossary tableRef={tableRef} colHeaders={colHeaders} />
+      <ColumnGlossary
+        tableRef={tableRef}
+        colHeaders={colHeaders}
+        filter={variable => variable.WORKSHEET == sheetName}
+      />
       <Table
         ref={tableRef}
         id={databaseName}
@@ -132,11 +136,16 @@ export const getTableSchema = (
           data: key,
           type: 'numeric',
           validator: (value, callback) => {
-            const min = column_schema['min'];
-            const max = column_schema['max'];
-            if (typeof min != 'undefined' && value < min) callback(false);
-            else if (typeof max != 'undefined' && value > max) callback(false);
-            else callback(true);
+            if (!isNaN(value)) {
+              const min = column_schema['min'];
+              const max = column_schema['max'];
+              const inRange =
+                (typeof min == 'undefined' || value >= min) &&
+                (typeof max == 'undefined' || value <= max);
+              callback(inRange);
+            } else {
+              callback(false);
+            }
           }
         };
     } else if (column_schema['type'] == 'boolean')
