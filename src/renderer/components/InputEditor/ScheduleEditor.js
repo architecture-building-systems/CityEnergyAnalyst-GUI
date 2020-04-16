@@ -5,7 +5,7 @@ import {
   fetchBuildingSchedule,
   setSelected,
   updateDaySchedule,
-  updateYearSchedule
+  updateYearSchedule,
 } from '../../actions/inputEditor';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -16,7 +16,7 @@ import { Tabs, Spin } from 'antd';
 const colormap = interpolate(['white', '#006ad5']);
 
 const ScheduleEditor = ({ selected, schedules, tabulator }) => {
-  const { tables } = useSelector(state => state.inputData);
+  const { tables } = useSelector((state) => state.inputData);
   const [tab, setTab] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -30,7 +30,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     const selectedRows = cell
       .getTable()
       .getSelectedData()
-      .map(data => data.Name);
+      .map((data) => data.Name);
     if (!e.ctrlKey) {
       (selectedRows.length !== [row.getIndex()].length ||
         !cell.getRow().isSelected()) &&
@@ -38,7 +38,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     } else {
       if (cell.getRow().isSelected()) {
         dispatch(
-          setSelected(selectedRows.filter(name => name !== row.getIndex()))
+          setSelected(selectedRows.filter((name) => name !== row.getIndex()))
         );
       } else {
         dispatch(setSelected([...selectedRows, row.getIndex()]));
@@ -50,12 +50,12 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
   useEffect(() => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
-      data: buildings.sort().map(building => ({ Name: building })),
+      data: buildings.sort().map((building) => ({ Name: building })),
       index: 'Name',
       columns: [{ title: 'Name', field: 'Name' }],
       layout: 'fitColumns',
       height: '300px',
-      cellClick: selectRow
+      cellClick: selectRow,
     });
     filtered && tabulator.current.setFilter('Name', 'in', selected);
   }, []);
@@ -64,7 +64,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     const buildings = Object.keys(tables.zone || {});
     tabulator.current &&
       tabulator.current.replaceData(
-        buildings.sort().map(building => ({ Name: building }))
+        buildings.sort().map((building) => ({ Name: building }))
       );
     tabulator.current.selectRow(selected);
     tabulator.current.redraw();
@@ -77,13 +77,13 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
       setLoading(false);
       clearTimeout(timeoutRef.current);
       const missingSchedules = selected.filter(
-        building => !Object.keys(schedules).includes(building)
+        (building) => !Object.keys(schedules).includes(building)
       );
       if (missingSchedules.length) {
         setLoading(true);
         timeoutRef.current = setTimeout(() => {
           dispatch(fetchBuildingSchedule(missingSchedules))
-            .catch(error => {
+            .catch((error) => {
               console.log(error);
               setErrors(error);
             })
@@ -111,7 +111,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
             Object.keys(errors).length ? (
               <div className="cea-schedule-error">
                 ERRORS FOUND:
-                {Object.keys(errors).map(building => (
+                {Object.keys(errors).map((building) => (
                   <div
                     key={building}
                   >{`${building}: ${errors[building].message}`}</div>
@@ -168,23 +168,23 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
       index: 'DAY',
       columns: [
         { title: 'DAY \\ HOUR', field: 'DAY', width: 100, headerSort: false },
-        ...[...Array(24).keys()].map(i => ({
+        ...[...Array(24).keys()].map((i) => ({
           title: (i + 1).toString(),
           field: i.toString(),
           headerSort: false,
           editor: 'input',
           // Hack to allow editing when double clicking
           cellDblClick: () => {},
-          formatter: cell => {
+          formatter: (cell) => {
             formatCellStyle(cell);
             return cell.getValue();
-          }
-        }))
+          },
+        })),
       ],
-      validationFailed: cell => {
+      validationFailed: (cell) => {
         cell.cancelEdit();
       },
-      cellEdited: cell => {
+      cellEdited: (cell) => {
         formatCellStyle(cell);
         dispatch(
           updateDaySchedule(
@@ -198,7 +198,7 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
       },
       layoutColumnsOnNewData: true,
       layout: 'fitDataFill',
-      tooltips: cell => {
+      tooltips: (cell) => {
         if (cell.getValue() == 'DIFF') {
           let out = '';
           for (const building of tooltipsRef.current.selected.sort()) {
@@ -210,7 +210,7 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
           }
           return out;
         }
-      }
+      },
     });
   }, []);
 
@@ -218,7 +218,7 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
   useEffect(() => {
     const columnDefs = tabulator.current.getColumnDefinitions();
     tabulator.current.setColumns(
-      columnDefs.map(def => {
+      columnDefs.map((def) => {
         if (def.field == 'DAY') {
           return def;
         }
@@ -227,10 +227,10 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
             ...def,
             editor: 'select',
             editorParams: {
-              values: ['OFF', 'SETBACK', 'SETPOINT']
+              values: ['OFF', 'SETBACK', 'SETPOINT'],
             },
             validator: null,
-            mutatorEdit: null
+            mutatorEdit: null,
           };
         }
         return {
@@ -239,7 +239,7 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
           editor: 'input',
           editorParams: null,
           validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
-          mutatorEdit: value => Number(Math.round(value + 'e2') + 'e-2')
+          mutatorEdit: (value) => Number(Math.round(value + 'e2') + 'e-2'),
         };
       })
     );
@@ -248,12 +248,12 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
   useEffect(() => {
     tooltipsRef.current = { selected, schedules, tab };
     tab &&
-      selected.every(building => Object.keys(schedules).includes(building)) &&
+      selected.every((building) => Object.keys(schedules).includes(building)) &&
       tabulator.current.updateOrAddData(parseData(schedules, selected, tab));
   }, [selected, schedules, tab]);
 
   useEffect(() => {
-    selected.every(building => Object.keys(schedules).includes(building)) &&
+    selected.every((building) => Object.keys(schedules).includes(building)) &&
       tabulator.current.redraw(true);
   }, [selected, tab, loading]);
 
@@ -272,7 +272,7 @@ const YearTable = ({ selected, schedules, loading }) => {
       index: 'name',
       columns: [
         { title: '', field: 'name', headerSort: false },
-        ...[...Array(12).keys()].map(i => ({
+        ...[...Array(12).keys()].map((i) => ({
           title: months_short[i],
           field: i.toString(),
           headerSort: false,
@@ -280,16 +280,16 @@ const YearTable = ({ selected, schedules, loading }) => {
           validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
           // Hack to allow editing when double clicking
           cellDblClick: () => {},
-          formatter: cell => {
+          formatter: (cell) => {
             formatCellStyle(cell);
             return cell.getValue();
-          }
-        }))
+          },
+        })),
       ],
-      validationFailed: cell => {
+      validationFailed: (cell) => {
         cell.cancelEdit();
       },
-      cellEdited: cell => {
+      cellEdited: (cell) => {
         formatCellStyle(cell);
         dispatch(
           updateYearSchedule(
@@ -300,7 +300,7 @@ const YearTable = ({ selected, schedules, loading }) => {
         );
       },
       layout: 'fitDataFill',
-      tooltips: cell => {
+      tooltips: (cell) => {
         if (cell.getValue() == 'DIFF') {
           let out = '';
           for (const building of tooltipsRef.current.selected.sort()) {
@@ -312,7 +312,7 @@ const YearTable = ({ selected, schedules, loading }) => {
           }
           return out;
         }
-      }
+      },
     });
 
     const redrawTable = () => {
@@ -327,12 +327,12 @@ const YearTable = ({ selected, schedules, loading }) => {
 
   useEffect(() => {
     tooltipsRef.current = { selected, schedules };
-    selected.every(building => Object.keys(schedules).includes(building)) &&
+    selected.every((building) => Object.keys(schedules).includes(building)) &&
       tabulator.current.updateOrAddData(parseYearData(schedules, selected));
   }, [schedules, selected]);
 
   useEffect(() => {
-    selected.every(building => Object.keys(schedules).includes(building)) &&
+    selected.every((building) => Object.keys(schedules).includes(building)) &&
       tabulator.current.redraw(true);
   }, [selected, loading]);
 
@@ -340,7 +340,7 @@ const YearTable = ({ selected, schedules, loading }) => {
 };
 
 const ScheduleTab = ({ tab, setTab, schedules }) => {
-  const TabPanes = getScheduleTypes(schedules).map(schedule => (
+  const TabPanes = getScheduleTypes(schedules).map((schedule) => (
     <Tabs.TabPane tab={schedule} key={schedule} />
   ));
 
@@ -356,7 +356,7 @@ const ScheduleTab = ({ tab, setTab, schedules }) => {
   );
 };
 
-const formatCellStyle = cell => {
+const formatCellStyle = (cell) => {
   const states = ['OFF', 'SETBACK', 'SETPOINT'];
   const value = cell.getValue();
   if (value == 'DIFF') {
@@ -403,10 +403,10 @@ const parseData = (schedules, selected, tab) => {
       out[day] = diffArray(out[day], days[day]);
     }
   }
-  return Object.keys(out).map(day => ({ DAY: day, ...out[day] }));
+  return Object.keys(out).map((day) => ({ DAY: day, ...out[day] }));
 };
 
-const getScheduleTypes = schedules => {
+const getScheduleTypes = (schedules) => {
   const buildings = Object.keys(schedules);
   if (!buildings.length) return [];
   try {

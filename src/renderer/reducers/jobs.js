@@ -6,21 +6,21 @@ import {
   START_JOB_SUCCESS,
   START_JOB_FAILED,
   UPDATE_JOB,
-  DISMISS_JOB
+  DISMISS_JOB,
 } from '../actions/jobs';
 
 const initialState = null;
 
-const transformInitialPayload = payload => {
+const transformInitialPayload = (payload) => {
   const out = {};
-  payload.forEach(job => {
+  payload.forEach((job) => {
     const { id, ...props } = job;
     out[id] = props;
   });
   return out;
 };
 
-const transformJobPayload = payload => {
+const transformJobPayload = (payload) => {
   const { id, ...props } = payload;
   return { [id]: { ...props } };
 };

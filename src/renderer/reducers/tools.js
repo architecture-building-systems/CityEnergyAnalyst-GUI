@@ -6,7 +6,7 @@ import {
   REQUEST_TOOLPARAMS_SUCCESS,
   REQUEST_TOOLPARAMS_FAILED,
   RESET_TOOLPARAMS,
-  SAVING_TOOLPARAMS
+  SAVING_TOOLPARAMS,
 } from '../actions/tools';
 
 export const toolList = (

@@ -27,7 +27,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
             <ExportDatabaseButton key="export" />,
             <Button key="script" type="primary" onClick={goToScript}>
               Go to Archetypes Mapper
-            </Button>
+            </Button>,
           ]
         ) : null
       }

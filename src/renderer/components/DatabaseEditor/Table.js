@@ -6,7 +6,7 @@ import 'handsontable/dist/handsontable.full.css';
 import {
   updateDatabaseState,
   updateDatabaseValidation,
-  updateDatabaseChanges
+  updateDatabaseChanges,
 } from '../../actions/databaseEditor';
 import { Button } from 'antd';
 
@@ -41,7 +41,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
               isValid,
               row: rowHeader,
               column: colHeader,
-              value
+              value,
             })
           );
         }
@@ -77,7 +77,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
   return updateRedux;
 };
 
-export const useTableUndoRedo = tableRef => {
+export const useTableUndoRedo = (tableRef) => {
   const [undoAvailable, setUndo] = useState(false);
   const [redoAvailable, setRedo] = useState(false);
 
@@ -99,7 +99,7 @@ export const useTableUndoRedo = tableRef => {
 
     // Enable oberserveChanges for `change` event
     tableInstance.updateSettings({
-      observeChanges: true
+      observeChanges: true,
     });
 
     // Use `afterChangesObserverd instead of `afterChange`
@@ -121,7 +121,7 @@ export const useTableUndoRedo = tableRef => {
     undoAvailable,
     redoAvailable,
     undo,
-    redo
+    redo,
   };
 };
 

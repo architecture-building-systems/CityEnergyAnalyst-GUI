@@ -1,13 +1,13 @@
 import {
   GET_PROJECT,
   GET_PROJECT_FAILED,
-  GET_PROJECT_SUCCESS
+  GET_PROJECT_SUCCESS,
 } from '../actions/project';
 
 const initialState = {
   info: { name: '', path: '', scenario: '', scenarios: [] },
   isFetching: false,
-  error: null
+  error: null,
 };
 
 const project = (state = initialState, { type, payload }) => {

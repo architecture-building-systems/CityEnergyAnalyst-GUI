@@ -30,7 +30,7 @@ export function deleteNestedProp(obj, prop, ...rest) {
 export const AsyncError = ({
   title = 'Something went wrong',
   error,
-  style = {}
+  style = {},
 }) => {
   return (
     <div style={style}>

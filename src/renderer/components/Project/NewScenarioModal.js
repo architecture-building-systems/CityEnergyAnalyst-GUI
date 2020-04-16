@@ -21,7 +21,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const goToDBEditor = useChangeRoute(routes.DATABASE_EDITOR);
   const databaseParameter = useFetchDatabasePathParameter();
 
-  const createScenario = e => {
+  const createScenario = (e) => {
     setError(null);
     formRef.current.validateFieldsAndScroll(
       { scroll: { offsetTop: 60 } },
@@ -53,7 +53,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
     );
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setVisible(false);
   };
 
@@ -105,9 +105,9 @@ const NewScenarioForm = Form.create()(
                   } else {
                     callback();
                   }
-                }
-              }
-            ]
+                },
+              },
+            ],
           })(<Input placeholder="Name of new Scenario" />)}
         </Form.Item>
 
@@ -119,7 +119,7 @@ const NewScenarioForm = Form.create()(
         <h2>Input Data</h2>
         <Form.Item>
           {form.getFieldDecorator('input-data', {
-            initialValue: 'generate'
+            initialValue: 'generate',
           })(
             <Radio.Group>
               <Radio value="generate" style={{ display: 'block' }}>
@@ -150,7 +150,7 @@ const useFetchDatabasePathParameter = () => {
         const dbPathParam =
           resp.data.parameters[
             resp.data.parameters.findIndex(
-              p => p.type === 'DatabasePathParameter'
+              (p) => p.type === 'DatabasePathParameter'
             )
           ];
         setParameter(dbPathParam);

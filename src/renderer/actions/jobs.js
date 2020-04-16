@@ -5,7 +5,7 @@ export const FETCH_JOBS_SUCCESS = 'FETCH_JOBS_SUCCESS';
 export const FETCH_JOBS_FAILED = 'FETCH_JOBS_FAILED';
 
 export const fetchJobs = () => {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch({ type: FETCH_JOBS });
     try {
       const jobs = await axios.get(`http://localhost:5050/server/jobs/list`);
@@ -21,7 +21,7 @@ export const CREATE_JOB_SUCCESS = 'CREATE_JOB_SUCCESS';
 export const CREATE_JOB_FAILED = 'CREATE_JOB_FAILED';
 
 export const createJob = (script, parameters) => {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch({ type: CREATE_JOB });
     try {
       const job_info = await axios.post(
@@ -40,8 +40,8 @@ export const START_JOB = 'START_JOB';
 export const START_JOB_SUCCESS = 'START_JOB_SUCCESS';
 export const START_JOB_FAILED = 'START_JOB_FAILED';
 
-export const startJob = jobID => {
-  return async dispatch => {
+export const startJob = (jobID) => {
+  return async (dispatch) => {
     dispatch({ type: START_JOB });
     try {
       const job = await axios.post(
@@ -56,15 +56,15 @@ export const startJob = jobID => {
 
 export const UPDATE_JOB = 'UPDATE_JOB';
 
-export const updateJob = job => {
+export const updateJob = (job) => {
   return { type: UPDATE_JOB, payload: job };
 };
 
 export const DISMISS_JOB = 'DISMISS_JOB';
 
-export const dismissJob = job => {
+export const dismissJob = (job) => {
   console.log('in dismissJob');
-  return dispatch => {
+  return (dispatch) => {
     console.log(`cancelling job ${job.id}`);
     dispatch({ type: DISMISS_JOB, payload: job });
   };

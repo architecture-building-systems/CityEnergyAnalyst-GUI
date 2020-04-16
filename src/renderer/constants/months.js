@@ -10,7 +10,7 @@ export default [
   'September',
   'October',
   'November',
-  'December'
+  'December',
 ];
 
 export const months_short = [
@@ -25,5 +25,5 @@ export const months_short = [
   'Sep',
   'Oct',
   'Nov',
-  'Dec'
+  'Dec',
 ];

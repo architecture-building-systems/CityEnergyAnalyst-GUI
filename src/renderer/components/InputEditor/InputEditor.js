@@ -14,11 +14,11 @@ const MAP_STYLE = {
   height: '500px',
   width: '100%',
   position: 'relative',
-  background: 'rgba(0, 0, 0, 0.05)'
+  background: 'rgba(0, 0, 0, 0.05)',
 };
 
 const InputEditor = () => {
-  const { status, error } = useSelector(state => state.inputData);
+  const { status, error } = useSelector((state) => state.inputData);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const InputEditor = () => {
 };
 
 const InputMap = () => {
-  const { geojsons, colors } = useSelector(state => state.inputData);
+  const { geojsons, colors } = useSelector((state) => state.inputData);
 
   if (!geojsons) return null;
   return (
@@ -59,11 +59,11 @@ const InputMap = () => {
 };
 
 const InputTable = () => {
-  const { order } = useSelector(state => state.inputData);
+  const { order } = useSelector((state) => state.inputData);
   const [tab, setTab] = useState('zone');
 
   if (!order) return null;
-  const TabPanes = [...order, 'schedules'].map(key => (
+  const TabPanes = [...order, 'schedules'].map((key) => (
     <Tabs.TabPane key={key} tab={key} />
   ));
   return (
@@ -85,7 +85,7 @@ const InputTable = () => {
 };
 
 const InputNavigationPrompt = () => {
-  const { changes } = useSelector(state => state.inputData);
+  const { changes } = useSelector((state) => state.inputData);
 
   return (
     <NavigationPrompt

@@ -6,7 +6,7 @@ const CreatingScenarioModal = ({
   visible,
   setVisible,
   error,
-  createScenario
+  createScenario,
 }) => {
   const hideModal = () => {
     setVisible(false);

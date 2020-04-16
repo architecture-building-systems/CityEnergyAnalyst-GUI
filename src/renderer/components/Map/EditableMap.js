@@ -13,15 +13,15 @@ const defaultViewState = {
   latitude: 0,
   zoom: 0,
   pitch: 0,
-  bearing: 0
+  bearing: 0,
 };
 
 const EMPTY_FEATURE = {
   type: 'FeatureCollection',
-  features: []
+  features: [],
 };
 
-export const calcPolyArea = geojson => {
+export const calcPolyArea = (geojson) => {
   const poly = geojson.features[0]?.geometry?.coordinates;
   if (typeof poly === 'undefined') return 0;
   const site = polygon(geojson.features[0].geometry.coordinates);
@@ -34,7 +34,7 @@ export const calcPolyArea = geojson => {
 const EditableMap = ({
   location = defaultViewState,
   geojson = null,
-  outputGeojson = null
+  outputGeojson = null,
 }) => {
   const [viewState, setViewState] = useState(defaultViewState);
   const [mode, setMode] = useState('view');
@@ -56,7 +56,7 @@ const EditableMap = ({
       setData(updatedData);
     },
 
-    onLayerClick: () => {}
+    onLayerClick: () => {},
   });
 
   const onViewStateChange = ({ viewState }) => {
@@ -86,7 +86,7 @@ const EditableMap = ({
 
   useEffect(() => {
     setTimeout(
-      () => setViewState(viewState => ({ ...viewState, ...location })),
+      () => setViewState((viewState) => ({ ...viewState, ...location })),
       0
     );
   }, [location]);
@@ -111,7 +111,7 @@ const EditableMap = ({
             padding: 10,
             zIndex: 5,
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            fontWeight: 600
+            fontWeight: 600,
           }}
         >
           {`Selected Area: ${calcPolyArea(data)} km2`}
@@ -124,7 +124,7 @@ const EditableMap = ({
           right: 0,
           padding: 10,
           display: 'none',
-          zIndex: 5
+          zIndex: 5,
         }}
       >
         {hasData ? null : (

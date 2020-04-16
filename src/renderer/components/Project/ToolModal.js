@@ -4,14 +4,14 @@ import { Modal, Button, message } from 'antd';
 import Tool from '../Tools/Tool';
 
 const ToolModal = ({ tool, visible, setVisible }) => {
-  const error = useSelector(state => state.toolSaving.error);
+  const error = useSelector((state) => state.toolSaving.error);
   const hideModal = () => {
     setVisible(false);
   };
 
   const formButtons = ({ getForm, saveParams, setDefault }) => {
     message.config({
-      top: 120
+      top: 120,
     });
 
     const saveToConfig = async () => {

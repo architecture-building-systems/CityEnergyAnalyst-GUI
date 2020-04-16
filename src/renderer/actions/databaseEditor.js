@@ -8,7 +8,7 @@ export const initDatabaseState = () => async (dispatch, getState) => {
   return Promise.all([
     dispatch(fetchDatabaseData()),
     dispatch(fetchDatabaseSchema()),
-    dispatch(fetchDatabaseGlossary())
+    dispatch(fetchDatabaseGlossary()),
   ]).then(() => {
     const { status } = getState().databaseEditor.status;
     if (status == 'fetching' && status !== 'failed')
@@ -19,7 +19,7 @@ export const initDatabaseState = () => async (dispatch, getState) => {
 export const FETCH_DATABASE_DATA = 'FETCH_DATABASE_DATA';
 export const FETCH_DATABASE_DATA_SUCCESS = 'FETCH_DATABASE_DATA_SUCCESS';
 export const FETCH_DATABASE_DATA_FAILURE = 'FETCH_DATABASE_DATA_FAILURE';
-export const fetchDatabaseData = () => async dispatch => {
+export const fetchDatabaseData = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_DATA });
     const { data } = await axios.get(
@@ -27,12 +27,12 @@ export const fetchDatabaseData = () => async dispatch => {
     );
     return dispatch({
       type: FETCH_DATABASE_DATA_SUCCESS,
-      payload: data
+      payload: data,
     });
   } catch (err) {
     return dispatch({
       type: FETCH_DATABASE_DATA_FAILURE,
-      payload: err.response || err
+      payload: err.response || err,
     });
   }
 };
@@ -40,7 +40,7 @@ export const fetchDatabaseData = () => async dispatch => {
 export const FETCH_DATABASE_SCHEMA = 'FETCH_DATABASE_SCHEMA';
 export const FETCH_DATABASE_SCHEMA_SUCCESS = 'FETCH_DATABASE_SCHEMA_SUCCESS';
 export const FETCH_DATABASE_SCHEMA_FAILURE = 'FETCH_DATABASE_SCHEMA_FAILURE';
-export const fetchDatabaseSchema = () => async dispatch => {
+export const fetchDatabaseSchema = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_SCHEMA });
     const { data } = await axios.get(
@@ -48,12 +48,12 @@ export const fetchDatabaseSchema = () => async dispatch => {
     );
     return dispatch({
       type: FETCH_DATABASE_SCHEMA_SUCCESS,
-      payload: data
+      payload: data,
     });
   } catch (err) {
     return dispatch({
       type: FETCH_DATABASE_SCHEMA_FAILURE,
-      payload: err.response || err
+      payload: err.response || err,
     });
   }
 };
@@ -63,18 +63,18 @@ export const FETCH_DATABASE_GLOSSARY_SUCCESS =
   'FETCH_DATABASE_GLOSSARY_SUCCESS';
 export const FETCH_DATABASE_GLOSSARY_FAILURE =
   'FETCH_DATABASE_GLOSSARY_FAILURE';
-export const fetchDatabaseGlossary = () => async dispatch => {
+export const fetchDatabaseGlossary = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_GLOSSARY });
     const { data } = await axios.get(`http://localhost:5050/api/glossary`);
     return dispatch({
       type: FETCH_DATABASE_GLOSSARY_SUCCESS,
-      payload: data
+      payload: data,
     });
   } catch (err) {
     return dispatch({
       type: FETCH_DATABASE_GLOSSARY_FAILURE,
-      payload: err.response || err
+      payload: err.response || err,
     });
   }
 };
@@ -82,19 +82,19 @@ export const fetchDatabaseGlossary = () => async dispatch => {
 export const COPY_SCHEDULE_DATA = 'COPY_SCHEDULE_DATA';
 export const copyScheduleData = (name, copy) => ({
   type: COPY_SCHEDULE_DATA,
-  payload: { name, copy }
+  payload: { name, copy },
 });
 
 export const UPDATE_DATABASE_VALIDATION = 'UPDATE_DATABASE_VALIDATION';
-export const updateDatabaseValidation = validation => ({
+export const updateDatabaseValidation = (validation) => ({
   type: UPDATE_DATABASE_VALIDATION,
-  payload: validation
+  payload: validation,
 });
 
 export const UPDATE_DATABASE_CHANGES = 'UPDATE_DATABASE_CHANGES';
-export const updateDatabaseChanges = change => ({
+export const updateDatabaseChanges = (change) => ({
   type: UPDATE_DATABASE_CHANGES,
-  payload: change
+  payload: change,
 });
 
 export const RESET_DATABASE_CHANGES = 'RESET_DATABASE_CHANGES';
@@ -109,5 +109,5 @@ export const resetDatabaseState = () => ({ type: RESET_DATABASE_STATE });
 export const SET_ACTIVE_DATABASE = 'SET_ACTIVE_DATABASE';
 export const setActiveDatabase = (category, name) => ({
   type: SET_ACTIVE_DATABASE,
-  payload: { category, name }
+  payload: { category, name },
 });

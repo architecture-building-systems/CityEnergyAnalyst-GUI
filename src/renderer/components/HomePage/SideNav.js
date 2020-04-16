@@ -13,8 +13,8 @@ const { SubMenu } = Menu;
 const logo = getStatic('cea-logo.png');
 
 const SideNav = () => {
-  const { collapsed } = useSelector(state => state.sider);
-  const { location } = useSelector(state => state.router);
+  const { collapsed } = useSelector((state) => state.sider);
+  const { location } = useSelector((state) => state.router);
   const dispatch = useDispatch();
 
   const [broken, setBroken] = useState(false);
@@ -22,7 +22,7 @@ const SideNav = () => {
 
   const selectedKey = location.pathname;
 
-  const collapseSider = breakpoint => {
+  const collapseSider = (breakpoint) => {
     setBroken(breakpoint);
     if (breakpoint) {
       setPrevCollapsed(collapsed);
@@ -39,7 +39,7 @@ const SideNav = () => {
       width="250"
       breakpoint="lg"
       collapsedWidth={broken ? '0' : '80'}
-      onBreakpoint={breakpoint => collapseSider(breakpoint)}
+      onBreakpoint={(breakpoint) => collapseSider(breakpoint)}
       trigger={null}
       collapsible
       collapsed={collapsed}
@@ -56,7 +56,7 @@ const SideNav = () => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          height: 'calc(100% - 90px)'
+          height: 'calc(100% - 90px)',
         }}
       >
         <Menu
@@ -181,9 +181,9 @@ const SideNav = () => {
 };
 
 const ScenarioMenuItem = ({ children, ...props }) => {
-  const { scenario } = useSelector(state => state.project.info);
+  const { scenario } = useSelector((state) => state.project.info);
   if (scenario === '') return null;
-  return React.Children.map(children, child =>
+  return React.Children.map(children, (child) =>
     React.cloneElement(child, { ...props })
   );
 };

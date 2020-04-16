@@ -42,7 +42,7 @@ export const useEventListener = (eventName, handler, element = window) => {
 
     if (!isSupported) return;
 
-    const eventListener = event => savedHandler.current(event);
+    const eventListener = (event) => savedHandler.current(event);
     element.addEventListener(eventName, eventListener);
 
     // Remove event listener on cleanup

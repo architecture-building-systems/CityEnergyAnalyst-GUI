@@ -11,7 +11,7 @@ const Database = ({ name, data, schema }) => {
 
   return (
     <Tabs className="cea-database-editor-tabs" type="card">
-      {sheetNames.map(sheetName => (
+      {sheetNames.map((sheetName) => (
         <Tabs.TabPane key={`${name}-${sheetName}`} tab={sheetName}>
           <DatabaseTable
             databaseName={name}
@@ -26,7 +26,7 @@ const Database = ({ name, data, schema }) => {
 };
 
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
-  const data = useSelector(state => state.databaseEditor.data);
+  const data = useSelector((state) => state.databaseEditor.data);
   const tableRef = useRef(null);
   const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
   const { columns, colHeaders } = getTableSchema(
@@ -51,7 +51,7 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
       <ColumnGlossary
         tableRef={tableRef}
         colHeaders={colHeaders}
-        filter={variable => variable.WORKSHEET == sheetName}
+        filter={(variable) => variable.WORKSHEET == sheetName}
       />
       <Table
         ref={tableRef}
@@ -75,14 +75,14 @@ export const getTableSchema = (
   colHeaders
 ) => {
   const _colHeaders = colHeaders || Object.keys(tableData[0]);
-  const columns = _colHeaders.map(key => {
+  const columns = _colHeaders.map((key) => {
     const column_schema = schema['columns'][key];
 
     // Try to infer type from schema, else load default
     if (typeof column_schema === 'undefined') {
       console.error(`Could not find \`${key}\` in schema`, {
         sheetName,
-        schema
+        schema,
       });
       return { data: key };
     }
@@ -104,7 +104,7 @@ export const getTableSchema = (
         return {
           data: key,
           type: 'dropdown',
-          source: choice_prop['values']
+          source: choice_prop['values'],
         };
       // Get list from data
       if (typeof choice_prop['lookup'] != 'undefined') {
@@ -112,7 +112,7 @@ export const getTableSchema = (
           'lookup'
         ];
         const lookup = data[database_category][database_name][sheet];
-        const choices = lookup.map(row => row[column]);
+        const choices = lookup.map((row) => row[column]);
         return { data: key, type: 'dropdown', source: choices };
       }
     }
@@ -129,7 +129,7 @@ export const getTableSchema = (
             } else {
               callback(false);
             }
-          }
+          },
         };
       else
         return {
@@ -146,7 +146,7 @@ export const getTableSchema = (
             } else {
               callback(false);
             }
-          }
+          },
         };
     } else if (column_schema['type'] == 'boolean')
       return { data: key, type: 'dropdown', source: [true, false] };

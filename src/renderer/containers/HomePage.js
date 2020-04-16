@@ -22,7 +22,7 @@ const HomePage = () => {
         <SideNav />
         <Layout
           style={{
-            height: 'calc(100vh - 52px)'
+            height: 'calc(100vh - 52px)',
           }}
         >
           <Header />
@@ -32,7 +32,7 @@ const HomePage = () => {
               marginTop: 88,
               padding: 24,
               background: '#fff',
-              minHeight: 'fit-content'
+              minHeight: 'fit-content',
             }}
           >
             <Switch>

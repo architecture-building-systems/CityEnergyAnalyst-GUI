@@ -13,7 +13,7 @@ import {
   UPDATE_DAYSCHEDULE,
   DELETE_BUILDINGS,
   SAVE_INPUTDATA_SUCCESS,
-  DISCARD_INPUTDATA_CHANGES_SUCCESS
+  DISCARD_INPUTDATA_CHANGES_SUCCESS,
 } from '../actions/inputEditor';
 import { months_short } from '../constants/months';
 import { checkNestedProp, deleteNestedProp, createNestedProp } from '../utils';
@@ -22,7 +22,7 @@ const initialState = {
   selected: [],
   changes: { update: {}, delete: {} },
   error: null,
-  status: ''
+  status: '',
 };
 
 const buildingGeometries = ['zone', 'surroundings'];
@@ -47,7 +47,7 @@ function updateChanges(
       createNestedProp(changes.update, table, building, property);
       changes.update[table][building][property] = {
         oldValue: storedValue,
-        newValue: newValue
+        newValue: newValue,
       };
     }
   }
@@ -77,9 +77,9 @@ function updateData(state, table, buildings, properties) {
             [property]: value,
             ...(tables[table][building].REFERENCE
               ? { REFERENCE: 'User - Input' }
-              : {})
-          }
-        }
+              : {}),
+          },
+        },
       };
 
       // Update building properties of geojsons
@@ -98,17 +98,17 @@ function updateData(state, table, buildings, properties) {
 
 function updateGeoJsonProperty(geojsons, table, building, property) {
   const _building = geojsons[table].features.find(
-    feature => feature.properties.Name == building
+    (feature) => feature.properties.Name == building
   );
   if (_building)
     _building.properties = {
       ..._building.properties,
       [property.property]: Number(property.value),
-      ...(_building.properties.REFERENCE ? { REFERENCE: 'User - Input' } : {})
+      ...(_building.properties.REFERENCE ? { REFERENCE: 'User - Input' } : {}),
     };
   return {
     ...geojsons,
-    [table]: { ...geojsons[table], features: geojsons[table].features }
+    [table]: { ...geojsons[table], features: geojsons[table].features },
   };
 }
 
@@ -153,9 +153,9 @@ function deleteGeoJsonFeature(geojsons, table, building) {
     [table]: {
       ...geojsons[table],
       features: geojsons[table].features.filter(
-        feature => feature.properties.Name != building
-      )
-    }
+        (feature) => feature.properties.Name != building
+      ),
+    },
   };
 }
 
@@ -182,10 +182,10 @@ function updateDaySchedule(state, buildings, tab, day, hour, value) {
           ...schedules[building].SCHEDULES,
           [tab]: {
             ...schedules[building].SCHEDULES[tab],
-            [day]: daySchedule
-          }
-        }
-      }
+            [day]: daySchedule,
+          },
+        },
+      },
     };
   }
   return { schedules };
@@ -210,8 +210,8 @@ function updateYearSchedule(state, buildings, month, value) {
       ...schedules,
       [building]: {
         ...schedules[building],
-        MONTHLY_MULTIPLIER: monthSchedule
-      }
+        MONTHLY_MULTIPLIER: monthSchedule,
+      },
     };
   }
   return { schedules };
@@ -235,7 +235,7 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.table,
           payload.buildings,
           payload.properties
-        )
+        ),
       };
     case UPDATE_YEARSCHEDULE:
       return {
@@ -245,7 +245,7 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.buildings,
           payload.month,
           payload.value
-        )
+        ),
       };
     case UPDATE_DAYSCHEDULE:
       return {
@@ -257,13 +257,13 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.day,
           payload.hour,
           payload.value
-        )
+        ),
       };
     case DELETE_BUILDINGS:
       return {
         ...state,
         selected: initialState.selected,
-        ...deleteBuildings(state, payload.buildings)
+        ...deleteBuildings(state, payload.buildings),
       };
     case SET_SELECTED:
     case REQUEST_MAPDATA:

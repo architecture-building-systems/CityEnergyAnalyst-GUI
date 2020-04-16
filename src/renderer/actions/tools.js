@@ -27,61 +27,61 @@ export const fetchToolList = () => {
   };
 };
 
-export const fetchToolParams = tool =>
+export const fetchToolParams = (tool) =>
   httpAction({ url: `/tools/${tool}`, type: REQUEST_TOOLPARAMS });
 
 export const resetToolParams = () => ({ type: RESET_TOOLPARAMS });
 
 export const saveToolParams = (tool, params) => {
-  return dispatch => {
+  return (dispatch) => {
     dispatch({
       type: SAVING_TOOLPARAMS,
-      payload: { isSaving: true, error: null }
+      payload: { isSaving: true, error: null },
     });
     return axios
       .post(`http://localhost:5050/api/tools/${tool}/save-config`, params)
-      .then(response => {
+      .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
-          payload: { isSaving: false }
+          payload: { isSaving: false },
         });
         return response.data;
       })
-      .catch(error => {
+      .catch((error) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
           payload: {
             error: { message: error.response.data.message },
-            isSaving: false
-          }
+            isSaving: false,
+          },
         });
       });
   };
 };
 
-export const setDefaultToolParams = tool => {
-  return dispatch => {
+export const setDefaultToolParams = (tool) => {
+  return (dispatch) => {
     dispatch({
       type: SAVING_TOOLPARAMS,
-      payload: { isSaving: true, error: null }
+      payload: { isSaving: true, error: null },
     });
     return axios
       .post(`http://localhost:5050/api/tools/${tool}/default`)
-      .then(response => {
+      .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
-          payload: { isSaving: false }
+          payload: { isSaving: false },
         });
         dispatch(fetchToolParams(tool));
         return response.data;
       })
-      .catch(error => {
+      .catch((error) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
           payload: {
             error: { message: error.response.data.message },
-            isSaving: false
-          }
+            isSaving: false,
+          },
         });
       });
   };

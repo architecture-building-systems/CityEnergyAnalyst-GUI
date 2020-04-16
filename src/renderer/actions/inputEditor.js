@@ -29,9 +29,9 @@ export const DISCARD_INPUTDATA_CHANGES_FAILED =
 
 export const resetInputData = () => ({ type: RESET_INPUTDATA });
 
-export const setSelected = selected => ({
+export const setSelected = (selected) => ({
   type: SET_SELECTED,
-  payload: { selected }
+  payload: { selected },
 });
 
 export const fetchInputData = () =>
@@ -47,27 +47,27 @@ export const saveChanges = () => (dispatch, getState) =>
         method: 'PUT',
         type: SAVE_INPUTDATA,
         data: { tables, geojsons, crs, schedules },
-        onSuccess: data => resolve(data),
-        onFailure: error => reject(error)
+        onSuccess: (data) => resolve(data),
+        onFailure: (error) => reject(error),
       })
     );
   });
 
-export const fetchBuildingSchedule = buildings => dispatch => {
+export const fetchBuildingSchedule = (buildings) => (dispatch) => {
   dispatch({ type: REQUEST_BUILDINGSCHEDULE });
   let errors = {};
-  const promises = buildings.map(building =>
+  const promises = buildings.map((building) =>
     axios
       .get(`http://localhost:5050/api/inputs/building-schedule/${building}`)
-      .then(resp => {
+      .then((resp) => {
         return { [building]: resp.data };
       })
-      .catch(error => {
+      .catch((error) => {
         errors[building] = error.response.data;
       })
   );
   // eslint-disable-next-line no-undef
-  return Promise.all(promises).then(values => {
+  return Promise.all(promises).then((values) => {
     if (Object.keys(errors).length) {
       throw errors;
     } else {
@@ -78,7 +78,7 @@ export const fetchBuildingSchedule = buildings => dispatch => {
       }
       dispatch({
         type: REQUEST_BUILDINGSCHEDULE_SUCCESS,
-        payload: out
+        payload: out,
       });
     }
   });
@@ -93,15 +93,15 @@ export const discardChanges = () => (dispatch, getState) =>
         httpAction({
           url: '/inputs/all-inputs',
           type: DISCARD_INPUTDATA_CHANGES,
-          onSuccess: data => resolve(data),
-          onFailure: error => reject(error)
+          onSuccess: (data) => resolve(data),
+          onFailure: (error) => reject(error),
         })
       );
     }),
     fetchBuildingSchedule(Object.keys(getState().inputData.schedules))(
       dispatch,
       getState
-    )
+    ),
   ]);
 
 export const updateInputData = (
@@ -110,12 +110,12 @@ export const updateInputData = (
   properties = []
 ) => ({
   type: UPDATE_INPUTDATA,
-  payload: { table, buildings, properties }
+  payload: { table, buildings, properties },
 });
 
 export const updateYearSchedule = (buildings = [], month = '', value = 0) => ({
   type: UPDATE_YEARSCHEDULE,
-  payload: { buildings, month, value }
+  payload: { buildings, month, value },
 });
 
 export const updateDaySchedule = (
@@ -126,30 +126,30 @@ export const updateDaySchedule = (
   value = ''
 ) => ({
   type: UPDATE_DAYSCHEDULE,
-  payload: { buildings, tab, day, hour, value }
+  payload: { buildings, tab, day, hour, value },
 });
 
 export const deleteBuildings = (buildings = []) => ({
   type: DELETE_BUILDINGS,
-  payload: { buildings }
+  payload: { buildings },
 });
 
 export const fetchMapData = () => {
   const layerList = Object.keys(inputEndpoints);
-  return dispatch => {
+  return (dispatch) => {
     dispatch({
       type: REQUEST_MAPDATA,
-      payload: { isFetchingMapData: true, error: null }
+      payload: { isFetchingMapData: true, error: null },
     });
 
-    let promises = layerList.map(type =>
-      axios.get(inputEndpoints[type]).catch(error => {
+    let promises = layerList.map((type) =>
+      axios.get(inputEndpoints[type]).catch((error) => {
         console.log(error.response.data);
       })
     );
     return axios
       .all(promises)
-      .then(results => {
+      .then((results) => {
         let data = {};
         for (var i = 0; i < layerList.length; i++) {
           if (results[i] && results[i].status === 200) {
@@ -158,9 +158,9 @@ export const fetchMapData = () => {
         }
         dispatch({
           type: RECEIVE_MAPDATA,
-          payload: { geojsons: data, isFetchingMapData: false }
+          payload: { geojsons: data, isFetchingMapData: false },
         });
       })
-      .catch(error => console.log(error));
+      .catch((error) => console.log(error));
   };
 };

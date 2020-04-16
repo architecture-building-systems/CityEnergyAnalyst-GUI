@@ -7,7 +7,7 @@ import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
 const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
   const tooltipRef = useRef();
-  const dbGlossary = useSelector(state => state.databaseEditor.glossary);
+  const dbGlossary = useSelector((state) => state.databaseEditor.glossary);
   const [tableGlossary, setTableGlossary] = useState([]);
   const tooltipPrompt = (
     <p className="cea-database-editor-column-tooltip">
@@ -18,12 +18,12 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
   useEffect(() => {
     const _dbGlossary =
       typeof filter === 'function'
-        ? dbGlossary.filter(variable => filter(variable))
+        ? dbGlossary.filter((variable) => filter(variable))
         : dbGlossary;
     setTableGlossary(
       colHeaders
-        .map(col => _dbGlossary.find(variable => col === variable.VARIABLE))
-        .filter(obj => typeof obj !== 'undefined')
+        .map((col) => _dbGlossary.find((variable) => col === variable.VARIABLE))
+        .filter((obj) => typeof obj !== 'undefined')
     );
   }, []);
 

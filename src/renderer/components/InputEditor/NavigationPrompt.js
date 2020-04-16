@@ -11,11 +11,11 @@ class NavigationPrompt extends React.Component {
   }
 
   componentDidMount() {
-    this.unblock = this.props.history.block(nextLocation => {
+    this.unblock = this.props.history.block((nextLocation) => {
       if (this.props.when) {
         this.setState({
           openModal: true,
-          nextLocation: nextLocation
+          nextLocation: nextLocation,
         });
       }
       return !this.props.when;

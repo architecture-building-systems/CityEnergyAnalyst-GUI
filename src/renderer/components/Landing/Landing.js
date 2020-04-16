@@ -11,7 +11,7 @@ import routes from '../../constants/routes';
 
 const logo = getStatic('cea-logo.png');
 
-const useProjectInfo = initialValue => {
+const useProjectInfo = (initialValue) => {
   const [info, setInfo] = useState(initialValue);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const Landing = () => {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center'
+          alignItems: 'center',
         }}
       >
         <img

@@ -19,7 +19,7 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
         dispatch(
           updateInputData(
             table,
-            inputTable.getSelectedData().map(data => data.Name),
+            inputTable.getSelectedData().map((data) => data.Name),
             updates
           )
         );
@@ -57,7 +57,7 @@ const Table = ({ inputTable }) => {
     <div style={{ overflow: 'auto', maxHeight: 200 }}>
       <table>
         <tr>
-          {inputTable.getColumnDefinitions().map(columnDef => (
+          {inputTable.getColumnDefinitions().map((columnDef) => (
             <th style={{ padding: '0 15px' }} key={columnDef.title}>
               {columnDef.title}
             </th>
@@ -66,8 +66,8 @@ const Table = ({ inputTable }) => {
         {inputTable
           .getSelectedData()
           .sort((a, b) => (a.Name > b.Name ? 1 : -1))
-          .map(data => {
-            const row = inputTable.getColumnDefinitions().map(columnDef => (
+          .map((data) => {
+            const row = inputTable.getColumnDefinitions().map((columnDef) => (
               <td style={{ padding: '0 15px' }} key={columnDef.title}>
                 {data[columnDef.title]}
               </td>
@@ -80,10 +80,10 @@ const Table = ({ inputTable }) => {
 };
 
 const InputDataForm = Form.create()(({ form, inputTable, table }) => {
-  const { columns } = useSelector(state => state.inputData);
+  const { columns } = useSelector((state) => state.inputData);
   return (
     <Form>
-      {inputTable.getColumnDefinitions().map(columnDef => {
+      {inputTable.getColumnDefinitions().map((columnDef) => {
         const { title } = columnDef;
         if (title != 'Name' && title != 'REFERENCE')
           return (
@@ -124,7 +124,7 @@ const createFormItem = (form, title, columnInfo) => {
     str: 'string',
     int: 'integer',
     float: 'float',
-    year: 'integer'
+    year: 'integer',
   };
   const checkNumeric = (value, type) => {
     if (type == 'str') return value;
@@ -140,7 +140,7 @@ const createFormItem = (form, title, columnInfo) => {
       {
         type: typeMap[type] == 'string' ? 'string' : 'number',
         message: `${title} is not a ${typeMap[type]}`,
-        transform: value => checkNumeric(value, type)
+        transform: (value) => checkNumeric(value, type),
       },
       {
         validator: (rule, value, callback) => {
@@ -155,9 +155,9 @@ const createFormItem = (form, title, columnInfo) => {
           } catch (err) {
             callback(err);
           }
-        }
-      }
-    ]
+        },
+      },
+    ],
   })(<Input placeholder="unchanged" />);
 };
 

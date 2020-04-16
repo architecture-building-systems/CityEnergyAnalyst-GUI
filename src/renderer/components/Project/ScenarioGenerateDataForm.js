@@ -14,18 +14,18 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
   const zoneChecked = tools.includes('zone');
   const surroundingsChecked = tools.includes('surroundings');
 
-  const showModal = tool => {
+  const showModal = (tool) => {
     setSelectedTool(tool);
     setModalVisible(true);
   };
 
-  const handleChange = checkedValue => {
+  const handleChange = (checkedValue) => {
     if (!checkedValue.includes('surroundings')) {
       setTimeout(() => {
         form.setFieldsValue({
           tools: checkedValue.filter(
-            element => element === 'weather' || element === 'zone'
-          )
+            (element) => element === 'weather' || element === 'zone'
+          ),
         });
       }, 0);
     }
@@ -34,7 +34,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
   return (
     <div
       style={{
-        display: visible ? 'block' : 'none'
+        display: visible ? 'block' : 'none',
       }}
     >
       <Form.Item
@@ -43,7 +43,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
         wrapperCol={{ span: 11, offset: 1 }}
       >
         {form.getFieldDecorator('tools', {
-          initialValue: ['zone']
+          initialValue: ['zone'],
         })(
           <Checkbox.Group onChange={handleChange}>
             <div style={{ margin: 10 }}>
@@ -54,7 +54,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Icon type="setting" onClick={() => showModal('zone-helper')} />
                 <small
                   style={{
-                    marginLeft: 10
+                    marginLeft: 10,
                   }}
                 >
                   *Selected by default
@@ -76,7 +76,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   style={{
                     color: 'red',
                     marginLeft: 10,
-                    display: zoneChecked ? 'none' : ''
+                    display: zoneChecked ? 'none' : '',
                   }}
                 >
                   *Requires zone file.
@@ -100,7 +100,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   style={{
                     color: 'red',
                     marginLeft: 10,
-                    display: surroundingsChecked ? 'none' : ''
+                    display: surroundingsChecked ? 'none' : '',
                   }}
                 >
                   *Requires zone and surroundings file.
@@ -122,7 +122,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                   style={{
                     color: 'red',
                     marginLeft: 10,
-                    display: surroundingsChecked ? 'none' : ''
+                    display: surroundingsChecked ? 'none' : '',
                   }}
                 >
                   *Requires zone and surroundings file.
@@ -148,7 +148,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
         style={{
           display: form.getFieldValue('tools').includes('zone')
             ? 'block'
-            : 'none'
+            : 'none',
         }}
       >
         <ScenarioMap form={form} />
@@ -197,8 +197,8 @@ const ScenarioMap = ({ form }) => {
           {
             latlong: {
               lat: resp.data[0].lat,
-              long: resp.data[0].lon
-            }
+              long: resp.data[0].lon,
+            },
           },
           goToLocation
         );
@@ -214,13 +214,13 @@ const ScenarioMap = ({ form }) => {
         setLocation({
           latitude: parseFloat(values.latlong.lat),
           longitude: parseFloat(values.latlong.long),
-          zoom: 16
+          zoom: 16,
         });
       }
     });
   };
 
-  const setGeojson = data => {
+  const setGeojson = (data) => {
     form.setFieldsValue({ geojson: data });
   };
 
@@ -233,7 +233,7 @@ const ScenarioMap = ({ form }) => {
         <Row>
           <h4>Location</h4>
           {form.getFieldDecorator('location', {
-            initialValue: ''
+            initialValue: '',
           })(
             <Input
               onPressEnter={getLatLong}
@@ -254,7 +254,7 @@ const ScenarioMap = ({ form }) => {
       <Form.Item>
         {form.getFieldDecorator('latlong', {
           initialValue: { lat: 0, long: 0 },
-          rules: [{ validator: checkLatLong }]
+          rules: [{ validator: checkLatLong }],
         })(<LatLongInput onClick={goToLocation} />)}
       </Form.Item>
 
@@ -264,9 +264,9 @@ const ScenarioMap = ({ form }) => {
           rules: [
             {
               required: form.getFieldValue('input-data') === 'generate',
-              validator: checkArea
-            }
-          ]
+              validator: checkArea,
+            },
+          ],
         })(<Input style={{ display: 'none' }} />)}
       </Form.Item>
 
@@ -285,7 +285,7 @@ const ScenarioMap = ({ form }) => {
 
 const LatLongInput = React.forwardRef(
   ({ value = {}, onChange, onClick = null }, ref) => {
-    const triggerChange = changedValue => {
+    const triggerChange = (changedValue) => {
       if (onChange) {
         onChange({ ...value, ...changedValue });
       }
@@ -297,7 +297,7 @@ const LatLongInput = React.forwardRef(
           <h4>Latitude</h4>
           <Input
             value={'lat' in value ? value.lat : null}
-            onChange={e => {
+            onChange={(e) => {
               triggerChange({ lat: e.target.value });
             }}
             onPressEnter={onClick}
@@ -307,7 +307,7 @@ const LatLongInput = React.forwardRef(
           <h4>Longitude</h4>
           <Input
             value={'long' in value ? value.long : null}
-            onChange={e => {
+            onChange={(e) => {
               triggerChange({ long: e.target.value });
             }}
             onPressEnter={onClick}

@@ -7,9 +7,9 @@ import { setCollapsed } from '../../actions/homepage';
 const { Header: AntHeader } = Layout;
 
 const Header = () => {
-  const { collapsed } = useSelector(state => state.sider);
-  const { name, scenario } = useSelector(state => state.project.info);
-  const { pathname } = useSelector(state => state.router.location);
+  const { collapsed } = useSelector((state) => state.sider);
+  const { name, scenario } = useSelector((state) => state.project.info);
+  const { pathname } = useSelector((state) => state.router.location);
   const dispatch = useDispatch();
 
   return (
@@ -23,7 +23,7 @@ const Header = () => {
         padding: 0,
         width: '100%',
         zIndex: 7,
-        boxShadow: '0 3px 4px -6px black'
+        boxShadow: '0 3px 4px -6px black',
       }}
     >
       <div className="cea-home-header-left" style={{ display: 'flex' }}>
@@ -38,7 +38,7 @@ const Header = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              lineHeight: 'initial'
+              lineHeight: 'initial',
             }}
           >
             <span>

@@ -7,7 +7,7 @@ import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
-  const databaseChanges = useSelector(state => state.databaseEditor.changes);
+  const databaseChanges = useSelector((state) => state.databaseEditor.changes);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 
@@ -24,14 +24,14 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
           setConfirmLoading(false);
           setVisible(false);
           message.config({
-            top: 120
+            top: 120,
           });
           message.success('Database succesfully exported');
         } catch (err) {
           console.log(err.response);
           setConfirmLoading(false);
           message.config({
-            top: 120
+            top: 120,
           });
           message.error('Something went wrong.');
         }
@@ -39,7 +39,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setVisible(false);
   };
 
@@ -92,8 +92,8 @@ const ExportForm = Form.create()(({ form }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
       />
       <FormItemWrapper
@@ -110,8 +110,8 @@ const ExportForm = Form.create()(({ form }) => {
               } else {
                 callback();
               }
-            }
-          }
+            },
+          },
         ]}
         inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />

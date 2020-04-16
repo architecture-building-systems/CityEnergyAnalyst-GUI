@@ -12,7 +12,7 @@ import {
   FETCH_DATABASE_SCHEMA_FAILURE,
   FETCH_DATABASE_GLOSSARY_FAILURE,
   RESET_DATABASE_CHANGES,
-  COPY_SCHEDULE_DATA
+  COPY_SCHEDULE_DATA,
 } from '../actions/databaseEditor';
 import { combineReducers } from 'redux';
 import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
@@ -44,7 +44,7 @@ const databaseGlossary = (state = [], { type, payload }) => {
   switch (type) {
     case FETCH_DATABASE_GLOSSARY_SUCCESS:
       try {
-        return payload.find(script => script.script === 'data_initializer')
+        return payload.find((script) => script.script === 'data_initializer')
           .variables;
       } catch (err) {
         console.log(err);
@@ -72,10 +72,10 @@ const databaseData = (state = {}, { type, payload }) => {
           schedules: {
             ...state.archetypes.schedules,
             [payload.name]: {
-              ...state.archetypes.schedules[payload.copy]
-            }
-          }
-        }
+              ...state.archetypes.schedules[payload.copy],
+            },
+          },
+        },
       };
     default:
       return state;
@@ -143,7 +143,7 @@ const databaseEditor = combineReducers({
   schema: databaseSchema,
   glossary: databaseGlossary,
   menu: databaseMenu,
-  changes: databaseChanges
+  changes: databaseChanges,
 });
 
 export default databaseEditor;

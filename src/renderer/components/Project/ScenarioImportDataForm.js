@@ -8,47 +8,47 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     zone: {
       extension: ['.shp'],
       placeholder: 'Path to geometry of the zone',
-      help: ''
+      help: '',
     },
     surroundings: {
       extension: ['.shp'],
       placeholder: 'Path to geometry of surroundings',
-      help: ''
+      help: '',
     },
     streets: {
       extension: ['.shp'],
       placeholder: 'Path to street geometry',
-      help: ''
+      help: '',
     },
     terrain: {
       extension: ['.tif'],
       placeholder: 'Path to the digital elevation model',
-      help: ''
+      help: '',
     },
     typology: {
       extension: ['.dbf'],
       placeholder: 'Path to typology database',
-      help: 'Leave empty for CEA to create one for you'
-    }
+      help: 'Leave empty for CEA to create one for you',
+    },
   };
   form.getFieldDecorator('fields', {
-    initialValue: ['zone', 'typology']
+    initialValue: ['zone', 'typology'],
   });
   const fields = form.getFieldValue('fields');
   const fileChoices = Object.keys(inputFiles).filter(
-    fileType => !fields.includes(fileType)
+    (fileType) => !fields.includes(fileType)
   );
 
-  const addField = value => {
+  const addField = (value) => {
     const newFields = fields.concat(value);
     form.setFieldsValue({
-      fields: newFields
+      fields: newFields,
     });
   };
 
-  const removeField = k => {
+  const removeField = (k) => {
     form.setFieldsValue({
-      fields: fields.filter(key => key !== k)
+      fields: fields.filter((key) => key !== k),
     });
   };
 
@@ -58,17 +58,21 @@ const ScenarioImportDataForm = ({ form, visible }) => {
       filters: [
         {
           name: `${file} file`,
-          extensions: inputFiles[file].extension.map(fileExtension =>
+          extensions: inputFiles[file].extension.map((fileExtension) =>
             fileExtension.substr(1)
-          )
-        }
-      ]
+          ),
+        },
+      ],
     };
-    remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, paths => {
-      if (paths.length) {
-        form.setFieldsValue({ [id]: paths[0] });
+    remote.dialog.showOpenDialog(
+      remote.getCurrentWindow(),
+      options,
+      (paths) => {
+        if (paths.length) {
+          form.setFieldsValue({ [id]: paths[0] });
+        }
       }
-    });
+    );
   };
 
   // Check if file is valid
@@ -79,13 +83,13 @@ const ScenarioImportDataForm = ({ form, visible }) => {
   return (
     <div
       style={{
-        display: visible ? 'block' : 'none'
+        display: visible ? 'block' : 'none',
       }}
     >
       <Dropdown
         overlay={
           <Menu>
-            {fileChoices.map(choice => (
+            {fileChoices.map((choice) => (
               <Menu.Item key={choice} onClick={() => addField(choice)}>
                 {choice}
               </Menu.Item>
@@ -99,7 +103,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
         </Button>
       </Dropdown>
 
-      {fields.map(key => (
+      {fields.map((key) => (
         <Form.Item key={key} label={key}>
           {form.getFieldDecorator(`files[${key}]`, {
             initialValue: '',
@@ -118,10 +122,10 @@ const ScenarioImportDataForm = ({ form, visible }) => {
                       } else if (!vaildFile(key, value))
                         callback(`Select a vaild ${key} file`);
                       else callback();
-                    }
+                    },
                   }
-                : {}
-            ]
+                : {},
+            ],
           })(
             <Input
               style={{ width: '60%', marginRight: 8 }}
@@ -145,7 +149,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
                 position: 'relative',
                 top: 4,
                 color: '#ff4d4f',
-                fontSize: 24
+                fontSize: 24,
               }}
             />
           )}

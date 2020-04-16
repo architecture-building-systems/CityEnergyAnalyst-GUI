@@ -4,7 +4,7 @@ import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import ReactMapGL, {
   _MapContext as MapContext,
-  NavigationControl
+  NavigationControl,
 } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import { area as calcArea, length as calcLength } from '@turf/turf';
@@ -13,7 +13,7 @@ import axios from 'axios';
 import {
   Toggle3DControl,
   ToggleMapStyleControl,
-  ResetCameraControl
+  ResetCameraControl,
 } from './MapButtons';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
@@ -24,12 +24,12 @@ const defaultViewState = {
   latitude: 0,
   zoom: 0,
   pitch: 0,
-  bearing: 0
+  bearing: 0,
 };
 
 function useRefWithCallback(callback) {
   const ref = useRef(null);
-  const setRef = useCallback(node => {
+  const setRef = useCallback((node) => {
     if (node) {
       callback(node);
     }
@@ -45,9 +45,9 @@ const DeckGLMap = ({ data, colors }) => {
   const glRef = useRef();
   const selectedLayer = useRef();
   const dispatch = useDispatch();
-  const selected = useSelector(state => state.inputData.selected);
+  const selected = useSelector((state) => state.inputData.selected);
   const connectedBuildings = useSelector(
-    state => state.inputData.connected_buildings
+    (state) => state.inputData.connected_buildings
   );
   const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(defaultViewState);
@@ -58,7 +58,7 @@ const DeckGLMap = ({ data, colors }) => {
     streets: !!data.streets,
     dc: !!data.dc,
     dh: !!data.dh && !data.dc,
-    network: true
+    network: true,
   });
   const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
 
@@ -67,13 +67,13 @@ const DeckGLMap = ({ data, colors }) => {
     if (data.zone) {
       const bbox = data.zone.bbox;
       cameraOptions.current = map.cameraForBounds(bbox, {
-        maxZoom: 20
+        maxZoom: 20,
       });
       setViewState({
         ...viewState,
         zoom: cameraOptions.current.zoom,
         latitude: cameraOptions.current.center.lat,
-        longitude: cameraOptions.current.center.lng
+        longitude: cameraOptions.current.center.lng,
       });
     }
   }
@@ -92,8 +92,8 @@ const DeckGLMap = ({ data, colors }) => {
           extruded: extruded,
           visible: visibility.zone,
 
-          getElevation: f => f.properties['height_ag'],
-          getFillColor: f =>
+          getElevation: (f) => f.properties['height_ag'],
+          getFillColor: (f) =>
             buildingColor(
               f.properties['Name'],
               'zone',
@@ -103,7 +103,7 @@ const DeckGLMap = ({ data, colors }) => {
               network_type
             ),
           updateTriggers: {
-            getFillColor: selected
+            getFillColor: selected,
           },
 
           pickable: true,
@@ -111,7 +111,7 @@ const DeckGLMap = ({ data, colors }) => {
           highlightColor: [255, 255, 0, 128],
 
           onHover: updateTooltip,
-          onClick: onClick
+          onClick: onClick,
         })
       );
     }
@@ -126,8 +126,8 @@ const DeckGLMap = ({ data, colors }) => {
           extruded: extruded,
           visible: visibility.surroundings,
 
-          getElevation: f => f.properties['height_ag'],
-          getFillColor: f =>
+          getElevation: (f) => f.properties['height_ag'],
+          getFillColor: (f) =>
             buildingColor(
               f.properties['Name'],
               'surroundings',
@@ -137,7 +137,7 @@ const DeckGLMap = ({ data, colors }) => {
               network_type
             ),
           updateTriggers: {
-            getFillColor: selected
+            getFillColor: selected,
           },
 
           pickable: true,
@@ -145,7 +145,7 @@ const DeckGLMap = ({ data, colors }) => {
           highlightColor: [255, 255, 0, 128],
 
           onHover: updateTooltip,
-          onClick: onClick
+          onClick: onClick,
         })
       );
     }
@@ -161,7 +161,7 @@ const DeckGLMap = ({ data, colors }) => {
           pickable: true,
           autoHighlight: true,
 
-          onHover: updateTooltip
+          onHover: updateTooltip,
         })
       );
     }
@@ -175,14 +175,15 @@ const DeckGLMap = ({ data, colors }) => {
           visible: visibility.dc && visibility.network,
 
           getLineColor: colors.dc,
-          getFillColor: f => nodeFillColor(f.properties['Type'], colors, 'dc'),
+          getFillColor: (f) =>
+            nodeFillColor(f.properties['Type'], colors, 'dc'),
           getLineWidth: 3,
           getRadius: 3,
 
           pickable: true,
           autoHighlight: true,
 
-          onHover: updateTooltip
+          onHover: updateTooltip,
         })
       );
     }
@@ -196,14 +197,15 @@ const DeckGLMap = ({ data, colors }) => {
           visible: visibility.dh && visibility.network,
 
           getLineColor: colors.dh,
-          getFillColor: f => nodeFillColor(f.properties['Type'], colors, 'dh'),
+          getFillColor: (f) =>
+            nodeFillColor(f.properties['Type'], colors, 'dh'),
           getLineWidth: 3,
           getRadius: 3,
 
           pickable: true,
           autoHighlight: true,
 
-          onHover: updateTooltip
+          onHover: updateTooltip,
         })
       );
     }
@@ -229,7 +231,7 @@ const DeckGLMap = ({ data, colors }) => {
       let index = -1;
       let newSelected = [...selected];
       if (event.srcEvent.ctrlKey && event.leftButton) {
-        index = newSelected.findIndex(x => x === object.properties['Name']);
+        index = newSelected.findIndex((x) => x === object.properties['Name']);
         if (index !== -1) {
           newSelected.splice(index, 1);
           dispatch(setSelected(newSelected));
@@ -267,7 +269,7 @@ const DeckGLMap = ({ data, colors }) => {
         ContextProvider={MapContext.Provider}
         onViewStateChange={onViewStateChange}
         onDragStart={onDragStart}
-        onWebGLInitialized={gl => (glRef.current = gl)}
+        onWebGLInitialized={(gl) => (glRef.current = gl)}
       >
         <ReactMapGL ref={mapRef} mapStyle={mapStyles[mapStyle]} />
         <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
@@ -292,12 +294,12 @@ const DeckGLMap = ({ data, colors }) => {
 };
 
 const NetworkToggle = ({ data, setVisibility }) => {
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { value } = e.target;
-    setVisibility(oldValue => ({
+    setVisibility((oldValue) => ({
       ...oldValue,
       dc: value === 'dc',
-      dh: value === 'dh'
+      dh: value === 'dh',
     }));
   };
   return (
@@ -333,9 +335,9 @@ const NetworkToggle = ({ data, setVisibility }) => {
 };
 
 const LayerToggle = ({ data, setVisibility }) => {
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { value, checked } = e.target;
-    setVisibility(oldValue => ({ ...oldValue, [value]: checked }));
+    setVisibility((oldValue) => ({ ...oldValue, [value]: checked }));
   };
   return (
     <div id="layers-group">
@@ -411,28 +413,31 @@ function updateTooltip({ x, y, object, layer }) {
       innerHTML += `<div><b>Name</b>: ${properties.Name}</div><br />`;
       Object.keys(properties)
         .sort()
-        .forEach(key => {
+        .forEach((key) => {
           if (key != 'Name')
             innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
         });
       let area = Math.round(calcArea(object) * 1000) / 1000;
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
       if (layer.id === 'zone')
-        innerHTML += `<div><b>GFA</b>: ${Math.round(
-          (properties['floors_ag'] + properties['floors_bg']) * area * 1000
-        ) / 1000}m<sup>2</sup></div>`;
+        innerHTML += `<div><b>GFA</b>: ${
+          Math.round(
+            (properties['floors_ag'] + properties['floors_bg']) * area * 1000
+          ) / 1000
+        }m<sup>2</sup></div>`;
     } else if (layer.id === 'dc' || layer.id === 'dh') {
-      Object.keys(properties).forEach(key => {
+      Object.keys(properties).forEach((key) => {
         if (key !== 'Building' && properties[key] === 'NONE') return null;
         innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
       });
       if (properties['Buildings']) {
         let length = calcLength(object) * 1000;
-        innerHTML += `<br><div><b>length</b>: ${Math.round(length * 1000) /
-          1000}m</div>`;
+        innerHTML += `<br><div><b>length</b>: ${
+          Math.round(length * 1000) / 1000
+        }m</div>`;
       }
     } else {
-      Object.keys(properties).forEach(key => {
+      Object.keys(properties).forEach((key) => {
         innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
       });
     }
@@ -469,18 +474,18 @@ const buildingColor = (
   return colors.disconnected;
 };
 
-export const useGeoJsons = layerList => {
+export const useGeoJsons = (layerList) => {
   const [geojsons, setGeoJsons] = useState();
 
   useEffect(() => {
-    let promises = layerList.map(type => {
-      return axios.get(inputEndpoints[type]).catch(error => {
+    let promises = layerList.map((type) => {
+      return axios.get(inputEndpoints[type]).catch((error) => {
         return console.log(error.response.data);
       });
     });
     axios
       .all(promises)
-      .then(results => {
+      .then((results) => {
         let _data = {};
         for (var i = 0; i < layerList.length; i++) {
           if (results[i] && results[i].status === 200) {
@@ -489,7 +494,7 @@ export const useGeoJsons = layerList => {
         }
         setGeoJsons(_data);
       })
-      .catch(error => console.log(error));
+      .catch((error) => console.log(error));
   }, []);
 
   return [geojsons, setGeoJsons];

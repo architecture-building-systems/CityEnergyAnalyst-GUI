@@ -8,8 +8,8 @@ import routes from '../../constants/routes';
 
 const { SubMenu } = Menu;
 
-const ToolsMenu = props => {
-  const { status, tools } = useSelector(state => state.toolList);
+const ToolsMenu = (props) => {
+  const { status, tools } = useSelector((state) => state.toolList);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -22,8 +22,8 @@ const ToolsMenu = props => {
   } else if (status == 'failed') {
     toolMenu = <Menu.Item key="no-tools">Error Fetching Tools</Menu.Item>;
   } else if (Object.keys(tools).length) {
-    const toolCategoryList = Object.keys(tools).map(category => {
-      const toolList = tools[category].map(tool => {
+    const toolCategoryList = Object.keys(tools).map((category) => {
+      const toolList = tools[category].map((tool) => {
         const { name, label, description } = tool;
         return (
           <ToolItem
@@ -67,7 +67,7 @@ const ToolsMenu = props => {
   );
 };
 
-const ToolItem = props => {
+const ToolItem = (props) => {
   const { name, label, description, ...rest } = props;
   return (
     <Link to={`${routes.TOOLS}/${name}`}>

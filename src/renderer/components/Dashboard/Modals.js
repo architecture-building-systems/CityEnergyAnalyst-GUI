@@ -7,7 +7,7 @@ import {
   Radio,
   Button,
   Skeleton,
-  Icon
+  Icon,
 } from 'antd';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
@@ -20,21 +20,21 @@ const { Option } = Select;
 export const ModalNewDashboard = ({
   fetchDashboards,
   setDashIndex,
-  dashboardNames
+  dashboardNames,
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [newDashIndex, setNewDashIndex] = useState(null);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
           .post(`http://localhost:5050/api/dashboards/`, values)
-          .then(response => {
+          .then((response) => {
             if (response) {
               console.log(response.data);
               fetchDashboards();
@@ -43,7 +43,7 @@ export const ModalNewDashboard = ({
               setNewDashIndex(response.data.new_dashboard_index);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             setConfirmLoading(false);
             console.log(error.response);
           });
@@ -51,7 +51,7 @@ export const ModalNewDashboard = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modals.newDashboard, false);
   };
 
@@ -90,7 +90,7 @@ const DashForm = Form.create()(({ form }) => {
       >
         {getFieldDecorator('name', {
           initialValue: '',
-          rules: [{ required: true }]
+          rules: [{ required: true }],
         })(<Input />)}
       </Form.Item>
       <Form.Item
@@ -100,7 +100,7 @@ const DashForm = Form.create()(({ form }) => {
         wrapperCol={{ span: 11, offset: 1 }}
       >
         {getFieldDecorator('layout', {
-          initialValue: 'row'
+          initialValue: 'row',
         })(
           <Radio.Group>
             <Radio value="row" style={{ display: 'block' }}>
@@ -129,14 +129,14 @@ export const ModalDuplicateDashboard = ({
   fetchDashboards,
   dashIndex,
   setDashIndex,
-  dashboardNames
+  dashboardNames,
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [newDashIndex, setNewDashIndex] = useState(null);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -144,9 +144,9 @@ export const ModalDuplicateDashboard = ({
         axios
           .post(`http://localhost:5050/api/dashboards/duplicate`, {
             ...values,
-            dashboard_index: dashIndex
+            dashboard_index: dashIndex,
           })
-          .then(response => {
+          .then((response) => {
             if (response) {
               console.log(response.data);
               fetchDashboards();
@@ -155,7 +155,7 @@ export const ModalDuplicateDashboard = ({
               setNewDashIndex(response.data.new_dashboard_index);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             setConfirmLoading(false);
             console.log(error.response);
           });
@@ -163,7 +163,7 @@ export const ModalDuplicateDashboard = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modals.duplicateDashboard, false);
   };
 
@@ -206,7 +206,7 @@ const DashDuplicateForm = Form.create()(
         >
           {getFieldDecorator('name', {
             initialValue: `${dashboardNames[dashIndex]}(Copy)`,
-            rules: [{ required: true }]
+            rules: [{ required: true }],
           })(<Input />)}
         </Form.Item>
       </Form>
@@ -220,14 +220,14 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
           .patch(`http://localhost:5050/api/dashboards/${dashIndex}`, values)
-          .then(response => {
+          .then((response) => {
             if (response) {
               console.log(response.data);
               fetchDashboards();
@@ -235,7 +235,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
               setModalVisible(modals.setScenario, false);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             setConfirmLoading(false);
             console.log(error.response);
           });
@@ -243,20 +243,20 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modals.setScenario, false);
   };
 
   useEffect(() => {
     if (visible.setScenario) {
-      axios.get('http://localhost:5050/api/project/').then(response => {
+      axios.get('http://localhost:5050/api/project/').then((response) => {
         const { scenario, scenarios } = response.data;
         setScenarios({
           type: 'ScenarioNameParameter',
           name: 'scenario',
           value: scenario,
           help: 'Change the scenario parameter of all plots in this dashboard',
-          choices: scenarios
+          choices: scenarios,
         });
       });
     } else setScenarios(null);
@@ -290,16 +290,16 @@ const SetScenarioForm = Form.create()(({ form, scenarios }) => {
 export const ModalDeleteDashboard = ({
   fetchDashboards,
   dashIndex,
-  setDashIndex
+  setDashIndex,
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     setConfirmLoading(true);
     axios
       .delete(`http://localhost:5050/api/dashboards/${dashIndex}`)
-      .then(response => {
+      .then((response) => {
         if (response) {
           console.log(response.data);
           setDashIndex(0);
@@ -308,13 +308,13 @@ export const ModalDeleteDashboard = ({
           setModalVisible(modals.deleteDashboard, false);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         setConfirmLoading(false);
         console.log(error.response);
       });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modals.deleteDashboard, false);
   };
 
@@ -340,7 +340,7 @@ const ModalAddPlotTemplate = ({
   fetchDashboards,
   dashIndex,
   activePlotRef,
-  categories
+  categories,
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -351,9 +351,9 @@ const ModalAddPlotTemplate = ({
 
   const { setModalVisible, visible } = useContext(ModalContext);
 
-  const nextPage = () => setPage(oldValue => oldValue + 1);
-  const prevPage = () => setPage(oldValue => oldValue - 1);
-  const getParameters = async scenario => {
+  const nextPage = () => setPage((oldValue) => oldValue + 1);
+  const prevPage = () => setPage((oldValue) => oldValue - 1);
+  const getParameters = async (scenario) => {
     try {
       const params = await axios.get(
         `http://localhost:5050/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`,
@@ -366,7 +366,7 @@ const ModalAddPlotTemplate = ({
     }
   };
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -376,7 +376,7 @@ const ModalAddPlotTemplate = ({
             `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
             { ...category, parameters: values }
           )
-          .then(response => {
+          .then((response) => {
             if (response) {
               console.log(response.data);
               fetchDashboards();
@@ -384,7 +384,7 @@ const ModalAddPlotTemplate = ({
               setModalVisible(modal, false);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             setConfirmLoading(false);
             console.log(error.response);
           });
@@ -392,7 +392,7 @@ const ModalAddPlotTemplate = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modal, false);
   };
 
@@ -445,7 +445,7 @@ const ModalAddPlotTemplate = ({
           disabled={page !== 1}
         >
           Ok
-        </Button>
+        </Button>,
       ]}
       destroyOnClose
     >
@@ -465,14 +465,14 @@ const ModalAddPlotTemplate = ({
   );
 };
 
-export const ModalAddPlot = props => {
+export const ModalAddPlot = (props) => {
   const { modals } = useContext(ModalContext);
   return (
     <ModalAddPlotTemplate title="Add Plot" modal={modals.addPlot} {...props} />
   );
 };
 
-export const ModalChangePlot = props => {
+export const ModalChangePlot = (props) => {
   const { modals } = useContext(ModalContext);
   return (
     <ModalAddPlotTemplate
@@ -490,19 +490,19 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
   const [selected, setSelected] = useState({
     category: categoryIDs[0],
     plots: categories[categoryIDs[0]].plots,
-    selectedPlot: categories[categoryIDs[0]].plots[0].id
+    selectedPlot: categories[categoryIDs[0]].plots[0].id,
   });
 
-  const handleCategoryChange = value => {
+  const handleCategoryChange = (value) => {
     setValues({ category: value, plot_id: categories[value].plots[0].id });
     setSelected({
       category: value,
       plots: categories[value].plots,
-      selectedPlot: categories[value].plots[0].id
+      selectedPlot: categories[value].plots[0].id,
     });
   };
 
-  const handlePlotChange = value => {
+  const handlePlotChange = (value) => {
     setValues({ category: selected.category, plot_id: value });
     setSelected({ ...selected, selectedPlot: value });
   };
@@ -511,7 +511,7 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
     if (categories !== null)
       setValues({
         category: selected.category,
-        plot_id: selected.selectedPlot
+        plot_id: selected.selectedPlot,
       });
   }, [categories]);
 
@@ -519,7 +519,7 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
     <Form layout="vertical">
       <Form.Item label="Category" key="category">
         <Select defaultValue={categoryIDs[0]} onChange={handleCategoryChange}>
-          {categoryIDs.map(id => (
+          {categoryIDs.map((id) => (
             <Option key={id} value={id}>
               {categories[id].label}
             </Option>
@@ -528,7 +528,7 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
       </Form.Item>
       <Form.Item label="Plot" key="plot">
         <Select value={selected.selectedPlot} onChange={handlePlotChange}>
-          {selected.plots.map(plot => (
+          {selected.plots.map((plot) => (
             <Option key={plot.id} value={plot.id}>
               {plot.name}
             </Option>
@@ -542,13 +542,13 @@ const CategoriesForm = Form.create()(({ categories, setValues }) => {
 export const ModalEditParameters = ({
   fetchDashboards,
   dashIndex,
-  activePlotRef
+  activePlotRef,
 }) => {
   const [parameters, setParameters] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
-  const getParameters = async scenario => {
+  const getParameters = async (scenario) => {
     try {
       const params = await axios.get(
         `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
@@ -561,7 +561,7 @@ export const ModalEditParameters = ({
     }
   };
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -571,7 +571,7 @@ export const ModalEditParameters = ({
             `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
             { parameters: values }
           )
-          .then(response => {
+          .then((response) => {
             if (response) {
               console.log(response.data);
               fetchDashboards();
@@ -579,7 +579,7 @@ export const ModalEditParameters = ({
               setModalVisible(modals.editParameters, false);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             setConfirmLoading(false);
             console.log(error.response);
           });
@@ -587,7 +587,7 @@ export const ModalEditParameters = ({
     });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modals.editParameters, false);
   };
 
@@ -619,7 +619,7 @@ export const ModalEditParameters = ({
 
 const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
   const scenario = form.getFieldValue('scenario-name');
-  const handleScenarioChange = async scenario => {
+  const handleScenarioChange = async (scenario) => {
     await getParameters(scenario);
     form.validateFields((errors, values) => {});
   };
@@ -632,7 +632,7 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
     <Form layout="horizontal">
       {parameters ? (
         <React.Fragment>
-          {parameters.map(param => (
+          {parameters.map((param) => (
             <Parameter key={param.name} form={form} parameter={param} />
           ))}
         </React.Fragment>
@@ -646,18 +646,18 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
 export const ModalDeletePlot = ({
   fetchDashboards,
   dashIndex,
-  activePlotRef
+  activePlotRef,
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
 
-  const handleOk = e => {
+  const handleOk = (e) => {
     setConfirmLoading(true);
     axios
       .delete(
         `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`
       )
-      .then(response => {
+      .then((response) => {
         if (response) {
           console.log(response.data);
           fetchDashboards();
@@ -665,13 +665,13 @@ export const ModalDeletePlot = ({
           setModalVisible(modals.deletePlot, false);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         setConfirmLoading(false);
         console.log(error.response);
       });
   };
 
-  const handleCancel = e => {
+  const handleCancel = (e) => {
     setModalVisible(modals.deletePlot, false);
   };
 
@@ -691,7 +691,7 @@ export const ModalDeletePlot = ({
   );
 };
 
-const groupFilesOnParent = fileList => {
+const groupFilesOnParent = (fileList) => {
   let out = {};
   for (const fileLocation of fileList) {
     const parentFolder = path.dirname(fileLocation);
@@ -703,7 +703,7 @@ const groupFilesOnParent = fileList => {
 };
 
 const FileList = ({ folderPath, filePaths }) => {
-  const fileList = filePaths.map(file => (
+  const fileList = filePaths.map((file) => (
     <li key={file}>
       <a onClick={() => shell.openItem(path.join(folderPath, file))}>{file}</a>
     </li>
@@ -736,7 +736,7 @@ const PlotFilesList = ({ inputs, data }) => {
       {inputFolders.length ? (
         <div>
           <h2>Input Files</h2>
-          {inputFolders.map(inputFolder => (
+          {inputFolders.map((inputFolder) => (
             <FileList
               key={inputFolder}
               folderPath={inputFolder}
@@ -748,7 +748,7 @@ const PlotFilesList = ({ inputs, data }) => {
       {dataFolders.length ? (
         <div>
           <h2>Data Files</h2>
-          {dataFolders.map(dataFolder => (
+          {dataFolders.map((dataFolder) => (
             <FileList
               key={dataFolder}
               folderPath={dataFolder}
@@ -776,7 +776,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
         );
         setFileLocations({
           inputs: groupFilesOnParent(data.inputs),
-          data: groupFilesOnParent(data.data)
+          data: groupFilesOnParent(data.data),
         });
       } catch (err) {
         console.log(err);
