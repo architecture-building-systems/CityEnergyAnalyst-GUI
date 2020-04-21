@@ -13,6 +13,7 @@ const { SubMenu } = Menu;
 const logo = getStatic('cea-logo.png');
 
 const SideNav = () => {
+  // TODO: Maybe use context instead of redux for this
   const { collapsed } = useSelector((state) => state.sider);
   const { location } = useSelector((state) => state.router);
   const dispatch = useDispatch();
