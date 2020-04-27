@@ -55,7 +55,7 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
       />
       <Table
         ref={tableRef}
-        id={databaseName}
+        id={`${databaseName}-${sheetName}`}
         data={sheetData}
         colHeaders={colHeaders}
         rowHeaders={true}

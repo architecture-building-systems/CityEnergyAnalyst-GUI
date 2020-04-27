@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
@@ -9,8 +9,10 @@ import {
   updateDatabaseChanges,
 } from '../../actions/databaseEditor';
 import { Button } from 'antd';
+import { useEventListener } from '../../utils/hooks';
 
 const Table = React.forwardRef((props, ref) => {
+  useResizeActiveTable(ref);
   return <HotTable ref={ref} {...props} />;
 });
 
@@ -156,6 +158,29 @@ export const TableButtons = ({ tableRef, databaseName, sheetName }) => {
       </Button>
     </div>
   );
+};
+
+const useResizeActiveTable = (tableRef) => {
+  const [windowWidth, setWindowWidth] = useState();
+  const getWindowWidth = () => setWindowWidth(window.innerWidth);
+
+  const renderTable = () => {
+    const tabElement =
+      tableRef.current.hotElementRef.parentElement.parentElement;
+    const opacity = window.getComputedStyle(tabElement);
+    // Resize table if it is active i.e. the tab element is visible
+    // To prevent resizing hidden tab elements
+    if (opacity)
+      setTimeout(() => {
+        tableRef.current.hotInstance.render();
+      }, 100);
+  };
+  useEventListener('resize', getWindowWidth);
+
+  // Rerender table only when the side navigation hides/unhides i.e. passing breakpoint width 992px
+  useEffect(() => {
+    renderTable();
+  }, [windowWidth < 992]);
 };
 
 export default Table;
