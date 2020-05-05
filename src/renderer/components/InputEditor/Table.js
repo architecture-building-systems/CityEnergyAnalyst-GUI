@@ -352,6 +352,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
               description,
               unit,
               type,
+              choices,
               path: _path,
             } = columnDef.description[columnDef.columns[index].title];
             ReactDOM.render(
@@ -363,7 +364,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                       <br />
                       {unit}
                       <br />
-                      {type == 'choice' && (
+                      {typeof choices != 'undefined' && (
                         <p
                           className="cea-input-editor-col-header-link"
                           onClick={() => {
@@ -486,6 +487,19 @@ const useTableData = (tab) => {
             // Hack to allow editing when double clicking
             cellDblClick: () => {},
           };
+          if (typeof columns[tab][column].choices != 'undefined')
+            return {
+              ...columnDef,
+              minWidth: 170,
+              editor: 'select',
+              editorParams: {
+                values: columns[tab][column].choices,
+                listItemFormatter: (value, label) => {
+                  if (!label) return value;
+                  return `${value} : ${label}`;
+                },
+              },
+            };
           switch (dataType) {
             case 'int':
             case 'year':
@@ -526,19 +540,6 @@ const useTableData = (tab) => {
                 ...columnDef,
                 editor: 'input',
                 validator: ['required', 'string'],
-              };
-            case 'choice':
-              return {
-                ...columnDef,
-                minWidth: 170,
-                editor: 'select',
-                editorParams: {
-                  values: columns[tab][column].choices,
-                  listItemFormatter: (value, label) => {
-                    if (!label) return value;
-                    return `${value} : ${label}`;
-                  },
-                },
               };
             default:
               return columnDef;
