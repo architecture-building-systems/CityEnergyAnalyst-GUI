@@ -59,11 +59,12 @@ const InputMap = () => {
 };
 
 const InputTable = () => {
-  const { order } = useSelector((state) => state.inputData);
+  const tables = useSelector((state) => state.inputData.tables);
   const [tab, setTab] = useState('zone');
 
-  if (!order) return null;
-  const TabPanes = [...order, 'schedules'].map((key) => (
+  if (typeof tables == 'undefined') return null;
+  console.log(tables);
+  const TabPanes = [...Object.keys(tables), 'schedules'].map((key) => (
     <Tabs.TabPane key={key} tab={key} />
   ));
   return (
