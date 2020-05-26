@@ -7,7 +7,9 @@ import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
-  const databaseChanges = useSelector(state => state.databaseEditor.changes);
+  const databaseChanges = useSelector(
+    state => state.databaseEditor.changes.present
+  );
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 

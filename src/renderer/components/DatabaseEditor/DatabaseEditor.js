@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useEffect, useReducer, useRef } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import axios from 'axios';
 import { Icon, Button } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -9,7 +9,9 @@ import './DatabaseEditor.css';
 import {
   resetDatabaseState,
   initDatabaseState,
-  resetDatabaseChanges
+  initDatabaseFailure,
+  initDatabaseSuccess,
+  setActiveDatabase
 } from '../../actions/databaseEditor';
 import { AsyncError } from '../../utils';
 import routes from '../../constants/routes';
@@ -25,9 +27,8 @@ const useValidateDatabasePath = () => {
   const [error, setError] = useState(null);
 
   const checkDBPathValidity = async () => {
+    setValid(null);
     try {
-      setValid(null);
-      setError(null);
       const resp = await axios.get(
         'http://localhost:5050/api/inputs/databases/check'
       );
@@ -35,7 +36,6 @@ const useValidateDatabasePath = () => {
     } catch (err) {
       if (err.response) setError(err.response.data.message);
       else setError('Could not read and verify databases.');
-      setValid(false);
     }
   };
 
@@ -43,7 +43,76 @@ const useValidateDatabasePath = () => {
     checkDBPathValidity();
   }, []);
 
+  useEffect(() => {
+    if (valid === null) setError(null);
+  }, [valid]);
+
+  useEffect(() => {
+    if (error !== null) setValid(false);
+  }, [error]);
+
   return [valid, error, checkDBPathValidity];
+};
+
+const useInitDatabaseEditor = () => {
+  const [databaseCategories, setCategories] = useState({});
+  const cancelTokenRef = useRef(axios.CancelToken.source());
+  const isMountedRef = useRef(true);
+  const dispatch = useDispatch();
+
+  const fetchInitDatabases = async () => {
+    // eslint-disable-next-line
+    const values = await Promise.all([
+      axios.get('http://localhost:5050/api/inputs/databases/all', {
+        cancelToken: cancelTokenRef.current.token
+      }),
+      axios.get('http://localhost:5050/api/databases/schema/all', {
+        cancelToken: cancelTokenRef.current.token
+      }),
+      axios.get(`http://localhost:5050/api/glossary`, {
+        cancelToken: cancelTokenRef.current.token
+      })
+    ]);
+    return {
+      data: values[0].data,
+      schema: values[1].data,
+      glossary: values[2].data
+    };
+  };
+
+  const getDatabaseStructure = data => {
+    let out = {};
+    for (const category in data) {
+      out[category] = Object.keys(data[category]);
+    }
+    return out;
+  };
+
+  const initDatabaseEditor = async () => {
+    dispatch(initDatabaseState());
+    try {
+      const values = await fetchInitDatabases();
+      console.log(values);
+      setCategories(getDatabaseStructure(values.data));
+      dispatch(initDatabaseSuccess(values));
+    } catch (error) {
+      // Ignore axios cancel error
+      if (!axios.isCancel(error)) {
+        dispatch(initDatabaseFailure(error));
+      }
+    }
+  };
+
+  useEffect(() => {
+    initDatabaseEditor();
+    return () => {
+      isMountedRef.current = false;
+      cancelTokenRef.current.cancel();
+      dispatch(resetDatabaseState());
+    };
+  }, []);
+
+  return { initDatabaseEditor, databaseCategories };
 };
 
 const DatabaseEditor = () => {
@@ -65,7 +134,7 @@ const DatabaseEditor = () => {
         <div>
           <ExportDatabaseButton />
           <Button type="primary" onClick={goToScript}>
-            Assign Database
+            Import Database
           </Button>
         </div>
       </div>
@@ -76,12 +145,14 @@ const DatabaseEditor = () => {
           <div>
             <div style={{ margin: 20 }}>
               <p>
-                Could not find or validate databases. Try assigning a new
-                database
+                Could not find or validate databases. Try refreshing or
+                importing a new database
               </p>
               {error !== null && <details>{error}</details>}
             </div>
-            <Button onClick={checkDBPathValidity}>Try Again</Button>
+            <Button onClick={checkDBPathValidity} icon="sync">
+              Refresh
+            </Button>
           </div>
         )}
       </div>
@@ -91,17 +162,12 @@ const DatabaseEditor = () => {
 };
 
 const DatabaseContent = () => {
+  const { databaseCategories } = useInitDatabaseEditor();
   const { status, error } = useSelector(state => state.databaseEditor.status);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(initDatabaseState());
-
-    // Reset Database state on unmount
-    return () => {
-      dispatch(resetDatabaseState());
-    };
-  }, []);
+  const onCategoryChange = (category, name) =>
+    dispatch(setActiveDatabase(category, name));
 
   if (status === 'fetching')
     return (
@@ -112,12 +178,15 @@ const DatabaseContent = () => {
     );
   if (status === 'failed') return <AsyncError error={error} />;
 
-  if (status !== 'success') return null;
+  if (Object.keys(databaseCategories).length < 1) return null;
 
   return (
     <React.Fragment>
-      <DatabaseTopMenu />
-      <DatabaseContainer />
+      <DatabaseTopMenu
+        databaseCategories={databaseCategories}
+        onChange={onCategoryChange}
+      />
+      <DatabaseContainer databaseCategories={databaseCategories} />
     </React.Fragment>
   );
 };
@@ -150,12 +219,13 @@ export const ExportDatabaseButton = () => {
 };
 
 const SaveDatabaseButton = () => {
-  const databasesData = useSelector(state => state.databaseEditor.data);
-  const databaseValidation = useSelector(
-    state => state.databaseEditor.validation
+  const store = useStore();
+  const validationLength = useSelector(
+    state => Object.keys(state.databaseEditor.validation).length
   );
-  const databaseChanges = useSelector(state => state.databaseEditor.changes);
-  const dispatch = useDispatch();
+  const changesLength = useSelector(
+    state => state.databaseEditor.changes.present.length
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -169,13 +239,13 @@ const SaveDatabaseButton = () => {
   const saveDB = async () => {
     setModalVisible(true);
     try {
+      const databasesData = store.getState().databaseEditor.data.present;
       console.log(databasesData);
       const resp = await axios.put(
         'http://localhost:5050/api/inputs/databases',
         databasesData
       );
       setSuccess(true);
-      dispatch(resetDatabaseChanges());
     } catch (err) {
       console.log(err.response);
       setError(err.response);
@@ -185,9 +255,7 @@ const SaveDatabaseButton = () => {
     <React.Fragment>
       <Button
         // Disable button if there are validation errors or if there are no changes to data
-        disabled={
-          !!Object.keys(databaseValidation).length || !databaseChanges.length
-        }
+        disabled={validationLength > 0 || changesLength === 0}
         onClick={saveDB}
       >
         Save Databases
@@ -202,13 +270,18 @@ const SaveDatabaseButton = () => {
   );
 };
 
-const DatabaseContainer = () => {
-  const data = useSelector(state => state.databaseEditor.data);
-  const schema = useSelector(state => state.databaseEditor.schema);
+const DatabaseContainer = ({ databaseCategories }) => {
   const { category, name } = useSelector(state => state.databaseEditor.menu);
+  const schema = useSelector(state => state.databaseEditor.schema);
+  const glossary = useSelector(state => state.databaseEditor.glossary);
+  const filteredGlossary = React.useMemo(
+    () => glossary.find(script => script.script === 'inputs').variables,
+    [glossary]
+  );
+
   if (
-    !Object.keys(data).includes(category) ||
-    !Object.keys(data[category]).includes(name)
+    !Object.keys(databaseCategories).includes(category) ||
+    !databaseCategories[category].includes(name)
   )
     return <div>{`${category}-${name} database not found`}</div>;
 
@@ -219,15 +292,17 @@ const DatabaseContainer = () => {
         <ValidationErrors databaseName={name} />
         {name === 'USE_TYPES' ? (
           <UseTypesDatabase
+            category={category}
             name={name}
-            data={data[category][name]}
-            schema={schema[category][name]}
+            schema={schema}
+            glossary={filteredGlossary}
           />
         ) : (
           <Database
+            category={category}
             name={name}
-            data={data[category][name]}
-            schema={schema[category][name]}
+            schema={schema}
+            glossary={filteredGlossary}
           />
         )}
       </div>

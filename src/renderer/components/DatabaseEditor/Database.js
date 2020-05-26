@@ -1,23 +1,26 @@
 import React, { useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, shallowEqual } from 'react-redux';
 import { Tabs } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
-import Table, { TableButtons, useTableUpdateRedux } from './Table';
+import Table, { TableButtons } from './Table';
 import ColumnGlossary from './ColumnGlossary';
 
-const Database = ({ name, data, schema }) => {
-  const sheetNames = Object.keys(data);
-
+const Database = ({ category, name, schema, glossary }) => {
+  const tableNames = useSelector(
+    state => Object.keys(state.databaseEditor.data.present[category][name]),
+    shallowEqual
+  );
   return (
     <Tabs className="cea-database-editor-tabs" type="card">
-      {sheetNames.map(sheetName => (
-        <Tabs.TabPane key={`${name}-${sheetName}`} tab={sheetName}>
+      {tableNames.map(tableName => (
+        <Tabs.TabPane key={`${name}-${tableName}`} tab={tableName}>
           <DatabaseTable
+            category={category}
             databaseName={name}
-            sheetName={sheetName}
-            sheetData={data[sheetName]}
-            schema={schema[sheetName]}
+            tableName={tableName}
+            schema={schema}
+            glossary={glossary}
           />
         </Tabs.TabPane>
       ))}
@@ -25,34 +28,47 @@ const Database = ({ name, data, schema }) => {
   );
 };
 
-const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
-  const data = useSelector(state => state.databaseEditor.data);
+const DatabaseTable = ({
+  category,
+  databaseName,
+  tableName,
+  schema,
+  glossary
+}) => {
+  const data = useSelector(state => state.databaseEditor.data.present);
   const tableRef = useRef(null);
-  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
-  const { columns, colHeaders } = getTableSchema(
-    schema,
-    sheetName,
-    sheetData,
+  const tableData = useSelector(
+    state =>
+      state.databaseEditor.data.present[category][databaseName][tableName]
+  );
+  const tableSchema = schema[category][databaseName][tableName];
+  const { columns, colHeaders } = getTableColumns(
+    tableSchema,
+    tableName,
+    tableData,
     data
   );
 
-  // Validate cells on mount
-  useEffect(() => {
-    tableRef.current.hotInstance.validateCells();
-  }, []);
-
   return (
-    <div className="cea-database-editor-sheet">
+    <div className="cea-database-editor-table">
       <TableButtons
         tableRef={tableRef}
         databaseName={databaseName}
-        sheetName={sheetName}
+        tableName={tableName}
+        columns={columns}
       />
-      <ColumnGlossary tableRef={tableRef} colHeaders={colHeaders} />
+      <ColumnGlossary
+        tableRef={tableRef}
+        colHeaders={colHeaders}
+        glossary={glossary}
+      />
       <Table
         ref={tableRef}
-        id={databaseName}
-        data={sheetData}
+        category={category}
+        databaseName={databaseName}
+        tableName={tableName}
+        dataLocator={[tableName]}
+        data={tableData}
         colHeaders={colHeaders}
         rowHeaders={true}
         columns={columns}
@@ -63,13 +79,13 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   );
 };
 
-const getTableSchema = (schema, sheetName, tableData, data) => {
+const getTableColumns = (schema, tableName, tableData, data) => {
   const colHeaders = Object.keys(tableData[0]);
   const columns = colHeaders.map(key => {
     // Try to infer type from schema, else load default
     if (typeof schema[key] === 'undefined') {
       console.error(`Could not find \`${key}\` in schema`, {
-        sheetName,
+        tableName,
         schema
       });
       return { data: key };
@@ -106,7 +122,7 @@ const getTableSchema = (schema, sheetName, tableData, data) => {
     if (Array.isArray(schema[key]['types_found'])) {
       if (['long', 'float', 'int'].includes(schema[key]['types_found'][0])) {
         // Accept 'NA' values for air_conditioning_systems
-        if (['HEATING', 'COOLING'].includes(sheetName))
+        if (['HEATING', 'COOLING'].includes(tableName))
           return {
             data: key,
             type: 'numeric',

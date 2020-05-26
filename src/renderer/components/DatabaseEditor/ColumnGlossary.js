@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useSelector } from 'react-redux';
 import './DatabaseEditor.css';
 import Handsontable from 'handsontable';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 
-const ColumnGlossary = ({ tableRef, colHeaders }) => {
+const ColumnGlossary = ({ tableRef, colHeaders, glossary }) => {
   const tooltipRef = useRef();
-  const dbGlossary = useSelector(state => state.databaseEditor.glossary);
   const [tableGlossary, setTableGlossary] = useState([]);
   const tooltipPrompt = (
     <p className="cea-database-editor-column-tooltip">
@@ -18,7 +16,7 @@ const ColumnGlossary = ({ tableRef, colHeaders }) => {
   useEffect(() => {
     setTableGlossary(
       colHeaders
-        .map(col => dbGlossary.find(variable => col === variable.VARIABLE))
+        .map(col => glossary.find(variable => col === variable.VARIABLE))
         .filter(obj => typeof obj !== 'undefined')
     );
   }, []);

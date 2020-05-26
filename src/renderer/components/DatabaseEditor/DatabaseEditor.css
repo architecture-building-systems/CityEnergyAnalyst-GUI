@@ -33,6 +33,14 @@
   margin: 20px;
 }
 
+.cea-database-editor-database-buttons {
+  margin: 10px;
+}
+
+.cea-database-editor-database-buttons button {
+  margin-right: 5px;
+}
+
 .cea-database-editor-saving-modal-footer button {
   margin-left: 10px;
 }

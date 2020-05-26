@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Button, Modal, Menu } from 'antd';
 import './DatabaseEditor.css';
-import { setActiveDatabase } from '../../actions/databaseEditor';
 
-const DatabaseTopMenu = () => {
-  const data = useSelector(state => state.databaseEditor.data);
+const DatabaseTopMenu = ({ databaseCategories, onChange = () => {} }) => {
   const validation = useSelector(state => state.databaseEditor.validation);
-  const dispatch = useDispatch();
   const [selectedKey, setSelected] = useState(
-    `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`
+    `${Object.keys(databaseCategories)[0]}:${
+      databaseCategories[Object.keys(databaseCategories)[0]][0]
+    }`
   );
   const [visible, setVisible] = useState(false);
 
@@ -18,7 +17,7 @@ const DatabaseTopMenu = () => {
   };
 
   useEffect(() => {
-    dispatch(setActiveDatabase(...selectedKey.split(':')));
+    onChange(...selectedKey.split(':'));
   }, [selectedKey]);
 
   return (
@@ -33,9 +32,9 @@ const DatabaseTopMenu = () => {
         }}
         selectedKeys={[selectedKey]}
       >
-        {Object.keys(data).map(category => (
+        {Object.keys(databaseCategories).map(category => (
           <Menu.SubMenu key={category} title={category.toUpperCase()}>
-            {Object.keys(data[category]).map(name => (
+            {databaseCategories[category].map(name => (
               <Menu.Item key={`${category}:${name}`}>
                 {name.replace('_', '-')}
               </Menu.Item>

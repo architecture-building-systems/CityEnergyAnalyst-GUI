@@ -29,6 +29,7 @@
     "handsontable": "6.2.2",
     "history": "^4.9.0",
     "html-react-parser": "^0.9.1",
+    "immer": "^6.0.0",
     "luma.gl": "^7.2.0",
     "nebula.gl": "^0.15.0",
     "react": "^16.9.0",
@@ -41,6 +42,7 @@
     "react-spring": "^8.0.27",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
+    "redux-undo": "^1.0.0",
     "socket.io-client": "^2.3.0",
     "source-map-support": "^0.5.12",
     "tabulator-tables": "^4.4.1"
@@ -48,8 +50,8 @@
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@babel/plugin-proposal-optional-chaining": "^7.8.3",
-    "@babel/preset-react": "^7.0.0",
     "@babel/polyfill": "^7.8.3",
+    "@babel/preset-react": "^7.0.0",
     "electron": "^5.0.9",
     "electron-builder": "^21.2.0",
     "electron-webpack": "^2.7.4",

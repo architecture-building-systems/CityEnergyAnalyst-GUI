@@ -1,21 +1,18 @@
 import {
-  UPDATE_DATABASE_CHANGES,
   RESET_DATABASE_STATE,
-  FETCH_DATABASE_DATA_SUCCESS,
   UPDATE_DATABASE_VALIDATION,
-  FETCH_DATABASE_GLOSSARY_SUCCESS,
   SET_ACTIVE_DATABASE,
-  FETCH_DATABASE_SCHEMA_SUCCESS,
   INIT_DATABASE_STATE,
   INIT_DATABASE_STATE_SUCCESS,
-  FETCH_DATABASE_DATA_FAILURE,
-  FETCH_DATABASE_SCHEMA_FAILURE,
-  FETCH_DATABASE_GLOSSARY_FAILURE,
-  RESET_DATABASE_CHANGES,
-  COPY_SCHEDULE_DATA
+  INIT_DATABASE_STATE_FAILURE,
+  ADD_DATABASE_ROW,
+  EDIT_DATADBASE_DATA,
+  RESET_DATABASE_UNDO
 } from '../actions/databaseEditor';
 import { combineReducers } from 'redux';
 import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
+import undoable from 'redux-undo';
+import produce from 'immer';
 
 const databaseValidation = (state = {}, { type, payload }) => {
   switch (type) {
@@ -42,13 +39,8 @@ const databaseValidation = (state = {}, { type, payload }) => {
 
 const databaseGlossary = (state = [], { type, payload }) => {
   switch (type) {
-    case FETCH_DATABASE_GLOSSARY_SUCCESS:
-      try {
-        return payload.find(script => script.script === 'inputs').variables;
-      } catch (err) {
-        console.log(err);
-        return [];
-      }
+    case INIT_DATABASE_STATE_SUCCESS:
+      return payload.glossary;
     case RESET_DATABASE_STATE:
       return [];
     default:
@@ -58,24 +50,48 @@ const databaseGlossary = (state = [], { type, payload }) => {
 
 const databaseData = (state = {}, { type, payload }) => {
   switch (type) {
-    case FETCH_DATABASE_DATA_SUCCESS:
-      return payload;
+    case INIT_DATABASE_STATE_SUCCESS:
+      return payload.data;
     case RESET_DATABASE_STATE:
       return {};
-    // FIXME: Hardcoded location of schedules database
-    case COPY_SCHEDULE_DATA:
-      return {
-        ...state,
-        archetypes: {
-          ...state.archetypes,
-          schedules: {
-            ...state.archetypes.schedules,
-            [payload.name]: {
-              ...state.archetypes.schedules[payload.copy]
-            }
+    case EDIT_DATADBASE_DATA: {
+      const {
+        category,
+        databaseName,
+        tableName,
+        dataLocator,
+        changes
+      } = payload;
+      return produce(state, draft => {
+        for (let [row, column, oldValue, newValue] of changes) {
+          let dataLocation = draft[category][databaseName];
+          for (const loc of dataLocator) {
+            dataLocation = dataLocation[loc];
+            dataLocation[row][column] = newValue;
           }
         }
-      };
+      });
+    }
+    // case ADD_DATABASE_ROW: {
+    //   const { category, databaseName, tableName, locator, changes } = payload;
+    //   const data = state[category][databaseName][sheetName];
+    //   const lastRow = data[data.length - 1];
+    //   let newRow = {};
+    //   columns.forEach((value, index) => {
+    //     newRow[value.data] = lastRow[value.data];
+    //   });
+    //   data.push(newRow);
+    //   return {
+    //     ...state,
+    //     [category]: {
+    //       ...state[category],
+    //       [databaseName]: {
+    //         ...state[category][databaseName],
+    //         [sheetName]: [...data]
+    //       }
+    //     }
+    //   };
+    // }
     default:
       return state;
   }
@@ -83,8 +99,8 @@ const databaseData = (state = {}, { type, payload }) => {
 
 const databaseSchema = (state = {}, { type, payload }) => {
   switch (type) {
-    case FETCH_DATABASE_SCHEMA_SUCCESS:
-      return payload;
+    case INIT_DATABASE_STATE_SUCCESS:
+      return payload.schema;
     case RESET_DATABASE_STATE:
       return {};
     default:
@@ -98,9 +114,7 @@ const databaseStatus = (state = { status: null }, { type, payload }) => {
       return { status: 'fetching' };
     case INIT_DATABASE_STATE_SUCCESS:
       return { status: 'success' };
-    case FETCH_DATABASE_DATA_FAILURE:
-    case FETCH_DATABASE_SCHEMA_FAILURE:
-    case FETCH_DATABASE_GLOSSARY_FAILURE:
+    case INIT_DATABASE_STATE_FAILURE:
       return { status: 'failed', error: payload };
     case RESET_DATABASE_STATE:
       return { status: null };
@@ -125,9 +139,10 @@ const databaseMenu = (
 
 const databaseChanges = (state = [], { type, payload }) => {
   switch (type) {
-    case UPDATE_DATABASE_CHANGES:
-      return [...state, payload];
-    case RESET_DATABASE_CHANGES:
+    case EDIT_DATADBASE_DATA:
+      return produce(state, draft => {
+        draft.push([...payload.changes]);
+      });
     case RESET_DATABASE_STATE:
       return [];
     default:
@@ -138,11 +153,11 @@ const databaseChanges = (state = [], { type, payload }) => {
 const databaseEditor = combineReducers({
   status: databaseStatus,
   validation: databaseValidation,
-  data: databaseData,
+  data: undoable(databaseData, { initTypes: [RESET_DATABASE_UNDO] }),
   schema: databaseSchema,
   glossary: databaseGlossary,
   menu: databaseMenu,
-  changes: databaseChanges
+  changes: undoable(databaseChanges, { initTypes: [RESET_DATABASE_UNDO] })
 });
 
 export default databaseEditor;

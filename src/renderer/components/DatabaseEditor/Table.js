@@ -1,24 +1,55 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useEffect, useState, useContext } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { ActionCreators } from 'redux-undo';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import {
-  updateDatabaseState,
   updateDatabaseValidation,
-  updateDatabaseChanges
+  addDatabaseRow,
+  editDatabaseData
 } from '../../actions/databaseEditor';
 import { Button } from 'antd';
 
 const Table = React.forwardRef((props, ref) => {
-  return <HotTable ref={ref} {...props} />;
+  const {
+    category,
+    databaseName,
+    tableName,
+    dataLocator,
+    rowHeaders,
+    colHeaders
+  } = props;
+  const dispatch = useDispatch();
+  const onBeforeChange = (changes, source) => {
+    if (source !== 'loadData') {
+      const filteredChanges = changes.filter(change => change[2] != change[3]);
+      filteredChanges.length &&
+        dispatch(
+          editDatabaseData(
+            category,
+            databaseName,
+            tableName,
+            dataLocator,
+            changes
+          )
+        );
+    }
+    return false;
+  };
+  return (
+    <HotTable
+      ref={ref}
+      beforeChange={onBeforeChange}
+      undo={false}
+      observeChanges={true}
+      {...props}
+    />
+  );
 });
 
 export const useTableUpdateRedux = (tableRef, database, sheet) => {
   const dispatch = useDispatch();
-  const updateRedux = () => {
-    dispatch(updateDatabaseState());
-  };
 
   useEffect(() => {
     const tableInstance = tableRef.current.hotInstance;
@@ -46,113 +77,86 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
       }
     };
 
-    const afterChange = (changes, source) => {
-      switch (source) {
-        // Do nothing when loading data
-        case 'loadData':
-          break;
-        default: {
-          // const _changes = changes.map(change => {
-          //   const [row, prop, oldVal, newVal] = change;
-          //   const col =
-          //     typeof colHeaders[prop] !== 'undefined'
-          //       ? colHeaders[prop]
-          //       : prop;
-          // });
-          dispatch(updateDatabaseChanges({ database, sheet, changes }));
-        }
-      }
-    };
-
     Handsontable.hooks.add('afterValidate', afterValidate, tableInstance);
-    Handsontable.hooks.add('afterChange', afterChange, tableInstance);
     return () => {
       Handsontable.hooks.remove('afterValidate', afterValidate, tableInstance);
-      Handsontable.hooks.remove('afterChange', afterChange, tableInstance);
     };
   }, [sheet]);
 
-  return updateRedux;
-};
-
-export const useTableUndoRedo = tableRef => {
-  const [undoAvailable, setUndo] = useState(false);
-  const [redoAvailable, setRedo] = useState(false);
-
-  const undo = () => {
-    tableRef.current.hotInstance.undo();
-  };
-  const redo = () => {
-    tableRef.current.hotInstance.redo();
-  };
-
-  useEffect(() => {
-    const tableInstance = tableRef.current.hotInstance;
-    const checkUndo = () => {
-      setUndo(tableInstance.isUndoAvailable());
-    };
-    const checkRedo = () => {
-      setRedo(tableInstance.isRedoAvailable());
-    };
-
-    // Enable oberserveChanges for `change` event
-    tableInstance.updateSettings({
-      observeChanges: true
-    });
-
-    // Use `afterChangesObserverd instead of `afterChange`
-    // to observe changes to number of rows
-    Handsontable.hooks.add(
-      'afterChangesObserved',
-      [checkUndo, checkRedo],
-      tableInstance
-    );
-
-    // Handsontable.hooks.add(
-    //   'afterChange',
-    //   [checkUndo, checkRedo],
-    //   tableRef.current.hotInstance
-    // );
-  }, []);
-
-  return {
-    undoAvailable,
-    redoAvailable,
-    undo,
-    redo
-  };
+  return '';
 };
 
 // TODO: This is hardcoded, change to use schema
 const restricted_databases = ['FEEDSTOCKS'];
 const restricted_sheets = ['HEX'];
 
-export const TableButtons = ({ tableRef, databaseName, sheetName }) => {
-  const { undoAvailable, redoAvailable, undo, redo } = useTableUndoRedo(
-    tableRef
-  );
+export const TableButtons = ({
+  tableRef,
+  databaseName,
+  sheetName,
+  columns
+}) => {
+  const dispatch = useDispatch();
 
   return (
-    <div style={{ margin: 10 }}>
+    <div className="cea-database-editor-database-buttons">
       <p>Sheet Functions</p>
       {!restricted_databases.includes(databaseName) &&
         !restricted_sheets.includes(sheetName) && (
           <Button
             size="small"
             onClick={() => {
-              tableRef.current.hotInstance.alter('insert_row');
+              dispatch(addDatabaseRow(databaseName, sheetName, columns));
             }}
           >
             Add Row
           </Button>
         )}
-      <Button size="small" icon="undo" disabled={!undoAvailable} onClick={undo}>
-        Undo
-      </Button>
-      <Button size="small" icon="redo" disabled={!redoAvailable} onClick={redo}>
-        Redo
-      </Button>
+      <UndoButton tableRef={tableRef} />
+      <RedoButton tableRef={tableRef} />
     </div>
+  );
+};
+
+const UndoButton = ({ tableRef }) => {
+  const isUndoAvailable = useSelector(
+    state => state.databaseEditor.data.past.length > 1 // Prevent undoing to initial state without data
+  );
+  const dispatch = useDispatch();
+  const handleClick = () => {
+    isUndoAvailable && dispatch(ActionCreators.undo());
+  };
+
+  return (
+    <Button
+      size="small"
+      icon="undo"
+      disabled={!isUndoAvailable}
+      onClick={handleClick}
+    >
+      Undo
+    </Button>
+  );
+};
+
+const RedoButton = () => {
+  const isRedoAvailable = useSelector(
+    state => state.databaseEditor.data.future.length > 0
+  );
+  const dispatch = useDispatch();
+  const handleClick = () => {
+    isRedoAvailable && dispatch(ActionCreators.redo());
+  };
+
+  return (
+    <Button
+      size="small"
+      icon="redo"
+      disabled={!isRedoAvailable}
+      onClick={handleClick}
+    >
+      Redo
+    </Button>
   );
 };
 

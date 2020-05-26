@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
-import { Tabs, Button, Modal, Select } from 'antd';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
+import { Tabs, Button, Select } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
-import Table, { useTableUpdateRedux } from './Table';
+import Table from './Table';
 import { months_short } from '../../constants/months';
 import { useChangeRoute } from '../Project/Project';
 import routes from '../../constants/routes';
 
-const UseTypesDatabase = ({ name, data, schema }) => {
-  const useTypes = Object.keys(data['SCHEDULES']);
+const UseTypesDatabase = ({ category, name, schema, glossary }) => {
+  const useTypeData = useSelector(
+    state => state.databaseEditor.data.present[category][name]
+  );
+  const useTypes = Object.keys(useTypeData['SCHEDULES']);
   const [selectedType, setSelected] = useState(useTypes[0]);
-  const [choices, setChoices] = useState(useTypes);
   const goToScript = useChangeRoute(`${routes.TOOLS}/create-mixed-use-type`);
-  const dispatch = useDispatch();
 
   return (
     <React.Fragment>
@@ -23,7 +24,7 @@ const UseTypesDatabase = ({ name, data, schema }) => {
           value={selectedType}
           style={{ width: 250 }}
         >
-          {choices.map(choice => (
+          {useTypes.map(choice => (
             <Select.Option key={choice} value={choice}>
               {choice}
             </Select.Option>
@@ -31,28 +32,37 @@ const UseTypesDatabase = ({ name, data, schema }) => {
         </Select>
         <Button onClick={goToScript}>Add new Use-Type</Button>
       </div>
-      <UseTypesTable
+      <UseTypesContainer
+        category={category}
         databaseName={name}
         useTypeName={selectedType}
-        useTypeData={data}
+        useTypeData={useTypeData}
         schema={schema}
       />
     </React.Fragment>
   );
 };
 
-const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
+const UseTypesContainer = ({
+  category,
+  databaseName,
+  useTypeName,
+  useTypeData,
+  schema
+}) => {
+  const useTypePropertyNames = Object.keys(useTypeData['USE_TYPE_PROPERTIES']);
   return (
     <div className="cea-database-editor-use-types">
       <div>
         <b>METADATA:</b> {useTypeData['SCHEDULES'][useTypeName]['METADATA']}
       </div>
       <h3>Properties</h3>
-      {Object.keys(useTypeData['USE_TYPE_PROPERTIES']).map(property => (
+      {useTypePropertyNames.map(property => (
         <UseTypePropertyTable
           key={`${useTypeName}-${property}`}
+          category={category}
           databaseName={databaseName}
-          sheetName={useTypeName}
+          tableName={useTypeName}
           property={property}
           propertyData={
             useTypeData['USE_TYPE_PROPERTIES'][property][useTypeName]
@@ -61,13 +71,15 @@ const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
       ))}
       <h3>Schedules</h3>
       <SchedulesYearTable
+        category={category}
         databaseName={databaseName}
-        sheetName={useTypeName}
+        tableName={useTypeName}
         yearData={useTypeData['SCHEDULES'][useTypeName]['MONTHLY_MULTIPLIER']}
       />
       <SchedulesTypeTab
+        category={category}
         databaseName={databaseName}
-        sheetName={useTypeName}
+        tableName={useTypeName}
         scheduleData={useTypeData['SCHEDULES'][useTypeName]['SCHEDULES']}
       />
     </div>
@@ -75,13 +87,13 @@ const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
 };
 
 const UseTypePropertyTable = ({
+  category,
   databaseName,
-  sheetName,
+  tableName,
   property,
   propertyData
 }) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
   const colHeaders = Object.keys(propertyData);
   const columns = colHeaders.map(key => ({
     data: key,
@@ -91,15 +103,19 @@ const UseTypePropertyTable = ({
   //  Revalidate cells on sheet change
   useEffect(() => {
     tableRef.current.hotInstance.validateCells();
-  }, [sheetName]);
+  }, [tableName]);
 
   return (
     <div className={`cea-database-editor-schedule-${property}`}>
       <Table
         ref={tableRef}
-        id={`${databaseName}-${sheetName}-${property}`}
+        id={`${databaseName}-${tableName}-${property}`}
+        category={category}
+        databaseName={databaseName}
+        tableName={tableName}
+        dataLocator={['USE_TYPE_PROPERTIES', property, tableName]}
         data={[propertyData]}
-        rowHeaders={property}
+        rowHeaders={[property]}
         rowHeaderWidth={180}
         colHeaders={colHeaders}
         columns={columns}
@@ -110,13 +126,19 @@ const UseTypePropertyTable = ({
   );
 };
 
-const SchedulesTypeTab = ({ databaseName, sheetName, scheduleData }) => {
+const SchedulesTypeTab = ({
+  category,
+  databaseName,
+  tableName,
+  scheduleData
+}) => {
   const [selectedType, setSelected] = useState(Object.keys(scheduleData)[0]);
   return (
     <div>
       <SchedulesDataTable
+        category={category}
         databaseName={databaseName}
-        sheetName={sheetName}
+        tableName={tableName}
         scheduleType={selectedType}
         data={scheduleData[selectedType]}
       />
@@ -145,9 +167,13 @@ const fractionFloatValidator = (value, callback) => {
   }
 };
 
-const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
+const SchedulesYearTable = ({
+  category,
+  databaseName,
+  tableName,
+  yearData
+}) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
   const colHeaders = Object.keys(yearData).map(i => months_short[i]);
   const columns = Object.keys(colHeaders).map(key => ({
     data: Number(key),
@@ -158,16 +184,20 @@ const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
   //  Revalidate cells on sheet change
   useEffect(() => {
     tableRef.current.hotInstance.validateCells();
-  }, [sheetName]);
+  }, [tableName]);
 
   return (
     <div className="cea-database-editor-schedule-year">
       <p>Yearly/Month</p>
       <Table
         ref={tableRef}
-        id={`${databaseName}-${sheetName}-year`}
+        id={`${databaseName}-${tableName}-year`}
+        category={category}
+        databaseName={databaseName}
+        tableName={tableName}
+        dataLocator={['SCHEDULES', tableName]}
         data={[yearData]}
-        rowHeaders="MONTHLY_MULTIPLIER"
+        rowHeaders={['MONTHLY_MULTIPLIER']}
         rowHeaderWidth={180}
         colHeaders={colHeaders}
         columns={columns}
@@ -179,20 +209,16 @@ const SchedulesYearTable = ({ databaseName, sheetName, yearData }) => {
 };
 
 const SchedulesDataTable = ({
+  category,
   databaseName,
-  sheetName,
+  tableName,
   scheduleType,
   data
 }) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(
-    tableRef,
-    databaseName,
-    `${sheetName}-${scheduleType}`
-  );
   const rowHeaders = Object.keys(data);
   const tableData = rowHeaders.map(row => data[row]);
-  const colHeaders = Object.keys(tableData[0]).map(i => Number(i) + 1);
+  const colHeaders = Object.keys(tableData[0]);
   const columns = Object.keys(colHeaders).map(key => {
     // FIXME: Temp solution
     if (['HEATING', 'COOLING'].includes(scheduleType)) {
@@ -208,14 +234,18 @@ const SchedulesDataTable = ({
   //  Revalidate cells on sheet and type change
   useEffect(() => {
     tableRef.current.hotInstance.validateCells();
-  }, [sheetName, scheduleType]);
+  }, [tableName, scheduleType]);
 
   return (
     <div className="cea-database-editor-schedule-data">
       <p>Day/Hour</p>
       <Table
         ref={tableRef}
-        id={`${databaseName}-${sheetName}-data`}
+        id={`${databaseName}-${tableName}-data`}
+        category={category}
+        databaseName={databaseName}
+        tableName={tableName}
+        dataLocator={['SCHEDULES', tableName, 'SCHEDULES', scheduleType]}
         data={tableData}
         rowHeaders={rowHeaders}
         rowHeaderWidth={80}
