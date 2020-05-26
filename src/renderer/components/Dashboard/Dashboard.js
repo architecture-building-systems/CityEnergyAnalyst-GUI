@@ -16,7 +16,6 @@ import { ModalContext, ModalManager } from '../../utils/ModalManager';
 import { RowLayout, GridLayout } from './Layouts';
 import './Dashboard.css';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
-import * as deck from '@deck.gl/core';
 
 const { Option } = Select;
 const modals = {
@@ -210,14 +209,17 @@ const useDashboardData = () => {
   return { dashboards, fetchDashboards, categories };
 };
 
-// Mounting plot divs do not fetch script tags
 export const usePlotDependencies = () => {
   const deckRef = useRef();
-  const lumaRef = useRef();
   const [isMounted, setIsMounted] = useState(false);
   const PlotDependencies = [
     ['script', 'https://cdn.plot.ly/plotly-latest.min.js'],
-    ['script', `https://unpkg.com/deck.gl@latest/dist.min.js`],
+    [
+      'script',
+      `https://unpkg.com/deck.gl@${
+        window.deck ? window.deck.version : 'latest'
+      }/dist.min.js`
+    ],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],
     ['script', 'https://npmcdn.com/@turf/turf/turf.min.js']
   ];
@@ -248,11 +250,9 @@ export const usePlotDependencies = () => {
   };
 
   useEffect(() => {
-    // Store react deck and luma reference
+    // Store original deck reference
     deckRef.current = window.deck;
-    lumaRef.current = window.luma;
     window.deck = null;
-    window.luma = null;
     window.addEventListener('resize', resizePlots);
     menuToggle && menuToggle.addEventListener('click', resizePlots);
     let scriptPromises = [];
@@ -267,7 +267,6 @@ export const usePlotDependencies = () => {
 
     return () => {
       window.deck = deckRef.current;
-      window.luma = lumaRef.current;
       window.removeEventListener('resize', resizePlots);
       menuToggle && menuToggle.removeEventListener('click', resizePlots);
       scripts.map(dependency => dependency.remove());
