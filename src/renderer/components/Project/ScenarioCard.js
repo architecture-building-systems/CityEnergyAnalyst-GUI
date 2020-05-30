@@ -6,7 +6,7 @@ import RenameScenarioModal from './RenameScenarioModal';
 
 const ScenarioCard = ({ scenario, projectPath, active }) => {
   const _openScenario = useOpenScenario();
-  const openScenario = () => _openScenario(scenario);
+  const openScenario = () => _openScenario(projectPath, scenario);
 
   return (
     <Card

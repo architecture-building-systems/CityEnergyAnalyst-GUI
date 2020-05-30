@@ -37,7 +37,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
             );
             console.log(resp.data);
             if (values['databases-path'] !== 'create') {
-              openScenario(values.name);
+              openScenario(project, values.name);
             } else {
               await fetchProject();
               goToDBEditor();

@@ -130,10 +130,15 @@ const NewScenarioButton = ({ project = () => {} }) => {
   );
 };
 
-export const changeScenario = async (scenario, onSuccess = () => {}) => {
+export const updateConfigProjectInfo = async (
+  projectPath,
+  scenario,
+  onSuccess = () => {}
+) => {
   try {
     const resp = await axios.put(`http://localhost:5050/api/project/`, {
-      scenario,
+      path: projectPath,
+      scenario: scenario,
     });
     console.log(resp.data);
     onSuccess();
@@ -157,11 +162,12 @@ export const deleteScenario = async (scenario, onSuccess = () => {}) => {
 export const useOpenScenario = () => {
   const fetchProject = useFetchProject();
   const goToInputEditor = useChangeRoute(routes.INPUT_EDITOR);
-  return (scenario) => {
-    changeScenario(scenario, async () => {
+  return (projectPath, scenario) => {
+    updateConfigProjectInfo(projectPath, scenario, () => {
       // Fetch new project info first before going to input editor
-      await fetchProject();
-      goToInputEditor();
+      fetchProject().then(() => {
+        goToInputEditor();
+      });
     });
   };
 };
