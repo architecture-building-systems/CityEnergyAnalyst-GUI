@@ -165,9 +165,7 @@ export const useOpenScenario = () => {
   return (projectPath, scenario) => {
     updateConfigProjectInfo(projectPath, scenario, () => {
       // Fetch new project info first before going to input editor
-      fetchProject().then(() => {
-        goToInputEditor();
-      });
+      fetchProject().then(goToInputEditor);
     });
   };
 };

@@ -3,7 +3,12 @@ import { Modal, Form, Radio, Input, Select } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { useOpenScenario, useFetchProject, useChangeRoute } from './Project';
+import {
+  useOpenScenario,
+  useFetchProject,
+  useChangeRoute,
+  updateConfigProjectInfo,
+} from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
@@ -23,34 +28,27 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
 
   const createScenario = (e) => {
     setError(null);
-    formRef.current.validateFieldsAndScroll(
-      { scroll: { offsetTop: 60 } },
-      async (err, values) => {
-        if (!err) {
-          setConfirmLoading(true);
-          setModalVisible(true);
-          console.log('Received values of form: ', values);
-          try {
-            const resp = await axios.post(
-              'http://localhost:5050/api/project/scenario/',
-              values
-            );
-            console.log(resp.data);
-            if (values['databases-path'] !== 'create') {
-              openScenario(project, values.name);
-            } else {
-              await fetchProject();
-              goToDBEditor();
-            }
-          } catch (err) {
-            console.log(err.response);
-            setError(err.response);
-          } finally {
-            setConfirmLoading(false);
-          }
+    const formConfig = { scroll: { offsetTop: 60 } };
+    formRef.current.validateFieldsAndScroll(formConfig, async (err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        setModalVisible(true);
+        console.log('Received values of form: ', values);
+        try {
+          const resp = await axios.post(
+            'http://localhost:5050/api/project/scenario/',
+            { projectPath: project.path, ...values }
+          );
+          console.log(resp.data);
+          openScenario(project.path, values.name);
+        } catch (err) {
+          console.log(err.response);
+          setError(err.response);
+        } finally {
+          setConfirmLoading(false);
         }
       }
-    );
+    });
   };
 
   const handleCancel = (e) => {
