@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
-import { useAsyncData } from '../../utils/hooks';
+import axios from 'axios';
 import { deleteScenario, useOpenScenario, useFetchProject } from './Project';
 import RenameScenarioModal from './RenameScenarioModal';
 
@@ -29,22 +29,21 @@ const ScenarioCard = ({ scenario, projectPath, active }) => {
     >
       <Row>
         <Col span={6}>
-          <ScenarioImage scenario={scenario} onClick={openScenario} />
+          <ScenarioImage
+            projectPath={projectPath}
+            scenario={scenario}
+            onClick={openScenario}
+          />
         </Col>
       </Row>
     </Card>
   );
 };
 
-const ScenarioImage = ({ scenario, onClick = () => {} }) => {
-  const [
-    image,
-    isLoading,
-    error,
-  ] = useAsyncData(
-    `http://localhost:5050/api/project/scenario/${scenario}/image`,
-    { image: null },
-    [scenario]
+const ScenarioImage = ({ projectPath, scenario, onClick = () => {} }) => {
+  const [image, isLoading, error] = useGenerateScenarioImage(
+    projectPath,
+    scenario
   );
 
   return (
@@ -64,12 +63,38 @@ const ScenarioImage = ({ scenario, onClick = () => {} }) => {
       ) : (
         <img
           className="cea-scenario-preview-image"
-          src={`data:image/png;base64,${image.image}`}
+          src={`data:image/png;base64,${image}`}
           onClick={onClick}
         />
       )}
     </div>
   );
+};
+
+const useGenerateScenarioImage = (projectPath, scenario) => {
+  const [data, setData] = useState({ image: null });
+  const [isLoading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const resp = await axios.get(
+          `http://localhost:5050/api/project/scenario/${scenario}/image`,
+          { params: { projectPath: projectPath } }
+        );
+        setData(resp.data);
+      } catch (err) {
+        console.log(err.response.data);
+        setError(err.response.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, []);
+
+  return [data.image, isLoading, error];
 };
 
 const EditScenarioMenu = ({ scenario, projectPath }) => {
