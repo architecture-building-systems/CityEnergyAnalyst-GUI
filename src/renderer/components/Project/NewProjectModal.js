@@ -1,40 +1,40 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { remote } from 'electron';
+import { useConfigProjectInfo, useFetchProject } from '../Project/Project';
 
-const NewProjectModal = ({
-  visible,
-  setVisible,
-  initialValue,
-  onSuccess = () => {},
-}) => {
+const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
+  const {
+    info: { path: projectPath },
+    fetchInfo,
+  } = useConfigProjectInfo();
+  const fetchProject = useFetchProject();
+
+  useEffect(() => {
+    if (visible) fetchInfo();
+  }, [visible]);
 
   const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
-        setConfirmLoading(true);
         console.log('Received values of form: ', values);
+        setConfirmLoading(true);
         try {
-          const createProject = await axios.post(
+          const resp = await axios.post(
             `http://localhost:5050/api/project/`,
             values
           );
-          console.log(createProject.data);
-          const updateProject = await axios.put(
-            `http://localhost:5050/api/project/`,
-            {
-              path: path.join(values.path, values.name),
-            }
-          );
-          console.log(updateProject.data);
-          setConfirmLoading(false);
-          setVisible(false);
-          onSuccess();
+          fetchProject(resp.data.path).then(() => {
+            setConfirmLoading(false);
+            setVisible(false);
+            onSuccess();
+          });
         } catch (err) {
           console.log(err.response);
           setConfirmLoading(false);
@@ -58,7 +58,14 @@ const NewProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm ref={formRef} initialValue={initialValue} />
+      <NewProjectForm
+        ref={formRef}
+        initialValue={
+          projectPath
+            ? require('path').dirname(projectPath)
+            : remote.app.getPath('home')
+        }
+      />
     </Modal>
   );
 };

@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { useDispatch } from 'react-redux';
 import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { getProject } from '../../actions/project';
 import { FormItemWrapper } from '../Tools/Parameter';
+import { useFetchProject } from './Project';
 
 const RenameScenarioModal = ({
   scenario,
@@ -15,11 +14,7 @@ const RenameScenarioModal = ({
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
-  const dispatch = useDispatch();
-
-  const reloadProject = () => {
-    dispatch(getProject());
-  };
+  const fetchProject = useFetchProject();
 
   const handleOk = (e) => {
     formRef.current.validateFields(async (err, values) => {
@@ -32,7 +27,7 @@ const RenameScenarioModal = ({
             values
           );
           console.log(resp.data);
-          reloadProject();
+          fetchProject();
           setVisible(false);
         } catch (err) {
           console.log(err.response);

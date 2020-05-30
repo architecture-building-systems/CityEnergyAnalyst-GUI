@@ -4,7 +4,6 @@ import { push } from 'connected-react-router';
 import { Card, Button } from 'antd';
 import { getProject } from '../../actions/project';
 import axios from 'axios';
-import { remote } from 'electron';
 import NewProjectModal from './NewProjectModal';
 import OpenProjectModal from './OpenProjectModal';
 import NewScenarioModal from './NewScenarioModal';
@@ -20,11 +19,6 @@ const Project = () => {
   const projectExists = !error && name !== '';
   const projectTitle = projectExists ? name : 'No Project found';
 
-  // Get Project Details on mount
-  useEffect(() => {
-    fetchProject();
-  }, []);
-
   return (
     <div className="cea-project">
       <Card
@@ -33,18 +27,12 @@ const Project = () => {
           <div className="cea-project-title-bar">
             <h2>{projectTitle}</h2>
             <div className="cea-project-options">
-              <NewProjectButton
-                projectPath={projectPath}
-                onSuccess={fetchProject}
-              />
-              <OpenProjectButton
-                projectPath={projectPath}
-                onSuccess={fetchProject}
-              />
+              <NewProjectButton />
+              <OpenProjectButton />
               <Button
                 icon="sync"
                 size="small"
-                onClick={fetchProject}
+                onClick={() => fetchProject(projectPath)}
                 loading={isFetching}
               >
                 Refresh
@@ -60,7 +48,7 @@ const Project = () => {
               <p style={{ textAlign: 'center', margin: 20 }}>
                 No scenarios found
               </p>
-            ) : scenario === '' ? (
+            ) : scenario === null ? (
               <p style={{ textAlign: 'center', margin: 20 }}>
                 No scenario currently selected
               </p>
@@ -80,7 +68,7 @@ const Project = () => {
   );
 };
 
-const NewProjectButton = ({ projectPath, onSuccess }) => {
+const NewProjectButton = ({ onSuccess }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -91,18 +79,13 @@ const NewProjectButton = ({ projectPath, onSuccess }) => {
       <NewProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        initialValue={
-          projectPath
-            ? require('path').dirname(projectPath)
-            : remote.app.getPath('home')
-        }
         onSuccess={onSuccess}
       />
     </React.Fragment>
   );
 };
 
-const OpenProjectButton = ({ projectPath, onSuccess }) => {
+const OpenProjectButton = ({ onSuccess = () => {} }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -117,14 +100,13 @@ const OpenProjectButton = ({ projectPath, onSuccess }) => {
       <OpenProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        initialValue={projectPath}
         onSuccess={onSuccess}
       />
     </React.Fragment>
   );
 };
 
-const NewScenarioButton = ({ project }) => {
+const NewScenarioButton = ({ project = () => {} }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -191,7 +173,27 @@ export const useChangeRoute = (route) => {
 
 export const useFetchProject = () => {
   const dispatch = useDispatch();
-  return () => dispatch(getProject());
+  return (projectPath = null) => dispatch(getProject(projectPath));
+};
+
+export const useConfigProjectInfo = () => {
+  const [info, setInfo] = useState({
+    name: null,
+    path: null,
+    scenario: null,
+    scenarios: null,
+  });
+
+  const fetchInfo = async () => {
+    try {
+      const resp = await axios.get('http://localhost:5050/api/project/');
+      setInfo(resp.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return { info, fetchInfo };
 };
 
 export default Project;

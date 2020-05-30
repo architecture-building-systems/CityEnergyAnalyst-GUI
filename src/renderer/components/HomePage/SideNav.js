@@ -183,7 +183,7 @@ const SideNav = () => {
 
 const ScenarioMenuItem = ({ children, ...props }) => {
   const { scenario } = useSelector((state) => state.project.info);
-  if (scenario === '') return null;
+  if (scenario === null) return null;
   return React.Children.map(children, (child) =>
     React.cloneElement(child, { ...props })
   );
