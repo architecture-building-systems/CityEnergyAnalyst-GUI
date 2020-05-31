@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { Card, Button } from 'antd';
+import { Card, Button, message } from 'antd';
 import { getProject, updateScenario } from '../../actions/project';
 import axios from 'axios';
 import NewProjectModal from './NewProjectModal';
@@ -174,9 +174,24 @@ export const useOpenScenario = () => {
   const fetchProject = useFetchProject();
   const goToInputEditor = useChangeRoute(routes.INPUT_EDITOR);
   return (projectPath, scenario) => {
-    updateConfigProjectInfo(projectPath, scenario, () => {
-      // Fetch new project info first before going to input editor
-      fetchProject().then(goToInputEditor);
+    // Check if scenario still exist
+    fetchProject(projectPath).then((info) => {
+      const { scenarios } = info;
+      if (scenarios.includes(scenario))
+        updateConfigProjectInfo(projectPath, scenario, () => {
+          // Fetch new project info first before going to input editor
+          fetchProject().then(goToInputEditor);
+        });
+      else {
+        message.config({
+          top: 120,
+        });
+        message.error(
+          <span>
+            Scenario: <b>{scenario}</b> could not be found.
+          </span>
+        );
+      }
     });
   };
 };
