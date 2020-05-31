@@ -1,20 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form, Radio, Input, Select } from 'antd';
+import { Modal, Form, Radio, Input } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import {
-  useOpenScenario,
-  useFetchProject,
-  useChangeRoute,
-  updateConfigProjectInfo,
-} from './Project';
+import { useOpenScenario } from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
 import Parameter from '../Tools/Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
-import routes from '../../constants/routes';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -22,8 +16,6 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [error, setError] = useState(null);
   const formRef = useRef();
   const openScenario = useOpenScenario();
-  const fetchProject = useFetchProject();
-  const goToDBEditor = useChangeRoute(routes.DATABASE_EDITOR);
   const databaseParameter = useFetchDatabasePathParameter();
 
   const createScenario = (e) => {
