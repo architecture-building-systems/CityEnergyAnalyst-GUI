@@ -34,3 +34,10 @@ export const getProject = (projectPath = null) => {
       });
   };
 };
+
+export const UPDATE_SCENARIO = 'UPDATE_SCENARIO';
+
+export const updateScenario = (scenario) => ({
+  type: UPDATE_SCENARIO,
+  payload: { scenario },
+});

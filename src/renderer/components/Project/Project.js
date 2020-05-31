@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import { Card, Button } from 'antd';
-import { getProject } from '../../actions/project';
+import { getProject, updateScenario } from '../../actions/project';
 import axios from 'axios';
 import NewProjectModal from './NewProjectModal';
 import OpenProjectModal from './OpenProjectModal';
@@ -13,7 +13,6 @@ import './Project.css';
 
 const Project = () => {
   const { isFetching, error, info } = useSelector((state) => state.project);
-  const fetchProject = useFetchProject();
 
   const { name, path: projectPath, scenario, scenarios } = info;
   const projectExists = !error && name !== '';
@@ -29,14 +28,7 @@ const Project = () => {
             <div className="cea-project-options">
               <NewProjectButton />
               <OpenProjectButton />
-              <Button
-                icon="sync"
-                size="small"
-                onClick={() => fetchProject(projectPath)}
-                loading={isFetching}
-              >
-                Refresh
-              </Button>
+              <RefreshProjectButton project={info} loading={isFetching} />
             </div>
           </div>
         }
@@ -106,7 +98,26 @@ const OpenProjectButton = ({ onSuccess = () => {} }) => {
   );
 };
 
-const NewScenarioButton = ({ project = () => {} }) => {
+const RefreshProjectButton = ({ loading, project }) => {
+  const fetchProject = useFetchProject();
+  const dispatch = useDispatch();
+  const { path: projectPath, scenarios, scenario } = project;
+
+  const refreshProject = () => {
+    fetchProject(projectPath).then(() => {
+      // Set scenario back if it exists
+      if (scenarios.includes(scenario)) dispatch(updateScenario(scenario));
+    });
+  };
+
+  return (
+    <Button icon="sync" size="small" onClick={refreshProject} loading={loading}>
+      Refresh
+    </Button>
+  );
+};
+
+const NewScenarioButton = ({ project }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
