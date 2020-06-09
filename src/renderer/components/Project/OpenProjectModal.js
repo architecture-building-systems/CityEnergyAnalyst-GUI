@@ -2,15 +2,15 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Modal, Form } from 'antd';
 import path from 'path';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
-import { useConfigProjectInfo, useFetchProject } from '../Project/Project';
+import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const {
-    info: { path: projectPath },
+    info: { project },
     fetchInfo,
-  } = useConfigProjectInfo();
+  } = useFetchConfigProjectInfo();
   const fetchProject = useFetchProject();
 
   useEffect(() => {
@@ -22,7 +22,8 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       if (!err) {
         console.log('Received values of form: ', values);
         setConfirmLoading(true);
-        fetchProject(values.path).then(() => {
+        const { project } = values;
+        fetchProject(project).then(() => {
           setConfirmLoading(false);
           setVisible(false);
           onSuccess();
@@ -46,7 +47,7 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <OpenProjectForm ref={formRef} initialValue={projectPath} />
+      <OpenProjectForm ref={formRef} initialValue={project} />
     </Modal>
   );
 };
@@ -56,7 +57,7 @@ const OpenProjectForm = Form.create()(({ form, initialValue }) => {
     <Form>
       <FormItemWrapper
         form={form}
-        name="path"
+        name="project"
         initialValue={initialValue}
         help="Path of Project"
         rules={[

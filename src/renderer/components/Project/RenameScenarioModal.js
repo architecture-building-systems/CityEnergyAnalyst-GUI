@@ -7,8 +7,8 @@ import { FormItemWrapper } from '../Tools/Parameter';
 import { useFetchProject } from './Project';
 
 const RenameScenarioModal = ({
-  scenario,
-  projectPath,
+  scenarioName,
+  project,
   visible,
   setVisible,
 }) => {
@@ -23,7 +23,7 @@ const RenameScenarioModal = ({
         console.log('Received values of form: ', values);
         try {
           const resp = await axios.put(
-            `http://localhost:5050/api/project/scenario/${scenario}`,
+            `http://localhost:5050/api/project/scenario/${scenarioName}`,
             values
           );
           console.log(resp.data);
@@ -52,17 +52,17 @@ const RenameScenarioModal = ({
       centered
       destroyOnClose
     >
-      <h2>Current Name: {scenario}</h2>
-      <RenameScenarioForm ref={formRef} projectPath={projectPath} />
+      <h2>Current Name: {scenarioName}</h2>
+      <RenameScenarioForm ref={formRef} project={project} />
     </Modal>
   );
 };
 
-const RenameScenarioForm = Form.create()(({ form, projectPath }) => {
-  const checkName = (projectPath, name) => {
+const RenameScenarioForm = Form.create()(({ form, project }) => {
+  const checkName = (project, name) => {
     const dirs = fs
-      .readdirSync(projectPath)
-      .filter((f) => fs.statSync(path.join(projectPath, f)).isDirectory());
+      .readdirSync(project)
+      .filter((f) => fs.statSync(path.join(project, f)).isDirectory());
     return dirs.includes(name);
   };
 
@@ -79,7 +79,7 @@ const RenameScenarioForm = Form.create()(({ form, projectPath }) => {
             validator: (rule, value, callback) => {
               if (
                 value.length != 0 &&
-                checkName(projectPath, form.getFieldValue('name'))
+                checkName(project, form.getFieldValue('name'))
               ) {
                 callback('Scenario with name already exists in the project');
               } else {

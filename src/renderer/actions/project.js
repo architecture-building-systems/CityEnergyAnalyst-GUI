@@ -4,19 +4,13 @@ export const GET_PROJECT = 'GET_PROJECT';
 export const GET_PROJECT_SUCCESS = 'GET_PROJECT_SUCCESS';
 export const GET_PROJECT_FAILED = 'GET_PROJECT_FAILED';
 
-export const getProject = (projectPath = null) => {
+export const getProject = (project = null) => {
   return (dispatch) => {
     dispatch({
       type: GET_PROJECT,
       payload: { isFetching: true, error: null },
     });
-    const config = projectPath
-      ? {
-          params: {
-            path: projectPath,
-          },
-        }
-      : {};
+    const config = project ? { params: { project } } : {};
     return axios
       .get(`http://localhost:5050/api/project`, config)
       .then((response) => {
@@ -37,7 +31,7 @@ export const getProject = (projectPath = null) => {
 
 export const UPDATE_SCENARIO = 'UPDATE_SCENARIO';
 
-export const updateScenario = (scenario) => ({
+export const updateScenario = (scenarioName) => ({
   type: UPDATE_SCENARIO,
-  payload: { scenario },
+  payload: { scenario_name: scenarioName },
 });

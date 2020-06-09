@@ -5,15 +5,15 @@ import path from 'path';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { remote } from 'electron';
-import { useConfigProjectInfo, useFetchProject } from '../Project/Project';
+import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const {
-    info: { path: projectPath },
+    info: { project },
     fetchInfo,
-  } = useConfigProjectInfo();
+  } = useFetchConfigProjectInfo();
   const fetchProject = useFetchProject();
 
   useEffect(() => {
@@ -30,7 +30,8 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
             `http://localhost:5050/api/project/`,
             values
           );
-          fetchProject(resp.data.path).then(() => {
+          const { project } = resp.data;
+          fetchProject(project).then(() => {
             setConfirmLoading(false);
             setVisible(false);
             onSuccess();
@@ -61,8 +62,8 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       <NewProjectForm
         ref={formRef}
         initialValue={
-          projectPath
-            ? require('path').dirname(projectPath)
+          project
+            ? require('path').dirname(project)
             : remote.app.getPath('home')
         }
       />
@@ -75,7 +76,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
     <Form layout="horizontal">
       <FormItemWrapper
         form={form}
-        name="name"
+        name="project_name"
         initialValue=""
         help="Name of new Project"
         required={true}
@@ -84,7 +85,9 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
             validator: (rule, value, callback) => {
               if (
                 value.length != 0 &&
-                fs.existsSync(path.join(form.getFieldValue('path'), value))
+                fs.existsSync(
+                  path.join(form.getFieldValue('project_root'), value)
+                )
               ) {
                 callback('Folder with name already exists in path');
               } else {
@@ -96,7 +99,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
       />
       <FormItemWrapper
         form={form}
-        name="path"
+        name="project_root"
         initialValue={initialValue}
         help="Path of new Project"
         rules={[

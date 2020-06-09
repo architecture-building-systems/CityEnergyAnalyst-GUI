@@ -29,10 +29,10 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
         try {
           const resp = await axios.post(
             'http://localhost:5050/api/project/scenario/',
-            { projectPath: project.path, ...values }
+            { project, ...values }
           );
           console.log(resp.data);
-          openScenario(project.path, values.name);
+          openScenario(project, values.scenario_name);
         } catch (err) {
           console.log(err.response);
           setError(err.response);
@@ -76,12 +76,12 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
 
 const NewScenarioForm = Form.create()(
   ({ form, project, databaseParameter }) => {
-    const choice = form.getFieldValue('input-data');
+    const choice = form.getFieldValue('input_data');
 
     return (
       <Form>
         <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
-          {form.getFieldDecorator('name', {
+          {form.getFieldDecorator('scenario_name', {
             initialValue: '',
             rules: [
               { required: true },
@@ -89,7 +89,7 @@ const NewScenarioForm = Form.create()(
                 validator: (rule, value, callback) => {
                   if (
                     value.length != 0 &&
-                    fs.existsSync(path.join(project.path, value))
+                    fs.existsSync(path.join(project, value))
                   ) {
                     callback('Scenario with name already exists in project');
                   } else {
@@ -108,7 +108,7 @@ const NewScenarioForm = Form.create()(
 
         <h2>Input Data</h2>
         <Form.Item>
-          {form.getFieldDecorator('input-data', {
+          {form.getFieldDecorator('input_data', {
             initialValue: 'generate',
           })(
             <Radio.Group>
@@ -143,7 +143,7 @@ const useFetchDatabasePathParameter = () => {
               (p) => p.type === 'DatabasePathParameter'
             )
           ];
-        setParameter(dbPathParam);
+        setParameter({ ...dbPathParam, name: 'databases_path' });
       } catch (err) {
         console.log(err);
       }

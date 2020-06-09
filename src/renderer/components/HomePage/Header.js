@@ -8,7 +8,10 @@ const { Header: AntHeader } = Layout;
 
 const Header = () => {
   const { collapsed } = useSelector((state) => state.sider);
-  const { name, scenario } = useSelector((state) => state.project.info);
+  const {
+    project_name: projectName,
+    scenario_name: scenarioName,
+  } = useSelector((state) => state.project.info);
   const { pathname } = useSelector((state) => state.router.location);
   const dispatch = useDispatch();
 
@@ -43,11 +46,11 @@ const Header = () => {
           >
             <span>
               <i>Current Project: </i>
-              <b>{name}</b>
+              <b>{projectName}</b>
             </span>
             <span>
               <i>Scenario: </i>
-              <b>{scenario}</b>
+              <b>{scenarioName}</b>
             </span>
           </span>
         )}

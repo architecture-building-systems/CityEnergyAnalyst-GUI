@@ -6,7 +6,12 @@ import {
 } from '../actions/project';
 
 const initialState = {
-  info: { name: null, path: null, scenario: null, scenarios: [] },
+  info: {
+    project: null,
+    project_name: null,
+    scenario_name: null,
+    scenarios_list: [],
+  },
   isFetching: false,
   error: null,
 };
