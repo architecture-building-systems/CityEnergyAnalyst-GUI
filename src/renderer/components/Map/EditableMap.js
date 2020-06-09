@@ -154,6 +154,7 @@ const EditableMap = ({
         controller={{ doubleClickZoom: false, dragRotate: false }}
         layers={[layer]}
         onViewStateChange={onViewStateChange}
+        useDevicePixels={false}
       >
         <ReactMapGL
           mapStyle={mapStyles.LIGHT_MAP}
