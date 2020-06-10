@@ -1,36 +1,33 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Modal, Form } from 'antd';
-import axios from 'axios';
 import path from 'path';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
-const OpenProjectModal = ({
-  visible,
-  setVisible,
-  initialValue,
-  onSuccess = () => {},
-}) => {
+const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
+  const {
+    info: { project },
+    fetchInfo,
+  } = useFetchConfigProjectInfo();
+  const fetchProject = useFetchProject();
+
+  useEffect(() => {
+    if (visible) fetchInfo();
+  }, [visible]);
 
   const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
-        setConfirmLoading(true);
         console.log('Received values of form: ', values);
-        try {
-          const openProject = await axios.put(
-            `http://localhost:5050/api/project/`,
-            values
-          );
-          console.log(openProject.data);
+        setConfirmLoading(true);
+        const { project } = values;
+        fetchProject(project).then(() => {
+          setConfirmLoading(false);
           setVisible(false);
-          setConfirmLoading(false);
           onSuccess();
-        } catch (err) {
-          console.log(err.response);
-          setConfirmLoading(false);
-        }
+        });
       }
     });
   };
@@ -50,7 +47,7 @@ const OpenProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <OpenProjectForm ref={formRef} initialValue={initialValue} />
+      <OpenProjectForm ref={formRef} initialValue={project} />
     </Modal>
   );
 };
@@ -60,13 +57,13 @@ const OpenProjectForm = Form.create()(({ form, initialValue }) => {
     <Form>
       <FormItemWrapper
         form={form}
-        name="path"
+        name="project"
         initialValue={initialValue}
         help="Path of Project"
         rules={[
           {
             validator: (rule, value, callback) => {
-              if (value.length !== 0 && path.resolve(value) !== value) {
+              if (path.resolve(value) !== value) {
                 callback('Path entered is invalid');
               } else {
                 callback();

@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form, Radio, Input, Select } from 'antd';
+import { Modal, Form, Radio, Input } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { useOpenScenario, useFetchProject, useChangeRoute } from './Project';
+import { useOpenScenario } from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
 import Parameter from '../Tools/Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
-import routes from '../../constants/routes';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -17,40 +16,31 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [error, setError] = useState(null);
   const formRef = useRef();
   const openScenario = useOpenScenario();
-  const fetchProject = useFetchProject();
-  const goToDBEditor = useChangeRoute(routes.DATABASE_EDITOR);
   const databaseParameter = useFetchDatabasePathParameter();
 
   const createScenario = (e) => {
     setError(null);
-    formRef.current.validateFieldsAndScroll(
-      { scroll: { offsetTop: 60 } },
-      async (err, values) => {
-        if (!err) {
-          setConfirmLoading(true);
-          setModalVisible(true);
-          console.log('Received values of form: ', values);
-          try {
-            const resp = await axios.post(
-              'http://localhost:5050/api/project/scenario/',
-              values
-            );
-            console.log(resp.data);
-            if (values['databases-path'] !== 'create') {
-              openScenario(values.name);
-            } else {
-              await fetchProject();
-              goToDBEditor();
-            }
-          } catch (err) {
-            console.log(err.response);
-            setError(err.response);
-          } finally {
-            setConfirmLoading(false);
-          }
+    const formConfig = { scroll: { offsetTop: 60 } };
+    formRef.current.validateFieldsAndScroll(formConfig, async (err, values) => {
+      if (!err) {
+        setConfirmLoading(true);
+        setModalVisible(true);
+        console.log('Received values of form: ', values);
+        try {
+          const resp = await axios.post(
+            'http://localhost:5050/api/project/scenario/',
+            { project, ...values }
+          );
+          console.log(resp.data);
+          openScenario(project, values.scenario_name.trim());
+        } catch (err) {
+          console.log(err.response);
+          setError(err.response);
+        } finally {
+          setConfirmLoading(false);
         }
       }
-    );
+    });
   };
 
   const handleCancel = (e) => {
@@ -86,20 +76,23 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
 
 const NewScenarioForm = Form.create()(
   ({ form, project, databaseParameter }) => {
-    const choice = form.getFieldValue('input-data');
+    const choice = form.getFieldValue('input_data');
 
     return (
       <Form>
         <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
-          {form.getFieldDecorator('name', {
+          {form.getFieldDecorator('scenario_name', {
             initialValue: '',
             rules: [
-              { required: true },
+              {
+                required: true,
+                transform: (value) => value.trim(),
+              },
               {
                 validator: (rule, value, callback) => {
                   if (
                     value.length != 0 &&
-                    fs.existsSync(path.join(project.path, value))
+                    fs.existsSync(path.join(project, value))
                   ) {
                     callback('Scenario with name already exists in project');
                   } else {
@@ -118,7 +111,7 @@ const NewScenarioForm = Form.create()(
 
         <h2>Input Data</h2>
         <Form.Item>
-          {form.getFieldDecorator('input-data', {
+          {form.getFieldDecorator('input_data', {
             initialValue: 'generate',
           })(
             <Radio.Group>
@@ -153,7 +146,7 @@ const useFetchDatabasePathParameter = () => {
               (p) => p.type === 'DatabasePathParameter'
             )
           ];
-        setParameter(dbPathParam);
+        setParameter({ ...dbPathParam, name: 'databases_path' });
       } catch (err) {
         console.log(err);
       }

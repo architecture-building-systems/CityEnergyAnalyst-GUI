@@ -1,40 +1,41 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Form } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { remote } from 'electron';
+import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
-const NewProjectModal = ({
-  visible,
-  setVisible,
-  initialValue,
-  onSuccess = () => {},
-}) => {
+const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
+  const {
+    info: { project },
+    fetchInfo,
+  } = useFetchConfigProjectInfo();
+  const fetchProject = useFetchProject();
+
+  useEffect(() => {
+    if (visible) fetchInfo();
+  }, [visible]);
 
   const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
-        setConfirmLoading(true);
         console.log('Received values of form: ', values);
+        setConfirmLoading(true);
         try {
-          const createProject = await axios.post(
+          const resp = await axios.post(
             `http://localhost:5050/api/project/`,
             values
           );
-          console.log(createProject.data);
-          const updateProject = await axios.put(
-            `http://localhost:5050/api/project/`,
-            {
-              path: path.join(values.path, values.name),
-            }
-          );
-          console.log(updateProject.data);
-          setConfirmLoading(false);
-          setVisible(false);
-          onSuccess();
+          const { project } = resp.data;
+          fetchProject(project).then(() => {
+            setConfirmLoading(false);
+            setVisible(false);
+            onSuccess();
+          });
         } catch (err) {
           console.log(err.response);
           setConfirmLoading(false);
@@ -58,7 +59,14 @@ const NewProjectModal = ({
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm ref={formRef} initialValue={initialValue} />
+      <NewProjectForm
+        ref={formRef}
+        initialValue={
+          project
+            ? require('path').dirname(project)
+            : remote.app.getPath('home')
+        }
+      />
     </Modal>
   );
 };
@@ -68,7 +76,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
     <Form layout="horizontal">
       <FormItemWrapper
         form={form}
-        name="name"
+        name="project_name"
         initialValue=""
         help="Name of new Project"
         required={true}
@@ -77,7 +85,9 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
             validator: (rule, value, callback) => {
               if (
                 value.length != 0 &&
-                fs.existsSync(path.join(form.getFieldValue('path'), value))
+                fs.existsSync(
+                  path.join(form.getFieldValue('project_root'), value)
+                )
               ) {
                 callback('Folder with name already exists in path');
               } else {
@@ -89,7 +99,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
       />
       <FormItemWrapper
         form={form}
-        name="path"
+        name="project_root"
         initialValue={initialValue}
         help="Path of new Project"
         rules={[

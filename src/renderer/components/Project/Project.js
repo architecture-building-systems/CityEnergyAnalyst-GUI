@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { push } from 'connected-react-router';
-import { Card, Button } from 'antd';
-import { getProject } from '../../actions/project';
+import { push, replace } from 'connected-react-router';
+import { Card, Button, message } from 'antd';
+import { getProject, updateScenario } from '../../actions/project';
 import axios from 'axios';
-import { remote } from 'electron';
 import NewProjectModal from './NewProjectModal';
 import OpenProjectModal from './OpenProjectModal';
 import NewScenarioModal from './NewScenarioModal';
@@ -14,16 +13,15 @@ import './Project.css';
 
 const Project = () => {
   const { isFetching, error, info } = useSelector((state) => state.project);
-  const fetchProject = useFetchProject();
 
-  const { name, path: projectPath, scenario, scenarios } = info;
-  const projectExists = !error && name !== '';
-  const projectTitle = projectExists ? name : 'No Project found';
-
-  // Get Project Details on mount
-  useEffect(() => {
-    fetchProject();
-  }, []);
+  const {
+    project,
+    project_name: projectName,
+    scenario_name: scenarioName,
+    scenarios_list: scenariosList,
+  } = info;
+  const projectExists = !error && projectName !== '';
+  const projectTitle = projectExists ? projectName : 'No Project found';
 
   return (
     <div className="cea-project">
@@ -33,44 +31,35 @@ const Project = () => {
           <div className="cea-project-title-bar">
             <h2>{projectTitle}</h2>
             <div className="cea-project-options">
-              <NewProjectButton
-                projectPath={projectPath}
-                onSuccess={fetchProject}
-              />
-              <OpenProjectButton
-                projectPath={projectPath}
-                onSuccess={fetchProject}
-              />
-              <Button
-                icon="sync"
-                size="small"
-                onClick={fetchProject}
+              <NewProjectButton />
+              <OpenProjectButton />
+              <RefreshProjectButton
+                project={project}
+                scenarioName={scenarioName}
                 loading={isFetching}
-              >
-                Refresh
-              </Button>
+              />
             </div>
           </div>
         }
       >
         {projectExists && (
           <React.Fragment>
-            <NewScenarioButton project={info} />
-            {!scenarios.length ? (
+            <NewScenarioButton project={project} />
+            {!scenariosList.length ? (
               <p style={{ textAlign: 'center', margin: 20 }}>
                 No scenarios found
               </p>
-            ) : scenario === '' ? (
+            ) : scenarioName === null ? (
               <p style={{ textAlign: 'center', margin: 20 }}>
                 No scenario currently selected
               </p>
             ) : null}
-            {scenarios.map((_scenario) => (
+            {scenariosList.map((scenario) => (
               <ScenarioCard
-                key={`${name}-${_scenario}`}
-                scenario={_scenario}
-                projectPath={projectPath}
-                active={_scenario == scenario}
+                key={`${projectName}-${scenario}`}
+                scenarioName={scenario}
+                project={project}
+                active={scenario == scenarioName}
               />
             ))}
           </React.Fragment>
@@ -80,7 +69,7 @@ const Project = () => {
   );
 };
 
-const NewProjectButton = ({ projectPath, onSuccess }) => {
+const NewProjectButton = ({ onSuccess }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -91,18 +80,13 @@ const NewProjectButton = ({ projectPath, onSuccess }) => {
       <NewProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        initialValue={
-          projectPath
-            ? require('path').dirname(projectPath)
-            : remote.app.getPath('home')
-        }
         onSuccess={onSuccess}
       />
     </React.Fragment>
   );
 };
 
-const OpenProjectButton = ({ projectPath, onSuccess }) => {
+const OpenProjectButton = ({ onSuccess = () => {} }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -117,10 +101,28 @@ const OpenProjectButton = ({ projectPath, onSuccess }) => {
       <OpenProjectModal
         visible={isModalVisible}
         setVisible={setModalVisible}
-        initialValue={projectPath}
         onSuccess={onSuccess}
       />
     </React.Fragment>
+  );
+};
+
+const RefreshProjectButton = ({ loading, project, scenarioName }) => {
+  const fetchProject = useFetchProject();
+  const dispatch = useDispatch();
+
+  const refreshProject = () => {
+    fetchProject(project).then(({ scenarios_list: scenariosList }) => {
+      // Set scenario back if it exists
+      if (scenariosList.includes(scenarioName))
+        dispatch(updateScenario(scenarioName));
+    });
+  };
+
+  return (
+    <Button icon="sync" size="small" onClick={refreshProject} loading={loading}>
+      Refresh
+    </Button>
   );
 };
 
@@ -148,15 +150,16 @@ const NewScenarioButton = ({ project }) => {
   );
 };
 
-export const changeScenario = async (scenario, onSuccess = () => {}) => {
+const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
     const resp = await axios.put(`http://localhost:5050/api/project/`, {
-      scenario,
+      project,
+      scenario_name: scenarioName,
     });
     console.log(resp.data);
-    onSuccess();
+    return resp.data;
   } catch (err) {
-    console.log(err.response);
+    console.error(err.response);
   }
 };
 
@@ -168,19 +171,34 @@ export const deleteScenario = async (scenario, onSuccess = () => {}) => {
     console.log(resp.data);
     onSuccess();
   } catch (err) {
-    console.log(err.response);
+    console.error(err.response);
   }
 };
 
-export const useOpenScenario = () => {
+export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
   const fetchProject = useFetchProject();
-  const goToInputEditor = useChangeRoute(routes.INPUT_EDITOR);
-  return (scenario) => {
-    changeScenario(scenario, async () => {
-      // Fetch new project info first before going to input editor
-      await fetchProject();
-      goToInputEditor();
-    });
+  const changeRoute = useChangeRoute(route);
+  return async (project, scenarioName) => {
+    // Fetch project info first before going to route
+    const { scenarios_list: scenariosList } = await fetchProjectDetails(
+      project
+    );
+    // Check if scenario still exist
+    if (scenariosList.includes(scenarioName)) {
+      await updateConfigProjectInfo(project, scenarioName);
+      return fetchProject().then(changeRoute);
+    } else {
+      fetchProject(project).then(() => {
+        message.config({
+          top: 120,
+        });
+        message.error(
+          <span>
+            Scenario: <b>{scenarioName}</b> could not be found.
+          </span>
+        );
+      });
+    }
   };
 };
 
@@ -191,7 +209,29 @@ export const useChangeRoute = (route) => {
 
 export const useFetchProject = () => {
   const dispatch = useDispatch();
-  return () => dispatch(getProject());
+  return (project) => dispatch(getProject(project));
+};
+
+const fetchProjectDetails = async (project = null) => {
+  const config = project ? { params: { project } } : {};
+  try {
+    const resp = await axios.get('http://localhost:5050/api/project/', config);
+    console.log(resp.data);
+    return resp.data;
+  } catch (err) {
+    console.error(err.response);
+  }
+};
+
+export const useFetchConfigProjectInfo = () => {
+  const [info, setInfo] = useState({});
+
+  const fetchInfo = async () => {
+    const projectDetails = await fetchProjectDetails();
+    setInfo(projectDetails);
+  };
+
+  return { info, fetchInfo };
 };
 
 export default Project;

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
-import { useAsyncData } from '../../utils/hooks';
+import axios from 'axios';
 import { deleteScenario, useOpenScenario, useFetchProject } from './Project';
 import RenameScenarioModal from './RenameScenarioModal';
 
-const ScenarioCard = ({ scenario, projectPath, active }) => {
-  const _openScenario = useOpenScenario();
-  const openScenario = () => _openScenario(scenario);
+const ScenarioCard = ({ scenarioName, project, active }) => {
+  const openScenario = useOpenScenario();
+  const handleOpenScenario = () => openScenario(project, scenarioName);
 
   return (
     <Card
@@ -14,14 +14,14 @@ const ScenarioCard = ({ scenario, projectPath, active }) => {
       type="inner"
       title={
         <React.Fragment>
-          <span>{scenario} </span>
+          <span>{scenarioName} </span>
           {active && <Tag>Current</Tag>}
         </React.Fragment>
       }
       extra={
         <React.Fragment>
-          <EditScenarioMenu scenario={scenario} projectPath={projectPath} />
-          <Button type="primary" onClick={openScenario}>
+          <EditScenarioMenu scenarioName={scenarioName} project={project} />
+          <Button type="primary" onClick={handleOpenScenario}>
             Open
           </Button>
         </React.Fragment>
@@ -29,22 +29,21 @@ const ScenarioCard = ({ scenario, projectPath, active }) => {
     >
       <Row>
         <Col span={6}>
-          <ScenarioImage scenario={scenario} onClick={openScenario} />
+          <ScenarioImage
+            project={project}
+            scenarioName={scenarioName}
+            onClick={handleOpenScenario}
+          />
         </Col>
       </Row>
     </Card>
   );
 };
 
-const ScenarioImage = ({ scenario, onClick = () => {} }) => {
-  const [
-    image,
-    isLoading,
-    error,
-  ] = useAsyncData(
-    `http://localhost:5050/api/project/scenario/${scenario}/image`,
-    { image: null },
-    [scenario]
+const ScenarioImage = ({ project, scenarioName, onClick = () => {} }) => {
+  const [image, isLoading, error] = useGenerateScenarioImage(
+    project,
+    scenarioName
   );
 
   return (
@@ -64,7 +63,7 @@ const ScenarioImage = ({ scenario, onClick = () => {} }) => {
       ) : (
         <img
           className="cea-scenario-preview-image"
-          src={`data:image/png;base64,${image.image}`}
+          src={`data:image/png;base64,${image}`}
           onClick={onClick}
         />
       )}
@@ -72,7 +71,33 @@ const ScenarioImage = ({ scenario, onClick = () => {} }) => {
   );
 };
 
-const EditScenarioMenu = ({ scenario, projectPath }) => {
+const useGenerateScenarioImage = (project, scenarioName) => {
+  const [data, setData] = useState({ image: null });
+  const [isLoading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const resp = await axios.get(
+          `http://localhost:5050/api/project/scenario/${scenarioName}/image`,
+          { params: { project } }
+        );
+        setData(resp.data);
+      } catch (err) {
+        console.log(err.response.data);
+        setError(err.response.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, []);
+
+  return [data.image, isLoading, error];
+};
+
+const EditScenarioMenu = ({ scenarioName, project }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const fetchProject = useFetchProject();
 
@@ -83,7 +108,7 @@ const EditScenarioMenu = ({ scenario, projectPath }) => {
       content: (
         <div>
           <p>
-            <b>{scenario}</b>
+            <b>{scenarioName}</b>
           </p>
           <p>
             <i>(This operation cannot be reversed)</i>
@@ -94,7 +119,7 @@ const EditScenarioMenu = ({ scenario, projectPath }) => {
       okType: 'danger',
       okButtonProps: { disabled: true },
       cancelText: 'Cancel',
-      onOk: () => deleteScenario(scenario, () => fetchProject()),
+      onOk: () => deleteScenario(scenarioName, fetchProject),
       centered: true,
     });
 
@@ -114,7 +139,7 @@ const EditScenarioMenu = ({ scenario, projectPath }) => {
   };
 
   return (
-    <span id={`${scenario}-edit-button`} className="scenario-edit-button">
+    <span id={`${scenarioName}-edit-button`} className="scenario-edit-button">
       <Dropdown
         overlay={
           <Menu>
@@ -133,7 +158,7 @@ const EditScenarioMenu = ({ scenario, projectPath }) => {
         }
         trigger={['click']}
         getPopupContainer={() => {
-          return document.getElementById(`${scenario}-edit-button`);
+          return document.getElementById(`${scenarioName}-edit-button`);
         }}
       >
         <Button>
@@ -141,8 +166,8 @@ const EditScenarioMenu = ({ scenario, projectPath }) => {
         </Button>
       </Dropdown>
       <RenameScenarioModal
-        scenario={scenario}
-        projectPath={projectPath}
+        scenarioName={scenarioName}
+        project={project}
         visible={isModalVisible}
         setVisible={setModalVisible}
       />
