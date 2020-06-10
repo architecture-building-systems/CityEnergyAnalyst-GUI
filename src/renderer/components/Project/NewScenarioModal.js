@@ -32,7 +32,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
             { project, ...values }
           );
           console.log(resp.data);
-          openScenario(project, values.scenario_name);
+          openScenario(project, values.scenario_name.trim());
         } catch (err) {
           console.log(err.response);
           setError(err.response);
@@ -84,7 +84,10 @@ const NewScenarioForm = Form.create()(
           {form.getFieldDecorator('scenario_name', {
             initialValue: '',
             rules: [
-              { required: true },
+              {
+                required: true,
+                transform: (value) => value.trim(),
+              },
               {
                 validator: (rule, value, callback) => {
                   if (
