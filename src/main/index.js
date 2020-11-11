@@ -6,6 +6,9 @@ import { format as formatUrl } from 'url';
 import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
 import menu from './menu';
 import axios from 'axios';
+import ini from 'ini';
+import os from 'os';
+import fs from 'fs';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -14,8 +17,13 @@ let mainWindow;
 let splashWindow;
 
 // TEMP SOLUTION. Should load from config or env
-const CEA_URL = 'http://localhost:5050';
+const cea_config = ini.parse(
+  fs.readFileSync(path.join(os.homedir(), 'cea.config'), 'utf-8')
+);
+const CEA_URL = `${cea_config.server.host}:${cea_config.server.port}`;
+console.log(`CEA_URL: ${CEA_URL}`);
 process.env.CEA_URL = CEA_URL;
+app.exit();
 
 // Add Menu to application
 Menu.setApplicationMenu(menu);

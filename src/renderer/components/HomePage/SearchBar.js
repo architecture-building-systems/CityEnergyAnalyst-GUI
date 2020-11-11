@@ -12,7 +12,7 @@ const useGlossaryData = () => {
   useEffect(() => {
     const getSearchResults = async () => {
       try {
-        const result = await axios.get('http://localhost:5050/api/glossary');
+        const result = await axios.get('http://${process.env.CEA_URL}/api/glossary');
         setData(result.data);
       } catch (error) {
         console.log(error);
@@ -103,13 +103,13 @@ const SearchResults = ({ data, input, setValue }) => {
       {results.length ? (
         results
       ) : (
-        <div className="cea-search-item empty">
-          No results found for
-          <b>
-            <i>{` ${input}`}</i>
-          </b>
-        </div>
-      )}
+          <div className="cea-search-item empty">
+            No results found for
+            <b>
+              <i>{` ${input}`}</i>
+            </b>
+          </div>
+        )}
     </div>
   );
 };
@@ -118,8 +118,7 @@ const SearchItem = ({ category, item, setValue }) => {
   const { VARIABLE, UNIT, DESCRIPTION, FILE_NAME, LOCATOR_METHOD } = item;
   const openUrl = () => {
     shell.openExternal(
-      `${DOCS_URL}${
-        category === 'inputs' ? 'input' : 'output'
+      `${DOCS_URL}${category === 'inputs' ? 'input' : 'output'
       }_methods.html?highlight=${VARIABLE}#${LOCATOR_METHOD.split('_').join(
         '-'
       )}`

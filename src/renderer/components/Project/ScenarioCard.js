@@ -40,7 +40,7 @@ const ScenarioCard = ({ scenarioName, project, active }) => {
   );
 };
 
-const ScenarioImage = ({ project, scenarioName, onClick = () => {} }) => {
+const ScenarioImage = ({ project, scenarioName, onClick = () => { } }) => {
   const [image, isLoading, error] = useGenerateScenarioImage(
     project,
     scenarioName
@@ -61,12 +61,12 @@ const ScenarioImage = ({ project, scenarioName, onClick = () => {} }) => {
       ) : error ? (
         'Unable to generate image'
       ) : (
-        <img
-          className="cea-scenario-preview-image"
-          src={`data:image/png;base64,${image}`}
-          onClick={onClick}
-        />
-      )}
+            <img
+              className="cea-scenario-preview-image"
+              src={`data:image/png;base64,${image}`}
+              onClick={onClick}
+            />
+          )}
     </div>
   );
 };
@@ -80,7 +80,7 @@ const useGenerateScenarioImage = (project, scenarioName) => {
     const fetch = async () => {
       try {
         const resp = await axios.get(
-          `http://localhost:5050/api/project/scenario/${scenarioName}/image`,
+          `http://${process.env.CEA_URL}/api/project/scenario/${scenarioName}/image`,
           { params: { project } }
         );
         setData(resp.data);

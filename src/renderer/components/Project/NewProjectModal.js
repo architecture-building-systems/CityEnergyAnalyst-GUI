@@ -7,7 +7,7 @@ import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { remote } from 'electron';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
-const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
+const NewProjectModal = ({ visible, setVisible, onSuccess = () => { } }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const {
@@ -27,7 +27,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
         setConfirmLoading(true);
         try {
           const resp = await axios.post(
-            `http://localhost:5050/api/project/`,
+            `http://${process.env.CEA_URL}/api/project/`,
             values
           );
           const { project } = resp.data;

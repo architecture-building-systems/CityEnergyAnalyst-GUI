@@ -86,7 +86,7 @@ const NewProjectButton = ({ onSuccess }) => {
   );
 };
 
-const OpenProjectButton = ({ onSuccess = () => {} }) => {
+const OpenProjectButton = ({ onSuccess = () => { } }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -152,7 +152,7 @@ const NewScenarioButton = ({ project }) => {
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
-    const resp = await axios.put(`http://localhost:5050/api/project/`, {
+    const resp = await axios.put(`http://${process.env.CEA_URL}/api/project/`, {
       project,
       scenario_name: scenarioName,
     });
@@ -163,10 +163,10 @@ const updateConfigProjectInfo = async (project, scenarioName) => {
   }
 };
 
-export const deleteScenario = async (scenario, onSuccess = () => {}) => {
+export const deleteScenario = async (scenario, onSuccess = () => { }) => {
   try {
     const resp = await axios.delete(
-      `http://localhost:5050/api/project/scenario/${scenario}`
+      `http://${process.env.CEA_URL}/api/project/scenario/${scenario}`
     );
     console.log(resp.data);
     onSuccess();
@@ -215,7 +215,7 @@ export const useFetchProject = () => {
 const fetchProjectDetails = async (project = null) => {
   const config = project ? { params: { project } } : {};
   try {
-    const resp = await axios.get('http://localhost:5050/api/project/', config);
+    const resp = await axios.get('http://${process.env.CEA_URL}/api/project/', config);
     console.log(resp.data);
     return resp.data;
   } catch (err) {

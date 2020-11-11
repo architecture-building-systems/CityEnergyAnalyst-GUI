@@ -23,7 +23,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
     const fetch = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5050/plots/div/${dashIndex}/${index}`,
+          `http://${process.env.CEA_URL}/plots/div/${dashIndex}/${index}`,
           {
             cancelToken: source.token,
           }
@@ -121,8 +121,8 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
       ) : error ? (
         <ErrorPlot error={error} />
       ) : (
-        <LoadingPlot plotStyle={plotStyle} />
-      )}
+            <LoadingPlot plotStyle={plotStyle} />
+          )}
     </Card>
   );
 };
@@ -192,7 +192,7 @@ const OpenInWindow = ({ index, dashIndex }) => {
         }
       );
     });
-    win.loadURL(`http://localhost:5050/plots/plot/${dashIndex}/${index}`);
+    win.loadURL(`http://${process.env.CEA_URL}/plots/plot/${dashIndex}/${index}`);
   };
 
   return (

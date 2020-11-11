@@ -8,7 +8,7 @@ export const fetchJobs = () => {
   return async (dispatch) => {
     dispatch({ type: FETCH_JOBS });
     try {
-      const jobs = await axios.get(`http://localhost:5050/server/jobs/list`);
+      const jobs = await axios.get(`http://${process.env.CEA_URL}/server/jobs/list`);
       dispatch({ type: FETCH_JOBS_SUCCESS, payload: jobs.data });
     } catch (error) {
       dispatch({ type: FETCH_JOBS_FAILED, payload: error });
@@ -25,7 +25,7 @@ export const createJob = (script, parameters) => {
     dispatch({ type: CREATE_JOB });
     try {
       const job_info = await axios.post(
-        `http://localhost:5050/server/jobs/new`,
+        `http://${process.env.CEA_URL}/server/jobs/new`,
         { script, parameters }
       );
       dispatch({ type: CREATE_JOB_SUCCESS, payload: job_info.data });
@@ -45,7 +45,7 @@ export const startJob = (jobID) => {
     dispatch({ type: START_JOB });
     try {
       const job = await axios.post(
-        `http://localhost:5050/server/jobs/start/${jobID}`
+        `http://${process.env.CEA_URL}/server/jobs/start/${jobID}`
       );
       dispatch({ type: START_JOB_SUCCESS, payload: job.data });
     } catch (error) {

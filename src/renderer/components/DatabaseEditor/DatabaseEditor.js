@@ -29,7 +29,7 @@ const useValidateDatabasePath = () => {
       setValid(null);
       setError(null);
       const resp = await axios.get(
-        'http://localhost:5050/api/inputs/databases/check'
+        'http://${process.env.CEA_URL}/api/inputs/databases/check'
       );
       setValid(true);
     } catch (err) {
@@ -73,21 +73,21 @@ const DatabaseEditor = () => {
         {valid ? (
           <DatabaseContent />
         ) : (
-          <div>
-            <div style={{ margin: 20 }}>
-              <h3>
-                Could not find or validate input databases. Try importing a new
-                database
+            <div>
+              <div style={{ margin: 20 }}>
+                <h3>
+                  Could not find or validate input databases. Try importing a new
+                  database
               </h3>
-              {error !== null && (
-                <details>
-                  <pre>{error}</pre>
-                </details>
-              )}
+                {error !== null && (
+                  <details>
+                    <pre>{error}</pre>
+                  </details>
+                )}
+              </div>
+              <Button onClick={checkDBPathValidity}>Try Again</Button>
             </div>
-            <Button onClick={checkDBPathValidity}>Try Again</Button>
-          </div>
-        )}
+          )}
       </div>
       <div className="cea-database-editor-footer"></div>
     </div>
@@ -176,7 +176,7 @@ const SaveDatabaseButton = () => {
     try {
       console.log(databasesData);
       const resp = await axios.put(
-        'http://localhost:5050/api/inputs/databases',
+        'http://${process.env.CEA_URL}/api/inputs/databases',
         databasesData
       );
       setSuccess(true);
@@ -229,12 +229,12 @@ const DatabaseContainer = () => {
             schema={schema[name]}
           />
         ) : (
-          <Database
-            name={name}
-            data={data[category][name]}
-            schema={schema[name]}
-          />
-        )}
+            <Database
+              name={name}
+              data={data[category][name]}
+              schema={schema[name]}
+            />
+          )}
       </div>
       <SaveDatabaseButton />
     </div>

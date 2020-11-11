@@ -23,7 +23,7 @@ const RenameScenarioModal = ({
         console.log('Received values of form: ', values);
         try {
           const resp = await axios.put(
-            `http://localhost:5050/api/project/scenario/${scenarioName}`,
+            `http://${process.env.CEA_URL}/api/project/scenario/${scenarioName}`,
             values
           );
           console.log(resp.data);

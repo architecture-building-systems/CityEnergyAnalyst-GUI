@@ -33,7 +33,7 @@ export const ModalNewDashboard = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .post(`http://localhost:5050/api/dashboards/`, values)
+          .post(`http://${process.env.CEA_URL}/api/dashboards/`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -142,7 +142,7 @@ export const ModalDuplicateDashboard = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .post(`http://localhost:5050/api/dashboards/duplicate`, {
+          .post(`http://${process.env.CEA_URL}/api/dashboards/duplicate`, {
             ...values,
             dashboard_index: dashIndex,
           })
@@ -226,7 +226,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .patch(`http://localhost:5050/api/dashboards/${dashIndex}`, values)
+          .patch(`http://${process.env.CEA_URL}/api/dashboards/${dashIndex}`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -249,7 +249,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
 
   useEffect(() => {
     if (visible.setScenario) {
-      axios.get('http://localhost:5050/api/project/').then((response) => {
+      axios.get('http://${process.env.CEA_URL}/api/project/').then((response) => {
         const { scenario, scenarios } = response.data;
         setScenarios({
           type: 'ScenarioNameParameter',
@@ -281,8 +281,8 @@ const SetScenarioForm = Form.create()(({ form, scenarios }) => {
       {scenarios ? (
         <Parameter form={form} parameter={form} />
       ) : (
-        'Fetching Data...'
-      )}
+          'Fetching Data...'
+        )}
     </Form>
   );
 });
@@ -298,7 +298,7 @@ export const ModalDeleteDashboard = ({
   const handleOk = (e) => {
     setConfirmLoading(true);
     axios
-      .delete(`http://localhost:5050/api/dashboards/${dashIndex}`)
+      .delete(`http://${process.env.CEA_URL}/api/dashboards/${dashIndex}`)
       .then((response) => {
         if (response) {
           console.log(response.data);
@@ -356,7 +356,7 @@ const ModalAddPlotTemplate = ({
   const getParameters = async (scenario) => {
     try {
       const params = await axios.get(
-        `http://localhost:5050/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`,
+        `http://${process.env.CEA_URL}/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`,
         scenario ? { params: { scenario } } : {}
       );
       console.log(params.data);
@@ -373,7 +373,7 @@ const ModalAddPlotTemplate = ({
         console.log('Received values of form: ', values);
         axios
           .put(
-            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+            `http://${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
             { ...category, parameters: values }
           )
           .then((response) => {
@@ -551,7 +551,7 @@ export const ModalEditParameters = ({
   const getParameters = async (scenario) => {
     try {
       const params = await axios.get(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
+        `http://${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
         scenario ? { params: { scenario } } : {}
       );
       console.log(params.data);
@@ -568,7 +568,7 @@ export const ModalEditParameters = ({
         console.log('Received values of form: ', values);
         axios
           .put(
-            `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+            `http://${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
             { parameters: values }
           )
           .then((response) => {
@@ -621,7 +621,7 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
   const scenario = form.getFieldValue('scenario-name');
   const handleScenarioChange = async (scenario) => {
     await getParameters(scenario);
-    form.validateFields((errors, values) => {});
+    form.validateFields((errors, values) => { });
   };
   useEffect(() => {
     if (scenario) {
@@ -637,8 +637,8 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
           ))}
         </React.Fragment>
       ) : (
-        'Fetching Data...'
-      )}
+          'Fetching Data...'
+        )}
     </Form>
   );
 });
@@ -655,7 +655,7 @@ export const ModalDeletePlot = ({
     setConfirmLoading(true);
     axios
       .delete(
-        `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`
+        `http://${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`
       )
       .then((response) => {
         if (response) {
@@ -722,8 +722,8 @@ const FileList = ({ folderPath, filePaths }) => {
           </div>
         </details>
       ) : (
-        <ul>{fileList}</ul>
-      )}
+          <ul>{fileList}</ul>
+        )}
     </div>
   );
 };
@@ -772,7 +772,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
       try {
         setLoading(true);
         const { data } = await axios.get(
-          `http://localhost:5050/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/input-files`
+          `http://${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/input-files`
         );
         setFileLocations({
           inputs: groupFilesOnParent(data.inputs),
@@ -805,8 +805,8 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
           data={fileLocations.data}
         />
       ) : (
-        <div>Files not found</div>
-      )}
+            <div>Files not found</div>
+          )}
     </Modal>
   );
 };

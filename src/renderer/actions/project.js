@@ -12,7 +12,7 @@ export const getProject = (project = null) => {
     });
     const config = project ? { params: { project } } : {};
     return axios
-      .get(`http://localhost:5050/api/project`, config)
+      .get(`http://${process.env.CEA_URL}/api/project`, config)
       .then((response) => {
         dispatch({
           type: GET_PROJECT_SUCCESS,
