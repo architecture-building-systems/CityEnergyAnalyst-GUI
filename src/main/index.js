@@ -23,7 +23,6 @@ const cea_config = ini.parse(
 const CEA_URL = `${cea_config.server.host}:${cea_config.server.port}`;
 console.log(`CEA_URL: ${CEA_URL}`);
 process.env.CEA_URL = CEA_URL;
-app.exit();
 
 // Add Menu to application
 Menu.setApplicationMenu(menu);
