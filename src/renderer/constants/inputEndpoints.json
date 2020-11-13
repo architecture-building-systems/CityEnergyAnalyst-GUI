@@ -1,7 +1,7 @@
 {
-  "zone": "http://localhost:5050/api/inputs/building-properties/zone/geojson",
-  "surroundings": "http://localhost:5050/api/inputs/building-properties/surroundings/geojson",
-  "streets": "http://localhost:5050/api/inputs/others/streets/geojson",
-  "dh": "http://localhost:5050/api/inputs/others/dh/geojson",
-  "dc": "http://localhost:5050/api/inputs/others/dc/geojson"
+  "zone": "/api/inputs/building-properties/zone/geojson",
+  "surroundings": "/api/inputs/building-properties/surroundings/geojson",
+  "streets": "/api/inputs/others/streets/geojson",
+  "dh": "/api/inputs/others/dh/geojson",
+  "dc": "/api/inputs/others/dc/geojson"
 }

@@ -23,7 +23,7 @@ export const fetchDatabaseData = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_DATA });
     const { data } = await axios.get(
-      `http://localhost:5050/api/inputs/databases`
+      `http://${process.env.CEA_URL}/api/inputs/databases`
     );
     return dispatch({
       type: FETCH_DATABASE_DATA_SUCCESS,
