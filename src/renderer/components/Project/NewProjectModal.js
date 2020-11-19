@@ -7,7 +7,7 @@ import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { remote } from 'electron';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
-const NewProjectModal = ({ visible, setVisible, onSuccess = () => { } }) => {
+const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const {

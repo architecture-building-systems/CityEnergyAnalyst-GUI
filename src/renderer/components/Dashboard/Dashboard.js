@@ -61,13 +61,13 @@ const Dashboard = () => {
               activePlotRef={activePlotRef}
             />
           ) : (
-              <GridLayout
-                dashIndex={dashIndex}
-                plots={plots}
-                grid_width={dashboards[dashIndex].grid_width}
-                activePlotRef={activePlotRef}
-              />
-            )}
+            <GridLayout
+              dashIndex={dashIndex}
+              plots={plots}
+              grid_width={dashboards[dashIndex].grid_width}
+              activePlotRef={activePlotRef}
+            />
+          )}
         </div>
       </div>
       <ModalNewDashboard
@@ -185,7 +185,9 @@ const useDashboardData = () => {
 
   const fetchDashboards = async () => {
     try {
-      const resp = await axios.get('http://${process.env.CEA_URL}/api/dashboards/');
+      const resp = await axios.get(
+        'http://${process.env.CEA_URL}/api/dashboards/'
+      );
       setDashboards(resp.data);
     } catch (error) {
       console.log(error);
@@ -216,7 +218,8 @@ export const usePlotDependencies = () => {
     ['script', 'https://cdn.plot.ly/plotly-latest.min.js'],
     [
       'script',
-      `https://unpkg.com/deck.gl@${window.deck ? window.deck.version : 'latest'
+      `https://unpkg.com/deck.gl@${
+        window.deck ? window.deck.version : 'latest'
       }/dist.min.js`,
     ],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],

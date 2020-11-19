@@ -58,7 +58,9 @@ export const fetchBuildingSchedule = (buildings) => (dispatch) => {
   let errors = {};
   const promises = buildings.map((building) =>
     axios
-      .get(`http://${process.env.CEA_URL}/api/inputs/building-schedule/${building}`)
+      .get(
+        `http://${process.env.CEA_URL}/api/inputs/building-schedule/${building}`
+      )
       .then((resp) => {
         return { [building]: resp.data };
       })

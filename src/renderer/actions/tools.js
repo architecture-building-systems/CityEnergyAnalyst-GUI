@@ -39,7 +39,10 @@ export const saveToolParams = (tool, params) => {
       payload: { isSaving: true, error: null },
     });
     return axios
-      .post(`http://${process.env.CEA_URL}/api/tools/${tool}/save-config`, params)
+      .post(
+        `http://${process.env.CEA_URL}/api/tools/${tool}/save-config`,
+        params
+      )
       .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,

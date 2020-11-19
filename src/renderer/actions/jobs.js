@@ -8,7 +8,9 @@ export const fetchJobs = () => {
   return async (dispatch) => {
     dispatch({ type: FETCH_JOBS });
     try {
-      const jobs = await axios.get(`http://${process.env.CEA_URL}/server/jobs/list`);
+      const jobs = await axios.get(
+        `http://${process.env.CEA_URL}/server/jobs/list`
+      );
       dispatch({ type: FETCH_JOBS_SUCCESS, payload: jobs.data });
     } catch (error) {
       dispatch({ type: FETCH_JOBS_FAILED, payload: error });

@@ -66,7 +66,9 @@ export const FETCH_DATABASE_GLOSSARY_FAILURE =
 export const fetchDatabaseGlossary = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_GLOSSARY });
-    const { data } = await axios.get(`http://${process.env.CEA_URL}/api/glossary`);
+    const { data } = await axios.get(
+      `http://${process.env.CEA_URL}/api/glossary`
+    );
     return dispatch({
       type: FETCH_DATABASE_GLOSSARY_SUCCESS,
       payload: data,

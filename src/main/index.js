@@ -16,7 +16,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 let mainWindow;
 let splashWindow;
 
-// TEMP SOLUTION. Should load from config or env
+// TEMP SOLUTION. Should check for errors (file doesn't exist)
 const cea_config = ini.parse(
   fs.readFileSync(path.join(os.homedir(), 'cea.config'), 'utf-8')
 );

@@ -226,7 +226,10 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .patch(`http://${process.env.CEA_URL}/api/dashboards/${dashIndex}`, values)
+          .patch(
+            `http://${process.env.CEA_URL}/api/dashboards/${dashIndex}`,
+            values
+          )
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -249,16 +252,19 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
 
   useEffect(() => {
     if (visible.setScenario) {
-      axios.get('http://${process.env.CEA_URL}/api/project/').then((response) => {
-        const { scenario, scenarios } = response.data;
-        setScenarios({
-          type: 'ScenarioNameParameter',
-          name: 'scenario',
-          value: scenario,
-          help: 'Change the scenario parameter of all plots in this dashboard',
-          choices: scenarios,
+      axios
+        .get('http://${process.env.CEA_URL}/api/project/')
+        .then((response) => {
+          const { scenario, scenarios } = response.data;
+          setScenarios({
+            type: 'ScenarioNameParameter',
+            name: 'scenario',
+            value: scenario,
+            help:
+              'Change the scenario parameter of all plots in this dashboard',
+            choices: scenarios,
+          });
         });
-      });
     } else setScenarios(null);
   }, [visible.setScenario]);
 
@@ -281,8 +287,8 @@ const SetScenarioForm = Form.create()(({ form, scenarios }) => {
       {scenarios ? (
         <Parameter form={form} parameter={form} />
       ) : (
-          'Fetching Data...'
-        )}
+        'Fetching Data...'
+      )}
     </Form>
   );
 });
@@ -621,7 +627,7 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
   const scenario = form.getFieldValue('scenario-name');
   const handleScenarioChange = async (scenario) => {
     await getParameters(scenario);
-    form.validateFields((errors, values) => { });
+    form.validateFields((errors, values) => {});
   };
   useEffect(() => {
     if (scenario) {
@@ -637,8 +643,8 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
           ))}
         </React.Fragment>
       ) : (
-          'Fetching Data...'
-        )}
+        'Fetching Data...'
+      )}
     </Form>
   );
 });
@@ -722,8 +728,8 @@ const FileList = ({ folderPath, filePaths }) => {
           </div>
         </details>
       ) : (
-          <ul>{fileList}</ul>
-        )}
+        <ul>{fileList}</ul>
+      )}
     </div>
   );
 };
@@ -805,8 +811,8 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
           data={fileLocations.data}
         />
       ) : (
-            <div>Files not found</div>
-          )}
+        <div>Files not found</div>
+      )}
     </Modal>
   );
 };

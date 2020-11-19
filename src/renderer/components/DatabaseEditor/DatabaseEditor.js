@@ -73,21 +73,21 @@ const DatabaseEditor = () => {
         {valid ? (
           <DatabaseContent />
         ) : (
-            <div>
-              <div style={{ margin: 20 }}>
-                <h3>
-                  Could not find or validate input databases. Try importing a new
-                  database
+          <div>
+            <div style={{ margin: 20 }}>
+              <h3>
+                Could not find or validate input databases. Try importing a new
+                database
               </h3>
-                {error !== null && (
-                  <details>
-                    <pre>{error}</pre>
-                  </details>
-                )}
-              </div>
-              <Button onClick={checkDBPathValidity}>Try Again</Button>
+              {error !== null && (
+                <details>
+                  <pre>{error}</pre>
+                </details>
+              )}
             </div>
-          )}
+            <Button onClick={checkDBPathValidity}>Try Again</Button>
+          </div>
+        )}
       </div>
       <div className="cea-database-editor-footer"></div>
     </div>
@@ -229,12 +229,12 @@ const DatabaseContainer = () => {
             schema={schema[name]}
           />
         ) : (
-            <Database
-              name={name}
-              data={data[category][name]}
-              schema={schema[name]}
-            />
-          )}
+          <Database
+            name={name}
+            data={data[category][name]}
+            schema={schema[name]}
+          />
+        )}
       </div>
       <SaveDatabaseButton />
     </div>

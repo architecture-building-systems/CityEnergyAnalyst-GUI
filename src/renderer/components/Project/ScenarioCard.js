@@ -40,7 +40,7 @@ const ScenarioCard = ({ scenarioName, project, active }) => {
   );
 };
 
-const ScenarioImage = ({ project, scenarioName, onClick = () => { } }) => {
+const ScenarioImage = ({ project, scenarioName, onClick = () => {} }) => {
   const [image, isLoading, error] = useGenerateScenarioImage(
     project,
     scenarioName
@@ -61,12 +61,12 @@ const ScenarioImage = ({ project, scenarioName, onClick = () => { } }) => {
       ) : error ? (
         'Unable to generate image'
       ) : (
-            <img
-              className="cea-scenario-preview-image"
-              src={`data:image/png;base64,${image}`}
-              onClick={onClick}
-            />
-          )}
+        <img
+          className="cea-scenario-preview-image"
+          src={`data:image/png;base64,${image}`}
+          onClick={onClick}
+        />
+      )}
     </div>
   );
 };

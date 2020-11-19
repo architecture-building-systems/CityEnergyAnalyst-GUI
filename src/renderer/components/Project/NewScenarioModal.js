@@ -142,9 +142,9 @@ const useFetchDatabasePathParameter = () => {
         );
         const dbPathParam =
           resp.data.parameters[
-          resp.data.parameters.findIndex(
-            (p) => p.type === 'DatabasePathParameter'
-          )
+            resp.data.parameters.findIndex(
+              (p) => p.type === 'DatabasePathParameter'
+            )
           ];
         setParameter({ ...dbPathParam, name: 'databases_path' });
       } catch (err) {

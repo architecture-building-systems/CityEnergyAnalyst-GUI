@@ -121,8 +121,8 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
       ) : error ? (
         <ErrorPlot error={error} />
       ) : (
-            <LoadingPlot plotStyle={plotStyle} />
-          )}
+        <LoadingPlot plotStyle={plotStyle} />
+      )}
     </Card>
   );
 };
@@ -192,7 +192,9 @@ const OpenInWindow = ({ index, dashIndex }) => {
         }
       );
     });
-    win.loadURL(`http://${process.env.CEA_URL}/plots/plot/${dashIndex}/${index}`);
+    win.loadURL(
+      `http://${process.env.CEA_URL}/plots/plot/${dashIndex}/${index}`
+    );
   };
 
   return (
