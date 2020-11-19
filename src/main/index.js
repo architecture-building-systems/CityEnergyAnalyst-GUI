@@ -20,7 +20,7 @@ let splashWindow;
 const cea_config = ini.parse(
   fs.readFileSync(path.join(os.homedir(), 'cea.config'), 'utf-8')
 );
-const CEA_URL = `${cea_config.server.host}:${cea_config.server.port}`;
+const CEA_URL = `${cea_config.server.protocol}://${cea_config.server.host}:${cea_config.server.port}`;
 console.log(`CEA_URL: ${CEA_URL}`);
 process.env.CEA_URL = CEA_URL;
 
@@ -97,11 +97,13 @@ function createSplashWindow(url) {
       if (alive) {
         console.log('cea dashboard already running...');
         mainWindow = createMainWindow();
-      } else console.log('cea dashboard not running, starting...');
-      createCEAProcess(url, window, () => {
-        console.log('cea dashboard process created...');
-        mainWindow = createMainWindow();
-      });
+      } else {
+        console.log('cea dashboard not running, starting...');
+        createCEAProcess(url, window, () => {
+          console.log('cea dashboard process created...');
+          mainWindow = createMainWindow();
+        });
+      }
     });
   });
 
