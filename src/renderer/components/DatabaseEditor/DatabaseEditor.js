@@ -29,7 +29,7 @@ const useValidateDatabasePath = () => {
       setValid(null);
       setError(null);
       const resp = await axios.get(
-        'http://${process.env.CEA_URL}/api/inputs/databases/check'
+        `${process.env.CEA_URL}/api/inputs/databases/check`
       );
       setValid(true);
     } catch (err) {
@@ -176,7 +176,7 @@ const SaveDatabaseButton = () => {
     try {
       console.log(databasesData);
       const resp = await axios.put(
-        'http://${process.env.CEA_URL}/api/inputs/databases',
+        `${process.env.CEA_URL}/api/inputs/databases`,
         databasesData
       );
       setSuccess(true);
