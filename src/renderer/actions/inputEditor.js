@@ -145,9 +145,11 @@ export const fetchMapData = () => {
     });
 
     let promises = layerList.map((type) =>
-      axios.get(inputEndpoints[type]).catch((error) => {
-        console.log(error.response.data);
-      })
+      axios
+        .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
+        .catch((error) => {
+          console.log(error.response.data);
+        })
     );
     return axios
       .all(promises)

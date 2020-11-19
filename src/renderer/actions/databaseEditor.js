@@ -44,7 +44,7 @@ export const fetchDatabaseSchema = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_SCHEMA });
     const { data } = await axios.get(
-      `http://${process.env.CEA_URL}/api/databases/schema`
+      `${process.env.CEA_URL}/api/databases/schema`
     );
     return dispatch({
       type: FETCH_DATABASE_SCHEMA_SUCCESS,
@@ -66,9 +66,7 @@ export const FETCH_DATABASE_GLOSSARY_FAILURE =
 export const fetchDatabaseGlossary = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_GLOSSARY });
-    const { data } = await axios.get(
-      `http://${process.env.CEA_URL}/api/glossary`
-    );
+    const { data } = await axios.get(`${process.env.CEA_URL}/api/glossary`);
     return dispatch({
       type: FETCH_DATABASE_GLOSSARY_SUCCESS,
       payload: data,

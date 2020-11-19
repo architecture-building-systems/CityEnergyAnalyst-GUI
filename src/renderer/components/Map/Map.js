@@ -479,9 +479,11 @@ export const useGeoJsons = (layerList) => {
 
   useEffect(() => {
     let promises = layerList.map((type) => {
-      return axios.get(inputEndpoints[type]).catch((error) => {
-        return console.log(error.response.data);
-      });
+      return axios
+        .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
+        .catch((error) => {
+          return console.log(error.response.data);
+        });
     });
     axios
       .all(promises)
