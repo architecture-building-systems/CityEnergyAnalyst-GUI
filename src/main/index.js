@@ -76,7 +76,7 @@ function createMainWindow() {
   return window;
 }
 
-function createSplashWindow() {
+function createSplashWindow(url) {
   const window = new BrowserWindow({
     height: 300,
     width: 500,
@@ -93,12 +93,15 @@ function createSplashWindow() {
     window.show();
 
     // Check if CEA server is already running, only start if not
-    isCEAAlive().then((alive) => {
-      if (alive) mainWindow = createMainWindow();
-      else
-        createCEAProcess(window, () => {
-          mainWindow = createMainWindow();
-        });
+    isCEAAlive(url).then((alive) => {
+      if (alive) {
+        console.log('cea dashboard already running...');
+        mainWindow = createMainWindow();
+      } else console.log('cea dashboard not running, starting...');
+      createCEAProcess(url, window, () => {
+        console.log('cea dashboard process created...');
+        mainWindow = createMainWindow();
+      });
     });
   });
 
@@ -153,7 +156,8 @@ app.on('activate', () => {
 
 // create splash BrowserWindow when electron is ready
 app.on('ready', () => {
-  splashWindow = createSplashWindow();
+  console.log(`app.on('ready'): CEA_URL=${CEA_URL}`);
+  splashWindow = createSplashWindow(CEA_URL);
 });
 
 /**

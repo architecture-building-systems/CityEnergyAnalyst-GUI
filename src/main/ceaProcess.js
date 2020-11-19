@@ -7,7 +7,8 @@ let cea;
 let timeout;
 let interval;
 
-export function createCEAProcess(BrowserWindow, callback) {
+export function createCEAProcess(url, BrowserWindow, callback) {
+  console.log(`createCEAProcess(${url})`);
   // For windows
   if (process.platform === 'win32') {
     let scriptPath = path.join(
@@ -54,7 +55,7 @@ export function createCEAProcess(BrowserWindow, callback) {
     app.exit();
   }
 
-  checkCEAStarted(() => {
+  checkCEAStarted(url, () => {
     // Remove Error message box listener after successful startup
     cea.stderr.removeListener('data', saveStartupError);
     cea.removeListener('exit', showStartupError);
@@ -74,9 +75,10 @@ export function killCEAProcess() {
   timeout && clearTimeout(timeout);
 }
 
-export async function isCEAAlive() {
+export async function isCEAAlive(url) {
+  console.log(`isCEAAlive(${url})`);
   try {
-    const resp = await axios.get(`${process.env.CEA_URL}/server/alive`);
+    const resp = await axios.get(`${url}/server/alive`);
     return resp.status == 200;
   } catch (error) {
     console.log(error.response || 'No Response');
@@ -84,7 +86,8 @@ export async function isCEAAlive() {
   }
 }
 
-function checkCEAStarted(callback) {
+function checkCEAStarted(url, callback) {
+  console.log(`checkCEAStarted(${url})`);
   const runCallbackOnce = (() => {
     let executed = false;
     return () => {
@@ -96,8 +99,10 @@ function checkCEAStarted(callback) {
   })();
 
   // Check every 1 seconds
+  var bound_url = url;
+  console.log(`checkCEAStarted(bound_url=${bound_url})`);
   interval = setInterval(async () => {
-    const alive = await isCEAAlive();
+    const alive = await isCEAAlive(bound_url);
     if (alive) {
       clearInterval(interval);
       timeout && clearTimeout(timeout);
