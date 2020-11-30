@@ -163,14 +163,24 @@ const updateConfigProjectInfo = async (project, scenarioName) => {
   }
 };
 
-export const deleteScenario = async (scenario, onSuccess = () => {}) => {
+export const deleteScenario = async (
+  scenario,
+  project,
+  onSuccess = () => {}
+) => {
   try {
+    console.log(`About to delete scenario ${scenario}`);
     const resp = await axios.delete(
-      `http://localhost:5050/api/project/scenario/${scenario}`
+      `http://localhost:5050/api/project/scenario/${scenario}`,
+      {
+        // apparently we can send a payload here: https://stackoverflow.com/a/58234086/2260
+        data: { project: project },
+      }
     );
     console.log(resp.data);
     onSuccess();
   } catch (err) {
+    console.log(`Failed to delete scenario ${scenario}`);
     console.error(err.response);
   }
 };
