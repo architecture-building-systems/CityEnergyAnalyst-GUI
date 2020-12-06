@@ -21,7 +21,7 @@ const project = (state = initialState, { type, payload }) => {
     case GET_PROJECT:
       return { ...state, ...payload };
     case GET_PROJECT_SUCCESS:
-      return { ...state, ...check_scenario_list_for_emtpy(payload) };
+      return { ...state, ...check_scenario_list(payload) };
     case GET_PROJECT_FAILED:
       return { ...state, ...initialState, ...payload };
     case UPDATE_SCENARIO:
@@ -31,16 +31,15 @@ const project = (state = initialState, { type, payload }) => {
   }
 };
 
-const check_scenario_list_for_emtpy = (payload) => {
-  const { info, ...rest_of_payload } = payload;
-  const { scenarios_list, ...rest_of_info } = info;
-  console.log(payload);
-  console.log(info);
-  console.log(scenarios_list);
-  if (typeof scenarios_list !== 'undefined' && scenarios_list.length === 0) {
+const check_scenario_list = (payload) => {
+  const {
+    info: { scenarios_list, scenario_name },
+  } = payload;
+  // Set scenario name to null if project is empty or scenario does not exist
+  if (scenarios_list.length === 0 || !scenarios_list.includes(scenario_name)) {
     return {
-      ...rest_of_payload,
-      info: { ...rest_of_info, scenarios_list, scenario_name: '' },
+      ...payload,
+      info: { ...payload.info, scenario_name: null },
     };
   }
   return payload;
