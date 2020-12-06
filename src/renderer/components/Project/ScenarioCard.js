@@ -119,7 +119,7 @@ const EditScenarioMenu = ({ scenarioName, project }) => {
       okType: 'danger',
       okButtonProps: { disabled: true },
       cancelText: 'Cancel',
-      onOk: () => deleteScenario(scenarioName, fetchProject),
+      onOk: () => deleteScenario(scenarioName, project, fetchProject),
       centered: true,
     });
 
