@@ -107,7 +107,7 @@ const InputDataForm = Form.create()(({ form, inputTable, table }) => {
 const createFormItem = (form, title, columnInfo) => {
   const { type, choices, constraints } = columnInfo;
 
-  if (type == 'choice') {
+  if (typeof choices !== 'undefined') {
     const Options = choices.map(({ value, label }) => (
       <Select.Option key={value} value={value}>
         {`${value} : ${label}`}
