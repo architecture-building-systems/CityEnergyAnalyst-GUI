@@ -6,6 +6,9 @@ import { format as formatUrl } from 'url';
 import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
 import menu from './menu';
 import axios from 'axios';
+import ini from 'ini';
+import os from 'os';
+import fs from 'fs';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -13,8 +16,12 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 let mainWindow;
 let splashWindow;
 
-// TEMP SOLUTION. Should load from config or env
-const CEA_URL = 'http://localhost:5050';
+// TEMP SOLUTION. Should check for errors (file doesn't exist)
+const cea_config = ini.parse(
+  fs.readFileSync(path.join(os.homedir(), 'cea.config'), 'utf-8')
+);
+const CEA_URL = `${cea_config.server.protocol}://${cea_config.server.host}:${cea_config.server.port}`;
+console.log(`CEA_URL: ${CEA_URL}`);
 process.env.CEA_URL = CEA_URL;
 
 // Add Menu to application
@@ -69,7 +76,7 @@ function createMainWindow() {
   return window;
 }
 
-function createSplashWindow() {
+function createSplashWindow(url) {
   const window = new BrowserWindow({
     height: 300,
     width: 500,
@@ -86,12 +93,17 @@ function createSplashWindow() {
     window.show();
 
     // Check if CEA server is already running, only start if not
-    isCEAAlive().then((alive) => {
-      if (alive) mainWindow = createMainWindow();
-      else
-        createCEAProcess(window, () => {
+    isCEAAlive(url).then((alive) => {
+      if (alive) {
+        console.log('cea dashboard already running...');
+        mainWindow = createMainWindow();
+      } else {
+        console.log('cea dashboard not running, starting...');
+        createCEAProcess(url, window, () => {
+          console.log('cea dashboard process created...');
           mainWindow = createMainWindow();
         });
+      }
     });
   });
 
@@ -146,7 +158,8 @@ app.on('activate', () => {
 
 // create splash BrowserWindow when electron is ready
 app.on('ready', () => {
-  splashWindow = createSplashWindow();
+  console.log(`app.on('ready'): CEA_URL=${CEA_URL}`);
+  splashWindow = createSplashWindow(CEA_URL);
 });
 
 /**

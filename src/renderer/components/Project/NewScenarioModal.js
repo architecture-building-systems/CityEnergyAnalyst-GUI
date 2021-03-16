@@ -28,7 +28,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
         console.log('Received values of form: ', values);
         try {
           const resp = await axios.post(
-            'http://localhost:5050/api/project/scenario/',
+            `${process.env.CEA_URL}/api/project/scenario/`,
             { project, ...values }
           );
           console.log(resp.data);
@@ -138,7 +138,7 @@ const useFetchDatabasePathParameter = () => {
     const fetchParameter = async () => {
       try {
         const resp = await axios.get(
-          'http://localhost:5050/api/tools/data-initializer'
+          `${process.env.CEA_URL}/api/tools/data-initializer`
         );
         const dbPathParam =
           resp.data.parameters[

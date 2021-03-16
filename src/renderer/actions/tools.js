@@ -39,7 +39,7 @@ export const saveToolParams = (tool, params) => {
       payload: { isSaving: true, error: null },
     });
     return axios
-      .post(`http://localhost:5050/api/tools/${tool}/save-config`, params)
+      .post(`${process.env.CEA_URL}/api/tools/${tool}/save-config`, params)
       .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
@@ -66,7 +66,7 @@ export const setDefaultToolParams = (tool) => {
       payload: { isSaving: true, error: null },
     });
     return axios
-      .post(`http://localhost:5050/api/tools/${tool}/default`)
+      .post(`${process.env.CEA_URL}/api/tools/${tool}/default`)
       .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,

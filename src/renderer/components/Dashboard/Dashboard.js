@@ -185,7 +185,7 @@ const useDashboardData = () => {
 
   const fetchDashboards = async () => {
     try {
-      const resp = await axios.get('http://localhost:5050/api/dashboards/');
+      const resp = await axios.get(`${process.env.CEA_URL}/api/dashboards/`);
       setDashboards(resp.data);
     } catch (error) {
       console.log(error);
@@ -194,7 +194,7 @@ const useDashboardData = () => {
   const fetchCategories = async () => {
     try {
       const resp = await axios.get(
-        'http://localhost:5050/api/dashboards/plot-categories'
+        `${process.env.CEA_URL}/api/dashboards/plot-categories`
       );
       setCategories(resp.data);
     } catch (error) {

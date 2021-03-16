@@ -18,7 +18,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
         console.log('Received values of form: ', values);
         try {
           const resp = axios.put(
-            'http://localhost:5050/api/inputs/databases/copy',
+            `${process.env.CEA_URL}/api/inputs/databases/copy`,
             values
           );
           setConfirmLoading(false);

@@ -152,7 +152,7 @@ const NewScenarioButton = ({ project }) => {
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
-    const resp = await axios.put(`http://localhost:5050/api/project/`, {
+    const resp = await axios.put(`${process.env.CEA_URL}/api/project/`, {
       project,
       scenario_name: scenarioName,
     });
@@ -171,7 +171,7 @@ export const deleteScenario = async (
   try {
     console.log(`About to delete scenario ${scenario}`);
     const resp = await axios.delete(
-      `http://localhost:5050/api/project/scenario/${scenario}`,
+      `${process.env.CEA_URL}/api/project/scenario/${scenario}`,
       {
         // apparently we can send a payload here: https://stackoverflow.com/a/58234086/2260
         data: { project: project },
@@ -223,12 +223,14 @@ export const useFetchProject = () => {
 };
 
 const fetchProjectDetails = async (project = null) => {
+  console.log(`fetchProjectDetails: ${project} - url: ${process.env.CEA_URL}`);
   const config = project ? { params: { project } } : {};
   try {
-    const resp = await axios.get('http://localhost:5050/api/project/', config);
-    console.log(resp.data);
+    const resp = await axios.get(`${process.env.CEA_URL}/api/project/`, config);
+    console.log(`fetchProjectDetails: resp.data=${resp.data}`);
     return resp.data;
   } catch (err) {
+    console.error(err);
     console.error(err.response);
   }
 };

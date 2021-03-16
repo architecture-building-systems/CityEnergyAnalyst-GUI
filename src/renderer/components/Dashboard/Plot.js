@@ -23,7 +23,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
     const fetch = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5050/plots/div/${dashIndex}/${index}`,
+          `${process.env.CEA_URL}/plots/div/${dashIndex}/${index}`,
           {
             cancelToken: source.token,
           }
@@ -192,7 +192,7 @@ const OpenInWindow = ({ index, dashIndex }) => {
         }
       );
     });
-    win.loadURL(`http://localhost:5050/plots/plot/${dashIndex}/${index}`);
+    win.loadURL(`${process.env.CEA_URL}/plots/plot/${dashIndex}/${index}`);
   };
 
   return (
