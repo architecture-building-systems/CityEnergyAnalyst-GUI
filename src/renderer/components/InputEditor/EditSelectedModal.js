@@ -121,13 +121,13 @@ const createFormItem = (form, title, columnInfo) => {
   }
 
   const typeMap = {
-    str: 'string',
+    string: 'string',
     int: 'integer',
     float: 'float',
     year: 'integer',
   };
   const checkNumeric = (value, type) => {
-    if (type == 'str') return value;
+    if (type == 'string') return value;
     if (value === null || value == '') return 0;
     const regex =
       type === 'int' ? /^([1-9][0-9]*|0)$/ : /^([1-9][0-9]*|0)(\.\d+)?$/;
@@ -144,11 +144,23 @@ const createFormItem = (form, title, columnInfo) => {
       },
       {
         validator: (rule, value, callback) => {
+          console.log({ type, columnInfo, constraints });
           try {
             if (typeof constraints != 'undefined') {
               if (typeof constraints.max != 'undefined') {
-                if (type != 'str' && value > constraints.max)
+                if (type != 'string' && value > constraints.max)
                   return new Error(`Max value: ${constraints.max}`);
+              }
+            }
+            if (type == 'string' && columnInfo?.regex) {
+              const regex = new RegExp(columnInfo.regex);
+              console.log({ test: regex.test(value) });
+              if (!regex.test(value)) {
+                return new Error(
+                  columnInfo?.example
+                    ? `${title} is not in the right format. e.g. ${columnInfo.example}`
+                    : `Does not fit expression: ${regex}`
+                );
               }
             }
             callback();
