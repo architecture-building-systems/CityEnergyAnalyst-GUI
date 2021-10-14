@@ -1,7 +1,13 @@
-import React from 'react';
-import { remote } from 'electron';
+import { ipcRenderer } from 'electron';
 import fs from 'fs';
-import { Form, Input, Icon, Button, Dropdown, Menu } from 'antd';
+import {
+  DownOutlined,
+  EllipsisOutlined,
+  MinusCircleOutlined,
+} from '@ant-design/icons';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Input, Button, Dropdown, Menu } from 'antd';
 
 const ScenarioImportDataForm = ({ form, visible }) => {
   const inputFiles = {
@@ -52,7 +58,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     });
   };
 
-  const openDialog = (id, file) => {
+  const openDialog = async (id, file) => {
     const options = {
       properties: ['openFile'],
       filters: [
@@ -64,15 +70,10 @@ const ScenarioImportDataForm = ({ form, visible }) => {
         },
       ],
     };
-    remote.dialog.showOpenDialog(
-      remote.getCurrentWindow(),
-      options,
-      (paths) => {
-        if (paths.length) {
-          form.setFieldsValue({ [id]: paths[0] });
-        }
-      }
-    );
+    const paths = await ipcRenderer.invoke('open-dialog', options);
+    if (paths && paths.length) {
+      form.setFieldsValue({ [id]: paths[0] });
+    }
   };
 
   // Check if file is valid
@@ -99,7 +100,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
         trigger={['click']}
       >
         <Button>
-          Select additional files that you want to import <Icon type="down" />
+          Select additional files that you want to import <DownOutlined />
         </Button>
       </Dropdown>
 
@@ -136,14 +137,13 @@ const ScenarioImportDataForm = ({ form, visible }) => {
                   style={{ height: '30px', width: '50px' }}
                   onClick={() => openDialog(`files[${key}]`, key)}
                 >
-                  <Icon type="ellipsis" />
+                  <EllipsisOutlined />
                 </button>
               }
             />
           )}
           {['zone', 'typology'].includes(key) ? null : (
-            <Icon
-              type="minus-circle-o"
+            <MinusCircleOutlined
               onClick={() => removeField(key)}
               style={{
                 position: 'relative',

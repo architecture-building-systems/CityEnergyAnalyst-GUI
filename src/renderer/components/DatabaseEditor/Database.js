@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Tabs } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -108,9 +108,8 @@ export const getTableSchema = (
         };
       // Get list from data
       if (typeof choice_prop['lookup'] != 'undefined') {
-        const { database_category, database_name, sheet, column } = choice_prop[
-          'lookup'
-        ];
+        const { database_category, database_name, sheet, column } =
+          choice_prop['lookup'];
         const lookup = data[database_category][database_name][sheet];
         const choices = lookup.map((row) => row[column]);
         return { data: key, type: 'dropdown', source: choices };

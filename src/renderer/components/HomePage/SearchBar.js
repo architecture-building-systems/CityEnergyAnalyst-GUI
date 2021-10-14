@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { shell } from 'electron';
-import { Icon, Input } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import { Input } from 'antd';
 import axios from 'axios';
 import './SearchBar.css';
 
@@ -55,7 +56,7 @@ const SearchBar = () => {
     <div style={{ marginLeft: 50 }}>
       <Input
         placeholder="Glossary Search"
-        suffix={<Icon type="search" />}
+        suffix={<SearchOutlined />}
         value={value}
         onChange={handleChange}
         onFocus={handleFocus}

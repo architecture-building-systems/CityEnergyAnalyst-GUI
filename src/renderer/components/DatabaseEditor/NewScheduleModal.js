@@ -1,5 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Modal, Form, Select } from 'antd';
+import { useState, useRef } from 'react';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal, Select } from 'antd';
 import { FormItemWrapper } from '../Tools/Parameter';
 
 const NewScheduleModal = ({

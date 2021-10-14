@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import interpolate from 'color-interpolate';
 import {
@@ -118,7 +118,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
                 ))}
               </div>
             ) : (
-              <React.Fragment>
+              <>
                 <div className="cea-schedule-year">
                   <YearTable
                     selected={selected}
@@ -141,7 +141,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
                     schedules={schedules}
                   />
                 </div>
-              </React.Fragment>
+              </>
             )
           ) : (
             <div className="cea-schedule-no-data">

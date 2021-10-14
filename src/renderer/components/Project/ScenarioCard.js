@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Icon, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
+import { useState, useEffect } from 'react';
+import { DownOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
 import axios from 'axios';
 import { deleteScenario, useOpenScenario, useFetchProject } from './Project';
 import RenameScenarioModal from './RenameScenarioModal';
@@ -13,18 +14,18 @@ const ScenarioCard = ({ scenarioName, project, active }) => {
       style={{ marginTop: 16 }}
       type="inner"
       title={
-        <React.Fragment>
+        <>
           <span>{scenarioName} </span>
           {active && <Tag>Current</Tag>}
-        </React.Fragment>
+        </>
       }
       extra={
-        <React.Fragment>
+        <>
           <EditScenarioMenu scenarioName={scenarioName} project={project} />
           <Button type="primary" onClick={handleOpenScenario}>
             Open
           </Button>
-        </React.Fragment>
+        </>
       }
     >
       <Row>
@@ -162,7 +163,7 @@ const EditScenarioMenu = ({ scenarioName, project }) => {
         }}
       >
         <Button>
-          Edit <Icon type="down" />
+          Edit <DownOutlined />
         </Button>
       </Dropdown>
       <RenameScenarioModal

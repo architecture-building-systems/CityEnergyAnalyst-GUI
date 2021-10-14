@@ -1,5 +1,5 @@
-import React from 'react';
-import { Icon, Button, Modal } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Modal } from 'antd';
 import { ExportDatabaseButton } from './DatabaseEditor';
 import './DatabaseEditor.css';
 import { AsyncError } from '../../utils';
@@ -41,7 +41,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
         </div>
       ) : !success ? (
         <div>
-          <Icon type="loading" style={{ color: 'blue', margin: 5 }} />
+          <LoadingOutlined style={{ color: 'blue', margin: 5 }} />
           <span>Saving Databases</span>
         </div>
       ) : (

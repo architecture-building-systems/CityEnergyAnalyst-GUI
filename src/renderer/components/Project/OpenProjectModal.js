@@ -1,5 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Modal, Form } from 'antd';
+import { useRef, useState, useEffect } from 'react';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal } from 'antd';
 import path from 'path';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';

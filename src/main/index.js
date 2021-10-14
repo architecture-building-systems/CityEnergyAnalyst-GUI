@@ -1,8 +1,7 @@
 'use strict';
 
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, dialog } from 'electron';
 import path from 'path';
-import { format as formatUrl } from 'url';
 import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
 import menu from './menu';
 import axios from 'axios';
@@ -34,7 +33,11 @@ function createMainWindow() {
     show: false, // starts hidden until page is loaded
     frame: false,
     titleBarStyle: 'hidden', // or 'customButtonsOnHover',
-    webPreferences: { nodeIntegration: true },
+    webPreferences: {
+      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
   });
 
   window.webContents.on('did-frame-finish-load', () => {
@@ -49,17 +52,7 @@ function createMainWindow() {
     splashWindow && splashWindow.close();
   });
 
-  if (isDevelopment) {
-    window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
-  } else {
-    window.loadURL(
-      formatUrl({
-        pathname: path.join(__dirname, 'index.html'),
-        protocol: 'file',
-        slashes: true,
-      })
-    );
-  }
+  window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}`);
 
   window.on('closed', () => {
     mainWindow = null;
@@ -71,6 +64,67 @@ function createMainWindow() {
     setImmediate(() => {
       window.focus();
     });
+  });
+
+  // Set window handlers
+  window.on('maximize', () => {
+    window.webContents.send('main-window-maximize');
+  });
+  window.on('unmaximize', () => {
+    window.webContents.send('main-window-unmaximize');
+  });
+  ipcMain.handle('main-window-close', () => {
+    window.close();
+  });
+  ipcMain.handle('main-window-minimize', () => {
+    window.minimize();
+  });
+  ipcMain.handle('main-window-restore', () => {
+    window.restore();
+  });
+  ipcMain.handle('main-window-maximize', () => {
+    window.maximize();
+  });
+
+  ipcMain.handle('open-dialog', async (_, arg) => {
+    const { filePaths } = await dialog.showOpenDialog(window, arg);
+    return filePaths;
+  });
+
+  ipcMain.handle('open-plot-window', (_, arg) => {
+    const { index, dashIndex } = arg;
+
+    let win = new BrowserWindow({
+      title: 'City Energy Analyst | Loading Plot...',
+      width: 800,
+      height: 600,
+    });
+    win.removeMenu();
+    win.on('closed', () => {
+      win = null;
+    });
+
+    // Triggers savePage when 'Export to File' is clicked
+    win.webContents.on('did-navigate-in-page', () => {
+      dialog
+        .showSaveDialog(win, {
+          defaultPath: win.getTitle().split(' | ')[1],
+          filters: [
+            {
+              name: 'HTML',
+              extensions: ['html'],
+            },
+          ],
+        })
+        .then(({ filePath }) => {
+          if (filePath) win.webContents.savePage(filePath, 'HTMLOnly');
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    });
+
+    win.loadURL(`${process.env.CEA_URL}/plots/plot/${dashIndex}/${index}`);
   });
 
   return window;
@@ -86,7 +140,11 @@ function createSplashWindow(url) {
     frame: false,
     backgroundColor: '#2e2c29',
     titleBarStyle: 'hidden',
-    webPreferences: { nodeIntegration: true },
+    webPreferences: {
+      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
   });
 
   window.once('ready-to-show', () => {
@@ -107,13 +165,7 @@ function createSplashWindow(url) {
     });
   });
 
-  if (isDevelopment) {
-    window.loadURL(
-      `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/#/splash`
-    );
-  } else {
-    window.loadURL(`file://${__dirname}/index.html#/splash`);
-  }
+  window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}/#/splash`);
 
   window.on('closed', () => {
     !mainWindow && killCEAProcess();
@@ -161,11 +213,3 @@ app.on('ready', () => {
   console.log(`app.on('ready'): CEA_URL=${CEA_URL}`);
   splashWindow = createSplashWindow(CEA_URL);
 });
-
-/**
- * Hot Loader
- */
-
-if (module.hot) {
-  module.hot.accept();
-}

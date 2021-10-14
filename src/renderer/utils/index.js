@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function checkNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') return false;
   if (rest.length === 0) return true;

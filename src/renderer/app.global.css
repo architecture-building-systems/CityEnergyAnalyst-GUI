@@ -1,3 +1,5 @@
+@import '~antd/dist/antd.css';
+
 #app {
   height: 100vh;
   overflow: hidden;
@@ -64,11 +66,15 @@ button:hover {
   cursor: pointer;
 }
 
-.formButtons .ant-form-item-control {
+.formButtons .ant-legacy-form-item-control {
   display: flex;
   justify-content: center;
 }
 
 .formButtons button {
+  margin: 0px 10px;
+}
+
+.ant-card-extra > .anticon {
   margin: 0px 10px;
 }

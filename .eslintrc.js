@@ -3,24 +3,25 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
-    'plugin:prettier/recommended'
+    'plugin:react/jsx-runtime',
+    'plugin:prettier/recommended',
   ],
-
   parser: 'babel-eslint',
   parserOptions: {
-    sourceType: 'module'
+    sourceType: 'module',
   },
   env: {
     browser: true,
-    node: true
+    node: true,
   },
   globals: {
-    __static: true
+    MAIN_WINDOW_WEBPACK_ENTRY: true,
+    MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: true,
   },
   settings: {
     react: {
-      version: 'detect'
-    }
+      version: 'detect',
+    },
   },
   rules: {
     // allow anonymous component functions
@@ -31,6 +32,6 @@ module.exports = {
     // allow spreading out properties from an object without warnings
     // 'no-unused-vars': [1, { ignoreRestSiblings: true }],
     'no-unused-vars': 'off',
-    'react/prop-types': 'off'
-  }
+    'react/prop-types': 'off',
+  },
 };

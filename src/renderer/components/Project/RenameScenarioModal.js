@@ -1,5 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Modal, Form } from 'antd';
+import { useState, useRef } from 'react';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';

@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { memo, useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { remote } from 'electron';
-import { Button, Card, Menu, Tooltip, Icon, Spin, Empty, Dropdown } from 'antd';
+import { ipcRenderer } from 'electron';
+import Icon, {
+  EditTwoTone,
+  FileTextTwoTone,
+  LoadingOutlined,
+  PlusOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
+import { Button, Card, Menu, Tooltip, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
@@ -83,7 +90,7 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
         <div>
           <span style={{ fontWeight: 'bold' }}>{data.title}</span>
           {data.parameters['scenario-name'] && (
-            <React.Fragment>
+            <>
               <span> - </span>
               <small>{data.parameters['scenario-name']}</small>
               {div && div.content && (
@@ -94,20 +101,20 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
                   div={div}
                 />
               )}
-            </React.Fragment>
+            </>
           )}
         </div>
       }
       extra={
-        <React.Fragment>
+        <>
           {div && div.content && (
-            <React.Fragment>
+            <>
               <PlotLegendToggle divID={div.content[0].props.id} />
               <InputFiles index={index} activePlotRef={activePlotRef} />
-            </React.Fragment>
+            </>
           )}
           <EditMenu index={index} activePlotRef={activePlotRef} />
-        </React.Fragment>
+        </>
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
       bodyStyle={{
@@ -136,8 +143,7 @@ const PlotLegendToggle = ({ divID }) => {
 
   return (
     <Tooltip title="Toggle Legend">
-      <Icon
-        type="unordered-list"
+      <UnorderedListOutlined
         onClick={toggleLegends}
         style={{ color: showLegend ? '#1890ff' : 'grey' }}
       />
@@ -154,45 +160,14 @@ const InputFiles = ({ index, activePlotRef }) => {
 
   return (
     <Tooltip title="Show plot data files">
-      <Icon type="file-text" theme="twoTone" onClick={showModalPlotFiles} />
+      <FileTextTwoTone onClick={showModalPlotFiles} />
     </Tooltip>
   );
 };
 
 const OpenInWindow = ({ index, dashIndex }) => {
   const openNewWindow = () => {
-    let win = new remote.BrowserWindow({
-      title: 'City Energy Analyst | Loading Plot...',
-      width: 800,
-      height: 600,
-      titleBarStyle: 'hidden',
-      webPreferences: { nodeIntegration: true },
-    });
-    win.removeMenu();
-    win.on('closed', () => {
-      win = null;
-    });
-    // Triggers savePage when 'Export to File' is clicked
-    win.webContents.on('did-navigate-in-page', () => {
-      remote.dialog.showSaveDialog(
-        win,
-        {
-          defaultPath: win.getTitle().split(' | ')[1],
-          filters: [
-            {
-              name: 'HTML',
-              extensions: ['html'],
-            },
-          ],
-        },
-        (outputPath) => {
-          win.webContents.savePage(outputPath, 'HTMLOnly', (error) => {
-            if (!error) console.log('Save page successfully');
-          });
-        }
-      );
-    });
-    win.loadURL(`${process.env.CEA_URL}/plots/plot/${dashIndex}/${index}`);
+    ipcRenderer.invoke('open-plot-window', { index, dashIndex });
   };
 
   return (
@@ -213,7 +188,7 @@ const OpenInWindow = ({ index, dashIndex }) => {
   );
 };
 
-const EditMenu = React.memo(({ index, activePlotRef }) => {
+const EditMenu = memo(({ index, activePlotRef }) => {
   const { modals, setModalVisible } = useContext(ModalContext);
 
   const showModalEditParameters = () => {
@@ -245,18 +220,18 @@ const EditMenu = React.memo(({ index, activePlotRef }) => {
   );
 
   return (
-    <React.Fragment>
+    <>
       <Dropdown overlay={menu} trigger={['click']}>
-        <Icon type="edit" theme="twoTone" />
+        <EditTwoTone />
       </Dropdown>
-    </React.Fragment>
+    </>
   );
 });
 
 const LoadingPlot = ({ plotStyle = defaultPlotStyle }) => {
   return (
     <Spin
-      indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+      indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
       tip="Loading Plot..."
     >
       <div style={{ height: plotStyle.height }} />
@@ -283,7 +258,7 @@ const ErrorPlot = ({ error }) => {
     );
   if (error.status === 500)
     return (
-      <React.Fragment>
+      <>
         <div style={{ textAlign: 'center', margin: 20 }}>
           <h3>Something went wrong!</h3>
         </div>
@@ -296,7 +271,7 @@ const ErrorPlot = ({ error }) => {
         >
           {error.data}
         </pre>
-      </React.Fragment>
+      </>
     );
   return null;
 };
@@ -319,7 +294,11 @@ export const EmptyPlot = ({ style, index, activePlotRef }) => {
       size="small"
     >
       <Empty>
-        <Button type="primary" icon="plus" onClick={showModalAddPlot}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={showModalAddPlot}
+        >
           Add plot
         </Button>
       </Empty>

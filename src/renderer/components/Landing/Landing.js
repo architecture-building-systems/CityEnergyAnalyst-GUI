@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { Button, Icon } from 'antd';
+import { FolderOpenOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import getStatic from '../../utils/static';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
@@ -35,13 +36,13 @@ const NewProjectModalButton = () => {
   };
 
   return (
-    <React.Fragment>
+    <>
       <Button
         type="primary"
         style={{ width: 300, margin: 24 }}
         onClick={() => setVisible(true)}
       >
-        <Icon type="plus" />
+        <PlusOutlined />
         New Project
       </Button>
       <NewProjectModal
@@ -49,7 +50,7 @@ const NewProjectModalButton = () => {
         setVisible={setVisible}
         onSuccess={goToProjectPage}
       />
-    </React.Fragment>
+    </>
   );
 };
 
@@ -62,13 +63,13 @@ const OpenProjectModalButton = () => {
   };
 
   return (
-    <React.Fragment>
+    <>
       <Button
         type="primary"
         style={{ width: 300, margin: 24 }}
         onClick={() => setVisible(true)}
       >
-        <Icon type="folder-open" />
+        <FolderOpenOutlined />
         Open Project
       </Button>
       <OpenProjectModal
@@ -76,7 +77,7 @@ const OpenProjectModalButton = () => {
         setVisible={setVisible}
         onSuccess={goToProjectPage}
       />
-    </React.Fragment>
+    </>
   );
 };
 

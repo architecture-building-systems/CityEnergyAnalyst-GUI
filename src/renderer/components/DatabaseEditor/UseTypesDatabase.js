@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { Tabs, Button, Modal, Select } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -16,7 +16,7 @@ const UseTypesDatabase = ({ name, data, schema }) => {
   const dispatch = useDispatch();
 
   return (
-    <React.Fragment>
+    <>
       <div className="cea-database-editor-use-types">
         <Select
           onSelect={setSelected}
@@ -37,14 +37,13 @@ const UseTypesDatabase = ({ name, data, schema }) => {
         useTypeData={data}
         schema={schema}
       />
-    </React.Fragment>
+    </>
   );
 };
 
 const UseTypesTable = ({ databaseName, useTypeName, useTypeData, schema }) => {
-  const { METADATA, MONTHLY_MULTIPLIER, ...others } = useTypeData['SCHEDULES'][
-    useTypeName
-  ];
+  const { METADATA, MONTHLY_MULTIPLIER, ...others } =
+    useTypeData['SCHEDULES'][useTypeName];
   return (
     <div className="cea-database-editor-use-types">
       <div>

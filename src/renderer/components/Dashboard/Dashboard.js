@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
+import { useState, useEffect, useMemo, useRef, useContext } from 'react';
+import {
+  CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { Button, Select } from 'antd';
 import axios from 'axios';
 import {
@@ -145,7 +151,7 @@ const DashButtons = () => {
     <div className="cea-dashboard-title-button-group">
       <Button
         type="primary"
-        icon="plus"
+        icon={<PlusOutlined />}
         size="small"
         onClick={() => setModalVisible(modals.newDashboard, true)}
       >
@@ -153,7 +159,7 @@ const DashButtons = () => {
       </Button>
       <Button
         type="primary"
-        icon="copy"
+        icon={<CopyOutlined />}
         size="small"
         onClick={() => setModalVisible(modals.duplicateDashboard, true)}
       >
@@ -161,7 +167,7 @@ const DashButtons = () => {
       </Button>
       <Button
         type="primary"
-        icon="edit"
+        icon={<EditOutlined />}
         size="small"
         onClick={() => setModalVisible(modals.setScenario, true)}
       >
@@ -169,7 +175,7 @@ const DashButtons = () => {
       </Button>
       <Button
         type="danger"
-        icon="delete"
+        icon={<DeleteOutlined />}
         size="small"
         onClick={() => setModalVisible(modals.deleteDashboard, true)}
       >

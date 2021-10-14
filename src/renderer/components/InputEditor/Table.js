@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Card, Button, Modal, message, Tooltip, Icon } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Card, Button, Modal, message, Tooltip } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -24,7 +25,7 @@ const Table = ({ tab }) => {
   const tabulator = useRef(null);
 
   return (
-    <React.Fragment>
+    <>
       <Card
         headStyle={{ backgroundColor: '#f1f1f1' }}
         size="small"
@@ -33,7 +34,7 @@ const Table = ({ tab }) => {
             placement="right"
             title="You can select multiple buildings in the table and the map by holding down the `Ctrl` key"
           >
-            <Icon type="info-circle" />
+            <InfoCircleOutlined />
           </Tooltip>
         }
         extra={
@@ -51,7 +52,7 @@ const Table = ({ tab }) => {
         )}
       </Card>
       <InputEditorButtons changes={changes} />
-    </React.Fragment>
+    </>
   );
 };
 
@@ -260,7 +261,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
         Filter on Selection
       </Button>
       {selectedInTable ? (
-        <React.Fragment>
+        <>
           {tab != 'schedules' && (
             <Button onClick={editSelected}>Edit Selection</Button>
           )}
@@ -268,7 +269,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
           <Button type="danger" onClick={deleteSelected}>
             Delete Selection
           </Button>
-        </React.Fragment>
+        </>
       ) : null}
       <EditSelectedModal
         visible={modalVisible}
@@ -405,10 +406,10 @@ const TableEditor = ({ tab, selected, tabulator }) => {
   }, [selected]);
 
   return (
-    <React.Fragment>
+    <>
       <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
       {!data.length && <ScriptSuggestion tab={tab} />}
-    </React.Fragment>
+    </>
   );
 };
 
