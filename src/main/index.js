@@ -165,7 +165,7 @@ function createSplashWindow(url) {
     });
   });
 
-  window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}/#/splash`);
+  window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}#splash`);
 
   window.on('closed', () => {
     !mainWindow && killCEAProcess();
