@@ -107,9 +107,11 @@ const InputDataForm = Form.create()(({ form, inputTable, table }) => {
 });
 
 const createFormItem = (form, title, columnInfo) => {
-  const { type, choices, constraints } = columnInfo;
+  const { type } = columnInfo;
 
-  if (typeof choices !== 'undefined') {
+  // Choices Field
+  const choices = columnInfo?.choices;
+  if (choices) {
     const Options = choices.map(({ value, label }) => (
       <Select.Option key={value} value={value}>
         {`${value} : ${label}`}
@@ -123,34 +125,51 @@ const createFormItem = (form, title, columnInfo) => {
   }
 
   const typeMap = {
-    str: 'string',
+    string: 'string',
     int: 'integer',
     float: 'float',
     year: 'integer',
   };
+
   const checkNumeric = (value, type) => {
-    if (type == 'str') return value;
+    if (type == 'string') return value;
     if (value === null || value == '') return 0;
     const regex =
       type === 'int' ? /^([1-9][0-9]*|0)$/ : /^([1-9][0-9]*|0)(\.\d+)?$/;
     return regex.test(value) ? Number(value) : NaN;
   };
 
+  const fieldType = type == 'string' ? 'string' : 'number';
   return form.getFieldDecorator(title, {
-    initialValue: null,
     rules: [
       {
-        type: typeMap[type] == 'string' ? 'string' : 'number',
+        type: fieldType,
         message: `${title} is not a ${typeMap[type]}`,
         transform: (value) => checkNumeric(value, type),
       },
       {
         validator: (rule, value, callback) => {
           try {
-            if (typeof constraints != 'undefined') {
-              if (typeof constraints.max != 'undefined') {
-                if (type != 'str' && value > constraints.max)
-                  return new Error(`Max value: ${constraints.max}`);
+            if (typeof value != 'undefined') {
+              // Check contraints
+              const constraints = columnInfo?.constraints;
+              if (columnInfo?.constraints) {
+                if (constraints?.max) {
+                  if (type != 'string' && value > constraints.max)
+                    return new Error(`Max value: ${constraints.max}`);
+                }
+              }
+
+              // Check regex
+              if (type == 'string' && columnInfo?.regex) {
+                const regex = new RegExp(columnInfo.regex);
+                if (!regex.test(value)) {
+                  return new Error(
+                    columnInfo?.example
+                      ? `${title} is not in the right format. e.g. ${columnInfo.example}`
+                      : `Does not fit expression: ${regex}`
+                  );
+                }
               }
             }
             callback();
