@@ -1,7 +1,10 @@
-import React from 'react';
-import { remote } from 'electron';
+import { forwardRef } from 'react';
+import { ipcRenderer } from 'electron';
 import fs from 'fs';
-import { Form, Input, Icon, Switch, Select, Divider, Button } from 'antd';
+import { EllipsisOutlined, PlusOutlined } from '@ant-design/icons';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Input, Switch, Select, Divider, Button } from 'antd';
 
 const Parameter = ({ parameter, form }) => {
   const { name, type, value, choices, help } = parameter;
@@ -201,7 +204,7 @@ const Parameter = ({ parameter, form }) => {
                     role="button"
                     tabIndex={0}
                   >
-                    <Icon type="plus" /> Browse for databases path
+                    <PlusOutlined /> Browse for databases path
                   </div>
                 </div>
               )}
@@ -239,7 +242,7 @@ const Parameter = ({ parameter, form }) => {
                     role="button"
                     tabIndex={0}
                   >
-                    <Icon type="plus" /> Browse for weather file
+                    <PlusOutlined /> Browse for weather file
                   </div>
                 </div>
               )}
@@ -303,7 +306,7 @@ export const FormItemWrapper = ({
   );
 };
 
-export const OpenDialogInput = React.forwardRef((props, ref) => {
+export const OpenDialogInput = forwardRef((props, ref) => {
   const { form, type, id, ...rest } = props;
   return (
     <Input
@@ -315,7 +318,7 @@ export const OpenDialogInput = React.forwardRef((props, ref) => {
           style={{ height: '30px', width: '50px' }}
           onClick={() => openDialog(form, type, id)}
         >
-          <Icon type="ellipsis" />
+          <EllipsisOutlined />
         </button>
       }
       {...rest}
@@ -323,16 +326,16 @@ export const OpenDialogInput = React.forwardRef((props, ref) => {
   );
 });
 
-const openDialog = (form, type, name) => {
+const openDialog = async (form, type, name) => {
   const options =
     type === 'PathParameter'
       ? { properties: ['openDirectory'] }
       : { properties: ['openFile'] };
-  remote.dialog.showOpenDialog(remote.getCurrentWindow(), options, (paths) => {
-    if (paths && paths.length) {
-      form.setFieldsValue({ [name]: paths[0] });
-    }
-  });
+
+  const paths = await ipcRenderer.invoke('open-dialog', options);
+  if (paths && paths.length) {
+    form.setFieldsValue({ [name]: paths[0] });
+  }
 };
 
 export default Parameter;

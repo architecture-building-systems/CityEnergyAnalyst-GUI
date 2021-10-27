@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, Button, Icon } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Modal, Button } from 'antd';
 import { AsyncError } from '../../utils';
 
 const CreatingScenarioModal = ({
@@ -35,7 +35,7 @@ const CreatingScenarioModal = ({
         </div>
       ) : (
         <div>
-          <Icon type="loading" style={{ color: 'blue', margin: 5 }} />
+          <LoadingOutlined style={{ color: 'blue', margin: 5 }} />
           <span>Creating Scenario</span>
         </div>
       )}

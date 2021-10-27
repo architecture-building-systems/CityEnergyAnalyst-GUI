@@ -1,14 +1,8 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
-import {
-  Modal,
-  Form,
-  Select,
-  Input,
-  Radio,
-  Button,
-  Skeleton,
-  Icon,
-} from 'antd';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { FolderOutlined } from '@ant-design/icons';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
 import { shell } from 'electron';
@@ -631,11 +625,11 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
   return (
     <Form layout="horizontal">
       {parameters ? (
-        <React.Fragment>
+        <>
           {parameters.map((param) => (
             <Parameter key={param.name} form={form} parameter={param} />
           ))}
-        </React.Fragment>
+        </>
       ) : (
         'Fetching Data...'
       )}
@@ -711,7 +705,7 @@ const FileList = ({ folderPath, filePaths }) => {
 
   return (
     <div style={{ marginBottom: 10 }}>
-      <Icon type="folder" />
+      <FolderOutlined />
       <b style={{ margin: 5 }}>{folderPath}</b>
       <a onClick={() => shell.openItem(folderPath)}>Open Folder</a>
       {filePaths.length > 3 ? (

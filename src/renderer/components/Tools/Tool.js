@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
 import {
   Skeleton,
   Result,
   Divider,
-  Form,
   Collapse,
   Button,
   Spin as AntSpin,
@@ -190,7 +191,7 @@ const ToolForm = Form.create()(
 
 const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
   return (
-    <React.Fragment>
+    <>
       <Button type="primary" onClick={runScript}>
         Run Script
       </Button>
@@ -205,7 +206,7 @@ const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
       <Button type="primary" onClick={setDefault}>
         Default
       </Button>
-    </React.Fragment>
+    </>
   );
 };
 

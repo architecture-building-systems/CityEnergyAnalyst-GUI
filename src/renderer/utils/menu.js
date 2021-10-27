@@ -1,4 +1,4 @@
-import { ipcRenderer, shell } from 'electron';
+import { shell } from 'electron';
 
 const { openExternal } = shell;
 
@@ -19,8 +19,7 @@ export const defaultTemplate = [
       {
         id: '2',
         label: 'Sub Menu',
-        icon:
-          'https://www.gstatic.com/images/branding/product/1x/keep_48dp.png',
+        icon: 'https://www.gstatic.com/images/branding/product/1x/keep_48dp.png',
         submenu: [
           {
             label: 'Color Submenu',
@@ -108,7 +107,7 @@ export const defaultTemplate = [
         label: 'Test Accelerator',
         accelerator: 'CommandOrControl+Y',
         click: (item, win, e) => {
-          ipcRenderer.send('Test');
+          console.log(item, win, e);
         },
       },
       {

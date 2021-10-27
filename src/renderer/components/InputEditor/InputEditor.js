@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import DeckGLMap from '../Map/Map';
 import Table from './Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInputData, resetInputData } from '../../actions/inputEditor';
-import { Tabs, Modal, Icon } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Tabs, Modal } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -33,7 +34,7 @@ const InputEditor = () => {
   if (status == 'fetching')
     return (
       <CenterSpinner
-        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
         tip="Reading Input Files..."
       />
     );

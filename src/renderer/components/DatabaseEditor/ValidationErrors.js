@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSelector } from 'react-redux';
 import { Alert } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';

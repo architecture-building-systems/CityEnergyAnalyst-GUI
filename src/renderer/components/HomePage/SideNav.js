@@ -1,8 +1,20 @@
-import React, { useState } from 'react';
+import { Children, cloneElement, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { shell } from 'electron';
 import { Link } from 'react-router-dom';
-import { Layout, Menu, Icon } from 'antd';
+import {
+  BarChartOutlined,
+  BookOutlined,
+  DatabaseOutlined,
+  EditOutlined,
+  ExceptionOutlined,
+  FlagOutlined,
+  ProjectOutlined,
+  QuestionCircleOutlined,
+  ReadOutlined,
+} from '@ant-design/icons';
+
+import { Layout, Menu } from 'antd';
 import { setCollapsed } from '../../actions/homepage';
 import ToolsMenu from './ToolsMenu';
 import routes from '../../constants/routes';
@@ -70,7 +82,7 @@ const SideNav = () => {
           {selectedKey !== '/' && (
             <Menu.Item key={routes.PROJECT_OVERVIEW}>
               <span>
-                <Icon type="project" />
+                <ProjectOutlined />
                 <span>Project Overview</span>
               </span>
               <Link to={routes.PROJECT_OVERVIEW} />
@@ -80,7 +92,7 @@ const SideNav = () => {
           <ScenarioMenuItem key={routes.DATABASE_EDITOR}>
             <Menu.Item>
               <span>
-                <Icon type="database" />
+                <DatabaseOutlined />
                 <span>Database Editor</span>
               </span>
               <Link to={routes.DATABASE_EDITOR} />
@@ -89,20 +101,20 @@ const SideNav = () => {
           <ScenarioMenuItem key={routes.INPUT_EDITOR}>
             <Menu.Item>
               <span>
-                <Icon type="edit" />
+                <EditOutlined />
                 <span>Input Editor</span>
               </span>
               <Link to={routes.INPUT_EDITOR} />
             </Menu.Item>
           </ScenarioMenuItem>
-          <ScenarioMenuItem>
+          <ScenarioMenuItem key={routes.TOOLS}>
             <ToolsMenu />
           </ScenarioMenuItem>
 
           <ScenarioMenuItem key={routes.DASHBOARD}>
             <Menu.Item>
               <span>
-                <Icon type="bar-chart" />
+                <BarChartOutlined />
                 <span>Dashboard</span>
               </span>
               <Link to={routes.DASHBOARD} />
@@ -119,7 +131,7 @@ const SideNav = () => {
             key="help"
             title={
               <span>
-                <Icon type="question-circle" />
+                <QuestionCircleOutlined />
                 <span>Help</span>
               </span>
             }
@@ -131,7 +143,7 @@ const SideNav = () => {
               }
             >
               <span>
-                <Icon type="read" />
+                <ReadOutlined />
                 <span>Blog Tutorials</span>
               </span>
             </Menu.Item>
@@ -144,7 +156,7 @@ const SideNav = () => {
               }
             >
               <span>
-                <Icon type="book" />
+                <BookOutlined />
                 <span>Documentation</span>
               </span>
             </Menu.Item>
@@ -157,7 +169,7 @@ const SideNav = () => {
               }
             >
               <span>
-                <Icon type="flag" />
+                <FlagOutlined />
                 <span>Report an Issue</span>
               </span>
             </Menu.Item>
@@ -170,7 +182,7 @@ const SideNav = () => {
               }
             >
               <span>
-                <Icon type="exception" />
+                <ExceptionOutlined />
                 <span>Known Issues</span>
               </span>
             </Menu.Item>
@@ -184,9 +196,7 @@ const SideNav = () => {
 const ScenarioMenuItem = ({ children, ...props }) => {
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
   if (scenarioName === null) return null;
-  return React.Children.map(children, (child) =>
-    React.cloneElement(child, { ...props })
-  );
+  return Children.map(children, (child) => cloneElement(child, { ...props }));
 };
 
 export default SideNav;

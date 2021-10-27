@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
@@ -8,10 +8,11 @@ import {
   updateDatabaseValidation,
   updateDatabaseChanges,
 } from '../../actions/databaseEditor';
+import { RedoOutlined, UndoOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useEventListener } from '../../utils/hooks';
 
-const Table = React.forwardRef((props, ref) => {
+const Table = forwardRef((props, ref) => {
   useResizeActiveTable(ref);
   return <HotTable ref={ref} {...props} />;
 });
@@ -132,9 +133,8 @@ const restricted_databases = ['FEEDSTOCKS'];
 const restricted_sheets = ['HEX'];
 
 export const TableButtons = ({ tableRef, databaseName, sheetName }) => {
-  const { undoAvailable, redoAvailable, undo, redo } = useTableUndoRedo(
-    tableRef
-  );
+  const { undoAvailable, redoAvailable, undo, redo } =
+    useTableUndoRedo(tableRef);
 
   return (
     <div style={{ margin: 10 }}>
@@ -150,10 +150,20 @@ export const TableButtons = ({ tableRef, databaseName, sheetName }) => {
             Add Row
           </Button>
         )}
-      <Button size="small" icon="undo" disabled={!undoAvailable} onClick={undo}>
+      <Button
+        size="small"
+        icon={<UndoOutlined />}
+        disabled={!undoAvailable}
+        onClick={undo}
+      >
         Undo
       </Button>
-      <Button size="small" icon="redo" disabled={!redoAvailable} onClick={redo}>
+      <Button
+        size="small"
+        icon={<RedoOutlined />}
+        disabled={!redoAvailable}
+        onClick={redo}
+      >
         Redo
       </Button>
     </div>

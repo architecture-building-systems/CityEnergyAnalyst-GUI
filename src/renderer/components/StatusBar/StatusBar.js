@@ -1,6 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Icon, Popover, notification, Button, Modal } from 'antd';
+
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  DownOutlined,
+  ExclamationCircleOutlined,
+  LoadingOutlined,
+  ToolFilled,
+} from '@ant-design/icons';
+
+import { Popover, notification, Button, Modal } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
@@ -59,9 +70,9 @@ const JobOutputLogger = () => {
   if (message.length < 1) return null;
 
   return (
-    <React.Fragment>
+    <>
       <span style={{ margin: '0 5px' }}>{message}</span>
-    </React.Fragment>
+    </>
   );
 };
 
@@ -106,7 +117,7 @@ const JobListPopover = () => {
       },
     };
     if (type === 'started')
-      notification.open({ ...config, icon: <Icon type="loading" /> });
+      notification.open({ ...config, icon: <LoadingOutlined /> });
     else if (type === 'created') notification['info'](config);
     else if (type === 'canceled') notification['info'](config);
     else {
@@ -150,11 +161,7 @@ const JobListPopover = () => {
     >
       <StatusBarButton onClick={() => setVisible((visible) => !visible)}>
         <JobOutputLogger />
-        <Icon
-          className="cea-job-list-popover-collapse"
-          type="tool"
-          theme="filled"
-        />
+        <ToolFilled className="cea-job-list-popover-collapse" />
       </StatusBarButton>
     </Popover>
   ) : null;
@@ -166,8 +173,7 @@ const JobListPopoverTitle = ({ jobs, setVisible }) => {
       <div>
         {!Object.keys(jobs).length ? 'No Jobs Running' : 'Current Jobs'}
       </div>
-      <Icon
-        type="down"
+      <DownOutlined
         style={{ fontSize: 10, alignSelf: 'center' }}
         onClick={() => setVisible(false)}
       />
@@ -211,23 +217,17 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
   const StateIcon = ({ state }) => {
     switch (state) {
       case 0:
-        return (
-          <Icon type="clock-circle" style={{ color: 'blue', margin: 5 }} />
-        );
+        return <ClockCircleOutlined style={{ color: 'blue', margin: 5 }} />;
       case 1:
-        return <Icon type="loading" style={{ color: 'blue', margin: 5 }} />;
+        return <LoadingOutlined style={{ color: 'blue', margin: 5 }} />;
       case 2:
-        return (
-          <Icon type="check-circle" style={{ color: 'green', margin: 5 }} />
-        );
+        return <CheckCircleOutlined style={{ color: 'green', margin: 5 }} />;
       case 3:
         return (
-          <Icon type="exclamation-circle" style={{ color: 'red', margin: 5 }} />
+          <ExclamationCircleOutlined style={{ color: 'red', margin: 5 }} />
         );
       case 4:
-        return (
-          <Icon type="close-circle" style={{ color: 'grey', margin: 5 }} />
-        );
+        return <CloseCircleOutlined style={{ color: 'grey', margin: 5 }} />;
       default:
         return null;
     }

@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form } from 'antd';
+import { useState, useRef, useEffect } from 'react';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal } from 'antd';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
-import { remote } from 'electron';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
@@ -61,11 +62,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
     >
       <NewProjectForm
         ref={formRef}
-        initialValue={
-          project
-            ? require('path').dirname(project)
-            : remote.app.getPath('home')
-        }
+        initialValue={project ? require('path').dirname(project) : null}
       />
     </Modal>
   );

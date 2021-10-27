@@ -1,4 +1,4 @@
-import React from 'react';
+import {} from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { Layout } from 'antd';
 import SideNav from '../components/HomePage/SideNav';
@@ -17,7 +17,7 @@ const { Content } = Layout;
 
 const HomePage = () => {
   return (
-    <React.Fragment>
+    <>
       <Layout>
         <SideNav />
         <Layout
@@ -33,6 +33,7 @@ const HomePage = () => {
               padding: 24,
               background: '#fff',
               minHeight: 'fit-content',
+              overflow: 'auto',
             }}
           >
             <Switch>
@@ -47,7 +48,7 @@ const HomePage = () => {
         </Layout>
       </Layout>
       <StatusBar />
-    </React.Fragment>
+    </>
   );
 };
 

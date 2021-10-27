@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import { Icon, Button } from 'antd';
+import {
+  ImportOutlined,
+  LoadingOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import { Button } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import ExportDatabaseModal from './ExportDatabaseModal';
@@ -53,7 +58,7 @@ const DatabaseEditor = () => {
   if (valid === null)
     return (
       <CenterSpinner
-        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
         tip="Verifying Databases..."
       />
     );
@@ -64,7 +69,7 @@ const DatabaseEditor = () => {
         <h2>Database Editor</h2>
         <div>
           <ExportDatabaseButton />
-          <Button type="primary" icon="import" onClick={goToScript}>
+          <Button type="primary" icon={<ImportOutlined />} onClick={goToScript}>
             Import Database
           </Button>
         </div>
@@ -110,7 +115,7 @@ const DatabaseContent = () => {
   if (status === 'fetching')
     return (
       <CenterSpinner
-        indicator={<Icon type="loading" style={{ fontSize: 24 }} spin />}
+        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
         tip="Reading Databases..."
       />
     );
@@ -119,10 +124,10 @@ const DatabaseContent = () => {
   if (status !== 'success') return null;
 
   return (
-    <React.Fragment>
+    <>
       <DatabaseTopMenu />
       <DatabaseContainer />
-    </React.Fragment>
+    </>
   );
 };
 
@@ -136,9 +141,9 @@ export const ExportDatabaseButton = () => {
   if (status !== 'success') return null;
 
   return (
-    <React.Fragment>
+    <>
       <Button
-        icon="upload"
+        icon={<UploadOutlined />}
         disabled={!!Object.keys(databaseValidation).length}
         onClick={() => {
           setModalVisible(true);
@@ -150,7 +155,7 @@ export const ExportDatabaseButton = () => {
         visible={modalVisible}
         setVisible={setModalVisible}
       />
-    </React.Fragment>
+    </>
   );
 };
 
@@ -187,7 +192,7 @@ const SaveDatabaseButton = () => {
     }
   };
   return (
-    <React.Fragment>
+    <>
       <Button
         // Disable button if there are validation errors or if there are no changes to data
         disabled={
@@ -203,7 +208,7 @@ const SaveDatabaseButton = () => {
         error={error}
         success={success}
       />
-    </React.Fragment>
+    </>
   );
 };
 

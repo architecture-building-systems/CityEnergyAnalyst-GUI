@@ -1,4 +1,4 @@
-import React from 'react';
+import {} from 'react';
 import { useSelector } from 'react-redux';
 import { Modal, Button, message } from 'antd';
 import Tool from '../Tools/Tool';
@@ -36,7 +36,7 @@ const ToolModal = ({ tool, visible, setVisible }) => {
     };
 
     return (
-      <React.Fragment>
+      <>
         <Button onClick={hideModal}>Cancel</Button>
         <Button type="primary" onClick={saveDefault}>
           Load default settings
@@ -44,7 +44,7 @@ const ToolModal = ({ tool, visible, setVisible }) => {
         <Button type="primary" onClick={saveToConfig}>
           Save & Close
         </Button>
-      </React.Fragment>
+      </>
     );
   };
 

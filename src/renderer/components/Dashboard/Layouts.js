@@ -1,4 +1,5 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import { Button, Row, Col, Affix } from 'antd';
 import { Plot, EmptyPlot } from './Plot';
 import { ModalContext } from '../../utils/ModalManager';
@@ -12,11 +13,11 @@ export const RowLayout = ({ dashIndex, plots, activePlotRef }) => {
   };
 
   return (
-    <React.Fragment>
+    <>
       {plots.length ? (
         plots.map((data, index) => (
           <Row key={`${dashIndex}-${index}-${data.hash}`}>
-            <Col>
+            <Col span={24}>
               <Plot
                 index={index}
                 dashIndex={dashIndex}
@@ -28,7 +29,7 @@ export const RowLayout = ({ dashIndex, plots, activePlotRef }) => {
         ))
       ) : (
         <Row>
-          <Col>
+          <Col span={24}>
             <EmptyPlot
               dashIndex={dashIndex}
               index={0}
@@ -42,7 +43,7 @@ export const RowLayout = ({ dashIndex, plots, activePlotRef }) => {
         <Affix offsetBottom={100}>
           <Button
             type="primary"
-            icon="plus"
+            icon={<PlusOutlined />}
             style={{ float: 'right', marginTop: 20 }}
             onClick={showModalAddPlot}
           >
@@ -50,7 +51,7 @@ export const RowLayout = ({ dashIndex, plots, activePlotRef }) => {
           </Button>
         </Affix>
       ) : null}
-    </React.Fragment>
+    </>
   );
 };
 

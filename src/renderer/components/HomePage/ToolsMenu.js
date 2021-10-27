@@ -1,8 +1,8 @@
-// @flow
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Menu, Icon, Tooltip } from 'antd';
+import { ToolOutlined } from '@ant-design/icons';
+import { Menu, Tooltip } from 'antd';
 import { fetchToolList } from '../../actions/tools';
 import routes from '../../constants/routes';
 
@@ -39,7 +39,6 @@ const ToolsMenu = (props) => {
           key={category}
           title={<span>{category}</span>}
           style={{ minWidth: '200px' }}
-          {...props}
         >
           {toolList}
         </SubMenu>
@@ -53,10 +52,9 @@ const ToolsMenu = (props) => {
 
   return (
     <SubMenu
-      key="tools"
       title={
         <span>
-          <Icon type="tool" />
+          <ToolOutlined />
           <span>Tools</span>
         </span>
       }

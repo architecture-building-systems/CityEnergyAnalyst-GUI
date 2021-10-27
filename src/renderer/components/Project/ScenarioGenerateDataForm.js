@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { Form, Checkbox, Row, Icon, Card, Input, Col } from 'antd';
+import { forwardRef, useState } from 'react';
+import { SettingOutlined } from '@ant-design/icons';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Checkbox, Row, Card, Input, Col } from 'antd';
 import axios from 'axios';
 import EditableMap from '../Map/EditableMap';
 import ToolModal from './ToolModal';
@@ -51,7 +54,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="zone" disabled>
                   Zone
                 </Checkbox>
-                <Icon type="setting" onClick={() => showModal('zone-helper')} />
+                <SettingOutlined onClick={() => showModal('zone-helper')} />
                 <small
                   style={{
                     marginLeft: 10,
@@ -68,8 +71,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="surroundings" disabled={!zoneChecked}>
                   Surroundings
                 </Checkbox>
-                <Icon
-                  type="setting"
+                <SettingOutlined
                   onClick={() => showModal('surroundings-helper')}
                 />
                 <small
@@ -92,10 +94,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="streets" disabled={!surroundingsChecked}>
                   Streets
                 </Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('streets-helper')}
-                />
+                <SettingOutlined onClick={() => showModal('streets-helper')} />
                 <small
                   style={{
                     color: 'red',
@@ -114,10 +113,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
                 <Checkbox value="terrain" disabled={!surroundingsChecked}>
                   Terrain
                 </Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('terrain-helper')}
-                />
+                <SettingOutlined onClick={() => showModal('terrain-helper')} />
                 <small
                   style={{
                     color: 'red',
@@ -134,10 +130,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
             <div style={{ margin: 10 }}>
               <Row>
                 <Checkbox value="weather">Weather</Checkbox>
-                <Icon
-                  type="setting"
-                  onClick={() => showModal('weather-helper')}
-                />
+                <SettingOutlined onClick={() => showModal('weather-helper')} />
               </Row>
               <small>- Set the weather file for the scenario.</small>
             </div>
@@ -163,7 +156,8 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
 };
 
 const checkLatLong = (rule, value, callback) => {
-  const regex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+  const regex =
+    /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
   if (regex.test(`${value.lat},${value.long}`)) {
     callback();
   } else {
@@ -284,7 +278,7 @@ const ScenarioMap = ({ form }) => {
   );
 };
 
-const LatLongInput = React.forwardRef(
+const LatLongInput = forwardRef(
   ({ value = {}, onChange, onClick = null }, ref) => {
     const triggerChange = (changedValue) => {
       if (onChange) {

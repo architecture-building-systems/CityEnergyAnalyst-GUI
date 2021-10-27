@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { push, replace } from 'connected-react-router';
+import {
+  FolderOpenOutlined,
+  PlusOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
 import { Card, Button, message } from 'antd';
 import { getProject, updateScenario } from '../../actions/project';
 import axios from 'axios';
@@ -43,7 +48,7 @@ const Project = () => {
         }
       >
         {projectExists && (
-          <React.Fragment>
+          <>
             <NewScenarioButton project={project} />
             {!scenariosList.length ? (
               <p style={{ textAlign: 'center', margin: 20 }}>
@@ -62,7 +67,7 @@ const Project = () => {
                 active={scenario == scenarioName}
               />
             ))}
-          </React.Fragment>
+          </>
         )}
       </Card>
     </div>
@@ -73,8 +78,12 @@ const NewProjectButton = ({ onSuccess }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
-    <React.Fragment>
-      <Button icon="plus" size="small" onClick={() => setModalVisible(true)}>
+    <>
+      <Button
+        icon={<PlusOutlined />}
+        size="small"
+        onClick={() => setModalVisible(true)}
+      >
         Create Project
       </Button>
       <NewProjectModal
@@ -82,7 +91,7 @@ const NewProjectButton = ({ onSuccess }) => {
         setVisible={setModalVisible}
         onSuccess={onSuccess}
       />
-    </React.Fragment>
+    </>
   );
 };
 
@@ -90,9 +99,9 @@ const OpenProjectButton = ({ onSuccess = () => {} }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
-    <React.Fragment>
+    <>
       <Button
-        icon="folder-open"
+        icon={<FolderOpenOutlined />}
         size="small"
         onClick={() => setModalVisible(true)}
       >
@@ -103,7 +112,7 @@ const OpenProjectButton = ({ onSuccess = () => {} }) => {
         setVisible={setModalVisible}
         onSuccess={onSuccess}
       />
-    </React.Fragment>
+    </>
   );
 };
 
@@ -120,7 +129,12 @@ const RefreshProjectButton = ({ loading, project, scenarioName }) => {
   };
 
   return (
-    <Button icon="sync" size="small" onClick={refreshProject} loading={loading}>
+    <Button
+      icon={<SyncOutlined />}
+      size="small"
+      onClick={refreshProject}
+      loading={loading}
+    >
       Refresh
     </Button>
   );
@@ -130,7 +144,7 @@ const NewScenarioButton = ({ project }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
-    <React.Fragment>
+    <>
       <Button
         type="primary"
         style={{
@@ -146,7 +160,7 @@ const NewScenarioButton = ({ project }) => {
         setVisible={setModalVisible}
         project={project}
       />
-    </React.Fragment>
+    </>
   );
 };
 

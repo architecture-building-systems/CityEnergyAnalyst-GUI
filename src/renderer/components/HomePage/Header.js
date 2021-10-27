@@ -1,6 +1,6 @@
-import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Layout, Icon } from 'antd';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { Layout } from 'antd';
 import SearchBar from './Searchbar';
 import { setCollapsed } from '../../actions/homepage';
 
@@ -8,10 +8,8 @@ const { Header: AntHeader } = Layout;
 
 const Header = () => {
   const { collapsed } = useSelector((state) => state.sider);
-  const {
-    project_name: projectName,
-    scenario_name: scenarioName,
-  } = useSelector((state) => state.project.info);
+  const { project_name: projectName, scenario_name: scenarioName } =
+    useSelector((state) => state.project.info);
   const { pathname } = useSelector((state) => state.router.location);
   const dispatch = useDispatch();
 
@@ -30,11 +28,12 @@ const Header = () => {
       }}
     >
       <div className="cea-home-header-left" style={{ display: 'flex' }}>
-        <Icon
+        <span
           className="trigger menu-toggle"
-          type={collapsed ? 'menu-unfold' : 'menu-fold'}
           onClick={() => dispatch(setCollapsed(!collapsed))}
-        />
+        >
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </span>
         {pathname !== '/' && (
           <span
             style={{

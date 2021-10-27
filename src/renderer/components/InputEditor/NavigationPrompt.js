@@ -1,8 +1,8 @@
-import React from 'react';
+import { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 
 // From https://gist.github.com/bummzack/a586533607ece482475e0c211790dd50
-class NavigationPrompt extends React.Component {
+class NavigationPrompt extends Component {
   constructor(props) {
     super(props);
     this.state = { nextLocation: null, openModal: false };

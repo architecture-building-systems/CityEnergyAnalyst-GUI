@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
@@ -261,7 +261,7 @@ const DeckGLMap = ({ data, colors }) => {
   }, [data, visibility, extruded, selected]);
 
   return (
-    <React.Fragment>
+    <>
       <DeckGL
         viewState={viewState}
         controller={true}
@@ -272,24 +272,24 @@ const DeckGLMap = ({ data, colors }) => {
         onWebGLInitialized={(gl) => (glRef.current = gl)}
       >
         <ReactMapGL ref={mapRef} mapStyle={mapStyles[mapStyle]} />
-        <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
-          <Toggle3DControl
-            callback={setExtruded}
-            viewState={viewState}
-            setViewState={setViewState}
-          />
-          <ResetCameraControl
-            cameraOptions={cameraOptions.current}
-            viewState={viewState}
-            setViewState={setViewState}
-          />
-          <ToggleMapStyleControl callback={setMapStyle} />
-        </div>
       </DeckGL>
       <NetworkToggle data={data} setVisibility={setVisibility} />
       <LayerToggle data={data} setVisibility={setVisibility} />
+      <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
+        <Toggle3DControl
+          callback={setExtruded}
+          viewState={viewState}
+          setViewState={setViewState}
+        />
+        <ResetCameraControl
+          cameraOptions={cameraOptions.current}
+          viewState={viewState}
+          setViewState={setViewState}
+        />
+        <ToggleMapStyleControl callback={setMapStyle} />
+      </div>
       <div id="map-tooltip"></div>
-    </React.Fragment>
+    </>
   );
 };
 
