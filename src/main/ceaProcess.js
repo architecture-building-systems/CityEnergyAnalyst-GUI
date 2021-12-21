@@ -6,6 +6,7 @@ import { app, dialog } from 'electron';
 let cea;
 let timeout;
 let interval;
+let startupError = '';
 
 export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
@@ -28,22 +29,24 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     cea = require('child_process').spawn('cmd.exe', ['/c', scriptPath]);
   }
 
-  cea.stdout.on('data', function (data) {
-    console.log(data.toString('utf8'));
-  });
+  if (cea) {
+    cea.stdout.on('data', function (data) {
+      console.log(data.toString('utf8'));
+    });
 
-  cea.stderr.on('data', function (data) {
-    console.log(data.toString('utf8'));
-  });
+    cea.stderr.on('data', function (data) {
+      console.error(data.toString('utf8'));
+    });
 
-  // Show Error message box when CEA encounters any error on startup
-  let startupError = '';
-  cea.stderr.on('data', saveStartupError);
-  cea.on('exit', showStartupError);
+    // Show Error message box when CEA encounters any error on startup
+    cea.stderr.on('data', saveStartupError);
+    cea.on('exit', showStartupError);
+  }
 
   function saveStartupError(message) {
     startupError += message.toString('utf8');
   }
+
   function showStartupError() {
     dialog.showMessageBox(BrowserWindow, {
       type: 'error',
@@ -57,8 +60,10 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
   checkCEAStarted(url, () => {
     // Remove Error message box listener after successful startup
-    cea.stderr.removeListener('data', saveStartupError);
-    cea.removeListener('exit', showStartupError);
+    if (cea) {
+      cea.stderr.removeListener('data', saveStartupError);
+      cea.removeListener('exit', showStartupError);
+    }
     callback();
   });
 
@@ -81,7 +86,7 @@ export async function isCEAAlive(url) {
     const resp = await axios.get(`${url}/server/alive`);
     return resp.status == 200;
   } catch (error) {
-    console.log(error.response || 'No Response');
+    console.error(error.response || 'No Response');
     return false;
   }
 }
