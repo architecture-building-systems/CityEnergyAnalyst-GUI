@@ -88,6 +88,7 @@
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
     "deck.gl": "7",
+    "electron-log": "^4.4.3",
     "electron-squirrel-startup": "^1.0.0",
     "frameless-titlebar": "^2.1.4",
     "handsontable": "6",
