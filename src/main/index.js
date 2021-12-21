@@ -195,7 +195,7 @@ app.on('will-quit', (event) => {
       const resp = await axios.post(`${CEA_URL}/server/shutdown`);
       console.log(resp?.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
     app.exit();
   };

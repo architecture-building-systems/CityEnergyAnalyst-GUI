@@ -146,7 +146,7 @@ export const fetchMapData = () => {
       axios
         .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
         .catch((error) => {
-          console.log(error.response.data);
+          console.error(error.response.data);
         })
     );
     return axios
@@ -163,6 +163,6 @@ export const fetchMapData = () => {
           payload: { geojsons: data, isFetchingMapData: false },
         });
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.error(error));
   };
 };

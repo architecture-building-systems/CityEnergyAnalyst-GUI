@@ -199,7 +199,7 @@ const ScenarioMap = ({ form }) => {
         );
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

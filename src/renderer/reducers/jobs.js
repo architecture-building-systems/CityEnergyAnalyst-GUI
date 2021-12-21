@@ -31,16 +31,16 @@ const jobs = (state = initialState, { type, payload }) => {
       return transformInitialPayload(payload);
     case CREATE_JOB_SUCCESS:
     case UPDATE_JOB:
-      console.log(payload);
+      console.debug(payload);
       return { ...state, ...transformJobPayload(payload) };
     case DISMISS_JOB:
-      console.log(payload);
+      console.debug(payload);
       return { ...state, ...transformJobPayload(payload) };
     case FETCH_JOBS_FAILED:
     case CREATE_JOB_FAILED:
     case START_JOB_SUCCESS:
     case START_JOB_FAILED:
-      console.log(payload);
+      console.debug(payload);
       return state;
     default:
       return state;

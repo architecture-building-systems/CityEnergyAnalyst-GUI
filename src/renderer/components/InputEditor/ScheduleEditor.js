@@ -84,7 +84,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
         timeoutRef.current = setTimeout(() => {
           dispatch(fetchBuildingSchedule(missingSchedules))
             .catch((error) => {
-              console.log(error);
+              console.error(error);
               setErrors(error);
             })
             .finally(() => {
@@ -412,7 +412,7 @@ const getScheduleTypes = (schedules) => {
   try {
     return Object.keys(schedules[buildings[0]].SCHEDULES);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return [];
   }
 };

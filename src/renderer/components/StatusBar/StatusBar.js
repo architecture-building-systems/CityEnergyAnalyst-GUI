@@ -299,7 +299,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         );
         setMessage(resp.data);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
     listenerFuncRef.current &&

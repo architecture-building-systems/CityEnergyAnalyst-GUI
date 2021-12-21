@@ -32,7 +32,7 @@ const RenameScenarioModal = ({
           fetchProject();
           setVisible(false);
         } catch (err) {
-          console.log(err.response);
+          console.error(err.response);
           setConfirmLoading(false);
         }
       }

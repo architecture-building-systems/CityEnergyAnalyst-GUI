@@ -84,7 +84,7 @@ const InputEditorButtons = ({ changes }) => {
             message.success('Changes Saved!');
           })
           .catch((error) => {
-            console.log(error);
+            console.error(error);
             message.config({
               top: 120,
             });
@@ -117,7 +117,7 @@ const InputEditorButtons = ({ changes }) => {
             message.info('Unsaved changes have been discarded.');
           })
           .catch((error) => {
-            console.log(error);
+            console.error(error);
             message.error('Something went wrong.', 0);
           });
       },

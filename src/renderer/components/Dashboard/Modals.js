@@ -39,7 +39,7 @@ export const ModalNewDashboard = ({
           })
           .catch((error) => {
             setConfirmLoading(false);
-            console.log(error.response);
+            console.error(error.response);
           });
       }
     });
@@ -151,7 +151,7 @@ export const ModalDuplicateDashboard = ({
           })
           .catch((error) => {
             setConfirmLoading(false);
-            console.log(error.response);
+            console.error(error.response);
           });
       }
     });
@@ -304,7 +304,7 @@ export const ModalDeleteDashboard = ({
       })
       .catch((error) => {
         setConfirmLoading(false);
-        console.log(error.response);
+        console.error(error.response);
       });
   };
 
@@ -356,7 +356,7 @@ const ModalAddPlotTemplate = ({
       console.log(params.data);
       setParameters(params.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -380,7 +380,7 @@ const ModalAddPlotTemplate = ({
           })
           .catch((error) => {
             setConfirmLoading(false);
-            console.log(error.response);
+            console.error(error.response);
           });
       }
     });
@@ -551,7 +551,7 @@ export const ModalEditParameters = ({
       console.log(params.data);
       setParameters(params.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -575,7 +575,7 @@ export const ModalEditParameters = ({
           })
           .catch((error) => {
             setConfirmLoading(false);
-            console.log(error.response);
+            console.error(error.response);
           });
       }
     });
@@ -661,7 +661,7 @@ export const ModalDeletePlot = ({
       })
       .catch((error) => {
         setConfirmLoading(false);
-        console.log(error.response);
+        console.error(error.response);
       });
   };
 
@@ -773,7 +773,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
           data: groupFilesOnParent(data.data),
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
       } finally {
         setLoading(false);
       }

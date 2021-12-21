@@ -47,7 +47,7 @@ const databaseGlossary = (state = [], { type, payload }) => {
         return payload.find((script) => script.script === 'data_initializer')
           .variables;
       } catch (err) {
-        console.log(err);
+        console.error(err);
         return [];
       }
     case RESET_DATABASE_STATE:
