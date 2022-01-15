@@ -30,12 +30,13 @@ export function createCEAProcess(url, BrowserWindow, callback) {
   }
 
   if (cea) {
+    // Attach cea output to console
     cea.stdout.on('data', function (data) {
-      console.log(data.toString('utf8'));
+      console.log(data.toString('utf8').trim());
     });
 
     cea.stderr.on('data', function (data) {
-      console.error(data.toString('utf8'));
+      console.error(data.toString('utf8').trim());
     });
 
     // Show Error message box when CEA encounters any error on startup
@@ -81,7 +82,7 @@ export function killCEAProcess() {
 }
 
 export async function isCEAAlive(url) {
-  console.log(`isCEAAlive(${url})`);
+  console.debug(`isCEAAlive(${url})`);
   try {
     const resp = await axios.get(`${url}/server/alive`);
     return resp.status == 200;
@@ -92,7 +93,7 @@ export async function isCEAAlive(url) {
 }
 
 function checkCEAStarted(url, callback) {
-  console.log(`checkCEAStarted(${url})`);
+  console.debug(`checkCEAStarted(${url})`);
   const runCallbackOnce = (() => {
     let executed = false;
     return () => {
@@ -105,7 +106,7 @@ function checkCEAStarted(url, callback) {
 
   // Check every 1 seconds
   var bound_url = url;
-  console.log(`checkCEAStarted(bound_url=${bound_url})`);
+  console.debug(`checkCEAStarted(bound_url=${bound_url})`);
   interval = setInterval(async () => {
     const alive = await isCEAAlive(bound_url);
     if (alive) {

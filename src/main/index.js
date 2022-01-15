@@ -16,6 +16,7 @@ log.transports.file.resolvePath = (variables) => {
 };
 const mainLog = log.scope('main');
 console.log = mainLog.log;
+console.debug = mainLog.debug;
 console.error = mainLog.error;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
