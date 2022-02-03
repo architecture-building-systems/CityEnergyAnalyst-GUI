@@ -27,7 +27,7 @@ export const httpAction = ({
 });
 
 const httpMiddleware =
-  ({ dispatch, getState }) =>
+  ({ dispatch }) =>
   (next) =>
   (action) => {
     if (!action.HTTP_ACTION) return next(action);
@@ -62,15 +62,10 @@ const httpMiddleware =
         onSuccess(data);
       } catch (error) {
         const errorPayload =
-          // Received response out of 2xx range
-          error.response
-            ? error.response
-            : // The request was made but no response was received
-            error.request
-            ? error.request
-            : // Something happened in setting up the request that triggered an Error
-              error;
-        console.log(editPayload());
+          error?.response || // Received response out of 2xx range
+          error?.request || // The request was made but no response was received
+          error; // Something happened in setting up the request that triggered an Error
+        console.error(errorPayload);
         dispatch({
           type: type + '_FAILED',
           payload: editPayload(errorPayload) || errorPayload,
