@@ -37,21 +37,31 @@ export const setSelected = (selected) => ({
 export const fetchInputData = () =>
   httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
 
-export const saveChanges = () => (dispatch, getState) =>
-  // eslint-disable-next-line no-undef
-  new Promise((resolve, reject) => {
-    const { tables, geojsons, crs, schedules } = getState().inputData;
-    dispatch(
-      httpAction({
-        url: '/inputs/all-inputs',
-        method: 'PUT',
-        type: SAVE_INPUTDATA,
-        data: { tables, geojsons, crs, schedules },
-        onSuccess: (data) => resolve(data),
-        onFailure: (error) => reject(error),
-      })
-    );
-  });
+export const saveChanges = () => (dispatch, getState) => {
+  dispatch({ type: SAVE_INPUTDATA });
+
+  const { tables, geojsons, crs, schedules } = getState().inputData;
+  return axios
+    .put(`${process.env.CEA_URL}/api/inputs/all-inputs`, {
+      tables,
+      geojsons,
+      crs,
+      schedules,
+    })
+    .then(({ data }) => {
+      dispatch({
+        type: SAVE_INPUTDATA_SUCCESS,
+        payload: data,
+      });
+    })
+    .catch((error) => {
+      const errorPayload = error?.response || error?.request || error;
+      dispatch({
+        type: SAVE_INPUTDATA_FAILED,
+        payload: errorPayload,
+      });
+    });
+};
 
 export const fetchBuildingSchedule = (buildings) => (dispatch) => {
   dispatch({ type: REQUEST_BUILDINGSCHEDULE });
