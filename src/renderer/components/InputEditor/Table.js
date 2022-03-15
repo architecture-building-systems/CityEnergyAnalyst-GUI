@@ -77,7 +77,6 @@ const InputEditorButtons = ({ changes }) => {
       async onOk() {
         await dispatch(saveChanges())
           .then((data) => {
-            console.log(data);
             message.config({
               top: 120,
             });

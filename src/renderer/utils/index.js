@@ -1,3 +1,5 @@
+import { Result } from 'antd';
+
 export function createNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') {
     obj[prop] = {};
@@ -19,24 +21,29 @@ export function deleteNestedProp(obj, prop, ...rest) {
   }
 }
 
-export const AsyncError = ({
-  title = 'Something went wrong',
-  error,
-  style = {},
-}) => {
+export const AsyncError = ({ title = 'Something went wrong', error }) => {
   return (
-    <div style={style}>
-      <h2>{title}</h2>
-      <div>ERROR: {error?.data?.message || 'UNKNOWN ERROR'}</div>
+    <Result
+      status="error"
+      title={title}
+      subTitle={
+        <div>
+          You may submit this a as an issue on our GitHub page{' '}
+          <a href="https://github.com/architecture-building-systems/CityEnergyAnalyst">
+            here
+          </a>
+        </div>
+      }
+    >
       <div>
-        You may submit this a as an issue on our GitHub page
-        https://github.com/architecture-building-systems/CityEnergyAnalyst
+        <h3>Error Message:</h3>
+        <p>{error?.data?.message || 'UNKNOWN ERROR'}</p>
+        {error?.data?.trace && (
+          <details>
+            <pre style={{ margin: 10 }}>{error.data.trace}</pre>
+          </details>
+        )}
       </div>
-      {error?.data?.trace && (
-        <details style={{ margin: 10 }}>
-          <pre>{error.data.trace}</pre>
-        </details>
-      )}
-    </div>
+    </Result>
   );
 };

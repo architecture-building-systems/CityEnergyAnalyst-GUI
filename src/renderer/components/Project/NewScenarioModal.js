@@ -24,6 +24,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
     setError(null);
     const formConfig = { scroll: { offsetTop: 60 } };
     formRef.current.validateFieldsAndScroll(formConfig, async (err, values) => {
+      console.debug(values);
       if (!err) {
         setConfirmLoading(true);
         setModalVisible(true);

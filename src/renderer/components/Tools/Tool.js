@@ -19,6 +19,7 @@ import {
 import { createJob } from '../../actions/jobs';
 import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
+import { AsyncError } from '../../utils';
 
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
@@ -42,23 +43,7 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
 
   if (status == 'fetching') return <Skeleton active />;
   if (status == 'failed') {
-    return (
-      <Result
-        status="warning"
-        title="Something went wrong with CEA"
-        extra={
-          <div style={{ textAlign: 'left' }}>
-            Error Message:
-            <pre>{error.data && error.data.message}</pre>
-            <details>
-              <pre style={{ backgroundColor: '#f1f1f1', margin: 10 }}>
-                {error.data && error.data.trace}
-              </pre>
-            </details>
-          </div>
-        }
-      />
-    );
+    return <AsyncError error={error} />;
   }
   if (!label) return null;
 
