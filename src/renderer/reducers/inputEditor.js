@@ -16,7 +16,7 @@ import {
   DISCARD_INPUTDATA_CHANGES_SUCCESS,
 } from '../actions/inputEditor';
 import { months_short } from '../constants/months';
-import { checkNestedProp, deleteNestedProp, createNestedProp } from '../utils';
+import { deleteNestedProp, createNestedProp } from '../utils';
 
 const initialState = {
   selected: [],
@@ -36,7 +36,7 @@ function updateChanges(
   newValue
 ) {
   // Check if update entry exists
-  if (checkNestedProp(changes.update, table, building, property)) {
+  if (changes?.update?.table?.building?.property) {
     // Delete update if newValue equals oldValue else update newValue
     if (changes.update[table][building][property].oldValue == newValue)
       deleteNestedProp(changes.update, table, building, property);

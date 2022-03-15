@@ -1,9 +1,3 @@
-export function checkNestedProp(obj, prop, ...rest) {
-  if (typeof obj[prop] == 'undefined') return false;
-  if (rest.length === 0) return true;
-  return checkNestedProp(obj[prop], ...rest);
-}
-
 export function createNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') {
     obj[prop] = {};
@@ -33,13 +27,12 @@ export const AsyncError = ({
   return (
     <div style={style}>
       <h2>{title}</h2>
+      <div>ERROR: {error?.data?.message || 'UNKNOWN ERROR'}</div>
       <div>
-        ERROR:{' '}
-        {checkNestedProp(error, 'data', 'message')
-          ? error.data.message
-          : 'UNKNOWN ERROR'}
+        You may submit this a as an issue on our GitHub page
+        https://github.com/architecture-building-systems/CityEnergyAnalyst
       </div>
-      {checkNestedProp(error, 'data', 'trace') && (
+      {error?.data?.trace && (
         <details style={{ margin: 10 }}>
           <pre>{error.data.trace}</pre>
         </details>
