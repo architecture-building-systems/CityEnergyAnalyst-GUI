@@ -258,7 +258,7 @@ const ScenarioMap = ({ form }) => {
           initialValue: null,
           rules: [
             {
-              required: form.getFieldValue('input-data') === 'generate',
+              required: form.getFieldValue('input_data') === 'generate',
               validator: checkArea,
             },
           ],
