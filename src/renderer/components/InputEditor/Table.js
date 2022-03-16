@@ -17,6 +17,7 @@ import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
 import { shell } from 'electron';
+import { AsyncError } from '../../utils';
 
 const Table = ({ tab }) => {
   const { selected, changes, schedules } = useSelector(
@@ -76,18 +77,18 @@ const InputEditorButtons = ({ changes }) => {
       cancelText: 'Cancel',
       async onOk() {
         await dispatch(saveChanges())
-          .then((data) => {
+          .then(() => {
             message.config({
               top: 120,
             });
             message.success('Changes Saved!');
           })
           .catch((error) => {
-            console.error(error);
-            message.config({
-              top: 120,
+            Modal.error({
+              title: 'Could not save changes',
+              content: <AsyncError error={error} />,
+              width: '80vw',
             });
-            message.error('Something went wrong.', 0);
           });
       },
     });
