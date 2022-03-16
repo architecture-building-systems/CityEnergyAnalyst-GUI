@@ -133,7 +133,7 @@ const createFormItem = (form, title, columnInfo) => {
 
   const checkNumeric = (value, type) => {
     if (type == 'string') return value;
-    if (value === null || value == '') return 0;
+    if (value === undefined || value == '') return 0;
     const regex =
       type === 'int' ? /^([1-9][0-9]*|0)$/ : /^([1-9][0-9]*|0)(\.\d+)?$/;
     return regex.test(value) ? Number(value) : NaN;
