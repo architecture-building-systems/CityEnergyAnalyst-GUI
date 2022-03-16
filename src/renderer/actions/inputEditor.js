@@ -56,11 +56,12 @@ export const saveChanges = () => async (dispatch, getState) => {
     })
     .catch((error) => {
       const errorPayload = error?.response || error?.request || error;
+      console.error(errorPayload);
       dispatch({
         type: SAVE_INPUTDATA_FAILED,
         payload: errorPayload,
       });
-      throw error;
+      throw errorPayload;
     });
 };
 
