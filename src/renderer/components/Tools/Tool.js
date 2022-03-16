@@ -2,14 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
-import {
-  Skeleton,
-  Result,
-  Divider,
-  Collapse,
-  Button,
-  Spin as AntSpin,
-} from 'antd';
+import { Skeleton, Divider, Collapse, Button, Spin as AntSpin } from 'antd';
 import {
   fetchToolParams,
   saveToolParams,
