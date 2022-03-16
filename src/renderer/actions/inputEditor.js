@@ -37,7 +37,7 @@ export const setSelected = (selected) => ({
 export const fetchInputData = () =>
   httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
 
-export const saveChanges = () => (dispatch, getState) => {
+export const saveChanges = () => async (dispatch, getState) => {
   dispatch({ type: SAVE_INPUTDATA });
 
   const { tables, geojsons, crs, schedules } = getState().inputData;
@@ -60,6 +60,7 @@ export const saveChanges = () => (dispatch, getState) => {
         type: SAVE_INPUTDATA_FAILED,
         payload: errorPayload,
       });
+      throw error;
     });
 };
 
