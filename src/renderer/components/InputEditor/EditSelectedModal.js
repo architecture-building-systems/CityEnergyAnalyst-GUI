@@ -58,24 +58,26 @@ const Table = ({ inputTable }) => {
   return (
     <div style={{ overflow: 'auto', maxHeight: 200 }}>
       <table>
-        <tr>
-          {inputTable.getColumnDefinitions().map((columnDef) => (
-            <th style={{ padding: '0 15px' }} key={columnDef.title}>
-              {columnDef.title}
-            </th>
-          ))}
-        </tr>
-        {inputTable
-          .getSelectedData()
-          .sort((a, b) => (a.Name > b.Name ? 1 : -1))
-          .map((data) => {
-            const row = inputTable.getColumnDefinitions().map((columnDef) => (
-              <td style={{ padding: '0 15px' }} key={columnDef.title}>
-                {data[columnDef.title]}
-              </td>
-            ));
-            return <tr key={data.Name}>{row}</tr>;
-          })}
+        <tbody>
+          <tr>
+            {inputTable.getColumnDefinitions().map((columnDef) => (
+              <th style={{ padding: '0 15px' }} key={columnDef.title}>
+                {columnDef.title}
+              </th>
+            ))}
+          </tr>
+          {inputTable
+            .getSelectedData()
+            .sort((a, b) => (a.Name > b.Name ? 1 : -1))
+            .map((data) => {
+              const row = inputTable.getColumnDefinitions().map((columnDef) => (
+                <td style={{ padding: '0 15px' }} key={columnDef.title}>
+                  {data[columnDef.title]}
+                </td>
+              ));
+              return <tr key={data.Name}>{row}</tr>;
+            })}
+        </tbody>
       </table>
     </div>
   );
@@ -133,7 +135,7 @@ const createFormItem = (form, title, columnInfo) => {
 
   const checkNumeric = (value, type) => {
     if (type == 'string') return value;
-    if (value === null || value == '') return 0;
+    if (value === undefined || value == '') return 0;
     const regex =
       type === 'int' ? /^([1-9][0-9]*|0)$/ : /^([1-9][0-9]*|0)(\.\d+)?$/;
     return regex.test(value) ? Number(value) : NaN;
