@@ -11,8 +11,9 @@ import fs from 'fs';
 import log from 'electron-log';
 
 // Setup logging
-log.transports.file.resolvePath = (variables) => {
-  return path.join(variables.libraryDefaultDir, 'console.log');
+process.env.LOG_PATH = path.join(app.getPath('logs'), 'console.log');
+log.transports.file.resolvePath = () => {
+  return process.env.LOG_PATH;
 };
 const mainLog = log.scope('main');
 console.log = mainLog.log;
