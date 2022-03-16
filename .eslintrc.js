@@ -10,6 +10,9 @@ module.exports = {
   parserOptions: {
     sourceType: 'module',
     requireConfigFile: false,
+    babelOptions: {
+      presets: ['@babel/preset-react'],
+    },
   },
   env: {
     browser: true,
