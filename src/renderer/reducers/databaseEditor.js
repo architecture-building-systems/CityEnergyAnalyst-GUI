@@ -15,14 +15,14 @@ import {
   COPY_SCHEDULE_DATA,
 } from '../actions/databaseEditor';
 import { combineReducers } from 'redux';
-import { checkNestedProp, createNestedProp, deleteNestedProp } from '../utils';
+import { createNestedProp, deleteNestedProp } from '../utils';
 
 const databaseValidation = (state = {}, { type, payload }) => {
   switch (type) {
     case UPDATE_DATABASE_VALIDATION: {
       const { isValid, database, sheet, column, row, value } = payload;
       // Check if invalid value exists in store
-      if (checkNestedProp(state, database, sheet, row, column)) {
+      if (state?.database?.sheet?.row?.column) {
         // Remove value if it is corrected else add it to store
         if (isValid) deleteNestedProp(state, database, sheet, row, column);
         else state[database][sheet][row][column] = value;
@@ -47,7 +47,7 @@ const databaseGlossary = (state = [], { type, payload }) => {
         return payload.find((script) => script.script === 'data_initializer')
           .variables;
       } catch (err) {
-        console.log(err);
+        console.error(err);
         return [];
       }
     case RESET_DATABASE_STATE:

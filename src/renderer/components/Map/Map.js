@@ -482,7 +482,7 @@ export const useGeoJsons = (layerList) => {
       return axios
         .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
         .catch((error) => {
-          return console.log(error.response.data);
+          return console.error(error.response.data);
         });
     });
     axios
@@ -496,7 +496,7 @@ export const useGeoJsons = (layerList) => {
         }
         setGeoJsons(_data);
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.error(error));
   }, []);
 
   return [geojsons, setGeoJsons];

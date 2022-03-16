@@ -8,6 +8,17 @@ import axios from 'axios';
 import ini from 'ini';
 import os from 'os';
 import fs from 'fs';
+import log from 'electron-log';
+
+// Setup logging
+process.env.LOG_PATH = path.join(app.getPath('logs'), 'console.log');
+log.transports.file.resolvePath = () => {
+  return process.env.LOG_PATH;
+};
+const mainLog = log.scope('main');
+console.log = mainLog.log;
+console.debug = mainLog.debug;
+console.error = mainLog.error;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -184,9 +195,9 @@ app.on('will-quit', (event) => {
   const shutdown = async () => {
     try {
       const resp = await axios.post(`${CEA_URL}/server/shutdown`);
-      console.log(resp);
+      console.log(resp?.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
     app.exit();
   };

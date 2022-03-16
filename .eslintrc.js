@@ -6,9 +6,13 @@ module.exports = {
     'plugin:react/jsx-runtime',
     'plugin:prettier/recommended',
   ],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   parserOptions: {
     sourceType: 'module',
+    requireConfigFile: false,
+    babelOptions: {
+      presets: ['@babel/preset-react'],
+    },
   },
   env: {
     browser: true,

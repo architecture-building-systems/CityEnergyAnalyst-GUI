@@ -194,7 +194,7 @@ const useDashboardData = () => {
       const resp = await axios.get(`${process.env.CEA_URL}/api/dashboards/`);
       setDashboards(resp.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
   const fetchCategories = async () => {
@@ -204,7 +204,7 @@ const useDashboardData = () => {
       );
       setCategories(resp.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -266,7 +266,7 @@ export const usePlotDependencies = () => {
       mountNodes(...dependency, scriptPromises)
     );
     // eslint-disable-next-line
-    Promise.all(scriptPromises).then(values => {
+    Promise.all(scriptPromises).then((values) => {
       // Return true only once all scripts have been loaded
       setIsMounted(true);
     });

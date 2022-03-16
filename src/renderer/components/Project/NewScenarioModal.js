@@ -24,6 +24,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
     setError(null);
     const formConfig = { scroll: { offsetTop: 60 } };
     formRef.current.validateFieldsAndScroll(formConfig, async (err, values) => {
+      console.debug(values);
       if (!err) {
         setConfirmLoading(true);
         setModalVisible(true);
@@ -36,7 +37,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
           console.log(resp.data);
           openScenario(project, values.scenario_name.trim());
         } catch (err) {
-          console.log(err.response);
+          console.error(err.response);
           setError(err.response);
         } finally {
           setConfirmLoading(false);
@@ -150,7 +151,7 @@ const useFetchDatabasePathParameter = () => {
           ];
         setParameter({ ...dbPathParam, name: 'databases_path' });
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
     fetchParameter();

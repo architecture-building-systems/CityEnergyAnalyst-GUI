@@ -17,7 +17,7 @@ export const useAsyncData = (
         console.log(resp.data);
         setData(resp.data);
       } catch (err) {
-        console.log(err.response.data);
+        console.error(err.response.data);
         setError(err.response.data);
       } finally {
         setLoading(false);

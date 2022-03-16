@@ -30,7 +30,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
           });
           message.success('Database succesfully exported');
         } catch (err) {
-          console.log(err.response);
+          console.error(err.response);
           setConfirmLoading(false);
           message.config({
             top: 120,
