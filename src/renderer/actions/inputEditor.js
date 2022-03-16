@@ -37,7 +37,7 @@ export const setSelected = (selected) => ({
 export const fetchInputData = () =>
   httpAction({ url: '/inputs/all-inputs', type: REQUEST_INPUTDATA });
 
-export const saveChanges = () => (dispatch, getState) => {
+export const saveChanges = () => async (dispatch, getState) => {
   dispatch({ type: SAVE_INPUTDATA });
 
   const { tables, geojsons, crs, schedules } = getState().inputData;
@@ -56,10 +56,12 @@ export const saveChanges = () => (dispatch, getState) => {
     })
     .catch((error) => {
       const errorPayload = error?.response || error?.request || error;
+      console.error(errorPayload);
       dispatch({
         type: SAVE_INPUTDATA_FAILED,
         payload: errorPayload,
       });
+      throw errorPayload;
     });
 };
 
@@ -156,7 +158,7 @@ export const fetchMapData = () => {
       axios
         .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
         .catch((error) => {
-          console.log(error.response.data);
+          console.error(error.response.data);
         })
     );
     return axios
@@ -173,6 +175,6 @@ export const fetchMapData = () => {
           payload: { geojsons: data, isFetchingMapData: false },
         });
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.error(error));
   };
 };

@@ -6,6 +6,7 @@ import { app, dialog } from 'electron';
 let cea;
 let timeout;
 let interval;
+let startupError = '';
 
 export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
@@ -28,24 +29,27 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     cea = require('child_process').spawn('cmd.exe', ['/c', scriptPath]);
   }
 
-  cea.stdout.on('data', function (data) {
-    console.log(data.toString('utf8'));
-  });
+  if (cea) {
+    // Attach cea output to console
+    cea.stdout.on('data', function (data) {
+      console.log(data.toString('utf8').trim());
+    });
 
-  cea.stderr.on('data', function (data) {
-    console.log(data.toString('utf8'));
-  });
+    cea.stderr.on('data', function (data) {
+      console.error(data.toString('utf8').trim());
+    });
 
-  // Show Error message box when CEA encounters any error on startup
-  let startupError = '';
-  cea.stderr.on('data', saveStartupError);
-  cea.on('exit', showStartupError);
+    // Show Error message box when CEA encounters any error on startup
+    cea.stderr.on('data', saveStartupError);
+    cea.on('exit', showStartupError);
+  }
 
   function saveStartupError(message) {
     startupError += message.toString('utf8');
   }
+
   function showStartupError() {
-    dialog.showMessageBox(BrowserWindow, {
+    dialog.showMessageBoxSync(BrowserWindow, {
       type: 'error',
       title: 'CEA Error',
       message: 'CEA has encounted an error on startup',
@@ -57,8 +61,10 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
   checkCEAStarted(url, () => {
     // Remove Error message box listener after successful startup
-    cea.stderr.removeListener('data', saveStartupError);
-    cea.removeListener('exit', showStartupError);
+    if (cea) {
+      cea.stderr.removeListener('data', saveStartupError);
+      cea.removeListener('exit', showStartupError);
+    }
     callback();
   });
 
@@ -76,18 +82,18 @@ export function killCEAProcess() {
 }
 
 export async function isCEAAlive(url) {
-  console.log(`isCEAAlive(${url})`);
+  console.debug(`isCEAAlive(${url})`);
   try {
     const resp = await axios.get(`${url}/server/alive`);
     return resp.status == 200;
   } catch (error) {
-    console.log(error.response || 'No Response');
+    console.error(error.response || 'No Response');
     return false;
   }
 }
 
 function checkCEAStarted(url, callback) {
-  console.log(`checkCEAStarted(${url})`);
+  console.debug(`checkCEAStarted(${url})`);
   const runCallbackOnce = (() => {
     let executed = false;
     return () => {
@@ -100,7 +106,7 @@ function checkCEAStarted(url, callback) {
 
   // Check every 1 seconds
   var bound_url = url;
-  console.log(`checkCEAStarted(bound_url=${bound_url})`);
+  console.debug(`checkCEAStarted(bound_url=${bound_url})`);
   interval = setInterval(async () => {
     const alive = await isCEAAlive(bound_url);
     if (alive) {

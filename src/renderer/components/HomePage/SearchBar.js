@@ -16,7 +16,7 @@ const useGlossaryData = () => {
         const result = await axios.get(`${process.env.CEA_URL}/api/glossary`);
         setData(result.data);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
     getSearchResults();

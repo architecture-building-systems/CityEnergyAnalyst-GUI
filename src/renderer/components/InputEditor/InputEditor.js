@@ -64,7 +64,7 @@ const InputTable = () => {
   const [tab, setTab] = useState('zone');
 
   if (typeof tables == 'undefined') return null;
-  console.log(tables);
+  console.debug(tables);
   const TabPanes = [...Object.keys(tables), 'schedules'].map((key) => (
     <Tabs.TabPane key={key} tab={key} />
   ));
