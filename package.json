@@ -107,7 +107,7 @@
     "react-spring": "^9.2.5",
     "redux": "^4.1.2",
     "redux-thunk": "^2.4.1",
-    "socket.io-client": "^2.3.0",
+    "socket.io-client": "^4.5.3",
     "tabulator-tables": "^4.4.1"
   }
 }
