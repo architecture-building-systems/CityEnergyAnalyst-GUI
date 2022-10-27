@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { useSelector } from 'react-redux';
 import './DatabaseEditor.css';
 import Handsontable from 'handsontable';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
+import { createRoot } from 'react-dom/client';
 
 const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
   const tooltipRef = useRef();
@@ -29,7 +29,8 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
 
   useEffect(() => {
     if (tableGlossary.length) {
-      ReactDOM.render(tooltipPrompt, tooltipRef.current);
+      const root = createRoot(tooltipRef.current);
+      root.render(tooltipPrompt);
       const tableInstance = tableRef.current.hotInstance;
       Handsontable.hooks.add(
         'afterOnCellMouseOver',
@@ -37,15 +38,14 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
           if (coords.row == -1 && coords.col != -1) {
             if (typeof tableGlossary[coords.col] !== 'undefined') {
               const { VARIABLE, DESCRIPTION, UNIT } = tableGlossary[coords.col];
-              ReactDOM.render(
+              root.render(
                 <p className="cea-database-editor-column-tooltip">
                   <b>{VARIABLE}</b>
                   {' : '}
                   <i>{DESCRIPTION}</i>
                   {' / UNIT: '}
                   <span>{UNIT}</span>
-                </p>,
-                tooltipRef.current
+                </p>
               );
             }
           }
