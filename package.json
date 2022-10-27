@@ -93,7 +93,7 @@
     "electron-log": "^4.4.3",
     "electron-squirrel-startup": "^1.0.0",
     "frameless-titlebar": "^2.1.4",
-    "handsontable": "^6",
+    "handsontable": "^10",
     "history": "^4.9.0",
     "html-react-parser": "^3.0.4",
     "ini": "^3.0.1",
