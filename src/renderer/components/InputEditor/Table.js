@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
@@ -18,6 +17,7 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
 import { shell } from 'electron';
 import { AsyncError } from '../../utils';
+import { createRoot } from 'react-dom/client';
 
 const Table = ({ tab }) => {
   const { selected, changes, schedules } = useSelector(
@@ -356,7 +356,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
               choices,
               path: _path,
             } = columnDef.description[columnDef.columns[index].title];
-            ReactDOM.render(
+            createRoot(col).render(
               <Tooltip
                 title={
                   description && (
@@ -386,8 +386,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                   {columnDef.columns[index].title}
                 </div>
                 <div className="tabulator-arrow"></div>
-              </Tooltip>,
-              col
+              </Tooltip>
             );
           });
       } else if (tabulator.current.getData().length == data.length) {

@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-gui",
   "productName": "CityEnergyAnalyst-GUI",
-  "version": "3.26.0",
+  "version": "3.32.0",
   "description": "Official GUI of the City Energy Analyst tool",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
@@ -31,9 +31,9 @@
         }
       ],
       "plugins": [
-        [
-          "@electron-forge/plugin-webpack",
-          {
+        {
+          "name": "@electron-forge/plugin-webpack",
+          "config": {
             "devContentSecurityPolicy": "default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;",
             "mainConfig": "./webpack.main.config.js",
             "renderer": {
@@ -44,12 +44,15 @@
                 {
                   "name": "main_window",
                   "html": "./src/renderer/index.html",
-                  "js": "./src/renderer/index.js"
+                  "js": "./src/renderer/index.js",
+                  "preload": {
+                    "js": "./src/preload.js"
+                  }
                 }
               ]
             }
           }
-        ]
+        }
       ]
     }
   },
@@ -62,12 +65,12 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.61",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
     "@electron-forge/maker-zip": "^6.0.0-beta.63",
-    "@electron-forge/plugin-webpack": "6.0.0-beta.63",
-    "@vercel/webpack-asset-relocator-loader": "1.7.0",
+    "@electron-forge/plugin-webpack": "^6.0.0-beta.63",
+    "@vercel/webpack-asset-relocator-loader": "^1.7.0",
     "babel-loader": "^8.2.2",
     "copy-webpack-plugin": "^9.0.1",
     "css-loader": "^6.0.0",
-    "electron": "17.1.2",
+    "electron": "^21.2.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
@@ -83,28 +86,28 @@
     "@handsontable/react": "^3.1.2",
     "@turf/turf": "^6.5.0",
     "antd": "^4.19.2",
-    "axios": "0.26.1",
+    "axios": "^1.1.3",
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
-    "deck.gl": "7",
+    "deck.gl": "^7",
     "electron-log": "^4.4.3",
     "electron-squirrel-startup": "^1.0.0",
     "frameless-titlebar": "^2.1.4",
-    "handsontable": "6",
+    "handsontable": "^6",
     "history": "^4.9.0",
-    "html-react-parser": "^0.9.1",
-    "ini": "^2.0.0",
-    "nebula.gl": "0.15.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-map-gl": "5",
-    "react-redux": "^7.2.6",
+    "html-react-parser": "^3.0.4",
+    "ini": "^3.0.1",
+    "nebula.gl": "^0.15.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-map-gl": "^5",
+    "react-redux": "^8.0.4",
     "react-router": "^5.0.1",
     "react-router-dom": "^5.0.1",
     "react-spring": "^9.2.5",
     "redux": "^4.1.2",
     "redux-thunk": "^2.4.1",
-    "socket.io-client": "^2.3.0",
+    "socket.io-client": "^4.5.3",
     "tabulator-tables": "^4.4.1"
   }
 }

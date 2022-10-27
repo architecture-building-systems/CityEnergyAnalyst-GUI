@@ -1,4 +1,4 @@
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import App from './containers/App';
 import { configureStore, history } from './store/configureStore';
 import './app.global.css';
@@ -14,4 +14,6 @@ console.error = rendererLog.error;
 
 const store = configureStore();
 
-render(<App store={store} history={history} />, document.getElementById('app'));
+const container = document.getElementById('app');
+const root = createRoot(container);
+root.render(<App store={store} history={history} />);

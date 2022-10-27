@@ -6,7 +6,7 @@ export const httpAction = ({
   url = '',
   method = 'GET',
   data = null,
-  headers = [],
+  headers = {},
   onSuccess = (data) => {},
   onFailure = (error) => {},
   payload = {},
