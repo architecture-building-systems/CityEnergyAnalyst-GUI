@@ -105,6 +105,7 @@ const Parameter = ({ parameter, form }) => {
       );
     case 'MultiChoiceParameter':
     case 'BuildingsParameter':
+    case 'OrderedMultiChoiceParameter':
     case 'MultiSystemParameter': {
       const selectAll = (e) => {
         e.preventDefault();
