@@ -1,0 +1,75 @@
+@import '~antd/dist/antd.css';
+
+#app {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.trigger {
+  font-size: 18px;
+  line-height: 64px;
+  padding: 0 24px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.trigger:hover {
+  color: #1890ff;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  height: 50px;
+  margin: 16px;
+}
+
+.logo .title {
+  color: white;
+  margin: auto 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.logo .title.inactive {
+  opacity: 0;
+  width: 0;
+  margin: 0;
+  transition-duration: 0.5s;
+  transition-property: opacity, width;
+  transition-timing-function: cubic-bezier(0.645, 0.045, 0.355, 1);
+  -webkit-transition-delay: 0s;
+  -moz-transition-delay: 0s;
+  -o-transition-delay: 0s;
+  transition-delay: 0s;
+}
+
+/* .ant-form-item {
+  margin-bottom: 8px;
+} */
+
+pre {
+  text-align: left;
+}
+
+.ant-input-group-addon {
+  padding: 0;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.formButtons .ant-legacy-form-item-control {
+  display: flex;
+  justify-content: center;
+}
+
+.formButtons button {
+  margin: 0px 10px;
+}
+
+.ant-card-extra > .anticon {
+  margin: 0px 10px;
+}
