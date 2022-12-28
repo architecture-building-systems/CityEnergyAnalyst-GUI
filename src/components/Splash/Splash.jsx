@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSpring, animated } from 'react-spring';
-import getStatic from '../../utils/static';
-
-const logo = getStatic('cea-logo.png');
+import ceaLogo from '../../assets/react.svg';
 
 const useLoadingMessages = () => {
   const [message, setMessage] = useState('');
@@ -46,7 +44,7 @@ const Splash = () => {
         }}
       >
         <img
-          src={logo}
+          src={ceaLogo}
           style={{ width: '100%' }}
           alt="CEA Logo"
           draggable="false"
