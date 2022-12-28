@@ -17,7 +17,7 @@ import { Layout, Menu } from 'antd';
 import { setCollapsed } from '../../actions/homepage';
 import ToolsMenu from './ToolsMenu';
 import routes from '../../constants/routes';
-import ceaLogo from '../../assets/react.svg';
+import ceaLogo from '../../assets/cea-logo.png';
 
 const { Sider } = Layout;
 const { SubMenu } = Menu;

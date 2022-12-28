@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSpring, animated } from 'react-spring';
-import ceaLogo from '../../assets/react.svg';
+import ceaLogo from '../../assets/cea-logo.png';
 
 const useLoadingMessages = () => {
   const [message, setMessage] = useState('');

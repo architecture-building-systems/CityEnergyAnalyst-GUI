@@ -6,7 +6,7 @@ import { Button } from 'antd';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
 import routes from '../../constants/routes';
-import ceaLogo from '../../assets/react.svg';
+import ceaLogo from '../../assets/cea-logo.png';
 
 const Landing = () => {
   return (
