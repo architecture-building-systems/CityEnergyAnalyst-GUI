@@ -42,7 +42,7 @@ export const saveChanges = () => async (dispatch, getState) => {
 
   const { tables, geojsons, crs, schedules } = getState().inputData;
   return axios
-    .put(`${process.env.CEA_URL}/api/inputs/all-inputs`, {
+    .put(`${import.meta.env.VITE_CEA_URL}/api/inputs/all-inputs`, {
       tables,
       geojsons,
       crs,
@@ -70,7 +70,11 @@ export const fetchBuildingSchedule = (buildings) => (dispatch) => {
   let errors = {};
   const promises = buildings.map((building) =>
     axios
-      .get(`${process.env.CEA_URL}/api/inputs/building-schedule/${building}`)
+      .get(
+        `${
+          import.meta.env.VITE_CEA_URL
+        }/api/inputs/building-schedule/${building}`
+      )
       .then((resp) => {
         return { [building]: resp.data };
       })
@@ -156,7 +160,7 @@ export const fetchMapData = () => {
 
     let promises = layerList.map((type) =>
       axios
-        .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
+        .get(`${import.meta.env.VITE_CEA_URL}${inputEndpoints[type]}`)
         .catch((error) => {
           console.error(error.response.data);
         })

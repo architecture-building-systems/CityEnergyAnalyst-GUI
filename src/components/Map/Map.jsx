@@ -480,7 +480,7 @@ export const useGeoJsons = (layerList) => {
   useEffect(() => {
     let promises = layerList.map((type) => {
       return axios
-        .get(`${process.env.CEA_URL}${inputEndpoints[type]}`)
+        .get(`${import.meta.env.VITE_CEA_URL}${inputEndpoints[type]}`)
         .catch((error) => {
           return console.error(error.response.data);
         });

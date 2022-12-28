@@ -81,7 +81,9 @@ const useGenerateScenarioImage = (project, scenarioName) => {
     const fetch = async () => {
       try {
         const resp = await axios.get(
-          `${process.env.CEA_URL}/api/project/scenario/${scenarioName}/image`,
+          `${
+            import.meta.env.VITE_CEA_URL
+          }/api/project/scenario/${scenarioName}/image`,
           { params: { project } }
         );
         setData(resp.data);

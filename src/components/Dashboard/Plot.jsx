@@ -29,7 +29,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
     const fetch = async () => {
       try {
         const response = await axios.get(
-          `${process.env.CEA_URL}/plots/div/${dashIndex}/${index}`,
+          `${import.meta.env.VITE_CEA_URL}/plots/div/${dashIndex}/${index}`,
           {
             cancelToken: source.token,
           }

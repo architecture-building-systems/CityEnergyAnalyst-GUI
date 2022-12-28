@@ -166,10 +166,13 @@ const NewScenarioButton = ({ project }) => {
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
-    const resp = await axios.put(`${process.env.CEA_URL}/api/project/`, {
-      project,
-      scenario_name: scenarioName,
-    });
+    const resp = await axios.put(
+      `${import.meta.env.VITE_CEA_URL}/api/project/`,
+      {
+        project,
+        scenario_name: scenarioName,
+      }
+    );
     console.log(resp.data);
     return resp.data;
   } catch (err) {
@@ -185,7 +188,7 @@ export const deleteScenario = async (
   try {
     console.log(`About to delete scenario ${scenario}`);
     const resp = await axios.delete(
-      `${process.env.CEA_URL}/api/project/scenario/${scenario}`,
+      `${import.meta.env.VITE_CEA_URL}/api/project/scenario/${scenario}`,
       {
         // apparently we can send a payload here: https://stackoverflow.com/a/58234086/2260
         data: { project: project },
@@ -237,10 +240,15 @@ export const useFetchProject = () => {
 };
 
 const fetchProjectDetails = async (project = null) => {
-  console.log(`fetchProjectDetails: ${project} - url: ${process.env.CEA_URL}`);
+  console.log(
+    `fetchProjectDetails: ${project} - url: ${import.meta.env.VITE_CEA_URL}`
+  );
   const config = project ? { params: { project } } : {};
   try {
-    const resp = await axios.get(`${process.env.CEA_URL}/api/project/`, config);
+    const resp = await axios.get(
+      `${import.meta.env.VITE_CEA_URL}/api/project/`,
+      config
+    );
     console.log(`fetchProjectDetails: resp.data=${resp.data}`);
     return resp.data;
   } catch (err) {

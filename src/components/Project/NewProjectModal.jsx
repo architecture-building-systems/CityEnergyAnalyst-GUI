@@ -26,7 +26,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
         setConfirmLoading(true);
         try {
           const resp = await axios.post(
-            `${process.env.CEA_URL}/api/project/`,
+            `${import.meta.env.VITE_CEA_URL}/api/project/`,
             values
           );
           const { project } = resp.data;

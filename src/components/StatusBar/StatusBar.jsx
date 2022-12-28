@@ -17,7 +17,7 @@ import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
 import './StatusBar.css';
 
-const socket = io(`${process.env.CEA_URL}`);
+const socket = io(`${import.meta.env.VITE_CEA_URL}`);
 
 const StatusBar = () => {
   return (
@@ -293,7 +293,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
     const getJobOutput = async () => {
       try {
         const resp = await axios.get(
-          `${process.env.CEA_URL}/server/streams/read/${job.id}`,
+          `${import.meta.env.VITE_CEA_URL}/server/streams/read/${job.id}`,
           null,
           { responseType: 'text' }
         );
@@ -342,7 +342,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
 };
 
 const cancelCeaJob = (job) => {
-  axios.post(`${process.env.CEA_URL}/server/jobs/cancel/${job.id}`);
+  axios.post(`${import.meta.env.VITE_CEA_URL}/server/jobs/cancel/${job.id}`);
 };
 
 export default StatusBar;

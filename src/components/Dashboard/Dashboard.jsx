@@ -191,7 +191,9 @@ const useDashboardData = () => {
 
   const fetchDashboards = async () => {
     try {
-      const resp = await axios.get(`${process.env.CEA_URL}/api/dashboards/`);
+      const resp = await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/`
+      );
       setDashboards(resp.data);
     } catch (error) {
       console.error(error);
@@ -200,7 +202,7 @@ const useDashboardData = () => {
   const fetchCategories = async () => {
     try {
       const resp = await axios.get(
-        `${process.env.CEA_URL}/api/dashboards/plot-categories`
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories`
       );
       setCategories(resp.data);
     } catch (error) {

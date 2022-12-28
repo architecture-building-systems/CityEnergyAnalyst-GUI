@@ -12,7 +12,9 @@ const useGlossaryData = () => {
   useEffect(() => {
     const getSearchResults = async () => {
       try {
-        const result = await axios.get(`${process.env.CEA_URL}/api/glossary`);
+        const result = await axios.get(
+          `${import.meta.env.VITE_CEA_URL}/api/glossary`
+        );
         setData(result.data);
       } catch (error) {
         console.error(error);

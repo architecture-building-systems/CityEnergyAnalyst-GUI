@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const httpAction = ({
   type = '',
-  baseURL = `${process.env.CEA_URL}/api`,
+  baseURL = `${import.meta.env.VITE_CEA_URL}/api`,
   url = '',
   method = 'GET',
   data = null,

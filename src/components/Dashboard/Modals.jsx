@@ -25,7 +25,7 @@ export const ModalNewDashboard = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .post(`${process.env.CEA_URL}/api/dashboards/`, values)
+          .post(`${import.meta.env.VITE_CEA_URL}/api/dashboards/`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -134,7 +134,7 @@ export const ModalDuplicateDashboard = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .post(`${process.env.CEA_URL}/api/dashboards/duplicate`, {
+          .post(`${import.meta.env.VITE_CEA_URL}/api/dashboards/duplicate`, {
             ...values,
             dashboard_index: dashIndex,
           })
@@ -218,7 +218,10 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         axios
-          .patch(`${process.env.CEA_URL}/api/dashboards/${dashIndex}`, values)
+          .patch(
+            `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}`,
+            values
+          )
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -241,16 +244,18 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
 
   useEffect(() => {
     if (visible.setScenario) {
-      axios.get(`${process.env.CEA_URL}/api/project/`).then((response) => {
-        const { scenario, scenarios } = response.data;
-        setScenarios({
-          type: 'ScenarioNameParameter',
-          name: 'scenario',
-          value: scenario,
-          help: 'Change the scenario parameter of all plots in this dashboard',
-          choices: scenarios,
+      axios
+        .get(`${import.meta.env.VITE_CEA_URL}/api/project/`)
+        .then((response) => {
+          const { scenario, scenarios } = response.data;
+          setScenarios({
+            type: 'ScenarioNameParameter',
+            name: 'scenario',
+            value: scenario,
+            help: 'Change the scenario parameter of all plots in this dashboard',
+            choices: scenarios,
+          });
         });
-      });
     } else setScenarios(null);
   }, [visible.setScenario]);
 
@@ -290,7 +295,7 @@ export const ModalDeleteDashboard = ({
   const handleOk = (e) => {
     setConfirmLoading(true);
     axios
-      .delete(`${process.env.CEA_URL}/api/dashboards/${dashIndex}`)
+      .delete(`${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}`)
       .then((response) => {
         if (response) {
           console.log(response.data);
@@ -348,7 +353,9 @@ const ModalAddPlotTemplate = ({
   const getParameters = async (scenario) => {
     try {
       const params = await axios.get(
-        `${process.env.CEA_URL}/api/dashboards/plot-categories/${category.category}/plots/${category.plot_id}/parameters`,
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories/${
+          category.category
+        }/plots/${category.plot_id}/parameters`,
         scenario ? { params: { scenario } } : {}
       );
       console.log(params.data);
@@ -365,7 +372,9 @@ const ModalAddPlotTemplate = ({
         console.log('Received values of form: ', values);
         axios
           .put(
-            `${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+            `${
+              import.meta.env.VITE_CEA_URL
+            }/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
             { ...category, parameters: values }
           )
           .then((response) => {
@@ -543,7 +552,9 @@ export const ModalEditParameters = ({
   const getParameters = async (scenario) => {
     try {
       const params = await axios.get(
-        `${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
+          activePlotRef.current
+        }/parameters`,
         scenario ? { params: { scenario } } : {}
       );
       console.log(params.data);
@@ -560,7 +571,9 @@ export const ModalEditParameters = ({
         console.log('Received values of form: ', values);
         axios
           .put(
-            `${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
+            `${
+              import.meta.env.VITE_CEA_URL
+            }/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
             { parameters: values }
           )
           .then((response) => {
@@ -647,7 +660,9 @@ export const ModalDeletePlot = ({
     setConfirmLoading(true);
     axios
       .delete(
-        `${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
+          activePlotRef.current
+        }`
       )
       .then((response) => {
         if (response) {
@@ -764,7 +779,9 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
       try {
         setLoading(true);
         const { data } = await axios.get(
-          `${process.env.CEA_URL}/api/dashboards/${dashIndex}/plots/${activePlotRef.current}/input-files`
+          `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
+            activePlotRef.current
+          }/input-files`
         );
         setFileLocations({
           inputs: groupFilesOnParent(data.inputs),

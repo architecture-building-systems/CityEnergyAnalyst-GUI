@@ -23,7 +23,9 @@ const RenameScenarioModal = ({
         console.log('Received values of form: ', values);
         try {
           const resp = await axios.put(
-            `${process.env.CEA_URL}/api/project/scenario/${scenarioName}`,
+            `${
+              import.meta.env.VITE_CEA_URL
+            }/api/project/scenario/${scenarioName}`,
             values
           );
           console.log(resp.data);
