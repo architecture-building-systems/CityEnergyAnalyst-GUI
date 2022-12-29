@@ -4,6 +4,7 @@ import { Modal, message, Alert, Input } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
+import { checkExist, joinPath } from '../../utils/file';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
   const databaseChanges = useSelector((state) => state.databaseEditor.changes);
@@ -16,7 +17,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         try {
-          const resp = axios.put(
+          axios.put(
             `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/copy`,
             values
           );
@@ -25,7 +26,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
           message.config({
             top: 120,
           });
-          message.success('Database succesfully exported');
+          message.success('Database successfully exported');
         } catch (err) {
           console.error(err.response);
           setConfirmLoading(false);
@@ -81,9 +82,16 @@ const ExportForm = Form.create()(({ form }) => {
         required={true}
         rules={[
           {
-            validator: (rule, value, callback) => {
+            validator: async (rule, value, callback) => {
               if (value.length != 0) {
-                callback('Folder with name already exists in path');
+                const contentPath = joinPath(form.getFieldValue('path'), value);
+                const pathExists = await checkExist(
+                  '',
+                  'directory',
+                  contentPath
+                );
+                if (pathExists)
+                  callback('Folder with name already exists in path');
               } else {
                 callback();
               }
@@ -97,17 +105,6 @@ const ExportForm = Form.create()(({ form }) => {
         initialValue=""
         help="Path to export Database"
         required={true}
-        rules={[
-          {
-            validator: (rule, value, callback) => {
-              if (value.length !== 0 && path.resolve(value) !== value) {
-                callback('Path entered is invalid');
-              } else {
-                callback();
-              }
-            },
-          },
-        ]}
         inputComponent={<Input form={form} type="PathParameter" />}
       />
     </Form>

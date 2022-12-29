@@ -33,7 +33,7 @@ const useValidateDatabasePath = () => {
     try {
       setValid(null);
       setError(null);
-      const resp = await axios.get(
+      await axios.get(
         `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/check`
       );
       setValid(true);
@@ -185,7 +185,7 @@ const SaveDatabaseButton = () => {
     setModalVisible(true);
     try {
       console.log(databasesData);
-      const resp = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_CEA_URL}/api/inputs/databases`,
         databasesData
       );
