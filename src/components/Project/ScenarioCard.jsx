@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { DownOutlined } from '@ant-design/icons';
-import { Card, Row, Col, Button, Modal, Tag, Dropdown, Menu } from 'antd';
+import {
+  Card,
+  Row,
+  Col,
+  Button,
+  Modal,
+  Tag,
+  Dropdown,
+  Menu,
+  Space,
+} from 'antd';
 import axios from 'axios';
 import { deleteScenario, useOpenScenario, useFetchProject } from './Project';
 import RenameScenarioModal from './RenameScenarioModal';
@@ -20,12 +30,12 @@ const ScenarioCard = ({ scenarioName, project, active }) => {
         </>
       }
       extra={
-        <>
+        <Space>
           <EditScenarioMenu scenarioName={scenarioName} project={project} />
           <Button type="primary" onClick={handleOpenScenario}>
             Open
           </Button>
-        </>
+        </Space>
       }
     >
       <Row>
