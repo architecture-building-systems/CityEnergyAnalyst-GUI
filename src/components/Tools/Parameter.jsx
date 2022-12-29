@@ -1,8 +1,6 @@
-import { forwardRef, useState } from 'react';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import { Input, Switch, Select, Divider, Button, Space } from 'antd';
-import DialogModel from '../Content/Content';
+import { PlusOutlined } from '@ant-design/icons';
+import { Input, Switch, Select, Divider, Button } from 'antd';
 import { checkExist } from '../../utils/file';
 
 const Parameter = ({ parameter, form }) => {
@@ -61,7 +59,7 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={<OpenDialogInput form={form} type={type} />}
+          inputComponent={<Input form={form} type={type} />}
         />
       );
     }
@@ -202,7 +200,6 @@ const Parameter = ({ parameter, form }) => {
                   <Divider style={{ margin: '4px 0' }} />
                   <div
                     style={{ padding: '8px', cursor: 'pointer' }}
-                    onMouseDown={() => openDialog(form, 'PathParameter', name)}
                     role="button"
                     tabIndex={0}
                   >
@@ -240,7 +237,6 @@ const Parameter = ({ parameter, form }) => {
                   <Divider style={{ margin: '4px 0' }} />
                   <div
                     style={{ padding: '8px', cursor: 'pointer' }}
-                    onMouseDown={() => openDialog(form, type, name)}
                     role="button"
                     tabIndex={0}
                   >
@@ -307,31 +303,29 @@ export const FormItemWrapper = ({
   );
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, type, id, ...rest } = props;
-  const [open, setOpen] = useState(false);
-
-  const onSuccess = (contentPath) => {
-    form.setFieldsValue({ [id]: contentPath });
-  };
-
-  return (
-    <>
-      <Space.Compact block style={{ paddingBottom: 3 }}>
-        <Input ref={ref} style={{ width: '100%' }} {...rest} />
-        <Button
-          type="primary"
-          style={{ width: 60 }}
-          icon={<SearchOutlined />}
-          onClick={() => {
-            setOpen(true);
-          }}
-        ></Button>
-      </Space.Compact>
-      <DialogModel open={open} setOpen={setOpen} onSuccess={onSuccess} />
-    </>
-  );
-});
-OpenDialogInput.displayName = 'OpenDialogInput';
+// export const OpenDialogInput = forwardRef((props, ref) => {
+//   const { form, type, id, ...rest } = props;
+//   const [open, setOpen] = useState(false);
+//   const onSuccess = (contentPath) => {
+//     form.setFieldsValue({ [id]: contentPath });
+//   };
+//   return (
+//     <>
+//       <Space.Compact block style={{ paddingBottom: 3 }}>
+//         <Input ref={ref} style={{ width: '100%' }} {...rest} />
+//         <Button
+//           type="primary"
+//           style={{ width: 60 }}
+//           icon={<SearchOutlined />}
+//           onClick={() => {
+//             setOpen(true);
+//           }}
+//         ></Button>
+//       </Space.Compact>
+//       <DialogModel open={open} setOpen={setOpen} onSuccess={onSuccess} />
+//     </>
+//   );
+// });
+// OpenDialogInput.displayName = 'OpenDialogInput';
 
 export default Parameter;

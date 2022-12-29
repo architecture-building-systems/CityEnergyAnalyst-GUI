@@ -90,10 +90,7 @@ const NewScenarioForm = Form.create()(
               },
               {
                 validator: (rule, value, callback) => {
-                  if (
-                    value.length != 0 &&
-                    fs.existsSync(path.join(project, value))
-                  ) {
+                  if (value.length != 0) {
                     callback('Scenario with name already exists in project');
                   } else {
                     callback();

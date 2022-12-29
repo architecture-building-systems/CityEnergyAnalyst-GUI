@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
-import { Modal, message, Alert } from 'antd';
+import { Modal, message, Alert, Input } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { FormItemWrapper } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
@@ -82,11 +82,7 @@ const ExportForm = Form.create()(({ form }) => {
         rules={[
           {
             validator: (rule, value, callback) => {
-              if (
-                value.length != 0 &&
-                form.getFieldValue('path').length != 0 &&
-                fs.existsSync(path.join(form.getFieldValue('path'), value))
-              ) {
+              if (value.length != 0) {
                 callback('Folder with name already exists in path');
               } else {
                 callback();
@@ -112,7 +108,7 @@ const ExportForm = Form.create()(({ form }) => {
             },
           },
         ]}
-        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+        inputComponent={<Input form={form} type="PathParameter" />}
       />
     </Form>
   );

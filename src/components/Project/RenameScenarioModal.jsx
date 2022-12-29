@@ -60,13 +60,6 @@ const RenameScenarioModal = ({
 };
 
 const RenameScenarioForm = Form.create()(({ form, project }) => {
-  const checkName = (project, name) => {
-    const dirs = fs
-      .readdirSync(project)
-      .filter((f) => fs.statSync(path.join(project, f)).isDirectory());
-    return dirs.includes(name);
-  };
-
   return (
     <Form layout="horizontal">
       <FormItemWrapper
@@ -78,10 +71,7 @@ const RenameScenarioForm = Form.create()(({ form, project }) => {
         rules={[
           {
             validator: (rule, value, callback) => {
-              if (
-                value.length != 0 &&
-                checkName(project, form.getFieldValue('name'))
-              ) {
+              if (value.length != 0) {
                 callback('Scenario with name already exists in the project');
               } else {
                 callback();

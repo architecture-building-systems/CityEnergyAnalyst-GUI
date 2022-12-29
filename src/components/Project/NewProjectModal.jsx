@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Form } from '@ant-design/compatible';
-import { Modal } from 'antd';
+import { Modal, Input } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { FormItemWrapper } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
 import { checkExist, dirname, joinPath } from '../../utils/file';
 
@@ -108,7 +108,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
             },
           },
         ]}
-        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+        inputComponent={<Input form={form} type="PathParameter" />}
       />
     </Form>
   );

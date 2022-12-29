@@ -1,8 +1,4 @@
-import {
-  DownOutlined,
-  EllipsisOutlined,
-  MinusCircleOutlined,
-} from '@ant-design/icons';
+import { DownOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
 import { Input, Button, Dropdown, Menu } from 'antd';
 
@@ -55,24 +51,6 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     });
   };
 
-  const openDialog = async (id, file) => {
-    const options = {
-      properties: ['openFile'],
-      filters: [
-        {
-          name: `${file} file`,
-          extensions: inputFiles[file].extension.map((fileExtension) =>
-            fileExtension.substr(1)
-          ),
-        },
-      ],
-    };
-    const paths = await ipcRenderer.invoke('open-dialog', options);
-    if (paths && paths.length) {
-      form.setFieldsValue({ [id]: paths[0] });
-    }
-  };
-
   // Check if file is valid
   const vaildFile = (fileType, filePath) => {
     return true;
@@ -110,14 +88,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
               visible
                 ? {
                     validator: (rule, value, callback) => {
-                      if (!fs.existsSync(value)) {
-                        if (
-                          ['zone', 'typology'].includes(key) &&
-                          value === ''
-                        ) {
-                          callback();
-                        } else callback('Path does not exist');
-                      } else if (!vaildFile(key, value))
+                      if (!vaildFile(key, value))
                         callback(`Select a vaild ${key} file`);
                       else callback();
                     },
@@ -128,15 +99,6 @@ const ScenarioImportDataForm = ({ form, visible }) => {
             <Input
               style={{ width: '60%', marginRight: 8 }}
               placeholder={inputFiles[key].placeholder}
-              addonAfter={
-                <button
-                  type="button"
-                  style={{ height: '30px', width: '50px' }}
-                  onClick={() => openDialog(`files[${key}]`, key)}
-                >
-                  <EllipsisOutlined />
-                </button>
-              }
             />
           )}
           {['zone', 'typology'].includes(key) ? null : (
