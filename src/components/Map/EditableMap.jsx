@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DeckGL from '@deck.gl/react';
 import ReactMapGL from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
-import { EditableGeoJsonLayer } from 'nebula.gl';
+import { EditableGeoJsonLayer } from '@nebula.gl/layers';
 import { Button } from 'antd';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './EditableMap.css';
