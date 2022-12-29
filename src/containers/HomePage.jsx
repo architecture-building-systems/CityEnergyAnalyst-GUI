@@ -1,4 +1,4 @@
-import {} from 'react';
+import { useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { Layout } from 'antd';
 import SideNav from '../components/HomePage/SideNav';
@@ -6,16 +6,32 @@ import Header from '../components/HomePage/Header';
 import { ToolRoute } from '../components/Tools/Tool';
 import InputEditor from '../components/InputEditor/InputEditor';
 import Dashboard from '../components/Dashboard/Dashboard';
-import Project from '../components/Project/Project';
+import Project, { useFetchProject } from '../components/Project/Project';
 import StatusBar from '../components/StatusBar/StatusBar';
 import Landing from '../components/Landing/Landing';
 import DatabaseEditor from '../components/DatabaseEditor/DatabaseEditor';
 
 import routes from '../constants/routes';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateScenario } from '../actions/project';
 
 const { Content } = Layout;
 
 const HomePage = () => {
+  const fetchProject = useFetchProject();
+  const dispatch = useDispatch();
+
+  const {
+    info: { project, scenario_name: scenarioName },
+  } = useSelector((state) => state.project);
+
+  useEffect(() => {
+    fetchProject(project).then(({ scenarios_list: scenariosList }) => {
+      // Set scenario back if it exists
+      if (scenariosList.includes(scenarioName))
+        dispatch(updateScenario(scenarioName));
+    });
+  }, []);
   return (
     <>
       <Layout>
