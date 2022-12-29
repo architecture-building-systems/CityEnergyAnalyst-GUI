@@ -19,17 +19,22 @@ const MAP_STYLE = {
 };
 
 const InputEditor = () => {
+  const {
+    info: { scenario_name: scenarioName },
+  } = useSelector((state) => state.project);
+
   const { status, error } = useSelector((state) => state.inputData);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchInputData());
+    if (scenarioName !== null) dispatch(fetchInputData());
     // Reset input data state on umount
     return () => {
       dispatch(resetInputData());
     };
-  }, []);
+  }, [scenarioName]);
 
+  if (scenarioName === null) return <div>No scenario selected.</div>;
   if (error) return <AsyncError error={error} />;
   if (status == 'fetching')
     return (

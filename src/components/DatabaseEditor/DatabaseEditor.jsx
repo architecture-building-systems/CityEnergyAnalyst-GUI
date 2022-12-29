@@ -52,9 +52,14 @@ const useValidateDatabasePath = () => {
 };
 
 const DatabaseEditor = () => {
+  const {
+    info: { scenario_name: scenarioName },
+  } = useSelector((state) => state.project);
+
   const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
   const goToScript = useChangeRoute(`${routes.TOOLS}/data-initializer`);
 
+  if (scenarioName === null) return <div>No scenario selected.</div>;
   if (valid === null)
     return (
       <CenterSpinner
