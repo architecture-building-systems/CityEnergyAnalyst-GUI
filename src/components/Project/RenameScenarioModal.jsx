@@ -4,6 +4,7 @@ import { Modal } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper } from '../Tools/Parameter';
 import { useFetchProject } from './Project';
+import { checkExist, joinPath } from '../../utils/file';
 
 const RenameScenarioModal = ({
   scenarioName,
@@ -15,7 +16,7 @@ const RenameScenarioModal = ({
   const formRef = useRef();
   const fetchProject = useFetchProject();
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -70,8 +71,10 @@ const RenameScenarioForm = Form.create()(({ form, project }) => {
         required={true}
         rules={[
           {
-            validator: (rule, value, callback) => {
-              if (value.length != 0) {
+            validator: async (rule, value, callback) => {
+              const contentPath = joinPath(project, value);
+              const pathExists = await checkExist('', 'directory', contentPath);
+              if (value.length != 0 && pathExists) {
                 callback('Scenario with name already exists in the project');
               } else {
                 callback();
