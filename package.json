@@ -51,6 +51,7 @@
     "handsontable": "^6",
     "history": "^4.9.0",
     "html-react-parser": "^3.0.4",
+    "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-map-gl": "^5",

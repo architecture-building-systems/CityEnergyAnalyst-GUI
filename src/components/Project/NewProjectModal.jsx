@@ -4,6 +4,7 @@ import { Modal } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
+import { checkExist, dirname, joinPath } from '../../utils/file';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -59,7 +60,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
     >
       <NewProjectForm
         ref={formRef}
-        initialValue={project ? require('path').dirname(project) : null}
+        initialValue={project ? dirname(project) : null}
       />
     </Modal>
   );
@@ -76,13 +77,13 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
         required={true}
         rules={[
           {
-            validator: (rule, value, callback) => {
-              if (
-                value.length != 0 &&
-                fs.existsSync(
-                  path.join(form.getFieldValue('project_root'), value)
-                )
-              ) {
+            validator: async (rule, value, callback) => {
+              const contentPath = joinPath(
+                form.getFieldValue('project_root'),
+                value
+              );
+              const pathExists = await checkExist('', 'directory', contentPath);
+              if (value.length != 0 && pathExists) {
                 callback('Folder with name already exists in path');
               } else {
                 callback();
@@ -98,8 +99,8 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
         help="Path of new Project"
         rules={[
           {
-            validator: (rule, value, callback) => {
-              if (value.length !== 0 && path.resolve(value) !== value) {
+            validator: async (rule, value, callback) => {
+              if (value.length == 0) {
                 callback('Path entered is invalid');
               } else {
                 callback();

@@ -3,6 +3,7 @@ import { Form } from '@ant-design/compatible';
 import { Modal } from 'antd';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
+import { checkExist } from '../../utils/file';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -62,8 +63,9 @@ const OpenProjectForm = Form.create()(({ form, initialValue }) => {
         help="Path of Project"
         rules={[
           {
-            validator: (rule, value, callback) => {
-              if (path.resolve(value) !== value) {
+            validator: async (rule, value, callback) => {
+              const pathExists = await checkExist('', 'directory', value);
+              if (!pathExists) {
                 callback('Path entered is invalid');
               } else {
                 callback();

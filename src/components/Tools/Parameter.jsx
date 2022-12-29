@@ -1,8 +1,9 @@
-import { forwardRef } from 'react';
-import { EllipsisOutlined, PlusOutlined } from '@ant-design/icons';
+import { forwardRef, useState } from 'react';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
-import { Input, Switch, Select, Divider, Button } from 'antd';
+import { Input, Switch, Select, Divider, Button, Space } from 'antd';
+import DialogModel from '../Content/Content';
+import { checkExist } from '../../utils/file';
 
 const Parameter = ({ parameter, form }) => {
   const { name, type, value, choices, help } = parameter;
@@ -48,8 +49,11 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: (rule, value, callback) => {
-                if (!fs.existsSync(value)) {
+              validator: async (rule, value, callback) => {
+                const contentType =
+                  type == 'PathParameter' ? 'directory' : 'file';
+                const pathExists = await checkExist('', contentType, value);
+                if (!pathExists) {
                   callback('Path does not exist');
                 } else {
                   callback();
@@ -289,8 +293,8 @@ export const FormItemWrapper = ({
   return (
     <Form.Item
       label={name}
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 11, offset: 1 }}
+      labelCol={{ span: 4 }}
+      wrapperCol={{ span: 15, offset: 1 }}
       key={name}
     >
       {form.getFieldDecorator(name, {
@@ -298,7 +302,6 @@ export const FormItemWrapper = ({
         rules: [{ required: required }, ...rules],
         ...config,
       })(inputComponent)}
-      <br />
       <small style={{ display: 'block', lineHeight: 'normal' }}>{help}</small>
     </Form.Item>
   );
@@ -306,34 +309,29 @@ export const FormItemWrapper = ({
 
 export const OpenDialogInput = forwardRef((props, ref) => {
   const { form, type, id, ...rest } = props;
+  const [open, setOpen] = useState(false);
+
+  const onSuccess = (contentPath) => {
+    form.setFieldsValue({ [id]: contentPath });
+  };
+
   return (
-    <Input
-      ref={ref}
-      addonAfter={
-        <button
-          className={type}
-          type="button"
-          style={{ height: '30px', width: '50px' }}
-          onClick={() => openDialog(form, type, id)}
-        >
-          <EllipsisOutlined />
-        </button>
-      }
-      {...rest}
-    />
+    <>
+      <Space.Compact block style={{ paddingBottom: 3 }}>
+        <Input ref={ref} style={{ width: '100%' }} {...rest} />
+        <Button
+          type="primary"
+          style={{ width: 60 }}
+          icon={<SearchOutlined />}
+          onClick={() => {
+            setOpen(true);
+          }}
+        ></Button>
+      </Space.Compact>
+      <DialogModel open={open} setOpen={setOpen} onSuccess={onSuccess} />
+    </>
   );
 });
-
-const openDialog = async (form, type, name) => {
-  const options =
-    type === 'PathParameter'
-      ? { properties: ['openDirectory'] }
-      : { properties: ['openFile'] };
-
-  const paths = await ipcRenderer.invoke('open-dialog', options);
-  if (paths && paths.length) {
-    form.setFieldsValue({ [name]: paths[0] });
-  }
-};
+OpenDialogInput.displayName = 'OpenDialogInput';
 
 export default Parameter;
