@@ -43,7 +43,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 

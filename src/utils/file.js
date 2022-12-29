@@ -39,13 +39,15 @@ export const checkExist = async (
   }
 };
 
-export const dirname = (fullPath) => {
-  const { base, dir, name } = path.parse(fullPath);
-  const isWin = base == name;
+const isWin = (fullPath) => {
+  const { base } = path.parse(fullPath);
+  return base == fullPath;
+};
 
-  if (isWin)
+export const dirname = (fullPath) => {
+  if (isWin(fullPath))
     return path.dirname(fullPath.replace(/\\/g, '/')).replace(/\//g, '\\');
-  else return dir;
+  else return path.dirname(fullPath);
 };
 
 export const joinPath = (dir, suffix) => {
