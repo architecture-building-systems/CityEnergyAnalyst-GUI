@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { FolderOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';

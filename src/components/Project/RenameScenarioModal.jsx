@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Modal } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper } from '../Tools/Parameter';

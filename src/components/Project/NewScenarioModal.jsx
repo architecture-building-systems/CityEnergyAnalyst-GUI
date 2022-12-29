@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Modal, Radio, Input } from 'antd';
 import axios from 'axios';
 import { useOpenScenario } from './Project';
