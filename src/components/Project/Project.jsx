@@ -35,7 +35,7 @@ const Project = () => {
         title={
           <div className="cea-project-title-bar">
             <h2>{projectTitle}</h2>
-            <div className="cea-project-options">
+            <div className="cea-project-options" style={{ paddingBottom: 18 }}>
               <NewProjectButton />
               <OpenProjectButton />
               <RefreshProjectButton
