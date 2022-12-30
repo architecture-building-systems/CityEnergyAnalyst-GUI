@@ -316,6 +316,20 @@ const DeckGLMap = ({ data, colors }) => {
           >
             Reset Camera
           </Button>
+          <Button
+            style={{ fontSize: 12 }}
+            type="primary"
+            size="small"
+            block
+            onClick={() => {
+              setViewState((state) => ({
+                ...state,
+                bearing: 0,
+              }));
+            }}
+          >
+            Reset Compass
+          </Button>
         </div>
       </DeckGL>
       <div id="map-tooltip"></div>
