@@ -46,10 +46,11 @@ const DeckGLMap = ({ data, colors }) => {
     zone: !!data.zone,
     surroundings: !!data.surroundings,
     streets: !!data.streets,
-    dc: !!data.dc,
-    dh: !!data.dh && !data.dc,
+    dc: data?.dc !== null,
+    dh: data?.dh !== null && data?.dc === null,
     network: true,
   });
+
   const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
 
   const onMapLoad = useCallback(() => {
@@ -97,7 +98,7 @@ const DeckGLMap = ({ data, colors }) => {
               network_type
             ),
           updateTriggers: {
-            getFillColor: selected,
+            getFillColor: [selected, visibility.dc],
           },
 
           pickable: true,
@@ -240,6 +241,14 @@ const DeckGLMap = ({ data, colors }) => {
     }
   };
 
+  const onNetworkChange = (value) => {
+    setVisibility((oldValue) => ({
+      ...oldValue,
+      dc: value === 'dc',
+      dh: value === 'dh',
+    }));
+  };
+
   useEffect(() => {
     setLayers(renderLayers());
   }, [data, visibility, extruded, selected]);
@@ -258,7 +267,14 @@ const DeckGLMap = ({ data, colors }) => {
       >
         <DeckGLOverlay layers={layers} />
 
-        <NetworkToggle data={data} setVisibility={setVisibility} />
+        <NetworkToggle
+          cooling={data?.dc !== null}
+          heating={data?.dh !== null}
+          initialValue={
+            data?.dc !== null ? 'dc' : data?.dh !== null ? 'dh' : null
+          }
+          onChange={onNetworkChange}
+        />
         <LayerToggle data={data} setVisibility={setVisibility} />
       </Map>
       <div id="map-tooltip"></div>
@@ -315,7 +331,7 @@ function updateTooltip({ x, y, object, layer }) {
 
 const nodeFillColor = (type, colors, network) => {
   if (type === 'NONE') {
-    return network === 'dc' ? colors.dc : colors.dh;
+    return network === 'dc' ? colors.dc : network === 'dh' ? colors.dh : null;
   } else if (type === 'CONSUMER') {
     return [255, 255, 255];
   } else if (type === 'PLANT') {

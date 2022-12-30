@@ -1,40 +1,41 @@
-export const NetworkToggle = ({ data, setVisibility }) => {
-  const handleChange = (e) => {
-    const { value } = e.target;
-    setVisibility((oldValue) => ({
-      ...oldValue,
-      dc: value === 'dc',
-      dh: value === 'dh',
-    }));
+import { useState } from 'react';
+
+export const NetworkToggle = ({
+  cooling,
+  heating,
+  initialValue = null,
+  onChange = () => {},
+}) => {
+  const [selected, setSelected] = useState(initialValue);
+
+  const handleChange = (value) => {
+    setSelected(value);
+    onChange(value);
   };
+
+  const RadioInput = ({ value, label }) => {
+    return (
+      <label className="map-plot-label network-label">
+        <input
+          type="radio"
+          name="network-type"
+          value={value}
+          onChange={() => {
+            handleChange(value);
+          }}
+          checked={selected === value}
+        />
+        {label}
+      </label>
+    );
+  };
+
   return (
     <div className="network-toggle">
       <span>Network Type:</span>
-      {data.dc && (
-        <label className="map-plot-label network-label">
-          <input
-            type="radio"
-            name="network-type"
-            value="dc"
-            onChange={handleChange}
-            defaultChecked
-          />
-          District Cooling
-        </label>
-      )}
-      {data.dh && (
-        <label className="map-plot-label network-label">
-          <input
-            type="radio"
-            name="network-type"
-            value="dh"
-            onChange={handleChange}
-            defaultChecked={!data.dc}
-          />
-          District Heating
-        </label>
-      )}
-      {!data.dc && !data.dh && <div>No networks found</div>}
+      {cooling && <RadioInput value="dc" label="District Cooling" />}
+      {heating && <RadioInput value="dh" label="District Heating" />}
+      {!cooling && !heating && <div>No networks found</div>}
     </div>
   );
 };
