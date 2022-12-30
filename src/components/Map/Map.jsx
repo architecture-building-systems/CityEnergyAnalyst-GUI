@@ -2,10 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
-import ReactMapGL, {
-  _MapContext as MapContext,
-  NavigationControl,
-} from 'react-map-gl';
+import ReactMapGL, { _MapContext as MapContext } from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
 import { area as calcArea, length as calcLength } from '@turf/turf';
 import inputEndpoints from '../../constants/inputEndpoints';
@@ -261,7 +258,7 @@ const DeckGLMap = ({ data, colors }) => {
   }, [data, visibility, extruded, selected]);
 
   return (
-    <>
+    <div onContextMenu={(evt) => evt.preventDefault()}>
       <DeckGL
         viewState={viewState}
         controller={true}
@@ -289,7 +286,7 @@ const DeckGLMap = ({ data, colors }) => {
         <ToggleMapStyleControl callback={setMapStyle} />
       </div>
       <div id="map-tooltip"></div>
-    </>
+    </div>
   );
 };
 
