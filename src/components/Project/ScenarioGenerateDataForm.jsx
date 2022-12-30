@@ -239,21 +239,15 @@ const ScenarioMap = ({ form }) => {
 
       <Form.Item>
         <Row>
-          <h4>Location</h4>
+          <div>Location</div>
           {form.getFieldDecorator('location', {
             initialValue: '',
           })(
-            <Input
-              onPressEnter={getLatLong}
-              addonAfter={
-                <button
-                  type="button"
-                  style={{ height: 30, width: 50 }}
-                  onClick={getLatLong}
-                >
-                  Go
-                </button>
-              }
+            <Input.Search
+              placeholder="input location name"
+              allowClear
+              enterButton="Search"
+              onSearch={getLatLong}
             />
           )}
         </Row>
@@ -302,7 +296,7 @@ const LatLongInput = forwardRef(
     return (
       <Row gutter={16} ref={ref}>
         <Col span={12}>
-          <h4>Latitude</h4>
+          <div>Latitude</div>
           <Input
             value={'lat' in value ? value.lat : null}
             onChange={(e) => {
@@ -312,27 +306,21 @@ const LatLongInput = forwardRef(
           />
         </Col>
         <Col span={12}>
-          <h4>Longitude</h4>
-          <Input
+          <div>Longitude</div>
+          <Input.Search
             value={'long' in value ? value.long : null}
+            style={{ marginTop: 4 }}
+            enterButton="Go"
+            onSearch={onClick}
             onChange={(e) => {
               triggerChange({ long: e.target.value });
             }}
-            onPressEnter={onClick}
-            addonAfter={
-              <button
-                type="button"
-                style={{ height: 30, width: 50 }}
-                onClick={onClick}
-              >
-                Go
-              </button>
-            }
           />
         </Col>
       </Row>
     );
   }
 );
+LatLongInput.displayName = 'LatLongInput';
 
 export default ScenarioGenerateDataForm;
