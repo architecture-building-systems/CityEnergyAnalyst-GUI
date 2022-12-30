@@ -1,45 +1,38 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import DeckGL from '@deck.gl/react';
-import { GeoJsonLayer } from '@deck.gl/layers';
-import ReactMapGL, { _MapContext as MapContext } from 'react-map-gl';
+
+import { GeoJsonLayer } from '@deck.gl/layers/typed';
+import { MapboxOverlay } from '@deck.gl/mapbox/typed';
+
 import mapStyles from '../../constants/mapStyles';
 import { area as calcArea, length as calcLength } from '@turf/turf';
-import inputEndpoints from '../../constants/inputEndpoints';
-import axios from 'axios';
-import {
-  Toggle3DControl,
-  ToggleMapStyleControl,
-  ResetCameraControl,
-} from './MapButtons';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
+
+import Map from 'react-map-gl';
+import { useControl } from 'react-map-gl';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { LayerToggle, NetworkToggle } from './Toggle';
 
 // Initial viewport settings
 const defaultViewState = {
   longitude: 0,
   latitude: 0,
-  zoom: 0,
+  zoom: 1,
   pitch: 0,
   bearing: 0,
 };
 
-function useRefWithCallback(callback) {
-  const ref = useRef(null);
-  const setRef = useCallback((node) => {
-    if (node) {
-      callback(node);
-    }
-    ref.current = node;
-  }, []);
-
-  return [setRef];
+function DeckGLOverlay(props) {
+  const overlay = useControl(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
 }
 
 const DeckGLMap = ({ data, colors }) => {
-  const [mapRef] = useRefWithCallback(calcCameraOptions);
+  const mapRef = useRef();
   const cameraOptions = useRef();
-  const glRef = useRef();
   const selectedLayer = useRef();
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
@@ -59,21 +52,25 @@ const DeckGLMap = ({ data, colors }) => {
   });
   const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
 
-  function calcCameraOptions(node) {
-    const map = node.getMap();
-    if (data.zone) {
-      const bbox = data.zone.bbox;
-      cameraOptions.current = map.cameraForBounds(bbox, {
-        maxZoom: 20,
-      });
-      setViewState({
-        ...viewState,
-        zoom: cameraOptions.current.zoom,
-        latitude: cameraOptions.current.center.lat,
-        longitude: cameraOptions.current.center.lng,
-      });
-    }
-  }
+  const onMapLoad = useCallback(() => {
+    console.debug('Map loaded.');
+
+    const mapbox = mapRef.current.getMap();
+    const bbox = data?.zone.bbox;
+    if (bbox === null) return;
+
+    cameraOptions.current = mapbox.cameraForBounds(bbox, {
+      maxZoom: 16,
+      padding: 8,
+    });
+
+    setViewState({
+      ...viewState,
+      zoom: cameraOptions.current.zoom,
+      latitude: cameraOptions.current.center.lat,
+      longitude: cameraOptions.current.center.lng,
+    });
+  });
 
   const renderLayers = () => {
     const network_type = visibility.dc ? 'dc' : 'dh';
@@ -213,11 +210,12 @@ const DeckGLMap = ({ data, colors }) => {
     setViewState(viewState);
   };
 
-  const onDragStart = (info, event) => {
-    let dToggleButton = document.getElementById('3d-button');
-    if (event.rightButton && !extruded) {
-      dToggleButton.click();
-    }
+  const onPitchStart = (event) => {
+    // let dToggleButton = document.getElementById('3d-button');
+    // if (event.rightButton && !extruded) {
+    //   dToggleButton.click();
+    // }
+    console.log(event);
   };
 
   const onClick = ({ object, layer }, event) => {
@@ -242,159 +240,29 @@ const DeckGLMap = ({ data, colors }) => {
     }
   };
 
-  useEffect(
-    // Clear WebGL context
-    () => () => {
-      if (glRef.current) {
-        const extension = glRef.current.getExtension('WEBGL_lose_context');
-        if (extension) extension.loseContext();
-      }
-    },
-    []
-  );
-
   useEffect(() => {
     setLayers(renderLayers());
   }, [data, visibility, extruded, selected]);
 
   return (
-    <div onContextMenu={(evt) => evt.preventDefault()}>
-      <DeckGL
-        viewState={viewState}
-        controller={true}
-        layers={layers}
-        ContextProvider={MapContext.Provider}
-        onViewStateChange={onViewStateChange}
-        onDragStart={onDragStart}
-        onWebGLInitialized={(gl) => (glRef.current = gl)}
+    <>
+      <Map
+        ref={mapRef}
+        mapLib={maplibregl}
+        mapStyle={mapStyles[mapStyle]}
+        onLoad={onMapLoad}
+        onMove={onViewStateChange}
+        onPitchStart={onPitchStart}
+        onContextMenu={(e) => e.preventDefault()}
+        {...viewState}
       >
-        <ReactMapGL ref={mapRef} mapStyle={mapStyles[mapStyle]} />
-      </DeckGL>
-      <NetworkToggle data={data} setVisibility={setVisibility} />
-      <LayerToggle data={data} setVisibility={setVisibility} />
-      <div style={{ position: 'absolute', right: 0, zIndex: 3, padding: 10 }}>
-        <Toggle3DControl
-          callback={setExtruded}
-          viewState={viewState}
-          setViewState={setViewState}
-        />
-        <ResetCameraControl
-          cameraOptions={cameraOptions.current}
-          viewState={viewState}
-          setViewState={setViewState}
-        />
-        <ToggleMapStyleControl callback={setMapStyle} />
-      </div>
+        <DeckGLOverlay layers={layers} />
+
+        <NetworkToggle data={data} setVisibility={setVisibility} />
+        <LayerToggle data={data} setVisibility={setVisibility} />
+      </Map>
       <div id="map-tooltip"></div>
-    </div>
-  );
-};
-
-const NetworkToggle = ({ data, setVisibility }) => {
-  const handleChange = (e) => {
-    const { value } = e.target;
-    setVisibility((oldValue) => ({
-      ...oldValue,
-      dc: value === 'dc',
-      dh: value === 'dh',
-    }));
-  };
-  return (
-    <div className="network-toggle">
-      <span>Network Type:</span>
-      {data.dc && (
-        <label className="map-plot-label network-label">
-          <input
-            type="radio"
-            name="network-type"
-            value="dc"
-            onChange={handleChange}
-            defaultChecked
-          />
-          District Cooling
-        </label>
-      )}
-      {data.dh && (
-        <label className="map-plot-label network-label">
-          <input
-            type="radio"
-            name="network-type"
-            value="dh"
-            onChange={handleChange}
-            defaultChecked={!data.dc}
-          />
-          District Heating
-        </label>
-      )}
-      {!data.dc && !data.dh && <div>No networks found</div>}
-    </div>
-  );
-};
-
-const LayerToggle = ({ data, setVisibility }) => {
-  const handleChange = (e) => {
-    const { value, checked } = e.target;
-    setVisibility((oldValue) => ({ ...oldValue, [value]: checked }));
-  };
-  return (
-    <div id="layers-group">
-      {data.zone && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="zone"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Zone
-          </label>
-        </span>
-      )}
-      {data.surroundings && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="surroundings"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Surroundings
-          </label>
-        </span>
-      )}
-      {data.streets && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="streets"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Streets
-          </label>
-        </span>
-      )}
-      {(data.dh || data.dc) && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="network"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Network
-          </label>
-        </span>
-      )}
-    </div>
+    </>
   );
 };
 
@@ -469,34 +337,6 @@ const buildingColor = (
   if (layer === 'surroundings') return colors.surroundings;
   if (connectedBuildings.includes(buildingName)) return colors[network_type];
   return colors.disconnected;
-};
-
-export const useGeoJsons = (layerList) => {
-  const [geojsons, setGeoJsons] = useState();
-
-  useEffect(() => {
-    let promises = layerList.map((type) => {
-      return axios
-        .get(`${import.meta.env.VITE_CEA_URL}${inputEndpoints[type]}`)
-        .catch((error) => {
-          return console.error(error.response.data);
-        });
-    });
-    axios
-      .all(promises)
-      .then((results) => {
-        let _data = {};
-        for (var i = 0; i < layerList.length; i++) {
-          if (results[i] && results[i].status === 200) {
-            _data[layerList[i]] = results[i].data;
-          }
-        }
-        setGeoJsons(_data);
-      })
-      .catch((error) => console.error(error));
-  }, []);
-
-  return [geojsons, setGeoJsons];
 };
 
 export default DeckGLMap;
