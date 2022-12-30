@@ -14,6 +14,7 @@ import { useControl } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { LayerToggle, NetworkToggle } from './Toggle';
+import { Button, Switch } from 'antd';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -34,6 +35,7 @@ const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const cameraOptions = useRef();
   const selectedLayer = useRef();
+  const firstPitch = useRef(false);
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
   const connectedBuildings = useSelector(
@@ -65,12 +67,13 @@ const DeckGLMap = ({ data, colors }) => {
       padding: 8,
     });
 
-    setViewState({
-      ...viewState,
+    setViewState((state) => ({
+      ...state,
       zoom: cameraOptions.current.zoom,
+      bearing: cameraOptions.current.bearing,
       latitude: cameraOptions.current.center.lat,
       longitude: cameraOptions.current.center.lng,
-    });
+    }));
   });
 
   const renderLayers = () => {
@@ -211,12 +214,11 @@ const DeckGLMap = ({ data, colors }) => {
     setViewState(viewState);
   };
 
-  const onPitchStart = (event) => {
-    // let dToggleButton = document.getElementById('3d-button');
-    // if (event.rightButton && !extruded) {
-    //   dToggleButton.click();
-    // }
-    console.log(event);
+  const onPitchStart = () => {
+    if (!firstPitch.current) {
+      setExtruded(true);
+      firstPitch.current = true;
+    }
   };
 
   const onClick = ({ object, layer }, event) => {
@@ -259,6 +261,7 @@ const DeckGLMap = ({ data, colors }) => {
         ref={mapRef}
         mapLib={maplibregl}
         mapStyle={mapStyles[mapStyle]}
+        minZoom={1}
         onLoad={onMapLoad}
         onMove={onViewStateChange}
         onPitchStart={onPitchStart}
@@ -276,6 +279,48 @@ const DeckGLMap = ({ data, colors }) => {
           onChange={onNetworkChange}
         />
         <LayerToggle data={data} setVisibility={setVisibility} />
+
+        <div id="map-controls">
+          <div>
+            Dark Mode:
+            <Switch
+              style={{ margin: 6 }}
+              size="small"
+              onChange={(checked) => {
+                setMapStyle(checked ? 'DARK_MAP' : 'LIGHT_MAP');
+              }}
+            />
+          </div>
+          <div>
+            3D Buildings:
+            <Switch
+              style={{ margin: 6 }}
+              size="small"
+              checked={extruded}
+              onChange={(checked) => {
+                setExtruded(checked);
+              }}
+            />
+          </div>
+          <Button
+            style={{ fontSize: 12 }}
+            type="primary"
+            size="small"
+            block
+            onClick={() => {
+              setViewState((state) => ({
+                ...state,
+                pitch: 0,
+                zoom: cameraOptions.current.zoom,
+                bearing: cameraOptions.current.bearing,
+                latitude: cameraOptions.current.center.lat,
+                longitude: cameraOptions.current.center.lng,
+              }));
+            }}
+          >
+            Reset Camera
+          </Button>
+        </div>
       </Map>
       <div id="map-tooltip"></div>
     </>

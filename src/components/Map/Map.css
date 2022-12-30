@@ -44,3 +44,14 @@
 #layers-group span {
   padding: 5px;
 }
+
+#map-controls {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
