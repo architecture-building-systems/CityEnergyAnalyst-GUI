@@ -8,6 +8,7 @@ import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
 import Parameter from '../Tools/Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
+import { checkExist, joinPath } from '../../utils/file';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -89,8 +90,14 @@ const NewScenarioForm = Form.create()(
                 transform: (value) => value.trim(),
               },
               {
-                validator: (rule, value, callback) => {
-                  if (value.length != 0) {
+                validator: async (rule, value, callback) => {
+                  const contentPath = joinPath(project, value);
+                  const pathExists = await checkExist(
+                    '',
+                    'directory',
+                    contentPath
+                  );
+                  if (value.length != 0 && pathExists) {
                     callback('Scenario with name already exists in project');
                   } else {
                     callback();
