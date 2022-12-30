@@ -760,7 +760,7 @@
   dependencies:
     "@babel/runtime" "^7.3.1"
 
-"@luma.gl/constants@8.5.18", "@luma.gl/constants@^8.5.16":
+"@luma.gl/constants@8.5.18", "@luma.gl/constants@^8.5.10", "@luma.gl/constants@^8.5.16":
   version "8.5.18"
   resolved "https://registry.yarnpkg.com/@luma.gl/constants/-/constants-8.5.18.tgz#f18886dfb1407225cd18cb792e490219f91eb3d2"
   integrity sha512-lQLGAlroQaeJkAUwrb1fRiHlMBP9/ukyjnZ1QlYgXYyeC7/9XhLx4rqBlOzQ2sxcTHHwi73nHD0P2XmVuAccBg==
@@ -987,7 +987,7 @@
     lodash.throttle "^4.1.1"
     viewport-mercator-project ">=6.0.0"
 
-"@nebula.gl/layers@^1.0.4":
+"@nebula.gl/layers@1.0.4":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@nebula.gl/layers/-/layers-1.0.4.tgz#5acea95db132cbcb02bbb4a8afa805a0d9adc606"
   integrity sha512-jwBGvQK7iIdq05DWl5q7vOIhpU+rVFhR+y30G1P5toz/SD9z3Qadfm2SYDgIcX36Ez45mJMKVllY7hLEG1tSRA==
@@ -3572,6 +3572,11 @@ esutils@^2.0.2:
   resolved "https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz"
   integrity sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
 
+events@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
+  integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==
+
 expression-eval@^2.0.0:
   version "2.1.0"
   resolved "https://registry.npmjs.org/expression-eval/-/expression-eval-2.1.0.tgz"
@@ -4503,6 +4508,41 @@ natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
+
+nebula.gl@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/nebula.gl/-/nebula.gl-1.0.4.tgz#2763af1fc40148eae5fa97c1cb301157845b36da"
+  integrity sha512-B9kMO45N830E0K1b+TQbv/2cNOCGzixHCQNeJCJ6sAHrKxaT2851tnHlW3EgD/zfvgw3B9yGWqWpXUihm8d4PA==
+  dependencies:
+    "@luma.gl/constants" "^8.5.10"
+    "@nebula.gl/layers" "1.0.4"
+    "@turf/bbox" ">=4.0.0"
+    "@turf/bbox-polygon" ">=4.0.0"
+    "@turf/bearing" ">=4.0.0"
+    "@turf/boolean-point-in-polygon" ">=4.0.0"
+    "@turf/buffer" ">=4.0.0"
+    "@turf/center" ">=4.0.0"
+    "@turf/centroid" ">=4.0.0"
+    "@turf/circle" ">=4.0.0"
+    "@turf/destination" ">=4.0.0"
+    "@turf/difference" ">=4.0.0"
+    "@turf/distance" ">=4.0.0"
+    "@turf/ellipse" ">=4.0.0"
+    "@turf/helpers" ">=4.0.0"
+    "@turf/intersect" ">=4.0.0"
+    "@turf/line-intersect" ">=4.0.0"
+    "@turf/nearest-point-on-line" ">=4.0.0"
+    "@turf/point-to-line-distance" ">=4.0.0"
+    "@turf/polygon-to-line" ">=4.0.0"
+    "@turf/transform-rotate" ">=4.0.0"
+    "@turf/transform-scale" ">=4.0.0"
+    "@turf/transform-translate" ">=4.0.0"
+    "@turf/union" ">=4.0.0"
+    cubic-hermite-spline "^1.0.1"
+    geojson-types "^2.0.1"
+    global ">=4.3.0"
+    uuid "7.0.3"
+    viewport-mercator-project ">=6.0.0"
 
 needle@^3.1.0:
   version "3.2.0"
@@ -5865,6 +5905,11 @@ use-sync-external-store@^1.0.0:
   resolved "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.2.0.tgz"
   integrity sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==
 
+uuid@7.0.3:
+  version "7.0.3"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-7.0.3.tgz#c5c9f2c8cf25dc0a372c4df1441c41f5bd0c680b"
+  integrity sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==
+
 value-equal@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/value-equal/-/value-equal-1.0.1.tgz"
@@ -5872,7 +5917,7 @@ value-equal@^1.0.1:
 
 viewport-mercator-project@>=6.0.0:
   version "7.0.4"
-  resolved "https://registry.npmjs.org/viewport-mercator-project/-/viewport-mercator-project-7.0.4.tgz"
+  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-7.0.4.tgz#67feec04135484bf424dd4890d630e82116b31e6"
   integrity sha512-0jzpL6pIMocCKWg1C3mqi/N4UPgZC3FzwghEm1H+XsUo8hNZAyJc3QR7YqC816ibOR8aWT5pCsV+gCu8/BMJgg==
   dependencies:
     "@math.gl/web-mercator" "^3.5.5"

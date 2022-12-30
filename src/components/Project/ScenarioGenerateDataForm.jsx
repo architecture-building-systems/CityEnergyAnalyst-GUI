@@ -269,7 +269,7 @@ const ScenarioMap = ({ form }) => {
           <EditableMap
             location={location}
             geojson={form.getFieldValue('geojson')}
-            outputGeojson={setGeojson}
+            setValue={setGeojson}
           />
         </div>
       )}

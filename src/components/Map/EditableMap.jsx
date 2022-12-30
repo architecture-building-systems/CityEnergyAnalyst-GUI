@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
-import DeckGL from '@deck.gl/react';
-import ReactMapGL from 'react-map-gl';
+import Map from 'react-map-gl';
 import mapStyles from '../../constants/mapStyles';
-import { EditableGeoJsonLayer } from '@nebula.gl/layers';
+import {
+  DrawPolygonMode,
+  EditableGeoJsonLayer,
+  ModifyMode,
+  ViewMode,
+} from 'nebula.gl';
 import { Button } from 'antd';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import './EditableMap.css';
 import { area as calcArea, polygon } from '@turf/turf';
+import { DeckGL } from 'deck.gl';
 
 const defaultViewState = {
   longitude: 0,
@@ -33,49 +39,51 @@ export const calcPolyArea = (geojson) => {
 
 const EditableMap = ({
   location = defaultViewState,
-  geojson = null,
-  outputGeojson = null,
+  geojson = EMPTY_FEATURE,
+  setValue = () => {},
 }) => {
   const [viewState, setViewState] = useState(defaultViewState);
-  const [mode, setMode] = useState('view');
+  const [mode, setMode] = useState(null);
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
-  const hasData = !!data.features.length;
+  const hasData = data.features.length > 0;
 
   const layer = new EditableGeoJsonLayer({
     id: 'geojson-layer',
     data: data,
-    mode: mode,
+    mode:
+      mode === 'draw'
+        ? DrawPolygonMode
+        : mode === 'edit'
+        ? ModifyMode
+        : ViewMode,
     selectedFeatureIndexes: selectedFeatureIndexes,
 
-    onEdit: ({ updatedData }) => {
-      if (mode === 'drawPolygon') {
-        setMode('view');
-        setSelectedFeatureIndexes([0]);
+    onEdit: (e) => {
+      if (e.editType === 'addFeature') {
+        setData(e.updatedData);
+        setMode(null);
+      } else if (
+        ['removePosition', 'movePosition', 'addPosition'].includes(e.editType)
+      ) {
+        setData(e.updatedData);
       }
-      setData(updatedData);
     },
-
-    onLayerClick: () => {},
   });
 
-  const onViewStateChange = ({ viewState }) => {
-    setViewState(viewState);
-  };
-
-  const changeToDraw = () => {
-    if (mode !== 'drawPolygon') {
-      setMode('drawPolygon');
+  const ToggleDraw = () => {
+    if (mode !== 'draw') {
+      setMode('draw');
     } else {
-      setMode('view');
+      setMode(null);
     }
   };
 
-  const changeToEdit = () => {
-    if (mode !== 'modify') {
-      setMode('modify');
+  const ToggleEdit = () => {
+    if (mode !== 'edit') {
+      setMode('edit');
     } else {
-      setMode('view');
+      setMode(null);
     }
   };
 
@@ -85,84 +93,61 @@ const EditableMap = ({
   };
 
   useEffect(() => {
-    setTimeout(
-      () => setViewState((viewState) => ({ ...viewState, ...location })),
-      0
-    );
+    setViewState((viewState) => ({ ...viewState, ...location }));
   }, [location]);
 
   useEffect(() => {
-    if (outputGeojson) {
-      if (hasData) {
-        outputGeojson(data);
-      } else {
-        outputGeojson(null);
-      }
-    }
+    if (mode === 'draw') setData(EMPTY_FEATURE);
+    else if (mode === 'edit') setSelectedFeatureIndexes([0]);
+    else setSelectedFeatureIndexes([]);
+  }, [mode]);
+
+  useEffect(() => {
+    setValue(data);
   }, [data]);
 
   return (
     <>
       {hasData && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            padding: 10,
-            zIndex: 5,
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            fontWeight: 600,
-          }}
-        >
-          {`Selected Area: ${calcPolyArea(data)} km2`}
+        <div id="edit-map-area-info">
+          {`Area size: ${calcPolyArea(data)} km2`}
         </div>
       )}
-      <div
-        id="edit-map-buttons"
-        style={{
-          position: 'absolute',
-          right: 0,
-          padding: 10,
-          display: 'none',
-          zIndex: 5,
-        }}
-      >
-        {hasData ? null : (
+      <div id="edit-map-buttons">
+        {hasData ? (
+          <>
+            <Button
+              type={mode === 'edit' ? 'primary' : 'default'}
+              onClick={ToggleEdit}
+            >
+              Edit
+            </Button>
+            <Button type="primary" onClick={deletePolygon} danger>
+              Delete
+            </Button>
+          </>
+        ) : (
           <Button
-            type={mode === 'drawPolygon' ? 'primary' : 'default'}
-            onClick={changeToDraw}
+            type={mode === 'draw' ? 'primary' : 'default'}
+            onClick={ToggleDraw}
           >
             Draw
           </Button>
         )}
-        {!hasData ? null : (
-          <Button
-            type={mode === 'modify' ? 'primary' : 'default'}
-            onClick={changeToEdit}
-          >
-            {mode !== 'modify' ? 'Edit' : 'Done'}
-          </Button>
-        )}
-        {!hasData || mode === 'modify' ? null : (
-          <Button type="danger" onClick={deletePolygon}>
-            Delete
-          </Button>
-        )}
       </div>
-      <DeckGL
-        viewState={viewState}
-        controller={{ doubleClickZoom: false, dragRotate: false }}
-        layers={[layer]}
-        onViewStateChange={onViewStateChange}
-        useDevicePixels={false}
-      >
-        <ReactMapGL
-          mapStyle={mapStyles.LIGHT_MAP}
-          onLoad={() => {
-            document.getElementById('edit-map-buttons').style.display = 'block';
+
+      <div onContextMenu={(e) => e.preventDefault()}>
+        <DeckGL
+          viewState={viewState}
+          controller={{ dragRotate: false, doubleClickZoom: false }}
+          layers={[layer]}
+          onViewStateChange={({ viewState }) => {
+            setViewState(viewState);
           }}
-        />
-      </DeckGL>
+        >
+          <Map mapLib={maplibregl} mapStyle={mapStyles['LIGHT_MAP']} />
+        </DeckGL>
+      </div>
     </>
   );
 };
