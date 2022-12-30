@@ -289,7 +289,7 @@ export const FormItemWrapper = ({
   return (
     <Form.Item
       label={name}
-      labelCol={{ span: 4 }}
+      labelCol={{ span: 6 }}
       wrapperCol={{ span: 15, offset: 1 }}
       key={name}
     >

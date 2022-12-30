@@ -33,6 +33,98 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
     }
   };
 
+  const ZoneTool = () => (
+    <div>
+      <div>
+        <Checkbox value="zone" disabled>
+          Zone
+        </Checkbox>
+        <SettingOutlined onClick={() => showModal('zone-helper')} />
+        <small
+          style={{
+            marginLeft: 10,
+          }}
+        >
+          *Selected by default
+        </small>
+      </div>
+      <small>- Query zone geometry from Open Street Maps.</small>
+    </div>
+  );
+
+  const SurroundingsTool = () => (
+    <div>
+      <div>
+        <Checkbox value="surroundings" disabled={!zoneChecked}>
+          Surroundings
+        </Checkbox>
+        <SettingOutlined onClick={() => showModal('surroundings-helper')} />
+        <small
+          style={{
+            color: 'red',
+            marginLeft: 10,
+            display: zoneChecked ? 'none' : '',
+          }}
+        >
+          *Requires zone file.
+        </small>
+      </div>
+      <small>- Query Surroundings geometry from Open Street Maps.</small>
+    </div>
+  );
+
+  const StreetsTool = () => (
+    <div>
+      <div>
+        <Checkbox value="streets" disabled={!surroundingsChecked}>
+          Streets
+        </Checkbox>
+        <SettingOutlined onClick={() => showModal('streets-helper')} />
+        <small
+          style={{
+            color: 'red',
+            marginLeft: 10,
+            display: surroundingsChecked ? 'none' : '',
+          }}
+        >
+          *Requires zone and surroundings file.
+        </small>
+      </div>
+      <small>- Query streets geometry from Open Street Maps.</small>
+    </div>
+  );
+
+  const TerrainTool = () => (
+    <div>
+      <div>
+        <Checkbox value="terrain" disabled={!surroundingsChecked}>
+          Terrain
+        </Checkbox>
+        <SettingOutlined onClick={() => showModal('terrain-helper')} />
+        <small
+          style={{
+            color: 'red',
+            marginLeft: 10,
+            display: surroundingsChecked ? 'none' : '',
+          }}
+        >
+          *Requires zone and surroundings file.
+        </small>
+      </div>
+      <small>- Creates a fixed elevation terrain file.</small>
+    </div>
+  );
+
+  const WeatherTool = () => (
+    <div>
+      <div>
+        <Checkbox value="weather">Weather</Checkbox>
+        <SettingOutlined onClick={() => showModal('weather-helper')} />
+      </div>
+      <small>- Set the weather file for the scenario.</small>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -48,90 +140,12 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
           initialValue: ['zone'],
         })(
           <Checkbox.Group onChange={handleChange}>
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="zone" disabled>
-                  Zone
-                </Checkbox>
-                <SettingOutlined onClick={() => showModal('zone-helper')} />
-                <small
-                  style={{
-                    marginLeft: 10,
-                  }}
-                >
-                  *Selected by default
-                </small>
-              </Row>
-              <small>- Query zone geometry from Open Street Maps.</small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="surroundings" disabled={!zoneChecked}>
-                  Surroundings
-                </Checkbox>
-                <SettingOutlined
-                  onClick={() => showModal('surroundings-helper')}
-                />
-                <small
-                  style={{
-                    color: 'red',
-                    marginLeft: 10,
-                    display: zoneChecked ? 'none' : '',
-                  }}
-                >
-                  *Requires zone file.
-                </small>
-              </Row>
-              <small>
-                - Query Surroundings geometry from Open Street Maps.
-              </small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="streets" disabled={!surroundingsChecked}>
-                  Streets
-                </Checkbox>
-                <SettingOutlined onClick={() => showModal('streets-helper')} />
-                <small
-                  style={{
-                    color: 'red',
-                    marginLeft: 10,
-                    display: surroundingsChecked ? 'none' : '',
-                  }}
-                >
-                  *Requires zone and surroundings file.
-                </small>
-              </Row>
-              <small>- Query streets geometry from Open Street Maps.</small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="terrain" disabled={!surroundingsChecked}>
-                  Terrain
-                </Checkbox>
-                <SettingOutlined onClick={() => showModal('terrain-helper')} />
-                <small
-                  style={{
-                    color: 'red',
-                    marginLeft: 10,
-                    display: surroundingsChecked ? 'none' : '',
-                  }}
-                >
-                  *Requires zone and surroundings file.
-                </small>
-              </Row>
-              <small>- Creates a fixed elevation terrain file.</small>
-            </div>
-
-            <div style={{ margin: 10 }}>
-              <Row>
-                <Checkbox value="weather">Weather</Checkbox>
-                <SettingOutlined onClick={() => showModal('weather-helper')} />
-              </Row>
-              <small>- Set the weather file for the scenario.</small>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <ZoneTool />
+              <SurroundingsTool />
+              <StreetsTool />
+              <TerrainTool />
+              <WeatherTool />
             </div>
           </Checkbox.Group>
         )}
