@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
+import { DeckGL } from 'deck.gl';
 import { GeoJsonLayer } from '@deck.gl/layers/typed';
-import { MapboxOverlay } from '@deck.gl/mapbox/typed';
 
 import mapStyles from '../../constants/mapStyles';
 import { area as calcArea, length as calcLength } from '@turf/turf';
@@ -10,7 +10,6 @@ import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
 import Map from 'react-map-gl';
-import { useControl } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { LayerToggle, NetworkToggle } from './Toggle';
@@ -20,16 +19,10 @@ import { Button, Switch } from 'antd';
 const defaultViewState = {
   longitude: 0,
   latitude: 0,
-  zoom: 1,
+  zoom: 0,
   pitch: 0,
   bearing: 0,
 };
-
-function DeckGLOverlay(props) {
-  const overlay = useControl(() => new MapboxOverlay(props));
-  overlay.setProps(props);
-  return null;
-}
 
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
@@ -176,7 +169,7 @@ const DeckGLMap = ({ data, colors }) => {
           getFillColor: (f) =>
             nodeFillColor(f.properties['Type'], colors, 'dc'),
           getLineWidth: 3,
-          getRadius: 3,
+          getPointRadius: 3,
 
           pickable: true,
           autoHighlight: true,
@@ -198,7 +191,7 @@ const DeckGLMap = ({ data, colors }) => {
           getFillColor: (f) =>
             nodeFillColor(f.properties['Type'], colors, 'dh'),
           getLineWidth: 3,
-          getRadius: 3,
+          getPointRadius: 3,
 
           pickable: true,
           autoHighlight: true,
@@ -210,12 +203,8 @@ const DeckGLMap = ({ data, colors }) => {
     return _layers;
   };
 
-  const onViewStateChange = ({ viewState }) => {
-    setViewState(viewState);
-  };
-
-  const onPitchStart = () => {
-    if (!firstPitch.current) {
+  const onDragStart = (info, event) => {
+    if (!firstPitch.current && event.rightButton) {
       setExtruded(true);
       firstPitch.current = true;
     }
@@ -256,20 +245,27 @@ const DeckGLMap = ({ data, colors }) => {
   }, [data, visibility, extruded, selected]);
 
   return (
-    <>
-      <Map
-        ref={mapRef}
-        mapLib={maplibregl}
-        mapStyle={mapStyles[mapStyle]}
-        minZoom={1}
-        onLoad={onMapLoad}
-        onMove={onViewStateChange}
-        onPitchStart={onPitchStart}
-        onContextMenu={(e) => e.preventDefault()}
-        {...viewState}
+    <div
+      onContextMenu={(e) => {
+        e.preventDefault();
+      }}
+    >
+      <DeckGL
+        viewState={viewState}
+        controller={{ inertia: true }}
+        layers={layers}
+        onViewStateChange={({ viewState }) => {
+          setViewState(viewState);
+        }}
+        onDragStart={onDragStart}
       >
-        <DeckGLOverlay layers={layers} />
-
+        <Map
+          ref={mapRef}
+          mapLib={maplibregl}
+          mapStyle={mapStyles[mapStyle]}
+          onLoad={onMapLoad}
+          minZoom={1}
+        />
         <NetworkToggle
           cooling={data?.dc !== null}
           heating={data?.dh !== null}
@@ -321,9 +317,9 @@ const DeckGLMap = ({ data, colors }) => {
             Reset Camera
           </Button>
         </div>
-      </Map>
+      </DeckGL>
       <div id="map-tooltip"></div>
-    </>
+    </div>
   );
 };
 
