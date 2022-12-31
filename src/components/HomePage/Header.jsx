@@ -1,17 +1,47 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
 import { Layout } from 'antd';
 import SearchBar from './Searchbar';
-import { setCollapsed } from '../../actions/homepage';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { useContext } from 'react';
+import { LayoutContext } from '../../containers/HomePage';
 
 const { Header: AntHeader } = Layout;
 
 const Header = () => {
-  const { collapsed } = useSelector((state) => state.sider);
   const { project_name: projectName, scenario_name: scenarioName } =
     useSelector((state) => state.project.info);
   const { pathname } = useSelector((state) => state.router.location);
-  const dispatch = useDispatch();
+
+  const { collapsed, setCollapsed } = useContext(LayoutContext);
+
+  const CollapseButton = () => {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontSize: 18,
+        }}
+      >
+        {collapsed ? (
+          <MenuUnfoldOutlined
+            style={{ padding: 18 }}
+            onClick={() => {
+              setCollapsed(false);
+            }}
+          />
+        ) : (
+          <MenuFoldOutlined
+            style={{ padding: 18 }}
+            onClick={() => {
+              setCollapsed(true);
+            }}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <AntHeader
@@ -28,12 +58,7 @@ const Header = () => {
       }}
     >
       <div className="cea-home-header-left" style={{ display: 'flex' }}>
-        <span
-          className="trigger menu-toggle"
-          onClick={() => dispatch(setCollapsed(!collapsed))}
-        >
-          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        </span>
+        <CollapseButton />
         {pathname !== '/' && (
           <span
             style={{
@@ -54,10 +79,7 @@ const Header = () => {
           </span>
         )}
       </div>
-      <div
-        className="cea-home-header-right"
-        style={{ width: '30%', marginRight: collapsed ? 125 : 300 }}
-      >
+      <div className="cea-home-header-right">
         <SearchBar />
       </div>
     </AntHeader>

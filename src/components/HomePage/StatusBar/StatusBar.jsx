@@ -14,7 +14,7 @@ import {
 import { Popover, notification, Button, Modal } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
+import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
 import './StatusBar.css';
 
 const socket = io(`${import.meta.env.VITE_CEA_URL}`);

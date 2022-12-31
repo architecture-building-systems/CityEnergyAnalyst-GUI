@@ -5,7 +5,6 @@
   background-color: #333;
   display: flex;
   justify-content: space-between;
-  position: fixed;
   z-index: 9999;
 }
 

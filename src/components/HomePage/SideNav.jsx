@@ -1,5 +1,5 @@
-import { Children, cloneElement, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { Children, cloneElement, useContext, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   BarChartOutlined,
@@ -14,47 +14,47 @@ import {
 } from '@ant-design/icons';
 
 import { Layout, Menu } from 'antd';
-import { setCollapsed } from '../../actions/homepage';
 import ToolsMenu from './ToolsMenu';
 import routes from '../../constants/routes';
 import ceaLogo from '../../assets/cea-logo.png';
+import { LayoutContext } from '../../containers/HomePage';
 
 const { Sider } = Layout;
 const { SubMenu } = Menu;
 
 const SideNav = () => {
-  // TODO: Maybe use context instead of redux for this
-  const { collapsed } = useSelector((state) => state.sider);
   const { location } = useSelector((state) => state.router);
-  const dispatch = useDispatch();
 
-  const [broken, setBroken] = useState(false);
+  const { collapsed, setCollapsed } = useContext(LayoutContext);
+  const [breakpoint, setBreakpoint] = useState(false);
   const [prevCollapsed, setPrevCollapsed] = useState(true);
 
   const selectedKey = location.pathname;
 
   const collapseSider = (breakpoint) => {
-    setBroken(breakpoint);
     if (breakpoint) {
       setPrevCollapsed(collapsed);
       if (!collapsed) {
-        dispatch(setCollapsed(true));
+        setCollapsed(true);
       }
     } else {
-      dispatch(setCollapsed(prevCollapsed));
+      setCollapsed(prevCollapsed);
     }
   };
+
+  useEffect(() => {
+    collapseSider(breakpoint);
+  }, [breakpoint]);
 
   return (
     <Sider
       width="250"
       breakpoint="lg"
-      collapsedWidth={broken ? '0' : '80'}
-      onBreakpoint={(breakpoint) => collapseSider(breakpoint)}
+      collapsedWidth={breakpoint ? '0' : '80'}
+      onBreakpoint={setBreakpoint}
       trigger={null}
       collapsible
       collapsed={collapsed}
-      // defaultCollapsed="true"
     >
       <div className="logo">
         <img src={ceaLogo} style={{ height: '100%' }} alt="Logo" />
@@ -137,7 +137,11 @@ const SideNav = () => {
             <Menu.Item
               key="blog-tutorials"
               onClick={() =>
-                shell.openExternal('https://cityenergyanalyst.com/blog-1')
+                window.open(
+                  'https://cityenergyanalyst.com/blog-1',
+                  '_blank',
+                  'noreferrer'
+                )
               }
             >
               <span>
@@ -148,8 +152,10 @@ const SideNav = () => {
             <Menu.Item
               key="documentation"
               onClick={() =>
-                shell.openExternal(
-                  'http://city-energy-analyst.readthedocs.io/en/latest/'
+                window.open(
+                  'http://city-energy-analyst.readthedocs.io/en/latest/',
+                  '_blank',
+                  'noreferrer'
                 )
               }
             >
@@ -161,8 +167,10 @@ const SideNav = () => {
             <Menu.Item
               key="report-issue"
               onClick={() =>
-                shell.openExternal(
-                  'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new'
+                window.open(
+                  'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
+                  '_blank',
+                  'noreferrer'
                 )
               }
             >
@@ -174,8 +182,10 @@ const SideNav = () => {
             <Menu.Item
               key="known-issue"
               onClick={() =>
-                shell.openExternal(
-                  'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+'
+                window.open(
+                  'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
+                  '_blank',
+                  'noreferrer'
                 )
               }
             >
