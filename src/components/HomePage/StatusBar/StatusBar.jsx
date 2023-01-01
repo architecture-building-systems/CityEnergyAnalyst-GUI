@@ -69,11 +69,7 @@ const JobOutputLogger = () => {
 
   if (message.length < 1) return null;
 
-  return (
-    <>
-      <span style={{ margin: '0 5px' }}>{message}</span>
-    </>
-  );
+  return <span>{message}</span>;
 };
 
 const JobListPopover = () => {
