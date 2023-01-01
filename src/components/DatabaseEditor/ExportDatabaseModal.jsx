@@ -39,7 +39,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 

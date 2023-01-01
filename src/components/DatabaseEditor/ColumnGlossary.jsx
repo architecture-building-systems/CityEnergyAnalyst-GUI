@@ -34,7 +34,7 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
       const tableInstance = tableRef.current.hotInstance;
       Handsontable.hooks.add(
         'afterOnCellMouseOver',
-        (e, coords, td) => {
+        (e, coords) => {
           if (coords.row == -1 && coords.col != -1) {
             if (typeof tableGlossary[coords.col] !== 'undefined') {
               const { VARIABLE, DESCRIPTION, UNIT } = tableGlossary[coords.col];

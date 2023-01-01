@@ -17,6 +17,7 @@ const ToolModal = ({ tool, visible, setVisible }) => {
     const saveToConfig = async () => {
       let values = getForm();
       if (values) {
+        // eslint-disable-next-line no-unused-vars
         const { scenario, ...params } = values;
         await saveParams(params);
         if (error === null) {

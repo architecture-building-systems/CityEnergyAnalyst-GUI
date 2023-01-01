@@ -85,7 +85,7 @@ const ContentTable = ({ content, updateContent }) => {
 };
 
 const ContentBreadcrumb = ({ path, updateContent }) => {
-  const splitPaths = (path) => {};
+  const splitPaths = () => {};
   const paths = splitPaths(path);
 
   const crumbs = paths.map((path, index) => (

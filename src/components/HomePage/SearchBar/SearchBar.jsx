@@ -120,18 +120,26 @@ const SearchResults = ({ data, input, setValue }) => {
 const SearchItem = ({ category, item, setValue }) => {
   const { VARIABLE, UNIT, DESCRIPTION, FILE_NAME, LOCATOR_METHOD } = item;
   const openUrl = () => {
-    shell.openExternal(
+    window.open(
       `${DOCS_URL}${
         category === 'inputs' ? 'input' : 'output'
       }_methods.html?highlight=${VARIABLE}#${LOCATOR_METHOD.split('_').join(
         '-'
-      )}`
+      )}`,
+      '_blank',
+      'noreferrer'
     );
     setValue(VARIABLE);
   };
 
   return (
-    <div className="cea-search-item" onClick={openUrl}>
+    <div
+      className="cea-search-item"
+      tabIndex="0"
+      role="button"
+      onClick={openUrl}
+      onKeyDown={() => {}}
+    >
       <div>
         <b>{VARIABLE}</b>
         <small> - {UNIT}</small>

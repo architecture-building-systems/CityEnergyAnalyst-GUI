@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { push, replace } from 'connected-react-router';
+import { push } from 'connected-react-router';
 import {
   FolderOpenOutlined,
   PlusOutlined,

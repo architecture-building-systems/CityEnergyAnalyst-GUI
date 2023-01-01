@@ -354,13 +354,8 @@ const TableEditor = ({ tab, selected, tabulator }) => {
         document
           .querySelectorAll('.tabulator-col-content')
           .forEach((col, index) => {
-            const {
-              description,
-              unit,
-              type,
-              choices,
-              path: _path,
-            } = columnDef.description[columnDef.columns[index].title];
+            const { description, unit, choices } =
+              columnDef.description[columnDef.columns[index].title];
             createRoot(col).render(
               <Tooltip
                 title={
@@ -371,14 +366,10 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                       {unit}
                       <br />
                       {typeof choices != 'undefined' && (
-                        <p
-                          className="cea-input-editor-col-header-link"
-                          onClick={() => {
-                            shell.openItem(_path);
-                          }}
-                        >
+                        // TODO: Fix open file
+                        <a className="cea-input-editor-col-header-link">
                           Open File
-                        </p>
+                        </a>
                       )}
                     </div>
                   )
@@ -566,7 +557,7 @@ const useTableData = (tab) => {
   return [data, columnDef];
 };
 
-const simpleDateVal = (cell, value, parameters) => {
+const simpleDateVal = (cell, value) => {
   const [date, month] = value.split('|').map((number) => Number(number));
   const daysInMonths = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   return daysInMonths[month] >= date;

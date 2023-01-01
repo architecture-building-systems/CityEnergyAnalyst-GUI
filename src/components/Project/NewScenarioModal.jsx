@@ -18,7 +18,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   const openScenario = useOpenScenario();
   const databaseParameter = useFetchDatabasePathParameter();
 
-  const createScenario = (e) => {
+  const createScenario = () => {
     setError(null);
     const formConfig = { scroll: { offsetTop: 60 } };
     formRef.current.validateFieldsAndScroll(formConfig, async (err, values) => {
@@ -44,7 +44,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 

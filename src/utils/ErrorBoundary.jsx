@@ -6,11 +6,12 @@ export default class DefaultErrorBoundary extends Component {
     this.state = { error: null, errorInfo: null };
   }
 
-  componentDidCatch = (error, errorInfo) =>
+  componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
       errorInfo: errorInfo,
     });
+  }
 
   render() {
     if (this.state.errorInfo) {
@@ -30,19 +31,19 @@ export const withErrorBoundary = (
   onError = () => {},
   ErrorComponent = DefaultErrorComponent
 ) =>
-  class extends Component {
+  class withErrorBoundary extends Component {
     constructor(props) {
       super(props);
       this.state = { error: null, errorInfo: null };
     }
 
-    componentDidCatch = (error, errorInfo) => {
+    componentDidCatch(error, errorInfo) {
       this.setState({
         error: error,
         errorInfo: errorInfo,
       });
       onError(error, errorInfo);
-    };
+    }
 
     render() {
       if (this.state.errorInfo) {

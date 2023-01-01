@@ -7,10 +7,10 @@ export const httpAction = ({
   method = 'GET',
   data = null,
   headers = {},
-  onSuccess = (data) => {},
-  onFailure = (error) => {},
+  onSuccess = () => {},
+  onFailure = () => {},
   payload = {},
-  editPayload = (payload) => {},
+  editPayload = () => {},
 }) => ({
   HTTP_ACTION: {
     type,

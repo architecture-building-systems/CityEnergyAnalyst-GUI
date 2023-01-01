@@ -72,8 +72,10 @@ const ScenarioImage = ({ project, scenarioName, onClick = () => {} }) => {
       ) : error ? (
         'Unable to generate image'
       ) : (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
         <img
           className="cea-scenario-preview-image"
+          alt={`${scenarioName} preview`}
           src={`data:image/png;base64,${image}`}
           onClick={onClick}
         />

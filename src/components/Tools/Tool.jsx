@@ -100,6 +100,7 @@ const ToolForm = Form.create()(
       return out;
     };
 
+    // eslint-disable-next-line react/display-name
     const withFormFunctions = (FormButtons) => (props) => {
       if (FormButtons === null) return null;
 

@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
@@ -16,6 +16,7 @@ const Table = forwardRef((props, ref) => {
   useResizeActiveTable(ref);
   return <HotTable ref={ref} {...props} />;
 });
+Table.displayName = 'Table';
 
 export const useTableUpdateRedux = (tableRef, database, sheet) => {
   const dispatch = useDispatch();

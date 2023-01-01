@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, Select } from 'antd';
 import { FormItemWrapper } from '../Tools/Parameter';
@@ -21,7 +21,7 @@ const NewScheduleModal = ({
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 

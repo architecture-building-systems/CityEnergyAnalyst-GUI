@@ -51,8 +51,8 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     });
   };
 
-  // Check if file is valid
-  const vaildFile = (fileType, filePath) => {
+  // TODO: Check if file is valid
+  const vaildFile = () => {
     return true;
   };
 

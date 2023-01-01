@@ -1,5 +1,4 @@
-import { FileTextOutlined } from '@ant-design/icons';
-import { Button, Result } from 'antd';
+import { Result } from 'antd';
 
 export function createNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') {
@@ -22,6 +21,7 @@ export function deleteNestedProp(obj, prop, ...rest) {
   }
 }
 
+// TODO: Find way to show error log
 export const AsyncError = ({ title = 'Something went wrong', error }) => {
   return (
     <Result
@@ -33,23 +33,13 @@ export const AsyncError = ({ title = 'Something went wrong', error }) => {
             You may submit the contents of the log file and the error details as
             an issue on our GitHub{' '}
             <a
-              onClick={() =>
-                shell.openExternal(
-                  'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new?assignees=&labels=bug&template=bug_report.md&title='
-                )
-              }
+              href="https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new?assignees=&labels=bug&template=bug_report.md&title="
+              target="_blank"
+              rel="noopener noreferrer"
             >
               here.
             </a>
           </p>
-          <Button
-            icon={<FileTextOutlined />}
-            onClick={() => {
-              shell.openPath(process.env.LOG_PATH);
-            }}
-          >
-            Open log file
-          </Button>
         </div>
       }
     >

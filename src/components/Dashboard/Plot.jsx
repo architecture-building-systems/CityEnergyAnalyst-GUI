@@ -164,10 +164,10 @@ const InputFiles = ({ index, activePlotRef }) => {
   );
 };
 
+// eslint-disable-next-line no-unused-vars
 const OpenInWindow = ({ index, dashIndex }) => {
-  const openNewWindow = () => {
-    ipcRenderer.invoke('open-plot-window', { index, dashIndex });
-  };
+  // TODO: Find way to show plot in a separate window
+  const openNewWindow = () => {};
 
   return (
     <Tooltip title="Open in new window">
@@ -226,6 +226,7 @@ const EditMenu = memo(({ index, activePlotRef }) => {
     </>
   );
 });
+EditMenu.displayName = 'EditMenu';
 
 const LoadingPlot = ({ plotStyle = defaultPlotStyle }) => {
   return (

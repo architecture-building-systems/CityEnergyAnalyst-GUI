@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
-import { Tabs, Button, Modal, Select } from 'antd';
+import { Tabs, Button, Select } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
-import Table, { useTableUpdateRedux } from './Table';
+import Table from './Table';
 import { useChangeRoute } from '../Project/Project';
 import routes from '../../constants/routes';
 import { getTableSchema } from './Database';
@@ -11,9 +10,7 @@ import { getTableSchema } from './Database';
 const UseTypesDatabase = ({ name, data, schema }) => {
   const useTypes = Object.keys(data['SCHEDULES']);
   const [selectedType, setSelected] = useState(useTypes[0]);
-  const [choices, setChoices] = useState(useTypes);
   const goToScript = useChangeRoute(`${routes.TOOLS}/create-mixed-use-type`);
-  const dispatch = useDispatch();
 
   return (
     <>
@@ -23,7 +20,7 @@ const UseTypesDatabase = ({ name, data, schema }) => {
           value={selectedType}
           style={{ width: 250 }}
         >
-          {choices.map((choice) => (
+          {useTypes.map((choice) => (
             <Select.Option key={choice} value={choice}>
               {choice}
             </Select.Option>
@@ -85,7 +82,6 @@ const UseTypePropertyTable = ({
   schema,
 }) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
   const tableData = [propertyData.find((data) => data.code == sheetName)];
   const { columns, colHeaders } = getTableSchema(
     schema,
@@ -151,7 +147,6 @@ const SchedulesTypeTab = ({
 
 const SchedulesYearTable = ({ databaseName, sheetName, yearData, schema }) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
   const { columns, colHeaders } = getTableSchema(
     schema,
     sheetName,
@@ -190,11 +185,6 @@ const SchedulesDataTable = ({
   schema,
 }) => {
   const tableRef = useRef();
-  const updateRedux = useTableUpdateRedux(
-    tableRef,
-    databaseName,
-    `${sheetName}-${scheduleType}`
-  );
   const rowHeaders = data.map((row) => row['DAY']);
   const { columns, colHeaders } = getTableSchema(
     schema,

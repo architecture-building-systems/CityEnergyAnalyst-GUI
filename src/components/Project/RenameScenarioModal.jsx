@@ -39,7 +39,7 @@ const RenameScenarioModal = ({
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setVisible(false);
   };
 
