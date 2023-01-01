@@ -1,6 +1,5 @@
 import { createContext, useEffect, useState } from 'react';
 import { Route, Switch } from 'react-router-dom';
-import { Layout } from 'antd';
 import SideNav from '../components/HomePage/SideNav';
 import Header from '../components/HomePage/Header';
 import { ToolRoute } from '../components/Tools/Tool';
@@ -15,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateScenario } from '../actions/project';
 import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 
-const { Content } = Layout;
+import './HomePage.css';
 
 export const LayoutContext = createContext();
 
@@ -46,24 +45,17 @@ const HomePage = () => {
 
   return (
     <ContextProvider>
-      <Layout>
-        <SideNav />
-        <Layout
-          style={{
-            height: 'calc(100vh - 24px)',
-          }}
-        >
+      <div id="homepage-container">
+        <div id="homepage-header-container">
           <Header />
-          <Content
-            style={{
-              margin: '24px 16px',
-              marginTop: 88,
-              padding: 24,
-              background: '#fff',
-              minHeight: 'fit-content',
-              overflow: 'auto',
-            }}
-          >
+        </div>
+
+        <div id="homepage-sidebar-container">
+          <SideNav />
+        </div>
+
+        <div id="homepage-content-container">
+          <div id="homepage-content">
             <Switch>
               <Route path={routes.PROJECT_OVERVIEW} component={Project} />
               <Route path={routes.INPUT_EDITOR} component={InputEditor} />
@@ -72,10 +64,12 @@ const HomePage = () => {
               <Route path={routes.DATABASE_EDITOR} component={DatabaseEditor} />
               <Route exact path={routes.HOME} component={Landing} />
             </Switch>
-          </Content>
-        </Layout>
-      </Layout>
-      <StatusBar />
+          </div>
+        </div>
+        <div id="homepage-status-bar-container">
+          <StatusBar />
+        </div>
+      </div>
     </ContextProvider>
   );
 };

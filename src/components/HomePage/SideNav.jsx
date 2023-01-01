@@ -48,26 +48,26 @@ const SideNav = () => {
 
   return (
     <Sider
-      width="250"
       breakpoint="lg"
       collapsedWidth={breakpoint ? '0' : '80'}
       onBreakpoint={setBreakpoint}
       trigger={null}
       collapsible
       collapsed={collapsed}
+      hidden={breakpoint && collapsed}
     >
       <div className="logo">
-        <img src={ceaLogo} style={{ height: '100%' }} alt="Logo" />
-        <h1 className={collapsed ? 'title inactive' : 'title active'}>
+        <img src={ceaLogo} alt="Logo" />
+        <span className={collapsed ? 'title inactive' : 'title active'}>
           City Energy Analyst
-        </h1>
+        </span>
       </div>
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          height: 'calc(100% - 90px)',
+          flexGrow: 1,
         }}
       >
         <Menu
@@ -75,7 +75,6 @@ const SideNav = () => {
           mode="vertical"
           defaultSelectedKeys={['projectOverview']}
           selectedKeys={[selectedKey]}
-          style={{ width: '100%' }}
         >
           {selectedKey !== '/' && (
             <Menu.Item key={routes.PROJECT_OVERVIEW}>
@@ -119,12 +118,7 @@ const SideNav = () => {
             </Menu.Item>
           </ScenarioMenuItem>
         </Menu>
-        <Menu
-          theme="dark"
-          mode="vertical"
-          style={{ width: '100%' }}
-          selectedKeys={[]}
-        >
+        <Menu theme="dark" mode="vertical" selectedKeys={[]}>
           <SubMenu
             key="help"
             title={

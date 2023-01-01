@@ -1,11 +1,8 @@
 import { useSelector } from 'react-redux';
-import { Layout } from 'antd';
-import SearchBar from './Searchbar';
+import SearchBar from './Searchbar/SearchBar';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
 import { LayoutContext } from '../../containers/HomePage';
-
-const { Header: AntHeader } = Layout;
 
 const Header = () => {
   const { project_name: projectName, scenario_name: scenarioName } =
@@ -18,9 +15,6 @@ const Header = () => {
     return (
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
           fontSize: 18,
         }}
       >
@@ -44,45 +38,38 @@ const Header = () => {
   };
 
   return (
-    <AntHeader
+    <div
       className="cea-home-header"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
-        background: '#fff',
-        position: 'fixed',
-        padding: 0,
-        width: '100%',
-        zIndex: 7,
+        alignItems: 'center',
+        height: '100%',
         boxShadow: '0 3px 4px -6px black',
       }}
     >
-      <div className="cea-home-header-left" style={{ display: 'flex' }}>
+      <div
+        className="cea-home-header-left"
+        style={{ display: 'flex', alignItems: 'center' }}
+      >
         <CollapseButton />
         {pathname !== '/' && (
-          <span
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              lineHeight: 'initial',
-            }}
-          >
-            <span>
+          <div style={{ fontSize: 14 }}>
+            <div>
               <i>Current Project: </i>
               <b>{projectName}</b>
-            </span>
-            <span>
+            </div>
+            <div>
               <i>Scenario: </i>
               <b>{scenarioName}</b>
-            </span>
-          </span>
+            </div>
+          </div>
         )}
       </div>
       <div className="cea-home-header-right">
         <SearchBar />
       </div>
-    </AntHeader>
+    </div>
   );
 };
 

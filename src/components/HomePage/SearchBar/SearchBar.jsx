@@ -54,7 +54,7 @@ const SearchBar = () => {
   }, [value]);
 
   return (
-    <div style={{ marginLeft: 50 }}>
+    <div style={{ margin: '0 24px' }}>
       <Input
         placeholder="Glossary Search"
         suffix={<SearchOutlined />}
@@ -62,6 +62,7 @@ const SearchBar = () => {
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
+        style={{ width: 280 }}
       />
       {visible && input.length ? (
         <SearchResults
