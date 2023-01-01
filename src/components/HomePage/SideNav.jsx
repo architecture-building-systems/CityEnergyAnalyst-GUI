@@ -132,7 +132,7 @@ const SideNav = () => {
               key="blog-tutorials"
               onClick={() =>
                 window.open(
-                  'https://cityenergyanalyst.com/blog-1',
+                  'https://www.cityenergyanalyst.com/blogs',
                   '_blank',
                   'noreferrer'
                 )
