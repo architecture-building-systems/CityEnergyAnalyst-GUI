@@ -53,3 +53,9 @@ export const dirname = (fullPath) => {
 export const joinPath = (dir, suffix) => {
   return path.join(dir, suffix);
 };
+
+export const basename = (fullPath) => {
+  if (isWin(fullPath))
+    return path.basename(fullPath.replace(/\\/g, '/')).replace(/\//g, '\\');
+  else return path.basename(fullPath);
+};

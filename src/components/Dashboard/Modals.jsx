@@ -5,6 +5,7 @@ import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
 import Parameter from '../Tools/Parameter';
+import { basename, dirname } from '../../utils/file';
 
 const { Option } = Select;
 
@@ -18,7 +19,7 @@ export const ModalNewDashboard = ({
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -42,7 +43,7 @@ export const ModalNewDashboard = ({
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modals.newDashboard, false);
   };
 
@@ -127,7 +128,7 @@ export const ModalDuplicateDashboard = ({
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -154,7 +155,7 @@ export const ModalDuplicateDashboard = ({
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modals.duplicateDashboard, false);
   };
 
@@ -211,7 +212,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
   const { modals, setModalVisible, visible } = useContext(ModalContext);
   const formRef = useRef();
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -237,7 +238,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modals.setScenario, false);
   };
 
@@ -291,7 +292,7 @@ export const ModalDeleteDashboard = ({
   const [confirmLoading, setConfirmLoading] = useState(false);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     setConfirmLoading(true);
     axios
       .delete(`${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}`)
@@ -310,7 +311,7 @@ export const ModalDeleteDashboard = ({
       });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modals.deleteDashboard, false);
   };
 
@@ -364,7 +365,7 @@ const ModalAddPlotTemplate = ({
     }
   };
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -392,7 +393,7 @@ const ModalAddPlotTemplate = ({
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modal, false);
   };
 
@@ -563,7 +564,7 @@ export const ModalEditParameters = ({
     }
   };
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     formRef.current.validateFields((err, values) => {
       if (!err) {
         setConfirmLoading(true);
@@ -591,7 +592,7 @@ export const ModalEditParameters = ({
     });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modals.editParameters, false);
   };
 
@@ -625,7 +626,7 @@ const ParamsForm = Form.create()(({ parameters, form, getParameters }) => {
   const scenario = form.getFieldValue('scenario-name');
   const handleScenarioChange = async (scenario) => {
     await getParameters(scenario);
-    form.validateFields((errors, values) => {});
+    form.validateFields(() => {});
   };
   useEffect(() => {
     if (scenario) {
@@ -655,7 +656,7 @@ export const ModalDeletePlot = ({
   const [confirmLoading, setConfirmLoading] = useState(false);
   const { modals, setModalVisible, visible } = useContext(ModalContext);
 
-  const handleOk = (e) => {
+  const handleOk = () => {
     setConfirmLoading(true);
     axios
       .delete(
@@ -677,7 +678,7 @@ export const ModalDeletePlot = ({
       });
   };
 
-  const handleCancel = (e) => {
+  const handleCancel = () => {
     setModalVisible(modals.deletePlot, false);
   };
 
@@ -697,11 +698,11 @@ export const ModalDeletePlot = ({
   );
 };
 
-const groupFilesOnParent = (fileList) => {
+const groupFilesOnParent = async (fileList) => {
   let out = {};
   for (const fileLocation of fileList) {
-    const parentFolder = path.dirname(fileLocation);
-    const fileName = path.basename(fileLocation);
+    const parentFolder = dirname(fileLocation);
+    const fileName = basename(fileLocation);
     if (typeof out[parentFolder] == 'undefined') out[parentFolder] = [];
     out[parentFolder].push(fileName);
   }
@@ -709,9 +710,10 @@ const groupFilesOnParent = (fileList) => {
 };
 
 const FileList = ({ folderPath, filePaths }) => {
+  // TODO: Find way to open file when anchor tags are clicked
   const fileList = filePaths.map((file) => (
     <li key={file}>
-      <a onClick={() => shell.openItem(path.join(folderPath, file))}>{file}</a>
+      <a>{file}</a>
     </li>
   ));
 
@@ -719,7 +721,7 @@ const FileList = ({ folderPath, filePaths }) => {
     <div style={{ marginBottom: 10 }}>
       <FolderOutlined />
       <b style={{ margin: 5 }}>{folderPath}</b>
-      <a onClick={() => shell.openItem(folderPath)}>Open Folder</a>
+      <a>Open Folder</a>
       {filePaths.length > 3 ? (
         <details style={{ margin: 10 }}>
           <summary>Show files</summary>
@@ -783,8 +785,8 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
           }/input-files`
         );
         setFileLocations({
-          inputs: groupFilesOnParent(data.inputs),
-          data: groupFilesOnParent(data.data),
+          inputs: await groupFilesOnParent(data.inputs),
+          data: await groupFilesOnParent(data.data),
         });
       } catch (err) {
         console.error(err);
