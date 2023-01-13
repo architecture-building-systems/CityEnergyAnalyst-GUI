@@ -59,6 +59,7 @@ export const AsyncError = ({ title = 'Something went wrong', error }) => {
                 borderRadius: 16,
                 background: 'white',
                 maxHeight: 500,
+                overflow: 'auto',
               }}
             >
               {error.data.trace}
