@@ -418,9 +418,7 @@ const ScriptSuggestion = ({ tab }) => {
     <div>
       Input file could not be found. You can create the file using
       {tab == 'typology' ? (
-        <Link to={`${routes.TOOLS}/database-migrator`}>
-          {' database-migrator '}
-        </Link>
+        <Link to={`${routes.TOOLS}/data-migrator`}>{' data-migrator '}</Link>
       ) : tab == 'surroundings' ? (
         <Link to={`${routes.TOOLS}/surroundings-helper`}>
           {' surroundings-helper '}
