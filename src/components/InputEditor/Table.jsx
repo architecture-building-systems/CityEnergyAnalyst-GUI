@@ -414,9 +414,7 @@ const ScriptSuggestion = ({ tab }) => {
     <div>
       Input file could not be found. You can create the file using
       {tab == 'typology' ? (
-        <Link to={`${routes.TOOLS}/database-migrator`}>
-          {' database-migrator '}
-        </Link>
+        <Link to={`${routes.TOOLS}/data-migrator`}>{' data-migrator '}</Link>
       ) : tab == 'surroundings' ? (
         <Link to={`${routes.TOOLS}/surroundings-helper`}>
           {' surroundings-helper '}
@@ -481,7 +479,7 @@ const useTableData = (tab) => {
             ...columnDef,
             minWidth: 100,
             // Hack to allow editing when double clicking
-            cellDblClick: () => {},
+            cellDblClick: () => { },
           };
           if (typeof columns[tab][column].choices != 'undefined')
             return {
@@ -514,9 +512,9 @@ const useTableData = (tab) => {
                   'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
                   ...(columns[tab][column].constraints
                     ? Object.keys(columns[tab][column].constraints).map(
-                        (constraint) =>
-                          `${constraint}:${columns[tab][column].constraints[constraint]}`
-                      )
+                      (constraint) =>
+                        `${constraint}:${columns[tab][column].constraints[constraint]}`
+                    )
                     : []),
                 ],
                 mutatorEdit: (value) => Number(value),
