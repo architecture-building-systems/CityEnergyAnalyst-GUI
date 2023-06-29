@@ -4,7 +4,7 @@ import { Form } from '@ant-design/compatible';
 import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
-import { shell } from 'electron';
+import { ipcRenderer } from 'electron';
 import Parameter from '../Tools/Parameter';
 import path from 'path';
 
@@ -698,7 +698,15 @@ const groupFilesOnParent = (fileList) => {
 const FileList = ({ folderPath, filePaths }) => {
   const fileList = filePaths.map((file) => (
     <li key={file}>
-      <a onClick={() => shell.openItem(path.join(folderPath, file))}>{file}</a>
+      <a
+        onClick={() =>
+          ipcRenderer.invoke('open-path', {
+            path: path.join(folderPath, file),
+          })
+        }
+      >
+        {file}
+      </a>
     </li>
   ));
 
@@ -706,7 +714,15 @@ const FileList = ({ folderPath, filePaths }) => {
     <div style={{ marginBottom: 10 }}>
       <FolderOutlined />
       <b style={{ margin: 5 }}>{folderPath}</b>
-      <a onClick={() => shell.openItem(folderPath)}>Open Folder</a>
+      <a
+        onClick={() =>
+          ipcRenderer.invoke('open-path', {
+            path: folderPath,
+          })
+        }
+      >
+        Open Folder
+      </a>
       {filePaths.length > 3 ? (
         <details style={{ margin: 10 }}>
           <summary>Show files</summary>
