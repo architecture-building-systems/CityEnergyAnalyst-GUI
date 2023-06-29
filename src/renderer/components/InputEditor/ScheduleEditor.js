@@ -233,6 +233,15 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
             mutatorEdit: null,
           };
         }
+        if (tab == 'ELECTROMOBILITY') {
+          return {
+            ...def,
+            editor: 'input',
+            editorParams: null,
+            validator: ['required', 'regex:^\\d+$'],
+            mutatorEdit: (value) => Number(value),
+          };
+        }
         return {
           ...def,
           // 2 decimal places
