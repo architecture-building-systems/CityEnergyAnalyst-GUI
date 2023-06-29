@@ -1,5 +1,3 @@
-@import '~antd/dist/antd.css';
-
 #app {
   height: 100vh;
   overflow: hidden;
@@ -8,6 +6,10 @@
 #cea-title-bar {
   position: relative;
   z-index: 9999;
+}
+
+body {
+  margin: 0;
 }
 
 .trigger {

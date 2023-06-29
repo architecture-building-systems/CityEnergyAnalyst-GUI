@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { FolderOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
@@ -321,7 +320,7 @@ export const ModalDeleteDashboard = ({
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       okText="Delete"
-      okButtonProps={{ type: 'danger' }}
+      okButtonProps={{ type: 'primary', danger: true }}
     >
       Are you sure you want to delete this dashboard?
     </Modal>
@@ -678,7 +677,7 @@ export const ModalDeletePlot = ({
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       okText="Delete"
-      okButtonProps={{ type: 'danger' }}
+      okButtonProps={{ type: 'primary', danger: true }}
     >
       Are you sure you want to delete this plot?
     </Modal>
