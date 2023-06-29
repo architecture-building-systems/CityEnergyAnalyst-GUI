@@ -174,7 +174,8 @@ const DashButtons = () => {
         Set Scenario
       </Button>
       <Button
-        type="danger"
+        type="primary"
+        danger
         icon={<DeleteOutlined />}
         size="small"
         onClick={() => setModalVisible(modals.deleteDashboard, true)}

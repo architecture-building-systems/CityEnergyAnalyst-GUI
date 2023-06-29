@@ -1,7 +1,6 @@
 import { forwardRef, useState } from 'react';
 import { SettingOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Checkbox, Row, Card, Input, Col } from 'antd';
 import axios from 'axios';
 import EditableMap from '../Map/EditableMap';

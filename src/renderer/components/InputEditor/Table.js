@@ -131,7 +131,8 @@ const InputEditorButtons = ({ changes }) => {
       </Button>
       <Button
         style={{ margin: 5 }}
-        type="danger"
+        type="primary"
+        danger
         disabled={noChanges}
         onClick={_discardChanges}
       >
@@ -266,7 +267,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
             <Button onClick={editSelected}>Edit Selection</Button>
           )}
           <Button onClick={clearSelected}>Clear Selection</Button>
-          <Button type="danger" onClick={deleteSelected}>
+          <Button type="primary" danger onClick={deleteSelected}>
             Delete Selection
           </Button>
         </>

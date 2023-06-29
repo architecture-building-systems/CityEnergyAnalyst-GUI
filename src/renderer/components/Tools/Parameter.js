@@ -3,7 +3,6 @@ import { ipcRenderer } from 'electron';
 import fs from 'fs';
 import { EllipsisOutlined, PlusOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Input, Switch, Select, Divider, Button } from 'antd';
 
 const Parameter = ({ parameter, form }) => {

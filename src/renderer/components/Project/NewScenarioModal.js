@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Modal, Radio, Input } from 'antd';
 import fs from 'fs';
 import path from 'path';

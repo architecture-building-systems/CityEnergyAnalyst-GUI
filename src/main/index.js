@@ -1,6 +1,6 @@
 'use strict';
 
-import { app, BrowserWindow, Menu, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import { createCEAProcess, isCEAAlive, killCEAProcess } from './ceaProcess';
 import menu from './menu';
@@ -140,6 +140,11 @@ function createMainWindow() {
 
   return window;
 }
+
+ipcMain.handle('open-path', (_, arg) => {
+  const { path } = arg;
+  shell.openPath(path);
+});
 
 function createSplashWindow(url) {
   const window = new BrowserWindow({

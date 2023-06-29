@@ -144,7 +144,7 @@ const EditableMap = ({
           </Button>
         )}
         {!hasData || mode === 'modify' ? null : (
-          <Button type="danger" onClick={deletePolygon}>
+          <Button type="primary" onClick={deletePolygon}>
             Delete
           </Button>
         )}

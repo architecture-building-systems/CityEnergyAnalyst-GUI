@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
 import { Modal, Input, Select } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { updateInputData } from '../../actions/inputEditor';
