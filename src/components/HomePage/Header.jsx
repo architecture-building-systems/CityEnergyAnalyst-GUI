@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import SearchBar from './Searchbar/SearchBar';
+import SearchBar from './SearchBar/SearchBar';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
 import { LayoutContext } from '../../containers/HomePage';
