@@ -46,7 +46,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
   return (
     <Modal
       title="Export current Database"
-      visible={visible}
+      open={visible}
       width={800}
       okText="Export"
       onOk={handleOk}

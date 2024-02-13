@@ -104,7 +104,7 @@ const InputNavigationPrompt = () => {
         <Modal
           centered
           closable={false}
-          visible={isOpen}
+          open={isOpen}
           onOk={onConfirm}
           onCancel={onCancel}
         >

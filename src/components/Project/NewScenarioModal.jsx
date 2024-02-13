@@ -51,7 +51,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   return (
     <Modal
       title="Create new Scenario"
-      visible={visible}
+      open={visible}
       width={800}
       onOk={createScenario}
       onCancel={handleCancel}

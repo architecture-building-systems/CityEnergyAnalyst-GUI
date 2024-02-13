@@ -28,7 +28,7 @@ const NewScheduleModal = ({
   return (
     <Modal
       title="Add new Archetype Schedule"
-      visible={visible}
+      open={visible}
       width={800}
       okText="Add"
       onOk={handleOk}

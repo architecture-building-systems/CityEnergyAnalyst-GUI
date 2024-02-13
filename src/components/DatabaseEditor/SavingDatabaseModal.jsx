@@ -10,7 +10,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
   const goToScript = useChangeRoute(`${routes.TOOLS}/archetypes-mapper`);
   return (
     <Modal
-      visible={visible}
+      open={visible}
       width={800}
       onCancel={hideModal}
       closable={false}

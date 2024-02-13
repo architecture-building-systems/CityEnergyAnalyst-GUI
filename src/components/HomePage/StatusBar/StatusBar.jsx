@@ -145,7 +145,7 @@ const JobListPopover = () => {
       placement="topRight"
       title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
       content={<JobListPopoverContent jobs={jobs} />}
-      visible={visible}
+      open={visible}
     >
       <div
         className="cea-status-bar-button"
@@ -310,7 +310,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   return (
     <Modal
       title={`Job Output for ${job.id} - ${job.script}`}
-      visible={visible}
+      open={visible}
       width={800}
       footer={false}
       onCancel={() => setVisible(false)}

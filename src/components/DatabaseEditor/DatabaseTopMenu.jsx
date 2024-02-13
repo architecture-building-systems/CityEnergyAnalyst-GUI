@@ -46,7 +46,7 @@ const DatabaseTopMenu = () => {
       <Modal
         centered
         closable={false}
-        visible={visible}
+        open={visible}
         footer={[
           <Button key="back" onClick={handleOk}>
             Go Back
