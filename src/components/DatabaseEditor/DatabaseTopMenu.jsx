@@ -32,8 +32,7 @@ const DatabaseTopMenu = () => {
           else setSelected(key);
         }}
         selectedKeys={[selectedKey]}
-      >
-        {Object.keys(data).map((category) => (
+        items={Object.keys(data).map((category) => (
           <Menu.SubMenu key={category} title={category.toUpperCase()}>
             {Object.keys(data[category]).map((name) => (
               <Menu.Item key={`${category}:${name}`}>
@@ -42,7 +41,7 @@ const DatabaseTopMenu = () => {
             ))}
           </Menu.SubMenu>
         ))}
-      </Menu>
+      />
       <Modal
         centered
         closable={false}

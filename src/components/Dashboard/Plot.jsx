@@ -204,18 +204,20 @@ const EditMenu = memo(({ index, activePlotRef }) => {
   };
 
   const menu = (
-    <Menu>
-      <Menu.Item key="changePlot" onClick={showModalChangePlot}>
-        Change Plot
-      </Menu.Item>
-      <Menu.Item key="editParameters" onClick={showModalEditParameters}>
-        Edit Parameters
-      </Menu.Item>
-      <Menu.Divider />
-      <Menu.Item key="deletePlot" onClick={showModalDeletePlot}>
-        <div style={{ color: 'red' }}>Delete Plot</div>
-      </Menu.Item>
-    </Menu>
+    <Menu
+      items={[
+        <Menu.Item key="changePlot" onClick={showModalChangePlot}>
+          Change Plot
+        </Menu.Item>,
+        <Menu.Item key="editParameters" onClick={showModalEditParameters}>
+          Edit Parameters
+        </Menu.Item>,
+        <Menu.Divider />,
+        <Menu.Item key="deletePlot" onClick={showModalDeletePlot}>
+          <div style={{ color: 'red' }}>Delete Plot</div>
+        </Menu.Item>,
+      ]}
+    />
   );
 
   return (

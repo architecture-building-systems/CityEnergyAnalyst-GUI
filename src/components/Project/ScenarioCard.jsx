@@ -157,19 +157,21 @@ const EditScenarioMenu = ({ scenarioName, project }) => {
     <span id={`${scenarioName}-edit-button`} className="scenario-edit-button">
       <Dropdown
         menu={
-          <Menu>
-            <Menu.Item key="rename" onClick={() => setModalVisible(true)}>
-              Rename
-            </Menu.Item>
-            <Menu.Divider />
-            <Menu.Item
-              key="delete"
-              onClick={showConfirm}
-              style={{ color: 'red' }}
-            >
-              Delete
-            </Menu.Item>
-          </Menu>
+          <Menu
+            items={[
+              <Menu.Item key="rename" onClick={() => setModalVisible(true)}>
+                Rename
+              </Menu.Item>,
+              <Menu.Divider />,
+              <Menu.Item
+                key="delete"
+                onClick={showConfirm}
+                style={{ color: 'red' }}
+              >
+                Delete
+              </Menu.Item>,
+            ]}
+          />
         }
         trigger={['click']}
         getPopupContainer={() => {

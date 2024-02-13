@@ -64,13 +64,13 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     >
       <Dropdown
         menu={
-          <Menu>
-            {fileChoices.map((choice) => (
+          <Menu
+            items={fileChoices.map((choice) => (
               <Menu.Item key={choice} onClick={() => addField(choice)}>
                 {choice}
               </Menu.Item>
             ))}
-          </Menu>
+          />
         }
         trigger={['click']}
       >
