@@ -9,9 +9,7 @@ import { area as calcArea, length as calcLength } from '@turf/turf';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
-import Map from 'react-map-gl';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import Map from 'react-map-gl/maplibre';
 import { LayerToggle, NetworkToggle } from './Toggle';
 import { Button, Switch } from 'antd';
 
@@ -261,7 +259,6 @@ const DeckGLMap = ({ data, colors }) => {
       >
         <Map
           ref={mapRef}
-          mapLib={maplibregl}
           mapStyle={mapStyles[mapStyle]}
           onLoad={onMapLoad}
           minZoom={1}

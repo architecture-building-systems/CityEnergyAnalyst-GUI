@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Map from 'react-map-gl';
+import Map from 'react-map-gl/maplibre';
 import mapStyles from '../../constants/mapStyles';
 import {
   DrawPolygonMode,
@@ -8,8 +8,6 @@ import {
   ViewMode,
 } from 'nebula.gl';
 import { Button } from 'antd';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import './EditableMap.css';
 import { area as calcArea, polygon } from '@turf/turf';
 import { DeckGL } from 'deck.gl';
@@ -145,7 +143,7 @@ const EditableMap = ({
             setViewState(viewState);
           }}
         >
-          <Map mapLib={maplibregl} mapStyle={mapStyles['LIGHT_MAP']} />
+          <Map mapStyle={mapStyles['LIGHT_MAP']} />
         </DeckGL>
       </div>
     </>
