@@ -10,6 +10,7 @@ import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
 import Map from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { LayerToggle, NetworkToggle } from './Toggle';
 import { Button, Switch } from 'antd';
 
