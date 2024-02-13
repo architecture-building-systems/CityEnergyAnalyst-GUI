@@ -220,7 +220,7 @@ const EditMenu = memo(({ index, activePlotRef }) => {
 
   return (
     <>
-      <Dropdown overlay={menu} trigger={['click']}>
+      <Dropdown menu={menu} trigger={['click']}>
         <EditTwoTone />
       </Dropdown>
     </>

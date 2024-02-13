@@ -63,7 +63,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
       }}
     >
       <Dropdown
-        overlay={
+        menu={
           <Menu>
             {fileChoices.map((choice) => (
               <Menu.Item key={choice} onClick={() => addField(choice)}>

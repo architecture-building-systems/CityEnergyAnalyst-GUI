@@ -156,7 +156,7 @@ const EditScenarioMenu = ({ scenarioName, project }) => {
   return (
     <span id={`${scenarioName}-edit-button`} className="scenario-edit-button">
       <Dropdown
-        overlay={
+        menu={
           <Menu>
             <Menu.Item key="rename" onClick={() => setModalVisible(true)}>
               Rename
