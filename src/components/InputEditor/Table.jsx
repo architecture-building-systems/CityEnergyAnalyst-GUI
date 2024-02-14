@@ -27,7 +27,7 @@ const Table = ({ tab }) => {
   return (
     <>
       <Card
-        headStyle={{ backgroundColor: '#f1f1f1' }}
+        styles={{ header: { backgroundColor: '#f1f1f1' } }}
         size="small"
         title={
           <Tooltip
@@ -271,7 +271,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
             <Button onClick={editSelected}>Edit Selection</Button>
           )}
           <Button onClick={clearSelected}>Clear Selection</Button>
-          <Button type="danger" onClick={deleteSelected}>
+          <Button onClick={deleteSelected} danger>
             Delete Selection
           </Button>
         </>
@@ -479,7 +479,7 @@ const useTableData = (tab) => {
             ...columnDef,
             minWidth: 100,
             // Hack to allow editing when double clicking
-            cellDblClick: () => { },
+            cellDblClick: () => {},
           };
           if (typeof columns[tab][column].choices != 'undefined')
             return {
@@ -512,9 +512,9 @@ const useTableData = (tab) => {
                   'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
                   ...(columns[tab][column].constraints
                     ? Object.keys(columns[tab][column].constraints).map(
-                      (constraint) =>
-                        `${constraint}:${columns[tab][column].constraints[constraint]}`
-                    )
+                        (constraint) =>
+                          `${constraint}:${columns[tab][column].constraints[constraint]}`
+                      )
                     : []),
                 ],
                 mutatorEdit: (value) => Number(value),

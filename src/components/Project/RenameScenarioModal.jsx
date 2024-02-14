@@ -46,7 +46,7 @@ const RenameScenarioModal = ({
   return (
     <Modal
       title="Rename Scenario"
-      visible={visible}
+      open={visible}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}

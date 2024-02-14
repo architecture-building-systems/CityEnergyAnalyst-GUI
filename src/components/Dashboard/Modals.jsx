@@ -57,7 +57,7 @@ export const ModalNewDashboard = ({
   return (
     <Modal
       title="New Dashboard"
-      visible={visible.newDashboard}
+      open={visible.newDashboard}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -169,7 +169,7 @@ export const ModalDuplicateDashboard = ({
   return (
     <Modal
       title="Duplicate Dashboard"
-      visible={visible.duplicateDashboard}
+      open={visible.duplicateDashboard}
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
@@ -262,7 +262,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
   return (
     <Modal
       title="Set Scenario"
-      visible={visible.setScenario}
+      open={visible.setScenario}
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
@@ -318,7 +318,7 @@ export const ModalDeleteDashboard = ({
   return (
     <Modal
       title="Delete Dashboard"
-      visible={visible.deleteDashboard}
+      open={visible.deleteDashboard}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -406,7 +406,7 @@ const ModalAddPlotTemplate = ({
   return (
     <Modal
       title={title}
-      visible={visible[modal]}
+      open={visible[modal]}
       onCancel={handleCancel}
       width={800}
       footer={[
@@ -605,7 +605,7 @@ export const ModalEditParameters = ({
   return (
     <Modal
       title="Edit plot parameters"
-      visible={visible.editParameters}
+      open={visible.editParameters}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -685,7 +685,7 @@ export const ModalDeletePlot = ({
   return (
     <Modal
       title="Delete plot"
-      visible={visible.deletePlot}
+      open={visible.deletePlot}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
@@ -801,7 +801,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
   return (
     <Modal
       title="Plot Data Files"
-      visible={visible.plotFiles}
+      open={visible.plotFiles}
       width={800}
       onCancel={handleCancel}
       footer={null}

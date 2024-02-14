@@ -69,10 +69,7 @@ const InputTable = () => {
   const [tab, setTab] = useState('zone');
 
   if (typeof tables == 'undefined') return null;
-  console.debug(tables);
-  const TabPanes = [...Object.keys(tables), 'schedules'].map((key) => (
-    <Tabs.TabPane key={key} tab={key} />
-  ));
+
   return (
     <div className="cea-input-editor" style={{ margin: '10px 0' }}>
       <Tabs
@@ -81,9 +78,11 @@ const InputTable = () => {
         activeKey={tab}
         onChange={setTab}
         animated={false}
-      >
-        {TabPanes}
-      </Tabs>
+        items={[...Object.keys(tables), 'schedules'].map((key) => ({
+          key: key,
+          label: key,
+        }))}
+      />
       <div className="cea-input-editor-table">
         <Table tab={tab} />
       </div>
@@ -104,7 +103,7 @@ const InputNavigationPrompt = () => {
         <Modal
           centered
           closable={false}
-          visible={isOpen}
+          open={isOpen}
           onOk={onConfirm}
           onCancel={onCancel}
         >

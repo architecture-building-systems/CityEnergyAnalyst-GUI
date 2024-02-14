@@ -56,24 +56,22 @@ const ScenarioImportDataForm = ({ form, visible }) => {
     return true;
   };
 
+  const items = fileChoices.map((choice) => ({
+    key: choice,
+    label: choice,
+  }));
+
+  const onClick = ({ key }) => {
+    addField(key);
+  };
+
   return (
     <div
       style={{
         display: visible ? 'block' : 'none',
       }}
     >
-      <Dropdown
-        overlay={
-          <Menu>
-            {fileChoices.map((choice) => (
-              <Menu.Item key={choice} onClick={() => addField(choice)}>
-                {choice}
-              </Menu.Item>
-            ))}
-          </Menu>
-        }
-        trigger={['click']}
-      >
+      <Dropdown menu={{ items, onClick }} trigger={['click']}>
         <Button>
           Select additional files that you want to import <DownOutlined />
         </Button>

@@ -136,11 +136,11 @@ const SchedulesTypeTab = ({
         tabPosition="bottom"
         activeKey={selectedType}
         onChange={setSelected}
-      >
-        {Object.keys(scheduleData).map((scheduleType) => (
-          <Tabs.TabPane key={scheduleType} tab={scheduleType}></Tabs.TabPane>
-        ))}
-      </Tabs>
+        items={Object.keys(scheduleData).map((scheduleType) => ({
+          key: scheduleType,
+          label: scheduleType,
+        }))}
+      />
     </div>
   );
 };

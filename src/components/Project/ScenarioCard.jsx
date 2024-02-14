@@ -144,6 +144,7 @@ const EditScenarioMenu = ({ scenarioName, project }) => {
         okText: `DELETE (${secondsToGo})`,
       });
     }, 1000);
+
     setTimeout(() => {
       clearInterval(timer);
       modal.update({
@@ -153,24 +154,32 @@ const EditScenarioMenu = ({ scenarioName, project }) => {
     }, secondsToGo * 1000);
   };
 
+  const items = [
+    {
+      key: 'rename',
+      label: 'Rename',
+    },
+    { type: 'divider' },
+    { key: 'delete', label: <div style={{ color: 'red' }}>Delete</div> },
+  ];
+
+  const onClick = ({ key }) => {
+    switch (key) {
+      case 'rename':
+        setModalVisible(true);
+        break;
+      case 'delete':
+        showConfirm();
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <span id={`${scenarioName}-edit-button`} className="scenario-edit-button">
       <Dropdown
-        overlay={
-          <Menu>
-            <Menu.Item key="rename" onClick={() => setModalVisible(true)}>
-              Rename
-            </Menu.Item>
-            <Menu.Divider />
-            <Menu.Item
-              key="delete"
-              onClick={showConfirm}
-              style={{ color: 'red' }}
-            >
-              Delete
-            </Menu.Item>
-          </Menu>
-        }
+        menu={{ items, onClick }}
         trigger={['click']}
         getPopupContainer={() => {
           return document.getElementById(`${scenarioName}-edit-button`);

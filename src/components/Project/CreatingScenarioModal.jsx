@@ -18,7 +18,7 @@ const CreatingScenarioModal = ({
 
   return (
     <Modal
-      visible={visible}
+      open={visible}
       width={800}
       footer={false}
       onCancel={hideModal}

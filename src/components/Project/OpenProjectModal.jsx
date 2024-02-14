@@ -40,7 +40,7 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   return (
     <Modal
       title="Open Project"
-      visible={visible}
+      open={visible}
       width={800}
       okText="Open"
       onOk={handleOk}

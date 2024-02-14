@@ -32,21 +32,19 @@ const DatabaseTopMenu = () => {
           else setSelected(key);
         }}
         selectedKeys={[selectedKey]}
-      >
-        {Object.keys(data).map((category) => (
-          <Menu.SubMenu key={category} title={category.toUpperCase()}>
-            {Object.keys(data[category]).map((name) => (
-              <Menu.Item key={`${category}:${name}`}>
-                {name.replace('_', '-')}
-              </Menu.Item>
-            ))}
-          </Menu.SubMenu>
-        ))}
-      </Menu>
+        items={Object.keys(data).map((category) => ({
+          key: category,
+          label: category.toUpperCase(),
+          children: Object.keys(data[category]).map((name) => ({
+            key: `${category}:${name}`,
+            label: name.replace('_', '-'),
+          })),
+        }))}
+      />
       <Modal
         centered
         closable={false}
-        visible={visible}
+        open={visible}
         footer={[
           <Button key="back" onClick={handleOk}>
             Go Back

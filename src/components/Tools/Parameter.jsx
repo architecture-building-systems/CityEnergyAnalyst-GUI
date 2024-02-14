@@ -151,7 +151,6 @@ const Parameter = ({ parameter, form }) => {
               mode="multiple"
               style={{ width: '100%' }}
               placeholder="Nothing Selected"
-              showArrow
               maxTagCount={10}
               dropdownRender={(menu) => (
                 <div>

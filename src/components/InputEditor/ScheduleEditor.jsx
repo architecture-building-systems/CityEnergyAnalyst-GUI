@@ -351,19 +351,22 @@ const YearTable = ({ selected, schedules, loading }) => {
 };
 
 const ScheduleTab = ({ tab, setTab, schedules }) => {
-  const TabPanes = getScheduleTypes(schedules).map((schedule) => (
-    <Tabs.TabPane tab={schedule} key={schedule} />
-  ));
-
   useEffect(() => {
     if (!tab) setTab(getScheduleTypes(schedules)[0] || null);
   }, [schedules]);
 
   if (!tab) return null;
   return (
-    <Tabs activeKey={tab} onChange={setTab} type="card" tabPosition="bottom">
-      {TabPanes}
-    </Tabs>
+    <Tabs
+      activeKey={tab}
+      onChange={setTab}
+      type="card"
+      tabPosition="bottom"
+      items={getScheduleTypes(schedules).map((schedule) => ({
+        key: schedule,
+        label: schedule,
+      }))}
+    />
   );
 };
 

@@ -31,15 +31,17 @@
 #homepage-content-container {
   grid-area: content;
   overflow: auto;
+  padding: 18px;
 }
 
 #homepage-content {
-  margin: 18px;
   padding: 24px;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
     rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
   background: #fff;
   border-radius: 8px;
+  box-sizing: border-box;
+  min-height: 100%;
 }
 
 #homepage-status-bar-container {

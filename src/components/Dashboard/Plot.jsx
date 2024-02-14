@@ -116,7 +116,7 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
         </>
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
-      bodyStyle={{
+      styles={{
         height: plotStyle.height,
         minHeight: plotStyle.minHeight,
       }}
@@ -203,27 +203,44 @@ const EditMenu = memo(({ index, activePlotRef }) => {
     activePlotRef.current = index;
   };
 
-  const menu = (
-    <Menu>
-      <Menu.Item key="changePlot" onClick={showModalChangePlot}>
-        Change Plot
-      </Menu.Item>
-      <Menu.Item key="editParameters" onClick={showModalEditParameters}>
-        Edit Parameters
-      </Menu.Item>
-      <Menu.Divider />
-      <Menu.Item key="deletePlot" onClick={showModalDeletePlot}>
-        <div style={{ color: 'red' }}>Delete Plot</div>
-      </Menu.Item>
-    </Menu>
-  );
+  const items = [
+    {
+      key: 'changePlot',
+      label: 'Change Plot',
+    },
+    {
+      key: 'editParameters',
+      label: 'Edit Parameters',
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'deletePlot',
+      label: <div style={{ color: 'red' }}>Delete Plot</div>,
+    },
+  ];
+
+  const onClick = ({ key }) => {
+    switch (key) {
+      case 'changePlot':
+        showModalChangePlot();
+        break;
+      case 'editParameters':
+        showModalEditParameters();
+        break;
+      case 'deletePlot':
+        showModalDeletePlot();
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
-    <>
-      <Dropdown overlay={menu} trigger={['click']}>
-        <EditTwoTone />
-      </Dropdown>
-    </>
+    <Dropdown menu={{ items, onClick }} trigger={['click']}>
+      <EditTwoTone />
+    </Dropdown>
   );
 });
 EditMenu.displayName = 'EditMenu';
@@ -290,7 +307,7 @@ export const EmptyPlot = ({ style, index, activePlotRef }) => {
     <Card
       title="Empty Plot"
       style={{ ...plotStyle, height: '', minHeight: '' }}
-      bodyStyle={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
+      styles={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
       size="small"
     >
       <Empty>

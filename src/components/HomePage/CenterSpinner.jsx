@@ -1,18 +1,10 @@
 import { Spin } from 'antd';
 
-const CenterSpinner = ({ style = {}, ...props }) => {
+const CenterSpinner = ({ tip = '', indicator = <></> }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        ...style,
-      }}
-    >
-      <Spin {...props} />
-    </div>
+    <Spin tip={tip} indicator={indicator} wrapperClassName="centerSpinner">
+      <div style={{ minHeight: 400 }} />
+    </Spin>
   );
 };
 

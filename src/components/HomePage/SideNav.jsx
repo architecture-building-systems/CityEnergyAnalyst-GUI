@@ -1,5 +1,5 @@
-import { Children, cloneElement, useContext, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useContext, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   BarChartOutlined,
@@ -11,25 +11,44 @@ import {
   ProjectOutlined,
   QuestionCircleOutlined,
   ReadOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 
-import { Layout, Menu } from 'antd';
-import ToolsMenu from './ToolsMenu';
+import { Layout, Menu, Tooltip } from 'antd';
 import routes from '../../constants/routes';
 import ceaLogo from '../../assets/cea-logo.png';
 import { LayoutContext } from '../../containers/HomePage';
+import { fetchToolList } from '../../actions/tools';
 
 const { Sider } = Layout;
-const { SubMenu } = Menu;
+
+const useFetchTools = () => {
+  const dispatch = useDispatch();
+  const { status, tools } = useSelector((state) => state.toolList);
+
+  useEffect(() => {
+    dispatch(fetchToolList());
+  }, []);
+
+  return { status, tools };
+};
 
 const SideNav = () => {
-  const { location } = useSelector((state) => state.router);
+  const { pathname: selectedKey } = useSelector(
+    (state) => state.router.location
+  );
+  const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   const { collapsed, setCollapsed } = useContext(LayoutContext);
   const [breakpoint, setBreakpoint] = useState(false);
   const [prevCollapsed, setPrevCollapsed] = useState(true);
 
-  const selectedKey = location.pathname;
+  const { status, tools } = useFetchTools();
+
+  const _scenarioMenuItems =
+    scenarioName !== null
+      ? scenarioMenuItems(toolMenuItems(status, tools))
+      : [];
 
   const collapseSider = (breakpoint) => {
     if (breakpoint) {
@@ -73,78 +92,136 @@ const SideNav = () => {
         <Menu
           theme="dark"
           mode="vertical"
-          defaultSelectedKeys={['projectOverview']}
           selectedKeys={[selectedKey]}
-        >
-          {selectedKey !== '/' && (
-            <Menu.Item key={routes.PROJECT_OVERVIEW}>
-              <span>
-                <ProjectOutlined />
-                <span>Project Overview</span>
-              </span>
-              <Link to={routes.PROJECT_OVERVIEW} />
-            </Menu.Item>
-          )}
+          items={[...projectMenuItems(), ..._scenarioMenuItems]}
+        />
 
-          <ScenarioMenuItem key={routes.DATABASE_EDITOR}>
-            <Menu.Item>
-              <span>
-                <DatabaseOutlined />
-                <span>Database Editor</span>
-              </span>
-              <Link to={routes.DATABASE_EDITOR} />
-            </Menu.Item>
-          </ScenarioMenuItem>
-          <ScenarioMenuItem key={routes.INPUT_EDITOR}>
-            <Menu.Item>
-              <span>
-                <EditOutlined />
-                <span>Input Editor</span>
-              </span>
-              <Link to={routes.INPUT_EDITOR} />
-            </Menu.Item>
-          </ScenarioMenuItem>
-          <ScenarioMenuItem key={routes.TOOLS}>
-            <ToolsMenu />
-          </ScenarioMenuItem>
+        <Menu
+          theme="dark"
+          mode="vertical"
+          selectedKeys={[]}
+          items={helpMenuItems()}
+        />
+      </div>
+    </Sider>
+  );
+};
 
-          <ScenarioMenuItem key={routes.DASHBOARD}>
-            <Menu.Item>
-              <span>
-                <BarChartOutlined />
-                <span>Dashboard</span>
-              </span>
-              <Link to={routes.DASHBOARD} />
-            </Menu.Item>
-          </ScenarioMenuItem>
-        </Menu>
-        <Menu theme="dark" mode="vertical" selectedKeys={[]}>
-          <SubMenu
-            key="help"
-            title={
-              <span>
-                <QuestionCircleOutlined />
-                <span>Help</span>
-              </span>
-            }
-          >
-            <Menu.Item
-              key="blog-tutorials"
+const projectMenuItems = () => {
+  return [
+    {
+      label: <Link to={routes.PROJECT_OVERVIEW}>Project Overview</Link>,
+      key: routes.PROJECT_OVERVIEW,
+      icon: <ProjectOutlined />,
+    },
+  ];
+};
+
+const scenarioMenuItems = (toolsMenu) => {
+  return [
+    {
+      label: <Link to={routes.DATABASE_EDITOR}>Database Editor</Link>,
+      key: routes.DATABASE_EDITOR,
+      icon: <DatabaseOutlined />,
+    },
+    {
+      label: <Link to={routes.INPUT_EDITOR}>Input Editor</Link>,
+      key: routes.INPUT_EDITOR,
+      icon: <EditOutlined />,
+    },
+    toolsMenu,
+    {
+      label: <Link to={routes.DASHBOARD}>Dashboard</Link>,
+      key: routes.DASHBOARD,
+      icon: <BarChartOutlined />,
+    },
+  ];
+};
+
+const toolMenuItems = (status, tools) => {
+  var children = [];
+
+  if (status == 'fetching')
+    children = [
+      {
+        label: 'Fetching Tools...',
+        key: 'no-tools',
+      },
+    ];
+  else if (status == 'failed')
+    children = [
+      {
+        label: 'Error Fetching Tools',
+        key: 'no-tools',
+      },
+    ];
+  else if (Object.keys(tools).length) {
+    const toolCategoryList = Object.keys(tools).map((category) => {
+      return {
+        label: category,
+        key: category,
+        children: tools[category].map(({ name, label, description }) => ({
+          label: (
+            <Tooltip
+              title={description}
+              placement="right"
+              overlayStyle={{ paddingLeft: 12 }}
+              color="rgb(80,80,80)"
+            >
+              <Link to={`${routes.TOOLS}/${name}`}>
+                <div>{label}</div>
+              </Link>
+            </Tooltip>
+          ),
+          key: name,
+        })),
+      };
+    });
+
+    children = toolCategoryList;
+  } else
+    children = [
+      {
+        label: 'No Tools Found',
+        key: 'no-tools',
+      },
+    ];
+
+  return {
+    label: 'Tools',
+    key: routes.TOOLS,
+    icon: <ToolOutlined />,
+    children,
+  };
+};
+
+const helpMenuItems = () => {
+  return [
+    {
+      label: 'Help',
+      key: 'help',
+      icon: <QuestionCircleOutlined />,
+      children: [
+        {
+          label: (
+            <span
               onClick={() =>
                 window.open(
-                  'https://www.cityenergyanalyst.com/blogs',
+                  'https://www.cityenergyanalyst.com/blog',
                   '_blank',
                   'noreferrer'
                 )
               }
             >
-              <span>
-                <ReadOutlined />
-                <span>Blog Tutorials</span>
-              </span>
-            </Menu.Item>
-            <Menu.Item
-              key="documentation"
+              Blog Tutorials
+            </span>
+          ),
+          key: 'blog-tutorials',
+          icon: <ReadOutlined />,
+        },
+        {
+          label: (
+            <span
               onClick={() =>
                 window.open(
                   'http://city-energy-analyst.readthedocs.io/en/latest/',
@@ -153,13 +230,15 @@ const SideNav = () => {
                 )
               }
             >
-              <span>
-                <BookOutlined />
-                <span>Documentation</span>
-              </span>
-            </Menu.Item>
-            <Menu.Item
-              key="report-issue"
+              Documentation
+            </span>
+          ),
+          key: 'documentation',
+          icon: <BookOutlined />,
+        },
+        {
+          label: (
+            <span
               onClick={() =>
                 window.open(
                   'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
@@ -168,13 +247,15 @@ const SideNav = () => {
                 )
               }
             >
-              <span>
-                <FlagOutlined />
-                <span>Report an Issue</span>
-              </span>
-            </Menu.Item>
-            <Menu.Item
-              key="known-issue"
+              Report an Issue
+            </span>
+          ),
+          key: 'report-issue',
+          icon: <FlagOutlined />,
+        },
+        {
+          label: (
+            <span
               onClick={() =>
                 window.open(
                   'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
@@ -183,22 +264,15 @@ const SideNav = () => {
                 )
               }
             >
-              <span>
-                <ExceptionOutlined />
-                <span>Known Issues</span>
-              </span>
-            </Menu.Item>
-          </SubMenu>
-        </Menu>
-      </div>
-    </Sider>
-  );
-};
-
-const ScenarioMenuItem = ({ children, ...props }) => {
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
-  if (scenarioName === null) return null;
-  return Children.map(children, (child) => cloneElement(child, { ...props }));
+              Known Issues
+            </span>
+          ),
+          key: 'known-issue',
+          icon: <ExceptionOutlined />,
+        },
+      ],
+    },
+  ];
 };
 
 export default SideNav;

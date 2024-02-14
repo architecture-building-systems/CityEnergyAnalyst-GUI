@@ -36,7 +36,7 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
   return (
     <Modal
       title={`Edit ${table} Table`}
-      visible={visible}
+      open={visible}
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}

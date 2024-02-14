@@ -30,14 +30,6 @@ const StatusBar = () => {
   );
 };
 
-const StatusBarButton = ({ children, ...props }) => {
-  return (
-    <div {...props} className="cea-status-bar-button">
-      {children}
-    </div>
-  );
-};
-
 const JobOutputLogger = () => {
   const [message, setMessage] = useState('');
 
@@ -153,12 +145,15 @@ const JobListPopover = () => {
       placement="topRight"
       title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
       content={<JobListPopoverContent jobs={jobs} />}
-      visible={visible}
+      open={visible}
     >
-      <StatusBarButton onClick={() => setVisible((visible) => !visible)}>
+      <div
+        className="cea-status-bar-button"
+        onClick={() => setVisible((visible) => !visible)}
+      >
         <JobOutputLogger />
         <ToolFilled className="cea-job-list-popover-collapse" />
-      </StatusBarButton>
+      </div>
     </Popover>
   ) : null;
 };
@@ -315,7 +310,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   return (
     <Modal
       title={`Job Output for ${job.id} - ${job.script}`}
-      visible={visible}
+      open={visible}
       width={800}
       footer={false}
       onCancel={() => setVisible(false)}
