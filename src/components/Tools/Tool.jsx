@@ -136,21 +136,19 @@ const ToolForm = Form.create()(
 
     let categoricalParams = null;
     if (categoricalParameters && Object.keys(categoricalParameters).length) {
-      const categories = Object.keys(categoricalParameters).map((category) => {
-        const { Panel } = Collapse;
-        const Parameters = categoricalParameters[category].map((param) => (
+      const categories = Object.keys(categoricalParameters).map((category) => ({
+        key: category,
+        label: category,
+        children: categoricalParameters[category].map((param) => (
           <Parameter key={param.name} form={form} parameter={param} />
-        ));
-        return (
-          <Panel header={category} key={category} forceRender>
-            {Parameters}
-          </Panel>
-        );
-      });
+        )),
+      }));
       categoricalParams = (
-        <Collapse activeKey={activeKey} onChange={setActiveKey}>
-          {categories}
-        </Collapse>
+        <Collapse
+          activeKey={activeKey}
+          onChange={setActiveKey}
+          items={categories}
+        />
       );
     }
 
