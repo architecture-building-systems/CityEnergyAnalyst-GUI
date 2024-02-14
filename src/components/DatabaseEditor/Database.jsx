@@ -10,18 +10,22 @@ const Database = ({ name, data, schema }) => {
   const sheetNames = Object.keys(data);
 
   return (
-    <Tabs className="cea-database-editor-tabs" type="card">
-      {sheetNames.map((sheetName) => (
-        <Tabs.TabPane key={`${name}-${sheetName}`} tab={sheetName}>
+    <Tabs
+      className="cea-database-editor-tabs"
+      type="card"
+      items={sheetNames.map((sheetName) => ({
+        key: `${name}-${sheetName}`,
+        label: sheetName,
+        children: (
           <DatabaseTable
             databaseName={name}
             sheetName={sheetName}
             sheetData={data[sheetName]}
             schema={schema[sheetName]}
           />
-        </Tabs.TabPane>
-      ))}
-    </Tabs>
+        ),
+      }))}
+    />
   );
 };
 
