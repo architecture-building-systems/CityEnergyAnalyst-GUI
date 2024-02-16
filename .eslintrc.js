@@ -38,7 +38,7 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['simple-import-sort'],
+  plugins: ['react-refresh', 'simple-import-sort'],
   rules: {
     'prettier/prettier': ['error', {}, { usePrettierrc: true }],
     'react/react-in-jsx-scope': 'off',
@@ -54,5 +54,6 @@ module.exports = {
         aspects: ['invalidHref', 'preferButton'],
       },
     ],
+    'react-refresh/only-export-components': 'warn',
   },
 };

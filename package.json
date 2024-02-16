@@ -3,15 +3,16 @@
   "productName": "CityEnergyAnalyst-GUI",
   "version": "3.32.0",
   "description": "Official GUI of the City Energy Analyst tool",
-  "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build-electron": "vite build --mode electron",
     "preview": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier  --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
-    "lint": "yarn lint:format && yarn lint:fix "
+    "electron:start": "concurrently \"yarn dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "yarn build-electron && electron-builder build --publish never"
   },
   "keywords": [],
   "author": {
@@ -23,16 +24,22 @@
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.9",
     "@vitejs/plugin-react-swc": "^3.6.0",
+    "concurrently": "^8.2.2",
+    "electron": "^28.2.3",
+    "electron-builder": "^24.9.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsx-a11y": "^6.5.1",
     "eslint-plugin-prettier": "^5.1.3",
     "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
     "eslint-plugin-simple-import-sort": "^7.0.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.2.5",
     "redux-logger": "^3.0.6",
-    "vite": "^5.1.1",
+    "vite": "^5.1.3",
+    "wait-on": "^7.2.0"
   },
   "dependencies": {
     "@ant-design/compatible": "^5.1.2",
@@ -63,5 +70,17 @@
     "redux-thunk": "^2.4.2",
     "socket.io-client": "^4.5.3",
     "tabulator-tables": "^4.4.1"
+  },
+  "main": "electron/main.js",
+  "build": {
+    "appId": "CityEnergyAnalyst",
+    "productName": "CityEnergyAnalyst",
+    "directories": {
+      "output": "out"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**"
+    ]
   }
 }
