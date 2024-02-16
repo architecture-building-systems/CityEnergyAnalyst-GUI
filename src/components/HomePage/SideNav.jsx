@@ -173,7 +173,7 @@ const toolMenuItems = (status, tools) => {
               </Link>
             </Tooltip>
           ),
-          key: name,
+          key: `${routes.TOOLS}/${name}`,
         })),
       };
     });
