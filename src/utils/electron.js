@@ -9,8 +9,20 @@ export const openDialog = async (form, type, name) => {
       ? { properties: ['openDirectory'] }
       : { properties: ['openFile'] };
 
-  const paths = await window.api.send('open-dialog', options);
-  if (paths && paths.length) {
-    form.setFieldsValue({ [name]: paths[0] });
+  try {
+    const paths = await window.api.send('open-dialog', options);
+    if (paths && paths.length) {
+      form.setFieldsValue({ [name]: paths[0] });
+    }
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const openExternal = async (url) => {
+  try {
+    await window.api.send('open-external', { url });
+  } catch (e) {
+    console.error(e);
   }
 };

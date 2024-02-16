@@ -4,6 +4,7 @@ const {
   screen: electronScreen,
   ipcMain,
   dialog,
+  shell,
 } = require('electron');
 const path = require('path');
 
@@ -45,6 +46,10 @@ const createMainWindow = () => {
   ipcMain.handle('open-dialog', async (_, arg) => {
     const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
     return filePaths;
+  });
+
+  ipcMain.handle('open-external', async (_, { url }) => {
+    shell.openExternal(url);
   });
 };
 

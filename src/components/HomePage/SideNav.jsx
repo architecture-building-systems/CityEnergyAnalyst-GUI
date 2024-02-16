@@ -19,6 +19,7 @@ import routes from '../../constants/routes';
 import ceaLogo from '../../assets/cea-logo.png';
 import { LayoutContext } from '../../containers/HomePage';
 import { fetchToolList } from '../../actions/tools';
+import { isElectron, openExternal } from '../../utils/electron';
 
 const { Sider } = Layout;
 
@@ -35,7 +36,7 @@ const useFetchTools = () => {
 
 const SideNav = () => {
   const { pathname: selectedKey } = useSelector(
-    (state) => state.router.location
+    (state) => state.router.location,
   );
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
@@ -101,6 +102,11 @@ const SideNav = () => {
           mode="vertical"
           selectedKeys={[]}
           items={helpMenuItems()}
+          onClick={({ key }) => {
+            const url = helpMenuUrls[key];
+            if (isElectron()) openExternal(url);
+            else window.open(url, '_blank', 'noreferrer');
+          }}
         />
       </div>
     </Sider>
@@ -195,6 +201,16 @@ const toolMenuItems = (status, tools) => {
   };
 };
 
+const helpMenuUrls = {
+  'blog-tutorials': 'https://www.cityenergyanalyst.com/blog',
+  documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
+  'report-issue':
+    'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
+
+  'known-issue':
+    'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
+};
+
 const helpMenuItems = () => {
   return [
     {
@@ -203,70 +219,22 @@ const helpMenuItems = () => {
       icon: <QuestionCircleOutlined />,
       children: [
         {
-          label: (
-            <span
-              onClick={() =>
-                window.open(
-                  'https://www.cityenergyanalyst.com/blog',
-                  '_blank',
-                  'noreferrer'
-                )
-              }
-            >
-              Blog Tutorials
-            </span>
-          ),
+          label: 'Blog Tutorials',
           key: 'blog-tutorials',
           icon: <ReadOutlined />,
         },
         {
-          label: (
-            <span
-              onClick={() =>
-                window.open(
-                  'http://city-energy-analyst.readthedocs.io/en/latest/',
-                  '_blank',
-                  'noreferrer'
-                )
-              }
-            >
-              Documentation
-            </span>
-          ),
+          label: 'Documentation',
           key: 'documentation',
           icon: <BookOutlined />,
         },
         {
-          label: (
-            <span
-              onClick={() =>
-                window.open(
-                  'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
-                  '_blank',
-                  'noreferrer'
-                )
-              }
-            >
-              Report an Issue
-            </span>
-          ),
+          label: 'Report an Issue',
           key: 'report-issue',
           icon: <FlagOutlined />,
         },
         {
-          label: (
-            <span
-              onClick={() =>
-                window.open(
-                  'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
-                  '_blank',
-                  'noreferrer'
-                )
-              }
-            >
-              Known Issues
-            </span>
-          ),
+          label: 'Known Issues',
           key: 'known-issue',
           icon: <ExceptionOutlined />,
         },
