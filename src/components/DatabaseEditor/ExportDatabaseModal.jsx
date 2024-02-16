@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, message, Alert, Input } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper } from '../Tools/Parameter';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
 import { checkExist, joinPath } from '../../utils/file';
 
@@ -19,7 +19,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
         try {
           axios.put(
             `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/copy`,
-            values
+            values,
           );
           setConfirmLoading(false);
           setVisible(false);
@@ -88,7 +88,7 @@ const ExportForm = Form.create()(({ form }) => {
                 const pathExists = await checkExist(
                   '',
                   'directory',
-                  contentPath
+                  contentPath,
                 );
                 if (pathExists)
                   callback('Folder with name already exists in path');
@@ -105,7 +105,7 @@ const ExportForm = Form.create()(({ form }) => {
         initialValue=""
         help="Path to export Database"
         required={true}
-        inputComponent={<Input form={form} type="PathParameter" />}
+        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
       />
     </Form>
   );

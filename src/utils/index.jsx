@@ -70,8 +70,3 @@ export const AsyncError = ({ title = 'Something went wrong', error }) => {
     </Result>
   );
 };
-
-export const isElectron = () => {
-  const userAgent = navigator.userAgent.toLowerCase();
-  return userAgent.indexOf(' electron/') !== -1;
-};

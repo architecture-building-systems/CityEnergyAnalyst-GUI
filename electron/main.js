@@ -1,7 +1,13 @@
-const { app, BrowserWindow, screen: electronScreen } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  screen: electronScreen,
+  ipcMain,
+  dialog,
+} = require('electron');
 const path = require('path');
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = !app.isPackaged;
 
 const createMainWindow = () => {
   let mainWindow = new BrowserWindow({
@@ -34,6 +40,11 @@ const createMainWindow = () => {
   mainWindow.webContents.on('new-window', (event, url) => {
     event.preventDefault();
     mainWindow.loadURL(url);
+  });
+
+  ipcMain.handle('open-dialog', async (_, arg) => {
+    const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
+    return filePaths;
   });
 };
 

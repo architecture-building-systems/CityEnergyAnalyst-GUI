@@ -1,7 +1,10 @@
 import { Form } from '@ant-design/compatible';
-import { PlusOutlined } from '@ant-design/icons';
-import { Input, Switch, Select, Divider, Button } from 'antd';
+import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Input, Switch, Select, Divider, Button, Space } from 'antd';
 import { checkExist } from '../../utils/file';
+import { forwardRef } from 'react';
+
+import { isElectron, openDialog } from '../../utils/electron';
 
 const Parameter = ({ parameter, form }) => {
   const { name, type, value, choices, help } = parameter;
@@ -59,7 +62,7 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={<Input form={form} type={type} />}
+          inputComponent={<OpenDialogInput form={form} type={type} />}
         />
       );
     }
@@ -130,7 +133,7 @@ const Parameter = ({ parameter, form }) => {
             {
               validator: (rule, value, callback) => {
                 const invalidChoices = value.filter(
-                  (choice) => !choices.includes(choice)
+                  (choice) => !choices.includes(choice),
                 );
                 if (invalidChoices.length) {
                   callback(
@@ -138,7 +141,7 @@ const Parameter = ({ parameter, form }) => {
                       invalidChoices.length > 1
                         ? 'are not valid choices'
                         : 'is not a valid choice'
-                    }`
+                    }`,
                   );
                 } else {
                   callback();
@@ -302,29 +305,25 @@ export const FormItemWrapper = ({
   );
 };
 
-// export const OpenDialogInput = forwardRef((props, ref) => {
-//   const { form, type, id, ...rest } = props;
-//   const [open, setOpen] = useState(false);
-//   const onSuccess = (contentPath) => {
-//     form.setFieldsValue({ [id]: contentPath });
-//   };
-//   return (
-//     <>
-//       <Space.Compact block style={{ paddingBottom: 3 }}>
-//         <Input ref={ref} style={{ width: '100%' }} {...rest} />
-//         <Button
-//           type="primary"
-//           style={{ width: 60 }}
-//           icon={<SearchOutlined />}
-//           onClick={() => {
-//             setOpen(true);
-//           }}
-//         ></Button>
-//       </Space.Compact>
-//       <DialogModel open={open} setOpen={setOpen} onSuccess={onSuccess} />
-//     </>
-//   );
-// });
-// OpenDialogInput.displayName = 'OpenDialogInput';
+export const OpenDialogInput = forwardRef((props, ref) => {
+  const { form, type, id, ...rest } = props;
+
+  if (!isElectron()) return <Input ref={ref} {...props} />;
+
+  return (
+    <Space.Compact block style={{ paddingBottom: 3 }}>
+      <Input ref={ref} style={{ width: '100%' }} {...rest} />
+      <Button
+        type="primary"
+        style={{ width: 60 }}
+        icon={<FileSearchOutlined />}
+        onClick={async () => {
+          await openDialog(form, type, id);
+        }}
+      ></Button>
+    </Space.Compact>
+  );
+});
+OpenDialogInput.displayName = 'OpenDialogInput';
 
 export default Parameter;
