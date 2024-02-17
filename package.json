@@ -82,6 +82,12 @@
     "files": [
       "dist/**/*",
       "electron/**"
-    ]
+    ],
+    "mac": {
+      "icon": "public/cea.icns",
+      "target": [
+        "dmg"
+      ]
+    }
   }
 }
