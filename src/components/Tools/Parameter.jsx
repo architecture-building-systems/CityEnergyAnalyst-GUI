@@ -1,13 +1,13 @@
 import { Form } from '@ant-design/compatible';
 import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { Input, Switch, Select, Divider, Button, Space } from 'antd';
-import { checkExist } from '../../utils/file';
+import { basename, checkExist, dirname } from '../../utils/file';
 import { forwardRef } from 'react';
 
 import { isElectron, openDialog } from '../../utils/electron';
 
 const Parameter = ({ parameter, form }) => {
-  const { name, type, value, choices, help } = parameter;
+  const { name, type, value, choices, nullable, help } = parameter;
   const { setFieldsValue } = form;
 
   switch (type) {
@@ -51,11 +51,22 @@ const Parameter = ({ parameter, form }) => {
           rules={[
             {
               validator: async (rule, value, callback) => {
+                console.log({ parameter });
+                if (value == '' && nullable) return callback();
+
                 const contentType =
                   type == 'PathParameter' ? 'directory' : 'file';
-                const pathExists = await checkExist('', contentType, value);
+
+                const pathExists =
+                  contentType == 'directory'
+                    ? await checkExist('', contentType, value)
+                    : await checkExist(
+                        basename(value),
+                        contentType,
+                        dirname(value),
+                      );
                 if (!pathExists) {
-                  callback('Path does not exist');
+                  callback('Path entered is invalid');
                 } else {
                   callback();
                 }
