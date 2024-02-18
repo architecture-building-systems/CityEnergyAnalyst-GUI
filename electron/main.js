@@ -43,6 +43,12 @@ const createMainWindow = () => {
     mainWindow.loadURL(url);
   });
 
+  return mainWindow;
+};
+
+app.whenReady().then(() => {
+  const mainWindow = createMainWindow();
+
   ipcMain.handle('open-dialog', async (_, arg) => {
     const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
     return filePaths;
@@ -51,10 +57,6 @@ const createMainWindow = () => {
   ipcMain.handle('open-external', async (_, { url }) => {
     shell.openExternal(url);
   });
-};
-
-app.whenReady().then(() => {
-  createMainWindow();
 
   app.on('activate', () => {
     if (!BrowserWindow.getAllWindows().length) {
