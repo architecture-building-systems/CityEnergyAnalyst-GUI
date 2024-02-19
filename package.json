@@ -93,13 +93,13 @@
           "from": "micromamba",
           "to": "."
         }
-      ],
-      "win": {
-        "icon": "public/cea.ico",
-        "target": [
-          "dir"
-        ]
-      }
+      ]
+    },
+    "win": {
+      "icon": "public/cea.ico",
+      "target": [
+        "dir"
+      ]
     }
   }
 }
