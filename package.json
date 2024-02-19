@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@ant-design/compatible": "^5.1.2",
-    "@ant-design/icons": "^4.8.0",
+    "@ant-design/icons": "^5.3.0",
     "@babel/polyfill": "^7.12.1",
     "@handsontable/react": "^3.1.2",
     "@turf/turf": "^6.5.0",
