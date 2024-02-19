@@ -72,7 +72,7 @@
     "socket.io-client": "^4.5.3",
     "tabulator-tables": "^4.4.1"
   },
-  "main": "electron/main.js",
+  "main": "electron/main.mjs",
   "build": {
     "appId": "CityEnergyAnalyst",
     "productName": "CityEnergyAnalyst",
@@ -87,7 +87,19 @@
       "icon": "public/cea.icns",
       "target": [
         "dmg"
-      ]
+      ],
+      "extraResources": [
+        {
+          "from": "micromamba",
+          "to": "."
+        }
+      ],
+      "win": {
+        "icon": "public/cea.ico",
+        "target": [
+          "dir"
+        ]
+      }
     }
   }
 }
