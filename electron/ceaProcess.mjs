@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { app, dialog } from 'electron';
 import fs from 'fs';
 import path, { dirname } from 'path';
@@ -104,7 +103,7 @@ export function killCEAProcess() {
 export async function isCEAAlive(url) {
   console.debug(`isCEAAlive(${url})`);
   try {
-    const resp = await axios.get(`${url}/server/alive`);
+    const resp = await fetch(`${url}/server/alive`);
     return resp.status == 200;
   } catch (error) {
     console.error(error.response || 'No Response');

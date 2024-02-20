@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { app, BrowserWindow, screen, ipcMain, dialog, shell } from 'electron';
 import path, { dirname } from 'path';
 
@@ -133,10 +132,16 @@ app.on('will-quit', (event) => {
   event.preventDefault();
   const shutdown = async () => {
     try {
-      const resp = await axios.post(`${CEA_URL}/server/shutdown`);
-      console.log(resp?.data);
+      const resp = await fetch(`${CEA_URL}/server/shutdown`, {
+        method: 'POST',
+      });
+      const content = await resp.json();
+      console.log(content);
     } catch (error) {
       console.error(error);
+    } finally {
+      // Make sure CEA process is killed
+      killCEAProcess();
     }
     app.exit();
   };
