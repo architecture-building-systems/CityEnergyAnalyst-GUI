@@ -10,9 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 let cea;
-let timeout;
-let interval;
 let startupError = '';
+
+let intervals = [];
+let timeouts = [];
 
 export function createCEAProcess(url, callback) {
   console.log(`createCEAProcess(${url})`);
@@ -94,8 +95,10 @@ export function killCEAProcess() {
     cea.removeAllListeners('exit');
     process.kill(cea.pid);
   }
-  interval && clearInterval(interval);
-  timeout && clearTimeout(timeout);
+
+  // Clear all intervals and timeouts
+  intervals.forEach((interval) => clearInterval(interval));
+  timeouts.forEach((timeout) => clearTimeout(timeout));
 }
 
 export async function isCEAAlive(url) {
@@ -110,12 +113,16 @@ export async function isCEAAlive(url) {
 }
 
 function checkCEAStarted(url, callback = () => {}) {
+  let interval;
+  let timeout;
+
   console.debug(`checkCEAStarted(${url})`);
   const runCallbackOnce = (() => {
     let executed = false;
     return () => {
       if (!executed) {
         executed = true;
+        console.debug('Running callback');
         callback();
       }
     };
@@ -137,4 +144,8 @@ function checkCEAStarted(url, callback = () => {}) {
   timeout = setTimeout(() => {
     clearInterval(interval);
   }, 60000);
+
+  // Store references to global scope
+  intervals.push(interval);
+  timeouts.push(timeouts);
 }
