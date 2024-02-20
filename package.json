@@ -18,9 +18,15 @@
   },
   "keywords": [],
   "author": {
-    "name": "Reynold Mok",
-    "email": "reynold.mok@arch.ethz.ch"
+    "name": "Architecture and Building Systems",
+    "email": "cea@arch.ethz.ch"
   },
+  "maintainers": [
+    {
+      "name": "Reynold Mok",
+      "email": "reynold.mok@arch.ethz.ch"
+    }
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/react": "^18.0.26",
@@ -75,7 +81,7 @@
   },
   "main": "electron/main.mjs",
   "build": {
-    "appId": "CityEnergyAnalyst",
+    "appId": "CityEnergyAnalyst-GUI",
     "directories": {
       "output": "out"
     },
