@@ -3,6 +3,7 @@
   "productName": "CityEnergyAnalyst-GUI",
   "version": "3.32.0",
   "description": "Official GUI of the City Energy Analyst tool",
+  "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
   "scripts": {
     "dev": "vite",
@@ -75,7 +76,6 @@
   "main": "electron/main.mjs",
   "build": {
     "appId": "CityEnergyAnalyst",
-    "productName": "CityEnergyAnalyst",
     "directories": {
       "output": "out"
     },
