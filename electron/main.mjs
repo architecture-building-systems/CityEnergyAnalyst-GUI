@@ -72,7 +72,8 @@ function createSplashWindow(url) {
   });
 
   // hides the traffic lights for macOS
-  splashWindow.setWindowButtonVisibility(false);
+  if (process.platform == 'darwin')
+    splashWindow.setWindowButtonVisibility(false);
 
   if (isDev) {
     splashWindow.loadURL('http://localhost:5173/splash');
