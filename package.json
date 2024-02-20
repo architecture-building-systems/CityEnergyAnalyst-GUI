@@ -87,7 +87,8 @@
     },
     "files": [
       "dist/**/*",
-      "electron/**"
+      "electron/**",
+      "!node_modules/**/*"
     ],
     "mac": {
       "icon": "public/cea.icns",
