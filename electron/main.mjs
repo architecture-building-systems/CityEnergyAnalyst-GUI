@@ -41,6 +41,7 @@ const createMainWindow = () => {
   }
 
   mainWindow.once('ready-to-show', () => {
+    splashWindow && splashWindow.close();
     mainWindow.show();
   });
 
@@ -92,13 +93,11 @@ function createSplashWindow(url) {
       .then((alive) => {
         if (alive) {
           console.log('cea dashboard already running...');
-          splashWindow && splashWindow.close();
           createMainWindow();
         } else {
           console.log('cea dashboard not running, starting...');
           createCEAProcess(url, () => {
             console.log('cea dashboard process created...');
-            splashWindow && splashWindow.close();
             createMainWindow();
           });
         }
