@@ -2,7 +2,7 @@ import axios from 'axios';
 import { app, BrowserWindow, screen, ipcMain, dialog, shell } from 'electron';
 import path, { dirname } from 'path';
 
-import { isCEAAlive, createCEAProcess } from './ceaProcess.mjs';
+import { isCEAAlive, createCEAProcess, killCEAProcess } from './ceaProcess.mjs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +15,7 @@ const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow;
+let splashWindow;
 
 const createMainWindow = () => {
   mainWindow = new BrowserWindow({
@@ -22,6 +23,7 @@ const createMainWindow = () => {
     height: screen.getPrimaryDisplay().workArea.height,
     show: false,
     backgroundColor: 'white',
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
@@ -52,38 +54,73 @@ const createMainWindow = () => {
   });
 };
 
-app.whenReady().then(() => {
-  createMainWindow();
-
-  ipcMain.handle('open-dialog', async (_, arg) => {
-    const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
-    return filePaths;
+function createSplashWindow(url) {
+  splashWindow = new BrowserWindow({
+    height: 300,
+    width: 500,
+    resizable: false,
+    maximizable: false,
+    show: false,
+    frame: false,
+    backgroundColor: '#2e2c29',
+    titleBarStyle: 'hidden',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      devTools: false,
+    },
   });
 
-  ipcMain.handle('open-external', async (_, { url }) => {
-    shell.openExternal(url);
+  // hides the traffic lights for macOS
+  splashWindow.setWindowButtonVisibility(false);
+
+  if (isDev) {
+    splashWindow.loadURL('http://localhost:5173/splash');
+    splashWindow.openDevTools();
+  } else {
+    splashWindow.loadURL(
+      `file://${path.join(__dirname, '../dist/index.html#splash')}`,
+    );
+  }
+
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show();
+
+    // Check if CEA server is already running, only start if not
+    isCEAAlive(url)
+      .then((alive) => {
+        if (alive) {
+          console.log('cea dashboard already running...');
+          splashWindow && splashWindow.close();
+          createMainWindow();
+        } else {
+          console.log('cea dashboard not running, starting...');
+          createCEAProcess(url, () => {
+            console.log('cea dashboard process created...');
+            splashWindow && splashWindow.close();
+            createMainWindow();
+          });
+        }
+      })
+      .then(() => {
+        console.log('closing splash');
+      });
   });
 
-  app.on('activate', () => {
-    if (!BrowserWindow.getAllWindows().length) {
-      createMainWindow();
-    }
+  splashWindow.on('closed', () => {
+    !mainWindow && killCEAProcess();
+    splashWindow = null;
   });
-});
+}
 
 app.on('ready', () => {
-  const url = CEA_URL;
-  // Check if CEA server is already running, only start if not
-  isCEAAlive(url).then((alive) => {
-    if (alive) {
-      console.log('cea dashboard already running...');
-    } else {
-      console.log('cea dashboard not running, starting...');
-      createCEAProcess(url, () => {
-        console.log('cea dashboard process created...');
-      });
-    }
-  });
+  createSplashWindow(CEA_URL);
+});
+
+app.on('activate', () => {
+  if (!BrowserWindow.getAllWindows().length) {
+    createMainWindow();
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -104,4 +141,13 @@ app.on('will-quit', (event) => {
     app.exit();
   };
   shutdown();
+});
+
+ipcMain.handle('open-dialog', async (_, arg) => {
+  const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
+  return filePaths;
+});
+
+ipcMain.handle('open-external', async (_, { url }) => {
+  shell.openExternal(url);
 });

@@ -39,10 +39,11 @@ export function createCEAProcess(url, callback) {
       break;
     }
     case 'darwin': {
+      checkCEAStarted(url);
       break;
     }
     default:
-      break;
+      throw new Error('Start CEA dashboard server manually.');
   }
 
   if (cea) {
@@ -108,7 +109,7 @@ export async function isCEAAlive(url) {
   }
 }
 
-function checkCEAStarted(url, callback) {
+function checkCEAStarted(url, callback = () => {}) {
   console.debug(`checkCEAStarted(${url})`);
   const runCallbackOnce = (() => {
     let executed = false;
