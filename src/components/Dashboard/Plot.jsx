@@ -32,7 +32,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
           `${import.meta.env.VITE_CEA_URL}/plots/div/${dashIndex}/${index}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
         if (mounted)
           setDiv(() => {
@@ -60,7 +60,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
 
       // Clean up script node if it is mounted
       let script = document.querySelector(
-        `script[data-id=script-cea-react-${hash}]`
+        `script[data-id=script-cea-react-${hash}]`,
       );
       if (script) script.remove();
     };
@@ -92,14 +92,6 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
             <>
               <span> - </span>
               <small>{data.parameters['scenario-name']}</small>
-              {div && div.content && (
-                <OpenInWindow
-                  index={index}
-                  dashIndex={dashIndex}
-                  data={data}
-                  div={div}
-                />
-              )}
             </>
           )}
         </div>
