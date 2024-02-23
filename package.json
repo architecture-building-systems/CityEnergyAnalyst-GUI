@@ -97,7 +97,7 @@
       ],
       "extraResources": [
         {
-          "from": "micromamba",
+          "from": "dependencies",
           "to": "."
         }
       ]
