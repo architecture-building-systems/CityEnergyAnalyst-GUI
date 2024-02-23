@@ -39,7 +39,14 @@ export function createCEAProcess(url, callback) {
       break;
     }
     case 'darwin': {
-      checkCEAStarted(url);
+      if (app.isPackaged) {
+        // micromamba located in Contents/Resources/micromamba
+        cea = spawn(
+          'micromamba',
+          ['-r', 'micromamba-root', '-n', 'cea', 'run', 'cea', 'dashboard'],
+          { cwd: process.resourcesPath },
+        );
+      } else checkCEAStarted(url);
       break;
     }
     default:
