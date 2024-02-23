@@ -42,8 +42,8 @@ export function createCEAProcess(url, callback) {
       if (app.isPackaged) {
         // micromamba located in Contents/Resources/micromamba
         cea = spawn(
-          'micromamba',
-          ['-r', 'micromamba-root', '-n', 'cea', 'run', 'cea', 'dashboard'],
+          './micromamba',
+          ['-r', './micromamba-root', '-n', 'cea', 'run', 'cea', 'dashboard'],
           { cwd: process.resourcesPath },
         );
       } else checkCEAStarted(url);
