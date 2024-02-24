@@ -43,7 +43,16 @@ export function createCEAProcess(url, callback) {
         // micromamba located in Contents/Resources/micromamba
         cea = spawn(
           './micromamba',
-          ['-r', './micromamba-root', '-n', 'cea', 'run', 'cea', 'dashboard'],
+          [
+            '-r',
+            './micromamba-root',
+            '-n',
+            'cea',
+            'run',
+            'python',
+            'm',
+            'cea.interfaces.dashboard.dashboard',
+          ],
           { cwd: process.resourcesPath },
         );
       } else checkCEAStarted(url);
