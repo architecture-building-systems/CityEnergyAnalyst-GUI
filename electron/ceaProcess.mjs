@@ -50,7 +50,7 @@ export function createCEAProcess(url, callback) {
             'cea',
             'run',
             'python',
-            'm',
+            '-m',
             'cea.interfaces.dashboard.dashboard',
           ],
           { cwd: process.resourcesPath },
