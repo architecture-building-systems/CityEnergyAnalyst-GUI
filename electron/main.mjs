@@ -16,6 +16,48 @@ const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
 let mainWindow;
 let splashWindow;
 
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('ready', () => {
+    createSplashWindow(CEA_URL);
+  });
+
+  app.on('activate', () => {
+    if (!BrowserWindow.getAllWindows().length) {
+      createMainWindow();
+    }
+  });
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
+
+  app.on('will-quit', (event) => {
+    event.preventDefault();
+    const shutdown = async () => {
+      try {
+        const resp = await fetch(`${CEA_URL}/server/shutdown`, {
+          method: 'POST',
+        });
+        const content = await resp.json();
+        console.log(content);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        // Make sure CEA process is killed
+        killCEAProcess();
+      }
+      app.exit();
+    };
+    shutdown();
+  });
+}
+
 const createMainWindow = () => {
   mainWindow = new BrowserWindow({
     width: screen.getPrimaryDisplay().workArea.width,
@@ -111,42 +153,6 @@ function createSplashWindow(url) {
     splashWindow = null;
   });
 }
-
-app.on('ready', () => {
-  createSplashWindow(CEA_URL);
-});
-
-app.on('activate', () => {
-  if (!BrowserWindow.getAllWindows().length) {
-    createMainWindow();
-  }
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('will-quit', (event) => {
-  event.preventDefault();
-  const shutdown = async () => {
-    try {
-      const resp = await fetch(`${CEA_URL}/server/shutdown`, {
-        method: 'POST',
-      });
-      const content = await resp.json();
-      console.log(content);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Make sure CEA process is killed
-      killCEAProcess();
-    }
-    app.exit();
-  };
-  shutdown();
-});
 
 ipcMain.handle('open-dialog', async (_, arg) => {
   const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
