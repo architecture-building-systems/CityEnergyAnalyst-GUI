@@ -37,8 +37,12 @@ if (!gotTheLock) {
     }
   });
 
-  app.on('will-quit', (event) => {
+  app.on('will-quit', async (event) => {
     event.preventDefault();
+
+    mainWindow && mainWindow.close();
+    splashWindow && splashWindow.close();
+
     const shutdown = async () => {
       try {
         const resp = await fetch(`${CEA_URL}/server/shutdown`, {
@@ -52,9 +56,10 @@ if (!gotTheLock) {
         // Make sure CEA process is killed
         killCEAProcess();
       }
-      app.exit();
     };
-    shutdown();
+
+    await shutdown();
+    app.exit();
   });
 }
 
@@ -124,26 +129,25 @@ function createSplashWindow(url) {
     );
   }
 
-  splashWindow.once('ready-to-show', () => {
+  splashWindow.once('ready-to-show', async () => {
     splashWindow.show();
 
     // Check if CEA server is already running, only start if not
-    isCEAAlive(url)
-      .then((alive) => {
-        if (alive) {
-          console.log('cea dashboard already running...');
+    try {
+      const alive = await isCEAAlive(url);
+      if (alive) {
+        console.log('cea dashboard already running...');
+        createMainWindow();
+      } else {
+        console.log('cea dashboard not running, starting...');
+        createCEAProcess(url, () => {
+          console.log('cea dashboard process created...');
           createMainWindow();
-        } else {
-          console.log('cea dashboard not running, starting...');
-          createCEAProcess(url, () => {
-            console.log('cea dashboard process created...');
-            createMainWindow();
-          });
-        }
-      })
-      .then(() => {
-        console.log('closing splash');
-      });
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   splashWindow.on('closed', () => {
