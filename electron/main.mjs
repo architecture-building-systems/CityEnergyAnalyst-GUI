@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path, { dirname } from 'path';
 
 import { isCEAAlive, createCEAProcess, killCEAProcess } from './ceaProcess.mjs';
@@ -60,8 +60,6 @@ if (!gotTheLock) {
 
 const createMainWindow = () => {
   mainWindow = new BrowserWindow({
-    width: screen.getPrimaryDisplay().workArea.width,
-    height: screen.getPrimaryDisplay().workArea.height,
     show: false,
     backgroundColor: 'white',
     autoHideMenuBar: true,
