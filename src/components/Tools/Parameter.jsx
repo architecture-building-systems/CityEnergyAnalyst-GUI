@@ -211,13 +211,10 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <div
-                    style={{ padding: '8px', cursor: 'pointer' }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <PlusOutlined /> Browse for databases path
-                  </div>
+                  <OpenDialogButton form={form} type="directory" id={name}>
+                    <PlusOutlined />
+                    Browse for databases path
+                  </OpenDialogButton>
                 </div>
               )}
             >
@@ -248,13 +245,10 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <div
-                    style={{ padding: '8px', cursor: 'pointer' }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <PlusOutlined /> Browse for weather file
-                  </div>
+                  <OpenDialogButton form={form} type="file" id={name}>
+                    <PlusOutlined />
+                    Browse for weather file
+                  </OpenDialogButton>
                 </div>
               )}
             >
@@ -336,5 +330,23 @@ export const OpenDialogInput = forwardRef((props, ref) => {
   );
 });
 OpenDialogInput.displayName = 'OpenDialogInput';
+
+export const OpenDialogButton = (props) => {
+  const { form, type, id, children } = props;
+
+  // ignore if not electron for now
+  if (!isElectron()) return null;
+
+  return (
+    <Button
+      style={{ width: '100%' }}
+      onClick={async () => {
+        await openDialog(form, type, id);
+      }}
+    >
+      {children}
+    </Button>
+  );
+};
 
 export default Parameter;

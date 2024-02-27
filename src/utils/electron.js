@@ -5,7 +5,7 @@ export const isElectron = () => {
 
 export const openDialog = async (form, type, name) => {
   const options =
-    type === 'PathParameter'
+    type === 'directory'
       ? { properties: ['openDirectory'] }
       : { properties: ['openFile'] };
 
