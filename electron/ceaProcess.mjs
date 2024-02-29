@@ -53,7 +53,7 @@ export function createCEAProcess(url, callback) {
             '-m',
             'cea.interfaces.dashboard.dashboard',
           ],
-          { cwd: process.resourcesPath },
+          { cwd: dirname(app.getAppPath()) },
         );
       } else checkCEAStarted(url);
       break;
