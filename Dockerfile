@@ -1,12 +1,12 @@
-FROM node:18-alpine
+FROM node:current-alpine
 
 WORKDIR /app
 COPY package.json .
 
-RUN npm install
+RUN yarn
 COPY . .
 
-RUN npm run build
+RUN yarn build
 EXPOSE 4173
 
-CMD [ "npm", "run", "preview" ]
+CMD [ "yarn", "preview" ]
