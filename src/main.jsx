@@ -12,6 +12,11 @@ axios.interceptors.request.use((request) => {
   return request;
 });
 
+axios.interceptors.response.use((config) => {
+  console.log('Config:', JSON.stringify(config, null, 2));
+  return config;
+});
+
 axios.interceptors.response.use((response) => {
   console.log('Response:', JSON.stringify(response, null, 2));
   return response;
