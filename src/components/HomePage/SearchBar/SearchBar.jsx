@@ -13,7 +13,7 @@ const useGlossaryData = () => {
     const getSearchResults = async () => {
       try {
         const result = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/api/glossary`
+          `${import.meta.env.VITE_CEA_URL}/api/glossary/`,
         );
         setData(result.data);
       } catch (error) {
@@ -82,7 +82,7 @@ const SearchResults = ({ data, input, setValue }) => {
       const variables = category.variables.filter(
         (variable) =>
           variable.VARIABLE.length != 0 &&
-          variable.VARIABLE.toLowerCase().indexOf(input.toLowerCase()) == 0
+          variable.VARIABLE.toLowerCase().indexOf(input.toLowerCase()) == 0,
       );
       if (!variables.length) return null;
       return (
@@ -124,10 +124,10 @@ const SearchItem = ({ category, item, setValue }) => {
       `${DOCS_URL}${
         category === 'inputs' ? 'input' : 'output'
       }_methods.html?highlight=${VARIABLE}#${LOCATOR_METHOD.split('_').join(
-        '-'
+        '-',
       )}`,
       '_blank',
-      'noreferrer'
+      'noreferrer',
     );
     setValue(VARIABLE);
   };

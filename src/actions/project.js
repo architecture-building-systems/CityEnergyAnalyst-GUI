@@ -12,7 +12,7 @@ export const getProject = (project = null) => {
     });
     const config = project ? { params: { project } } : {};
     return axios
-      .get(`${import.meta.env.VITE_CEA_URL}/api/project`, config)
+      .get(`${import.meta.env.VITE_CEA_URL}/api/project/`, config)
       .then((response) => {
         dispatch({
           type: GET_PROJECT_SUCCESS,
