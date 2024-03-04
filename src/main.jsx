@@ -12,6 +12,11 @@ axios.interceptors.request.use((request) => {
   return request;
 });
 
+axios.interceptors.response.use((response) => {
+  console.log('Response:', JSON.stringify(response, null, 2));
+  return response;
+});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App store={store} history={history} />
