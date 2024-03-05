@@ -109,8 +109,10 @@ export const Plot = ({ index, dashIndex, data, style, activePlotRef = 0 }) => {
       }
       style={{ ...plotStyle, height: '', minHeight: '' }}
       styles={{
-        height: plotStyle.height,
-        minHeight: plotStyle.minHeight,
+        body: {
+          height: plotStyle.height,
+          minHeight: plotStyle.minHeight,
+        },
       }}
       size="small"
     >
@@ -299,7 +301,9 @@ export const EmptyPlot = ({ style, index, activePlotRef }) => {
     <Card
       title="Empty Plot"
       style={{ ...plotStyle, height: '', minHeight: '' }}
-      styles={{ height: plotStyle.height, minHeight: plotStyle.minHeight }}
+      styles={{
+        body: { height: plotStyle.height, minHeight: plotStyle.minHeight },
+      }}
       size="small"
     >
       <Empty>
