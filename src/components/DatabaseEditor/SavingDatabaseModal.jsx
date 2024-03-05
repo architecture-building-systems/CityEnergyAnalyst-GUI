@@ -3,8 +3,8 @@ import { Button, Modal } from 'antd';
 import { ExportDatabaseButton } from './DatabaseEditor';
 import './DatabaseEditor.css';
 import { AsyncError } from '../../utils';
-import routes from '../../constants/routes';
-import { useChangeRoute } from '../Project/Project';
+import routes from '../../constants/routes.json';
+import { useChangeRoute } from '../../utils/hooks';
 
 const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
   const goToScript = useChangeRoute(`${routes.TOOLS}/archetypes-mapper`);

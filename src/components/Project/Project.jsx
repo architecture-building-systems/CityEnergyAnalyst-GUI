@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { push } from 'connected-react-router';
 import {
   FolderOpenOutlined,
   PlusOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
 import { Card, Button, message } from 'antd';
-import { getProject, updateScenario } from '../../actions/project';
+import { updateScenario } from '../../actions/project';
 import axios from 'axios';
 import NewProjectModal from './NewProjectModal';
 import OpenProjectModal from './OpenProjectModal';
 import NewScenarioModal from './NewScenarioModal';
 import ScenarioCard from './ScenarioCard';
-import routes from '../../constants/routes';
+import routes from '../../constants/routes.json';
 import './Project.css';
+import { useChangeRoute, useFetchProject } from '../../utils/hooks';
 
 const Project = () => {
   const { isFetching, error, info } = useSelector((state) => state.project);
@@ -171,7 +171,7 @@ const updateConfigProjectInfo = async (project, scenarioName) => {
       {
         project,
         scenario_name: scenarioName,
-      }
+      },
     );
     console.log(resp.data);
     return resp.data;
@@ -183,7 +183,7 @@ const updateConfigProjectInfo = async (project, scenarioName) => {
 export const deleteScenario = async (
   scenario,
   project,
-  onSuccess = () => {}
+  onSuccess = () => {},
 ) => {
   try {
     console.log(`About to delete scenario ${scenario}`);
@@ -192,7 +192,7 @@ export const deleteScenario = async (
       {
         // apparently we can send a payload here: https://stackoverflow.com/a/58234086/2260
         data: { project: project },
-      }
+      },
     );
     console.log(resp.data);
     onSuccess();
@@ -207,9 +207,8 @@ export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
   const changeRoute = useChangeRoute(route);
   return async (project, scenarioName) => {
     // Fetch project info first before going to route
-    const { scenarios_list: scenariosList } = await fetchProjectDetails(
-      project
-    );
+    const { scenarios_list: scenariosList } =
+      await fetchProjectDetails(project);
     // Check if scenario still exist
     if (scenariosList.includes(scenarioName)) {
       await updateConfigProjectInfo(project, scenarioName);
@@ -222,32 +221,22 @@ export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
         message.error(
           <span>
             Scenario: <b>{scenarioName}</b> could not be found.
-          </span>
+          </span>,
         );
       });
     }
   };
 };
 
-export const useChangeRoute = (route) => {
-  const dispatch = useDispatch();
-  return () => dispatch(push(route));
-};
-
-export const useFetchProject = () => {
-  const dispatch = useDispatch();
-  return (project) => dispatch(getProject(project));
-};
-
 const fetchProjectDetails = async (project = null) => {
   console.log(
-    `fetchProjectDetails: ${project} - url: ${import.meta.env.VITE_CEA_URL}`
+    `fetchProjectDetails: ${project} - url: ${import.meta.env.VITE_CEA_URL}`,
   );
   const config = project ? { params: { project } } : {};
   try {
     const resp = await axios.get(
       `${import.meta.env.VITE_CEA_URL}/api/project/`,
-      config
+      config,
     );
     console.log(`fetchProjectDetails: resp.data=${resp.data}`);
     return resp.data;

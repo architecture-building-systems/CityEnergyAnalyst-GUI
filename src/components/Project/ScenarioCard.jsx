@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react';
 import { DownOutlined } from '@ant-design/icons';
-import {
-  Card,
-  Row,
-  Col,
-  Button,
-  Modal,
-  Tag,
-  Dropdown,
-  Menu,
-  Space,
-} from 'antd';
+import { Card, Row, Col, Button, Modal, Tag, Dropdown, Space } from 'antd';
 import axios from 'axios';
-import { deleteScenario, useOpenScenario, useFetchProject } from './Project';
+import { deleteScenario, useOpenScenario } from './Project';
 import RenameScenarioModal from './RenameScenarioModal';
+import { useFetchProject } from '../../utils/hooks';
 
 const ScenarioCard = ({ scenarioName, project, active }) => {
   const openScenario = useOpenScenario();
@@ -54,7 +45,7 @@ const ScenarioCard = ({ scenarioName, project, active }) => {
 const ScenarioImage = ({ project, scenarioName, onClick = () => {} }) => {
   const [image, isLoading, error] = useGenerateScenarioImage(
     project,
-    scenarioName
+    scenarioName,
   );
 
   return (
@@ -96,7 +87,7 @@ const useGenerateScenarioImage = (project, scenarioName) => {
           `${
             import.meta.env.VITE_CEA_URL
           }/api/project/scenario/${scenarioName}/image`,
-          { params: { project } }
+          { params: { project } },
         );
         setData(resp.data);
       } catch (err) {

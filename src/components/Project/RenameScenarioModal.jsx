@@ -3,8 +3,8 @@ import { Form } from '@ant-design/compatible';
 import { Modal } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper } from '../Tools/Parameter';
-import { useFetchProject } from './Project';
 import { checkExist, joinPath } from '../../utils/file';
+import { useFetchProject } from '../../utils/hooks';
 
 const RenameScenarioModal = ({
   scenarioName,
@@ -26,7 +26,7 @@ const RenameScenarioModal = ({
             `${
               import.meta.env.VITE_CEA_URL
             }/api/project/scenario/${scenarioName}`,
-            values
+            values,
           );
           console.log(resp.data);
           fetchProject();

@@ -3,8 +3,9 @@ import { Form } from '@ant-design/compatible';
 import { Modal } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
-import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
+import { useFetchConfigProjectInfo } from '../Project/Project';
 import { checkExist, dirname, joinPath } from '../../utils/file';
+import { useFetchProject } from '../../utils/hooks';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);

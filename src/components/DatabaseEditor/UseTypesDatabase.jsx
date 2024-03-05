@@ -3,9 +3,9 @@ import { Tabs, Button, Select } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
 import Table from './Table';
-import { useChangeRoute } from '../Project/Project';
-import routes from '../../constants/routes';
+import routes from '../../constants/routes.json';
 import { getTableSchema } from './Database';
+import { useChangeRoute } from '../../utils/hooks';
 
 const UseTypesDatabase = ({ name, data, schema }) => {
   const useTypes = Object.keys(data['SCHEDULES']);
@@ -88,7 +88,7 @@ const UseTypePropertyTable = ({
     sheetName,
     tableData,
     null,
-    Object.keys(tableData[0]).filter((row) => row !== 'code')
+    Object.keys(tableData[0]).filter((row) => row !== 'code'),
   );
 
   //  Revalidate cells on sheet change
@@ -151,7 +151,7 @@ const SchedulesYearTable = ({ databaseName, sheetName, yearData, schema }) => {
     schema,
     sheetName,
     yearData,
-    null
+    null,
   );
 
   //  Revalidate cells on sheet change
@@ -191,7 +191,7 @@ const SchedulesDataTable = ({
     sheetName,
     data,
     null,
-    Object.keys(data[0]).filter((col) => col !== 'DAY')
+    Object.keys(data[0]).filter((col) => col !== 'DAY'),
   );
 
   //  Revalidate cells on sheet and type change

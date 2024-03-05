@@ -3,7 +3,6 @@ import { Route, Switch } from 'react-router-dom';
 import SideNav from '../components/HomePage/SideNav';
 import Header from '../components/HomePage/Header';
 import { ToolRoute } from '../components/Tools/Tool';
-import { useFetchProject } from '../components/Project/Project';
 
 import routes from '../constants/routes.json';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,6 +10,7 @@ import { updateScenario } from '../actions/project';
 import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 
 import './HomePage.css';
+import { useFetchProject } from '../utils/hooks';
 
 export const LayoutContext = createContext();
 
