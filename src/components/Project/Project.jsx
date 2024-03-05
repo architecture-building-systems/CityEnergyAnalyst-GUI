@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   FolderOpenOutlined,
@@ -8,13 +8,14 @@ import {
 import { Card, Button, message } from 'antd';
 import { updateScenario } from '../../actions/project';
 import axios from 'axios';
-import NewProjectModal from './NewProjectModal';
-import OpenProjectModal from './OpenProjectModal';
-import NewScenarioModal from './NewScenarioModal';
 import ScenarioCard from './ScenarioCard';
 import routes from '../../constants/routes.json';
 import './Project.css';
 import { useChangeRoute, useFetchProject } from '../../utils/hooks';
+
+const NewProjectModal = lazy(() => import('./NewProjectModal'));
+const OpenProjectModal = lazy(() => import('./OpenProjectModal'));
+const NewScenarioModal = lazy(() => import('./NewScenarioModal'));
 
 const Project = () => {
   const { isFetching, error, info } = useSelector((state) => state.project);
@@ -86,11 +87,13 @@ const NewProjectButton = ({ onSuccess }) => {
       >
         Create Project
       </Button>
-      <NewProjectModal
-        visible={isModalVisible}
-        setVisible={setModalVisible}
-        onSuccess={onSuccess}
-      />
+      <Suspense>
+        <NewProjectModal
+          visible={isModalVisible}
+          setVisible={setModalVisible}
+          onSuccess={onSuccess}
+        />
+      </Suspense>
     </>
   );
 };
@@ -107,11 +110,13 @@ const OpenProjectButton = ({ onSuccess = () => {} }) => {
       >
         Open Project
       </Button>
-      <OpenProjectModal
-        visible={isModalVisible}
-        setVisible={setModalVisible}
-        onSuccess={onSuccess}
-      />
+      <Suspense>
+        <OpenProjectModal
+          visible={isModalVisible}
+          setVisible={setModalVisible}
+          onSuccess={onSuccess}
+        />
+      </Suspense>
     </>
   );
 };
@@ -155,11 +160,13 @@ const NewScenarioButton = ({ project }) => {
       >
         + Create New Scenario
       </Button>
-      <NewScenarioModal
-        visible={isModalVisible}
-        setVisible={setModalVisible}
-        project={project}
-      />
+      <Suspense>
+        <NewScenarioModal
+          visible={isModalVisible}
+          setVisible={setModalVisible}
+          project={project}
+        />
+      </Suspense>
     </>
   );
 };
