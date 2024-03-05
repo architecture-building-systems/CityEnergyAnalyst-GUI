@@ -7,7 +7,7 @@ import Icon, {
   PlusOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Menu, Tooltip, Spin, Empty, Dropdown } from 'antd';
+import { Button, Card, Tooltip, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
 import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
@@ -25,13 +25,13 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
   // Get plot div
   useEffect(() => {
     let mounted = true;
-    const source = axios.CancelToken.source();
+    const controller = new AbortController();
     const fetch = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_CEA_URL}/plots/div/${dashIndex}/${index}`,
           {
-            cancelToken: source.token,
+            signal: controller.signal,
           },
         );
         if (mounted)
@@ -56,7 +56,7 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
     return () => {
       // Cancel the request if it is not completed
       mounted = false;
-      source.cancel();
+      controller.abort();
 
       // Clean up script node if it is mounted
       let script = document.querySelector(
