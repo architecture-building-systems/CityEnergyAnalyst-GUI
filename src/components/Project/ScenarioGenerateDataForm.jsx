@@ -1,11 +1,12 @@
-import { forwardRef, useState } from 'react';
+import { Suspense, forwardRef, lazy, useState } from 'react';
 import { SettingOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
 import { Checkbox, Row, Card, Input, Col } from 'antd';
 import axios from 'axios';
-import EditableMap from '../Map/EditableMap';
 import ToolModal from './ToolModal';
-import { calcPolyArea } from '../Map/EditableMap';
+import { calcPolyArea } from '../Map/utils';
+
+const EditableMap = lazy(() => import('../Map/EditableMap'));
 
 const MAX_AREA_SIZE = 100;
 
@@ -26,7 +27,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
       setTimeout(() => {
         form.setFieldsValue({
           tools: checkedValue.filter(
-            (element) => element === 'weather' || element === 'zone'
+            (element) => element === 'weather' || element === 'zone',
           ),
         });
       }, 0);
@@ -147,7 +148,7 @@ const ScenarioGenerateDataForm = ({ form, visible }) => {
               <TerrainTool />
               <WeatherTool />
             </div>
-          </Checkbox.Group>
+          </Checkbox.Group>,
         )}
       </Form.Item>
       <div
@@ -184,7 +185,7 @@ const checkArea = (rule, value, callback) => {
     callback('Create a polygon by selecting an area in the map.');
   else if (calcPolyArea(value) > MAX_AREA_SIZE) {
     callback(
-      `Area selected is above ${MAX_AREA_SIZE} km2. CEA would not be able to extract information from that size due to the bandwidth limitation of Open Street Maps API. Try selecting a smaller area.`
+      `Area selected is above ${MAX_AREA_SIZE} km2. CEA would not be able to extract information from that size due to the bandwidth limitation of Open Street Maps API. Try selecting a smaller area.`,
     );
   } else {
     callback();
@@ -198,7 +199,7 @@ const ScenarioMap = ({ form }) => {
     const address = form.getFieldValue('location');
     try {
       const resp = await axios.get(
-        `https://nominatim.openstreetmap.org/?format=json&q=${address}&limit=1`
+        `https://nominatim.openstreetmap.org/?format=json&q=${address}&limit=1`,
       );
       if (resp.data) {
         form.setFieldsValue(
@@ -208,7 +209,7 @@ const ScenarioMap = ({ form }) => {
               long: resp.data[0].lon,
             },
           },
-          goToLocation
+          goToLocation,
         );
       }
     } catch (err) {
@@ -248,7 +249,7 @@ const ScenarioMap = ({ form }) => {
               allowClear
               enterButton="Search"
               onSearch={getLatLong}
-            />
+            />,
           )}
         </Row>
       </Form.Item>
@@ -274,11 +275,13 @@ const ScenarioMap = ({ form }) => {
 
       {form.getFieldValue('tools').includes('zone') && (
         <div style={{ position: 'relative', height: 450 }}>
-          <EditableMap
-            location={location}
-            geojson={form.getFieldValue('geojson')}
-            setValue={setGeojson}
-          />
+          <Suspense>
+            <EditableMap
+              location={location}
+              geojson={form.getFieldValue('geojson')}
+              setValue={setGeojson}
+            />
+          </Suspense>
         </div>
       )}
     </Card>
@@ -319,7 +322,7 @@ const LatLongInput = forwardRef(
         </Col>
       </Row>
     );
-  }
+  },
 );
 LatLongInput.displayName = 'LatLongInput';
 

@@ -1,11 +1,12 @@
-import { Component } from 'react';
+import { Component, Suspense, lazy } from 'react';
 import { Provider } from 'react-redux';
 import { Switch, Route } from 'react-router';
 import { ConnectedRouter } from 'connected-react-router';
 
-import routes from '../constants/routes';
-import HomePage from './HomePage';
-import Splash from '../components/Splash/Splash';
+import routes from '../constants/routes.json';
+
+const HomePage = lazy(() => import('./HomePage'));
+const Splash = lazy(() => import('../components/Splash/Splash'));
 
 class App extends Component {
   render() {
@@ -14,9 +15,15 @@ class App extends Component {
       <Provider store={store}>
         <ConnectedRouter history={history}>
           <Switch>
-            <Route exact path={routes.SPLASH} component={Splash} />
+            <Route exact path={routes.SPLASH}>
+              <Suspense>
+                <Splash />
+              </Suspense>
+            </Route>
             <Route path={routes.HOME}>
-              <HomePage />
+              <Suspense>
+                <HomePage />
+              </Suspense>
             </Route>
           </Switch>
         </ConnectedRouter>
