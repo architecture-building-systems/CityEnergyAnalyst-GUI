@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Map from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import mapStyles from '../../constants/mapStyles';
+import mapStyles from '../../constants/mapStyles.json';
 import {
   DrawPolygonMode,
   EditableGeoJsonLayer,
@@ -10,8 +10,8 @@ import {
 } from 'nebula.gl';
 import { Button } from 'antd';
 import './EditableMap.css';
-import { area as calcArea, polygon } from '@turf/turf';
 import { DeckGL } from 'deck.gl';
+import { calcPolyArea } from './utils';
 
 const defaultViewState = {
   longitude: 0,
@@ -24,16 +24,6 @@ const defaultViewState = {
 const EMPTY_FEATURE = {
   type: 'FeatureCollection',
   features: [],
-};
-
-export const calcPolyArea = (geojson) => {
-  const poly = geojson.features[0]?.geometry?.coordinates;
-  if (typeof poly === 'undefined') return 0;
-  const site = polygon(geojson.features[0].geometry.coordinates);
-  // convert area from m^2 to km^2
-  const area = (calcArea(site) / 1000000).toFixed(2);
-
-  return area;
 };
 
 const EditableMap = ({
@@ -54,8 +44,8 @@ const EditableMap = ({
       mode === 'draw'
         ? DrawPolygonMode
         : mode === 'edit'
-        ? ModifyMode
-        : ViewMode,
+          ? ModifyMode
+          : ViewMode,
     selectedFeatureIndexes: selectedFeatureIndexes,
 
     onEdit: (e) => {
