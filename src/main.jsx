@@ -9,5 +9,5 @@ const store = configureStore();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App store={store} history={history} />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
