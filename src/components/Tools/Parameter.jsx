@@ -42,6 +42,7 @@ const Parameter = ({ parameter, form }) => {
     }
     case 'PathParameter':
     case 'FileParameter': {
+      const contentType = type == 'PathParameter' ? 'directory' : 'file';
       return (
         <FormItemWrapper
           form={form}
@@ -53,9 +54,6 @@ const Parameter = ({ parameter, form }) => {
               validator: async (rule, value, callback) => {
                 console.log({ parameter });
                 if (value == '' && nullable) return callback();
-
-                const contentType =
-                  type == 'PathParameter' ? 'directory' : 'file';
 
                 const pathExists =
                   contentType == 'directory'
@@ -73,7 +71,7 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={<OpenDialogInput form={form} type={type} />}
+          inputComponent={<OpenDialogInput form={form} type={contentType} />}
         />
       );
     }

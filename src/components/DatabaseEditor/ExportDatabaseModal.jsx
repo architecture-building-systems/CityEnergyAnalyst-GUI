@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
-import { Modal, message, Alert, Input } from 'antd';
+import { Modal, message, Alert } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
@@ -105,7 +105,7 @@ const ExportForm = Form.create()(({ form }) => {
         initialValue=""
         help="Path to export Database"
         required={true}
-        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+        inputComponent={<OpenDialogInput form={form} type="directory" />}
       />
     </Form>
   );
