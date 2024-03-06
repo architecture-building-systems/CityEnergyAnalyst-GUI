@@ -8,6 +8,7 @@ import {
   EditOutlined,
   ExceptionOutlined,
   FlagOutlined,
+  MailOutlined,
   ProjectOutlined,
   QuestionCircleOutlined,
   ReadOutlined,
@@ -206,9 +207,9 @@ const helpMenuUrls = {
   documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
   'report-issue':
     'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
-
   'known-issue':
     'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
+  contact: 'https://www.cityenergyanalyst.com/contact',
 };
 
 const helpMenuItems = () => {
@@ -237,6 +238,11 @@ const helpMenuItems = () => {
           label: 'Known Issues',
           key: 'known-issue',
           icon: <ExceptionOutlined />,
+        },
+        {
+          label: 'Contact Us',
+          key: 'contact',
+          icon: <MailOutlined />,
         },
       ],
     },
