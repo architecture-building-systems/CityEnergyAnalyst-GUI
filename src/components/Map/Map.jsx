@@ -4,7 +4,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { DeckGL } from 'deck.gl';
 import { GeoJsonLayer } from '@deck.gl/layers/typed';
 
-import mapStyles from '../../constants/mapStyles';
+import positron from '../../constants/mapStyles/positron.json';
+import no_label from '../../constants/mapStyles/positron_nolabel.json';
+
 import { area as calcArea, length as calcLength } from '@turf/turf';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
@@ -31,7 +33,7 @@ const DeckGLMap = ({ data, colors }) => {
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
   const connectedBuildings = useSelector(
-    (state) => state.inputData.connected_buildings
+    (state) => state.inputData.connected_buildings,
   );
   const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(defaultViewState);
@@ -45,7 +47,7 @@ const DeckGLMap = ({ data, colors }) => {
     network: true,
   });
 
-  const [mapStyle, setMapStyle] = useState('LIGHT_MAP');
+  const [mapStyle, setMapStyle] = useState('labels');
 
   const onMapLoad = useCallback(() => {
     console.debug('Map loaded.');
@@ -90,7 +92,7 @@ const DeckGLMap = ({ data, colors }) => {
               colors,
               connectedBuildings[network_type],
               selected,
-              network_type
+              network_type,
             ),
           updateTriggers: {
             getFillColor: [selected, visibility.dc],
@@ -102,7 +104,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           onHover: updateTooltip,
           onClick: onClick,
-        })
+        }),
       );
     }
     if (data.surroundings) {
@@ -124,7 +126,7 @@ const DeckGLMap = ({ data, colors }) => {
               colors,
               connectedBuildings[network_type],
               selected,
-              network_type
+              network_type,
             ),
           updateTriggers: {
             getFillColor: selected,
@@ -136,7 +138,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           onHover: updateTooltip,
           onClick: onClick,
-        })
+        }),
       );
     }
     if (data.streets) {
@@ -144,7 +146,7 @@ const DeckGLMap = ({ data, colors }) => {
         new GeoJsonLayer({
           id: 'streets',
           data: data.streets,
-          getLineColor: [0, 255, 0],
+          getLineColor: [171, 95, 127],
           getLineWidth: 1,
           visible: visibility.streets,
 
@@ -152,7 +154,7 @@ const DeckGLMap = ({ data, colors }) => {
           autoHighlight: true,
 
           onHover: updateTooltip,
-        })
+        }),
       );
     }
     if (data.dc) {
@@ -174,7 +176,7 @@ const DeckGLMap = ({ data, colors }) => {
           autoHighlight: true,
 
           onHover: updateTooltip,
-        })
+        }),
       );
     }
     if (data.dh) {
@@ -196,7 +198,7 @@ const DeckGLMap = ({ data, colors }) => {
           autoHighlight: true,
 
           onHover: updateTooltip,
-        })
+        }),
       );
     }
     return _layers;
@@ -260,7 +262,7 @@ const DeckGLMap = ({ data, colors }) => {
       >
         <Map
           ref={mapRef}
-          mapStyle={mapStyles[mapStyle]}
+          mapStyle={mapStyle == 'labels' ? positron : no_label}
           onLoad={onMapLoad}
           minZoom={1}
         />
@@ -276,12 +278,13 @@ const DeckGLMap = ({ data, colors }) => {
 
         <div id="map-controls">
           <div>
-            Dark Mode:
+            Show labels:
             <Switch
               style={{ margin: 6 }}
               size="small"
+              defaultChecked
               onChange={(checked) => {
-                setMapStyle(checked ? 'DARK_MAP' : 'LIGHT_MAP');
+                setMapStyle(checked ? 'labels' : 'no_labels');
               }}
             />
           </div>
@@ -356,7 +359,7 @@ function updateTooltip({ x, y, object, layer }) {
       if (layer.id === 'zone')
         innerHTML += `<div><b>GFA</b>: ${
           Math.round(
-            (properties['floors_ag'] + properties['floors_bg']) * area * 1000
+            (properties['floors_ag'] + properties['floors_bg']) * area * 1000,
           ) / 1000
         }m<sup>2</sup></div>`;
     } else if (layer.id === 'dc' || layer.id === 'dh') {
@@ -398,7 +401,7 @@ const buildingColor = (
   colors,
   connectedBuildings,
   selected,
-  network_type
+  network_type,
 ) => {
   if (selected.includes(buildingName)) {
     return [255, 255, 0, 255];
