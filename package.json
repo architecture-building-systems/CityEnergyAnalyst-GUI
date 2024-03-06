@@ -98,7 +98,11 @@
       "extraResources": [
         {
           "from": "dependencies",
-          "to": "."
+          "to": ".",
+          "filter": [
+            "**/*",
+            "!**/__pycache__"
+          ]
         }
       ]
     },

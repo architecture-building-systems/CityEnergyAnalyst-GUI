@@ -23,3 +23,5 @@ out
 *.njsproj
 *.sln
 *.sw?
+
+dependencies
