@@ -146,7 +146,7 @@ const DeckGLMap = ({ data, colors }) => {
         new GeoJsonLayer({
           id: 'streets',
           data: data.streets,
-          getLineColor: [0, 255, 0],
+          getLineColor: [171, 95, 127],
           getLineWidth: 1,
           visible: visibility.streets,
 
