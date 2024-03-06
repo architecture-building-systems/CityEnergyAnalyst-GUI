@@ -109,7 +109,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
             },
           },
         ]}
-        inputComponent={<OpenDialogInput form={form} type="PathParameter" />}
+        inputComponent={<OpenDialogInput form={form} type="directory" />}
       />
     </Form>
   );
