@@ -252,18 +252,23 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           <small>status:</small>
           <i>{` ${JOB_STATES[job.state]}`}</i>
         </div>
-        <div>
-          <small>parameters: </small>
-        </div>
-        <pre
-          style={{
-            padding: 5,
-            fontSize: 11,
-            backgroundColor: '#f1f1f1',
-          }}
-        >
-          {JSON.stringify(job.parameters, null, 2)}
-        </pre>
+        <details>
+          <summary>
+            <small>Show parameters</small>
+          </summary>
+          <pre
+            style={{
+              padding: 12,
+              fontSize: 10,
+              backgroundColor: '#f1f1f1',
+              overflow: 'auto',
+              maxHeight: 240,
+              borderRadius: 6,
+            }}
+          >
+            {JSON.stringify(job.parameters, null, 2)}
+          </pre>
+        </details>
       </div>
     </div>
   );
