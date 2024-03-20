@@ -256,6 +256,14 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           <small>status:</small>
           <i>{` ${JOB_STATES[job.state]}`}</i>
         </div>
+
+        <div>
+          <small>
+            scenario: <i>{job.parameters?.scenario}</i>
+          </small>
+          <i></i>
+        </div>
+
         <details>
           <summary>
             <small>Show parameters</small>
