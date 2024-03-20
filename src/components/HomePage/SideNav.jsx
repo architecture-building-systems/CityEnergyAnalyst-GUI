@@ -77,7 +77,16 @@ const SideNav = () => {
       collapsed={collapsed}
       hidden={breakpoint && collapsed}
     >
-      <div className="logo">
+      <div
+        className="logo"
+        aria-hidden="true"
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        onClick={() => {
+          const url = 'https://www.cityenergyanalyst.com';
+          if (isElectron()) openExternal(url);
+          else window.open(url, '_blank', 'noreferrer');
+        }}
+      >
         <img src={ceaLogo} alt="Logo" />
         <span className={collapsed ? 'title inactive' : 'title active'}>
           City Energy Analyst
