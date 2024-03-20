@@ -11,8 +11,8 @@ import {
   MailOutlined,
   ProjectOutlined,
   QuestionCircleOutlined,
-  ReadOutlined,
   ToolOutlined,
+  YoutubeOutlined,
 } from '@ant-design/icons';
 
 import { Layout, Menu, Tooltip } from 'antd';
@@ -77,7 +77,16 @@ const SideNav = () => {
       collapsed={collapsed}
       hidden={breakpoint && collapsed}
     >
-      <div className="logo">
+      <div
+        className="logo"
+        aria-hidden="true"
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        onClick={() => {
+          const url = 'https://www.cityenergyanalyst.com';
+          if (isElectron()) openExternal(url);
+          else window.open(url, '_blank', 'noreferrer');
+        }}
+      >
         <img src={ceaLogo} alt="Logo" />
         <span className={collapsed ? 'title inactive' : 'title active'}>
           City Energy Analyst
@@ -203,7 +212,7 @@ const toolMenuItems = (status, tools) => {
 };
 
 const helpMenuUrls = {
-  'blog-tutorials': 'https://www.cityenergyanalyst.com/blog',
+  'video-tutorials': 'https://www.cityenergyanalyst.com/video',
   documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
   'report-issue':
     'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
@@ -220,9 +229,9 @@ const helpMenuItems = () => {
       icon: <QuestionCircleOutlined />,
       children: [
         {
-          label: 'Blog Tutorials',
-          key: 'blog-tutorials',
-          icon: <ReadOutlined />,
+          label: 'Video Tutorials',
+          key: 'video-tutorials',
+          icon: <YoutubeOutlined />,
         },
         {
           label: 'Documentation',
