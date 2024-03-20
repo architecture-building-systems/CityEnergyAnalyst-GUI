@@ -11,7 +11,7 @@ import {
   ToolFilled,
 } from '@ant-design/icons';
 
-import { Popover, notification, Button, Modal } from 'antd';
+import { Popover, notification, Button, Modal, Space } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
@@ -230,9 +230,13 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           <StateIcon state={job.state} />
           <b>{`jobID: ${id} - ${job.script}`}</b>
         </div>
-        <div>
+        <Space>
           {job.state < 2 && (
-            <Button size="small" onClick={() => cancelCeaJob({ id, ...job })}>
+            <Button
+              size="small"
+              danger
+              onClick={() => cancelCeaJob({ id, ...job })}
+            >
               Cancel
             </Button>
           )}
@@ -243,9 +247,9 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
               setModalVisible(true);
             }}
           >
-            More Info
+            Show Logs
           </Button>
-        </div>
+        </Space>
       </div>
       <div>
         <div>
@@ -291,7 +295,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         const resp = await axios.get(
           `${import.meta.env.VITE_CEA_URL}/server/streams/read/${job.id}`,
           null,
-          { responseType: 'text' }
+          { responseType: 'text' },
         );
         setMessage(resp.data);
       } catch (error) {
