@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Tabs } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
-import Table, { TableButtons } from './Table';
+import Table, { TableButtons, useTableUpdateRedux } from './Table';
 import ColumnGlossary from './ColumnGlossary';
 
 const Database = ({ name, data, schema }) => {
@@ -32,11 +32,12 @@ const Database = ({ name, data, schema }) => {
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   const data = useSelector((state) => state.databaseEditor.data);
   const tableRef = useRef(null);
+  const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
   const { columns, colHeaders } = getTableSchema(
     schema,
     sheetName,
     sheetData,
-    data
+    data,
   );
 
   // Validate cells on mount
@@ -75,7 +76,7 @@ export const getTableSchema = (
   sheetName,
   tableData,
   data,
-  colHeaders
+  colHeaders,
 ) => {
   const _colHeaders = colHeaders || Object.keys(tableData[0]);
   const columns = _colHeaders.map((key) => {

@@ -227,6 +227,9 @@ const DatabaseContainer = () => {
   )
     return <div>{`${category}-${name} database not found`}</div>;
 
+  if (!schema?.[name])
+    return <div>{`Schema for database ${category}-${name} was not found`}</div>;
+
   return (
     <div className="cea-database-editor-database-container">
       <div className="cea-database-editor-database">
