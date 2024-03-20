@@ -11,8 +11,8 @@ import {
   MailOutlined,
   ProjectOutlined,
   QuestionCircleOutlined,
-  ReadOutlined,
   ToolOutlined,
+  YoutubeOutlined,
 } from '@ant-design/icons';
 
 import { Layout, Menu, Tooltip } from 'antd';
@@ -212,7 +212,7 @@ const toolMenuItems = (status, tools) => {
 };
 
 const helpMenuUrls = {
-  'blog-tutorials': 'https://www.cityenergyanalyst.com/blog',
+  'video-tutorials': 'https://www.cityenergyanalyst.com/video',
   documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
   'report-issue':
     'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
@@ -229,9 +229,9 @@ const helpMenuItems = () => {
       icon: <QuestionCircleOutlined />,
       children: [
         {
-          label: 'Blog Tutorials',
-          key: 'blog-tutorials',
-          icon: <ReadOutlined />,
+          label: 'Video Tutorials',
+          key: 'video-tutorials',
+          icon: <YoutubeOutlined />,
         },
         {
           label: 'Documentation',
