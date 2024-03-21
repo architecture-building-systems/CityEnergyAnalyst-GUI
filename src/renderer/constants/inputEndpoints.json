@@ -1,7 +1,0 @@
-{
-  "zone": "/api/inputs/building-properties/zone/geojson",
-  "surroundings": "/api/inputs/building-properties/surroundings/geojson",
-  "streets": "/api/inputs/others/streets/geojson",
-  "dh": "/api/inputs/others/dh/geojson",
-  "dc": "/api/inputs/others/dc/geojson"
-}

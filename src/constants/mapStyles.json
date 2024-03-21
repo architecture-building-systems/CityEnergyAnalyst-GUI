@@ -1,0 +1,46 @@
+{
+  "LIGHT_MAP": {
+    "version": 8,
+    "sources": {
+      "osm-tiles": {
+        "type": "raster",
+        "tiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        "tileSize": 256,
+        "minzoom": 0,
+        "maxzoom": 19,
+        "attribution": "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+      }
+    },
+    "layers": [
+      {
+        "id": "osm-tiles",
+        "type": "raster",
+        "source": "osm-tiles"
+      }
+    ]
+  },
+  "DARK_MAP": {
+    "version": 8,
+    "sources": {
+      "carto-tiles": {
+        "type": "raster",
+        "tiles": [
+          "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+          "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+          "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
+        ],
+        "tileSize": 256,
+        "minzoom": 0,
+        "maxzoom": 22,
+        "attribution": "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL."
+      }
+    },
+    "layers": [
+      {
+        "id": "carto-tiles",
+        "type": "raster",
+        "source": "carto-tiles"
+      }
+    ]
+  }
+}

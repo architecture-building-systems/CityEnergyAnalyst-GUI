@@ -1,0 +1,68 @@
+#cea-status-bar-container {
+  width: 100%;
+  height: 24px;
+  color: white;
+  background-color: #333;
+  display: flex;
+  justify-content: space-between;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.cea-status-bar-button {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px;
+  margin: 0 8px;
+  height: 100%;
+  align-items: center;
+}
+
+.cea-status-bar-button * {
+  user-select: none;
+}
+
+.cea-status-bar-button:hover {
+  background-color: #555;
+  cursor: pointer;
+}
+
+.cea-status-bar-button:active {
+  background-color: #777;
+}
+
+.cea-job-list-popover .ant-popover-inner {
+  width: 500px;
+}
+
+.cea-job-list-popover .ant-popover-inner-content {
+  background-color: #aaaaaa;
+  padding: unset;
+  overflow: auto;
+}
+
+.cea-job-list-popover-collapse:hover {
+  cursor: pointer;
+}
+
+.cea-job-info-card {
+  background-color: rgba(255, 255, 255, 1);
+  padding: 10px;
+  margin-bottom: 1px;
+}
+
+.cea-job-info-card:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.ant-notification {
+  z-index: 1050;
+}
+
+.ant-notification:hover {
+  cursor: pointer;
+}

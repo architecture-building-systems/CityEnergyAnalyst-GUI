@@ -1,0 +1,41 @@
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+.trigger {
+  font-size: 18px;
+  line-height: 64px;
+  padding: 0 24px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.trigger:hover {
+  color: #1890ff;
+}
+
+pre {
+  text-align: left;
+}
+
+.ant-input-group-addon {
+  padding: 0;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.formButtons .ant-legacy-form-item-control {
+  display: flex;
+  justify-content: center;
+}
+
+.formButtons button {
+  margin: 0px 10px;
+}
+
+.ant-card-extra > .anticon {
+  margin: 0px 10px;
+}

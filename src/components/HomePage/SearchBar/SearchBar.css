@@ -1,0 +1,44 @@
+.cea-search-dropdown {
+  line-height: normal;
+  margin-top: -10px;
+  max-height: 200px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: auto;
+  position: absolute;
+  top: 60px;
+  right: 25px;
+  max-width: 400px;
+  min-width: 280px;
+}
+
+.cea-search-category-title {
+  font-style: italic;
+  font-weight: bold;
+  user-select: none;
+  padding: 5px;
+  background-color: #f1f1f1;
+}
+
+.cea-search-item {
+  padding: 12px;
+  border-bottom: 1px solid #f1f1f1;
+}
+.cea-search-item.empty {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cea-search-item:hover {
+  background-color: #dddddd;
+  cursor: pointer;
+}
+
+.cea-search-item.empty:hover {
+  cursor: default;
+}
+
+.cea-search-description {
+  margin: 5px 0;
+}
