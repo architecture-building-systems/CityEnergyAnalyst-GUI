@@ -8,10 +8,17 @@ class FileNotFoundError extends Error {
   }
 }
 
+class InvalidContentType extends Error {
+  constructor(message, options) {
+    // Need to pass `options` as the second parameter to install the "cause" property.
+    super(message, options);
+  }
+}
+
 export const getContentInfo = async (
   content_path = '',
   content_type = 'directory',
-  root_path = null
+  root_path = null,
 ) => {
   try {
     const url = `${import.meta.env.VITE_CEA_URL}/api/contents/${content_path}`;
@@ -21,6 +28,7 @@ export const getContentInfo = async (
     return data;
   } catch (error) {
     if (error.response.status == 404) throw new FileNotFoundError();
+    if (error.response.status == 400) throw new InvalidContentType();
     else throw error;
   }
 };
@@ -28,13 +36,17 @@ export const getContentInfo = async (
 export const checkExist = async (
   content_path,
   content_type,
-  root_path = null
+  root_path = null,
 ) => {
   try {
     await getContentInfo(content_path, content_type, root_path);
     return true;
   } catch (error) {
-    if (error instanceof FileNotFoundError) return false;
+    if (
+      error instanceof FileNotFoundError ||
+      error instanceof InvalidContentType
+    )
+      return false;
     else throw error;
   }
 };

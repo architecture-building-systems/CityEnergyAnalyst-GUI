@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSpring, animated } from 'react-spring';
+import { useSpring, animated } from '@react-spring/web';
 import ceaLogo from '../../assets/cea-logo.png';
 
 const useLoadingMessages = () => {
@@ -10,24 +10,21 @@ const useLoadingMessages = () => {
   return message;
 };
 
-const usePulse = () => {
-  const [pulse, setPulse] = useState(true);
-  useEffect(() => {
-    setInterval(() => setPulse((oldValue) => !oldValue), 800);
-  }, []);
-  return pulse;
-};
-
 const Splash = () => {
   const message = useLoadingMessages();
-  const pulse = usePulse();
-  const props = useSpring({ scale: pulse ? 1 : 1.1 });
+  const springs = useSpring({
+    from: { scale: 1 },
+    to: [{ scale: 1.1 }, { scale: 1 }],
+    loop: true,
+    config: {
+      duration: 800,
+    },
+  });
 
   return (
     <div
       style={{
-        height: '100%',
-        width: '100%',
+        height: '100vh',
         backgroundColor: '#2e2c29',
         color: 'white',
         display: 'flex',
@@ -40,7 +37,7 @@ const Splash = () => {
       <animated.div
         style={{
           width: 100,
-          transform: props.scale.interpolate((x) => `scale(${x})`),
+          ...springs,
         }}
       >
         <img
@@ -50,7 +47,9 @@ const Splash = () => {
           draggable="false"
         />
       </animated.div>
-      <h1 style={{ margin: 20, color: 'white' }}>City Energy Analyst</h1>
+      <h1 style={{ margin: 20, color: 'white', textAlign: 'center' }}>
+        City Energy Analyst
+      </h1>
       <small>{message}</small>
     </div>
   );

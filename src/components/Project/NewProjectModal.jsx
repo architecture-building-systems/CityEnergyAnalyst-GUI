@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Form } from '@ant-design/compatible';
-import { Modal, Input } from 'antd';
+import { Modal } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper } from '../Tools/Parameter';
-import { useFetchConfigProjectInfo, useFetchProject } from '../Project/Project';
+import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { useFetchConfigProjectInfo } from '../Project/Project';
 import { checkExist, dirname, joinPath } from '../../utils/file';
+import { useFetchProject } from '../../utils/hooks';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -27,7 +28,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
         try {
           const resp = await axios.post(
             `${import.meta.env.VITE_CEA_URL}/api/project/`,
-            values
+            values,
           );
           const { project } = resp.data;
           fetchProject(project).then(() => {
@@ -80,7 +81,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
             validator: async (rule, value, callback) => {
               const contentPath = joinPath(
                 form.getFieldValue('project_root'),
-                value
+                value,
               );
               const pathExists = await checkExist('', 'directory', contentPath);
               if (value.length != 0 && pathExists) {
@@ -108,7 +109,7 @@ const NewProjectForm = Form.create()(({ form, initialValue }) => {
             },
           },
         ]}
-        inputComponent={<Input form={form} type="PathParameter" />}
+        inputComponent={<OpenDialogInput form={form} type="directory" />}
       />
     </Form>
   );

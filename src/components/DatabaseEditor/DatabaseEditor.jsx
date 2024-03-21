@@ -17,13 +17,13 @@ import {
   resetDatabaseChanges,
 } from '../../actions/databaseEditor';
 import { AsyncError } from '../../utils';
-import routes from '../../constants/routes';
-import { useChangeRoute } from '../Project/Project';
+import routes from '../../constants/routes.json';
 import SavingDatabaseModal from './SavingDatabaseModal';
 import DatabaseTopMenu from './DatabaseTopMenu';
 import Database from './Database';
 import UseTypesDatabase from './UseTypesDatabase';
 import ValidationErrors from './ValidationErrors';
+import { useChangeRoute } from '../../utils/hooks';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -34,7 +34,7 @@ const useValidateDatabasePath = () => {
       setValid(null);
       setError(null);
       await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/check`
+        `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/check`,
       );
       setValid(true);
     } catch (err) {
@@ -139,7 +139,7 @@ const DatabaseContent = () => {
 export const ExportDatabaseButton = () => {
   const { status } = useSelector((state) => state.databaseEditor.status);
   const databaseValidation = useSelector(
-    (state) => state.databaseEditor.validation
+    (state) => state.databaseEditor.validation,
   );
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -167,7 +167,7 @@ export const ExportDatabaseButton = () => {
 const SaveDatabaseButton = () => {
   const databasesData = useSelector((state) => state.databaseEditor.data);
   const databaseValidation = useSelector(
-    (state) => state.databaseEditor.validation
+    (state) => state.databaseEditor.validation,
   );
   const databaseChanges = useSelector((state) => state.databaseEditor.changes);
   const dispatch = useDispatch();
@@ -187,7 +187,7 @@ const SaveDatabaseButton = () => {
       console.log(databasesData);
       await axios.put(
         `${import.meta.env.VITE_CEA_URL}/api/inputs/databases`,
-        databasesData
+        databasesData,
       );
       setSuccess(true);
       dispatch(resetDatabaseChanges());
@@ -226,6 +226,9 @@ const DatabaseContainer = () => {
     !Object.keys(data[category]).includes(name)
   )
     return <div>{`${category}-${name} database not found`}</div>;
+
+  if (!schema?.[name])
+    return <div>{`Schema for database ${category}-${name} was not found`}</div>;
 
   return (
     <div className="cea-database-editor-database-container">

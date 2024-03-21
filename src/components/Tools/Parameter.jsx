@@ -1,10 +1,13 @@
 import { Form } from '@ant-design/compatible';
-import { PlusOutlined } from '@ant-design/icons';
-import { Input, Switch, Select, Divider, Button } from 'antd';
-import { checkExist } from '../../utils/file';
+import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Input, Switch, Select, Divider, Button, Space } from 'antd';
+import { basename, checkExist, dirname } from '../../utils/file';
+import { forwardRef } from 'react';
+
+import { isElectron, openDialog } from '../../utils/electron';
 
 const Parameter = ({ parameter, form }) => {
-  const { name, type, value, choices, help } = parameter;
+  const { name, type, value, choices, nullable, help } = parameter;
   const { setFieldsValue } = form;
 
   switch (type) {
@@ -39,6 +42,7 @@ const Parameter = ({ parameter, form }) => {
     }
     case 'PathParameter':
     case 'FileParameter': {
+      const contentType = type == 'PathParameter' ? 'directory' : 'file';
       return (
         <FormItemWrapper
           form={form}
@@ -48,18 +52,26 @@ const Parameter = ({ parameter, form }) => {
           rules={[
             {
               validator: async (rule, value, callback) => {
-                const contentType =
-                  type == 'PathParameter' ? 'directory' : 'file';
-                const pathExists = await checkExist('', contentType, value);
+                console.log({ parameter });
+                if (value == '' && nullable) return callback();
+
+                const pathExists =
+                  contentType == 'directory'
+                    ? await checkExist('', contentType, value)
+                    : await checkExist(
+                        basename(value),
+                        contentType,
+                        dirname(value),
+                      );
                 if (!pathExists) {
-                  callback('Path does not exist');
+                  callback('Path entered is invalid');
                 } else {
                   callback();
                 }
               },
             },
           ]}
-          inputComponent={<Input form={form} type={type} />}
+          inputComponent={<OpenDialogInput form={form} type={contentType} />}
         />
       );
     }
@@ -130,7 +142,7 @@ const Parameter = ({ parameter, form }) => {
             {
               validator: (rule, value, callback) => {
                 const invalidChoices = value.filter(
-                  (choice) => !choices.includes(choice)
+                  (choice) => !choices.includes(choice),
                 );
                 if (invalidChoices.length) {
                   callback(
@@ -138,7 +150,7 @@ const Parameter = ({ parameter, form }) => {
                       invalidChoices.length > 1
                         ? 'are not valid choices'
                         : 'is not a valid choice'
-                    }`
+                    }`,
                   );
                 } else {
                   callback();
@@ -197,13 +209,10 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <div
-                    style={{ padding: '8px', cursor: 'pointer' }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <PlusOutlined /> Browse for databases path
-                  </div>
+                  <OpenDialogButton form={form} type="directory" id={name}>
+                    <PlusOutlined />
+                    Browse for databases path
+                  </OpenDialogButton>
                 </div>
               )}
             >
@@ -234,13 +243,10 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <div
-                    style={{ padding: '8px', cursor: 'pointer' }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <PlusOutlined /> Browse for weather file
-                  </div>
+                  <OpenDialogButton form={form} type="file" id={name}>
+                    <PlusOutlined />
+                    Browse for weather file
+                  </OpenDialogButton>
                 </div>
               )}
             >
@@ -302,29 +308,43 @@ export const FormItemWrapper = ({
   );
 };
 
-// export const OpenDialogInput = forwardRef((props, ref) => {
-//   const { form, type, id, ...rest } = props;
-//   const [open, setOpen] = useState(false);
-//   const onSuccess = (contentPath) => {
-//     form.setFieldsValue({ [id]: contentPath });
-//   };
-//   return (
-//     <>
-//       <Space.Compact block style={{ paddingBottom: 3 }}>
-//         <Input ref={ref} style={{ width: '100%' }} {...rest} />
-//         <Button
-//           type="primary"
-//           style={{ width: 60 }}
-//           icon={<SearchOutlined />}
-//           onClick={() => {
-//             setOpen(true);
-//           }}
-//         ></Button>
-//       </Space.Compact>
-//       <DialogModel open={open} setOpen={setOpen} onSuccess={onSuccess} />
-//     </>
-//   );
-// });
-// OpenDialogInput.displayName = 'OpenDialogInput';
+export const OpenDialogInput = forwardRef((props, ref) => {
+  const { form, type, id, ...rest } = props;
+
+  if (!isElectron()) return <Input ref={ref} {...props} />;
+
+  return (
+    <Space.Compact block style={{ paddingBottom: 3 }}>
+      <Input ref={ref} style={{ width: '100%' }} {...rest} />
+      <Button
+        type="primary"
+        style={{ width: 60 }}
+        icon={<FileSearchOutlined />}
+        onClick={async () => {
+          await openDialog(form, type, id);
+        }}
+      ></Button>
+    </Space.Compact>
+  );
+});
+OpenDialogInput.displayName = 'OpenDialogInput';
+
+export const OpenDialogButton = (props) => {
+  const { form, type, id, children } = props;
+
+  // ignore if not electron for now
+  if (!isElectron()) return null;
+
+  return (
+    <Button
+      style={{ width: '100%' }}
+      onClick={async () => {
+        await openDialog(form, type, id);
+      }}
+    >
+      {children}
+    </Button>
+  );
+};
 
 export default Parameter;

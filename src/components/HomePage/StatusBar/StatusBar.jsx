@@ -11,7 +11,7 @@ import {
   ToolFilled,
 } from '@ant-design/icons';
 
-import { Popover, notification, Button, Modal } from 'antd';
+import { Popover, notification, Button, Modal, Space } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
@@ -230,9 +230,13 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           <StateIcon state={job.state} />
           <b>{`jobID: ${id} - ${job.script}`}</b>
         </div>
-        <div>
+        <Space>
           {job.state < 2 && (
-            <Button size="small" onClick={() => cancelCeaJob({ id, ...job })}>
+            <Button
+              size="small"
+              danger
+              onClick={() => cancelCeaJob({ id, ...job })}
+            >
               Cancel
             </Button>
           )}
@@ -243,27 +247,40 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
               setModalVisible(true);
             }}
           >
-            More Info
+            Show Logs
           </Button>
-        </div>
+        </Space>
       </div>
       <div>
         <div>
           <small>status:</small>
           <i>{` ${JOB_STATES[job.state]}`}</i>
         </div>
+
         <div>
-          <small>parameters: </small>
+          <small>
+            scenario: <i>{job.parameters?.scenario}</i>
+          </small>
+          <i></i>
         </div>
-        <pre
-          style={{
-            padding: 5,
-            fontSize: 11,
-            backgroundColor: '#f1f1f1',
-          }}
-        >
-          {JSON.stringify(job.parameters, null, 2)}
-        </pre>
+
+        <details>
+          <summary>
+            <small>Show parameters</small>
+          </summary>
+          <pre
+            style={{
+              padding: 12,
+              fontSize: 10,
+              backgroundColor: '#f1f1f1',
+              overflow: 'auto',
+              maxHeight: 240,
+              borderRadius: 6,
+            }}
+          >
+            {JSON.stringify(job.parameters, null, 2)}
+          </pre>
+        </details>
       </div>
     </div>
   );
@@ -286,7 +303,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         const resp = await axios.get(
           `${import.meta.env.VITE_CEA_URL}/server/streams/read/${job.id}`,
           null,
-          { responseType: 'text' }
+          { responseType: 'text' },
         );
         setMessage(resp.data);
       } catch (error) {

@@ -110,7 +110,7 @@ const DashForm = Form.create()(({ form }) => {
             <Radio value="grid-4">
               Grid 4<div className="grid-4-image"></div>
             </Radio>
-          </Radio.Group>
+          </Radio.Group>,
         )}
       </Form.Item>
     </Form>
@@ -184,27 +184,29 @@ export const ModalDuplicateDashboard = ({
   );
 };
 
-const DashDuplicateForm = Form.create()(
-  ({ form, dashIndex, dashboardNames }) => {
-    const { getFieldDecorator } = form;
+const DashDuplicateForm = Form.create()(({
+  form,
+  dashIndex,
+  dashboardNames,
+}) => {
+  const { getFieldDecorator } = form;
 
-    return (
-      <Form layout="horizontal">
-        <Form.Item
-          label="Name"
-          key="name"
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 11, offset: 1 }}
-        >
-          {getFieldDecorator('name', {
-            initialValue: `${dashboardNames[dashIndex]}(Copy)`,
-            rules: [{ required: true }],
-          })(<Input />)}
-        </Form.Item>
-      </Form>
-    );
-  }
-);
+  return (
+    <Form layout="horizontal">
+      <Form.Item
+        label="Name"
+        key="name"
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 11, offset: 1 }}
+      >
+        {getFieldDecorator('name', {
+          initialValue: `${dashboardNames[dashIndex]}(Copy)`,
+          rules: [{ required: true }],
+        })(<Input />)}
+      </Form.Item>
+    </Form>
+  );
+});
 
 export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
   const [scenarios, setScenarios] = useState(null);
@@ -220,7 +222,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
         axios
           .patch(
             `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}`,
-            values
+            values,
           )
           .then((response) => {
             if (response) {
@@ -356,7 +358,7 @@ const ModalAddPlotTemplate = ({
         `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories/${
           category.category
         }/plots/${category.plot_id}/parameters`,
-        scenario ? { params: { scenario } } : {}
+        scenario ? { params: { scenario } } : {},
       );
       console.log(params.data);
       setParameters(params.data);
@@ -375,7 +377,7 @@ const ModalAddPlotTemplate = ({
             `${
               import.meta.env.VITE_CEA_URL
             }/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
-            { ...category, parameters: values }
+            { ...category, parameters: values },
           )
           .then((response) => {
             if (response) {
@@ -555,7 +557,7 @@ export const ModalEditParameters = ({
         `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
           activePlotRef.current
         }/parameters`,
-        scenario ? { params: { scenario } } : {}
+        scenario ? { params: { scenario } } : {},
       );
       console.log(params.data);
       setParameters(params.data);
@@ -574,7 +576,7 @@ export const ModalEditParameters = ({
             `${
               import.meta.env.VITE_CEA_URL
             }/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
-            { parameters: values }
+            { parameters: values },
           )
           .then((response) => {
             if (response) {
@@ -662,7 +664,7 @@ export const ModalDeletePlot = ({
       .delete(
         `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
           activePlotRef.current
-        }`
+        }`,
       )
       .then((response) => {
         if (response) {
@@ -710,28 +712,15 @@ const groupFilesOnParent = async (fileList) => {
 };
 
 const FileList = ({ folderPath, filePaths }) => {
-  // TODO: Find way to open file when anchor tags are clicked
-  const fileList = filePaths.map((file) => (
-    <li key={file}>
-      <a>{file}</a>
-    </li>
-  ));
+  const fileList = filePaths.map((file) => <li key={file}>{file}</li>);
 
   return (
     <div style={{ marginBottom: 10 }}>
       <FolderOutlined />
       <b style={{ margin: 5 }}>{folderPath}</b>
-      <a>Open Folder</a>
-      {filePaths.length > 3 ? (
-        <details style={{ margin: 10 }}>
-          <summary>Show files</summary>
-          <div style={{ margin: 10, maxHeight: 200, overflow: 'auto' }}>
-            <ul>{fileList}</ul>
-          </div>
-        </details>
-      ) : (
+      <div style={{ margin: 10, maxHeight: 200, overflow: 'auto' }}>
         <ul>{fileList}</ul>
-      )}
+      </div>
     </div>
   );
 };
@@ -782,7 +771,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
         const { data } = await axios.get(
           `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
             activePlotRef.current
-          }/input-files`
+          }/input-files`,
         );
         setFileLocations({
           inputs: await groupFilesOnParent(data.inputs),
