@@ -62,6 +62,7 @@
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
     "deck.gl": "^8.9.34",
+    "electron-log": "^5.1.2",
     "electron-updater": "^6.1.8",
     "events": "^3.3.0",
     "handsontable": "^6",
