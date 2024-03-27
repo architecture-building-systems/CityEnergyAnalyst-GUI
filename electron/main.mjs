@@ -7,6 +7,7 @@ import {
   killCEAProcess,
 } from './cea/process.mjs';
 import { fileURLToPath } from 'url';
+import { getAutoUpdater } from './updater.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,6 +22,7 @@ let mainWindow;
 let splashWindow;
 
 const gotTheLock = app.requestSingleInstanceLock();
+const autoUpdater = getAutoUpdater();
 
 if (!gotTheLock) {
   app.quit();
@@ -86,6 +88,8 @@ const createMainWindow = () => {
     mainWindow.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    // Only check if not dev
+    autoUpdater.checkForUpdatesAndNotify();
   }
 
   mainWindow.once('ready-to-show', () => {

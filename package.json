@@ -14,7 +14,8 @@
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "yarn build-electron && electron-builder build --publish never"
+    "electron:build": "yarn build-electron && electron-builder build --publish never",
+    "electron:release": "electron-builder"
   },
   "keywords": [],
   "author": {
@@ -61,6 +62,7 @@
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
     "deck.gl": "^8.9.34",
+    "electron-updater": "^6.1.8",
     "events": "^3.3.0",
     "handsontable": "^6",
     "history": "^4.9.0",
