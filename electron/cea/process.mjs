@@ -1,65 +1,32 @@
-import { app, dialog } from 'electron';
 import fs from 'fs';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-import { spawn } from 'child_process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import path from 'path';
+import axios from 'axios';
+import { app, dialog } from 'electron';
 
 let cea;
+let timeout;
+let interval;
 let startupError = '';
 
-let intervals = [];
-let timeouts = [];
-
-export function createCEAProcess(url, callback) {
+export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
-  let cea;
-
-  switch (process.platform) {
-    case 'win32': {
-      let scriptPath = path.join(
-        path.dirname(process.execPath),
-        '/../',
+  // For windows
+  if (process.platform === 'win32') {
+    let scriptPath = path.join(
+      path.dirname(process.execPath),
+      '/../',
+      'dashboard.bat',
+    );
+    // Fallback to default install path
+    if (!fs.existsSync(scriptPath))
+      scriptPath = path.join(
+        process.env.USERPROFILE,
+        'Documents',
+        'CityEnergyAnalyst',
         'dashboard.bat',
       );
-
-      // Fallback to default install path
-      if (!fs.existsSync(scriptPath))
-        scriptPath = path.join(
-          process.env.USERPROFILE,
-          'Documents',
-          'CityEnergyAnalyst',
-          'dashboard.bat',
-        );
-      console.log(scriptPath);
-      cea = spawn('cmd.exe', ['/c', scriptPath]);
-      break;
-    }
-    case 'darwin': {
-      if (app.isPackaged) {
-        // micromamba located in Contents/Resources/micromamba
-        cea = spawn(
-          './micromamba',
-          [
-            '-r',
-            './micromamba-root',
-            '-n',
-            'cea',
-            'run',
-            'python',
-            '-m',
-            'cea.interfaces.dashboard.dashboard',
-          ],
-          { cwd: dirname(app.getAppPath()) },
-        );
-      } else checkCEAStarted(url);
-      break;
-    }
-    default:
-      throw new Error('Start CEA dashboard server manually.');
+    console.log(scriptPath);
+    cea = require('child_process').spawn('cmd.exe', ['/c', scriptPath]);
   }
 
   if (cea) {
@@ -82,18 +49,18 @@ export function createCEAProcess(url, callback) {
   }
 
   function showStartupError() {
-    dialog.showMessageBoxSync({
+    dialog.showMessageBoxSync(BrowserWindow, {
       type: 'error',
       title: 'CEA Error',
-      message: 'CEA has encountered an error on startup',
+      message: 'CEA has encounted an error on startup',
       detail: startupError,
       buttons: ['Exit CEA'],
     });
     app.exit();
   }
 
-  // Remove Error message box listener after successful startup
   checkCEAStarted(url, () => {
+    // Remove Error message box listener after successful startup
     if (cea) {
       cea.stderr.removeListener('data', saveStartupError);
       cea.removeListener('exit', showStartupError);
@@ -110,16 +77,14 @@ export function killCEAProcess() {
     cea.removeAllListeners('exit');
     process.kill(cea.pid);
   }
-
-  // Clear all intervals and timeouts
-  intervals.forEach((interval) => clearInterval(interval));
-  timeouts.forEach((timeout) => clearTimeout(timeout));
+  interval && clearInterval(interval);
+  timeout && clearTimeout(timeout);
 }
 
 export async function isCEAAlive(url) {
   console.debug(`isCEAAlive(${url})`);
   try {
-    const resp = await fetch(`${url}/server/alive`);
+    const resp = await axios.get(`${url}/server/alive`);
     return resp.status == 200;
   } catch (error) {
     console.error(error.response || 'No Response');
@@ -127,17 +92,13 @@ export async function isCEAAlive(url) {
   }
 }
 
-function checkCEAStarted(url, callback = () => {}) {
-  let interval;
-  let timeout;
-
+function checkCEAStarted(url, callback) {
   console.debug(`checkCEAStarted(${url})`);
   const runCallbackOnce = (() => {
     let executed = false;
     return () => {
       if (!executed) {
         executed = true;
-        console.debug('Running callback');
         callback();
       }
     };
@@ -159,8 +120,4 @@ function checkCEAStarted(url, callback = () => {}) {
   timeout = setTimeout(() => {
     clearInterval(interval);
   }, 60000);
-
-  // Store references to global scope
-  intervals.push(interval);
-  timeouts.push(timeouts);
 }

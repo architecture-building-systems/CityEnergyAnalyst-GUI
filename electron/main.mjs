@@ -1,7 +1,11 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path, { dirname } from 'path';
 
-import { isCEAAlive, createCEAProcess, killCEAProcess } from './ceaProcess.mjs';
+import {
+  isCEAAlive,
+  createCEAProcess,
+  killCEAProcess,
+} from './cea/process.mjs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -140,7 +144,7 @@ function createSplashWindow(url) {
         createMainWindow();
       } else {
         console.log('cea dashboard not running, starting...');
-        createCEAProcess(url, () => {
+        createCEAProcess(url, splashWindow, () => {
           console.log('cea dashboard process created...');
           createMainWindow();
         });
