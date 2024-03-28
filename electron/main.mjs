@@ -151,69 +151,44 @@ function createSplashWindow(url) {
     splashWindow.show();
     console.debug(`Starting CEA GUI ${appVersion}`);
 
-    var ceaEnvExists = true;
-    var ceaOutdated = false;
+    const preflightChecks = async () => {
+      const sendPreflightEvent = (message) => {
+        splashWindow.webContents.send('preflightEvents', message);
+      };
 
-    const sendPreflightEvent = (message) => {
-      splashWindow.webContents.send('preflightEvents', message);
-    };
-
-    sendPreflightEvent('Checking for CEA environment...');
-    // Check for CEA
-    try {
-      checkCEAenv();
-    } catch (error) {
-      // Will throw CEAError if env does not exist
-      if (error instanceof CEAError) ceaEnvExists = false;
-      // Exit on any other errors
-      else {
-        dialog.showMessageBoxSync(splashWindow, {
-          type: 'error',
-          title: 'CEA Error',
-          message: 'CEA has encounted an error on startup',
-          detail: error.toString(),
-          buttons: ['Exit CEA'],
-        });
-        app.exit();
-      }
-    }
-
-    // Create CEA env is does not exist
-    if (!ceaEnvExists) {
-      sendPreflightEvent(
-        `Creating CEA environment(${appVersion})...\n(this might take a while)`,
-      );
+      // Check for CEA
+      sendPreflightEvent('Checking for CEA environment...');
+      var ceaEnvExists = true;
       try {
+        checkCEAenv();
+      } catch (error) {
+        // Will throw CEAError if env does not exist
+        if (error instanceof CEAError) ceaEnvExists = false;
+        // Exit on any other errors
+        else throw error;
+      }
+
+      // Create CEA env is does not exist
+      if (!ceaEnvExists) {
+        sendPreflightEvent(
+          `Creating CEA environment(${appVersion})...\n(this might take a while)`,
+        );
         // Fetch CEA version that is the same as the app
         await createCEAenv(`v${appVersion}`);
-      } catch (error) {
-        dialog.showMessageBoxSync(splashWindow, {
-          type: 'error',
-          title: 'CEA Error',
-          message: 'CEA has encounted an error on startup',
-          detail: error.toString(),
-          buttons: ['Exit CEA'],
-        });
-        app.exit();
       }
-    }
 
-    // Check CEA version
-    const ceaVersion = getCEAenvVersion();
+      // Check CEA version
+      const ceaVersion = getCEAenvVersion();
+      console.debug({ appVersion, ceaVersion });
 
-    if (ceaVersion != appVersion) ceaOutdated = true;
+      // Update CEA if outdated
+      if (ceaVersion != appVersion) {
+        sendPreflightEvent(`Updating CEA environment(${ceaVersion})...`);
+        await updateCEAenv(`v${appVersion}`);
+      }
 
-    // Update CEA if outdated
-    if (ceaOutdated) {
-      console.debug({ message: 'CEA is outdated', appVersion, ceaVersion });
-      sendPreflightEvent(`Updating CEA environment(${ceaVersion})...`);
-
-      await updateCEAenv(`v${appVersion}`);
-    }
-
-    sendPreflightEvent('Starting CEA Dashboard...');
-    // Check if CEA server is already running, only start if not
-    try {
+      // Check if CEA server is already running, only start if not
+      sendPreflightEvent('Starting CEA Dashboard...');
       const alive = await isCEAAlive(url);
       if (alive) {
         console.log('cea dashboard already running...');
@@ -225,8 +200,19 @@ function createSplashWindow(url) {
           createMainWindow();
         });
       }
+    };
+
+    try {
+      await preflightChecks();
     } catch (error) {
-      console.log(error);
+      dialog.showMessageBoxSync(splashWindow, {
+        type: 'error',
+        title: 'CEA Error',
+        message: 'CEA has encounted an error on startup',
+        detail: error.toString(),
+        buttons: ['Exit CEA'],
+      });
+      app.exit();
     }
   });
 
