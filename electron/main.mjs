@@ -8,11 +8,20 @@ import {
 } from './cea/process.mjs';
 import { fileURLToPath } from 'url';
 import { getAutoUpdater } from './updater.mjs';
+import {
+  checkCEAenv,
+  createCEAenv,
+  getCEAenvVersion,
+  updateCEAenv,
+} from './cea/env.mjs';
+import { CEAError } from './cea/errors.mjs';
+import { initLog } from './log.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const isDev = !app.isPackaged;
+const appVersion = app.getVersion();
 const CEA_HOST = '127.0.0.1';
 const CEA_PORT = '5050';
 const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
@@ -23,6 +32,7 @@ let splashWindow;
 
 const gotTheLock = app.requestSingleInstanceLock();
 const autoUpdater = getAutoUpdater();
+initLog();
 
 if (!gotTheLock) {
   app.quit();
@@ -139,6 +149,58 @@ function createSplashWindow(url) {
 
   splashWindow.once('ready-to-show', async () => {
     splashWindow.show();
+    console.debug(`Starting CEA GUI ${appVersion}`);
+
+    var ceaEnvExists = true;
+    var ceaOutdated = false;
+
+    // Check for CEA
+    try {
+      checkCEAenv();
+    } catch (error) {
+      // Will throw CEAError if env does not exist
+      if (error instanceof CEAError) ceaEnvExists = false;
+      // Exit on any other errors
+      else {
+        dialog.showMessageBoxSync(splashWindow, {
+          type: 'error',
+          title: 'CEA Error',
+          message: 'CEA has encounted an error on startup',
+          detail: error.toString(),
+          buttons: ['Exit CEA'],
+        });
+        app.exit();
+      }
+    }
+
+    // Create CEA env is does not exist
+    if (!ceaEnvExists) {
+      try {
+        // Fetch CEA version that is the same as the app
+        await createCEAenv(`v${appVersion}`);
+      } catch (error) {
+        dialog.showMessageBoxSync(splashWindow, {
+          type: 'error',
+          title: 'CEA Error',
+          message: 'CEA has encounted an error on startup',
+          detail: error.toString(),
+          buttons: ['Exit CEA'],
+        });
+        app.exit();
+      }
+    }
+
+    // Check CEA version
+    const ceaVersion = getCEAenvVersion();
+
+    if (ceaVersion != appVersion) ceaOutdated = true;
+
+    // Update CEA if outdated
+    if (ceaOutdated) {
+      console.debug({ message: 'CEA is outdated', appVersion, ceaVersion });
+
+      await updateCEAenv(`v${appVersion}`);
+    }
 
     // Check if CEA server is already running, only start if not
     try {
