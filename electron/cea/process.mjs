@@ -118,7 +118,7 @@ function checkCEAStarted(url, callback) {
     };
   })();
 
-  // Check every 1 seconds
+  // Check every 3 seconds
   var bound_url = url;
   console.debug(`checkCEAStarted(bound_url=${bound_url})`);
   interval = setInterval(async () => {
@@ -128,10 +128,10 @@ function checkCEAStarted(url, callback) {
       timeout && clearTimeout(timeout);
       runCallbackOnce();
     }
-  }, 1000);
+  }, 3000);
 
-  // Stop checking after 1 min
+  // Stop checking after 5 min
   timeout = setTimeout(() => {
     clearInterval(interval);
-  }, 60000);
+  }, 300000);
 }
