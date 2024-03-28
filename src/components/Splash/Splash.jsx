@@ -3,10 +3,20 @@ import { useSpring, animated } from '@react-spring/web';
 import ceaLogo from '../../assets/cea-logo.png';
 
 const useLoadingMessages = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('Initalizing CEA Dashboard...');
+
   useEffect(() => {
-    setMessage('Starting CEA Dashboard...');
+    const updateMessage = (msg) => {
+      setMessage(msg);
+    };
+
+    window.api.onPreflightEvent(updateMessage);
+
+    return () => {
+      window.api.removePreflightEventListener(updateMessage);
+    };
   }, []);
+
   return message;
 };
 
@@ -50,7 +60,9 @@ const Splash = () => {
       <h1 style={{ margin: 20, color: 'white', textAlign: 'center' }}>
         City Energy Analyst
       </h1>
-      <small>{message}</small>
+      <small>
+        <pre>{message}</pre>
+      </small>
     </div>
   );
 };

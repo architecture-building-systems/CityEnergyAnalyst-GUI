@@ -88,7 +88,6 @@ const createMainWindow = () => {
       preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: true,
       devTools: isDev,
     },
   });
@@ -128,6 +127,7 @@ function createSplashWindow(url) {
     backgroundColor: '#2e2c29',
     titleBarStyle: 'hidden',
     webPreferences: {
+      preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: false,
@@ -154,6 +154,11 @@ function createSplashWindow(url) {
     var ceaEnvExists = true;
     var ceaOutdated = false;
 
+    const sendPreflightEvent = (message) => {
+      splashWindow.webContents.send('preflightEvents', message);
+    };
+
+    sendPreflightEvent('Checking for CEA environment...');
     // Check for CEA
     try {
       checkCEAenv();
@@ -175,6 +180,9 @@ function createSplashWindow(url) {
 
     // Create CEA env is does not exist
     if (!ceaEnvExists) {
+      sendPreflightEvent(
+        `Creating CEA environment(${appVersion})...\n(this might take a while)`,
+      );
       try {
         // Fetch CEA version that is the same as the app
         await createCEAenv(`v${appVersion}`);
@@ -198,10 +206,12 @@ function createSplashWindow(url) {
     // Update CEA if outdated
     if (ceaOutdated) {
       console.debug({ message: 'CEA is outdated', appVersion, ceaVersion });
+      sendPreflightEvent(`Updating CEA environment(${ceaVersion})...`);
 
       await updateCEAenv(`v${appVersion}`);
     }
 
+    sendPreflightEvent('Starting CEA Dashboard...');
     // Check if CEA server is already running, only start if not
     try {
       const alive = await isCEAAlive(url);
