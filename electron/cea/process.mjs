@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import { spawn } from 'child_process';
+
 import axios from 'axios';
 import { app, dialog } from 'electron';
+
+import { getMicromambaPath, getCEARootPath } from './env.mjs';
 
 let cea;
 let timeout;
@@ -26,7 +30,17 @@ export function createCEAProcess(url, BrowserWindow, callback) {
         'dashboard.bat',
       );
     console.log(scriptPath);
-    cea = require('child_process').spawn('cmd.exe', ['/c', scriptPath]);
+    cea = spawn('cmd.exe', ['/c', scriptPath]);
+  } else if (process.platform === 'darwin') {
+    cea = spawn(getMicromambaPath(), [
+      '-r',
+      getCEARootPath(),
+      '-n',
+      'cea',
+      'run',
+      'cea',
+      'dashboard',
+    ]);
   }
 
   if (cea) {
