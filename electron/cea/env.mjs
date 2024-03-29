@@ -1,13 +1,16 @@
 import { app } from 'electron';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { CEAError, MicromambaError } from './errors.mjs';
 import { downloadFile } from '../download.mjs';
+import { promisify } from 'util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const execAsync = promisify(exec);
 
 const paths = {
   darwin: {
@@ -48,16 +51,16 @@ export const getCEARootPath = () => {
   return _path;
 };
 
-export const getCEAenvVersion = () => {
+export const getCEAenvVersion = async () => {
   const versionCmd = 'python -c "import cea; print(cea.__version__)"';
 
   try {
-    const ceaVersion = execSync(
+    const { stdout } = await execAsync(
       `${getMicromambaPath()} -r ${getCEARootPath()} -n cea run ${versionCmd}`,
-    )
-      .toString()
-      .trim();
+    );
+    const ceaVersion = stdout.toString().trim();
     console.debug({ ceaVersion });
+
     return ceaVersion;
   } catch (error) {
     console.error(error);
@@ -65,9 +68,9 @@ export const getCEAenvVersion = () => {
   }
 };
 
-export const checkCEAenv = () => {
+export const checkCEAenv = async () => {
   try {
-    execSync(
+    await execAsync(
       `${getMicromambaPath()} -r ${getCEARootPath()} -n cea run cea --help`,
     );
   } catch (error) {
@@ -116,7 +119,7 @@ export const createCEAenv = async (ceaVersion) => {
 
   // Create CEA env using micromamba
   try {
-    execSync(
+    await execAsync(
       `${getMicromambaPath()} -r ${getCEARootPath()} -n cea create -f ${condaLockPath} -y`,
     );
   } catch (error) {
@@ -134,7 +137,7 @@ export const updateCEAenv = async (ceaVersion) => {
 
   // Update CEA env using micromamba
   try {
-    execSync(
+    await execAsync(
       `${getMicromambaPath()} -r ${getCEARootPath()} -n cea update -f ${condaLockPath} -y`,
     );
   } catch (error) {

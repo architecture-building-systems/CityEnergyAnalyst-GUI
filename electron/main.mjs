@@ -160,7 +160,7 @@ function createSplashWindow(url) {
       sendPreflightEvent('Checking for CEA environment...');
       var ceaEnvExists = true;
       try {
-        checkCEAenv();
+        await checkCEAenv();
       } catch (error) {
         // Will throw CEAError if env does not exist
         if (error instanceof CEAError) ceaEnvExists = false;
@@ -178,7 +178,7 @@ function createSplashWindow(url) {
       }
 
       // Check CEA version
-      const ceaVersion = getCEAenvVersion();
+      const ceaVersion = await getCEAenvVersion();
       console.debug({ appVersion, ceaVersion });
 
       // Update CEA if outdated
