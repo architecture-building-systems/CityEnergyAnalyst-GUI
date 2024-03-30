@@ -149,7 +149,7 @@ function createSplashWindow(url) {
 
   splashWindow.once('ready-to-show', async () => {
     splashWindow.show();
-    console.debug(`Starting CEA GUI ${appVersion}`);
+    console.debug(`CEA GUI version: ${appVersion}`);
 
     const preflightChecks = async () => {
       const sendPreflightEvent = (message) => {
@@ -171,7 +171,7 @@ function createSplashWindow(url) {
       // Create CEA env is does not exist
       if (!ceaEnvExists) {
         sendPreflightEvent(
-          `Creating CEA environment(${appVersion})...\n(this might take a while)`,
+          `Creating CEA environment (${appVersion})...\n(this might take a few minutes)`,
         );
         // Fetch CEA version that is the same as the app
         await createCEAenv(`v${appVersion}`);
@@ -183,7 +183,7 @@ function createSplashWindow(url) {
 
       // Update CEA if outdated
       if (ceaVersion != appVersion) {
-        sendPreflightEvent(`Updating CEA environment(${ceaVersion})...`);
+        sendPreflightEvent(`Updating CEA environment (${ceaVersion})...`);
         await updateCEAenv(`v${appVersion}`);
       }
 

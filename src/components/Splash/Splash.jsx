@@ -41,6 +41,7 @@ const Splash = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        textAlign: 'center',
         userSelect: 'none',
       }}
     >
@@ -57,12 +58,8 @@ const Splash = () => {
           draggable="false"
         />
       </animated.div>
-      <h1 style={{ margin: 20, color: 'white', textAlign: 'center' }}>
-        City Energy Analyst
-      </h1>
-      <small>
-        <pre>{message}</pre>
-      </small>
+      <h1 style={{ margin: 20, color: 'white' }}>City Energy Analyst</h1>
+      <small style={{ whiteSpace: 'pre-line' }}>{message}</small>
     </div>
   );
 };
