@@ -32,7 +32,7 @@ export const getMicromambaPath = () => {
 
   // Try running micromamba
   try {
-    execSync(`${_path} -r ${getCEARootPath()} --version`);
+    execSync(`${_path} --version`);
   } catch (error) {
     console.error(error);
     throw new MicromambaError('Unable to run micromamba.');
@@ -97,13 +97,13 @@ const fetchCondaLock = async (ceaVersion, condaLockPath) => {
   }
 };
 
-const installCEA = (ceaVersion) => {
+const installCEA = async (ceaVersion) => {
   const ceaGitUrl = `https://github.com/architecture-building-systems/CityEnergyAnalyst.git@${ceaVersion}`;
   console.debug({ message: 'Installing CEA from git', ceaGitUrl });
 
   // Install CEA to CEA env
   try {
-    execSync(
+    await execAsync(
       `${getMicromambaPath()} -r ${getCEARootPath()} -n cea run pip install git+${ceaGitUrl}`,
     );
   } catch (error) {
@@ -127,7 +127,7 @@ export const createCEAenv = async (ceaVersion) => {
     throw new MicromambaError('Could not create CEA environment.');
   }
 
-  installCEA(ceaVersion);
+  await installCEA(ceaVersion);
 };
 
 export const updateCEAenv = async (ceaVersion) => {
@@ -145,5 +145,5 @@ export const updateCEAenv = async (ceaVersion) => {
     throw new MicromambaError('Could not update CEA environment.');
   }
 
-  installCEA(ceaVersion);
+  await installCEA(ceaVersion);
 };
