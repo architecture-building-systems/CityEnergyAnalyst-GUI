@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-gui",
   "productName": "CityEnergyAnalyst-GUI",
-  "version": "3.32.0",
+  "version": "3.35.5",
   "description": "Official GUI of the City Energy Analyst tool",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
@@ -103,12 +103,18 @@
           "from": "dependencies",
           "to": "."
         }
+      ],
+      "publish": [
+        "github"
       ]
     },
     "win": {
       "icon": "public/cea.ico",
       "target": [
         "dir"
+      ],
+      "publish": [
+        "github"
       ]
     }
   }
