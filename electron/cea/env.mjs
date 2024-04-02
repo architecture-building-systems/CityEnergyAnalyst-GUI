@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { exec, execSync } from 'child_process';
+import { exec, execSync, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { CEAError, MicromambaError } from './errors.mjs';
 import { downloadFile } from '../download.mjs';
@@ -31,11 +31,13 @@ export const getMicromambaPath = (check = false) => {
     throw new MicromambaError('Unable to find path to micromamba.');
 
   // Try running micromamba
-  try {
-    execSync(`${_path} --version`);
-  } catch (error) {
-    console.error(error);
-    throw new MicromambaError('Unable to run micromamba.');
+  if (check) {
+    try {
+      execSync(`${_path} --version`);
+    } catch (error) {
+      console.error(error);
+      throw new MicromambaError('Unable to run micromamba.');
+    }
   }
 
   return _path;
@@ -103,9 +105,36 @@ const installCEA = async (ceaVersion) => {
 
   // Install CEA to CEA env
   try {
-    await execAsync(
-      `${getMicromambaPath()} -r ${getCEARootPath()} -n cea run pip install git+${ceaGitUrl}`,
-    );
+    await new Promise((resolve, reject) => {
+      const child = spawn(getMicromambaPath(), [
+        '-r',
+        getCEARootPath(),
+        '-n',
+        'cea',
+        'run',
+        'pip',
+        'install',
+        `git+${ceaGitUrl}`,
+      ]);
+
+      child.stdout.on('data', (data) => {
+        console.debug(data.toString().trim());
+      });
+
+      var err = '';
+      child.stderr.on('data', (data) => {
+        err += data.toString();
+      });
+
+      child.on('exit', (code) => {
+        if (code > 0) {
+          console.error(err);
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
   } catch (error) {
     console.error(error);
     throw new MicromambaError('Could not install CEA into CEA environment.');
@@ -119,9 +148,36 @@ export const createCEAenv = async (ceaVersion) => {
 
   // Create CEA env using micromamba
   try {
-    await execAsync(
-      `${getMicromambaPath()} -r ${getCEARootPath()} -n cea create -f ${condaLockPath} -y`,
-    );
+    await new Promise((resolve, reject) => {
+      const child = spawn(getMicromambaPath(), [
+        '-r',
+        getCEARootPath(),
+        '-n',
+        'cea',
+        'create',
+        '-f',
+        condaLockPath,
+        '-y',
+      ]);
+
+      child.stdout.on('data', (data) => {
+        console.debug(data.toString().trim());
+      });
+
+      var err = '';
+      child.stderr.on('data', (data) => {
+        err += data.toString();
+      });
+
+      child.on('exit', (code) => {
+        if (code > 0) {
+          console.error(err);
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
   } catch (error) {
     console.error(error);
     throw new MicromambaError('Could not create CEA environment.');
@@ -137,9 +193,36 @@ export const updateCEAenv = async (ceaVersion) => {
 
   // Update CEA env using micromamba
   try {
-    await execAsync(
-      `${getMicromambaPath()} -r ${getCEARootPath()} -n cea update -f ${condaLockPath} -y`,
-    );
+    await new Promise((resolve, reject) => {
+      const child = spawn(getMicromambaPath(), [
+        '-r',
+        getCEARootPath(),
+        '-n',
+        'cea',
+        'update',
+        '-f',
+        condaLockPath,
+        '-y',
+      ]);
+
+      child.stdout.on('data', (data) => {
+        console.debug(data.toString().trim());
+      });
+
+      var err = '';
+      child.stderr.on('data', (data) => {
+        err += data.toString();
+      });
+
+      child.on('exit', (code) => {
+        if (code > 0) {
+          console.error(err);
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
   } catch (error) {
     console.error(error);
     throw new MicromambaError('Could not update CEA environment.');
