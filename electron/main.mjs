@@ -183,7 +183,9 @@ function createSplashWindow(url) {
 
       // Update CEA if outdated
       if (ceaVersion != appVersion) {
-        sendPreflightEvent(`Updating CEA environment (${ceaVersion})...`);
+        sendPreflightEvent(
+          `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
+        );
         await updateCEAenv(`v${appVersion}`);
       }
 
