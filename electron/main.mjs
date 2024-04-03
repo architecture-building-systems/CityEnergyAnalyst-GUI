@@ -160,7 +160,7 @@ function createSplashWindow(url) {
 
       // Check for GUI update (only in production)
       if (!isDev) {
-        await new Promise((resolve) => {
+        const info = await new Promise((resolve, reject) => {
           autoUpdater.checkForUpdatesAndNotify();
 
           autoUpdater.on('checking-for-update', () => {
@@ -168,7 +168,7 @@ function createSplashWindow(url) {
           });
 
           autoUpdater.on('update-available', (info) => {
-            sendPreflightEvent('Update available.');
+            sendPreflightEvent('Update available; Downloading now.');
           });
 
           autoUpdater.on('update-not-available', (info) => {
@@ -178,7 +178,7 @@ function createSplashWindow(url) {
 
           autoUpdater.on('error', (err) => {
             console.error(`Error in auto-updater: ${err.toString()}`);
-            resolve();
+            reject(err);
           });
 
           autoUpdater.on('download-progress', (progressObj) => {
@@ -189,11 +189,19 @@ function createSplashWindow(url) {
           });
 
           autoUpdater.on('update-downloaded', (info) => {
-            sendPreflightEvent('Update downloaded; will install now');
-            // autoUpdater.quitAndInstall();
-            resolve();
+            sendPreflightEvent('Update downloaded; Installing now.');
+            resolve(info);
           });
         });
+
+        // Restart if update is downloaded
+        if (info !== null) {
+          sendPreflightEvent(
+            `Restarting to install update (${info?.version})...`,
+          );
+          autoUpdater.quitAndInstall();
+          return;
+        }
       }
 
       // Check for CEA
