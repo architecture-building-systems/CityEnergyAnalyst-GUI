@@ -95,7 +95,7 @@
     "mac": {
       "icon": "public/cea.icns",
       "target": [
-        "dmg"
+        "default"
       ],
       "extraResources": [
         {
