@@ -33,7 +33,7 @@ export const getMicromambaPath = (check = false) => {
   // Try running micromamba
   if (check) {
     try {
-      execSync(`${_path} --version`);
+      execSync(`"${_path}" --version`);
     } catch (error) {
       console.error(error);
       throw new MicromambaError('Unable to run micromamba.');
@@ -58,7 +58,7 @@ export const getCEAenvVersion = async () => {
 
   try {
     const { stdout } = await execAsync(
-      `${getMicromambaPath()} -r ${getCEARootPath()} -n cea run ${versionCmd}`,
+      `"${getMicromambaPath()}" -r ${getCEARootPath()} -n cea run ${versionCmd}`,
     );
     const ceaVersion = stdout.toString().trim();
     console.debug({ ceaVersion });
@@ -73,7 +73,7 @@ export const getCEAenvVersion = async () => {
 export const checkCEAenv = async () => {
   try {
     await execAsync(
-      `${getMicromambaPath(true)} -r ${getCEARootPath()} -n cea run cea --help`,
+      `"${getMicromambaPath(true)}" -r ${getCEARootPath()} -n cea run cea --help`,
     );
   } catch (error) {
     console.error(error);
@@ -106,16 +106,20 @@ const installCEA = async (ceaVersion) => {
   // Install CEA to CEA env
   try {
     await new Promise((resolve, reject) => {
-      const child = spawn(getMicromambaPath(), [
-        '-r',
-        getCEARootPath(),
-        '-n',
-        'cea',
-        'run',
-        'pip',
-        'install',
-        `git+${ceaGitUrl}`,
-      ]);
+      const child = spawn(
+        `"${getMicromambaPath()}"`,
+        [
+          '-r',
+          getCEARootPath(),
+          '-n',
+          'cea',
+          'run',
+          'pip',
+          'install',
+          `git+${ceaGitUrl}`,
+        ],
+        { shell: true },
+      );
 
       child.stdout.on('data', (data) => {
         console.debug(data.toString().trim());
@@ -128,7 +132,6 @@ const installCEA = async (ceaVersion) => {
 
       child.on('exit', (code) => {
         if (code > 0) {
-          console.error(err);
           reject(err);
         }
 
@@ -171,7 +174,6 @@ export const createCEAenv = async (ceaVersion) => {
 
       child.on('exit', (code) => {
         if (code > 0) {
-          console.error(err);
           reject(err);
         }
 
@@ -216,7 +218,6 @@ export const updateCEAenv = async (ceaVersion) => {
 
       child.on('exit', (code) => {
         if (code > 0) {
-          console.error(err);
           reject(err);
         }
 

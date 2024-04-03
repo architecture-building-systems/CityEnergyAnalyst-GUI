@@ -30,9 +30,12 @@ const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
 let mainWindow;
 let splashWindow;
 
+const log = initLog();
+
 const gotTheLock = app.requestSingleInstanceLock();
 const autoUpdater = getAutoUpdater();
-initLog();
+
+autoUpdater.logger = log;
 
 if (!gotTheLock) {
   app.quit();
@@ -97,8 +100,6 @@ const createMainWindow = () => {
     mainWindow.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
-    // Only check if not dev
-    autoUpdater.checkForUpdatesAndNotify();
   }
 
   mainWindow.once('ready-to-show', () => {
@@ -149,12 +150,51 @@ function createSplashWindow(url) {
 
   splashWindow.once('ready-to-show', async () => {
     splashWindow.show();
-    console.debug(`CEA GUI version: ${appVersion}`);
+    console.log(`CEA GUI version: ${appVersion}`);
 
     const preflightChecks = async () => {
       const sendPreflightEvent = (message) => {
+        console.log(message);
         splashWindow.webContents.send('preflightEvents', message);
       };
+
+      // Check for GUI update (only in production)
+      if (!isDev) {
+        await new Promise((resolve) => {
+          autoUpdater.checkForUpdatesAndNotify();
+
+          autoUpdater.on('checking-for-update', () => {
+            sendPreflightEvent('Checking for GUI update...');
+          });
+
+          autoUpdater.on('update-available', (info) => {
+            sendPreflightEvent('Update available.');
+          });
+
+          autoUpdater.on('update-not-available', (info) => {
+            sendPreflightEvent('Update not available.');
+            resolve();
+          });
+
+          autoUpdater.on('error', (err) => {
+            console.error(`Error in auto-updater: ${err.toString()}`);
+            resolve();
+          });
+
+          autoUpdater.on('download-progress', (progressObj) => {
+            let logMessage = `Download speed: ${progressObj.bytesPerSecond}`;
+            logMessage = `${logMessage} - Downloaded ${progressObj.percent}%`;
+            logMessage = `${logMessage} (${progressObj.transferred}/${progressObj.total})`;
+            sendPreflightEvent(logMessage);
+          });
+
+          autoUpdater.on('update-downloaded', (info) => {
+            sendPreflightEvent('Update downloaded; will install now');
+            // autoUpdater.quitAndInstall();
+            resolve();
+          });
+        });
+      }
 
       // Check for CEA
       sendPreflightEvent('Checking for CEA environment...');

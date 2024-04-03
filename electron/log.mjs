@@ -7,4 +7,6 @@ export const initLog = () => {
   console.log = log.log;
   console.error = log.error;
   console.debug = log.debug;
+
+  return log;
 };
