@@ -84,7 +84,7 @@
   },
   "main": "electron/main.mjs",
   "build": {
-    "appId": "CityEnergyAnalyst-GUI",
+    "appId": "com.cityenergyanalyst.gui",
     "directories": {
       "output": "out"
     },
