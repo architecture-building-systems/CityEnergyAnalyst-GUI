@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { DeckGL } from 'deck.gl';
-import { GeoJsonLayer } from '@deck.gl/layers/typed';
+import { DeckGL } from '@deck.gl/react';
+import { GeoJsonLayer } from '@deck.gl/layers';
 
 import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
@@ -11,7 +11,7 @@ import { area as calcArea, length as calcLength } from '@turf/turf';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
-import Map from 'react-map-gl/maplibre';
+import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { LayerToggle, NetworkToggle } from './Toggle';
 import { Button, Switch } from 'antd';

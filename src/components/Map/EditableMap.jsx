@@ -7,10 +7,10 @@ import {
   EditableGeoJsonLayer,
   ModifyMode,
   ViewMode,
-} from 'nebula.gl';
+} from '@nebula.gl/layers';
 import { Button } from 'antd';
 import './EditableMap.css';
-import { DeckGL } from 'deck.gl';
+import { DeckGL } from '@deck.gl/react';
 import { calcPolyArea } from './utils';
 
 const defaultViewState = {
