@@ -195,7 +195,7 @@ function createSplashWindow(url) {
         });
 
         // Restart if update is downloaded
-        if (info !== null) {
+        if (info !== undefined) {
           sendPreflightEvent(
             `Restarting to install update (${info?.version})...`,
           );
