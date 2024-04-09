@@ -55,6 +55,7 @@
     "@ant-design/icons": "^5.3.0",
     "@babel/polyfill": "^7.12.1",
     "@deck.gl/core": "^9.0.4",
+    "@deck.gl/geo-layers": "^9.0.6",
     "@deck.gl/layers": "^9.0.4",
     "@deck.gl/react": "^9.0.4",
     "@handsontable/react": "^3.1.2",
