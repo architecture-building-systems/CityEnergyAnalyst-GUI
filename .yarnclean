@@ -36,7 +36,3 @@ Gruntfile.js
 # misc
 *.gz
 *.md
-
-
-# FIXME: Temp fix for notarizing mac app
-node_modules/texture-compressor
