@@ -1,13 +1,27 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path, { dirname } from 'path';
 
-import { isCEAAlive, createCEAProcess, killCEAProcess } from './ceaProcess.mjs';
+import {
+  isCEAAlive,
+  createCEAProcess,
+  killCEAProcess,
+} from './cea/process.mjs';
 import { fileURLToPath } from 'url';
+import { getAutoUpdater } from './updater.mjs';
+import {
+  checkCEAenv,
+  createCEAenv,
+  getCEAenvVersion,
+  updateCEAenv,
+} from './cea/env.mjs';
+import { CEAError } from './cea/errors.mjs';
+import { initLog } from './log.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const isDev = !app.isPackaged;
+const appVersion = app.getVersion();
 const CEA_HOST = '127.0.0.1';
 const CEA_PORT = '5050';
 const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
@@ -16,7 +30,12 @@ const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
 let mainWindow;
 let splashWindow;
 
+const log = initLog();
+
 const gotTheLock = app.requestSingleInstanceLock();
+const autoUpdater = getAutoUpdater();
+
+autoUpdater.logger = log;
 
 if (!gotTheLock) {
   app.quit();
@@ -72,7 +91,6 @@ const createMainWindow = () => {
       preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: true,
       devTools: isDev,
     },
   });
@@ -110,6 +128,7 @@ function createSplashWindow(url) {
     backgroundColor: '#2e2c29',
     titleBarStyle: 'hidden',
     webPreferences: {
+      preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: false,
@@ -131,22 +150,119 @@ function createSplashWindow(url) {
 
   splashWindow.once('ready-to-show', async () => {
     splashWindow.show();
+    console.log(`CEA GUI version: ${appVersion}`);
 
-    // Check if CEA server is already running, only start if not
-    try {
+    const preflightChecks = async () => {
+      const sendPreflightEvent = (message) => {
+        console.log(message);
+        splashWindow.webContents.send('preflightEvents', message);
+      };
+
+      // Check for GUI update (only in production)
+      if (!isDev) {
+        const info = await new Promise((resolve, reject) => {
+          autoUpdater.checkForUpdatesAndNotify();
+
+          autoUpdater.on('checking-for-update', () => {
+            sendPreflightEvent('Checking for GUI update...');
+          });
+
+          autoUpdater.on('update-available', (info) => {
+            sendPreflightEvent('Update available; Downloading now.');
+          });
+
+          autoUpdater.on('update-not-available', (info) => {
+            sendPreflightEvent('Update not available.');
+            resolve();
+          });
+
+          autoUpdater.on('error', (err) => {
+            console.error(`Error in auto-updater: ${err.toString()}`);
+            reject(err);
+          });
+
+          autoUpdater.on('download-progress', (progressObj) => {
+            let logMessage = `Download speed: ${progressObj.bytesPerSecond}`;
+            logMessage = `${logMessage} - Downloaded ${progressObj.percent}%`;
+            logMessage = `${logMessage} (${progressObj.transferred}/${progressObj.total})`;
+            sendPreflightEvent(logMessage);
+          });
+
+          autoUpdater.on('update-downloaded', (info) => {
+            sendPreflightEvent('Update downloaded; Installing now.');
+            resolve(info);
+          });
+        });
+
+        // Restart if update is downloaded
+        if (info !== undefined) {
+          sendPreflightEvent(
+            `Restarting to install update (${info?.version})...`,
+          );
+          autoUpdater.quitAndInstall();
+          return;
+        }
+      }
+
+      // Check for CEA
+      sendPreflightEvent('Checking for CEA environment...');
+      var ceaEnvExists = true;
+      try {
+        await checkCEAenv();
+      } catch (error) {
+        // Will throw CEAError if env does not exist
+        if (error instanceof CEAError) ceaEnvExists = false;
+        // Exit on any other errors
+        else throw error;
+      }
+
+      // Create CEA env is does not exist
+      if (!ceaEnvExists) {
+        sendPreflightEvent(
+          `Creating CEA environment (${appVersion})...\n(this might take a few minutes)`,
+        );
+        // Fetch CEA version that is the same as the app
+        await createCEAenv(`v${appVersion}`);
+      }
+
+      // Check CEA version
+      const ceaVersion = await getCEAenvVersion();
+      console.debug({ appVersion, ceaVersion });
+
+      // Update CEA if outdated
+      if (ceaVersion != appVersion) {
+        sendPreflightEvent(
+          `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
+        );
+        await updateCEAenv(`v${appVersion}`);
+      }
+
+      // Check if CEA server is already running, only start if not
+      sendPreflightEvent('Starting CEA Dashboard...');
       const alive = await isCEAAlive(url);
       if (alive) {
         console.log('cea dashboard already running...');
         createMainWindow();
       } else {
         console.log('cea dashboard not running, starting...');
-        createCEAProcess(url, () => {
+        createCEAProcess(url, splashWindow, () => {
           console.log('cea dashboard process created...');
           createMainWindow();
         });
       }
+    };
+
+    try {
+      await preflightChecks();
     } catch (error) {
-      console.log(error);
+      dialog.showMessageBoxSync(splashWindow, {
+        type: 'error',
+        title: 'CEA Error',
+        message: 'CEA has encounted an error on startup',
+        detail: error.toString(),
+        buttons: ['Exit CEA'],
+      });
+      app.exit();
     }
   });
 

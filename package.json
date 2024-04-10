@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-gui",
   "productName": "CityEnergyAnalyst-GUI",
-  "version": "3.32.0",
+  "version": "3.35.6",
   "description": "Official GUI of the City Energy Analyst tool",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
@@ -14,7 +14,8 @@
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "yarn build-electron && electron-builder build --publish never"
+    "electron:build": "yarn build-electron && electron-builder build --publish never",
+    "electron:release": "yarn build-electron && electron-builder --publish always"
   },
   "keywords": [],
   "author": {
@@ -34,7 +35,7 @@
     "@vitejs/plugin-react-swc": "^3.6.0",
     "concurrently": "^8.2.2",
     "electron": "^28.2.3",
-    "electron-builder": "^24.9.1",
+    "electron-builder": "^24.13.3",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
@@ -54,6 +55,7 @@
     "@ant-design/icons": "^5.3.0",
     "@babel/polyfill": "^7.12.1",
     "@handsontable/react": "^3.1.2",
+    "@nebula.gl/layers": "^1.0.4",
     "@react-spring/web": "^9.7.3",
     "@turf/turf": "^6.5.0",
     "antd": "^5.14.1",
@@ -61,12 +63,13 @@
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
     "deck.gl": "^8.9.34",
+    "electron-log": "^5.1.2",
+    "electron-updater": "^6.1.8",
     "events": "^3.3.0",
     "handsontable": "^6",
     "history": "^4.9.0",
     "html-react-parser": "^3.0.4",
     "maplibre-gl": "^4.0.0",
-    "nebula.gl": "^1.0.4",
     "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -81,35 +84,37 @@
   },
   "main": "electron/main.mjs",
   "build": {
-    "appId": "CityEnergyAnalyst-GUI",
+    "appId": "com.cityenergyanalyst.gui",
     "directories": {
       "output": "out"
     },
     "files": [
       "dist/**/*",
-      "electron/**",
-      "!node_modules/**/*"
+      "electron/**/*",
+      "!node_modules/texture-compressor"
     ],
     "mac": {
       "icon": "public/cea.icns",
       "target": [
-        "dmg"
+        "default"
       ],
       "extraResources": [
         {
           "from": "dependencies",
-          "to": ".",
-          "filter": [
-            "**/*",
-            "!**/__pycache__"
-          ]
+          "to": "."
         }
+      ],
+      "publish": [
+        "github"
       ]
     },
     "win": {
       "icon": "public/cea.ico",
       "target": [
         "dir"
+      ],
+      "publish": [
+        "github"
       ]
     }
   }

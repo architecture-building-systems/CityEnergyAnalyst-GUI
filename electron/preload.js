@@ -5,7 +5,11 @@ contextBridge.exposeInMainWorld('api', {
     try {
       return await ipcRenderer.invoke(channel, data);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   },
+  onPreflightEvent: (callback) =>
+    ipcRenderer.on('preflightEvents', (_event, value) => callback(value)),
+  removePreflightEventListener: (callback) =>
+    ipcRenderer.removeListener('preflightEvents', callback),
 });
