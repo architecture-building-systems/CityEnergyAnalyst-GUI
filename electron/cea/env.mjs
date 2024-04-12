@@ -1,14 +1,10 @@
 import { app } from 'electron';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import path from 'path';
 import { exec, execSync, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { CEAError, MicromambaError } from './errors.mjs';
 import { downloadFile } from '../download.mjs';
 import { promisify } from 'util';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const execAsync = promisify(exec);
 
@@ -18,8 +14,18 @@ const paths = {
     root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
   },
   win32: {
-    micromamba: path.join(process.resourcesPath, 'micromamba.exe'),
-    root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
+    micromamba: path.join(
+      path.dirname(process.execPath),
+      '..',
+      'dependencies',
+      'micromamba.exe',
+    ),
+    root: path.join(
+      path.dirname(process.execPath),
+      '..',
+      'dependencies',
+      'micromamba',
+    ),
   },
 };
 
