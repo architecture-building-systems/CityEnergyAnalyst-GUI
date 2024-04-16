@@ -110,12 +110,15 @@
     },
     "win": {
       "icon": "public/cea.ico",
-      "target": [
-        "dir"
-      ],
+      "target": "nsis",
       "publish": [
         "github"
       ]
+    },
+    "nsis": {
+      "runAfterFinish": false,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false
     }
   }
 }
