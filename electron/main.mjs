@@ -199,7 +199,8 @@ function createSplashWindow(url) {
           sendPreflightEvent(
             `Restarting to install update (${info?.version})...`,
           );
-          autoUpdater.quitAndInstall();
+          // Make Windows update install silent and run after
+          autoUpdater.quitAndInstall(true, true);
           return;
         }
       }
