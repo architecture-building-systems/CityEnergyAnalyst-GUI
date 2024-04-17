@@ -116,7 +116,6 @@
       ]
     },
     "nsis": {
-      "runAfterFinish": false,
       "createDesktopShortcut": false,
       "createStartMenuShortcut": false
     }
