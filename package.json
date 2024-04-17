@@ -116,8 +116,10 @@
       ]
     },
     "nsis": {
+      "runAfterFinish": false,
       "createDesktopShortcut": false,
-      "createStartMenuShortcut": false
+      "createStartMenuShortcut": false,
+      "allowToChangeInstallationDirectory": true
     }
   }
 }
