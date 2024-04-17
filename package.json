@@ -118,8 +118,7 @@
     "nsis": {
       "runAfterFinish": false,
       "createDesktopShortcut": false,
-      "createStartMenuShortcut": false,
-      "allowToChangeInstallationDirectory": true
+      "createStartMenuShortcut": false
     }
   }
 }
