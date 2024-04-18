@@ -174,7 +174,7 @@ function createSplashWindow(url) {
 
             autoUpdater.on('update-not-available', (info) => {
               sendPreflightEvent('Update not available.');
-              resolve();
+              resolve(null);
             });
 
             autoUpdater.on('error', (err) => {
@@ -199,7 +199,7 @@ function createSplashWindow(url) {
         try {
           const info = await checkUpdates();
           // Restart if update is downloaded
-          if (info !== undefined) {
+          if (info !== null) {
             sendPreflightEvent(
               `Restarting to install update (${info?.version})...`,
             );
