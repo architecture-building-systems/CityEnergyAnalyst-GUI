@@ -95,9 +95,7 @@
     ],
     "mac": {
       "icon": "public/cea.icns",
-      "target": [
-        "default"
-      ],
+      "target": "default",
       "extraResources": [
         {
           "from": "dependencies",
