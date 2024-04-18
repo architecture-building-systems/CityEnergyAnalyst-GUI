@@ -108,7 +108,12 @@
     },
     "win": {
       "icon": "public/cea.ico",
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": "x64"
+        }
+      ],
       "publish": [
         "github"
       ]
