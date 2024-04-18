@@ -15,7 +15,8 @@
     "lint:format": "prettier --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "yarn build-electron && electron-builder build --publish never",
-    "electron:release": "yarn build-electron && electron-builder --publish always"
+    "electron:release": "yarn build-electron && electron-builder build --publish always",
+    "electron:release-local": "export $(cat .env.electron.local | xargs) && yarn build-electron && electron-builder build --publish always"
   },
   "keywords": [],
   "author": {
@@ -95,9 +96,7 @@
     ],
     "mac": {
       "icon": "public/cea.icns",
-      "target": [
-        "default"
-      ],
+      "target": "default",
       "extraResources": [
         {
           "from": "dependencies",
@@ -111,11 +110,18 @@
     "win": {
       "icon": "public/cea.ico",
       "target": [
-        "dir"
+        {
+          "target": "nsis",
+          "arch": "x64"
+        }
       ],
       "publish": [
         "github"
       ]
+    },
+    "nsis": {
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false
     }
   }
 }
