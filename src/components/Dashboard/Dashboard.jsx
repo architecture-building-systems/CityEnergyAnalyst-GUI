@@ -229,7 +229,7 @@ export const usePlotDependencies = () => {
       }/dist.min.js`,
     ],
     ['script', 'https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js'],
-    ['script', 'https://npmcdn.com/@turf/turf/turf.min.js'],
+    ['script', 'https://unpkg.com/@turf/turf@6/turf.min.js'],
   ];
 
   const menuToggle = document.querySelector('.menu-toggle');
