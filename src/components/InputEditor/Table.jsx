@@ -467,90 +467,91 @@ const useTableData = (tab) => {
         ...tables[tab][row],
       }));
 
-  const getColumnDef = () => {
-    let _columns = Object.keys(columns[tab]).map((column) => {
-      let columnDef = { title: column, field: column };
-      switch (column) {
-        case 'REFERENCE':
-          return columnDef;
-        case 'Name':
-          return { ...columnDef, frozen: true, cellClick: selectRow };
-        default: {
-          const dataType = columns[tab][column].type;
-          columnDef = {
-            ...columnDef,
-            minWidth: 100,
-            // Hack to allow editing when double clicking
-            cellDblClick: () => {},
-          };
-          if (typeof columns[tab][column].choices != 'undefined')
-            return {
-              ...columnDef,
-              minWidth: 170,
-              editor: 'select',
-              editorParams: {
-                values: columns[tab][column].choices,
-                listItemFormatter: (value, label) => {
-                  if (!label) return value;
-                  return `${value} : ${label}`;
-                },
-              },
-            };
-          switch (dataType) {
-            case 'int':
-            case 'year':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
-                mutatorEdit: (value) => Number(value),
-              };
-            case 'float':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: [
-                  'required',
-                  'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
-                  ...(columns[tab][column].constraints
-                    ? Object.keys(columns[tab][column].constraints).map(
-                        (constraint) =>
-                          `${constraint}:${columns[tab][column].constraints[constraint]}`,
-                      )
-                    : []),
-                ],
-                mutatorEdit: (value) => Number(value),
-              };
-            case 'date':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: [
-                  'required',
-                  'regex:^[0-3][0-9]\\|[0-1][0-9]$',
-                  { type: simpleDateVal },
-                ],
-              };
-            case 'str':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: ['required', 'string'],
-              };
-            default:
-              return columnDef;
-          }
-        }
-      }
-    });
-    return { columns: _columns, description: columns[tab] };
-  };
   useEffect(() => {
     if (columns[tab] === null) {
       // Return null values if data does not exist
       setColumnDef(null);
       setData(null);
     } else {
+      const getColumnDef = () => {
+        let _columns = Object.keys(columns[tab]).map((column) => {
+          let columnDef = { title: column, field: column };
+          switch (column) {
+            case 'REFERENCE':
+              return columnDef;
+            case 'Name':
+              return { ...columnDef, frozen: true, cellClick: selectRow };
+            default: {
+              const dataType = columns[tab][column].type;
+              columnDef = {
+                ...columnDef,
+                minWidth: 100,
+                // Hack to allow editing when double clicking
+                cellDblClick: () => {},
+              };
+              if (typeof columns[tab][column].choices != 'undefined')
+                return {
+                  ...columnDef,
+                  minWidth: 170,
+                  editor: 'select',
+                  editorParams: {
+                    values: columns[tab][column].choices,
+                    listItemFormatter: (value, label) => {
+                      if (!label) return value;
+                      return `${value} : ${label}`;
+                    },
+                  },
+                };
+              switch (dataType) {
+                case 'int':
+                case 'year':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
+                    mutatorEdit: (value) => Number(value),
+                  };
+                case 'float':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: [
+                      'required',
+                      'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
+                      ...(columns[tab][column].constraints
+                        ? Object.keys(columns[tab][column].constraints).map(
+                            (constraint) =>
+                              `${constraint}:${columns[tab][column].constraints[constraint]}`,
+                          )
+                        : []),
+                    ],
+                    mutatorEdit: (value) => Number(value),
+                  };
+                case 'date':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: [
+                      'required',
+                      'regex:^[0-3][0-9]\\|[0-1][0-9]$',
+                      { type: simpleDateVal },
+                    ],
+                  };
+                case 'str':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: ['required', 'string'],
+                  };
+                default:
+                  return columnDef;
+              }
+            }
+          }
+        });
+        return { columns: _columns, description: columns[tab] };
+      };
+
       setColumnDef(getColumnDef());
       setData(getData());
     }
