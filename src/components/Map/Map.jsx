@@ -7,7 +7,11 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
 
-import { area as calcArea, length as calcLength } from '@turf/turf';
+import {
+  area as calcArea,
+  length as calcLength,
+  bbox as calcBbox,
+} from '@turf/turf';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
@@ -53,10 +57,10 @@ const DeckGLMap = ({ data, colors }) => {
     console.debug('Map loaded.');
 
     const mapbox = mapRef.current.getMap();
-    const bbox = data?.zone.bbox;
-    if (bbox === null) return;
+    const zone = data?.zone;
+    if (zone === null) return;
 
-    cameraOptions.current = mapbox.cameraForBounds(bbox, {
+    cameraOptions.current = mapbox.cameraForBounds(calcBbox(zone), {
       maxZoom: 16,
       padding: 8,
     });
