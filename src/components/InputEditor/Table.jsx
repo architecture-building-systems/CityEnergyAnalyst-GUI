@@ -20,7 +20,7 @@ import { createRoot } from 'react-dom/client';
 
 const Table = ({ tab }) => {
   const { selected, changes, schedules } = useSelector(
-    (state) => state.inputData
+    (state) => state.inputData,
   );
   const tabulator = useRef(null);
 
@@ -159,7 +159,7 @@ const ChangesSummary = ({ changes }) => {
               </u>
               <div>
                 {changes.delete[table].reduce(
-                  (out, building) => `${out}, ${building}`
+                  (out, building) => `${out}, ${building}`,
                 )}
               </div>
               <br />
@@ -186,7 +186,7 @@ const ChangesSummary = ({ changes }) => {
                         → 
                         ${changes.update[table][building][property].newValue}`}
                       </div>
-                    )
+                    ),
                   )}
                 </div>
               ))}
@@ -207,8 +207,11 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    // Determine if zone or surrounding buildings are selected
     const typeOfBuilding = tab != 'surroundings' ? 'zone' : 'surroundings';
-    setSelectedInTable(Object.keys(data[typeOfBuilding]).includes(selected[0]));
+    setSelectedInTable(
+      Object.keys(data?.[typeOfBuilding] || {}).includes(selected[0]),
+    );
   }, [tab, selected]);
 
   const selectAll = () => {
@@ -296,9 +299,9 @@ const TableEditor = ({ tab, selected, tabulator }) => {
   useEffect(() => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
-      data: data,
+      data: [],
       index: 'Name',
-      columns: columnDef.columns,
+      columns: [],
       layout: 'fitDataFill',
       height: '300px',
       validationFailed: (cell) => {
@@ -323,8 +326,8 @@ const TableEditor = ({ tab, selected, tabulator }) => {
           updateInputData(
             tableRef.current,
             [cell.getData()['Name']],
-            [{ property: cell.getField(), value: cell.getValue() }]
-          )
+            [{ property: cell.getField(), value: cell.getValue() }],
+          ),
         );
       },
       placeholder: '<div>No matching records found.</div>',
@@ -338,15 +341,14 @@ const TableEditor = ({ tab, selected, tabulator }) => {
   }, [tab]);
 
   useEffect(() => {
-    if (tabulator.current) {
-      tabulator.current.setData([]);
+    if (tabulator.current && columnDef !== null) {
       tabulator.current.setColumns(columnDef.columns);
       columnDescriptionRef.current = columnDef.description;
     }
   }, [columnDef]);
 
   useEffect(() => {
-    if (tabulator.current) {
+    if (tabulator.current && data !== null) {
       if (!tabulator.current.getData().length) {
         tabulator.current.setData(data);
         tabulator.current.selectRow(selected);
@@ -382,7 +384,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                   {columnDef.columns[index].title}
                 </div>
                 <div className="tabulator-arrow"></div>
-              </Tooltip>
+              </Tooltip>,
             );
           });
       } else if (tabulator.current.getData().length == data.length) {
@@ -402,8 +404,8 @@ const TableEditor = ({ tab, selected, tabulator }) => {
 
   return (
     <>
-      <div ref={divRef} style={{ display: data.length ? 'block' : 'none' }} />
-      {!data.length && <ScriptSuggestion tab={tab} />}
+      <div ref={divRef} style={{ display: data !== null ? 'block' : 'none' }} />
+      {data === null && <ScriptSuggestion tab={tab} />}
     </>
   );
 };
@@ -431,8 +433,8 @@ const ScriptSuggestion = ({ tab }) => {
 
 const useTableData = (tab) => {
   const { columns, tables } = useSelector((state) => state.inputData);
-  const [data, setData] = useState([]);
-  const [columnDef, setColumnDef] = useState({ columns: [], description: [] });
+  const [data, setData] = useState(null);
+  const [columnDef, setColumnDef] = useState(null);
 
   const dispatch = useDispatch();
 
@@ -449,7 +451,7 @@ const useTableData = (tab) => {
     } else {
       if (cell.getRow().isSelected()) {
         dispatch(
-          setSelected(selectedRows.filter((name) => name !== row.getIndex()))
+          setSelected(selectedRows.filter((name) => name !== row.getIndex())),
         );
       } else {
         dispatch(setSelected([...selectedRows, row.getIndex()]));
@@ -465,91 +467,100 @@ const useTableData = (tab) => {
         ...tables[tab][row],
       }));
 
-  const getColumnDef = () => {
-    let _columns = Object.keys(columns[tab]).map((column) => {
-      let columnDef = { title: column, field: column };
-      switch (column) {
-        case 'REFERENCE':
-          return columnDef;
-        case 'Name':
-          return { ...columnDef, frozen: true, cellClick: selectRow };
-        default: {
-          const dataType = columns[tab][column].type;
-          columnDef = {
-            ...columnDef,
-            minWidth: 100,
-            // Hack to allow editing when double clicking
-            cellDblClick: () => {},
-          };
-          if (typeof columns[tab][column].choices != 'undefined')
-            return {
-              ...columnDef,
-              minWidth: 170,
-              editor: 'select',
-              editorParams: {
-                values: columns[tab][column].choices,
-                listItemFormatter: (value, label) => {
-                  if (!label) return value;
-                  return `${value} : ${label}`;
-                },
-              },
-            };
-          switch (dataType) {
-            case 'int':
-            case 'year':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
-                mutatorEdit: (value) => Number(value),
-              };
-            case 'float':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: [
-                  'required',
-                  'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
-                  ...(columns[tab][column].constraints
-                    ? Object.keys(columns[tab][column].constraints).map(
-                        (constraint) =>
-                          `${constraint}:${columns[tab][column].constraints[constraint]}`
-                      )
-                    : []),
-                ],
-                mutatorEdit: (value) => Number(value),
-              };
-            case 'date':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: [
-                  'required',
-                  'regex:^[0-3][0-9]\\|[0-1][0-9]$',
-                  { type: simpleDateVal },
-                ],
-              };
-            case 'str':
-              return {
-                ...columnDef,
-                editor: 'input',
-                validator: ['required', 'string'],
-              };
-            default:
-              return columnDef;
-          }
-        }
-      }
-    });
-    return { columns: _columns, description: columns[tab] };
-  };
   useEffect(() => {
-    setColumnDef(getColumnDef());
-    setData(getData());
+    if (columns[tab] === null) {
+      // Return null values if data does not exist
+      setColumnDef(null);
+      setData(null);
+    } else {
+      const getColumnDef = () => {
+        let _columns = Object.keys(columns[tab]).map((column) => {
+          let columnDef = { title: column, field: column };
+          switch (column) {
+            case 'REFERENCE':
+              return columnDef;
+            case 'Name':
+              return { ...columnDef, frozen: true, cellClick: selectRow };
+            default: {
+              const dataType = columns[tab][column].type;
+              columnDef = {
+                ...columnDef,
+                minWidth: 100,
+                // Hack to allow editing when double clicking
+                cellDblClick: () => {},
+              };
+              if (typeof columns[tab][column].choices != 'undefined')
+                return {
+                  ...columnDef,
+                  minWidth: 170,
+                  editor: 'select',
+                  editorParams: {
+                    values: columns[tab][column].choices,
+                    listItemFormatter: (value, label) => {
+                      if (!label) return value;
+                      return `${value} : ${label}`;
+                    },
+                  },
+                };
+              switch (dataType) {
+                case 'int':
+                case 'year':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
+                    mutatorEdit: (value) => Number(value),
+                  };
+                case 'float':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: [
+                      'required',
+                      'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
+                      ...(columns[tab][column].constraints
+                        ? Object.keys(columns[tab][column].constraints).map(
+                            (constraint) =>
+                              `${constraint}:${columns[tab][column].constraints[constraint]}`,
+                          )
+                        : []),
+                    ],
+                    mutatorEdit: (value) => Number(value),
+                  };
+                case 'date':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: [
+                      'required',
+                      'regex:^[0-3][0-9]\\|[0-1][0-9]$',
+                      { type: simpleDateVal },
+                    ],
+                  };
+                case 'str':
+                  return {
+                    ...columnDef,
+                    editor: 'input',
+                    validator: ['required', 'string'],
+                  };
+                default:
+                  return columnDef;
+              }
+            }
+          }
+        });
+        return { columns: _columns, description: columns[tab] };
+      };
+
+      setColumnDef(getColumnDef());
+      setData(getData());
+    }
   }, [tab]);
 
   useEffect(() => {
-    setData(getData());
+    if (tables[tab] !== null) {
+      setData(getData());
+    }
   }, [tables[tab]]);
 
   return [data, columnDef];
