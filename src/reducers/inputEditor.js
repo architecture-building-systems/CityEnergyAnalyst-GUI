@@ -140,6 +140,8 @@ function deleteBuildings(state, buildings) {
       geojsons = deleteGeoJsonFeature(geojsons, 'zone', building);
     } else {
       delete tables.surroundings[building];
+      tables = { ...tables, surroundings: { ...tables.surroundings } };
+
       geojsons = deleteGeoJsonFeature(geojsons, 'surroundings', building);
     }
   }
