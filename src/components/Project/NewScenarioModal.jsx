@@ -30,7 +30,7 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
         try {
           const resp = await axios.post(
             `${import.meta.env.VITE_CEA_URL}/api/project/scenario/`,
-            { project, ...values }
+            { project, ...values },
           );
           console.log(resp.data);
           openScenario(project, values.scenario_name.trim());
@@ -75,66 +75,68 @@ const NewScenarioModal = ({ visible, setVisible, project }) => {
   );
 };
 
-const NewScenarioForm = Form.create()(
-  ({ form, project, databaseParameter }) => {
-    const choice = form.getFieldValue('input_data');
+const NewScenarioForm = Form.create()(({
+  form,
+  project,
+  databaseParameter,
+}) => {
+  const choice = form.getFieldValue('input_data');
 
-    return (
-      <Form>
-        <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
-          {form.getFieldDecorator('scenario_name', {
-            initialValue: '',
-            rules: [
-              {
-                required: true,
-                transform: (value) => value.trim(),
+  return (
+    <Form>
+      <Form.Item label={<h2 style={{ display: 'inline' }}>Scenario Name</h2>}>
+        {form.getFieldDecorator('scenario_name', {
+          initialValue: '',
+          rules: [
+            {
+              required: true,
+              transform: (value) => value.trim(),
+            },
+            {
+              validator: async (rule, value, callback) => {
+                const contentPath = joinPath(project, value);
+                const pathExists = await checkExist(
+                  '',
+                  'directory',
+                  contentPath,
+                );
+                if (value.length != 0 && pathExists) {
+                  callback('Scenario with name already exists in project');
+                } else {
+                  callback();
+                }
               },
-              {
-                validator: async (rule, value, callback) => {
-                  const contentPath = joinPath(project, value);
-                  const pathExists = await checkExist(
-                    '',
-                    'directory',
-                    contentPath
-                  );
-                  if (value.length != 0 && pathExists) {
-                    callback('Scenario with name already exists in project');
-                  } else {
-                    callback();
-                  }
-                },
-              },
-            ],
-          })(<Input placeholder="Name of new Scenario" />)}
-        </Form.Item>
+            },
+          ],
+        })(<Input placeholder="Name of new Scenario" />)}
+      </Form.Item>
 
-        <h2>Database</h2>
-        {databaseParameter !== null && (
-          <Parameter form={form} parameter={databaseParameter} />
+      <h2>Database</h2>
+      {databaseParameter !== null && (
+        <Parameter form={form} parameter={databaseParameter} />
+      )}
+
+      <h2>Input Data</h2>
+      <Form.Item>
+        {form.getFieldDecorator('input_data', {
+          initialValue: 'generate',
+        })(
+          <Radio.Group>
+            <Radio value="generate" style={{ display: 'block' }}>
+              Generate new input files using tools
+            </Radio>
+            <Radio value="import" style={{ display: 'block' }}>
+              Import input files
+            </Radio>
+          </Radio.Group>,
         )}
+      </Form.Item>
 
-        <h2>Input Data</h2>
-        <Form.Item>
-          {form.getFieldDecorator('input_data', {
-            initialValue: 'generate',
-          })(
-            <Radio.Group>
-              <Radio value="generate" style={{ display: 'block' }}>
-                Generate new input files using tools
-              </Radio>
-              <Radio value="import" style={{ display: 'block' }}>
-                Import input files
-              </Radio>
-            </Radio.Group>
-          )}
-        </Form.Item>
-
-        <ScenarioGenerateDataForm form={form} visible={choice === 'generate'} />
-        <ScenarioImportDataForm form={form} visible={choice === 'import'} />
-      </Form>
-    );
-  }
-);
+      <ScenarioGenerateDataForm form={form} visible={choice === 'generate'} />
+      <ScenarioImportDataForm form={form} visible={choice === 'import'} />
+    </Form>
+  );
+});
 
 const useFetchDatabasePathParameter = () => {
   const [parameter, setParameter] = useState(null);
@@ -142,12 +144,12 @@ const useFetchDatabasePathParameter = () => {
     const fetchParameter = async () => {
       try {
         const resp = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/api/tools/data-initializer`
+          `${import.meta.env.VITE_CEA_URL}/api/tools/data-initializer`,
         );
         const dbPathParam =
           resp.data.parameters[
             resp.data.parameters.findIndex(
-              (p) => p.type === 'DatabasePathParameter'
+              (p) => p.type === 'DatabasePathParameter',
             )
           ];
         setParameter({ ...dbPathParam, name: 'databases_path' });

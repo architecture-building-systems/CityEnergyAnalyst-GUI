@@ -14,7 +14,7 @@ const DialogModel = ({ open, setOpen, onSuccess = () => {} }) => {
     const contentInfo = await getContentInfo(
       contentPath,
       'directory',
-      root_path
+      root_path,
     );
     setContent(contentInfo);
   };

@@ -59,111 +59,115 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
   );
 });
 
-const ToolForm = Form.create()(
-  ({ parameters, categoricalParameters, script, formButtons, form }) => {
-    const dispatch = useDispatch();
-    const [activeKey, setActiveKey] = useState([]);
+const ToolForm = Form.create()(({
+  parameters,
+  categoricalParameters,
+  script,
+  formButtons,
+  form,
+}) => {
+  const dispatch = useDispatch();
+  const [activeKey, setActiveKey] = useState([]);
 
-    const getForm = () => {
-      let out = null;
-      form.validateFields((err, values) => {
-        if (!err) {
-          const index = parameters.findIndex(
-            (x) => x.type === 'ScenarioParameter'
-          );
-          let scenario = {};
-          if (index >= 0) scenario = { scenario: parameters[index].value };
-          out = {
-            ...scenario,
-            ...values,
-          };
-          console.log('Received values of form: ', out);
-        } // Expand collapsed categories if errors are found inside
-        else if (categoricalParameters) {
-          let categoriesWithErrors = [];
-          for (const parameterName in err) {
-            for (const category in categoricalParameters) {
-              if (
-                typeof categoricalParameters[category].find(
-                  (x) => x.name === parameterName
-                ) !== 'undefined'
-              ) {
-                categoriesWithErrors.push(category);
-                break;
-              }
+  const getForm = () => {
+    let out = null;
+    form.validateFields((err, values) => {
+      if (!err) {
+        const index = parameters.findIndex(
+          (x) => x.type === 'ScenarioParameter',
+        );
+        let scenario = {};
+        if (index >= 0) scenario = { scenario: parameters[index].value };
+        out = {
+          ...scenario,
+          ...values,
+        };
+        console.log('Received values of form: ', out);
+      } // Expand collapsed categories if errors are found inside
+      else if (categoricalParameters) {
+        let categoriesWithErrors = [];
+        for (const parameterName in err) {
+          for (const category in categoricalParameters) {
+            if (
+              typeof categoricalParameters[category].find(
+                (x) => x.name === parameterName,
+              ) !== 'undefined'
+            ) {
+              categoriesWithErrors.push(category);
+              break;
             }
           }
-          categoriesWithErrors.length &&
-            setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
         }
-      });
-      return out;
+        categoriesWithErrors.length &&
+          setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
+      }
+    });
+    return out;
+  };
+
+  // eslint-disable-next-line react/display-name
+  const withFormFunctions = (FormButtons) => (props) => {
+    if (FormButtons === null) return null;
+
+    const runScript = () => {
+      const values = getForm();
+      values && dispatch(createJob(script, values));
     };
 
-    // eslint-disable-next-line react/display-name
-    const withFormFunctions = (FormButtons) => (props) => {
-      if (FormButtons === null) return null;
-
-      const runScript = () => {
-        const values = getForm();
-        values && dispatch(createJob(script, values));
-      };
-
-      const saveParams = (params) => {
-        params && dispatch(saveToolParams(script, params));
-      };
-
-      const setDefault = () => dispatch(setDefaultToolParams(script));
-
-      return (
-        <FormButtons
-          {...props}
-          getForm={getForm}
-          runScript={runScript}
-          saveParams={saveParams}
-          setDefault={setDefault}
-        />
-      );
+    const saveParams = (params) => {
+      params && dispatch(saveToolParams(script, params));
     };
 
-    let toolParams = null;
-    if (parameters) {
-      toolParams = parameters.map((param) => {
-        if (param.type === 'ScenarioParameter') return null;
-        return <Parameter key={param.name} form={form} parameter={param} />;
-      });
-    }
-
-    let categoricalParams = null;
-    if (categoricalParameters && Object.keys(categoricalParameters).length) {
-      const categories = Object.keys(categoricalParameters).map((category) => ({
-        key: category,
-        label: category,
-        children: categoricalParameters[category].map((param) => (
-          <Parameter key={param.name} form={form} parameter={param} />
-        )),
-      }));
-      categoricalParams = (
-        <Collapse
-          activeKey={activeKey}
-          onChange={setActiveKey}
-          items={categories}
-        />
-      );
-    }
+    const setDefault = () => dispatch(setDefaultToolParams(script));
 
     return (
-      <Form layout="horizontal">
-        {toolParams}
-        {categoricalParams}
-        <br />
-        <Form.Item className="formButtons">
-          {withFormFunctions(formButtons)()}
-        </Form.Item>
-      </Form>
+      <FormButtons
+        {...props}
+        getForm={getForm}
+        runScript={runScript}
+        saveParams={saveParams}
+        setDefault={setDefault}
+      />
+    );
+  };
+
+  let toolParams = null;
+  if (parameters) {
+    toolParams = parameters.map((param) => {
+      if (param.type === 'ScenarioParameter') return null;
+      return <Parameter key={param.name} form={form} parameter={param} />;
+    });
+  }
+
+  let categoricalParams = null;
+  if (categoricalParameters && Object.keys(categoricalParameters).length) {
+    const categories = Object.keys(categoricalParameters).map((category) => ({
+      key: category,
+      label: category,
+      children: categoricalParameters[category].map((param) => (
+        <Parameter key={param.name} form={form} parameter={param} />
+      )),
+    }));
+    categoricalParams = (
+      <Collapse
+        activeKey={activeKey}
+        onChange={setActiveKey}
+        items={categories}
+      />
     );
   }
-);
+
+  return (
+    <Form layout="horizontal">
+      {toolParams}
+      {categoricalParams}
+      <br />
+      <Form.Item className="formButtons">
+        {withFormFunctions(formButtons)()}
+      </Form.Item>
+    </Form>
+  );
+});
 
 const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
   return (

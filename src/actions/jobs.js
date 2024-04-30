@@ -9,7 +9,7 @@ export const fetchJobs = () => {
     dispatch({ type: FETCH_JOBS });
     try {
       const jobs = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs/list`
+        `${import.meta.env.VITE_CEA_URL}/server/jobs/list`,
       );
       dispatch({ type: FETCH_JOBS_SUCCESS, payload: jobs.data });
     } catch (error) {
@@ -28,7 +28,7 @@ export const createJob = (script, parameters) => {
     try {
       const job_info = await axios.post(
         `${import.meta.env.VITE_CEA_URL}/server/jobs/new`,
-        { script, parameters }
+        { script, parameters },
       );
       dispatch({ type: CREATE_JOB_SUCCESS, payload: job_info.data });
       dispatch(startJob(job_info.data.id));
@@ -47,7 +47,7 @@ export const startJob = (jobID) => {
     dispatch({ type: START_JOB });
     try {
       const job = await axios.post(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs/start/${jobID}`
+        `${import.meta.env.VITE_CEA_URL}/server/jobs/start/${jobID}`,
       );
       dispatch({ type: START_JOB_SUCCESS, payload: job.data });
     } catch (error) {

@@ -32,7 +32,7 @@ function updateChanges(
   building,
   property,
   storedValue,
-  newValue
+  newValue,
 ) {
   // Check if update entry exists
   if (changes?.update?.table?.building?.property) {
@@ -64,7 +64,7 @@ function updateData(state, table, buildings, properties) {
         building,
         property,
         tables[table][building][property],
-        value
+        value,
       );
 
       tables = {
@@ -87,7 +87,7 @@ function updateData(state, table, buildings, properties) {
           geojsons,
           table,
           building,
-          propertyObj
+          propertyObj,
         );
       }
     }
@@ -97,7 +97,7 @@ function updateData(state, table, buildings, properties) {
 
 function updateGeoJsonProperty(geojsons, table, building, property) {
   const _building = geojsons[table].features.find(
-    (feature) => feature.properties.Name == building
+    (feature) => feature.properties.Name == building,
   );
   if (_building)
     _building.properties = {
@@ -154,7 +154,7 @@ function deleteGeoJsonFeature(geojsons, table, building) {
     [table]: {
       ...geojsons[table],
       features: geojsons[table].features.filter(
-        (feature) => feature.properties.Name != building
+        (feature) => feature.properties.Name != building,
       ),
     },
   };
@@ -170,7 +170,7 @@ function updateDaySchedule(state, buildings, tab, day, hour, value) {
       building,
       `${tab}_${day}_${hour + 1}`,
       schedules[building].SCHEDULES[tab][day][hour],
-      value
+      value,
     );
 
     let daySchedule = schedules[building].SCHEDULES[tab][day];
@@ -202,7 +202,7 @@ function updateYearSchedule(state, buildings, month, value) {
       building,
       `MONTHLY_MULTIPLIER_${months_short[month]}`,
       schedules[building].MONTHLY_MULTIPLIER[month],
-      value
+      value,
     );
 
     let monthSchedule = schedules[building].MONTHLY_MULTIPLIER;
@@ -235,7 +235,7 @@ const inputData = (state = initialState, { type, payload }) => {
           state,
           payload.table,
           payload.buildings,
-          payload.properties
+          payload.properties,
         ),
       };
     case UPDATE_YEARSCHEDULE:
@@ -245,7 +245,7 @@ const inputData = (state = initialState, { type, payload }) => {
           state,
           payload.buildings,
           payload.month,
-          payload.value
+          payload.value,
         ),
       };
     case UPDATE_DAYSCHEDULE:
@@ -257,7 +257,7 @@ const inputData = (state = initialState, { type, payload }) => {
           payload.tab,
           payload.day,
           payload.hour,
-          payload.value
+          payload.value,
         ),
       };
     case DELETE_BUILDINGS:

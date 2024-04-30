@@ -35,7 +35,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
   });
   const fields = form.getFieldValue('fields');
   const fileChoices = Object.keys(inputFiles).filter(
-    (fileType) => !fields.includes(fileType)
+    (fileType) => !fields.includes(fileType),
   );
 
   const addField = (value) => {
@@ -97,7 +97,7 @@ const ScenarioImportDataForm = ({ form, visible }) => {
             <Input
               style={{ width: '60%', marginRight: 8 }}
               placeholder={inputFiles[key].placeholder}
-            />
+            />,
           )}
           {['zone', 'typology'].includes(key) ? null : (
             <MinusCircleOutlined

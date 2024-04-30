@@ -112,7 +112,7 @@ const databaseStatus = (state = { status: null }, { type, payload }) => {
 
 const databaseMenu = (
   state = { category: null, name: null },
-  { type, payload }
+  { type, payload },
 ) => {
   switch (type) {
     case SET_ACTIVE_DATABASE:

@@ -41,7 +41,7 @@ export const saveToolParams = (tool, params) => {
     return axios
       .post(
         `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/save-config`,
-        params
+        params,
       )
       .then((response) => {
         dispatch({

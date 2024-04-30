@@ -23,7 +23,7 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
     setTableGlossary(
       colHeaders
         .map((col) => _dbGlossary.find((variable) => col === variable.VARIABLE))
-        .filter((obj) => typeof obj !== 'undefined')
+        .filter((obj) => typeof obj !== 'undefined'),
     );
   }, []);
 
@@ -45,12 +45,12 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
                   <i>{DESCRIPTION}</i>
                   {' / UNIT: '}
                   <span>{UNIT}</span>
-                </p>
+                </p>,
               );
             }
           }
         },
-        tableInstance
+        tableInstance,
       );
     }
   }, [tableGlossary]);

@@ -73,14 +73,14 @@ export const fetchBuildingSchedule = (buildings) => (dispatch) => {
       .get(
         `${
           import.meta.env.VITE_CEA_URL
-        }/api/inputs/building-schedule/${building}`
+        }/api/inputs/building-schedule/${building}`,
       )
       .then((resp) => {
         return { [building]: resp.data };
       })
       .catch((error) => {
         errors[building] = error.response.data;
-      })
+      }),
   );
   // eslint-disable-next-line no-undef
   return Promise.all(promises).then((values) => {
@@ -111,19 +111,19 @@ export const discardChanges = () => (dispatch, getState) =>
           type: DISCARD_INPUTDATA_CHANGES,
           onSuccess: (data) => resolve(data),
           onFailure: (error) => reject(error),
-        })
+        }),
       );
     }),
     fetchBuildingSchedule(Object.keys(getState().inputData.schedules))(
       dispatch,
-      getState
+      getState,
     ),
   ]);
 
 export const updateInputData = (
   table = '',
   buildings = [],
-  properties = []
+  properties = [],
 ) => ({
   type: UPDATE_INPUTDATA,
   payload: { table, buildings, properties },
@@ -139,7 +139,7 @@ export const updateDaySchedule = (
   tab = '',
   day = '',
   hour = 0,
-  value = ''
+  value = '',
 ) => ({
   type: UPDATE_DAYSCHEDULE,
   payload: { buildings, tab, day, hour, value },
@@ -163,7 +163,7 @@ export const fetchMapData = () => {
         .get(`${import.meta.env.VITE_CEA_URL}${inputEndpoints[type]}`)
         .catch((error) => {
           console.error(error.response.data);
-        })
+        }),
     );
     return axios
       .all(promises)

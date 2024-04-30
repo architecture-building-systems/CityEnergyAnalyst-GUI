@@ -38,7 +38,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     } else {
       if (cell.getRow().isSelected()) {
         dispatch(
-          setSelected(selectedRows.filter((name) => name !== row.getIndex()))
+          setSelected(selectedRows.filter((name) => name !== row.getIndex())),
         );
       } else {
         dispatch(setSelected([...selectedRows, row.getIndex()]));
@@ -64,7 +64,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     const buildings = Object.keys(tables.zone || {});
     tabulator.current &&
       tabulator.current.replaceData(
-        buildings.sort().map((building) => ({ Name: building }))
+        buildings.sort().map((building) => ({ Name: building })),
       );
     tabulator.current.selectRow(selected);
     tabulator.current.redraw();
@@ -77,7 +77,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
       setLoading(false);
       clearTimeout(timeoutRef.current);
       const missingSchedules = selected.filter(
-        (building) => !Object.keys(schedules).includes(building)
+        (building) => !Object.keys(schedules).includes(building),
       );
       if (missingSchedules.length) {
         setLoading(true);
@@ -192,8 +192,8 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
             tooltipsRef.current.tab,
             cell.getData().DAY,
             Number(cell.getField()),
-            cell.getValue()
-          )
+            cell.getValue(),
+          ),
         );
       },
       layoutColumnsOnNewData: true,
@@ -252,7 +252,7 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
           validator: ['required', 'regex:^(1|0)?(\\.\\d+)?$', 'max:1'],
           mutatorEdit: (value) => Number(Math.round(value + 'e2') + 'e-2'),
         };
-      })
+      }),
     );
   }, [tab]);
 
@@ -306,8 +306,8 @@ const YearTable = ({ selected, schedules, loading }) => {
           updateYearSchedule(
             tooltipsRef.current.selected,
             cell.getField(),
-            cell.getValue()
-          )
+            cell.getValue(),
+          ),
         );
       },
       layout: 'fitDataFill',
@@ -380,12 +380,12 @@ const formatCellStyle = (cell) => {
     if (!isNaN(value) && value != 0) {
       cell.getElement().style.backgroundColor = addRGBAlpha(
         colormap(value),
-        0.5
+        0.5,
       );
     } else if (states.includes(value) && states.indexOf(value) != 0) {
       cell.getElement().style.backgroundColor = addRGBAlpha(
         colormap(states.indexOf(value) / (states.length - 1)),
-        0.5
+        0.5,
       );
     } else {
       cell.getElement().style.backgroundColor = '';

@@ -11,7 +11,7 @@ import {
 
 export const toolList = (
   state = { status: '', error: null, tools: {} },
-  { type, payload }
+  { type, payload },
 ) => {
   switch (type) {
     case REQUEST_TOOLLIST:
@@ -27,7 +27,7 @@ export const toolList = (
 
 export const toolParams = (
   state = { status: '', error: null, params: {} },
-  { type, payload }
+  { type, payload },
 ) => {
   switch (type) {
     case REQUEST_TOOLPARAMS:
@@ -45,7 +45,7 @@ export const toolParams = (
 
 export const toolSaving = (
   state = { isSaving: false, error: null },
-  { type, payload }
+  { type, payload },
 ) => {
   switch (type) {
     case SAVING_TOOLPARAMS:

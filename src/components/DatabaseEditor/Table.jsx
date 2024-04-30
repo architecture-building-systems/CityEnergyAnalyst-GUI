@@ -34,7 +34,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
           break;
         default: {
           const colHeader = tableInstance.getColHeader(
-            tableInstance.propToCol(prop)
+            tableInstance.propToCol(prop),
           );
           const rowHeader = tableInstance.getRowHeader(row) || row;
 
@@ -46,7 +46,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
               row: rowHeader,
               column: colHeader,
               value,
-            })
+            }),
           );
         }
       }
@@ -111,7 +111,7 @@ export const useTableUndoRedo = (tableRef) => {
     Handsontable.hooks.add(
       'afterChangesObserved',
       [checkUndo, checkRedo],
-      tableInstance
+      tableInstance,
     );
 
     // Handsontable.hooks.add(

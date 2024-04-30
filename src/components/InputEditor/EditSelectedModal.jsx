@@ -21,8 +21,8 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
           updateInputData(
             table,
             inputTable.getSelectedData().map((data) => data.Name),
-            updates
-          )
+            updates,
+          ),
         );
         setVisible(false);
       }
@@ -121,7 +121,7 @@ const createFormItem = (form, title, columnInfo) => {
     return form.getFieldDecorator(title)(
       <Select placeholder="unchanged" allowClear={true}>
         {Options}
-      </Select>
+      </Select>,
     );
   }
 
@@ -168,7 +168,7 @@ const createFormItem = (form, title, columnInfo) => {
                   return new Error(
                     columnInfo?.example
                       ? `${title} is not in the right format. e.g. ${columnInfo.example}`
-                      : `Does not fit expression: ${regex}`
+                      : `Does not fit expression: ${regex}`,
                   );
                 }
               }

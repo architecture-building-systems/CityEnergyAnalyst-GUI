@@ -9,7 +9,7 @@ const DatabaseTopMenu = () => {
   const validation = useSelector((state) => state.databaseEditor.validation);
   const dispatch = useDispatch();
   const [selectedKey, setSelected] = useState(
-    `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`
+    `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`,
   );
   const [visible, setVisible] = useState(false);
 

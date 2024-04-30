@@ -131,7 +131,7 @@ const DashSelect = ({ dashIndex, setDashIndex, dashboardNames }) => {
           {name}
         </Option>
       )),
-    [dashboardNames]
+    [dashboardNames],
   );
 
   return (
@@ -192,7 +192,7 @@ const useDashboardData = () => {
   const fetchDashboards = async () => {
     try {
       const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/`
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/`,
       );
       setDashboards(resp.data);
     } catch (error) {
@@ -202,7 +202,7 @@ const useDashboardData = () => {
   const fetchCategories = async () => {
     try {
       const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories`
+        `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories`,
       );
       setCategories(resp.data);
     } catch (error) {
@@ -265,7 +265,7 @@ export const usePlotDependencies = () => {
     menuToggle && menuToggle.addEventListener('click', resizePlots);
     let scriptPromises = [];
     const scripts = PlotDependencies.map((dependency) =>
-      mountNodes(...dependency, scriptPromises)
+      mountNodes(...dependency, scriptPromises),
     );
     // eslint-disable-next-line
     Promise.all(scriptPromises).then((values) => {

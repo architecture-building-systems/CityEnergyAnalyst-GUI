@@ -29,7 +29,7 @@ export default class DefaultErrorBoundary extends Component {
 export const withErrorBoundary = (
   WrappedComponent,
   onError = () => {},
-  ErrorComponent = DefaultErrorComponent
+  ErrorComponent = DefaultErrorComponent,
 ) =>
   class withErrorBoundary extends Component {
     constructor(props) {

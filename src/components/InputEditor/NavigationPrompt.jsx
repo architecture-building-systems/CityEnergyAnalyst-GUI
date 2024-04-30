@@ -45,7 +45,7 @@ class NavigationPrompt extends Component {
         {this.props.children(
           this.state.openModal,
           this.onConfirm,
-          this.onCancel
+          this.onCancel,
         )}
       </div>
     );
