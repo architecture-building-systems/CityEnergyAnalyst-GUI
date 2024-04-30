@@ -131,7 +131,7 @@ function deleteBuildings(state, buildings) {
     if (isZoneBuilding) {
       // Delete building from every table that is not surroundings
       for (const table in tables) {
-        if (table != 'surroundings') {
+        if (table != 'surroundings' && tables?.[table]?.[building]) {
           delete tables[table][building];
           tables = { ...tables, [table]: { ...tables[table] } };
         }
