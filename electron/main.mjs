@@ -211,37 +211,39 @@ function createSplashWindow(url) {
         }
       }
 
-      // Check for CEA
-      sendPreflightEvent('Checking for CEA environment...');
-      var ceaEnvExists = true;
-      try {
-        await checkCEAenv();
-      } catch (error) {
-        // Will throw CEAError if env does not exist
-        if (error instanceof CEAError) ceaEnvExists = false;
-        // Exit on any other errors
-        else throw error;
-      }
+      // Check for CEA environment (only in production)
+      if (!isDev) {
+        sendPreflightEvent('Checking for CEA environment...');
+        var ceaEnvExists = true;
+        try {
+          await checkCEAenv();
+        } catch (error) {
+          // Will throw CEAError if env does not exist
+          if (error instanceof CEAError) ceaEnvExists = false;
+          // Exit on any other errors
+          else throw error;
+        }
 
-      // Create CEA env is does not exist
-      if (!ceaEnvExists) {
-        sendPreflightEvent(
-          `Creating CEA environment (${appVersion})...\n(this might take a few minutes)`,
-        );
-        // Fetch CEA version that is the same as the app
-        await createCEAenv(`v${appVersion}`);
-      }
+        // Create CEA env is does not exist
+        if (!ceaEnvExists) {
+          sendPreflightEvent(
+            `Creating CEA environment (${appVersion})...\n(this might take a few minutes)`,
+          );
+          // Fetch CEA version that is the same as the app
+          await createCEAenv(`v${appVersion}`);
+        }
 
-      // Check CEA version
-      const ceaVersion = await getCEAenvVersion();
-      console.debug({ appVersion, ceaVersion });
+        // Check CEA version
+        const ceaVersion = await getCEAenvVersion();
+        console.debug({ appVersion, ceaVersion });
 
-      // Update CEA if outdated
-      if (ceaVersion != appVersion) {
-        sendPreflightEvent(
-          `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
-        );
-        await updateCEAenv(`v${appVersion}`);
+        // Update CEA if outdated
+        if (ceaVersion != appVersion) {
+          sendPreflightEvent(
+            `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
+          );
+          await updateCEAenv(`v${appVersion}`);
+        }
       }
 
       // Check if CEA server is already running, only start if not
