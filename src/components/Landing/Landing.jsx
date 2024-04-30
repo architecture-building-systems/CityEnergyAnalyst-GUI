@@ -5,7 +5,7 @@ import { FolderOpenOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
-import routes from '../../constants/routes';
+import routes from '../../constants/routes.json';
 import ceaLogo from '../../assets/cea-logo.png';
 
 const Landing = () => {

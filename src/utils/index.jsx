@@ -34,7 +34,7 @@ export const AsyncError = ({ title = 'Something went wrong', error }) => {
             You may submit the contents of the log file and the error details as
             an issue on our GitHub{' '}
             <span
-              aria-hidden="true"
+              aria-hidden
               style={{
                 cursor: 'pointer',
                 color: 'blue',

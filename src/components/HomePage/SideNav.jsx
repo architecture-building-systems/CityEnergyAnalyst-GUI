@@ -16,7 +16,7 @@ import {
 } from '@ant-design/icons';
 
 import { Layout, Menu, Tooltip } from 'antd';
-import routes from '../../constants/routes';
+import routes from '../../constants/routes.json';
 import ceaLogo from '../../assets/cea-logo.png';
 import { LayoutContext } from '../../containers/HomePage';
 import { fetchToolList } from '../../actions/tools';
@@ -79,7 +79,7 @@ const SideNav = () => {
     >
       <div
         className="logo"
-        aria-hidden="true"
+        aria-hidden
         style={{ cursor: 'pointer', userSelect: 'none' }}
         onClick={() => {
           const url = 'https://www.cityenergyanalyst.com';

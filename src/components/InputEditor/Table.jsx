@@ -11,7 +11,7 @@ import {
   saveChanges,
 } from '../../actions/inputEditor';
 import EditSelectedModal from './EditSelectedModal';
-import routes from '../../constants/routes';
+import routes from '../../constants/routes.json';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';

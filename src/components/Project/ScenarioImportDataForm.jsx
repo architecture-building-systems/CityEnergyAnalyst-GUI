@@ -1,6 +1,6 @@
 import { DownOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
-import { Input, Button, Dropdown, Menu } from 'antd';
+import { Input, Button, Dropdown } from 'antd';
 
 const ScenarioImportDataForm = ({ form, visible }) => {
   const inputFiles = {

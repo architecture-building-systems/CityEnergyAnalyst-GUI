@@ -1,5 +1,5 @@
 import axios from 'axios';
-import inputEndpoints from '../constants/inputEndpoints';
+import inputEndpoints from '../constants/inputEndpoints.json';
 import { httpAction } from '../store/httpMiddleware';
 
 export const RESET_INPUTDATA = 'RESET_INPUTDATA';
