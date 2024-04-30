@@ -1,4 +1,5 @@
 import { Result } from 'antd';
+import { isElectron, openExternal } from './electron';
 
 export function createNestedProp(obj, prop, ...rest) {
   if (typeof obj[prop] == 'undefined') {
@@ -32,13 +33,23 @@ export const AsyncError = ({ title = 'Something went wrong', error }) => {
           <p>
             You may submit the contents of the log file and the error details as
             an issue on our GitHub{' '}
-            <a
-              href="https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new?assignees=&labels=bug&template=bug_report.md&title="
-              target="_blank"
-              rel="noopener noreferrer"
+            <span
+              aria-hidden="true"
+              style={{
+                cursor: 'pointer',
+                color: 'blue',
+                textDecoration: 'underline',
+              }}
+              onClick={() => {
+                const url =
+                  'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new?assignees=&labels=bug&template=bug_report.md&title=';
+                if (isElectron()) openExternal(url);
+                else window.open(url, '_blank', 'noreferrer');
+              }}
             >
-              here.
-            </a>
+              here
+            </span>
+            .
           </p>
         </div>
       }
