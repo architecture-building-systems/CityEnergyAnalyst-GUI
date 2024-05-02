@@ -211,6 +211,13 @@ function createSplashWindow(url) {
         }
       }
 
+      // Start immediately if cea is already running
+      if (await isCEAAlive(url)) {
+        console.log('cea dashboard already running...');
+        createMainWindow();
+        return;
+      }
+
       // Check for CEA environment (only in production)
       if (!isDev) {
         sendPreflightEvent('Checking for CEA environment...');
@@ -252,11 +259,13 @@ function createSplashWindow(url) {
       if (alive) {
         console.log('cea dashboard already running...');
         createMainWindow();
+        return;
       } else {
         console.log('cea dashboard not running, starting...');
         createCEAProcess(url, splashWindow, () => {
           console.log('cea dashboard process created...');
           createMainWindow();
+          return;
         });
       }
     };
