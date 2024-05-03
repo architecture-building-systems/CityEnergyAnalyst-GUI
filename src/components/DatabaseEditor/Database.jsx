@@ -121,36 +121,26 @@ export const getTableSchema = (
     }
 
     if (['long', 'float', 'int'].includes(column_schema['type'])) {
-      // Accept 'NA' values for air_conditioning_systems
-      if (['HEATING', 'COOLING'].includes(sheetName))
-        return {
-          data: key,
-          type: 'numeric',
-          validator: (value, callback) => {
-            if (value === 'NA' || !isNaN(value)) {
-              callback(true);
-            } else {
-              callback(false);
-            }
-          },
-        };
-      else
-        return {
-          data: key,
-          type: 'numeric',
-          validator: (value, callback) => {
-            if (!isNaN(value)) {
-              const min = column_schema['min'];
-              const max = column_schema['max'];
-              const inRange =
-                (typeof min == 'undefined' || value >= min) &&
-                (typeof max == 'undefined' || value <= max);
-              callback(inRange);
-            } else {
-              callback(false);
-            }
-          },
-        };
+      return {
+        data: key,
+        type: 'numeric',
+        validator: (value, callback) => {
+          if (!isNaN(value)) {
+            const min = column_schema['min'];
+            const max = column_schema['max'];
+            const inRange =
+              (typeof min == 'undefined' || value >= min) &&
+              (typeof max == 'undefined' || value <= max);
+            callback(inRange);
+          } else if (['HEATING', 'COOLING'].includes(sheetName)) {
+            // Accept 'NA' values for air_conditioning_systems
+            callback(value === 'NA' || !isNaN(value));
+          } else if (key === 'mean_qual') {
+            // FIXME: Remove hardcoded handling
+            callback(value === '-');
+          } else callback(false);
+        },
+      };
     } else if (column_schema['type'] == 'boolean')
       return { data: key, type: 'dropdown', source: [true, false] };
 
