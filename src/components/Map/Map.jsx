@@ -116,7 +116,7 @@ const DeckGLMap = ({ data, colors }) => {
         new GeoJsonLayer({
           id: 'surroundings',
           data: data.surroundings,
-          opacity: 0.5,
+          // opacity: 0.5,
           wireframe: true,
           filled: true,
           extruded: extruded,
@@ -200,6 +200,31 @@ const DeckGLMap = ({ data, colors }) => {
 
           pickable: true,
           autoHighlight: true,
+
+          onHover: updateTooltip,
+        }),
+      );
+    }
+    if (data.trees) {
+      _layers.push(
+        new GeoJsonLayer({
+          id: 'trees',
+          data: data.trees,
+          extruded: extruded,
+
+          getElevation: (f) => f.properties['Z'],
+          getFillColor: (f) => {
+            if (extruded)
+              // Make trees more transparent in 3D due to the stacking of surface colors
+              return [100, 225, 55, f.properties['density'] ** 1.55 * 255];
+            else return [100, 225, 55, f.properties['density'] * 255];
+          },
+          pickable: true,
+          getLineWidth: 0.1,
+
+          updateTriggers: {
+            getFillColor: extruded,
+          },
 
           onHover: updateTooltip,
         }),
