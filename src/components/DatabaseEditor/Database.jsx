@@ -80,10 +80,10 @@ export const getTableSchema = (
 ) => {
   const _colHeaders = colHeaders || Object.keys(tableData[0]);
   const columns = _colHeaders.map((key) => {
-    const column_schema = schema['columns'][key];
+    const column_schema = schema?.['columns']?.[key];
 
     // Try to infer type from schema, else load default
-    if (typeof column_schema === 'undefined') {
+    if (typeof column_schema === 'undefined' || column_schema === 'null') {
       console.error(`Could not find \`${key}\` in schema`, {
         sheetName,
         schema,
