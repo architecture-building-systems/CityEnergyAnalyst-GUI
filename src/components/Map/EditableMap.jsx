@@ -3,11 +3,11 @@ import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import mapStyles from '../../constants/mapStyles.json';
 import {
-  DrawPolygonMode,
   EditableGeoJsonLayer,
+  DrawPolygonMode,
   ModifyMode,
   ViewMode,
-} from '@nebula.gl/layers';
+} from '@deck.gl-community/editable-layers';
 import { Button } from 'antd';
 import './EditableMap.css';
 import { DeckGL } from '@deck.gl/react';
