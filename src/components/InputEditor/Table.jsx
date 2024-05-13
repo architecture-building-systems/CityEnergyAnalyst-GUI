@@ -344,6 +344,42 @@ const TableEditor = ({ tab, selected, tabulator }) => {
     if (tabulator.current && columnDef !== null) {
       tabulator.current.setColumns(columnDef.columns);
       columnDescriptionRef.current = columnDef.description;
+
+      // Add tooltips to column headers on column change
+      document
+        .querySelectorAll('.tabulator-col-content')
+        .forEach((col, index) => {
+          const { description, unit, choices } =
+            columnDef.description[columnDef.columns[index].title];
+          createRoot(col).render(
+            <Tooltip
+              title={
+                description && (
+                  <div>
+                    {description}
+                    <br />
+                    {unit}
+                    <br />
+                    {typeof choices != 'undefined' && (
+                      // TODO: Fix open file
+                      <a className="cea-input-editor-col-header-link">
+                        Open File
+                      </a>
+                    )}
+                  </div>
+                )
+              }
+              getPopupContainer={() => {
+                return document.getElementsByClassName('ant-card-body')[0];
+              }}
+            >
+              <div className="tabulator-col-title">
+                {columnDef.columns[index].title}
+              </div>
+              <div className="tabulator-arrow"></div>
+            </Tooltip>,
+          );
+        });
     }
   }, [columnDef]);
 
@@ -352,43 +388,6 @@ const TableEditor = ({ tab, selected, tabulator }) => {
       if (!tabulator.current.getData().length) {
         tabulator.current.setData(data);
         tabulator.current.selectRow(selected);
-        // Add tooltips to column headers on new data
-        document
-          .querySelectorAll('.tabulator-col-content')
-          .forEach((col, index) => {
-            const { description, unit, choices } =
-              columnDef.description[columnDef.columns[index].title];
-            createRoot(col).render(
-              <Tooltip
-                title={
-                  description && (
-                    <div>
-                      {description}
-                      <br />
-                      {unit}
-                      <br />
-                      {typeof choices != 'undefined' && (
-                        // TODO: Fix open file
-                        <a className="cea-input-editor-col-header-link">
-                          Open File
-                        </a>
-                      )}
-                    </div>
-                  )
-                }
-                getPopupContainer={() => {
-                  return document.getElementsByClassName('ant-card-body')[0];
-                }}
-              >
-                <div className="tabulator-col-title">
-                  {columnDef.columns[index].title}
-                </div>
-                <div className="tabulator-arrow"></div>
-              </Tooltip>,
-            );
-          });
-      } else if (tabulator.current.getData().length == data.length) {
-        tabulator.current.updateData(data);
       } else tabulator.current.setData(data);
     }
   }, [data]);
