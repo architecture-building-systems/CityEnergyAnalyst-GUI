@@ -413,14 +413,16 @@ const TableEditor = ({ tab, selected, tabulator }) => {
 // FIXME: Could get info from backend instead of hardcoding
 const ScriptSuggestion = ({ tab }) => {
   return (
-    <div>
-      Input file could not be found. You can create the file using
+    <div style={{ margin: 8 }}>
+      Input file could not be found. You can import/create the file using the
       {tab == 'typology' ? (
         <Link to={`${routes.TOOLS}/data-migrator`}>{' data-migrator '}</Link>
       ) : tab == 'surroundings' ? (
         <Link to={`${routes.TOOLS}/surroundings-helper`}>
           {' surroundings-helper '}
         </Link>
+      ) : tab == 'trees' ? (
+        <Link to={`${routes.TOOLS}/tree-helper`}>{' tree-helper '}</Link>
       ) : (
         <Link to={`${routes.TOOLS}/archetypes-mapper`}>
           {' archetypes-mapper '}
