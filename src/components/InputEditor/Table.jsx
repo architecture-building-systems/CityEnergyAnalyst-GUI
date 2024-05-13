@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card, Button, Modal, message, Tooltip } from 'antd';
+import { Card, Button, Modal, message, Tooltip, Space } from 'antd';
 import {
   setSelected,
   updateInputData,
@@ -260,7 +260,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   };
 
   return (
-    <div>
+    <Space>
       <Button onClick={selectAll}>Select All</Button>
       <Button
         type={filterToggle ? 'primary' : 'default'}
@@ -285,7 +285,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
         inputTable={tabulator.current}
         table={tab}
       />
-    </div>
+    </Space>
   );
 };
 
