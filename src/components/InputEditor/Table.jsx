@@ -207,10 +207,9 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Determine if zone or surrounding buildings are selected
-    const typeOfBuilding = tab != 'surroundings' ? 'zone' : 'surroundings';
+    const selectedType = ['surroundings', 'trees'].includes(tab) ? tab : 'zone';
     setSelectedInTable(
-      Object.keys(data?.[typeOfBuilding] || {}).includes(selected[0]),
+      Object.keys(data?.[selectedType] || {}).includes(selected[0]),
     );
   }, [tab, selected]);
 
@@ -234,11 +233,12 @@ const TableButtons = ({ selected, tabulator, tab }) => {
 
   const deleteSelected = () => {
     Modal.confirm({
-      title: 'Are you sure delete these buildings?',
+      title: `Are you sure delete these ${tab == 'trees' ? 'trees ' : 'buildings'}?`,
       content: (
         <div>
           <i style={{ fontSize: '1vw' }}>
-            This will delete the following buildings from every table:
+            This will delete the following{' '}
+            {tab == 'trees' ? 'trees ' : 'buildings'} from every table:
           </i>
           <div style={{ overflow: 'auto', maxHeight: 200, margin: 10 }}>
             {selected.reduce((out, building) => `${out}, ${building}`)}

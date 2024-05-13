@@ -113,10 +113,11 @@ function updateGeoJsonProperty(geojsons, table, building, property) {
 
 function deleteBuildings(state, buildings) {
   let { geojsons, tables, changes } = state;
-  const isZoneBuilding = !!tables.zone[buildings[0]];
+  const isZoneBuilding = !!tables?.zone?.[buildings[0]];
+  const isTree = !!tables?.trees?.[buildings[0]];
 
   // Track delete changes
-  const layer = isZoneBuilding ? 'zone' : 'surroundings';
+  const layer = isZoneBuilding ? 'zone' : isTree ? 'trees' : 'surroundings';
   changes.delete[layer] = changes.delete[layer] || [];
   changes.delete[layer].push(...buildings);
 
@@ -139,10 +140,12 @@ function deleteBuildings(state, buildings) {
       // Delete building from zone geojson
       geojsons = deleteGeoJsonFeature(geojsons, 'zone', building);
     } else {
-      delete tables.surroundings[building];
-      tables = { ...tables, surroundings: { ...tables.surroundings } };
+      const type = isTree ? 'trees' : 'surroundings';
 
-      geojsons = deleteGeoJsonFeature(geojsons, 'surroundings', building);
+      delete tables[type][building];
+      tables = { ...tables, [type]: { ...tables[type] } };
+
+      geojsons = deleteGeoJsonFeature(geojsons, type, building);
     }
   }
   return { geojsons, tables, changes };
