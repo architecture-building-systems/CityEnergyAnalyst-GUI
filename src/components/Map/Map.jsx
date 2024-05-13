@@ -212,12 +212,12 @@ const DeckGLMap = ({ data, colors }) => {
           data: data.trees,
           extruded: extruded,
 
-          getElevation: (f) => f.properties['Z'],
+          getElevation: (f) => f.properties['height_tc'],
           getFillColor: (f) => {
             if (extruded)
               // Make trees more transparent in 3D due to the stacking of surface colors
-              return [100, 225, 55, f.properties['density'] ** 1.55 * 255];
-            else return [100, 225, 55, f.properties['density'] * 255];
+              return [100, 225, 55, f.properties['density_la'] ** 1.55 * 255];
+            else return [100, 225, 55, f.properties['density_la'] * 255];
           },
           pickable: true,
           getLineWidth: 0.1,
