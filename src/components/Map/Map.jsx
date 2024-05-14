@@ -45,6 +45,7 @@ const DeckGLMap = ({ data, colors }) => {
   const [visibility, setVisibility] = useState({
     zone: !!data.zone,
     surroundings: !!data.surroundings,
+    trees: !!data.trees,
     streets: !!data.streets,
     dc: data?.dc !== null,
     dh: data?.dh !== null && data?.dc === null,
@@ -211,9 +212,13 @@ const DeckGLMap = ({ data, colors }) => {
           id: 'trees',
           data: data.trees,
           extruded: extruded,
+          visible: visibility.trees,
 
           getElevation: (f) => f.properties['height_tc'],
           getFillColor: (f) => {
+            if (selected.includes(f.properties['Name'])) {
+              return [255, 255, 0, 255];
+            }
             if (extruded)
               // Make trees more transparent in 3D due to the stacking of surface colors
               return [100, 225, 55, f.properties['density_la'] ** 1.55 * 255];
@@ -223,10 +228,11 @@ const DeckGLMap = ({ data, colors }) => {
           getLineWidth: 0.1,
 
           updateTriggers: {
-            getFillColor: extruded,
+            getFillColor: [extruded, selected],
           },
 
           onHover: updateTooltip,
+          onClick: onClick,
         }),
       );
     }

@@ -75,6 +75,20 @@ export const LayerToggle = ({ data, setVisibility }) => {
           </label>
         </span>
       )}
+      {data.trees && (
+        <span className="layer-toggle">
+          <label className="map-plot-label">
+            <input
+              type="checkbox"
+              name="layer-toggle"
+              value="trees"
+              onChange={handleChange}
+              defaultChecked
+            />
+            Trees
+          </label>
+        </span>
+      )}
       {data.streets && (
         <span className="layer-toggle">
           <label className="map-plot-label">
