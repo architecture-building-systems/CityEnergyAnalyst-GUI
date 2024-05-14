@@ -16,7 +16,7 @@
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "yarn build-electron && electron-builder build --publish never",
     "electron:release": "yarn build-electron && electron-builder build --publish always",
-    "electron:release-local": "export $(cat .env.electron.local | xargs) && yarn build-electron && electron-builder build --publish always"
+    "electron:release-local": "export $(cat .env.electron.api.local | xargs) && yarn build-electron && electron-builder build --publish always"
   },
   "keywords": [],
   "author": {
@@ -35,7 +35,7 @@
     "@types/react-dom": "^18.0.9",
     "@vitejs/plugin-react-swc": "^3.6.0",
     "concurrently": "^8.2.2",
-    "electron": "^29.2.0",
+    "electron": "^30.0.4",
     "electron-builder": "^24.13.3",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -123,5 +123,6 @@
       "createDesktopShortcut": false,
       "createStartMenuShortcut": false
     }
-  }
+  },
+  "packageManager": "yarn@4.2.2"
 }
