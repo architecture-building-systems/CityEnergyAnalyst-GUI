@@ -241,23 +241,27 @@ const DeckGLMap = ({ data, colors }) => {
   };
 
   const onClick = ({ object, layer }, event) => {
+    const name = object.properties['Name'];
     if (layer.id !== selectedLayer.current) {
-      dispatch(setSelected([object.properties['Name']]));
+      dispatch(setSelected([name]));
       selectedLayer.current = layer.id;
     } else {
       let index = -1;
       let newSelected = [...selected];
-      if (event.srcEvent.ctrlKey && event.leftButton) {
-        index = newSelected.findIndex((x) => x === object.properties['Name']);
+      if (
+        (event.srcEvent.ctrlKey && event.leftButton) ||
+        (event.srcEvent.metaKey && event.leftButton)
+      ) {
+        index = newSelected.findIndex((x) => x === name);
         if (index !== -1) {
           newSelected.splice(index, 1);
           dispatch(setSelected(newSelected));
         } else {
-          newSelected.push(object.properties['Name']);
+          newSelected.push(name);
           dispatch(setSelected(newSelected));
         }
       } else {
-        dispatch(setSelected([object.properties['Name']]));
+        dispatch(setSelected([name]));
       }
     }
   };

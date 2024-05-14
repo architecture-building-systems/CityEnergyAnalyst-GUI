@@ -19,3 +19,20 @@ export function deleteNestedProp(obj, prop, ...rest) {
   }
 }
 
+export function getOperatingSystem() {
+  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+  // Detect Windows OS
+  if (/windows/i.test(userAgent)) {
+    return 'Windows';
+  }
+
+  // Detect Mac OS
+  if (/macintosh|mac os x/i.test(userAgent)) {
+    return 'Mac';
+  }
+
+  // Optional: Add more OS detections here (Linux, Android, iOS, etc.)
+
+  return 'Unknown OS';
+}

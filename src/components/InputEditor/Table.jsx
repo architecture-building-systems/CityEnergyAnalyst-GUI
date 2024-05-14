@@ -15,8 +15,11 @@ import routes from '../../constants/routes.json';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
+import { getOperatingSystem } from '../../utils';
 import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
+
+const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
 const Table = ({ tab }) => {
   const { selected, changes, schedules } = useSelector(
@@ -30,10 +33,7 @@ const Table = ({ tab }) => {
         styles={{ header: { backgroundColor: '#f1f1f1' } }}
         size="small"
         title={
-          <Tooltip
-            placement="right"
-            title="You can select multiple buildings in the table and the map by holding down the `Ctrl` key"
-          >
+          <Tooltip placement="right" title={title}>
             <InfoCircleOutlined />
           </Tooltip>
         }
@@ -445,19 +445,17 @@ const useTableData = (tab) => {
       .getTable()
       .getSelectedData()
       .map((data) => data.Name);
-    if (!e.ctrlKey) {
-      (selectedRows.length !== [row.getIndex()].length ||
-        !cell.getRow().isSelected()) &&
-        dispatch(setSelected([row.getIndex()]));
-    } else {
-      if (cell.getRow().isSelected()) {
+    if (e.ctrlKey || e.metaKey) {
+      if (cell.getRow().isSelected())
         dispatch(
           setSelected(selectedRows.filter((name) => name !== row.getIndex())),
         );
-      } else {
-        dispatch(setSelected([...selectedRows, row.getIndex()]));
-      }
-    }
+      else dispatch(setSelected([...selectedRows, row.getIndex()]));
+    } else if (
+      selectedRows.length !== [row.getIndex()].length ||
+      !cell.getRow().isSelected()
+    )
+      dispatch(setSelected([row.getIndex()]));
   };
 
   const getData = () =>
