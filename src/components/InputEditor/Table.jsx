@@ -385,10 +385,8 @@ const TableEditor = ({ tab, selected, tabulator }) => {
 
   useEffect(() => {
     if (tabulator.current && data !== null) {
-      if (!tabulator.current.getData().length) {
-        tabulator.current.setData(data);
-        tabulator.current.selectRow(selected);
-      } else tabulator.current.setData(data);
+      tabulator.current.setData(data);
+      tabulator.current.selectRow(selected);
     }
   }, [data]);
 
