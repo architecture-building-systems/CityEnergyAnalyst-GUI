@@ -66,7 +66,6 @@
     "deck.gl": "^9.0.14",
     "electron-log": "^5.1.2",
     "electron-updater": "^6.1.8",
-    "events": "^3.3.0",
     "handsontable": "^6",
     "history": "^4.9.0",
     "html-react-parser": "^3.0.4",
@@ -97,6 +96,9 @@
     "mac": {
       "icon": "public/cea.icns",
       "target": "dmg",
+      "files": [
+        "!node_modules"
+      ],
       "extraResources": [
         {
           "from": "dependencies",
