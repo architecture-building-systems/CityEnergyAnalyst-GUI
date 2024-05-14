@@ -15,7 +15,7 @@ import routes from '../../constants/routes.json';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
-import { AsyncError } from '../../utils';
+import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
 
 const Table = ({ tab }) => {

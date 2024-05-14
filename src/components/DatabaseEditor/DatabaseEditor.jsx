@@ -16,7 +16,7 @@ import {
   initDatabaseState,
   resetDatabaseChanges,
 } from '../../actions/databaseEditor';
-import { AsyncError } from '../../utils';
+import { AsyncError } from '../../utils/AsyncError';
 import routes from '../../constants/routes.json';
 import SavingDatabaseModal from './SavingDatabaseModal';
 import DatabaseTopMenu from './DatabaseTopMenu';

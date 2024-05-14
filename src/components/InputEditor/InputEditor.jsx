@@ -8,7 +8,7 @@ import { Tabs, Modal } from 'antd';
 import CenterSpinner from '../HomePage/CenterSpinner';
 import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
-import { AsyncError } from '../../utils';
+import { AsyncError } from '../../utils/AsyncError';
 import './InputEditor.css';
 
 const MAP_STYLE = {

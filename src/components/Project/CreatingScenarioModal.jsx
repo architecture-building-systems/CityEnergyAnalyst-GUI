@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Modal, Button } from 'antd';
-import { AsyncError } from '../../utils';
+import { AsyncError } from '../../utils/AsyncError';
 
 const CreatingScenarioModal = ({
   visible,

@@ -11,7 +11,7 @@ import {
 import { createJob } from '../../actions/jobs';
 import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
-import { AsyncError } from '../../utils';
+import { AsyncError } from '../../utils/AsyncError';
 
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
