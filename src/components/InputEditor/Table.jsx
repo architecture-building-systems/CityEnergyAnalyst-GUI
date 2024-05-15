@@ -419,7 +419,7 @@ const ScriptSuggestion = ({ tab }) => {
           {' surroundings-helper '}
         </Link>
       ) : tab == 'trees' ? (
-        <Link to={`${routes.TOOLS}/tree-helper`}>{' tree-helper '}</Link>
+        <Link to={`${routes.TOOLS}/trees-helper`}>{' trees-helper '}</Link>
       ) : (
         <Link to={`${routes.TOOLS}/archetypes-mapper`}>
           {' archetypes-mapper '}
