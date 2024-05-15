@@ -328,7 +328,7 @@ const DeckGLMap = ({ data, colors }) => {
             />
           </div>
           <div>
-            3D Buildings:
+            Toggle 3D:
             <Switch
               style={{ margin: 6 }}
               size="small"
