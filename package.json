@@ -16,7 +16,7 @@
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "yarn build-electron && electron-builder build --publish never",
     "electron:release": "yarn build-electron && electron-builder build --publish always",
-    "electron:release-local": "export $(cat .env.electron.api.local | xargs) && yarn build-electron && electron-builder build --publish always"
+    "electron:release-local": "yarn build-electron && electron-builder build --publish always"
   },
   "keywords": [],
   "author": {
