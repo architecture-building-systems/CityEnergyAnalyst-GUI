@@ -90,8 +90,7 @@
     },
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "!node_modules/texture-compressor"
+      "electron/**/*"
     ],
     "mac": {
       "icon": "public/cea.icns",
