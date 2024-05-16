@@ -88,14 +88,22 @@
       "output": "out"
     },
     "files": [
-      "dist/**/*",
-      "electron/**/*"
+      "dist/**",
+      "electron/**"
     ],
     "mac": {
       "icon": "public/cea.icns",
-      "target": "dmg",
+      "target": [
+        {
+          "target": "default",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
       "files": [
-        "!node_modules"
+        "!node_modules/texture-compressor"
       ],
       "extraResources": [
         {
