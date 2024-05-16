@@ -198,7 +198,7 @@ function createSplashWindow(url) {
         try {
           const info = await checkUpdates();
           // Restart if update is downloaded
-          if (info !== null) {
+          if (info?.version) {
             sendPreflightEvent(
               `Restarting to install update (${info?.version})...`,
             );
