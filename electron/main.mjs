@@ -20,7 +20,6 @@ import { initLog } from './log.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const isDev = !app.isPackaged;
 const appVersion = app.getVersion();
 const CEA_HOST = '127.0.0.1';
 const CEA_PORT = '5050';
@@ -91,15 +90,15 @@ const createMainWindow = () => {
       preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      devTools: isDev,
+      devTools: !app.isPackaged,
     },
   });
 
-  if (isDev) {
+  if (app.isPackaged) {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  } else {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
   mainWindow.once('ready-to-show', () => {
@@ -131,7 +130,7 @@ function createSplashWindow(url) {
       preload: path.join(__dirname, './preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      devTools: false,
+      devTools: !app.isPackaged,
     },
   });
 
@@ -139,13 +138,13 @@ function createSplashWindow(url) {
   if (process.platform == 'darwin')
     splashWindow.setWindowButtonVisibility(false);
 
-  if (isDev) {
-    splashWindow.loadURL('http://localhost:5173/splash');
-    splashWindow.openDevTools();
-  } else {
+  if (app.isPackaged) {
     splashWindow.loadURL(
       `file://${path.join(__dirname, '../dist/index.html#splash')}`,
     );
+  } else {
+    splashWindow.loadURL('http://localhost:5173/splash');
+    splashWindow.openDevTools();
   }
 
   splashWindow.once('ready-to-show', async () => {
@@ -159,7 +158,7 @@ function createSplashWindow(url) {
       };
 
       // Check for GUI update (only in production)
-      if (!isDev) {
+      if (app.isPackaged) {
         const checkUpdates = async () =>
           await new Promise((resolve, reject) => {
             autoUpdater.checkForUpdatesAndNotify();
@@ -219,7 +218,7 @@ function createSplashWindow(url) {
       }
 
       // Check for CEA environment (only in production)
-      if (!isDev) {
+      if (app.isPackaged) {
         sendPreflightEvent('Checking for CEA environment...');
         var ceaEnvExists = true;
         try {
