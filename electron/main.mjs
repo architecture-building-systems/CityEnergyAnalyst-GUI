@@ -188,11 +188,10 @@ function createSplashWindow(url) {
             });
 
             await autoUpdater.downloadUpdate();
-
-            autoUpdater.quitAndInstall();
+            return true;
           } else if (response == 1) {
             sendPreflightEvent('Update Ignored.');
-            return;
+            return false;
           }
         } catch (error) {
           // Ignore error for now and continue to launch GUI
@@ -202,7 +201,12 @@ function createSplashWindow(url) {
 
       // Check for GUI update (only in production)
       if (app.isPackaged) {
-        await checkUpdates();
+        const updateAvailable = await checkUpdates();
+        if (updateAvailable) {
+          sendPreflightEvent('Restarting to install update...');
+          autoUpdater.quitAndInstall();
+          return;
+        }
       }
 
       // Start immediately if cea is already running
