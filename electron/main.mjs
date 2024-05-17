@@ -16,6 +16,7 @@ import {
 } from './cea/env.mjs';
 import { CEAError } from './cea/errors.mjs';
 import { initLog } from './log.mjs';
+import { readConfig, writeConfig } from './config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -167,15 +168,23 @@ function createSplashWindow(url) {
           if (!info?.updateInfo?.version) return false;
           // Ignore if latest version is the same
           if (info.updateInfo.version == appVersion) return false;
+          // Ignore if found in config
+          const userConfig = readConfig();
+          if (userConfig?.ignoreVersions == info.updateInfo.version)
+            return false;
 
-          const { response } = await dialog.showMessageBox(splashWindow, {
-            title: 'Update found',
-            type: 'info',
-            defaultId: 0,
-            message: `A new update was found (${info.updateInfo.version}).\n Do you want to install it?`,
-            detail: `${info.updateInfo.releaseNotes}`,
-            buttons: ['Install', 'Skip'],
-          });
+          const { response, checkboxChecked } = await dialog.showMessageBox(
+            splashWindow,
+            {
+              title: 'Update found',
+              type: 'info',
+              defaultId: 0,
+              message: `A new update was found (${info.updateInfo.version}).\n Do you want to install it?`,
+              detail: `${info.updateInfo.releaseNotes}`,
+              checkboxLabel: 'Remember my decision for this version',
+              buttons: ['Install', 'Skip'],
+            },
+          );
 
           if (response == 0) {
             autoUpdater.on('download-progress', (progressObj) => {
@@ -193,6 +202,12 @@ function createSplashWindow(url) {
             return true;
           } else if (response == 1) {
             sendPreflightEvent('Update Ignored.');
+
+            // Save preference
+            if (checkboxChecked) {
+              writeConfig({ ignoreVersions: info.updateInfo.version });
+            }
+
             return false;
           }
         } catch (error) {
