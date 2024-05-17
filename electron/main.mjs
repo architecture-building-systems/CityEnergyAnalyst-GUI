@@ -164,7 +164,9 @@ function createSplashWindow(url) {
           console.debug(info);
 
           // Ignore if unable to get version information
-          if (!info?.updateInfo?.version) return;
+          if (!info?.updateInfo?.version) return false;
+          // Ignore if latest version is the same
+          if (info.updateInfo.version == appVersion) return false;
 
           const { response } = await dialog.showMessageBox(splashWindow, {
             title: 'Update found',
