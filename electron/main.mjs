@@ -157,57 +157,52 @@ function createSplashWindow(url) {
         splashWindow.webContents.send('preflightEvents', message);
       };
 
-      // Check for GUI update (only in production)
-      if (app.isPackaged) {
-        const checkUpdates = async () =>
-          await new Promise((resolve, reject) => {
-            autoUpdater.checkForUpdatesAndNotify();
+      const checkUpdates = async () => {
+        try {
+          sendPreflightEvent('Checking for GUI update...');
+          const info = await autoUpdater.checkForUpdates();
+          console.debug(info);
 
-            autoUpdater.on('checking-for-update', () => {
-              sendPreflightEvent('Checking for GUI update...');
-            });
+          // Ignore if unable to get version information
+          if (!info?.updateInfo?.version) return;
 
-            autoUpdater.on('update-available', (info) => {
-              sendPreflightEvent('Update available; Downloading now.');
-            });
+          const { response } = await dialog.showMessageBox(splashWindow, {
+            title: 'Update found',
+            type: 'info',
+            defaultId: 0,
+            message: `A new update was found (${info.updateInfo.version}).\n Do you want to install it?`,
+            detail: `${info.updateInfo.releaseNotes}`,
+            buttons: ['Install', 'Skip'],
+          });
 
-            autoUpdater.on('update-not-available', (info) => {
-              sendPreflightEvent('Update not available.');
-              resolve(null);
-            });
-
-            autoUpdater.on('error', (err) => {
-              sendPreflightEvent('Unable to fetch update.');
-              console.error(`Error in auto-updater: ${err.toString()}`);
-              reject(err);
-            });
-
+          if (response == 0) {
             autoUpdater.on('download-progress', (progressObj) => {
-              let logMessage = `Download speed: ${progressObj.bytesPerSecond}`;
-              logMessage = `${logMessage} - Downloaded ${progressObj.percent}%`;
-              logMessage = `${logMessage} (${progressObj.transferred}/${progressObj.total})`;
+              let logMessage = `Download speed: ${progressObj.bytesPerSecond.toFixed(2)}\n`;
+              logMessage = `${logMessage} - Downloaded ${progressObj.percent.toFixed(2)}%\n`;
+              logMessage = `${logMessage} (${progressObj.transferred.toFixed(0)}/${progressObj.total.toFixed(0)})`;
               sendPreflightEvent(logMessage);
             });
 
-            autoUpdater.on('update-downloaded', (info) => {
+            autoUpdater.on('update-downloaded', () => {
               sendPreflightEvent('Update downloaded; Installing now.');
-              resolve(info);
             });
-          });
 
-        try {
-          const info = await checkUpdates();
-          // Restart if update is downloaded
-          if (info?.version) {
-            sendPreflightEvent(
-              `Restarting to install update (${info?.version})...`,
-            );
+            await autoUpdater.downloadUpdate();
+
             autoUpdater.quitAndInstall();
+          } else if (response == 1) {
+            sendPreflightEvent('Update Ignored.');
             return;
           }
         } catch (error) {
           // Ignore error for now and continue to launch GUI
+          sendPreflightEvent('Update failed.');
         }
+      };
+
+      // Check for GUI update (only in production)
+      if (app.isPackaged) {
+        await checkUpdates();
       }
 
       // Start immediately if cea is already running
