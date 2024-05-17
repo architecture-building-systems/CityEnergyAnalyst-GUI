@@ -177,7 +177,7 @@ function createSplashWindow(url) {
 
           if (response == 0) {
             autoUpdater.on('download-progress', (progressObj) => {
-              let logMessage = `Download speed: ${progressObj.bytesPerSecond.toFixed(2)}\n`;
+              let logMessage = `Download speed: ${(progressObj.bytesPerSecond / 1000).toFixed(0)}kB/s`;
               logMessage = `${logMessage} - Downloaded ${progressObj.percent.toFixed(2)}%\n`;
               logMessage = `${logMessage} (${progressObj.transferred.toFixed(0)}/${progressObj.total.toFixed(0)})`;
               sendPreflightEvent(logMessage);
