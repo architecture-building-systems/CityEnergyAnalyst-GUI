@@ -14,7 +14,7 @@
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "yarn build-electron && electron-builder build --publish never",
+    "electron:build": "yarn build-electron && electron-builder build --publish never -c.mac.identity=null",
     "electron:release": "yarn build-electron && electron-builder build --publish always"
   },
   "keywords": [],
@@ -93,15 +93,7 @@
     ],
     "mac": {
       "icon": "public/cea.icns",
-      "target": [
-        {
-          "target": "default",
-          "arch": [
-            "arm64",
-            "x64"
-          ]
-        }
-      ],
+      "target": "default",
       "files": [
         "!node_modules/texture-compressor"
       ],
