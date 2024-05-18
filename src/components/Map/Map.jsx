@@ -316,27 +316,25 @@ const DeckGLMap = ({ data, colors }) => {
         <LayerToggle data={data} setVisibility={setVisibility} />
 
         <div id="map-controls">
-          <div>
-            Show labels:
+          <div style={{ display: 'flex', gap: 8 }}>
             <Switch
-              style={{ margin: 6 }}
               size="small"
               defaultChecked
               onChange={(checked) => {
                 setMapStyle(checked ? 'labels' : 'no_labels');
               }}
             />
+            Show Map Labels
           </div>
-          <div>
-            Toggle 3D:
+          <div style={{ display: 'flex', gap: 8 }}>
             <Switch
-              style={{ margin: 6 }}
               size="small"
               checked={extruded}
               onChange={(checked) => {
                 setExtruded(checked);
               }}
             />
+            Show 3D
           </div>
           <Button
             style={{ fontSize: 12 }}

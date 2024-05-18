@@ -32,7 +32,9 @@ export const NetworkToggle = ({
 
   return (
     <div className="network-toggle">
-      <span>Network Type:</span>
+      <b>
+        <u>Networks</u>
+      </b>
       {cooling && <RadioInput value="dc" label="District Cooling" />}
       {heating && <RadioInput value="dh" label="District Heating" />}
       {!cooling && !heating && <div>No networks found</div>}

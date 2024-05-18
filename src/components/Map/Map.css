@@ -19,11 +19,20 @@
   position: absolute;
   z-index: 5;
   background: #fff;
-  padding: 5px;
+  padding: 12px;
+  margin: 8px;
+  border-radius: 8px;
+  font-size: small;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .map-plot-label {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  font-size: small;
+  gap: 2px;
 }
 
 .map-plot-label.network-label {
@@ -31,18 +40,16 @@
 }
 
 #layers-group {
-  display: inline-block;
-  text-align: center;
+  display: flex;
   position: absolute;
   z-index: 5;
   left: 50%;
-  top: 15px;
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.9);
-}
-
-#layers-group span {
-  padding: 5px;
+  padding: 4px 8px;
+  margin: 8px;
+  border-radius: 8px;
+  gap: 8px;
 }
 
 #map-controls {
@@ -54,4 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin: 8px;
+  border-radius: 8px;
+  font-size: small;
 }
