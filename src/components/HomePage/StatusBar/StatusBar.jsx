@@ -22,10 +22,43 @@ const socket = io(`${import.meta.env.VITE_CEA_URL}`);
 const StatusBar = () => {
   return (
     <div id="cea-status-bar-container">
-      <div id="cea-status-bar-left"></div>
+      <div id="cea-status-bar-left">
+        <CEAVersion />
+      </div>
       <div id="cea-status-bar-right">
         <JobListPopover />
       </div>
+    </div>
+  );
+};
+
+const CEAVersion = () => {
+  const [version, setVersion] = useState();
+  const getVersion = async () => {
+    try {
+      setVersion(await window?.api?.getAppVersion());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    getVersion();
+  }, []);
+
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        display: 'flex',
+        alignItems: 'center',
+        height: '100%',
+        margin: '0 12px',
+        fontWeight: 'bold',
+        userSelect: 'none',
+      }}
+    >
+      <span>v{version}</span>
     </div>
   );
 };

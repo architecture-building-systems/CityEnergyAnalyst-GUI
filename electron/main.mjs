@@ -311,5 +311,7 @@ ipcMain.handle('open-dialog', async (_, arg) => {
 });
 
 ipcMain.handle('open-external', async (_, { url }) => {
-  shell.openExternal(url);
+  await shell.openExternal(url);
 });
+
+ipcMain.handle('get-app-version', () => appVersion);
