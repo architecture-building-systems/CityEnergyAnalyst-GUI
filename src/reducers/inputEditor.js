@@ -53,10 +53,20 @@ function updateChanges(
 }
 
 function updateData(state, table, buildings, properties) {
-  let { geojsons, tables, changes } = state;
+  let { geojsons, tables, changes, columns } = state;
   for (const building of buildings) {
     for (const propertyObj of properties) {
       const { property, value } = propertyObj;
+
+      // Ensure value type is correct
+      let _value = value;
+      try {
+        const type = columns[table][property].type;
+        _value = type == 'string' ? value : Number(value);
+      } catch (error) {
+        console.error(error);
+      }
+
       // Track update changes
       updateChanges(
         changes,
@@ -64,7 +74,7 @@ function updateData(state, table, buildings, properties) {
         building,
         property,
         tables[table][building][property],
-        value,
+        _value,
       );
 
       tables = {
@@ -73,7 +83,7 @@ function updateData(state, table, buildings, properties) {
           ...tables[table],
           [building]: {
             ...tables[table][building],
-            [property]: value,
+            [property]: _value,
             ...(tables[table][building].REFERENCE
               ? { REFERENCE: 'User - Input' }
               : {}),
@@ -87,7 +97,8 @@ function updateData(state, table, buildings, properties) {
           geojsons,
           table,
           building,
-          propertyObj,
+          property,
+          _value,
         );
       }
     }
@@ -95,14 +106,14 @@ function updateData(state, table, buildings, properties) {
   return { geojsons, tables };
 }
 
-function updateGeoJsonProperty(geojsons, table, building, property) {
+function updateGeoJsonProperty(geojsons, table, building, property, value) {
   const _building = geojsons[table].features.find(
     (feature) => feature.properties.Name == building,
   );
   if (_building)
     _building.properties = {
       ..._building.properties,
-      [property.property]: Number(property.value),
+      [property]: value,
       ...(_building.properties.REFERENCE ? { REFERENCE: 'User - Input' } : {}),
     };
   return {
