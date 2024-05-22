@@ -81,7 +81,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
   return updateRedux;
 };
 
-export const useTableUndoRedo = (tableRef) => {
+const useTableUndoRedo = (tableRef) => {
   const [undoAvailable, setUndo] = useState(false);
   const [redoAvailable, setRedo] = useState(false);
 
