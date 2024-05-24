@@ -249,9 +249,29 @@ const Parameter = ({ parameter, form }) => {
                   </OpenDialogButton>
                 </div>
               )}
-            >
-              {Options}
-            </Select>
+              options={[
+                {
+                  label: <span>Third-party sources</span>,
+                  title: 'Third-party sources',
+                  options: [
+                    {
+                      label: <span> Fetch from climate.onebuilding.org</span>,
+                      value: '',
+                    },
+                  ],
+                },
+                {
+                  label: <span>CEA Built-in</span>,
+                  title: 'CEA Built-in',
+                  options: Object.keys(choices).map((choice) => {
+                    return {
+                      label: <span>{choice}</span>,
+                      value: choices[choice],
+                    };
+                  }),
+                },
+              ]}
+            />
           }
         />
       );
