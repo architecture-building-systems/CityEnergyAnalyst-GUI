@@ -147,7 +147,7 @@ const scenarioMenuItems = (toolsMenu) => {
     },
     toolsMenu,
     {
-      label: <Link to={routes.DASHBOARD}>Dashboard</Link>,
+      label: <Link to={routes.DASHBOARD}>Plots</Link>,
       key: routes.DASHBOARD,
       icon: <BarChartOutlined />,
     },
