@@ -486,7 +486,7 @@ const useTableData = (tab) => {
                 // Hack to allow editing when double clicking
                 cellDblClick: () => {},
               };
-              if (typeof columns[tab][column].choices != 'undefined')
+              if (columns[tab][column]?.choices != undefined)
                 return {
                   ...columnDef,
                   minWidth: 170,
@@ -534,13 +534,19 @@ const useTableData = (tab) => {
                       { type: simpleDateVal },
                     ],
                   };
-                case 'str':
+                case 'string':
+                  console.log(columns[tab][column]?.nullable);
                   return {
                     ...columnDef,
                     editor: 'input',
-                    validator: ['required', 'string'],
+                    validator: [
+                      ...(columns[tab][column]?.nullable ? [] : ['required']),
+                    ],
                   };
                 default:
+                  console.error(
+                    `Could not find column validation for type "${dataType}" for column "${column}"`,
+                  );
                   return columnDef;
               }
             }
