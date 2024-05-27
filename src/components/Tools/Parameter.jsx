@@ -43,6 +43,16 @@ const Parameter = ({ parameter, form }) => {
     case 'PathParameter':
     case 'FileParameter': {
       const contentType = type == 'PathParameter' ? 'directory' : 'file';
+      const filters =
+        type == 'PathParameter'
+          ? []
+          : [
+              {
+                name,
+                extensions: parameter?.extensions || [],
+              },
+            ];
+
       return (
         <FormItemWrapper
           form={form}
@@ -52,7 +62,6 @@ const Parameter = ({ parameter, form }) => {
           rules={[
             {
               validator: async (rule, value, callback) => {
-                console.log({ parameter });
                 if (value == '' && nullable) return callback();
 
                 const pathExists =
@@ -71,7 +80,9 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={<OpenDialogInput form={form} type={contentType} />}
+          inputComponent={
+            <OpenDialogInput form={form} type={contentType} filters={filters} />
+          }
         />
       );
     }
@@ -225,12 +236,6 @@ const Parameter = ({ parameter, form }) => {
 
     case 'WeatherPathParameter': {
       const { choices } = parameter;
-      const { Option } = Select;
-      const Options = Object.keys(choices).map((choice) => (
-        <Option key={choice} value={choices[choice]}>
-          {choice}
-        </Option>
-      ));
       return (
         <FormItemWrapper
           form={form}
@@ -243,15 +248,40 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <OpenDialogButton form={form} type="file" id={name}>
+                  <OpenDialogButton
+                    form={form}
+                    type="file"
+                    filters={[{ name: 'Weather files', extensions: ['epw'] }]}
+                    id={name}
+                  >
                     <PlusOutlined />
                     Browse for weather file
                   </OpenDialogButton>
                 </div>
               )}
-            >
-              {Options}
-            </Select>
+              options={[
+                {
+                  label: <span>Third-party sources</span>,
+                  title: 'Third-party sources',
+                  options: [
+                    {
+                      label: <span> Fetch from climate.onebuilding.org</span>,
+                      value: '',
+                    },
+                  ],
+                },
+                {
+                  label: <span>CEA Built-in</span>,
+                  title: 'CEA Built-in',
+                  options: Object.keys(choices).map((choice) => {
+                    return {
+                      label: <span>{choice}</span>,
+                      value: choices[choice],
+                    };
+                  }),
+                },
+              ]}
+            />
           }
         />
       );
@@ -309,7 +339,7 @@ export const FormItemWrapper = ({
 };
 
 export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, type, id, ...rest } = props;
+  const { form, type, filters = [], id, ...rest } = props;
 
   if (!isElectron()) return <Input ref={ref} {...props} />;
 
@@ -321,7 +351,7 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         style={{ width: 60 }}
         icon={<FileSearchOutlined />}
         onClick={async () => {
-          await openDialog(form, type, id);
+          await openDialog(form, type, filters, id);
         }}
       ></Button>
     </Space.Compact>
@@ -330,7 +360,7 @@ export const OpenDialogInput = forwardRef((props, ref) => {
 OpenDialogInput.displayName = 'OpenDialogInput';
 
 export const OpenDialogButton = (props) => {
-  const { form, type, id, children } = props;
+  const { form, type, filters = [], id, children } = props;
 
   // ignore if not electron for now
   if (!isElectron()) return null;
@@ -339,7 +369,7 @@ export const OpenDialogButton = (props) => {
     <Button
       style={{ width: '100%' }}
       onClick={async () => {
-        await openDialog(form, type, id);
+        await openDialog(form, type, filters, id);
       }}
     >
       {children}

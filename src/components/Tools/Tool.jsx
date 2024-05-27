@@ -44,7 +44,9 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
       <Spin>
         <h1>{category}</h1>
         <h2 style={{ display: 'inline' }}>{label}</h2>
-        <small> - {description}</small>
+        <p>
+          <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
+        </p>
         <Divider />
         <div>
           <ToolForm
