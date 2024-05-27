@@ -42,16 +42,16 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
         meta.valid = false;
       }
 
-      dispatch(
-        updateDatabaseValidation({
-          database,
-          sheet,
-          isValid,
-          row: rowHeader,
-          column: colHeader,
-          value,
-        }),
-      );
+      // dispatch(
+      //   updateDatabaseValidation({
+      //     database,
+      //     sheet,
+      //     isValid,
+      //     row: rowHeader,
+      //     column: colHeader,
+      //     value,
+      //   }),
+      // );
     };
 
     const afterChange = (changes, source) => {
