@@ -125,7 +125,8 @@ export const getTableSchema = (
         data: key,
         type: 'numeric',
         validator: (value, callback) => {
-          if (!isNaN(value)) {
+          if (value === null || value === '') callback(false);
+          else if (!isNaN(value)) {
             const min = column_schema['min'];
             const max = column_schema['max'];
             const inRange =

@@ -13,7 +13,7 @@ import { Button } from 'antd';
 import { useEventListener } from '../../utils/hooks';
 
 const Table = forwardRef((props, ref) => {
-  useResizeActiveTable(ref);
+  // useResizeActiveTable(ref);
   return <HotTable ref={ref} {...props} />;
 });
 Table.displayName = 'Table';
@@ -28,53 +28,53 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
     const tableInstance = tableRef.current.hotInstance;
 
     const afterValidate = (isValid, value, row, prop, source) => {
-      // Do not dispatch if validated manually
-      switch (source) {
-        case 'validateCells':
-          break;
-        default: {
-          const colHeader = tableInstance.getColHeader(
-            tableInstance.propToCol(prop),
-          );
-          const rowHeader = tableInstance.getRowHeader(row) || row;
+      const colHeader = tableInstance.getColHeader(
+        tableInstance.propToCol(prop),
+      );
+      const rowHeader = tableInstance.getRowHeader(row) || row;
 
-          dispatch(
-            updateDatabaseValidation({
-              database,
-              sheet,
-              isValid,
-              row: rowHeader,
-              column: colHeader,
-              value,
-            }),
-          );
-        }
+      if (!isValid) {
+        // Set cells to invalid
+        const meta = tableInstance.getCellMeta(
+          row,
+          tableInstance.propToCol(prop),
+        );
+        meta.valid = false;
       }
+
+      dispatch(
+        updateDatabaseValidation({
+          database,
+          sheet,
+          isValid,
+          row: rowHeader,
+          column: colHeader,
+          value,
+        }),
+      );
     };
 
     const afterChange = (changes, source) => {
-      switch (source) {
-        // Do nothing when loading data
-        case 'loadData':
-          break;
-        default: {
-          // const _changes = changes.map(change => {
-          //   const [row, prop, oldVal, newVal] = change;
-          //   const col =
-          //     typeof colHeaders[prop] !== 'undefined'
-          //       ? colHeaders[prop]
-          //       : prop;
-          // });
-          dispatch(updateDatabaseChanges({ database, sheet, changes }));
-        }
-      }
+      if (changes?.length)
+        dispatch(updateDatabaseChanges({ database, sheet, changes }));
+    };
+
+    const afterCreateRow = (index) => {
+      // Validate rows after creating new row
+      tableInstance.validateRows([index]);
     };
 
     Handsontable.hooks.add('afterValidate', afterValidate, tableInstance);
     Handsontable.hooks.add('afterChange', afterChange, tableInstance);
+    Handsontable.hooks.add('afterCreateRow', afterCreateRow, tableInstance);
     return () => {
       Handsontable.hooks.remove('afterValidate', afterValidate, tableInstance);
       Handsontable.hooks.remove('afterChange', afterChange, tableInstance);
+      Handsontable.hooks.remove(
+        'afterCreateRow',
+        afterCreateRow,
+        tableInstance,
+      );
     };
   }, [sheet]);
 
