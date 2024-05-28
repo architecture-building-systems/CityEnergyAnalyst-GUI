@@ -14,5 +14,5 @@ export const initLog = () => {
 
 export const openLog = () => {
   const logFilePath = log.transports.file.getFile().path;
-  shell.openItem(logFilePath);
+  shell.openPath(logFilePath);
 };
