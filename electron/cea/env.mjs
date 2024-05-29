@@ -1,5 +1,6 @@
 import { app } from 'electron';
 import path from 'path';
+import os from 'os';
 import { exec, execSync, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { CEAError, MicromambaError } from './errors.mjs';
@@ -10,7 +11,7 @@ const execAsync = promisify(exec);
 
 const paths = {
   darwin: {
-    micromamba: path.join(process.resourcesPath, 'micromamba'),
+    micromamba: path.join(process.resourcesPath, os.arch(), 'micromamba'),
     root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
   },
   win32: {
