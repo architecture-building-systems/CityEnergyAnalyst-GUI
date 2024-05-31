@@ -18,6 +18,7 @@ import ScheduleEditor from './ScheduleEditor';
 import { getOperatingSystem } from '../../utils';
 import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
+import { isElectron } from '../../utils/electron';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
@@ -360,8 +361,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                     <br />
                     {unit}
                     <br />
-                    {typeof choices != 'undefined' && (
-                      // TODO: Fix open file
+                    {isElectron() && typeof choices != 'undefined' && (
                       <a className="cea-input-editor-col-header-link">
                         Open File
                       </a>
