@@ -36,9 +36,9 @@ const CEAVersion = () => {
   const [version, setVersion] = useState();
   const getVersion = async () => {
     try {
-      setVersion(await window?.api?.getAppVersion());
+      setVersion(`v${await window?.api?.getAppVersion()}`);
     } catch (e) {
-      console.error(e);
+      setVersion('');
     }
   };
 
@@ -58,7 +58,7 @@ const CEAVersion = () => {
         userSelect: 'none',
       }}
     >
-      <span>v{version}</span>
+      <span>{version}</span>
     </div>
   );
 };
