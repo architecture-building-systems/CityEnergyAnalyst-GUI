@@ -37,7 +37,7 @@ export const NetworkToggle = ({
       </b>
       {cooling && <RadioInput value="dc" label="District Cooling" />}
       {heating && <RadioInput value="dh" label="District Heating" />}
-      {!cooling && !heating && <div>No networks found</div>}
+      {!cooling && !heating && <div>No thermal networks found</div>}
     </div>
   );
 };
