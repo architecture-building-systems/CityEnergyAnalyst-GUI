@@ -15,7 +15,6 @@ import {
   ModalDuplicateDashboard,
   ModalEditParameters,
   ModalNewDashboard,
-  ModalSetScenario,
   ModalPlotFiles,
 } from './Modals';
 import { ModalContext, ModalManager } from '../../utils/ModalManager';
@@ -86,10 +85,6 @@ const Dashboard = () => {
         dashIndex={dashIndex}
         setDashIndex={setDashIndex}
         dashboardNames={dashboardNames}
-      />
-      <ModalSetScenario
-        fetchDashboards={fetchDashboards}
-        dashIndex={dashIndex}
       />
       <ModalDeleteDashboard
         fetchDashboards={fetchDashboards}
