@@ -180,7 +180,7 @@ function createSplashWindow(url) {
               type: 'info',
               defaultId: 0,
               message: `A new update was found (${info.updateInfo.version}).\n Do you want to install it?`,
-              detail: `${info.updateInfo.releaseNotes}`,
+              // detail: `${info.updateInfo.releaseNotes}`,
               checkboxLabel: 'Remember my decision for this version',
               buttons: ['Install', 'Skip'],
             },
