@@ -1,10 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useContext } from 'react';
-import {
-  CopyOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
 import axios from 'axios';
 import {
@@ -159,14 +154,6 @@ const DashButtons = () => {
         onClick={() => setModalVisible(modals.duplicateDashboard, true)}
       >
         Duplicate Dashboard
-      </Button>
-      <Button
-        type="primary"
-        icon={<EditOutlined />}
-        size="small"
-        onClick={() => setModalVisible(modals.setScenario, true)}
-      >
-        Set Scenario
       </Button>
       <Button
         danger
