@@ -36,7 +36,8 @@ const CEAVersion = () => {
   const [version, setVersion] = useState();
   const getVersion = async () => {
     try {
-      setVersion(`v${await window?.api?.getAppVersion()}`);
+      const _version = await window?.api?.getAppVersion();
+      setVersion(`v${_version}`);
     } catch (e) {
       setVersion('');
     }
