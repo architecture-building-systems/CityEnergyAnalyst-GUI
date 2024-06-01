@@ -17,7 +17,7 @@ const Landing = () => {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 48,
-        margin: '10% 0',
+        margin: '8% 0',
         width: '100%',
       }}
     >
