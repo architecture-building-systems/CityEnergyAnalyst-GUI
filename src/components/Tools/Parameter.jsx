@@ -118,6 +118,8 @@ const Parameter = ({ parameter, form }) => {
     case 'MultiChoiceParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter': {
+      const placeholder =
+        type == 'BuildingsParameter' ? 'All Buildings' : 'Nothing Selected';
       const selectAll = (e) => {
         e.preventDefault();
         setFieldsValue({
@@ -162,7 +164,7 @@ const Parameter = ({ parameter, form }) => {
             <Select
               mode="multiple"
               style={{ width: '100%' }}
-              placeholder="Nothing Selected"
+              placeholder={placeholder}
               maxTagCount={10}
               dropdownRender={(menu) => (
                 <div>
