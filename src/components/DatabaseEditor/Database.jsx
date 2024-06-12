@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Tabs } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
-import Table, { TableButtons } from './Table';
+import Table, { TableButtons, useTableUpdateRedux } from './Table';
 import ColumnGlossary from './ColumnGlossary';
 
 const Database = ({ name, data, schema }) => {
@@ -32,7 +32,7 @@ const Database = ({ name, data, schema }) => {
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   const data = useSelector((state) => state.databaseEditor.data);
   const tableRef = useRef(null);
-  // const updateRedux = useTableUpdateRedux(tableRef, databaseName, sheetName);
+  useTableUpdateRedux(tableRef, databaseName, sheetName);
   const { columns, colHeaders } = getTableSchema(
     schema,
     sheetName,
@@ -125,7 +125,8 @@ export const getTableSchema = (
         data: key,
         type: 'numeric',
         validator: (value, callback) => {
-          if (!isNaN(value)) {
+          if (value === null || value === '') callback(false);
+          else if (!isNaN(value)) {
             const min = column_schema['min'];
             const max = column_schema['max'];
             const inRange =

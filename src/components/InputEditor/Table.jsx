@@ -18,6 +18,7 @@ import ScheduleEditor from './ScheduleEditor';
 import { getOperatingSystem } from '../../utils';
 import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
+import { isElectron } from '../../utils/electron';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
@@ -360,8 +361,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
                     <br />
                     {unit}
                     <br />
-                    {typeof choices != 'undefined' && (
-                      // TODO: Fix open file
+                    {isElectron() && typeof choices != 'undefined' && (
                       <a className="cea-input-editor-col-header-link">
                         Open File
                       </a>
@@ -486,7 +486,7 @@ const useTableData = (tab) => {
                 // Hack to allow editing when double clicking
                 cellDblClick: () => {},
               };
-              if (typeof columns[tab][column].choices != 'undefined')
+              if (columns[tab][column]?.choices != undefined)
                 return {
                   ...columnDef,
                   minWidth: 170,
@@ -534,13 +534,19 @@ const useTableData = (tab) => {
                       { type: simpleDateVal },
                     ],
                   };
-                case 'str':
+                case 'string':
+                  console.log(columns[tab][column]?.nullable);
                   return {
                     ...columnDef,
                     editor: 'input',
-                    validator: ['required', 'string'],
+                    validator: [
+                      ...(columns[tab][column]?.nullable ? [] : ['required']),
+                    ],
                   };
                 default:
+                  console.error(
+                    `Could not find column validation for type "${dataType}" for column "${column}"`,
+                  );
                   return columnDef;
               }
             }

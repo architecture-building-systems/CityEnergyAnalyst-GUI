@@ -15,7 +15,7 @@ import {
   updateCEAenv,
 } from './cea/env.mjs';
 import { CEAError } from './cea/errors.mjs';
-import { initLog } from './log.mjs';
+import { initLog, openLog } from './log.mjs';
 import { readConfig, writeConfig } from './config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -180,7 +180,7 @@ function createSplashWindow(url) {
               type: 'info',
               defaultId: 0,
               message: `A new update was found (${info.updateInfo.version}).\n Do you want to install it?`,
-              detail: `${info.updateInfo.releaseNotes}`,
+              // detail: `${info.updateInfo.releaseNotes}`,
               checkboxLabel: 'Remember my decision for this version',
               buttons: ['Install', 'Skip'],
             },
@@ -288,13 +288,17 @@ function createSplashWindow(url) {
     try {
       await preflightChecks();
     } catch (error) {
+      console.error(error);
       dialog.showMessageBoxSync(splashWindow, {
         type: 'error',
         title: 'CEA Error',
-        message: 'CEA has encounted an error on startup',
-        detail: error.toString(),
-        buttons: ['Exit CEA'],
+        message:
+          'CEA has encounted an error on startup.\n The application will exit now.',
+        detail:
+          'You can report this error to us at our GitHub page\n (https://github.com/architecture-building-systems/CityEnergyAnalyst/issues).',
+        buttons: ['Show logs'],
       });
+      openLog();
       app.exit();
     }
   });

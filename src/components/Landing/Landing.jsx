@@ -6,7 +6,7 @@ import { Button } from 'antd';
 import NewProjectModal from '../Project/NewProjectModal';
 import OpenProjectModal from '../Project/OpenProjectModal';
 import routes from '../../constants/routes.json';
-import ceaLogo from '../../assets/cea-logo.png';
+import ceaLogo from '../../assets/cea-logo-name.png';
 
 const Landing = () => {
   return (
@@ -15,16 +15,26 @@ const Landing = () => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: 48,
+        margin: '8% 0',
+        width: '100%',
       }}
     >
-      <img
-        src={ceaLogo}
-        style={{ width: '15%', minWidth: 100 }}
-        alt="CEA Logo"
-      />
-      <h2 style={{ fontSize: '2em', margin: 30 }}>City Energy Analyst</h2>
-      <NewProjectModalButton />
-      <OpenProjectModalButton />
+      <img src={ceaLogo} style={{ width: 350 }} alt="CEA Logo" />
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 24,
+          width: 350,
+        }}
+      >
+        <NewProjectModalButton />
+        <OpenProjectModalButton />
+      </div>
     </div>
   );
 };
@@ -41,7 +51,7 @@ const NewProjectModalButton = () => {
     <>
       <Button
         type="primary"
-        style={{ width: 300, margin: 24 }}
+        style={{ width: '100%' }}
         onClick={() => setVisible(true)}
       >
         <PlusOutlined />
@@ -68,7 +78,7 @@ const OpenProjectModalButton = () => {
     <>
       <Button
         type="primary"
-        style={{ width: 300, margin: 24 }}
+        style={{ width: '100%' }}
         onClick={() => setVisible(true)}
       >
         <FolderOpenOutlined />

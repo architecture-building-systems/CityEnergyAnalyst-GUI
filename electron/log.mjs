@@ -1,3 +1,4 @@
+import { shell } from 'electron';
 import log from 'electron-log';
 
 export const initLog = () => {
@@ -9,4 +10,9 @@ export const initLog = () => {
   console.debug = log.debug;
 
   return log;
+};
+
+export const openLog = () => {
+  const logFilePath = log.transports.file.getFile().path;
+  shell.openPath(logFilePath);
 };

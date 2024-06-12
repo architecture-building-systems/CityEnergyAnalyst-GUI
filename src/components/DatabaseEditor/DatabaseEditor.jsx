@@ -174,6 +174,8 @@ const SaveDatabaseButton = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const disabled =
+    !!Object.keys(databaseValidation).length || !databaseChanges.length;
 
   const hideModal = () => {
     setModalVisible(false);
@@ -196,13 +198,12 @@ const SaveDatabaseButton = () => {
       setError(err.response);
     }
   };
+
   return (
     <>
       <Button
         // Disable button if there are validation errors or if there are no changes to data
-        disabled={
-          !!Object.keys(databaseValidation).length || !databaseChanges.length
-        }
+        disabled={disabled}
         onClick={saveDB}
       >
         Save Changes
