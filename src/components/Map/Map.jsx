@@ -65,9 +65,9 @@ const DeckGLMap = ({ data, colors }) => {
 
     // Calculate total bounds with other geometries
     let bboxPoly = bboxPolygon(calcBbox(zone));
-    if (data?.surroundings !== null)
+    if (data?.surroundings !== null && data.surroundings?.features?.length)
       bboxPoly = union(bboxPoly, bboxPolygon(calcBbox(data.surroundings)));
-    if (data?.trees !== null)
+    if (data?.trees !== null && data.trees?.features?.length)
       bboxPoly = union(bboxPoly, bboxPolygon(calcBbox(data.trees)));
 
     cameraOptions.current = mapbox.cameraForBounds(calcBbox(bboxPoly), {
