@@ -11,6 +11,8 @@ import {
   area as calcArea,
   length as calcLength,
   bbox as calcBbox,
+  union,
+  bboxPolygon,
 } from '@turf/turf';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
@@ -61,7 +63,14 @@ const DeckGLMap = ({ data, colors }) => {
     const zone = data?.zone;
     if (zone === null) return;
 
-    cameraOptions.current = mapbox.cameraForBounds(calcBbox(zone), {
+    // Calculate total bounds with other geometries
+    let bboxPoly = bboxPolygon(calcBbox(zone));
+    if (data?.surroundings !== null)
+      bboxPoly = union(bboxPoly, bboxPolygon(calcBbox(data.surroundings)));
+    if (data?.trees !== null)
+      bboxPoly = union(bboxPoly, bboxPolygon(calcBbox(data.trees)));
+
+    cameraOptions.current = mapbox.cameraForBounds(calcBbox(bboxPoly), {
       maxZoom: 16,
       padding: 8,
     });

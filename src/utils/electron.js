@@ -3,11 +3,11 @@ export const isElectron = () => {
   return userAgent.indexOf(' electron/') !== -1;
 };
 
-export const openDialog = async (form, type, name) => {
+export const openDialog = async (form, type, filters, name) => {
   const options =
     type === 'directory'
       ? { properties: ['openDirectory'] }
-      : { properties: ['openFile'] };
+      : { properties: ['openFile'], filters };
 
   try {
     const paths = await window.api.openDialog(options);

@@ -535,7 +535,6 @@ const useTableData = (tab) => {
                     ],
                   };
                 case 'string':
-                  console.log(columns[tab][column]?.nullable);
                   return {
                     ...columnDef,
                     editor: 'input',

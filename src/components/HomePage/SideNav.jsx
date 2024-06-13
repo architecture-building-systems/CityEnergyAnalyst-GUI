@@ -11,6 +11,7 @@ import {
   MailOutlined,
   ProjectOutlined,
   QuestionCircleOutlined,
+  RocketOutlined,
   ToolOutlined,
   YoutubeOutlined,
 } from '@ant-design/icons';
@@ -147,7 +148,7 @@ const scenarioMenuItems = (toolsMenu) => {
     },
     toolsMenu,
     {
-      label: <Link to={routes.DASHBOARD}>Dashboard</Link>,
+      label: <Link to={routes.DASHBOARD}>Plots</Link>,
       key: routes.DASHBOARD,
       icon: <BarChartOutlined />,
     },
@@ -212,6 +213,7 @@ const toolMenuItems = (status, tools) => {
 };
 
 const helpMenuUrls = {
+  'learning-camp': 'https://www.cityenergyanalyst.com/learning-camp',
   'video-tutorials': 'https://www.cityenergyanalyst.com/video',
   documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
   'report-issue':
@@ -228,6 +230,11 @@ const helpMenuItems = () => {
       key: 'help',
       icon: <QuestionCircleOutlined />,
       children: [
+        {
+          label: 'Learning Camp',
+          key: 'learning-camp',
+          icon: <RocketOutlined />,
+        },
         {
           label: 'Video Tutorials',
           key: 'video-tutorials',

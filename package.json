@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-gui",
   "productName": "CityEnergyAnalyst-GUI",
-  "version": "3.36.0",
+  "version": "3.37.0",
   "description": "Official GUI of the City Energy Analyst tool",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
