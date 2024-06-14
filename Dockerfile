@@ -3,7 +3,8 @@ FROM node:current-alpine
 RUN corepack enable
 
 WORKDIR /app
-COPY package.json .
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
 
 RUN yarn
 COPY . .
