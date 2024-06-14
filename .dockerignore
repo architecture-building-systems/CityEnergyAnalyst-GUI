@@ -6,3 +6,6 @@ npm-debug.log
 .coverage
 .coverage.*
 .aws
+
+dependencies
+out
