@@ -7,13 +7,7 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
 
-import {
-  area as calcArea,
-  length as calcLength,
-  bbox as calcBbox,
-  union,
-  bboxPolygon,
-} from '@turf/turf';
+import * as turf from '@turf/turf';
 import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
@@ -64,13 +58,25 @@ const DeckGLMap = ({ data, colors }) => {
     if (zone === null) return;
 
     // Calculate total bounds with other geometries
-    let bboxPoly = bboxPolygon(calcBbox(zone));
-    if (data?.surroundings !== null && data.surroundings?.features?.length)
-      bboxPoly = union(bboxPoly, bboxPolygon(calcBbox(data.surroundings)));
-    if (data?.trees !== null && data.trees?.features?.length)
-      bboxPoly = union(bboxPoly, bboxPolygon(calcBbox(data.trees)));
+    let bboxPoly = turf.bboxPolygon(turf.bbox(zone));
 
-    cameraOptions.current = mapbox.cameraForBounds(calcBbox(bboxPoly), {
+    if (data?.surroundings !== null && data.surroundings?.features?.length)
+      bboxPoly = turf.union(
+        turf.featureCollection([
+          bboxPoly,
+          turf.bboxPolygon(turf.bbox(data.surroundings)),
+        ]),
+      );
+
+    if (data?.trees !== null && data.trees?.features?.length)
+      bboxPoly = turf.union(
+        turf.featureCollection([
+          bboxPoly,
+          turf.bboxPolygon(turf.bbox(data.trees)),
+        ]),
+      );
+
+    cameraOptions.current = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
       maxZoom: 16,
       padding: 8,
     });
@@ -400,7 +406,7 @@ function updateTooltip({ x, y, object, layer }) {
           if (key != 'Name')
             innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
         });
-      let area = Math.round(calcArea(object) * 1000) / 1000;
+      let area = Math.round(turf.area(object) * 1000) / 1000;
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
       if (layer.id === 'zone')
         innerHTML += `<div><b>GFA</b>: ${
@@ -414,7 +420,7 @@ function updateTooltip({ x, y, object, layer }) {
         innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
       });
       if (properties['Buildings']) {
-        let length = calcLength(object) * 1000;
+        let length = turf.length(object) * 1000;
         innerHTML += `<br><div><b>length</b>: ${
           Math.round(length * 1000) / 1000
         }m</div>`;
