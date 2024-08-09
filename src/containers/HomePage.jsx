@@ -31,6 +31,41 @@ const DatabaseEditor = lazy(
 );
 const Landing = lazy(() => import('../components/Landing/Landing'));
 
+const HomePageContent = () => {
+  return (
+    <div id="homepage-content">
+      <Switch>
+        <Route path={routes.PROJECT_OVERVIEW}>
+          <Suspense>
+            <Project />
+          </Suspense>
+        </Route>
+        <Route path={routes.INPUT_EDITOR}>
+          <Suspense>
+            <InputEditor />
+          </Suspense>
+        </Route>
+        <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
+        <Route path={routes.DASHBOARD}>
+          <Suspense>
+            <Dashboard />
+          </Suspense>
+        </Route>
+        <Route path={routes.DATABASE_EDITOR}>
+          <Suspense>
+            <DatabaseEditor />
+          </Suspense>
+        </Route>
+        <Route exact path={routes.HOME}>
+          <Suspense>
+            <Landing />
+          </Suspense>
+        </Route>
+      </Switch>
+    </div>
+  );
+};
+
 const HomePage = () => {
   const fetchProject = useFetchProject();
   const dispatch = useDispatch();
@@ -50,44 +85,17 @@ const HomePage = () => {
   return (
     <ContextProvider>
       <div id="homepage-container">
-        <div id="homepage-header-container">
-          <Header />
-        </div>
-
-        <div id="homepage-sidebar-container">
-          <SideNav />
-        </div>
-
-        <div id="homepage-content-container">
-          <div id="homepage-content">
-            <Switch>
-              <Route path={routes.PROJECT_OVERVIEW}>
-                <Suspense>
-                  <Project />
-                </Suspense>
-              </Route>
-              <Route path={routes.INPUT_EDITOR}>
-                <Suspense>
-                  <InputEditor />
-                </Suspense>
-              </Route>
-              <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
-              <Route path={routes.DASHBOARD}>
-                <Suspense>
-                  <Dashboard />
-                </Suspense>
-              </Route>
-              <Route path={routes.DATABASE_EDITOR}>
-                <Suspense>
-                  <DatabaseEditor />
-                </Suspense>
-              </Route>
-              <Route exact path={routes.HOME}>
-                <Suspense>
-                  <Landing />
-                </Suspense>
-              </Route>
-            </Switch>
+        <div id="homepage-top-container">
+          <div id="homepage-sidebar-container">
+            <SideNav />
+          </div>
+          <div id="homepage-right-container">
+            <div id="homepage-header-container">
+              <Header />
+            </div>
+            <div id="homepage-content-container">
+              <HomePageContent />
+            </div>
           </div>
         </div>
         <div id="homepage-status-bar-container">
