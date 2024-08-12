@@ -2,7 +2,7 @@ import { Form } from '@ant-design/compatible';
 import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { Input, Switch, Select, Divider, Button, Space } from 'antd';
 import { basename, checkExist, dirname } from '../../utils/file';
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 
 import { isElectron, openDialog } from '../../utils/electron';
 
@@ -362,21 +362,40 @@ export const OpenDialogInput = forwardRef((props, ref) => {
 OpenDialogInput.displayName = 'OpenDialogInput';
 
 export const OpenDialogButton = (props) => {
-  const { form, type, filters = [], id, children } = props;
+  const { form, name, type, filters = [], id, children, ...rest } = props;
 
-  // ignore if not electron for now
-  if (!isElectron()) return null;
+  if (!isElectron()) {
+    const [value, setValue] = useState('');
+    const onChange = (e) => {
+      setValue(e.target.value);
+    };
 
-  return (
-    <Button
-      style={{ width: '100%' }}
-      onClick={async () => {
-        await openDialog(form, type, filters, id);
-      }}
-    >
-      {children}
-    </Button>
-  );
+    const onClick = () => {
+      form.setFieldsValue({ [name]: value });
+    };
+
+    return (
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Space.Compact style={{ width: '100%' }}>
+          <Input {...rest} value={value} onChange={onChange} />
+          <Button type="primary" onClick={onClick}>
+            Select
+          </Button>
+        </Space.Compact>
+      </Space>
+    );
+  } else {
+    return (
+      <Button
+        style={{ width: '100%' }}
+        onClick={async () => {
+          await openDialog(form, type, filters, id);
+        }}
+      >
+        {children}
+      </Button>
+    );
+  }
 };
 
 export default Parameter;
