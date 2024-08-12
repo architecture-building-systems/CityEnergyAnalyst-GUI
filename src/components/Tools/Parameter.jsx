@@ -361,9 +361,15 @@ export const OpenDialogInput = forwardRef((props, ref) => {
 });
 OpenDialogInput.displayName = 'OpenDialogInput';
 
-export const OpenDialogButton = (props) => {
-  const { form, name, type, filters = [], id, children, ...rest } = props;
-
+export const OpenDialogButton = ({
+  form,
+  name,
+  type,
+  filters = [],
+  id,
+  children,
+  ...rest
+}) => {
   if (!isElectron()) {
     const [value, setValue] = useState('');
     const onChange = (e) => {
