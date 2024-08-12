@@ -11,6 +11,7 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
+import CreateScenario from './CreateScenario';
 
 export const LayoutContext = createContext();
 
@@ -38,6 +39,11 @@ const HomePageContent = () => {
         <Route path={routes.PROJECT_OVERVIEW}>
           <Suspense>
             <Project />
+          </Suspense>
+        </Route>
+        <Route path={routes.CREATE_SCENARIO}>
+          <Suspense>
+            <CreateScenario />
           </Suspense>
         </Route>
         <Route path={routes.INPUT_EDITOR}>

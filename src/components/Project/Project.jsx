@@ -15,7 +15,6 @@ import { useChangeRoute, useFetchProject } from '../../utils/hooks';
 
 const NewProjectModal = lazy(() => import('./NewProjectModal'));
 const OpenProjectModal = lazy(() => import('./OpenProjectModal'));
-const NewScenarioModal = lazy(() => import('./NewScenarioModal'));
 
 const Project = () => {
   const { isFetching, error, info } = useSelector((state) => state.project);
@@ -146,8 +145,7 @@ const RefreshProjectButton = ({ loading, project, scenarioName }) => {
 };
 
 const NewScenarioButton = ({ project }) => {
-  const [isModalVisible, setModalVisible] = useState(false);
-
+  const changeRoute = useChangeRoute(routes.CREATE_SCENARIO);
   return (
     <>
       <Button
@@ -156,17 +154,11 @@ const NewScenarioButton = ({ project }) => {
           display: 'block',
           width: '100%',
         }}
-        onClick={() => setModalVisible(true)}
+        onClick={changeRoute}
       >
-        + Create New Scenario
+        <PlusOutlined />
+        Create Scenario
       </Button>
-      <Suspense>
-        <NewScenarioModal
-          visible={isModalVisible}
-          setVisible={setModalVisible}
-          project={project}
-        />
-      </Suspense>
     </>
   );
 };
