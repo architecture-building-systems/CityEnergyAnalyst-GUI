@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import mapStyles from '../../constants/mapStyles.json';
+import positron from '../../constants/mapStyles/positron.json';
 import {
   EditableGeoJsonLayer,
   DrawPolygonMode,
@@ -134,7 +134,7 @@ const EditableMap = ({
             setViewState(viewState);
           }}
         >
-          <Map mapStyle={mapStyles['LIGHT_MAP']} />
+          <Map mapStyle={positron} />
         </DeckGL>
       </div>
     </>
