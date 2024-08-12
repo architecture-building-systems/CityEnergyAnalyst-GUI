@@ -52,17 +52,23 @@ const DatabaseForm = ({ databases, initialValues, onBack, onFinish }) => {
                 form={form}
                 name="database"
                 type="directory"
-                placeholder="Enter path to databases"
+                placeholder="or enter path to databases"
               >
                 <PlusOutlined />
                 Browse for databases path
               </OpenDialogButton>
             </div>
           )}
-          options={databases.map((database) => ({
-            label: `${database} - ${countryMap?.[database] || database}`,
-            value: database,
-          }))}
+          options={[
+            {
+              label: <span>CEA Built-in</span>,
+              title: 'CEA Built-in',
+              options: databases.map((database) => ({
+                label: `${database} - ${countryMap?.[database] || database}`,
+                value: database,
+              })),
+            },
+          ]}
         />
       </Form.Item>
       <Form.Item>
