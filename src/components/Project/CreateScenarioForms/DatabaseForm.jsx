@@ -61,8 +61,7 @@ const DatabaseForm = ({ databases, initialValues, onBack, onFinish }) => {
           )}
           options={[
             {
-              label: <span>CEA Built-in</span>,
-              title: 'CEA Built-in',
+              label: 'CEA Built-in',
               options: databases.map((database) => ({
                 label: `${database} - ${countryMap?.[database] || database}`,
                 value: database,

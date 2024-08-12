@@ -55,6 +55,7 @@ const ContextForm = ({ weather, initialValues, onBack, onFinish }) => {
                 name="weather"
                 type="file"
                 filters={[{ name: 'Weather files', extensions: ['epw'] }]}
+                placeholder="or enter path to weather file"
               >
                 <PlusOutlined />
                 Browse for weather file
@@ -63,8 +64,7 @@ const ContextForm = ({ weather, initialValues, onBack, onFinish }) => {
           )}
           options={[
             {
-              label: <span>Third-party sources</span>,
-              title: 'Third-party sources',
+              label: 'Third-party sources',
               options: [
                 {
                   label: <span> Fetch from climate.onebuilding.org</span>,
@@ -73,8 +73,7 @@ const ContextForm = ({ weather, initialValues, onBack, onFinish }) => {
               ],
             },
             {
-              label: <span>CEA Built-in</span>,
-              title: 'CEA Built-in',
+              label: 'CEA Built-in',
               options: weather.map((choice) => {
                 return {
                   label: choice,
