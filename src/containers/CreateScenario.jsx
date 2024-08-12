@@ -6,7 +6,6 @@ import DatabaseForm, {
   useFetchDatabases,
 } from '../components/Project/CreateScenarioForms/DatabaseForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import TypologyForm from '../components/Project/CreateScenarioForms/TypologyForm';
 import ContextForm, {
   useFetchWeather,
@@ -98,16 +97,14 @@ const CreateScenarioForm = ({ setGeojson }) => {
 const CreateScenario = () => {
   const [geojson, setGeojson] = useState({});
   return (
-    <ErrorBoundary>
-      <Row style={{ height: '100%' }}>
-        <Col span={12}>
-          <EditableMap />
-        </Col>
-        <Col span={12}>
-          <CreateScenarioForm setGeojson={setGeojson} />
-        </Col>
-      </Row>
-    </ErrorBoundary>
+    <Row style={{ height: '100%' }}>
+      <Col span={12}>
+        <EditableMap />
+      </Col>
+      <Col span={12}>
+        <CreateScenarioForm setGeojson={setGeojson} />
+      </Col>
+    </Row>
   );
 };
 

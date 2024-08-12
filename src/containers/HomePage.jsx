@@ -12,6 +12,7 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import CreateScenario from './CreateScenario';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 export const LayoutContext = createContext();
 
@@ -35,39 +36,41 @@ const Landing = lazy(() => import('../components/Landing/Landing'));
 const HomePageContent = () => {
   return (
     <div id="homepage-content">
-      <Switch>
-        <Route path={routes.PROJECT_OVERVIEW}>
-          <Suspense>
-            <Project />
-          </Suspense>
-        </Route>
-        <Route path={routes.CREATE_SCENARIO}>
-          <Suspense>
-            <CreateScenario />
-          </Suspense>
-        </Route>
-        <Route path={routes.INPUT_EDITOR}>
-          <Suspense>
-            <InputEditor />
-          </Suspense>
-        </Route>
-        <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
-        <Route path={routes.DASHBOARD}>
-          <Suspense>
-            <Dashboard />
-          </Suspense>
-        </Route>
-        <Route path={routes.DATABASE_EDITOR}>
-          <Suspense>
-            <DatabaseEditor />
-          </Suspense>
-        </Route>
-        <Route exact path={routes.HOME}>
-          <Suspense>
-            <Landing />
-          </Suspense>
-        </Route>
-      </Switch>
+      <ErrorBoundary>
+        <Switch>
+          <Route path={routes.PROJECT_OVERVIEW}>
+            <Suspense>
+              <Project />
+            </Suspense>
+          </Route>
+          <Route path={routes.CREATE_SCENARIO}>
+            <Suspense>
+              <CreateScenario />
+            </Suspense>
+          </Route>
+          <Route path={routes.INPUT_EDITOR}>
+            <Suspense>
+              <InputEditor />
+            </Suspense>
+          </Route>
+          <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
+          <Route path={routes.DASHBOARD}>
+            <Suspense>
+              <Dashboard />
+            </Suspense>
+          </Route>
+          <Route path={routes.DATABASE_EDITOR}>
+            <Suspense>
+              <DatabaseEditor />
+            </Suspense>
+          </Route>
+          <Route exact path={routes.HOME}>
+            <Suspense>
+              <Landing />
+            </Suspense>
+          </Route>
+        </Switch>
+      </ErrorBoundary>
     </div>
   );
 };
