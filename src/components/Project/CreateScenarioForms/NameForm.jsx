@@ -17,11 +17,15 @@ const NameForm = ({ initialValues, onFinish }) => {
     <Form initialValues={initialValues} onFinish={onFinish} layout="vertical">
       <Form.Item
         label="Scenario Name"
-        name="name"
+        name="scenario_name"
         extra="Name must be unique and contain no spaces"
         rules={[{ required: true, message: 'Scenario name cannot be empty' }]}
       >
-        <Input placeholder="new_scenario" onChange={onNameChange} />
+        <Input
+          placeholder="new_scenario"
+          onChange={onNameChange}
+          autoComplete="off"
+        />
       </Form.Item>
       {value !== undefined && value.trim().indexOf(' ') !== -1 && (
         <span>
