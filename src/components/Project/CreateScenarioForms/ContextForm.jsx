@@ -21,13 +21,20 @@ export const useFetchWeather = () => {
   return weather;
 };
 
-const ContextForm = ({ weather, initialValues, onBack, onFinish }) => {
+const ContextForm = ({
+  weather,
+  initialValues,
+  onChange,
+  onBack,
+  onFinish,
+}) => {
   const [form] = Form.useForm();
 
   return (
     <Form
       form={form}
       initialValues={initialValues}
+      onValuesChange={onChange}
       onFinish={onFinish}
       layout="vertical"
     >

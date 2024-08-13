@@ -17,6 +17,10 @@ const CreateScenarioForm = ({ setVisible }) => {
   const databases = useFetchDatabases();
   const weather = useFetchWeather();
 
+  const onChange = (values) => {
+    setData({ ...data, ...values });
+  };
+
   const onBack = () => {
     setCurrent(current - 1);
   };
@@ -45,6 +49,7 @@ const CreateScenarioForm = ({ setVisible }) => {
         <DatabaseForm
           databases={databases}
           initialValues={data}
+          onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
         />
@@ -56,6 +61,7 @@ const CreateScenarioForm = ({ setVisible }) => {
       content: (
         <GeometryForm
           initialValues={data}
+          onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
         />
@@ -67,6 +73,7 @@ const CreateScenarioForm = ({ setVisible }) => {
       content: (
         <TypologyForm
           initialValues={data}
+          onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
         />
@@ -79,6 +86,7 @@ const CreateScenarioForm = ({ setVisible }) => {
         <ContextForm
           weather={weather}
           initialValues={data}
+          onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
         />

@@ -19,13 +19,14 @@ import { MapFormContext } from '../../../containers/CreateScenario';
 const GENERATE_OSM_CEA = 'generate-osm-cea';
 const EXAMPLE_CITIES = ['Singapore', 'Zürich'];
 
-const UserGeometryForm = ({ initialValues, onBack, onFinish }) => {
+const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
   const [form] = Form.useForm();
 
   return (
     <Form
       form={form}
       initialValues={initialValues}
+      onValuesChange={onChange}
       onFinish={onFinish}
       layout="vertical"
     >
@@ -144,13 +145,19 @@ const UserGeometryForm = ({ initialValues, onBack, onFinish }) => {
   );
 };
 
-const GenerateGeometryForm = ({ initialValues, onBack, onFinish }) => {
+const GenerateGeometryForm = ({
+  initialValues,
+  onChange,
+  onBack,
+  onFinish,
+}) => {
   const [form] = Form.useForm();
 
   return (
     <Form
       form={form}
       initialValues={initialValues}
+      onValuesChange={onChange}
       onFinish={onFinish}
       layout="vertical"
     >
@@ -331,7 +338,7 @@ const IntegerSliderInput = ({
   );
 };
 
-const GeometryForm = ({ initialValues, onBack, onFinish }) => {
+const GeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
   const [current, setCurrent] = useState(0);
   const [formData, setFormData] = useState(initialValues);
 
@@ -362,11 +369,13 @@ const GeometryForm = ({ initialValues, onBack, onFinish }) => {
   const forms = [
     <UserGeometryForm
       initialValues={formData}
+      onChange={onChange}
       onBack={onBack}
       onFinish={onUserGeomertyFormFinish}
     />,
     <GenerateGeometryForm
       initialValues={formData}
+      onChange={onChange}
       onBack={onGeometryFormBack}
       onFinish={onGenerateGeometryFormFinish}
     />,

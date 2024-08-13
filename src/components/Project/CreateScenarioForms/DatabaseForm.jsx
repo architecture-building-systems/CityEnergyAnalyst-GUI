@@ -21,7 +21,13 @@ export const useFetchDatabases = () => {
   return databases;
 };
 
-const DatabaseForm = ({ databases, initialValues, onBack, onFinish }) => {
+const DatabaseForm = ({
+  databases,
+  initialValues,
+  onChange,
+  onBack,
+  onFinish,
+}) => {
   const [form] = Form.useForm();
 
   const countryMap = {
@@ -34,6 +40,7 @@ const DatabaseForm = ({ databases, initialValues, onBack, onFinish }) => {
     <Form
       form={form}
       initialValues={initialValues}
+      onValuesChange={onChange}
       onFinish={onFinish}
       layout="vertical"
     >

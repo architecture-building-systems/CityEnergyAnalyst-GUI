@@ -2,13 +2,14 @@ import { Button, Form, Input } from 'antd';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { PlusOutlined } from '@ant-design/icons';
 
-const TypologyForm = ({ initialValues, onBack, onFinish }) => {
+const TypologyForm = ({ initialValues, onChange, onBack, onFinish }) => {
   const [form] = Form.useForm();
 
   return (
     <Form
       form={form}
       initialValues={initialValues}
+      onValuesChange={onChange}
       onFinish={onFinish}
       layout="vertical"
     >
