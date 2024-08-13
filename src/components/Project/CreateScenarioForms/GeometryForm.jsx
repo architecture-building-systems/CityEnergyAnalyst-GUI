@@ -31,7 +31,7 @@ const UserGeometryForm = ({ initialValues, onBack, onFinish }) => {
     >
       <Form.Item
         label="Building geometries (zone)"
-        name={['user', 'zone']}
+        name="user_zone"
         extra={
           <div>
             <div>Link to a path to building geometries in .shp format.</div>
@@ -47,7 +47,7 @@ const UserGeometryForm = ({ initialValues, onBack, onFinish }) => {
               <Divider style={{ margin: '4px 0' }} />
               <OpenDialogButton
                 form={form}
-                name={['user', 'zone']}
+                name="user_zone"
                 type="file"
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
                 placeholder="or enter path to zone file"
@@ -73,7 +73,7 @@ const UserGeometryForm = ({ initialValues, onBack, onFinish }) => {
 
       <Form.Item
         label="Other building geometries (surroundings)"
-        name={['user', 'surroundings']}
+        name="user_surroundings"
         extra={
           <div>
             <div>
@@ -91,7 +91,7 @@ const UserGeometryForm = ({ initialValues, onBack, onFinish }) => {
               <Divider style={{ margin: '4px 0' }} />
               <OpenDialogButton
                 form={form}
-                name={['user', 'surroundings']}
+                name="user_surroundings"
                 type="file"
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
                 placeholder="or enter path to surroundings file"
@@ -154,23 +154,23 @@ const GenerateGeometryForm = ({ initialValues, onBack, onFinish }) => {
       onFinish={onFinish}
       layout="vertical"
     >
-      {initialValues?.user?.zone === GENERATE_OSM_CEA && (
+      {initialValues?.user_zone === GENERATE_OSM_CEA && (
         <>
-          <GenerateZoneGeometryForm form={form} name={['generate', 'zone']} />
+          <GenerateZoneGeometryForm form={form} name="generate_zone" />
 
           <Form.Item
             label="Generate zone geometry"
-            name={['generate', 'zone']}
+            name="generate_zone"
             rules={[{ required: true }]}
             hidden
           />
         </>
       )}
 
-      {initialValues?.user?.surroundings === GENERATE_OSM_CEA && (
+      {initialValues?.user_surroundings === GENERATE_OSM_CEA && (
         <Form.Item
           label="Generate surroundings geometry"
-          name={['generate', 'surroundings']}
+          name="generate_surroundings"
           extra="Buffer in meters around the zone geometry"
           rules={[{ required: true }]}
         >
@@ -234,10 +234,7 @@ const GenerateZoneGeometryForm = ({ form, name }) => {
     let value = null;
     if (geojson?.features?.length) value = geojson;
 
-    // TODO: handle deeply nested arrays
-    if (Array.isArray(name)) {
-      form.setFieldsValue({ [name[0]]: { [name[1]]: value } });
-    } else form.setFieldsValue({ [name]: value });
+    form.setFieldsValue({ [name]: value });
   }, [geojson]);
 
   return (
@@ -341,8 +338,8 @@ const GeometryForm = ({ initialValues, onBack, onFinish }) => {
   const onUserGeomertyFormFinish = (values) => {
     // Complete geometry form if user geometry is provided
     if (
-      values?.user?.zone !== GENERATE_OSM_CEA &&
-      values?.user?.surroundings !== GENERATE_OSM_CEA
+      values?.user_zone !== GENERATE_OSM_CEA &&
+      values?.user_surroundings !== GENERATE_OSM_CEA
     ) {
       onFinish(values);
     } else {

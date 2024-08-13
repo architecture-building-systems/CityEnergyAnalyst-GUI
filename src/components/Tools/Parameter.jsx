@@ -372,15 +372,16 @@ export const OpenDialogButton = ({
 }) => {
   if (!isElectron()) {
     const [value, setValue] = useState('');
+    const updateFormValue = () => {
+      form.setFieldsValue({ [name]: value });
+    };
+
     const onChange = (e) => {
       setValue(e.target.value);
     };
 
     const onClick = () => {
-      // TODO: handle deeply nested arrays
-      if (Array.isArray(name)) {
-        form.setFieldsValue({ [name[0]]: { [name[1]]: value } });
-      } else form.setFieldsValue({ [name]: value });
+      updateFormValue();
     };
 
     return (
