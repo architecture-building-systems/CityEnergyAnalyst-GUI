@@ -1,6 +1,6 @@
 import { Col, Divider, Row, Steps } from 'antd';
 import EditableMap from '../components/Map/EditableMap';
-import { createContext, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import DatabaseForm, {
   useFetchDatabases,
@@ -11,7 +11,7 @@ import ContextForm, {
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/ContextForm';
 
-const CreateScenarioForm = () => {
+const CreateScenarioForm = ({ setVisible }) => {
   const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
@@ -33,22 +33,62 @@ const CreateScenarioForm = () => {
   };
 
   const forms = [
-    <NameForm initialValues={data} onFinish={onFinish} />,
-    <DatabaseForm
-      databases={databases}
-      initialValues={data}
-      onBack={onBack}
-      onFinish={onFinish}
-    />,
-    <GeometryForm initialValues={data} onBack={onBack} onFinish={onFinish} />,
-    <TypologyForm initialValues={data} onBack={onBack} onFinish={onFinish} />,
-    <ContextForm
-      weather={weather}
-      initialValues={data}
-      onBack={onBack}
-      onFinish={onFinish}
-    />,
+    {
+      description: 'Name',
+      showMap: false,
+      content: <NameForm initialValues={data} onFinish={onFinish} />,
+    },
+    {
+      description: 'Database',
+      showMap: false,
+      content: (
+        <DatabaseForm
+          databases={databases}
+          initialValues={data}
+          onBack={onBack}
+          onFinish={onFinish}
+        />
+      ),
+    },
+    {
+      description: 'Geometries',
+      showMap: true,
+      content: (
+        <GeometryForm
+          initialValues={data}
+          onBack={onBack}
+          onFinish={onFinish}
+        />
+      ),
+    },
+    {
+      description: 'Typology',
+      showMap: true,
+      content: (
+        <TypologyForm
+          initialValues={data}
+          onBack={onBack}
+          onFinish={onFinish}
+        />
+      ),
+    },
+    {
+      description: 'Context',
+      showMap: true,
+      content: (
+        <ContextForm
+          weather={weather}
+          initialValues={data}
+          onBack={onBack}
+          onFinish={onFinish}
+        />
+      ),
+    },
   ];
+
+  useEffect(() => {
+    setVisible(forms[current].showMap);
+  }, [current]);
 
   return (
     <div
@@ -70,18 +110,12 @@ const CreateScenarioForm = () => {
         <p>Adds a new scenario to the current project.</p>
         <Divider />
       </div>
-      <div style={{ flexGrow: 1 }}>{forms[current]}</div>
+      <div style={{ flexGrow: 1 }}>{forms[current].content}</div>
       <div style={{ marginTop: 24 }}>
         <Steps
           current={current}
           labelPlacement="vertical"
-          items={[
-            { description: 'Name' },
-            { description: 'Database' },
-            { description: 'Geometries' },
-            { description: 'Typology' },
-            { description: 'Context' },
-          ]}
+          items={forms}
           size="small"
         />
       </div>
@@ -92,18 +126,29 @@ const CreateScenarioForm = () => {
 export const MapFormContext = createContext();
 
 const CreateScenario = () => {
-  // TODO: Use context instead of state
   const [geojson, setGeojson] = useState({});
   const [location, setLocation] = useState();
+  const [visible, setVisible] = useState(false);
 
   return (
     <Row style={{ height: '100%' }}>
       <Col span={12}>
-        <EditableMap location={location} setValue={setGeojson} />
+        {(visible && (
+          <EditableMap location={location} setValue={setGeojson} />
+        )) || (
+          <div
+            style={{
+              height: '100%',
+              backgroundColor: 'lightgrey',
+              borderRadius: 8,
+              opacity: 0.5,
+            }}
+          />
+        )}
       </Col>
       <Col span={12}>
-        <MapFormContext.Provider value={{ geojson, setLocation }}>
-          <CreateScenarioForm />
+        <MapFormContext.Provider value={{ geojson, setLocation, setVisible }}>
+          <CreateScenarioForm setVisible={setVisible} />
         </MapFormContext.Provider>
       </Col>
     </Row>
