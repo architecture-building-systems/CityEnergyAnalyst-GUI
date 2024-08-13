@@ -31,7 +31,10 @@ const EditableMap = ({
   geojson = EMPTY_FEATURE,
   setValue = () => {},
 }) => {
-  const [viewState, setViewState] = useState(defaultViewState);
+  const [viewState, setViewState] = useState({
+    ...defaultViewState,
+    ...location,
+  });
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
@@ -127,6 +130,7 @@ const EditableMap = ({
 
       <div onContextMenu={(e) => e.preventDefault()}>
         <DeckGL
+          initialViewState={viewState}
           viewState={viewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
           layers={[layer]}
