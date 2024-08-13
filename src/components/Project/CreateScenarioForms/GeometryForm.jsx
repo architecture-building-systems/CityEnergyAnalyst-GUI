@@ -285,19 +285,26 @@ const getGeocodeLocation = async (address) => {
   }
 };
 
-const IntegerSliderInput = ({ name, min = 1, max = 500, ...rest }) => {
+const IntegerSliderInput = ({
+  name,
+  defaultValue = 50,
+  min = 1,
+  max = 500,
+  ...rest
+}) => {
   // For antd form controls
-  const { id, value = 50, onChange } = rest;
+  const { id, value, onChange } = rest;
   const [inputValue, setInputValue] = useState(value);
 
-  const onValueChange = (newValue) => {
+  const onInputChange = (newValue) => {
     setInputValue(newValue);
 
-    onChange(newValue);
+    if (onChange) onChange(newValue);
   };
 
   useEffect(() => {
-    onValueChange(value);
+    // Make sure default value is set on mount
+    onInputChange(value !== undefined ? value : defaultValue);
   }, []);
 
   return (
@@ -306,7 +313,7 @@ const IntegerSliderInput = ({ name, min = 1, max = 500, ...rest }) => {
         <Slider
           min={min}
           max={max}
-          onChange={onValueChange}
+          onChange={onInputChange}
           value={typeof inputValue === 'number' ? inputValue : 0}
         />
       </Col>
@@ -320,7 +327,7 @@ const IntegerSliderInput = ({ name, min = 1, max = 500, ...rest }) => {
             margin: '0 16px',
           }}
           value={inputValue}
-          onChange={onValueChange}
+          onChange={onInputChange}
         />
       </Col>
     </Row>
