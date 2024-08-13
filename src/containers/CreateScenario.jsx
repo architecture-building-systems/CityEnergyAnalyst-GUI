@@ -1,6 +1,6 @@
 import { Col, Divider, Row, Steps } from 'antd';
 import EditableMap from '../components/Map/EditableMap';
-import { useState } from 'react';
+import { createContext, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import DatabaseForm, {
   useFetchDatabases,
@@ -11,7 +11,7 @@ import ContextForm, {
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/ContextForm';
 
-const CreateScenarioForm = ({ setGeojson }) => {
+const CreateScenarioForm = () => {
   const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
@@ -40,12 +40,7 @@ const CreateScenarioForm = ({ setGeojson }) => {
       onBack={onBack}
       onFinish={onFinish}
     />,
-    <GeometryForm
-      initialValues={data}
-      onBack={onBack}
-      onFinish={onFinish}
-      setGeojson={setGeojson}
-    />,
+    <GeometryForm initialValues={data} onBack={onBack} onFinish={onFinish} />,
     <TypologyForm initialValues={data} onBack={onBack} onFinish={onFinish} />,
     <ContextForm
       weather={weather}
@@ -94,15 +89,22 @@ const CreateScenarioForm = ({ setGeojson }) => {
   );
 };
 
+export const MapFormContext = createContext();
+
 const CreateScenario = () => {
+  // TODO: Use context instead of state
   const [geojson, setGeojson] = useState({});
+  const [location, setLocation] = useState();
+
   return (
     <Row style={{ height: '100%' }}>
       <Col span={12}>
-        <EditableMap />
+        <EditableMap location={location} setValue={setGeojson} />
       </Col>
       <Col span={12}>
-        <CreateScenarioForm setGeojson={setGeojson} />
+        <MapFormContext.Provider value={{ geojson, setLocation }}>
+          <CreateScenarioForm />
+        </MapFormContext.Provider>
       </Col>
     </Row>
   );
