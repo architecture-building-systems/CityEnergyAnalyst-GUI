@@ -377,8 +377,8 @@ export const OpenDialogButton = ({
     };
 
     const onClick = () => {
+      // TODO: handle deeply nested arrays
       if (Array.isArray(name)) {
-        // TODO: handle deeply nested arrays
         form.setFieldsValue({ [name[0]]: { [name[1]]: value } });
       } else form.setFieldsValue({ [name]: value });
     };
