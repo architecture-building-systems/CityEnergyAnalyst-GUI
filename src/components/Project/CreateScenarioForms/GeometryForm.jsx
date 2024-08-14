@@ -63,7 +63,7 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
               label: 'CEA Built-in',
               options: [
                 {
-                  label: 'Generate from OSM using CEA',
+                  label: 'Generate from OpenStreetMap using CEA',
                   value: GENERATE_OSM_CEA,
                 },
               ],
@@ -118,7 +118,7 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
               label: 'CEA Built-in',
               options: [
                 {
-                  label: 'Generate from OSM using CEA',
+                  label: 'Generate from OpenStreetMap using CEA',
                   value: GENERATE_OSM_CEA,
                 },
               ],
@@ -252,7 +252,7 @@ const GenerateZoneGeometryForm = ({ form, name }) => {
   return (
     <Form.Item
       label="Generate zone geometry"
-      extra="Search for a location in OpenStreetMap"
+      extra="Search for a location using OpenStreetMap"
     >
       <Input.Search
         placeholder={`Example: type "${randomCity}”`}
