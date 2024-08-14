@@ -263,12 +263,12 @@ const GenerateZoneGeometryForm = ({ form, name, onChange = () => {} }) => {
       if (data === null) {
         throw new Error('Location not found');
       }
-
-      const { lat, lon, display_name } = data;
+      const { lat, lon, display_name, boundingbox } = data;
       setLocation({
         latitude: parseFloat(lat),
         longitude: parseFloat(lon),
         zoom: 16,
+        bbox: [boundingbox[2], boundingbox[0], boundingbox[3], boundingbox[1]],
       });
       setAddress(display_name);
     } catch (err) {

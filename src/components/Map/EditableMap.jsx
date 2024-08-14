@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import positron from '../../constants/mapStyles/positron.json';
@@ -31,10 +31,8 @@ const EditableMap = ({
   geojson = EMPTY_FEATURE,
   setValue = () => {},
 }) => {
-  const [viewState, setViewState] = useState({
-    ...defaultViewState,
-    ...location,
-  });
+  const mapRef = useRef();
+  const [viewState, setViewState] = useState(defaultViewState);
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
@@ -85,7 +83,25 @@ const EditableMap = ({
   };
 
   useEffect(() => {
-    setViewState((viewState) => ({ ...viewState, ...location }));
+    if (location.bbox && mapRef.current) {
+      const mapbox = mapRef.current.getMap();
+
+      const { zoom } = mapbox.cameraForBounds(location.bbox, {
+        maxZoom: 18,
+      });
+
+      setViewState((viewState) => ({
+        ...viewState,
+        zoom: zoom,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      }));
+
+      // Trigger a refresh so that map is zoomed correctly
+      mapRef.current.zoomTo(zoom);
+    } else {
+      setViewState((viewState) => ({ ...viewState, ...location }));
+    }
   }, [location]);
 
   useEffect(() => {
@@ -138,7 +154,7 @@ const EditableMap = ({
             setViewState(viewState);
           }}
         >
-          <Map mapStyle={positron} />
+          <Map ref={mapRef} mapStyle={positron} />
         </DeckGL>
       </div>
     </>
