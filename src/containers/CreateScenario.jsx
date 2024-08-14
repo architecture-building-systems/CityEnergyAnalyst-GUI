@@ -12,7 +12,7 @@ import ContextForm, {
 } from '../components/Project/CreateScenarioForms/ContextForm';
 import { useSelector } from 'react-redux';
 
-const CreateScenarioForm = ({ setVisible }) => {
+const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
   const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
@@ -41,7 +41,13 @@ const CreateScenarioForm = ({ setVisible }) => {
     {
       description: 'Name',
       showMap: false,
-      content: <NameForm initialValues={data} onFinish={onFinish} />,
+      content: (
+        <NameForm
+          initialValues={data}
+          scenarioNames={scenarioNames}
+          onFinish={onFinish}
+        />
+      ),
     },
     {
       description: 'Database',
@@ -141,7 +147,7 @@ const CreateScenario = () => {
 
   // TDOD: Get list of scenarios from project
   const { info } = useSelector((state) => state.project);
-  const scenariosList = info?.scenarios_list || [];
+  const scenarioNames = info?.scenarios_list || [];
 
   return (
     <Row style={{ height: '100%' }}>
@@ -165,7 +171,7 @@ const CreateScenario = () => {
             <div style={{ padding: 24 }}>
               <h2>Scenarios in project</h2>
               <List
-                dataSource={scenariosList}
+                dataSource={scenarioNames}
                 renderItem={(item) => (
                   <List.Item>
                     <div
@@ -182,7 +188,10 @@ const CreateScenario = () => {
       </Col>
       <Col span={12}>
         <MapFormContext.Provider value={{ geojson, setLocation, setVisible }}>
-          <CreateScenarioForm setVisible={setVisible} />
+          <CreateScenarioForm
+            setVisible={setVisible}
+            scenarioNames={scenarioNames}
+          />
         </MapFormContext.Provider>
       </Col>
     </Row>
