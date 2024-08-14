@@ -104,6 +104,15 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
           )}
           options={[
             {
+              label: 'CEA Built-in',
+              options: [
+                {
+                  label: 'Generate from OpenStreetMap using CEA',
+                  value: GENERATE_OSM_CEA,
+                },
+              ],
+            },
+            {
               label: (
                 <div>
                   None{' '}
@@ -113,15 +122,6 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
                 </div>
               ),
               value: 'none',
-            },
-            {
-              label: 'CEA Built-in',
-              options: [
-                {
-                  label: 'Generate from OpenStreetMap using CEA',
-                  value: GENERATE_OSM_CEA,
-                },
-              ],
             },
           ]}
         />
@@ -153,20 +153,45 @@ const GenerateGeometryForm = ({
 }) => {
   const [form] = Form.useForm();
 
+  const [error, setError] = useState(null);
+
+  const onFinishFailed = ({ errorFields }) => {
+    setError(errorFields.find((error) => error.name.includes('generate_zone')));
+  };
+
   return (
     <Form
       form={form}
       initialValues={initialValues}
       onValuesChange={onChange}
       onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
       layout="vertical"
     >
       {initialValues?.user_zone === GENERATE_OSM_CEA && (
         <>
-          <GenerateZoneGeometryForm form={form} name="generate_zone" />
+          <div
+            style={{
+              marginBottom: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <div>
+              Search for a location below and select an area with buildings by
+              drawing a polygon on the map.
+            </div>
+            {error && <div style={{ color: 'red' }}>{error.errors[0]}</div>}
+          </div>
+
+          <GenerateZoneGeometryForm
+            form={form}
+            name="generate_zone"
+            onChange={() => setError(null)}
+          />
 
           <Form.Item
-            label="Generate zone geometry"
             name="generate_zone"
             rules={[
               { required: true },
@@ -174,7 +199,11 @@ const GenerateGeometryForm = ({
                 validator: (_, value) =>
                   value?.features?.length
                     ? Promise.resolve()
-                    : Promise.reject(new Error('Geometry is required')),
+                    : Promise.reject(
+                        new Error(
+                          'Area geometry not found. Please select an area on the map by drawing a polygon.',
+                        ),
+                      ),
               },
             ]}
             hidden
@@ -210,7 +239,7 @@ const GenerateGeometryForm = ({
   );
 };
 
-const GenerateZoneGeometryForm = ({ form, name }) => {
+const GenerateZoneGeometryForm = ({ form, name, onChange = () => {} }) => {
   const { geojson, setLocation } = useContext(MapFormContext);
   const [loading, setLoading] = useState(false);
   const [locationAddress, setAddress] = useState(null);
@@ -250,14 +279,13 @@ const GenerateZoneGeometryForm = ({ form, name }) => {
   };
 
   useEffect(() => {
-    console.log({ geojson });
-
-    form.setFieldsValue({ [name]: geojson });
+    form.setFieldValue(name, geojson);
+    onChange(geojson);
   }, [geojson]);
 
   return (
     <Form.Item
-      label="Generate zone geometry"
+      label="Location"
       extra="Search for a location using OpenStreetMap"
       initialValue={geojson}
     >
