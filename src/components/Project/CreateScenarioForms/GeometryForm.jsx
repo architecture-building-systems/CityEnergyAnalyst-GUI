@@ -217,6 +217,7 @@ const GenerateGeometryForm = ({
           name="generate_surroundings"
           extra="Buffer in meters around the zone geometry"
           rules={[{ required: true }]}
+          initialValue={initialValues.generate_surroundings || 50}
         >
           <IntegerSliderInput />
         </Form.Item>
@@ -332,42 +333,30 @@ const getGeocodeLocation = async (address) => {
   }
 };
 
-const IntegerSliderInput = ({
-  name,
-  defaultValue = 50,
-  min = 1,
-  max = 500,
-  ...rest
-}) => {
+const IntegerSliderInput = ({ min = 1, max = 500, ...props }) => {
   // For antd form controls
-  const { id, value, onChange } = rest;
+  const { id, value, onChange } = props;
   const [inputValue, setInputValue] = useState(value);
 
   const onInputChange = (newValue) => {
     setInputValue(newValue);
 
-    if (onChange) onChange(newValue);
+    // Trigger antd form change event
+    onChange?.(newValue);
   };
 
-  useEffect(() => {
-    // Make sure default value is set on mount
-    onInputChange(value !== undefined ? value : defaultValue);
-  }, []);
-
   return (
-    <Row>
+    <Row id={id}>
       <Col span={12}>
         <Slider
           min={min}
           max={max}
+          value={inputValue}
           onChange={onInputChange}
-          value={typeof inputValue === 'number' ? inputValue : 0}
         />
       </Col>
       <Col span={4}>
         <InputNumber
-          id={id}
-          name={name}
           min={min}
           max={max}
           style={{
@@ -394,31 +383,36 @@ const GeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
       onFinish(values);
     } else {
       // Otherwise, bring to next geometry form
-      setFormData({ ...formData, ...values });
       setCurrent(current + 1);
     }
   };
 
   const onGenerateGeometryFormFinish = (values) => {
-    const allFormData = { ...formData, ...values };
-    setFormData(allFormData);
-    onFinish(allFormData);
+    onFinish({ ...formData, ...values });
   };
 
   const onGeometryFormBack = () => {
     setCurrent(current - 1);
   };
 
+  const onGeometryFormChange = (values) => {
+    // Update geometry form data
+    setFormData({ ...formData, ...values });
+
+    // Update parent form data
+    onChange(values);
+  };
+
   const forms = [
     <UserGeometryForm
       initialValues={formData}
-      onChange={onChange}
+      onChange={onGeometryFormChange}
       onBack={onBack}
       onFinish={onUserGeomertyFormFinish}
     />,
     <GenerateGeometryForm
       initialValues={formData}
-      onChange={onChange}
+      onChange={onGeometryFormChange}
       onBack={onGeometryFormBack}
       onFinish={onGenerateGeometryFormFinish}
     />,
