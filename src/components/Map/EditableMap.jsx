@@ -32,7 +32,7 @@ const EditableMap = ({
   setValue = () => {},
 }) => {
   const mapRef = useRef();
-  const [viewState, setViewState] = useState(defaultViewState);
+  const [viewState, setViewState] = useState(location);
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(geojson !== null ? geojson : EMPTY_FEATURE);
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
@@ -154,7 +154,22 @@ const EditableMap = ({
             setViewState(viewState);
           }}
         >
-          <Map ref={mapRef} mapStyle={positron} />
+          <Map
+            ref={mapRef}
+            mapStyle={positron}
+            onLoad={(e) => {
+              if (location.bbox) {
+                const mapbox = e.target;
+                const { zoom } = mapbox.cameraForBounds(location.bbox, {
+                  maxZoom: 18,
+                });
+                setViewState((viewState) => ({
+                  ...viewState,
+                  zoom: zoom,
+                }));
+              }
+            }}
+          />
         </DeckGL>
       </div>
     </>
