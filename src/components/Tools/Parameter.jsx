@@ -340,10 +340,41 @@ export const FormItemWrapper = ({
   );
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, type, filters = [], id, ...rest } = props;
+const PathInput = ({ value, onChange, form, name, ...rest }) => {
+  const [inputValue, setValue] = useState(value);
 
-  if (!isElectron()) return <Input ref={ref} {...props} />;
+  const onClick = () => {
+    form.setFieldsValue({ [name]: inputValue });
+  };
+
+  const onValueChange = (e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    onChange?.(newValue);
+  };
+
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <Space.Compact style={{ width: '100%' }}>
+        <Input
+          {...rest}
+          value={inputValue}
+          onChange={onValueChange}
+          type="text"
+        />
+        <Button type="primary" onClick={onClick}>
+          Select
+        </Button>
+      </Space.Compact>
+    </Space>
+  );
+};
+
+export const OpenDialogInput = forwardRef((props, ref) => {
+  const { form, name, type, filters = [], ...rest } = props;
+
+  if (!isElectron()) return <PathInput {...props} />;
 
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
@@ -353,7 +384,7 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         style={{ width: 60 }}
         icon={<FileSearchOutlined />}
         onClick={async () => {
-          await openDialog(form, type, filters, id);
+          await openDialog(form, type, filters, name);
         }}
       ></Button>
     </Space.Compact>
@@ -371,29 +402,7 @@ export const OpenDialogButton = ({
   ...rest
 }) => {
   if (!isElectron()) {
-    const [value, setValue] = useState('');
-    const updateFormValue = () => {
-      form.setFieldsValue({ [name]: value });
-    };
-
-    const onChange = (e) => {
-      setValue(e.target.value);
-    };
-
-    const onClick = () => {
-      updateFormValue();
-    };
-
-    return (
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Space.Compact style={{ width: '100%' }}>
-          <Input {...rest} value={value} onChange={onChange} />
-          <Button type="primary" onClick={onClick}>
-            Select
-          </Button>
-        </Space.Compact>
-      </Space>
-    );
+    return <PathInput form={form} name={name} {...rest} />;
   } else {
     return (
       <Button
