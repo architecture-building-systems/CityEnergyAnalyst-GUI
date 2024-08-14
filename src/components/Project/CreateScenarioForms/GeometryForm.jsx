@@ -207,8 +207,13 @@ const GenerateZoneGeometryForm = ({ form, name }) => {
   const [loading, setLoading] = useState(false);
   const [locationAddress, setAddress] = useState(null);
 
-  const randomCity =
-    EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)];
+  const [randomCity, setRandomCity] = useState('');
+
+  useEffect(() => {
+    setRandomCity(
+      EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
+    );
+  }, []);
 
   const onSearch = async (searchAddress) => {
     if (searchAddress.trim().length === 0) return;
@@ -245,7 +250,10 @@ const GenerateZoneGeometryForm = ({ form, name }) => {
   }, [geojson]);
 
   return (
-    <Form.Item label="Generate zone geometry" extra="Search for a location">
+    <Form.Item
+      label="Generate zone geometry"
+      extra="Search for a location in OpenStreetMap"
+    >
       <Input.Search
         placeholder={`Example: type "${randomCity}”`}
         allowClear
