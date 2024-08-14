@@ -1,5 +1,5 @@
-import { Button, Divider, Form, Input, Select } from 'antd';
-import { OpenDialogButton } from '../../Tools/Parameter';
+import { Button, Divider, Form, Select } from 'antd';
+import { OpenDialogButton, OpenDialogInput } from '../../Tools/Parameter';
 import { PlusOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -103,15 +103,12 @@ const ContextForm = ({
         }
         rules={[{ required: true }]}
       >
-        <OpenDialogButton
+        <OpenDialogInput
           form={form}
           name="terrain"
           type="file"
           filters={[{ name: 'Terrain files', extensions: ['tif', 'tiff'] }]}
-        >
-          <PlusOutlined />
-          Browse for terrain file
-        </OpenDialogButton>
+        />
       </Form.Item>
 
       <Form.Item
@@ -129,15 +126,12 @@ const ContextForm = ({
         }
         rules={[{ required: true }]}
       >
-        <OpenDialogButton
+        <OpenDialogInput
           form={form}
           name="street"
           type="file"
           filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-        >
-          <PlusOutlined />
-          Browse for street file
-        </OpenDialogButton>
+        />
       </Form.Item>
 
       <Form.Item>

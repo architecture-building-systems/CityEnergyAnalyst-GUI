@@ -399,7 +399,7 @@ export const OpenDialogButton = ({
       <Button
         style={{ width: '100%' }}
         onClick={async () => {
-          await openDialog(form, type, filters, id);
+          await openDialog(form, type, filters, name);
         }}
       >
         {children}

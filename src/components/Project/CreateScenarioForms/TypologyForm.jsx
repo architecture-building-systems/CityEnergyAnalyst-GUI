@@ -1,6 +1,5 @@
-import { Button, Form, Input } from 'antd';
-import { OpenDialogButton } from '../../Tools/Parameter';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Form } from 'antd';
+import { OpenDialogInput } from '../../Tools/Parameter';
 
 const TypologyForm = ({ initialValues, onChange, onBack, onFinish }) => {
   const [form] = Form.useForm();
@@ -28,16 +27,13 @@ const TypologyForm = ({ initialValues, onChange, onBack, onFinish }) => {
           </div>
         }
       >
-        <OpenDialogButton
+        <OpenDialogInput
           form={form}
           name="typology"
           type="file"
           filters={[{ name: 'DBF files', extensions: ['dbf'] }]}
           placeholder="Leave empty to auto-generate default"
-        >
-          <PlusOutlined />
-          Browse for typology file
-        </OpenDialogButton>
+        />
       </Form.Item>
 
       <Form.Item>
