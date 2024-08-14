@@ -1,4 +1,4 @@
-import { Col, Divider, Row, Steps } from 'antd';
+import { Col, Divider, List, Row, Steps } from 'antd';
 import EditableMap from '../components/Map/EditableMap';
 import { createContext, useEffect, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
@@ -10,6 +10,7 @@ import TypologyForm from '../components/Project/CreateScenarioForms/TypologyForm
 import ContextForm, {
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/ContextForm';
+import { useSelector } from 'react-redux';
 
 const CreateScenarioForm = ({ setVisible }) => {
   const [current, setCurrent] = useState(0);
@@ -138,6 +139,10 @@ const CreateScenario = () => {
   const [location, setLocation] = useState();
   const [visible, setVisible] = useState(false);
 
+  // TDOD: Get list of scenarios from project
+  const { info } = useSelector((state) => state.project);
+  const scenariosList = info?.scenarios_list || [];
+
   return (
     <Row style={{ height: '100%' }}>
       <Col span={12}>
@@ -151,11 +156,28 @@ const CreateScenario = () => {
           <div
             style={{
               height: '100%',
-              backgroundColor: 'lightgrey',
+              // backgroundColor: 'lightgrey',
+              // opacity: 0.5,
+              border: '1px solid #eee',
               borderRadius: 8,
-              opacity: 0.5,
             }}
-          />
+          >
+            <div style={{ padding: 24 }}>
+              <h2>Scenarios in project</h2>
+              <List
+                dataSource={scenariosList}
+                renderItem={(item) => (
+                  <List.Item>
+                    <div
+                      style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
+                    >
+                      {item}
+                    </div>
+                  </List.Item>
+                )}
+              />
+            </div>
+          </div>
         )}
       </Col>
       <Col span={12}>
