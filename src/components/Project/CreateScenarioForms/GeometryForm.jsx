@@ -333,7 +333,13 @@ const getGeocodeLocation = async (address) => {
   }
 };
 
-const IntegerSliderInput = ({ min = 1, max = 500, ...props }) => {
+const IntegerSliderInput = ({
+  min = 10,
+  max = 500,
+  defaultValue = 50,
+  step = 10,
+  ...props
+}) => {
   // For antd form controls
   const { id, value, onChange } = props;
   const [inputValue, setInputValue] = useState(value);
@@ -351,6 +357,12 @@ const IntegerSliderInput = ({ min = 1, max = 500, ...props }) => {
         <Slider
           min={min}
           max={max}
+          step={step}
+          marks={{
+            [min]: '',
+            [defaultValue]: `${defaultValue}`,
+            [max]: '',
+          }}
           value={inputValue}
           onChange={onInputChange}
         />
@@ -359,6 +371,7 @@ const IntegerSliderInput = ({ min = 1, max = 500, ...props }) => {
         <InputNumber
           min={min}
           max={max}
+          step={step}
           style={{
             margin: '0 16px',
           }}
