@@ -168,7 +168,15 @@ const GenerateGeometryForm = ({
           <Form.Item
             label="Generate zone geometry"
             name="generate_zone"
-            rules={[{ required: true }]}
+            rules={[
+              { required: true },
+              {
+                validator: (_, value) =>
+                  value?.features?.length
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('Geometry is required')),
+              },
+            ]}
             hidden
           />
         </>
@@ -242,17 +250,16 @@ const GenerateZoneGeometryForm = ({ form, name }) => {
   };
 
   useEffect(() => {
-    // Set null if no features
-    let value = null;
-    if (geojson?.features?.length) value = geojson;
+    console.log({ geojson });
 
-    form.setFieldsValue({ [name]: value });
+    form.setFieldsValue({ [name]: geojson });
   }, [geojson]);
 
   return (
     <Form.Item
       label="Generate zone geometry"
       extra="Search for a location using OpenStreetMap"
+      initialValue={geojson}
     >
       <Input.Search
         placeholder={`Example: type "${randomCity}”`}

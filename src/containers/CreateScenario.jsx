@@ -134,7 +134,7 @@ const CreateScenarioForm = ({ setVisible }) => {
 export const MapFormContext = createContext();
 
 const CreateScenario = () => {
-  const [geojson, setGeojson] = useState({});
+  const [geojson, setGeojson] = useState();
   const [location, setLocation] = useState();
   const [visible, setVisible] = useState(false);
 
@@ -142,7 +142,11 @@ const CreateScenario = () => {
     <Row style={{ height: '100%' }}>
       <Col span={12}>
         {(visible && (
-          <EditableMap location={location} setValue={setGeojson} />
+          <EditableMap
+            location={location}
+            geojson={geojson}
+            setValue={setGeojson}
+          />
         )) || (
           <div
             style={{
