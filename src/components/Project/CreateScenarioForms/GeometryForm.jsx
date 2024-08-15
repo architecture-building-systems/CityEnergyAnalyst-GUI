@@ -169,7 +169,7 @@ const GenerateGeometryForm = ({
       onFinishFailed={onFinishFailed}
       layout="vertical"
     >
-      {initialValues?.user_zone === GENERATE_OSM_CEA && (
+      {initialValues?.user_zone === GENERATE_ZONE_CEA && (
         <>
           <div
             style={{
@@ -212,7 +212,7 @@ const GenerateGeometryForm = ({
         </>
       )}
 
-      {initialValues?.user_surroundings === GENERATE_OSM_CEA && (
+      {initialValues?.user_surroundings === GENERATE_SURROUNDINGS_CEA && (
         <Form.Item
           label="Generate surroundings geometry"
           name="generate_surroundings"
@@ -391,8 +391,8 @@ const GeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
   const onUserGeomertyFormFinish = (values) => {
     // Complete geometry form if user geometry is provided
     if (
-      values?.user_zone !== GENERATE_OSM_CEA &&
-      values?.user_surroundings !== GENERATE_OSM_CEA
+      values?.user_zone !== GENERATE_ZONE_CEA &&
+      values?.user_surroundings !== GENERATE_SURROUNDINGS_CEA
     ) {
       onFinish(values);
     } else {
