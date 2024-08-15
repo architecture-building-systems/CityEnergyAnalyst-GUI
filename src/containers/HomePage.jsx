@@ -1,4 +1,4 @@
-import { Suspense, createContext, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import SideNav from '../components/HomePage/SideNav';
 import Header from '../components/HomePage/Header';
@@ -12,8 +12,7 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-
-export const LayoutContext = createContext();
+import { LayoutContext } from '../components/HomePage/hooks';
 
 const ContextProvider = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
