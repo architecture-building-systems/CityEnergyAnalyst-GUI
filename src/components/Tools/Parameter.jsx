@@ -359,7 +359,7 @@ const PathInput = ({ value, onChange, form, name, ...rest }) => {
       <Space.Compact style={{ width: '100%' }}>
         <Input
           {...rest}
-          value={inputValue}
+          value={value || inputValue}
           onChange={onValueChange}
           type="text"
         />
