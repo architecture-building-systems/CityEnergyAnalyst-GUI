@@ -9,7 +9,7 @@ import {
   Col,
   Input,
 } from 'antd';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -255,17 +255,13 @@ const GenerateGeometryForm = ({
 };
 
 const GenerateZoneGeometryForm = ({ form, name, onChange }) => {
+  const randomCity = useRef(
+    EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
+  );
+
   const { geojson, setLocation } = useContext(MapFormContext);
   const [loading, setLoading] = useState(false);
   const [locationAddress, setAddress] = useState(null);
-
-  const [randomCity, setRandomCity] = useState('');
-
-  useEffect(() => {
-    setRandomCity(
-      EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
-    );
-  }, []);
 
   const onSearch = async (searchAddress) => {
     if (searchAddress.trim().length === 0) return;
@@ -305,7 +301,7 @@ const GenerateZoneGeometryForm = ({ form, name, onChange }) => {
       initialValue={geojson}
     >
       <Input.Search
-        placeholder={`Example: type "${randomCity}”`}
+        placeholder={`Example: type "${randomCity.current}”`}
         allowClear
         enterButton="Search"
         loading={loading}
