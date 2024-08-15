@@ -16,7 +16,8 @@ import axios from 'axios';
 
 import { MapFormContext } from '../../../containers/CreateScenario';
 
-const GENERATE_OSM_CEA = 'generate-osm-cea';
+const GENERATE_ZONE_CEA = 'generate-zone-cea';
+const GENERATE_SURROUNDINGS_CEA = 'generate-surroundings-cea';
 const EXAMPLE_CITIES = ['Singapore', 'Zürich'];
 
 const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
@@ -60,11 +61,11 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
           )}
           options={[
             {
-              label: 'CEA Built-in',
+              label: 'CEA Tools',
               options: [
                 {
                   label: 'Generate from OpenStreetMap using CEA',
-                  value: GENERATE_OSM_CEA,
+                  value: GENERATE_ZONE_CEA,
                 },
               ],
             },
@@ -104,11 +105,11 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
           )}
           options={[
             {
-              label: 'CEA Built-in',
+              label: 'CEA Tools',
               options: [
                 {
                   label: 'Generate from OpenStreetMap using CEA',
-                  value: GENERATE_OSM_CEA,
+                  value: GENERATE_SURROUNDINGS_CEA,
                 },
               ],
             },

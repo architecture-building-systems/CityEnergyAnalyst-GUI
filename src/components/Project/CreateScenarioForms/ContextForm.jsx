@@ -4,6 +4,9 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const GENERATE_TERRAIN_CEA = 'generate-terrain-cea';
+const GENERATE_STREET_CEA = 'generate-street-cea';
+
 export const useFetchWeather = () => {
   const [weather, setWeather] = useState([]);
 
@@ -74,7 +77,7 @@ const ContextForm = ({
               label: 'Third-party sources',
               options: [
                 {
-                  label: <span> Fetch from climate.onebuilding.org</span>,
+                  label: 'Fetch from climate.onebuilding.org',
                   value: 'climate.onebuilding.org',
                 },
               ],
@@ -103,11 +106,36 @@ const ContextForm = ({
         }
         rules={[{ required: true }]}
       >
-        <OpenDialogInput
-          form={form}
-          name="terrain"
-          type="file"
-          filters={[{ name: 'Terrain files', extensions: ['tif', 'tiff'] }]}
+        <Select
+          dropdownRender={(menu) => (
+            <div>
+              {menu}
+              <Divider style={{ margin: '4px 0' }} />
+              <OpenDialogButton
+                form={form}
+                name="terrain"
+                type="file"
+                filters={[
+                  { name: 'Terrain files', extensions: ['tif', 'tiff'] },
+                ]}
+                placeholder="or enter path to terrain file"
+              >
+                <PlusOutlined />
+                Browse for terrain file
+              </OpenDialogButton>
+            </div>
+          )}
+          options={[
+            {
+              label: 'CEA Tools',
+              options: [
+                {
+                  label: 'Generate from Tilezen using CEA',
+                  value: GENERATE_TERRAIN_CEA,
+                },
+              ],
+            },
+          ]}
         />
       </Form.Item>
 
@@ -126,11 +154,34 @@ const ContextForm = ({
         }
         rules={[{ required: true }]}
       >
-        <OpenDialogInput
-          form={form}
-          name="street"
-          type="file"
-          filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+        <Select
+          dropdownRender={(menu) => (
+            <div>
+              {menu}
+              <Divider style={{ margin: '4px 0' }} />
+              <OpenDialogButton
+                form={form}
+                name="street"
+                type="file"
+                filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+                placeholder="or enter path to street geometry file"
+              >
+                <PlusOutlined />
+                Browse for street geometry file
+              </OpenDialogButton>
+            </div>
+          )}
+          options={[
+            {
+              label: 'CEA Tools',
+              options: [
+                {
+                  label: 'Generate from OpenStreetMap using CEA',
+                  value: GENERATE_STREET_CEA,
+                },
+              ],
+            },
+          ]}
         />
       </Form.Item>
 
