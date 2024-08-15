@@ -51,6 +51,7 @@ const DatabaseForm = ({
         rules={[{ required: true }]}
       >
         <Select
+          placeholder="Choose an option from the dropdown"
           dropdownRender={(menu) => (
             <div>
               {menu}
@@ -59,7 +60,7 @@ const DatabaseForm = ({
                 form={form}
                 name="database"
                 type="directory"
-                placeholder="or enter path to databases"
+                placeholder="Or enter path to database folder here"
               >
                 <PlusOutlined />
                 Browse for databases path

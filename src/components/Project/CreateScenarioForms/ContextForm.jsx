@@ -56,6 +56,7 @@ const ContextForm = ({
         rules={[{ required: true }]}
       >
         <Select
+          placeholder="Choose an option from the dropdown"
           dropdownRender={(menu) => (
             <div>
               {menu}
@@ -65,7 +66,7 @@ const ContextForm = ({
                 name="weather"
                 type="file"
                 filters={[{ name: 'Weather files', extensions: ['epw'] }]}
-                placeholder="or enter path to weather file"
+                placeholder="Or enter path to weather file here"
               >
                 <PlusOutlined />
                 Browse for weather file
@@ -107,6 +108,7 @@ const ContextForm = ({
         rules={[{ required: true }]}
       >
         <Select
+          placeholder="Choose an option from the dropdown"
           dropdownRender={(menu) => (
             <div>
               {menu}
@@ -118,7 +120,7 @@ const ContextForm = ({
                 filters={[
                   { name: 'Terrain files', extensions: ['tif', 'tiff'] },
                 ]}
-                placeholder="or enter path to terrain file"
+                placeholder="Or enter path to terrain file here"
               >
                 <PlusOutlined />
                 Browse for terrain file
@@ -140,12 +142,12 @@ const ContextForm = ({
       </Form.Item>
 
       <Form.Item
-        label="Street (centre line) geometry"
+        label="Street (centre line) geometries"
         name="street"
         extra={
           <div>
             <div>
-              Link to a path to street centre line geometry in .shp format.
+              Link to a path to street centre line geometries in .shp format.
             </div>
             <div>See an example here.</div>
             <br />
@@ -155,6 +157,7 @@ const ContextForm = ({
         rules={[{ required: true }]}
       >
         <Select
+          placeholder="Choose an option from the dropdown"
           dropdownRender={(menu) => (
             <div>
               {menu}
@@ -164,7 +167,7 @@ const ContextForm = ({
                 name="street"
                 type="file"
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-                placeholder="or enter path to street geometry file"
+                placeholder="Or enter path to street geometry file here"
               >
                 <PlusOutlined />
                 Browse for street geometry file
@@ -178,6 +181,15 @@ const ContextForm = ({
                 {
                   label: 'Generate from OpenStreetMap using CEA',
                   value: GENERATE_STREET_CEA,
+                },
+              ],
+            },
+            {
+              label: 'None',
+              options: [
+                {
+                  label: 'No street geometries',
+                  value: 'none',
                 },
               ],
             },

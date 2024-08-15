@@ -123,7 +123,7 @@ const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
     >
       <div>
         <h2>Create Scenario</h2>
-        <p>Adds a new scenario to the current project.</p>
+        <p>Adds a new Scenario to the current Project.</p>
         <Divider />
       </div>
       <div style={{ flexGrow: 1 }}>{forms[current].content}</div>
@@ -160,17 +160,14 @@ const CreateScenario = () => {
             setValue={setGeojson}
           />
         )) || (
-          <div
-            style={{
-              height: '100%',
-              // backgroundColor: 'lightgrey',
-              // opacity: 0.5,
-              border: '1px solid #eee',
-              borderRadius: 8,
-            }}
-          >
-            <div style={{ padding: 24 }}>
-              <h2>Scenarios in project</h2>
+          <div>
+            <div
+              style={{
+                padding: 24,
+              }}
+            >
+              <h2>Scenarios in current Project</h2>
+              <p>{scenarioNames.length} Scenario found</p>
               <List
                 dataSource={scenarioNames}
                 renderItem={(item) => (

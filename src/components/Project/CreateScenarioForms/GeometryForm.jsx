@@ -40,9 +40,10 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
             <div>See an example here.</div>
           </div>
         }
-        rules={[{ required: true, message: 'This field is required' }]}
+        rules={[{ required: true, message: 'This field is required.' }]}
       >
         <Select
+          placeholder="Choose an option from the dropdown"
           dropdownRender={(menu) => (
             <div>
               {menu}
@@ -52,7 +53,7 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
                 name="user_zone"
                 type="file"
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-                placeholder="or enter path to zone file"
+                placeholder="Or enter path to zone file here"
               >
                 <PlusOutlined />
                 Browse for zone file
@@ -74,7 +75,7 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
       </Form.Item>
 
       <Form.Item
-        label="Other building geometries (surroundings)"
+        label="Building geometries (surroundings)"
         name="user_surroundings"
         extra={
           <div>
@@ -84,9 +85,10 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
             <div>See an example here.</div>
           </div>
         }
-        rules={[{ required: true, message: 'This field is required' }]}
+        rules={[{ required: true, message: 'This field is required.' }]}
       >
         <Select
+          placeholder="Choose an option from the dropdown"
           dropdownRender={(menu) => (
             <div>
               {menu}
@@ -96,7 +98,7 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
                 name="user_surroundings"
                 type="file"
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-                placeholder="or enter path to surroundings file"
+                placeholder="Or enter path to surroundings file here"
               >
                 <PlusOutlined />
                 Browse for surroundings file
@@ -114,15 +116,13 @@ const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
               ],
             },
             {
-              label: (
-                <div>
-                  None{' '}
-                  <i style={{ color: 'rgba(0, 0, 0, 0.5)' }}>
-                    (No surrounding buildings)
-                  </i>
-                </div>
-              ),
-              value: 'none',
+              label: 'None',
+              options: [
+                {
+                  label: 'No surrounding buildings',
+                  value: 'none',
+                },
+              ],
             },
           ]}
         />
@@ -216,7 +216,7 @@ const GenerateGeometryForm = ({
         <Form.Item
           label="Generate surroundings geometry"
           name="generate_surroundings"
-          extra="Buffer in meters around the zone geometry"
+          extra="Set the buffer in meters around the zone buildings."
           rules={[{ required: true }]}
           initialValue={initialValues.generate_surroundings || 50}
         >
@@ -262,7 +262,7 @@ const GenerateZoneGeometryForm = ({ form, name, onChange = () => {} }) => {
     try {
       const data = await getGeocodeLocation(searchAddress);
       if (data === null) {
-        throw new Error('Location not found');
+        throw new Error('Location not found.');
       }
       const { lat, lon, display_name, boundingbox } = data;
       setLocation({
@@ -288,7 +288,7 @@ const GenerateZoneGeometryForm = ({ form, name, onChange = () => {} }) => {
   return (
     <Form.Item
       label="Location"
-      extra="Search for a location using OpenStreetMap"
+      extra="Search for a location using OpenStreetMap."
       initialValue={geojson}
     >
       <Input.Search
