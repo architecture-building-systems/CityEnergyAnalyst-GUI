@@ -1,24 +1,12 @@
 import { Form, Button, Select, Divider } from 'antd';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { PlusOutlined } from '@ant-design/icons';
 
-export const useFetchDatabases = () => {
-  const [databases, setDatabases] = useState([]);
-
-  const fetchDatabases = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/databases/region`,
-    );
-    return data;
-  };
-
-  useEffect(() => {
-    fetchDatabases().then(({ regions }) => setDatabases(regions));
-  }, []);
-
-  return databases;
+const countryMap = {
+  SG: 'Singapore',
+  CH: 'Switzerland',
+  DE: 'Germany',
 };
 
 const DatabaseForm = ({
@@ -27,14 +15,13 @@ const DatabaseForm = ({
   onChange,
   onBack,
   onFinish,
+  onMount,
 }) => {
   const [form] = Form.useForm();
 
-  const countryMap = {
-    SG: 'Singapore',
-    CH: 'Switzerland',
-    DE: 'Germany',
-  };
+  useEffect(() => {
+    onMount?.();
+  }, []);
 
   return (
     <Form

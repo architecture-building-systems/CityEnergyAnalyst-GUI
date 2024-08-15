@@ -1,19 +1,20 @@
 import { Col, Divider, List, Row, Steps } from 'antd';
-import { createContext, lazy, useEffect, useState } from 'react';
+import { lazy, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
-import DatabaseForm, {
-  useFetchDatabases,
-} from '../components/Project/CreateScenarioForms/DatabaseForm';
+import DatabaseForm from '../components/Project/CreateScenarioForms/DatabaseForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import TypologyForm from '../components/Project/CreateScenarioForms/TypologyForm';
-import ContextForm, {
-  useFetchWeather,
-} from '../components/Project/CreateScenarioForms/ContextForm';
+import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
 import { useSelector } from 'react-redux';
+import {
+  MapFormContext,
+  useFetchDatabases,
+  useFetchWeather,
+} from '../components/Project/CreateScenarioForms/hooks';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
-const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
+const CreateScenarioForm = ({ setSecondary }) => {
   const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
@@ -41,18 +42,16 @@ const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
   const forms = [
     {
       description: 'Name',
-      showMap: false,
       content: (
         <NameForm
           initialValues={data}
-          scenarioNames={scenarioNames}
           onFinish={onFinish}
+          onMount={() => setSecondary('scenarioList')}
         />
       ),
     },
     {
       description: 'Database',
-      showMap: false,
       content: (
         <DatabaseForm
           databases={databases}
@@ -60,36 +59,36 @@ const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
           onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
+          onMount={() => setSecondary()}
         />
       ),
     },
     {
       description: 'Geometries',
-      showMap: true,
       content: (
         <GeometryForm
           initialValues={data}
           onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
+          setSecondary={setSecondary}
         />
       ),
     },
     {
       description: 'Typology',
-      showMap: true,
       content: (
         <TypologyForm
           initialValues={data}
           onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
+          onMount={() => setSecondary()}
         />
       ),
     },
     {
       description: 'Context',
-      showMap: true,
       content: (
         <ContextForm
           weather={weather}
@@ -97,14 +96,11 @@ const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
           onChange={onChange}
           onBack={onBack}
           onFinish={onFinish}
+          onMount={() => setSecondary()}
         />
       ),
     },
   ];
-
-  useEffect(() => {
-    setVisible(forms[current].showMap);
-  }, [current]);
 
   return (
     <div
@@ -139,57 +135,69 @@ const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
   );
 };
 
-export const MapFormContext = createContext();
-
-const CreateScenario = () => {
-  const [geojson, setGeojson] = useState();
-  const [location, setLocation] = useState();
-  const [visible, setVisible] = useState(false);
-
+const ScenarioList = () => {
   // TDOD: Get list of scenarios from project
   const { info } = useSelector((state) => state.project);
   const scenarioNames = info?.scenarios_list || [];
 
   return (
+    <div>
+      <div
+        style={{
+          padding: 24,
+        }}
+      >
+        <h2>Scenarios in current Project</h2>
+        <p>{scenarioNames.length} Scenario found</p>
+        <List
+          dataSource={scenarioNames}
+          renderItem={(item) => (
+            <List.Item>
+              <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                {item}
+              </div>
+            </List.Item>
+          )}
+        />
+      </div>
+    </div>
+  );
+};
+
+export const useSecondaryCards = (name) => {
+  const { names, setSecondary } = useContext(SecondaryContext);
+
+  useEffect(() => {
+    if (name !== undefined && !names.includes(name))
+      console.warn(`Secondary card "${name}" not found.`);
+    setSecondary(name);
+  });
+
+  return setSecondary;
+};
+
+const CreateScenario = () => {
+  const [secondaryName, setSecondary] = useState('');
+  const [geojson, setGeojson] = useState();
+  const [location, setLocation] = useState();
+
+  const secondaryCards = {
+    scenarioList: <ScenarioList />,
+    map: (
+      <EditableMap
+        location={location}
+        geojson={geojson}
+        setValue={setGeojson}
+      />
+    ),
+  };
+
+  return (
     <Row style={{ height: '100%' }}>
+      <Col span={12}>{secondaryCards?.[secondaryName]}</Col>
       <Col span={12}>
-        {(visible && (
-          <EditableMap
-            location={location}
-            geojson={geojson}
-            setValue={setGeojson}
-          />
-        )) || (
-          <div>
-            <div
-              style={{
-                padding: 24,
-              }}
-            >
-              <h2>Scenarios in current Project</h2>
-              <p>{scenarioNames.length} Scenario found</p>
-              <List
-                dataSource={scenarioNames}
-                renderItem={(item) => (
-                  <List.Item>
-                    <div
-                      style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-                    >
-                      {item}
-                    </div>
-                  </List.Item>
-                )}
-              />
-            </div>
-          </div>
-        )}
-      </Col>
-      <Col span={12}>
-        <MapFormContext.Provider value={{ geojson, setLocation, setVisible }}>
-          <CreateScenarioForm
-            setVisible={setVisible}
-            scenarioNames={scenarioNames}
-          />
+        <MapFormContext.Provider value={{ geojson, setLocation }}>
+          <CreateScenarioForm setSecondary={setSecondary} />
         </MapFormContext.Provider>
       </Col>
     </Row>

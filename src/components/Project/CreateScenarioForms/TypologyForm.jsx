@@ -1,8 +1,19 @@
 import { Button, Form } from 'antd';
 import { OpenDialogInput } from '../../Tools/Parameter';
+import { useEffect } from 'react';
 
-const TypologyForm = ({ initialValues, onChange, onBack, onFinish }) => {
+const TypologyForm = ({
+  initialValues,
+  onChange,
+  onBack,
+  onFinish,
+  onMount,
+}) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    onMount?.();
+  }, []);
 
   return (
     <Form

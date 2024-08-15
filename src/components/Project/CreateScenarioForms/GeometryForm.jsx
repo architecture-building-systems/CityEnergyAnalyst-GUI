@@ -13,15 +13,24 @@ import { useContext, useEffect, useState } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
-
-import { MapFormContext } from '../../../containers/CreateScenario';
+import { MapFormContext } from './hooks';
 
 const GENERATE_ZONE_CEA = 'generate-zone-cea';
 const GENERATE_SURROUNDINGS_CEA = 'generate-surroundings-cea';
 const EXAMPLE_CITIES = ['Singapore', 'Zürich'];
 
-const UserGeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
+const UserGeometryForm = ({
+  initialValues,
+  onChange,
+  onBack,
+  onFinish,
+  setSecondary,
+}) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    setSecondary();
+  }, []);
 
   return (
     <Form
@@ -151,14 +160,18 @@ const GenerateGeometryForm = ({
   onChange,
   onBack,
   onFinish,
+  setSecondary,
 }) => {
   const [form] = Form.useForm();
-
   const [error, setError] = useState(null);
 
   const onFinishFailed = ({ errorFields }) => {
     setError(errorFields.find((error) => error.name.includes('generate_zone')));
   };
+
+  useEffect(() => {
+    if (initialValues?.user_zone === GENERATE_ZONE_CEA) setSecondary('map');
+  }, []);
 
   return (
     <Form
@@ -241,7 +254,7 @@ const GenerateGeometryForm = ({
   );
 };
 
-const GenerateZoneGeometryForm = ({ form, name, onChange = () => {} }) => {
+const GenerateZoneGeometryForm = ({ form, name, onChange }) => {
   const { geojson, setLocation } = useContext(MapFormContext);
   const [loading, setLoading] = useState(false);
   const [locationAddress, setAddress] = useState(null);
@@ -384,7 +397,13 @@ const IntegerSliderInput = ({
   );
 };
 
-const GeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
+const GeometryForm = ({
+  initialValues,
+  onChange,
+  onBack,
+  onFinish,
+  setSecondary,
+}) => {
   const [current, setCurrent] = useState(0);
   const [formData, setFormData] = useState(initialValues);
 
@@ -423,12 +442,14 @@ const GeometryForm = ({ initialValues, onChange, onBack, onFinish }) => {
       onChange={onGeometryFormChange}
       onBack={onBack}
       onFinish={onUserGeomertyFormFinish}
+      setSecondary={setSecondary}
     />,
     <GenerateGeometryForm
       initialValues={formData}
       onChange={onGeometryFormChange}
       onBack={onGeometryFormBack}
       onFinish={onGenerateGeometryFormFinish}
+      setSecondary={setSecondary}
     />,
   ];
 

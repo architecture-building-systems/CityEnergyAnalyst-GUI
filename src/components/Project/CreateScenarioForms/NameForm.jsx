@@ -1,7 +1,7 @@
 import { Form, Input, Button } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-const NameForm = ({ initialValues, scenarioNames, onFinish }) => {
+const NameForm = ({ initialValues, onFinish, onMount }) => {
   const [value, setValue] = useState(initialValues.name);
 
   const onNameChange = (e) => {
@@ -13,12 +13,16 @@ const NameForm = ({ initialValues, scenarioNames, onFinish }) => {
     }
   };
 
-  const validateScenarioName = (_, value) => {
-    if (scenarioNames.includes(value)) {
-      return Promise.reject('Scenario name already exists.');
-    }
-    return Promise.resolve();
-  };
+  useEffect(() => {
+    onMount?.();
+  }, []);
+
+  // const validateScenarioName = (_, value) => {
+  //   if (scenarioNames.includes(value)) {
+  //     return Promise.reject('Scenario name already exists.');
+  //   }
+  //   return Promise.resolve();
+  // };
 
   return (
     <Form initialValues={initialValues} onFinish={onFinish} layout="vertical">
@@ -26,10 +30,7 @@ const NameForm = ({ initialValues, scenarioNames, onFinish }) => {
         label="Scenario Name"
         name="scenario_name"
         extra="Name must be unique and contain no spaces."
-        rules={[
-          { required: true, message: 'Scenario name cannot be empty.' },
-          { validator: validateScenarioName },
-        ]}
+        rules={[{ required: true, message: 'Scenario name cannot be empty.' }]}
       >
         <Input
           placeholder="Example: new_scenario_name"

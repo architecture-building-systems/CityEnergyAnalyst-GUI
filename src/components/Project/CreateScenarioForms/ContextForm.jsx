@@ -1,28 +1,10 @@
 import { Button, Divider, Form, Select } from 'antd';
-import { OpenDialogButton, OpenDialogInput } from '../../Tools/Parameter';
+import { OpenDialogButton } from '../../Tools/Parameter';
 import { PlusOutlined } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect } from 'react';
 
 const GENERATE_TERRAIN_CEA = 'generate-terrain-cea';
 const GENERATE_STREET_CEA = 'generate-street-cea';
-
-export const useFetchWeather = () => {
-  const [weather, setWeather] = useState([]);
-
-  const fetchWeather = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/weather`,
-    );
-    return data;
-  };
-
-  useEffect(() => {
-    fetchWeather().then(({ weather }) => setWeather(weather));
-  }, []);
-
-  return weather;
-};
 
 const ContextForm = ({
   weather,
@@ -30,8 +12,13 @@ const ContextForm = ({
   onChange,
   onBack,
   onFinish,
+  onMount,
 }) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    onMount?.();
+  }, []);
 
   return (
     <Form
