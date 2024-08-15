@@ -1,6 +1,5 @@
 import { Col, Divider, List, Row, Steps } from 'antd';
-import EditableMap from '../components/Map/EditableMap';
-import { createContext, useEffect, useState } from 'react';
+import { createContext, lazy, useEffect, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import DatabaseForm, {
   useFetchDatabases,
@@ -11,6 +10,8 @@ import ContextForm, {
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/ContextForm';
 import { useSelector } from 'react-redux';
+
+const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
 const CreateScenarioForm = ({ setVisible, scenarioNames }) => {
   const [current, setCurrent] = useState(0);

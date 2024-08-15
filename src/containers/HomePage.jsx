@@ -11,7 +11,6 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
-import CreateScenario from './CreateScenario';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 export const LayoutContext = createContext();
@@ -26,6 +25,7 @@ const ContextProvider = ({ children }) => {
 };
 
 const Project = lazy(() => import('../components/Project/Project'));
+const CreateScenario = lazy(() => import('./CreateScenario'));
 const InputEditor = lazy(() => import('../components/InputEditor/InputEditor'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
