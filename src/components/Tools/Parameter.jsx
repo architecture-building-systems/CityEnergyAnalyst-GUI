@@ -399,6 +399,7 @@ export const OpenDialogButton = ({
   filters = [],
   id,
   children,
+  buttonType = 'default',
   ...rest
 }) => {
   if (!isElectron()) {
@@ -406,6 +407,7 @@ export const OpenDialogButton = ({
   } else {
     return (
       <Button
+        type={buttonType}
         style={{ width: '100%' }}
         onClick={async () => {
           await openDialog(form, type, filters, name);

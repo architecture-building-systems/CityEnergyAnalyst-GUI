@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
-import { PlusOutlined } from '@ant-design/icons';
+import { FileSearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { MapFormContext } from './hooks';
 
@@ -64,7 +64,7 @@ const UserGeometryForm = ({
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
                 placeholder="Or enter path to zone file here"
               >
-                <PlusOutlined />
+                <FileSearchOutlined />
                 Browse for zone file
               </OpenDialogButton>
             </div>
@@ -109,7 +109,7 @@ const UserGeometryForm = ({
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
                 placeholder="Or enter path to surroundings file here"
               >
-                <PlusOutlined />
+                <FileSearchOutlined />
                 Browse for surroundings file
               </OpenDialogButton>
             </div>

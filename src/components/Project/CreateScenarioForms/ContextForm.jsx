@@ -1,6 +1,6 @@
 import { Button, Divider, Form, Select } from 'antd';
 import { OpenDialogButton } from '../../Tools/Parameter';
-import { PlusOutlined } from '@ant-design/icons';
+import { FileSearchOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 
 const GENERATE_TERRAIN_CEA = 'generate-terrain-cea';
@@ -55,7 +55,7 @@ const ContextForm = ({
                 filters={[{ name: 'Weather files', extensions: ['epw'] }]}
                 placeholder="Or enter path to weather file here"
               >
-                <PlusOutlined />
+                <FileSearchOutlined />
                 Browse for weather file
               </OpenDialogButton>
             </div>
@@ -109,7 +109,7 @@ const ContextForm = ({
                 ]}
                 placeholder="Or enter path to terrain file here"
               >
-                <PlusOutlined />
+                <FileSearchOutlined />
                 Browse for terrain file
               </OpenDialogButton>
             </div>
@@ -156,7 +156,7 @@ const ContextForm = ({
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
                 placeholder="Or enter path to street geometry file here"
               >
-                <PlusOutlined />
+                <FileSearchOutlined />
                 Browse for street geometry file
               </OpenDialogButton>
             </div>

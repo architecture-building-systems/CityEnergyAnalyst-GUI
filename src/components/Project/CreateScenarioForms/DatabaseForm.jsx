@@ -1,7 +1,7 @@
 import { Form, Button, Select, Divider } from 'antd';
 import { useEffect } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
-import { PlusOutlined } from '@ant-design/icons';
+import { FileSearchOutlined } from '@ant-design/icons';
 
 const countryMap = {
   SG: 'Singapore',
@@ -49,7 +49,7 @@ const DatabaseForm = ({
                 type="directory"
                 placeholder="Or enter path to database folder here"
               >
-                <PlusOutlined />
+                <FileSearchOutlined />
                 Browse for databases path
               </OpenDialogButton>
             </div>
