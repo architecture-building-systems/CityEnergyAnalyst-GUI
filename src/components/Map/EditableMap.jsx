@@ -11,7 +11,8 @@ import {
 import { Button } from 'antd';
 import './EditableMap.css';
 import { DeckGL } from '@deck.gl/react';
-import { calcPolyArea } from './utils';
+import axios from 'axios';
+import { GeoJsonLayer } from 'deck.gl';
 
 const defaultViewState = {
   longitude: 0,
@@ -24,6 +25,45 @@ const defaultViewState = {
 const EMPTY_FEATURE = {
   type: 'FeatureCollection',
   features: [],
+};
+
+const useFetchBuildings = (polygon, mode) => {
+  const [buildings, setBuildings] = useState(EMPTY_FEATURE);
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState();
+
+  const fetchBuildings = async (polygon) => {
+    setError(null);
+    setFetching(true);
+    try {
+      const resp = await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
+        {
+          params: {
+            generate: true,
+            polygon: JSON.stringify(polygon),
+          },
+        },
+      );
+      setBuildings(resp.data);
+    } catch (error) {
+      console.log(error);
+
+      setError(error);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (polygon && polygon?.features?.length) {
+      mode == null && fetchBuildings(polygon);
+    } else {
+      setBuildings(EMPTY_FEATURE);
+    }
+  }, [polygon, mode]);
+
+  return { buildings, fetching, error };
 };
 
 const EditableMap = ({
@@ -39,6 +79,8 @@ const EditableMap = ({
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(polygon || EMPTY_FEATURE);
 
+  const { buildings, fetching, error } = useFetchBuildings(data, mode);
+
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
   const hasData = data.features.length > 0;
 
@@ -52,8 +94,8 @@ const EditableMap = ({
     onPolygonChange?.(data);
   }, []);
 
-  const layer = new EditableGeoJsonLayer({
-    id: 'geojson-layer',
+  const editableLayer = new EditableGeoJsonLayer({
+    id: 'editable-layer',
     data: data,
     mode:
       mode === 'draw'
@@ -73,6 +115,14 @@ const EditableMap = ({
         triggerDataChange(e.updatedData);
       }
     },
+  });
+
+  const buildingsLayer = new GeoJsonLayer({
+    id: 'buildings-layer',
+    data: buildings,
+    getFillColor: [255, 255, 255],
+    getLineColor: [0, 0, 0],
+    getLineWidth: 1,
   });
 
   const ToggleDraw = () => {
@@ -102,15 +152,33 @@ const EditableMap = ({
     else setSelectedFeatureIndexes([]);
   }, [mode]);
 
-  useEffect(() => {
-    onPolygonChange?.(data);
-  }, [data]);
-
   return (
     <>
       {hasData && (
         <div id="edit-map-area-info">
-          {`Area size: ${calcPolyArea(data)} km2`}
+          {fetching ? (
+            <b>Fetching buildings...</b>
+          ) : error ? (
+            <b>Error fetching buildings</b>
+          ) : (
+            <div
+              style={{
+                maxWidth: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div>
+                <b>Buildings found: {buildings.features.length}</b>
+              </div>
+              <small>
+                <i>
+                  The number of buildings may be different after postprocessing.
+                </i>
+              </small>
+            </div>
+          )}
         </div>
       )}
 
@@ -141,7 +209,7 @@ const EditableMap = ({
         <DeckGL
           viewState={viewState || _viewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
-          layers={[layer]}
+          layers={[editableLayer, buildingsLayer]}
           onViewStateChange={triggerViewStateChange}
         >
           <Map mapStyle={positron} onLoad={onMapLoad} />
