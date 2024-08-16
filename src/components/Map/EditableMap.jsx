@@ -146,7 +146,6 @@ const EditableMap = ({
 
       <div onContextMenu={(e) => e.preventDefault()}>
         <DeckGL
-          initialViewState={viewState}
           viewState={viewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
           layers={[layer]}
