@@ -1,5 +1,5 @@
 import { Col, Divider, List, Row, Steps } from 'antd';
-import { lazy, useState } from 'react';
+import { lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import DatabaseForm from '../components/Project/CreateScenarioForms/DatabaseForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
@@ -14,7 +14,7 @@ import {
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
-const CreateScenarioForm = ({ setSecondary }) => {
+const CreateScenarioForm = memo(({ setSecondary }) => {
   const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
@@ -133,7 +133,7 @@ const CreateScenarioForm = ({ setSecondary }) => {
       </div>
     </div>
   );
-};
+});
 
 const ScenarioList = () => {
   // TDOD: Get list of scenarios from project
@@ -165,17 +165,49 @@ const ScenarioList = () => {
 };
 
 const CreateScenario = () => {
+  const mapRef = useRef();
+  const [viewState, setViewState] = useState();
   const [secondaryName, setSecondary] = useState('');
   const [geojson, setGeojson] = useState();
   const [location, setLocation] = useState();
+
+  const onMapLoad = useCallback((e) => {
+    const mapbox = e.target;
+
+    // Store the map instance in the ref
+    mapRef.current = mapbox;
+  }, []);
+
+  // Use mapbox to determine zoom level based on bbox
+  useEffect(() => {
+    if (location?.bbox && mapRef.current) {
+      const mapbox = mapRef.current;
+      const { zoom } = mapbox.cameraForBounds(location.bbox, {
+        maxZoom: 18,
+      });
+      setViewState({
+        ...viewState,
+        zoom: zoom,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
+
+      // Trigger a refresh so that map is zoomed correctly
+      mapbox.zoomTo(mapbox.getZoom());
+    } else {
+      setViewState(viewState);
+    }
+  }, [location]);
 
   const secondaryCards = {
     scenarioList: <ScenarioList />,
     map: (
       <EditableMap
-        location={location}
-        geojson={geojson}
-        setValue={setGeojson}
+        viewState={viewState}
+        onViewStateChange={setViewState}
+        polygon={geojson}
+        onPolygonChange={setGeojson}
+        onMapLoad={onMapLoad}
       />
     ),
   };
