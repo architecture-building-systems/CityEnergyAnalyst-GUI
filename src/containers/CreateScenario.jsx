@@ -164,18 +164,6 @@ const ScenarioList = () => {
   );
 };
 
-export const useSecondaryCards = (name) => {
-  const { names, setSecondary } = useContext(SecondaryContext);
-
-  useEffect(() => {
-    if (name !== undefined && !names.includes(name))
-      console.warn(`Secondary card "${name}" not found.`);
-    setSecondary(name);
-  });
-
-  return setSecondary;
-};
-
 const CreateScenario = () => {
   const [secondaryName, setSecondary] = useState('');
   const [geojson, setGeojson] = useState();
