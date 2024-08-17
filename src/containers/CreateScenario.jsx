@@ -136,7 +136,6 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
 });
 
 const ScenarioList = () => {
-  // TDOD: Get list of scenarios from project
   const { info } = useSelector((state) => state.project);
   const scenarioNames = info?.scenarios_list || [];
 
