@@ -466,6 +466,7 @@ const GeometryForm = ({
 
   const forms = [
     <UserGeometryForm
+      key="user-geometry"
       initialValues={formData}
       onChange={onGeometryFormChange}
       onBack={onBack}
@@ -473,6 +474,7 @@ const GeometryForm = ({
       setSecondary={setSecondary}
     />,
     <GenerateGeometryForm
+      key="generate-geometry"
       initialValues={formData}
       onChange={onGeometryFormChange}
       onBack={onGeometryFormBack}
