@@ -14,11 +14,12 @@ import { OpenDialogButton } from '../../Tools/Parameter';
 import { FileSearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { MapFormContext } from './hooks';
-
-const GENERATE_ZONE_CEA = 'generate-zone-cea';
-const GENERATE_SURROUNDINGS_CEA = 'generate-surroundings-cea';
-const EMTPY_GEOMETRY = 'none';
-const EXAMPLE_CITIES = ['Singapore', 'Zürich'];
+import {
+  GENERATE_ZONE_CEA,
+  GENERATE_SURROUNDINGS_CEA,
+  EMTPY_GEOMETRY,
+  EXAMPLE_CITIES,
+} from './constants';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -222,12 +223,20 @@ const GenerateGeometryForm = ({
               marginBottom: 24,
               display: 'flex',
               flexDirection: 'column',
-              gap: 8,
+              gap: 16,
             }}
           >
             <div>
               Search for a location below and select an area with buildings by
               drawing a polygon on the map.
+            </div>
+            <div>
+              <i>
+                Building typology information would also be generated based on
+                OpenStreetMap.
+                <br />
+                (Step 4 will be skipped)
+              </i>
             </div>
             {error && <div style={{ color: 'red' }}>{error.errors[0]}</div>}
           </div>
@@ -436,6 +445,8 @@ const GeometryForm = ({
   const [formData, setFormData] = useState(initialValues);
 
   const onUserGeomertyFormFinish = (values) => {
+    setFormData((prev) => ({ ...prev, ...values }));
+
     // Complete geometry form if user geometry is provided
     if (
       values?.user_zone !== GENERATE_ZONE_CEA &&
@@ -458,7 +469,7 @@ const GeometryForm = ({
 
   const onGeometryFormChange = (values) => {
     // Update geometry form data
-    setFormData({ ...formData, ...values });
+    setFormData((prev) => ({ ...prev, ...values }));
 
     // Update parent form data
     onChange(values);

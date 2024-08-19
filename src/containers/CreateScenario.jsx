@@ -11,6 +11,7 @@ import {
   useFetchDatabases,
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/hooks';
+import { GENERATE_ZONE_CEA } from '../components/Project/CreateScenarioForms/constants';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -36,6 +37,26 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
       const allFormData = { ...data, ...values };
       setData(allFormData);
       console.log(allFormData);
+    }
+  };
+
+  const onGeometryFinish = (values) => {
+    setData({ ...data, ...values });
+
+    // Skip typology if user geometry is generated
+    if (data?.user_zone === GENERATE_ZONE_CEA) {
+      setCurrent(current + 2);
+    } else {
+      setCurrent(current + 1);
+    }
+  };
+
+  const onContextBack = () => {
+    // Skip typology if user geometry is generated
+    if (data?.user_zone === GENERATE_ZONE_CEA) {
+      setCurrent(current - 2);
+    } else {
+      setCurrent(current - 1);
     }
   };
 
@@ -70,7 +91,7 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
           initialValues={data}
           onChange={onChange}
           onBack={onBack}
-          onFinish={onFinish}
+          onFinish={onGeometryFinish}
           setSecondary={setSecondary}
         />
       ),
@@ -94,7 +115,7 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
           weather={weather}
           initialValues={data}
           onChange={onChange}
-          onBack={onBack}
+          onBack={onContextBack}
           onFinish={onFinish}
           onMount={() => setSecondary()}
         />
