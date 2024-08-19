@@ -2,11 +2,33 @@ import { Form, Button, Select, Divider } from 'antd';
 import { useEffect } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { FileSearchOutlined } from '@ant-design/icons';
+import axios from 'axios';
 
 const countryMap = {
   SG: 'Singapore',
   CH: 'Switzerland',
   DE: 'Germany',
+};
+
+const validateDatabase = async (value, databases) => {
+  // Do not need to validate CEA databases
+  if (databases.includes(value)) return Promise.resolve();
+
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/validate`,
+      {
+        type: 'path',
+        path: value,
+      },
+    );
+    console.log(response);
+    return Promise.resolve();
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.detail || 'Unable to validate database.';
+    return Promise.reject(`${errorMessage}`);
+  }
 };
 
 const DatabaseForm = ({
@@ -35,7 +57,10 @@ const DatabaseForm = ({
         label="Database"
         name="database"
         extra="Select a Database from CEA or link to your own."
-        rules={[{ required: true }]}
+        rules={[
+          { required: true },
+          { validator: (_, value) => validateDatabase(value, databases) },
+        ]}
       >
         <Select
           placeholder="Choose an option from the dropdown"

@@ -397,7 +397,6 @@ export const OpenDialogButton = ({
   name,
   type,
   filters = [],
-  id,
   children,
   buttonType = 'default',
   ...rest
@@ -411,6 +410,7 @@ export const OpenDialogButton = ({
         style={{ width: '100%' }}
         onClick={async () => {
           await openDialog(form, type, filters, name);
+          form.validateFields([name]);
         }}
       >
         {children}
