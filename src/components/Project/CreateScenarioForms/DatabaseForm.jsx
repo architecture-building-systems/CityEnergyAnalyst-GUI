@@ -16,7 +16,7 @@ const validateDatabase = async (value, databases) => {
 
   try {
     const response = await axios.post(
-      `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/validate`,
+      `${import.meta.env.VITE_CEA_URL}/api/databases/validate`,
       {
         type: 'path',
         path: value,
