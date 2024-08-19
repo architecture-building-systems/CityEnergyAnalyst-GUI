@@ -2,9 +2,11 @@ import { Button, Divider, Form, Select } from 'antd';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { FileSearchOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
-
-const GENERATE_TERRAIN_CEA = 'generate-terrain-cea';
-const GENERATE_STREET_CEA = 'generate-street-cea';
+import {
+  EMTPY_GEOMETRY,
+  GENERATE_STREET_CEA,
+  GENERATE_TERRAIN_CEA,
+} from './constants';
 
 const ContextForm = ({
   weather,
@@ -176,7 +178,7 @@ const ContextForm = ({
               options: [
                 {
                   label: 'No street geometries',
-                  value: 'none',
+                  value: EMTPY_GEOMETRY,
                 },
               ],
             },
