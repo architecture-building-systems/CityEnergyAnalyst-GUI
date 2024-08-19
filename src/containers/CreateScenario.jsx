@@ -22,7 +22,7 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
   const weather = useFetchWeather();
 
   const onChange = (values) => {
-    setData({ ...data, ...values });
+    setData((prev) => ({ ...prev, ...values }));
   };
 
   const onBack = () => {
@@ -31,17 +31,19 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
 
   const onFinish = (values) => {
     if (current < forms.length - 1) {
-      setData({ ...data, ...values });
+      setData((prev) => ({ ...prev, ...values }));
       setCurrent(current + 1);
     } else {
-      const allFormData = { ...data, ...values };
-      setData(allFormData);
-      console.log(allFormData);
+      setData((prev) => {
+        const allFormData = { ...prev, ...values };
+        console.log(allFormData);
+        return allFormData;
+      });
     }
   };
 
   const onGeometryFinish = (values) => {
-    setData({ ...data, ...values });
+    setData((prev) => ({ ...prev, ...values }));
 
     // Skip typology if user geometry is generated
     if (values?.user_zone === GENERATE_ZONE_CEA) {
