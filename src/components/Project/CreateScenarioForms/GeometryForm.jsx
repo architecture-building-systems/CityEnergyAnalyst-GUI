@@ -17,7 +17,34 @@ import { MapFormContext } from './hooks';
 
 const GENERATE_ZONE_CEA = 'generate-zone-cea';
 const GENERATE_SURROUNDINGS_CEA = 'generate-surroundings-cea';
+const EMTPY_GEOMETRY = 'none';
 const EXAMPLE_CITIES = ['Singapore', 'Zürich'];
+
+const validateGeometry = async (value, buildingType) => {
+  if (
+    [GENERATE_ZONE_CEA, GENERATE_SURROUNDINGS_CEA, EMTPY_GEOMETRY].includes(
+      value,
+    )
+  )
+    return Promise.resolve();
+
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings/validate`,
+      {
+        type: 'path',
+        building: buildingType,
+        path: value,
+      },
+    );
+    console.log(response);
+    return Promise.resolve();
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.detail || 'Unable to validate geometries.';
+    return Promise.reject(`${errorMessage}`);
+  }
+};
 
 const UserGeometryForm = ({
   initialValues,
@@ -49,7 +76,10 @@ const UserGeometryForm = ({
             <div>See an example here.</div>
           </div>
         }
-        rules={[{ required: true, message: 'This field is required.' }]}
+        rules={[
+          { required: true, message: 'This field is required.' },
+          { validator: (_, value) => validateGeometry(value, 'zone') },
+        ]}
       >
         <Select
           placeholder="Choose an option from the dropdown"
@@ -94,7 +124,10 @@ const UserGeometryForm = ({
             <div>See an example here.</div>
           </div>
         }
-        rules={[{ required: true, message: 'This field is required.' }]}
+        rules={[
+          { required: true, message: 'This field is required.' },
+          { validator: (_, value) => validateGeometry(value, 'surroundings') },
+        ]}
       >
         <Select
           placeholder="Choose an option from the dropdown"
@@ -129,7 +162,7 @@ const UserGeometryForm = ({
               options: [
                 {
                   label: 'No surrounding buildings',
-                  value: 'none',
+                  value: EMTPY_GEOMETRY,
                 },
               ],
             },
@@ -208,7 +241,6 @@ const GenerateGeometryForm = ({
           <Form.Item
             name="generate_zone"
             rules={[
-              { required: true },
               {
                 validator: (_, value) =>
                   value?.features?.length

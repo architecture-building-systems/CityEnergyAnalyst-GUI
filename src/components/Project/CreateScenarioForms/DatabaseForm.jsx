@@ -58,7 +58,7 @@ const DatabaseForm = ({
         name="database"
         extra="Select a Database from CEA or link to your own."
         rules={[
-          { required: true },
+          { required: true, message: 'Please select a database.' },
           { validator: (_, value) => validateDatabase(value, databases) },
         ]}
       >
