@@ -44,7 +44,7 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
     setData({ ...data, ...values });
 
     // Skip typology if user geometry is generated
-    if (data?.user_zone === GENERATE_ZONE_CEA) {
+    if (values?.user_zone === GENERATE_ZONE_CEA) {
       setCurrent(current + 2);
     } else {
       setCurrent(current + 1);
