@@ -34,6 +34,7 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
   const [error, setError] = useState();
 
   const createScenario = async (data) => {
+    console.log(data);
     setError(null);
     setFetching(true);
     try {
@@ -116,7 +117,7 @@ const CreateScenarioProgressModal = ({
   );
 };
 
-const CreateScenarioForm = memo(({ setSecondary }) => {
+const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
   const {
     info: { project },
   } = useSelector((state) => state.project);
