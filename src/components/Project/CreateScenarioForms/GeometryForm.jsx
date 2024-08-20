@@ -271,10 +271,10 @@ const GenerateGeometryForm = ({
           label="Generate surroundings geometry"
           name="generate_surroundings"
           extra="Set the buffer in meters around the zone buildings."
-          rules={[{ required: true }]}
+          rules={[{ required: true, message: 'This field is required.' }]}
           initialValue={initialValues.generate_surroundings || 50}
         >
-          <IntegerSliderInput />
+          <InputNumber min={1} />
         </Form.Item>
       )}
       <Form.Item>
@@ -382,56 +382,6 @@ const getGeocodeLocation = async (address) => {
     console.error(err);
     return null;
   }
-};
-
-const IntegerSliderInput = ({
-  min = 10,
-  max = 500,
-  defaultValue = 50,
-  step = 10,
-  ...props
-}) => {
-  // For antd form controls
-  const { id, value, onChange } = props;
-  const [inputValue, setInputValue] = useState(value);
-
-  const onInputChange = (newValue) => {
-    setInputValue(newValue);
-
-    // Trigger antd form change event
-    onChange?.(newValue);
-  };
-
-  return (
-    <Row id={id}>
-      <Col span={12}>
-        <Slider
-          min={min}
-          max={max}
-          step={step}
-          marks={{
-            [min]: '',
-            [defaultValue]: `${defaultValue}`,
-            [max]: '',
-          }}
-          value={inputValue}
-          onChange={onInputChange}
-        />
-      </Col>
-      <Col span={4}>
-        <InputNumber
-          min={min}
-          max={max}
-          step={step}
-          style={{
-            margin: '0 16px',
-          }}
-          value={inputValue}
-          onChange={onInputChange}
-        />
-      </Col>
-    </Row>
-  );
 };
 
 const GeometryForm = ({
