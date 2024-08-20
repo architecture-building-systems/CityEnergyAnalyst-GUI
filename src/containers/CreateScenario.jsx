@@ -1,4 +1,14 @@
-import { Col, Divider, List, Row, Steps } from 'antd';
+import {
+  Button,
+  Col,
+  Divider,
+  List,
+  Modal,
+  Result,
+  Row,
+  Spin,
+  Steps,
+} from 'antd';
 import { lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import DatabaseForm from '../components/Project/CreateScenarioForms/DatabaseForm';
@@ -12,10 +22,116 @@ import {
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/hooks';
 import { GENERATE_ZONE_CEA } from '../components/Project/CreateScenarioForms/constants';
+import axios from 'axios';
+import { LoadingOutlined } from '@ant-design/icons';
+import { useOpenScenario } from '../components/Project/Project';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
+const useCreateScenario = (projectPath, { onSuccess }) => {
+  const [formData, setFormData] = useState({});
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState();
+
+  const createScenario = async (data) => {
+    setError(null);
+    setFetching(true);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_CEA_URL}/api/project/scenario/v2`,
+        { ...data, project: projectPath },
+      );
+      onSuccess?.(response.data);
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (formData?.scenario_name && projectPath) {
+      createScenario(formData);
+    }
+  }, [formData, projectPath]);
+
+  return { setFormData, fetching, error };
+};
+
+const CreateScenarioProgressModal = ({
+  showModal,
+  setShowModal,
+  success,
+  error,
+  fetching,
+}) => {
+  return (
+    <Modal
+      centered
+      closable={false}
+      footer={null}
+      open={showModal}
+      width="50vw"
+    >
+      <div
+        style={{
+          height: 300,
+        }}
+      >
+        {fetching && (
+          <Spin
+            tip="Creating scenario..."
+            indicator={<LoadingOutlined spin />}
+            size="large"
+          >
+            <div style={{ height: 300 }} />
+          </Spin>
+        )}
+        {error && (
+          <Result
+            status="error"
+            title="Scenario creation failed"
+            subTitle="There was an error while creating the scenario"
+            extra={[
+              <Button
+                type="primary"
+                key="console"
+                onClick={() => setShowModal(false)}
+              >
+                Back
+              </Button>,
+            ]}
+          />
+        )}
+        {success && (
+          <Result
+            status="success"
+            title="Scenario created successfully"
+            subTitle="redirecting to input editor..."
+          />
+        )}
+      </div>
+    </Modal>
+  );
+};
+
 const CreateScenarioForm = memo(({ setSecondary }) => {
+  const {
+    info: { project },
+  } = useSelector((state) => state.project);
+  const openScenario = useOpenScenario();
+  const { setFormData, fetching, error } = useCreateScenario(project, {
+    // Redirect to input editor when scenario is created
+    onSuccess: ({ scenario_name }) => {
+      setSuccess(true);
+      // Delay before redirecting to input editor
+      setTimeout(() => openScenario(project, scenario_name), 1000);
+    },
+  });
+
+  const [success, setSuccess] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
@@ -36,9 +152,10 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
     } else {
       setData((prev) => {
         const allFormData = { ...prev, ...values };
-        console.log(allFormData);
+        setFormData(allFormData);
         return allFormData;
       });
+      setShowModal(true);
     }
   };
 
@@ -154,6 +271,13 @@ const CreateScenarioForm = memo(({ setSecondary }) => {
           size="small"
         />
       </div>
+      <CreateScenarioProgressModal
+        showModal={showModal}
+        setShowModal={setShowModal}
+        success={success}
+        error={error}
+        fetching={fetching}
+      />
     </div>
   );
 });
