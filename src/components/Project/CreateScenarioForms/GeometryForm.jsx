@@ -1,14 +1,4 @@
-import {
-  Form,
-  Button,
-  Select,
-  Divider,
-  InputNumber,
-  Slider,
-  Row,
-  Col,
-  Input,
-} from 'antd';
+import { Form, Button, Select, Divider, InputNumber, Input } from 'antd';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { FileSearchOutlined } from '@ant-design/icons';
