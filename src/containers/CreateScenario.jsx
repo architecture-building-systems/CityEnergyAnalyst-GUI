@@ -66,6 +66,7 @@ const CreateScenarioProgressModal = ({
   success,
   error,
   fetching,
+  onOk,
 }) => {
   return (
     <Modal
@@ -75,11 +76,7 @@ const CreateScenarioProgressModal = ({
       open={showModal}
       width="50vw"
     >
-      <div
-        style={{
-          height: 300,
-        }}
-      >
+      <div>
         {fetching && (
           <Spin
             tip="Creating scenario..."
@@ -108,9 +105,19 @@ const CreateScenarioProgressModal = ({
         {success && (
           <Result
             status="success"
-            title="Scenario created successfully"
-            subTitle="redirecting to input editor..."
-          />
+            title="Scenario created successfully!"
+            subTitle={
+              <>
+                <div>Redirecting to Input Editor...</div>
+                <div>Click below if you are not redirected.</div>
+              </>
+            }
+            extra={[
+              <Button key="ok" type="primary" onClick={onOk}>
+                Go to Input Editor
+              </Button>,
+            ]}
+          ></Result>
         )}
       </div>
     </Modal>
@@ -127,7 +134,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
     onSuccess: ({ scenario_name }) => {
       setSuccess(true);
       // Delay before redirecting to input editor
-      setTimeout(() => openScenario(project, scenario_name), 1000);
+      setTimeout(() => openScenario(project, scenario_name), 2000);
     },
   });
 
@@ -137,6 +144,10 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
   const weather = useFetchWeather();
+
+  const goToInputEditor = () => {
+    openScenario(project, data.scenario_name);
+  };
 
   const onChange = (values) => {
     setData((prev) => ({ ...prev, ...values }));
@@ -153,6 +164,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
     } else {
       setData((prev) => {
         const allFormData = { ...prev, ...values };
+        setSuccess(false);
         setFormData(allFormData);
         return allFormData;
       });
@@ -278,6 +290,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
         success={success}
         error={error}
         fetching={fetching}
+        onOk={goToInputEditor}
       />
     </div>
   );
