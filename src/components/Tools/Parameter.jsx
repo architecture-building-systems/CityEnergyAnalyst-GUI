@@ -268,7 +268,7 @@ const Parameter = ({ parameter, form }) => {
                   options: [
                     {
                       label: <span> Fetch from climate.onebuilding.org</span>,
-                      value: '',
+                      value: 'climate.onebuilding.org',
                     },
                   ],
                 },
