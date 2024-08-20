@@ -16,6 +16,12 @@ const NameForm = ({ initialValues, onFinish, onMount }) => {
     }
   };
 
+  const onFormFinish = (value) => {
+    // Remove whitespace from name
+    const scenario_name = value.scenario_name.replace(/\s/g, '_');
+    onFinish?.({ scenario_name });
+  };
+
   useEffect(() => {
     onMount?.();
   }, []);
@@ -28,7 +34,11 @@ const NameForm = ({ initialValues, onFinish, onMount }) => {
   };
 
   return (
-    <Form initialValues={initialValues} onFinish={onFinish} layout="vertical">
+    <Form
+      initialValues={initialValues}
+      onFinish={onFormFinish}
+      layout="vertical"
+    >
       <Form.Item
         label="Scenario Name"
         name="scenario_name"
