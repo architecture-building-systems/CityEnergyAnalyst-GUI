@@ -160,7 +160,10 @@ const UserGeometryForm = ({
               <div>You can leave it empty and modify it later.</div>
             </div>
           }
-          rules={[{ validator: (_, value) => validateTypology(value) }]}
+          rules={[
+            { required: true, message: 'This field is required.' },
+            { validator: (_, value) => validateTypology(value) },
+          ]}
         >
           <Select
             placeholder="Choose an option from the dropdown"
