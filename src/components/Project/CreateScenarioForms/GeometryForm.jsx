@@ -12,7 +12,7 @@ import {
   GENERATE_TYPOLOGY_CEA,
 } from './constants';
 
-const validateGeometry = async (value, buildingType, onSuccess) => {
+const validateGeometry = async (value, buildingType) => {
   if (
     [GENERATE_ZONE_CEA, GENERATE_SURROUNDINGS_CEA, EMTPY_GEOMETRY].includes(
       value,
@@ -29,7 +29,7 @@ const validateGeometry = async (value, buildingType, onSuccess) => {
         path: value,
       },
     );
-    onSuccess?.(response?.data);
+    console.log(response);
     return Promise.resolve();
   } catch (error) {
     const errorMessage =
@@ -67,11 +67,30 @@ const UserGeometryForm = ({
 }) => {
   const [form] = Form.useForm();
   const [zoneValue, setZoneValue] = useState(initialValues.user_zone);
+  const [typologyInZone, setTypologyInZone] = useState(false);
 
   const showTypologyForm = useMemo(
-    () => ![GENERATE_ZONE_CEA, undefined].includes(zoneValue),
-    [zoneValue],
+    // Show typology form if zone is not empty and there are no typology values in zone
+    () =>
+      ![GENERATE_ZONE_CEA, undefined].includes(zoneValue) && !typologyInZone,
+    [zoneValue, typologyInZone],
   );
+
+  const checkZoneForTypology = async (value) => {
+    // Do not check if zone is empty or generated
+    if ([GENERATE_ZONE_CEA, EMTPY_GEOMETRY].includes(value))
+      return Promise.resolve();
+
+    try {
+      await validateTypology(value);
+      setTypologyInZone(true);
+    } catch (error) {
+      setTypologyInZone(false);
+    }
+
+    // Always return positive result
+    return Promise.resolve();
+  };
 
   useEffect(() => {
     setSecondary();
@@ -104,7 +123,11 @@ const UserGeometryForm = ({
         rules={[
           { required: true, message: 'This field is required.' },
           {
-            validator: (_, value) => validateGeometry(value, 'zone'),
+            validator: async (_, value) =>
+              await validateGeometry(value, 'zone'),
+          },
+          {
+            validator: async (_, value) => await checkZoneForTypology(value),
           },
         ]}
       >
