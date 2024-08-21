@@ -399,10 +399,11 @@ export const OpenDialogButton = ({
   filters = [],
   children,
   buttonType = 'default',
+  onChange,
   ...rest
 }) => {
   if (!isElectron()) {
-    return <PathInput form={form} name={name} {...rest} />;
+    return <PathInput form={form} name={name} onChange={onChange} {...rest} />;
   } else {
     return (
       <Button
@@ -410,6 +411,7 @@ export const OpenDialogButton = ({
         style={{ width: '100%' }}
         onClick={async () => {
           await openDialog(form, type, filters, name);
+          onChange?.(form.getFieldValue(name));
           form.validateFields([name]);
         }}
       >

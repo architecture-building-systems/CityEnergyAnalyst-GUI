@@ -1,5 +1,5 @@
 import { Form, Button, Select, Divider, InputNumber, Input } from 'antd';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { FileSearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -9,9 +9,10 @@ import {
   GENERATE_SURROUNDINGS_CEA,
   EMTPY_GEOMETRY,
   EXAMPLE_CITIES,
+  GENERATE_TYPOLOGY_CEA,
 } from './constants';
 
-const validateGeometry = async (value, buildingType) => {
+const validateGeometry = async (value, buildingType, onSuccess) => {
   if (
     [GENERATE_ZONE_CEA, GENERATE_SURROUNDINGS_CEA, EMTPY_GEOMETRY].includes(
       value,
@@ -28,11 +29,31 @@ const validateGeometry = async (value, buildingType) => {
         path: value,
       },
     );
-    console.log(response);
+    onSuccess?.(response?.data);
     return Promise.resolve();
   } catch (error) {
     const errorMessage =
       error?.response?.data?.detail || 'Unable to validate geometries.';
+    return Promise.reject(`${errorMessage}`);
+  }
+};
+
+const validateTypology = async (value) => {
+  if (value === GENERATE_TYPOLOGY_CEA) return Promise.resolve();
+
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_CEA_URL}/api/geometry/typology/validate`,
+      {
+        type: 'path',
+        path: value,
+      },
+    );
+    console.log(response);
+    return Promise.resolve();
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.detail || 'Unable to validate typology.';
     return Promise.reject(`${errorMessage}`);
   }
 };
@@ -45,10 +66,23 @@ const UserGeometryForm = ({
   setSecondary,
 }) => {
   const [form] = Form.useForm();
+  const [zoneValue, setZoneValue] = useState(initialValues.user_zone);
+
+  const showTypologyForm = useMemo(
+    () => ![GENERATE_ZONE_CEA, undefined].includes(zoneValue),
+    [zoneValue],
+  );
 
   useEffect(() => {
     setSecondary();
   }, []);
+
+  const onZoneChange = (value) => {
+    setZoneValue(value);
+
+    // Trigger parent form change
+    onChange?.({ user_zone: value });
+  };
 
   return (
     <Form
@@ -69,7 +103,9 @@ const UserGeometryForm = ({
         }
         rules={[
           { required: true, message: 'This field is required.' },
-          { validator: (_, value) => validateGeometry(value, 'zone') },
+          {
+            validator: (_, value) => validateGeometry(value, 'zone'),
+          },
         ]}
       >
         <Select
@@ -84,6 +120,7 @@ const UserGeometryForm = ({
                 type="file"
                 filters={[{ name: 'SHP files', extensions: ['shp'] }]}
                 placeholder="Or enter path to zone file here"
+                onChange={onZoneChange}
               >
                 <FileSearchOutlined />
                 Browse for zone file
@@ -101,8 +138,62 @@ const UserGeometryForm = ({
               ],
             },
           ]}
+          onChange={onZoneChange}
         />
       </Form.Item>
+
+      {showTypologyForm && (
+        <Form.Item
+          label="Building information (typology)"
+          name="typology"
+          // Do not preserve typology value when typology form item is hidden
+          preserve={false}
+          extra={
+            <div>
+              <br />
+              <div>
+                Link to a path to building information in .xlsx/.csv/.dbf
+                format.
+              </div>
+              <div>See an example here.</div>
+              <br />
+              <div>You can leave it empty and modify it later.</div>
+            </div>
+          }
+          rules={[{ validator: (_, value) => validateTypology(value) }]}
+        >
+          <Select
+            placeholder="Choose an option from the dropdown"
+            dropdownRender={(menu) => (
+              <div>
+                {menu}
+                <Divider style={{ margin: '4px 0' }} />
+                <OpenDialogButton
+                  form={form}
+                  name="typology"
+                  type="file"
+                  filters={[{ name: 'DBF files', extensions: ['dbf'] }]}
+                  placeholder="Or enter path to typology file here"
+                >
+                  <FileSearchOutlined />
+                  Browse for typology file
+                </OpenDialogButton>
+              </div>
+            )}
+            options={[
+              {
+                label: 'Defaults',
+                options: [
+                  {
+                    label: 'Auto-generate using default values',
+                    value: GENERATE_TYPOLOGY_CEA,
+                  },
+                ],
+              },
+            ]}
+          />
+        </Form.Item>
+      )}
 
       <Form.Item
         label="Building geometries (surroundings)"
@@ -219,14 +310,6 @@ const GenerateGeometryForm = ({
             <div>
               Search for a location below and select an area with buildings by
               drawing a polygon on the map.
-            </div>
-            <div>
-              <i>
-                Building typology information would also be generated based on
-                OpenStreetMap.
-                <br />
-                (Step 4 will be skipped)
-              </i>
             </div>
             {error && <div style={{ color: 'red' }}>{error.errors[0]}</div>}
           </div>

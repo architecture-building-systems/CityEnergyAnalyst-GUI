@@ -13,7 +13,6 @@ import { lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import DatabaseForm from '../components/Project/CreateScenarioForms/DatabaseForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
-import TypologyForm from '../components/Project/CreateScenarioForms/TypologyForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
 import { useSelector } from 'react-redux';
 import {
@@ -174,13 +173,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
 
   const onGeometryFinish = (values) => {
     setData((prev) => ({ ...prev, ...values }));
-
-    // Skip typology if user geometry is generated
-    if (values?.user_zone === GENERATE_ZONE_CEA) {
-      setCurrent(current + 2);
-    } else {
-      setCurrent(current + 1);
-    }
+    setCurrent(current + 1);
   };
 
   const onContextBack = () => {
@@ -217,7 +210,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
       ),
     },
     {
-      description: 'Geometries',
+      description: 'Buildings',
       content: (
         <GeometryForm
           initialValues={data}
@@ -225,18 +218,6 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
           onBack={onBack}
           onFinish={onGeometryFinish}
           setSecondary={setSecondary}
-        />
-      ),
-    },
-    {
-      description: 'Typology',
-      content: (
-        <TypologyForm
-          initialValues={data}
-          onChange={onChange}
-          onBack={onBack}
-          onFinish={onFinish}
-          onMount={() => setSecondary()}
         />
       ),
     },
