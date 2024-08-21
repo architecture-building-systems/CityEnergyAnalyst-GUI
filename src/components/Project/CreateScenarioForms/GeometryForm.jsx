@@ -67,7 +67,12 @@ const UserGeometryForm = ({
 }) => {
   const [form] = Form.useForm();
   const [zoneValue, setZoneValue] = useState(initialValues.user_zone);
-  const [typologyInZone, setTypologyInZone] = useState(false);
+  const [typologyInZone, setTypologyInZone] = useState(
+    // Set to true if initial value is not defined
+    initialValues?.typology_in_zone == undefined
+      ? true
+      : initialValues?.typology_in_zone,
+  );
 
   const showTypologyForm = useMemo(
     // Show typology form if zone is not empty and there are no typology values in zone
@@ -78,17 +83,20 @@ const UserGeometryForm = ({
 
   const checkZoneForTypology = async (value) => {
     // Do not check if zone is empty or generated
-    if ([GENERATE_ZONE_CEA, EMTPY_GEOMETRY].includes(value))
+    if ([GENERATE_ZONE_CEA, EMTPY_GEOMETRY].includes(value)) {
+      onTypologyInZoneChange(true);
       return Promise.resolve();
-
-    try {
-      await validateTypology(value);
-      setTypologyInZone(true);
-    } catch (error) {
-      setTypologyInZone(false);
     }
 
-    // Always return positive result
+    // Set "typology in zone" state
+    try {
+      await validateTypology(value);
+      onTypologyInZoneChange(true);
+    } catch (error) {
+      onTypologyInZoneChange(false);
+    }
+
+    // Always resolve validation
     return Promise.resolve();
   };
 
@@ -101,6 +109,16 @@ const UserGeometryForm = ({
 
     // Trigger parent form change
     onChange?.({ user_zone: value });
+  };
+
+  const onTypologyInZoneChange = (value) => {
+    setTypologyInZone(value);
+
+    // Store "typology in zone" state in parent form
+    // Clear typology if typology in zone is true
+    if (value) onChange?.({ typology_in_zone: value, typology: null });
+    // Trigger parent form change
+    else onChange?.({ typology_in_zone: value });
   };
 
   return (
@@ -523,6 +541,10 @@ const GeometryForm = ({
     // Update parent form data
     onChange(values);
   };
+
+  useEffect(() => {
+    console.log(formData);
+  }, [formData]);
 
   const forms = [
     <UserGeometryForm
