@@ -11,7 +11,6 @@ import {
 } from 'antd';
 import { lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
-import DatabaseForm from '../components/Project/CreateScenarioForms/DatabaseForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
 import { useSelector } from 'react-redux';
@@ -197,19 +196,6 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
       ),
     },
     {
-      description: 'Database',
-      content: (
-        <DatabaseForm
-          databases={databases}
-          initialValues={data}
-          onChange={onChange}
-          onBack={onBack}
-          onFinish={onFinish}
-          onMount={() => setSecondary()}
-        />
-      ),
-    },
-    {
       description: 'Buildings',
       content: (
         <GeometryForm
@@ -225,6 +211,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
       description: 'Context',
       content: (
         <ContextForm
+          databases={databases}
           weather={weather}
           initialValues={data}
           onChange={onChange}
