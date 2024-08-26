@@ -505,64 +505,15 @@ const GeometryForm = ({
   onFinish,
   setSecondary,
 }) => {
-  const [current, setCurrent] = useState(0);
-  const [formData, setFormData] = useState(initialValues);
-
-  const onUserGeomertyFormFinish = (values) => {
-    setFormData((prev) => ({ ...prev, ...values }));
-
-    // Complete geometry form if user geometry is provided
-    if (
-      values?.user_zone !== GENERATE_ZONE_CEA &&
-      values?.user_surroundings !== GENERATE_SURROUNDINGS_CEA
-    ) {
-      onFinish(values);
-    } else {
-      // Otherwise, bring to next geometry form
-      setCurrent(current + 1);
-    }
-  };
-
-  const onGenerateGeometryFormFinish = (values) => {
-    onFinish({ ...formData, ...values });
-  };
-
-  const onGeometryFormBack = () => {
-    setCurrent(current - 1);
-  };
-
-  const onGeometryFormChange = (values) => {
-    // Update geometry form data
-    setFormData((prev) => ({ ...prev, ...values }));
-
-    // Update parent form data
-    onChange(values);
-  };
-
-  useEffect(() => {
-    console.log(formData);
-  }, [formData]);
-
-  const forms = [
+  return (
     <UserGeometryForm
-      key="user-geometry"
-      initialValues={formData}
-      onChange={onGeometryFormChange}
+      initialValues={initialValues}
+      onChange={onChange}
       onBack={onBack}
-      onFinish={onUserGeomertyFormFinish}
+      onFinish={onFinish}
       setSecondary={setSecondary}
-    />,
-    <GenerateGeometryForm
-      key="generate-geometry"
-      initialValues={formData}
-      onChange={onGeometryFormChange}
-      onBack={onGeometryFormBack}
-      onFinish={onGenerateGeometryFormFinish}
-      setSecondary={setSecondary}
-    />,
-  ];
-
-  return forms[current];
+    />
+  );
 };
 
 export default GeometryForm;
