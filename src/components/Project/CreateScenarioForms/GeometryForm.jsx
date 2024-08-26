@@ -191,14 +191,11 @@ const UserGeometryForm = ({
           preserve={false}
           extra={
             <div>
-              <br />
               <div>
                 Link to a path to building information in .xlsx/.csv/.dbf
                 format.
               </div>
               <div>See an example here.</div>
-              <br />
-              <div>You can leave it empty and modify it later.</div>
             </div>
           }
           rules={[
