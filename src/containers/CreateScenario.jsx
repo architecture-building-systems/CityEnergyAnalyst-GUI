@@ -1,14 +1,4 @@
-import {
-  Button,
-  Col,
-  Divider,
-  List,
-  Modal,
-  Result,
-  Row,
-  Spin,
-  Steps,
-} from 'antd';
+import { Button, Col, List, Modal, Result, Row, Spin, Steps } from 'antd';
 import { lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
@@ -242,17 +232,17 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
       <div>
         <h2>Create Scenario</h2>
         <p>Adds a new Scenario to the current Project.</p>
-        <Divider />
+        <div style={{ marginTop: 48 }}>
+          <Steps
+            current={current}
+            labelPlacement="vertical"
+            items={forms}
+            size="small"
+          />
+        </div>
+        {/* <Divider /> */}
       </div>
       <div style={{ flexGrow: 1 }}>{forms[current].content}</div>
-      <div style={{ marginTop: 24 }}>
-        <Steps
-          current={current}
-          labelPlacement="vertical"
-          items={forms}
-          size="small"
-        />
-      </div>
       <CreateScenarioProgressModal
         showModal={showModal}
         setShowModal={setShowModal}
