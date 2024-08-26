@@ -61,9 +61,7 @@ const validateTypology = async (value) => {
 const UserGeometryForm = ({
   initialValues,
   onChange,
-  onBack,
   onFinish,
-  setSecondary,
   formButtons,
 }) => {
   const [form] = Form.useForm();
@@ -100,10 +98,6 @@ const UserGeometryForm = ({
     // Always resolve validation
     return Promise.resolve();
   };
-
-  useEffect(() => {
-    setSecondary();
-  }, []);
 
   const onZoneChange = (value) => {
     setZoneValue(value);

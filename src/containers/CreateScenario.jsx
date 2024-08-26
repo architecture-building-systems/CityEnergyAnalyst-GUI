@@ -9,7 +9,6 @@ import {
   useFetchDatabases,
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/hooks';
-import { GENERATE_ZONE_CEA } from '../components/Project/CreateScenarioForms/constants';
 import axios from 'axios';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useOpenScenario } from '../components/Project/Project';
@@ -113,7 +112,10 @@ const CreateScenarioProgressModal = ({
   );
 };
 
-const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
+const CreateScenarioForm = memo(function CreateScenarioForm({
+  formIndex,
+  onFormChange,
+}) {
   const {
     info: { project },
   } = useSelector((state) => state.project);
@@ -129,7 +131,6 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
 
   const [success, setSuccess] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [current, setCurrent] = useState(0);
   const [data, setData] = useState({});
   const databases = useFetchDatabases();
   const weather = useFetchWeather();
@@ -143,13 +144,13 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
   };
 
   const onBack = () => {
-    setCurrent(current - 1);
+    onFormChange((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
   const onFinish = (values) => {
-    if (current < forms.length - 1) {
+    if (formIndex < forms.length - 1) {
       setData((prev) => ({ ...prev, ...values }));
-      setCurrent(current + 1);
+      onFormChange((prev) => prev + 1);
     } else {
       setData((prev) => {
         const allFormData = { ...prev, ...values };
@@ -158,20 +159,6 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
         return allFormData;
       });
       setShowModal(true);
-    }
-  };
-
-  const onGeometryFinish = (values) => {
-    setData((prev) => ({ ...prev, ...values }));
-    setCurrent(current + 1);
-  };
-
-  const onContextBack = () => {
-    // Skip typology if user geometry is generated
-    if (data?.user_zone === GENERATE_ZONE_CEA) {
-      setCurrent(current - 2);
-    } else {
-      setCurrent(current - 1);
     }
   };
 
@@ -186,9 +173,9 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
         }}
       >
         <Button type="primary" htmlType="submit" style={{ width: 100 }}>
-          {current === forms.length - 1 ? 'Finish' : 'Next'}
+          {formIndex === forms.length - 1 ? 'Finish' : 'Next'}
         </Button>
-        {current > 0 && (
+        {formIndex > 0 && (
           <Button style={{ width: 100 }} onClick={onBack}>
             Back
           </Button>
@@ -204,7 +191,6 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
         <NameForm
           initialValues={data}
           onFinish={onFinish}
-          onMount={() => setSecondary('scenarioList')}
           formButtons={<FormButtons />}
         />
       ),
@@ -216,8 +202,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
           initialValues={data}
           onChange={onChange}
           onBack={onBack}
-          onFinish={onGeometryFinish}
-          setSecondary={setSecondary}
+          onFinish={onFinish}
           formButtons={<FormButtons />}
         />
       ),
@@ -230,9 +215,8 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
           weather={weather}
           initialValues={data}
           onChange={onChange}
-          onBack={onContextBack}
+          onBack={onBack}
           onFinish={onFinish}
-          onMount={() => setSecondary()}
           formButtons={<FormButtons />}
         />
       ),
@@ -259,14 +243,14 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
         <p>Adds a new Scenario to the current Project.</p>
         <div style={{ marginTop: 48 }}>
           <Steps
-            current={current}
+            current={formIndex}
             labelPlacement="vertical"
             items={forms}
             size="small"
           />
         </div>
       </div>
-      <div style={{ flexGrow: 1 }}>{forms[current].content}</div>
+      <div style={{ flexGrow: 1 }}>{forms[formIndex].content}</div>
       <CreateScenarioProgressModal
         showModal={showModal}
         setShowModal={setShowModal}
@@ -309,8 +293,9 @@ const ScenarioList = () => {
 
 const CreateScenario = () => {
   const mapRef = useRef();
+
+  const [formIndex, setFormIndex] = useState(0);
   const [viewState, setViewState] = useState();
-  const [secondaryName, setSecondary] = useState('');
   const [geojson, setGeojson] = useState();
   const [location, setLocation] = useState();
 
@@ -358,10 +343,15 @@ const CreateScenario = () => {
   return (
     <ErrorBoundary>
       <Row style={{ height: '100%' }}>
-        <Col span={12}>{secondaryCards?.[secondaryName]}</Col>
+        <Col span={12}>
+          {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
+        </Col>
         <Col span={12}>
           <MapFormContext.Provider value={{ geojson, setLocation }}>
-            <CreateScenarioForm setSecondary={setSecondary} />
+            <CreateScenarioForm
+              formIndex={formIndex}
+              onFormChange={setFormIndex}
+            />
           </MapFormContext.Provider>
         </Col>
       </Row>

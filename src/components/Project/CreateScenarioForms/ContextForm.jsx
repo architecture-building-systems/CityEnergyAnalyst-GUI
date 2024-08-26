@@ -1,7 +1,6 @@
-import { Button, Divider, Form, Select } from 'antd';
+import { Divider, Form, Select } from 'antd';
 import { OpenDialogButton } from '../../Tools/Parameter';
 import { FileSearchOutlined } from '@ant-design/icons';
-import { useEffect } from 'react';
 import {
   EMTPY_GEOMETRY,
   GENERATE_STREET_CEA,
@@ -57,16 +56,10 @@ const ContextForm = ({
   weather = [],
   initialValues,
   onChange,
-  onBack,
   onFinish,
-  onMount,
   formButtons,
 }) => {
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    onMount?.();
-  }, []);
 
   return (
     <Form

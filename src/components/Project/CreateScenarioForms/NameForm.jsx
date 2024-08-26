@@ -1,8 +1,8 @@
 import { Form, Input } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 
-const NameForm = ({ initialValues, onFinish, onMount, formButtons }) => {
+const NameForm = ({ initialValues, onFinish, formButtons }) => {
   const { info } = useSelector((state) => state.project);
   const scenarioNames = info?.scenarios_list || [];
   const [value, setValue] = useState(initialValues.name);
@@ -21,10 +21,6 @@ const NameForm = ({ initialValues, onFinish, onMount, formButtons }) => {
     const scenario_name = value.scenario_name.replace(/\s/g, '_');
     onFinish?.({ scenario_name });
   };
-
-  useEffect(() => {
-    onMount?.();
-  }, []);
 
   const validateScenarioName = (_, value) => {
     if (scenarioNames.includes(value)) {
