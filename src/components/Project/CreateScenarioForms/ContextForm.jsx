@@ -60,6 +60,7 @@ const ContextForm = ({
   onBack,
   onFinish,
   onMount,
+  formButtons,
 }) => {
   const [form] = Form.useForm();
 
@@ -75,6 +76,7 @@ const ContextForm = ({
       onFinish={onFinish}
       layout="vertical"
     >
+      {formButtons}
       <Form.Item
         label="Database"
         name="database"
@@ -285,21 +287,6 @@ const ContextForm = ({
             },
           ]}
         />
-      </Form.Item>
-
-      <Form.Item>
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            style={{ padding: '0 36px' }}
-          >
-            Finish
-          </Button>
-          <Button style={{ padding: '0 36px' }} onClick={onBack}>
-            Back
-          </Button>
-        </div>
       </Form.Item>
     </Form>
   );

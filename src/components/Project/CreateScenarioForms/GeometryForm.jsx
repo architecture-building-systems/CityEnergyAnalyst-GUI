@@ -64,6 +64,7 @@ const UserGeometryForm = ({
   onBack,
   onFinish,
   setSecondary,
+  formButtons,
 }) => {
   const [form] = Form.useForm();
   const [zoneValue, setZoneValue] = useState(initialValues.user_zone);
@@ -129,6 +130,7 @@ const UserGeometryForm = ({
       onFinish={onFinish}
       layout="vertical"
     >
+      {formButtons}
       <Form.Item
         label="Building geometries (zone)"
         name="user_zone"
@@ -291,21 +293,6 @@ const UserGeometryForm = ({
             },
           ]}
         />
-      </Form.Item>
-
-      <Form.Item>
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            style={{ padding: '0 36px' }}
-          >
-            Next
-          </Button>
-          <Button style={{ padding: '0 36px' }} onClick={onBack}>
-            Back
-          </Button>
-        </div>
       </Form.Item>
     </Form>
   );
@@ -504,6 +491,7 @@ const GeometryForm = ({
   onBack,
   onFinish,
   setSecondary,
+  formButtons,
 }) => {
   return (
     <UserGeometryForm
@@ -512,6 +500,7 @@ const GeometryForm = ({
       onBack={onBack}
       onFinish={onFinish}
       setSecondary={setSecondary}
+      formButtons={formButtons}
     />
   );
 };

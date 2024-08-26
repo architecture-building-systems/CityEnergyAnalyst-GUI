@@ -175,6 +175,28 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
     }
   };
 
+  const FormButtons = () => {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          marginTop: 24,
+          flexDirection: 'row-reverse',
+        }}
+      >
+        <Button type="primary" htmlType="submit" style={{ width: 100 }}>
+          {current === forms.length - 1 ? 'Finish' : 'Next'}
+        </Button>
+        {current > 0 && (
+          <Button style={{ width: 100 }} onClick={onBack}>
+            Back
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   const forms = [
     {
       description: 'Name',
@@ -183,6 +205,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
           initialValues={data}
           onFinish={onFinish}
           onMount={() => setSecondary('scenarioList')}
+          formButtons={<FormButtons />}
         />
       ),
     },
@@ -195,6 +218,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
           onBack={onBack}
           onFinish={onGeometryFinish}
           setSecondary={setSecondary}
+          formButtons={<FormButtons />}
         />
       ),
     },
@@ -209,6 +233,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
           onBack={onContextBack}
           onFinish={onFinish}
           onMount={() => setSecondary()}
+          formButtons={<FormButtons />}
         />
       ),
     },
@@ -240,7 +265,6 @@ const CreateScenarioForm = memo(function CreateScenarioForm({ setSecondary }) {
             size="small"
           />
         </div>
-        {/* <Divider /> */}
       </div>
       <div style={{ flexGrow: 1 }}>{forms[current].content}</div>
       <CreateScenarioProgressModal

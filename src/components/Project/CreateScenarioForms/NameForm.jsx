@@ -1,8 +1,8 @@
-import { Form, Input, Button } from 'antd';
+import { Form, Input } from 'antd';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-const NameForm = ({ initialValues, onFinish, onMount }) => {
+const NameForm = ({ initialValues, onFinish, onMount, formButtons }) => {
   const { info } = useSelector((state) => state.project);
   const scenarioNames = info?.scenarios_list || [];
   const [value, setValue] = useState(initialValues.name);
@@ -39,6 +39,7 @@ const NameForm = ({ initialValues, onFinish, onMount }) => {
       onFinish={onFormFinish}
       layout="vertical"
     >
+      {formButtons}
       <Form.Item
         label="Scenario Name"
         name="scenario_name"
@@ -63,18 +64,6 @@ const NameForm = ({ initialValues, onFinish, onMount }) => {
           ".
         </span>
       )}
-
-      <Form.Item>
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            style={{ padding: '0 36px' }}
-          >
-            Next
-          </Button>
-        </div>
-      </Form.Item>
     </Form>
   );
 };
