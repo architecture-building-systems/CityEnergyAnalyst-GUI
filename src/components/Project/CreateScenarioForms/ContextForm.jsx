@@ -15,6 +15,12 @@ const countryMap = {
   DE: 'Germany',
 };
 
+const weatherSources = {
+  ladybug: 'https://www.ladybug.tools/epwmap/',
+  energyplus: 'https://energyplus.net/weather',
+  southampton: 'https://energy.soton.ac.uk/ccworldweathergen/',
+};
+
 const validateDatabase = async (value, databases) => {
   // Do not need to validate CEA databases
   if (databases.includes(value)) return Promise.resolve();
@@ -99,13 +105,24 @@ const ContextForm = ({
       <Form.Item
         label="Weather data"
         name="weather"
+        tooltip={{
+          title: (
+            <>
+              <div>Some websites to find .epw files:</div>
+              <div>
+                <a href={weatherSources.energyplus}>Energyplus</a>
+                <br />
+                <a href={weatherSources.ladybug}>Ladybug</a>
+                <br />
+                <a href={weatherSources.southampton}>Southampthon</a>
+              </div>
+            </>
+          ),
+        }}
         extra={
           <div>
             <div>Link to a path to weather information in .epw format.</div>
             <div>See an example here.</div>
-            <br />
-            <div>Where to find such weather files?</div>
-            <div>e.g. Energyplus, Ladybug, Southampthon.</div>
           </div>
         }
         rules={[{ required: true }]}
@@ -199,14 +216,15 @@ const ContextForm = ({
       <Form.Item
         label="Street (centre line) geometries"
         name="street"
+        tooltip={{
+          title: <div>This is used for district thermal network analysis.</div>,
+        }}
         extra={
           <div>
             <div>
               Link to a path to street centre line geometries in .shp format.
             </div>
             <div>See an example here.</div>
-            <br />
-            <div>This is used for district thermal network analysis.</div>
           </div>
         }
         rules={[{ required: true }]}
