@@ -8,6 +8,7 @@ import {
   GENERATE_TERRAIN_CEA,
 } from './constants';
 import axios from 'axios';
+import { isElectron, openExternal } from '../../../utils/electron';
 
 const countryMap = {
   SG: 'Singapore',
@@ -15,11 +16,20 @@ const countryMap = {
   DE: 'Germany',
 };
 
-const weatherSources = {
-  ladybug: 'https://www.ladybug.tools/epwmap/',
-  energyplus: 'https://energyplus.net/weather',
-  southampton: 'https://energy.soton.ac.uk/ccworldweathergen/',
-};
+const weatherSources = [
+  {
+    label: 'Energyplus',
+    url: 'https://energyplus.net/weather',
+  },
+  {
+    label: 'Ladybug',
+    url: 'https://www.ladybug.tools/epwmap/',
+  },
+  {
+    label: 'Southampton',
+    url: 'https://energy.soton.ac.uk/ccworldweathergen/',
+  },
+];
 
 const validateDatabase = async (value, databases) => {
   // Do not need to validate CEA databases
@@ -110,11 +120,18 @@ const ContextForm = ({
             <>
               <div>Some websites to find .epw files:</div>
               <div>
-                <a href={weatherSources.energyplus}>Energyplus</a>
-                <br />
-                <a href={weatherSources.ladybug}>Ladybug</a>
-                <br />
-                <a href={weatherSources.southampton}>Southampthon</a>
+                {weatherSources.map((source) => (
+                  <button
+                    key={source.url}
+                    onClick={() => {
+                      const url = source.url;
+                      if (isElectron()) openExternal(url);
+                      else window.open(url, '_blank', 'noreferrer');
+                    }}
+                  >
+                    {source.label}
+                  </button>
+                ))}
               </div>
             </>
           ),
