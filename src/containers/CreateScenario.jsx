@@ -23,6 +23,7 @@ import { GENERATE_ZONE_CEA } from '../components/Project/CreateScenarioForms/con
 import axios from 'axios';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useOpenScenario } from '../components/Project/Project';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -341,14 +342,16 @@ const CreateScenario = () => {
   };
 
   return (
-    <Row style={{ height: '100%' }}>
-      <Col span={12}>{secondaryCards?.[secondaryName]}</Col>
-      <Col span={12}>
-        <MapFormContext.Provider value={{ geojson, setLocation }}>
-          <CreateScenarioForm setSecondary={setSecondary} />
-        </MapFormContext.Provider>
-      </Col>
-    </Row>
+    <ErrorBoundary>
+      <Row style={{ height: '100%' }}>
+        <Col span={12}>{secondaryCards?.[secondaryName]}</Col>
+        <Col span={12}>
+          <MapFormContext.Provider value={{ geojson, setLocation }}>
+            <CreateScenarioForm setSecondary={setSecondary} />
+          </MapFormContext.Provider>
+        </Col>
+      </Row>
+    </ErrorBoundary>
   );
 };
 
