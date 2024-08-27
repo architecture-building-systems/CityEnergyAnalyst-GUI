@@ -1,6 +1,5 @@
-import { Form, Button, Select, Divider, InputNumber, Input } from 'antd';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { OpenDialogButton } from '../../Tools/Parameter';
+import { Form, Button, InputNumber, Input } from 'antd';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { FileSearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { MapFormContext } from './hooks';
@@ -11,6 +10,7 @@ import {
   EXAMPLE_CITIES,
   GENERATE_TYPOLOGY_CEA,
 } from './constants';
+import { SelectWithFileDialog } from './FormInput';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -56,240 +56,6 @@ const validateTypology = async (value) => {
       error?.response?.data?.detail || 'Unable to validate typology.';
     return Promise.reject(`${errorMessage}`);
   }
-};
-
-const UserGeometryForm = ({
-  initialValues,
-  onChange,
-  onFinish,
-  formButtons,
-}) => {
-  const [form] = Form.useForm();
-  const [zoneValue, setZoneValue] = useState(initialValues.user_zone);
-  const [typologyInZone, setTypologyInZone] = useState(
-    // Set to true if initial value is not defined
-    initialValues?.typology_in_zone == undefined
-      ? true
-      : initialValues?.typology_in_zone,
-  );
-
-  const showTypologyForm = useMemo(
-    // Show typology form if zone is not empty and there are no typology values in zone
-    () =>
-      ![GENERATE_ZONE_CEA, undefined].includes(zoneValue) && !typologyInZone,
-    [zoneValue, typologyInZone],
-  );
-
-  const checkZoneForTypology = async (value) => {
-    // Do not check if zone is empty or generated
-    if ([GENERATE_ZONE_CEA, EMTPY_GEOMETRY].includes(value)) {
-      onTypologyInZoneChange(true);
-      return Promise.resolve();
-    }
-
-    // Set "typology in zone" state
-    try {
-      await validateTypology(value);
-      onTypologyInZoneChange(true);
-    } catch (error) {
-      onTypologyInZoneChange(false);
-    }
-
-    // Always resolve validation
-    return Promise.resolve();
-  };
-
-  const onZoneChange = (value) => {
-    setZoneValue(value);
-
-    // Trigger parent form change
-    onChange?.({ user_zone: value });
-  };
-
-  const onTypologyInZoneChange = (value) => {
-    setTypologyInZone(value);
-
-    // Store "typology in zone" state in parent form
-    // Clear typology if typology in zone is true
-    if (value) onChange?.({ typology_in_zone: value, typology: null });
-    // Trigger parent form change
-    else onChange?.({ typology_in_zone: value });
-  };
-
-  return (
-    <Form
-      form={form}
-      initialValues={initialValues}
-      onValuesChange={onChange}
-      onFinish={onFinish}
-      layout="vertical"
-    >
-      {formButtons}
-      <Form.Item
-        label="Building geometries (zone)"
-        name="user_zone"
-        extra={
-          <div>
-            <div>Link to a path to building geometries in .shp format.</div>
-            <div>See an example here.</div>
-          </div>
-        }
-        rules={[
-          { required: true, message: 'This field is required.' },
-          {
-            validator: async (_, value) =>
-              await validateGeometry(value, 'zone'),
-          },
-          {
-            validator: async (_, value) => await checkZoneForTypology(value),
-          },
-        ]}
-      >
-        <Select
-          placeholder="Choose an option from the dropdown"
-          dropdownRender={(menu) => (
-            <div>
-              {menu}
-              <Divider style={{ margin: '4px 0' }} />
-              <OpenDialogButton
-                form={form}
-                name="user_zone"
-                type="file"
-                filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-                placeholder="Or enter path to zone file here"
-                onChange={onZoneChange}
-              >
-                <FileSearchOutlined />
-                Browse for zone file
-              </OpenDialogButton>
-            </div>
-          )}
-          options={[
-            {
-              label: 'CEA Tools',
-              options: [
-                {
-                  label: 'Generate from OpenStreetMap using CEA',
-                  value: GENERATE_ZONE_CEA,
-                },
-              ],
-            },
-          ]}
-          onChange={onZoneChange}
-        />
-      </Form.Item>
-
-      {showTypologyForm && (
-        <Form.Item
-          label="Building information (typology)"
-          name="typology"
-          // Do not preserve typology value when typology form item is hidden
-          preserve={false}
-          extra={
-            <div>
-              <div>
-                Link to a path to building information in .xlsx/.csv/.dbf
-                format.
-              </div>
-              <div>See an example here.</div>
-            </div>
-          }
-          rules={[
-            { required: true, message: 'This field is required.' },
-            { validator: (_, value) => validateTypology(value) },
-          ]}
-        >
-          <Select
-            placeholder="Choose an option from the dropdown"
-            dropdownRender={(menu) => (
-              <div>
-                {menu}
-                <Divider style={{ margin: '4px 0' }} />
-                <OpenDialogButton
-                  form={form}
-                  name="typology"
-                  type="file"
-                  filters={[{ name: 'DBF files', extensions: ['dbf'] }]}
-                  placeholder="Or enter path to typology file here"
-                >
-                  <FileSearchOutlined />
-                  Browse for typology file
-                </OpenDialogButton>
-              </div>
-            )}
-            options={[
-              {
-                label: 'Defaults',
-                options: [
-                  {
-                    label: 'Auto-generate using default values',
-                    value: GENERATE_TYPOLOGY_CEA,
-                  },
-                ],
-              },
-            ]}
-          />
-        </Form.Item>
-      )}
-
-      <Form.Item
-        label="Building geometries (surroundings)"
-        name="user_surroundings"
-        extra={
-          <div>
-            <div>
-              Link to a path to surrounding building geometries in .shp format.
-            </div>
-            <div>See an example here.</div>
-          </div>
-        }
-        rules={[
-          { required: true, message: 'This field is required.' },
-          { validator: (_, value) => validateGeometry(value, 'surroundings') },
-        ]}
-      >
-        <Select
-          placeholder="Choose an option from the dropdown"
-          dropdownRender={(menu) => (
-            <div>
-              {menu}
-              <Divider style={{ margin: '4px 0' }} />
-              <OpenDialogButton
-                form={form}
-                name="user_surroundings"
-                type="file"
-                filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-                placeholder="Or enter path to surroundings file here"
-              >
-                <FileSearchOutlined />
-                Browse for surroundings file
-              </OpenDialogButton>
-            </div>
-          )}
-          options={[
-            {
-              label: 'CEA Tools',
-              options: [
-                {
-                  label: 'Generate from OpenStreetMap using CEA',
-                  value: GENERATE_SURROUNDINGS_CEA,
-                },
-              ],
-            },
-            {
-              label: 'None',
-              options: [
-                {
-                  label: 'No surrounding buildings',
-                  value: EMTPY_GEOMETRY,
-                },
-              ],
-            },
-          ]}
-        />
-      </Form.Item>
-    </Form>
-  );
 };
 
 const GenerateGeometryForm = ({
@@ -479,23 +245,237 @@ const getGeocodeLocation = async (address) => {
   }
 };
 
-const GeometryForm = ({
-  initialValues,
-  onChange,
-  onBack,
-  onFinish,
-  setSecondary,
-  formButtons,
-}) => {
+const ZoneGeometryFormItem = ({ onValidated }) => {
+  const userZoneValidator = async (_, value) => {
+    // Do not check if zone is generated
+    if (value === GENERATE_ZONE_CEA) {
+      onValidated?.({ valid: true, typology: null });
+      return Promise.resolve();
+    }
+
+    // Check if zone is valid
+    try {
+      await validateGeometry(value, 'zone');
+    } catch (error) {
+      onValidated?.({ valid: false, typology: null });
+      return Promise.reject(error);
+    }
+
+    // Check if typology in zone
+    try {
+      await validateTypology(value);
+      onValidated?.({ valid: true, typology: true });
+    } catch (error) {
+      onValidated?.({ valid: true, typology: false });
+    }
+
+    return Promise.resolve();
+  };
+
   return (
-    <UserGeometryForm
+    <Form.Item
+      label="Building geometries (zone)"
+      name="user_zone"
+      extra={
+        <div>
+          <div>Link to a path to building geometries in .shp format.</div>
+          <div>See an example here.</div>
+        </div>
+      }
+      rules={[
+        { required: true, message: 'This field is required.' },
+        { validator: userZoneValidator },
+      ]}
+    >
+      <SelectWithFileDialog
+        name="user_zone"
+        type="file"
+        filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+        placeholder="Choose an option from the dropdown"
+        options={[
+          {
+            label: 'Generate from OpenStreetMap',
+            value: GENERATE_ZONE_CEA,
+          },
+        ]}
+      >
+        <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+          <FileSearchOutlined />
+          Import .shp file
+        </div>
+      </SelectWithFileDialog>
+    </Form.Item>
+  );
+};
+
+const GenerateZoneFormItem = () => {
+  const generateZoneValidator = (_, value) =>
+    value?.features?.length
+      ? Promise.resolve()
+      : Promise.reject(
+          new Error(
+            'Area geometry not found. Please select an area on the map by drawing a polygon.',
+          ),
+        );
+
+  return (
+    <>
+      <Form.Item
+        name="generate_zone"
+        rules={[
+          {
+            validator: generateZoneValidator,
+          },
+        ]}
+        hidden
+      />
+    </>
+  );
+};
+
+const SurroundingsGeometryFormItem = () => {
+  return (
+    <Form.Item
+      label="Building geometries (surroundings)"
+      name="user_surroundings"
+      tooltip={{
+        title: (
+          <div>
+            This is used for shading effects in Building Solar Radiation.
+          </div>
+        ),
+      }}
+      extra={
+        <div>
+          <div>
+            Link to a path to surrounding building geometries in .shp format.
+          </div>
+          <div>See an example here.</div>
+        </div>
+      }
+      rules={[
+        { required: true, message: 'This field is required.' },
+        { validator: (_, value) => validateGeometry(value, 'surroundings') },
+      ]}
+    >
+      <SelectWithFileDialog
+        name="user_surroundings"
+        type="file"
+        filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+        placeholder="Choose an option from the dropdown"
+        options={[
+          {
+            label: 'Generate from OpenStreetMap',
+            value: GENERATE_SURROUNDINGS_CEA,
+          },
+          {
+            label: 'No surrounding buildings',
+            value: EMTPY_GEOMETRY,
+          },
+        ]}
+      >
+        <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+          <FileSearchOutlined />
+          Import .shp file
+        </div>
+      </SelectWithFileDialog>
+    </Form.Item>
+  );
+};
+
+const GenerateSurroundingsFormItem = ({ initialValue }) => {
+  return (
+    <Form.Item
+      label="Generate surroundings geometry"
+      name="generate_surroundings"
+      extra="Set the buffer in meters around the zone buildings."
+      rules={[{ required: true, message: 'This field is required.' }]}
+      initialValue={initialValue || 50}
+    >
+      <InputNumber min={1} />
+    </Form.Item>
+  );
+};
+
+const TypologyFormItem = () => {
+  return (
+    <Form.Item
+      label="Building information (typology)"
+      name="typology"
+      extra={
+        <div>
+          <div>
+            Link to a path to building information in .xlsx/.csv/.dbf format.
+          </div>
+          <div>See an example here.</div>
+        </div>
+      }
+      rules={[
+        { required: true, message: 'This field is required.' },
+        { validator: (_, value) => validateTypology(value) },
+      ]}
+    >
+      <SelectWithFileDialog
+        name="typology"
+        type="file"
+        filters={[{ name: 'DBF files', extensions: ['dbf'] }]}
+        placeholder="Choose an option from the dropdown"
+        options={[
+          {
+            label: 'Auto-generate using default values',
+            value: GENERATE_TYPOLOGY_CEA,
+          },
+        ]}
+      >
+        <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+          <FileSearchOutlined />
+          Import .dbf file
+        </div>
+      </SelectWithFileDialog>
+    </Form.Item>
+  );
+};
+
+const GeometryForm = ({ initialValues, onChange, onFinish, formButtons }) => {
+  const [showTypologyForm, setTypologyVisibility] = useState(
+    initialValues?.typology_in_zone || false,
+  );
+
+  const handleTyologyVisibility = (value) => {
+    setTypologyVisibility(value);
+
+    // Store value in parent form to avoid validating zone again on form change
+    onChange?.({ typology_in_zone: value });
+  };
+
+  const onZoneValidated = ({ valid, typology }) => {
+    // Only show typology form if zone is valid and typology is not found
+    if (valid && typology == false) handleTyologyVisibility(true);
+    else handleTyologyVisibility(false);
+  };
+
+  return (
+    <Form
       initialValues={initialValues}
-      onChange={onChange}
-      onBack={onBack}
+      onValuesChange={onChange}
       onFinish={onFinish}
-      setSecondary={setSecondary}
-      formButtons={formButtons}
-    />
+      layout="vertical"
+    >
+      {formButtons}
+
+      <ZoneGeometryFormItem onValidated={onZoneValidated} />
+      {showTypologyForm && <TypologyFormItem />}
+      {initialValues?.user_zone === GENERATE_ZONE_CEA && (
+        <GenerateZoneFormItem />
+      )}
+
+      <SurroundingsGeometryFormItem />
+      {initialValues?.user_surroundings === GENERATE_SURROUNDINGS_CEA && (
+        <GenerateSurroundingsFormItem
+          initialValue={initialValues?.generate_surroundings}
+        />
+      )}
+    </Form>
   );
 };
 
