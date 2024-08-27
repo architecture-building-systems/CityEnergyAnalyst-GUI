@@ -17,15 +17,15 @@ const countryMap = {
 
 const weatherSources = [
   {
-    label: 'Energyplus',
+    label: 'Weather Data (EnergyPlus)',
     url: 'https://energyplus.net/weather',
   },
   {
-    label: 'Ladybug',
+    label: 'EPW Map (Ladybug Tools)',
     url: 'https://www.ladybug.tools/epwmap/',
   },
   {
-    label: 'Southampton',
+    label: 'CCWorldWeatherGen',
     url: 'https://energy.soton.ac.uk/ccworldweathergen/',
   },
 ];
