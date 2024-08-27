@@ -344,7 +344,7 @@ const PathInput = ({ value, onChange, form, name, ...rest }) => {
   const [inputValue, setValue] = useState(value);
 
   const onClick = () => {
-    form.setFieldsValue({ [name]: inputValue });
+    form?.setFieldsValue({ [name]: inputValue });
   };
 
   const onValueChange = (e) => {
@@ -372,7 +372,7 @@ const PathInput = ({ value, onChange, form, name, ...rest }) => {
 };
 
 export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, name, type, filters = [], ...rest } = props;
+  const { form, name, type, onChange, filters = [], ...rest } = props;
 
   if (!isElectron()) return <PathInput {...props} />;
 
@@ -384,7 +384,10 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         style={{ width: 60 }}
         icon={<FileSearchOutlined />}
         onClick={async () => {
-          await openDialog(form, type, filters, name);
+          // TODO: Remove need for form
+          const path = await openDialog(form, type, filters, name);
+          onChange?.(path);
+          form?.validateFields([name]);
         }}
       ></Button>
     </Space.Compact>
@@ -410,9 +413,10 @@ export const OpenDialogButton = ({
         type={buttonType}
         style={{ width: '100%' }}
         onClick={async () => {
-          await openDialog(form, type, filters, name);
-          onChange?.(form.getFieldValue(name));
-          form.validateFields([name]);
+          // TODO: Remove need for form
+          const path = await openDialog(form, type, filters, name);
+          onChange?.(path);
+          form?.validateFields([name]);
         }}
       >
         {children}
