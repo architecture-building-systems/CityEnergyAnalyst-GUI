@@ -1,5 +1,13 @@
 import { Button, Col, List, Modal, Result, Row, Spin, Steps } from 'antd';
-import { lazy, memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
@@ -330,13 +338,15 @@ const CreateScenario = () => {
   const secondaryCards = {
     scenarioList: <ScenarioList />,
     map: (
-      <EditableMap
-        viewState={viewState}
-        onViewStateChange={setViewState}
-        polygon={geojson}
-        onPolygonChange={setGeojson}
-        onMapLoad={onMapLoad}
-      />
+      <Suspense fallback={<div>Loading Map...</div>}>
+        <EditableMap
+          viewState={viewState}
+          onViewStateChange={setViewState}
+          polygon={geojson}
+          onPolygonChange={setGeojson}
+          onMapLoad={onMapLoad}
+        />
+      </Suspense>
     ),
   };
 
