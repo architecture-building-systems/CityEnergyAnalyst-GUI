@@ -19,6 +19,7 @@ const validateGeometry = async (value, buildingType) => {
     )
   )
     return Promise.resolve();
+  else if (value === undefined) return Promise.reject();
 
   try {
     const response = await axios.post(
@@ -40,6 +41,7 @@ const validateGeometry = async (value, buildingType) => {
 
 const validateTypology = async (value) => {
   if (value === GENERATE_TYPOLOGY_CEA) return Promise.resolve();
+  else if (value === undefined) return Promise.reject();
 
   try {
     const response = await axios.post(
