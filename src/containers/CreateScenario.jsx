@@ -9,15 +9,7 @@ import {
   Spin,
   Steps,
 } from 'antd';
-import {
-  lazy,
-  memo,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { lazy, memo, Suspense, useEffect, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
@@ -309,40 +301,11 @@ const ScenarioList = () => {
 };
 
 const CreateScenario = () => {
-  const mapRef = useRef();
-
   const [formIndex, setFormIndex] = useState(0);
+
+  // Store map view state
   const [viewState, setViewState] = useState();
   const [geojson, setGeojson] = useState();
-  const [location, setLocation] = useState();
-
-  const onMapLoad = useCallback((e) => {
-    const mapbox = e.target;
-
-    // Store the map instance in the ref
-    mapRef.current = mapbox;
-  }, []);
-
-  // Use mapbox to determine zoom level based on bbox
-  useEffect(() => {
-    if (location?.bbox && mapRef.current) {
-      const mapbox = mapRef.current;
-      const { zoom } = mapbox.cameraForBounds(location.bbox, {
-        maxZoom: 18,
-      });
-      setViewState({
-        ...viewState,
-        zoom: zoom,
-        latitude: location.latitude,
-        longitude: location.longitude,
-      });
-
-      // Trigger a refresh so that map is zoomed correctly
-      mapbox.zoomTo(mapbox.getZoom());
-    } else {
-      setViewState(viewState);
-    }
-  }, [location]);
 
   const secondaryCards = {
     scenarioList: <ScenarioList />,
@@ -353,7 +316,6 @@ const CreateScenario = () => {
           onViewStateChange={setViewState}
           polygon={geojson}
           onPolygonChange={setGeojson}
-          onMapLoad={onMapLoad}
         />
       </Suspense>
     ),
@@ -366,7 +328,7 @@ const CreateScenario = () => {
           {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
         </Col>
         <Col span={12}>
-          <MapFormContext.Provider value={{ geojson, setLocation }}>
+          <MapFormContext.Provider value={{ geojson }}>
             <CreateScenarioForm
               formIndex={formIndex}
               onFormChange={setFormIndex}

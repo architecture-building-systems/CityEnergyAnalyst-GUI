@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import positron from '../../constants/mapStyles/positron.json';
@@ -8,11 +8,13 @@ import {
   ModifyMode,
   ViewMode,
 } from '@deck.gl-community/editable-layers';
-import { Button } from 'antd';
+import { Button, Input } from 'antd';
 import './EditableMap.css';
 import { DeckGL } from '@deck.gl/react';
 import axios from 'axios';
 import { GeoJsonLayer } from 'deck.gl';
+import { EXAMPLE_CITIES } from '../Project/CreateScenarioForms/constants';
+import { useCameraForBounds, useGeocodeLocation } from './hooks';
 
 const defaultViewState = {
   longitude: 0,
@@ -66,28 +68,74 @@ const useFetchBuildings = (polygon, mode) => {
   return { buildings, fetching, error };
 };
 
+const LocationSearchBar = ({ onLocationResult }) => {
+  const randomCity = useRef(
+    EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
+  );
+
+  const { locationAddress, setSearchAddress, loading } =
+    useGeocodeLocation(onLocationResult);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <i>Search for a location</i>
+      <Input.Search
+        placeholder={`Example: type "${randomCity.current}”`}
+        allowClear
+        loading={loading}
+        onSearch={setSearchAddress}
+      />
+      {locationAddress instanceof Error ? (
+        <small style={{ color: 'red', fontStyle: 'italic' }}>
+          Location not found
+        </small>
+      ) : (
+        locationAddress && (
+          <small>
+            <i>Found location: {locationAddress?.display_name || 'Unknown'}</i>
+          </small>
+        )
+      )}
+    </div>
+  );
+};
+
 const EditableMap = ({
   viewState,
   onViewStateChange,
 
   onMapLoad,
 
-  polygon = EMPTY_FEATURE,
+  polygon,
   onPolygonChange,
 }) => {
-  const [_viewState, setViewState] = useState(defaultViewState);
+  const mapRef = useRef();
+
+  const handleViewStateChange = useCallback(({ viewState }) => {
+    onViewStateChange?.(viewState);
+  }, []);
+
+  const { setLocation } = useCameraForBounds(
+    mapRef,
+    ({ cameraOptions, location }) => {
+      onViewStateChange({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        zoom: cameraOptions.zoom,
+      });
+
+      // Trigger a refresh so that map is zoomed correctly
+      mapRef.current.zoomTo(cameraOptions.zoom);
+    },
+  );
+
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(polygon || EMPTY_FEATURE);
 
   const { buildings, fetching, error } = useFetchBuildings(data, mode);
 
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
-  const hasData = data.features.length > 0;
-
-  const triggerViewStateChange = useCallback(({ viewState: newViewState }) => {
-    setViewState(newViewState);
-    onViewStateChange?.(newViewState);
-  }, []);
+  const hasData = data?.features?.length > 0;
 
   const triggerDataChange = useCallback((data) => {
     setData(data);
@@ -154,33 +202,46 @@ const EditableMap = ({
 
   return (
     <>
-      {hasData && (
-        <div id="edit-map-area-info">
-          {fetching ? (
-            <b>Fetching buildings...</b>
-          ) : error ? (
-            <b>Error fetching buildings</b>
-          ) : (
-            <div
-              style={{
-                maxWidth: 200,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-              }}
-            >
-              <div>
-                <b>Buildings found: {buildings.features.length}</b>
+      <div
+        id="edit-map-search-bar"
+        style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          padding: 12,
+          zIndex: 5,
+          width: 300,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: 10,
+        }}
+      >
+        <LocationSearchBar onLocationResult={setLocation} />
+
+        {hasData && (
+          <div>
+            {fetching ? (
+              <b>Fetching buildings...</b>
+            ) : error ? (
+              <b>Error fetching buildings</b>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <b>Buildings found: {buildings?.features?.length || 0}</b>
+                </div>
+                <small>
+                  <i>
+                    The number of buildings may be different after
+                    postprocessing.
+                  </i>
+                </small>
               </div>
-              <small>
-                <i>
-                  The number of buildings may be different after postprocessing.
-                </i>
-              </small>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
 
       <div id="edit-map-buttons">
         {hasData ? (
@@ -207,12 +268,21 @@ const EditableMap = ({
 
       <div onContextMenu={(e) => e.preventDefault()}>
         <DeckGL
-          viewState={viewState || _viewState}
+          viewState={viewState || defaultViewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
           layers={[editableLayer, buildingsLayer]}
-          onViewStateChange={triggerViewStateChange}
+          onViewStateChange={handleViewStateChange}
         >
-          <Map mapStyle={positron} onLoad={onMapLoad} />
+          <Map
+            mapStyle={positron}
+            onLoad={(e) => {
+              const mapbox = e.target;
+              // Store the map instance in the ref
+              mapRef.current = mapbox;
+
+              onMapLoad?.(e);
+            }}
+          />
         </DeckGL>
       </div>
     </>

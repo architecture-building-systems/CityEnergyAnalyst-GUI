@@ -1,16 +1,15 @@
-import { Form, Button, InputNumber, Input, Alert } from 'antd';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { Form, InputNumber, Alert } from 'antd';
+import { useContext, useEffect, useState } from 'react';
 import { FileSearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { MapFormContext } from './hooks';
 import {
   GENERATE_ZONE_CEA,
   GENERATE_SURROUNDINGS_CEA,
   EMTPY_GEOMETRY,
-  EXAMPLE_CITIES,
   GENERATE_TYPOLOGY_CEA,
 } from './constants';
 import { SelectWithFileDialog } from './FormInput';
+import { MapFormContext } from './hooks';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -57,193 +56,6 @@ const validateTypology = async (value) => {
     const errorMessage =
       error?.response?.data?.detail || 'Unable to validate typology.';
     return Promise.reject(`${errorMessage}`);
-  }
-};
-
-const GenerateGeometryForm = ({
-  initialValues,
-  onChange,
-  onBack,
-  onFinish,
-  setSecondary,
-}) => {
-  const [form] = Form.useForm();
-  const [error, setError] = useState(null);
-
-  const onFinishFailed = ({ errorFields }) => {
-    setError(errorFields.find((error) => error.name.includes('generate_zone')));
-  };
-
-  useEffect(() => {
-    if (initialValues?.user_zone === GENERATE_ZONE_CEA) setSecondary('map');
-  }, []);
-
-  return (
-    <Form
-      form={form}
-      initialValues={initialValues}
-      onValuesChange={onChange}
-      onFinish={onFinish}
-      onFinishFailed={onFinishFailed}
-      layout="vertical"
-    >
-      {initialValues?.user_zone === GENERATE_ZONE_CEA && (
-        <>
-          <div
-            style={{
-              marginBottom: 24,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
-            <div>
-              Search for a location below and select an area with buildings by
-              drawing a polygon on the map.
-            </div>
-            {error && <div style={{ color: 'red' }}>{error.errors[0]}</div>}
-          </div>
-
-          <GenerateZoneGeometryForm
-            form={form}
-            name="generate_zone"
-            onChange={() => setError(null)}
-          />
-
-          <Form.Item
-            name="generate_zone"
-            rules={[
-              {
-                validator: (_, value) =>
-                  value?.features?.length
-                    ? Promise.resolve()
-                    : Promise.reject(
-                        new Error(
-                          'Area geometry not found. Please select an area on the map by drawing a polygon.',
-                        ),
-                      ),
-              },
-            ]}
-            hidden
-          />
-        </>
-      )}
-
-      {initialValues?.user_surroundings === GENERATE_SURROUNDINGS_CEA && (
-        <Form.Item
-          label="Generate surroundings geometry"
-          name="generate_surroundings"
-          extra="Set the buffer in meters around the zone buildings."
-          rules={[{ required: true, message: 'This field is required.' }]}
-          initialValue={initialValues.generate_surroundings || 50}
-        >
-          <InputNumber min={1} />
-        </Form.Item>
-      )}
-      <Form.Item>
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            style={{ padding: '0 36px' }}
-          >
-            Next
-          </Button>
-          <Button style={{ padding: '0 36px' }} onClick={onBack}>
-            Back
-          </Button>
-        </div>
-      </Form.Item>
-    </Form>
-  );
-};
-
-const GenerateZoneGeometryForm = ({ form, name, onChange }) => {
-  const randomCity = useRef(
-    EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
-  );
-
-  const { geojson, setLocation } = useContext(MapFormContext);
-  const [loading, setLoading] = useState(false);
-  const [locationAddress, setAddress] = useState(null);
-
-  const onSearch = async (searchAddress) => {
-    if (searchAddress.trim().length === 0) return;
-
-    setLoading(true);
-    setAddress(null);
-    try {
-      const data = await getGeocodeLocation(searchAddress);
-      if (data === null) {
-        throw new Error('Location not found.');
-      }
-      const { lat, lon, display_name, boundingbox } = data;
-      setLocation({
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon),
-        zoom: 16,
-        bbox: [boundingbox[2], boundingbox[0], boundingbox[3], boundingbox[1]],
-      });
-      setAddress(display_name);
-    } catch (err) {
-      console.error(err);
-      setAddress(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    form.setFieldValue(name, geojson);
-    onChange(geojson);
-  }, [geojson]);
-
-  return (
-    <Form.Item
-      label="Location"
-      extra="Search for a location using OpenStreetMap."
-      initialValue={geojson}
-    >
-      <Input.Search
-        placeholder={`Example: type "${randomCity.current}”`}
-        allowClear
-        enterButton="Search"
-        loading={loading}
-        onSearch={onSearch}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            // Prevent form submit
-            e.preventDefault();
-          }
-        }}
-      />
-      {locationAddress instanceof Error ? (
-        <small style={{ margin: 4 }}>
-          <i>Location not found</i>
-        </small>
-      ) : (
-        locationAddress && (
-          <small style={{ margin: 4 }}>
-            <i>Found location: {locationAddress}</i>
-          </small>
-        )
-      )}
-    </Form.Item>
-  );
-};
-
-const getGeocodeLocation = async (address) => {
-  try {
-    const _address = encodeURIComponent(address);
-    const resp = await axios.get(
-      `https://nominatim.openstreetmap.org/?format=json&q=${_address}&limit=1`,
-    );
-    if (resp?.data && resp.data.length) {
-      return resp.data[0];
-    } else return null;
-  } catch (err) {
-    console.error(err);
-    return null;
   }
 };
 
@@ -310,7 +122,12 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
   );
 };
 
-const GenerateZoneFormItem = () => {
+const GenerateZoneFormItem = ({ form }) => {
+  const { geojson } = useContext(MapFormContext);
+  useEffect(() => {
+    form.setFieldValue('generate_zone', geojson);
+  }, [geojson]);
+
   const [error, setError] = useState(null);
 
   const generateZoneValidator = (_, value) => {
@@ -462,6 +279,8 @@ const TypologyFormItem = () => {
 };
 
 const GeometryForm = ({ initialValues, onChange, onFinish, formButtons }) => {
+  const [form] = Form.useForm();
+
   const [showTypologyForm, setTypologyVisibility] = useState(
     initialValues?.typology_in_zone || false,
   );
@@ -481,6 +300,7 @@ const GeometryForm = ({ initialValues, onChange, onFinish, formButtons }) => {
 
   return (
     <Form
+      form={form}
       initialValues={initialValues}
       onValuesChange={onChange}
       onFinish={onFinish}
@@ -491,7 +311,7 @@ const GeometryForm = ({ initialValues, onChange, onFinish, formButtons }) => {
       <ZoneGeometryFormItem onValidated={onZoneValidated} />
       {showTypologyForm && <TypologyFormItem />}
       {initialValues?.user_zone === GENERATE_ZONE_CEA && (
-        <GenerateZoneFormItem />
+        <GenerateZoneFormItem form={form} />
       )}
 
       <SurroundingsGeometryFormItem />
