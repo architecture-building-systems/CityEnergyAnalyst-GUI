@@ -394,7 +394,7 @@ const GenerateSurroundingsFormItem = ({ initialValue }) => {
       rules={[{ required: true, message: 'This field is required.' }]}
       initialValue={initialValue || 50}
     >
-      <InputNumber min={1} />
+      <InputNumber min={1} suffix="m" />
     </Form.Item>
   );
 };
