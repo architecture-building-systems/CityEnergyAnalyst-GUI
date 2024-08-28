@@ -29,7 +29,8 @@ const EMPTY_FEATURE = {
   features: [],
 };
 
-const useFetchBuildings = (polygon, mode) => {
+const useFetchBuildings = (onFetchedBuildings) => {
+  const [polygon, setPolygon] = useState();
   const [buildings, setBuildings] = useState(EMPTY_FEATURE);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState();
@@ -48,6 +49,7 @@ const useFetchBuildings = (polygon, mode) => {
         },
       );
       setBuildings(resp.data);
+      onFetchedBuildings?.(resp.data);
     } catch (error) {
       console.log(error);
 
@@ -59,13 +61,13 @@ const useFetchBuildings = (polygon, mode) => {
 
   useEffect(() => {
     if (polygon && polygon?.features?.length) {
-      mode == null && fetchBuildings(polygon);
+      fetchBuildings(polygon);
     } else {
       setBuildings(EMPTY_FEATURE);
     }
-  }, [polygon, mode]);
+  }, [polygon]);
 
-  return { buildings, fetching, error };
+  return { setPolygon, buildings, fetching, error };
 };
 
 const LocationSearchBar = ({ onLocationResult }) => {
@@ -108,8 +110,11 @@ const EditableMap = ({
 
   polygon,
   onPolygonChange,
+  onFetchedBuildings,
 
-  disableDrawing = false,
+  buildings,
+
+  drawingMode = false,
 }) => {
   const mapRef = useRef();
 
@@ -134,7 +139,12 @@ const EditableMap = ({
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(polygon || EMPTY_FEATURE);
 
-  const { buildings, fetching, error } = useFetchBuildings(data, mode);
+  const {
+    setPolygon,
+    buildings: previewBuildings,
+    fetching,
+    error,
+  } = useFetchBuildings(onFetchedBuildings);
 
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
   const hasData = data?.features?.length > 0;
@@ -165,14 +175,28 @@ const EditableMap = ({
         triggerDataChange(e.updatedData);
       }
     },
+
+    visible: drawingMode,
+  });
+
+  const previewBuildingsLayer = new GeoJsonLayer({
+    id: 'preview-buildings-layer',
+    data: previewBuildings,
+    getFillColor: [255, 255, 255],
+    getLineColor: [0, 0, 0],
+    getLineWidth: 1,
+
+    visible: drawingMode,
   });
 
   const buildingsLayer = new GeoJsonLayer({
     id: 'buildings-layer',
-    data: buildings,
+    data: buildings || EMPTY_FEATURE,
     getFillColor: [255, 255, 255],
     getLineColor: [0, 0, 0],
     getLineWidth: 1,
+
+    visible: !drawingMode,
   });
 
   const ToggleDraw = () => {
@@ -203,12 +227,13 @@ const EditableMap = ({
   }, [mode]);
 
   useEffect(() => {
-    if (disableDrawing) triggerDataChange(EMPTY_FEATURE);
-  }, [disableDrawing]);
+    // Only fetch buildings if the mode is not draw or edit
+    mode == null && setPolygon(data);
+  }, [mode, data]);
 
   return (
     <>
-      {!disableDrawing && (
+      {drawingMode && (
         <>
           <div
             id="edit-map-search-bar"
@@ -228,29 +253,25 @@ const EditableMap = ({
           >
             <LocationSearchBar onLocationResult={setLocation} />
 
-            {hasData && (
-              <div>
-                {fetching ? (
-                  <b>Fetching buildings...</b>
-                ) : error ? (
-                  <b>Error fetching buildings</b>
-                ) : (
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-                  >
-                    <div>
-                      <b>Buildings found: {buildings?.features?.length || 0}</b>
-                    </div>
-                    <small>
-                      <i>
-                        The number of buildings may be different after
-                        postprocessing.
-                      </i>
-                    </small>
-                  </div>
-                )}
+            {fetching ? (
+              <b>Fetching buildings...</b>
+            ) : error ? (
+              <b>Error fetching buildings</b>
+            ) : previewBuildings?.features?.length ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <b>
+                    Buildings found: {previewBuildings?.features?.length || 0}
+                  </b>
+                </div>
+                <small>
+                  <i>
+                    The number of buildings may be different after
+                    postprocessing.
+                  </i>
+                </small>
               </div>
-            )}
+            ) : null}
           </div>
           <div id="edit-map-buttons">
             {hasData ? (
@@ -281,7 +302,7 @@ const EditableMap = ({
         <DeckGL
           viewState={viewState || defaultViewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
-          layers={[editableLayer, buildingsLayer]}
+          layers={[editableLayer, previewBuildingsLayer, buildingsLayer]}
           onViewStateChange={handleViewStateChange}
         >
           <Map

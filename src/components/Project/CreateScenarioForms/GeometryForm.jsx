@@ -123,14 +123,15 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 };
 
 const GenerateZoneFormItem = ({ form }) => {
-  const { geojson, setDisableDrawing } = useContext(MapFormContext);
+  const { geojson, setDrawingMode } = useContext(MapFormContext);
   useEffect(() => {
     form.setFieldValue('generate_zone', geojson);
   }, [geojson]);
 
+  // Set drawing mode on mount and disable it on unmount
   useEffect(() => {
-    setDisableDrawing(false);
-    return () => setDisableDrawing(true);
+    setDrawingMode(true);
+    return () => setDrawingMode(false);
   }, []);
 
   const [error, setError] = useState(null);

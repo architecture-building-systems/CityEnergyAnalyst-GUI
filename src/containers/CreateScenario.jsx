@@ -307,7 +307,9 @@ const CreateScenario = () => {
   // Store map view state
   const [viewState, setViewState] = useState();
   const [geojson, setGeojson] = useState();
-  const [disableDrawing, setDisableDrawing] = useState(true);
+  const [drawingMode, setDrawingMode] = useState(false);
+
+  const [buildings, setBuildings] = useState();
 
   const secondaryCards = {
     scenarioList: <ScenarioList />,
@@ -318,7 +320,9 @@ const CreateScenario = () => {
           onViewStateChange={setViewState}
           polygon={geojson}
           onPolygonChange={setGeojson}
-          disableDrawing={disableDrawing}
+          drawingMode={drawingMode}
+          onFetchedBuildings={setBuildings}
+          buildings={buildings}
         />
       </Suspense>
     ),
@@ -331,7 +335,9 @@ const CreateScenario = () => {
           {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
         </Col>
         <Col span={12}>
-          <MapFormContext.Provider value={{ geojson, setDisableDrawing }}>
+          <MapFormContext.Provider
+            value={{ geojson, setDrawingMode, setBuildings }}
+          >
             <CreateScenarioForm
               formIndex={formIndex}
               onFormChange={handleFormIndexChange}
