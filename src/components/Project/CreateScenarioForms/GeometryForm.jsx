@@ -1,4 +1,4 @@
-import { Form, Button, InputNumber, Input } from 'antd';
+import { Form, Button, InputNumber, Input, Alert } from 'antd';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { FileSearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -311,17 +311,40 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 };
 
 const GenerateZoneFormItem = () => {
-  const generateZoneValidator = (_, value) =>
-    value?.features?.length
-      ? Promise.resolve()
-      : Promise.reject(
-          new Error(
-            'Area geometry not found. Please select an area on the map by drawing a polygon.',
-          ),
-        );
+  const [error, setError] = useState(null);
+
+  const generateZoneValidator = (_, value) => {
+    if (value?.features?.length) {
+      setError(null);
+      return Promise.resolve();
+    } else {
+      setError(
+        'Area geometry not found. Please select an area on the map by drawing a polygon.',
+      );
+      return Promise.reject();
+    }
+  };
 
   return (
     <>
+      <div
+        style={{
+          marginBottom: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      >
+        <Alert
+          message="Select an area on the map"
+          description="Search for a location on the map and select an area with buildings by
+          drawing a polygon."
+          type="info"
+          showIcon
+        />
+
+        {error && <div style={{ color: 'red' }}>{error}</div>}
+      </div>
       <Form.Item
         name="generate_zone"
         rules={[

@@ -1,4 +1,14 @@
-import { Button, Col, List, Modal, Result, Row, Spin, Steps } from 'antd';
+import {
+  Alert,
+  Button,
+  Col,
+  List,
+  Modal,
+  Result,
+  Row,
+  Spin,
+  Steps,
+} from 'antd';
 import {
   lazy,
   memo,
@@ -20,7 +30,6 @@ import {
 import axios from 'axios';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useOpenScenario } from '../components/Project/Project';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -351,7 +360,7 @@ const CreateScenario = () => {
   };
 
   return (
-    <ErrorBoundary>
+    <Alert.ErrorBoundary>
       <Row style={{ height: '100%' }}>
         <Col span={12}>
           {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
@@ -365,7 +374,7 @@ const CreateScenario = () => {
           </MapFormContext.Provider>
         </Col>
       </Row>
-    </ErrorBoundary>
+    </Alert.ErrorBoundary>
   );
 };
 
