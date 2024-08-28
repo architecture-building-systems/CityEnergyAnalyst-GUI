@@ -9,7 +9,7 @@ import {
   Spin,
   Steps,
 } from 'antd';
-import { lazy, memo, Suspense, useEffect, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useState } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
@@ -302,10 +302,12 @@ const ScenarioList = () => {
 
 const CreateScenario = () => {
   const [formIndex, setFormIndex] = useState(0);
+  const handleFormIndexChange = useCallback((index) => setFormIndex(index), []);
 
   // Store map view state
   const [viewState, setViewState] = useState();
   const [geojson, setGeojson] = useState();
+  const [disableDrawing, setDisableDrawing] = useState(true);
 
   const secondaryCards = {
     scenarioList: <ScenarioList />,
@@ -316,6 +318,7 @@ const CreateScenario = () => {
           onViewStateChange={setViewState}
           polygon={geojson}
           onPolygonChange={setGeojson}
+          disableDrawing={disableDrawing}
         />
       </Suspense>
     ),
@@ -328,10 +331,10 @@ const CreateScenario = () => {
           {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
         </Col>
         <Col span={12}>
-          <MapFormContext.Provider value={{ geojson }}>
+          <MapFormContext.Provider value={{ geojson, setDisableDrawing }}>
             <CreateScenarioForm
               formIndex={formIndex}
-              onFormChange={setFormIndex}
+              onFormChange={handleFormIndexChange}
             />
           </MapFormContext.Provider>
         </Col>

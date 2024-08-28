@@ -108,6 +108,8 @@ const EditableMap = ({
 
   polygon,
   onPolygonChange,
+
+  disableDrawing = false,
 }) => {
   const mapRef = useRef();
 
@@ -200,71 +202,80 @@ const EditableMap = ({
     else setSelectedFeatureIndexes([]);
   }, [mode]);
 
+  useEffect(() => {
+    if (disableDrawing) triggerDataChange(EMPTY_FEATURE);
+  }, [disableDrawing]);
+
   return (
     <>
-      <div
-        id="edit-map-search-bar"
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          padding: 12,
-          zIndex: 5,
-          width: 300,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          borderRadius: 10,
-        }}
-      >
-        <LocationSearchBar onLocationResult={setLocation} />
+      {!disableDrawing && (
+        <>
+          <div
+            id="edit-map-search-bar"
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              padding: 12,
+              zIndex: 5,
+              width: 300,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderRadius: 10,
+            }}
+          >
+            <LocationSearchBar onLocationResult={setLocation} />
 
-        {hasData && (
-          <div>
-            {fetching ? (
-              <b>Fetching buildings...</b>
-            ) : error ? (
-              <b>Error fetching buildings</b>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div>
-                  <b>Buildings found: {buildings?.features?.length || 0}</b>
-                </div>
-                <small>
-                  <i>
-                    The number of buildings may be different after
-                    postprocessing.
-                  </i>
-                </small>
+            {hasData && (
+              <div>
+                {fetching ? (
+                  <b>Fetching buildings...</b>
+                ) : error ? (
+                  <b>Error fetching buildings</b>
+                ) : (
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+                  >
+                    <div>
+                      <b>Buildings found: {buildings?.features?.length || 0}</b>
+                    </div>
+                    <small>
+                      <i>
+                        The number of buildings may be different after
+                        postprocessing.
+                      </i>
+                    </small>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
-
-      <div id="edit-map-buttons">
-        {hasData ? (
-          <>
-            <Button
-              type={mode === 'edit' ? 'primary' : 'default'}
-              onClick={ToggleEdit}
-            >
-              Edit
-            </Button>
-            <Button type="primary" onClick={deletePolygon} danger>
-              Delete
-            </Button>
-          </>
-        ) : (
-          <Button
-            type={mode === 'draw' ? 'primary' : 'default'}
-            onClick={ToggleDraw}
-          >
-            Draw
-          </Button>
-        )}
-      </div>
+          <div id="edit-map-buttons">
+            {hasData ? (
+              <>
+                <Button
+                  type={mode === 'edit' ? 'primary' : 'default'}
+                  onClick={ToggleEdit}
+                >
+                  Edit
+                </Button>
+                <Button type="primary" onClick={deletePolygon} danger>
+                  Delete
+                </Button>
+              </>
+            ) : (
+              <Button
+                type={mode === 'draw' ? 'primary' : 'default'}
+                onClick={ToggleDraw}
+              >
+                Draw
+              </Button>
+            )}
+          </div>
+        </>
+      )}
 
       <div onContextMenu={(e) => e.preventDefault()}>
         <DeckGL

@@ -123,10 +123,15 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 };
 
 const GenerateZoneFormItem = ({ form }) => {
-  const { geojson } = useContext(MapFormContext);
+  const { geojson, setDisableDrawing } = useContext(MapFormContext);
   useEffect(() => {
     form.setFieldValue('generate_zone', geojson);
   }, [geojson]);
+
+  useEffect(() => {
+    setDisableDrawing(false);
+    return () => setDisableDrawing(true);
+  }, []);
 
   const [error, setError] = useState(null);
 
