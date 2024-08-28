@@ -230,14 +230,14 @@ const SurroundingsGeometryFormItem = () => {
   );
 };
 
-const GenerateSurroundingsFormItem = ({ initialValue }) => {
+const GenerateSurroundingsFormItem = ({ initialValue = 50 }) => {
   return (
     <Form.Item
       label="Generate surroundings geometry"
       name="generate_surroundings"
       extra="Set the buffer in meters around the zone buildings."
       rules={[{ required: true, message: 'This field is required.' }]}
-      initialValue={initialValue || 50}
+      initialValue={initialValue}
     >
       <InputNumber min={1} suffix="m" />
     </Form.Item>
