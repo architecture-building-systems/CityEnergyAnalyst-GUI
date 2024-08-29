@@ -65,6 +65,7 @@ const LocationSearchBar = ({ onLocationResult }) => {
 const DrawModeInterface = ({
   mode,
 
+  buildings,
   polygon,
 
   onFetchedBuildings,
@@ -74,7 +75,7 @@ const DrawModeInterface = ({
   onEdit,
   onDelete,
 }) => {
-  const { fetchBuildings, buildings, fetching, error } =
+  const { fetchBuildings, fetching, error } =
     useFetchBuildings(onFetchedBuildings); // Store fetched buildings in parent context
 
   useEffect(() => {
@@ -253,26 +254,16 @@ const EditableMap = ({
     else setSelectedFeatureIndexes([]);
   }, [mode]);
 
-  // useEffect(() => {
-  //   // Zoom to buildings if not in drawMode
-  //   if (!drawingMode && buildings) {
-  //     const boundingbox = turf.bbox(buildings);
-  //     const centroid = turf.center(buildings);
-  //     const coord = turf.getCoord(centroid);
-
-  //     setLocation({
-  //       boundingbox,
-  //       longitude: coord[0],
-  //       latitude: coord[1],
-  //     });
-  //   }
-  // }, [drawingMode, buildings, setLocation]);
+  useEffect(() => {
+    if (drawingMode) setSelectedFeatureIndexes([]);
+  }, [drawingMode]);
 
   return (
     <>
       {drawingMode && (
         <DrawModeInterface
           mode={mode}
+          buildings={buildings}
           polygon={data}
           onFetchedBuildings={onFetchedBuildings}
           onLocationResult={setLocation}
