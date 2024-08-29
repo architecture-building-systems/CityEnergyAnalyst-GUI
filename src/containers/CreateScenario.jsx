@@ -9,7 +9,15 @@ import {
   Spin,
   Steps,
 } from 'antd';
-import { lazy, memo, Suspense, useCallback, useEffect, useState } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
@@ -328,6 +336,11 @@ const CreateScenario = () => {
     ),
   };
 
+  const contextValue = useMemo(
+    () => ({ geojson, setDrawingMode, setBuildings }),
+    [geojson],
+  );
+
   return (
     <Alert.ErrorBoundary>
       <Row style={{ height: '100%' }}>
@@ -335,9 +348,7 @@ const CreateScenario = () => {
           {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
         </Col>
         <Col span={12}>
-          <MapFormContext.Provider
-            value={{ geojson, setDrawingMode, setBuildings }}
-          >
+          <MapFormContext.Provider value={contextValue}>
             <CreateScenarioForm
               formIndex={formIndex}
               onFormChange={handleFormIndexChange}
