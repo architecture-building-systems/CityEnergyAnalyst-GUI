@@ -10,6 +10,7 @@ import {
 } from './constants';
 import { SelectWithFileDialog } from './FormInput';
 import { MapFormContext } from './hooks';
+import { useFetchBuildingsFromPath } from '../../Map/hooks';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -60,6 +61,9 @@ const validateTypology = async (value) => {
 };
 
 const ZoneGeometryFormItem = ({ onValidated }) => {
+  const { setBuildings } = useContext(MapFormContext);
+  const { setPath } = useFetchBuildingsFromPath(setBuildings);
+
   const userZoneValidator = async (_, value) => {
     // Do not check if zone is generated
     if (value === GENERATE_ZONE_CEA) {
@@ -70,6 +74,7 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
     // Check if zone is valid
     try {
       await validateGeometry(value, 'zone');
+      setPath(value);
     } catch (error) {
       onValidated?.({ valid: false, typology: null });
       return Promise.reject(error);

@@ -16,6 +16,8 @@ import { GeoJsonLayer } from 'deck.gl';
 import { EXAMPLE_CITIES } from '../Project/CreateScenarioForms/constants';
 import { useCameraForBounds, useGeocodeLocation } from './hooks';
 
+import * as turf from '@turf/turf';
+
 const defaultViewState = {
   longitude: 0,
   latitude: 0,
@@ -144,7 +146,7 @@ const EditableMap = ({
     buildings: previewBuildings,
     fetching,
     error,
-  } = useFetchBuildings(onFetchedBuildings);
+  } = useFetchBuildings(onFetchedBuildings); // Store fetched buildings in parent context
 
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
   const hasData = data?.features?.length > 0;
@@ -230,6 +232,20 @@ const EditableMap = ({
     // Only fetch buildings if the mode is not draw or edit
     mode == null && setPolygon(data);
   }, [mode, data]);
+
+  useEffect(() => {
+    if (!drawingMode && buildings) {
+      const boundingbox = turf.bbox(buildings);
+      const centroid = turf.center(buildings);
+      const coord = turf.getCoord(centroid);
+
+      setLocation({
+        boundingbox,
+        longitude: coord[0],
+        latitude: coord[1],
+      });
+    }
+  }, [buildings]);
 
   return (
     <>

@@ -79,3 +79,39 @@ export const useCameraForBounds = (mapRef, onChange) => {
 
   return { setLocation };
 };
+
+export const useFetchBuildingsFromPath = (onFetchedBuildings) => {
+  const [path, setPath] = useState();
+  const [buildings, setBuildings] = useState();
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState();
+
+  const fetchBuildings = async (path) => {
+    setError(null);
+    setFetching(true);
+    try {
+      const resp = await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
+        {
+          params: {
+            path,
+          },
+        },
+      );
+      setBuildings(resp.data);
+      onFetchedBuildings?.(resp.data);
+    } catch (error) {
+      console.log(error);
+
+      setError(error);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (path) fetchBuildings(path);
+  }, [path]);
+
+  return { setPath, buildings, fetching, error };
+};
