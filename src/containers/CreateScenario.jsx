@@ -16,6 +16,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
@@ -30,6 +31,8 @@ import {
 import axios from 'axios';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useOpenScenario } from '../components/Project/Project';
+import { useCameraForBounds } from '../components/Map/hooks';
+import { calcBoundsAndCenter } from '../components/Map/utils';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -309,6 +312,9 @@ const ScenarioList = () => {
 };
 
 const CreateScenario = () => {
+  const mapRef = useRef();
+  const onMapLoad = useCallback((e) => (mapRef.current = e.target), []);
+
   const [formIndex, setFormIndex] = useState(0);
   const handleFormIndexChange = useCallback((index) => setFormIndex(index), []);
 
@@ -318,6 +324,22 @@ const CreateScenario = () => {
   const [drawingMode, setDrawingMode] = useState(false);
 
   const [buildings, setBuildings] = useState();
+
+  const { setLocation } = useCameraForBounds(
+    mapRef,
+    ({ cameraOptions, location }) => {
+      setViewState({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        zoom: cameraOptions.zoom,
+      });
+    },
+  );
+
+  const handleZoneGeometryChange = useCallback((zone) => {
+    setBuildings(zone);
+    setLocation(calcBoundsAndCenter(zone));
+  }, []);
 
   const secondaryCards = {
     scenarioList: <ScenarioList />,
@@ -331,14 +353,26 @@ const CreateScenario = () => {
           drawingMode={drawingMode}
           onFetchedBuildings={setBuildings}
           buildings={buildings}
+          onMapLoad={onMapLoad}
         />
       </Suspense>
     ),
   };
 
+  useEffect(() => {
+    // Go to building location on last form
+    if (formIndex === 2) {
+      setLocation(calcBoundsAndCenter(buildings));
+    }
+  }, [formIndex]);
+
   const contextValue = useMemo(
-    () => ({ geojson, setDrawingMode, setBuildings }),
-    [geojson],
+    () => ({
+      geojson,
+      setDrawingMode,
+      setBuildings: handleZoneGeometryChange,
+    }),
+    [geojson, handleZoneGeometryChange],
   );
 
   return (

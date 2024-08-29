@@ -62,7 +62,7 @@ const validateTypology = async (value) => {
 
 const ZoneGeometryFormItem = ({ onValidated }) => {
   const { setBuildings } = useContext(MapFormContext);
-  const { setPath } = useFetchBuildingsFromPath(setBuildings);
+  const { fetchBuildings } = useFetchBuildingsFromPath(setBuildings);
 
   const userZoneValidator = async (_, value) => {
     // Do not check if zone is generated
@@ -74,7 +74,7 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
     // Check if zone is valid
     try {
       await validateGeometry(value, 'zone');
-      setPath(value);
+      fetchBuildings(value);
     } catch (error) {
       onValidated?.({ valid: false, typology: null });
       return Promise.reject(error);

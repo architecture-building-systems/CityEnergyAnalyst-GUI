@@ -11,12 +11,14 @@ import {
 import { Button, Input } from 'antd';
 import './EditableMap.css';
 import { DeckGL } from '@deck.gl/react';
-import axios from 'axios';
 import { GeoJsonLayer } from 'deck.gl';
 import { EXAMPLE_CITIES } from '../Project/CreateScenarioForms/constants';
-import { useCameraForBounds, useGeocodeLocation } from './hooks';
-
-import * as turf from '@turf/turf';
+import {
+  useCameraForBounds,
+  useGeocodeLocation,
+  useFetchBuildings,
+} from './hooks';
+import { EMPTY_FEATURE } from './utils';
 
 const defaultViewState = {
   longitude: 0,
@@ -26,58 +28,12 @@ const defaultViewState = {
   bearing: 0,
 };
 
-const EMPTY_FEATURE = {
-  type: 'FeatureCollection',
-  features: [],
-};
-
-const useFetchBuildings = (onFetchedBuildings) => {
-  const [polygon, setPolygon] = useState();
-  const [buildings, setBuildings] = useState(EMPTY_FEATURE);
-  const [fetching, setFetching] = useState(false);
-  const [error, setError] = useState();
-
-  const fetchBuildings = async (polygon) => {
-    setError(null);
-    setFetching(true);
-    try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
-        {
-          params: {
-            generate: true,
-            polygon: JSON.stringify(polygon),
-          },
-        },
-      );
-      setBuildings(resp.data);
-      onFetchedBuildings?.(resp.data);
-    } catch (error) {
-      console.log(error);
-
-      setError(error);
-    } finally {
-      setFetching(false);
-    }
-  };
-
-  useEffect(() => {
-    if (polygon && polygon?.features?.length) {
-      fetchBuildings(polygon);
-    } else {
-      setBuildings(EMPTY_FEATURE);
-    }
-  }, [polygon]);
-
-  return { setPolygon, buildings, fetching, error };
-};
-
 const LocationSearchBar = ({ onLocationResult }) => {
   const randomCity = useRef(
     EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
   );
 
-  const { locationAddress, setSearchAddress, loading } =
+  const { locationAddress, searchAddress, loading } =
     useGeocodeLocation(onLocationResult);
 
   return (
@@ -87,9 +43,11 @@ const LocationSearchBar = ({ onLocationResult }) => {
         placeholder={`Example: type "${randomCity.current}”`}
         allowClear
         loading={loading}
-        onSearch={setSearchAddress}
+        onSearch={searchAddress}
       />
-      {locationAddress instanceof Error ? (
+      {loading ? (
+        <small>Searching...</small>
+      ) : locationAddress instanceof Error ? (
         <small style={{ color: 'red', fontStyle: 'italic' }}>
           Location not found
         </small>
@@ -104,6 +62,90 @@ const LocationSearchBar = ({ onLocationResult }) => {
   );
 };
 
+const DrawModeInterface = ({
+  mode,
+
+  polygon,
+
+  onFetchedBuildings,
+  onLocationResult,
+
+  onDraw,
+  onEdit,
+  onDelete,
+}) => {
+  const { fetchBuildings, buildings, fetching, error } =
+    useFetchBuildings(onFetchedBuildings); // Store fetched buildings in parent context
+
+  useEffect(() => {
+    // Only fetch buildings if in drawMode and not editing
+    mode == null && polygon?.features?.length && fetchBuildings(polygon); // Set polygon to null if in view mode
+  }, [mode, polygon, fetchBuildings]);
+
+  return (
+    <>
+      <div
+        id="edit-map-search-bar"
+        style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          padding: 12,
+          zIndex: 5,
+          width: 300,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: 10,
+        }}
+      >
+        <LocationSearchBar onLocationResult={onLocationResult} />
+
+        {fetching ? (
+          <b>Fetching buildings...</b>
+        ) : error ? (
+          <b>Error fetching buildings</b>
+        ) : buildings?.features?.length ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div>
+              <b>Buildings found: {buildings?.features?.length || 0}</b>
+            </div>
+            <small>
+              <i>
+                The number of buildings may be different after postprocessing.
+              </i>
+            </small>
+          </div>
+        ) : null}
+      </div>
+
+      <div id="edit-map-buttons">
+        {polygon?.features?.length ? (
+          <>
+            <Button
+              type={mode === 'edit' ? 'primary' : 'default'}
+              onClick={onEdit}
+            >
+              Edit
+            </Button>
+            <Button type="primary" onClick={onDelete} danger>
+              Delete
+            </Button>
+          </>
+        ) : (
+          <Button
+            type={mode === 'draw' ? 'primary' : 'default'}
+            onClick={onDraw}
+          >
+            Draw
+          </Button>
+        )}
+      </div>
+    </>
+  );
+};
+
 const EditableMap = ({
   viewState,
   onViewStateChange,
@@ -112,9 +154,9 @@ const EditableMap = ({
 
   polygon,
   onPolygonChange,
-  onFetchedBuildings,
 
   buildings,
+  onFetchedBuildings,
 
   drawingMode = false,
 }) => {
@@ -140,25 +182,16 @@ const EditableMap = ({
 
   const [mode, setMode] = useState(null);
   const [data, setData] = useState(polygon || EMPTY_FEATURE);
-
-  const {
-    setPolygon,
-    buildings: previewBuildings,
-    fetching,
-    error,
-  } = useFetchBuildings(onFetchedBuildings); // Store fetched buildings in parent context
-
-  const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
-  const hasData = data?.features?.length > 0;
-
   const triggerDataChange = useCallback((data) => {
     setData(data);
     onPolygonChange?.(data);
   }, []);
 
+  const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
+
   const editableLayer = new EditableGeoJsonLayer({
     id: 'editable-layer',
-    data: data,
+    data: polygon?.features ? polygon : data || EMPTY_FEATURE,
     mode:
       mode === 'draw'
         ? DrawPolygonMode
@@ -183,25 +216,13 @@ const EditableMap = ({
 
   const previewBuildingsLayer = new GeoJsonLayer({
     id: 'preview-buildings-layer',
-    data: previewBuildings,
+    data: buildings?.features ? buildings : EMPTY_FEATURE,
     getFillColor: [255, 255, 255],
     getLineColor: [0, 0, 0],
     getLineWidth: 1,
-
-    visible: drawingMode,
   });
 
-  const buildingsLayer = new GeoJsonLayer({
-    id: 'buildings-layer',
-    data: buildings || EMPTY_FEATURE,
-    getFillColor: [255, 255, 255],
-    getLineColor: [0, 0, 0],
-    getLineWidth: 1,
-
-    visible: !drawingMode,
-  });
-
-  const ToggleDraw = () => {
+  const toggleDraw = () => {
     if (mode !== 'draw') {
       setMode('draw');
     } else {
@@ -209,7 +230,7 @@ const EditableMap = ({
     }
   };
 
-  const ToggleEdit = () => {
+  const toggleEdit = () => {
     if (mode !== 'edit') {
       setMode('edit');
     } else {
@@ -217,108 +238,55 @@ const EditableMap = ({
     }
   };
 
-  const deletePolygon = () => {
-    triggerDataChange(EMPTY_FEATURE);
+  const clearGeometries = () => {
+    // Remove polygon
+    triggerDataChange(null);
+    // Remove buildings
+    onFetchedBuildings(null);
     setSelectedFeatureIndexes([]);
   };
 
   useEffect(() => {
-    if (mode === 'draw') triggerDataChange(EMPTY_FEATURE);
+    if (mode === 'draw') triggerDataChange(null);
     else if (mode === 'edit') setSelectedFeatureIndexes([0]);
+    // view mode
     else setSelectedFeatureIndexes([]);
   }, [mode]);
 
-  useEffect(() => {
-    // Only fetch buildings if the mode is not draw or edit
-    mode == null && setPolygon(data);
-  }, [mode, data]);
+  // useEffect(() => {
+  //   // Zoom to buildings if not in drawMode
+  //   if (!drawingMode && buildings) {
+  //     const boundingbox = turf.bbox(buildings);
+  //     const centroid = turf.center(buildings);
+  //     const coord = turf.getCoord(centroid);
 
-  useEffect(() => {
-    if (!drawingMode && buildings) {
-      const boundingbox = turf.bbox(buildings);
-      const centroid = turf.center(buildings);
-      const coord = turf.getCoord(centroid);
-
-      setLocation({
-        boundingbox,
-        longitude: coord[0],
-        latitude: coord[1],
-      });
-    }
-  }, [buildings]);
+  //     setLocation({
+  //       boundingbox,
+  //       longitude: coord[0],
+  //       latitude: coord[1],
+  //     });
+  //   }
+  // }, [drawingMode, buildings, setLocation]);
 
   return (
     <>
       {drawingMode && (
-        <>
-          <div
-            id="edit-map-search-bar"
-            style={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              padding: 12,
-              zIndex: 5,
-              width: 300,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderRadius: 10,
-            }}
-          >
-            <LocationSearchBar onLocationResult={setLocation} />
-
-            {fetching ? (
-              <b>Fetching buildings...</b>
-            ) : error ? (
-              <b>Error fetching buildings</b>
-            ) : previewBuildings?.features?.length ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div>
-                  <b>
-                    Buildings found: {previewBuildings?.features?.length || 0}
-                  </b>
-                </div>
-                <small>
-                  <i>
-                    The number of buildings may be different after
-                    postprocessing.
-                  </i>
-                </small>
-              </div>
-            ) : null}
-          </div>
-          <div id="edit-map-buttons">
-            {hasData ? (
-              <>
-                <Button
-                  type={mode === 'edit' ? 'primary' : 'default'}
-                  onClick={ToggleEdit}
-                >
-                  Edit
-                </Button>
-                <Button type="primary" onClick={deletePolygon} danger>
-                  Delete
-                </Button>
-              </>
-            ) : (
-              <Button
-                type={mode === 'draw' ? 'primary' : 'default'}
-                onClick={ToggleDraw}
-              >
-                Draw
-              </Button>
-            )}
-          </div>
-        </>
+        <DrawModeInterface
+          mode={mode}
+          polygon={data}
+          onFetchedBuildings={onFetchedBuildings}
+          onLocationResult={setLocation}
+          onDraw={toggleDraw}
+          onDelete={clearGeometries}
+          onEdit={toggleEdit}
+        />
       )}
 
       <div onContextMenu={(e) => e.preventDefault()}>
         <DeckGL
           viewState={viewState || defaultViewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
-          layers={[editableLayer, previewBuildingsLayer, buildingsLayer]}
+          layers={[editableLayer, previewBuildingsLayer]}
           onViewStateChange={handleViewStateChange}
         >
           <Map
