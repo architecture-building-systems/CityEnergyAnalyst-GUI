@@ -76,6 +76,7 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
       await validateGeometry(value, 'zone');
       fetchBuildings(value);
     } catch (error) {
+      setBuildings(null);
       onValidated?.({ valid: false, typology: null });
       return Promise.reject(error);
     }
