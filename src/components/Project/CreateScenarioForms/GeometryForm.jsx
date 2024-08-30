@@ -129,10 +129,10 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 };
 
 const GenerateZoneFormItem = ({ form }) => {
-  const { geojson, setDrawingMode } = useContext(MapFormContext);
+  const { polygon, setDrawingMode } = useContext(MapFormContext);
   useEffect(() => {
-    form.setFieldValue('generate_zone', geojson);
-  }, [geojson]);
+    form.setFieldValue('generate_zone', polygon);
+  }, [polygon]);
 
   // Set drawing mode on mount and disable it on unmount
   useEffect(() => {
@@ -292,6 +292,7 @@ const TypologyFormItem = () => {
 
 const GeometryForm = ({ initialValues, onChange, onFinish, formButtons }) => {
   const [form] = Form.useForm();
+  const { fetchedBuildings, setBuildings } = useContext(MapFormContext);
 
   const [showTypologyForm, setTypologyVisibility] = useState(
     initialValues?.typology_in_zone || false,
@@ -310,12 +311,20 @@ const GeometryForm = ({ initialValues, onChange, onFinish, formButtons }) => {
     else handleTyologyVisibility(false);
   };
 
+  const handleFormFinish = (values) => {
+    if (values.user_zone === GENERATE_ZONE_CEA) {
+      // Set buildings to fetched buildings if zone is generated
+      setBuildings(fetchedBuildings);
+    }
+    onFinish?.(values);
+  };
+
   return (
     <Form
       form={form}
       initialValues={initialValues}
       onValuesChange={onChange}
-      onFinish={onFinish}
+      onFinish={handleFormFinish}
       layout="vertical"
     >
       {formButtons}

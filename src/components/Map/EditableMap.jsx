@@ -11,14 +11,14 @@ import {
 import { Button, Input } from 'antd';
 import './EditableMap.css';
 import { DeckGL } from '@deck.gl/react';
-import { GeoJsonLayer } from 'deck.gl';
+import { FlyToInterpolator, GeoJsonLayer } from 'deck.gl';
 import { EXAMPLE_CITIES } from '../Project/CreateScenarioForms/constants';
 import {
   useCameraForBounds,
   useGeocodeLocation,
   useFetchBuildings,
 } from './hooks';
-import { EMPTY_FEATURE } from './utils';
+import { calcBoundsAndCenter, EMPTY_FEATURE } from './utils';
 
 const defaultViewState = {
   longitude: 0,
@@ -62,8 +62,21 @@ const LocationSearchBar = ({ onLocationResult }) => {
   );
 };
 
+const drawModes = {
+  draw: 'Draw',
+  edit: 'Edit',
+  view: null,
+};
+
+const modeLayers = {
+  [drawModes.draw]: DrawPolygonMode,
+  [drawModes.edit]: ModifyMode,
+  [drawModes.view]: ViewMode,
+};
+
 const DrawModeInterface = ({
   mode,
+  onModeChange,
 
   buildings,
   polygon,
@@ -71,17 +84,18 @@ const DrawModeInterface = ({
   onFetchedBuildings,
   onLocationResult,
 
-  onDraw,
-  onEdit,
   onDelete,
 }) => {
   const { fetchBuildings, fetching, error } =
     useFetchBuildings(onFetchedBuildings); // Store fetched buildings in parent context
 
   useEffect(() => {
-    // Only fetch buildings if in drawMode and not editing
-    mode == null && polygon?.features?.length && fetchBuildings(polygon); // Set polygon to null if in view mode
-  }, [mode, polygon, fetchBuildings]);
+    // Only fetch buildings if in view mode and buildings are not already loaded
+    mode == drawModes.view &&
+      !buildings?.features?.length &&
+      polygon?.features?.length &&
+      fetchBuildings(polygon);
+  }, [mode, polygon, fetchBuildings, buildings?.features?.length]);
 
   return (
     <>
@@ -122,11 +136,15 @@ const DrawModeInterface = ({
       </div>
 
       <div id="edit-map-buttons">
-        {polygon?.features?.length ? (
+        {polygon?.features?.length && !fetching ? (
           <>
             <Button
-              type={mode === 'edit' ? 'primary' : 'default'}
-              onClick={onEdit}
+              type={mode == drawModes.edit ? 'primary' : 'default'}
+              onClick={() =>
+                onModeChange(
+                  mode == drawModes.edit ? drawModes.view : drawModes.edit,
+                )
+              }
             >
               Edit
             </Button>
@@ -136,8 +154,9 @@ const DrawModeInterface = ({
           </>
         ) : (
           <Button
-            type={mode === 'draw' ? 'primary' : 'default'}
-            onClick={onDraw}
+            type={mode === drawModes.draw ? 'primary' : 'default'}
+            onClick={() => onModeChange(drawModes.draw)}
+            loading={fetching}
           >
             Draw
           </Button>
@@ -148,12 +167,13 @@ const DrawModeInterface = ({
 };
 
 const EditableMap = ({
+  initialValues,
+
   viewState,
   onViewStateChange,
 
   onMapLoad,
 
-  polygon,
   onPolygonChange,
 
   buildings,
@@ -163,9 +183,12 @@ const EditableMap = ({
 }) => {
   const mapRef = useRef();
 
-  const handleViewStateChange = useCallback(({ viewState }) => {
-    onViewStateChange?.(viewState);
-  }, []);
+  const handleViewStateChange = useCallback(
+    ({ viewState }) => {
+      onViewStateChange?.(viewState);
+    },
+    [onViewStateChange],
+  );
 
   const { setLocation } = useCameraForBounds(
     mapRef,
@@ -174,6 +197,8 @@ const EditableMap = ({
         latitude: location.latitude,
         longitude: location.longitude,
         zoom: cameraOptions.zoom,
+        transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+        transitionDuration: 1000,
       });
 
       // Trigger a refresh so that map is zoomed correctly
@@ -181,30 +206,39 @@ const EditableMap = ({
     },
   );
 
-  const [mode, setMode] = useState(null);
-  const [data, setData] = useState(polygon || EMPTY_FEATURE);
-  const triggerDataChange = useCallback((data) => {
-    setData(data);
-    onPolygonChange?.(data);
-  }, []);
+  const [mode, setMode] = useState(drawModes.view);
+  const [data, setData] = useState(initialValues?.polygon || EMPTY_FEATURE);
+  const triggerDataChange = useCallback(
+    (data) => {
+      setData(data);
+      onPolygonChange?.(data);
+    },
+    [onPolygonChange],
+  );
+
+  const [fetchedBuildings, setFetchedBuildings] = useState(
+    initialValues?.fetchedBuildings,
+  );
+  const handleFetchedBuildingsChange = useCallback(
+    (data) => {
+      setFetchedBuildings(data);
+      onFetchedBuildings?.(data);
+    },
+    [onFetchedBuildings],
+  );
 
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
 
   const editableLayer = new EditableGeoJsonLayer({
     id: 'editable-layer',
-    data: polygon?.features ? polygon : data || EMPTY_FEATURE,
-    mode:
-      mode === 'draw'
-        ? DrawPolygonMode
-        : mode === 'edit'
-          ? ModifyMode
-          : ViewMode,
+    data: data,
+    mode: modeLayers[mode],
     selectedFeatureIndexes: selectedFeatureIndexes,
 
     onEdit: (e) => {
       if (e.editType === 'addFeature') {
         triggerDataChange(e.updatedData);
-        setMode(null);
+        setMode(drawModes.view);
       } else if (
         ['removePosition', 'movePosition', 'addPosition'].includes(e.editType)
       ) {
@@ -215,47 +249,44 @@ const EditableMap = ({
     visible: drawingMode,
   });
 
-  const previewBuildingsLayer = new GeoJsonLayer({
-    id: 'preview-buildings-layer',
+  const fetchedBuildingsLayer = new GeoJsonLayer({
+    id: 'fetched-buildings-layer',
+    data: fetchedBuildings?.features ? fetchedBuildings : EMPTY_FEATURE,
+    getFillColor: [255, 255, 255],
+    getLineColor: [0, 0, 0],
+    getLineWidth: 1,
+
+    visible: drawingMode,
+  });
+
+  const zoneBuildingsLayer = new GeoJsonLayer({
+    id: 'zone-buildings-layer',
     data: buildings?.features ? buildings : EMPTY_FEATURE,
     getFillColor: [255, 255, 255],
     getLineColor: [0, 0, 0],
     getLineWidth: 1,
+
+    visible: !drawingMode,
   });
-
-  const toggleDraw = () => {
-    if (mode !== 'draw') {
-      setMode('draw');
-    } else {
-      setMode(null);
-    }
-  };
-
-  const toggleEdit = () => {
-    if (mode !== 'edit') {
-      setMode('edit');
-    } else {
-      setMode(null);
-    }
-  };
 
   const clearGeometries = () => {
     // Remove polygon
-    triggerDataChange(null);
+    triggerDataChange(EMPTY_FEATURE);
     // Remove buildings
-    onFetchedBuildings(null);
+    setFetchedBuildings(EMPTY_FEATURE);
     setSelectedFeatureIndexes([]);
   };
 
   useEffect(() => {
-    if (mode === 'draw') triggerDataChange(null);
-    else if (mode === 'edit') setSelectedFeatureIndexes([0]);
+    if (mode === drawModes.draw) triggerDataChange(EMPTY_FEATURE);
+    else if (mode === drawModes.edit) setSelectedFeatureIndexes([0]);
     // view mode
     else setSelectedFeatureIndexes([]);
   }, [mode]);
 
   useEffect(() => {
-    if (drawingMode) setSelectedFeatureIndexes([]);
+    if (drawingMode && fetchedBuildings?.features?.length)
+      setLocation(calcBoundsAndCenter(fetchedBuildings));
   }, [drawingMode]);
 
   return (
@@ -263,13 +294,12 @@ const EditableMap = ({
       {drawingMode && (
         <DrawModeInterface
           mode={mode}
-          buildings={buildings}
+          buildings={fetchedBuildings}
           polygon={data}
-          onFetchedBuildings={onFetchedBuildings}
+          onFetchedBuildings={handleFetchedBuildingsChange}
           onLocationResult={setLocation}
-          onDraw={toggleDraw}
+          onModeChange={setMode}
           onDelete={clearGeometries}
-          onEdit={toggleEdit}
         />
       )}
 
@@ -277,7 +307,7 @@ const EditableMap = ({
         <DeckGL
           viewState={viewState || defaultViewState}
           controller={{ dragRotate: false, doubleClickZoom: false }}
-          layers={[editableLayer, previewBuildingsLayer]}
+          layers={[editableLayer, fetchedBuildingsLayer, zoneBuildingsLayer]}
           onViewStateChange={handleViewStateChange}
         >
           <Map

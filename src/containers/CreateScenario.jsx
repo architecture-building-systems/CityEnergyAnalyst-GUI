@@ -33,6 +33,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { useOpenScenario } from '../components/Project/Project';
 import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
+import { FlyToInterpolator } from 'deck.gl';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -318,10 +319,11 @@ const CreateScenario = () => {
   const [formIndex, setFormIndex] = useState(0);
   const handleFormIndexChange = useCallback((index) => setFormIndex(index), []);
 
-  // Store map view state
+  // Store map state
   const [viewState, setViewState] = useState();
-  const [geojson, setGeojson] = useState();
   const [drawingMode, setDrawingMode] = useState(false);
+  const [polygon, setPolygon] = useState();
+  const [fetchedBuildings, setFetchedBuildings] = useState();
 
   const [buildings, setBuildings] = useState();
 
@@ -332,6 +334,8 @@ const CreateScenario = () => {
         latitude: location.latitude,
         longitude: location.longitude,
         zoom: cameraOptions.zoom,
+        transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+        transitionDuration: 1000,
       });
     },
   );
@@ -341,17 +345,25 @@ const CreateScenario = () => {
     setLocation(calcBoundsAndCenter(zone));
   }, []);
 
+  const initialValues = useMemo(
+    () => ({
+      polygon,
+      fetchedBuildings,
+    }),
+    [fetchedBuildings, polygon],
+  );
+
   const secondaryCards = {
     scenarioList: <ScenarioList />,
     map: (
       <Suspense fallback={<div>Loading Map...</div>}>
         <EditableMap
+          initialValues={initialValues}
           viewState={viewState}
           onViewStateChange={setViewState}
-          polygon={geojson}
-          onPolygonChange={setGeojson}
+          onPolygonChange={setPolygon}
           drawingMode={drawingMode}
-          onFetchedBuildings={setBuildings}
+          onFetchedBuildings={setFetchedBuildings}
           buildings={buildings}
           onMapLoad={onMapLoad}
         />
@@ -360,19 +372,21 @@ const CreateScenario = () => {
   };
 
   useEffect(() => {
-    // Go to building location on last form
     if (formIndex === 2) {
+      // Go to building location on last form
       setLocation(calcBoundsAndCenter(buildings));
     }
   }, [formIndex]);
 
   const contextValue = useMemo(
     () => ({
-      geojson,
+      polygon,
+      fetchedBuildings,
+      setPolygon,
       setDrawingMode,
       setBuildings: handleZoneGeometryChange,
     }),
-    [geojson, handleZoneGeometryChange],
+    [polygon, fetchedBuildings, handleZoneGeometryChange],
   );
 
   return (
