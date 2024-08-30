@@ -67,6 +67,7 @@ export const useCameraForBounds = (mapRef, onChange) => {
       const mapbox = mapRef.current;
       const cameraOptions = mapbox.cameraForBounds(location.boundingbox, {
         maxZoom: 18,
+        padding: 20,
       });
       onChange?.({ cameraOptions, location });
     }

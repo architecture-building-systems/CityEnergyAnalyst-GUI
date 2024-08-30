@@ -320,6 +320,7 @@ const CreateScenario = () => {
   const handleFormIndexChange = useCallback((index) => setFormIndex(index), []);
 
   // Store map state
+  const [controller, setController] = useState(true);
   const [viewState, setViewState] = useState();
   const [drawingMode, setDrawingMode] = useState(false);
   const [polygon, setPolygon] = useState();
@@ -359,6 +360,7 @@ const CreateScenario = () => {
       <Suspense fallback={<div>Loading Map...</div>}>
         <EditableMap
           initialValues={initialValues}
+          controller={controller}
           viewState={viewState}
           onViewStateChange={setViewState}
           onPolygonChange={setPolygon}
@@ -373,10 +375,15 @@ const CreateScenario = () => {
 
   useEffect(() => {
     if (formIndex === 2) {
+      // Disable map controller
+      setController(false);
       // Go to building location on last form
       setLocation(calcBoundsAndCenter(buildings));
+    } else {
+      // Enable map controller
+      setController(true);
     }
-  }, [formIndex]);
+  }, [buildings, formIndex, setLocation]);
 
   const contextValue = useMemo(
     () => ({

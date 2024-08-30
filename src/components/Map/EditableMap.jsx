@@ -172,6 +172,8 @@ const EditableMap = ({
   viewState,
   onViewStateChange,
 
+  controller,
+
   onMapLoad,
 
   onPolygonChange,
@@ -306,7 +308,9 @@ const EditableMap = ({
       <div onContextMenu={(e) => e.preventDefault()}>
         <DeckGL
           viewState={viewState || defaultViewState}
-          controller={{ dragRotate: false, doubleClickZoom: false }}
+          controller={
+            controller ? { dragRotate: false, doubleClickZoom: false } : false
+          }
           layers={[editableLayer, fetchedBuildingsLayer, zoneBuildingsLayer]}
           onViewStateChange={handleViewStateChange}
         >
