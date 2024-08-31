@@ -275,7 +275,7 @@ const EditableMap = ({
     // Remove polygon
     triggerDataChange(EMPTY_FEATURE);
     // Remove buildings
-    setFetchedBuildings(EMPTY_FEATURE);
+    handleFetchedBuildingsChange(EMPTY_FEATURE);
     setSelectedFeatureIndexes([]);
   };
 
