@@ -8,6 +8,7 @@ import {
 } from './constants';
 import axios from 'axios';
 import { isElectron, openExternal } from '../../../utils/electron';
+import { SelectWithFileDialog } from './FormInput';
 
 const countryMap = {
   SG: 'Singapore',
@@ -79,34 +80,27 @@ const ContextForm = ({
           { validator: (_, value) => validateDatabase(value, databases) },
         ]}
       >
-        <Select
+        <SelectWithFileDialog
           placeholder="Choose an option from the dropdown"
-          dropdownRender={(menu) => (
-            <div>
-              {menu}
-              <Divider style={{ margin: '4px 0' }} />
-              <OpenDialogButton
-                form={form}
-                name="database"
-                type="directory"
-                placeholder="Or enter path to database folder here"
-              >
-                <FileSearchOutlined />
-                Browse for databases path
-              </OpenDialogButton>
-            </div>
-          )}
+          name="database"
+          type="directory"
           options={[
             {
-              label: 'CEA Databases',
+              label: 'CEA Built-in',
               options: databases.map((database) => ({
                 label: `${database} - ${countryMap?.[database] || database}`,
                 value: database,
               })),
             },
           ]}
-        />
+        >
+          <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+            <FileSearchOutlined />
+            Import database from directory
+          </div>
+        </SelectWithFileDialog>
       </Form.Item>
+
       <Form.Item
         label="Weather data"
         name="weather"
@@ -139,24 +133,11 @@ const ContextForm = ({
         }
         rules={[{ required: true }]}
       >
-        <Select
+        <SelectWithFileDialog
           placeholder="Choose an option from the dropdown"
-          dropdownRender={(menu) => (
-            <div>
-              {menu}
-              <Divider style={{ margin: '4px 0' }} />
-              <OpenDialogButton
-                form={form}
-                name="weather"
-                type="file"
-                filters={[{ name: 'Weather files', extensions: ['epw'] }]}
-                placeholder="Or enter path to weather file here"
-              >
-                <FileSearchOutlined />
-                Browse for weather file
-              </OpenDialogButton>
-            </div>
-          )}
+          name="weather"
+          type="file"
+          filters={[{ name: 'Weather files', extensions: ['epw'] }]}
           options={[
             {
               label: 'Third-party sources',
@@ -177,7 +158,12 @@ const ContextForm = ({
               }),
             },
           ]}
-        />
+        >
+          <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+            <FileSearchOutlined />
+            Import .epw file
+          </div>
+        </SelectWithFileDialog>
       </Form.Item>
 
       <Form.Item
@@ -191,42 +177,32 @@ const ContextForm = ({
         }
         rules={[{ required: true }]}
       >
-        <Select
+        <SelectWithFileDialog
           placeholder="Choose an option from the dropdown"
-          dropdownRender={(menu) => (
-            <div>
-              {menu}
-              <Divider style={{ margin: '4px 0' }} />
-              <OpenDialogButton
-                form={form}
-                name="terrain"
-                type="file"
-                filters={[
-                  { name: 'Terrain files', extensions: ['tif', 'tiff'] },
-                ]}
-                placeholder="Or enter path to terrain file here"
-              >
-                <FileSearchOutlined />
-                Browse for terrain file
-              </OpenDialogButton>
-            </div>
-          )}
+          name="terrain"
+          type="file"
+          filters={[{ name: 'Terrain files', extensions: ['tif', 'tiff'] }]}
           options={[
             {
-              label: 'CEA Tools',
+              label: 'Third-party sources',
               options: [
                 {
-                  label: 'Generate from Tilezen using CEA',
+                  label: 'Fetch from registry.opendata.aws/terrain-tiles',
                   value: GENERATE_TERRAIN_CEA,
                 },
               ],
             },
           ]}
-        />
+        >
+          <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+            <FileSearchOutlined />
+            Import .tiff file
+          </div>
+        </SelectWithFileDialog>
       </Form.Item>
 
       <Form.Item
-        label="Street (centre line) geometries"
+        label="Street (centreline) geometries"
         name="street"
         tooltip={{
           title: <div>This is used for district thermal network analysis.</div>,
@@ -234,52 +210,34 @@ const ContextForm = ({
         extra={
           <div>
             <div>
-              Link to a path to street centre line geometries in .shp format.
+              Link to a path to street centreline geometries in .shp format.
             </div>
             <div>See an example here.</div>
           </div>
         }
         rules={[{ required: true }]}
       >
-        <Select
+        <SelectWithFileDialog
           placeholder="Choose an option from the dropdown"
-          dropdownRender={(menu) => (
-            <div>
-              {menu}
-              <Divider style={{ margin: '4px 0' }} />
-              <OpenDialogButton
-                form={form}
-                name="street"
-                type="file"
-                filters={[{ name: 'SHP files', extensions: ['shp'] }]}
-                placeholder="Or enter path to street geometry file here"
-              >
-                <FileSearchOutlined />
-                Browse for street geometry file
-              </OpenDialogButton>
-            </div>
-          )}
+          name="street"
+          type="file"
+          filters={[{ name: 'SHP files', extensions: ['shp'] }]}
           options={[
             {
-              label: 'CEA Tools',
-              options: [
-                {
-                  label: 'Generate from OpenStreetMap using CEA',
-                  value: GENERATE_STREET_CEA,
-                },
-              ],
+              label: 'Generate from OpenStreetMap',
+              value: GENERATE_STREET_CEA,
             },
             {
-              label: 'None',
-              options: [
-                {
-                  label: 'No street geometries',
-                  value: EMTPY_GEOMETRY,
-                },
-              ],
+              label: 'No street geometries',
+              value: EMTPY_GEOMETRY,
             },
           ]}
-        />
+        >
+          <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+            <FileSearchOutlined />
+            Import .shp file
+          </div>
+        </SelectWithFileDialog>
       </Form.Item>
     </Form>
   );
