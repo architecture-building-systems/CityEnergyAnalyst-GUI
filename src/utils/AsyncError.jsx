@@ -36,7 +36,7 @@ export function AsyncError({ title = 'Something went wrong', error }) {
       <div>
         <h3>Error Message:</h3>
         <p style={{ fontFamily: 'monospace' }}>
-          {error?.data?.message || 'UNKNOWN ERROR'}
+          {error?.data?.message || error?.data?.detail || 'UNKNOWN ERROR'}
         </p>
         {error?.data?.trace && (
           <details style={{ cursor: 'pointer' }}>
