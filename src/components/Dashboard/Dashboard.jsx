@@ -200,7 +200,6 @@ const useDashboardData = () => {
 };
 
 export const usePlotDependencies = () => {
-  const deckRef = useRef();
   const [isMounted, setIsMounted] = useState(false);
   const PlotDependencies = [
     ['script', 'https://cdn.plot.ly/plotly-latest.min.js'],
@@ -240,9 +239,8 @@ export const usePlotDependencies = () => {
   };
 
   useEffect(() => {
-    // Store original deck reference
-    deckRef.current = window.deck;
-    window.deck = null;
+    // Remove any deck references
+    delete window.deck;
     window.addEventListener('resize', resizePlots);
     menuToggle && menuToggle.addEventListener('click', resizePlots);
     let scriptPromises = [];
@@ -257,8 +255,8 @@ export const usePlotDependencies = () => {
 
     return () => {
       // Prevent any luma version conflicts
-      window.luma = null;
-      window.deck = deckRef.current;
+      delete window.luma;
+      delete window.deck;
       window.removeEventListener('resize', resizePlots);
       menuToggle && menuToggle.removeEventListener('click', resizePlots);
       scripts.map((dependency) => dependency.remove());
