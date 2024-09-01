@@ -136,10 +136,6 @@ const JobListPopover = () => {
       key: id,
       message: message[type],
       placement: 'bottomRight',
-      onClick: () => {
-        notification.close(id);
-        setVisible(true);
-      },
     };
     if (type === 'started')
       notification.open({ ...config, icon: <LoadingOutlined /> });
