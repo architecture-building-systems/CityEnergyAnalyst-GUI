@@ -256,6 +256,8 @@ export const usePlotDependencies = () => {
     });
 
     return () => {
+      // Prevent any luma version conflicts
+      window.luma = null;
       window.deck = deckRef.current;
       window.removeEventListener('resize', resizePlots);
       menuToggle && menuToggle.removeEventListener('click', resizePlots);
