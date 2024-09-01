@@ -9,7 +9,7 @@ export const fetchJobs = () => {
     dispatch({ type: FETCH_JOBS });
     try {
       const jobs = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs`,
+        `${import.meta.env.VITE_CEA_URL}/server/jobs/`,
       );
       dispatch({ type: FETCH_JOBS_SUCCESS, payload: jobs.data });
     } catch (error) {
