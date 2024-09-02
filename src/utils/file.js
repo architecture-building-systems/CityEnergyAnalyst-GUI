@@ -71,3 +71,25 @@ export const basename = (fullPath) => {
     return path.basename(fullPath.replace(/\\/g, '/')).replace(/\//g, '\\');
   else return path.basename(fullPath);
 };
+
+export const sanitizePath = (baseDir, userInput, levelDepth = null) => {
+  // Resolve the absolute path
+  const resolvedPath = path.resolve(baseDir, userInput);
+
+  // Check if the resolved path starts with the base directory
+  if (!resolvedPath.startsWith(baseDir)) {
+    // If the path is outside the base directory, handle it appropriately
+    throw new Error('Invalid path: Outside of base directory');
+  }
+
+  if (levelDepth !== null) {
+    // Remove the base directory part and split the remaining path
+    const relativePath = path.relative(baseDir, resolvedPath);
+    const pathSegments = relativePath.split(path.sep);
+
+    // Check if the path is within the specified level depth
+    if (pathSegments.length > levelDepth) {
+      throw new Error('Invalid path: Too many levels down');
+    }
+  }
+};
