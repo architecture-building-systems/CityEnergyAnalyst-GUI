@@ -20,10 +20,9 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
     if (visible) fetchInfo();
   }, [visible]);
 
-  const handleOk = async () => {
+  const onFinish = async (values) => {
     try {
       setConfirmLoading(true);
-      const values = await form.validateFields();
       const resp = await axios.post(
         `${import.meta.env.VITE_CEA_URL}/api/project/`,
         values,
@@ -33,6 +32,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
         setConfirmLoading(false);
         setVisible(false);
         onSuccess();
+        form.resetFields();
       });
     } catch (e) {
       console.log(e);
@@ -51,7 +51,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       open={visible}
       width={800}
       okText="Create"
-      onOk={handleOk}
+      onOk={form.submit}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       destroyOnClose
@@ -59,6 +59,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       {initialValue && (
         <NewProjectForm
           form={form}
+          onFinish={onFinish}
           initialValue={initialValue}
           project={info}
         />
@@ -67,10 +68,11 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   );
 };
 
-const NewProjectForm = ({ form, initialValue, project }) => {
+const NewProjectForm = ({ form, onFinish, initialValue, project }) => {
   return (
     <Form
       form={form}
+      onFinish={onFinish}
       labelCol={{ span: 6 }}
       wrapperCol={{ span: 15, offset: 1 }}
     >

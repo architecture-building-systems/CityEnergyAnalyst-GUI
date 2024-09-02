@@ -16,10 +16,9 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
     if (visible) fetchInfo();
   }, [visible]);
 
-  const handleOk = async () => {
+  const onFinish = (values) => {
     try {
       setConfirmLoading(true);
-      const values = await form.validateFields();
       const { project } = values;
       fetchProject(project).then(() => {
         setConfirmLoading(false);
@@ -43,19 +42,24 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       open={visible}
       width={800}
       okText="Open"
-      onOk={handleOk}
+      onOk={form.submit}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       destroyOnClose
     >
       {project && (
-        <OpenProjectForm form={form} initialValue={project} project={info} />
+        <OpenProjectForm
+          form={form}
+          onFinish={onFinish}
+          initialValue={project}
+          project={info}
+        />
       )}
     </Modal>
   );
 };
 
-const OpenProjectForm = ({ form, initialValue, project }) => {
+const OpenProjectForm = ({ form, onFinish, initialValue, project }) => {
   const projectOptions = useMemo(() => {
     // FIXME: This is a workaround to get the project root
     const projectRoot = project?.project ? dirname(project?.project) : '';
@@ -70,6 +74,7 @@ const OpenProjectForm = ({ form, initialValue, project }) => {
   return (
     <Form
       form={form}
+      onFinish={onFinish}
       labelCol={{ span: 6 }}
       wrapperCol={{ span: 15, offset: 1 }}
     >
