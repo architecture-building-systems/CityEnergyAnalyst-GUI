@@ -125,17 +125,11 @@ const InputEditorButtons = ({ changes }) => {
   };
 
   return (
-    <div style={{ marginTop: 10 }}>
-      <Button
-        style={{ margin: 5 }}
-        type="primary"
-        disabled={noChanges}
-        onClick={_saveChanges}
-      >
+    <div style={{ display: 'flex', gap: 10 }}>
+      <Button type="primary" disabled={noChanges} onClick={_saveChanges}>
         Save
       </Button>
       <Button
-        style={{ margin: 5 }}
         type="primary"
         disabled={noChanges}
         onClick={_discardChanges}

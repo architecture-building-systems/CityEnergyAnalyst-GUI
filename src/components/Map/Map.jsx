@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -39,10 +39,10 @@ const DeckGLMap = ({ data, colors }) => {
   const [viewState, setViewState] = useState(defaultViewState);
   const [extruded, setExtruded] = useState(false);
   const [visibility, setVisibility] = useState({
-    zone: !!data.zone,
-    surroundings: !!data.surroundings,
-    trees: !!data.trees,
-    streets: !!data.streets,
+    zone: true,
+    surroundings: true,
+    trees: true,
+    streets: true,
     dc: data?.dc !== null,
     dh: data?.dh !== null && data?.dc === null,
     network: true,
@@ -50,50 +50,52 @@ const DeckGLMap = ({ data, colors }) => {
 
   const [mapStyle, setMapStyle] = useState('labels');
 
-  const onMapLoad = useCallback(() => {
-    console.debug('Map loaded.');
+  useEffect(() => {
+    if (mapRef.current && data?.zone) {
+      const zoomToBounds = () => {
+        const mapbox = mapRef.current.getMap();
+        const zone = data?.zone;
 
-    const mapbox = mapRef.current.getMap();
-    const zone = data?.zone;
-    if (zone === null) return;
+        // Calculate total bounds with other geometries
+        let bboxPoly = turf.bboxPolygon(turf.bbox(zone));
 
-    // Calculate total bounds with other geometries
-    let bboxPoly = turf.bboxPolygon(turf.bbox(zone));
+        if (data?.surroundings !== null && data.surroundings?.features?.length)
+          bboxPoly = turf.union(
+            turf.featureCollection([
+              bboxPoly,
+              turf.bboxPolygon(turf.bbox(data.surroundings)),
+            ]),
+          );
 
-    if (data?.surroundings !== null && data.surroundings?.features?.length)
-      bboxPoly = turf.union(
-        turf.featureCollection([
-          bboxPoly,
-          turf.bboxPolygon(turf.bbox(data.surroundings)),
-        ]),
-      );
+        if (data?.trees !== null && data.trees?.features?.length)
+          bboxPoly = turf.union(
+            turf.featureCollection([
+              bboxPoly,
+              turf.bboxPolygon(turf.bbox(data.trees)),
+            ]),
+          );
 
-    if (data?.trees !== null && data.trees?.features?.length)
-      bboxPoly = turf.union(
-        turf.featureCollection([
-          bboxPoly,
-          turf.bboxPolygon(turf.bbox(data.trees)),
-        ]),
-      );
+        cameraOptions.current = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
+          maxZoom: 16,
+          padding: 8,
+        });
 
-    cameraOptions.current = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
-      maxZoom: 16,
-      padding: 8,
-    });
-
-    setViewState((state) => ({
-      ...state,
-      zoom: cameraOptions.current.zoom,
-      bearing: cameraOptions.current.bearing,
-      latitude: cameraOptions.current.center.lat,
-      longitude: cameraOptions.current.center.lng,
-    }));
-  });
+        setViewState((state) => ({
+          ...state,
+          zoom: cameraOptions.current.zoom,
+          bearing: cameraOptions.current.bearing,
+          latitude: cameraOptions.current.center.lat,
+          longitude: cameraOptions.current.center.lng,
+        }));
+      };
+      zoomToBounds();
+    }
+  }, [data, mapRef]);
 
   const renderLayers = () => {
     const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
-    if (data.zone) {
+    if (data?.zone) {
       _layers.push(
         new GeoJsonLayer({
           id: 'zone',
@@ -127,7 +129,7 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
-    if (data.surroundings) {
+    if (data?.surroundings) {
       _layers.push(
         new GeoJsonLayer({
           id: 'surroundings',
@@ -161,7 +163,7 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
-    if (data.streets) {
+    if (data?.streets) {
       _layers.push(
         new GeoJsonLayer({
           id: 'streets',
@@ -177,7 +179,7 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
-    if (data.dc) {
+    if (data?.dc) {
       _layers.push(
         new GeoJsonLayer({
           id: 'dc',
@@ -199,7 +201,7 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
-    if (data.dh) {
+    if (data?.dh) {
       _layers.push(
         new GeoJsonLayer({
           id: 'dh',
@@ -221,7 +223,7 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
-    if (data.trees) {
+    if (data?.trees) {
       _layers.push(
         new GeoJsonLayer({
           id: 'trees',
@@ -317,18 +319,17 @@ const DeckGLMap = ({ data, colors }) => {
         <Map
           ref={mapRef}
           mapStyle={mapStyle == 'labels' ? positron : no_label}
-          onLoad={onMapLoad}
           minZoom={1}
         />
-        <NetworkToggle
+        {/* <NetworkToggle
           cooling={data?.dc !== null}
           heating={data?.dh !== null}
           initialValue={
             data?.dc !== null ? 'dc' : data?.dh !== null ? 'dh' : null
           }
           onChange={onNetworkChange}
-        />
-        <LayerToggle data={data} setVisibility={setVisibility} />
+        /> */}
+        {data && <LayerToggle data={data} setVisibility={setVisibility} />}
 
         <div id="map-controls">
           <div style={{ display: 'flex', gap: 8 }}>

@@ -6,16 +6,27 @@ import routes from '../../../../constants/routes.json';
 import { useDispatch } from 'react-redux';
 import { useHoverGrow } from './hooks';
 import { useOpenScenario } from '../../Project';
+import { useMemo } from 'react';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
+  const remainingScenarios = useMemo(() => {
+    return scenarioList.filter((scenario) => scenario !== scenarioName);
+  }, [scenarioList, scenarioName]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          {scenarioName ? scenarioName : 'No Scenario selected'}
-          <div style={{ fontSize: 20 }}>
-            <NewScenarioIcon />
-          </div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+
+        minHeight: 0,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        {scenarioName ? scenarioName : 'No Scenario selected'}
+        <div style={{ fontSize: 20 }}>
+          <NewScenarioIcon />
         </div>
       </div>
       <div
@@ -24,11 +35,11 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
           flexDirection: 'column',
           padding: '0 16px',
           gap: 8,
-          maxHeight: 100,
+
           overflow: 'auto',
         }}
       >
-        {scenarioList.map((scenario) => (
+        {remainingScenarios.map((scenario) => (
           <ScenarioItem key={scenario} project={project} scenario={scenario} />
         ))}
       </div>

@@ -1,17 +1,9 @@
 import { Divider } from 'antd';
 import ceaLogo from '../../../../assets/cea-logo.png';
-import { useSelector } from 'react-redux';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 
-const OverviewCard = () => {
-  const {
-    project,
-    project_name: projectName,
-    scenario_name: scenarioName,
-    scenarios_list: scenarioList,
-  } = useSelector((state) => state.project.info);
-
+const OverviewCard = ({ project, projectName, scenarioName, scenarioList }) => {
   return (
     <div
       style={{
@@ -19,7 +11,9 @@ const OverviewCard = () => {
         padding: 12,
         borderRadius: 12,
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        width: 250,
+
+        boxSizing: 'border-box',
+        height: '100%',
 
         display: 'flex',
         flexDirection: 'column',
