@@ -18,8 +18,8 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
 
   const handleOk = async () => {
     try {
-      const values = await form.validateFields();
       setConfirmLoading(true);
+      const values = await form.validateFields();
       const { project } = values;
       fetchProject(project).then(() => {
         setConfirmLoading(false);
@@ -28,6 +28,8 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       });
     } catch (e) {
       console.log(e);
+    } finally {
+      setConfirmLoading(false);
     }
   };
 

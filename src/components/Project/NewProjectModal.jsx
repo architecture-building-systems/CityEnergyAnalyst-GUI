@@ -20,28 +20,25 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
     if (visible) fetchInfo();
   }, [visible]);
 
-  const handleOk = () => {
-    form.validateFields(async (err, values) => {
-      if (!err) {
-        console.log('Received values of form: ', values);
-        setConfirmLoading(true);
-        try {
-          const resp = await axios.post(
-            `${import.meta.env.VITE_CEA_URL}/api/project/`,
-            values,
-          );
-          const { project } = resp.data;
-          fetchProject(project).then(() => {
-            setConfirmLoading(false);
-            setVisible(false);
-            onSuccess();
-          });
-        } catch (err) {
-          console.error(err.response);
-          setConfirmLoading(false);
-        }
-      }
-    });
+  const handleOk = async () => {
+    try {
+      setConfirmLoading(true);
+      const values = await form.validateFields();
+      const resp = await axios.post(
+        `${import.meta.env.VITE_CEA_URL}/api/project/`,
+        values,
+      );
+      const { project } = resp.data;
+      fetchProject(project).then(() => {
+        setConfirmLoading(false);
+        setVisible(false);
+        onSuccess();
+      });
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setConfirmLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -128,7 +125,7 @@ const NewProjectForm = ({ form, initialValue, project }) => {
             },
           },
         ]}
-        hidden={project?.project_root}
+        hidden={project?.projects}
       >
         <OpenDialogInput form={form} type="directory" />
       </Form.Item>
