@@ -126,7 +126,8 @@ const RefreshProjectButton = ({ loading, project, scenarioName }) => {
   const dispatch = useDispatch();
 
   const refreshProject = () => {
-    fetchProject(project).then(({ scenarios_list: scenariosList }) => {
+    fetchProject(project).then((projectInfo) => {
+      const scenariosList = projectInfo?.scenarios_list || [];
       // Set scenario back if it exists
       if (scenariosList.includes(scenarioName))
         dispatch(updateScenario(scenarioName));
