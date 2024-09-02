@@ -10,6 +10,7 @@ import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
+const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
@@ -21,6 +22,11 @@ const HomePageContent = () => {
   return (
     <ErrorBoundary>
       <Switch>
+        <Route path={routes.PROJECT}>
+          <Suspense>
+            <Project />
+          </Suspense>
+        </Route>
         <Route path={routes.CREATE_SCENARIO}>
           <Suspense>
             <CreateScenario />

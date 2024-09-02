@@ -4,7 +4,8 @@
   "DATABASE_EDITOR": "/database-editor",
   "INPUT_EDITOR": "/input-editor",
   "DASHBOARD": "/dashboard",
-  "PROJECT_OVERVIEW": "/project",
+  "PROJECT": "/project",
+  "PROJECT_OVERVIEW": "/overview",
   "CREATE_SCENARIO": "/create-scenario",
   "SPLASH": "/splash"
 }

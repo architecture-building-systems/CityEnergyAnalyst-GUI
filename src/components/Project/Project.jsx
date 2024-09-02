@@ -97,7 +97,7 @@ const NewProjectButton = ({ onSuccess }) => {
   );
 };
 
-const OpenProjectButton = ({ onSuccess = () => {} }) => {
+const OpenProjectButton = ({ onSuccess }) => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -228,9 +228,6 @@ export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
 };
 
 const fetchProjectDetails = async (project = null) => {
-  console.log(
-    `fetchProjectDetails: ${project} - url: ${import.meta.env.VITE_CEA_URL}`,
-  );
   const config = project ? { params: { project } } : {};
   try {
     const resp = await axios.get(

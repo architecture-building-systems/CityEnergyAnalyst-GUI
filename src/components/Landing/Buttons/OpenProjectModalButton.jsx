@@ -12,7 +12,7 @@ const OpenProjectModalButton = () => {
   const dispatch = useDispatch();
 
   const goToProjectPage = () => {
-    dispatch(push(routes.PROJECT_OVERVIEW));
+    dispatch(push(routes.PROJECT));
   };
 
   return (
