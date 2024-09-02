@@ -3,7 +3,7 @@ import { Form, Input, Modal } from 'antd';
 import axios from 'axios';
 import { OpenDialogInput } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo } from '../Project/Project';
-import { checkExist, dirname, joinPath } from '../../utils/file';
+import { checkExist, dirname, joinPath, sanitizePath } from '../../utils/file';
 import { useFetchProject } from '../../utils/hooks';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
@@ -82,14 +82,22 @@ const NewProjectForm = ({ form, initialValue, project }) => {
         label="Project Name"
         extra="Name of new Project"
         rules={[
-          { required: true },
+          { required: true, message: 'Project name cannot be empty' },
           {
             validator: async (_, value) => {
-              console.log(form.getFieldValue('project_root'));
-              const contentPath = joinPath(
-                form.getFieldValue('project_root'),
-                value,
-              );
+              const projectRoot = form.getFieldValue('project_root');
+
+              // Sanitize the path if project root is set
+              if (projectRoot !== '') {
+                console.log('Sanitizing path');
+                try {
+                  sanitizePath(projectRoot, value, 1);
+                } catch (err) {
+                  return Promise.reject('Path entered is invalid');
+                }
+              }
+
+              const contentPath = joinPath(projectRoot, value);
               const pathExists = await checkExist('', 'directory', contentPath);
               if (value.length != 0 && pathExists) {
                 return Promise.reject('project name already exists in path');
@@ -99,7 +107,7 @@ const NewProjectForm = ({ form, initialValue, project }) => {
           },
         ]}
       >
-        <Input />
+        <Input placeholder="new_project" autoComplete="off" />
       </Form.Item>
 
       {/* Only allow project root to be set if it is not already set */}
