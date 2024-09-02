@@ -81,6 +81,7 @@ const NewProjectForm = ({ form, initialValue, project }) => {
         name="project_name"
         label="Project Name"
         extra="Name of new Project"
+        validateFirst
         rules={[
           { required: true, message: 'Project name cannot be empty' },
           {
@@ -127,7 +128,7 @@ const NewProjectForm = ({ form, initialValue, project }) => {
             },
           },
         ]}
-        hidden={project?.project_root !== ''}
+        hidden={project?.project_root}
       >
         <OpenDialogInput form={form} type="directory" />
       </Form.Item>
