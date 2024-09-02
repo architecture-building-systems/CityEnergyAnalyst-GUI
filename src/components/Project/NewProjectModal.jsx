@@ -1,19 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
-import { Form } from '@ant-design/compatible';
-import { Modal } from 'antd';
+import { useState, useEffect, useMemo } from 'react';
+import { Form, Input, Modal } from 'antd';
 import axios from 'axios';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
+import { OpenDialogInput } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo } from '../Project/Project';
 import { checkExist, dirname, joinPath } from '../../utils/file';
 import { useFetchProject } from '../../utils/hooks';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const formRef = useRef();
-  const {
-    info: { project },
-    fetchInfo,
-  } = useFetchConfigProjectInfo();
+  const [form] = Form.useForm();
+  const { info, fetchInfo } = useFetchConfigProjectInfo();
+  const initialValue = useMemo(
+    () => (info?.project ? dirname(info.project) : null),
+    [info?.project],
+  );
   const fetchProject = useFetchProject();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   }, [visible]);
 
   const handleOk = () => {
-    formRef.current.validateFields(async (err, values) => {
+    form.validateFields(async (err, values) => {
       if (!err) {
         console.log('Received values of form: ', values);
         setConfirmLoading(true);
@@ -59,60 +59,72 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <NewProjectForm
-        ref={formRef}
-        initialValue={project ? dirname(project) : null}
-      />
+      {initialValue && (
+        <NewProjectForm
+          form={form}
+          initialValue={initialValue}
+          project={info}
+        />
+      )}
     </Modal>
   );
 };
 
-const NewProjectForm = Form.create()(({ form, initialValue }) => {
+const NewProjectForm = ({ form, initialValue, project }) => {
   return (
-    <Form layout="horizontal">
-      <FormItemWrapper
-        form={form}
+    <Form
+      form={form}
+      labelCol={{ span: 6 }}
+      wrapperCol={{ span: 15, offset: 1 }}
+    >
+      <Form.Item
         name="project_name"
-        initialValue=""
-        help="Name of new Project"
-        required={true}
+        label="Project Name"
+        extra="Name of new Project"
         rules={[
+          { required: true },
           {
-            validator: async (rule, value, callback) => {
+            validator: async (_, value) => {
+              console.log(form.getFieldValue('project_root'));
               const contentPath = joinPath(
                 form.getFieldValue('project_root'),
                 value,
               );
               const pathExists = await checkExist('', 'directory', contentPath);
               if (value.length != 0 && pathExists) {
-                callback('Folder with name already exists in path');
-              } else {
-                callback();
+                return Promise.reject('project name already exists in path');
               }
+              return Promise.resolve();
             },
           },
         ]}
-      />
-      <FormItemWrapper
-        form={form}
+      >
+        <Input />
+      </Form.Item>
+
+      {/* Only allow project root to be set if it is not already set */}
+      <Form.Item
         name="project_root"
+        label="Project Root"
         initialValue={initialValue}
-        help="Path of new Project"
+        extra="Path of new Project"
         rules={[
           {
-            validator: async (rule, value, callback) => {
+            validator: async (_, value) => {
               if (value.length == 0) {
-                callback('Path entered is invalid');
-              } else {
-                callback();
+                return Promise.reject('Path entered is invalid');
               }
+
+              return Promise.resolve();
             },
           },
         ]}
-        inputComponent={<OpenDialogInput form={form} type="directory" />}
-      />
+        hidden={project?.project_root !== ''}
+      >
+        <OpenDialogInput form={form} type="directory" />
+      </Form.Item>
     </Form>
   );
-});
+};
 
 export default NewProjectModal;
