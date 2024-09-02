@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import routes from '../constants/routes.json';
@@ -9,16 +9,6 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { LayoutContext } from '../components/HomePage/hooks';
-
-const ContextProvider = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  return (
-    <LayoutContext.Provider value={{ collapsed, setCollapsed }}>
-      {children}
-    </LayoutContext.Provider>
-  );
-};
 
 const CreateScenario = lazy(() => import('./CreateScenario'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
@@ -73,16 +63,14 @@ const HomePage = () => {
   }, []);
 
   return (
-    <ContextProvider>
-      <div id="homepage-container">
-        <div id="homepage-content-container">
-          <HomePageContent />
-        </div>
-        <div id="homepage-status-bar-container">
-          <StatusBar />
-        </div>
+    <div id="homepage-container">
+      <div id="homepage-content-container">
+        <HomePageContent />
       </div>
-    </ContextProvider>
+      <div id="homepage-status-bar-container">
+        <StatusBar />
+      </div>
+    </div>
   );
 };
 
