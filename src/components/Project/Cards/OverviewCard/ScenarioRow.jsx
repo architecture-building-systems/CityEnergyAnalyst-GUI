@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const remainingScenarios = useMemo(() => {
-    return scenarioList.filter((scenario) => scenario !== scenarioName);
+    return scenarioList.filter((scenario) => scenario !== scenarioName).sort();
   }, [scenarioList, scenarioName]);
 
   return (
