@@ -15,6 +15,7 @@ import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { LayerToggle, NetworkToggle } from './Toggle';
 import { Button, Switch } from 'antd';
+import { FlyToInterpolator } from 'deck.gl';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -86,6 +87,8 @@ const DeckGLMap = ({ data, colors }) => {
           bearing: cameraOptions.current.bearing,
           latitude: cameraOptions.current.center.lat,
           longitude: cameraOptions.current.center.lng,
+          transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+          transitionDuration: 1000,
         }));
       };
       zoomToBounds();
