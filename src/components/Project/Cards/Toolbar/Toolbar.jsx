@@ -81,7 +81,7 @@ const ToolMenu = ({ category, tools, onToolSelected }) => {
   );
 };
 
-const Toolbar = ({ onToolSelected, onOpenInputEditor }) => {
+const Toolbar = ({ onToolSelected, onOpenInputEditor, showTools }) => {
   const dispatch = useDispatch();
   const { status, tools } = useFetchTools();
 
@@ -99,34 +99,42 @@ const Toolbar = ({ onToolSelected, onOpenInputEditor }) => {
         padding: 2,
       }}
     >
-      <HomeOutlined className="cea-card-toolbar-icon" />
-      <Divider className="cea-card-toolbar-divider" type="vertical" />
-      <Tooltip title="Database Editor" overlayInnerStyle={{ fontSize: 12 }}>
-        <DatabaseOutlined
-          className="cea-card-toolbar-icon"
-          onClick={() => dispatch(push(routes.DATABASE_EDITOR))}
-        />
-      </Tooltip>
-      <Tooltip title="Input Editor" overlayInnerStyle={{ fontSize: 12 }}>
-        <EditOutlined
-          className="cea-card-toolbar-icon"
-          onClick={() => onOpenInputEditor?.()}
-        />
-      </Tooltip>
-      <Divider className="cea-card-toolbar-divider" type="vertical" />
+      {/* <HomeOutlined className="cea-card-toolbar-icon" />
+      <Divider className="cea-card-toolbar-divider" type="vertical" /> */}
+      {showTools && (
+        <>
+          <Tooltip title="Database Editor" overlayInnerStyle={{ fontSize: 12 }}>
+            <DatabaseOutlined
+              className="cea-card-toolbar-icon"
+              onClick={() => dispatch(push(routes.DATABASE_EDITOR))}
+            />
+          </Tooltip>
+          <Tooltip title="Input Editor" overlayInnerStyle={{ fontSize: 12 }}>
+            <EditOutlined
+              className="cea-card-toolbar-icon"
+              onClick={() => onOpenInputEditor?.()}
+            />
+          </Tooltip>
+          <Divider className="cea-card-toolbar-divider" type="vertical" />
+        </>
+      )}
       {status == 'fetching' ? (
         <div>Loading Tools</div>
       ) : (
-        Object.keys(tools).map((category) => (
-          <ToolMenu
-            key={category}
-            category={category}
-            tools={tools?.[category]}
-            onToolSelected={onToolSelected}
-          />
-        ))
+        showTools && (
+          <>
+            {Object.keys(tools).map((category) => (
+              <ToolMenu
+                key={category}
+                category={category}
+                tools={tools?.[category]}
+                onToolSelected={onToolSelected}
+              />
+            ))}
+            <Divider className="cea-card-toolbar-divider" type="vertical" />
+          </>
+        )
       )}
-      <Divider className="cea-card-toolbar-divider" type="vertical" />
       <Tooltip title="Plots" overlayInnerStyle={{ fontSize: 12 }}>
         <BarChartOutlined
           className="cea-card-toolbar-icon"

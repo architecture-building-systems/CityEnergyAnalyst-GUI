@@ -53,8 +53,8 @@ const Project = () => {
           style={{
             // TODO: Make this dynamic
             height: '33vh',
-            width: 250,
-
+            minWidth: 250,
+            width: '15vw',
             pointerEvents: 'auto',
           }}
         >
@@ -73,6 +73,7 @@ const Project = () => {
           }}
         >
           <Toolbar
+            showTools={!!scenarioName}
             onToolSelected={setSelectedTool}
             onOpenInputEditor={() => setInputEditor((prev) => !prev)}
           />
