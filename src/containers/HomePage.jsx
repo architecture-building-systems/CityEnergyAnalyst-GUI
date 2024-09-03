@@ -32,7 +32,9 @@ const HomePageContent = () => {
         </Route>
         <Route path={routes.CREATE_SCENARIO}>
           <Suspense>
-            <CreateScenario />
+            <Cardwrapper>
+              <CreateScenario />
+            </Cardwrapper>
           </Suspense>
         </Route>
         <Route path={routes.DASHBOARD}>
@@ -74,12 +76,19 @@ const Cardwrapper = ({ children }) => {
 
         height: '100%',
         overflow: 'auto',
+
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
       }}
     >
-      <Button onClick={() => dispatch(push(routes.PROJECT))}>
+      <Button
+        style={{ marginRight: 'auto', position: 'sticky', top: 0, zIndex: 1 }}
+        onClick={() => dispatch(push(routes.PROJECT))}
+      >
         <LeftOutlined /> Back
       </Button>
-      <div>{children}</div>
+      <div style={{ flexGrow: 1 }}>{children}</div>
     </div>
   );
 };
