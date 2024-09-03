@@ -64,7 +64,6 @@ const ToolMenu = ({ category, tools }) => {
       open={showTooltip}
       onOpenChange={setShowTooltip}
       overlayInnerStyle={{ fontSize: 12 }}
-      placement="top"
     >
       <Dropdown
         menu={{ items }}
@@ -100,14 +99,14 @@ const Toolbar = () => {
       }}
     >
       <HomeOutlined className="cea-card-toolbar-icon" />
-      <Divider type="vertical" style={{ height: '60%', margin: 'auto' }} />
+      <Divider className="cea-card-toolbar-divider" type="vertical" />
       <Tooltip title="Database Editor" overlayInnerStyle={{ fontSize: 12 }}>
         <DatabaseOutlined
           className="cea-card-toolbar-icon"
           onClick={() => dispatch(push(routes.DATABASE_EDITOR))}
         />
       </Tooltip>
-      <Divider type="vertical" style={{ height: '60%', margin: 'auto' }} />
+      <Divider className="cea-card-toolbar-divider" type="vertical" />
       {status == 'fetching' ? (
         <div>Loading Tools</div>
       ) : (
@@ -119,7 +118,7 @@ const Toolbar = () => {
           />
         ))
       )}
-      <Divider type="vertical" style={{ height: '60%', margin: 'auto' }} />
+      <Divider className="cea-card-toolbar-divider" type="vertical" />
       <Tooltip title="Plots" overlayInnerStyle={{ fontSize: 12 }}>
         <BarChartOutlined
           className="cea-card-toolbar-icon"

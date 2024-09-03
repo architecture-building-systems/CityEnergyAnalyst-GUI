@@ -13,3 +13,8 @@
 
   font-size: 20px;
 }
+
+.cea-card-toolbar-divider {
+  height: 60%;
+  margin: auto;
+}
