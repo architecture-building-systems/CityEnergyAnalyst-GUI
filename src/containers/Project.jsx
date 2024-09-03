@@ -6,6 +6,7 @@ import { fetchInputData, resetInputData } from '../actions/inputEditor';
 import { Spin, Tabs } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
+import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
 
 const Project = () => {
   const dispatch = useDispatch();
@@ -33,17 +34,40 @@ const Project = () => {
           margin: 12,
           zIndex: 1,
 
-          height: '33vh',
-          width: 250,
+          display: 'flex',
+          gap: 12,
+          alignItems: 'flex-start',
+
+          pointerEvents: 'none',
         }}
       >
-        <OverviewCard
-          project={project}
-          projectName={projectName}
-          scenarioName={scenarioName}
-          scenarioList={scenarioList}
-        />
+        <div
+          style={{
+            height: '33vh',
+            width: 250,
+
+            pointerEvents: 'auto',
+          }}
+        >
+          <OverviewCard
+            project={project}
+            projectName={projectName}
+            scenarioName={scenarioName}
+            scenarioList={scenarioList}
+          />
+        </div>
+
+        <div
+          style={{
+            zIndex: 1,
+
+            pointerEvents: 'auto',
+          }}
+        >
+          <Toolbar />
+        </div>
       </div>
+
       <InputMap projectName={projectName} scenarioName={scenarioName} />
 
       <div
@@ -57,6 +81,7 @@ const Project = () => {
           width: 'calc(100% - 24px)',
 
           borderRadius: 12,
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
           overflow: 'auto',
         }}
@@ -78,6 +103,9 @@ const InputMap = () => {
           height: '100%',
           position: 'relative',
           background: 'rgba(0, 0, 0, 0.05)',
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
         }}
       >
         {status == 'fetching' && (

@@ -18,6 +18,8 @@ const OverviewCard = ({ project, projectName, scenarioName, scenarioList }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
+
+        fontSize: 12,
       }}
     >
       <Logo height={55} />
@@ -44,7 +46,7 @@ const Logo = ({ height }) => {
       }}
     >
       <img style={{ height: '100%' }} src={ceaLogo} alt="Logo" />
-      <span style={{ fontSize: '1em', fontWeight: 600 }}>
+      <span style={{ fontSize: '1.2em', fontWeight: 600 }}>
         City Energy Analyst
       </span>
     </div>

@@ -15,8 +15,8 @@ const ProjectRow = ({ projectName }) => {
         alignItems: 'center',
       }}
     >
-      <div style={{ fontWeight: 800 }}>{projectName}</div>
-      <div style={{ display: 'flex', gap: 12, fontSize: 20 }}>
+      <b>{projectName}</b>
+      <div style={{ display: 'flex', gap: 8, fontSize: 20 }}>
         <OpenProjectIcon />
         <NewProjectIcon />
       </div>
