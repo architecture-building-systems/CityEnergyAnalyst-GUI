@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { useHoverGrow } from './hooks';
 import { useOpenScenario } from '../../Project';
 import { useMemo } from 'react';
+import { Tooltip } from 'antd';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const remainingScenarios = useMemo(() => {
@@ -65,13 +66,19 @@ const NewScenarioIcon = () => {
   const onClick = () => dispatch(push(routes.CREATE_SCENARIO));
 
   return (
-    <animated.div
-      style={styles}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+    <Tooltip
+      title="New Scenario"
+      placement="right"
+      overlayInnerStyle={{ fontSize: 12 }}
     >
-      <PlusCircleOutlined onClick={onClick} />
-    </animated.div>
+      <animated.div
+        style={styles}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <PlusCircleOutlined onClick={onClick} />
+      </animated.div>
+    </Tooltip>
   );
 };
 

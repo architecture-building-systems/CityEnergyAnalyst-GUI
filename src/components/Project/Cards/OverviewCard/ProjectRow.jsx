@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { animated } from '@react-spring/web';
 import NewProjectModal from '../../NewProjectModal';
 import { useHoverGrow } from './hooks';
+import { Tooltip } from 'antd';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -31,7 +32,7 @@ const OpenProjectIcon = () => {
   const onSuccess = async ({ project }) => {};
 
   return (
-    <>
+    <Tooltip title="Open Project" overlayInnerStyle={{ fontSize: 12 }}>
       <animated.div
         style={styles}
         onMouseEnter={onMouseEnter}
@@ -44,7 +45,7 @@ const OpenProjectIcon = () => {
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
-    </>
+    </Tooltip>
   );
 };
 
@@ -55,7 +56,7 @@ const NewProjectIcon = () => {
   const onSuccess = () => {};
 
   return (
-    <>
+    <Tooltip title="New Project" overlayInnerStyle={{ fontSize: 12 }}>
       <animated.div
         style={styles}
         onMouseEnter={onMouseEnter}
@@ -68,7 +69,7 @@ const NewProjectIcon = () => {
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
-    </>
+    </Tooltip>
   );
 };
 
