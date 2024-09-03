@@ -7,6 +7,7 @@ import { Spin, Tabs } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
+import ToolCard from '../components/Project/Cards/ToolCard/ToolCard';
 
 const Project = () => {
   const dispatch = useDispatch();
@@ -17,6 +18,10 @@ const Project = () => {
     scenario_name: scenarioName,
     scenarios_list: scenarioList,
   } = useSelector((state) => state.project.info);
+
+  const [selectedTool, setSelectedTool] = useState(null);
+
+  useEffect(() => setSelectedTool(null), [projectName, scenarioName]);
 
   useEffect(() => {
     if (scenarioName !== null) dispatch(fetchInputData());
@@ -43,6 +48,7 @@ const Project = () => {
       >
         <div
           style={{
+            // TODO: Make this dynamic
             height: '33vh',
             width: 250,
 
@@ -59,17 +65,15 @@ const Project = () => {
 
         <div
           style={{
-            zIndex: 1,
-
+            height: '100%',
             pointerEvents: 'auto',
           }}
         >
-          <Toolbar />
+          <Toolbar onToolSelected={setSelectedTool} />
         </div>
       </div>
 
       <InputMap projectName={projectName} scenarioName={scenarioName} />
-
       <div
         style={{
           position: 'absolute',
@@ -77,16 +81,40 @@ const Project = () => {
           bottom: 24,
           margin: 12,
 
-          height: '40vh',
+          display: 'flex',
+          gap: 12,
+          alignItems: 'flex-end',
+          justifyContent: 'flex-end',
+
+          height: 'calc(100% - 48px)',
           width: 'calc(100% - 24px)',
 
-          borderRadius: 12,
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-
-          overflow: 'auto',
+          pointerEvents: 'none',
         }}
       >
-        <InputTable />
+        <div
+          style={{
+            borderRadius: 12,
+            boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+
+            // TODO: Make this dynamic
+            maxHeight: '30%',
+            overflow: 'auto',
+            pointerEvents: 'auto',
+
+            flexGrow: 1,
+          }}
+        >
+          <InputTable />
+        </div>
+        {selectedTool && (
+          <div style={{ height: '100%', pointerEvents: 'auto' }}>
+            <ToolCard
+              selectedTool={selectedTool}
+              onClose={() => setSelectedTool(null)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ const toolIconMap = {
   Utilities: <ToolOutlined />,
 };
 
-const ToolMenu = ({ category, tools }) => {
+const ToolMenu = ({ category, tools, onToolSelected }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   const items = tools.map((tool) => ({
@@ -66,7 +66,7 @@ const ToolMenu = ({ category, tools }) => {
       overlayInnerStyle={{ fontSize: 12 }}
     >
       <Dropdown
-        menu={{ items }}
+        menu={{ items, onClick: ({ key }) => onToolSelected(key) }}
         trigger={['click']}
         onOpenChange={() => setShowTooltip(false)}
       >
@@ -80,7 +80,7 @@ const ToolMenu = ({ category, tools }) => {
   );
 };
 
-const Toolbar = () => {
+const Toolbar = ({ onToolSelected }) => {
   const dispatch = useDispatch();
   const { status, tools } = useFetchTools();
 
@@ -115,6 +115,7 @@ const Toolbar = () => {
             key={category}
             category={category}
             tools={tools?.[category]}
+            onToolSelected={onToolSelected}
           />
         ))
       )}
