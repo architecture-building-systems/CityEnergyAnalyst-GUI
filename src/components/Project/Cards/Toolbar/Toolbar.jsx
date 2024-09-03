@@ -1,6 +1,5 @@
 import {
   DatabaseOutlined,
-  HomeOutlined,
   ToolOutlined,
   BarChartOutlined,
   DownOutlined,
@@ -13,7 +12,7 @@ import {
   EditOutlined,
 } from '@ant-design/icons';
 import { Divider, Dropdown, Tooltip } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchToolList } from '../../../../actions/tools';
 import { push } from 'connected-react-router';
@@ -42,34 +41,47 @@ const toolIconMap = {
   Utilities: <ToolOutlined />,
 };
 
-const ToolMenu = ({ category, tools, onToolSelected }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
+const ToolMenu = ({
+  category,
+  tools,
+  onToolSelected,
+  showTooltip,
+  onMenuOpenChange,
+}) => {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
 
-  const items = tools.map((tool) => ({
-    key: tool.name,
-    label: (
-      <Tooltip
-        title={tool.description}
-        placement="right"
-        overlayInnerStyle={{ fontSize: 12 }}
-      >
-        <div style={{ width: '100%' }}>{tool.label}</div>
-      </Tooltip>
-    ),
-  }));
+  const items = useMemo(
+    () =>
+      tools.map((tool) => ({
+        key: tool.name,
+        label: (
+          <Tooltip
+            title={tool.description}
+            placement="right"
+            overlayInnerStyle={{ fontSize: 12 }}
+          >
+            <div style={{ width: '100%' }}>{tool.label}</div>
+          </Tooltip>
+        ),
+      })),
+    [tools],
+  );
+
+  useEffect(() => {
+    setTooltipVisible(false);
+  }, [showTooltip]);
 
   return (
     <Tooltip
-      title={category}
-      mouseEnterDelay={0.8}
-      open={showTooltip}
-      onOpenChange={setShowTooltip}
+      title={showTooltip ? category : ''}
       overlayInnerStyle={{ fontSize: 12 }}
+      open={showTooltip && tooltipVisible}
+      onOpenChange={setTooltipVisible}
     >
       <Dropdown
         menu={{ items, onClick: ({ key }) => onToolSelected(key) }}
         trigger={['click']}
-        onOpenChange={() => setShowTooltip(false)}
+        onOpenChange={onMenuOpenChange}
       >
         <div className="cea-card-toolbar-icon">
           {toolIconMap?.[category] || <ToolOutlined />}
@@ -84,6 +96,8 @@ const ToolMenu = ({ category, tools, onToolSelected }) => {
 const Toolbar = ({ onToolSelected, onOpenInputEditor, showTools }) => {
   const dispatch = useDispatch();
   const { status, tools } = useFetchTools();
+
+  const [showTooltip, setShowTooltip] = useState(true);
 
   return (
     <div
@@ -129,6 +143,8 @@ const Toolbar = ({ onToolSelected, onOpenInputEditor, showTools }) => {
                 category={category}
                 tools={tools?.[category]}
                 onToolSelected={onToolSelected}
+                showTooltip={showTooltip}
+                onMenuOpenChange={(value) => setShowTooltip(!value)}
               />
             ))}
             <Divider className="cea-card-toolbar-divider" type="vertical" />
