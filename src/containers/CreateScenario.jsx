@@ -35,6 +35,8 @@ import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
 import { FlyToInterpolator } from 'deck.gl';
 
+import routes from '../constants/routes.json';
+
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
 const useCreateScenario = (projectPath, { onSuccess }) => {
@@ -117,13 +119,13 @@ const CreateScenarioProgressModal = ({
             title="Scenario created successfully!"
             subTitle={
               <>
-                <div>Redirecting to Input Editor...</div>
+                <div>Redirecting to Scenario...</div>
                 <div>Click below if you are not redirected.</div>
               </>
             }
             extra={[
               <Button key="ok" type="primary" onClick={onOk}>
-                Go to Input Editor
+                Open Scenario
               </Button>,
             ]}
           ></Result>
@@ -140,7 +142,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
   const {
     info: { project },
   } = useSelector((state) => state.project);
-  const openScenario = useOpenScenario();
+  const openScenario = useOpenScenario(routes.PROJECT);
   const { setFormData, fetching, error } = useCreateScenario(project, {
     // Redirect to input editor when scenario is created
     onSuccess: ({ scenario_name }) => {
@@ -156,7 +158,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
   const databases = useFetchDatabases();
   const weather = useFetchWeather();
 
-  const goToInputEditor = () => {
+  const goToScenario = () => {
     openScenario(project, data.scenario_name);
   };
 
@@ -278,7 +280,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
         success={success}
         error={error}
         fetching={fetching}
-        onOk={goToInputEditor}
+        onOk={goToScenario}
       />
     </div>
   );
