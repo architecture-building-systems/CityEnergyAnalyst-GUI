@@ -20,8 +20,11 @@ const Project = () => {
   } = useSelector((state) => state.project.info);
 
   const [selectedTool, setSelectedTool] = useState(null);
+  const [showInputEditor, setInputEditor] = useState(false);
 
-  useEffect(() => setSelectedTool(null), [projectName, scenarioName]);
+  useEffect(() => {
+    setSelectedTool(null), setInputEditor(false);
+  }, [projectName, scenarioName]);
 
   useEffect(() => {
     if (scenarioName !== null) dispatch(fetchInputData());
@@ -69,7 +72,10 @@ const Project = () => {
             pointerEvents: 'auto',
           }}
         >
-          <Toolbar onToolSelected={setSelectedTool} />
+          <Toolbar
+            onToolSelected={setSelectedTool}
+            onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+          />
         </div>
       </div>
 
@@ -92,21 +98,23 @@ const Project = () => {
           pointerEvents: 'none',
         }}
       >
-        <div
-          style={{
-            borderRadius: 12,
-            boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+        {showInputEditor && (
+          <div
+            style={{
+              borderRadius: 12,
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
-            // TODO: Make this dynamic
-            maxHeight: '30%',
-            overflow: 'auto',
-            pointerEvents: 'auto',
+              // TODO: Make this dynamic
+              maxHeight: '30%',
+              overflow: 'auto',
+              pointerEvents: 'auto',
 
-            flexGrow: 1,
-          }}
-        >
-          <InputTable />
-        </div>
+              flexGrow: 1,
+            }}
+          >
+            <InputTable />
+          </div>
+        )}
         {selectedTool && (
           <div style={{ height: '100%', pointerEvents: 'auto' }}>
             <ToolCard

@@ -10,6 +10,7 @@ import {
   ThunderboltOutlined,
   DeploymentUnitOutlined,
   RadarChartOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { Divider, Dropdown, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
@@ -80,7 +81,7 @@ const ToolMenu = ({ category, tools, onToolSelected }) => {
   );
 };
 
-const Toolbar = ({ onToolSelected }) => {
+const Toolbar = ({ onToolSelected, onOpenInputEditor }) => {
   const dispatch = useDispatch();
   const { status, tools } = useFetchTools();
 
@@ -104,6 +105,12 @@ const Toolbar = ({ onToolSelected }) => {
         <DatabaseOutlined
           className="cea-card-toolbar-icon"
           onClick={() => dispatch(push(routes.DATABASE_EDITOR))}
+        />
+      </Tooltip>
+      <Tooltip title="Input Editor" overlayInnerStyle={{ fontSize: 12 }}>
+        <EditOutlined
+          className="cea-card-toolbar-icon"
+          onClick={() => onOpenInputEditor?.()}
         />
       </Tooltip>
       <Divider className="cea-card-toolbar-divider" type="vertical" />
