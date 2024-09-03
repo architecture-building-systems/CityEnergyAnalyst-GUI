@@ -3,7 +3,7 @@ import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
 import { useEffect, useState } from 'react';
 import { fetchInputData, resetInputData } from '../actions/inputEditor';
-import { Spin, Tabs } from 'antd';
+import { Alert, Spin, Tabs } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
@@ -125,6 +125,24 @@ const Project = () => {
           </div>
         )}
       </div>
+
+      {!scenarioName && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            userSelect: 'none',
+          }}
+        >
+          <Alert
+            message="No Scenario Selected"
+            description="Please select a scenario to start editing inputs"
+            type="info"
+          />
+        </div>
+      )}
     </div>
   );
 };
