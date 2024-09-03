@@ -44,7 +44,7 @@ const Dashboard = () => {
 
   return (
     <ModalManager modals={modals}>
-      <div id="cea-dashboard-content" style={{ minHeight: '100%' }}>
+      <div id="cea-dashboard-content">
         <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
           <DashSelect
             dashIndex={dashIndex}

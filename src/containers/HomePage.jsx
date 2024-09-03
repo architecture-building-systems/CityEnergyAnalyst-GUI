@@ -9,6 +9,9 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import { Button } from 'antd';
+import { LeftOutlined } from '@ant-design/icons';
+import { push } from 'connected-react-router';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -34,12 +37,16 @@ const HomePageContent = () => {
         </Route>
         <Route path={routes.DASHBOARD}>
           <Suspense>
-            <Dashboard />
+            <Cardwrapper>
+              <Dashboard />
+            </Cardwrapper>
           </Suspense>
         </Route>
         <Route path={routes.DATABASE_EDITOR}>
           <Suspense>
-            <DatabaseEditor />
+            <Cardwrapper>
+              <DatabaseEditor />
+            </Cardwrapper>
           </Suspense>
         </Route>
         <Route exact path={routes.HOME}>
@@ -49,6 +56,31 @@ const HomePageContent = () => {
         </Route>
       </Switch>
     </ErrorBoundary>
+  );
+};
+
+const Cardwrapper = ({ children }) => {
+  const dispatch = useDispatch();
+
+  return (
+    <div
+      style={{
+        border: '1px solid #ccc',
+        borderRadius: 8,
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+
+        margin: 24,
+        padding: 24,
+
+        height: '100%',
+        overflow: 'auto',
+      }}
+    >
+      <Button onClick={() => dispatch(push(routes.PROJECT))}>
+        <LeftOutlined /> Back
+      </Button>
+      <div>{children}</div>
+    </div>
   );
 };
 
