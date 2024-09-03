@@ -3,7 +3,7 @@
   "TOOLS": "/tools",
   "DATABASE_EDITOR": "/database-editor",
   "INPUT_EDITOR": "/input-editor",
-  "DASHBOARD": "/dashboard",
+  "DASHBOARD": "/plots",
   "PROJECT": "/project",
   "PROJECT_OVERVIEW": "/overview",
   "CREATE_SCENARIO": "/create-scenario",
