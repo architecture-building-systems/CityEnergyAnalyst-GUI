@@ -55,8 +55,8 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
       );
       onSuccess?.(response.data);
     } catch (error) {
-      console.log(error);
-      setError(error);
+      console.log(error?.response?.data);
+      setError(error?.response?.data);
     } finally {
       setFetching(false);
     }
@@ -99,9 +99,11 @@ const CreateScenarioProgressModal = ({
         )}
         {error && (
           <Result
-            status="error"
+            status="warning"
             title="Scenario creation failed"
-            subTitle="There was an error while creating the scenario"
+            subTitle={
+              error?.detail || 'There was an error while creating the scenario'
+            }
             extra={[
               <Button
                 type="primary"
