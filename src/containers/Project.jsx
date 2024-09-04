@@ -9,7 +9,25 @@ import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
 import ToolCard from '../components/Project/Cards/ToolCard/ToolCard';
 
+import './Project.css';
+
 const Project = () => {
+  const { scenario_name: scenarioName } = useSelector(
+    (state) => state.project.info,
+  );
+
+  return (
+    <div style={{ height: '100%', background: '#f0f2f8' }}>
+      <ProjectOverlay />
+
+      <InputMap />
+
+      {!scenarioName && <ScenarioAlert />}
+    </div>
+  );
+};
+
+const ProjectOverlay = () => {
   const dispatch = useDispatch();
 
   const {
@@ -35,87 +53,51 @@ const Project = () => {
   }, [dispatch, projectName, scenarioName]);
 
   return (
-    <div style={{ height: '100%', background: '#f0f2f8' }}>
-      <div
-        style={{
-          position: 'absolute',
-          margin: 12,
-          zIndex: 1,
-
-          display: 'flex',
-          gap: 12,
-          alignItems: 'flex-start',
-
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          style={{
-            // TODO: Make this dynamic
-            height: '33vh',
-            minWidth: 250,
-            width: '15vw',
-            pointerEvents: 'auto',
-          }}
-        >
-          <OverviewCard
-            project={project}
-            projectName={projectName}
-            scenarioName={scenarioName}
-            scenarioList={scenarioList}
-          />
-        </div>
-
-        <div
-          style={{
-            height: '100%',
-            pointerEvents: 'auto',
-          }}
-        >
+    <div id="cea-project-overlay">
+      <div id="cea-project-overlay-left">
+        <div id="cea-project-overlay-left-top">
+          <div
+            style={{
+              // TODO: Make this dynamic
+              height: '33vh',
+              minWidth: 250,
+              width: '15vw',
+            }}
+          >
+            <OverviewCard
+              project={project}
+              projectName={projectName}
+              scenarioName={scenarioName}
+              scenarioList={scenarioList}
+            />
+          </div>
           <Toolbar
             showTools={!!scenarioName}
             onToolSelected={setSelectedTool}
             onOpenInputEditor={() => setInputEditor((prev) => !prev)}
           />
         </div>
+        <div id="cea-project-overlay-left-bottom">
+          {showInputEditor && (
+            <div
+              style={{
+                borderRadius: 12,
+                boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+
+                // TODO: Make this dynamic
+                maxHeight: '30vh',
+                overflow: 'auto',
+                pointerEvents: 'auto',
+
+                flexGrow: 1,
+              }}
+            >
+              <InputTable />
+            </div>
+          )}
+        </div>
       </div>
-
-      <InputMap projectName={projectName} scenarioName={scenarioName} />
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 1,
-          bottom: 24,
-          margin: 12,
-
-          display: 'flex',
-          gap: 12,
-          alignItems: 'flex-end',
-          justifyContent: 'flex-end',
-
-          height: 'calc(100% - 48px)',
-          width: 'calc(100% - 24px)',
-
-          pointerEvents: 'none',
-        }}
-      >
-        {showInputEditor && (
-          <div
-            style={{
-              borderRadius: 12,
-              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-
-              // TODO: Make this dynamic
-              maxHeight: '30%',
-              overflow: 'auto',
-              pointerEvents: 'auto',
-
-              flexGrow: 1,
-            }}
-          >
-            <InputTable />
-          </div>
-        )}
+      <div id="cea-project-overlay-right">
         {selectedTool && (
           <div style={{ height: '100%', pointerEvents: 'auto' }}>
             <ToolCard
@@ -125,24 +107,6 @@ const Project = () => {
           </div>
         )}
       </div>
-
-      {!scenarioName && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            userSelect: 'none',
-          }}
-        >
-          <Alert
-            message="No Scenario Selected"
-            description="Please select a scenario to start editing inputs"
-            type="info"
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -221,6 +185,26 @@ const InputTable = () => {
       >
         <Table tab={tab} />
       </div>
+    </div>
+  );
+};
+
+const ScenarioAlert = () => {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        userSelect: 'none',
+      }}
+    >
+      <Alert
+        message="No Scenario Selected"
+        description="Please select a scenario to start editing inputs"
+        type="info"
+      />
     </div>
   );
 };

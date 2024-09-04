@@ -1,0 +1,44 @@
+#cea-project-overlay {
+  position: absolute;
+  top: 0;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  display: flex;
+  gap: 12px;
+
+  height: calc(100vh - 24px);
+  width: 100vw;
+
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+#cea-project-overlay-left {
+  height: 100%;
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  min-width: 0;
+}
+
+#cea-project-overlay-right {
+  height: 100%;
+}
+
+#cea-project-overlay-left-top {
+  display: flex;
+  gap: 12px;
+}
+
+#cea-project-overlay-left-bottom {
+  display: flex;
+
+  flex-direction: column;
+  justify-content: flex-end;
+}
