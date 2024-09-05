@@ -404,7 +404,17 @@ const CreateScenario = () => {
     <Alert.ErrorBoundary>
       <Row style={{ height: '100%' }}>
         <Col span={12}>
-          {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
+          <div
+            style={{
+              height: '100%',
+              overflow: 'auto',
+              background: '#fff',
+              borderRadius: 8,
+              border: '1px solid #eee',
+            }}
+          >
+            {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
+          </div>
         </Col>
         <Col span={12}>
           <MapFormContext.Provider value={contextValue}>
