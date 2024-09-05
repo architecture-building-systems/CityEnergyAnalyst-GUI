@@ -32,7 +32,7 @@ const HomePageContent = () => {
         </Route>
         <Route path={routes.CREATE_SCENARIO}>
           <Suspense>
-            <Cardwrapper style={{ backgroudColor: '#D4DADC' }}>
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
               <CreateScenario />
             </Cardwrapper>
           </Suspense>
