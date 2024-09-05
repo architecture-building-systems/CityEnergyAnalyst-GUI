@@ -311,11 +311,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
   }, [data, visibility, extruded, selected]);
 
   return (
-    <div
-      onContextMenu={(e) => {
-        e.preventDefault();
-      }}
-    >
+    <>
       <DeckGL
         viewState={viewState}
         controller={{ inertia: true }}
@@ -324,6 +320,9 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
           setViewState(viewState);
         }}
         onDragStart={onDragStart}
+        onContextMenu={(e) => {
+          e.preventDefault();
+        }}
       >
         <Map
           ref={mapRef}
@@ -400,7 +399,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
         {controlsElementId === 'map-controls' && <div id="map-controls" />}
       </DeckGL>
       <div id="map-tooltip"></div>
-    </div>
+    </>
   );
 };
 
