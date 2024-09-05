@@ -10,7 +10,7 @@ import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
 import ToolCard from '../components/Project/Cards/ToolCard/ToolCard';
 
 import './Project.css';
-import BottomButtons from '../components/Project/Cards/BottomBottons/BottomButtons';
+import BottomToolButtons from '../components/Project/Cards/BottomToolBottons/BottomToolButtons';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -95,7 +95,7 @@ const ProjectOverlay = () => {
               <InputTable />
             </div>
           )}
-          <BottomButtons
+          <BottomToolButtons
             onOpenInputEditor={() => setInputEditor((prev) => !prev)}
           />
         </div>

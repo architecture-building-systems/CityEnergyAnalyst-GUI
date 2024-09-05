@@ -40,9 +40,20 @@
   pointer-events: auto;
 }
 
+#cea-project-overlay-left-bottom > * {
+  pointer-events: auto;
+}
+
 #cea-project-overlay-left-bottom {
   display: flex;
 
   flex-direction: column;
   justify-content: flex-end;
+
+  gap: 12px;
+}
+
+#bottom-buttons .cea-card-toolbar-icon {
+  background-color: #000;
+  font-size: 28px;
 }
