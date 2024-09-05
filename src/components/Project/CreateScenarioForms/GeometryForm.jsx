@@ -272,7 +272,9 @@ const TypologyFormItem = () => {
       <SelectWithFileDialog
         name="typology"
         type="file"
-        filters={[{ name: 'DBF files', extensions: ['dbf'] }]}
+        filters={[
+          { name: 'Typology formats', extensions: ['csv', 'dbf', 'xlsx'] },
+        ]}
         placeholder="Choose an option from the dropdown"
         options={[
           {
@@ -283,7 +285,7 @@ const TypologyFormItem = () => {
       >
         <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
           <FileSearchOutlined />
-          Import .dbf file
+          Import .xlsx/.csv/.dbf file
         </div>
       </SelectWithFileDialog>
     </Form.Item>
