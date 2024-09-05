@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Form } from '@ant-design/compatible';
-import { Skeleton, Divider, Collapse, Button, Spin as AntSpin } from 'antd';
+import {
+  Skeleton,
+  Divider,
+  Collapse,
+  Button,
+  Spin as AntSpin,
+  Alert,
+} from 'antd';
 import {
   fetchToolParams,
   saveToolParams,
@@ -14,12 +21,73 @@ import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
 import './Tool.css';
+import axios from 'axios';
 
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
 };
 
-const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
+const useCheckMissingInputs = (tool) => {
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      setFetching(true);
+      try {
+        await axios.get(
+          `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
+        );
+        setError(null);
+      } catch (err) {
+        console.error(err.response.data);
+        setError(err.response.data?.detail?.script_suggestions);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetch();
+  }, [tool]);
+
+  return { fetching, error };
+};
+
+const ScriptSuggestions = ({ script, onMissingInputs }) => {
+  const { fetching, error } = useCheckMissingInputs(script);
+
+  console.log({ error });
+  useEffect(() => {
+    onMissingInputs?.(error?.length || false);
+  }, [error]);
+
+  if (fetching) return <Skeleton active />;
+  if (error)
+    return (
+      <Alert
+        message="Missing inputs"
+        description={
+          <div>
+            <p>Run the following scripts to find missing inputs:</p>
+            {error?.length ? (
+              <div>
+                {error.map(({ label, name }) => {
+                  return <div key={name}>`{label}`</div>;
+                })}
+              </div>
+            ) : (
+              <div>Something went wrong</div>
+            )}
+          </div>
+        }
+        type="info"
+        showIcon
+      />
+    );
+  return null;
+};
+
+const Tool = withErrorBoundary(({ script }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const dispatch = useDispatch();
   const {
@@ -29,6 +97,9 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
     parameters,
     categorical_parameters: categoricalParameters,
   } = params;
+
+  // Disable form buttons until inputs are found
+  const [missingInputs, setMissingInputs] = useState(true);
 
   useEffect(() => {
     dispatch(fetchToolParams(script));
@@ -49,12 +120,20 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
         <p>
           <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
         </p>
-        <ToolForm
-          parameters={parameters}
-          categoricalParameters={categoricalParameters}
-          script={script}
-          formButtons={formButtons}
-        />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ScriptSuggestions
+            script={script}
+            onMissingInputs={setMissingInputs}
+          />
+
+          <ToolForm
+            parameters={parameters}
+            categoricalParameters={categoricalParameters}
+            script={script}
+            disableButtons={missingInputs}
+          />
+        </div>
       </Spin>
     </div>
   );
@@ -64,8 +143,8 @@ const ToolForm = Form.create()(({
   parameters,
   categoricalParameters,
   script,
-  formButtons,
   form,
+  disableButtons,
 }) => {
   const dispatch = useDispatch();
   const [activeKey, setActiveKey] = useState([]);
@@ -106,31 +185,16 @@ const ToolForm = Form.create()(({
     return out;
   };
 
-  // eslint-disable-next-line react/display-name
-  const withFormFunctions = (FormButtons) => (props) => {
-    if (FormButtons === null) return null;
-
-    const runScript = () => {
-      const values = getForm();
-      values && dispatch(createJob(script, values));
-    };
-
-    const saveParams = (params) => {
-      params && dispatch(saveToolParams(script, params));
-    };
-
-    const setDefault = () => dispatch(setDefaultToolParams(script));
-
-    return (
-      <FormButtons
-        {...props}
-        getForm={getForm}
-        runScript={runScript}
-        saveParams={saveParams}
-        setDefault={setDefault}
-      />
-    );
+  const runScript = () => {
+    const values = getForm();
+    values && dispatch(createJob(script, values));
   };
+
+  const saveParams = (params) => {
+    params && dispatch(saveToolParams(script, params));
+  };
+
+  const setDefault = () => dispatch(setDefaultToolParams(script));
 
   let toolParams = null;
   if (parameters) {
@@ -162,7 +226,13 @@ const ToolForm = Form.create()(({
     <Form layout="horizontal" className="cea-tool-form">
       <Form.Item className="formButtons">
         <div className="cea-tool-form-buttongroup">
-          {withFormFunctions(formButtons)()}
+          <ToolFormButtons
+            getForm={getForm}
+            runScript={runScript}
+            saveParams={saveParams}
+            setDefault={setDefault}
+            disabled={disableButtons}
+          />
         </div>
       </Form.Item>
       <Divider />
@@ -174,10 +244,16 @@ const ToolForm = Form.create()(({
   );
 });
 
-const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
+const ToolFormButtons = ({
+  getForm,
+  runScript,
+  saveParams,
+  setDefault,
+  disabled = false,
+}) => {
   return (
     <>
-      <Button type="primary" onClick={runScript}>
+      <Button type="primary" onClick={runScript} disabled={disabled}>
         Run Script
       </Button>
       <Button
@@ -185,10 +261,11 @@ const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
         onClick={() => {
           saveParams(getForm());
         }}
+        disabled={disabled}
       >
         Save to Config
       </Button>
-      <Button type="primary" onClick={setDefault}>
+      <Button type="primary" onClick={setDefault} disabled={disabled}>
         Default
       </Button>
     </>
