@@ -9,7 +9,7 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { Button } from 'antd';
+import { Button, ConfigProvider } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import { push } from 'connected-react-router';
 
@@ -111,14 +111,23 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div id="homepage-container">
-      <div id="homepage-content-container">
-        <HomePageContent />
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#1470AF',
+          colorInfo: '#1470AF',
+        },
+      }}
+    >
+      <div id="homepage-container">
+        <div id="homepage-content-container">
+          <HomePageContent />
+        </div>
+        <div id="homepage-status-bar-container">
+          <StatusBar />
+        </div>
       </div>
-      <div id="homepage-status-bar-container">
-        <StatusBar />
-      </div>
-    </div>
+    </ConfigProvider>
   );
 };
 
