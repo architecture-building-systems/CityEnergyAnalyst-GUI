@@ -178,7 +178,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
           id: 'streets',
           data: data.streets,
           getLineColor: [171, 95, 127],
-          getLineWidth: 1,
+          getLineWidth: 0.75,
           visible: visibility.streets,
 
           pickable: true,
