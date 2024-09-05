@@ -22,7 +22,7 @@ import { AsyncError } from '../../utils/AsyncError';
 
 import './Tool.css';
 import axios from 'axios';
-import { RunIcon } from '../../assets/icons';
+import { ExternalLinkIcon, RunIcon } from '../../assets/icons';
 import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
@@ -56,7 +56,7 @@ const useCheckMissingInputs = (tool) => {
   return { fetching, error };
 };
 
-const ScriptSuggestions = ({ script, onMissingInputs }) => {
+const ScriptSuggestions = ({ script, onMissingInputs, onToolSelected }) => {
   const { fetching, error } = useCheckMissingInputs(script);
 
   useEffect(() => {
@@ -65,19 +65,33 @@ const ScriptSuggestions = ({ script, onMissingInputs }) => {
 
   if (fetching)
     return (
-      <div style={{ fontFamily: 'monospace' }}>Checking for missing inputs</div>
+      <div style={{ fontFamily: 'monospace' }}>
+        Checking for missing inputs...
+      </div>
     );
   if (error)
     return (
       <Alert
-        message="Missing inputs"
+        message="Missing inputs detected"
         description={
           <div>
-            <p>Run the following scripts to find missing inputs:</p>
+            <p>Run the following scripts to create the missing inputs:</p>
             {error?.length ? (
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {error.map(({ label, name }) => {
-                  return <div key={name}>`{label}`</div>;
+                  return (
+                    <div key={name} style={{ display: 'flex', gap: 8 }}>
+                      -
+                      <b
+                        className="cea-tool-suggestions"
+                        onClick={() => onToolSelected?.(name)}
+                        style={{ marginRight: 'auto' }}
+                      >
+                        {label}
+                        <ExternalLinkIcon style={{ fontSize: 18 }} />
+                      </b>
+                    </div>
+                  );
                 })}
               </div>
             ) : (
@@ -92,7 +106,7 @@ const ScriptSuggestions = ({ script, onMissingInputs }) => {
   return null;
 };
 
-const Tool = withErrorBoundary(({ script }) => {
+const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const dispatch = useDispatch();
   const {
@@ -130,6 +144,7 @@ const Tool = withErrorBoundary(({ script }) => {
           <ScriptSuggestions
             script={script}
             onMissingInputs={setMissingInputs}
+            onToolSelected={onToolSelected}
           />
 
           <ToolForm
@@ -229,6 +244,14 @@ const ToolForm = Form.create()(({
 
   return (
     <Form layout="horizontal" className="cea-tool-form">
+      <div
+        style={{
+          postion: 'absolute',
+          height: '100%',
+          width: '100%',
+          background: '#fff',
+        }}
+      />
       <Form.Item className="formButtons">
         <div className="cea-tool-form-buttongroup">
           <ToolFormButtons
@@ -278,7 +301,7 @@ const ToolFormButtons = ({
         }}
         disabled={disabled}
       >
-        Save settings
+        Save Settings
       </Button>
       <Button onClick={setDefault} disabled={disabled}>
         Reset

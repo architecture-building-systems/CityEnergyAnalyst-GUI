@@ -2,7 +2,7 @@ import { VerticalLeftOutlined } from '@ant-design/icons';
 import Tool from '../../../Tools/Tool';
 import { Button } from 'antd';
 
-const ToolCard = ({ selectedTool, onClose }) => {
+const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
   return (
     <div
       style={{
@@ -27,7 +27,7 @@ const ToolCard = ({ selectedTool, onClose }) => {
       <Button onClick={() => onClose?.(true)} style={{ marginRight: 'auto' }}>
         <VerticalLeftOutlined />
       </Button>
-      <Tool script={selectedTool} />
+      <Tool script={selectedTool} onToolSelected={onToolSelected} />
     </div>
   );
 };

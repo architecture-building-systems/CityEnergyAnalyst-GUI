@@ -108,6 +108,7 @@ const ProjectOverlay = () => {
             <ToolCard
               selectedTool={selectedTool}
               onClose={() => setSelectedTool(null)}
+              onToolSelected={setSelectedTool}
             />
           </div>
         )}
