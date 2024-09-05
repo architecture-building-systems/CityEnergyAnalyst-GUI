@@ -12,7 +12,7 @@ import { useHoverGrow } from '../OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
 
-const BottomToolButtons = ({ onOpenInputEditor }) => {
+const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   const dispatch = useDispatch();
 
   const items = [
@@ -20,11 +20,13 @@ const BottomToolButtons = ({ onOpenInputEditor }) => {
       icon: DatabaseEditorIcon,
       title: 'Database Editor',
       onClick: () => dispatch(push(routes.DATABASE_EDITOR)),
+      hidden: !showTools,
     },
     {
       icon: InputEditorIcon,
       title: 'Input Editor',
       onClick: () => onOpenInputEditor?.(),
+      hidden: !showTools,
     },
     {
       icon: GraphsIcon,
@@ -48,15 +50,18 @@ const BottomToolButtons = ({ onOpenInputEditor }) => {
           icon={item.icon}
           title={item.title}
           onClick={item.onClick}
+          hidden={item.hidden}
         />
       ))}
     </div>
   );
 };
 
-const ToolHoverButton = ({ title, icon, onClick }) => {
+const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const _icon = icon;
+
+  if (hidden) return null;
 
   return (
     <Tooltip title={title} overlayInnerStyle={{ fontSize: 12 }}>

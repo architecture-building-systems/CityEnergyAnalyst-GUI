@@ -38,7 +38,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         <div
           style={{
             backgroundColor: '#000',
-            padding: 12,
+            padding: '6px 12px',
             borderRadius: 12,
             color: '#fff',
 

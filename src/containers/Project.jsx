@@ -98,6 +98,7 @@ const ProjectOverlay = () => {
           )}
           <BottomToolButtons
             onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+            showTools={!!scenarioName}
           />
         </div>
       </div>
