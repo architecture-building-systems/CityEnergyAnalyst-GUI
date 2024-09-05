@@ -22,6 +22,10 @@ import { AsyncError } from '../../utils/AsyncError';
 
 import './Tool.css';
 import axios from 'axios';
+import { RunIcon } from '../../assets/icons';
+import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
+
+import { animated } from '@react-spring/web';
 
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
@@ -40,7 +44,6 @@ const useCheckMissingInputs = (tool) => {
         );
         setError(null);
       } catch (err) {
-        console.error(err.response.data);
         setError(err.response.data?.detail?.script_suggestions);
       } finally {
         setFetching(false);
@@ -56,12 +59,14 @@ const useCheckMissingInputs = (tool) => {
 const ScriptSuggestions = ({ script, onMissingInputs }) => {
   const { fetching, error } = useCheckMissingInputs(script);
 
-  console.log({ error });
   useEffect(() => {
-    onMissingInputs?.(error?.length || false);
+    onMissingInputs?.(error?.length);
   }, [error]);
 
-  if (fetching) return <Skeleton active />;
+  if (fetching)
+    return (
+      <div style={{ fontFamily: 'monospace' }}>Checking for missing inputs</div>
+    );
   if (error)
     return (
       <Alert
@@ -251,22 +256,32 @@ const ToolFormButtons = ({
   setDefault,
   disabled = false,
 }) => {
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   return (
     <>
-      <Button type="primary" onClick={runScript} disabled={disabled}>
-        Run Script
-      </Button>
+      <animated.div
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={disabled ? null : styles}
+      >
+        <Button type="primary" onClick={runScript} disabled={disabled}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Run
+            <RunIcon style={{ fontSize: 18 }} />
+          </div>
+        </Button>
+      </animated.div>
+
       <Button
-        type="primary"
         onClick={() => {
           saveParams(getForm());
         }}
         disabled={disabled}
       >
-        Save to Config
+        Save settings
       </Button>
-      <Button type="primary" onClick={setDefault} disabled={disabled}>
-        Default
+      <Button onClick={setDefault} disabled={disabled}>
+        Reset
       </Button>
     </>
   );

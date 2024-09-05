@@ -17,6 +17,8 @@ import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
 import DuplicateIcon from './duplicate.svg';
 
+import RunIcon from './run.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -34,4 +36,5 @@ export {
   CreateNewIcon,
   RefreshIcon,
   DuplicateIcon,
+  RunIcon,
 };

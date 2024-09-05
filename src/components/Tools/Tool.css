@@ -1,6 +1,8 @@
 .cea-tool-form-buttongroup {
   display: flex;
-  gap: 8px;
+  align-items: center;
+
+  gap: 12px;
 }
 .cea-tool-form-buttongroup button {
   font-size: 12px;
