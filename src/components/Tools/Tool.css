@@ -1,0 +1,7 @@
+.cea-tool-form-buttongroup {
+  display: flex;
+  gap: 8px;
+}
+.cea-tool-form-buttongroup button {
+  font-size: 12px;
+}

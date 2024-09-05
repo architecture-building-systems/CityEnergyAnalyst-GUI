@@ -13,6 +13,8 @@ import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
+import './Tool.css';
+
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
 };
@@ -42,20 +44,17 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
   return (
     <div>
       <Spin>
-        <h1>{category}</h1>
+        <h3>{category}</h3>
         <h2 style={{ display: 'inline' }}>{label}</h2>
         <p>
           <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
         </p>
-        <Divider />
-        <div>
-          <ToolForm
-            parameters={parameters}
-            categoricalParameters={categoricalParameters}
-            script={script}
-            formButtons={formButtons}
-          />
-        </div>
+        <ToolForm
+          parameters={parameters}
+          categoricalParameters={categoricalParameters}
+          script={script}
+          formButtons={formButtons}
+        />
       </Spin>
     </div>
   );
@@ -160,13 +159,17 @@ const ToolForm = Form.create()(({
   }
 
   return (
-    <Form layout="horizontal">
+    <Form layout="horizontal" className="cea-tool-form">
+      <Form.Item className="formButtons">
+        <div className="cea-tool-form-buttongroup">
+          {withFormFunctions(formButtons)()}
+        </div>
+      </Form.Item>
+      <Divider />
+
       {toolParams}
       {categoricalParams}
       <br />
-      <Form.Item className="formButtons">
-        {withFormFunctions(formButtons)()}
-      </Form.Item>
     </Form>
   );
 });
