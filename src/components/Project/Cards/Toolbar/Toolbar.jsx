@@ -93,7 +93,7 @@ const ToolMenu = ({
         <div className="cea-card-toolbar-icon">
           {icon}
           <animated.div style={styles}>
-            <DownOutlined style={{ fontSize: 8, marginLeft: 4 }} />
+            <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
           </animated.div>
         </div>
       </Dropdown>
@@ -109,6 +109,7 @@ const Toolbar = ({ onToolSelected, showTools }) => {
   return (
     <div
       id="cea-card-toolbar"
+      className="cea-overlay-card"
       style={{
         display: 'flex',
         background: '#000',

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Icons" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26">
-  <polygon points="32 26 0 26 0 10 2 10 2 24 30 24 30 10 32 10 32 26" fill="#231f20"/>
-  <path d="m32,8H0V0h32v8ZM2,6h28V2H2v4Z" fill="#231f20"/>
-  <rect x="4" y="3" width="2" height="2" fill="#231f20"/>
-  <rect x="7" y="3" width="2" height="2" fill="#231f20"/>
-  <rect x="10" y="3" width="2" height="2" fill="#231f20"/>
-  <path d="m12,22H4v-12h8v12Zm-6-2h4v-8h-4v8Z" fill="#231f20"/>
-  <path d="m28,22h-14v-12h14v12Zm-12-2h10v-8h-10v8Z" fill="#231f20"/>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26">
+  <polygon points="32 26 0 26 0 10 2 10 2 24 30 24 30 10 32 10 32 26" fill="currentColor"/>
+  <path d="m32,8H0V0h32v8ZM2,6h28V2H2v4Z" fill="currentColor"/>
+  <rect x="4" y="3" width="2" height="2" fill="currentColor"/>
+  <rect x="7" y="3" width="2" height="2" fill="currentColor"/>
+  <rect x="10" y="3" width="2" height="2" fill="currentColor"/>
+  <path d="m12,22H4v-12h8v12Zm-6-2h4v-8h-4v8Z" fill="currentColor"/>
+  <path d="m28,22h-14v-12h14v12Zm-12-2h10v-8h-10v8Z" fill="currentColor"/>
 </svg>

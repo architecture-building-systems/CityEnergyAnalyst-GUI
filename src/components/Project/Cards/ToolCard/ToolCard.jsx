@@ -24,9 +24,11 @@ const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
         minWidth: 450,
       }}
     >
-      <Button onClick={() => onClose?.(true)} style={{ marginRight: 'auto' }}>
-        <VerticalLeftOutlined />
-      </Button>
+      <Button
+        icon={<VerticalLeftOutlined />}
+        onClick={() => onClose?.(true)}
+        style={{ marginRight: 'auto', padding: 12 }}
+      />
       <Tool script={selectedTool} onToolSelected={onToolSelected} />
     </div>
   );

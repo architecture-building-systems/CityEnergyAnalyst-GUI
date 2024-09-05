@@ -3,7 +3,7 @@ import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
 import { useEffect, useState } from 'react';
 import { fetchInputData, resetInputData } from '../actions/inputEditor';
-import { Alert, Spin, Tabs } from 'antd';
+import { Alert, Spin, Tabs, Tooltip } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
@@ -11,6 +11,9 @@ import ToolCard from '../components/Project/Cards/ToolCard/ToolCard';
 
 import './Project.css';
 import BottomToolButtons from '../components/Project/Cards/BottomToolBottons/BottomToolButtons';
+import { useTransition, animated } from '@react-spring/web';
+import { ShowHideCardsIcon } from '../assets/icons';
+import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -38,11 +41,46 @@ const ProjectOverlay = () => {
     scenarios_list: scenarioList,
   } = useSelector((state) => state.project.info);
 
-  const [selectedTool, setSelectedTool] = useState(null);
+  const [hideAll, setHideAll] = useState(false);
+  const [selectedTool, setSelectedTool] = useState();
   const [showInputEditor, setInputEditor] = useState(false);
+  const [showTools, setShowTools] = useState(false);
+
+  const handleToolSelected = (tool) => {
+    setSelectedTool(tool);
+    setShowTools(true);
+  };
+
+  const handleHideAll = () => {
+    setHideAll((prev) => !prev);
+  };
+
+  const tension = 150;
+  const friction = 20;
+  const transitionFromRight = useTransition(!hideAll & showTools, {
+    from: { transform: 'translateX(100%)', opacity: 0 }, // Start off-screen (right) and invisible
+    enter: { transform: 'translateX(0%)', opacity: 1 }, // Slide in to the screen and become visible
+    leave: { transform: 'translateX(100%)', opacity: 0 }, // Slide out to the right and fade out
+    config: { tension, friction }, // Control the speed of the animation
+  });
+
+  const transitionFromLeft = useTransition(!hideAll, {
+    from: { transform: 'translateX(-100%)', opacity: 0 }, // Start off-screen (left) and invisible
+    enter: { transform: 'translateX(0%)', opacity: 1 }, // Slide in to the screen and become visible
+    leave: { transform: 'translateX(-100%)', opacity: 0 }, // Slide out to the left and fade out
+    config: { tension, friction }, // Control the speed of the animation
+  });
+
+  const transitionFromBottom = useTransition(!hideAll & showInputEditor, {
+    from: { transform: 'translateY(100%)', opacity: 0 }, // Start off-screen (left) and invisible
+    enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in to the screen and become visible
+    leave: { transform: 'translateY(100%)', opacity: 0 }, // Slide out to the left and fade out
+    config: { tension, friction }, // Control the speed of the animation
+  });
 
   useEffect(() => {
-    setSelectedTool(null), setInputEditor(false);
+    setShowTools(false);
+    setInputEditor(false);
   }, [projectName, scenarioName]);
 
   useEffect(() => {
@@ -57,60 +95,97 @@ const ProjectOverlay = () => {
     <div id="cea-project-overlay">
       <div id="cea-project-overlay-left">
         <div id="cea-project-overlay-left-top">
-          <div
-            style={{
-              // TODO: Make this dynamic
-              height: '33vh',
-              minWidth: 250,
-              width: '15vw',
-            }}
-          >
-            <OverviewCard
-              project={project}
-              projectName={projectName}
-              scenarioName={scenarioName}
-              scenarioList={scenarioList}
-            />
-          </div>
-          <Toolbar
-            showTools={!!scenarioName}
-            onToolSelected={setSelectedTool}
-          />
+          {hideAll && (
+            <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
+              <ShowHideCardsButton onToggle={handleHideAll} />
+            </div>
+          )}
+
+          {transitionFromLeft((styles, item) =>
+            item ? (
+              <animated.div
+                style={{
+                  ...styles,
+                  height: '100%',
+                  width: '100%',
+                  display: 'flex',
+                  gap: 12,
+                }}
+              >
+                <div
+                  className="cea-overlay-card"
+                  style={{
+                    // TODO: Make this dynamic
+                    height: '33vh',
+                    minWidth: 250,
+                    width: '15vw',
+                  }}
+                >
+                  <OverviewCard
+                    project={project}
+                    projectName={projectName}
+                    scenarioName={scenarioName}
+                    scenarioList={scenarioList}
+                    onToggleHideAll={handleHideAll}
+                  />
+                </div>
+                <Toolbar
+                  showTools={!!scenarioName}
+                  onToolSelected={handleToolSelected}
+                />
+              </animated.div>
+            ) : null,
+          )}
         </div>
         <div id="cea-project-overlay-left-bottom">
           <div id="map-controls-overlay" />
-          {showInputEditor && (
-            <div
-              style={{
-                borderRadius: 12,
-                boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+          {transitionFromBottom((styles, item) =>
+            item ? (
+              <animated.div
+                className="cea-overlay-card"
+                style={{
+                  ...styles,
+                  borderRadius: 12,
+                  boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
-                // TODO: Make this dynamic
-                maxHeight: '30vh',
-                overflow: 'auto',
-                pointerEvents: 'auto',
+                  // TODO: Make this dynamic
+                  maxHeight: '30vh',
+                  overflow: 'auto',
 
-                flexGrow: 1,
-              }}
-            >
-              <InputTable />
-            </div>
+                  flexGrow: 1,
+                }}
+              >
+                <InputTable />
+              </animated.div>
+            ) : null,
           )}
-          <BottomToolButtons
-            onOpenInputEditor={() => setInputEditor((prev) => !prev)}
-            showTools={!!scenarioName}
-          />
+
+          {!hideAll && (
+            <BottomToolButtons
+              onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+              showTools={!!scenarioName}
+            />
+          )}
         </div>
       </div>
       <div id="cea-project-overlay-right">
-        {selectedTool && (
-          <div style={{ height: '100%', pointerEvents: 'auto' }}>
-            <ToolCard
-              selectedTool={selectedTool}
-              onClose={() => setSelectedTool(null)}
-              onToolSelected={setSelectedTool}
-            />
-          </div>
+        {transitionFromRight((styles, item) =>
+          item ? (
+            <animated.div
+              className="cea-overlay-card"
+              style={{
+                ...styles,
+                height: '100%',
+              }}
+            >
+              <ToolCard
+                className="cea-overlay-card"
+                selectedTool={selectedTool}
+                onClose={() => setShowTools(false)}
+                onToolSelected={handleToolSelected}
+              />
+            </animated.div>
+          ) : null,
         )}
       </div>
     </div>
@@ -216,6 +291,29 @@ const ScenarioAlert = () => {
         type="info"
       />
     </div>
+  );
+};
+
+export const ShowHideCardsButton = ({ hideAll, onToggle, style }) => {
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+  return (
+    <Tooltip
+      title={!hideAll ? 'Show Overlays' : 'Hide Overlays'}
+      overlayInnerStyle={{ fontSize: 12 }}
+    >
+      <animated.div
+        className="cea-overlay-card"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={styles}
+      >
+        <ShowHideCardsIcon
+          className="cea-card-toolbar-icon"
+          style={{ margin: 0, background: '#000', ...style }}
+          onClick={() => onToggle?.((prev) => !prev)}
+        />
+      </animated.div>
+    </Tooltip>
   );
 };
 

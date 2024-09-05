@@ -18,6 +18,7 @@ import RefreshIcon from './refresh.svg';
 import DuplicateIcon from './duplicate.svg';
 
 import RunIcon from './run.svg';
+import ShowHideCardsIcon from './show_hide_cards.svg';
 
 export {
   DataManagementIcon,
@@ -37,4 +38,5 @@ export {
   RefreshIcon,
   DuplicateIcon,
   RunIcon,
+  ShowHideCardsIcon,
 };

@@ -38,6 +38,7 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   return (
     <div
       id="bottom-buttons"
+      className="cea-overlay-card"
       style={{
         display: 'flex',
         gap: 8,

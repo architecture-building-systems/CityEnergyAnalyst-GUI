@@ -2,8 +2,15 @@ import { Divider } from 'antd';
 import ceaLogo from '../../../../assets/cea-logo.png';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
+import { ShowHideCardsButton } from '../../../../containers/Project';
 
-const OverviewCard = ({ project, projectName, scenarioName, scenarioList }) => {
+const OverviewCard = ({
+  project,
+  projectName,
+  scenarioName,
+  scenarioList,
+  onToggleHideAll,
+}) => {
   return (
     <div
       style={{
@@ -23,7 +30,21 @@ const OverviewCard = ({ project, projectName, scenarioName, scenarioList }) => {
         fontSize: 12,
       }}
     >
-      <Logo height={60} />
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Logo height={60} />
+        <ShowHideCardsButton
+          hideAll={true}
+          onToggle={onToggleHideAll}
+          style={{ background: '#fff', color: '#000' }}
+        />
+      </div>
       <Divider style={{ margin: 0 }} />
       <ProjectRow projectName={projectName} />
       <Divider style={{ margin: 0 }} />
