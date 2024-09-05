@@ -32,7 +32,7 @@ const HomePageContent = () => {
         </Route>
         <Route path={routes.CREATE_SCENARIO}>
           <Suspense>
-            <Cardwrapper>
+            <Cardwrapper style={{ backgroudColor: '#D4DADC' }}>
               <CreateScenario />
             </Cardwrapper>
           </Suspense>
@@ -61,7 +61,7 @@ const HomePageContent = () => {
   );
 };
 
-const Cardwrapper = ({ children }) => {
+const Cardwrapper = ({ children, style }) => {
   const dispatch = useDispatch();
 
   return (
@@ -71,7 +71,6 @@ const Cardwrapper = ({ children }) => {
         borderRadius: 8,
         boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
-        margin: 24,
         padding: 24,
 
         height: '100%',
@@ -80,13 +79,15 @@ const Cardwrapper = ({ children }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: 24,
+
+        ...style,
       }}
     >
       <Button
         style={{ marginRight: 'auto', position: 'sticky', top: 0, zIndex: 1 }}
         onClick={() => dispatch(push(routes.PROJECT))}
       >
-        <LeftOutlined /> Back
+        <LeftOutlined /> Return
       </Button>
       <div style={{ flexGrow: 1 }}>{children}</div>
     </div>

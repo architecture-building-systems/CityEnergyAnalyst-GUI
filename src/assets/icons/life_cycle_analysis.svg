@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 31.41 31.41">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: currentColor;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <polyline class="cls-1" points="28.41 17 15.41 30 1.41 16 14.41 3"/>
+  <polyline class="cls-1" points="30.41 15 30.41 1 16.41 1"/>
+  <path class="cls-1" d="m25.41,10.02c-.01,2.21-1.82,3.99-4.02,3.98-2.21-.01-3.99-1.81-3.98-4.02.01-2.21,1.82-3.99,4.02-3.98s3.99,1.81,3.98,4.02Z"/>
+</svg>

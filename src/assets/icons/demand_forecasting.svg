@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: currentColor;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <path class="cls-1" d="m14,5C6.82,5,1,10.82,1,18s5.82,13,13,13,13-5.82,13-13"/>
+  <path class="cls-1" d="m17,1c7.18,0,14,6.82,14,14h-14V1Z"/>
+</svg>

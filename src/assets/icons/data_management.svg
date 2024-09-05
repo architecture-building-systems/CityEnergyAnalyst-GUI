@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: currentColor;
+      }
+    </style>
+  </defs>
+  <path class="cls-1" d="m32,32H0V0h32v32Zm-30-2h28V2H2v28Z"/>
+  <g>
+    <rect class="cls-1" x="9" y="6" width="2" height="8"/>
+    <rect class="cls-1" x="6" y="9" width="8" height="2"/>
+    <rect class="cls-1" x="18" y="9" width="8" height="2"/>
+    <rect class="cls-1" x="18" y="19" width="2" height="2"/>
+    <rect class="cls-1" x="23" y="23" width="2" height="2"/>
+  </g>
+  <g>
+    <rect class="cls-1" x="5.76" y="21" width="8.49" height="2" transform="translate(-12.63 13.51) rotate(-45)"/>
+    <rect class="cls-1" x="17.76" y="21" width="8.49" height="2" transform="translate(-9.11 22) rotate(-45)"/>
+    <rect class="cls-1" x="9" y="17.76" width="2" height="8.49" transform="translate(-12.63 13.51) rotate(-45)"/>
+  </g>
+</svg>

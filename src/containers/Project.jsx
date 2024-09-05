@@ -10,6 +10,7 @@ import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
 import ToolCard from '../components/Project/Cards/ToolCard/ToolCard';
 
 import './Project.css';
+import BottomButtons from '../components/Project/Cards/BottomBottons/BottomButtons';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -74,7 +75,6 @@ const ProjectOverlay = () => {
           <Toolbar
             showTools={!!scenarioName}
             onToolSelected={setSelectedTool}
-            onOpenInputEditor={() => setInputEditor((prev) => !prev)}
           />
         </div>
         <div id="cea-project-overlay-left-bottom">
@@ -95,6 +95,9 @@ const ProjectOverlay = () => {
               <InputTable />
             </div>
           )}
+          <BottomButtons
+            onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+          />
         </div>
       </div>
       <div id="cea-project-overlay-right">

@@ -1,26 +1,25 @@
-import {
-  DatabaseOutlined,
-  ToolOutlined,
-  DownOutlined,
-  PartitionOutlined,
-  PieChartOutlined,
-  ThunderboltOutlined,
-  SunOutlined,
-  GatewayOutlined,
-} from '@ant-design/icons';
-
-import { Divider, Dropdown, Tooltip } from 'antd';
+import { Dropdown, Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchToolList } from '../../../../actions/tools';
-import { push } from 'connected-react-router';
 
-import routes from '../../../../constants/routes.json';
+import { ToolOutlined, DownOutlined } from '@ant-design/icons';
+
 import './Toolbar.css';
 import { useHoverGrow } from '../OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
-import { GraphsIcon, InputEditorIcon, OptimisationIcon } from './icons';
+
+import {
+  DataManagementIcon,
+  SolarRadiationIcon,
+  DemandForecastingIcon,
+  OptimisationIcon,
+  UtilitiesIcon,
+  EnergyPotentialsIcon,
+  LifeCycleAnalysisIcon,
+  NetworksIcon,
+} from '../../../../assets/icons';
 
 const useFetchTools = () => {
   const dispatch = useDispatch();
@@ -34,14 +33,14 @@ const useFetchTools = () => {
 };
 
 const toolIconMap = {
-  'Data management': <PartitionOutlined />,
-  'Solar radiation': <SunOutlined />,
-  // 'Demand forecasting': <StreamlineOfficeBuilding1 />,
-  'Energy potentials': <ThunderboltOutlined />,
-  'Life cycle analysis': <PieChartOutlined />,
-  Networks: <GatewayOutlined />,
+  'Data management': <DataManagementIcon />,
+  'Solar radiation': <SolarRadiationIcon />,
+  'Demand forecasting': <DemandForecastingIcon />,
+  'Energy potentials': <EnergyPotentialsIcon />,
+  'Life cycle analysis': <LifeCycleAnalysisIcon />,
+  Networks: <NetworksIcon />,
   Optimization: <OptimisationIcon />,
-  Utilities: <ToolOutlined />,
+  Utilities: <UtilitiesIcon />,
 };
 
 const ToolMenu = ({
@@ -102,7 +101,7 @@ const ToolMenu = ({
   );
 };
 
-const Toolbar = ({ onToolSelected, onOpenInputEditor, showTools }) => {
+const Toolbar = ({ onToolSelected, showTools }) => {
   const dispatch = useDispatch();
   const { status, tools } = useFetchTools();
 
@@ -124,27 +123,6 @@ const Toolbar = ({ onToolSelected, onOpenInputEditor, showTools }) => {
     >
       {/* <HomeOutlined className="cea-card-toolbar-icon" />
       <Divider className="cea-card-toolbar-divider" type="vertical" /> */}
-      {showTools && (
-        <>
-          <Tooltip title="Database Editor" overlayInnerStyle={{ fontSize: 12 }}>
-            <DatabaseOutlined
-              className="cea-card-toolbar-icon"
-              onClick={() => dispatch(push(routes.DATABASE_EDITOR))}
-            />
-          </Tooltip>
-          <Tooltip title="Input Editor" overlayInnerStyle={{ fontSize: 12 }}>
-            {/* <EditOutlined
-              className="cea-card-toolbar-icon"
-              onClick={() => onOpenInputEditor?.()}
-            /> */}
-            <InputEditorIcon
-              className="cea-card-toolbar-icon"
-              onClick={() => onOpenInputEditor?.()}
-            />
-          </Tooltip>
-          <Divider className="cea-card-toolbar-divider" type="vertical" />
-        </>
-      )}
       {status == 'fetching' ? (
         <div>Loading Tools</div>
       ) : (
@@ -160,16 +138,9 @@ const Toolbar = ({ onToolSelected, onOpenInputEditor, showTools }) => {
                 onMenuOpenChange={(value) => setShowTooltip(!value)}
               />
             ))}
-            <Divider className="cea-card-toolbar-divider" type="vertical" />
           </>
         )
       )}
-      <Tooltip title="Plots" overlayInnerStyle={{ fontSize: 12 }}>
-        <GraphsIcon
-          className="cea-card-toolbar-icon"
-          onClick={() => dispatch(push(routes.DASHBOARD))}
-        />
-      </Tooltip>
     </div>
   );
 };
