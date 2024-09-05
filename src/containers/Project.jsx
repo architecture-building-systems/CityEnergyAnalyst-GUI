@@ -78,6 +78,7 @@ const ProjectOverlay = () => {
           />
         </div>
         <div id="cea-project-overlay-left-bottom">
+          <div id="map-controls-overlay" />
           {showInputEditor && (
             <div
               style={{
@@ -139,7 +140,11 @@ const InputMap = () => {
             fullscreen
           />
         )}
-        <DeckGLMap data={geojsons} colors={colors} />
+        <DeckGLMap
+          data={geojsons}
+          colors={colors}
+          controlsElementId="map-controls-overlay"
+        />
       </div>
     </>
   );
