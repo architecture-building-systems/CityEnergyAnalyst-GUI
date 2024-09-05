@@ -7,7 +7,9 @@ import { useHoverGrow } from './hooks';
 import { useOpenScenario } from '../../Project';
 import { useMemo } from 'react';
 import { Tooltip } from 'antd';
-import { CreateNewIcon } from '../../../../assets/icons';
+import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
+
+import './OverviewCard.css';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const remainingScenarios = useMemo(() => {
@@ -21,12 +23,34 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         flexDirection: 'column',
         gap: 12,
 
+        fontSize: 14,
         minHeight: 0,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        {scenarioName ? scenarioName : 'No Scenario selected'}
-        <div style={{ fontSize: 20 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#000',
+            padding: 12,
+            borderRadius: 12,
+            color: '#fff',
+
+            fontWeight: 'bold',
+
+            flexGrow: 1,
+          }}
+        >
+          {scenarioName ? scenarioName : 'Select Scenario'}
+        </div>
+        <div style={{ fontSize: 20, display: 'flex', gap: 8 }}>
+          <DuplicateScenarioIcon />
           <NewScenarioIcon />
         </div>
       </div>
@@ -34,9 +58,6 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          padding: '0 16px',
-          gap: 8,
-
           overflow: 'auto',
         }}
       >
@@ -53,9 +74,13 @@ const ScenarioItem = ({ project, scenario }) => {
   const handleOpenScenario = () => openScenario(project, scenario);
 
   return (
-    <button key={scenario} onClick={handleOpenScenario}>
+    <div
+      className="cea-card-scenario-item"
+      key={scenario}
+      onClick={handleOpenScenario}
+    >
       {scenario}
-    </button>
+    </div>
   );
 };
 
@@ -68,7 +93,7 @@ const NewScenarioIcon = () => {
   return (
     <Tooltip
       title="New Scenario"
-      placement="right"
+      placement="bottom"
       overlayInnerStyle={{ fontSize: 12 }}
     >
       <animated.div
@@ -77,6 +102,29 @@ const NewScenarioIcon = () => {
         onMouseLeave={onMouseLeave}
       >
         <CreateNewIcon onClick={onClick} />
+      </animated.div>
+    </Tooltip>
+  );
+};
+
+const DuplicateScenarioIcon = () => {
+  const dispatch = useDispatch();
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+
+  const onClick = () => {};
+
+  return (
+    <Tooltip
+      title="Duplicate Scenario"
+      placement="bottom"
+      overlayInnerStyle={{ fontSize: 12 }}
+    >
+      <animated.div
+        style={styles}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <DuplicateIcon onClick={onClick} />
       </animated.div>
     </Tooltip>
   );

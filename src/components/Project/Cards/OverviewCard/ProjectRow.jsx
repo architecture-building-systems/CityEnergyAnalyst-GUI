@@ -5,7 +5,11 @@ import { animated } from '@react-spring/web';
 import NewProjectModal from '../../NewProjectModal';
 import { useHoverGrow } from './hooks';
 import { Tooltip } from 'antd';
-import { CreateNewIcon, OpenProjectIcon } from '../../../../assets/icons';
+import {
+  CreateNewIcon,
+  OpenProjectIcon,
+  RefreshIcon,
+} from '../../../../assets/icons';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -18,6 +22,7 @@ const ProjectRow = ({ projectName }) => {
     >
       <b>{projectName}</b>
       <div style={{ display: 'flex', gap: 8, fontSize: 20 }}>
+        <RefreshIconButton />
         <OpenProjectIconButton />
         <NewProjectIconButton />
       </div>
@@ -69,6 +74,24 @@ const NewProjectIconButton = () => {
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
+    </Tooltip>
+  );
+};
+
+const RefreshIconButton = () => {
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+
+  const onSuccess = () => {};
+
+  return (
+    <Tooltip title="Refresh" overlayInnerStyle={{ fontSize: 12 }}>
+      <animated.div
+        style={styles}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <RefreshIcon />
+      </animated.div>
     </Tooltip>
   );
 };

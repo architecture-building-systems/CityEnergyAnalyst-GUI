@@ -46,9 +46,6 @@ const Logo = ({ height }) => {
       }}
     >
       <img style={{ height: '100%' }} src={ceaLogo} alt="Logo" />
-      <span style={{ fontSize: '1.2em', fontWeight: 600 }}>
-        City Energy Analyst
-      </span>
     </div>
   );
 };

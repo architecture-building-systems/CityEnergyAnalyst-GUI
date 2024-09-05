@@ -14,6 +14,8 @@ import GraphsIcon from './graphs.svg';
 import OpenProjectIcon from './open_project.svg';
 import ExternalLinkIcon from './external_link.svg';
 import CreateNewIcon from './create_new.svg';
+import RefreshIcon from './refresh.svg';
+import DuplicateIcon from './duplicate.svg';
 
 export {
   DataManagementIcon,
@@ -30,4 +32,6 @@ export {
   OpenProjectIcon,
   ExternalLinkIcon,
   CreateNewIcon,
+  RefreshIcon,
+  DuplicateIcon,
 };
