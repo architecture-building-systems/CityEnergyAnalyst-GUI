@@ -1,4 +1,3 @@
-import { FolderOpenOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import OpenProjectModal from '../../OpenProjectModal';
 import { useState } from 'react';
 
@@ -6,6 +5,7 @@ import { animated } from '@react-spring/web';
 import NewProjectModal from '../../NewProjectModal';
 import { useHoverGrow } from './hooks';
 import { Tooltip } from 'antd';
+import { CreateNewIcon, OpenProjectIcon } from '../../../../assets/icons';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -18,14 +18,14 @@ const ProjectRow = ({ projectName }) => {
     >
       <b>{projectName}</b>
       <div style={{ display: 'flex', gap: 8, fontSize: 20 }}>
-        <OpenProjectIcon />
-        <NewProjectIcon />
+        <OpenProjectIconButton />
+        <NewProjectIconButton />
       </div>
     </div>
   );
 };
 
-const OpenProjectIcon = () => {
+const OpenProjectIconButton = () => {
   const [visible, setVisible] = useState(false);
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
@@ -38,7 +38,7 @@ const OpenProjectIcon = () => {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <FolderOpenOutlined onClick={() => setVisible(true)} />
+        <OpenProjectIcon onClick={() => setVisible(true)} />
       </animated.div>
       <OpenProjectModal
         visible={visible}
@@ -49,7 +49,7 @@ const OpenProjectIcon = () => {
   );
 };
 
-const NewProjectIcon = () => {
+const NewProjectIconButton = () => {
   const [visible, setVisible] = useState(false);
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
@@ -62,7 +62,7 @@ const NewProjectIcon = () => {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <PlusCircleOutlined onClick={() => setVisible(true)} />
+        <CreateNewIcon onClick={() => setVisible(true)} />
       </animated.div>
       <NewProjectModal
         visible={visible}

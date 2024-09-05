@@ -102,7 +102,6 @@ const ToolMenu = ({
 };
 
 const Toolbar = ({ onToolSelected, showTools }) => {
-  const dispatch = useDispatch();
   const { status, tools } = useFetchTools();
 
   const [showTooltip, setShowTooltip] = useState(true);
@@ -113,12 +112,12 @@ const Toolbar = ({ onToolSelected, showTools }) => {
       style={{
         display: 'flex',
         background: '#000',
-        height: 40,
         borderRadius: 12,
         boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
+        height: 'fit-content',
+
         gap: 2,
-        padding: 2,
       }}
     >
       {/* <HomeOutlined className="cea-card-toolbar-icon" />

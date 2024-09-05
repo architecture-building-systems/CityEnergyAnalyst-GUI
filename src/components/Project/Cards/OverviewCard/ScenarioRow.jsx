@@ -1,4 +1,3 @@
-import { PlusCircleOutlined } from '@ant-design/icons';
 import { animated } from '@react-spring/web';
 import { push } from 'connected-react-router';
 
@@ -8,6 +7,7 @@ import { useHoverGrow } from './hooks';
 import { useOpenScenario } from '../../Project';
 import { useMemo } from 'react';
 import { Tooltip } from 'antd';
+import { CreateNewIcon } from '../../../../assets/icons';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const remainingScenarios = useMemo(() => {
@@ -76,7 +76,7 @@ const NewScenarioIcon = () => {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <PlusCircleOutlined onClick={onClick} />
+        <CreateNewIcon onClick={onClick} />
       </animated.div>
     </Tooltip>
   );

@@ -38,7 +38,7 @@ const BottomToolButtons = ({ onOpenInputEditor }) => {
       id="bottom-buttons"
       style={{
         display: 'flex',
-        gap: 24,
+        gap: 8,
         marginRight: 'auto',
       }}
     >
