@@ -19,7 +19,7 @@ import {
 import { Layout, Menu, Tooltip } from 'antd';
 import routes from '../../constants/routes.json';
 import ceaLogo from '../../assets/cea-logo.png';
-import { LayoutContext } from '../../containers/HomePage';
+import { LayoutContext } from './hooks';
 import { fetchToolList } from '../../actions/tools';
 import { isElectron, openExternal } from '../../utils/electron';
 

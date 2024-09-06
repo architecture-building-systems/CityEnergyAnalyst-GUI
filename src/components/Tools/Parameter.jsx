@@ -2,7 +2,7 @@ import { Form } from '@ant-design/compatible';
 import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { Input, Switch, Select, Divider, Button, Space } from 'antd';
 import { basename, checkExist, dirname } from '../../utils/file';
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 
 import { isElectron, openDialog } from '../../utils/electron';
 
@@ -268,7 +268,7 @@ const Parameter = ({ parameter, form }) => {
                   options: [
                     {
                       label: <span> Fetch from climate.onebuilding.org</span>,
-                      value: '',
+                      value: 'climate.onebuilding.org',
                     },
                   ],
                 },
@@ -340,10 +340,41 @@ export const FormItemWrapper = ({
   );
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, type, filters = [], id, ...rest } = props;
+const PathInput = ({ value, onChange, form, name, ...rest }) => {
+  const [inputValue, setValue] = useState(value);
 
-  if (!isElectron()) return <Input ref={ref} {...props} />;
+  const onClick = () => {
+    form?.setFieldsValue({ [name]: inputValue });
+  };
+
+  const onValueChange = (e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    onChange?.(newValue);
+  };
+
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <Space.Compact style={{ width: '100%' }}>
+        <Input
+          {...rest}
+          value={value || inputValue}
+          onChange={onValueChange}
+          type="text"
+        />
+        <Button type="primary" onClick={onClick}>
+          Select
+        </Button>
+      </Space.Compact>
+    </Space>
+  );
+};
+
+export const OpenDialogInput = forwardRef((props, ref) => {
+  const { form, name, type, onChange, filters = [], ...rest } = props;
+
+  if (!isElectron()) return <PathInput {...props} />;
 
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
@@ -353,7 +384,10 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         style={{ width: 60 }}
         icon={<FileSearchOutlined />}
         onClick={async () => {
-          await openDialog(form, type, filters, id);
+          // TODO: Remove need for form
+          const path = await openDialog(form, type, filters, name);
+          onChange?.(path);
+          form?.validateFields([name]);
         }}
       ></Button>
     </Space.Compact>
@@ -361,22 +395,34 @@ export const OpenDialogInput = forwardRef((props, ref) => {
 });
 OpenDialogInput.displayName = 'OpenDialogInput';
 
-export const OpenDialogButton = (props) => {
-  const { form, type, filters = [], id, children } = props;
-
-  // ignore if not electron for now
-  if (!isElectron()) return null;
-
-  return (
-    <Button
-      style={{ width: '100%' }}
-      onClick={async () => {
-        await openDialog(form, type, filters, id);
-      }}
-    >
-      {children}
-    </Button>
-  );
+export const OpenDialogButton = ({
+  form,
+  name,
+  type,
+  filters = [],
+  children,
+  buttonType = 'default',
+  onChange,
+  ...rest
+}) => {
+  if (!isElectron()) {
+    return <PathInput form={form} name={name} onChange={onChange} {...rest} />;
+  } else {
+    return (
+      <Button
+        type={buttonType}
+        style={{ width: '100%' }}
+        onClick={async () => {
+          // TODO: Remove need for form
+          const path = await openDialog(form, type, filters, name);
+          onChange?.(path);
+          form?.validateFields([name]);
+        }}
+      >
+        {children}
+      </Button>
+    );
+  }
 };
 
 export default Parameter;

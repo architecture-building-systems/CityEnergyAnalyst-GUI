@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import SearchBar from './SearchBar/SearchBar';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
-import { LayoutContext } from '../../containers/HomePage';
+import { LayoutContext } from './hooks';
 
 const Header = () => {
   const { project_name: projectName, scenario_name: scenarioName } =
