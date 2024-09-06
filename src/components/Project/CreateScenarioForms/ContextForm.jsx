@@ -1,5 +1,4 @@
-import { Divider, Form, Select } from 'antd';
-import { OpenDialogButton } from '../../Tools/Parameter';
+import { Form } from 'antd';
 import { FileSearchOutlined } from '@ant-design/icons';
 import {
   EMTPY_GEOMETRY,
@@ -196,7 +195,7 @@ const ContextForm = ({
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
             <FileSearchOutlined />
-            Import .tiff file
+            Import .tif/.tiff file
           </div>
         </SelectWithFileDialog>
       </Form.Item>

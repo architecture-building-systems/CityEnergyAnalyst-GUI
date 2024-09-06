@@ -38,7 +38,7 @@ const LocationSearchBar = ({ onLocationResult }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <i>Search for a location</i>
+      Search for a location
       <Input.Search
         placeholder={`Example: type "${randomCity.current}”`}
         allowClear
@@ -128,7 +128,8 @@ const DrawModeInterface = ({
             </div>
             <small>
               <i>
-                The number of buildings may be different after postprocessing.
+                Note: The number of buildings may be different after
+                postprocessing.
               </i>
             </small>
           </div>
@@ -146,7 +147,7 @@ const DrawModeInterface = ({
                 )
               }
             >
-              Edit
+              {mode == drawModes.edit ? 'Done' : 'Edit'}
             </Button>
             <Button type="primary" onClick={onDelete} danger>
               Delete

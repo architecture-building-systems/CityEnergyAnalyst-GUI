@@ -147,9 +147,7 @@ const GenerateZoneFormItem = ({ form }) => {
       setError(null);
       return Promise.resolve();
     } else {
-      setError(
-        'Area geometry not found. Please select an area on the map by drawing a polygon.',
-      );
+      setError('Boundary not found. Please draw a boundary on the map.');
       return Promise.reject();
     }
   };
@@ -165,9 +163,8 @@ const GenerateZoneFormItem = ({ form }) => {
         }}
       >
         <Alert
-          message="Select an area on the map"
-          description="Search for a location on the map and select an area with buildings by
-          drawing a polygon."
+          // message="Select an area on the map"
+          message="On the map, search for a location and draw the boundary of your site."
           type="info"
           showIcon
         />
@@ -240,9 +237,9 @@ const SurroundingsGeometryFormItem = () => {
 const GenerateSurroundingsFormItem = ({ initialValue = 50 }) => {
   return (
     <Form.Item
-      label="Generate surroundings geometry"
+      label="Buffer (surroundings)"
       name="generate_surroundings"
-      extra="Set the buffer in meters around the zone buildings."
+      extra="Set the buffer in metres around the Building geometries (zone)."
       rules={[{ required: true, message: 'This field is required.' }]}
       initialValue={initialValue}
     >
