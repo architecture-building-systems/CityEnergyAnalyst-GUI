@@ -42,7 +42,12 @@ const OverviewCard = ({
         <ShowHideCardsButton
           hideAll={true}
           onToggle={onToggleHideAll}
-          style={{ background: '#fff', color: '#000' }}
+          style={{
+            background: '#fff',
+            color: '#000',
+            padding: 0,
+            borderRadius: 0,
+          }}
         />
       </div>
       <Divider style={{ margin: 0 }} />
