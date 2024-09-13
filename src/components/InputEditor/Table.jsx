@@ -30,6 +30,8 @@ const Table = ({ tab }) => {
 
   return (
     <>
+      <InputEditorButtons changes={changes} />
+
       <Card
         styles={{ header: { backgroundColor: '#f1f1f1' } }}
         size="small"
@@ -52,7 +54,6 @@ const Table = ({ tab }) => {
           <TableEditor tabulator={tabulator} tab={tab} selected={selected} />
         )}
       </Card>
-      <InputEditorButtons changes={changes} />
     </>
   );
 };
