@@ -141,11 +141,12 @@ const DrawModeInterface = ({
           <>
             <Button
               type={mode == drawModes.edit ? 'primary' : 'default'}
-              onClick={() =>
+              onClick={() => {
                 onModeChange(
                   mode == drawModes.edit ? drawModes.view : drawModes.edit,
-                )
-              }
+                );
+                if (mode == drawModes.edit) fetchBuildings(polygon);
+              }}
             >
               {mode == drawModes.edit ? 'Done' : 'Edit'}
             </Button>
