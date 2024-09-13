@@ -129,7 +129,8 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 };
 
 const GenerateZoneFormItem = ({ form }) => {
-  const { polygon, setDrawingMode } = useContext(MapFormContext);
+  const { fetchedBuildings, polygon, setDrawingMode } =
+    useContext(MapFormContext);
   useEffect(() => {
     form.setFieldValue('generate_zone', polygon);
   }, [polygon]);
@@ -144,6 +145,11 @@ const GenerateZoneFormItem = ({ form }) => {
 
   const generateZoneValidator = (_, value) => {
     if (value?.features?.length) {
+      if (!fetchedBuildings?.features?.length) {
+        setError('No buildings found in the selected area.');
+        return Promise.reject();
+      }
+
       setError(null);
       return Promise.resolve();
     } else {
