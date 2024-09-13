@@ -293,14 +293,20 @@ const ScenarioList = () => {
   const scenarioNames = info?.scenarios_list || [];
 
   return (
-    <div>
-      <div
-        style={{
-          padding: 24,
-        }}
-      >
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+
+        padding: 24,
+      }}
+    >
+      <div>
         <h2>Scenarios in current Project</h2>
         <p>{scenarioNames.length} Scenario found</p>
+      </div>
+      <div style={{ overflow: 'auto' }}>
         <List
           dataSource={scenarioNames}
           renderItem={(item) => (
@@ -359,7 +365,11 @@ const CreateScenario = () => {
   );
 
   const secondaryCards = {
-    scenarioList: <ScenarioList />,
+    scenarioList: (
+      <div style={{ height: 'calc(100vh - 200px)' }}>
+        <ScenarioList />
+      </div>
+    ),
     map: (
       <Suspense fallback={<div>Loading Map...</div>}>
         <EditableMap
