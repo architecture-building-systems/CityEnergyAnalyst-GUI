@@ -305,13 +305,16 @@ function createSplashWindow(url) {
       await preflightChecks();
     } catch (error) {
       console.error(error);
+
+      const errorMessage = error?.message
+        ? `Details:\n${error.message}\n\n`
+        : '';
       dialog.showMessageBoxSync(splashWindow, {
         type: 'error',
         title: 'CEA Error',
         message:
           'CEA has encounted an error on startup.\n The application will exit now.',
-        detail:
-          'You can report this error to us at our GitHub page\n (https://github.com/architecture-building-systems/CityEnergyAnalyst/issues).',
+        detail: `${errorMessage}You can report this error to us at our GitHub page\n (https://github.com/architecture-building-systems/CityEnergyAnalyst/issues).`,
         buttons: ['Show logs'],
       });
       openLog();
