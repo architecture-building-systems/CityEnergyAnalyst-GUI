@@ -39,15 +39,41 @@ const HomePageContent = () => {
         </Route>
         <Route path={routes.DASHBOARD}>
           <Suspense>
-            <Cardwrapper>
-              <Dashboard />
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+              <div
+                style={{
+                  height: '100%',
+                  overflow: 'auto',
+                  background: '#fff',
+                  borderRadius: 8,
+                  border: '1px solid #eee',
+
+                  padding: 12,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <Dashboard />
+              </div>
             </Cardwrapper>
           </Suspense>
         </Route>
         <Route path={routes.DATABASE_EDITOR}>
           <Suspense>
-            <Cardwrapper>
-              <DatabaseEditor />
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+              <div
+                style={{
+                  height: '100%',
+                  overflow: 'auto',
+                  background: '#fff',
+                  borderRadius: 8,
+                  border: '1px solid #eee',
+
+                  padding: 24,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <DatabaseEditor />
+              </div>
             </Cardwrapper>
           </Suspense>
         </Route>
