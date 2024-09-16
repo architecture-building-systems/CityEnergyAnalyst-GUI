@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
 import path, { dirname } from 'path';
 
 import {
@@ -83,8 +83,22 @@ if (!gotTheLock) {
 }
 
 const createMainWindow = () => {
+  const displays = screen.getAllDisplays();
+  // Find the primary display or the one with the highest resolution
+  const primaryDisplay = displays.find((display) => display.isPrimary);
+  const display =
+    primaryDisplay ||
+    displays.reduce((a, b) =>
+      a.workArea.width * a.workArea.height >
+      b.workArea.width * b.workArea.height
+        ? a
+        : b,
+    );
+
   mainWindow = new BrowserWindow({
     show: false,
+    width: Math.min(display.workArea.width, 1920),
+    height: Math.min(display.workArea.height, 1080),
     backgroundColor: 'white',
     autoHideMenuBar: true,
     webPreferences: {
