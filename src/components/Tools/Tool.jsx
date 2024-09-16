@@ -60,8 +60,12 @@ const ScriptSuggestions = ({ script, onMissingInputs, onToolSelected }) => {
   const { fetching, error } = useCheckMissingInputs(script);
 
   useEffect(() => {
-    onMissingInputs?.(error?.length);
-  }, [error]);
+    onMissingInputs?.(true);
+  }, [script, onMissingInputs]);
+
+  useEffect(() => {
+    if (error === null) onMissingInputs?.(false);
+  }, [error, onMissingInputs]);
 
   if (fetching)
     return (
@@ -121,6 +125,9 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   const [missingInputs, setMissingInputs] = useState(true);
 
   useEffect(() => {
+    // Disable form buttons when script changes
+    setMissingInputs(true);
+
     dispatch(fetchToolParams(script));
     return () => dispatch(resetToolParams());
   }, [script]);
