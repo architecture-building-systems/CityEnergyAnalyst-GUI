@@ -111,7 +111,7 @@ const fetchCondaLock = async (ceaVersion, condaLockPath) => {
     await downloadFile(condaLockUrl, condaLockPath);
   } catch (error) {
     console.error(error);
-    throw new Error(`Unable to download file from ${condaLockUrl}`);
+    throw new Error(`Unable to fetch conda environment file.`);
   }
 };
 
