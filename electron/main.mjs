@@ -161,13 +161,29 @@ function createSplashWindow(url) {
       const checkUpdates = async () => {
         try {
           sendPreflightEvent('Checking for GUI update...');
-          const info = await autoUpdater.checkForUpdates();
+          let info;
+
+          autoUpdater.on('update-available', (_info) => {
+            console.debug('update-available event');
+            info = { ..._info, updateAvailable: true };
+          });
+          autoUpdater.on('update-not-available', (_info) => {
+            console.debug('update-not-available event');
+            sendPreflightEvent('No update available.');
+
+            info = { ..._info, updateAvailable: false };
+          });
+
+          const updateResult = await autoUpdater.checkForUpdates();
+          // autoUpdater.checkForUpdates() returns null if in dev mode
+          if (updateResult == null) return false;
+
           console.debug(info);
 
           // Ignore if unable to get version information
           if (!info?.updateInfo?.version) return false;
-          // Ignore if latest version is the same
-          if (info.updateInfo.version == appVersion) return false;
+          // Ignore if update is not available
+          if (!info.updateInfo?.updateAvailable) return false;
           // Ignore if found in config
           const userConfig = readConfig();
           if (userConfig?.ignoreVersions == info.updateInfo.version)
@@ -213,17 +229,17 @@ function createSplashWindow(url) {
         } catch (error) {
           // Ignore error for now and continue to launch GUI
           sendPreflightEvent('Update failed.');
+        } finally {
+          autoUpdater.removeAllListeners();
         }
       };
 
       // Check for GUI update (only in production)
-      if (app.isPackaged) {
-        const updateAvailable = await checkUpdates();
-        if (updateAvailable) {
-          sendPreflightEvent('Restarting to install update...');
-          autoUpdater.quitAndInstall();
-          return;
-        }
+      const updateAvailable = await checkUpdates();
+      if (updateAvailable) {
+        sendPreflightEvent('Restarting to install update...');
+        autoUpdater.quitAndInstall();
+        return;
       }
 
       // Start immediately if cea is already running
