@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import os from 'os';
 import { exec, execSync, spawn } from 'child_process';
@@ -11,7 +12,15 @@ const execAsync = promisify(exec);
 
 const paths = {
   darwin: {
-    micromamba: path.join(process.resourcesPath, os.arch(), 'micromamba'),
+    micromamba: app.isPackaged
+      ? path.join(process.resourcesPath, os.arch(), 'micromamba')
+      : // FIXME: Temp fix for dev env
+        path.join(
+          fileURLToPath(import.meta.url),
+          '../../../dependencies',
+          os.arch(),
+          'micromamba',
+        ),
     root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
   },
   win32: {
