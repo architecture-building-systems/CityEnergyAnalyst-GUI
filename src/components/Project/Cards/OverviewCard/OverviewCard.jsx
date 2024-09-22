@@ -1,8 +1,11 @@
-import { Divider } from 'antd';
+import { Divider, Dropdown } from 'antd';
 import ceaLogo from '../../../../assets/cea-logo.png';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import { ShowHideCardsButton } from '../../../../containers/Project';
+import { helpMenuItems, HelpMenuItemsLabel, helpMenuUrls } from './constants';
+import { DownOutlined } from '@ant-design/icons';
+import { useMemo } from 'react';
 
 const OverviewCard = ({
   project,
@@ -11,8 +14,23 @@ const OverviewCard = ({
   scenarioList,
   onToggleHideAll,
 }) => {
+  const menuItems = useMemo(
+    () =>
+      helpMenuItems.map((item) => {
+        const { label, key } = item;
+        const url = helpMenuUrls[key];
+
+        return {
+          ...item,
+          label: <HelpMenuItemsLabel url={url} name={label} />,
+        };
+      }),
+    [],
+  );
+
   return (
     <div
+      id="cea-overview-card"
       style={{
         background: '#fff',
         padding: 12,
@@ -38,7 +56,14 @@ const OverviewCard = ({
           justifyContent: 'space-between',
         }}
       >
-        <Logo height={60} />
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Logo height={60} />
+
+          <Dropdown menu={{ items: menuItems }}>
+            <DownOutlined />
+          </Dropdown>
+        </div>
+
         <ShowHideCardsButton
           hideAll={true}
           onToggle={onToggleHideAll}
