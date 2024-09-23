@@ -62,22 +62,9 @@ if (!gotTheLock) {
     mainWindow && mainWindow.close();
     splashWindow && splashWindow.close();
 
-    const shutdown = async () => {
-      try {
-        const resp = await fetch(`${CEA_URL}/server/shutdown`, {
-          method: 'POST',
-        });
-        const content = await resp.json();
-        console.log(content);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        // Make sure CEA process is killed
-        killCEAProcess();
-      }
-    };
+    killCEAProcess();
 
-    await shutdown();
+    console.debug('Exiting app...');
     app.exit();
   });
 }
