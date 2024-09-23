@@ -56,11 +56,11 @@ const OverviewCard = ({
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Logo height={60} />
 
           <Dropdown menu={{ items: menuItems }}>
-            <DownOutlined />
+            <DownOutlined style={{ padding: 8 }} />
           </Dropdown>
         </div>
 
