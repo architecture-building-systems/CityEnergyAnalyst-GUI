@@ -1,8 +1,5 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
-import SideNav from '../components/HomePage/SideNav';
-import Header from '../components/HomePage/Header';
-import { ToolRoute } from '../components/Tools/Tool';
 
 import routes from '../constants/routes.json';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,20 +9,12 @@ import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 import './HomePage.css';
 import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { LayoutContext } from '../components/HomePage/hooks';
+import { Button, ConfigProvider } from 'antd';
+import { LeftOutlined } from '@ant-design/icons';
+import { push } from 'connected-react-router';
 
-const ContextProvider = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  return (
-    <LayoutContext.Provider value={{ collapsed, setCollapsed }}>
-      {children}
-    </LayoutContext.Provider>
-  );
-};
-
-const Project = lazy(() => import('../components/Project/Project'));
+const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
-const InputEditor = lazy(() => import('../components/InputEditor/InputEditor'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
   () => import('../components/DatabaseEditor/DatabaseEditor'),
@@ -34,42 +23,99 @@ const Landing = lazy(() => import('../components/Landing/Landing'));
 
 const HomePageContent = () => {
   return (
-    <div id="homepage-content">
-      <ErrorBoundary>
-        <Switch>
-          <Route path={routes.PROJECT_OVERVIEW}>
-            <Suspense>
-              <Project />
-            </Suspense>
-          </Route>
-          <Route path={routes.CREATE_SCENARIO}>
-            <Suspense>
+    <ErrorBoundary>
+      <Switch>
+        <Route path={routes.PROJECT}>
+          <Suspense>
+            <Project />
+          </Suspense>
+        </Route>
+        <Route path={routes.CREATE_SCENARIO}>
+          <Suspense>
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
               <CreateScenario />
-            </Suspense>
-          </Route>
-          <Route path={routes.INPUT_EDITOR}>
-            <Suspense>
-              <InputEditor />
-            </Suspense>
-          </Route>
-          <Route path={`${routes.TOOLS}/:script`} component={ToolRoute} />
-          <Route path={routes.DASHBOARD}>
-            <Suspense>
-              <Dashboard />
-            </Suspense>
-          </Route>
-          <Route path={routes.DATABASE_EDITOR}>
-            <Suspense>
-              <DatabaseEditor />
-            </Suspense>
-          </Route>
-          <Route exact path={routes.HOME}>
-            <Suspense>
-              <Landing />
-            </Suspense>
-          </Route>
-        </Switch>
-      </ErrorBoundary>
+            </Cardwrapper>
+          </Suspense>
+        </Route>
+        <Route path={routes.DASHBOARD}>
+          <Suspense>
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+              <div
+                style={{
+                  height: '100%',
+                  overflow: 'auto',
+                  background: '#fff',
+                  borderRadius: 8,
+                  border: '1px solid #eee',
+
+                  padding: 12,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <Dashboard />
+              </div>
+            </Cardwrapper>
+          </Suspense>
+        </Route>
+        <Route path={routes.DATABASE_EDITOR}>
+          <Suspense>
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+              <div
+                style={{
+                  height: '100%',
+                  overflow: 'auto',
+                  background: '#fff',
+                  borderRadius: 8,
+                  border: '1px solid #eee',
+
+                  padding: 24,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <DatabaseEditor />
+              </div>
+            </Cardwrapper>
+          </Suspense>
+        </Route>
+        <Route exact path={routes.HOME}>
+          <Suspense>
+            <Landing />
+          </Suspense>
+        </Route>
+      </Switch>
+    </ErrorBoundary>
+  );
+};
+
+const Cardwrapper = ({ children, style }) => {
+  const dispatch = useDispatch();
+
+  return (
+    <div
+      style={{
+        border: '1px solid #ccc',
+        borderRadius: 8,
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+
+        padding: 24,
+
+        height: '100%',
+        overflow: 'auto',
+
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+
+        ...style,
+      }}
+    >
+      <Button
+        style={{ marginRight: 'auto', position: 'sticky', top: 0, zIndex: 1 }}
+        onClick={() => dispatch(push(routes.PROJECT))}
+      >
+        <LeftOutlined /> Return
+      </Button>
+      <div style={{ flexGrow: 1 }}>{children}</div>
     </div>
   );
 };
@@ -91,26 +137,23 @@ const HomePage = () => {
   }, []);
 
   return (
-    <ContextProvider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#1470AF',
+          colorInfo: '#1470AF',
+        },
+      }}
+    >
       <div id="homepage-container">
-        <div id="homepage-top-container">
-          <div id="homepage-sidebar-container">
-            <SideNav />
-          </div>
-          <div id="homepage-right-container">
-            <div id="homepage-header-container">
-              <Header />
-            </div>
-            <div id="homepage-content-container">
-              <HomePageContent />
-            </div>
-          </div>
+        <div id="homepage-content-container">
+          <HomePageContent />
         </div>
         <div id="homepage-status-bar-container">
           <StatusBar />
         </div>
       </div>
-    </ContextProvider>
+    </ConfigProvider>
   );
 };
 

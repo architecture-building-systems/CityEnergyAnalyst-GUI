@@ -30,6 +30,8 @@ const Table = ({ tab }) => {
 
   return (
     <>
+      <InputEditorButtons changes={changes} />
+
       <Card
         styles={{ header: { backgroundColor: '#f1f1f1' } }}
         size="small"
@@ -52,7 +54,6 @@ const Table = ({ tab }) => {
           <TableEditor tabulator={tabulator} tab={tab} selected={selected} />
         )}
       </Card>
-      <InputEditorButtons changes={changes} />
     </>
   );
 };
@@ -125,17 +126,11 @@ const InputEditorButtons = ({ changes }) => {
   };
 
   return (
-    <div style={{ marginTop: 10 }}>
-      <Button
-        style={{ margin: 5 }}
-        type="primary"
-        disabled={noChanges}
-        onClick={_saveChanges}
-      >
+    <div style={{ display: 'flex', gap: 10 }}>
+      <Button type="primary" disabled={noChanges} onClick={_saveChanges}>
         Save
       </Button>
       <Button
-        style={{ margin: 5 }}
         type="primary"
         disabled={noChanges}
         onClick={_discardChanges}

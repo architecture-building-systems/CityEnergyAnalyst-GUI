@@ -85,10 +85,24 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 }
 
 // Kill process and stop all timed events
-export function killCEAProcess() {
+export function killCEAProcess(killTimeout = 10000) {
   if (cea) {
     cea.removeAllListeners('exit');
-    process.kill(cea.pid);
+    let result = false;
+
+    setTimeout(() => {
+      result = process.kill(cea.pid, 'SIGKILL');
+    }, killTimeout);
+
+    result = process.kill(cea.pid, 'SIGTERM');
+
+    if (result) {
+      console.debug('CEA process killed with PID:', cea.pid);
+    } else {
+      console.error('Failed to kill CEA process with PID:', cea.pid);
+    }
+  } else {
+    console.debug('CEA process not found. Ignoring...');
   }
   interval && clearInterval(interval);
   timeout && clearTimeout(timeout);

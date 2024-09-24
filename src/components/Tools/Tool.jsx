@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Form } from '@ant-design/compatible';
-import { Skeleton, Divider, Collapse, Button, Spin as AntSpin } from 'antd';
+import {
+  Skeleton,
+  Divider,
+  Collapse,
+  Button,
+  Spin as AntSpin,
+  Alert,
+} from 'antd';
 import {
   fetchToolParams,
   saveToolParams,
@@ -13,11 +20,97 @@ import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
+import './Tool.css';
+import axios from 'axios';
+import { ExternalLinkIcon, RunIcon } from '../../assets/icons';
+import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
+
+import { animated } from '@react-spring/web';
+
 export const ToolRoute = ({ match }) => {
   return <Tool script={match.params.script} />;
 };
 
-const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
+const useCheckMissingInputs = (tool) => {
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      setFetching(true);
+      try {
+        await axios.get(
+          `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
+        );
+        setError(null);
+      } catch (err) {
+        setError(err.response.data?.detail?.script_suggestions);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetch();
+  }, [tool]);
+
+  return { fetching, error };
+};
+
+const ScriptSuggestions = ({ script, onMissingInputs, onToolSelected }) => {
+  const { fetching, error } = useCheckMissingInputs(script);
+
+  useEffect(() => {
+    onMissingInputs?.(true);
+  }, [script, onMissingInputs]);
+
+  useEffect(() => {
+    if (error === null) onMissingInputs?.(false);
+  }, [error, onMissingInputs]);
+
+  if (fetching)
+    return (
+      <div style={{ fontFamily: 'monospace' }}>
+        Checking for missing inputs...
+      </div>
+    );
+  if (error)
+    return (
+      <Alert
+        message="Missing inputs detected"
+        description={
+          <div>
+            <p>Run the following scripts to create the missing inputs:</p>
+            {error?.length ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {error.map(({ label, name }) => {
+                  return (
+                    <div key={name} style={{ display: 'flex', gap: 8 }}>
+                      -
+                      <b
+                        className="cea-tool-suggestions"
+                        onClick={() => onToolSelected?.(name)}
+                        style={{ marginRight: 'auto' }}
+                      >
+                        {label}
+                        <ExternalLinkIcon style={{ fontSize: 18 }} />
+                      </b>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div>Something went wrong</div>
+            )}
+          </div>
+        }
+        type="info"
+        showIcon
+      />
+    );
+  return null;
+};
+
+const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const dispatch = useDispatch();
   const {
@@ -28,7 +121,13 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
     categorical_parameters: categoricalParameters,
   } = params;
 
+  // Disable form buttons until inputs are found
+  const [missingInputs, setMissingInputs] = useState(true);
+
   useEffect(() => {
+    // Disable form buttons when script changes
+    setMissingInputs(true);
+
     dispatch(fetchToolParams(script));
     return () => dispatch(resetToolParams());
   }, [script]);
@@ -42,18 +141,24 @@ const Tool = withErrorBoundary(({ script, formButtons = ToolFormButtons }) => {
   return (
     <div>
       <Spin>
-        <h1>{category}</h1>
+        <h3>{category}</h3>
         <h2 style={{ display: 'inline' }}>{label}</h2>
         <p>
           <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
         </p>
-        <Divider />
-        <div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ScriptSuggestions
+            script={script}
+            onMissingInputs={setMissingInputs}
+            onToolSelected={onToolSelected}
+          />
+
           <ToolForm
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            formButtons={formButtons}
+            disableButtons={missingInputs}
           />
         </div>
       </Spin>
@@ -65,8 +170,8 @@ const ToolForm = Form.create()(({
   parameters,
   categoricalParameters,
   script,
-  formButtons,
   form,
+  disableButtons,
 }) => {
   const dispatch = useDispatch();
   const [activeKey, setActiveKey] = useState([]);
@@ -107,31 +212,16 @@ const ToolForm = Form.create()(({
     return out;
   };
 
-  // eslint-disable-next-line react/display-name
-  const withFormFunctions = (FormButtons) => (props) => {
-    if (FormButtons === null) return null;
-
-    const runScript = () => {
-      const values = getForm();
-      values && dispatch(createJob(script, values));
-    };
-
-    const saveParams = (params) => {
-      params && dispatch(saveToolParams(script, params));
-    };
-
-    const setDefault = () => dispatch(setDefaultToolParams(script));
-
-    return (
-      <FormButtons
-        {...props}
-        getForm={getForm}
-        runScript={runScript}
-        saveParams={saveParams}
-        setDefault={setDefault}
-      />
-    );
+  const runScript = () => {
+    const values = getForm();
+    values && dispatch(createJob(script, values));
   };
+
+  const saveParams = (params) => {
+    params && dispatch(saveToolParams(script, params));
+  };
+
+  const setDefault = () => dispatch(setDefaultToolParams(script));
 
   let toolParams = null;
   if (parameters) {
@@ -160,33 +250,68 @@ const ToolForm = Form.create()(({
   }
 
   return (
-    <Form layout="horizontal">
+    <Form layout="horizontal" className="cea-tool-form">
+      <div
+        style={{
+          postion: 'absolute',
+          height: '100%',
+          width: '100%',
+          background: '#fff',
+        }}
+      />
+      <Form.Item className="formButtons">
+        <div className="cea-tool-form-buttongroup">
+          <ToolFormButtons
+            getForm={getForm}
+            runScript={runScript}
+            saveParams={saveParams}
+            setDefault={setDefault}
+            disabled={disableButtons}
+          />
+        </div>
+      </Form.Item>
+      <Divider />
+
       {toolParams}
       {categoricalParams}
       <br />
-      <Form.Item className="formButtons">
-        {withFormFunctions(formButtons)()}
-      </Form.Item>
     </Form>
   );
 });
 
-const ToolFormButtons = ({ getForm, runScript, saveParams, setDefault }) => {
+const ToolFormButtons = ({
+  getForm,
+  runScript,
+  saveParams,
+  setDefault,
+  disabled = false,
+}) => {
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   return (
     <>
-      <Button type="primary" onClick={runScript}>
-        Run Script
-      </Button>
+      <animated.div
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={disabled ? null : styles}
+      >
+        <Button type="primary" onClick={runScript} disabled={disabled}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Run
+            <RunIcon style={{ fontSize: 18 }} />
+          </div>
+        </Button>
+      </animated.div>
+
       <Button
-        type="primary"
         onClick={() => {
           saveParams(getForm());
         }}
+        disabled={disabled}
       >
-        Save to Config
+        Save Settings
       </Button>
-      <Button type="primary" onClick={setDefault}>
-        Default
+      <Button onClick={setDefault} disabled={disabled}>
+        Reset
       </Button>
     </>
   );

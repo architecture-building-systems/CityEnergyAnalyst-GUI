@@ -7,7 +7,7 @@ import { useFetchConfigProjectInfo } from '../Project/Project';
 import { checkExist, dirname, joinPath } from '../../utils/file';
 import { useFetchProject } from '../../utils/hooks';
 
-const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
+const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const {
@@ -23,7 +23,6 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
-        console.log('Received values of form: ', values);
         setConfirmLoading(true);
         try {
           const resp = await axios.post(
@@ -34,7 +33,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
           fetchProject(project).then(() => {
             setConfirmLoading(false);
             setVisible(false);
-            onSuccess();
+            onSuccess?.(project);
           });
         } catch (err) {
           console.error(err.response);

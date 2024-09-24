@@ -1,0 +1,73 @@
+#cea-project-overlay {
+  position: absolute;
+  top: 0;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  display: flex;
+  gap: 12px;
+
+  height: calc(100vh - 24px);
+  width: 100vw;
+
+  padding: 12px;
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+#cea-project-overlay-left {
+  height: 100%;
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  min-width: 0;
+}
+
+#cea-project-overlay-right {
+  height: 100%;
+}
+
+#cea-project-overlay-left-top {
+  display: flex;
+  gap: 12px;
+}
+
+#cea-project-overlay .cea-overlay-card {
+  pointer-events: auto;
+}
+
+#cea-project-overlay-left-bottom {
+  display: flex;
+
+  flex-direction: column;
+  justify-content: flex-end;
+
+  gap: 12px;
+}
+
+#bottom-buttons .cea-card-toolbar-icon {
+  background-color: #000;
+}
+
+#map-controls-overlay {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+  background: #fff;
+  padding: 12px;
+
+  margin-left: auto;
+  pointer-events: auto;
+
+  font-size: 12px;
+}

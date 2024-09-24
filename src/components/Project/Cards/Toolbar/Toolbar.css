@@ -1,0 +1,24 @@
+.cea-card-toolbar-icon:hover {
+  background-color: #4d4d4d;
+  cursor: pointer;
+}
+
+.cea-card-toolbar-icon {
+  padding: 12px;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+  color: #fff;
+  margin: auto;
+}
+
+.cea-card-toolbar-divider {
+  height: 60%;
+  margin: auto 3px;
+
+  border-inline-start: 1px solid rgba(5, 5, 5, 0.3);
+}

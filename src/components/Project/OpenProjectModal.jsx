@@ -6,7 +6,7 @@ import { useFetchConfigProjectInfo } from '../Project/Project';
 import { checkExist } from '../../utils/file';
 import { useFetchProject } from '../../utils/hooks';
 
-const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
+const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
   const {
@@ -22,13 +22,12 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {
       if (!err) {
-        console.log('Received values of form: ', values);
         setConfirmLoading(true);
         const { project } = values;
-        fetchProject(project).then(() => {
+        fetchProject(project).then((value) => {
           setConfirmLoading(false);
           setVisible(false);
-          onSuccess();
+          onSuccess?.(value);
         });
       }
     });

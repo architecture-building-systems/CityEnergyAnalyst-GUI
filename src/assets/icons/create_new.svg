@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" data-name="Isolation Mode" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <path d="m16,32C7.18,32,0,24.82,0,16S7.18,0,16,0s16,7.18,16,16-7.18,16-16,16Zm0-30c-7.72,0-14,6.28-14,14s6.28,14,14,14,14-6.28,14-14S23.72,2,16,2Z" fill="currentColor"/>
+  <polygon points="17.01 16.99 17.04 23 15.04 23.01 15.01 17.01 9.01 17.04 8.99 15.04 14.99 15.01 14.96 9.01 16.96 9 16.99 14.99 22.99 14.96 23.01 16.96 17.01 16.99" fill="currentColor"/>
+</svg>

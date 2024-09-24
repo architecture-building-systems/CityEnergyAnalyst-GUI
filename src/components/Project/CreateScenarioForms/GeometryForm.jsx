@@ -129,7 +129,8 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 };
 
 const GenerateZoneFormItem = ({ form }) => {
-  const { polygon, setDrawingMode } = useContext(MapFormContext);
+  const { fetchedBuildings, polygon, setDrawingMode } =
+    useContext(MapFormContext);
   useEffect(() => {
     form.setFieldValue('generate_zone', polygon);
   }, [polygon]);
@@ -144,12 +145,15 @@ const GenerateZoneFormItem = ({ form }) => {
 
   const generateZoneValidator = (_, value) => {
     if (value?.features?.length) {
+      if (!fetchedBuildings?.features?.length) {
+        setError('No buildings found in the selected area.');
+        return Promise.reject();
+      }
+
       setError(null);
       return Promise.resolve();
     } else {
-      setError(
-        'Area geometry not found. Please select an area on the map by drawing a polygon.',
-      );
+      setError('Boundary not found. Please draw a boundary on the map.');
       return Promise.reject();
     }
   };
@@ -165,9 +169,8 @@ const GenerateZoneFormItem = ({ form }) => {
         }}
       >
         <Alert
-          message="Select an area on the map"
-          description="Search for a location on the map and select an area with buildings by
-          drawing a polygon."
+          // message="Select an area on the map"
+          message="On the map, search for a location and draw the boundary of your site."
           type="info"
           showIcon
         />
@@ -240,9 +243,9 @@ const SurroundingsGeometryFormItem = () => {
 const GenerateSurroundingsFormItem = ({ initialValue = 50 }) => {
   return (
     <Form.Item
-      label="Generate surroundings geometry"
+      label="Buffer (surroundings)"
       name="generate_surroundings"
-      extra="Set the buffer in meters around the zone buildings."
+      extra="Set the buffer in metres around the Building geometries (zone)."
       rules={[{ required: true, message: 'This field is required.' }]}
       initialValue={initialValue}
     >
@@ -272,7 +275,9 @@ const TypologyFormItem = () => {
       <SelectWithFileDialog
         name="typology"
         type="file"
-        filters={[{ name: 'DBF files', extensions: ['dbf'] }]}
+        filters={[
+          { name: 'Typology formats', extensions: ['csv', 'dbf', 'xlsx'] },
+        ]}
         placeholder="Choose an option from the dropdown"
         options={[
           {
@@ -283,7 +288,7 @@ const TypologyFormItem = () => {
       >
         <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
           <FileSearchOutlined />
-          Import .dbf file
+          Import .xlsx/.csv/.dbf file
         </div>
       </SelectWithFileDialog>
     </Form.Item>

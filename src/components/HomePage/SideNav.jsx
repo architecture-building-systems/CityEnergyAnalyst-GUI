@@ -3,17 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   BarChartOutlined,
-  BookOutlined,
   DatabaseOutlined,
   EditOutlined,
-  ExceptionOutlined,
-  FlagOutlined,
-  MailOutlined,
   ProjectOutlined,
-  QuestionCircleOutlined,
-  RocketOutlined,
   ToolOutlined,
-  YoutubeOutlined,
 } from '@ant-design/icons';
 
 import { Layout, Menu, Tooltip } from 'antd';
@@ -107,18 +100,6 @@ const SideNav = () => {
           selectedKeys={[selectedKey]}
           items={[...projectMenuItems(), ..._scenarioMenuItems]}
         />
-
-        <Menu
-          theme="dark"
-          mode="vertical"
-          selectedKeys={[]}
-          items={helpMenuItems()}
-          onClick={({ key }) => {
-            const url = helpMenuUrls[key];
-            if (isElectron()) openExternal(url);
-            else window.open(url, '_blank', 'noreferrer');
-          }}
-        />
       </div>
     </Sider>
   );
@@ -210,59 +191,6 @@ const toolMenuItems = (status, tools) => {
     icon: <ToolOutlined />,
     children,
   };
-};
-
-const helpMenuUrls = {
-  'learning-camp': 'https://www.cityenergyanalyst.com/learning-camp',
-  'video-tutorials': 'https://www.cityenergyanalyst.com/video',
-  documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
-  'report-issue':
-    'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
-  'known-issue':
-    'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
-  contact: 'https://www.cityenergyanalyst.com/contact',
-};
-
-const helpMenuItems = () => {
-  return [
-    {
-      label: 'Help',
-      key: 'help',
-      icon: <QuestionCircleOutlined />,
-      children: [
-        {
-          label: 'Learning Camp',
-          key: 'learning-camp',
-          icon: <RocketOutlined />,
-        },
-        {
-          label: 'Video Tutorials',
-          key: 'video-tutorials',
-          icon: <YoutubeOutlined />,
-        },
-        {
-          label: 'Documentation',
-          key: 'documentation',
-          icon: <BookOutlined />,
-        },
-        {
-          label: 'Report an Issue',
-          key: 'report-issue',
-          icon: <FlagOutlined />,
-        },
-        {
-          label: 'Known Issues',
-          key: 'known-issue',
-          icon: <ExceptionOutlined />,
-        },
-        {
-          label: 'Contact Us',
-          key: 'contact',
-          icon: <MailOutlined />,
-        },
-      ],
-    },
-  ];
 };
 
 export default SideNav;

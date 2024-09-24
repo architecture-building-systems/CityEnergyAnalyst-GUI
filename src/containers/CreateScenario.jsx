@@ -35,6 +35,8 @@ import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
 import { FlyToInterpolator } from 'deck.gl';
 
+import routes from '../constants/routes.json';
+
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
 const useCreateScenario = (projectPath, { onSuccess }) => {
@@ -53,8 +55,8 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
       );
       onSuccess?.(response.data);
     } catch (error) {
-      console.log(error);
-      setError(error);
+      console.log(error?.response?.data);
+      setError(error?.response?.data);
     } finally {
       setFetching(false);
     }
@@ -97,9 +99,11 @@ const CreateScenarioProgressModal = ({
         )}
         {error && (
           <Result
-            status="error"
+            status="warning"
             title="Scenario creation failed"
-            subTitle="There was an error while creating the scenario"
+            subTitle={
+              error?.detail || 'There was an error while creating the scenario'
+            }
             extra={[
               <Button
                 type="primary"
@@ -117,13 +121,13 @@ const CreateScenarioProgressModal = ({
             title="Scenario created successfully!"
             subTitle={
               <>
-                <div>Redirecting to Input Editor...</div>
+                <div>Redirecting to Scenario...</div>
                 <div>Click below if you are not redirected.</div>
               </>
             }
             extra={[
               <Button key="ok" type="primary" onClick={onOk}>
-                Go to Input Editor
+                Open Scenario
               </Button>,
             ]}
           ></Result>
@@ -140,7 +144,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
   const {
     info: { project },
   } = useSelector((state) => state.project);
-  const openScenario = useOpenScenario();
+  const openScenario = useOpenScenario(routes.PROJECT);
   const { setFormData, fetching, error } = useCreateScenario(project, {
     // Redirect to input editor when scenario is created
     onSuccess: ({ scenario_name }) => {
@@ -156,7 +160,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
   const databases = useFetchDatabases();
   const weather = useFetchWeather();
 
-  const goToInputEditor = () => {
+  const goToScenario = () => {
     openScenario(project, data.scenario_name);
   };
 
@@ -278,7 +282,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
         success={success}
         error={error}
         fetching={fetching}
-        onOk={goToInputEditor}
+        onOk={goToScenario}
       />
     </div>
   );
@@ -289,14 +293,20 @@ const ScenarioList = () => {
   const scenarioNames = info?.scenarios_list || [];
 
   return (
-    <div>
-      <div
-        style={{
-          padding: 24,
-        }}
-      >
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+
+        padding: 24,
+      }}
+    >
+      <div>
         <h2>Scenarios in current Project</h2>
         <p>{scenarioNames.length} Scenario found</p>
+      </div>
+      <div style={{ overflow: 'auto' }}>
         <List
           dataSource={scenarioNames}
           renderItem={(item) => (
@@ -355,7 +365,11 @@ const CreateScenario = () => {
   );
 
   const secondaryCards = {
-    scenarioList: <ScenarioList />,
+    scenarioList: (
+      <div style={{ height: 'calc(100vh - 200px)' }}>
+        <ScenarioList />
+      </div>
+    ),
     map: (
       <Suspense fallback={<div>Loading Map...</div>}>
         <EditableMap
@@ -400,7 +414,17 @@ const CreateScenario = () => {
     <Alert.ErrorBoundary>
       <Row style={{ height: '100%' }}>
         <Col span={12}>
-          {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
+          <div
+            style={{
+              height: '100%',
+              overflow: 'auto',
+              background: '#fff',
+              borderRadius: 8,
+              border: '1px solid #eee',
+            }}
+          >
+            {formIndex == 0 ? secondaryCards.scenarioList : secondaryCards.map}
+          </div>
         </Col>
         <Col span={12}>
           <MapFormContext.Provider value={contextValue}>

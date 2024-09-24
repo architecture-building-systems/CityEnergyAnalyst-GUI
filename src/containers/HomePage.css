@@ -1,119 +1,23 @@
 #homepage-container {
-  background: #f0f2f8;
+  background: #fff;
   height: 100vh;
   width: 100vw;
+
+  display: flex;
+  flex-direction: column;
 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-}
 
-#homepage-top-container {
-  display: flex;
-
-  height: calc(100% - 24px);
-}
-
-#homepage-status-bar-container {
-  height: 24px;
-}
-
-/* #homepage-sidebar-container {
-} */
-
-#homepage-right-container {
-  /* prevent overflow */
-  min-width: 0;
-  flex-grow: 1;
-
-  display: flex;
-  flex-direction: column;
-}
-
-#homepage-header-container {
-  z-index: 100;
-  height: 60px;
-  box-shadow:
-    rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
-    rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
-  background: #fff;
+  /* overflow: hidden; */
 }
 
 #homepage-content-container {
-  box-sizing: border-box;
-  padding: 18px;
-
   display: flex;
   flex-direction: column;
 
-  height: 100%;
-  overflow: auto;
-}
-
-#homepage-content {
-  padding: 24px;
-  box-shadow:
-    rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
-    rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
-  background: #fff;
-  border-radius: 8px;
-  box-sizing: border-box;
-
-  flex-grow: 1;
-}
-
-#homepage-sidebar-container .ant-layout-sider {
-  height: 100%;
-  background: #001529;
-}
-
-#homepage-sidebar-container .ant-layout-sider-children {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  margin-top: -0.1px;
-  padding-top: 0.1px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 18px 12px;
-}
-
-.logo img {
-  height: 100%;
-}
-
-.logo .title {
-  color: white;
-  font-size: 14px;
-  font-weight: bolder;
-  margin-left: 10px;
-
-  transition-duration: 0.5s;
-  transition-property: opacity, width, margin;
-  transition-timing-function: cubic-bezier(0.645, 0.045, 0.355, 1);
-  -webkit-transition-delay: 0s;
-  -moz-transition-delay: 0s;
-  -o-transition-delay: 0s;
-  transition-delay: 0s;
-}
-
-.logo .title.inactive {
-  opacity: 0;
-  width: 0;
-  margin: 0;
-  transition-duration: 0.5s;
-  transition-property: opacity, width, margin;
-  transition-timing-function: cubic-bezier(0.645, 0.045, 0.355, 1);
-  -webkit-transition-delay: 0s;
-  -moz-transition-delay: 0s;
-  -o-transition-delay: 0s;
-  transition-delay: 0s;
-
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  /* Minus the height of the status bar */
+  height: calc(100% - 24px);
+  width: 100%;
 }
