@@ -195,8 +195,7 @@ function createSplashWindow(url) {
           if (!info?.updateAvailable) return false;
           // Ignore if found in config
           const userConfig = readConfig();
-          if (userConfig?.ignoreVersions == info.updateInfo.version)
-            return false;
+          if (userConfig?.ignoreVersions == info.version) return false;
 
           const { response, checkboxChecked } = await dialog.showMessageBox(
             splashWindow,
@@ -204,7 +203,7 @@ function createSplashWindow(url) {
               title: 'Update found',
               type: 'info',
               defaultId: 0,
-              message: `A new update was found (${info.updateInfo.version}).\n Do you want to install it?`,
+              message: `A new update was found (${info.version}).\n Do you want to install it?`,
               // detail: `${info.updateInfo.releaseNotes}`,
               checkboxLabel: 'Remember my decision for this version',
               buttons: ['Install', 'Skip'],
@@ -230,12 +229,13 @@ function createSplashWindow(url) {
 
             // Save preference
             if (checkboxChecked) {
-              writeConfig({ ignoreVersions: info.updateInfo.version });
+              writeConfig({ ignoreVersions: info.version });
             }
 
             return false;
           }
         } catch (error) {
+          console.error(error);
           // Ignore error for now and continue to launch GUI
           sendPreflightEvent('Update failed.');
         } finally {
