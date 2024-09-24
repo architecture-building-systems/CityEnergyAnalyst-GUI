@@ -17,6 +17,7 @@ import {
 import { CEAError } from './cea/errors.mjs';
 import { initLog, openLog } from './log.mjs';
 import { readConfig, writeConfig } from './config.mjs';
+import { checkInternet } from './utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -158,6 +159,15 @@ function createSplashWindow(url) {
         console.log(message);
         splashWindow.webContents.send('preflightEvents', message);
       };
+
+      // Check for internet connection
+      const internetConnection = await checkInternet();
+      if (!internetConnection) {
+        sendPreflightEvent('No internet connection');
+        throw new CEAError(
+          'Unable to check for CEA environment. (No internet connection)',
+        );
+      }
 
       const checkUpdates = async () => {
         try {
