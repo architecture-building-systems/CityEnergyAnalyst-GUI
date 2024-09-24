@@ -93,7 +93,7 @@
       "electron/**"
     ],
     "mac": {
-      "icon": "public/cea.icns",
+      "icon": "public/cea.png",
       "target": "default",
       "files": [
         "!node_modules/texture-compressor"
@@ -109,7 +109,7 @@
       ]
     },
     "win": {
-      "icon": "public/cea.ico",
+      "icon": "public/cea.png",
       "target": [
         {
           "target": "nsis",
