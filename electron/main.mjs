@@ -175,13 +175,11 @@ function createSplashWindow(url) {
           let info;
 
           autoUpdater.on('update-available', (_info) => {
-            console.debug('update-available event');
+            sendPreflightEvent('Update available.');
             info = { ..._info, updateAvailable: true };
           });
           autoUpdater.on('update-not-available', (_info) => {
-            console.debug('update-not-available event');
             sendPreflightEvent('No update available.');
-
             info = { ..._info, updateAvailable: false };
           });
 
@@ -192,9 +190,9 @@ function createSplashWindow(url) {
           console.debug(info);
 
           // Ignore if unable to get version information
-          if (!info?.updateInfo?.version) return false;
+          if (!info?.version) return false;
           // Ignore if update is not available
-          if (!info.updateInfo?.updateAvailable) return false;
+          if (!info?.updateAvailable) return false;
           // Ignore if found in config
           const userConfig = readConfig();
           if (userConfig?.ignoreVersions == info.updateInfo.version)
