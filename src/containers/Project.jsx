@@ -285,11 +285,7 @@ const ScenarioAlert = () => {
         userSelect: 'none',
       }}
     >
-      <Alert
-        message="No Scenario Selected"
-        description="Please select a scenario to start editing inputs"
-        type="info"
-      />
+      <Alert message="Create or select a Scenario to start" type="info" />
     </div>
   );
 };

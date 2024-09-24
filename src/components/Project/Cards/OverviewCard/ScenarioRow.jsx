@@ -47,7 +47,11 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
             flexGrow: 1,
           }}
         >
-          {scenarioName ? scenarioName : 'Select Scenario'}
+          {scenarioName
+            ? scenarioName
+            : scenarioList?.length
+              ? 'Select Scenario'
+              : 'Create Scenario'}
         </div>
         <div style={{ fontSize: 20, display: 'flex', gap: 8 }}>
           <DuplicateScenarioIcon />
