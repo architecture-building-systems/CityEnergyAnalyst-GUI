@@ -54,7 +54,10 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
     // Show Error message box when CEA encounters any error on startup
     cea.stderr.on('data', saveStartupError);
-    cea.on('exit', showStartupError);
+    cea.on('exit', () => {
+      cea = null;
+      showStartupError();
+    });
   }
 
   function saveStartupError(message) {

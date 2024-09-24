@@ -17,6 +17,7 @@ import {
 import { CEAError } from './cea/errors.mjs';
 import { initLog, openLog } from './log.mjs';
 import { readConfig, writeConfig } from './config.mjs';
+import { checkInternet } from './utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -159,6 +160,15 @@ function createSplashWindow(url) {
         splashWindow.webContents.send('preflightEvents', message);
       };
 
+      // Check for internet connection
+      const internetConnection = await checkInternet();
+      if (!internetConnection) {
+        sendPreflightEvent('No internet connection');
+        throw new CEAError(
+          'Unable to check for CEA environment. (No internet connection)',
+        );
+      }
+
       const checkUpdates = async () => {
         try {
           sendPreflightEvent('Checking for GUI update...');
@@ -254,8 +264,10 @@ function createSplashWindow(url) {
       if (app.isPackaged) {
         sendPreflightEvent('Checking for CEA environment...');
         var ceaEnvExists = true;
+        let ceaEnvIsEditable = false;
+
         try {
-          await checkCEAenv();
+          ceaEnvIsEditable = await checkCEAenv();
         } catch (error) {
           // Will throw CEAError if env does not exist
           if (error instanceof CEAError) ceaEnvExists = false;
@@ -272,16 +284,19 @@ function createSplashWindow(url) {
           await createCEAenv(`v${appVersion}`);
         }
 
-        // Check CEA version
-        const ceaVersion = await getCEAenvVersion();
-        console.debug({ appVersion, ceaVersion });
+        // Only update CEA from github if not installed as editable package
+        if (!ceaEnvIsEditable) {
+          // Check CEA version
+          const ceaVersion = await getCEAenvVersion();
+          console.debug({ appVersion, ceaVersion });
 
-        // Update CEA if outdated
-        if (ceaVersion != appVersion) {
-          sendPreflightEvent(
-            `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
-          );
-          await updateCEAenv(`v${appVersion}`);
+          // Update CEA if outdated
+          if (ceaVersion != appVersion) {
+            sendPreflightEvent(
+              `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
+            );
+            await updateCEAenv(`v${appVersion}`);
+          }
         }
       }
 

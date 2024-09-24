@@ -87,10 +87,17 @@ export const getCEAenvVersion = async () => {
 };
 
 export const checkCEAenv = async () => {
+  // Check if CEA is in the environment
   try {
     await execAsync(
       `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run cea --help`,
     );
+
+    // Check if CEA is installed as editable package (i.e. dev mode)
+    const { stdout } = await execAsync(
+      `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run pip show cityenergyanalyst`,
+    );
+    return stdout.toString().trim().includes('Editable project location');
   } catch (error) {
     console.error(error);
     throw new CEAError(
