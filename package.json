@@ -12,7 +12,7 @@
     "build-electron": "vite build --mode electron",
     "preview": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
-    "lint:format": "prettier --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
+    "lint:format": "prettier --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
     "electron:dev": "concurrently \"yarn dev-electron\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "yarn build-electron && electron-builder build --publish never -c.mac.identity=null",
     "electron:release": "yarn build-electron && electron-builder build --publish always"
