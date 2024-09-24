@@ -93,11 +93,20 @@ export function killCEAProcess(killTimeout = 10000) {
     cea.removeAllListeners('exit');
     let result = false;
 
-    setTimeout(() => {
-      result = process.kill(cea.pid, 'SIGKILL');
-    }, killTimeout);
+    const safeKill = (signal) => {
+      try {
+        result = process.kill(cea.pid, signal);
+      } catch (error) {
+        if (error.code === 'ESRCH') {
+          console.error('Unable to kill CEA process. (Process not found)');
+        } else {
+          console.error(error);
+        }
+      }
+    };
 
-    result = process.kill(cea.pid, 'SIGTERM');
+    setTimeout(() => safeKill('SIGKILL'), killTimeout);
+    safeKill('SIGTERM');
 
     if (result) {
       console.debug('CEA process killed with PID:', cea.pid);
