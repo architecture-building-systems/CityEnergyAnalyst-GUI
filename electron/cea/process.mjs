@@ -1,6 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 
 import { app, dialog } from 'electron';
 
@@ -15,21 +13,15 @@ export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
   // For windows
   if (process.platform === 'win32') {
-    let scriptPath = path.join(
-      path.dirname(process.execPath),
-      '/../',
-      'dashboard.bat',
-    );
-    // Fallback to default install path
-    if (!fs.existsSync(scriptPath))
-      scriptPath = path.join(
-        process.env.USERPROFILE,
-        'Documents',
-        'CityEnergyAnalyst',
-        'dashboard.bat',
-      );
-    console.log(scriptPath);
-    cea = spawn('cmd.exe', ['/c', scriptPath]);
+    cea = spawn(getMicromambaPath(), [
+      '-r',
+      getCEARootPath(),
+      '-n',
+      'cea',
+      'run',
+      'cea',
+      'dashboard',
+    ]);
   } else if (process.platform === 'darwin') {
     cea = spawn(getMicromambaPath(), [
       '-r',
@@ -43,6 +35,8 @@ export function createCEAProcess(url, BrowserWindow, callback) {
   }
 
   if (cea) {
+    console.debug('CEA process started with PID:', cea.pid);
+
     // Attach cea output to console
     cea.stdout.on('data', function (data) {
       console.log(data.toString('utf8').trim());
@@ -93,9 +87,20 @@ export function killCEAProcess(killTimeout = 10000) {
     cea.removeAllListeners('exit');
     let result = false;
 
-    const safeKill = (signal) => {
+    if (process.platform === 'win32') {
+      // FIXME: Force kill on windows for now
+      console.debug('Forcing process kill using taskkill on Windows');
       try {
-        result = process.kill(cea.pid, signal);
+        execSync(`taskkill /PID ${cea.pid} /T /F`);
+        result = true;
+      } catch (error) {
+        console.error(`Error killing process: ${error?.message}`);
+      }
+    } else {
+      try {
+        setTimeout(() => process.kill(cea.pid, 'SIGKILL'), killTimeout);
+
+        result = process.kill(cea.pid, 'SIGTERM');
       } catch (error) {
         if (error.code === 'ESRCH') {
           console.error('Unable to kill CEA process. (Process not found)');
@@ -103,10 +108,7 @@ export function killCEAProcess(killTimeout = 10000) {
           console.error(error);
         }
       }
-    };
-
-    setTimeout(() => safeKill('SIGKILL'), killTimeout);
-    safeKill('SIGTERM');
+    }
 
     if (result) {
       console.debug('CEA process killed with PID:', cea.pid);
