@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const NetworkToggle = ({
   cooling,
@@ -45,8 +45,16 @@ export const NetworkToggle = ({
 export const LayerToggle = ({ data, setVisibility }) => {
   const handleChange = (e) => {
     const { value, checked } = e.target;
-    setVisibility((oldValue) => ({ ...oldValue, [value]: checked }));
+    setVisibility(value, checked);
   };
+
+  // Set all layers to visible by default
+  useEffect(() => {
+    Object.keys(data).map((name) => {
+      setVisibility(name, true);
+    });
+  }, []);
+
   return (
     <div id="layers-group">
       {data.zone && (

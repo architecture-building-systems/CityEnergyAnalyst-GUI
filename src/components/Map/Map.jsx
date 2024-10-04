@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -16,6 +16,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { LayerToggle, NetworkToggle } from './Toggle';
 import { Button, Switch } from 'antd';
 import { FlyToInterpolator } from 'deck.gl';
+import { useMapStore } from './store/store';
 
 // Initial viewport settings
 const defaultViewState = {
@@ -37,18 +38,12 @@ const DeckGLMap = ({ data, colors }) => {
     (state) => state.inputData.connected_buildings,
   );
 
+  const visibility = useMapStore((state) => state.visibility);
+  const setVisibility = useMapStore((state) => state.setVisibility);
+
   const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(defaultViewState);
   const [extruded, setExtruded] = useState(false);
-  const [visibility, setVisibility] = useState({
-    zone: true,
-    surroundings: true,
-    trees: true,
-    streets: true,
-    dc: data?.dc !== null,
-    dh: data?.dh !== null && data?.dc === null,
-    network: true,
-  });
 
   const [mapStyle, setMapStyle] = useState('labels');
 
@@ -293,13 +288,13 @@ const DeckGLMap = ({ data, colors }) => {
     }
   };
 
-  const onNetworkChange = (value) => {
-    setVisibility((oldValue) => ({
-      ...oldValue,
-      dc: value === 'dc',
-      dh: value === 'dh',
-    }));
-  };
+  // const onNetworkChange = (value) => {
+  //   setVisibility((oldValue) => ({
+  //     ...oldValue,
+  //     dc: value === 'dc',
+  //     dh: value === 'dh',
+  //   }));
+  // };
 
   useEffect(() => {
     setLayers(renderLayers());
