@@ -1,10 +1,21 @@
 import { create } from 'zustand';
+import { defaultViewState } from '../utils';
 
 export const useMapStore = create((set) => ({
   visibility: {},
   mapLabels: true,
+  viewState: defaultViewState,
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
   setMapLabels: (value) => set({ mapLabels: value }),
+  setViewState: (value) =>
+    set((state) => {
+      if (typeof value === 'function') {
+        const nextState = value(state.viewState);
+        return { viewState: nextState };
+      } else {
+        return { viewState: value };
+      }
+    }),
 }));

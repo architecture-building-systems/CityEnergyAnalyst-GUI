@@ -1,5 +1,14 @@
 import * as turf from '@turf/turf';
 
+// Initial viewport settings
+export const defaultViewState = {
+  longitude: 0,
+  latitude: 0,
+  zoom: 0,
+  pitch: 0,
+  bearing: 0,
+};
+
 export const EMPTY_FEATURE = {
   type: 'FeatureCollection',
   features: [],

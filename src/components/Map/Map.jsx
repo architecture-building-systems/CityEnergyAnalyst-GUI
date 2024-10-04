@@ -17,15 +17,6 @@ import { NetworkToggle } from './Toggle';
 import { FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
 
-// Initial viewport settings
-const defaultViewState = {
-  longitude: 0,
-  latitude: 0,
-  zoom: 0,
-  pitch: 0,
-  bearing: 0,
-};
-
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const cameraOptions = useRef();
@@ -37,11 +28,12 @@ const DeckGLMap = ({ data, colors }) => {
     (state) => state.inputData.connected_buildings,
   );
 
+  const viewState = useMapStore((state) => state.viewState);
   const visibility = useMapStore((state) => state.visibility);
   const mapLabels = useMapStore((state) => state.mapLabels);
 
+  const setViewState = useMapStore((state) => state.setViewState);
   const [layers, setLayers] = useState([]);
-  const [viewState, setViewState] = useState(defaultViewState);
   const [extruded, setExtruded] = useState(false);
 
   useEffect(() => {
