@@ -1,50 +1,83 @@
-import { Button, Switch } from 'antd';
+import { Tooltip } from 'antd';
+import { useMapStore } from './store/store';
+import { CameraView, Compass, ExtrudeIcon } from '../../assets/icons';
+
+const buttonStyle = {
+  fontSize: 24,
+  padding: 8,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+};
+
+const ExtrudeButton = () => {
+  const extruded = useMapStore((state) => state.extruded);
+  const setExtruded = useMapStore((state) => state.setExtruded);
+
+  const toggleExtruded = () => {
+    setExtruded(!extruded);
+  };
+
+  return (
+    <Tooltip title="Toggle 3D" overlayInnerStyle={{ fontSize: 12 }}>
+      <ExtrudeIcon style={buttonStyle} onClick={toggleExtruded} />
+    </Tooltip>
+  );
+};
+
+const ResetCameraButton = () => {
+  const setViewState = useMapStore((state) => state.setViewState);
+  const cameraOptions = useMapStore((state) => state.cameraOptions);
+
+  const resetCamera = () => {
+    setViewState((state) => ({
+      ...state,
+      pitch: 0,
+      zoom: cameraOptions.zoom,
+      bearing: cameraOptions.bearing,
+      latitude: cameraOptions.center.lat,
+      longitude: cameraOptions.center.lng,
+    }));
+  };
+  return (
+    <Tooltip title="Reset Camera" overlayInnerStyle={{ fontSize: 12 }}>
+      <CameraView style={buttonStyle} onClick={resetCamera} />
+    </Tooltip>
+  );
+};
+
+const ResetCompassButton = () => {
+  const viewState = useMapStore((state) => state.viewState);
+  const setViewState = useMapStore((state) => state.setViewState);
+
+  const bearings = -(viewState?.bearing ?? 0);
+
+  const resetCompass = () => {
+    setViewState((state) => ({
+      ...state,
+      bearing: 0,
+    }));
+  };
+
+  return (
+    <Tooltip title="Reset Compass" overlayInnerStyle={{ fontSize: 12 }}>
+      <Compass
+        style={{
+          ...buttonStyle,
+          transform: `rotate(${bearings}deg)`,
+        }}
+        onClick={resetCompass}
+      />
+    </Tooltip>
+  );
+};
 
 const MapControls = () => {
   return (
     <div id="map-controls">
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Switch
-          size="small"
-          checked={extruded}
-          onChange={(checked) => {
-            setExtruded(checked);
-          }}
-        />
-        Show 3D
-      </div>
-      <Button
-        style={{ fontSize: 12 }}
-        type="primary"
-        size="small"
-        block
-        onClick={() => {
-          setViewState((state) => ({
-            ...state,
-            pitch: 0,
-            zoom: cameraOptions.current.zoom,
-            bearing: cameraOptions.current.bearing,
-            latitude: cameraOptions.current.center.lat,
-            longitude: cameraOptions.current.center.lng,
-          }));
-        }}
-      >
-        Reset Camera
-      </Button>
-      <Button
-        style={{ fontSize: 12 }}
-        type="primary"
-        size="small"
-        block
-        onClick={() => {
-          setViewState((state) => ({
-            ...state,
-            bearing: 0,
-          }));
-        }}
-      >
-        Reset Compass
-      </Button>
+      <ExtrudeButton />
+      <ResetCameraButton />
+      <ResetCompassButton />
     </div>
   );
 };

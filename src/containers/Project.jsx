@@ -15,6 +15,7 @@ import { useTransition, animated } from '@react-spring/web';
 import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
 import { LayerToggle } from '../components/Map/Toggle';
+import MapControls from '../components/Map/MapControls';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -178,7 +179,6 @@ const ProjectOverlay = () => {
               className="cea-overlay-card"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                padding: 12,
                 borderRadius: 12,
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 
@@ -186,15 +186,15 @@ const ProjectOverlay = () => {
                 height: '100%',
 
                 display: 'flex',
-                gap: 12,
                 alignItems: 'center',
 
                 fontSize: 12,
               }}
             >
-              <div style={{ maxWidth: 240 }}>
+              <div style={{ maxWidth: 240, margin: 12 }}>
                 <LayerToggle />
               </div>
+              <MapControls />
             </div>
           </div>
         </div>

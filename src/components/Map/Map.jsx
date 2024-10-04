@@ -19,7 +19,6 @@ import { useMapStore } from './store/store';
 
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
-  const cameraOptions = useRef();
   const selectedLayer = useRef();
   const firstPitch = useRef(false);
   const dispatch = useDispatch();
@@ -34,6 +33,8 @@ const DeckGLMap = ({ data, colors }) => {
   const visibility = useMapStore((state) => state.visibility);
   const mapLabels = useMapStore((state) => state.mapLabels);
 
+  const setCameraOptions = useMapStore((state) => state.setCameraOptions);
+  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
   const setViewState = useMapStore((state) => state.setViewState);
   const setExtruded = useMapStore((state) => state.setExtruded);
   const [layers, setLayers] = useState([]);
@@ -63,22 +64,27 @@ const DeckGLMap = ({ data, colors }) => {
             ]),
           );
 
-        cameraOptions.current = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
+        const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
           maxZoom: 16,
           padding: 8,
         });
 
+        setCameraOptions(cameraOptions);
         setViewState((state) => ({
           ...state,
-          zoom: cameraOptions.current.zoom,
-          bearing: cameraOptions.current.bearing,
-          latitude: cameraOptions.current.center.lat,
-          longitude: cameraOptions.current.center.lng,
+          zoom: cameraOptions.zoom,
+          bearing: cameraOptions.bearing,
+          latitude: cameraOptions.center.lat,
+          longitude: cameraOptions.center.lng,
           transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
           transitionDuration: 1000,
         }));
       };
       zoomToBounds();
+    }
+    if (!data?.zone) {
+      // Reset camera options if no zone data is present
+      resetCameraOptions();
     }
   }, [data, mapRef]);
 

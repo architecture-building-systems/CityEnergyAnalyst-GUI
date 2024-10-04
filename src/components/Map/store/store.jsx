@@ -6,6 +6,7 @@ export const useMapStore = create((set) => ({
   mapLabels: true,
   viewState: defaultViewState,
   extruded: false,
+  cameraOptions: defaultViewState,
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
@@ -20,4 +21,6 @@ export const useMapStore = create((set) => ({
       }
     }),
   setExtruded: (value) => set({ extruded: value }),
+  setCameraOptions: (value) => set({ cameraOptions: value }),
+  resetCameraOptions: () => set({ cameraOptions: defaultViewState }),
 }));
