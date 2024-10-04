@@ -138,7 +138,6 @@ const ProjectOverlay = () => {
           )}
         </div>
         <div id="cea-project-overlay-left-bottom">
-          <div id="map-controls-overlay" />
           {transitionFromBottom((styles, item) =>
             item ? (
               <animated.div
@@ -217,11 +216,7 @@ const InputMap = () => {
             fullscreen
           />
         )}
-        <DeckGLMap
-          data={geojsons}
-          colors={colors}
-          controlsElementId="map-controls-overlay"
-        />
+        <DeckGLMap data={geojsons} colors={colors} />
       </div>
     </>
   );

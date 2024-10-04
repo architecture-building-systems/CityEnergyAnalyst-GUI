@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -27,12 +26,7 @@ const defaultViewState = {
   bearing: 0,
 };
 
-const Portal = ({ elementId, children }) => {
-  const portalRoot = document.getElementById(elementId);
-  return ReactDOM.createPortal(children, portalRoot);
-};
-
-const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
+const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const cameraOptions = useRef();
   const selectedLayer = useRef();
@@ -42,6 +36,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
   const connectedBuildings = useSelector(
     (state) => state.inputData.connected_buildings,
   );
+
   const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(defaultViewState);
   const [extruded, setExtruded] = useState(false);
@@ -339,9 +334,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
         /> */}
         {data && <LayerToggle data={data} setVisibility={setVisibility} />}
 
-        <div id="layers-group" />
-
-        <Portal elementId={controlsElementId}>
+        <div id="map-controls">
           <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
             <Switch
               size="small"
@@ -394,9 +387,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
           >
             Reset Compass
           </Button>
-        </Portal>
-
-        {controlsElementId === 'map-controls' && <div id="map-controls" />}
+        </div>
       </DeckGL>
       <div id="map-tooltip"></div>
     </>
