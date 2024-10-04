@@ -54,20 +54,3 @@
 #bottom-buttons .cea-card-toolbar-icon {
   background-color: #000;
 }
-
-#map-controls-overlay {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-
-  background: #fff;
-  padding: 12px;
-
-  margin-left: auto;
-  pointer-events: auto;
-
-  font-size: 12px;
-}

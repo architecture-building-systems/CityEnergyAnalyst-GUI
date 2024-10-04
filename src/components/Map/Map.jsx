@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -13,7 +13,7 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { LayerToggle, NetworkToggle } from './Toggle';
+import { NetworkToggle } from './Toggle';
 import { Button, Switch } from 'antd';
 import { FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
@@ -39,7 +39,6 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   const visibility = useMapStore((state) => state.visibility);
-  const setVisibility = useMapStore((state) => state.setVisibility);
 
   const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(defaultViewState);
@@ -327,7 +326,6 @@ const DeckGLMap = ({ data, colors }) => {
           }
           onChange={onNetworkChange}
         /> */}
-        {data && <LayerToggle data={data} setVisibility={setVisibility} />}
 
         <div id="map-controls">
           <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
