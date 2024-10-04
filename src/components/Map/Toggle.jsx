@@ -67,10 +67,16 @@ export const LayerToggle = () => {
     Object.keys(state.inputData.geojsons || {}),
   );
   const setVisibility = useMapStore((state) => state.setVisibility);
+  const setMapLabels = useMapStore((state) => state.setMapLabels);
 
   const handleChange = (e) => {
     const { value, checked } = e.target;
     setVisibility(value, checked);
+  };
+
+  const handleMapLabelsChange = (e) => {
+    const { checked } = e.target;
+    setMapLabels(checked);
   };
 
   // Set all layers to visible by default
@@ -83,7 +89,13 @@ export const LayerToggle = () => {
   }, [dataNames]);
 
   return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+      }}
+    >
       {data?.zone && (
         <LayerToggleRadio label="Zone" value="zone" onChange={handleChange} />
       )}
@@ -111,6 +123,11 @@ export const LayerToggle = () => {
           onChange={handleChange}
         />
       )}
+      <LayerToggleRadio
+        label="Map labels"
+        value="map_labels"
+        onChange={handleMapLabelsChange}
+      />
     </div>
   );
 };

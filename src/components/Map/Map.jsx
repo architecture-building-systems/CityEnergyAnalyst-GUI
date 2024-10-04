@@ -14,7 +14,6 @@ import './Map.css';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { NetworkToggle } from './Toggle';
-import { Button, Switch } from 'antd';
 import { FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
 
@@ -39,12 +38,11 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   const visibility = useMapStore((state) => state.visibility);
+  const mapLabels = useMapStore((state) => state.mapLabels);
 
   const [layers, setLayers] = useState([]);
   const [viewState, setViewState] = useState(defaultViewState);
   const [extruded, setExtruded] = useState(false);
-
-  const [mapStyle, setMapStyle] = useState('labels');
 
   useEffect(() => {
     if (mapRef.current && data?.zone) {
@@ -315,7 +313,7 @@ const DeckGLMap = ({ data, colors }) => {
       >
         <Map
           ref={mapRef}
-          mapStyle={mapStyle == 'labels' ? positron : no_label}
+          mapStyle={mapLabels ? positron : no_label}
           minZoom={1}
         />
         {/* <NetworkToggle
@@ -326,61 +324,6 @@ const DeckGLMap = ({ data, colors }) => {
           }
           onChange={onNetworkChange}
         /> */}
-
-        <div id="map-controls">
-          <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
-            <Switch
-              size="small"
-              defaultChecked
-              onChange={(checked) => {
-                setMapStyle(checked ? 'labels' : 'no_labels');
-              }}
-            />
-            Show Map Labels
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Switch
-              size="small"
-              checked={extruded}
-              onChange={(checked) => {
-                setExtruded(checked);
-              }}
-            />
-            Show 3D
-          </div>
-          <Button
-            style={{ fontSize: 12 }}
-            type="primary"
-            size="small"
-            block
-            onClick={() => {
-              setViewState((state) => ({
-                ...state,
-                pitch: 0,
-                zoom: cameraOptions.current.zoom,
-                bearing: cameraOptions.current.bearing,
-                latitude: cameraOptions.current.center.lat,
-                longitude: cameraOptions.current.center.lng,
-              }));
-            }}
-          >
-            Reset Camera
-          </Button>
-          <Button
-            style={{ fontSize: 12 }}
-            type="primary"
-            size="small"
-            block
-            onClick={() => {
-              setViewState((state) => ({
-                ...state,
-                bearing: 0,
-              }));
-            }}
-          >
-            Reset Compass
-          </Button>
-        </div>
       </DeckGL>
       <div id="map-tooltip"></div>
     </>

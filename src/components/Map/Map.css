@@ -28,6 +28,10 @@
   gap: 6px;
 }
 
+.layer-toggle {
+  flex: 1;
+}
+
 .layer-toggle .layer-toggle-label {
   display: flex;
   align-items: center;

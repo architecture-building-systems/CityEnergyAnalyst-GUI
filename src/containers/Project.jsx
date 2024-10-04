@@ -192,7 +192,7 @@ const ProjectOverlay = () => {
                 fontSize: 12,
               }}
             >
-              <div style={{ maxWidth: 180 }}>
+              <div style={{ maxWidth: 240 }}>
                 <LayerToggle />
               </div>
             </div>
