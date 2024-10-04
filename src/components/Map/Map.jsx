@@ -29,12 +29,14 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   const viewState = useMapStore((state) => state.viewState);
+  const extruded = useMapStore((state) => state.extruded);
+
   const visibility = useMapStore((state) => state.visibility);
   const mapLabels = useMapStore((state) => state.mapLabels);
 
   const setViewState = useMapStore((state) => state.setViewState);
+  const setExtruded = useMapStore((state) => state.setExtruded);
   const [layers, setLayers] = useState([]);
-  const [extruded, setExtruded] = useState(false);
 
   useEffect(() => {
     if (mapRef.current && data?.zone) {
