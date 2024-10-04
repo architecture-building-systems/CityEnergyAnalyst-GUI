@@ -178,7 +178,7 @@ const ProjectOverlay = () => {
             <div
               className="cea-overlay-card"
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 borderRadius: 12,
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 
