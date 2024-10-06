@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMapStore } from './store/store';
 import { useSelector } from 'react-redux';
 
@@ -63,9 +63,7 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
 
 export const LayerToggle = () => {
   const data = useSelector((state) => state.inputData.geojsons);
-  const dataNames = useSelector((state) =>
-    Object.keys(state.inputData.geojsons || {}),
-  );
+  const dataLoaded = useRef(false);
   const setVisibility = useMapStore((state) => state.setVisibility);
   const setMapLabels = useMapStore((state) => state.setMapLabels);
 
@@ -81,12 +79,20 @@ export const LayerToggle = () => {
 
   // Set all layers to visible by default
   useEffect(() => {
-    if (dataNames?.length > 0) {
-      dataNames.map((name) => {
-        setVisibility(name, true);
-      });
+    if (data?.zone && !dataLoaded.current) {
+      const dataNames = Object.keys(data);
+      if (dataNames?.length > 0) {
+        dataNames.map((name) => {
+          setVisibility(name, true);
+        });
+      }
+      dataLoaded.current = true;
     }
-  }, [dataNames]);
+
+    if (!data?.zone) {
+      dataLoaded.current = false;
+    }
+  }, [data]);
 
   return (
     <div
