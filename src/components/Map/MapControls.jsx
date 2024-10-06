@@ -1,6 +1,7 @@
 import { Tooltip } from 'antd';
 import { useMapStore } from './store/store';
 import { CameraView, Compass, ExtrudeIcon } from '../../assets/icons';
+import { useSelector } from 'react-redux';
 
 const buttonStyle = {
   fontSize: 24,
@@ -73,10 +74,16 @@ const ResetCompassButton = () => {
 };
 
 const MapControls = () => {
+  const data = useSelector((state) => state.inputData.geojsons);
+
   return (
     <div id="map-controls">
-      <ExtrudeButton />
-      <ResetCameraButton />
+      {data?.zone && (
+        <>
+          <ExtrudeButton />
+          <ResetCameraButton />
+        </>
+      )}
       <ResetCompassButton />
     </div>
   );
