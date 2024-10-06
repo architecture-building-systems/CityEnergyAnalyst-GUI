@@ -21,6 +21,7 @@ const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const selectedLayer = useRef();
   const firstPitch = useRef(false);
+  const cameraOptionsCalculated = useRef(false);
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
   const connectedBuildings = useSelector(
@@ -40,7 +41,7 @@ const DeckGLMap = ({ data, colors }) => {
   const [layers, setLayers] = useState([]);
 
   useEffect(() => {
-    if (mapRef.current && data?.zone) {
+    if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
       const zoomToBounds = () => {
         const mapbox = mapRef.current.getMap();
         const zone = data?.zone;
@@ -81,10 +82,12 @@ const DeckGLMap = ({ data, colors }) => {
         }));
       };
       zoomToBounds();
+      cameraOptionsCalculated.current = true;
     }
     if (!data?.zone) {
       // Reset camera options if no zone data is present
       resetCameraOptions();
+      cameraOptionsCalculated.current = false;
     }
   }, [data, mapRef]);
 
