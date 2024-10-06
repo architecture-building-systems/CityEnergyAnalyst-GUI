@@ -14,6 +14,8 @@ import BottomToolButtons from '../components/Project/Cards/BottomToolBottons/Bot
 import { useTransition, animated } from '@react-spring/web';
 import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
+import { LayerToggle } from '../components/Map/Toggle';
+import MapControls from '../components/Map/MapControls';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -138,7 +140,6 @@ const ProjectOverlay = () => {
           )}
         </div>
         <div id="cea-project-overlay-left-bottom">
-          <div id="map-controls-overlay" />
           {transitionFromBottom((styles, item) =>
             item ? (
               <animated.div
@@ -160,12 +161,42 @@ const ProjectOverlay = () => {
             ) : null,
           )}
 
-          {!hideAll && (
-            <BottomToolButtons
-              onOpenInputEditor={() => setInputEditor((prev) => !prev)}
-              showTools={!!scenarioName}
-            />
-          )}
+          <div
+            style={{
+              display: 'flex',
+              gap: 12,
+              height: 55,
+              alignItems: 'center',
+            }}
+          >
+            {!hideAll && (
+              <BottomToolButtons
+                onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+                showTools={!!scenarioName}
+              />
+            )}
+            <div
+              className="cea-overlay-card"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: 12,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+
+                boxSizing: 'border-box',
+                height: '100%',
+
+                display: 'flex',
+                alignItems: 'center',
+
+                fontSize: 12,
+              }}
+            >
+              <div style={{ maxWidth: 240, margin: 12 }}>
+                <LayerToggle />
+              </div>
+              <MapControls />
+            </div>
+          </div>
         </div>
       </div>
       <div id="cea-project-overlay-right">
@@ -217,11 +248,7 @@ const InputMap = () => {
             fullscreen
           />
         )}
-        <DeckGLMap
-          data={geojsons}
-          colors={colors}
-          controlsElementId="map-controls-overlay"
-        />
+        <DeckGLMap data={geojsons} colors={colors} />
       </div>
     </>
   );

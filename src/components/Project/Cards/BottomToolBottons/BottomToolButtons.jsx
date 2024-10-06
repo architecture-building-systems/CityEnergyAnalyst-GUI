@@ -42,7 +42,6 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
       style={{
         display: 'flex',
         gap: 8,
-        marginRight: 'auto',
       }}
     >
       {items.map((item) => (

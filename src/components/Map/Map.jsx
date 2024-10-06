@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -14,51 +13,35 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { LayerToggle, NetworkToggle } from './Toggle';
-import { Button, Switch } from 'antd';
+import { NetworkToggle } from './Toggle';
 import { FlyToInterpolator } from 'deck.gl';
+import { useMapStore } from './store/store';
 
-// Initial viewport settings
-const defaultViewState = {
-  longitude: 0,
-  latitude: 0,
-  zoom: 0,
-  pitch: 0,
-  bearing: 0,
-};
-
-const Portal = ({ elementId, children }) => {
-  const portalRoot = document.getElementById(elementId);
-  return ReactDOM.createPortal(children, portalRoot);
-};
-
-const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
+const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
-  const cameraOptions = useRef();
   const selectedLayer = useRef();
   const firstPitch = useRef(false);
+  const cameraOptionsCalculated = useRef(false);
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
   const connectedBuildings = useSelector(
     (state) => state.inputData.connected_buildings,
   );
-  const [layers, setLayers] = useState([]);
-  const [viewState, setViewState] = useState(defaultViewState);
-  const [extruded, setExtruded] = useState(false);
-  const [visibility, setVisibility] = useState({
-    zone: true,
-    surroundings: true,
-    trees: true,
-    streets: true,
-    dc: data?.dc !== null,
-    dh: data?.dh !== null && data?.dc === null,
-    network: true,
-  });
 
-  const [mapStyle, setMapStyle] = useState('labels');
+  const viewState = useMapStore((state) => state.viewState);
+  const extruded = useMapStore((state) => state.extruded);
+
+  const visibility = useMapStore((state) => state.visibility);
+  const mapLabels = useMapStore((state) => state.mapLabels);
+
+  const setCameraOptions = useMapStore((state) => state.setCameraOptions);
+  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+  const setViewState = useMapStore((state) => state.setViewState);
+  const setExtruded = useMapStore((state) => state.setExtruded);
+  const [layers, setLayers] = useState([]);
 
   useEffect(() => {
-    if (mapRef.current && data?.zone) {
+    if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
       const zoomToBounds = () => {
         const mapbox = mapRef.current.getMap();
         const zone = data?.zone;
@@ -82,22 +65,29 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
             ]),
           );
 
-        cameraOptions.current = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
+        const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
           maxZoom: 16,
           padding: 8,
         });
 
+        setCameraOptions(cameraOptions);
         setViewState((state) => ({
           ...state,
-          zoom: cameraOptions.current.zoom,
-          bearing: cameraOptions.current.bearing,
-          latitude: cameraOptions.current.center.lat,
-          longitude: cameraOptions.current.center.lng,
+          zoom: cameraOptions.zoom,
+          bearing: cameraOptions.bearing,
+          latitude: cameraOptions.center.lat,
+          longitude: cameraOptions.center.lng,
           transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
           transitionDuration: 1000,
         }));
       };
       zoomToBounds();
+      cameraOptionsCalculated.current = true;
+    }
+    if (!data?.zone) {
+      // Reset camera options if no zone data is present
+      resetCameraOptions();
+      cameraOptionsCalculated.current = false;
     }
   }, [data, mapRef]);
 
@@ -298,13 +288,13 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
     }
   };
 
-  const onNetworkChange = (value) => {
-    setVisibility((oldValue) => ({
-      ...oldValue,
-      dc: value === 'dc',
-      dh: value === 'dh',
-    }));
-  };
+  // const onNetworkChange = (value) => {
+  //   setVisibility((oldValue) => ({
+  //     ...oldValue,
+  //     dc: value === 'dc',
+  //     dh: value === 'dh',
+  //   }));
+  // };
 
   useEffect(() => {
     setLayers(renderLayers());
@@ -326,7 +316,7 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
       >
         <Map
           ref={mapRef}
-          mapStyle={mapStyle == 'labels' ? positron : no_label}
+          mapStyle={mapLabels ? positron : no_label}
           minZoom={1}
         />
         {/* <NetworkToggle
@@ -337,66 +327,6 @@ const DeckGLMap = ({ data, colors, controlsElementId = 'map-controls' }) => {
           }
           onChange={onNetworkChange}
         /> */}
-        {data && <LayerToggle data={data} setVisibility={setVisibility} />}
-
-        <div id="layers-group" />
-
-        <Portal elementId={controlsElementId}>
-          <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
-            <Switch
-              size="small"
-              defaultChecked
-              onChange={(checked) => {
-                setMapStyle(checked ? 'labels' : 'no_labels');
-              }}
-            />
-            Show Map Labels
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Switch
-              size="small"
-              checked={extruded}
-              onChange={(checked) => {
-                setExtruded(checked);
-              }}
-            />
-            Show 3D
-          </div>
-          <Button
-            style={{ fontSize: 12 }}
-            type="primary"
-            size="small"
-            block
-            onClick={() => {
-              setViewState((state) => ({
-                ...state,
-                pitch: 0,
-                zoom: cameraOptions.current.zoom,
-                bearing: cameraOptions.current.bearing,
-                latitude: cameraOptions.current.center.lat,
-                longitude: cameraOptions.current.center.lng,
-              }));
-            }}
-          >
-            Reset Camera
-          </Button>
-          <Button
-            style={{ fontSize: 12 }}
-            type="primary"
-            size="small"
-            block
-            onClick={() => {
-              setViewState((state) => ({
-                ...state,
-                bearing: 0,
-              }));
-            }}
-          >
-            Reset Compass
-          </Button>
-        </Portal>
-
-        {controlsElementId === 'map-controls' && <div id="map-controls" />}
       </DeckGL>
       <div id="map-tooltip"></div>
     </>

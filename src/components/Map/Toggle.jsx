@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useMapStore } from './store/store';
+import { useSelector } from 'react-redux';
 
 export const NetworkToggle = ({
   cooling,
@@ -42,83 +44,97 @@ export const NetworkToggle = ({
   );
 };
 
-export const LayerToggle = ({ data, setVisibility }) => {
+const LayerToggleRadio = ({ label, value, onChange }) => {
+  return (
+    <div className="layer-toggle">
+      <label className="layer-toggle-label">
+        <input
+          type="checkbox"
+          name="layer-toggle"
+          value={value}
+          onChange={onChange}
+          defaultChecked
+        />
+        {label}
+      </label>
+    </div>
+  );
+};
+
+export const LayerToggle = () => {
+  const data = useSelector((state) => state.inputData.geojsons);
+  const dataLoaded = useRef(false);
+  const setVisibility = useMapStore((state) => state.setVisibility);
+  const setMapLabels = useMapStore((state) => state.setMapLabels);
+
   const handleChange = (e) => {
     const { value, checked } = e.target;
-    setVisibility((oldValue) => ({ ...oldValue, [value]: checked }));
+    setVisibility(value, checked);
   };
+
+  const handleMapLabelsChange = (e) => {
+    const { checked } = e.target;
+    setMapLabels(checked);
+  };
+
+  // Set all layers to visible by default
+  useEffect(() => {
+    if (data?.zone && !dataLoaded.current) {
+      const dataNames = Object.keys(data);
+      if (dataNames?.length > 0) {
+        dataNames.map((name) => {
+          setVisibility(name, true);
+        });
+      }
+      dataLoaded.current = true;
+    }
+
+    if (!data?.zone) {
+      dataLoaded.current = false;
+    }
+  }, [data]);
+
   return (
-    <div id="layers-group">
-      {data.zone && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="zone"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Zone
-          </label>
-        </span>
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+        alignItems: 'center',
+      }}
+    >
+      {data?.zone && (
+        <LayerToggleRadio label="Zone" value="zone" onChange={handleChange} />
       )}
-      {data.surroundings && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="surroundings"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Surroundings
-          </label>
-        </span>
+      {data?.surroundings && (
+        <LayerToggleRadio
+          label="Surroundings"
+          value="surroundings"
+          onChange={handleChange}
+        />
       )}
-      {data.trees && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="trees"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Trees
-          </label>
-        </span>
+      {data?.trees && (
+        <LayerToggleRadio label="Trees" value="trees" onChange={handleChange} />
       )}
-      {data.streets && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="streets"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Streets
-          </label>
-        </span>
+      {data?.streets && (
+        <LayerToggleRadio
+          label="Streets"
+          value="streets"
+          onChange={handleChange}
+        />
       )}
-      {(data.dh || data.dc) && (
-        <span className="layer-toggle">
-          <label className="map-plot-label">
-            <input
-              type="checkbox"
-              name="layer-toggle"
-              value="network"
-              onChange={handleChange}
-              defaultChecked
-            />
-            Network
-          </label>
-        </span>
+      {(data?.dh || data?.dc) && (
+        <LayerToggleRadio
+          label="Network"
+          value="network"
+          onChange={handleChange}
+        />
       )}
+      <LayerToggleRadio
+        label="Map labels"
+        value="map_labels"
+        onChange={handleMapLabelsChange}
+      />
     </div>
   );
 };

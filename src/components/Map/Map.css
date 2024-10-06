@@ -28,41 +28,24 @@
   gap: 6px;
 }
 
-.map-plot-label {
+.layer-toggle {
+  flex: 1;
+}
+
+.layer-toggle .layer-toggle-label {
   display: flex;
   align-items: center;
-  font-size: small;
   gap: 2px;
+
+  user-select: none;
 }
 
 .map-plot-label.network-label {
   display: block;
 }
 
-#layers-group {
-  display: flex;
-  position: absolute;
-  z-index: 5;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px 8px;
-  margin: 8px;
-  border-radius: 8px;
-  gap: 8px;
-}
-
 #map-controls {
-  position: absolute;
-  z-index: 5;
-  right: 0;
-  background: #fff;
-  padding: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 8px;
-  border-radius: 8px;
-  font-size: small;
+  gap: 2px;
+  align-items: center;
 }

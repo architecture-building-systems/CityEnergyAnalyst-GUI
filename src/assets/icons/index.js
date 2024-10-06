@@ -20,6 +20,10 @@ import DuplicateIcon from './duplicate.svg';
 import RunIcon from './run.svg';
 import ShowHideCardsIcon from './show_hide_cards.svg';
 
+import ExtrudeIcon from './3d.svg';
+import CameraView from './camera_view.svg';
+import Compass from './compass.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -39,4 +43,7 @@ export {
   DuplicateIcon,
   RunIcon,
   ShowHideCardsIcon,
+  ExtrudeIcon,
+  CameraView,
+  Compass,
 };
