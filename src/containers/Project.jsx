@@ -18,6 +18,7 @@ import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
 import MapLayers from '../components/Project/Cards/MapLayers/MapLayers';
 import { ParameterSelectors } from '../components/Map/Layers/Selectors';
+import { Legends } from '../components/Map/Layers/Legends';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -142,6 +143,7 @@ const ProjectOverlay = () => {
           )}
         </div>
         <div id="cea-project-overlay-left-bottom">
+          <Legends />
           <ParameterSelectors />
           {transitionFromBottom((styles, item) =>
             item ? (

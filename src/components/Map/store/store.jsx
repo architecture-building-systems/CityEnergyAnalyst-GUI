@@ -9,6 +9,7 @@ export const useMapStore = create((set) => ({
   cameraOptions: defaultViewState,
   selectedMapCategory: {},
   mapLayerParameters: null,
+  mapLayerLegends: null,
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
@@ -27,4 +28,11 @@ export const useMapStore = create((set) => ({
   resetCameraOptions: () => set({ cameraOptions: defaultViewState }),
   setSelectedMapCategory: (value) => set({ selectedMapCategory: value }),
   setMapLayerParameters: (value) => set({ mapLayerParameters: value }),
+  setMapLayerLegends: (value) => set({ mapLayerLegends: value }),
+  removeMapLayerLegend: (value) =>
+    set((state) => {
+      const mapLayerLegends = { ...state.mapLayerLegends };
+      delete mapLayerLegends[value];
+      return { mapLayerLegends };
+    }),
 }));

@@ -43,6 +43,10 @@ const DeckGLMap = ({ data, colors }) => {
   const setExtruded = useMapStore((state) => state.setExtruded);
 
   const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
+  const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
+  const removeMapLayerLegend = useMapStore(
+    (state) => state.removeMapLayerLegend,
+  );
   const [layers, setLayers] = useState([]);
 
   const mapLayers = useGetMapLayer(selectedMapCategory);
@@ -260,18 +264,22 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    if (mapLayers?.['solar-potentials']) {
-      const props = mapLayers['solar-potentials'].properties;
+    const SOLAR_IRRADIATION = 'solar-irradiation';
+    if (mapLayers[SOLAR_IRRADIATION]) {
+      const props = mapLayers[SOLAR_IRRADIATION].properties;
+      const label = props['label'];
+
+      const maxValue = props['value_max'];
+      const minValue = props['value_min'];
+      const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
+      const points = 12;
 
       const gradientArray = new Gradient()
-        .setColorGradient('#0000F5', '#EA3624', '#FFFF54')
-        .setMidpoint(12)
+        .setColorGradient(...colourArray)
+        .setMidpoint(points)
         .getColors();
 
       const getColor = ({ value }) => {
-        const maxValue = props['value_max'];
-        const minValue = props['value_min'];
-
         const range = maxValue - minValue;
         const scale = range == 0 ? 0 : (value - minValue) / range;
         const colorIndex = Math.min(
@@ -282,10 +290,14 @@ const DeckGLMap = ({ data, colors }) => {
         return hexToRgb(gradientArray[colorIndex]);
       };
 
+      setMapLayerLegends({
+        [SOLAR_IRRADIATION]: { colourArray, points, minValue, maxValue, label },
+      });
+
       _layers.push(
         new PointCloudLayer({
           id: 'PointCloudLayer',
-          data: mapLayers['solar-potentials'].data,
+          data: mapLayers[SOLAR_IRRADIATION].data,
           material: false,
 
           getColor: getColor,
@@ -298,6 +310,8 @@ const DeckGLMap = ({ data, colors }) => {
           pickable: true,
         }),
       );
+    } else {
+      removeMapLayerLegend(SOLAR_IRRADIATION);
     }
     return _layers;
   };
