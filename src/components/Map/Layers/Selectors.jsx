@@ -83,7 +83,6 @@ export const ParameterSelectors = () => {
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 
         boxSizing: 'border-box',
-        height: '100%',
 
         display: 'flex',
         flexDirection: 'column',
