@@ -2,33 +2,9 @@ import { Tooltip } from 'antd';
 
 import { useEffect, useState } from 'react';
 import { useMapStore } from '../../../Map/store/store';
-import axios from 'axios';
 import { SolarRadiationIcon } from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
-
-const useGetMapLayerCategories = () => {
-  const [mapLayers, setMapLayers] = useState({});
-
-  const fetchMapLayerCategories = async () => {
-    try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/map_layers/`,
-      );
-      setMapLayers(resp.data);
-    } catch (err) {
-      console.error(err.response.data);
-      // setError(err.response.data);
-    } finally {
-      // setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMapLayerCategories();
-  }, []);
-
-  return mapLayers;
-};
+import { useGetMapLayerCategories } from '../../../Map/Layers';
 
 const MapLayers = () => {
   const [active, setActive] = useState(null);
@@ -40,14 +16,8 @@ const MapLayers = () => {
 
   const mapLayers = useGetMapLayerCategories();
 
-  const handleClick = (category) => {
-    if (active == category) {
-      setActive(null);
-    } else {
-      setActive(category);
-      const layers = mapLayers?.categories?.find((l) => l.name == category);
-      setSelectedMapCategory(layers);
-    }
+  const toggleActive = (category) => {
+    setActive(active == category ? null : category);
   };
 
   // Reset active layer when scenario changes
@@ -86,7 +56,7 @@ const MapLayers = () => {
         return (
           <CategoryIconButton
             key={name}
-            onClick={handleClick}
+            onClick={toggleActive}
             category={name}
             active={active == name}
           />

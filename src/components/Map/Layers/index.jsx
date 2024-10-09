@@ -1,6 +1,31 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useMapStore } from '../store/store';
+
+export const useGetMapLayerCategories = () => {
+  const [mapLayers, setMapLayers] = useState({});
+
+  const fetchMapLayerCategories = async () => {
+    try {
+      const resp = await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/map_layers/`,
+      );
+      setMapLayers(resp.data);
+    } catch (err) {
+      console.error(err.response.data);
+      // setError(err.response.data);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMapLayerCategories();
+  }, []);
+
+  return mapLayers;
+};
 
 const fetchMapLayer = async (category, layer_name, params) => {
   try {
@@ -14,24 +39,24 @@ const fetchMapLayer = async (category, layer_name, params) => {
   }
 };
 
-export const useGetMapLayer = (category, layers) => {
+export const useGetMapLayer = (mapCategoryInfo) => {
   const [mapLayers, setMapLayers] = useState({});
   const project = useSelector((state) => state.project.info.project);
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
-  // FIXME: This is hardcoded for now
-  const parameters = {
-    'scenario-name': scenarioName,
-    buildings: null,
-    hour: 12,
-  };
+  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
 
   const generateLayers = async () => {
     let out = {};
+
+    const { name, layers } = mapCategoryInfo;
     for (const layer of layers) {
-      const data = await fetchMapLayer(category, layer.name, {
+      const data = await fetchMapLayer(name, layer.name, {
         project,
-        parameters,
+        parameters: {
+          'scenario-name': scenarioName,
+          ...mapLayerParameters,
+        },
       });
       out[layer.name] = data;
     }
@@ -39,9 +64,9 @@ export const useGetMapLayer = (category, layers) => {
   };
 
   useEffect(() => {
-    if (!layers) setMapLayers({});
-    else generateLayers();
-  }, [category, layers]);
+    if (mapCategoryInfo?.layers && mapLayerParameters) generateLayers();
+    else setMapLayers({});
+  }, [mapCategoryInfo, mapLayerParameters]);
 
   return mapLayers;
 };
