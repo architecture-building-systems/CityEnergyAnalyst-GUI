@@ -13,6 +13,7 @@
   font-size: 10px;
   z-index: 9;
   pointer-events: none;
+  user-select: none;
 }
 
 .network-toggle {
