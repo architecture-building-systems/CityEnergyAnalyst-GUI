@@ -45,10 +45,7 @@ const DeckGLMap = ({ data, colors }) => {
   const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
   const [layers, setLayers] = useState([]);
 
-  const mapLayers = useGetMapLayer(
-    selectedMapCategory?.name,
-    selectedMapCategory?.layers,
-  );
+  const mapLayers = useGetMapLayer(selectedMapCategory);
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -275,7 +272,8 @@ const DeckGLMap = ({ data, colors }) => {
         const maxValue = props['value_max'];
         const minValue = props['value_min'];
 
-        const scale = (value - minValue) / (maxValue - minValue);
+        const range = maxValue - minValue;
+        const scale = range == 0 ? 0 : (value - minValue) / range;
         const colorIndex = Math.min(
           Math.floor(scale * (gradientArray.length - 1)),
           gradientArray.length - 1,
