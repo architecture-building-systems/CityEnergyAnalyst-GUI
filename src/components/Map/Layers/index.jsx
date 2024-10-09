@@ -16,9 +16,8 @@ const fetchMapLayer = async (category, layer_name, params) => {
 
 export const useGetMapLayer = (category, layers) => {
   const [mapLayers, setMapLayers] = useState({});
-  const { project, scenario_name: scenarioName } = useSelector(
-    (state) => state.project.info,
-  );
+  const project = useSelector((state) => state.project.info.project);
+  const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   // FIXME: This is hardcoded for now
   const parameters = {
@@ -42,7 +41,7 @@ export const useGetMapLayer = (category, layers) => {
   useEffect(() => {
     if (!layers) setMapLayers({});
     else generateLayers();
-  }, [category, layers, scenarioName]);
+  }, [category, layers]);
 
   return mapLayers;
 };

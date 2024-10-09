@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMapStore } from '../../../Map/store/store';
 import axios from 'axios';
 import { SolarRadiationIcon } from '../../../../assets/icons';
+import { useSelector } from 'react-redux';
 
 const useGetMapLayerCategories = () => {
   const [mapLayers, setMapLayers] = useState({});
@@ -35,18 +36,33 @@ const MapLayers = () => {
     (state) => state.setSelectedMapCategory,
   );
 
+  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+
   const mapLayers = useGetMapLayerCategories();
 
   const handleClick = (category) => {
     if (active == category) {
       setActive(null);
-      setSelectedMapCategory(null);
     } else {
       setActive(category);
       const layers = mapLayers?.categories?.find((l) => l.name == category);
       setSelectedMapCategory(layers);
     }
   };
+
+  // Reset active layer when scenario changes
+  useEffect(() => {
+    setActive(null);
+  }, [scenarioName]);
+
+  useEffect(() => {
+    if (active == null) {
+      setSelectedMapCategory(null);
+    } else {
+      const layers = mapLayers?.categories?.find((l) => l.name == active);
+      setSelectedMapCategory(layers);
+    }
+  }, [active]);
 
   return (
     <div
