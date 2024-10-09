@@ -17,6 +17,8 @@ import { NetworkToggle } from './Toggle';
 import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
 import { useGetMapLayer } from './Layers';
+import Gradient from 'javascript-color-gradient';
+import { hexToRgb } from './utils';
 
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
@@ -263,13 +265,11 @@ const DeckGLMap = ({ data, colors }) => {
 
     if (mapLayers?.['solar-potentials']) {
       const props = mapLayers['solar-potentials'].properties;
-      const COLOR_RAMP = [
-        [0, 0, 255, 255], // Blue for low values
-        [0, 255, 255, 255], // Cyan
-        [0, 255, 0, 255], // Green
-        [255, 255, 0, 255], // Yellow
-        [255, 0, 0, 255], // Red for high values
-      ];
+
+      const gradientArray = new Gradient()
+        .setColorGradient('#0000F5', '#EA3624', '#FFFF54')
+        .setMidpoint(12)
+        .getColors();
 
       const getColor = ({ value }) => {
         const maxValue = props['value_max'];
@@ -277,11 +277,11 @@ const DeckGLMap = ({ data, colors }) => {
 
         const scale = (value - minValue) / (maxValue - minValue);
         const colorIndex = Math.min(
-          Math.floor(scale * (COLOR_RAMP.length - 1)),
-          COLOR_RAMP.length - 1,
+          Math.floor(scale * (gradientArray.length - 1)),
+          gradientArray.length - 1,
         );
 
-        return COLOR_RAMP[colorIndex];
+        return hexToRgb(gradientArray[colorIndex]);
       };
 
       _layers.push(
@@ -292,7 +292,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           getColor: getColor,
           getPosition: (d) => d.position,
-          pointSize: 0.5,
+          pointSize: 1,
           sizeUnits: 'meters',
 
           // coordinateOrigin: [0, 0],
