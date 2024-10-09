@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
-import { GeoJsonLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, PointCloudLayer } from '@deck.gl/layers';
 
 import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
@@ -14,8 +14,9 @@ import './Map.css';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { NetworkToggle } from './Toggle';
-import { FlyToInterpolator } from 'deck.gl';
+import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
+import { useGetMapLayer } from './Layers';
 
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
@@ -38,7 +39,14 @@ const DeckGLMap = ({ data, colors }) => {
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
   const setViewState = useMapStore((state) => state.setViewState);
   const setExtruded = useMapStore((state) => state.setExtruded);
+
+  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
   const [layers, setLayers] = useState([]);
+
+  const mapLayers = useGetMapLayer(
+    selectedMapCategory?.name,
+    selectedMapCategory?.layers,
+  );
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -252,6 +260,47 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
+
+    if (mapLayers?.['solar-potentials']) {
+      const props = mapLayers['solar-potentials'].properties;
+      const COLOR_RAMP = [
+        [0, 0, 255, 255], // Blue for low values
+        [0, 255, 255, 255], // Cyan
+        [0, 255, 0, 255], // Green
+        [255, 255, 0, 255], // Yellow
+        [255, 0, 0, 255], // Red for high values
+      ];
+
+      const getColor = ({ value }) => {
+        const maxValue = props['value_max'];
+        const minValue = props['value_min'];
+
+        const scale = (value - minValue) / (maxValue - minValue);
+        const colorIndex = Math.min(
+          Math.floor(scale * (COLOR_RAMP.length - 1)),
+          COLOR_RAMP.length - 1,
+        );
+
+        return COLOR_RAMP[colorIndex];
+      };
+
+      _layers.push(
+        new PointCloudLayer({
+          id: 'PointCloudLayer',
+          data: mapLayers['solar-potentials'].data,
+          material: false,
+
+          getColor: getColor,
+          getPosition: (d) => d.position,
+          pointSize: 0.5,
+          sizeUnits: 'meters',
+
+          // coordinateOrigin: [0, 0],
+          coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+          pickable: true,
+        }),
+      );
+    }
     return _layers;
   };
 
@@ -298,7 +347,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   useEffect(() => {
     setLayers(renderLayers());
-  }, [data, visibility, extruded, selected]);
+  }, [data, visibility, extruded, selected, mapLayers]);
 
   return (
     <>

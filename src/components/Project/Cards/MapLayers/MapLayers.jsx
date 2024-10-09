@@ -1,17 +1,52 @@
 import { Tooltip } from 'antd';
 
-import { ToolOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useMapStore } from '../../../Map/store/store';
+import axios from 'axios';
+import { SolarRadiationIcon } from '../../../../assets/icons';
+
+const useGetMapLayerCategories = () => {
+  const [mapLayers, setMapLayers] = useState({});
+
+  const fetchMapLayerCategories = async () => {
+    try {
+      const resp = await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/map_layers/`,
+      );
+      setMapLayers(resp.data);
+    } catch (err) {
+      console.error(err.response.data);
+      // setError(err.response.data);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMapLayerCategories();
+  }, []);
+
+  return mapLayers;
+};
 
 const MapLayers = () => {
   const [active, setActive] = useState(null);
+  const setSelectedMapCategory = useMapStore(
+    (state) => state.setSelectedMapCategory,
+  );
 
-  const categories = [
-    {
-      category: 'Solar Radiation',
-      icon: null,
-    },
-  ];
+  const mapLayers = useGetMapLayerCategories();
+
+  const handleClick = (category) => {
+    if (active == category) {
+      setActive(null);
+      setSelectedMapCategory(null);
+    } else {
+      setActive(category);
+      const layers = mapLayers?.categories?.find((l) => l.name == category);
+      setSelectedMapCategory(layers);
+    }
+  };
 
   return (
     <div
@@ -30,24 +65,24 @@ const MapLayers = () => {
         fontSize: 12,
       }}
     >
-      {categories.map((item) => (
-        <CategoryIconButton
-          key={item.category}
-          onClick={() => {
-            setActive(active == item.category ? null : item.category);
-          }}
-          title={item.category}
-          icon={item.icon}
-          active={active == item.category}
-        />
-      ))}
+      {mapLayers?.categories?.map((category) => {
+        const { name } = category;
+        return (
+          <CategoryIconButton
+            key={name}
+            onClick={handleClick}
+            category={name}
+            active={active == name}
+          />
+        );
+      })}
     </div>
   );
 };
 
-const CategoryIconButton = ({ title, icon, onClick, active }) => {
-  const _icon = icon ?? ToolOutlined;
-
+const CategoryIconButton = ({ category, onClick, active }) => {
+  // FIXME: This is hardcoded for now
+  const _icon = SolarRadiationIcon;
   const style = active
     ? {
         color: 'white',
@@ -57,12 +92,16 @@ const CategoryIconButton = ({ title, icon, onClick, active }) => {
         color: 'black',
       };
 
+  const handleClick = () => {
+    onClick?.(category);
+  };
+
   return (
-    <Tooltip title={title} overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title={category} overlayInnerStyle={{ fontSize: 12 }}>
       <_icon
         className="cea-card-toolbar-icon"
         style={style}
-        onClick={onClick}
+        onClick={handleClick}
       />
     </Tooltip>
   );
