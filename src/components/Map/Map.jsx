@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
-import { GeoJsonLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, PointCloudLayer } from '@deck.gl/layers';
 
 import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
@@ -14,8 +14,11 @@ import './Map.css';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { NetworkToggle } from './Toggle';
-import { FlyToInterpolator } from 'deck.gl';
+import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
+import { useGetMapLayer } from './Layers';
+import Gradient from 'javascript-color-gradient';
+import { hexToRgb } from './utils';
 
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
@@ -38,7 +41,15 @@ const DeckGLMap = ({ data, colors }) => {
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
   const setViewState = useMapStore((state) => state.setViewState);
   const setExtruded = useMapStore((state) => state.setExtruded);
+
+  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
+  const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
+  const removeMapLayerLegend = useMapStore(
+    (state) => state.removeMapLayerLegend,
+  );
   const [layers, setLayers] = useState([]);
+
+  const mapLayers = useGetMapLayer(selectedMapCategory);
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -252,6 +263,56 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     }
+
+    const SOLAR_IRRADIATION = 'solar-irradiation';
+    if (mapLayers[SOLAR_IRRADIATION]) {
+      const props = mapLayers[SOLAR_IRRADIATION].properties;
+      const label = props['label'];
+
+      const maxValue = props['value_max'];
+      const minValue = props['value_min'];
+      const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
+      const points = 12;
+
+      const gradientArray = new Gradient()
+        .setColorGradient(...colourArray)
+        .setMidpoint(points)
+        .getColors();
+
+      const getColor = ({ value }) => {
+        const range = maxValue - minValue;
+        const scale = range == 0 ? 0 : (value - minValue) / range;
+        const colorIndex = Math.min(
+          Math.floor(scale * (gradientArray.length - 1)),
+          gradientArray.length - 1,
+        );
+
+        return hexToRgb(gradientArray[colorIndex]);
+      };
+
+      setMapLayerLegends({
+        [SOLAR_IRRADIATION]: { colourArray, points, minValue, maxValue, label },
+      });
+
+      _layers.push(
+        new PointCloudLayer({
+          id: 'PointCloudLayer',
+          data: mapLayers[SOLAR_IRRADIATION].data,
+          material: false,
+
+          getColor: getColor,
+          getPosition: (d) => d.position,
+          pointSize: 1,
+          sizeUnits: 'meters',
+
+          // coordinateOrigin: [0, 0],
+          coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+          pickable: true,
+        }),
+      );
+    } else {
+      removeMapLayerLegend(SOLAR_IRRADIATION);
+    }
     return _layers;
   };
 
@@ -298,7 +359,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   useEffect(() => {
     setLayers(renderLayers());
-  }, [data, visibility, extruded, selected]);
+  }, [data, visibility, extruded, selected, mapLayers]);
 
   return (
     <>

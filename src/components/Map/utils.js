@@ -37,3 +37,23 @@ export const calcBoundsAndCenter = (geojson) => {
     };
   }
 };
+
+export const hexToRgb = (hex) => {
+  // Remove the hash at the start if it's there
+  hex = hex.replace(/^#/, '');
+
+  // If it's a 3-digit hex code, convert it to 6-digit
+  if (hex.length === 3) {
+    hex = hex
+      .split('')
+      .map((char) => char + char)
+      .join('');
+  }
+  // Convert hex to RGB
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  // Return the RGB values as an array
+  return [r, g, b];
+};
