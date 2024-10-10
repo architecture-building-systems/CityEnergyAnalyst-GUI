@@ -19,6 +19,7 @@ import { getOperatingSystem } from '../../utils';
 import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from '../../utils/electron';
+import { useToolStore } from '../Tools/store';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
@@ -404,22 +405,32 @@ const TableEditor = ({ tab, selected, tabulator }) => {
 
 // FIXME: Could get info from backend instead of hardcoding
 const ScriptSuggestion = ({ tab }) => {
+  const tabScriptMap = {
+    typology: 'data-migrator',
+    surroundings: 'surroundings-helper',
+    trees: 'trees-helper',
+  };
+
+  const script = tabScriptMap?.[tab] ?? 'archetypes-mapper';
+  const setShowTools = useToolStore((state) => state.setShowTools);
+  const setSelectedTool = useToolStore((state) => state.setVisibility);
+
   return (
     <div style={{ margin: 8 }}>
-      Input file could not be found. You can import/create the file using the
-      {tab == 'typology' ? (
-        <Link to={`${routes.TOOLS}/data-migrator`}>{' data-migrator '}</Link>
-      ) : tab == 'surroundings' ? (
-        <Link to={`${routes.TOOLS}/surroundings-helper`}>
-          {' surroundings-helper '}
-        </Link>
-      ) : tab == 'trees' ? (
-        <Link to={`${routes.TOOLS}/trees-helper`}>{' trees-helper '}</Link>
-      ) : (
-        <Link to={`${routes.TOOLS}/archetypes-mapper`}>
-          {' archetypes-mapper '}
-        </Link>
-      )}
+      Input file could not be found. You can import/create the file using the{' '}
+      <span
+        style={{
+          cursor: 'pointer',
+          textDecoration: 'underline',
+          color: 'blue',
+        }}
+        onClick={() => {
+          setSelectedTool(script);
+          setShowTools(true);
+        }}
+      >
+        {script}
+      </span>{' '}
       tool.
     </div>
   );
