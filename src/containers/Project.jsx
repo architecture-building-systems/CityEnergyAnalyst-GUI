@@ -18,7 +18,7 @@ import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
 import MapLayers from '../components/Project/Cards/MapLayers/MapLayers';
 import { ParameterSelectors } from '../components/Map/Layers/Selectors';
-import { Legends } from '../components/Map/Layers/Legends';
+import { Legend } from '../components/Map/Layers/Legend';
 import { useToolStore } from '../components/Tools/store';
 
 const Project = () => {
@@ -147,8 +147,10 @@ const ProjectOverlay = () => {
           )}
         </div>
         <div id="cea-project-overlay-left-bottom">
-          <Legends />
-          <ParameterSelectors />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Legend />
+            <ParameterSelectors />
+          </div>
           {transitionFromBottom((styles, item) =>
             item ? (
               <animated.div

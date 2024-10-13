@@ -19,6 +19,7 @@ const ColourRampLegend = ({ label, colours, points, minValue, maxValue }) => {
       <div
         style={{
           display: 'flex',
+          justifyContent: 'center',
         }}
       >
         {gradientArray.map((color) => {
@@ -44,7 +45,7 @@ const ColourRampLegend = ({ label, colours, points, minValue, maxValue }) => {
   );
 };
 
-export const Legends = () => {
+export const Legend = () => {
   const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
   const mapLayerLegends = useMapStore((state) => state.mapLayerLegends);
 
@@ -67,13 +68,13 @@ export const Legends = () => {
 
         gap: 2,
 
-        minWidth: 200,
+        minWidth: 250,
 
         padding: 12,
         marginRight: 'auto',
       }}
     >
-      <b>Legends</b>
+      <b>Legend</b>
       {Object.keys(mapLayerLegends ?? {}).map((key) => {
         const value = mapLayerLegends[key];
         return (
