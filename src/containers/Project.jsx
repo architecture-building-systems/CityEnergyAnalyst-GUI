@@ -19,6 +19,7 @@ import MapControls from '../components/Map/MapControls';
 import MapLayers from '../components/Project/Cards/MapLayers/MapLayers';
 import { ParameterSelectors } from '../components/Map/Layers/Selectors';
 import { Legends } from '../components/Map/Layers/Legends';
+import { useToolStore } from '../components/Tools/store';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -47,9 +48,12 @@ const ProjectOverlay = () => {
   } = useSelector((state) => state.project.info);
 
   const [hideAll, setHideAll] = useState(false);
-  const [selectedTool, setSelectedTool] = useState();
   const [showInputEditor, setInputEditor] = useState(false);
-  const [showTools, setShowTools] = useState(false);
+
+  const showTools = useToolStore((state) => state.showTools);
+  const setShowTools = useToolStore((state) => state.setShowTools);
+  const selectedTool = useToolStore((state) => state.selectedTool);
+  const setSelectedTool = useToolStore((state) => state.setVisibility);
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
