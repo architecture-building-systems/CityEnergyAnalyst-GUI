@@ -269,9 +269,9 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    const SOLAR_IRRADIATION = 'solar-irradiation';
-    if (mapLayers[SOLAR_IRRADIATION]) {
-      const props = mapLayers[SOLAR_IRRADIATION].properties;
+    const SOLAR_IRRADIANCE = 'solar-irradiance';
+    if (mapLayers[SOLAR_IRRADIANCE]) {
+      const props = mapLayers[SOLAR_IRRADIANCE].properties;
       const label = props['label'];
 
       const totalMin = props['total_min'];
@@ -301,7 +301,7 @@ const DeckGLMap = ({ data, colors }) => {
       };
 
       setMapLayerLegends({
-        [SOLAR_IRRADIATION]: {
+        [SOLAR_IRRADIANCE]: {
           colourArray,
           points,
           range: [
@@ -315,7 +315,7 @@ const DeckGLMap = ({ data, colors }) => {
       _layers.push(
         new PointCloudLayer({
           id: 'PointCloudLayer',
-          data: mapLayers[SOLAR_IRRADIATION].data,
+          data: mapLayers[SOLAR_IRRADIANCE].data,
           material: false,
 
           getColor: getColor,
@@ -337,7 +337,7 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
     } else {
-      removeMapLayerLegend(SOLAR_IRRADIATION);
+      removeMapLayerLegend(SOLAR_IRRADIANCE);
     }
     return _layers;
   };
