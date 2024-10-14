@@ -39,34 +39,35 @@ const fetchMapLayer = async (category, layer_name, params) => {
   }
 };
 
-export const useGetMapLayer = (mapCategoryInfo) => {
+export const useGetMapLayers = (mapCategoryInfo) => {
   const [mapLayers, setMapLayers] = useState({});
   const project = useSelector((state) => state.project.info.project);
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
 
-  const generateLayers = async () => {
-    let out = {};
-
-    const { name, layers } = mapCategoryInfo;
-    for (const layer of layers) {
-      const data = await fetchMapLayer(name, layer.name, {
-        project,
-        parameters: {
-          'scenario-name': scenarioName,
-          ...mapLayerParameters,
-        },
-      });
-      out[layer.name] = data;
-    }
-    setMapLayers(out);
-  };
-
   useEffect(() => {
-    if (mapCategoryInfo?.layers && mapLayerParameters) generateLayers();
-    else setMapLayers({});
-  }, [mapCategoryInfo, mapLayerParameters]);
+    if (mapCategoryInfo?.layers && mapLayerParameters) {
+      const generateLayers = async () => {
+        let out = {};
+
+        const { name, layers } = mapCategoryInfo;
+        for (const layer of layers) {
+          const data = await fetchMapLayer(name, layer.name, {
+            project,
+            parameters: {
+              'scenario-name': scenarioName,
+              ...mapLayerParameters,
+            },
+          });
+          out[layer.name] = data;
+        }
+        setMapLayers(out);
+      };
+
+      generateLayers();
+    } else setMapLayers({});
+  }, [mapCategoryInfo, mapLayerParameters, project, scenarioName]);
 
   return mapLayers;
 };

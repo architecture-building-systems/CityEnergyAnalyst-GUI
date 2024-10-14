@@ -17,7 +17,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { NetworkToggle } from './Toggle';
 import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
-import { useGetMapLayer } from './Layers';
+import { useGetMapLayers } from './Layers';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
@@ -54,7 +54,7 @@ const DeckGLMap = ({ data, colors }) => {
   );
   const [layers, setLayers] = useState([]);
 
-  const mapLayers = useGetMapLayer(selectedMapCategory);
+  const mapLayers = useGetMapLayers(selectedMapCategory);
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
