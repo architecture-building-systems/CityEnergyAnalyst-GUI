@@ -34,7 +34,9 @@ export const TimeSeriesSelector = ({ parameterName, defaultValue = 12 }) => {
 
   return (
     <div style={{ padding: 8 }}>
-      <div>Time Selector</div>
+      <div>
+        <b>Time Period</b>
+      </div>
       <Slider
         defaultValue={defaultValue}
         min={0}
@@ -44,6 +46,30 @@ export const TimeSeriesSelector = ({ parameterName, defaultValue = 12 }) => {
           open: true,
           formatter: (value) => hourOfYearToDateTime(2023, value + 1),
         }}
+      />
+    </div>
+  );
+};
+
+export const ThresholdSelector = ({ parameterName, defaultValue }) => {
+  const setFilter = useMapStore((state) => state.setFilter);
+  const mapLayerParameter = useMapStore((state) => state.MapLayerParameter);
+
+  const handleChange = (value) => {
+    setFilter(value);
+  };
+
+  return (
+    <div style={{ padding: 8 }}>
+      <div>
+        <b>Threshold</b>
+      </div>
+      <Slider
+        max={1200}
+        defaultValue={defaultValue}
+        range={{ draggableTrack: true }}
+        onChangeComplete={handleChange}
+        tooltip={{ open: true }}
       />
     </div>
   );
@@ -85,6 +111,7 @@ export const ParameterSelectors = () => {
         display: 'flex',
         flexDirection: 'column',
 
+        padding: 2,
         width: '100%',
 
         fontSize: 12,
@@ -93,6 +120,7 @@ export const ParameterSelectors = () => {
       }}
     >
       <TimeSeriesSelector parameterName={'hour'} defaultValue={4370} />
+      <ThresholdSelector defaultValue={[0, 1200]} />
     </div>
   );
 };

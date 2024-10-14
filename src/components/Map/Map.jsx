@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
 import { GeoJsonLayer, PointCloudLayer } from '@deck.gl/layers';
+import { DataFilterExtension } from '@deck.gl/extensions';
 
 import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
@@ -44,6 +45,10 @@ const DeckGLMap = ({ data, colors }) => {
 
   const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
   const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
+
+  const range = useMapStore((state) => state.range);
+  const filter = useMapStore((state) => state.filter);
+
   const removeMapLayerLegend = useMapStore(
     (state) => state.removeMapLayerLegend,
   );
@@ -269,8 +274,14 @@ const DeckGLMap = ({ data, colors }) => {
       const props = mapLayers[SOLAR_IRRADIATION].properties;
       const label = props['label'];
 
-      const maxValue = props['value_max'];
-      const minValue = props['value_min'];
+      const totalMin = props['total_min'];
+      const totalMax = props['total_max'];
+      const maxValue = props['period_max'];
+      const minValue = props['period_min'];
+
+      const minParam = range[0];
+      const maxParam = range[1];
+
       const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
       const points = 12;
 
@@ -280,18 +291,25 @@ const DeckGLMap = ({ data, colors }) => {
         .getColors();
 
       const getColor = ({ value }) => {
-        const range = maxValue - minValue;
-        const scale = range == 0 ? 0 : (value - minValue) / range;
+        const range = maxParam - minParam;
+        const scale = range == 0 ? 0 : (value - minParam) / range;
         const colorIndex = Math.min(
           Math.floor(scale * (gradientArray.length - 1)),
           gradientArray.length - 1,
         );
-
         return hexToRgb(gradientArray[colorIndex]);
       };
 
       setMapLayerLegends({
-        [SOLAR_IRRADIATION]: { colourArray, points, minValue, maxValue, label },
+        [SOLAR_IRRADIATION]: {
+          colourArray,
+          points,
+          range: [
+            { label: 'Total Range (Whole Year)', min: totalMin, max: totalMax },
+            { label: 'Period Range', min: minValue, max: maxValue },
+          ],
+          label,
+        },
       });
 
       _layers.push(
@@ -308,6 +326,14 @@ const DeckGLMap = ({ data, colors }) => {
           // coordinateOrigin: [0, 0],
           coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
           pickable: true,
+
+          getFilterValue: (d) => d.value,
+          filterRange: filter,
+          extensions: [new DataFilterExtension({ filterSize: 1 })],
+
+          updateTriggers: {
+            getColor: [range],
+          },
         }),
       );
     } else {
@@ -359,7 +385,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   useEffect(() => {
     setLayers(renderLayers());
-  }, [data, visibility, extruded, selected, mapLayers]);
+  }, [data, visibility, extruded, selected, mapLayers, filter, range]);
 
   return (
     <>

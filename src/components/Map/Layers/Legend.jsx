@@ -1,11 +1,24 @@
 import Gradient from 'javascript-color-gradient';
 import { useMapStore } from '../store/store';
+import { Select } from 'antd';
+import { useEffect, useState } from 'react';
 
-const ColourRampLegend = ({ label, colours, points, minValue, maxValue }) => {
+const ColourRampLegend = ({ label, colours, points, range }) => {
+  const [index, setIndex] = useState(0);
+  const _range = useMapStore((state) => state.range);
+  const setRange = useMapStore((state) => state.setRange);
+
+  const { min, max } = range?.[index] ?? { min: 0, max: 0 };
+
   const gradientArray = new Gradient()
     .setColorGradient(...colours)
     .setMidpoint(points)
     .getColors();
+
+  useEffect(() => {
+    const { min, max } = range[index];
+    setRange([min, max]);
+  }, [index, min, max]);
 
   return (
     <div
@@ -15,7 +28,26 @@ const ColourRampLegend = ({ label, colours, points, minValue, maxValue }) => {
         gap: 8,
       }}
     >
-      <div>{label}</div>
+      <div>
+        <b>{label}</b>
+      </div>
+      <div>
+        Range
+        <Select
+          value={index}
+          onChange={setIndex}
+          defaultValue={0}
+          style={{ margin: 12, width: 200 }}
+        >
+          {range.map(({ label }, index) => {
+            return (
+              <Select.Option key={index} value={index}>
+                {label}
+              </Select.Option>
+            );
+          })}
+        </Select>
+      </div>
       <div
         style={{
           display: 'flex',
@@ -38,8 +70,8 @@ const ColourRampLegend = ({ label, colours, points, minValue, maxValue }) => {
           justifyContent: 'space-between',
         }}
       >
-        <div>{Math.round(minValue)}</div>
-        <div>{Math.round(maxValue)}</div>
+        <div>{Math.round(_range[0])}</div>
+        <div>{Math.round(_range[1])}</div>
       </div>
     </div>
   );
@@ -74,7 +106,6 @@ export const Legend = () => {
         marginRight: 'auto',
       }}
     >
-      <b>Legend</b>
       {Object.keys(mapLayerLegends ?? {}).map((key) => {
         const value = mapLayerLegends[key];
         return (
@@ -83,8 +114,7 @@ export const Legend = () => {
             label={value.label}
             colours={value.colourArray}
             points={value.points}
-            minValue={value.minValue}
-            maxValue={value.maxValue}
+            range={value.range}
           />
         );
       })}
