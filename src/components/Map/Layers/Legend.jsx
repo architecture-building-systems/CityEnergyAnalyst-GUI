@@ -4,11 +4,11 @@ import { Select } from 'antd';
 import { useEffect, useState } from 'react';
 
 const ColourRampLegend = ({ label, colours, points, range }) => {
-  const [index, setIndex] = useState(0);
+  const [value, setValue] = useState(Object.keys(range)[0]);
   const _range = useMapStore((state) => state.range);
   const setRange = useMapStore((state) => state.setRange);
 
-  const { min, max } = range?.[index] ?? { min: 0, max: 0 };
+  const { min, max } = range?.[value] ?? { min: 0, max: 0 };
 
   const gradientArray = new Gradient()
     .setColorGradient(...colours)
@@ -16,9 +16,9 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
     .getColors();
 
   useEffect(() => {
-    const { min, max } = range[index];
+    const { min, max } = range[value];
     setRange([min, max]);
-  }, [index, min, max]);
+  }, [value, min, max]);
 
   return (
     <div
@@ -34,15 +34,15 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       <div>
         Range
         <Select
-          value={index}
-          onChange={setIndex}
+          value={value}
+          onChange={setValue}
           defaultValue={0}
           style={{ margin: 12, width: 200 }}
         >
-          {range.map(({ label }, index) => {
+          {Object.keys(range).map((key) => {
             return (
-              <Select.Option key={index} value={index}>
-                {label}
+              <Select.Option key={key} value={key}>
+                {range[key].label}
               </Select.Option>
             );
           })}

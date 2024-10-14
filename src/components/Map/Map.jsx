@@ -273,11 +273,7 @@ const DeckGLMap = ({ data, colors }) => {
     if (mapLayers[SOLAR_IRRADIANCE]) {
       const props = mapLayers[SOLAR_IRRADIANCE].properties;
       const label = props['label'];
-
-      const totalMin = props['total_min'];
-      const totalMax = props['total_max'];
-      const maxValue = props['period_max'];
-      const minValue = props['period_min'];
+      const _range = props['range'];
 
       const minParam = range[0];
       const maxParam = range[1];
@@ -304,10 +300,7 @@ const DeckGLMap = ({ data, colors }) => {
         [SOLAR_IRRADIANCE]: {
           colourArray,
           points,
-          range: [
-            { label: 'Total Range (Whole Year)', min: totalMin, max: totalMax },
-            { label: 'Period Range', min: minValue, max: maxValue },
-          ],
+          range: _range,
           label,
         },
       });
