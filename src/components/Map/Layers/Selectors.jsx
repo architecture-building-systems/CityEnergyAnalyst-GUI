@@ -53,7 +53,6 @@ export const TimeSeriesSelector = ({ parameterName, defaultValue = 12 }) => {
 
 export const ThresholdSelector = ({ parameterName, defaultValue }) => {
   const setFilter = useMapStore((state) => state.setFilter);
-  const mapLayerParameter = useMapStore((state) => state.MapLayerParameter);
 
   const handleChange = (value) => {
     setFilter(value);
@@ -69,7 +68,7 @@ export const ThresholdSelector = ({ parameterName, defaultValue }) => {
         defaultValue={defaultValue}
         range={{ draggableTrack: true }}
         onChangeComplete={handleChange}
-        tooltip={{ open: true }}
+        tooltip={{ open: true, placement: 'bottom' }}
       />
     </div>
   );
