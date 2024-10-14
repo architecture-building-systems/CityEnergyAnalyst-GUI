@@ -119,7 +119,7 @@ export const ParameterSelectors = () => {
         gap: 2,
       }}
     >
-      <TimeSeriesSelector parameterName={'hour'} defaultValue={4370} />
+      <TimeSeriesSelector parameterName={'hour'} defaultValue={3636} />
       <ThresholdSelector defaultValue={[0, 1200]} />
     </div>
   );
