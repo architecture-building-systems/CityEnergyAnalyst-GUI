@@ -69,7 +69,7 @@ export const useGetMapLayers = (mapCategoryInfo) => {
 
       generateLayers();
     } else setMapLayers({});
-  }, [mapCategoryInfo, mapLayerParameters, project, scenarioName]);
+  }, [mapCategoryInfo, mapLayerParameters]);
 
   return mapLayers;
 };
