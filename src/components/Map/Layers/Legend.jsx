@@ -83,6 +83,8 @@ export const Legend = () => {
 
   if (!selectedMapCategory?.layers) return null;
 
+  console.log(mapLayerLegends);
+
   return (
     <div
       className="cea-overlay-card"
@@ -106,18 +108,22 @@ export const Legend = () => {
         marginRight: 'auto',
       }}
     >
-      {Object.keys(mapLayerLegends ?? {}).map((key) => {
-        const value = mapLayerLegends[key];
-        return (
-          <ColourRampLegend
-            key={key}
-            label={value.label}
-            colours={value.colourArray}
-            points={value.points}
-            range={value.range}
-          />
-        );
-      })}
+      {Object.keys(mapLayerLegends ?? {}).length === 0 ? (
+        <b>No data fouund</b>
+      ) : (
+        Object.keys(mapLayerLegends).map((key) => {
+          const value = mapLayerLegends[key];
+          return (
+            <ColourRampLegend
+              key={key}
+              label={value.label}
+              colours={value.colourArray}
+              points={value.points}
+              range={value.range}
+            />
+          );
+        })
+      )}
     </div>
   );
 };
