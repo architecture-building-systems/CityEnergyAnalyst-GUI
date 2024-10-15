@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-gui",
   "productName": "CityEnergyAnalyst-GUI",
-  "version": "4.0.0-alpha.5",
+  "version": "4.0.0-alpha.6",
   "description": "Official GUI of the City Energy Analyst tool",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
@@ -69,6 +69,7 @@
     "handsontable": "^6",
     "history": "^4.9.0",
     "html-react-parser": "^5.1.12",
+    "javascript-color-gradient": "^2.5.0",
     "maplibre-gl": "^4.5.2",
     "path-browserify": "^1.0.1",
     "react": "^18.2.0",

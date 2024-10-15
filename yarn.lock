@@ -5762,6 +5762,7 @@ __metadata:
     handsontable: "npm:^6"
     history: "npm:^4.9.0"
     html-react-parser: "npm:^5.1.12"
+    javascript-color-gradient: "npm:^2.5.0"
     maplibre-gl: "npm:^4.5.2"
     path-browserify: "npm:^1.0.1"
     prettier: "npm:^3.2.5"
@@ -8757,6 +8758,13 @@ __metadata:
   bin:
     jake: bin/cli.js
   checksum: 10c0/c4597b5ed9b6a908252feab296485a4f87cba9e26d6c20e0ca144fb69e0c40203d34a2efddb33b3d297b8bd59605e6c1f44f6221ca1e10e69175ecbf3ff5fe31
+  languageName: node
+  linkType: hard
+
+"javascript-color-gradient@npm:^2.5.0":
+  version: 2.5.0
+  resolution: "javascript-color-gradient@npm:2.5.0"
+  checksum: 10c0/63a5a028a32963e2ac97ba382aa8c7973f16ccef1dafe581c24ebe498f1f8e4944cda30c50efb93aeb931424e1273ae6ec7314fc5a43e28d92a2e2ad05cf26c9
   languageName: node
   linkType: hard
 
