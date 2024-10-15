@@ -34,6 +34,8 @@ const MapLayers = () => {
     }
   }, [active]);
 
+  if (!scenarioName) return null;
+
   return (
     <div
       className="cea-overlay-card"
