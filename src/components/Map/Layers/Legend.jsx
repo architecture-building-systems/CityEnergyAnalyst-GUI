@@ -70,8 +70,8 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
           justifyContent: 'space-between',
         }}
       >
-        <div>{Math.round(_range[0])}</div>
-        <div>{Math.round(_range[1])}</div>
+        <div>{Number(_range[0].toPrecision(3))}</div>
+        <div>{Number(_range[1].toPrecision(3))}</div>
       </div>
     </div>
   );

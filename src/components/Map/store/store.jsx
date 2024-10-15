@@ -10,6 +10,7 @@ export const useMapStore = create((set) => ({
   selectedMapCategory: {},
   mapLayerParameters: null,
   mapLayerLegends: null,
+  mapLayers: {},
   filter: [0, 1000],
   range: [0, 1000],
 
@@ -37,6 +38,7 @@ export const useMapStore = create((set) => ({
       delete mapLayerLegends[value];
       return { mapLayerLegends };
     }),
+  setMapLayers: (value) => set({ mapLayers: value }),
   setFilter: (value) => set({ filter: value }),
   setRange: (value) => set({ range: value }),
 }));

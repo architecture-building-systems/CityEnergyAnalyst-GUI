@@ -54,6 +54,11 @@ export const TimeSeriesSelector = ({ parameterName, defaultValue = 12 }) => {
 export const ThresholdSelector = ({ parameterName, defaultValue }) => {
   const setFilter = useMapStore((state) => state.setFilter);
 
+  const mapLayers = useMapStore((state) => state.mapLayers);
+  // FIXME: Remove hardcoded values
+  const { min, max } = mapLayers?.['solar-irradiance']?.properties?.range
+    ?.total ?? { min: 0, max: 1000 };
+
   const handleChange = (value) => {
     setFilter(value);
   };
@@ -64,7 +69,8 @@ export const ThresholdSelector = ({ parameterName, defaultValue }) => {
         <b>Threshold</b>
       </div>
       <Slider
-        max={1200}
+        min={Number(min.toPrecision(3))}
+        max={Number(max.toPrecision(3))}
         defaultValue={defaultValue}
         range={{ draggableTrack: true }}
         onChangeComplete={handleChange}

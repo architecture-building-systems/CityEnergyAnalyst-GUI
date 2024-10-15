@@ -40,7 +40,9 @@ const fetchMapLayer = async (category, layer_name, params) => {
 };
 
 export const useGetMapLayers = (mapCategoryInfo) => {
-  const [mapLayers, setMapLayers] = useState({});
+  const mapLayers = useMapStore((state) => state.mapLayers);
+  const setMapLayers = useMapStore((state) => state.setMapLayers);
+
   const project = useSelector((state) => state.project.info.project);
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
