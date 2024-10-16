@@ -222,7 +222,12 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <OpenDialogButton form={form} type="directory" id={name}>
+                  <OpenDialogButton
+                    form={form}
+                    type="directory"
+                    id={name}
+                    onChange={(value) => setFieldsValue({ [name]: value })}
+                  >
                     <PlusOutlined />
                     Browse for databases path
                   </OpenDialogButton>
@@ -255,6 +260,7 @@ const Parameter = ({ parameter, form }) => {
                     type="file"
                     filters={[{ name: 'Weather files', extensions: ['epw'] }]}
                     id={name}
+                    onChange={(value) => setFieldsValue({ [name]: value })}
                   >
                     <PlusOutlined />
                     Browse for weather file
