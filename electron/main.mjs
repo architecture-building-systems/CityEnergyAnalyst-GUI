@@ -162,12 +162,6 @@ function createSplashWindow(url) {
 
       // Check for internet connection
       const internetConnection = await checkInternet();
-      if (!internetConnection) {
-        sendPreflightEvent('No internet connection');
-        throw new CEAError(
-          'Unable to check for CEA environment. (No internet connection)',
-        );
-      }
 
       const checkUpdates = async () => {
         try {
@@ -243,12 +237,14 @@ function createSplashWindow(url) {
         }
       };
 
-      // Check for GUI update (only in production)
-      const updateAvailable = await checkUpdates();
-      if (updateAvailable) {
-        sendPreflightEvent('Restarting to install update...');
-        autoUpdater.quitAndInstall();
-        return;
+      // Check for GUI update (only in production and with internet connection)
+      if (internetConnection) {
+        const updateAvailable = await checkUpdates();
+        if (updateAvailable) {
+          sendPreflightEvent('Restarting to install update...');
+          autoUpdater.quitAndInstall();
+          return;
+        }
       }
 
       // Start immediately if cea is already running
@@ -275,6 +271,14 @@ function createSplashWindow(url) {
 
         // Create CEA env is does not exist
         if (!ceaEnvExists) {
+          // Throw error if no internet connection
+          if (!internetConnection) {
+            sendPreflightEvent('No internet connection');
+            throw new CEAError(
+              'Unable to verify/create CEA environment. (No internet connection)',
+            );
+          }
+
           sendPreflightEvent(
             `Creating CEA environment (${appVersion})...\n(this might take a few minutes)`,
           );
@@ -283,7 +287,7 @@ function createSplashWindow(url) {
         }
 
         // Only update CEA from github if not installed as editable package
-        if (!ceaEnvIsEditable) {
+        if (!ceaEnvIsEditable && internetConnection) {
           // Check CEA version
           const ceaVersion = await getCEAenvVersion();
           console.debug({ appVersion, ceaVersion });
