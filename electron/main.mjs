@@ -327,15 +327,18 @@ function createSplashWindow(url) {
       const errorMessage = error?.message
         ? `Details:\n${error.message}\n\n`
         : '';
-      dialog.showMessageBoxSync(splashWindow, {
+      const index = dialog.showMessageBoxSync(splashWindow, {
         type: 'error',
         title: 'CEA Error',
         message:
           'CEA has encounted an error on startup.\n The application will exit now.',
         detail: `${errorMessage}You can report this error to us at our GitHub page\n (https://github.com/architecture-building-systems/CityEnergyAnalyst/issues).`,
-        buttons: ['Show logs'],
+        buttons: ['Show logs', 'Exit'],
+        defaultId: 0,
+        cancelId: 1,
       });
-      openLog();
+
+      if (index == 0) openLog();
       app.exit();
     }
   });
