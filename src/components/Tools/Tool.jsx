@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Form } from '@ant-design/compatible';
 import {
@@ -35,30 +35,34 @@ const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState([]);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setFetching(true);
-      try {
-        await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
-        );
-        setError(null);
-      } catch (err) {
-        setError(err.response.data?.detail?.script_suggestions);
-      } finally {
-        setFetching(false);
-      }
-    };
-
-    fetch();
+  const fetch = useCallback(async () => {
+    setFetching(true);
+    try {
+      await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
+      );
+      setError(null);
+    } catch (err) {
+      setError(err.response.data?.detail?.script_suggestions);
+    } finally {
+      setFetching(false);
+    }
   }, [tool]);
 
-  return { fetching, error };
+  useEffect(() => {
+    fetch();
+  }, [tool, fetch]);
+
+  return { fetch, fetching, error };
 };
 
-const ScriptSuggestions = ({ script, onMissingInputs, onToolSelected }) => {
-  const { fetching, error } = useCheckMissingInputs(script);
-
+const ScriptSuggestions = ({
+  script,
+  onMissingInputs,
+  onToolSelected,
+  fetching,
+  error,
+}) => {
   useEffect(() => {
     onMissingInputs?.(true);
   }, [script, onMissingInputs]);
@@ -124,6 +128,12 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   // Disable form buttons until inputs are found
   const [missingInputs, setMissingInputs] = useState(true);
 
+  const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
+
+  const handleChange = () => {
+    fetch?.();
+  };
+
   useEffect(() => {
     // Disable form buttons when script changes
     setMissingInputs(true);
@@ -152,6 +162,8 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
             script={script}
             onMissingInputs={setMissingInputs}
             onToolSelected={onToolSelected}
+            fetching={fetching}
+            error={_error}
           />
 
           <ToolForm
@@ -159,6 +171,8 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
             categoricalParameters={categoricalParameters}
             script={script}
             disableButtons={missingInputs}
+            onSave={handleChange}
+            onReset={handleChange}
           />
         </div>
       </Spin>
@@ -172,6 +186,8 @@ const ToolForm = Form.create()(({
   script,
   form,
   disableButtons,
+  onSave,
+  onReset,
 }) => {
   const dispatch = useDispatch();
   const [activeKey, setActiveKey] = useState([]);
@@ -218,10 +234,14 @@ const ToolForm = Form.create()(({
   };
 
   const saveParams = (params) => {
+    onSave?.(params);
     params && dispatch(saveToolParams(script, params));
   };
 
-  const setDefault = () => dispatch(setDefaultToolParams(script));
+  const setDefault = () => {
+    onReset?.();
+    dispatch(setDefaultToolParams(script));
+  };
 
   let toolParams = null;
   if (parameters) {
@@ -306,13 +326,10 @@ const ToolFormButtons = ({
         onClick={() => {
           saveParams(getForm());
         }}
-        disabled={disabled}
       >
         Save Settings
       </Button>
-      <Button onClick={setDefault} disabled={disabled}>
-        Reset
-      </Button>
+      <Button onClick={setDefault}>Reset</Button>
     </>
   );
 };
