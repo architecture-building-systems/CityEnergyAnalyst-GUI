@@ -51,26 +51,12 @@ const useCheckMissingInputs = (tool) => {
 
   useEffect(() => {
     fetch();
-  }, [tool, fetch]);
+  }, [fetch]);
 
   return { fetch, fetching, error };
 };
 
-const ScriptSuggestions = ({
-  script,
-  onMissingInputs,
-  onToolSelected,
-  fetching,
-  error,
-}) => {
-  useEffect(() => {
-    onMissingInputs?.(true);
-  }, [script, onMissingInputs]);
-
-  useEffect(() => {
-    if (error === null) onMissingInputs?.(false);
-  }, [error, onMissingInputs]);
-
+const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   if (fetching)
     return (
       <div style={{ fontFamily: 'monospace' }}>
@@ -94,6 +80,7 @@ const ScriptSuggestions = ({
                         className="cea-tool-suggestions"
                         onClick={() => onToolSelected?.(name)}
                         style={{ marginRight: 'auto' }}
+                        aria-hidden
                       >
                         {label}
                         <ExternalLinkIcon style={{ fontSize: 18 }} />
@@ -125,19 +112,15 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
     categorical_parameters: categoricalParameters,
   } = params;
 
-  // Disable form buttons until inputs are found
-  const [missingInputs, setMissingInputs] = useState(true);
-
   const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
+
+  const disableButtons = fetching || _error !== null;
 
   const handleChange = () => {
     fetch?.();
   };
 
   useEffect(() => {
-    // Disable form buttons when script changes
-    setMissingInputs(true);
-
     dispatch(fetchToolParams(script));
     return () => dispatch(resetToolParams());
   }, [script]);
@@ -159,8 +142,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <ScriptSuggestions
-            script={script}
-            onMissingInputs={setMissingInputs}
             onToolSelected={onToolSelected}
             fetching={fetching}
             error={_error}
@@ -170,7 +151,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            disableButtons={missingInputs}
+            disableButtons={disableButtons}
             onSave={handleChange}
             onReset={handleChange}
           />
