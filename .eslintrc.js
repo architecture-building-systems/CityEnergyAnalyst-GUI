@@ -38,12 +38,17 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['react-refresh', 'simple-import-sort'],
+  plugins: [
+    'eslint-plugin-react-compiler',
+    'react-refresh',
+    'simple-import-sort',
+  ],
   rules: {
     'prettier/prettier': ['error', {}, { usePrettierrc: true }],
     'react/react-in-jsx-scope': 'off',
     'jsx-a11y/accessible-emoji': 'off',
     'react/prop-types': 'off',
+    'react-compiler/react-compiler': 'warn',
     // 'simple-import-sort/imports': 'error',
     // 'simple-import-sort/exports': 'error',
     'jsx-a11y/anchor-is-valid': [
