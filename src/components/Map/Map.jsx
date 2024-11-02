@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -111,7 +111,33 @@ const DeckGLMap = ({ data, colors }) => {
     }
   }, [data, mapRef]);
 
-  const renderLayers = () => {
+  const layers = useMemo(() => {
+    const onClick = ({ object, layer }, event) => {
+      const name = object.properties['Name'];
+      if (layer.id !== selectedLayer) {
+        dispatch(setSelected([name]));
+        setSelectedLayer(layer.id);
+      } else {
+        let index = -1;
+        let newSelected = [...selected];
+        if (
+          (event.srcEvent.ctrlKey && event.leftButton) ||
+          (event.srcEvent.metaKey && event.leftButton)
+        ) {
+          index = newSelected.findIndex((x) => x === name);
+          if (index !== -1) {
+            newSelected.splice(index, 1);
+            dispatch(setSelected(newSelected));
+          } else {
+            newSelected.push(name);
+            dispatch(setSelected(newSelected));
+          }
+        } else {
+          dispatch(setSelected([name]));
+        }
+      }
+    };
+
     const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
     if (data?.zone) {
@@ -318,7 +344,19 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     return _layers;
-  };
+  }, [
+    visibility,
+    data,
+    mapLayers,
+    selectedLayer,
+    dispatch,
+    selected,
+    extruded,
+    colors,
+    connectedBuildings,
+    range,
+    filter,
+  ]);
 
   const onDragStart = (info, event) => {
     if (!firstPitch.current && event.rightButton) {
@@ -326,34 +364,6 @@ const DeckGLMap = ({ data, colors }) => {
       firstPitch.current = true;
     }
   };
-
-  const onClick = ({ object, layer }, event) => {
-    const name = object.properties['Name'];
-    if (layer.id !== selectedLayer) {
-      dispatch(setSelected([name]));
-      setSelectedLayer(layer.id);
-    } else {
-      let index = -1;
-      let newSelected = [...selected];
-      if (
-        (event.srcEvent.ctrlKey && event.leftButton) ||
-        (event.srcEvent.metaKey && event.leftButton)
-      ) {
-        index = newSelected.findIndex((x) => x === name);
-        if (index !== -1) {
-          newSelected.splice(index, 1);
-          dispatch(setSelected(newSelected));
-        } else {
-          newSelected.push(name);
-          dispatch(setSelected(newSelected));
-        }
-      } else {
-        dispatch(setSelected([name]));
-      }
-    }
-  };
-
-  const layers = renderLayers();
 
   // const onNetworkChange = (value) => {
   //   setVisibility((oldValue) => ({
