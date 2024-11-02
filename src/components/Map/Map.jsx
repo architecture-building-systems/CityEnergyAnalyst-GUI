@@ -21,9 +21,12 @@ import { useGetMapLayers } from './Layers';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
+const SOLAR_IRRADIANCE = 'solar-irradiance';
+const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
+const points = 12;
+
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
-  const selectedLayer = useRef();
   const firstPitch = useRef(false);
   const cameraOptionsCalculated = useRef(false);
   const dispatch = useDispatch();
@@ -31,6 +34,8 @@ const DeckGLMap = ({ data, colors }) => {
   const connectedBuildings = useSelector(
     (state) => state.inputData.connected_buildings,
   );
+
+  const [selectedLayer, setSelectedLayer] = useState();
 
   const viewState = useMapStore((state) => state.viewState);
   const extruded = useMapStore((state) => state.extruded);
@@ -52,7 +57,6 @@ const DeckGLMap = ({ data, colors }) => {
   const removeMapLayerLegend = useMapStore(
     (state) => state.removeMapLayerLegend,
   );
-  const [layers, setLayers] = useState([]);
 
   const mapLayers = useGetMapLayers(selectedMapCategory);
 
@@ -269,17 +273,9 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    const SOLAR_IRRADIANCE = 'solar-irradiance';
     if (mapLayers[SOLAR_IRRADIANCE]) {
-      const props = mapLayers[SOLAR_IRRADIANCE].properties;
-      const label = props['label'];
-      const _range = props['range'];
-
       const minParam = range[0];
       const maxParam = range[1];
-
-      const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
-      const points = 12;
 
       const gradientArray = new Gradient()
         .setColorGradient(...colourArray)
@@ -295,15 +291,6 @@ const DeckGLMap = ({ data, colors }) => {
         );
         return hexToRgb(gradientArray[colorIndex]);
       };
-
-      setMapLayerLegends({
-        [SOLAR_IRRADIANCE]: {
-          colourArray,
-          points,
-          range: _range,
-          label,
-        },
-      });
 
       _layers.push(
         new PointCloudLayer({
@@ -329,8 +316,6 @@ const DeckGLMap = ({ data, colors }) => {
           },
         }),
       );
-    } else {
-      removeMapLayerLegend(SOLAR_IRRADIANCE);
     }
     return _layers;
   };
@@ -344,9 +329,9 @@ const DeckGLMap = ({ data, colors }) => {
 
   const onClick = ({ object, layer }, event) => {
     const name = object.properties['Name'];
-    if (layer.id !== selectedLayer.current) {
+    if (layer.id !== selectedLayer) {
       dispatch(setSelected([name]));
-      selectedLayer.current = layer.id;
+      setSelectedLayer(layer.id);
     } else {
       let index = -1;
       let newSelected = [...selected];
@@ -368,6 +353,8 @@ const DeckGLMap = ({ data, colors }) => {
     }
   };
 
+  const layers = renderLayers();
+
   // const onNetworkChange = (value) => {
   //   setVisibility((oldValue) => ({
   //     ...oldValue,
@@ -377,8 +364,23 @@ const DeckGLMap = ({ data, colors }) => {
   // };
 
   useEffect(() => {
-    setLayers(renderLayers());
-  }, [data, visibility, extruded, selected, mapLayers, filter, range]);
+    if (mapLayers[SOLAR_IRRADIANCE]) {
+      console.log(mapLayers[SOLAR_IRRADIANCE]);
+      const props = mapLayers[SOLAR_IRRADIANCE].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [SOLAR_IRRADIANCE]: {
+          colourArray,
+          points,
+          range: _range,
+          label,
+        },
+      });
+    } else {
+      removeMapLayerLegend(SOLAR_IRRADIANCE);
+    }
+  }, [mapLayers, removeMapLayerLegend, setMapLayerLegends]);
 
   return (
     <>
