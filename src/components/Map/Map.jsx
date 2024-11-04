@@ -375,7 +375,6 @@ const DeckGLMap = ({ data, colors }) => {
 
   useEffect(() => {
     if (mapLayers[SOLAR_IRRADIANCE]) {
-      console.log(mapLayers[SOLAR_IRRADIANCE]);
       const props = mapLayers[SOLAR_IRRADIANCE].properties;
       const label = props['label'];
       const _range = props['range'];
