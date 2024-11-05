@@ -236,8 +236,9 @@ const ToolForm = Form.create()(({
 
   const setDefault = () => {
     dispatch(setDefaultToolParams(script)).then(() => {
-      const params = getForm();
-      onReset?.(params);
+      getForm((params) => {
+        onReset?.(params);
+      });
     });
   };
 
