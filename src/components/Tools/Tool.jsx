@@ -119,7 +119,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   const disableButtons = fetching || _error !== null;
 
   const checkMissingInputs = (params) => {
-    console.log('checkMissingInputs', params);
     fetch?.(params);
   };
 
@@ -177,7 +176,8 @@ const ToolForm = Form.create()(({
   const dispatch = useDispatch();
   const [activeKey, setActiveKey] = useState([]);
 
-  const getForm = () => {
+  // TODO: Add error callback
+  const getForm = (callback) => {
     let out = null;
     form.validateFields((err, values) => {
       if (!err) {
@@ -191,6 +191,7 @@ const ToolForm = Form.create()(({
           ...values,
         };
         console.log('Received values of form: ', out);
+        callback?.(out);
       } // Expand collapsed categories if errors are found inside
       else if (categoricalParameters) {
         let categoriesWithErrors = [];
@@ -214,21 +215,23 @@ const ToolForm = Form.create()(({
   };
 
   useEffect(() => {
-    const params = getForm();
-    params && onMount?.(params);
+    getForm((params) => {
+      onMount?.(params);
+    });
   }, []);
 
   const runScript = () => {
-    const values = getForm();
-    values && dispatch(createJob(script, values));
+    getForm((params) => {
+      dispatch(createJob(script, params));
+    });
   };
 
   const saveParams = () => {
-    const params = getForm();
-    params &&
+    getForm((params) => {
       dispatch(saveToolParams(script, params)).then(() => {
         onSave?.(params);
       });
+    });
   };
 
   const setDefault = () => {
@@ -277,7 +280,6 @@ const ToolForm = Form.create()(({
       <Form.Item className="formButtons">
         <div className="cea-tool-form-buttongroup">
           <ToolFormButtons
-            getForm={getForm}
             runScript={runScript}
             saveParams={saveParams}
             setDefault={setDefault}
