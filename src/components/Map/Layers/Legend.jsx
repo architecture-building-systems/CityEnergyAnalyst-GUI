@@ -83,8 +83,6 @@ export const Legend = () => {
 
   if (!selectedMapCategory?.layers) return null;
 
-  console.log(mapLayerLegends);
-
   return (
     <div
       className="cea-overlay-card"

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -21,9 +21,12 @@ import { useGetMapLayers } from './Layers';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
+const SOLAR_IRRADIANCE = 'solar-irradiance';
+const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
+const points = 12;
+
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
-  const selectedLayer = useRef();
   const firstPitch = useRef(false);
   const cameraOptionsCalculated = useRef(false);
   const dispatch = useDispatch();
@@ -31,6 +34,8 @@ const DeckGLMap = ({ data, colors }) => {
   const connectedBuildings = useSelector(
     (state) => state.inputData.connected_buildings,
   );
+
+  const [selectedLayer, setSelectedLayer] = useState();
 
   const viewState = useMapStore((state) => state.viewState);
   const extruded = useMapStore((state) => state.extruded);
@@ -52,7 +57,6 @@ const DeckGLMap = ({ data, colors }) => {
   const removeMapLayerLegend = useMapStore(
     (state) => state.removeMapLayerLegend,
   );
-  const [layers, setLayers] = useState([]);
 
   const mapLayers = useGetMapLayers(selectedMapCategory);
 
@@ -107,7 +111,33 @@ const DeckGLMap = ({ data, colors }) => {
     }
   }, [data, mapRef]);
 
-  const renderLayers = () => {
+  const layers = useMemo(() => {
+    const onClick = ({ object, layer }, event) => {
+      const name = object.properties['Name'];
+      if (layer.id !== selectedLayer) {
+        dispatch(setSelected([name]));
+        setSelectedLayer(layer.id);
+      } else {
+        let index = -1;
+        let newSelected = [...selected];
+        if (
+          (event.srcEvent.ctrlKey && event.leftButton) ||
+          (event.srcEvent.metaKey && event.leftButton)
+        ) {
+          index = newSelected.findIndex((x) => x === name);
+          if (index !== -1) {
+            newSelected.splice(index, 1);
+            dispatch(setSelected(newSelected));
+          } else {
+            newSelected.push(name);
+            dispatch(setSelected(newSelected));
+          }
+        } else {
+          dispatch(setSelected([name]));
+        }
+      }
+    };
+
     const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
     if (data?.zone) {
@@ -269,17 +299,9 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    const SOLAR_IRRADIANCE = 'solar-irradiance';
     if (mapLayers[SOLAR_IRRADIANCE]) {
-      const props = mapLayers[SOLAR_IRRADIANCE].properties;
-      const label = props['label'];
-      const _range = props['range'];
-
       const minParam = range[0];
       const maxParam = range[1];
-
-      const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
-      const points = 12;
 
       const gradientArray = new Gradient()
         .setColorGradient(...colourArray)
@@ -295,15 +317,6 @@ const DeckGLMap = ({ data, colors }) => {
         );
         return hexToRgb(gradientArray[colorIndex]);
       };
-
-      setMapLayerLegends({
-        [SOLAR_IRRADIANCE]: {
-          colourArray,
-          points,
-          range: _range,
-          label,
-        },
-      });
 
       _layers.push(
         new PointCloudLayer({
@@ -329,42 +342,26 @@ const DeckGLMap = ({ data, colors }) => {
           },
         }),
       );
-    } else {
-      removeMapLayerLegend(SOLAR_IRRADIANCE);
     }
     return _layers;
-  };
+  }, [
+    visibility,
+    data,
+    mapLayers,
+    selectedLayer,
+    dispatch,
+    selected,
+    extruded,
+    colors,
+    connectedBuildings,
+    range,
+    filter,
+  ]);
 
   const onDragStart = (info, event) => {
     if (!firstPitch.current && event.rightButton) {
       setExtruded(true);
       firstPitch.current = true;
-    }
-  };
-
-  const onClick = ({ object, layer }, event) => {
-    const name = object.properties['Name'];
-    if (layer.id !== selectedLayer.current) {
-      dispatch(setSelected([name]));
-      selectedLayer.current = layer.id;
-    } else {
-      let index = -1;
-      let newSelected = [...selected];
-      if (
-        (event.srcEvent.ctrlKey && event.leftButton) ||
-        (event.srcEvent.metaKey && event.leftButton)
-      ) {
-        index = newSelected.findIndex((x) => x === name);
-        if (index !== -1) {
-          newSelected.splice(index, 1);
-          dispatch(setSelected(newSelected));
-        } else {
-          newSelected.push(name);
-          dispatch(setSelected(newSelected));
-        }
-      } else {
-        dispatch(setSelected([name]));
-      }
     }
   };
 
@@ -377,8 +374,22 @@ const DeckGLMap = ({ data, colors }) => {
   // };
 
   useEffect(() => {
-    setLayers(renderLayers());
-  }, [data, visibility, extruded, selected, mapLayers, filter, range]);
+    if (mapLayers[SOLAR_IRRADIANCE]) {
+      const props = mapLayers[SOLAR_IRRADIANCE].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [SOLAR_IRRADIANCE]: {
+          colourArray,
+          points,
+          range: _range,
+          label,
+        },
+      });
+    } else {
+      removeMapLayerLegend(SOLAR_IRRADIANCE);
+    }
+  }, [mapLayers, removeMapLayerLegend, setMapLayerLegends]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Form } from '@ant-design/compatible';
 import {
@@ -35,11 +35,12 @@ const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState([]);
 
-  const fetch = useCallback(async () => {
+  const fetch = async (parameters) => {
     setFetching(true);
     try {
-      await axios.get(
+      await axios.post(
         `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
+        parameters,
       );
       setError(null);
     } catch (err) {
@@ -47,30 +48,17 @@ const useCheckMissingInputs = (tool) => {
     } finally {
       setFetching(false);
     }
-  }, [tool]);
+  };
 
+  // reset error when tool changes
   useEffect(() => {
-    fetch();
-  }, [tool, fetch]);
+    setError([]);
+  }, [tool]);
 
   return { fetch, fetching, error };
 };
 
-const ScriptSuggestions = ({
-  script,
-  onMissingInputs,
-  onToolSelected,
-  fetching,
-  error,
-}) => {
-  useEffect(() => {
-    onMissingInputs?.(true);
-  }, [script, onMissingInputs]);
-
-  useEffect(() => {
-    if (error === null) onMissingInputs?.(false);
-  }, [error, onMissingInputs]);
-
+const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   if (fetching)
     return (
       <div style={{ fontFamily: 'monospace' }}>
@@ -94,6 +82,7 @@ const ScriptSuggestions = ({
                         className="cea-tool-suggestions"
                         onClick={() => onToolSelected?.(name)}
                         style={{ marginRight: 'auto' }}
+                        aria-hidden
                       >
                         {label}
                         <ExternalLinkIcon style={{ fontSize: 18 }} />
@@ -125,19 +114,16 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
     categorical_parameters: categoricalParameters,
   } = params;
 
-  // Disable form buttons until inputs are found
-  const [missingInputs, setMissingInputs] = useState(true);
-
   const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
 
-  const handleChange = () => {
-    fetch?.();
+  const disableButtons = fetching || _error !== null;
+
+  const checkMissingInputs = (params) => {
+    console.log('checkMissingInputs', params);
+    fetch?.(params);
   };
 
   useEffect(() => {
-    // Disable form buttons when script changes
-    setMissingInputs(true);
-
     dispatch(fetchToolParams(script));
     return () => dispatch(resetToolParams());
   }, [script]);
@@ -159,8 +145,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <ScriptSuggestions
-            script={script}
-            onMissingInputs={setMissingInputs}
             onToolSelected={onToolSelected}
             fetching={fetching}
             error={_error}
@@ -170,9 +154,9 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            disableButtons={missingInputs}
-            onSave={handleChange}
-            onReset={handleChange}
+            disableButtons={disableButtons}
+            onSave={checkMissingInputs}
+            onMount={checkMissingInputs}
           />
         </div>
       </Spin>
@@ -188,6 +172,7 @@ const ToolForm = Form.create()(({
   disableButtons,
   onSave,
   onReset,
+  onMount,
 }) => {
   const dispatch = useDispatch();
   const [activeKey, setActiveKey] = useState([]);
@@ -228,19 +213,29 @@ const ToolForm = Form.create()(({
     return out;
   };
 
+  useEffect(() => {
+    const params = getForm();
+    params && onMount?.(params);
+  }, []);
+
   const runScript = () => {
     const values = getForm();
     values && dispatch(createJob(script, values));
   };
 
-  const saveParams = (params) => {
-    onSave?.(params);
-    params && dispatch(saveToolParams(script, params));
+  const saveParams = () => {
+    const params = getForm();
+    params &&
+      dispatch(saveToolParams(script, params)).then(() => {
+        onSave?.(params);
+      });
   };
 
   const setDefault = () => {
-    onReset?.();
-    dispatch(setDefaultToolParams(script));
+    dispatch(setDefaultToolParams(script)).then(() => {
+      const params = getForm();
+      onReset?.(params);
+    });
   };
 
   let toolParams = null;
@@ -300,7 +295,6 @@ const ToolForm = Form.create()(({
 });
 
 const ToolFormButtons = ({
-  getForm,
   runScript,
   saveParams,
   setDefault,
@@ -322,13 +316,7 @@ const ToolFormButtons = ({
         </Button>
       </animated.div>
 
-      <Button
-        onClick={() => {
-          saveParams(getForm());
-        }}
-      >
-        Save Settings
-      </Button>
+      <Button onClick={saveParams}>Save Settings</Button>
       <Button onClick={setDefault}>Reset</Button>
     </>
   );
