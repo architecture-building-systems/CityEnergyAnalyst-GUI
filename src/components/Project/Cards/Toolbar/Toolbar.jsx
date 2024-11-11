@@ -65,7 +65,10 @@ const ToolMenu = ({
             placement="right"
             overlayInnerStyle={{ fontSize: 12 }}
           >
-            <div style={{ width: '100%' }}>{tool.label}</div>
+            <div style={{ width: '100%', display: 'flex', gap: 10 }}>
+              <span>-</span>
+              {tool.label}
+            </div>
           </Tooltip>
         ),
       })),
