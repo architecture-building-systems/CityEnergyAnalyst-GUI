@@ -31,6 +31,69 @@ const useMapStyle = () => {
   return showMapStyleLabels ? positron : no_label;
 };
 
+const useMapLayers = () => {
+  const mapLayers = useGetMapLayers();
+
+  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
+  const range = useMapStore((state) => state.range);
+  const filter = useMapStore((state) => state.filter);
+
+  const layers = useMemo(() => {
+    let _layers = [];
+
+    // Return early if no layers are selected
+    if (!selectedMapCategory) return _layers;
+
+    if (mapLayers[SOLAR_IRRADIANCE]) {
+      const minParam = range[0];
+      const maxParam = range[1];
+
+      const gradientArray = new Gradient()
+        .setColorGradient(...LEGEND_COLOUR_ARRAY)
+        .setMidpoint(LEGEND_POINTS)
+        .getColors();
+
+      const getColor = ({ value }) => {
+        const range = maxParam - minParam;
+        const scale = range == 0 ? 0 : (value - minParam) / range;
+        const colorIndex = Math.min(
+          Math.floor(scale * (gradientArray.length - 1)),
+          gradientArray.length - 1,
+        );
+        return hexToRgb(gradientArray[colorIndex]);
+      };
+
+      _layers.push(
+        new PointCloudLayer({
+          id: 'PointCloudLayer',
+          data: mapLayers[SOLAR_IRRADIANCE].data,
+          material: false,
+
+          getColor: getColor,
+          getPosition: (d) => d.position,
+          pointSize: 1,
+          sizeUnits: 'meters',
+
+          coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+          pickable: true,
+
+          getFilterValue: (d) => d.value,
+          filterRange: filter,
+          extensions: [new DataFilterExtension({ filterSize: 1 })],
+
+          updateTriggers: {
+            getColor: [range],
+          },
+        }),
+      );
+    }
+
+    return _layers;
+  }, [filter, mapLayers, range, selectedMapCategory]);
+
+  return layers;
+};
+
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
@@ -55,11 +118,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   const visibility = useMapStore((state) => state.visibility);
 
-  const range = useMapStore((state) => state.range);
-  const filter = useMapStore((state) => state.filter);
-
   const mapStyle = useMapStyle();
-  const mapLayers = useGetMapLayers();
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -111,7 +170,7 @@ const DeckGLMap = ({ data, colors }) => {
     }
   }, [data, mapRef, resetCameraOptions, setCameraOptions, setViewState]);
 
-  const layers = useMemo(() => {
+  const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
       const name = object.properties['Name'];
       if (layer.id !== selectedLayer) {
@@ -299,63 +358,21 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    if (mapLayers[SOLAR_IRRADIANCE]) {
-      const minParam = range[0];
-      const maxParam = range[1];
-
-      const gradientArray = new Gradient()
-        .setColorGradient(...LEGEND_COLOUR_ARRAY)
-        .setMidpoint(LEGEND_POINTS)
-        .getColors();
-
-      const getColor = ({ value }) => {
-        const range = maxParam - minParam;
-        const scale = range == 0 ? 0 : (value - minParam) / range;
-        const colorIndex = Math.min(
-          Math.floor(scale * (gradientArray.length - 1)),
-          gradientArray.length - 1,
-        );
-        return hexToRgb(gradientArray[colorIndex]);
-      };
-
-      _layers.push(
-        new PointCloudLayer({
-          id: 'PointCloudLayer',
-          data: mapLayers[SOLAR_IRRADIANCE].data,
-          material: false,
-
-          getColor: getColor,
-          getPosition: (d) => d.position,
-          pointSize: 1,
-          sizeUnits: 'meters',
-
-          coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-          pickable: true,
-
-          getFilterValue: (d) => d.value,
-          filterRange: filter,
-          extensions: [new DataFilterExtension({ filterSize: 1 })],
-
-          updateTriggers: {
-            getColor: [range],
-          },
-        }),
-      );
-    }
     return _layers;
   }, [
     visibility,
     data,
-    mapLayers,
     selectedLayer,
     dispatch,
     selected,
     extruded,
     colors,
     connectedBuildings,
-    range,
-    filter,
   ]);
+
+  const mapLayers = useMapLayers();
+
+  const layers = [...dataLayers, ...mapLayers];
 
   const onDragStart = (info, event) => {
     if (!firstPitch.current && event.rightButton) {
