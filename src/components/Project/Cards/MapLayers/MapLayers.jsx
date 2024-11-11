@@ -2,7 +2,11 @@ import { Tooltip } from 'antd';
 
 import { useEffect, useState } from 'react';
 import { useMapStore } from '../../../Map/store/store';
-import { SolarRadiationIcon } from '../../../../assets/icons';
+import {
+  SolarRadiationIcon,
+  GraphsIcon,
+  NetworksIcon,
+} from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
 import { useGetMapLayerCategories } from '../../../Map/Layers';
 
@@ -54,12 +58,13 @@ const MapLayers = () => {
       }}
     >
       {mapLayers?.categories?.map((category) => {
-        const { name } = category;
+        const { name, label } = category;
         return (
           <CategoryIconButton
             key={name}
             onClick={toggleActive}
             category={name}
+            label={label}
             active={active == name}
           />
         );
@@ -68,9 +73,13 @@ const MapLayers = () => {
   );
 };
 
-const CategoryIconButton = ({ category, onClick, active }) => {
-  // FIXME: This is hardcoded for now
-  const _icon = SolarRadiationIcon;
+const iconMap = {
+  'solar-irradiance': SolarRadiationIcon,
+  network: NetworksIcon,
+};
+
+const CategoryIconButton = ({ category, label, onClick, active }) => {
+  const _icon = iconMap?.[category] || GraphsIcon;
   const style = active
     ? {
         color: 'white',
@@ -85,7 +94,7 @@ const CategoryIconButton = ({ category, onClick, active }) => {
   };
 
   return (
-    <Tooltip title={category} overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title={label || category} overlayInnerStyle={{ fontSize: 12 }}>
       <_icon
         className="cea-card-toolbar-icon"
         style={style}
