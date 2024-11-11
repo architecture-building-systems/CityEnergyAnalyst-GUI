@@ -103,9 +103,6 @@ const DeckGLMap = ({ data, colors }) => {
 
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
-  const connectedBuildings = useSelector(
-    (state) => state.inputData.connected_buildings,
-  );
 
   const viewState = useMapStore((state) => state.viewState);
   const setViewState = useMapStore((state) => state.setViewState);
@@ -119,6 +116,8 @@ const DeckGLMap = ({ data, colors }) => {
   const visibility = useMapStore((state) => state.visibility);
 
   const mapStyle = useMapStyle();
+
+  const buildingColor = buildingColorFunction(colors, selected);
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -197,7 +196,6 @@ const DeckGLMap = ({ data, colors }) => {
       }
     };
 
-    const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
     if (data?.zone) {
       _layers.push(
@@ -211,15 +209,7 @@ const DeckGLMap = ({ data, colors }) => {
           visible: visibility.zone,
 
           getElevation: (f) => f.properties['height_ag'],
-          getFillColor: (f) =>
-            buildingColor(
-              f.properties['Name'],
-              'zone',
-              colors,
-              connectedBuildings[network_type],
-              selected,
-              network_type,
-            ),
+          getFillColor: (f) => buildingColor(f.properties['Name'], 'zone'),
           updateTriggers: {
             getFillColor: [selected, visibility.dc],
           },
@@ -246,14 +236,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>
-            buildingColor(
-              f.properties['Name'],
-              'surroundings',
-              colors,
-              connectedBuildings[network_type],
-              selected,
-              network_type,
-            ),
+            buildingColor(f.properties['Name'], 'surroundings'),
           updateTriggers: {
             getFillColor: selected,
           },
@@ -275,50 +258,6 @@ const DeckGLMap = ({ data, colors }) => {
           getLineColor: [171, 95, 127],
           getLineWidth: 0.75,
           visible: visibility.streets,
-
-          pickable: true,
-          autoHighlight: true,
-
-          onHover: updateTooltip,
-        }),
-      );
-    }
-    if (data?.dc) {
-      _layers.push(
-        new GeoJsonLayer({
-          id: 'dc',
-          data: data.dc,
-          stroked: false,
-          filled: true,
-          visible: visibility.dc && visibility.network,
-
-          getLineColor: colors.dc,
-          getFillColor: (f) =>
-            nodeFillColor(f.properties['Type'], colors, 'dc'),
-          getLineWidth: 3,
-          getPointRadius: 3,
-
-          pickable: true,
-          autoHighlight: true,
-
-          onHover: updateTooltip,
-        }),
-      );
-    }
-    if (data?.dh) {
-      _layers.push(
-        new GeoJsonLayer({
-          id: 'dh',
-          data: data.dh,
-          stroked: false,
-          filled: true,
-          visible: visibility.dh && visibility.network,
-
-          getLineColor: colors.dh,
-          getFillColor: (f) =>
-            nodeFillColor(f.properties['Type'], colors, 'dh'),
-          getLineWidth: 3,
-          getPointRadius: 3,
 
           pickable: true,
           autoHighlight: true,
@@ -366,15 +305,14 @@ const DeckGLMap = ({ data, colors }) => {
     dispatch,
     selected,
     extruded,
-    colors,
-    connectedBuildings,
+    buildingColor,
   ]);
 
   const mapLayers = useMapLayers();
 
   const layers = [...dataLayers, ...mapLayers];
 
-  const onDragStart = (info, event) => {
+  const onDragStart = (_, event) => {
     if (!firstPitch.current && event.rightButton) {
       setExtruded(true);
       firstPitch.current = true;
@@ -449,29 +387,12 @@ function updateTooltip({ x, y, object, layer }) {
   }
 }
 
-const nodeFillColor = (type, colors, network) => {
-  if (type === 'NONE') {
-    return network === 'dc' ? colors.dc : network === 'dh' ? colors.dh : null;
-  } else if (type === 'CONSUMER') {
-    return [255, 255, 255];
-  } else if (type === 'PLANT') {
-    return [0, 0, 0];
-  }
-};
-
-const buildingColor = (
-  buildingName,
-  layer,
-  colors,
-  connectedBuildings,
-  selected,
-  network_type,
-) => {
+const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
   if (selected.includes(buildingName)) {
     return [255, 255, 0, 255];
   }
   if (layer === 'surroundings') return colors.surroundings;
-  if (connectedBuildings.includes(buildingName)) return colors[network_type];
+
   return colors.disconnected;
 };
 
