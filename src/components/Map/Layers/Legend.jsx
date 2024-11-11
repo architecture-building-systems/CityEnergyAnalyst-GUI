@@ -2,6 +2,7 @@ import Gradient from 'javascript-color-gradient';
 import { useMapStore } from '../store/store';
 import { Select } from 'antd';
 import { useEffect, useState } from 'react';
+import { useMapLegends } from '.';
 
 const ColourRampLegend = ({ label, colours, points, range }) => {
   const [value, setValue] = useState(Object.keys(range)[0]);
@@ -79,7 +80,7 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
 
 export const Legend = () => {
   const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
-  const mapLayerLegends = useMapStore((state) => state.mapLayerLegends);
+  const mapLayerLegends = useMapLegends();
 
   if (!selectedMapCategory?.layers) return null;
 

@@ -39,7 +39,8 @@ const fetchMapLayer = async (category, layer_name, params) => {
   }
 };
 
-export const useGetMapLayers = (mapCategoryInfo) => {
+export const useGetMapLayers = () => {
+  const mapCategoryInfo = useMapStore((state) => state.selectedMapCategory);
   const mapLayers = useMapStore((state) => state.mapLayers);
   const setMapLayers = useMapStore((state) => state.setMapLayers);
 
@@ -69,7 +70,44 @@ export const useGetMapLayers = (mapCategoryInfo) => {
 
       generateLayers();
     } else setMapLayers({});
-  }, [mapCategoryInfo, mapLayerParameters]);
+  }, [
+    mapCategoryInfo,
+    mapLayerParameters,
+    project,
+    scenarioName,
+    setMapLayers,
+  ]);
 
   return mapLayers;
+};
+
+export const SOLAR_IRRADIANCE = 'solar-irradiance';
+export const LEGEND_COLOUR_ARRAY = ['#0000F5', '#EA3624', '#FFFF54'];
+export const LEGEND_POINTS = 12;
+
+export const useMapLegends = () => {
+  const mapLayers = useMapStore((state) => state.mapLayers);
+  const mapLegends = useMapStore((state) => state.mapLayerLegends);
+  const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
+
+  const project = useSelector((state) => state.project.info.project);
+  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+
+  useEffect(() => {
+    if (mapLayers[SOLAR_IRRADIANCE]) {
+      const props = mapLayers[SOLAR_IRRADIANCE].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [SOLAR_IRRADIANCE]: {
+          colourArray: LEGEND_COLOUR_ARRAY,
+          LEGEND_POINTS,
+          range: _range,
+          label,
+        },
+      });
+    } else setMapLayerLegends({});
+  }, [mapLayers, setMapLayerLegends, project, scenarioName]);
+
+  return mapLegends;
 };

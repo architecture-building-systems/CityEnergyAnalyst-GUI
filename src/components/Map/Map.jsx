@@ -14,51 +14,52 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { NetworkToggle } from './Toggle';
 import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
 import { useMapStore } from './store/store';
-import { useGetMapLayers } from './Layers';
+import {
+  LEGEND_COLOUR_ARRAY,
+  LEGEND_POINTS,
+  SOLAR_IRRADIANCE,
+  useGetMapLayers,
+} from './Layers';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
-const SOLAR_IRRADIANCE = 'solar-irradiance';
-const colourArray = ['#0000F5', '#EA3624', '#FFFF54'];
-const points = 12;
+const useMapStyle = () => {
+  const showMapStyleLabels = useMapStore((state) => state.mapLabels);
+
+  return showMapStyleLabels ? positron : no_label;
+};
 
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
   const cameraOptionsCalculated = useRef(false);
+
+  const [selectedLayer, setSelectedLayer] = useState();
+
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
   const connectedBuildings = useSelector(
     (state) => state.inputData.connected_buildings,
   );
 
-  const [selectedLayer, setSelectedLayer] = useState();
-
   const viewState = useMapStore((state) => state.viewState);
-  const extruded = useMapStore((state) => state.extruded);
+  const setViewState = useMapStore((state) => state.setViewState);
 
-  const visibility = useMapStore((state) => state.visibility);
-  const mapLabels = useMapStore((state) => state.mapLabels);
+  const extruded = useMapStore((state) => state.extruded);
+  const setExtruded = useMapStore((state) => state.setExtruded);
 
   const setCameraOptions = useMapStore((state) => state.setCameraOptions);
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
-  const setViewState = useMapStore((state) => state.setViewState);
-  const setExtruded = useMapStore((state) => state.setExtruded);
 
-  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
-  const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
+  const visibility = useMapStore((state) => state.visibility);
 
   const range = useMapStore((state) => state.range);
   const filter = useMapStore((state) => state.filter);
 
-  const removeMapLayerLegend = useMapStore(
-    (state) => state.removeMapLayerLegend,
-  );
-
-  const mapLayers = useGetMapLayers(selectedMapCategory);
+  const mapStyle = useMapStyle();
+  const mapLayers = useGetMapLayers();
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -103,13 +104,12 @@ const DeckGLMap = ({ data, colors }) => {
       };
       zoomToBounds();
       cameraOptionsCalculated.current = true;
-    }
-    if (!data?.zone) {
+    } else if (!data?.zone) {
       // Reset camera options if no zone data is present
       resetCameraOptions();
       cameraOptionsCalculated.current = false;
     }
-  }, [data, mapRef]);
+  }, [data, mapRef, resetCameraOptions, setCameraOptions, setViewState]);
 
   const layers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
@@ -304,8 +304,8 @@ const DeckGLMap = ({ data, colors }) => {
       const maxParam = range[1];
 
       const gradientArray = new Gradient()
-        .setColorGradient(...colourArray)
-        .setMidpoint(points)
+        .setColorGradient(...LEGEND_COLOUR_ARRAY)
+        .setMidpoint(LEGEND_POINTS)
         .getColors();
 
       const getColor = ({ value }) => {
@@ -329,7 +329,6 @@ const DeckGLMap = ({ data, colors }) => {
           pointSize: 1,
           sizeUnits: 'meters',
 
-          // coordinateOrigin: [0, 0],
           coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
           pickable: true,
 
@@ -365,32 +364,6 @@ const DeckGLMap = ({ data, colors }) => {
     }
   };
 
-  // const onNetworkChange = (value) => {
-  //   setVisibility((oldValue) => ({
-  //     ...oldValue,
-  //     dc: value === 'dc',
-  //     dh: value === 'dh',
-  //   }));
-  // };
-
-  useEffect(() => {
-    if (mapLayers[SOLAR_IRRADIANCE]) {
-      const props = mapLayers[SOLAR_IRRADIANCE].properties;
-      const label = props['label'];
-      const _range = props['range'];
-      setMapLayerLegends({
-        [SOLAR_IRRADIANCE]: {
-          colourArray,
-          points,
-          range: _range,
-          label,
-        },
-      });
-    } else {
-      removeMapLayerLegend(SOLAR_IRRADIANCE);
-    }
-  }, [mapLayers, removeMapLayerLegend, setMapLayerLegends]);
-
   return (
     <>
       <DeckGL
@@ -405,19 +378,7 @@ const DeckGLMap = ({ data, colors }) => {
           e.preventDefault();
         }}
       >
-        <Map
-          ref={mapRef}
-          mapStyle={mapLabels ? positron : no_label}
-          minZoom={1}
-        />
-        {/* <NetworkToggle
-          cooling={data?.dc !== null}
-          heating={data?.dh !== null}
-          initialValue={
-            data?.dc !== null ? 'dc' : data?.dh !== null ? 'dh' : null
-          }
-          onChange={onNetworkChange}
-        /> */}
+        <Map ref={mapRef} mapStyle={mapStyle} minZoom={1} />
       </DeckGL>
       <div id="map-tooltip"></div>
     </>
