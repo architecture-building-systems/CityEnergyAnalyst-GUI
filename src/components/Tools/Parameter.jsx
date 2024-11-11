@@ -92,6 +92,7 @@ const Parameter = ({ parameter, form }) => {
     case 'SingleBuildingParameter':
     case 'GenerationParameter':
     case 'SystemParameter':
+    case 'PVChoiceParameter':
       return (
         <FormItemWrapper
           form={form}
