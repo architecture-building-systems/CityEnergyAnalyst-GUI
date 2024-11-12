@@ -8,7 +8,11 @@ import {
   NetworksIcon,
 } from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
-import { useGetMapLayerCategories } from '../../../Map/Layers';
+import {
+  SOLAR_IRRADIANCE,
+  THERMAL_NETWORK,
+  useGetMapLayerCategories,
+} from '../../../Map/Layers';
 
 const MapLayers = () => {
   const [active, setActive] = useState(null);
@@ -74,8 +78,8 @@ const MapLayers = () => {
 };
 
 const iconMap = {
-  'solar-irradiance': SolarRadiationIcon,
-  network: NetworksIcon,
+  [SOLAR_IRRADIANCE]: SolarRadiationIcon,
+  [THERMAL_NETWORK]: NetworksIcon,
 };
 
 const CategoryIconButton = ({ category, label, onClick, active }) => {
