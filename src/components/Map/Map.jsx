@@ -20,6 +20,7 @@ import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIANCE,
+  THERMAL_NETWORK,
   useGetMapLayers,
 } from './Layers';
 import Gradient from 'javascript-color-gradient';
@@ -31,7 +32,7 @@ const useMapStyle = () => {
   return showMapStyleLabels ? positron : no_label;
 };
 
-const useMapLayers = () => {
+const useMapLayers = (colours) => {
   const mapLayers = useGetMapLayers();
 
   const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
@@ -88,8 +89,50 @@ const useMapLayers = () => {
       );
     }
 
+    if (mapLayers[THERMAL_NETWORK]) {
+      const nodeFillColor = (type) => {
+        if (type === 'NONE') {
+          return colours.dc;
+        } else if (type === 'CONSUMER') {
+          return [255, 255, 255];
+        } else if (type === 'PLANT') {
+          return [255, 255, 255];
+        }
+      };
+
+      const nodeRadius = (type) => {
+        if (type === 'NONE') {
+          return 1;
+        } else if (type === 'CONSUMER') {
+          return 2;
+        } else if (type === 'PLANT') {
+          return 5;
+        }
+      };
+
+      _layers.push(
+        new GeoJsonLayer({
+          id: `${THERMAL_NETWORK}-edges`,
+          data: mapLayers[THERMAL_NETWORK]?.edges,
+          getLineWidth: (f) => f.properties['peak_mass_flow'] / 10,
+          getLineColor: colours.dc,
+        }),
+      );
+
+      _layers.push(
+        new GeoJsonLayer({
+          id: `${THERMAL_NETWORK}-nodes`,
+          data: mapLayers[THERMAL_NETWORK]?.nodes,
+          getFillColor: (f) => nodeFillColor(f.properties['Type']),
+          getPointRadius: (f) => nodeRadius(f.properties['Type']),
+          getLineColor: colours.dc,
+          getLineWidth: 0.5,
+        }),
+      );
+    }
+
     return _layers;
-  }, [filter, mapLayers, range, selectedMapCategory]);
+  }, [filter, mapLayers, range, selectedMapCategory, colours]);
 
   return layers;
 };
@@ -308,7 +351,7 @@ const DeckGLMap = ({ data, colors }) => {
     buildingColor,
   ]);
 
-  const mapLayers = useMapLayers();
+  const mapLayers = useMapLayers(colors);
 
   const layers = [...dataLayers, ...mapLayers];
 
