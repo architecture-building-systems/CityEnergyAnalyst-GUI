@@ -10,7 +10,7 @@ export const useMapStore = create((set) => ({
   selectedMapCategory: {},
   mapLayerParameters: null,
   mapLayerLegends: null,
-  mapLayers: {},
+  mapLayers: null,
   filter: [0, 1000],
   range: [0, 1000],
 

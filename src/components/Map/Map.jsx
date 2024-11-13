@@ -45,12 +45,12 @@ const useMapLayers = (colours) => {
     let _layers = [];
 
     // Return early if no layers are selected
-    if (!categoryLayers) return _layers;
+    if (!categoryLayers || mapLayers === null) return _layers;
 
     categoryLayers.forEach((layer) => {
       const { name } = layer;
 
-      if (name == SOLAR_IRRADIANCE && mapLayers[SOLAR_IRRADIANCE]) {
+      if (name == SOLAR_IRRADIANCE && mapLayers?.[SOLAR_IRRADIANCE]) {
         const minParam = range[0];
         const maxParam = range[1];
 
@@ -94,7 +94,7 @@ const useMapLayers = (colours) => {
         );
       }
 
-      if (name == THERMAL_NETWORK && mapLayers[THERMAL_NETWORK]) {
+      if (name == THERMAL_NETWORK && mapLayers?.[THERMAL_NETWORK]) {
         const colour = colours?.dc ?? [255, 255, 255];
 
         const nodeFillColor = (type) => {

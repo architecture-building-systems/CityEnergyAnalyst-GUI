@@ -28,7 +28,7 @@ const ParameterSelectors = () => {
     }
   }, [layers, setMapLayerParameters]);
 
-  if (!layers || !mapLayers || Object.keys(mapLayers).length === 0) return null;
+  if (!layers || mapLayers === null) return null;
 
   return (
     <div

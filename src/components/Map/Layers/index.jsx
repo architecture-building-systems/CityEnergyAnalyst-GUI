@@ -69,7 +69,7 @@ export const useGetMapLayers = () => {
       };
 
       generateLayers();
-    } else setMapLayers({});
+    } else setMapLayers(null);
   }, [
     mapCategoryInfo,
     mapLayerParameters,
@@ -96,7 +96,7 @@ export const useMapLegends = () => {
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   useEffect(() => {
-    if (mapLayers[SOLAR_IRRADIANCE]) {
+    if (mapLayers?.[SOLAR_IRRADIANCE]) {
       const props = mapLayers[SOLAR_IRRADIANCE].properties;
       const label = props['label'];
       const _range = props['range'];
