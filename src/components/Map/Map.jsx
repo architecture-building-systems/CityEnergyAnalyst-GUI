@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -364,12 +364,26 @@ const DeckGLMap = ({ data, colors }) => {
 
   const layers = [...dataLayers, ...mapLayers];
 
-  const onDragStart = (_, event) => {
-    if (!firstPitch.current && event.rightButton) {
-      setExtruded(true);
-      firstPitch.current = true;
-    }
-  };
+  const onDragStart = useCallback(
+    (_, event) => {
+      if (!firstPitch.current && event.rightButton) {
+        setExtruded(true);
+        firstPitch.current = true;
+      }
+    },
+    [setExtruded],
+  );
+
+  const _onViewStateChange = useCallback(
+    ({ viewState }) => {
+      setViewState(viewState);
+    },
+    [setViewState],
+  );
+
+  const onContextMenu = useCallback((e) => {
+    e.preventDefault();
+  }, []);
 
   return (
     <>
@@ -377,13 +391,9 @@ const DeckGLMap = ({ data, colors }) => {
         viewState={viewState}
         controller={{ inertia: true }}
         layers={layers}
-        onViewStateChange={({ viewState }) => {
-          setViewState(viewState);
-        }}
+        onViewStateChange={_onViewStateChange}
         onDragStart={onDragStart}
-        onContextMenu={(e) => {
-          e.preventDefault();
-        }}
+        onContextMenu={onContextMenu}
       >
         <Map ref={mapRef} mapStyle={mapStyle} minZoom={1} />
       </DeckGL>
