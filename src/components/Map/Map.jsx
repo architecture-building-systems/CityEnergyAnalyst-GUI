@@ -35,7 +35,9 @@ const useMapStyle = () => {
 const useMapLayers = (colours) => {
   const mapLayers = useGetMapLayers();
 
-  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
+  const categoryLayers = useMapStore(
+    (state) => state.selectedMapCategory?.layers,
+  );
   const range = useMapStore((state) => state.range);
   const filter = useMapStore((state) => state.filter);
 
@@ -43,96 +45,103 @@ const useMapLayers = (colours) => {
     let _layers = [];
 
     // Return early if no layers are selected
-    if (!selectedMapCategory) return _layers;
+    if (!categoryLayers) return _layers;
 
-    if (mapLayers[SOLAR_IRRADIANCE]) {
-      const minParam = range[0];
-      const maxParam = range[1];
+    categoryLayers.forEach((layer) => {
+      const { name } = layer;
 
-      const gradientArray = new Gradient()
-        .setColorGradient(...LEGEND_COLOUR_ARRAY)
-        .setMidpoint(LEGEND_POINTS)
-        .getColors();
+      if (name == SOLAR_IRRADIANCE && mapLayers[SOLAR_IRRADIANCE]) {
+        const minParam = range[0];
+        const maxParam = range[1];
 
-      const getColor = ({ value }) => {
-        const range = maxParam - minParam;
-        const scale = range == 0 ? 0 : (value - minParam) / range;
-        const colorIndex = Math.min(
-          Math.floor(scale * (gradientArray.length - 1)),
-          gradientArray.length - 1,
+        const gradientArray = new Gradient()
+          .setColorGradient(...LEGEND_COLOUR_ARRAY)
+          .setMidpoint(LEGEND_POINTS)
+          .getColors();
+
+        const getColor = ({ value }) => {
+          const range = maxParam - minParam;
+          const scale = range == 0 ? 0 : (value - minParam) / range;
+          const colorIndex = Math.min(
+            Math.floor(scale * (gradientArray.length - 1)),
+            gradientArray.length - 1,
+          );
+          return hexToRgb(gradientArray[colorIndex]);
+        };
+
+        _layers.push(
+          new PointCloudLayer({
+            id: 'PointCloudLayer',
+            data: mapLayers[SOLAR_IRRADIANCE].data,
+            material: false,
+
+            getColor: getColor,
+            getPosition: (d) => d.position,
+            pointSize: 1,
+            sizeUnits: 'meters',
+
+            coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+            pickable: true,
+
+            getFilterValue: (d) => d.value,
+            filterRange: filter,
+            extensions: [new DataFilterExtension({ filterSize: 1 })],
+
+            updateTriggers: {
+              getColor: [range],
+            },
+          }),
         );
-        return hexToRgb(gradientArray[colorIndex]);
-      };
+      }
 
-      _layers.push(
-        new PointCloudLayer({
-          id: 'PointCloudLayer',
-          data: mapLayers[SOLAR_IRRADIANCE].data,
-          material: false,
+      if (name == THERMAL_NETWORK && mapLayers[THERMAL_NETWORK]) {
+        const colour = colours?.dc ?? [255, 255, 255];
 
-          getColor: getColor,
-          getPosition: (d) => d.position,
-          pointSize: 1,
-          sizeUnits: 'meters',
+        const nodeFillColor = (type) => {
+          if (type === 'NONE') {
+            return colour;
+          } else if (type === 'CONSUMER') {
+            return [255, 255, 255];
+          } else if (type === 'PLANT') {
+            return colours?.dh ?? [255, 255, 255];
+          }
+        };
 
-          coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-          pickable: true,
+        const nodeRadius = (type) => {
+          if (type === 'NONE') {
+            return 1;
+          } else if (type === 'CONSUMER') {
+            return 2;
+          } else if (type === 'PLANT') {
+            return 5;
+          }
+        };
 
-          getFilterValue: (d) => d.value,
-          filterRange: filter,
-          extensions: [new DataFilterExtension({ filterSize: 1 })],
+        _layers.push(
+          new GeoJsonLayer({
+            id: `${THERMAL_NETWORK}-edges`,
+            data: mapLayers[THERMAL_NETWORK]?.edges,
+            getLineWidth: (f) => f.properties['peak_mass_flow'] / 100,
+            getLineColor: colour,
+            zIndex: 100,
+          }),
+        );
 
-          updateTriggers: {
-            getColor: [range],
-          },
-        }),
-      );
-    }
-
-    if (mapLayers[THERMAL_NETWORK]) {
-      const nodeFillColor = (type) => {
-        if (type === 'NONE') {
-          return colours.dc;
-        } else if (type === 'CONSUMER') {
-          return [255, 255, 255];
-        } else if (type === 'PLANT') {
-          return [255, 255, 255];
-        }
-      };
-
-      const nodeRadius = (type) => {
-        if (type === 'NONE') {
-          return 1;
-        } else if (type === 'CONSUMER') {
-          return 2;
-        } else if (type === 'PLANT') {
-          return 5;
-        }
-      };
-
-      _layers.push(
-        new GeoJsonLayer({
-          id: `${THERMAL_NETWORK}-edges`,
-          data: mapLayers[THERMAL_NETWORK]?.edges,
-          getLineWidth: (f) => f.properties['peak_mass_flow'] / 10,
-          getLineColor: colours.dc,
-        }),
-      );
-
-      _layers.push(
-        new GeoJsonLayer({
-          id: `${THERMAL_NETWORK}-nodes`,
-          data: mapLayers[THERMAL_NETWORK]?.nodes,
-          getFillColor: (f) => nodeFillColor(f.properties['Type']),
-          getPointRadius: (f) => nodeRadius(f.properties['Type']),
-          getLineColor: colours.dc,
-          getLineWidth: 0.5,
-        }),
-      );
-    }
+        _layers.push(
+          new GeoJsonLayer({
+            id: `${THERMAL_NETWORK}-nodes`,
+            data: mapLayers[THERMAL_NETWORK]?.nodes,
+            getFillColor: (f) => nodeFillColor(f.properties['Type']),
+            getPointRadius: (f) => nodeRadius(f.properties['Type']),
+            getLineColor: colour,
+            getLineWidth: 0.5,
+          }),
+        );
+      }
+    });
 
     return _layers;
-  }, [filter, mapLayers, range, selectedMapCategory, colours]);
+  }, [filter, mapLayers, range, categoryLayers, colours]);
 
   return layers;
 };
