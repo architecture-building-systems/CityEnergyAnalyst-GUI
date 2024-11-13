@@ -16,7 +16,7 @@ import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
 import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
-import MapLayers from '../components/Project/Cards/MapLayers/MapLayers';
+import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
 import ParameterSelectors from '../components/Map/Layers/Selectors/base';
 import { Legend } from '../components/Map/Layers/Legend';
 import { useToolStore } from '../components/Tools/store';
@@ -208,7 +208,7 @@ const ProjectOverlay = () => {
               <MapControls />
             </div>
 
-            <MapLayers />
+            <MapLayersCard />
           </div>
         </div>
       </div>

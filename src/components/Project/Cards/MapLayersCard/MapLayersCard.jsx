@@ -14,7 +14,7 @@ import {
   useGetMapLayerCategories,
 } from '../../../Map/Layers';
 
-const MapLayers = () => {
+const MapLayersCard = () => {
   const [active, setActive] = useState(null);
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
@@ -108,4 +108,4 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
   );
 };
 
-export default MapLayers;
+export default MapLayersCard;
