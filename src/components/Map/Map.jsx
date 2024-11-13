@@ -169,7 +169,10 @@ const DeckGLMap = ({ data, colors }) => {
 
   const mapStyle = useMapStyle();
 
-  const buildingColor = buildingColorFunction(colors, selected);
+  const buildingColor = useMemo(
+    () => buildingColorFunction(colors, selected),
+    [colors, selected],
+  );
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
