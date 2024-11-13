@@ -79,10 +79,11 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
 };
 
 export const Legend = () => {
-  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
+  const layers = useMapStore((state) => state.selectedMapCategory?.layers);
   const mapLayerLegends = useMapLegends();
 
-  if (!selectedMapCategory?.layers) return null;
+  if (!layers || !mapLayerLegends || Object.keys(mapLayerLegends).length === 0)
+    return null;
 
   return (
     <div
