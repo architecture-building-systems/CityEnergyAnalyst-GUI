@@ -6,6 +6,7 @@ import NetworksIcon from './networks.svg';
 import OptimisationIcon from './optimisation.svg';
 import SolarRadiationIcon from './solar_radiation.svg';
 import UtilitiesIcon from './utilities.svg';
+import ImportExportIcon from './import_export.svg';
 
 import DatabaseEditorIcon from './database_editor.svg';
 import InputEditorIcon from './input_editor.svg';
@@ -46,4 +47,5 @@ export {
   ExtrudeIcon,
   CameraView,
   Compass,
+  ImportExportIcon,
 };
