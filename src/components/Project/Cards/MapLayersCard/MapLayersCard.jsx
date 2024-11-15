@@ -11,8 +11,8 @@ import { useSelector } from 'react-redux';
 import {
   SOLAR_IRRADIANCE,
   THERMAL_NETWORK,
-  useGetMapLayerCategories,
-} from '../../../Map/Layers';
+} from '../../../Map/Layers/constants';
+import { useGetMapLayerCategories } from '../../../Map/Layers';
 
 const MapLayersCard = () => {
   const [active, setActive] = useState(null);
@@ -22,7 +22,7 @@ const MapLayersCard = () => {
 
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
-  const mapLayers = useGetMapLayerCategories();
+  const mapLayerCategories = useGetMapLayerCategories();
 
   const toggleActive = (category) => {
     setActive(active == category ? null : category);
@@ -37,7 +37,9 @@ const MapLayersCard = () => {
     if (active == null) {
       setSelectedMapCategory(null);
     } else {
-      const layers = mapLayers?.categories?.find((l) => l.name == active);
+      const layers = mapLayerCategories?.categories?.find(
+        (l) => l.name == active,
+      );
       setSelectedMapCategory(layers);
     }
   }, [active]);
@@ -61,7 +63,7 @@ const MapLayersCard = () => {
         fontSize: 12,
       }}
     >
-      {mapLayers?.categories?.map((category) => {
+      {mapLayerCategories?.categories?.map((category) => {
         const { name, label } = category;
         return (
           <CategoryIconButton

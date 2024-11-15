@@ -7,7 +7,7 @@ export const useMapStore = create((set) => ({
   viewState: defaultViewState,
   extruded: false,
   cameraOptions: defaultViewState,
-  selectedMapCategory: {},
+  selectedMapCategory: null,
   mapLayerParameters: null,
   mapLayerLegends: null,
   mapLayers: null,

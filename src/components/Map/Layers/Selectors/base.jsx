@@ -1,34 +1,51 @@
-import { useEffect } from 'react';
-import { useMapStore } from '../../store/store';
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
+import { useMemo } from 'react';
 
-const ParameterSelectors = () => {
-  const layers = useMapStore((state) => state.selectedMapCategory?.layers);
-  const mapLayers = useMapStore((state) => state.mapLayers);
+const ParameterSelectors = ({ layers }) => {
+  const parameters = useMemo(
+    () =>
+      layers.map((layer) => {
+        const { name, parameters } = layer;
+        return (
+          <div key={name}>
+            {Object.entries(parameters).map(([key, parameter]) => {
+              const { name, default: defaultValue, selector } = parameter;
 
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
+              switch (selector) {
+                case 'time-series':
+                  return (
+                    <TimeSeriesSelector
+                      key={key}
+                      parameterName={name}
+                      defaultValue={defaultValue}
+                    />
+                  );
+                case 'threshold':
+                  return (
+                    <ThresholdSelector
+                      key={key}
+                      parameterName={name}
+                      defaultValue={defaultValue}
+                    />
+                  );
+                default:
+                  if (selector) {
+                    return (
+                      <div style={{ paddding: 12 }}>
+                        Unknown parameter type: {selector}
+                      </div>
+                    );
+                  }
+              }
+            })}
+          </div>
+        );
+      }),
+    [layers],
   );
 
-  useEffect(() => {
-    if (layers) {
-      let parameters = {};
-      for (const layer of layers) {
-        const { parameters: layerParameters } = layer;
-
-        // Apply default parameter values
-        for (const [key, value] of Object.entries(layerParameters)) {
-          if (value?.default) parameters[key] = value.default;
-        }
-      }
-      setMapLayerParameters(parameters);
-    } else {
-      setMapLayerParameters(null);
-    }
-  }, [layers, setMapLayerParameters]);
-
-  if (!layers || mapLayers === null) return null;
+  console.log('parameters', parameters);
 
   return (
     <div
@@ -49,19 +66,7 @@ const ParameterSelectors = () => {
         gap: 2,
       }}
     >
-      {/* {layers.map((layer) => {
-        const { name, parameters } = layer;
-        console.log(name, parameters);
-        return (
-          <TimeSeriesSelector
-            key={name}
-            parameterName={name}
-            defaultValue={parameters?.hour ?? 3636}
-          />
-        );
-      })} */}
-      <TimeSeriesSelector parameterName={'hour'} defaultValue={3636} />
-      <ThresholdSelector defaultValue={[0, 1200]} />
+      {parameters?.length > 0 ? parameters : <div>No parameters found</div>}
     </div>
   );
 };

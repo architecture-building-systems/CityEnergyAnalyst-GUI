@@ -21,8 +21,7 @@ import {
   LEGEND_POINTS,
   SOLAR_IRRADIANCE,
   THERMAL_NETWORK,
-  useGetMapLayers,
-} from './Layers';
+} from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
@@ -33,8 +32,7 @@ const useMapStyle = () => {
 };
 
 const useMapLayers = (colours) => {
-  const mapLayers = useGetMapLayers();
-
+  const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
     (state) => state.selectedMapCategory?.layers,
   );

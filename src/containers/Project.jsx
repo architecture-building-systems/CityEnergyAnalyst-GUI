@@ -17,9 +17,8 @@ import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
 import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
 import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
-import ParameterSelectors from '../components/Map/Layers/Selectors/base';
-import { Legend } from '../components/Map/Layers/Legend';
 import { useToolStore } from '../components/Tools/store';
+import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -147,10 +146,7 @@ const ProjectOverlay = () => {
           )}
         </div>
         <div id="cea-project-overlay-left-bottom">
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Legend />
-            <ParameterSelectors />
-          </div>
+          <MapLayerPropertiesCard />
           {transitionFromBottom((styles, item) =>
             item ? (
               <animated.div
