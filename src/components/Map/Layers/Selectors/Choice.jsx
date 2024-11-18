@@ -25,6 +25,7 @@ const ChoiceSelector = ({ parameterName, value, defaultValue, choices }) => {
         defaultValue={value ?? defaultValue}
         options={options}
         size="small"
+        placement="topLeft"
       />
     </div>
   );
