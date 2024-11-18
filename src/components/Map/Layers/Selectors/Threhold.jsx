@@ -9,7 +9,7 @@ const ThresholdSelector = ({ value, defaultValue, range }) => {
   };
 
   return (
-    <div style={{ padding: 8 }}>
+    <div style={{ padding: 8, userSelect: 'none' }}>
       <div style={{ display: 'flex', gap: 8 }}>
         <b>Threshold</b>
         <i>
