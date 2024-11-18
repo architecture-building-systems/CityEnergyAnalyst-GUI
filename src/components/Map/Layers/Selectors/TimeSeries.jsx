@@ -33,8 +33,9 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
 
   return (
     <div style={{ padding: 8 }}>
-      <div>
+      <div style={{ display: 'flex', gap: 8 }}>
         <b>Time Period</b>
+        <i>{hourOfYearToDateTime(2023, value + 1)}</i>
       </div>
       <Slider
         defaultValue={value ?? defaultValue}
@@ -42,7 +43,6 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
         max={8760 - 1}
         onChangeComplete={handleChange}
         tooltip={{
-          open: true,
           formatter: (value) => hourOfYearToDateTime(2023, value + 1),
         }}
       />

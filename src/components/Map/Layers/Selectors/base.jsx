@@ -44,8 +44,10 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
           </div>
         );
       }),
-    [layers],
+    [layers, parameterValues],
   );
+
+  if (!parameterValues) return null;
 
   return (
     <div

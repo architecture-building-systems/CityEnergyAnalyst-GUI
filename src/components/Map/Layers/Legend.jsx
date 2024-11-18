@@ -81,8 +81,7 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
 const Legend = () => {
   const mapLayerLegends = useMapLegends();
 
-  if (!mapLayerLegends || Object.keys(mapLayerLegends).length === 0)
-    return null;
+  if (!mapLayerLegends) return null;
 
   return (
     <div
@@ -107,22 +106,18 @@ const Legend = () => {
         marginRight: 'auto',
       }}
     >
-      {Object.keys(mapLayerLegends ?? {}).length === 0 ? (
-        <b>No data fouund</b>
-      ) : (
-        Object.keys(mapLayerLegends).map((key) => {
-          const value = mapLayerLegends[key];
-          return (
-            <ColourRampLegend
-              key={key}
-              label={value.label}
-              colours={value.colourArray}
-              points={value.points}
-              range={value.range}
-            />
-          );
-        })
-      )}
+      {Object.keys(mapLayerLegends).map((key) => {
+        const value = mapLayerLegends[key];
+        return (
+          <ColourRampLegend
+            key={key}
+            label={value.label}
+            colours={value.colourArray}
+            points={value.points}
+            range={value.range}
+          />
+        );
+      })}
     </div>
   );
 };

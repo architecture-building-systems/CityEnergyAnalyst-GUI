@@ -51,10 +51,34 @@ const MapLayerPropertiesCard = () => {
       </div>
     );
 
-  if (fetching) return <div>Fetching...</div>;
-
   return (
-    <div style={{ display: 'flex', gap: 12 }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: 12,
+        position: 'relative',
+      }}
+    >
+      {fetching && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+            pointerEvents: 'all',
+            userSelect: 'none',
+          }}
+        >
+          Fetching data...
+        </div>
+      )}
       <Legend />
       <ParameterSelectors
         layers={categoryInfo.layers}

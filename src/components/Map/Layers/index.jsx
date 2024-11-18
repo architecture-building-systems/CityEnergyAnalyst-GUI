@@ -122,7 +122,7 @@ export const useMapLegends = () => {
           label,
         },
       });
-    } else setMapLayerLegends({});
+    } else setMapLayerLegends(null);
   }, [mapLayers, setMapLayerLegends, project, scenarioName]);
 
   return mapLegends;

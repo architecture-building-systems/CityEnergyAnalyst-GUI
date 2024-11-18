@@ -1,13 +1,8 @@
 import { Slider } from 'antd';
 import { useMapStore } from '../../store/store';
 
-const ThresholdSelector = ({ parameterName, defaultValue }) => {
+const ThresholdSelector = ({ value, defaultValue, range = [0, 1000] }) => {
   const setFilter = useMapStore((state) => state.setFilter);
-
-  const mapLayers = useMapStore((state) => state.mapLayers);
-  // FIXME: Remove hardcoded values
-  const { min, max } = mapLayers?.['solar-irradiance']?.properties?.range
-    ?.total ?? { min: 0, max: 1000 };
 
   const handleChange = (value) => {
     setFilter(value);
@@ -15,16 +10,19 @@ const ThresholdSelector = ({ parameterName, defaultValue }) => {
 
   return (
     <div style={{ padding: 8 }}>
-      <div>
+      <div style={{ display: 'flex', gap: 8 }}>
         <b>Threshold</b>
+        <i>
+          [{value?.[0]} - {value?.[1]}]
+        </i>
       </div>
       <Slider
-        min={Number(min.toPrecision(3))}
-        max={Number(max.toPrecision(3))}
+        min={Number(range[0].toPrecision(3))}
+        max={Number(range[1].toPrecision(3))}
         defaultValue={defaultValue}
         range={{ draggableTrack: true }}
         onChangeComplete={handleChange}
-        tooltip={{ open: true, placement: 'bottom' }}
+        tooltip={{ placement: 'bottom' }}
       />
     </div>
   );
