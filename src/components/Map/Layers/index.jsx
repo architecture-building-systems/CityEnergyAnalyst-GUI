@@ -86,6 +86,7 @@ export const useGetMapLayers = (categoryInfo, parameters) => {
       } catch (error) {
         console.error(error.response?.data);
         setError(error.response?.data?.detail || 'Unknown error');
+        setMapLayers(null);
       } finally {
         setFetching(false);
       }
