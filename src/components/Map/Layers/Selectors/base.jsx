@@ -2,6 +2,7 @@ import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
 import { useMemo } from 'react';
 import { useMapStore } from '../../store/store';
+import ChoiceSelector from './Choice';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
@@ -12,7 +13,10 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
       layers.map((layer) => {
         const { name, parameters } = layer;
         return (
-          <div key={name}>
+          <div
+            key={name}
+            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+          >
             {Object.entries(parameters).map(([key, parameter]) => {
               const { default: defaultValue, selector } = parameter;
 
@@ -36,6 +40,18 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                       range={range}
                     />
                   );
+                case 'choice': {
+                  const { choices } = parameter;
+                  return (
+                    <ChoiceSelector
+                      key={`${name}-${key}`}
+                      parameterName={key}
+                      value={parameterValues?.[key]}
+                      defaultValue={defaultValue}
+                      choices={choices}
+                    />
+                  );
+                }
                 default:
                   if (selector) {
                     return (
@@ -65,7 +81,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         display: 'flex',
         flexDirection: 'column',
 
-        padding: 2,
+        padding: 12,
         width: '100%',
 
         fontSize: 12,
