@@ -21,7 +21,7 @@ const ThresholdSelector = ({ value, defaultValue, range }) => {
         max={Number(range[1].toPrecision(3))}
         defaultValue={value ?? defaultValue}
         range={{ draggableTrack: true }}
-        onChangeComplete={handleChange}
+        onChange={handleChange}
         tooltip={{ placement: 'bottom' }}
       />
     </div>
