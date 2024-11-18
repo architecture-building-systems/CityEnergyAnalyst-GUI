@@ -18,19 +18,18 @@ export const useMapStore = create((set) => ({
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
   setMapLabels: (value) => set({ mapLabels: value }),
   setViewState: (value) =>
-    set((state) => {
-      if (typeof value === 'function') {
-        const nextState = value(state.viewState);
-        return { viewState: nextState };
-      } else {
-        return { viewState: value };
-      }
-    }),
+    set((state) => ({
+      viewState: typeof value === 'function' ? value(state.viewState) : value,
+    })),
   setExtruded: (value) => set({ extruded: value }),
   setCameraOptions: (value) => set({ cameraOptions: value }),
   resetCameraOptions: () => set({ cameraOptions: defaultViewState }),
   setSelectedMapCategory: (value) => set({ selectedMapCategory: value }),
-  setMapLayerParameters: (value) => set({ mapLayerParameters: value }),
+  setMapLayerParameters: (value) =>
+    set((state) => ({
+      mapLayerParameters:
+        typeof value === 'function' ? value(state.mapLayerParameters) : value,
+    })),
   setMapLayerLegends: (value) => set({ mapLayerLegends: value }),
   removeMapLayerLegend: (value) =>
     set((state) => {

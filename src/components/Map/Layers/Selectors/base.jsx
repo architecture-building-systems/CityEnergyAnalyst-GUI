@@ -2,22 +2,23 @@ import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
 import { useMemo } from 'react';
 
-const ParameterSelectors = ({ layers }) => {
-  const parameters = useMemo(
+const ParameterSelectors = ({ layers, parameterValues }) => {
+  const _parameters = useMemo(
     () =>
       layers.map((layer) => {
         const { name, parameters } = layer;
         return (
           <div key={name}>
             {Object.entries(parameters).map(([key, parameter]) => {
-              const { name, default: defaultValue, selector } = parameter;
+              const { default: defaultValue, selector } = parameter;
 
               switch (selector) {
                 case 'time-series':
                   return (
                     <TimeSeriesSelector
                       key={`${name}-${key}`}
-                      parameterName={name}
+                      parameterName={key}
+                      value={parameterValues?.[key]}
                       defaultValue={defaultValue}
                     />
                   );
@@ -25,7 +26,8 @@ const ParameterSelectors = ({ layers }) => {
                   return (
                     <ThresholdSelector
                       key={`${name}-${key}`}
-                      parameterName={name}
+                      parameterName={key}
+                      value={parameterValues?.[key]}
                       defaultValue={defaultValue}
                     />
                   );
@@ -64,7 +66,7 @@ const ParameterSelectors = ({ layers }) => {
         gap: 2,
       }}
     >
-      {parameters?.length > 0 ? parameters : <div>No parameters found</div>}
+      {_parameters?.length > 0 ? _parameters : <div>No parameters found</div>}
     </div>
   );
 };

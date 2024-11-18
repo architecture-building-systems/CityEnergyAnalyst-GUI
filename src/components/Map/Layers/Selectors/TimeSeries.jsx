@@ -22,13 +22,13 @@ const hourOfYearToDateTime = (year, hourOfYear) => {
   return formattedDate;
 };
 
-const TimeSeriesSelector = ({ parameterName, defaultValue = 12 }) => {
+const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
   );
 
   const handleChange = (value) => {
-    setMapLayerParameters({ [parameterName]: value });
+    setMapLayerParameters((prev) => ({ ...prev, [parameterName]: value }));
   };
 
   return (
@@ -37,7 +37,7 @@ const TimeSeriesSelector = ({ parameterName, defaultValue = 12 }) => {
         <b>Time Period</b>
       </div>
       <Slider
-        defaultValue={defaultValue}
+        defaultValue={value ?? defaultValue}
         min={0}
         max={8760 - 1}
         onChangeComplete={handleChange}

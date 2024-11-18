@@ -56,7 +56,10 @@ const MapLayerPropertiesCard = () => {
   return (
     <div style={{ display: 'flex', gap: 12 }}>
       <Legend />
-      <ParameterSelectors layers={categoryInfo.layers} />
+      <ParameterSelectors
+        layers={categoryInfo.layers}
+        parameterValues={mapLayerParameters}
+      />
     </div>
   );
 };
