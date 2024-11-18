@@ -4,14 +4,24 @@ import { useMapStore } from '../../../Map/store/store';
 import { useGetMapLayers } from '../../../Map/Layers';
 import { useEffect } from 'react';
 import { Alert } from 'antd';
+import { useSelector } from 'react-redux';
 
 const MapLayerPropertiesCard = () => {
+  const project = useSelector((state) => state.project.info.project);
+  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
   );
   const setMapLayers = useMapStore((state) => state.setMapLayers);
+
+  // Reset layers when project or scenario name changes
+  useEffect(() => {
+    setMapLayers(null);
+    setMapLayerParameters(null);
+  }, [project, scenarioName]);
 
   // Reset layers and parameters when category changes
   useEffect(() => {
@@ -34,7 +44,12 @@ const MapLayerPropertiesCard = () => {
     setMapLayerParameters(parameters);
   }, [categoryInfo]);
 
-  const { fetching, error } = useGetMapLayers(categoryInfo, mapLayerParameters);
+  const { fetching, error } = useGetMapLayers(
+    categoryInfo,
+    project,
+    scenarioName,
+    mapLayerParameters,
+  );
 
   if (!categoryInfo || !categoryInfo?.layers) return null;
 

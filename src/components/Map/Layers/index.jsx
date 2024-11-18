@@ -45,14 +45,16 @@ const hasAllParameters = (categoryInfo, parameters) => {
   return hasAllParameters;
 };
 
-export const useGetMapLayers = (categoryInfo, parameters) => {
+export const useGetMapLayers = (
+  categoryInfo,
+  project,
+  scenarioName,
+  parameters,
+) => {
   const [error, setError] = useState(null);
   const [fetching, setFetching] = useState(false);
 
   const setMapLayers = useMapStore((state) => state.setMapLayers);
-
-  const project = useSelector((state) => state.project.info.project);
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   useEffect(() => {
     // Only fetch if we have both category and valid parameters
@@ -97,7 +99,7 @@ export const useGetMapLayers = (categoryInfo, parameters) => {
     return () => {
       ignore = true;
     };
-  }, [categoryInfo, parameters, project, scenarioName, setMapLayers]);
+  }, [categoryInfo, parameters]);
 
   return { fetching, error };
 };
