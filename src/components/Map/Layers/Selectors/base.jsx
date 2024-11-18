@@ -1,8 +1,12 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
 import { useMemo } from 'react';
+import { useMapStore } from '../../store/store';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
+  const range = useMapStore((state) => state.range);
+  const filter = useMapStore((state) => state.filter);
+
   const _parameters = useMemo(
     () =>
       layers.map((layer) => {
@@ -27,8 +31,9 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     <ThresholdSelector
                       key={`${name}-${key}`}
                       parameterName={key}
-                      value={parameterValues?.[key]}
+                      value={filter}
                       defaultValue={defaultValue}
+                      range={range}
                     />
                   );
                 default:
@@ -44,7 +49,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
           </div>
         );
       }),
-    [layers, parameterValues],
+    [layers, parameterValues, range, filter],
   );
 
   if (!parameterValues) return null;

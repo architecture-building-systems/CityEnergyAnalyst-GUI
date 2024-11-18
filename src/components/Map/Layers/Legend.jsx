@@ -19,7 +19,7 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
   useEffect(() => {
     const { min, max } = range[value];
     setRange([min, max]);
-  }, [value, min, max]);
+  }, [value, min, max, range]);
 
   return (
     <div

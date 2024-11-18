@@ -11,8 +11,8 @@ export const useMapStore = create((set) => ({
   mapLayerParameters: null,
   mapLayerLegends: null,
   mapLayers: null,
-  filter: [0, 1000],
-  range: [0, 1000],
+  filter: [0, 0],
+  range: [0, 0],
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),

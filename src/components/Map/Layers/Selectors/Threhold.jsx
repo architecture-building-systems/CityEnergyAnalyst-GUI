@@ -1,7 +1,7 @@
 import { Slider } from 'antd';
 import { useMapStore } from '../../store/store';
 
-const ThresholdSelector = ({ value, defaultValue, range = [0, 1000] }) => {
+const ThresholdSelector = ({ value, defaultValue, range }) => {
   const setFilter = useMapStore((state) => state.setFilter);
 
   const handleChange = (value) => {
@@ -19,7 +19,7 @@ const ThresholdSelector = ({ value, defaultValue, range = [0, 1000] }) => {
       <Slider
         min={Number(range[0].toPrecision(3))}
         max={Number(range[1].toPrecision(3))}
-        defaultValue={defaultValue}
+        defaultValue={value ?? defaultValue}
         range={{ draggableTrack: true }}
         onChangeComplete={handleChange}
         tooltip={{ placement: 'bottom' }}
