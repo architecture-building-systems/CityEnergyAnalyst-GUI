@@ -63,6 +63,8 @@ export const useGetMapLayers = (categoryInfo, parameters) => {
 
     const { name, layers } = categoryInfo;
 
+    let ignore = false;
+
     const generateLayers = async () => {
       const out = {};
       try {
@@ -78,7 +80,9 @@ export const useGetMapLayers = (categoryInfo, parameters) => {
           });
           out[layer.name] = data;
         }
-        setMapLayers(out);
+        if (!ignore) {
+          setMapLayers(out);
+        }
       } catch (error) {
         console.error(error.response?.data);
         setError(error.response?.data?.detail || 'Unknown error');
@@ -88,7 +92,11 @@ export const useGetMapLayers = (categoryInfo, parameters) => {
     };
 
     generateLayers();
-  }, [categoryInfo, parameters, project, scenarioName]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [categoryInfo, parameters, project, scenarioName, setMapLayers]);
 
   return { fetching, error };
 };
