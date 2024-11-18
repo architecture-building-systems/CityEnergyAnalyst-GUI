@@ -3,6 +3,7 @@ import Legend from '../../../Map/Layers/Legend';
 import { useMapStore } from '../../../Map/store/store';
 import { useGetMapLayers } from '../../../Map/Layers';
 import { useEffect } from 'react';
+import { Alert } from 'antd';
 
 const MapLayerPropertiesCard = () => {
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
@@ -39,26 +40,7 @@ const MapLayerPropertiesCard = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {error && (
-        <div
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderRadius: 12,
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-            boxSizing: 'border-box',
-
-            display: 'flex',
-            flexDirection: 'column',
-
-            fontSize: 12,
-            padding: 12,
-            fontWeight: 'bold',
-          }}
-        >
-          Error: {error}
-        </div>
-      )}
+      {error && <Alert message={error} type="error" showIcon />}
       <div
         style={{
           display: 'flex',
