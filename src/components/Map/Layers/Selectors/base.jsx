@@ -16,7 +16,7 @@ const ParameterSelectors = ({ layers }) => {
                 case 'time-series':
                   return (
                     <TimeSeriesSelector
-                      key={key}
+                      key={`${name}-${key}`}
                       parameterName={name}
                       defaultValue={defaultValue}
                     />
@@ -24,7 +24,7 @@ const ParameterSelectors = ({ layers }) => {
                 case 'threshold':
                   return (
                     <ThresholdSelector
-                      key={key}
+                      key={`${name}-${key}`}
                       parameterName={name}
                       defaultValue={defaultValue}
                     />
@@ -32,7 +32,7 @@ const ParameterSelectors = ({ layers }) => {
                 default:
                   if (selector) {
                     return (
-                      <div style={{ paddding: 12 }}>
+                      <div key={`${name}-${key}`} style={{ paddding: 12 }}>
                         Unknown parameter type: {selector}
                       </div>
                     );
@@ -44,8 +44,6 @@ const ParameterSelectors = ({ layers }) => {
       }),
     [layers],
   );
-
-  console.log('parameters', parameters);
 
   return (
     <div

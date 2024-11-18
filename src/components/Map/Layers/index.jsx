@@ -29,6 +29,22 @@ export const useGetMapLayerCategories = () => {
   return mapLayers;
 };
 
+const hasAllParameters = (categoryInfo, parameters) => {
+  // Verify all required parameters exist
+  const hasAllParameters = categoryInfo.layers.every((layer) => {
+    return Object.entries(layer.parameters).every(([key, param]) => {
+      // Ignore scenario-name
+      return key == 'scenario-name' || parameters?.[key] !== undefined;
+    });
+  });
+
+  if (!hasAllParameters) {
+    console.log('missing parameters', parameters, categoryInfo);
+  }
+
+  return hasAllParameters;
+};
+
 export const useGetMapLayers = (categoryInfo, parameters) => {
   const [error, setError] = useState(null);
   const [fetching, setFetching] = useState(false);
@@ -39,37 +55,39 @@ export const useGetMapLayers = (categoryInfo, parameters) => {
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   useEffect(() => {
-    if (categoryInfo && parameters) {
-      console.log('fetching map layers', categoryInfo, parameters);
-      const { name, layers } = categoryInfo;
+    // Only fetch if we have both category and valid parameters
+    if (!categoryInfo?.layers || !parameters) return;
 
-      const generateLayers = async () => {
-        let out = {};
+    // Only fetch if all required parameters exist
+    if (!hasAllParameters(categoryInfo, parameters)) return;
 
-        try {
-          setFetching(true);
-          setError(null);
-          for (const layer of layers) {
-            const data = await fetchMapLayer(name, layer.name, {
-              project,
-              parameters: {
-                'scenario-name': scenarioName,
-                ...parameters,
-              },
-            });
-            out[layer.name] = data;
-          }
-          setMapLayers(out);
-        } catch (error) {
-          console.error(error.response.data);
-          setError(error.response.data?.detail || 'Unknown error');
-        } finally {
-          setFetching(false);
+    const { name, layers } = categoryInfo;
+
+    const generateLayers = async () => {
+      const out = {};
+      try {
+        setFetching(true);
+        setError(null);
+        for (const layer of layers) {
+          const data = await fetchMapLayer(name, layer.name, {
+            project,
+            parameters: {
+              'scenario-name': scenarioName,
+              ...parameters,
+            },
+          });
+          out[layer.name] = data;
         }
-      };
+        setMapLayers(out);
+      } catch (error) {
+        console.error(error.response?.data);
+        setError(error.response?.data?.detail || 'Unknown error');
+      } finally {
+        setFetching(false);
+      }
+    };
 
-      generateLayers();
-    }
+    generateLayers();
   }, [categoryInfo, parameters, project, scenarioName]);
 
   return { fetching, error };

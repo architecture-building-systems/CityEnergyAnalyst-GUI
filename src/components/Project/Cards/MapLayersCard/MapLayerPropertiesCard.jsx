@@ -10,33 +10,32 @@ const MapLayerPropertiesCard = () => {
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
   );
+  const setMapLayers = useMapStore((state) => state.setMapLayers);
 
+  // Reset layers and parameters when category changes
   useEffect(() => {
-    // Apply default parameter values if not found
-    if (categoryInfo?.layers) {
-      console.log('set default parameters');
-      let parameters = {};
-      for (const layer of categoryInfo.layers) {
-        const { parameters: layerParameters } = layer;
+    setMapLayers(null);
+    setMapLayerParameters(null);
 
-        for (const [key, value] of Object.entries(layerParameters)) {
-          if (value?.default) parameters[key] = value.default;
+    if (!categoryInfo?.layers) return;
+
+    // Initialize parameters object with defaults from all layers
+    const parameters = {};
+    for (const layer of categoryInfo.layers) {
+      const { parameters: layerParameters } = layer;
+      for (const [key, value] of Object.entries(layerParameters)) {
+        if (value?.default) {
+          parameters[key] = value.default;
         }
       }
-
-      setMapLayerParameters(parameters);
     }
-    return () => {
-      console.log('resetting map layer parameters');
-      setMapLayerParameters(null);
-    };
-  }, [categoryInfo?.layers]);
+
+    setMapLayerParameters(parameters);
+  }, [categoryInfo]);
 
   const { fetching, error } = useGetMapLayers(categoryInfo, mapLayerParameters);
 
-  // Don't render if no category is selected
   if (!categoryInfo || !categoryInfo?.layers) return null;
-  // if (fetching) return <div style={{ padding: 12 }}>Loading...</div>;
   if (error)
     return (
       <div
@@ -45,13 +44,14 @@ const MapLayerPropertiesCard = () => {
           borderRadius: 12,
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           padding: 12,
-
           pointerEvents: 'select',
         }}
       >
         Error: {error}
       </div>
     );
+
+  if (fetching) return <div>Fetching...</div>;
 
   return (
     <div style={{ display: 'flex', gap: 12 }}>
