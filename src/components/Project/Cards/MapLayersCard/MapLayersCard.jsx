@@ -9,7 +9,7 @@ import {
 } from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
 import {
-  SOLAR_IRRADIANCE,
+  SOLAR_IRRADIATION,
   THERMAL_NETWORK,
 } from '../../../Map/Layers/constants';
 import { useGetMapLayerCategories } from '../../../Map/Layers';
@@ -80,7 +80,7 @@ const MapLayersCard = () => {
 };
 
 const iconMap = {
-  [SOLAR_IRRADIANCE]: SolarRadiationIcon,
+  [SOLAR_IRRADIATION]: SolarRadiationIcon,
   [THERMAL_NETWORK]: NetworksIcon,
 };
 

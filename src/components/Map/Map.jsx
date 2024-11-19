@@ -19,7 +19,7 @@ import { useMapStore } from './store/store';
 import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
-  SOLAR_IRRADIANCE,
+  SOLAR_IRRADIATION,
   THERMAL_NETWORK,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
@@ -48,7 +48,7 @@ const useMapLayers = (colours) => {
     categoryLayers.forEach((layer) => {
       const { name } = layer;
 
-      if (name == SOLAR_IRRADIANCE && mapLayers?.[SOLAR_IRRADIANCE]) {
+      if (name == SOLAR_IRRADIATION && mapLayers?.[SOLAR_IRRADIATION]) {
         const minParam = range[0];
         const maxParam = range[1];
 
@@ -70,7 +70,7 @@ const useMapLayers = (colours) => {
         _layers.push(
           new PointCloudLayer({
             id: 'PointCloudLayer',
-            data: mapLayers[SOLAR_IRRADIANCE].data,
+            data: mapLayers[SOLAR_IRRADIATION].data,
             material: false,
 
             getColor: getColor,

@@ -5,7 +5,7 @@ import { useMapStore } from '../store/store';
 import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
-  SOLAR_IRRADIANCE,
+  SOLAR_IRRADIATION,
 } from './constants';
 
 export const useGetMapLayerCategories = () => {
@@ -113,12 +113,12 @@ export const useMapLegends = () => {
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   useEffect(() => {
-    if (mapLayers?.[SOLAR_IRRADIANCE]) {
-      const props = mapLayers[SOLAR_IRRADIANCE].properties;
+    if (mapLayers?.[SOLAR_IRRADIATION]) {
+      const props = mapLayers[SOLAR_IRRADIATION].properties;
       const label = props['label'];
       const _range = props['range'];
       setMapLayerLegends({
-        [SOLAR_IRRADIANCE]: {
+        [SOLAR_IRRADIATION]: {
           colourArray: LEGEND_COLOUR_ARRAY,
           LEGEND_POINTS,
           range: _range,
