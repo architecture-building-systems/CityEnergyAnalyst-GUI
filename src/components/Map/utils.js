@@ -57,3 +57,7 @@ export const hexToRgb = (hex) => {
   // Return the RGB values as an array
   return [r, g, b];
 };
+
+export const formatNumber = (value) => {
+  return value.toLocaleString('en-US').replace(/,/g, "'");
+};

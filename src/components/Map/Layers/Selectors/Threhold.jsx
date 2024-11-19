@@ -1,7 +1,17 @@
 import { Slider } from 'antd';
 import { useMapStore } from '../../store/store';
+import { formatNumber } from '../../utils';
 
 const ThresholdSelector = ({ value, defaultValue, range }) => {
+  const marks = {
+    0: '0',
+    200: '200',
+    400: '400',
+    600: '600',
+    800: '800',
+    1000: '1000',
+  };
+
   const setFilter = useMapStore((state) => state.setFilter);
 
   const handleChange = (value) => {
@@ -13,7 +23,7 @@ const ThresholdSelector = ({ value, defaultValue, range }) => {
       <div style={{ display: 'flex', gap: 8 }}>
         <b>Threshold</b>
         <i>
-          [{value?.[0]} - {value?.[1]}]
+          [{formatNumber(value[0])} - {formatNumber(value[1])}]
         </i>
       </div>
       <Slider
@@ -23,6 +33,7 @@ const ThresholdSelector = ({ value, defaultValue, range }) => {
         range={{ draggableTrack: true }}
         onChange={handleChange}
         tooltip={{ placement: 'bottom' }}
+        marks={marks}
       />
     </div>
   );

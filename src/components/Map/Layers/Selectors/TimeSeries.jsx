@@ -1,28 +1,55 @@
 import { Slider } from 'antd';
 import { useMapStore } from '../../store/store';
+import { useMemo } from 'react';
 
-const hourOfYearToDateTime = (year, hourOfYear) => {
-  // Start from January 1st of the given year at midnight
-  const startOfYear = new Date(year, 0, 1, 0, 0, 0);
+const dayToDateTime = (dayOfYear, year = 2023) => {
+  // Start from January 1st of the given year
+  const startOfYear = new Date(year, 0, 1);
 
-  // Convert hours to milliseconds (1 hour = 60 minutes * 60 seconds * 1000 ms)
-  const milliseconds = hourOfYear * 60 * 60 * 1000;
-
-  // Add the milliseconds to the start of the year
-  const date = new Date(startOfYear.getTime() + milliseconds);
+  // Add the days (subtract 1 since dayOfYear is 1-based)
+  const date = new Date(
+    startOfYear.getTime() + (dayOfYear - 1) * 24 * 60 * 60 * 1000,
+  );
 
   const formattedDate = date.toLocaleString('en-GB', {
     day: '2-digit',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
+    month: 'short',
   });
 
   return formattedDate;
 };
 
+const months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+const getNthDayOfMonth = [
+  1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335,
+];
+
 const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
+  const min = 1;
+  const max = 365;
+
+  const marks = useMemo(() => {
+    const _marks = {};
+    months.forEach((month, index) => {
+      _marks[getNthDayOfMonth[index]] = month;
+    });
+    return _marks;
+  }, []);
+
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
   );
@@ -35,16 +62,21 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
     <div style={{ padding: 8 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         <b>Time Period</b>
-        <i>{hourOfYearToDateTime(2023, value + 1)}</i>
+        <i>
+          [{dayToDateTime(value?.[0])} - {dayToDateTime(value?.[1])}]
+        </i>
+        {value?.[1] - value?.[0] + 1} days
       </div>
       <Slider
         defaultValue={value ?? defaultValue}
-        min={0}
-        max={8760 - 1}
+        range={{ draggableTrack: true }}
+        min={min}
+        max={max}
         onChangeComplete={handleChange}
         tooltip={{
-          formatter: (value) => hourOfYearToDateTime(2023, value + 1),
+          formatter: (value) => dayToDateTime(value),
         }}
+        marks={marks}
       />
     </div>
   );
