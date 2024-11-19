@@ -64,7 +64,9 @@ const useMapLayers = (colours) => {
             Math.floor(scale * (gradientArray.length - 1)),
             gradientArray.length - 1,
           );
-          return hexToRgb(gradientArray[colorIndex]);
+
+          const hex = gradientArray?.[colorIndex];
+          return hex ? hexToRgb(hex) : null;
         };
 
         _layers.push(
