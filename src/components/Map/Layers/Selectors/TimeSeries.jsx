@@ -138,7 +138,7 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
           />
         </div>
       </div>
-      <div style={{ padding: 12 }}>
+      <div style={{ paddingLeft: 12, paddingRight: 12 }}>
         <Slider
           value={period}
           defaultValue={defaultValue}

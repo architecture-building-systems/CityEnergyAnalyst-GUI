@@ -25,7 +25,7 @@ const ThresholdSelector = ({ label, value, defaultValue, range }) => {
           [{formatNumber(value[0])} - {formatNumber(value[1])}]
         </div>
       </div>
-      <div style={{ padding: 12 }}>
+      <div style={{ paddingLeft: 12, paddingRight: 12 }}>
         <Slider
           min={Number(range[0].toPrecision(3))}
           max={Number(range[1].toPrecision(3))}
