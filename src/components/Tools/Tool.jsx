@@ -269,7 +269,7 @@ const ToolForm = Form.create()(({
   }
 
   return (
-    <Form layout="horizontal" className="cea-tool-form">
+    <Form layout="vertical" className="cea-tool-form">
       <div
         style={{
           postion: 'absolute',

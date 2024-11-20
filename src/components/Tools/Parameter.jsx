@@ -36,7 +36,9 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={<Input />}
+          inputComponent={
+            <Input placeholder={nullable ? 'Leave blank for default' : null} />
+          }
         />
       );
     }
@@ -332,17 +334,16 @@ export const FormItemWrapper = ({
 }) => {
   return (
     <Form.Item
-      label={name}
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 15, offset: 1 }}
+      label={<b>{name}</b>}
+      wrapperCol={{ offset: 1, span: 22 }}
       key={name}
+      extra={<div style={{ fontSize: 12 }}>{help}</div>}
     >
       {form.getFieldDecorator(name, {
         ...(typeof initialValue === 'undefined' ? {} : { initialValue }),
         rules: [{ required: required }, ...rules],
         ...config,
       })(inputComponent)}
-      <small style={{ display: 'block', lineHeight: 'normal' }}>{help}</small>
     </Form.Item>
   );
 };
