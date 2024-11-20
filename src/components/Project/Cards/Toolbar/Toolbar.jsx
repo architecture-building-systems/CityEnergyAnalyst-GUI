@@ -19,6 +19,7 @@ import {
   EnergyPotentialsIcon,
   LifeCycleAnalysisIcon,
   NetworksIcon,
+  ImportExportIcon,
 } from '../../../../assets/icons';
 
 const useFetchTools = () => {
@@ -41,6 +42,7 @@ const toolIconMap = {
   Networks: <NetworksIcon />,
   Optimization: <OptimisationIcon />,
   Utilities: <UtilitiesIcon />,
+  'Import & Export': <ImportExportIcon />,
 };
 
 const ToolMenu = ({
