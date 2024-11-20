@@ -3,6 +3,7 @@ import ThresholdSelector from './Threhold';
 import { useMemo } from 'react';
 import { useMapStore } from '../../store/store';
 import ChoiceSelector from './Choice';
+import { ConfigProvider } from 'antd';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
@@ -18,7 +19,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
             style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
           >
             {Object.entries(parameters).map(([key, parameter]) => {
-              const { default: defaultValue, selector } = parameter;
+              const { default: defaultValue, selector, label } = parameter;
 
               switch (selector) {
                 case 'time-series':
@@ -38,6 +39,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                       value={filter}
                       defaultValue={defaultValue}
                       range={range}
+                      label={label}
                     />
                   );
                 case 'choice': {
@@ -71,26 +73,40 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
   if (!parameterValues) return null;
 
   return (
-    <div
-      className="cea-overlay-card"
-      style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 12,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-        display: 'flex',
-        flexDirection: 'column',
-
-        padding: 12,
-        width: '100%',
-
-        fontSize: 12,
-
-        gap: 2,
+    <ConfigProvider
+      theme={{
+        components: {
+          Slider: {
+            trackBg: 'black',
+            trackHoverBg: 'gray',
+            handleColor: 'black',
+            dotActiveBorderColor: 'black',
+            fontSize: 12,
+          },
+        },
       }}
     >
-      {_parameters?.length > 0 ? _parameters : <div>No parameters found</div>}
-    </div>
+      <div
+        className="cea-overlay-card"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          borderRadius: 12,
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+
+          display: 'flex',
+          flexDirection: 'column',
+
+          padding: 12,
+          width: '100%',
+
+          fontSize: 12,
+
+          gap: 2,
+        }}
+      >
+        {_parameters?.length > 0 ? _parameters : <div>No parameters found</div>}
+      </div>
+    </ConfigProvider>
   );
 };
 
