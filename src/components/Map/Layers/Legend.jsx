@@ -57,9 +57,10 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
         }}
       >
         {gradientArray.map((color) => {
+          const width = 24;
           return (
             <div
-              style={{ backgroundColor: color, width: 18, height: 18 }}
+              style={{ backgroundColor: color, width: width, height: width }}
               key={color}
               title={color}
             />
