@@ -1,6 +1,6 @@
-import { Slider } from 'antd';
+import { Button, Slider } from 'antd';
 import { useMapStore } from '../../store/store';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const dayToDateTime = (dayOfYear, year = 2023) => {
   // Start from January 1st of the given year
@@ -105,7 +105,7 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
           {[
             dayToDateTime(value?.[0]),
             '00:00',
-            '-',
+            'to',
             dayToDateTime(value?.[1]),
             '23:00',
           ].join(' ')}
@@ -122,9 +122,13 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
           }}
         >
           {!wholePeriodSelected && (
-            <button style={{ fontSize: 12 }} onClick={handleSelectEntirePeriod}>
-              Select Entire Period
-            </button>
+            <Button
+              style={{ fontSize: 12 }}
+              size="small"
+              onClick={handleSelectEntirePeriod}
+            >
+              Select Entire Year
+            </Button>
           )}
 
           <Checkbox
