@@ -60,10 +60,12 @@ const Checkbox = ({ label, initialChecked = false, onChange }) => {
 };
 
 const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
+  const [period, setPeriod] = useState(value);
   const min = 1;
   const max = 365;
 
   const inverted = value?.[0] > value?.[1];
+  const wholePeriodSelected = value?.[0] === min && value?.[1] === max;
 
   const marks = useMemo(() => {
     const _marks = {};
@@ -82,6 +84,12 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
       ...prev,
       [parameterName]: value,
     }));
+  };
+
+  const handleSelectEntirePeriod = () => {
+    const newValue = inverted ? [max, min] : [min, max];
+    setPeriod(newValue);
+    handleChange(newValue);
   };
 
   const handleInvertSelection = () => {
@@ -106,7 +114,19 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
         {inverted
           ? `${365 + (value?.[1] - value?.[0]) + 1} days`
           : `${value?.[1] - value?.[0] + 1} days`}
-        <div style={{ marginLeft: 'auto' }}>
+        <div
+          style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            gap: 8,
+          }}
+        >
+          {!wholePeriodSelected && (
+            <button style={{ fontSize: 12 }} onClick={handleSelectEntirePeriod}>
+              Select Entire Period
+            </button>
+          )}
+
           <Checkbox
             label="Invert Date Selection"
             initialChecked={false}
@@ -116,10 +136,12 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
       </div>
       <div style={{ padding: 12 }}>
         <Slider
-          defaultValue={value ?? defaultValue}
+          value={period}
+          defaultValue={defaultValue}
           range={{ draggableTrack: true }}
           min={min}
           max={max}
+          onChange={(value) => setPeriod(value)}
           onChangeComplete={handleChange}
           tooltip={{
             formatter: (value) => dayToDateTime(value),
