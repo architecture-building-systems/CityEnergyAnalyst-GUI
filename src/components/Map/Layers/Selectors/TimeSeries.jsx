@@ -38,7 +38,7 @@ const getNthDayOfMonth = [
   1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335,
 ];
 
-const Checkbox = ({ label, initialChecked = false, onChange }) => {
+const Checkbox = ({ value, label, initialChecked = false, onChange }) => {
   const [isChecked, setIsChecked] = useState(initialChecked);
 
   const handleCheckboxChange = () => {
@@ -50,7 +50,7 @@ const Checkbox = ({ label, initialChecked = false, onChange }) => {
     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
       <input
         type="checkbox"
-        checked={isChecked}
+        checked={value ?? isChecked}
         onChange={handleCheckboxChange}
         style={{ marginRight: 8 }}
       />
@@ -87,7 +87,7 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
   };
 
   const handleSelectEntirePeriod = () => {
-    const newValue = inverted ? [max, min] : [min, max];
+    const newValue = [min, max];
     setPeriod(newValue);
     handleChange(newValue);
   };
@@ -134,6 +134,7 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
           <Checkbox
             label="Invert Date Selection"
             initialChecked={false}
+            value={inverted}
             onChange={handleInvertSelection}
           />
         </div>
