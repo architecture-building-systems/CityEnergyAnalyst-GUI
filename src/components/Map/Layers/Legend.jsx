@@ -27,29 +27,20 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 12,
       }}
     >
-      <div>
-        <b>{label}</b>
-      </div>
-      <div>
-        Range
-        <Select
-          value={value}
-          onChange={setValue}
-          defaultValue={0}
-          style={{ margin: 12, width: 200 }}
-        >
-          {Object.keys(range).map((key) => {
-            return (
-              <Select.Option key={key} value={key}>
-                {range[key].label}
-              </Select.Option>
-            );
-          })}
-        </Select>
-      </div>
+      <b>{label}</b>
+      <div>Range</div>
+      <Select value={value} onChange={setValue} defaultValue={0}>
+        {Object.keys(range).map((key) => {
+          return (
+            <Select.Option key={key} value={key}>
+              {range[key].label}
+            </Select.Option>
+          );
+        })}
+      </Select>
       <div
         style={{
           display: 'flex',
