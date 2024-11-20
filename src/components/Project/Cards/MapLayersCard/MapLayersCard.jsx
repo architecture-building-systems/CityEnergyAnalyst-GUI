@@ -2,11 +2,19 @@ import { Tooltip } from 'antd';
 
 import { useEffect, useState } from 'react';
 import { useMapStore } from '../../../Map/store/store';
-import { SolarRadiationIcon } from '../../../../assets/icons';
+import {
+  SolarRadiationIcon,
+  GraphsIcon,
+  NetworksIcon,
+} from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
+import {
+  SOLAR_IRRADIATION,
+  THERMAL_NETWORK,
+} from '../../../Map/Layers/constants';
 import { useGetMapLayerCategories } from '../../../Map/Layers';
 
-const MapLayers = () => {
+const MapLayersCard = () => {
   const [active, setActive] = useState(null);
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
@@ -14,7 +22,7 @@ const MapLayers = () => {
 
   const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
-  const mapLayers = useGetMapLayerCategories();
+  const mapLayerCategories = useGetMapLayerCategories();
 
   const toggleActive = (category) => {
     setActive(active == category ? null : category);
@@ -29,7 +37,9 @@ const MapLayers = () => {
     if (active == null) {
       setSelectedMapCategory(null);
     } else {
-      const layers = mapLayers?.categories?.find((l) => l.name == active);
+      const layers = mapLayerCategories?.categories?.find(
+        (l) => l.name == active,
+      );
       setSelectedMapCategory(layers);
     }
   }, [active]);
@@ -53,13 +63,14 @@ const MapLayers = () => {
         fontSize: 12,
       }}
     >
-      {mapLayers?.categories?.map((category) => {
-        const { name } = category;
+      {mapLayerCategories?.categories?.map((category) => {
+        const { name, label } = category;
         return (
           <CategoryIconButton
             key={name}
             onClick={toggleActive}
             category={name}
+            label={label}
             active={active == name}
           />
         );
@@ -68,9 +79,13 @@ const MapLayers = () => {
   );
 };
 
-const CategoryIconButton = ({ category, onClick, active }) => {
-  // FIXME: This is hardcoded for now
-  const _icon = SolarRadiationIcon;
+const iconMap = {
+  [SOLAR_IRRADIATION]: SolarRadiationIcon,
+  [THERMAL_NETWORK]: NetworksIcon,
+};
+
+const CategoryIconButton = ({ category, label, onClick, active }) => {
+  const _icon = iconMap?.[category] || GraphsIcon;
   const style = active
     ? {
         color: 'white',
@@ -85,7 +100,7 @@ const CategoryIconButton = ({ category, onClick, active }) => {
   };
 
   return (
-    <Tooltip title={category} overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title={label || category} overlayInnerStyle={{ fontSize: 12 }}>
       <_icon
         className="cea-card-toolbar-icon"
         style={style}
@@ -95,4 +110,4 @@ const CategoryIconButton = ({ category, onClick, active }) => {
   );
 };
 
-export default MapLayers;
+export default MapLayersCard;

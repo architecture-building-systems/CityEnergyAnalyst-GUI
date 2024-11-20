@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
@@ -19,9 +19,9 @@ import { useMapStore } from './store/store';
 import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
-  SOLAR_IRRADIANCE,
-  useGetMapLayers,
-} from './Layers';
+  SOLAR_IRRADIATION,
+  THERMAL_NETWORK,
+} from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
@@ -31,10 +31,11 @@ const useMapStyle = () => {
   return showMapStyleLabels ? positron : no_label;
 };
 
-const useMapLayers = () => {
-  const mapLayers = useGetMapLayers();
-
-  const selectedMapCategory = useMapStore((state) => state.selectedMapCategory);
+const useMapLayers = (colours) => {
+  const mapLayers = useMapStore((state) => state.mapLayers);
+  const categoryLayers = useMapStore(
+    (state) => state.selectedMapCategory?.layers,
+  );
   const range = useMapStore((state) => state.range);
   const filter = useMapStore((state) => state.filter);
 
@@ -42,54 +43,105 @@ const useMapLayers = () => {
     let _layers = [];
 
     // Return early if no layers are selected
-    if (!selectedMapCategory) return _layers;
+    if (!categoryLayers || mapLayers === null) return _layers;
 
-    if (mapLayers[SOLAR_IRRADIANCE]) {
-      const minParam = range[0];
-      const maxParam = range[1];
+    categoryLayers.forEach((layer) => {
+      const { name } = layer;
 
-      const gradientArray = new Gradient()
-        .setColorGradient(...LEGEND_COLOUR_ARRAY)
-        .setMidpoint(LEGEND_POINTS)
-        .getColors();
+      if (name == SOLAR_IRRADIATION && mapLayers?.[SOLAR_IRRADIATION]) {
+        const minParam = range[0];
+        const maxParam = range[1];
 
-      const getColor = ({ value }) => {
-        const range = maxParam - minParam;
-        const scale = range == 0 ? 0 : (value - minParam) / range;
-        const colorIndex = Math.min(
-          Math.floor(scale * (gradientArray.length - 1)),
-          gradientArray.length - 1,
+        const gradientArray = new Gradient()
+          .setColorGradient(...LEGEND_COLOUR_ARRAY)
+          .setMidpoint(LEGEND_POINTS)
+          .getColors();
+
+        const getColor = ({ value }) => {
+          const range = maxParam - minParam;
+          const scale = range == 0 ? 0 : (value - minParam) / range;
+          const colorIndex = Math.min(
+            Math.floor(scale * (gradientArray.length - 1)),
+            gradientArray.length - 1,
+          );
+
+          const hex = gradientArray?.[colorIndex];
+          return hex ? hexToRgb(hex) : null;
+        };
+
+        _layers.push(
+          new PointCloudLayer({
+            id: 'PointCloudLayer',
+            data: mapLayers[SOLAR_IRRADIATION].data,
+            material: false,
+
+            getColor: getColor,
+            getPosition: (d) => d.position,
+            pointSize: 1,
+            sizeUnits: 'meters',
+
+            coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+            pickable: true,
+
+            getFilterValue: (d) => d.value,
+            filterRange: filter,
+            extensions: [new DataFilterExtension({ filterSize: 1 })],
+
+            updateTriggers: {
+              getColor: [range],
+            },
+          }),
         );
-        return hexToRgb(gradientArray[colorIndex]);
-      };
+      }
 
-      _layers.push(
-        new PointCloudLayer({
-          id: 'PointCloudLayer',
-          data: mapLayers[SOLAR_IRRADIANCE].data,
-          material: false,
+      if (name == THERMAL_NETWORK && mapLayers?.[THERMAL_NETWORK]) {
+        const colour = colours?.dc ?? [255, 255, 255];
 
-          getColor: getColor,
-          getPosition: (d) => d.position,
-          pointSize: 1,
-          sizeUnits: 'meters',
+        const nodeFillColor = (type) => {
+          if (type === 'NONE') {
+            return colour;
+          } else if (type === 'CONSUMER') {
+            return [255, 255, 255];
+          } else if (type === 'PLANT') {
+            return colours?.dh ?? [255, 255, 255];
+          }
+        };
 
-          coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-          pickable: true,
+        const nodeRadius = (type) => {
+          if (type === 'NONE') {
+            return 1;
+          } else if (type === 'CONSUMER') {
+            return 2;
+          } else if (type === 'PLANT') {
+            return 5;
+          }
+        };
 
-          getFilterValue: (d) => d.value,
-          filterRange: filter,
-          extensions: [new DataFilterExtension({ filterSize: 1 })],
+        _layers.push(
+          new GeoJsonLayer({
+            id: `${THERMAL_NETWORK}-edges`,
+            data: mapLayers[THERMAL_NETWORK]?.edges,
+            getLineWidth: (f) => f.properties['peak_mass_flow'] / 100,
+            getLineColor: colour,
+            zIndex: 100,
+          }),
+        );
 
-          updateTriggers: {
-            getColor: [range],
-          },
-        }),
-      );
-    }
+        _layers.push(
+          new GeoJsonLayer({
+            id: `${THERMAL_NETWORK}-nodes`,
+            data: mapLayers[THERMAL_NETWORK]?.nodes,
+            getFillColor: (f) => nodeFillColor(f.properties['Type']),
+            getPointRadius: (f) => nodeRadius(f.properties['Type']),
+            getLineColor: colour,
+            getLineWidth: 0.5,
+          }),
+        );
+      }
+    });
 
     return _layers;
-  }, [filter, mapLayers, range, selectedMapCategory]);
+  }, [filter, mapLayers, range, categoryLayers, colours]);
 
   return layers;
 };
@@ -103,9 +155,6 @@ const DeckGLMap = ({ data, colors }) => {
 
   const dispatch = useDispatch();
   const selected = useSelector((state) => state.inputData.selected);
-  const connectedBuildings = useSelector(
-    (state) => state.inputData.connected_buildings,
-  );
 
   const viewState = useMapStore((state) => state.viewState);
   const setViewState = useMapStore((state) => state.setViewState);
@@ -119,6 +168,11 @@ const DeckGLMap = ({ data, colors }) => {
   const visibility = useMapStore((state) => state.visibility);
 
   const mapStyle = useMapStyle();
+
+  const buildingColor = useMemo(
+    () => buildingColorFunction(colors, selected),
+    [colors, selected],
+  );
 
   useEffect(() => {
     if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
@@ -197,7 +251,6 @@ const DeckGLMap = ({ data, colors }) => {
       }
     };
 
-    const network_type = visibility.dc ? 'dc' : 'dh';
     let _layers = [];
     if (data?.zone) {
       _layers.push(
@@ -211,15 +264,7 @@ const DeckGLMap = ({ data, colors }) => {
           visible: visibility.zone,
 
           getElevation: (f) => f.properties['height_ag'],
-          getFillColor: (f) =>
-            buildingColor(
-              f.properties['Name'],
-              'zone',
-              colors,
-              connectedBuildings[network_type],
-              selected,
-              network_type,
-            ),
+          getFillColor: (f) => buildingColor(f.properties['Name'], 'zone'),
           updateTriggers: {
             getFillColor: [selected, visibility.dc],
           },
@@ -246,14 +291,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>
-            buildingColor(
-              f.properties['Name'],
-              'surroundings',
-              colors,
-              connectedBuildings[network_type],
-              selected,
-              network_type,
-            ),
+            buildingColor(f.properties['Name'], 'surroundings'),
           updateTriggers: {
             getFillColor: selected,
           },
@@ -275,50 +313,6 @@ const DeckGLMap = ({ data, colors }) => {
           getLineColor: [171, 95, 127],
           getLineWidth: 0.75,
           visible: visibility.streets,
-
-          pickable: true,
-          autoHighlight: true,
-
-          onHover: updateTooltip,
-        }),
-      );
-    }
-    if (data?.dc) {
-      _layers.push(
-        new GeoJsonLayer({
-          id: 'dc',
-          data: data.dc,
-          stroked: false,
-          filled: true,
-          visible: visibility.dc && visibility.network,
-
-          getLineColor: colors.dc,
-          getFillColor: (f) =>
-            nodeFillColor(f.properties['Type'], colors, 'dc'),
-          getLineWidth: 3,
-          getPointRadius: 3,
-
-          pickable: true,
-          autoHighlight: true,
-
-          onHover: updateTooltip,
-        }),
-      );
-    }
-    if (data?.dh) {
-      _layers.push(
-        new GeoJsonLayer({
-          id: 'dh',
-          data: data.dh,
-          stroked: false,
-          filled: true,
-          visible: visibility.dh && visibility.network,
-
-          getLineColor: colors.dh,
-          getFillColor: (f) =>
-            nodeFillColor(f.properties['Type'], colors, 'dh'),
-          getLineWidth: 3,
-          getPointRadius: 3,
 
           pickable: true,
           autoHighlight: true,
@@ -366,20 +360,33 @@ const DeckGLMap = ({ data, colors }) => {
     dispatch,
     selected,
     extruded,
-    colors,
-    connectedBuildings,
+    buildingColor,
   ]);
 
-  const mapLayers = useMapLayers();
+  const mapLayers = useMapLayers(colors);
 
   const layers = [...dataLayers, ...mapLayers];
 
-  const onDragStart = (info, event) => {
-    if (!firstPitch.current && event.rightButton) {
-      setExtruded(true);
-      firstPitch.current = true;
-    }
-  };
+  const onDragStart = useCallback(
+    (_, event) => {
+      if (!firstPitch.current && event.rightButton) {
+        setExtruded(true);
+        firstPitch.current = true;
+      }
+    },
+    [setExtruded],
+  );
+
+  const _onViewStateChange = useCallback(
+    ({ viewState }) => {
+      setViewState(viewState);
+    },
+    [setViewState],
+  );
+
+  const onContextMenu = useCallback((e) => {
+    e.preventDefault();
+  }, []);
 
   return (
     <>
@@ -387,13 +394,9 @@ const DeckGLMap = ({ data, colors }) => {
         viewState={viewState}
         controller={{ inertia: true }}
         layers={layers}
-        onViewStateChange={({ viewState }) => {
-          setViewState(viewState);
-        }}
+        onViewStateChange={_onViewStateChange}
         onDragStart={onDragStart}
-        onContextMenu={(e) => {
-          e.preventDefault();
-        }}
+        onContextMenu={onContextMenu}
       >
         <Map ref={mapRef} mapStyle={mapStyle} minZoom={1} />
       </DeckGL>
@@ -449,29 +452,12 @@ function updateTooltip({ x, y, object, layer }) {
   }
 }
 
-const nodeFillColor = (type, colors, network) => {
-  if (type === 'NONE') {
-    return network === 'dc' ? colors.dc : network === 'dh' ? colors.dh : null;
-  } else if (type === 'CONSUMER') {
-    return [255, 255, 255];
-  } else if (type === 'PLANT') {
-    return [0, 0, 0];
-  }
-};
-
-const buildingColor = (
-  buildingName,
-  layer,
-  colors,
-  connectedBuildings,
-  selected,
-  network_type,
-) => {
+const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
   if (selected.includes(buildingName)) {
     return [255, 255, 0, 255];
   }
   if (layer === 'surroundings') return colors.surroundings;
-  if (connectedBuildings.includes(buildingName)) return colors[network_type];
+
   return colors.disconnected;
 };
 

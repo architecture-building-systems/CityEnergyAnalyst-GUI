@@ -16,10 +16,9 @@ import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
 import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
-import MapLayers from '../components/Project/Cards/MapLayers/MapLayers';
-import { ParameterSelectors } from '../components/Map/Layers/Selectors';
-import { Legend } from '../components/Map/Layers/Legend';
+import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
 import { useToolStore } from '../components/Tools/store';
+import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 const Project = () => {
   const { scenario_name: scenarioName } = useSelector(
@@ -126,7 +125,7 @@ const ProjectOverlay = () => {
                   style={{
                     // TODO: Make this dynamic
                     height: '33vh',
-                    minWidth: 250,
+                    minWidth: 280,
                     width: '15vw',
                   }}
                 >
@@ -147,10 +146,7 @@ const ProjectOverlay = () => {
           )}
         </div>
         <div id="cea-project-overlay-left-bottom">
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Legend />
-            <ParameterSelectors />
-          </div>
+          <MapLayerPropertiesCard />
           {transitionFromBottom((styles, item) =>
             item ? (
               <animated.div
@@ -208,7 +204,7 @@ const ProjectOverlay = () => {
               <MapControls />
             </div>
 
-            <MapLayers />
+            <MapLayersCard />
           </div>
         </div>
       </div>
