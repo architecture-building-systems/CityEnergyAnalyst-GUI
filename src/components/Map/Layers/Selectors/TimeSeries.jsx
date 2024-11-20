@@ -60,10 +60,10 @@ const Checkbox = ({ label, initialChecked = false, onChange }) => {
 };
 
 const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
-  const [invertSelection, setInvertSelection] = useState(false);
-
   const min = 1;
   const max = 365;
+
+  const inverted = value?.[0] > value?.[1];
 
   const marks = useMemo(() => {
     const _marks = {};
@@ -80,12 +80,11 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
   const handleChange = (value) => {
     setMapLayerParameters((prev) => ({
       ...prev,
-      [parameterName]: invertSelection ? [value?.[1], value?.[0]] : value,
+      [parameterName]: value,
     }));
   };
 
-  const handleInvertSelection = (invert) => {
-    setInvertSelection(invert);
+  const handleInvertSelection = () => {
     handleChange([value?.[1], value?.[0]]);
   };
 
@@ -104,13 +103,13 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
           ].join(' ')}
           ]
         </div>
-        {invertSelection
+        {inverted
           ? `${365 + (value?.[1] - value?.[0]) + 1} days`
           : `${value?.[1] - value?.[0] + 1} days`}
         <div style={{ marginLeft: 'auto' }}>
           <Checkbox
             label="Invert Date Selection"
-            initialChecked={invertSelection}
+            initialChecked={false}
             onChange={handleInvertSelection}
           />
         </div>
