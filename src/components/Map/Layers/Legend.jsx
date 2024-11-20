@@ -101,7 +101,7 @@ const Legend = () => {
 
         gap: 2,
 
-        minWidth: 250,
+        minWidth: 280,
 
         padding: 12,
         marginRight: 'auto',

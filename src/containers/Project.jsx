@@ -125,7 +125,7 @@ const ProjectOverlay = () => {
                   style={{
                     // TODO: Make this dynamic
                     height: '33vh',
-                    minWidth: 250,
+                    minWidth: 280,
                     width: '15vw',
                   }}
                 >
