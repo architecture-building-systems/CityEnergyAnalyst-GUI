@@ -1,18 +1,25 @@
 import { Slider } from 'antd';
 import { useMapStore } from '../../store/store';
 import { formatNumber } from '../../utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const ThresholdSelector = ({ label, value, defaultValue, range }) => {
   const [threshold, setThreshold] = useState(value);
 
-  const marks = {
-    200: '200',
-    400: '400',
-    600: '600',
-    800: '800',
-    1000: formatNumber(1000),
-  };
+  const marks = useMemo(() => {
+    const markIndex = [200, 400, 600, 800, 1000];
+
+    const _marks = {};
+    markIndex.forEach((index) => {
+      _marks[index] = {
+        style: {
+          color: '#0008',
+        },
+        label: formatNumber(index),
+      };
+    });
+    return _marks;
+  }, []);
 
   const setFilter = useMapStore((state) => state.setFilter);
 

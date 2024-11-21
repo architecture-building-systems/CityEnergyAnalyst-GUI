@@ -70,7 +70,12 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
   const marks = useMemo(() => {
     const _marks = {};
     months.forEach((month, index) => {
-      _marks[getNthDayOfMonth[index]] = month;
+      _marks[getNthDayOfMonth[index]] = {
+        style: {
+          color: '#0008',
+        },
+        label: month,
+      };
     });
     return _marks;
   }, []);
