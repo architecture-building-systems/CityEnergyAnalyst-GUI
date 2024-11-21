@@ -58,10 +58,12 @@ export const useGetMapLayers = (
 
   useEffect(() => {
     // Only fetch if we have both category and valid parameters
-    if (!categoryInfo?.layers || !parameters) return;
-
-    // Only fetch if all required parameters exist
-    if (!hasAllParameters(categoryInfo, parameters)) return;
+    if (
+      !categoryInfo?.layers ||
+      !parameters ||
+      !hasAllParameters(categoryInfo, parameters)
+    )
+      return;
 
     const { name, layers } = categoryInfo;
 
@@ -99,7 +101,7 @@ export const useGetMapLayers = (
     return () => {
       ignore = true;
     };
-  }, [categoryInfo, parameters]);
+  }, [parameters]);
 
   return { fetching, error };
 };
