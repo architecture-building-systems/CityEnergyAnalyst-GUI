@@ -14,9 +14,10 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
+import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
 import { useMapStore } from './store/store';
 import {
+  DEMAND,
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
@@ -135,6 +136,22 @@ const useMapLayers = (colours) => {
             getPointRadius: (f) => nodeRadius(f.properties['Type']),
             getLineColor: colour,
             getLineWidth: 0.5,
+          }),
+        );
+      }
+
+      if (name == DEMAND && mapLayers?.[DEMAND]) {
+        _layers.push(
+          new HexagonLayer({
+            id: 'HexagonLayer',
+            data: mapLayers[DEMAND].data,
+
+            extruded: true,
+            getPosition: (d) => d.position,
+            getColorWeight: (d) => d.value,
+            getElevationWeight: (d) => d.value,
+            elevationScale: 1,
+            radius: 10,
           }),
         );
       }
