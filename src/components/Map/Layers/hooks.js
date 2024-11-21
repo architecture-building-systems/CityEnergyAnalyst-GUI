@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useMapStore } from '../store/store';
 import {
+  DEMAND,
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
@@ -121,6 +122,18 @@ export const useMapLegends = () => {
       const _range = props['range'];
       setMapLayerLegends({
         [SOLAR_IRRADIATION]: {
+          colourArray: LEGEND_COLOUR_ARRAY,
+          LEGEND_POINTS,
+          range: _range,
+          label,
+        },
+      });
+    } else if (mapLayers?.[DEMAND]) {
+      const props = mapLayers[DEMAND].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [DEMAND]: {
           colourArray: LEGEND_COLOUR_ARRAY,
           LEGEND_POINTS,
           range: _range,

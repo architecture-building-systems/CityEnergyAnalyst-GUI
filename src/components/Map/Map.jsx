@@ -32,6 +32,23 @@ const useMapStyle = () => {
   return showMapStyleLabels ? positron : no_label;
 };
 
+const gradientArray = new Gradient()
+  .setColorGradient(...LEGEND_COLOUR_ARRAY)
+  .setMidpoint(LEGEND_POINTS)
+  .getColors();
+
+const getColor = (value, minParam, maxParam) => {
+  const range = maxParam - minParam;
+  const scale = range == 0 ? 0 : (value - minParam) / range;
+  const colorIndex = Math.min(
+    Math.floor(scale * (gradientArray.length - 1)),
+    gradientArray.length - 1,
+  );
+
+  const hex = gradientArray?.[colorIndex];
+  return hex ? hexToRgb(hex) : null;
+};
+
 const useMapLayers = (colours) => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
@@ -53,30 +70,13 @@ const useMapLayers = (colours) => {
         const minParam = range[0];
         const maxParam = range[1];
 
-        const gradientArray = new Gradient()
-          .setColorGradient(...LEGEND_COLOUR_ARRAY)
-          .setMidpoint(LEGEND_POINTS)
-          .getColors();
-
-        const getColor = ({ value }) => {
-          const range = maxParam - minParam;
-          const scale = range == 0 ? 0 : (value - minParam) / range;
-          const colorIndex = Math.min(
-            Math.floor(scale * (gradientArray.length - 1)),
-            gradientArray.length - 1,
-          );
-
-          const hex = gradientArray?.[colorIndex];
-          return hex ? hexToRgb(hex) : null;
-        };
-
         _layers.push(
           new PointCloudLayer({
             id: 'PointCloudLayer',
             data: mapLayers[SOLAR_IRRADIATION].data,
             material: false,
 
-            getColor: getColor,
+            getColor: (d) => getColor(d.value, minParam, maxParam),
             getPosition: (d) => d.position,
             pointSize: 1,
             sizeUnits: 'meters',
@@ -141,6 +141,9 @@ const useMapLayers = (colours) => {
       }
 
       if (name == DEMAND && mapLayers?.[DEMAND]) {
+        const minParam = range[0];
+        const maxParam = range[1];
+
         _layers.push(
           new HexagonLayer({
             id: 'HexagonLayer',
