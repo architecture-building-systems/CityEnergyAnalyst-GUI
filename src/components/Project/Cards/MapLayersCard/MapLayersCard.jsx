@@ -12,7 +12,7 @@ import {
   SOLAR_IRRADIATION,
   THERMAL_NETWORK,
 } from '../../../Map/Layers/constants';
-import { useGetMapLayerCategories } from '../../../Map/Layers';
+import { useGetMapLayerCategories } from '../../../Map/Layers/hooks';
 
 const MapLayersCard = () => {
   const [active, setActive] = useState(null);
