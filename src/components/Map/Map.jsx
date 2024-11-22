@@ -55,9 +55,8 @@ const useMapLayers = (colours) => {
     (state) => state.selectedMapCategory?.layers,
   );
 
-  const radius = useMapStore((state) => state.mapLayerParameters?.radius);
   const range = useMapStore((state) => state.range);
-  const filter = useMapStore((state) => state.filter);
+  const filters = useMapStore((state) => state.filters);
 
   const layers = useMemo(() => {
     let _layers = [];
@@ -71,6 +70,8 @@ const useMapLayers = (colours) => {
       if (name == SOLAR_IRRADIATION && mapLayers?.[SOLAR_IRRADIATION]) {
         const minParam = range[0];
         const maxParam = range[1];
+
+        const threshold = filters?.['range'];
 
         _layers.push(
           new PointCloudLayer({
@@ -87,7 +88,7 @@ const useMapLayers = (colours) => {
             pickable: true,
 
             getFilterValue: (d) => d.value,
-            filterRange: filter,
+            filterRange: threshold,
             extensions: [new DataFilterExtension({ filterSize: 1 })],
 
             updateTriggers: {
@@ -143,8 +144,7 @@ const useMapLayers = (colours) => {
       }
 
       if (name == DEMAND && mapLayers?.[DEMAND]) {
-        const minParam = range[0];
-        const maxParam = range[1];
+        const radius = filters?.['radius'];
 
         _layers.push(
           new HexagonLayer({
@@ -163,7 +163,7 @@ const useMapLayers = (colours) => {
     });
 
     return _layers;
-  }, [filter, mapLayers, range, categoryLayers, colours, radius]);
+  }, [filters, mapLayers, range, categoryLayers, colours]);
 
   return layers;
 };

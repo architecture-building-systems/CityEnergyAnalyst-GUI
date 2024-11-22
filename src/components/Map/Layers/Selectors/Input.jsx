@@ -1,13 +1,14 @@
 import { Input, InputNumber } from 'antd';
-import { useMapStore } from '../../store/store';
 
-const InputSelector = ({ parameterName, value, defaultValue, type }) => {
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
-  );
-
+const InputSelector = ({
+  parameterName,
+  value,
+  defaultValue,
+  onChange,
+  type,
+}) => {
   const handleChange = (value) => {
-    setMapLayerParameters((prev) => ({ ...prev, [parameterName]: value }));
+    onChange?.(value);
   };
 
   const Component = type == 'number' ? InputNumber : Input;

@@ -1,10 +1,9 @@
 import { Slider } from 'antd';
-import { useMapStore } from '../../store/store';
 import { formatNumber } from '../../utils';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-const ThresholdSelector = ({ label, value, defaultValue, range }) => {
-  const [threshold, setThreshold] = useState(value);
+const ThresholdSelector = ({ label, value, defaultValue, range, onChange }) => {
+  const [threshold, setThreshold] = useState(value ?? defaultValue);
 
   const marks = useMemo(() => {
     const markIndex = [200, 400, 600, 800, 1000];
@@ -21,26 +20,17 @@ const ThresholdSelector = ({ label, value, defaultValue, range }) => {
     return _marks;
   }, []);
 
-  const setFilter = useMapStore((state) => state.setFilter);
-
   const handleChange = (value) => {
     setThreshold(value);
-    setFilter(value);
+    onChange?.(value);
   };
-
-  useEffect(() => {
-    // If the threshold is not set on mount, set it to the default value
-    if (threshold[0] === 0 && threshold[1] === 0 && defaultValue) {
-      handleChange(defaultValue);
-    }
-  }, []);
 
   return (
     <div>
       <div style={{ display: 'flex', gap: 8 }}>
         <b>{label ?? 'Threshold'}</b>
         <div>
-          [{formatNumber(value[0])} - {formatNumber(value[1])}]
+          [{formatNumber(threshold[0])} - {formatNumber(threshold[1])}]
         </div>
       </div>
       <div style={{ paddingLeft: 12, paddingRight: 12 }}>
