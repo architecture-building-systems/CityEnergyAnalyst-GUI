@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useMapStore } from '../../store/store';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
+import InputSelector from './Input';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
@@ -51,6 +52,18 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                       value={parameterValues?.[key]}
                       defaultValue={defaultValue}
                       choices={choices}
+                    />
+                  );
+                }
+                case 'input': {
+                  const { type } = parameter;
+                  return (
+                    <InputSelector
+                      key={`${name}-${key}`}
+                      parameterName={key}
+                      value={parameterValues?.[key]}
+                      defaultValue={defaultValue}
+                      type={type}
                     />
                   );
                 }

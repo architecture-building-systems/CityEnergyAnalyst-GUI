@@ -54,6 +54,8 @@ const useMapLayers = (colours) => {
   const categoryLayers = useMapStore(
     (state) => state.selectedMapCategory?.layers,
   );
+
+  const radius = useMapStore((state) => state.mapLayerParameters?.radius);
   const range = useMapStore((state) => state.range);
   const filter = useMapStore((state) => state.filter);
 
@@ -154,14 +156,14 @@ const useMapLayers = (colours) => {
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
             elevationScale: 1,
-            radius: 10,
+            radius: radius,
           }),
         );
       }
     });
 
     return _layers;
-  }, [filter, mapLayers, range, categoryLayers, colours]);
+  }, [filter, mapLayers, range, categoryLayers, colours, radius]);
 
   return layers;
 };
