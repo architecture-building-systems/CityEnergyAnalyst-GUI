@@ -24,7 +24,7 @@ import {
   THERMAL_NETWORK,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
-import { hexToRgb } from './utils';
+import { hexToRgb, hexToRGBAList } from './utils';
 
 const useMapStyle = () => {
   const showMapStyleLabels = useMapStore((state) => state.mapLabels);
@@ -145,6 +145,8 @@ const useMapLayers = (colours) => {
 
       if (name == DEMAND && mapLayers?.[DEMAND]) {
         const radius = filters?.['radius'];
+        const colorRange = hexToRGBAList(gradientArray);
+        console.log({ colorRange });
 
         _layers.push(
           new HexagonLayer({
@@ -155,6 +157,7 @@ const useMapLayers = (colours) => {
             getPosition: (d) => d.position,
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
+            colorRange,
             elevationScale: 1,
             radius: radius,
           }),

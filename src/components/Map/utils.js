@@ -61,3 +61,34 @@ export const hexToRgb = (hex) => {
 export const formatNumber = (value) => {
   return value.toLocaleString('en-US').replace(/,/g, "'");
 };
+
+export const hexToRGBAList = (hexCodes) => {
+  return hexCodes.map((hex) => {
+    // Normalize the hex string by removing the "#" if present
+    let cleanHex = hex.replace('#', '');
+
+    // Depending on the length of the hex code, parse it accordingly
+    if (cleanHex.length === 3) {
+      // Shorthand hex format (#RGB)
+      const r = parseInt(cleanHex[0] + cleanHex[0], 16);
+      const g = parseInt(cleanHex[1] + cleanHex[1], 16);
+      const b = parseInt(cleanHex[2] + cleanHex[2], 16);
+      return [r, g, b, 255]; // Default alpha to 1
+    } else if (cleanHex.length === 6) {
+      // Standard hex format (#RRGGBB)
+      const r = parseInt(cleanHex.slice(0, 2), 16);
+      const g = parseInt(cleanHex.slice(2, 4), 16);
+      const b = parseInt(cleanHex.slice(4, 6), 16);
+      return [r, g, b, 255]; // Default alpha to 1
+    } else if (cleanHex.length === 8) {
+      // Hex format with alpha (#RRGGBBAA)
+      const r = parseInt(cleanHex.slice(0, 2), 16);
+      const g = parseInt(cleanHex.slice(2, 4), 16);
+      const b = parseInt(cleanHex.slice(4, 6), 16);
+      const a = parseInt(cleanHex.slice(6, 8), 16) / 255; // Convert alpha to [0, 1]
+      return [r, g, b, a];
+    } else {
+      throw new Error(`Invalid hex code: ${hex}`);
+    }
+  });
+};
