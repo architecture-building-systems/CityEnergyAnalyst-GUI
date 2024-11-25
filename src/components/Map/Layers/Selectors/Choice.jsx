@@ -1,13 +1,14 @@
 import { Select } from 'antd';
-import { useMapStore } from '../../store/store';
 
-const ChoiceSelector = ({ parameterName, value, defaultValue, choices }) => {
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
-  );
-
+const ChoiceSelector = ({
+  parameterName,
+  value,
+  defaultValue,
+  choices,
+  onChange,
+}) => {
   const handleChange = (value) => {
-    setMapLayerParameters((prev) => ({ ...prev, [parameterName]: value }));
+    onChange?.(value);
   };
 
   const options = choices.map((choice) => ({

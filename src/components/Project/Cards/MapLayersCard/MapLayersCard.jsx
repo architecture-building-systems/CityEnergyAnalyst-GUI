@@ -6,13 +6,15 @@ import {
   SolarRadiationIcon,
   GraphsIcon,
   NetworksIcon,
+  DemandForecastingIcon,
 } from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
 import {
+  DEMAND,
   SOLAR_IRRADIATION,
   THERMAL_NETWORK,
 } from '../../../Map/Layers/constants';
-import { useGetMapLayerCategories } from '../../../Map/Layers';
+import { useGetMapLayerCategories } from '../../../Map/Layers/hooks';
 
 const MapLayersCard = () => {
   const [active, setActive] = useState(null);
@@ -82,6 +84,7 @@ const MapLayersCard = () => {
 const iconMap = {
   [SOLAR_IRRADIATION]: SolarRadiationIcon,
   [THERMAL_NETWORK]: NetworksIcon,
+  [DEMAND]: DemandForecastingIcon,
 };
 
 const CategoryIconButton = ({ category, label, onClick, active }) => {

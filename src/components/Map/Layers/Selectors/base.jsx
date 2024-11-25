@@ -1,13 +1,47 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
-import { useMemo } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useMapStore } from '../../store/store';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
+import InputSelector from './Input';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
-  const filter = useMapStore((state) => state.filter);
+  const filters = useMapStore((state) => state.filters);
+
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
+  const setFilters = useMapStore((state) => state.setFilters);
+
+  const changeHandler = useCallback(
+    (parameterName, filter) => {
+      if (filter) {
+        return (value) => setFilters(filter, value);
+      } else {
+        return (value) =>
+          setMapLayerParameters((prev) => ({
+            ...prev,
+            [parameterName]: value,
+          }));
+      }
+    },
+    [setFilters, setMapLayerParameters],
+  );
+
+  // Set the filters to the default values
+  useEffect(() => {
+    layers.map((layer) => {
+      const { parameters } = layer;
+      Object.entries(parameters).forEach(([key, parameter]) => {
+        const { filter, default: defaultValue } = parameter;
+        if (filter && !filters?.[filter]) {
+          setFilters(filter, defaultValue);
+        }
+      });
+    });
+  }, [layers]);
 
   const _parameters = useMemo(
     () =>
@@ -19,7 +53,15 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
             style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
           >
             {Object.entries(parameters).map(([key, parameter]) => {
-              const { default: defaultValue, selector, label } = parameter;
+              const {
+                default: defaultValue,
+                selector,
+                label,
+                filter,
+              } = parameter;
+
+              const value = filter ? filters?.[filter] : parameterValues?.[key];
+              const _handleChange = changeHandler(key, filter);
 
               switch (selector) {
                 case 'time-series':
@@ -27,8 +69,9 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     <TimeSeriesSelector
                       key={`${name}-${key}`}
                       parameterName={key}
-                      value={parameterValues?.[key]}
+                      value={value}
                       defaultValue={defaultValue}
+                      onChange={_handleChange}
                     />
                   );
                 case 'threshold':
@@ -36,10 +79,11 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     <ThresholdSelector
                       key={`${name}-${key}`}
                       parameterName={key}
-                      value={filter}
+                      value={value}
                       defaultValue={defaultValue}
                       range={range}
                       label={label}
+                      onChange={_handleChange}
                     />
                   );
                 case 'choice': {
@@ -48,9 +92,23 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     <ChoiceSelector
                       key={`${name}-${key}`}
                       parameterName={key}
-                      value={parameterValues?.[key]}
+                      value={value}
                       defaultValue={defaultValue}
                       choices={choices}
+                      onChange={_handleChange}
+                    />
+                  );
+                }
+                case 'input': {
+                  const { type } = parameter;
+                  return (
+                    <InputSelector
+                      key={`${name}-${key}`}
+                      parameterName={key}
+                      value={value}
+                      defaultValue={defaultValue}
+                      type={type}
+                      onChange={_handleChange}
                     />
                   );
                 }
@@ -67,7 +125,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
           </div>
         );
       }),
-    [layers, parameterValues, range, filter],
+    [layers, parameterValues, range, filters, changeHandler],
   );
 
   if (!parameterValues) return null;

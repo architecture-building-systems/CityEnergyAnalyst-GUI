@@ -11,7 +11,7 @@ export const useMapStore = create((set) => ({
   mapLayerParameters: null,
   mapLayerLegends: null,
   mapLayers: null,
-  filter: [0, 0],
+  filters: {},
   range: [0, 0],
 
   setVisibility: (layer, value) =>
@@ -38,6 +38,12 @@ export const useMapStore = create((set) => ({
       return { mapLayerLegends };
     }),
   setMapLayers: (value) => set({ mapLayers: value }),
-  setFilter: (value) => set({ filter: value }),
+  setFilters: (key, value) =>
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        [key]: typeof value === 'function' ? value(state.filters[key]) : value,
+      },
+    })),
   setRange: (value) => set({ range: value }),
 }));

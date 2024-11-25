@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useMapStore } from '../store/store';
 import {
+  DEMAND,
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
@@ -58,10 +59,12 @@ export const useGetMapLayers = (
 
   useEffect(() => {
     // Only fetch if we have both category and valid parameters
-    if (!categoryInfo?.layers || !parameters) return;
-
-    // Only fetch if all required parameters exist
-    if (!hasAllParameters(categoryInfo, parameters)) return;
+    if (
+      !categoryInfo?.layers ||
+      !parameters ||
+      !hasAllParameters(categoryInfo, parameters)
+    )
+      return;
 
     const { name, layers } = categoryInfo;
 
@@ -99,7 +102,7 @@ export const useGetMapLayers = (
     return () => {
       ignore = true;
     };
-  }, [categoryInfo, parameters]);
+  }, [parameters]);
 
   return { fetching, error };
 };
@@ -119,6 +122,18 @@ export const useMapLegends = () => {
       const _range = props['range'];
       setMapLayerLegends({
         [SOLAR_IRRADIATION]: {
+          colourArray: LEGEND_COLOUR_ARRAY,
+          LEGEND_POINTS,
+          range: _range,
+          label,
+        },
+      });
+    } else if (mapLayers?.[DEMAND]) {
+      const props = mapLayers[DEMAND].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [DEMAND]: {
           colourArray: LEGEND_COLOUR_ARRAY,
           LEGEND_POINTS,
           range: _range,

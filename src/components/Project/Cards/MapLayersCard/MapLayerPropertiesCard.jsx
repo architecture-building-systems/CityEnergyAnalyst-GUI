@@ -1,7 +1,7 @@
 import ParameterSelectors from '../../../Map/Layers/Selectors/base';
 import Legend from '../../../Map/Layers/Legend';
 import { useMapStore } from '../../../Map/store/store';
-import { useGetMapLayers } from '../../../Map/Layers';
+import { useGetMapLayers } from '../../../Map/Layers/hooks';
 import { useEffect } from 'react';
 import { Alert } from 'antd';
 import { useSelector } from 'react-redux';

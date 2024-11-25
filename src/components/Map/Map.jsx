@@ -14,9 +14,10 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { COORDINATE_SYSTEM, FlyToInterpolator } from 'deck.gl';
+import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
 import { useMapStore } from './store/store';
 import {
+  DEMAND,
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
@@ -31,13 +32,33 @@ const useMapStyle = () => {
   return showMapStyleLabels ? positron : no_label;
 };
 
+const gradientArray = new Gradient()
+  .setColorGradient(...LEGEND_COLOUR_ARRAY)
+  .setMidpoint(LEGEND_POINTS)
+  .getColors();
+
+const rgbGradientArray = gradientArray.map((hex) => hexToRgb(hex));
+
+const getColor = (value, minParam, maxParam) => {
+  const range = maxParam - minParam;
+  const scale = range == 0 ? 0 : (value - minParam) / range;
+  const colorIndex = Math.min(
+    Math.floor(scale * (gradientArray.length - 1)),
+    gradientArray.length - 1,
+  );
+
+  const hex = gradientArray?.[colorIndex];
+  return hex ? hexToRgb(hex) : null;
+};
+
 const useMapLayers = (colours) => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
     (state) => state.selectedMapCategory?.layers,
   );
+
   const range = useMapStore((state) => state.range);
-  const filter = useMapStore((state) => state.filter);
+  const filters = useMapStore((state) => state.filters);
 
   const layers = useMemo(() => {
     let _layers = [];
@@ -52,22 +73,7 @@ const useMapLayers = (colours) => {
         const minParam = range[0];
         const maxParam = range[1];
 
-        const gradientArray = new Gradient()
-          .setColorGradient(...LEGEND_COLOUR_ARRAY)
-          .setMidpoint(LEGEND_POINTS)
-          .getColors();
-
-        const getColor = ({ value }) => {
-          const range = maxParam - minParam;
-          const scale = range == 0 ? 0 : (value - minParam) / range;
-          const colorIndex = Math.min(
-            Math.floor(scale * (gradientArray.length - 1)),
-            gradientArray.length - 1,
-          );
-
-          const hex = gradientArray?.[colorIndex];
-          return hex ? hexToRgb(hex) : null;
-        };
+        const threshold = filters?.['range'];
 
         _layers.push(
           new PointCloudLayer({
@@ -75,7 +81,7 @@ const useMapLayers = (colours) => {
             data: mapLayers[SOLAR_IRRADIATION].data,
             material: false,
 
-            getColor: getColor,
+            getColor: (d) => getColor(d.value, minParam, maxParam),
             getPosition: (d) => d.position,
             pointSize: 1,
             sizeUnits: 'meters',
@@ -84,7 +90,7 @@ const useMapLayers = (colours) => {
             pickable: true,
 
             getFilterValue: (d) => d.value,
-            filterRange: filter,
+            filterRange: threshold,
             extensions: [new DataFilterExtension({ filterSize: 1 })],
 
             updateTriggers: {
@@ -138,10 +144,33 @@ const useMapLayers = (colours) => {
           }),
         );
       }
+
+      if (name == DEMAND && mapLayers?.[DEMAND]) {
+        const radius = filters?.['radius'];
+
+        _layers.push(
+          new HexagonLayer({
+            id: 'HexagonLayer',
+            data: mapLayers[DEMAND].data,
+
+            extruded: true,
+            getPosition: (d) => d.position,
+            getColorWeight: (d) => d.value,
+            getElevationWeight: (d) => d.value,
+            colorRange: rgbGradientArray,
+            elevationScale: 1,
+            radius: radius,
+
+            updateTriggers: {
+              getColor: [range],
+            },
+          }),
+        );
+      }
     });
 
     return _layers;
-  }, [filter, mapLayers, range, categoryLayers, colours]);
+  }, [filters, mapLayers, range, categoryLayers, colours]);
 
   return layers;
 };

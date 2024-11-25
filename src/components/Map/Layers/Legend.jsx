@@ -2,7 +2,7 @@ import Gradient from 'javascript-color-gradient';
 import { useMapStore } from '../store/store';
 import { Select } from 'antd';
 import { useEffect, useState } from 'react';
-import { useMapLegends } from '.';
+import { useMapLegends } from './hooks';
 import { formatNumber } from '../utils';
 
 const ColourRampLegend = ({ label, colours, points, range }) => {
