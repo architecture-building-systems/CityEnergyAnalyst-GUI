@@ -37,6 +37,8 @@ const gradientArray = new Gradient()
   .setMidpoint(LEGEND_POINTS)
   .getColors();
 
+const rgbGradientArray = gradientArray.map((hex) => hexToRgb(hex));
+
 const getColor = (value, minParam, maxParam) => {
   const range = maxParam - minParam;
   const scale = range == 0 ? 0 : (value - minParam) / range;
@@ -145,8 +147,6 @@ const useMapLayers = (colours) => {
 
       if (name == DEMAND && mapLayers?.[DEMAND]) {
         const radius = filters?.['radius'];
-        const colorRange = gradientArray.map((hex) => hexToRgb(hex));
-        console.log({ colorRange });
 
         _layers.push(
           new HexagonLayer({
@@ -157,9 +157,13 @@ const useMapLayers = (colours) => {
             getPosition: (d) => d.position,
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
-            colorRange,
+            colorRange: rgbGradientArray,
             elevationScale: 1,
             radius: radius,
+
+            updateTriggers: {
+              getColor: [range],
+            },
           }),
         );
       }
