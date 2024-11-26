@@ -160,7 +160,7 @@ const useMapLayers = (colours) => {
             colorRange: rgbGradientArray,
             elevationScale: 1,
             radius: radius,
-
+            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
             updateTriggers: {
               getColor: [range],
             },
