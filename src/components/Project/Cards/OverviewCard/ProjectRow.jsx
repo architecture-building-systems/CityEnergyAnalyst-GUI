@@ -10,6 +10,10 @@ import {
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
+import { useOpenScenario } from '../../Project';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchInputData } from '../../../../actions/inputEditor';
+import { useFetchProject } from '../../../../utils/hooks';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -81,7 +85,23 @@ const NewProjectIconButton = () => {
 const RefreshIconButton = () => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
-  const onSuccess = () => {};
+  const { info } = useSelector((state) => state.project);
+  const { project, scenario_name: scenarioName } = info;
+
+  const dispatch = useDispatch();
+  const fetchProject = useFetchProject();
+  const openScenario = useOpenScenario();
+  const onRefresh = () => {
+    // Refresh scenario if scenario name is given
+    if (scenarioName) {
+      openScenario(project, scenarioName).then((exists) => {
+        if (exists) dispatch(fetchInputData());
+      });
+    } else {
+      // Otherwise, refresh project
+      fetchProject(project);
+    }
+  };
 
   return (
     <Tooltip title="Refresh" overlayInnerStyle={{ fontSize: 12 }}>
@@ -90,7 +110,7 @@ const RefreshIconButton = () => {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <RefreshIcon />
+        <RefreshIcon onClick={onRefresh} />
       </animated.div>
     </Tooltip>
   );
