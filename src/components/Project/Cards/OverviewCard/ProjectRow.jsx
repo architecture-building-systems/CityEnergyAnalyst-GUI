@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { animated } from '@react-spring/web';
 import NewProjectModal from '../../NewProjectModal';
 import { useHoverGrow } from './hooks';
-import { Tooltip } from 'antd';
+import { message, Tooltip } from 'antd';
 import {
   CreateNewIcon,
   OpenProjectIcon,
@@ -12,7 +12,10 @@ import {
 } from '../../../../assets/icons';
 import { useOpenScenario } from '../../Project';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchInputData } from '../../../../actions/inputEditor';
+import {
+  discardChanges,
+  fetchInputData,
+} from '../../../../actions/inputEditor';
 import { useFetchProject } from '../../../../utils/hooks';
 
 const ProjectRow = ({ projectName }) => {
@@ -86,12 +89,33 @@ const RefreshIconButton = () => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
   const { info } = useSelector((state) => state.project);
+  const changes = useSelector(
+    (state) =>
+      Object.keys(state.inputData?.changes?.delete).length > 0 ||
+      Object.keys(state.inputData?.changes?.update).length > 0,
+  );
   const { project, scenario_name: scenarioName } = info;
 
   const dispatch = useDispatch();
   const fetchProject = useFetchProject();
   const openScenario = useOpenScenario();
+
   const onRefresh = () => {
+    if (changes) {
+      message.config({
+        top: 120,
+        maxCount: 1,
+      });
+      message.warning(
+        <div style={{ padding: 8 }}>
+          Failed to refresh project.
+          <br />
+          <i>Save or discard changes before refreshing.</i>
+        </div>,
+      );
+      return;
+    }
+
     // Refresh scenario if scenario name is given
     if (scenarioName) {
       openScenario(project, scenarioName).then((exists) => {
