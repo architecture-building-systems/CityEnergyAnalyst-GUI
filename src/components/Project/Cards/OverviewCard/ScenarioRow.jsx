@@ -2,11 +2,11 @@ import { animated } from '@react-spring/web';
 import { push } from 'connected-react-router';
 
 import routes from '../../../../constants/routes.json';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useHoverGrow } from './hooks';
 import { useOpenScenario } from '../../Project';
 import { useMemo } from 'react';
-import { Tooltip } from 'antd';
+import { message, Tooltip } from 'antd';
 import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
 
 import './OverviewCard.css';
@@ -74,14 +74,34 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
 };
 
 const ScenarioItem = ({ project, scenario }) => {
+  const changes = useSelector(
+    (state) =>
+      Object.keys(state.inputData?.changes?.delete).length > 0 ||
+      Object.keys(state.inputData?.changes?.update).length > 0,
+  );
+
   const openScenario = useOpenScenario(routes.PROJECT);
-  const handleOpenScenario = () => openScenario(project, scenario);
+  const handleOpenScenario = () => {
+    if (changes) {
+      message.config({
+        top: 120,
+      });
+      message.warning(
+        'Save or discard changes before opening another scenario.',
+      );
+      return;
+    }
+    openScenario(project, scenario);
+  };
 
   return (
     <div
       className="cea-card-scenario-item"
       key={scenario}
       onClick={handleOpenScenario}
+      onKeyDown={(e) => e.key === 'Enter' && handleOpenScenario()}
+      role="button"
+      tabIndex={0}
     >
       {scenario}
     </div>
@@ -112,7 +132,6 @@ const NewScenarioIcon = () => {
 };
 
 const DuplicateScenarioIcon = () => {
-  const dispatch = useDispatch();
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
   const onClick = () => {};

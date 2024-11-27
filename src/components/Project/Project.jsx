@@ -201,7 +201,7 @@ export const deleteScenario = async (
   }
 };
 
-export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
+export const useOpenScenario = (route = routes.PROJECT) => {
   const fetchProject = useFetchProject();
   const changeRoute = useChangeRoute(route);
   return async (project, scenarioName) => {
@@ -211,9 +211,11 @@ export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
     // Check if scenario still exist
     if (scenariosList.includes(scenarioName)) {
       await updateConfigProjectInfo(project, scenarioName);
-      return fetchProject().then(changeRoute);
+      return fetchProject()
+        .then(changeRoute)
+        .then(() => true);
     } else {
-      fetchProject(project).then(() => {
+      return fetchProject(project).then(() => {
         message.config({
           top: 120,
         });
@@ -222,6 +224,7 @@ export const useOpenScenario = (route = routes.INPUT_EDITOR) => {
             Scenario: <b>{scenarioName}</b> could not be found.
           </span>,
         );
+        return false;
       });
     }
   };
