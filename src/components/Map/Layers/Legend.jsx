@@ -74,8 +74,6 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
 const Legend = () => {
   const mapLayerLegends = useMapLegends();
 
-  if (!mapLayerLegends) return null;
-
   return (
     <div
       className="cea-overlay-card"
@@ -97,20 +95,23 @@ const Legend = () => {
 
         padding: 12,
         marginRight: 'auto',
+
+        opacity: mapLayerLegends ? 1 : 0.8,
       }}
     >
-      {Object.keys(mapLayerLegends).map((key) => {
-        const value = mapLayerLegends[key];
-        return (
-          <ColourRampLegend
-            key={key}
-            label={value.label}
-            colours={value.colourArray}
-            points={value.points}
-            range={value.range}
-          />
-        );
-      })}
+      {mapLayerLegends &&
+        Object.keys(mapLayerLegends).map((key) => {
+          const value = mapLayerLegends[key];
+          return (
+            <ColourRampLegend
+              key={key}
+              label={value.label}
+              colours={value.colourArray}
+              points={value.points}
+              range={value.range}
+            />
+          );
+        })}
     </div>
   );
 };
