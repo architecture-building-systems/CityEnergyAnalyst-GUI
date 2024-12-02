@@ -109,6 +109,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     <InputSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
                       type={type}

@@ -2,6 +2,7 @@ import { Input, InputNumber } from 'antd';
 
 const InputSelector = ({
   parameterName,
+  label,
   value,
   defaultValue,
   onChange,
@@ -16,7 +17,7 @@ const InputSelector = ({
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <div>
-        <b>{parameterName}</b>
+        <b>{label}</b>
       </div>
       <Component onChange={handleChange} defaultValue={value ?? defaultValue} />
     </div>
