@@ -57,6 +57,11 @@ export const useGetMapLayers = (
 
   const setMapLayers = useMapStore((state) => state.setMapLayers);
 
+  // Reset error when category changes
+  useEffect(() => {
+    setError(null);
+  }, [categoryInfo]);
+
   useEffect(() => {
     // Only fetch if we have both category and valid parameters
     if (
