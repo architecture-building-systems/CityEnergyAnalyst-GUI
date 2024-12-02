@@ -4,4 +4,4 @@ export const LEGEND_POINTS = 12;
 
 export const DEMAND = 'demand';
 export const THERMAL_NETWORK = 'thermal-network';
-export const SOLAR_POTENTIALS = 'solar-potentials';
+export const RENEWABLE_ENERGY_POTENTIALS = 'renewable-energy-potentials';

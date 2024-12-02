@@ -21,7 +21,7 @@ import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
-  SOLAR_POTENTIALS,
+  RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
@@ -168,11 +168,14 @@ const useMapLayers = (colours) => {
         );
       }
 
-      if (name == SOLAR_POTENTIALS && mapLayers?.[SOLAR_POTENTIALS]) {
+      if (
+        name == RENEWABLE_ENERGY_POTENTIALS &&
+        mapLayers?.[RENEWABLE_ENERGY_POTENTIALS]
+      ) {
         _layers.push(
           new HexagonLayer({
-            id: `${SOLAR_POTENTIALS}-hex`,
-            data: mapLayers[SOLAR_POTENTIALS].data,
+            id: `${RENEWABLE_ENERGY_POTENTIALS}-hex`,
+            data: mapLayers[RENEWABLE_ENERGY_POTENTIALS].data,
 
             extruded: true,
             getPosition: (d) => d.position,
