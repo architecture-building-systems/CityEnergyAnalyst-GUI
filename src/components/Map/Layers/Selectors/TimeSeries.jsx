@@ -1,6 +1,6 @@
 import { Button, Slider } from 'antd';
 import { useMapStore } from '../../store/store';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const dayToDateTime = (dayOfYear, year = 2023) => {
   // Start from January 1st of the given year
@@ -59,13 +59,13 @@ const Checkbox = ({ value, label, initialChecked = false, onChange }) => {
   );
 };
 
-const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
-  const [period, setPeriod] = useState(value);
+const TimeSeriesSelector = ({ parameterName, value, defaultValue }) => {
+  const [period, setPeriod] = useState(value ?? defaultValue);
   const min = 1;
   const max = 365;
 
-  const inverted = value?.[0] > value?.[1];
-  const wholePeriodSelected = value?.[0] === min && value?.[1] === max;
+  const inverted = period?.[0] > period?.[1];
+  const wholePeriodSelected = period?.[0] === min && period?.[1] === max;
 
   const marks = useMemo(() => {
     const _marks = {};
@@ -84,17 +84,16 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
     (state) => state.setMapLayerParameters,
   );
 
-  const handleChange = (value) => {
+  const handleChange = (newValue) => {
+    setPeriod(newValue);
     setMapLayerParameters((prev) => ({
       ...prev,
-      [parameterName]: value,
+      [parameterName]: newValue,
     }));
   };
 
   const handleSelectEntirePeriod = () => {
-    const newValue = [min, max];
-    setPeriod(newValue);
-    handleChange(newValue);
+    handleChange([min, max]);
   };
 
   const handleInvertSelection = () => {
@@ -108,17 +107,17 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue = 12 }) => {
         <div>
           [
           {[
-            dayToDateTime(value?.[0]),
+            dayToDateTime(period?.[0]),
             '00:00',
             'to',
-            dayToDateTime(value?.[1]),
+            dayToDateTime(period?.[1]),
             '23:00',
           ].join(' ')}
           ]
         </div>
         {inverted
-          ? `${365 + (value?.[1] - value?.[0]) + 1} days`
-          : `${value?.[1] - value?.[0] + 1} days`}
+          ? `${365 + (period?.[1] - period?.[0]) + 1} days`
+          : `${period?.[1] - period?.[0] + 1} days`}
         <div
           style={{
             marginLeft: 'auto',

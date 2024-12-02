@@ -7,6 +7,7 @@ import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
+  SOLAR_POTENTIALS,
 } from './constants';
 
 export const useGetMapLayerCategories = () => {
@@ -35,7 +36,11 @@ const hasAllParameters = (categoryInfo, parameters) => {
   const hasAllParameters = categoryInfo.layers.every((layer) => {
     return Object.entries(layer.parameters).every(([key, param]) => {
       // Ignore scenario-name
-      return key == 'scenario-name' || parameters?.[key] !== undefined;
+      return (
+        key == 'scenario-name' ||
+        param?.filter ||
+        parameters?.[key] !== undefined
+      );
     });
   });
 
@@ -60,7 +65,7 @@ export const useGetMapLayers = (
   // Reset error when category changes
   useEffect(() => {
     setError(null);
-  }, [categoryInfo]);
+  }, [categoryInfo, parameters]);
 
   useEffect(() => {
     // Only fetch if we have both category and valid parameters
@@ -83,10 +88,8 @@ export const useGetMapLayers = (
         for (const layer of layers) {
           const data = await fetchMapLayer(name, layer.name, {
             project,
-            parameters: {
-              'scenario-name': scenarioName,
-              ...parameters,
-            },
+            scenario_name: scenarioName,
+            parameters,
           });
           out[layer.name] = data;
         }
@@ -95,6 +98,7 @@ export const useGetMapLayers = (
         }
       } catch (error) {
         console.error(error.response?.data);
+        console.log(parameters);
         setError(error.response?.data?.detail || 'Unknown error');
         setMapLayers(null);
       } finally {
@@ -102,9 +106,13 @@ export const useGetMapLayers = (
       }
     };
 
-    generateLayers();
+    setFetching(true);
+    const handler = setTimeout(() => {
+      generateLayers();
+    }, 300);
 
     return () => {
+      clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
   }, [parameters]);
@@ -139,6 +147,18 @@ export const useMapLegends = () => {
       const _range = props['range'];
       setMapLayerLegends({
         [DEMAND]: {
+          colourArray: LEGEND_COLOUR_ARRAY,
+          LEGEND_POINTS,
+          range: _range,
+          label,
+        },
+      });
+    } else if (mapLayers?.[SOLAR_POTENTIALS]) {
+      const props = mapLayers[SOLAR_POTENTIALS].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [SOLAR_POTENTIALS]: {
           colourArray: LEGEND_COLOUR_ARRAY,
           LEGEND_POINTS,
           range: _range,
