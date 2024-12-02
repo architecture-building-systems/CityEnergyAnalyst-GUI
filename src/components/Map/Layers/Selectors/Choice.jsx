@@ -11,7 +11,7 @@ const ChoiceSelector = ({
     onChange?.(value);
   };
 
-  const options = choices.map((choice) => ({
+  const options = choices?.map((choice) => ({
     value: choice,
     label: choice,
   }));
@@ -25,8 +25,8 @@ const ChoiceSelector = ({
         onChange={handleChange}
         defaultValue={value ?? defaultValue}
         options={options}
-        size="small"
         placement="topLeft"
+        style={{ width: 200 }}
       />
     </div>
   );
