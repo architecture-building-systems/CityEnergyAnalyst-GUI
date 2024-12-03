@@ -12,9 +12,15 @@ import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
 import './OverviewCard.css';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
+  const sortedScenarios = useMemo(() => {
+    return scenarioList.sort((a, b) => {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+  }, [scenarioList]);
+
   const remainingScenarios = useMemo(() => {
-    return scenarioList.filter((scenario) => scenario !== scenarioName).sort();
-  }, [scenarioList, scenarioName]);
+    return sortedScenarios.filter((scenario) => scenario !== scenarioName);
+  }, [sortedScenarios, scenarioName]);
 
   return (
     <div
