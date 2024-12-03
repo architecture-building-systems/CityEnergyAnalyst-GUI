@@ -21,6 +21,7 @@ import {
   LEGEND_COLOUR_ARRAY,
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
+  RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
@@ -59,6 +60,7 @@ const useMapLayers = (colours) => {
 
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
+  const radius = filters?.['radius'] ?? 10;
 
   const layers = useMemo(() => {
     let _layers = [];
@@ -146,8 +148,6 @@ const useMapLayers = (colours) => {
       }
 
       if (name == DEMAND && mapLayers?.[DEMAND]) {
-        const radius = filters?.['radius'];
-
         _layers.push(
           new HexagonLayer({
             id: 'HexagonLayer',
@@ -160,7 +160,31 @@ const useMapLayers = (colours) => {
             colorRange: rgbGradientArray,
             elevationScale: 1,
             radius: radius,
+            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
+            updateTriggers: {
+              getColor: [range],
+            },
+          }),
+        );
+      }
 
+      if (
+        name == RENEWABLE_ENERGY_POTENTIALS &&
+        mapLayers?.[RENEWABLE_ENERGY_POTENTIALS]
+      ) {
+        _layers.push(
+          new HexagonLayer({
+            id: `${RENEWABLE_ENERGY_POTENTIALS}-hex`,
+            data: mapLayers[RENEWABLE_ENERGY_POTENTIALS].data,
+
+            extruded: true,
+            getPosition: (d) => d.position,
+            getColorWeight: (d) => d.value,
+            getElevationWeight: (d) => d.value,
+            colorRange: rgbGradientArray,
+            elevationScale: 1,
+            radius: radius,
+            elevationDomain: range,
             updateTriggers: {
               getColor: [range],
             },

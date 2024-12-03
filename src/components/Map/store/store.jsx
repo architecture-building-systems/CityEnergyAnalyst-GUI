@@ -30,6 +30,12 @@ export const useMapStore = create((set) => ({
       mapLayerParameters:
         typeof value === 'function' ? value(state.mapLayerParameters) : value,
     })),
+  removeMapLayerParameter: (key) =>
+    set((state) => {
+      const mapLayerParameters = { ...state.mapLayerParameters };
+      delete mapLayerParameters[key];
+      return { mapLayerParameters };
+    }),
   setMapLayerLegends: (value) => set({ mapLayerLegends: value }),
   removeMapLayerLegend: (value) =>
     set((state) => {

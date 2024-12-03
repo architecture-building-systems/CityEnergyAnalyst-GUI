@@ -20,11 +20,12 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
       if (filter) {
         return (value) => setFilters(filter, value);
       } else {
-        return (value) =>
+        return (value) => {
           setMapLayerParameters((prev) => ({
             ...prev,
             [parameterName]: value,
           }));
+        };
       }
     },
     [setFilters, setMapLayerParameters],
@@ -47,6 +48,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
     () =>
       layers.map((layer) => {
         const { name, parameters } = layer;
+
         return (
           <div
             key={name}
@@ -87,15 +89,17 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     />
                   );
                 case 'choice': {
-                  const { choices } = parameter;
+                  const { depends_on } = parameter;
                   return (
                     <ChoiceSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
-                      choices={choices}
                       onChange={_handleChange}
+                      layerName={name}
+                      dependsOn={depends_on}
                     />
                   );
                 }
@@ -105,6 +109,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                     <InputSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
                       type={type}
@@ -127,8 +132,6 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
       }),
     [layers, parameterValues, range, filters, changeHandler],
   );
-
-  if (!parameterValues) return null;
 
   return (
     <ConfigProvider

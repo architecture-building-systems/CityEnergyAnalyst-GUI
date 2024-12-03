@@ -18,16 +18,14 @@ const MapLayerPropertiesCard = () => {
   const setMapLayers = useMapStore((state) => state.setMapLayers);
 
   // Reset layers when project or scenario name changes
+  // Reset layers when category changes
   useEffect(() => {
     setMapLayers(null);
     setMapLayerParameters(null);
-  }, [project, scenarioName]);
+  }, [project, scenarioName, categoryInfo]);
 
   // Reset layers and parameters when category changes
   useEffect(() => {
-    setMapLayers(null);
-    setMapLayerParameters(null);
-
     if (!categoryInfo?.layers) return;
 
     // Initialize parameters object with defaults from all layers
@@ -55,7 +53,7 @@ const MapLayerPropertiesCard = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {error && <Alert message={error} type="error" showIcon />}
+      {error && <Error error={error} />}
       <div
         style={{
           display: 'flex',
@@ -63,26 +61,7 @@ const MapLayerPropertiesCard = () => {
           position: 'relative',
         }}
       >
-        {fetching && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1,
-              pointerEvents: 'all',
-              userSelect: 'none',
-            }}
-          >
-            Fetching data...
-          </div>
-        )}
+        {fetching && <Loading />}
         <Legend />
         <ParameterSelectors
           layers={categoryInfo.layers}
@@ -91,6 +70,33 @@ const MapLayerPropertiesCard = () => {
       </div>
     </div>
   );
+};
+
+const Loading = () => {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1,
+        pointerEvents: 'all',
+        userSelect: 'none',
+      }}
+    >
+      Fetching data...
+    </div>
+  );
+};
+
+const Error = ({ error }) => {
+  return <Alert message={error} type="error" showIcon />;
 };
 
 export default MapLayerPropertiesCard;
