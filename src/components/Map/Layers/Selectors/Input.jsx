@@ -1,27 +1,49 @@
 import { Input, InputNumber } from 'antd';
 
-const InputSelector = ({
+export const InputSelector = ({
   parameterName,
   label,
   value,
   defaultValue,
   onChange,
-  type,
 }) => {
   const handleChange = (value) => {
     onChange?.(value);
   };
-
-  const Component = type == 'number' ? InputNumber : Input;
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <div>
         <b>{label}</b>
       </div>
-      <Component onChange={handleChange} defaultValue={value ?? defaultValue} />
+      <Input onChange={handleChange} defaultValue={value ?? defaultValue} />
     </div>
   );
 };
 
-export default InputSelector;
+export const InputNumberSelector = ({
+  parameterName,
+  label,
+  value,
+  defaultValue,
+  onChange,
+  range,
+}) => {
+  const handleChange = (value) => {
+    onChange?.(value);
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div>
+        <b>{label}</b>
+      </div>
+      <InputNumber
+        min={range?.[0]}
+        max={range?.[1]}
+        onChange={handleChange}
+        defaultValue={value ?? defaultValue}
+      />
+    </div>
+  );
+};
