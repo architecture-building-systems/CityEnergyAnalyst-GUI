@@ -23,6 +23,7 @@ import {
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
+  LIFE_CYCLE_ANALYSIS,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
@@ -60,7 +61,8 @@ const useMapLayers = (colours) => {
 
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
-  const radius = filters?.['radius'] ?? 10;
+  const radius = filters?.radius ?? 10;
+  const scale = filters?.scale ?? 1;
 
   const layers = useMemo(() => {
     let _layers = [];
@@ -129,9 +131,12 @@ const useMapLayers = (colours) => {
           new GeoJsonLayer({
             id: `${THERMAL_NETWORK}-edges`,
             data: mapLayers[THERMAL_NETWORK]?.edges,
-            getLineWidth: (f) => f.properties['peak_mass_flow'] / 100,
+            getLineWidth: (f) => (f.properties['peak_mass_flow'] / 100) * scale,
             getLineColor: colour,
             zIndex: 100,
+            updateTriggers: {
+              getLineWidth: [scale],
+            },
           }),
         );
 
@@ -150,7 +155,7 @@ const useMapLayers = (colours) => {
       if (name == DEMAND && mapLayers?.[DEMAND]) {
         _layers.push(
           new HexagonLayer({
-            id: 'HexagonLayer',
+            id: `${DEMAND}-hex`,
             data: mapLayers[DEMAND].data,
 
             extruded: true,
@@ -158,7 +163,7 @@ const useMapLayers = (colours) => {
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
             colorRange: rgbGradientArray,
-            elevationScale: 1,
+            elevationScale: scale,
             radius: radius,
             elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
             updateTriggers: {
@@ -182,9 +187,30 @@ const useMapLayers = (colours) => {
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
             colorRange: rgbGradientArray,
-            elevationScale: 1,
+            elevationScale: scale,
             radius: radius,
             elevationDomain: range,
+            updateTriggers: {
+              getColor: [range],
+            },
+          }),
+        );
+      }
+
+      if (name == LIFE_CYCLE_ANALYSIS && mapLayers?.[LIFE_CYCLE_ANALYSIS]) {
+        _layers.push(
+          new HexagonLayer({
+            id: `${LIFE_CYCLE_ANALYSIS}-hex`,
+            data: mapLayers[LIFE_CYCLE_ANALYSIS].data,
+
+            extruded: true,
+            getPosition: (d) => d.position,
+            getColorWeight: (d) => d.value,
+            getElevationWeight: (d) => d.value,
+            colorRange: rgbGradientArray,
+            elevationScale: scale,
+            radius: radius,
+            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
             updateTriggers: {
               getColor: [range],
             },

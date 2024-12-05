@@ -8,6 +8,7 @@ import {
   LEGEND_POINTS,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
+  LIFE_CYCLE_ANALYSIS,
 } from './constants';
 
 export const useGetMapLayerCategories = () => {
@@ -159,6 +160,18 @@ export const useMapLegends = () => {
       const _range = props['range'];
       setMapLayerLegends({
         [RENEWABLE_ENERGY_POTENTIALS]: {
+          colourArray: LEGEND_COLOUR_ARRAY,
+          LEGEND_POINTS,
+          range: _range,
+          label,
+        },
+      });
+    } else if (mapLayers?.[LIFE_CYCLE_ANALYSIS]) {
+      const props = mapLayers[LIFE_CYCLE_ANALYSIS].properties;
+      const label = props['label'];
+      const _range = props['range'];
+      setMapLayerLegends({
+        [LIFE_CYCLE_ANALYSIS]: {
           colourArray: LEGEND_COLOUR_ARRAY,
           LEGEND_POINTS,
           range: _range,

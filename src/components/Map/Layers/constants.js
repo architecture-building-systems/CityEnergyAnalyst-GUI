@@ -5,3 +5,4 @@ export const LEGEND_POINTS = 12;
 export const DEMAND = 'demand';
 export const THERMAL_NETWORK = 'thermal-network';
 export const RENEWABLE_ENERGY_POTENTIALS = 'renewable-energy-potentials';
+export const LIFE_CYCLE_ANALYSIS = 'life-cycle-analysis';

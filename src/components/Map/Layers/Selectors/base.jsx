@@ -4,7 +4,7 @@ import { useMemo, useCallback, useEffect } from 'react';
 import { useMapStore } from '../../store/store';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
-import InputSelector from './Input';
+import { InputSelector, InputNumberSelector } from './Input';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
@@ -105,17 +105,32 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                 }
                 case 'input': {
                   const { type } = parameter;
-                  return (
-                    <InputSelector
-                      key={`${name}-${key}`}
-                      parameterName={key}
-                      label={label}
-                      value={value}
-                      defaultValue={defaultValue}
-                      type={type}
-                      onChange={_handleChange}
-                    />
-                  );
+
+                  if (type === 'string') {
+                    return (
+                      <InputSelector
+                        key={`${name}-${key}`}
+                        parameterName={key}
+                        label={label}
+                        value={value}
+                        defaultValue={defaultValue}
+                        onChange={_handleChange}
+                      />
+                    );
+                  } else if (type === 'number') {
+                    const { range } = parameter;
+                    return (
+                      <InputNumberSelector
+                        key={`${name}-${key}`}
+                        parameterName={key}
+                        label={label}
+                        value={value}
+                        defaultValue={defaultValue}
+                        range={range}
+                        onChange={_handleChange}
+                      />
+                    );
+                  } else return null;
                 }
                 default:
                   if (selector) {

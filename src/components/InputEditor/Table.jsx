@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card, Button, Modal, message, Tooltip, Space } from 'antd';
 import {
@@ -11,7 +10,6 @@ import {
   saveChanges,
 } from '../../actions/inputEditor';
 import EditSelectedModal from './EditSelectedModal';
-import routes from '../../constants/routes.json';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
