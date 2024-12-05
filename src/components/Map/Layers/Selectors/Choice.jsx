@@ -108,7 +108,9 @@ const ChoiceSelector = ({
         onChange={handleChange}
         options={options}
         placement="topLeft"
-        style={{ width: 200 }}
+        style={{ minWidth: 200 }}
+        popupMatchSelectWidth={false}
+        dropdownStyle={{ width: 'auto', maxWidth: 300 }}
       />
     </div>
   );
