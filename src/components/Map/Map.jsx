@@ -23,6 +23,7 @@ import {
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
+  LIFE_CYCLE_ANALYSIS,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
@@ -154,7 +155,7 @@ const useMapLayers = (colours) => {
       if (name == DEMAND && mapLayers?.[DEMAND]) {
         _layers.push(
           new HexagonLayer({
-            id: 'HexagonLayer',
+            id: `${DEMAND}-hex`,
             data: mapLayers[DEMAND].data,
 
             extruded: true,
@@ -189,6 +190,27 @@ const useMapLayers = (colours) => {
             elevationScale: scale,
             radius: radius,
             elevationDomain: range,
+            updateTriggers: {
+              getColor: [range],
+            },
+          }),
+        );
+      }
+
+      if (name == LIFE_CYCLE_ANALYSIS && mapLayers?.[LIFE_CYCLE_ANALYSIS]) {
+        _layers.push(
+          new HexagonLayer({
+            id: `${LIFE_CYCLE_ANALYSIS}-hex`,
+            data: mapLayers[LIFE_CYCLE_ANALYSIS].data,
+
+            extruded: true,
+            getPosition: (d) => d.position,
+            getColorWeight: (d) => d.value,
+            getElevationWeight: (d) => d.value,
+            colorRange: rgbGradientArray,
+            elevationScale: scale,
+            radius: radius,
+            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
             updateTriggers: {
               getColor: [range],
             },
