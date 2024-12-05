@@ -60,7 +60,8 @@ const useMapLayers = (colours) => {
 
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
-  const radius = filters?.['radius'] ?? 10;
+  const radius = filters?.radius ?? 10;
+  const scale = filters?.scale ?? 1;
 
   const layers = useMemo(() => {
     let _layers = [];
@@ -129,9 +130,12 @@ const useMapLayers = (colours) => {
           new GeoJsonLayer({
             id: `${THERMAL_NETWORK}-edges`,
             data: mapLayers[THERMAL_NETWORK]?.edges,
-            getLineWidth: (f) => f.properties['peak_mass_flow'] / 100,
+            getLineWidth: (f) => (f.properties['peak_mass_flow'] / 100) * scale,
             getLineColor: colour,
             zIndex: 100,
+            updateTriggers: {
+              getLineWidth: [scale],
+            },
           }),
         );
 
@@ -158,7 +162,7 @@ const useMapLayers = (colours) => {
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
             colorRange: rgbGradientArray,
-            elevationScale: 1,
+            elevationScale: scale,
             radius: radius,
             elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
             updateTriggers: {
@@ -182,7 +186,7 @@ const useMapLayers = (colours) => {
             getColorWeight: (d) => d.value,
             getElevationWeight: (d) => d.value,
             colorRange: rgbGradientArray,
-            elevationScale: 1,
+            elevationScale: scale,
             radius: radius,
             elevationDomain: range,
             updateTriggers: {
