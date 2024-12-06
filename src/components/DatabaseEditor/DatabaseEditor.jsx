@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import {
-  ImportOutlined,
-  LoadingOutlined,
-  UploadOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import CenterSpinner from '../HomePage/CenterSpinner';
@@ -17,13 +13,11 @@ import {
   resetDatabaseChanges,
 } from '../../actions/databaseEditor';
 import { AsyncError } from '../../utils/AsyncError';
-import routes from '../../constants/routes.json';
 import SavingDatabaseModal from './SavingDatabaseModal';
 import DatabaseTopMenu from './DatabaseTopMenu';
 import Database from './Database';
 import UseTypesDatabase from './UseTypesDatabase';
 import ValidationErrors from './ValidationErrors';
-import { useChangeRoute } from '../../utils/hooks';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -57,7 +51,6 @@ const DatabaseEditor = () => {
   } = useSelector((state) => state.project);
 
   const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
-  const goToScript = useChangeRoute(`${routes.TOOLS}/data-initializer`);
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
   if (valid === null)
@@ -74,9 +67,6 @@ const DatabaseEditor = () => {
         <h2>Database Editor</h2>
         <div>
           <ExportDatabaseButton />
-          <Button type="primary" icon={<ImportOutlined />} onClick={goToScript}>
-            Import Database
-          </Button>
         </div>
       </div>
       <div className="cea-database-editor-content">
