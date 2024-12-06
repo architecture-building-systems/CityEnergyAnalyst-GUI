@@ -54,7 +54,9 @@ export const saveToolParams = (tool, params) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
           payload: {
-            error: { message: error.response.data.message },
+            error: {
+              message: error?.response?.data?.message ?? error?.message,
+            },
             isSaving: false,
           },
         });
@@ -79,10 +81,13 @@ export const setDefaultToolParams = (tool) => {
         return response.data;
       })
       .catch((error) => {
+        console.log(error);
         dispatch({
           type: SAVING_TOOLPARAMS,
           payload: {
-            error: { message: error.response.data.message },
+            error: {
+              message: error?.response?.data?.message ?? error?.message,
+            },
             isSaving: false,
           },
         });
