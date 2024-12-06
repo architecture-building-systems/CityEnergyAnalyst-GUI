@@ -8,6 +8,7 @@ import {
   Button,
   Spin as AntSpin,
   Alert,
+  message,
 } from 'antd';
 import {
   fetchToolParams,
@@ -326,7 +327,18 @@ const ToolFormButtons = ({
 };
 
 const Spin = ({ children }) => {
-  const { isSaving } = useSelector((state) => state.toolSaving);
+  const { isSaving, error } = useSelector((state) => state.toolSaving);
+
+  useEffect(() => {
+    if (error) {
+      message.config({
+        top: 120,
+      });
+      console.log(error);
+      message.error(error?.message ?? 'Something went wrong.');
+    }
+  }, [error]);
+
   return <AntSpin spinning={isSaving}>{children}</AntSpin>;
 };
 
