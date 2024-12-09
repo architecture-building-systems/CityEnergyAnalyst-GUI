@@ -292,7 +292,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
 const ScenarioList = () => {
   const { info, isFetching, error } = useSelector((state) => state.project);
   const project = info?.project;
-  const scenarioNames = info?.scenarios_list ?? [];
+  const scenarioNames = info?.scenarios_list?.sort() ?? [];
 
   const fetchProject = useFetchProject();
 
