@@ -36,6 +36,7 @@ import { calcBoundsAndCenter } from '../components/Map/utils';
 import { FlyToInterpolator } from 'deck.gl';
 
 import routes from '../constants/routes.json';
+import { useFetchProject } from '../utils/hooks';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -289,8 +290,15 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
 });
 
 const ScenarioList = () => {
-  const { info } = useSelector((state) => state.project);
-  const scenarioNames = info?.scenarios_list || [];
+  const { info, isFetching, error } = useSelector((state) => state.project);
+  const project = info?.project;
+  const scenarioNames = info?.scenarios_list?.sort() ?? [];
+
+  const fetchProject = useFetchProject();
+
+  useEffect(() => {
+    project && fetchProject(project);
+  }, [project]);
 
   return (
     <div
@@ -307,16 +315,22 @@ const ScenarioList = () => {
         <p>{scenarioNames.length} Scenario found</p>
       </div>
       <div style={{ overflow: 'auto' }}>
-        <List
-          dataSource={scenarioNames}
-          renderItem={(item) => (
-            <List.Item>
-              <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                {item}
-              </div>
-            </List.Item>
-          )}
-        />
+        {error ? (
+          <div>Error fetching scenarios</div>
+        ) : isFetching ? (
+          <div>Fetching scenarios...</div>
+        ) : (
+          <List
+            dataSource={scenarioNames}
+            renderItem={(item) => (
+              <List.Item>
+                <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  {item}
+                </div>
+              </List.Item>
+            )}
+          />
+        )}
       </div>
     </div>
   );
