@@ -18,12 +18,12 @@ import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
 import { useMapStore } from './store/store';
 import {
   DEMAND,
-  LEGEND_COLOUR_ARRAY,
-  LEGEND_POINTS,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
+  DEFAULT_LEGEND_COLOUR_ARRAY,
+  DEFAULT_LEGEND_POINTS,
 } from './Layers/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
@@ -34,26 +34,22 @@ const useMapStyle = () => {
   return showMapStyleLabels ? positron : no_label;
 };
 
-const gradientArray = new Gradient()
-  .setColorGradient(...LEGEND_COLOUR_ARRAY)
-  .setMidpoint(LEGEND_POINTS)
-  .getColors();
+const getLayerColours = (layer) => {
+  const colours = layer?.properties?.['colours'];
+  const colourArray = colours?.colour_array ?? DEFAULT_LEGEND_COLOUR_ARRAY;
+  const points = colours?.points ?? DEFAULT_LEGEND_POINTS;
 
-const rgbGradientArray = gradientArray.map((hex) => hexToRgb(hex));
+  const gradientArray = new Gradient()
+    .setColorGradient(...colourArray)
+    .setMidpoint(points)
+    .getColors();
 
-const getColor = (value, minParam, maxParam) => {
-  const range = maxParam - minParam;
-  const scale = range == 0 ? 0 : (value - minParam) / range;
-  const colorIndex = Math.min(
-    Math.floor(scale * (gradientArray.length - 1)),
-    gradientArray.length - 1,
-  );
+  const rgbGradientArray = gradientArray.map((hex) => hexToRgb(hex));
 
-  const hex = gradientArray?.[colorIndex];
-  return hex ? hexToRgb(hex) : null;
+  return rgbGradientArray;
 };
 
-const useMapLayers = (colours) => {
+const useMapLayers = () => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
     (state) => state.selectedMapCategory?.layers,
@@ -73,7 +69,20 @@ const useMapLayers = (colours) => {
     categoryLayers.forEach((layer) => {
       const { name } = layer;
 
-      if (name == SOLAR_IRRADIATION && mapLayers?.[SOLAR_IRRADIATION]) {
+      const rgbGradientArray = getLayerColours(mapLayers?.[name]);
+      const getColor = (value, minParam, maxParam) => {
+        const range = maxParam - minParam;
+        const scale = range == 0 ? 0 : (value - minParam) / range;
+        const colorIndex = Math.min(
+          Math.floor(scale * (rgbGradientArray.length - 1)),
+          rgbGradientArray.length - 1,
+        );
+
+        const hex = rgbGradientArray?.[colorIndex];
+        return hex;
+      };
+
+      if (name == SOLAR_IRRADIATION && mapLayers?.[name]) {
         const minParam = range[0];
         const maxParam = range[1];
 
@@ -82,7 +91,7 @@ const useMapLayers = (colours) => {
         _layers.push(
           new PointCloudLayer({
             id: 'PointCloudLayer',
-            data: mapLayers[SOLAR_IRRADIATION].data,
+            data: mapLayers[name].data,
             material: false,
 
             getColor: (d) => getColor(d.value, minParam, maxParam),
@@ -104,16 +113,26 @@ const useMapLayers = (colours) => {
         );
       }
 
-      if (name == THERMAL_NETWORK && mapLayers?.[THERMAL_NETWORK]) {
-        const colour = colours?.dc ?? [255, 255, 255];
+      if (name == THERMAL_NETWORK && mapLayers?.[name]) {
+        const colours = mapLayers[name].properties?.colours ?? {};
+
+        const edgeColour = hexToRgb(colours?.edges) ?? [255, 255, 255];
 
         const nodeFillColor = (type) => {
           if (type === 'NONE') {
-            return colour;
+            return edgeColour;
           } else if (type === 'CONSUMER') {
-            return [255, 255, 255];
+            return hexToRgb(colours?.nodes?.consumer) ?? [255, 255, 255];
           } else if (type === 'PLANT') {
-            return colours?.dh ?? [255, 255, 255];
+            return hexToRgb(colours?.nodes?.plant) ?? [255, 255, 255];
+          }
+        };
+
+        const nodeLineColor = (type) => {
+          if (type === 'PLANT') {
+            return [255, 255, 255];
+          } else {
+            return edgeColour;
           }
         };
 
@@ -129,10 +148,10 @@ const useMapLayers = (colours) => {
 
         _layers.push(
           new GeoJsonLayer({
-            id: `${THERMAL_NETWORK}-edges`,
-            data: mapLayers[THERMAL_NETWORK]?.edges,
+            id: `${name}-edges`,
+            data: mapLayers[name]?.edges,
             getLineWidth: (f) => (f.properties['peak_mass_flow'] / 100) * scale,
-            getLineColor: colour,
+            getLineColor: edgeColour,
             zIndex: 100,
             updateTriggers: {
               getLineWidth: [scale],
@@ -142,21 +161,24 @@ const useMapLayers = (colours) => {
 
         _layers.push(
           new GeoJsonLayer({
-            id: `${THERMAL_NETWORK}-nodes`,
-            data: mapLayers[THERMAL_NETWORK]?.nodes,
+            id: `${name}-nodes`,
+            data: mapLayers[name]?.nodes,
             getFillColor: (f) => nodeFillColor(f.properties['Type']),
             getPointRadius: (f) => nodeRadius(f.properties['Type']),
-            getLineColor: colour,
-            getLineWidth: 0.5,
+            getLineColor: (f) => nodeLineColor(f.properties['Type']),
+            getLineWidth: 1,
+            updateTriggers: {
+              getPointRadius: [scale],
+            },
           }),
         );
       }
 
-      if (name == DEMAND && mapLayers?.[DEMAND]) {
+      if (name == DEMAND && mapLayers?.[name]) {
         _layers.push(
           new HexagonLayer({
-            id: `${DEMAND}-hex`,
-            data: mapLayers[DEMAND].data,
+            id: `${name}-hex`,
+            data: mapLayers[name].data,
 
             extruded: true,
             getPosition: (d) => d.position,
@@ -173,14 +195,11 @@ const useMapLayers = (colours) => {
         );
       }
 
-      if (
-        name == RENEWABLE_ENERGY_POTENTIALS &&
-        mapLayers?.[RENEWABLE_ENERGY_POTENTIALS]
-      ) {
+      if (name == RENEWABLE_ENERGY_POTENTIALS && mapLayers?.[name]) {
         _layers.push(
           new HexagonLayer({
-            id: `${RENEWABLE_ENERGY_POTENTIALS}-hex`,
-            data: mapLayers[RENEWABLE_ENERGY_POTENTIALS].data,
+            id: `${name}-hex`,
+            data: mapLayers[name].data,
 
             extruded: true,
             getPosition: (d) => d.position,
@@ -197,11 +216,11 @@ const useMapLayers = (colours) => {
         );
       }
 
-      if (name == LIFE_CYCLE_ANALYSIS && mapLayers?.[LIFE_CYCLE_ANALYSIS]) {
+      if (name == LIFE_CYCLE_ANALYSIS && mapLayers?.[name]) {
         _layers.push(
           new HexagonLayer({
-            id: `${LIFE_CYCLE_ANALYSIS}-hex`,
-            data: mapLayers[LIFE_CYCLE_ANALYSIS].data,
+            id: `${name}-hex`,
+            data: mapLayers[name].data,
 
             extruded: true,
             getPosition: (d) => d.position,
@@ -220,7 +239,7 @@ const useMapLayers = (colours) => {
     });
 
     return _layers;
-  }, [filters, mapLayers, range, categoryLayers, colours]);
+  }, [filters, mapLayers, range, categoryLayers, scale]);
 
   return layers;
 };
@@ -442,7 +461,7 @@ const DeckGLMap = ({ data, colors }) => {
     buildingColor,
   ]);
 
-  const mapLayers = useMapLayers(colors);
+  const mapLayers = useMapLayers();
 
   const layers = [...dataLayers, ...mapLayers];
 
