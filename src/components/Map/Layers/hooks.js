@@ -4,8 +4,6 @@ import { useSelector } from 'react-redux';
 import { useMapStore } from '../store/store';
 import {
   DEMAND,
-  LEGEND_COLOUR_ARRAY,
-  LEGEND_POINTS,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   LIFE_CYCLE_ANALYSIS,
@@ -134,10 +132,11 @@ export const useMapLegends = () => {
       const props = mapLayers[SOLAR_IRRADIATION].properties;
       const label = props['label'];
       const _range = props['range'];
+      const colours = props['colours'];
       setMapLayerLegends({
         [SOLAR_IRRADIATION]: {
-          colourArray: LEGEND_COLOUR_ARRAY,
-          LEGEND_POINTS,
+          colourArray: colours?.colour_array,
+          points: colours?.points,
           range: _range,
           label,
         },
@@ -146,10 +145,11 @@ export const useMapLegends = () => {
       const props = mapLayers[DEMAND].properties;
       const label = props['label'];
       const _range = props['range'];
+      const colours = props['colours'];
       setMapLayerLegends({
         [DEMAND]: {
-          colourArray: LEGEND_COLOUR_ARRAY,
-          LEGEND_POINTS,
+          colourArray: colours?.colour_array,
+          points: colours?.points,
           range: _range,
           label,
         },
@@ -158,10 +158,11 @@ export const useMapLegends = () => {
       const props = mapLayers[RENEWABLE_ENERGY_POTENTIALS].properties;
       const label = props['label'];
       const _range = props['range'];
+      const colours = props['colours'];
       setMapLayerLegends({
         [RENEWABLE_ENERGY_POTENTIALS]: {
-          colourArray: LEGEND_COLOUR_ARRAY,
-          LEGEND_POINTS,
+          colourArray: colours?.colour_array,
+          points: colours?.points,
           range: _range,
           label,
         },
@@ -170,10 +171,11 @@ export const useMapLegends = () => {
       const props = mapLayers[LIFE_CYCLE_ANALYSIS].properties;
       const label = props['label'];
       const _range = props['range'];
+      const colours = props['colours'];
       setMapLayerLegends({
         [LIFE_CYCLE_ANALYSIS]: {
-          colourArray: LEGEND_COLOUR_ARRAY,
-          LEGEND_POINTS,
+          colourArray: colours?.colour_array,
+          points: colours?.points,
           range: _range,
           label,
         },
