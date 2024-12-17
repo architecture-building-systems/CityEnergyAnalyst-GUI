@@ -125,7 +125,8 @@ const RefreshProjectButton = ({ loading, project, scenarioName }) => {
   const dispatch = useDispatch();
 
   const refreshProject = () => {
-    fetchProject(project).then(({ scenarios_list: scenariosList }) => {
+    fetchProject(project).then((projectInfo) => {
+      const scenariosList = projectInfo?.scenarios_list || [];
       // Set scenario back if it exists
       if (scenariosList.includes(scenarioName))
         dispatch(updateScenario(scenarioName));
@@ -237,7 +238,6 @@ const fetchProjectDetails = async (project = null) => {
       `${import.meta.env.VITE_CEA_URL}/api/project/`,
       config,
     );
-    console.log(`fetchProjectDetails: resp.data=${resp.data}`);
     return resp.data;
   } catch (err) {
     console.error(err);
