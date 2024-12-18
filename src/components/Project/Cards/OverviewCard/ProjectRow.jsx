@@ -12,10 +12,7 @@ import {
 } from '../../../../assets/icons';
 import { useOpenScenario } from '../../Project';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  discardChanges,
-  fetchInputData,
-} from '../../../../actions/inputEditor';
+import { fetchInputData } from '../../../../actions/inputEditor';
 import { useFetchProject } from '../../../../utils/hooks';
 
 const ProjectRow = ({ projectName }) => {
@@ -41,7 +38,7 @@ const OpenProjectIconButton = () => {
   const [visible, setVisible] = useState(false);
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
-  const onSuccess = async ({ project }) => {};
+  const onSuccess = async () => {};
 
   return (
     <Tooltip title="Open Project" overlayInnerStyle={{ fontSize: 12 }}>
