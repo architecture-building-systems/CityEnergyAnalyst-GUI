@@ -18,37 +18,24 @@ class InvalidContentType extends Error {
 export const getContentInfo = async (
   content_path = '',
   content_type = 'directory',
-  root_path = null,
 ) => {
   try {
-    const url = `${import.meta.env.VITE_CEA_URL}/api/contents/${content_path}`;
+    const url = `${import.meta.env.VITE_CEA_URL}/api/contents`;
     const { data } = await axios.get(url, {
-      params: { type: content_type, ...(root_path && { root: root_path }) },
+      params: { content_type, content_path },
     });
     return data;
   } catch (error) {
-    if (error.response.status == 404) throw new FileNotFoundError();
-    if (error.response.status == 400) throw new InvalidContentType();
+    const message = error?.response?.data?.detail ?? 'Unknown error';
+    if (error.response.status == 404) throw new FileNotFoundError(message);
+    if (error.response.status == 400) throw new InvalidContentType(message);
     else throw error;
   }
 };
 
-export const checkExist = async (
-  content_path,
-  content_type,
-  root_path = null,
-) => {
-  try {
-    await getContentInfo(content_path, content_type, root_path);
-    return true;
-  } catch (error) {
-    if (
-      error instanceof FileNotFoundError ||
-      error instanceof InvalidContentType
-    )
-      return false;
-    else throw error;
-  }
+export const checkExist = async (content_path, content_type) => {
+  await getContentInfo(content_path, content_type);
+  return true;
 };
 
 const isWin = (fullPath) => {
