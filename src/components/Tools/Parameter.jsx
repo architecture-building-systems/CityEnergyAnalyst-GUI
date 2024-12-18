@@ -387,7 +387,12 @@ export const OpenDialogInput = forwardRef((props, ref) => {
 
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
-      <Input ref={ref} style={{ width: '100%' }} {...rest} />
+      <Input
+        ref={ref}
+        style={{ width: '100%' }}
+        onChange={onChange}
+        {...rest}
+      />
       <Button
         type="primary"
         style={{ width: 60 }}
