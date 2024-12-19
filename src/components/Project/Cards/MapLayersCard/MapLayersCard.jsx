@@ -10,7 +10,6 @@ import {
   EnergyPotentialsIcon,
   LifeCycleAnalysisIcon,
 } from '../../../../assets/icons';
-import { useSelector } from 'react-redux';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -19,14 +18,14 @@ import {
   LIFE_CYCLE_ANALYSIS,
 } from '../../../Map/Layers/constants';
 import { useGetMapLayerCategories } from '../../../Map/Layers/hooks';
+import { useProjectStore } from '../../store';
 
 const MapLayersCard = () => {
+  const scenarioName = useProjectStore((state) => state.scenario);
   const [active, setActive] = useState(null);
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
   );
-
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
 
   const mapLayerCategories = useGetMapLayerCategories();
 

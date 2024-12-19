@@ -1,20 +1,42 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Form, Input, Modal } from 'antd';
-import axios from 'axios';
 import { OpenDialogInput } from '../Tools/Parameter';
-import { useFetchConfigProjectInfo } from '../Project/Project';
-import { checkExist, dirname, joinPath, sanitizePath } from '../../utils/file';
-import { useFetchProject } from '../../utils/hooks';
+import {
+  checkExist,
+  dirname,
+  FileNotFoundError,
+  InvalidContentType,
+  joinPath,
+} from '../../utils/file';
+import { fetchConfig, useProjectStore } from './store';
+import axios from 'axios';
+
+const useFetchConfigProjectInfo = () => {
+  const [info, setInfo] = useState({});
+
+  const fetchInfo = async () => {
+    try {
+      const projectDetails = await fetchConfig();
+      setInfo(projectDetails);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return { info, fetchInfo };
+};
 
 const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [form] = Form.useForm();
+
+  const fetchProject = useProjectStore((state) => state.fetchInfo);
   const { info, fetchInfo } = useFetchConfigProjectInfo();
+
   const initialValue = useMemo(
     () => (info?.project ? dirname(info.project) : null),
     [info?.project],
   );
-  const fetchProject = useFetchProject();
 
   useEffect(() => {
     if (visible) fetchInfo();
@@ -23,17 +45,18 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
   const onFinish = async (values) => {
     try {
       setConfirmLoading(true);
+      console.log('Received values of form: ', values);
       const resp = await axios.post(
         `${import.meta.env.VITE_CEA_URL}/api/project/`,
         values,
       );
       const { project } = resp.data;
-      fetchProject(project).then(() => {
-        setConfirmLoading(false);
-        setVisible(false);
-        onSuccess();
-        form.resetFields();
-      });
+      await fetchProject(project);
+      setConfirmLoading(false);
+      setVisible(false);
+      onSuccess();
+
+      form.resetFields();
     } catch (e) {
       console.log(e);
     } finally {
@@ -68,7 +91,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
   );
 };
 
-const NewProjectForm = ({ form, onFinish, initialValue, project }) => {
+const NewProjectForm = ({ form, onFinish, initialValue }) => {
   return (
     <Form
       form={form}
@@ -87,21 +110,18 @@ const NewProjectForm = ({ form, onFinish, initialValue, project }) => {
             validator: async (_, value) => {
               const projectRoot = form.getFieldValue('project_root');
 
-              // Sanitize the path if project root is set
-              if (projectRoot !== '') {
-                console.log('Sanitizing path');
-                try {
-                  sanitizePath(projectRoot, value, 1);
-                } catch (err) {
-                  return Promise.reject('Path entered is invalid');
+              const contentPath = joinPath(projectRoot, value);
+              try {
+                const pathExists = await checkExist(contentPath, 'directory');
+                if (value.length != 0 && pathExists) {
+                  return Promise.reject('project name already exists in path');
+                }
+              } catch (error) {
+                if (!(error instanceof FileNotFoundError)) {
+                  throw error;
                 }
               }
 
-              const contentPath = joinPath(projectRoot, value);
-              const pathExists = await checkExist('', 'directory', contentPath);
-              if (value.length != 0 && pathExists) {
-                return Promise.reject('project name already exists in path');
-              }
               return Promise.resolve();
             },
           },
@@ -119,15 +139,13 @@ const NewProjectForm = ({ form, onFinish, initialValue, project }) => {
         rules={[
           {
             validator: async (_, value) => {
-              if (value.length == 0) {
-                return Promise.reject('Path entered is invalid');
-              }
-
+              if (value.length == 0)
+                return Promise.reject('Project cannot be empty');
+              await checkExist(value, 'directory');
               return Promise.resolve();
             },
           },
         ]}
-        hidden={project?.projects}
       >
         <OpenDialogInput form={form} type="directory" />
       </Form.Item>

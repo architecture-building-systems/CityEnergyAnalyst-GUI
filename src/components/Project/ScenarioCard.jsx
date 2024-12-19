@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { DownOutlined } from '@ant-design/icons';
 import { Card, Row, Col, Button, Modal, Tag, Dropdown, Space } from 'antd';
 import axios from 'axios';
-import { deleteScenario, useOpenScenario } from './Project';
+import { deleteScenario } from './Project';
 import RenameScenarioModal from './RenameScenarioModal';
-import { useFetchProject } from '../../utils/hooks';
+import { useProjectStore } from './store';
+import { useOpenScenario } from './hooks';
 
 const ScenarioCard = ({ scenarioName, project, active }) => {
   const openScenario = useOpenScenario();
@@ -105,7 +106,7 @@ const useGenerateScenarioImage = (project, scenarioName) => {
 
 const EditScenarioMenu = ({ scenarioName, project }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const fetchProject = useFetchProject();
+  const fetchProject = useProjectStore((state) => state.fetchInfo);
 
   const showConfirm = () => {
     let secondsToGo = 3;

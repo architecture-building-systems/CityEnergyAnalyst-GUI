@@ -4,11 +4,11 @@ import { useMapStore } from '../../../Map/store/store';
 import { useGetMapLayers } from '../../../Map/Layers/hooks';
 import { useEffect } from 'react';
 import { Alert } from 'antd';
-import { useSelector } from 'react-redux';
+import { useProjectStore } from '../../store';
 
 const MapLayerPropertiesCard = () => {
-  const project = useSelector((state) => state.project.info.project);
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);

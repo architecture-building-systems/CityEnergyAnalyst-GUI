@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useMapStore } from '../store/store';
 import {
   DEMAND,
@@ -8,6 +7,7 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   LIFE_CYCLE_ANALYSIS,
 } from './constants';
+import { useProjectStore } from '../../Project/store';
 
 export const useGetMapLayerCategories = () => {
   const [mapLayers, setMapLayers] = useState({});
@@ -124,8 +124,8 @@ export const useMapLegends = () => {
   const mapLegends = useMapStore((state) => state.mapLayerLegends);
   const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
 
-  const project = useSelector((state) => state.project.info.project);
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   useEffect(() => {
     if (mapLayers?.[SOLAR_IRRADIATION]) {

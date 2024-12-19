@@ -18,6 +18,7 @@ import DatabaseTopMenu from './DatabaseTopMenu';
 import Database from './Database';
 import UseTypesDatabase from './UseTypesDatabase';
 import ValidationErrors from './ValidationErrors';
+import { useProjectStore } from '../Project/store';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -46,9 +47,7 @@ const useValidateDatabasePath = () => {
 };
 
 const DatabaseEditor = () => {
-  const {
-    info: { scenario_name: scenarioName },
-  } = useSelector((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
 

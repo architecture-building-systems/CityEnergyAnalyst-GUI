@@ -1,14 +1,14 @@
 import axios from 'axios';
 import path from 'path-browserify';
 
-class FileNotFoundError extends Error {
+export class FileNotFoundError extends Error {
   constructor(message, options) {
     // Need to pass `options` as the second parameter to install the "cause" property.
     super(message, options);
   }
 }
 
-class InvalidContentType extends Error {
+export class InvalidContentType extends Error {
   constructor(message, options) {
     // Need to pass `options` as the second parameter to install the "cause" property.
     super(message, options);

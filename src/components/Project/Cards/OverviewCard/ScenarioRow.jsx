@@ -4,12 +4,12 @@ import { push } from 'connected-react-router';
 import routes from '../../../../constants/routes.json';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHoverGrow } from './hooks';
-import { useOpenScenario } from '../../Project';
 import { useMemo } from 'react';
 import { message, Tooltip } from 'antd';
 import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
 
 import './OverviewCard.css';
+import { useOpenScenario } from '../../hooks';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {

@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, Radio, Input } from 'antd';
 import axios from 'axios';
-import { useOpenScenario } from './Project';
 import CreatingScenarioModal from './CreatingScenarioModal';
 import ScenarioGenerateDataForm from './ScenarioGenerateDataForm';
 import ScenarioImportDataForm from './ScenarioImportDataForm';
 import Parameter from '../Tools/Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { checkExist, joinPath } from '../../utils/file';
+import { useOpenScenario } from './hooks';
 
 const NewScenarioModal = ({ visible, setVisible, project }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
