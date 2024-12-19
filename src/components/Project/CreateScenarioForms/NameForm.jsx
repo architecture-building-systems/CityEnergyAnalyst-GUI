@@ -1,10 +1,11 @@
 import { Form, Input } from 'antd';
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useProjectStore } from '../store';
 
 const NameForm = ({ initialValues, onFinish, formButtons }) => {
-  const { info } = useSelector((state) => state.project);
-  const scenarioNames = info?.scenarios_list || [];
+  const scenariosList = useProjectStore((state) => state.scenariosList);
+  const scenarioNames = scenariosList || [];
+
   const [value, setValue] = useState(initialValues.name);
 
   const onNameChange = (e) => {

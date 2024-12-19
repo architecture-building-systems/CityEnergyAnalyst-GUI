@@ -1,30 +1,30 @@
 import { Suspense, lazy, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import {
   FolderOpenOutlined,
   PlusOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { Card, Button, message } from 'antd';
-import { updateScenario } from '../../actions/project';
+import { Card, Button } from 'antd';
 import axios from 'axios';
 import ScenarioCard from './ScenarioCard';
 import routes from '../../constants/routes.json';
 import './Project.css';
-import { useChangeRoute, useFetchProject } from '../../utils/hooks';
+import { useChangeRoute } from '../../utils/hooks';
+import { useProjectStore } from './store';
 
 const NewProjectModal = lazy(() => import('./NewProjectModal'));
 const OpenProjectModal = lazy(() => import('./OpenProjectModal'));
 
 const Project = () => {
-  const { isFetching, error, info } = useSelector((state) => state.project);
-
   const {
+    isFetching,
+    error,
     project,
-    project_name: projectName,
-    scenario_name: scenarioName,
-    scenarios_list: scenariosList,
-  } = info;
+    name: projectName,
+    scenarioName,
+    scenariosList,
+  } = useProjectStore();
+
   const projectExists = !error && projectName !== '';
   const projectTitle = projectExists ? projectName : 'No Project found';
 
@@ -121,15 +121,15 @@ const OpenProjectButton = ({ onSuccess }) => {
 };
 
 const RefreshProjectButton = ({ loading, project, scenarioName }) => {
-  const fetchProject = useFetchProject();
-  const dispatch = useDispatch();
+  const fetchProject = useProjectStore((state) => state.fetchInfo);
+  const updateScenario = useProjectStore((state) => state.updateScenario);
 
-  const refreshProject = () => {
-    fetchProject(project).then(({ scenarios_list: scenariosList }) => {
-      // Set scenario back if it exists
-      if (scenariosList.includes(scenarioName))
-        dispatch(updateScenario(scenarioName));
-    });
+  const refreshProject = async () => {
+    const projectInfo = await fetchProject(project);
+    const scenariosList = projectInfo?.scenarios_list || [];
+
+    // Set scenario back if it exists
+    if (scenariosList.includes(scenarioName)) updateScenario(scenarioName);
   };
 
   return (
@@ -144,7 +144,7 @@ const RefreshProjectButton = ({ loading, project, scenarioName }) => {
   );
 };
 
-const NewScenarioButton = ({ project }) => {
+const NewScenarioButton = () => {
   const changeRoute = useChangeRoute(routes.CREATE_SCENARIO);
   return (
     <>
@@ -161,22 +161,6 @@ const NewScenarioButton = ({ project }) => {
       </Button>
     </>
   );
-};
-
-const updateConfigProjectInfo = async (project, scenarioName) => {
-  try {
-    const resp = await axios.put(
-      `${import.meta.env.VITE_CEA_URL}/api/project/`,
-      {
-        project,
-        scenario_name: scenarioName,
-      },
-    );
-    console.log(resp.data);
-    return resp.data;
-  } catch (err) {
-    console.error(err.response);
-  }
 };
 
 export const deleteScenario = async (
@@ -199,61 +183,6 @@ export const deleteScenario = async (
     console.log(`Failed to delete scenario ${scenario}`);
     console.error(err.response);
   }
-};
-
-export const useOpenScenario = (route = routes.PROJECT) => {
-  const fetchProject = useFetchProject();
-  const changeRoute = useChangeRoute(route);
-  return async (project, scenarioName) => {
-    // Fetch project info first before going to route
-    const { scenarios_list: scenariosList } =
-      await fetchProjectDetails(project);
-    // Check if scenario still exist
-    if (scenariosList.includes(scenarioName)) {
-      await updateConfigProjectInfo(project, scenarioName);
-      return fetchProject()
-        .then(changeRoute)
-        .then(() => true);
-    } else {
-      return fetchProject(project).then(() => {
-        message.config({
-          top: 120,
-        });
-        message.error(
-          <span>
-            Scenario: <b>{scenarioName}</b> could not be found.
-          </span>,
-        );
-        return false;
-      });
-    }
-  };
-};
-
-const fetchProjectDetails = async (project = null) => {
-  const config = project ? { params: { project } } : {};
-  try {
-    const resp = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/project/`,
-      config,
-    );
-    console.log(`fetchProjectDetails: resp.data=${resp.data}`);
-    return resp.data;
-  } catch (err) {
-    console.error(err);
-    console.error(err.response);
-  }
-};
-
-export const useFetchConfigProjectInfo = () => {
-  const [info, setInfo] = useState({});
-
-  const fetchInfo = async () => {
-    const projectDetails = await fetchProjectDetails();
-    setInfo(projectDetails);
-  };
-
-  return { info, fetchInfo };
 };
 
 export default Project;

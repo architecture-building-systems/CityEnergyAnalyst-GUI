@@ -1,36 +1,29 @@
-import { useRef, useState, useEffect } from 'react';
-import { Form } from '@ant-design/compatible';
-import { Modal } from 'antd';
-import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
-import { useFetchConfigProjectInfo } from '../Project/Project';
+import { useState } from 'react';
+import { Form, Modal } from 'antd';
+import { OpenDialogInput } from '../Tools/Parameter';
 import { checkExist } from '../../utils/file';
-import { useFetchProject } from '../../utils/hooks';
+import { useProjectStore } from './store';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
+  const project = useProjectStore((state) => state.project);
+  const updateScenario = useProjectStore((state) => state.updateScenario);
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
+
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const formRef = useRef();
-  const {
-    info: { project },
-    fetchInfo,
-  } = useFetchConfigProjectInfo();
-  const fetchProject = useFetchProject();
+  const [form] = Form.useForm();
 
-  useEffect(() => {
-    if (visible) fetchInfo();
-  }, [visible]);
-
-  const handleOk = () => {
-    formRef.current.validateFields(async (err, values) => {
-      if (!err) {
-        setConfirmLoading(true);
-        const { project } = values;
-        fetchProject(project).then((value) => {
-          setConfirmLoading(false);
-          setVisible(false);
-          onSuccess?.(value);
-        });
-      }
-    });
+  const onFinish = async ({ project }) => {
+    setConfirmLoading(true);
+    try {
+      updateScenario(null);
+      await fetchInfo(project);
+      setConfirmLoading(false);
+      setVisible(false);
+      onSuccess?.();
+    } catch (e) {
+      console.log(e);
+      setConfirmLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -43,40 +36,44 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
       open={visible}
       width={800}
       okText="Open"
-      onOk={handleOk}
+      onOk={form.submit}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      <OpenProjectForm ref={formRef} initialValue={project} />
+      <OpenProjectForm form={form} onFinish={onFinish} initialValue={project} />
     </Modal>
   );
 };
 
-const OpenProjectForm = Form.create()(({ form, initialValue }) => {
+const OpenProjectForm = ({ form, onFinish, initialValue }) => {
   return (
-    <Form>
-      <FormItemWrapper
-        form={form}
+    <Form
+      form={form}
+      onFinish={onFinish}
+      labelCol={{ span: 6 }}
+      wrapperCol={{ span: 15, offset: 1 }}
+    >
+      <Form.Item
+        label="Project"
         name="project"
         initialValue={initialValue}
-        help="Path of Project"
+        extra="Path of Project"
         rules={[
           {
-            validator: async (rule, value, callback) => {
-              const pathExists = await checkExist('', 'directory', value);
-              if (!pathExists) {
-                callback('Path entered is invalid');
-              } else {
-                callback();
-              }
+            validator: async (_, value) => {
+              if (value.length == 0)
+                return Promise.reject('Project cannot be empty');
+              await checkExist(value, 'directory');
+              return Promise.resolve();
             },
           },
         ]}
-        inputComponent={<OpenDialogInput form={form} type="directory" />}
-      />
+      >
+        <OpenDialogInput type="directory" />
+      </Form.Item>
     </Form>
   );
-});
+};
 
 export default OpenProjectModal;

@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { useMapStore } from '../../store/store';
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { useSelector } from 'react-redux';
+import { useProjectStore } from '../../../Project/store';
 
 const getChoices = async (
   layerCategory,
@@ -32,8 +32,8 @@ const ChoiceSelector = ({
   layerName,
   dependsOn,
 }) => {
-  const project = useSelector((state) => state.project.info.project);
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const removeMapLayerParameter = useMapStore(
     (state) => state.removeMapLayerParameter,

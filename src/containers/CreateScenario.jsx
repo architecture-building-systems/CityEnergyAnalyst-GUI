@@ -22,7 +22,6 @@ import {
 import NameForm from '../components/Project/CreateScenarioForms/NameForm';
 import GeometryForm from '../components/Project/CreateScenarioForms/GeometryForm';
 import ContextForm from '../components/Project/CreateScenarioForms/ContextForm';
-import { useSelector } from 'react-redux';
 import {
   MapFormContext,
   useFetchDatabases,
@@ -30,13 +29,13 @@ import {
 } from '../components/Project/CreateScenarioForms/hooks';
 import axios from 'axios';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useOpenScenario } from '../components/Project/Project';
 import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
 import { FlyToInterpolator } from 'deck.gl';
 
 import routes from '../constants/routes.json';
-import { useFetchProject } from '../utils/hooks';
+import { useProjectStore } from '../components/Project/store';
+import { useOpenScenario } from '../components/Project/hooks';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -142,9 +141,7 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
   formIndex,
   onFormChange,
 }) {
-  const {
-    info: { project },
-  } = useSelector((state) => state.project);
+  const project = useProjectStore((state) => state.project);
   const openScenario = useOpenScenario(routes.PROJECT);
   const { setFormData, fetching, error } = useCreateScenario(project, {
     // Redirect to input editor when scenario is created
@@ -290,15 +287,21 @@ const CreateScenarioForm = memo(function CreateScenarioForm({
 });
 
 const ScenarioList = () => {
-  const { info, isFetching, error } = useSelector((state) => state.project);
-  const project = info?.project;
-  const scenarioNames = info?.scenarios_list?.sort() ?? [];
+  const project = useProjectStore((state) => state.project);
+  const scenariosList = useProjectStore((state) => state.scenariosList);
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
-  const fetchProject = useFetchProject();
+  const { isFetching, error } = useProjectStore();
 
+  const scenarioNames = useMemo(
+    () => scenariosList?.sort() ?? [],
+    [scenariosList],
+  );
+
+  // Ensure scenariosList is udpated
   useEffect(() => {
-    project && fetchProject(project);
-  }, [project]);
+    project && fetchInfo(project);
+  }, []);
 
   return (
     <div

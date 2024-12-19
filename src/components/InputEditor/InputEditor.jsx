@@ -10,6 +10,7 @@ import NavigationPrompt from './NavigationPrompt';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 import './InputEditor.css';
+import { useProjectStore } from '../Project/store';
 
 const MAP_STYLE = {
   height: '500px',
@@ -19,9 +20,7 @@ const MAP_STYLE = {
 };
 
 const InputEditor = () => {
-  const {
-    info: { scenario_name: scenarioName },
-  } = useSelector((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   const { status, error } = useSelector((state) => state.inputData);
   const dispatch = useDispatch();

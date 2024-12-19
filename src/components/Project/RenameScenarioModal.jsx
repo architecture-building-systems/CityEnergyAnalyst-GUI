@@ -4,7 +4,7 @@ import { Modal } from 'antd';
 import axios from 'axios';
 import { FormItemWrapper } from '../Tools/Parameter';
 import { checkExist, joinPath } from '../../utils/file';
-import { useFetchProject } from '../../utils/hooks';
+import { useProjectStore } from './store';
 
 const RenameScenarioModal = ({
   scenarioName,
@@ -14,7 +14,7 @@ const RenameScenarioModal = ({
 }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
-  const fetchProject = useFetchProject();
+  const fetchProject = useProjectStore((state) => state.fetchInfo);
 
   const handleOk = () => {
     formRef.current.validateFields(async (err, values) => {

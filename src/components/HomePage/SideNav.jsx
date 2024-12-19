@@ -15,6 +15,7 @@ import ceaLogo from '../../assets/cea-logo.png';
 import { LayoutContext } from './hooks';
 import { fetchToolList } from '../../actions/tools';
 import { isElectron, openExternal } from '../../utils/electron';
+import { useProjectStore } from '../Project/store';
 
 const { Sider } = Layout;
 
@@ -33,7 +34,7 @@ const SideNav = () => {
   const { pathname: selectedKey } = useSelector(
     (state) => state.router.location,
   );
-  const scenarioName = useSelector((state) => state.project.info.scenario_name);
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   const { collapsed, setCollapsed } = useContext(LayoutContext);
   const [breakpoint, setBreakpoint] = useState(false);

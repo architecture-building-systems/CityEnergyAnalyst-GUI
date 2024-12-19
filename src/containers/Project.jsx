@@ -19,11 +19,10 @@ import MapControls from '../components/Map/MapControls';
 import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
 import { useToolStore } from '../components/Tools/store';
 import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
+import { useProjectStore } from '../components/Project/store';
 
 const Project = () => {
-  const { scenario_name: scenarioName } = useSelector(
-    (state) => state.project.info,
-  );
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   return (
     <div style={{ height: '100%', background: '#f0f2f8' }}>
@@ -37,15 +36,12 @@ const Project = () => {
 };
 
 const ProjectOverlay = () => {
+  const project = useProjectStore((state) => state.project);
+  const name = useProjectStore((state) => state.name);
+  const scenarioName = useProjectStore((state) => state.scenario);
+  const scenarioList = useProjectStore((state) => state.scenariosList);
+
   const dispatch = useDispatch();
-
-  const {
-    project,
-    project_name: projectName,
-    scenario_name: scenarioName,
-    scenarios_list: scenarioList,
-  } = useSelector((state) => state.project.info);
-
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
 
@@ -89,7 +85,7 @@ const ProjectOverlay = () => {
   useEffect(() => {
     setShowTools(false);
     setInputEditor(false);
-  }, [projectName, scenarioName]);
+  }, [name, scenarioName]);
 
   useEffect(() => {
     if (scenarioName !== null) dispatch(fetchInputData());
@@ -97,7 +93,7 @@ const ProjectOverlay = () => {
     return () => {
       dispatch(resetInputData());
     };
-  }, [dispatch, projectName, scenarioName]);
+  }, [dispatch, name, scenarioName]);
 
   return (
     <div id="cea-project-overlay">
@@ -131,7 +127,7 @@ const ProjectOverlay = () => {
                 >
                   <OverviewCard
                     project={project}
-                    projectName={projectName}
+                    projectName={name}
                     scenarioName={scenarioName}
                     scenarioList={scenarioList}
                     onToggleHideAll={handleHideAll}

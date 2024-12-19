@@ -3,10 +3,11 @@ import SearchBar from './SearchBar/SearchBar';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
 import { LayoutContext } from './hooks';
+import { useProjectStore } from '../Project/store';
 
 const Header = () => {
-  const { project_name: projectName, scenario_name: scenarioName } =
-    useSelector((state) => state.project.info);
+  const projectName = useProjectStore((state) => state.name);
+  const scenarioName = useProjectStore((state) => state.scenario);
   const { pathname } = useSelector((state) => state.router.location);
 
   const { collapsed, setCollapsed } = useContext(LayoutContext);

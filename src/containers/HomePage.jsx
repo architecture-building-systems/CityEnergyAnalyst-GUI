@@ -2,16 +2,15 @@ import { Suspense, lazy, useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import routes from '../constants/routes.json';
-import { useDispatch, useSelector } from 'react-redux';
-import { updateScenario } from '../actions/project';
+import { useDispatch } from 'react-redux';
 import StatusBar from '../components/HomePage/StatusBar/StatusBar';
 
 import './HomePage.css';
-import { useFetchProject } from '../utils/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { Button, ConfigProvider } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import { push } from 'connected-react-router';
+import { useProjectStore } from '../components/Project/store';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -21,7 +20,24 @@ const DatabaseEditor = lazy(
 );
 const Landing = lazy(() => import('../components/Landing/Landing'));
 
+const useInitProjectStore = () => {
+  const fetchConfig = useProjectStore((state) => state.fetchConfig);
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
+
+  useEffect(() => {
+    const initProject = async () => {
+      const { project } = await fetchConfig();
+      if (project) await fetchInfo(project);
+      else console.error('Project not found', project);
+    };
+
+    initProject();
+  }, []);
+};
+
 const HomePageContent = () => {
+  useInitProjectStore();
+
   return (
     <ErrorBoundary>
       <Switch>
@@ -121,21 +137,6 @@ const Cardwrapper = ({ children, style }) => {
 };
 
 const HomePage = () => {
-  const fetchProject = useFetchProject();
-  const dispatch = useDispatch();
-
-  const {
-    info: { project, scenario_name: scenarioName },
-  } = useSelector((state) => state.project);
-
-  useEffect(() => {
-    fetchProject(project).then(({ scenarios_list: scenariosList }) => {
-      // Set scenario back if it exists
-      if (scenariosList.includes(scenarioName))
-        dispatch(updateScenario(scenarioName));
-    });
-  }, []);
-
   return (
     <ConfigProvider
       theme={{
