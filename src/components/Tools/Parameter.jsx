@@ -132,7 +132,8 @@ const Parameter = ({ parameter, form }) => {
     case 'MultiChoiceParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
-    case 'ColumnMultiChoiceParameter': {
+    case 'ColumnMultiChoiceParameter':
+    case 'ScenarioNameMultiChoiceParameter': {
       const placeholder =
         type == 'BuildingsParameter' ? 'All Buildings' : 'Nothing Selected';
       const selectAll = (e) => {
