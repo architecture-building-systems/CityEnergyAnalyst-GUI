@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchToolList } from '../../../../actions/tools';
 
-import { ToolOutlined, DownOutlined } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 
 import './Toolbar.css';
 import { useHoverGrow } from '../OverviewCard/hooks';
@@ -20,6 +20,7 @@ import {
   LifeCycleAnalysisIcon,
   NetworksIcon,
   ImportExportIcon,
+  PlugInIcon,
 } from '../../../../assets/icons';
 
 const useFetchTools = () => {
@@ -55,7 +56,7 @@ const ToolMenu = ({
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
-  const icon = toolIconMap?.[category] || <ToolOutlined />;
+  const icon = toolIconMap?.[category] || <PlugInIcon />;
 
   const items = useMemo(
     () =>
