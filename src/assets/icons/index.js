@@ -25,6 +25,8 @@ import ExtrudeIcon from './3d.svg';
 import CameraView from './camera_view.svg';
 import Compass from './compass.svg';
 
+import PlugInIcon from './plug_in.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -48,4 +50,5 @@ export {
   CameraView,
   Compass,
   ImportExportIcon,
+  PlugInIcon,
 };

@@ -1,11 +1,14 @@
 import { Divider, Dropdown } from 'antd';
-import ceaLogo from '../../../../assets/cea-logo.png';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import { ShowHideCardsButton } from '../../../../containers/Project';
 import { helpMenuItems, HelpMenuItemsLabel, helpMenuUrls } from './constants';
 import { DownOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
+
+import CeaLogoSVG from '../../../../assets/cea-logo.svg';
+import { animated } from '@react-spring/web';
+import { useHoverGrow } from './hooks';
 
 const OverviewCard = ({
   project,
@@ -43,7 +46,7 @@ const OverviewCard = ({
 
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 8,
 
         fontSize: 12,
       }}
@@ -56,12 +59,9 @@ const OverviewCard = ({
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Logo height={60} />
-
-          <Dropdown menu={{ items: menuItems }}>
-            <DownOutlined style={{ padding: 8 }} />
-          </Dropdown>
+          <DropdownMenu menuItems={menuItems} />
         </div>
 
         <ShowHideCardsButton
@@ -75,9 +75,23 @@ const OverviewCard = ({
           }}
         />
       </div>
-      <Divider style={{ margin: 0 }} />
+      <Divider
+        orientation="right"
+        orientationMargin={2}
+        plain
+        style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
+      >
+        Project
+      </Divider>
       <ProjectRow projectName={projectName} />
-      <Divider style={{ margin: 0 }} />
+      <Divider
+        orientation="right"
+        orientationMargin={2}
+        plain
+        style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
+      >
+        Scenario
+      </Divider>
       <ScenarioRow
         project={project}
         scenarioName={scenarioName}
@@ -90,6 +104,7 @@ const OverviewCard = ({
 const Logo = ({ height }) => {
   return (
     <div
+      id="cea-overview-card-logo"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -97,8 +112,24 @@ const Logo = ({ height }) => {
         gap: 12,
       }}
     >
-      <img style={{ height: '100%' }} src={ceaLogo} alt="Logo" />
+      <CeaLogoSVG style={{ height: '100%' }} />
     </div>
+  );
+};
+
+const DropdownMenu = ({ menuItems }) => {
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+
+  return (
+    <animated.div style={styles}>
+      <Dropdown
+        menu={{ items: menuItems }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <DownOutlined style={{ padding: 8 }} />
+      </Dropdown>
+    </animated.div>
   );
 };
 
