@@ -46,7 +46,8 @@
 
     /* No animation for white group */
     #white {
-      opacity: 1;
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.1s;
     }
   </style>
   <g id="purple">
