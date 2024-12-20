@@ -34,13 +34,13 @@ const useFetchTools = () => {
 };
 
 const toolIconMap = {
-  'Data management': <DataManagementIcon />,
-  'Solar radiation': <SolarRadiationIcon />,
-  'Demand forecasting': <DemandForecastingIcon />,
-  'Energy potentials': <EnergyPotentialsIcon />,
-  'Life cycle analysis': <LifeCycleAnalysisIcon />,
-  Networks: <NetworksIcon />,
-  Optimization: <OptimisationIcon />,
+  'Data Management': <DataManagementIcon />,
+  'Solar Radiation Analysis': <SolarRadiationIcon />,
+  'Energy Demand Forecasting': <DemandForecastingIcon />,
+  'Renewable Energy Potential Assessment': <EnergyPotentialsIcon />,
+  'Life Cycle Analysis': <LifeCycleAnalysisIcon />,
+  'Thermal Network Design': <NetworksIcon />,
+  'Energy Supply System Optimisation': <OptimisationIcon />,
   Utilities: <UtilitiesIcon />,
   'Import & Export': <ImportExportIcon />,
 };
