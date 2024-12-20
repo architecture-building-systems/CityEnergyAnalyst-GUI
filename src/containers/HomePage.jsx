@@ -18,7 +18,7 @@ const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
   () => import('../components/DatabaseEditor/DatabaseEditor'),
 );
-const Landing = lazy(() => import('../components/Landing/Landing'));
+// const Landing = lazy(() => import('../components/Landing/Landing'));
 
 const useInitProjectStore = () => {
   const fetchConfig = useProjectStore((state) => state.fetchConfig);
@@ -93,11 +93,11 @@ const HomePageContent = () => {
             </Cardwrapper>
           </Suspense>
         </Route>
-        <Route exact path={routes.HOME}>
+        {/* <Route exact path={routes.HOME}>
           <Suspense>
             <Landing />
           </Suspense>
-        </Route>
+        </Route> */}
       </Switch>
     </ErrorBoundary>
   );
