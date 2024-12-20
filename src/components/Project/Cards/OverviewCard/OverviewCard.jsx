@@ -7,6 +7,8 @@ import { DownOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 
 import CeaLogoSVG from '../../../../assets/cea-logo.svg';
+import { animated } from '@react-spring/web';
+import { useHoverGrow } from './hooks';
 
 const OverviewCard = ({
   project,
@@ -59,10 +61,7 @@ const OverviewCard = ({
       >
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Logo height={60} />
-
-          <Dropdown menu={{ items: menuItems }}>
-            <DownOutlined style={{ padding: 8 }} />
-          </Dropdown>
+          <DropdownMenu menuItems={menuItems} />
         </div>
 
         <ShowHideCardsButton
@@ -100,6 +99,22 @@ const Logo = ({ height }) => {
     >
       <CeaLogoSVG style={{ height: '100%' }} />
     </div>
+  );
+};
+
+const DropdownMenu = ({ menuItems }) => {
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+
+  return (
+    <animated.div style={styles}>
+      <Dropdown
+        menu={{ items: menuItems }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <DownOutlined style={{ padding: 8 }} />
+      </Dropdown>
+    </animated.div>
   );
 };
 
