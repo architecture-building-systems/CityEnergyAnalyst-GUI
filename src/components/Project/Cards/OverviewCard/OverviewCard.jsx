@@ -59,7 +59,7 @@ const OverviewCard = ({
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Logo height={60} />
           <DropdownMenu menuItems={menuItems} />
         </div>
@@ -90,6 +90,7 @@ const OverviewCard = ({
 const Logo = ({ height }) => {
   return (
     <div
+      id="cea-overview-card-logo"
       style={{
         display: 'flex',
         alignItems: 'center',
