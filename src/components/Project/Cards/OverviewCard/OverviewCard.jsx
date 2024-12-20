@@ -1,11 +1,12 @@
 import { Divider, Dropdown } from 'antd';
-import ceaLogo from '../../../../assets/cea-logo.png';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import { ShowHideCardsButton } from '../../../../containers/Project';
 import { helpMenuItems, HelpMenuItemsLabel, helpMenuUrls } from './constants';
 import { DownOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
+
+import CeaLogoSVG from '../../../../assets/cea-logo.svg';
 
 const OverviewCard = ({
   project,
@@ -97,7 +98,7 @@ const Logo = ({ height }) => {
         gap: 12,
       }}
     >
-      <img style={{ height: '100%' }} src={ceaLogo} alt="Logo" />
+      <CeaLogoSVG style={{ height: '100%' }} />
     </div>
   );
 };
