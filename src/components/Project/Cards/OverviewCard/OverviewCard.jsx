@@ -46,7 +46,7 @@ const OverviewCard = ({
 
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 8,
 
         fontSize: 12,
       }}
@@ -75,9 +75,23 @@ const OverviewCard = ({
           }}
         />
       </div>
-      <Divider style={{ margin: 0 }} />
+      <Divider
+        orientation="right"
+        orientationMargin={2}
+        plain
+        style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
+      >
+        Project
+      </Divider>
       <ProjectRow projectName={projectName} />
-      <Divider style={{ margin: 0 }} />
+      <Divider
+        orientation="right"
+        orientationMargin={2}
+        plain
+        style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
+      >
+        Scenario
+      </Divider>
       <ScenarioRow
         project={project}
         scenarioName={scenarioName}

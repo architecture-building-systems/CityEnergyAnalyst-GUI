@@ -24,7 +24,15 @@ const ProjectRow = ({ projectName }) => {
         alignItems: 'center',
       }}
     >
-      <b>{projectName}</b>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+        }}
+      >
+        {':'}
+        <b>{projectName}</b>
+      </div>
       <div style={{ display: 'flex', gap: 8, fontSize: 20 }}>
         <RefreshIconButton />
         <OpenProjectIconButton />
