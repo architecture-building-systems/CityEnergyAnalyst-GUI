@@ -6,11 +6,13 @@ import { ConnectedRouter } from 'connected-react-router';
 import CeaLogoAnimate from '../assets/cea-logo-animate.svg';
 import routes from '../constants/routes.json';
 
-const HomePage = lazy(() => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(import('./HomePage')), 800);
-  });
-});
+const HomePage = lazy(() =>
+  Promise.all([
+    import('./HomePage'),
+    new Promise((resolve) => setTimeout(resolve, 1000)),
+  ]).then(([moduleExports]) => moduleExports),
+);
+
 const Splash = lazy(() => import('../components/Splash/Splash'));
 
 const Loading = () => {
