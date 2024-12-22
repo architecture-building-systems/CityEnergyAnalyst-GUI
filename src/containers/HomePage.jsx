@@ -41,11 +41,6 @@ const HomePageContent = () => {
   return (
     <ErrorBoundary>
       <Switch>
-        <Route path={routes.PROJECT}>
-          <Suspense>
-            <Project />
-          </Suspense>
-        </Route>
         <Route path={routes.CREATE_SCENARIO}>
           <Suspense>
             <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
@@ -91,6 +86,11 @@ const HomePageContent = () => {
                 <DatabaseEditor />
               </div>
             </Cardwrapper>
+          </Suspense>
+        </Route>
+        <Route path={routes.PROJECT}>
+          <Suspense>
+            <Project />
           </Suspense>
         </Route>
         {/* <Route exact path={routes.HOME}>
