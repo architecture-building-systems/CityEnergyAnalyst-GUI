@@ -6,9 +6,8 @@ import {
   GENERATE_ZONE_CEA,
   GENERATE_SURROUNDINGS_CEA,
   EMTPY_GEOMETRY,
-  GENERATE_TYPOLOGY_CEA,
 } from './constants';
-import { SelectWithFileDialog } from './FormInput';
+import { FileDialog, SelectWithFileDialog } from './FormInput';
 import { MapFormContext } from './hooks';
 import { useFetchBuildingsFromPath } from '../../Map/hooks';
 
@@ -40,8 +39,7 @@ const validateGeometry = async (value, buildingType) => {
 };
 
 const validateTypology = async (value) => {
-  if (value === GENERATE_TYPOLOGY_CEA) return Promise.resolve();
-  else if (value === undefined) return Promise.reject();
+  if (value === undefined) return Promise.reject();
 
   try {
     const response = await axios.post(
@@ -272,25 +270,14 @@ const TypologyFormItem = () => {
         { validator: (_, value) => validateTypology(value) },
       ]}
     >
-      <SelectWithFileDialog
+      <FileDialog
         name="typology"
         type="file"
         filters={[
           { name: 'Typology formats', extensions: ['csv', 'dbf', 'xlsx'] },
         ]}
-        placeholder="Choose an option from the dropdown"
-        options={[
-          {
-            label: 'Auto-generate using default values',
-            value: GENERATE_TYPOLOGY_CEA,
-          },
-        ]}
-      >
-        <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
-          <FileSearchOutlined />
-          Import .xlsx/.csv/.dbf file
-        </div>
-      </SelectWithFileDialog>
+        placeholder="Import .xlsx/.csv/.dbf file"
+      />
     </Form.Item>
   );
 };
