@@ -1,5 +1,25 @@
 import { Divider, Select } from 'antd';
-import { OpenDialogButton } from '../../Tools/Parameter';
+import { OpenDialogButton, OpenDialogInput } from '../../Tools/Parameter';
+
+export const FileDialog = ({
+  name,
+  type,
+  filters,
+  placeholder,
+  onChange,
+  value,
+}) => {
+  return (
+    <OpenDialogInput
+      name={name}
+      type={type}
+      filters={filters}
+      onChange={onChange}
+      value={value}
+      placeholder={placeholder}
+    />
+  );
+};
 
 export const SelectWithFileDialog = ({
   name,
