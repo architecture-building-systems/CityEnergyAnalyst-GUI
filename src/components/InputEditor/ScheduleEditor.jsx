@@ -51,7 +51,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
   useEffect(() => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
-      data: buildings.sort().map((building) => ({ Name: building })),
+      data: buildings.sort().map((building) => ({ [INDEX_COLUMN]: building })),
       index: INDEX_COLUMN,
       columns: [{ title: INDEX_COLUMN, field: INDEX_COLUMN }],
       layout: 'fitColumns',
@@ -65,7 +65,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     const buildings = Object.keys(tables.zone || {});
     tabulator.current &&
       tabulator.current.replaceData(
-        buildings.sort().map((building) => ({ Name: building })),
+        buildings.sort().map((building) => ({ [INDEX_COLUMN]: building })),
       );
     tabulator.current.selectRow(selected);
     tabulator.current.redraw();

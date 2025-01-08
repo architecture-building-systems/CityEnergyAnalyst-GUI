@@ -470,7 +470,7 @@ const useTableData = (tab) => {
     Object.keys(tables[tab])
       .sort()
       .map((row) => ({
-        Name: row,
+        [INDEX_COLUMN]: row,
         ...tables[tab][row],
       }));
 
