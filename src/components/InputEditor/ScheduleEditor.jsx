@@ -12,6 +12,7 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import './ScheduleEditor.css';
 import { months_short } from '../../constants/months';
 import { Tabs, Spin } from 'antd';
+import { INDEX_COLUMN } from './constants';
 
 const colormap = interpolate(['white', '#006ad5']);
 
@@ -30,7 +31,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     const selectedRows = cell
       .getTable()
       .getSelectedData()
-      .map((data) => data.Name);
+      .map((data) => data[INDEX_COLUMN]);
     if (!e.ctrlKey) {
       (selectedRows.length !== [row.getIndex()].length ||
         !cell.getRow().isSelected()) &&
@@ -51,13 +52,13 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
       data: buildings.sort().map((building) => ({ Name: building })),
-      index: 'Name',
-      columns: [{ title: 'Name', field: 'Name' }],
+      index: INDEX_COLUMN,
+      columns: [{ title: INDEX_COLUMN, field: INDEX_COLUMN }],
       layout: 'fitColumns',
       height: '300px',
       cellClick: selectRow,
     });
-    filtered && tabulator.current.setFilter('Name', 'in', selected);
+    filtered && tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
   }, []);
 
   useEffect(() => {
@@ -95,7 +96,7 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     }
     tabulator.current &&
       tabulator.current.getFilters().length &&
-      tabulator.current.setFilter('Name', 'in', selected);
+      tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
   }, [selected]);
 
   if (!buildings.length) return <div>No buildings found</div>;
@@ -280,9 +281,9 @@ const YearTable = ({ selected, schedules, loading }) => {
   useEffect(() => {
     tabulator.current = new Tabulator(divRef.current, {
       data: [],
-      index: 'name',
+      index: INDEX_COLUMN,
       columns: [
-        { title: '', field: 'name', headerSort: false },
+        { title: '', field: INDEX_COLUMN, headerSort: false },
         ...[...Array(12).keys()].map((i) => ({
           title: months_short[i],
           field: i.toString(),

@@ -19,6 +19,8 @@ import { createRoot } from 'react-dom/client';
 import { isElectron } from '../../utils/electron';
 import { useToolStore } from '../Tools/store';
 
+import { INDEX_COLUMN } from './constants';
+
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
 const Table = ({ tab }) => {
@@ -209,14 +211,18 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   }, [tab, selected]);
 
   const selectAll = () => {
-    dispatch(setSelected(tabulator.current.getData().map((data) => data.Name)));
+    dispatch(
+      setSelected(
+        tabulator.current.getData().map((data) => data[INDEX_COLUMN]),
+      ),
+    );
   };
 
   const filterSelected = () => {
     if (filterToggle) {
       tabulator.current.clearFilter();
     } else {
-      tabulator.current.setFilter('Name', 'in', selected);
+      tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
     }
     tabulator.current.redraw();
     setFilterToggle((oldValue) => !oldValue);
@@ -295,7 +301,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
       data: [],
-      index: 'Name',
+      index: INDEX_COLUMN,
       columns: [],
       layout: 'fitDataFill',
       height: '300px',
@@ -320,14 +326,14 @@ const TableEditor = ({ tab, selected, tabulator }) => {
         dispatch(
           updateInputData(
             tableRef.current,
-            [cell.getData()['Name']],
+            [cell.getData()[INDEX_COLUMN]],
             [{ property: cell.getField(), value: cell.getValue() }],
           ),
         );
       },
       placeholder: '<div>No matching records found.</div>',
     });
-    filtered && tabulator.current.setFilter('Name', 'in', selected);
+    filtered && tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
   }, []);
 
   // Keep reference of current table name
@@ -389,7 +395,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
       tabulator.current.deselectRow();
       tabulator.current.selectRow(selected);
       tabulator.current.getFilters().length &&
-        tabulator.current.setFilter('Name', 'in', selected);
+        tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
     }
   }, [selected]);
 
@@ -446,7 +452,7 @@ const useTableData = (tab) => {
     const selectedRows = cell
       .getTable()
       .getSelectedData()
-      .map((data) => data.Name);
+      .map((data) => data[INDEX_COLUMN]);
     if (e.ctrlKey || e.metaKey) {
       if (cell.getRow().isSelected())
         dispatch(
@@ -480,7 +486,7 @@ const useTableData = (tab) => {
           switch (column) {
             case 'REFERENCE':
               return columnDef;
-            case 'Name':
+            case INDEX_COLUMN:
               return { ...columnDef, frozen: true, cellClick: selectRow };
             default: {
               const dataType = columns[tab][column].type;
