@@ -63,7 +63,9 @@ const OpenProjectForm = ({ form, onFinish, initialValue, project }) => {
   const projectOptions = useMemo(() => {
     // FIXME: This is a workaround to get the project root
     const projectRoot = project?.project ? dirname(project?.project) : '';
-    const projectList = project?.projects || [];
+    const projectList = project?.projects;
+
+    if (!projectList) return null;
 
     return projectList.map((projectName) => ({
       label: projectName,
