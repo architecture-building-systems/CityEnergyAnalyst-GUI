@@ -165,9 +165,9 @@ const useMapLayers = () => {
           new GeoJsonLayer({
             id: `${name}-nodes`,
             data: mapLayers[name]?.nodes,
-            getFillColor: (f) => nodeFillColor(f.properties['Type']),
-            getPointRadius: (f) => nodeRadius(f.properties['Type']),
-            getLineColor: (f) => nodeLineColor(f.properties['Type']),
+            getFillColor: (f) => nodeFillColor(f.properties['type']),
+            getPointRadius: (f) => nodeRadius(f.properties['type']),
+            getLineColor: (f) => nodeLineColor(f.properties['type']),
             getLineWidth: 1,
             updateTriggers: {
               getPointRadius: [scale],
