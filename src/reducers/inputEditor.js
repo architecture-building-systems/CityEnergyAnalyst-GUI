@@ -14,6 +14,7 @@ import {
   SAVE_INPUTDATA_SUCCESS,
   DISCARD_INPUTDATA_CHANGES_SUCCESS,
 } from '../actions/inputEditor';
+import { INDEX_COLUMN } from '../components/InputEditor/constants';
 import { months_short } from '../constants/months';
 import { deleteNestedProp, createNestedProp } from '../utils';
 
@@ -108,7 +109,7 @@ function updateData(state, table, buildings, properties) {
 
 function updateGeoJsonProperty(geojsons, table, building, property, value) {
   const _building = geojsons[table].features.find(
-    (feature) => feature.properties.Name == building,
+    (feature) => feature.properties[INDEX_COLUMN] == building,
   );
   if (_building)
     _building.properties = {
@@ -168,7 +169,7 @@ function deleteGeoJsonFeature(geojsons, table, building) {
     [table]: {
       ...geojsons[table],
       features: geojsons[table].features.filter(
-        (feature) => feature.properties.Name != building,
+        (feature) => feature.properties[INDEX_COLUMN] != building,
       ),
     },
   };
