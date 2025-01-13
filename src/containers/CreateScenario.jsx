@@ -48,15 +48,25 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
     console.log(data);
     setError(null);
     setFetching(true);
+
     try {
+      // Submit formdata to API
+      const _formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        if (typeof data[key] === 'object' && !(data[key] instanceof File))
+          _formData.append(key, JSON.stringify(data[key]));
+        else _formData.append(key, data[key]);
+      });
+      _formData.append('project', projectPath);
+
       const response = await axios.post(
         `${import.meta.env.VITE_CEA_URL}/api/project/scenario/v2`,
-        { ...data, project: projectPath },
+        _formData,
       );
       onSuccess?.(response.data);
     } catch (error) {
-      console.log(error?.response?.data);
-      setError(error?.response?.data);
+      console.log(error?.response?.data || error);
+      setError(error?.response?.data || error);
     } finally {
       setFetching(false);
     }

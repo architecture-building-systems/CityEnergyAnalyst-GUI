@@ -10,6 +10,7 @@ import {
 import { FileDialog, SelectWithFileDialog } from './FormInput';
 import { MapFormContext } from './hooks';
 import { useFetchBuildingsFromPath } from '../../Map/hooks';
+import { isElectron } from '../../../utils/electron';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -62,7 +63,14 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
   const { setBuildings } = useContext(MapFormContext);
   const { fetchBuildings } = useFetchBuildingsFromPath(setBuildings);
 
+  const fileFilters = isElectron()
+    ? [{ name: 'SHP files', extensions: ['shp'] }]
+    : [{ extensions: ['zip'] }];
+
   const userZoneValidator = async (_, value) => {
+    // FIXME: Validate file input on server side
+    if (value instanceof File) return Promise.resolve();
+
     // Do not check if zone is generated
     if (value === GENERATE_ZONE_CEA) {
       onValidated?.({ valid: true, typology: null });
@@ -108,7 +116,7 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
       <SelectWithFileDialog
         name="user_zone"
         type="file"
-        filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+        filters={fileFilters}
         placeholder="Choose an option from the dropdown"
         options={[
           {
@@ -119,7 +127,7 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
       >
         <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
           <FileSearchOutlined />
-          Import .shp file
+          Import{isElectron() ? ' .shp file' : ' .zip file'}
         </div>
       </SelectWithFileDialog>
     </Form.Item>
@@ -189,6 +197,16 @@ const GenerateZoneFormItem = ({ form }) => {
 };
 
 const SurroundingsGeometryFormItem = () => {
+  const fileFilters = isElectron()
+    ? [{ name: 'SHP files', extensions: ['shp'] }]
+    : [{ extensions: ['zip'] }];
+
+  const userSurroundingsValidator = async (_, value) => {
+    // FIXME: Validate file input on server side
+    if (value instanceof File) return Promise.resolve();
+    await validateGeometry(value, 'surroundings');
+  };
+
   return (
     <Form.Item
       label="Building geometries (surroundings)"
@@ -210,13 +228,13 @@ const SurroundingsGeometryFormItem = () => {
       }
       rules={[
         { required: true, message: 'This field is required.' },
-        { validator: (_, value) => validateGeometry(value, 'surroundings') },
+        { validator: userSurroundingsValidator },
       ]}
     >
       <SelectWithFileDialog
         name="user_surroundings"
         type="file"
-        filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+        filters={fileFilters}
         placeholder="Choose an option from the dropdown"
         options={[
           {
@@ -231,7 +249,7 @@ const SurroundingsGeometryFormItem = () => {
       >
         <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
           <FileSearchOutlined />
-          Import .shp file
+          Import{isElectron() ? ' .shp file' : ' .zip file'}
         </div>
       </SelectWithFileDialog>
     </Form.Item>

@@ -61,6 +61,16 @@ const ContextForm = ({
 }) => {
   const [form] = Form.useForm();
 
+  const streetFilters = isElectron()
+    ? [{ name: 'SHP files', extensions: ['shp'] }]
+    : [{ extensions: ['zip'] }];
+
+  const userDatabaseValidator = async (_, value) => {
+    // FIXME: Validate file input on server side
+    if (value instanceof File) return Promise.resolve();
+    await validateDatabase(value, databases);
+  };
+
   return (
     <Form
       form={form}
@@ -76,13 +86,14 @@ const ContextForm = ({
         extra="Select a Database from CEA or link to your own."
         rules={[
           { required: true, message: 'Please select a database.' },
-          { validator: (_, value) => validateDatabase(value, databases) },
+          { validator: userDatabaseValidator },
         ]}
       >
         <SelectWithFileDialog
           placeholder="Choose an option from the dropdown"
           name="database"
-          type="directory"
+          type={isElectron() ? 'directory' : 'file'}
+          filters={isElectron() ? null : [{ extensions: ['zip'] }]}
           options={[
             {
               label: 'CEA Built-in',
@@ -95,7 +106,7 @@ const ContextForm = ({
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
             <FileSearchOutlined />
-            Import database from directory
+            Import database from{isElectron() ? ' directory' : ' .zip file'}
           </div>
         </SelectWithFileDialog>
       </Form.Item>
@@ -220,7 +231,7 @@ const ContextForm = ({
           placeholder="Choose an option from the dropdown"
           name="street"
           type="file"
-          filters={[{ name: 'SHP files', extensions: ['shp'] }]}
+          filters={streetFilters}
           options={[
             {
               label: 'Generate from OpenStreetMap',
@@ -234,7 +245,7 @@ const ContextForm = ({
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
             <FileSearchOutlined />
-            Import .shp file
+            Import{isElectron() ? ' .shp file' : ' .zip file'}
           </div>
         </SelectWithFileDialog>
       </Form.Item>

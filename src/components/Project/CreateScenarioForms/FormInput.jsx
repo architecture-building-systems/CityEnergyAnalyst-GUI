@@ -31,9 +31,11 @@ export const SelectWithFileDialog = ({
   children,
   value,
 }) => {
+  const _value = value instanceof File ? value.name : value;
+
   return (
     <Select
-      value={value}
+      value={_value}
       placeholder={placeholder}
       onSelect={onChange}
       dropdownRender={(menu) => (
