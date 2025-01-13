@@ -28,6 +28,8 @@ import {
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
+import { INDEX_COLUMN } from '../InputEditor/constants';
+
 const useMapStyle = () => {
   const showMapStyleLabels = useMapStore((state) => state.mapLabels);
 
@@ -163,9 +165,9 @@ const useMapLayers = () => {
           new GeoJsonLayer({
             id: `${name}-nodes`,
             data: mapLayers[name]?.nodes,
-            getFillColor: (f) => nodeFillColor(f.properties['Type']),
-            getPointRadius: (f) => nodeRadius(f.properties['Type']),
-            getLineColor: (f) => nodeLineColor(f.properties['Type']),
+            getFillColor: (f) => nodeFillColor(f.properties['type']),
+            getPointRadius: (f) => nodeRadius(f.properties['type']),
+            getLineColor: (f) => nodeLineColor(f.properties['type']),
             getLineWidth: 1,
             updateTriggers: {
               getPointRadius: [scale],
@@ -324,7 +326,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
-      const name = object.properties['Name'];
+      const name = object.properties[INDEX_COLUMN];
       if (layer.id !== selectedLayer) {
         dispatch(setSelected([name]));
         setSelectedLayer(layer.id);
@@ -362,7 +364,8 @@ const DeckGLMap = ({ data, colors }) => {
           visible: visibility.zone,
 
           getElevation: (f) => f.properties['height_ag'],
-          getFillColor: (f) => buildingColor(f.properties['Name'], 'zone'),
+          getFillColor: (f) =>
+            buildingColor(f.properties[INDEX_COLUMN], 'zone'),
           updateTriggers: {
             getFillColor: [selected, visibility.dc],
           },
@@ -389,7 +392,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>
-            buildingColor(f.properties['Name'], 'surroundings'),
+            buildingColor(f.properties[INDEX_COLUMN], 'surroundings'),
           updateTriggers: {
             getFillColor: selected,
           },
@@ -429,7 +432,7 @@ const DeckGLMap = ({ data, colors }) => {
 
           getElevation: (f) => f.properties['height_tc'],
           getFillColor: (f) => {
-            if (selected.includes(f.properties['Name'])) {
+            if (selected.includes(f.properties[INDEX_COLUMN])) {
               return [255, 255, 0, 255];
             }
             if (extruded)
@@ -512,11 +515,11 @@ function updateTooltip({ x, y, object, layer }) {
     let innerHTML = '';
 
     if (layer.id === 'zone' || layer.id === 'surroundings') {
-      innerHTML += `<div><b>Name</b>: ${properties.Name}</div><br />`;
+      innerHTML += `<div><b>Name</b>: ${properties[INDEX_COLUMN]}</div><br />`;
       Object.keys(properties)
         .sort()
         .forEach((key) => {
-          if (key != 'Name')
+          if (key != INDEX_COLUMN)
             innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
         });
       let area = Math.round(turf.area(object) * 1000) / 1000;
