@@ -5,6 +5,7 @@ import { OpenDialogInput } from '../Tools/Parameter';
 import { useFetchConfigProjectInfo } from '../Project/Project';
 import { checkExist, dirname, joinPath, sanitizePath } from '../../utils/file';
 import { useFetchProject } from '../../utils/hooks';
+import { isElectron } from '../../utils/electron';
 
 const NewProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -88,11 +89,11 @@ const NewProjectForm = ({ form, onFinish, initialValue, project }) => {
               const projectRoot = form.getFieldValue('project_root');
 
               // Sanitize the path if project root is set
-              if (projectRoot !== '') {
-                console.log('Sanitizing path');
+              if (!isElectron() && projectRoot !== '') {
                 try {
                   sanitizePath(projectRoot, value, 1);
                 } catch (err) {
+                  console.error(err)
                   return Promise.reject('Path entered is invalid');
                 }
               }
