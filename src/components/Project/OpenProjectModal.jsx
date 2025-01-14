@@ -58,8 +58,7 @@ const PathDialog = ({ initialValue }) => {
       rules={[
         {
           validator: async (_, value) => {
-            if (value.length == 0)
-              return Promise.reject('Project cannot be empty');
+            if (!value) return Promise.reject('Project cannot be empty');
             await checkExist(value, 'directory');
             return Promise.resolve();
           },
