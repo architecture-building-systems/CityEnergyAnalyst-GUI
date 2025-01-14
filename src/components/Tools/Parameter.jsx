@@ -1,6 +1,10 @@
 import { Form } from '@ant-design/compatible';
-import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { Input, Switch, Select, Divider, Button, Space } from 'antd';
+import {
+  FileSearchOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import { Input, Switch, Select, Divider, Button, Space, Upload } from 'antd';
 import { basename, checkExist, dirname } from '../../utils/file';
 import { forwardRef, useState } from 'react';
 
@@ -381,10 +385,74 @@ const PathInput = ({ value, onChange, form, name, ...rest }) => {
   );
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, name, type, onChange, filters = [], ...rest } = props;
+const UploadInput = (props) => {
+  const { children, onChange, ...rest } = props;
 
-  if (!isElectron()) return <PathInput {...props} />;
+  const handlePreview = async (file) => {
+    console.log(file);
+  };
+
+  // TODO: Add support for multiple files
+  return (
+    <Upload
+      showUploadList={false}
+      onPreview={handlePreview}
+      beforeUpload={(file) => {
+        onChange(file);
+        return false; // Prevent automatic upload
+      }}
+      {...rest}
+    >
+      <Button block>{children}</Button>
+    </Upload>
+  );
+};
+
+const covertFiltersToExtensions = (filters) => {
+  return filters
+    .map((filter) => (filter.extensions ? `.${filter.extensions}` : ''))
+    .join(',');
+};
+
+export const OpenDialogInput = forwardRef((props, ref) => {
+  const {
+    form,
+    name,
+    type,
+    onChange,
+    filters = [],
+    children,
+    value,
+    ...rest
+  } = props;
+
+  const _value = value instanceof File ? value.name : value;
+  const extensions = covertFiltersToExtensions(filters);
+
+  const input = isElectron() ? (
+    <Button
+      type="primary"
+      style={{ width: 60 }}
+      icon={<FileSearchOutlined />}
+      onClick={async () => {
+        // TODO: Remove need for form
+        const path = await openDialog(form, type, filters, name);
+        onChange?.(path);
+        form?.validateFields([name]);
+      }}
+    />
+  ) : (
+    <UploadInput
+      form={form}
+      name={name}
+      onChange={onChange}
+      type={type}
+      accept={extensions}
+      {...rest}
+    >
+      {children || <UploadOutlined />}
+    </UploadInput>
+  );
 
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
@@ -392,19 +460,10 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         ref={ref}
         style={{ width: '100%' }}
         onChange={onChange}
+        value={_value}
         {...rest}
       />
-      <Button
-        type="primary"
-        style={{ width: 60 }}
-        icon={<FileSearchOutlined />}
-        onClick={async () => {
-          // TODO: Remove need for form
-          const path = await openDialog(form, type, filters, name);
-          onChange?.(path);
-          form?.validateFields([name]);
-        }}
-      ></Button>
+      {input}
     </Space.Compact>
   );
 });
@@ -421,7 +480,20 @@ export const OpenDialogButton = ({
   ...rest
 }) => {
   if (!isElectron()) {
-    return <PathInput form={form} name={name} onChange={onChange} {...rest} />;
+    const extensions = covertFiltersToExtensions(filters);
+
+    return (
+      <UploadInput
+        form={form}
+        name={name}
+        onChange={onChange}
+        type={type}
+        accept={extensions}
+        {...rest}
+      >
+        {children}
+      </UploadInput>
+    );
   } else {
     return (
       <Button
