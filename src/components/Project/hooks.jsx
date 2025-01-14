@@ -4,6 +4,7 @@ import { useChangeRoute } from '../../utils/hooks';
 import { useProjectStore } from './store';
 import axios from 'axios';
 import { message } from 'antd';
+import { useEffect, useState } from 'react';
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
@@ -52,4 +53,26 @@ export const useOpenScenario = (route = routes.PROJECT) => {
       return false;
     }
   };
+};
+
+export const useFetchProjectChoices = () => {
+  const [choices, setChoices] = useState();
+
+  const fetchInfo = async () => {
+    try {
+      const resp = await axios.get(
+        `${import.meta.env.VITE_CEA_URL}/api/project/choices`,
+      );
+      const _choices = resp.data?.projects;
+      setChoices(_choices);
+    } catch (err) {
+      console.error(err?.response?.data);
+    }
+  };
+
+  useEffect(() => {
+    fetchInfo();
+  }, []);
+
+  return choices;
 };

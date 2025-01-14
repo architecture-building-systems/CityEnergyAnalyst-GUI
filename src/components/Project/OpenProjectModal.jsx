@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Form, Modal, Select } from 'antd';
 import { OpenDialogInput } from '../Tools/Parameter';
 import { checkExist } from '../../utils/file';
 import { useProjectStore } from './store';
 import { isElectron } from '../../utils/electron';
-import axios from 'axios';
+import { useFetchProjectChoices } from './hooks';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
   const project = useProjectStore((state) => state.project);
@@ -68,28 +68,6 @@ const PathDialog = ({ initialValue }) => {
       <OpenDialogInput type="directory" />
     </Form.Item>
   );
-};
-
-const useFetchProjectChoices = () => {
-  const [choices, setChoices] = useState();
-
-  const fetchInfo = async () => {
-    try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/project/choices`,
-      );
-      const _choices = resp.data?.projects;
-      setChoices(_choices);
-    } catch (err) {
-      console.error(err?.response?.data);
-    }
-  };
-
-  useEffect(() => {
-    fetchInfo();
-  }, []);
-
-  return choices;
 };
 
 const ProjectChoice = ({ initialValue }) => {
