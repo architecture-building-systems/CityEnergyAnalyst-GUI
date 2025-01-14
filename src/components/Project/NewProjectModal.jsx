@@ -5,11 +5,12 @@ import {
   checkExist,
   dirname,
   FileNotFoundError,
-  InvalidContentType,
   joinPath,
 } from '../../utils/file';
 import { fetchConfig, useProjectStore } from './store';
 import axios from 'axios';
+import { isElectron } from '../../utils/electron';
+import { useFetchProjectChoices } from './hooks';
 
 const useFetchConfigProjectInfo = () => {
   const [info, setInfo] = useState({});
@@ -91,14 +92,9 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
   );
 };
 
-const NewProjectForm = ({ form, onFinish, initialValue }) => {
+const ElectronForm = ({ form, initialValue }) => {
   return (
-    <Form
-      form={form}
-      onFinish={onFinish}
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 15, offset: 1 }}
-    >
+    <>
       <Form.Item
         name="project_name"
         label="Project Name"
@@ -149,6 +145,51 @@ const NewProjectForm = ({ form, onFinish, initialValue }) => {
       >
         <OpenDialogInput form={form} type="directory" />
       </Form.Item>
+    </>
+  );
+};
+
+const BrowserForm = () => {
+  const choices = useFetchProjectChoices();
+
+  return (
+    <Form.Item
+      name="project_name"
+      label="Project Name"
+      extra="Name of new Project"
+      validateFirst
+      rules={[
+        { required: true, message: 'Project name cannot be empty' },
+        {
+          validator: async (_, value) => {
+            console.log(choices, value);
+            if (choices) {
+              if (choices.includes(value)) {
+                return Promise.reject('Project name already exists');
+              }
+            }
+          },
+        },
+      ]}
+    >
+      <Input placeholder="new_project" autoComplete="off" />
+    </Form.Item>
+  );
+};
+
+const NewProjectForm = ({ form, onFinish, initialValue }) => {
+  return (
+    <Form
+      form={form}
+      onFinish={onFinish}
+      labelCol={{ span: 6 }}
+      wrapperCol={{ span: 15, offset: 1 }}
+    >
+      {isElectron() ? (
+        <ElectronForm form={form} initialValue={initialValue} />
+      ) : (
+        <BrowserForm />
+      )}
     </Form>
   );
 };
