@@ -12,12 +12,14 @@ export function useInputs() {
   return useQuery({
     queryKey: ['inputs', projectName, scenarioName],
     queryFn: async () => {
+      // Return empty object if projectName or scenarioName is not defined
+      if (!projectName || !scenarioName) return {};
+
       const { data } = await apiClient.get(
         `${API_ENDPOINTS.INPUTS}/all-inputs`,
       );
       return data;
     },
     initialData: {},
-    enabled: !!projectName && !!scenarioName,
   });
 }

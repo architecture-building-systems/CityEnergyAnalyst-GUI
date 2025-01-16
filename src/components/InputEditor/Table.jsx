@@ -23,7 +23,7 @@ import { INDEX_COLUMN } from './constants';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
-const Table = ({ tab }) => {
+const Table = ({ tab, tables, columns }) => {
   const { selected, changes, schedules } = useSelector(
     (state) => state.inputData,
   );
@@ -52,7 +52,13 @@ const Table = ({ tab }) => {
             schedules={schedules}
           />
         ) : (
-          <TableEditor tabulator={tabulator} tab={tab} selected={selected} />
+          <TableEditor
+            tabulator={tabulator}
+            tab={tab}
+            selected={selected}
+            tables={tables}
+            columns={columns}
+          />
         )}
       </Card>
     </>
@@ -290,8 +296,8 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   );
 };
 
-const TableEditor = ({ tab, selected, tabulator }) => {
-  const [data, columnDef] = useTableData(tab);
+const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
+  const [data, columnDef] = useTableData(tab, columns, tables);
   const dispatch = useDispatch();
   const divRef = useRef(null);
   const tableRef = useRef(tab);
@@ -440,8 +446,7 @@ const ScriptSuggestion = ({ tab }) => {
   );
 };
 
-const useTableData = (tab) => {
-  const { columns, tables } = useSelector((state) => state.inputData);
+const useTableData = (tab, columns, tables) => {
   const [data, setData] = useState(null);
   const [columnDef, setColumnDef] = useState(null);
 

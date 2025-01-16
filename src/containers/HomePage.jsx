@@ -12,6 +12,8 @@ import { LeftOutlined } from '@ant-design/icons';
 import { push } from 'connected-react-router';
 import { useProjectStore } from '../components/Project/store';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
@@ -136,6 +138,7 @@ const Cardwrapper = ({ children, style }) => {
   );
 };
 
+const queryClient = new QueryClient();
 const HomePage = () => {
   return (
     <ConfigProvider
@@ -146,14 +149,16 @@ const HomePage = () => {
         },
       }}
     >
-      <div id="homepage-container">
-        <div id="homepage-content-container">
-          <HomePageContent />
+      <QueryClientProvider client={queryClient}>
+        <div id="homepage-container">
+          <div id="homepage-content-container">
+            <HomePageContent />
+          </div>
+          <div id="homepage-status-bar-container">
+            <StatusBar />
+          </div>
         </div>
-        <div id="homepage-status-bar-container">
-          <StatusBar />
-        </div>
-      </div>
+      </QueryClientProvider>
     </ConfigProvider>
   );
 };

@@ -10,10 +10,10 @@ import {
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchInputData } from '../../../../actions/inputEditor';
+import { useSelector } from 'react-redux';
 import { useProjectStore } from '../../store';
 import { useOpenScenario } from '../../hooks';
+import { useInputs } from '../../../../hooks/queries/useInputs';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -103,7 +103,8 @@ const RefreshIconButton = () => {
       Object.keys(state.inputData?.changes?.update).length > 0,
   );
 
-  const dispatch = useDispatch();
+  const { refetch } = useInputs();
+
   const openScenario = useOpenScenario();
 
   const onRefresh = () => {
@@ -125,7 +126,7 @@ const RefreshIconButton = () => {
     // Refresh scenario if scenario name is given
     if (scenarioName) {
       openScenario(project, scenarioName).then((exists) => {
-        if (exists) dispatch(fetchInputData());
+        if (exists) refetch();
       });
     } else {
       // Otherwise, refresh project

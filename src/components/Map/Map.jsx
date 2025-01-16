@@ -251,6 +251,10 @@ const DeckGLMap = ({ data, colors }) => {
   const firstPitch = useRef(false);
   const cameraOptionsCalculated = useRef(false);
 
+  const zoneBounds = useMemo(() => {
+    return data?.zone ? turf.bbox(data.zone) : null;
+  }, [data?.zone]);
+
   const [selectedLayer, setSelectedLayer] = useState();
 
   const dispatch = useDispatch();
@@ -275,13 +279,20 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   useEffect(() => {
-    if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
+    // Reset camera options after zone bounds change
+    return () => {
+      cameraOptionsCalculated.current = false;
+      resetCameraOptions();
+    };
+  }, [zoneBounds]);
+
+  useEffect(() => {
+    if (mapRef.current && zoneBounds && !cameraOptionsCalculated.current) {
       const zoomToBounds = () => {
         const mapbox = mapRef.current.getMap();
-        const zone = data?.zone;
 
         // Calculate total bounds with other geometries
-        let bboxPoly = turf.bboxPolygon(turf.bbox(zone));
+        let bboxPoly = turf.bboxPolygon(zoneBounds);
 
         if (data?.surroundings !== null && data.surroundings?.features?.length)
           bboxPoly = turf.union(
@@ -317,12 +328,15 @@ const DeckGLMap = ({ data, colors }) => {
       };
       zoomToBounds();
       cameraOptionsCalculated.current = true;
-    } else if (!data?.zone) {
-      // Reset camera options if no zone data is present
-      resetCameraOptions();
-      cameraOptionsCalculated.current = false;
     }
-  }, [data, mapRef, resetCameraOptions, setCameraOptions, setViewState]);
+  }, [
+    data,
+    zoneBounds,
+    mapRef,
+    resetCameraOptions,
+    setCameraOptions,
+    setViewState,
+  ]);
 
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {

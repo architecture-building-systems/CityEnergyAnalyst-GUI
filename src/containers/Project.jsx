@@ -1,8 +1,6 @@
-import { useDispatch, useSelector } from 'react-redux';
 import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
-import { useEffect, useState } from 'react';
-import { fetchInputData, resetInputData } from '../actions/inputEditor';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Spin, Tabs, Tooltip } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
@@ -20,6 +18,7 @@ import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCa
 import { useToolStore } from '../components/Tools/store';
 import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 import { useProjectStore } from '../components/Project/store';
+import { useInputs } from '../hooks/queries/useInputs';
 
 const Project = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
@@ -41,7 +40,6 @@ const ProjectOverlay = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const scenarioList = useProjectStore((state) => state.scenariosList);
 
-  const dispatch = useDispatch();
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
 
@@ -86,14 +84,6 @@ const ProjectOverlay = () => {
     setShowTools(false);
     setInputEditor(false);
   }, [name, scenarioName]);
-
-  useEffect(() => {
-    if (scenarioName !== null) dispatch(fetchInputData());
-    // Reset input data state on umount
-    return () => {
-      dispatch(resetInputData());
-    };
-  }, [dispatch, name, scenarioName]);
 
   return (
     <div id="cea-project-overlay">
@@ -229,8 +219,10 @@ const ProjectOverlay = () => {
 };
 
 const InputMap = () => {
-  const { status } = useSelector((state) => state.inputData);
-  const { geojsons, colors } = useSelector((state) => state.inputData);
+  const { data, isFetching, isLoading, isRefetching } = useInputs();
+  const { geojsons, colors } = data;
+
+  console.log({ isFetching, isLoading, isRefetching });
 
   return (
     <>
@@ -244,7 +236,7 @@ const InputMap = () => {
           e.preventDefault();
         }}
       >
-        {status == 'fetching' && (
+        {isFetching && (
           <Spin
             indicator={<LoadingOutlined style={{ fontSize: 50 }} spin />}
             tip="Loading Inputs"
@@ -260,8 +252,18 @@ const InputMap = () => {
 };
 
 const InputTable = () => {
-  const tables = useSelector((state) => state.inputData.tables);
+  const { data } = useInputs();
+  const { tables, columns } = data;
+
   const [tab, setTab] = useState('zone');
+  const tabItems = useMemo(() => {
+    if (typeof tables == 'undefined') return null;
+
+    return [...Object.keys(tables), 'schedules'].map((key) => ({
+      key: key,
+      label: key,
+    }));
+  }, [tables]);
 
   if (typeof tables == 'undefined') return null;
 
@@ -284,10 +286,7 @@ const InputTable = () => {
         activeKey={tab}
         onChange={setTab}
         animated={false}
-        items={[...Object.keys(tables), 'schedules'].map((key) => ({
-          key: key,
-          label: key,
-        }))}
+        items={tabItems}
       />
       <div
         className="cea-input-editor-table"
@@ -300,7 +299,7 @@ const InputTable = () => {
           paddingBottom: 12,
         }}
       >
-        <Table tab={tab} />
+        <Table tab={tab} tables={tables} columns={columns} />
       </div>
     </div>
   );
