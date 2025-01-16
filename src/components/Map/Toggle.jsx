@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMapStore } from './store/store';
 import { useInputs } from '../../hooks/queries/useInputs';
 
@@ -79,20 +79,22 @@ export const LayerToggle = () => {
     setMapLabels(checked);
   };
 
-  // Set all layers to visible by default
-  if (data?.zone && !dataLoaded.current) {
-    const dataNames = Object.keys(data);
-    if (dataNames?.length > 0) {
-      dataNames.map((name) => {
-        setVisibility(name, true);
-      });
+  useEffect(() => {
+    // Set all layers to visible by default
+    if (data?.zone && !dataLoaded.current) {
+      const dataNames = Object.keys(data);
+      if (dataNames?.length > 0) {
+        dataNames.map((name) => {
+          setVisibility(name, true);
+        });
+      }
+      dataLoaded.current = true;
     }
-    dataLoaded.current = true;
-  }
 
-  if (!data?.zone) {
-    dataLoaded.current = false;
-  }
+    if (!data?.zone) {
+      dataLoaded.current = false;
+    }
+  }, [data]);
 
   return (
     <div
