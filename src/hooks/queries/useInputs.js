@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/axios';
-
 import { API_ENDPOINTS } from '../../api/endpoints';
-
 import { useProjectStore } from '../../components/Project/store';
 
 export function useInputs() {

@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card, Button, Modal, message, Tooltip, Space } from 'antd';
-import {
-  setSelected,
-  updateInputData,
-  deleteBuildings,
-  discardChanges,
-  saveChanges,
-} from '../../actions/inputEditor';
 import EditSelectedModal from './EditSelectedModal';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -20,13 +12,23 @@ import { isElectron } from '../../utils/electron';
 import { useToolStore } from '../Tools/store';
 
 import { INDEX_COLUMN } from './constants';
+import { useSaveInputs } from '../../hooks/mutations/useSaveInputs';
+import {
+  useDeleteBuildings,
+  useResyncInputs,
+  useUpdateInputs,
+} from '../../hooks/updates/useUpdateInputs';
+import { useChanges, useSelected, useSetSelected } from './store';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
 const Table = ({ tab, tables, columns }) => {
-  const { selected, changes, schedules } = useSelector(
-    (state) => state.inputData,
-  );
+  const selected = useSelected();
+  const changes = useChanges();
+
+  // TODO: Get schedules from backend
+  const schedules = {};
+
   const tabulator = useRef(null);
 
   return (
@@ -42,7 +44,13 @@ const Table = ({ tab, tables, columns }) => {
           </Tooltip>
         }
         extra={
-          <TableButtons selected={selected} tabulator={tabulator} tab={tab} />
+          <TableButtons
+            selected={selected}
+            tabulator={tabulator}
+            tab={tab}
+            tables={tables}
+            columns={columns}
+          />
         }
       >
         {tab == 'schedules' ? (
@@ -66,7 +74,13 @@ const Table = ({ tab, tables, columns }) => {
 };
 
 const InputEditorButtons = ({ changes }) => {
-  const dispatch = useDispatch();
+  const saveChanges = useSaveInputs();
+  const resyncInputs = useResyncInputs();
+
+  const discardChanges = () => {
+    resyncInputs();
+  };
+
   const noChanges =
     !Object.keys(changes.update).length && !Object.keys(changes.delete).length;
 
@@ -84,7 +98,7 @@ const InputEditorButtons = ({ changes }) => {
       okType: 'primary',
       cancelText: 'Cancel',
       async onOk() {
-        await dispatch(saveChanges())
+        await saveChanges()
           .then(() => {
             message.config({
               top: 120,
@@ -116,7 +130,7 @@ const InputEditorButtons = ({ changes }) => {
       okType: 'danger',
       cancelText: 'Cancel',
       async onOk() {
-        await dispatch(discardChanges())
+        await discardChanges()
           .then((data) => {
             console.log(data);
             message.config({
@@ -202,12 +216,16 @@ const ChangesSummary = ({ changes }) => {
   );
 };
 
-const TableButtons = ({ selected, tabulator, tab }) => {
+const TableButtons = ({ selected, tabulator, tables, tab, columns }) => {
+  const deleteBuildings = useDeleteBuildings();
+
+  const setSelected = useSetSelected();
+
   const [filterToggle, setFilterToggle] = useState(false);
   const [selectedInTable, setSelectedInTable] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const data = useSelector((state) => state.inputData.tables);
-  const dispatch = useDispatch();
+
+  const data = tables;
 
   useEffect(() => {
     const selectedType = ['surroundings', 'trees'].includes(tab) ? tab : 'zone';
@@ -217,11 +235,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   }, [tab, selected]);
 
   const selectAll = () => {
-    dispatch(
-      setSelected(
-        tabulator.current.getData().map((data) => data[INDEX_COLUMN]),
-      ),
-    );
+    setSelected(tabulator.current.getData().map((data) => data[INDEX_COLUMN]));
   };
 
   const filterSelected = () => {
@@ -235,7 +249,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   };
 
   const clearSelected = () => {
-    dispatch(setSelected([]));
+    setSelected([]);
   };
 
   const deleteSelected = () => {
@@ -257,7 +271,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
       okType: 'danger',
       cancelText: 'Cancel',
       onOk() {
-        dispatch(deleteBuildings([...selected]));
+        deleteBuildings([...selected]);
       },
     });
   };
@@ -291,14 +305,15 @@ const TableButtons = ({ selected, tabulator, tab }) => {
         setVisible={setModalVisible}
         inputTable={tabulator.current}
         table={tab}
+        columns={columns}
       />
     </Space>
   );
 };
 
 const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
+  const updateInputData = useUpdateInputs();
   const [data, columnDef] = useTableData(tab, columns, tables);
-  const dispatch = useDispatch();
   const divRef = useRef(null);
   const tableRef = useRef(tab);
   const columnDescriptionRef = useRef();
@@ -329,12 +344,10 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
         cell.cancelEdit();
       },
       cellEdited: (cell) => {
-        dispatch(
-          updateInputData(
-            tableRef.current,
-            [cell.getData()[INDEX_COLUMN]],
-            [{ property: cell.getField(), value: cell.getValue() }],
-          ),
+        updateInputData(
+          tableRef.current,
+          [cell.getData()[INDEX_COLUMN]],
+          [{ property: cell.getField(), value: cell.getValue() }],
         );
       },
       placeholder: '<div>No matching records found.</div>',
@@ -450,7 +463,7 @@ const useTableData = (tab, columns, tables) => {
   const [data, setData] = useState(null);
   const [columnDef, setColumnDef] = useState(null);
 
-  const dispatch = useDispatch();
+  const setSelected = useSetSelected();
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
@@ -460,15 +473,13 @@ const useTableData = (tab, columns, tables) => {
       .map((data) => data[INDEX_COLUMN]);
     if (e.ctrlKey || e.metaKey) {
       if (cell.getRow().isSelected())
-        dispatch(
-          setSelected(selectedRows.filter((name) => name !== row.getIndex())),
-        );
-      else dispatch(setSelected([...selectedRows, row.getIndex()]));
+        setSelected(selectedRows.filter((name) => name !== row.getIndex()));
+      else setSelected([...selectedRows, row.getIndex()]);
     } else if (
       selectedRows.length !== [row.getIndex()].length ||
       !cell.getRow().isSelected()
     )
-      dispatch(setSelected([row.getIndex()]));
+      setSelected([row.getIndex()]);
   };
 
   const getData = () =>
