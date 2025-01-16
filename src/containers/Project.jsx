@@ -219,10 +219,8 @@ const ProjectOverlay = () => {
 };
 
 const InputMap = () => {
-  const { data, isFetching, isLoading, isRefetching } = useInputs();
+  const { data, isFetching } = useInputs();
   const { geojsons, colors } = data;
-
-  console.log({ isFetching, isLoading, isRefetching });
 
   return (
     <>
