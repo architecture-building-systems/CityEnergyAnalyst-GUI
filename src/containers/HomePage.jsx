@@ -10,9 +10,9 @@ import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { Button, ConfigProvider } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import { push } from 'connected-react-router';
-import { useProjectStore } from '../components/Project/store';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useInitProjectStore } from '../components/Project/store';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -22,23 +22,12 @@ const DatabaseEditor = lazy(
 );
 // const Landing = lazy(() => import('../components/Landing/Landing'));
 
-const useInitProjectStore = () => {
-  const fetchConfig = useProjectStore((state) => state.fetchConfig);
-  const fetchInfo = useProjectStore((state) => state.fetchInfo);
+const HomePageContent = () => {
+  const { initProject } = useInitProjectStore();
 
   useEffect(() => {
-    const initProject = async () => {
-      const { project } = await fetchConfig();
-      if (project) await fetchInfo(project);
-      else console.error('Project not found', project);
-    };
-
     initProject();
   }, []);
-};
-
-const HomePageContent = () => {
-  useInitProjectStore();
 
   return (
     <ErrorBoundary>

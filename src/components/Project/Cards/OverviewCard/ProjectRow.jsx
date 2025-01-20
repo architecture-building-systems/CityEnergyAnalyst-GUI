@@ -11,7 +11,7 @@ import {
   RefreshIcon,
 } from '../../../../assets/icons';
 import { useSelector } from 'react-redux';
-import { useProjectStore } from '../../store';
+import { useInitProjectStore, useProjectStore } from '../../store';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 
@@ -92,6 +92,7 @@ const NewProjectIconButton = () => {
 
 const RefreshIconButton = () => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+  const { initProject } = useInitProjectStore();
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
@@ -123,8 +124,10 @@ const RefreshIconButton = () => {
       return;
     }
 
+    // Try to fetch from config if project is empty
+    if (!project) initProject();
     // Refresh scenario if scenario name is given
-    if (scenarioName) {
+    else if (scenarioName) {
       openScenario(project, scenarioName).then((exists) => {
         if (exists) refetch();
       });
