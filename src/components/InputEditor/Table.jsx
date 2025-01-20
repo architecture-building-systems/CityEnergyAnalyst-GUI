@@ -18,16 +18,18 @@ import {
   useResyncInputs,
   useUpdateInputs,
 } from '../../hooks/updates/useUpdateInputs';
-import { useChanges, useSelected, useSetSelected } from './store';
+import {
+  useChanges,
+  useDiscardChanges,
+  useSelected,
+  useSetSelected,
+} from './store';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
 const Table = ({ tab, tables, columns }) => {
   const selected = useSelected();
   const changes = useChanges();
-
-  // TODO: Get schedules from backend
-  const schedules = {};
 
   const tabulator = useRef(null);
 
@@ -57,7 +59,7 @@ const Table = ({ tab, tables, columns }) => {
           <ScheduleEditor
             tabulator={tabulator}
             selected={selected}
-            schedules={schedules}
+            tables={tables}
           />
         ) : (
           <TableEditor
@@ -76,9 +78,12 @@ const Table = ({ tab, tables, columns }) => {
 const InputEditorButtons = ({ changes }) => {
   const saveChanges = useSaveInputs();
   const resyncInputs = useResyncInputs();
+  const discardChangesFunc = useDiscardChanges();
 
-  const discardChanges = () => {
-    resyncInputs();
+  const discardChanges = async () => {
+    // TODO: Throw error
+    await resyncInputs();
+    discardChangesFunc();
   };
 
   const noChanges =
@@ -131,8 +136,7 @@ const InputEditorButtons = ({ changes }) => {
       cancelText: 'Cancel',
       async onOk() {
         await discardChanges()
-          .then((data) => {
-            console.log(data);
+          .then(() => {
             message.config({
               top: 120,
             });

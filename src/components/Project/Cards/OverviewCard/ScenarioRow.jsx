@@ -2,7 +2,7 @@ import { animated } from '@react-spring/web';
 import { push } from 'connected-react-router';
 
 import routes from '../../../../constants/routes.json';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useHoverGrow } from './hooks';
 import { useMemo } from 'react';
 import { message, Tooltip } from 'antd';
@@ -10,6 +10,7 @@ import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
 
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
+import { useChangesExist } from '../../../InputEditor/store';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -80,11 +81,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
 };
 
 const ScenarioItem = ({ project, scenario }) => {
-  const changes = useSelector(
-    (state) =>
-      Object.keys(state.inputData?.changes?.delete).length > 0 ||
-      Object.keys(state.inputData?.changes?.update).length > 0,
-  );
+  const changes = useChangesExist();
 
   const openScenario = useOpenScenario(routes.PROJECT);
   const handleOpenScenario = () => {

@@ -10,10 +10,10 @@ import {
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
-import { useSelector } from 'react-redux';
 import { useInitProjectStore, useProjectStore } from '../../store';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
+import { useChangesExist } from '../../../InputEditor/store';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -98,11 +98,7 @@ const RefreshIconButton = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
-  const changes = useSelector(
-    (state) =>
-      Object.keys(state.inputData?.changes?.delete).length > 0 ||
-      Object.keys(state.inputData?.changes?.update).length > 0,
-  );
+  const changes = useChangesExist();
 
   const { refetch } = useInputs();
 

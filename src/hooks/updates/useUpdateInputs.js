@@ -1,6 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useProjectStore } from '../../components/Project/store';
 import { INDEX_COLUMN } from '../../components/InputEditor/constants';
+import {
+  useChanges,
+  useSetChanges,
+  useUpdateChanges,
+} from '../../components/InputEditor/store';
+import { months_short } from '../../constants/months';
 
 const BUILDING_GEOMETRY_NAMES = ['zone', 'surroundings'];
 
@@ -20,8 +26,8 @@ function updateGeoJsonProperty(geojsons, table, building, property, value) {
   };
 }
 
-function updateData(state, table, buildings, properties) {
-  let { geojsons, tables, changes, columns } = state;
+function updateData(state, table, buildings, properties, onChange) {
+  let { geojsons, tables, columns } = state;
   for (const building of buildings) {
     for (const propertyObj of properties) {
       const { property, value } = propertyObj;
@@ -36,8 +42,7 @@ function updateData(state, table, buildings, properties) {
       }
 
       // Track update changes
-      updateChanges(
-        changes,
+      onChange(
         table,
         building,
         property,
@@ -74,62 +79,54 @@ function updateData(state, table, buildings, properties) {
   return { geojsons, tables };
 }
 
-function updateYearSchedule(state, buildings, month, value) {
-  let { schedules, changes } = state;
-  for (const building of buildings) {
-    // Track update changes
-    updateChanges(
-      changes,
-      'schedules',
-      building,
-      `MONTHLY_MULTIPLIER_${months_short[month]}`,
-      schedules[building].MONTHLY_MULTIPLIER[month],
-      value,
-    );
+function updateYearSchedule(schedule, building, month, value, onChange) {
+  // Track update changes
+  onChange(
+    'schedules',
+    building,
+    `MONTHLY_MULTIPLIER_${months_short[month]}`,
+    schedule.MONTHLY_MULTIPLIER[month],
+    value,
+  );
 
-    let monthSchedule = schedules[building].MONTHLY_MULTIPLIER;
-    monthSchedule[month] = value;
-    schedules = {
-      ...schedules,
-      [building]: {
-        ...schedules[building],
-        MONTHLY_MULTIPLIER: monthSchedule,
-      },
-    };
-  }
-  return { schedules };
+  let monthSchedule = schedule.MONTHLY_MULTIPLIER;
+  monthSchedule[month] = value;
+
+  return schedule;
 }
 
-function updateDaySchedule(state, buildings, tab, day, hour, value) {
-  let { schedules, changes } = state;
-  for (const building of buildings) {
-    // Track update changes
-    updateChanges(
-      changes,
-      'schedules',
-      building,
-      `${tab}_${day}_${hour + 1}`,
-      schedules[building].SCHEDULES[tab][day][hour],
-      value,
-    );
+function updateDaySchedule(
+  schedule,
+  building,
+  tab,
+  day,
+  hour,
+  value,
+  onChange,
+) {
+  // Track update changes
+  onChange(
+    'schedules',
+    building,
+    `${tab}_${day}_${hour + 1}`,
+    schedule.SCHEDULES[tab][day][hour],
+    value,
+  );
 
-    let daySchedule = schedules[building].SCHEDULES[tab][day];
-    daySchedule[hour] = value;
-    schedules = {
-      ...schedules,
-      [building]: {
-        ...schedules[building],
-        SCHEDULES: {
-          ...schedules[building].SCHEDULES,
-          [tab]: {
-            ...schedules[building].SCHEDULES[tab],
-            [day]: daySchedule,
-          },
-        },
+  let daySchedule = schedule.SCHEDULES[tab][day];
+  daySchedule[hour] = value;
+  schedule = {
+    ...schedule,
+    SCHEDULES: {
+      ...schedule.SCHEDULES,
+      [tab]: {
+        ...schedule.SCHEDULES[tab],
+        [day]: daySchedule,
       },
-    };
-  }
-  return { schedules };
+    },
+  };
+
+  return schedule;
 }
 
 function deleteGeoJsonFeature(geojsons, table, building) {
@@ -144,12 +141,10 @@ function deleteGeoJsonFeature(geojsons, table, building) {
   };
 }
 
-function deleteBuildings(state, buildings) {
+function deleteBuildings(state, buildings, changes, onChange) {
   let { geojsons, tables } = state;
   const isZoneBuilding = !!tables?.zone?.[buildings[0]];
   const isTree = !!tables?.trees?.[buildings[0]];
-
-  const changes = {};
 
   // Track delete changes
   const layer = isZoneBuilding ? 'zone' : isTree ? 'trees' : 'surroundings';
@@ -183,7 +178,8 @@ function deleteBuildings(state, buildings) {
       geojsons = deleteGeoJsonFeature(geojsons, type, building);
     }
   }
-  return { geojsons, tables, changes };
+  onChange?.(changes);
+  return { geojsons, tables };
 }
 
 export const useUpdateInputs = () => {
@@ -192,6 +188,8 @@ export const useUpdateInputs = () => {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
 
+  const updateChanges = useUpdateChanges();
+
   return (table = '', buildings = [], properties = []) =>
     queryClient.setQueryData(
       ['inputs', projectName, scenarioName],
@@ -199,7 +197,7 @@ export const useUpdateInputs = () => {
         // Update the old data
         return {
           ...oldData,
-          ...updateData(oldData, table, buildings, properties),
+          ...updateData(oldData, table, buildings, properties, updateChanges),
         };
       },
     );
@@ -211,16 +209,24 @@ export const useUpdateYearSchedule = () => {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  return (buildings = [], month = '', value = 0) =>
-    queryClient.setQueryData(
-      ['inputs', projectName, scenarioName],
-      (oldData) => {
-        return {
-          ...oldData,
-          ...updateYearSchedule(oldData, buildings, month, value),
-        };
-      },
-    );
+  const updateChanges = useUpdateChanges();
+
+  return (buildings = [], month = '', value = 0) => {
+    for (const building of buildings) {
+      queryClient.setQueryData(
+        ['inputs', 'building-schedule', building, projectName, scenarioName],
+        (oldData) => {
+          return updateYearSchedule(
+            oldData,
+            building,
+            month,
+            value,
+            updateChanges,
+          );
+        },
+      );
+    }
+  };
 };
 
 export const useUpdateDaySchedule = () => {
@@ -229,16 +235,26 @@ export const useUpdateDaySchedule = () => {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  return (buildings = [], tab = '', day = '', hour = 0, value = '') =>
-    queryClient.setQueryData(
-      ['inputs', projectName, scenarioName],
-      (oldData) => {
-        return {
-          ...oldData,
-          ...updateDaySchedule(oldData, buildings, tab, day, hour, value),
-        };
-      },
-    );
+  const updateChanges = useUpdateChanges();
+
+  return (buildings = [], tab = '', day = '', hour = 0, value = '') => {
+    for (const building of buildings) {
+      queryClient.setQueryData(
+        ['inputs', 'building-schedule', building, projectName, scenarioName],
+        (oldData) => {
+          return updateDaySchedule(
+            oldData,
+            building,
+            tab,
+            day,
+            hour,
+            value,
+            updateChanges,
+          );
+        },
+      );
+    }
+  };
 };
 
 export const useDeleteBuildings = () => {
@@ -247,6 +263,9 @@ export const useDeleteBuildings = () => {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
 
+  const changes = useChanges();
+  const setChanges = useSetChanges();
+
   return (buildings = []) =>
     queryClient.setQueryData(
       ['inputs', projectName, scenarioName],
@@ -254,7 +273,7 @@ export const useDeleteBuildings = () => {
         // Update the old data
         return {
           ...oldData,
-          ...deleteBuildings(oldData, buildings),
+          ...deleteBuildings(oldData, buildings, changes, setChanges),
         };
       },
     );
@@ -266,6 +285,6 @@ export const useResyncInputs = () => {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  return () =>
+  return async () =>
     queryClient.invalidateQueries(['inputs', projectName, scenarioName]);
 };
