@@ -19,5 +19,7 @@ export function useInputs() {
       return data;
     },
     initialData: {},
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 }

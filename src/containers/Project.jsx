@@ -219,12 +219,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 };
 
 const InputMap = ({ project, scenario }) => {
-  const { data, isFetching } = useInputs();
+  const { data, refetch, isFetching } = useInputs();
   const { geojsons, colors } = data;
 
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
   useEffect(() => {
+    refetch();
     resetCameraOptions();
   }, [project, scenario]);
 

@@ -145,9 +145,11 @@ const ScheduleEditor = ({ selected, tabulator, tables }) => {
             )
           ) : (
             <div className="cea-schedule-no-data">
-              {selected.length
-                ? 'Selected buildings do not have a schedule'
-                : 'No building selected'}
+              {_loading
+                ? 'Fetching building schedules...'
+                : selected.length
+                  ? 'Selected buildings do not have a schedule'
+                  : 'No building selected'}
             </div>
           )}
         </div>

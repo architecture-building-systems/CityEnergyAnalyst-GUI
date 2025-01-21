@@ -103,7 +103,8 @@ const InputEditorButtons = ({ changes }) => {
       okType: 'primary',
       cancelText: 'Cancel',
       async onOk() {
-        await saveChanges()
+        await saveChanges
+          .mutateAsync()
           .then(() => {
             message.config({
               top: 120,

@@ -29,6 +29,7 @@ export function useSchedules(buildings) {
           return data;
         },
         refetchOnMount: false,
+        refetchOnWindowFocus: false,
       };
     }),
   });
