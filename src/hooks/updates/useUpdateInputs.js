@@ -11,18 +11,32 @@ import { months_short } from '../../constants/months';
 const BUILDING_GEOMETRY_NAMES = ['zone', 'surroundings'];
 
 function updateGeoJsonProperty(geojsons, table, building, property, value) {
-  const _building = geojsons[table].features.find(
-    (feature) => feature.properties[INDEX_COLUMN] == building,
-  );
-  if (_building)
-    _building.properties = {
-      ..._building.properties,
-      [property]: value,
-      ...(_building.properties.REFERENCE ? { REFERENCE: 'User - Input' } : {}),
+  // Destructure the target GeoJSON table
+  const tableData = geojsons?.[table];
+  if (!tableData) return geojsons; // Return unchanged if the table doesn't exist
+
+  const updatedFeatures = tableData.features.map((feature) => {
+    // Return unchanged feature
+    if (feature.properties[INDEX_COLUMN] !== building) return feature;
+
+    // Return a new feature with updated properties
+    return {
+      ...feature,
+      properties: {
+        ...feature.properties,
+        [property]: value,
+        ...(feature.properties.REFERENCE ? { REFERENCE: 'User - Input' } : {}),
+      },
     };
+  });
+
+  // Return a new GeoJSON object with updated features
   return {
     ...geojsons,
-    [table]: { ...geojsons[table], features: geojsons[table].features },
+    [table]: {
+      ...tableData,
+      features: updatedFeatures,
+    },
   };
 }
 
@@ -193,13 +207,10 @@ export const useUpdateInputs = () => {
   return (table = '', buildings = [], properties = []) =>
     queryClient.setQueryData(
       ['inputs', projectName, scenarioName],
-      (oldData) => {
-        // Update the old data
-        return {
-          ...oldData,
-          ...updateData(oldData, table, buildings, properties, updateChanges),
-        };
-      },
+      (oldData) => ({
+        ...oldData,
+        ...updateData(oldData, table, buildings, properties, updateChanges),
+      }),
     );
 };
 
