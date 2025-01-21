@@ -2,10 +2,13 @@ import { useQueries } from '@tanstack/react-query';
 import { apiClient } from '../../api/axios';
 import { API_ENDPOINTS } from '../../api/endpoints';
 import { useProjectStore } from '../../components/Project/store';
+import { useFetchedSchedules } from '../../components/InputEditor/store';
 
-export function useSchedules(buildings) {
+export function useSchedules() {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
+
+  const buildings = Array.from(useFetchedSchedules());
 
   const results = useQueries({
     queries: buildings.map((building) => {

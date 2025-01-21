@@ -6,7 +6,11 @@ import './ScheduleEditor.css';
 import { months_short } from '../../constants/months';
 import { Tabs, Spin } from 'antd';
 import { INDEX_COLUMN } from './constants';
-import { useSetSelected } from './store';
+import {
+  useAddFetchedSchedule,
+  useFetchedSchedules,
+  useSetSelected,
+} from './store';
 import {
   useUpdateDaySchedule,
   useUpdateYearSchedule,
@@ -18,8 +22,9 @@ const colormap = interpolate(['white', '#006ad5']);
 const ScheduleEditor = ({ selected, tabulator, tables }) => {
   const setSelected = useSetSelected();
 
-  const [selectedBuildings, setMissingSchedules] = useState(new Set());
-  const { isLoading, schedules } = useSchedules(Array.from(selectedBuildings));
+  const { isLoading, schedules } = useSchedules();
+  const selectedBuildings = useFetchedSchedules();
+  const addFetchedSchedule = useAddFetchedSchedule();
 
   const [tab, setTab] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -85,10 +90,9 @@ const ScheduleEditor = ({ selected, tabulator, tables }) => {
       if (_missingSchedules.length) {
         setLoading(true);
         timeoutRef.current = setTimeout(() => {
-          setMissingSchedules((prev) => {
-            for (const building of _missingSchedules) prev.add(building);
-            return prev;
-          });
+          for (const building of _missingSchedules)
+            addFetchedSchedule(building);
+
           setLoading(false);
         }, 1000);
       }

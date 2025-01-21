@@ -4,21 +4,31 @@ import { createNestedProp, deleteNestedProp } from '../../utils';
 export const useTableStore = create((set) => ({
   selected: [],
   changes: { update: {}, delete: {} },
+  fetchedSchedules: new Set(),
 
   setSelected: (selected) => set({ selected }),
   setChanges: (changes) => set({ changes }),
   updateChanges: (table, building, property, storedValue, newValue) =>
     set((state) => ({
-      changes: updateChanges(
-        state.changes,
-        table,
-        building,
-        property,
-        storedValue,
-        newValue,
-      ),
+      changes: {
+        ...updateChanges(
+          state.changes,
+          table,
+          building,
+          property,
+          storedValue,
+          newValue,
+        ),
+      },
     })),
   discardChanges: () => set({ changes: { update: {}, delete: {} } }),
+  addFetchedSchedule: (building) =>
+    set((state) => ({
+      fetchedSchedules: state.fetchedSchedules.add(building),
+    })),
+
+  resetStore: () =>
+    set({ changes: { update: {}, delete: {} }, fetchedSchedules: new Set() }),
 }));
 
 function updateChanges(
@@ -63,3 +73,10 @@ export const useUpdateChanges = () =>
   useTableStore((state) => state.updateChanges);
 export const useDiscardChanges = () =>
   useTableStore((state) => state.discardChanges);
+
+export const useFetchedSchedules = () =>
+  useTableStore((state) => state.fetchedSchedules);
+export const useAddFetchedSchedule = () =>
+  useTableStore((state) => state.addFetchedSchedule);
+
+export const useResetStore = () => useTableStore((state) => state.resetStore);

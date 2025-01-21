@@ -1,22 +1,9 @@
 import { apiClient } from '../../api/axios';
 import { API_ENDPOINTS } from '../../api/endpoints';
 import { useProjectStore } from '../../components/Project/store';
-import {
-  useChanges,
-  useDiscardChanges,
-} from '../../components/InputEditor/store';
+import { useChanges, useResetStore } from '../../components/InputEditor/store';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useResyncInputs } from '../updates/useUpdateInputs';
-
-const saveChanges = () => async (dispatch, getState) => {
-  const { tables, geojsons, crs, schedules } = getState().inputData;
-  return apiClient.put(`${API_ENDPOINTS.INPUTS}/all-inputs`, {
-    tables,
-    geojsons,
-    crs,
-    schedules,
-  });
-};
 
 export function useSaveInputs() {
   const queryClient = useQueryClient();
@@ -25,7 +12,7 @@ export function useSaveInputs() {
   const scenarioName = useProjectStore((state) => state.scenario);
 
   const changes = useChanges();
-  const discardChanges = useDiscardChanges();
+  const resetStore = useResetStore();
   const resyncInputs = useResyncInputs();
 
   const { tables, geojsons, crs } = queryClient.getQueryData([
@@ -34,9 +21,19 @@ export function useSaveInputs() {
     scenarioName,
   ]);
 
-  console.log(changes);
-
-  const schedules = {};
+  const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
+    (obj, key) => {
+      obj[key] = queryClient.getQueryData([
+        'inputs',
+        'building-schedule',
+        key,
+        projectName,
+        scenarioName,
+      ]);
+      return obj;
+    },
+    {},
+  );
 
   return useMutation({
     mutationFn: async () => {
@@ -52,7 +49,7 @@ export function useSaveInputs() {
       return data;
     },
     onSuccess: () => {
-      discardChanges();
+      resetStore();
       resyncInputs();
       console.log('success');
     },
