@@ -13,7 +13,7 @@ import './Map.css';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
-import { useMapStore } from './store/store';
+import { useCameraOptionsCalulated, useMapStore } from './store/store';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -248,11 +248,6 @@ const useMapLayers = () => {
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
-  const cameraOptionsCalculated = useRef(false);
-
-  const zoneBounds = useMemo(() => {
-    return data?.zone ? turf.bbox(data.zone) : null;
-  }, [data?.zone]);
 
   const [selectedLayer, setSelectedLayer] = useState();
 
@@ -267,6 +262,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   const setCameraOptions = useMapStore((state) => state.setCameraOptions);
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+  const cameraOptionsCalulated = useCameraOptionsCalulated();
 
   const visibility = useMapStore((state) => state.visibility);
 
@@ -278,20 +274,13 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   useEffect(() => {
-    // Reset camera options after zone bounds change
-    return () => {
-      cameraOptionsCalculated.current = false;
-      resetCameraOptions();
-    };
-  }, [zoneBounds]);
-
-  useEffect(() => {
-    if (mapRef.current && zoneBounds && !cameraOptionsCalculated.current) {
+    if (!data?.zone) resetCameraOptions();
+    else if (mapRef.current && !cameraOptionsCalulated) {
       const zoomToBounds = () => {
         const mapbox = mapRef.current.getMap();
 
         // Calculate total bounds with other geometries
-        let bboxPoly = turf.bboxPolygon(zoneBounds);
+        let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
 
         if (data?.surroundings !== null && data.surroundings?.features?.length)
           bboxPoly = turf.union(
@@ -326,16 +315,8 @@ const DeckGLMap = ({ data, colors }) => {
         }));
       };
       zoomToBounds();
-      cameraOptionsCalculated.current = true;
     }
-  }, [
-    data,
-    zoneBounds,
-    mapRef,
-    resetCameraOptions,
-    setCameraOptions,
-    setViewState,
-  ]);
+  }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {

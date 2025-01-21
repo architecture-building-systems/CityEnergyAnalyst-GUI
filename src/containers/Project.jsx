@@ -19,25 +19,25 @@ import { useToolStore } from '../components/Tools/store';
 import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 import { useProjectStore } from '../components/Project/store';
 import { useInputs } from '../hooks/queries/useInputs';
+import { useMapStore } from '../components/Map/store/store';
 
 const Project = () => {
+  const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
 
   return (
     <div style={{ height: '100%', background: '#f0f2f8' }}>
-      <ProjectOverlay />
+      <ProjectOverlay project={project} scenarioName={scenarioName} />
 
-      <InputMap />
+      <InputMap project={project} scenario={scenarioName} />
 
       {!scenarioName && <ScenarioAlert />}
     </div>
   );
 };
 
-const ProjectOverlay = () => {
-  const project = useProjectStore((state) => state.project);
+const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
-  const scenarioName = useProjectStore((state) => state.scenario);
   const scenarioList = useProjectStore((state) => state.scenariosList);
 
   const [hideAll, setHideAll] = useState(false);
@@ -218,9 +218,15 @@ const ProjectOverlay = () => {
   );
 };
 
-const InputMap = () => {
+const InputMap = ({ project, scenario }) => {
   const { data, isFetching } = useInputs();
   const { geojsons, colors } = data;
+
+  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+
+  useEffect(() => {
+    resetCameraOptions();
+  }, [project, scenario]);
 
   return (
     <>
