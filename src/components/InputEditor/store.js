@@ -40,7 +40,7 @@ function updateChanges(
   newValue,
 ) {
   // Check if update entry exists
-  if (changes?.update?.table?.building?.property) {
+  if (changes?.update?.[table]?.[building]?.[property]) {
     // Delete update if newValue equals oldValue else update newValue
     if (changes.update[table][building][property].oldValue == newValue)
       deleteNestedProp(changes.update, table, building, property);

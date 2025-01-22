@@ -55,7 +55,6 @@ function updateData(state, table, buildings, properties, onChange) {
         console.error(error);
       }
 
-      // FIXME: Changes are based on the previous value, not the first one
       // Track update changes
       onChange(
         table,
