@@ -13,10 +13,17 @@ export function useInputs() {
       // Return empty object if projectName or scenarioName is not defined
       if (!projectName || !scenarioName) return {};
 
-      const { data } = await apiClient.get(
-        `${API_ENDPOINTS.INPUTS}/all-inputs`,
-      );
-      return data;
+      try {
+        const { data } = await apiClient.get(
+          `${API_ENDPOINTS.INPUTS}/all-inputs`,
+        );
+        return data;
+      } catch (error) {
+        throw new Error(
+          error?.response?.data?.detail ??
+            'Unknown error: Unable to fetch inputs.',
+        );
+      }
     },
     initialData: {},
     refetchOnMount: false,

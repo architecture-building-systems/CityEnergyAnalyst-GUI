@@ -1,7 +1,7 @@
 import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Spin, Tabs, Tooltip } from 'antd';
+import { Alert, message, Spin, Tabs, Tooltip } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
@@ -219,8 +219,20 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 };
 
 const InputMap = ({ project, scenario }) => {
-  const { data, refetch, isFetching } = useInputs();
+  const { data, refetch, isFetching, isError, error } = useInputs();
   const { geojsons, colors } = data;
+
+  const [messageApi, contextHolder] = message.useMessage();
+  const onError = (error) => {
+    messageApi.open({
+      type: 'error',
+      content: `Error reading inputs. (${error.message ?? 'Unknown error: Unable to fetch inputs.'})`,
+      style: {
+        marginTop: 120,
+      },
+      duration: 5,
+    });
+  };
 
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
@@ -229,8 +241,15 @@ const InputMap = ({ project, scenario }) => {
     resetCameraOptions();
   }, [project, scenario]);
 
+  useEffect(() => {
+    if (isError) {
+      onError(error);
+    }
+  }, [isError]);
+
   return (
     <>
+      {contextHolder}
       <div
         style={{
           height: '100%',
