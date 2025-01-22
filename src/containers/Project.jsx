@@ -226,6 +226,7 @@ const InputMap = ({ project, scenario }) => {
   const onError = (error) => {
     messageApi.open({
       type: 'error',
+      key: 'input-map-error',
       content: `Error reading inputs for "${scenario}". (${error.message ?? 'Unknown error: Unable to fetch inputs.'})`,
       style: {
         marginTop: 120,
@@ -242,10 +243,11 @@ const InputMap = ({ project, scenario }) => {
   }, [project, scenario]);
 
   useEffect(() => {
-    if (isError) {
+    // Only show error after retries
+    if (isError && !isFetching) {
       onError(error);
     }
-  }, [isError]);
+  }, [isError, isFetching]);
 
   return (
     <>
@@ -263,7 +265,9 @@ const InputMap = ({ project, scenario }) => {
         {isFetching && (
           <Spin
             indicator={<LoadingOutlined style={{ fontSize: 50 }} spin />}
-            tip="Loading Inputs"
+            tip={
+              isError ? 'Error reading inputs. Retrying...' : 'Loading Inputs'
+            }
             size="large"
             percent="auto"
             fullscreen
