@@ -226,7 +226,7 @@ const InputMap = ({ project, scenario }) => {
   const onError = (error) => {
     messageApi.open({
       type: 'error',
-      content: `Error reading inputs. (${error.message ?? 'Unknown error: Unable to fetch inputs.'})`,
+      content: `Error reading inputs for "${scenario}". (${error.message ?? 'Unknown error: Unable to fetch inputs.'})`,
       style: {
         marginTop: 120,
       },
