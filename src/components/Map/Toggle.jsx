@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMapStore } from './store/store';
-import { useSelector } from 'react-redux';
+import { useInputs } from '../../hooks/queries/useInputs';
 
 export const NetworkToggle = ({
   cooling,
@@ -62,7 +62,9 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
 };
 
 export const LayerToggle = () => {
-  const data = useSelector((state) => state.inputData.geojsons);
+  const { data: inputData } = useInputs();
+  const { geojsons: data } = inputData;
+
   const dataLoaded = useRef(false);
   const setVisibility = useMapStore((state) => state.setVisibility);
   const setMapLabels = useMapStore((state) => state.setMapLabels);
@@ -77,8 +79,8 @@ export const LayerToggle = () => {
     setMapLabels(checked);
   };
 
-  // Set all layers to visible by default
   useEffect(() => {
+    // Set all layers to visible by default
     if (data?.zone && !dataLoaded.current) {
       const dataNames = Object.keys(data);
       if (dataNames?.length > 0) {

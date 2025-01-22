@@ -2,14 +2,15 @@ import { animated } from '@react-spring/web';
 import { push } from 'connected-react-router';
 
 import routes from '../../../../constants/routes.json';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useHoverGrow } from './hooks';
 import { useMemo } from 'react';
-import { message, Tooltip } from 'antd';
+import { Badge, message, Tooltip } from 'antd';
 import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
 
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
+import { useChangesExist } from '../../../InputEditor/store';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -21,6 +22,8 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const remainingScenarios = useMemo(() => {
     return sortedScenarios.filter((scenario) => scenario !== scenarioName);
   }, [sortedScenarios, scenarioName]);
+
+  const changesExist = useChangesExist();
 
   return (
     <div
@@ -41,24 +44,24 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
           gap: 12,
         }}
       >
-        <div
-          style={{
-            backgroundColor: '#000',
-            padding: '10px 12px',
-            borderRadius: 12,
-            color: '#fff',
+        <Badge dot styles={{ root: { flex: 1 } }} count={changesExist ? 1 : 0}>
+          <div
+            style={{
+              backgroundColor: '#000',
+              padding: '10px 12px',
+              borderRadius: 12,
+              color: '#fff',
 
-            fontWeight: 'bold',
-
-            flexGrow: 1,
-          }}
-        >
-          {scenarioName
-            ? scenarioName
-            : scenarioList?.length
-              ? 'Select Scenario'
-              : 'Create Scenario'}
-        </div>
+              fontWeight: 'bold',
+            }}
+          >
+            {scenarioName
+              ? scenarioName
+              : scenarioList?.length
+                ? 'Select Scenario'
+                : 'Create Scenario'}
+          </div>
+        </Badge>
         <div style={{ fontSize: 20, display: 'flex', gap: 8 }}>
           <DuplicateScenarioIcon />
           <NewScenarioIcon />
@@ -80,11 +83,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
 };
 
 const ScenarioItem = ({ project, scenario }) => {
-  const changes = useSelector(
-    (state) =>
-      Object.keys(state.inputData?.changes?.delete).length > 0 ||
-      Object.keys(state.inputData?.changes?.update).length > 0,
-  );
+  const changes = useChangesExist();
 
   const openScenario = useOpenScenario(routes.PROJECT);
   const handleOpenScenario = () => {

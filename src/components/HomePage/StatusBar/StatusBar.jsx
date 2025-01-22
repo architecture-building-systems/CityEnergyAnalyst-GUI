@@ -38,7 +38,7 @@ const CEAVersion = () => {
     try {
       const _version = await window?.api?.getAppVersion();
       if (_version === undefined)
-        throw Error('Unable to determine CEA version.');
+        throw new Error('Unable to determine CEA version.');
 
       setVersion(`v${_version}`);
     } catch (e) {

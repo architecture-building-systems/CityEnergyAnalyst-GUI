@@ -1,30 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import interpolate from 'color-interpolate';
-import {
-  fetchBuildingSchedule,
-  setSelected,
-  updateDaySchedule,
-  updateYearSchedule,
-} from '../../actions/inputEditor';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './ScheduleEditor.css';
 import { months_short } from '../../constants/months';
 import { Tabs, Spin } from 'antd';
 import { INDEX_COLUMN } from './constants';
+import {
+  useAddFetchedSchedule,
+  useFetchedSchedules,
+  useSetSelected,
+} from './store';
+import {
+  useUpdateDaySchedule,
+  useUpdateYearSchedule,
+} from '../../hooks/updates/useUpdateInputs';
+import { useSchedules } from '../../hooks/queries/useSchedules';
 
 const colormap = interpolate(['white', '#006ad5']);
 
-const ScheduleEditor = ({ selected, schedules, tabulator }) => {
-  const { tables } = useSelector((state) => state.inputData);
+const ScheduleEditor = ({ selected, tabulator, tables }) => {
+  const setSelected = useSetSelected();
+
+  const { isLoading, schedules } = useSchedules();
+  const selectedBuildings = useFetchedSchedules();
+  const addFetchedSchedule = useAddFetchedSchedule();
+
   const [tab, setTab] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const buildings = Object.keys(tables.zone || {});
-  const dispatch = useDispatch();
   const divRef = useRef(null);
   const timeoutRef = useRef();
+
+  const _loading = isLoading || loading;
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
@@ -35,14 +44,12 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
     if (!e.ctrlKey) {
       (selectedRows.length !== [row.getIndex()].length ||
         !cell.getRow().isSelected()) &&
-        dispatch(setSelected([row.getIndex()]));
+        setSelected([row.getIndex()]);
     } else {
       if (cell.getRow().isSelected()) {
-        dispatch(
-          setSelected(selectedRows.filter((name) => name !== row.getIndex())),
-        );
+        setSelected(selectedRows.filter((name) => name !== row.getIndex()));
       } else {
-        dispatch(setSelected([...selectedRows, row.getIndex()]));
+        setSelected([...selectedRows, row.getIndex()]);
       }
     }
   };
@@ -77,20 +84,16 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
       tabulator.current && tabulator.current.selectRow(selected);
       setLoading(false);
       clearTimeout(timeoutRef.current);
-      const missingSchedules = selected.filter(
-        (building) => !Object.keys(schedules).includes(building),
+      const _missingSchedules = selected.filter(
+        (building) => !selectedBuildings.has(building),
       );
-      if (missingSchedules.length) {
+      if (_missingSchedules.length) {
         setLoading(true);
         timeoutRef.current = setTimeout(() => {
-          dispatch(fetchBuildingSchedule(missingSchedules))
-            .catch((error) => {
-              console.error(error);
-              setErrors(error);
-            })
-            .finally(() => {
-              setLoading(false);
-            });
+          for (const building of _missingSchedules)
+            addFetchedSchedule(building);
+
+          setLoading(false);
         }, 1000);
       }
     }
@@ -106,9 +109,9 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
       <div className="cea-schedule-buildings">
         <div ref={divRef} />
       </div>
-      <Spin spinning={loading}>
+      <Spin spinning={_loading}>
         <div className="cea-schedule-test">
-          {buildings.includes(selected[0]) ? (
+          {buildings.includes(selected[0]) && !_loading ? (
             Object.keys(errors).length ? (
               <div className="cea-schedule-error">
                 ERRORS FOUND:
@@ -146,9 +149,11 @@ const ScheduleEditor = ({ selected, schedules, tabulator }) => {
             )
           ) : (
             <div className="cea-schedule-no-data">
-              {selected.length
-                ? 'Selected buildings do not have a schedule'
-                : 'No building selected'}
+              {_loading
+                ? 'Fetching building schedules...'
+                : selected.length
+                  ? 'Selected buildings do not have a schedule'
+                  : 'No building selected'}
             </div>
           )}
         </div>
@@ -161,7 +166,8 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
   const tooltipsRef = useRef({ selected, schedules, tab });
-  const dispatch = useDispatch();
+
+  const updateDaySchedule = useUpdateDaySchedule();
 
   useEffect(() => {
     tabulator.current = new Tabulator(divRef.current, {
@@ -187,14 +193,12 @@ const DataTable = ({ selected, tab, schedules, loading }) => {
       },
       cellEdited: (cell) => {
         formatCellStyle(cell);
-        dispatch(
-          updateDaySchedule(
-            tooltipsRef.current.selected,
-            tooltipsRef.current.tab,
-            cell.getData().DAY,
-            Number(cell.getField()),
-            cell.getValue(),
-          ),
+        updateDaySchedule(
+          tooltipsRef.current.selected,
+          tooltipsRef.current.tab,
+          cell.getData().DAY,
+          Number(cell.getField()),
+          cell.getValue(),
         );
       },
       layoutColumnsOnNewData: true,
@@ -276,7 +280,8 @@ const YearTable = ({ selected, schedules, loading }) => {
   const tabulator = useRef(null);
   const divRef = useRef(null);
   const tooltipsRef = useRef({ selected, schedules });
-  const dispatch = useDispatch();
+
+  const updateYearSchedule = useUpdateYearSchedule();
 
   useEffect(() => {
     tabulator.current = new Tabulator(divRef.current, {
@@ -303,12 +308,10 @@ const YearTable = ({ selected, schedules, loading }) => {
       },
       cellEdited: (cell) => {
         formatCellStyle(cell);
-        dispatch(
-          updateYearSchedule(
-            tooltipsRef.current.selected,
-            cell.getField(),
-            cell.getValue(),
-          ),
+        updateYearSchedule(
+          tooltipsRef.current.selected,
+          cell.getField(),
+          cell.getValue(),
         );
       },
       layout: 'fitDataFill',

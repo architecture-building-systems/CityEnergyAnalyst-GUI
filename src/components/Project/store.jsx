@@ -79,3 +79,19 @@ export const useSettingsStore = create((set) => ({
   settings: {},
   setSettings: (value) => set({ settings: value }),
 }));
+
+export const useFetchFromConfig = () =>
+  useProjectStore((state) => state.fetchConfig);
+
+export const useInitProjectStore = () => {
+  const fetchConfig = useFetchFromConfig();
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
+
+  const initProject = async () => {
+    const { project } = await fetchConfig();
+    if (project) await fetchInfo(project);
+    else console.error('Project not found', project);
+  };
+
+  return { initProject };
+};

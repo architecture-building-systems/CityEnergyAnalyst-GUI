@@ -1,9 +1,7 @@
-import { useDispatch, useSelector } from 'react-redux';
 import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
-import { useEffect, useState } from 'react';
-import { fetchInputData, resetInputData } from '../actions/inputEditor';
-import { Alert, Spin, Tabs, Tooltip } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, message, Spin, Tabs, Tooltip } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
@@ -20,28 +18,28 @@ import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCa
 import { useToolStore } from '../components/Tools/store';
 import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 import { useProjectStore } from '../components/Project/store';
+import { useInputs } from '../hooks/queries/useInputs';
+import { useMapStore } from '../components/Map/store/store';
 
 const Project = () => {
+  const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
 
   return (
     <div style={{ height: '100%', background: '#f0f2f8' }}>
-      <ProjectOverlay />
+      <ProjectOverlay project={project} scenarioName={scenarioName} />
 
-      <InputMap />
+      <InputMap project={project} scenario={scenarioName} />
 
       {!scenarioName && <ScenarioAlert />}
     </div>
   );
 };
 
-const ProjectOverlay = () => {
-  const project = useProjectStore((state) => state.project);
+const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
-  const scenarioName = useProjectStore((state) => state.scenario);
   const scenarioList = useProjectStore((state) => state.scenariosList);
 
-  const dispatch = useDispatch();
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
 
@@ -86,14 +84,6 @@ const ProjectOverlay = () => {
     setShowTools(false);
     setInputEditor(false);
   }, [name, scenarioName]);
-
-  useEffect(() => {
-    if (scenarioName !== null) dispatch(fetchInputData());
-    // Reset input data state on umount
-    return () => {
-      dispatch(resetInputData());
-    };
-  }, [dispatch, name, scenarioName]);
 
   return (
     <div id="cea-project-overlay">
@@ -228,12 +218,40 @@ const ProjectOverlay = () => {
   );
 };
 
-const InputMap = () => {
-  const { status } = useSelector((state) => state.inputData);
-  const { geojsons, colors } = useSelector((state) => state.inputData);
+const InputMap = ({ project, scenario }) => {
+  const { data, refetch, isFetching, isError, error } = useInputs();
+  const { geojsons, colors } = data;
+
+  const [messageApi, contextHolder] = message.useMessage();
+  const onError = (error) => {
+    messageApi.open({
+      type: 'error',
+      key: 'input-map-error',
+      content: `Error reading inputs for "${scenario}". (${error.message ?? 'Unknown error: Unable to fetch inputs.'})`,
+      style: {
+        marginTop: 120,
+      },
+      duration: 5,
+    });
+  };
+
+  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+
+  useEffect(() => {
+    refetch();
+    resetCameraOptions();
+  }, [project, scenario]);
+
+  useEffect(() => {
+    // Only show error after retries
+    if (isError && !isFetching) {
+      onError(error);
+    }
+  }, [isError, isFetching]);
 
   return (
     <>
+      {contextHolder}
       <div
         style={{
           height: '100%',
@@ -244,10 +262,12 @@ const InputMap = () => {
           e.preventDefault();
         }}
       >
-        {status == 'fetching' && (
+        {isFetching && (
           <Spin
             indicator={<LoadingOutlined style={{ fontSize: 50 }} spin />}
-            tip="Loading Inputs"
+            tip={
+              isError ? 'Error reading inputs. Retrying...' : 'Loading Inputs'
+            }
             size="large"
             percent="auto"
             fullscreen
@@ -260,8 +280,18 @@ const InputMap = () => {
 };
 
 const InputTable = () => {
-  const tables = useSelector((state) => state.inputData.tables);
+  const { data } = useInputs();
+  const { tables, columns } = data;
+
   const [tab, setTab] = useState('zone');
+  const tabItems = useMemo(() => {
+    if (typeof tables == 'undefined') return null;
+
+    return [...Object.keys(tables), 'schedules'].map((key) => ({
+      key: key,
+      label: key,
+    }));
+  }, [tables]);
 
   if (typeof tables == 'undefined') return null;
 
@@ -284,10 +314,7 @@ const InputTable = () => {
         activeKey={tab}
         onChange={setTab}
         animated={false}
-        items={[...Object.keys(tables), 'schedules'].map((key) => ({
-          key: key,
-          label: key,
-        }))}
+        items={tabItems}
       />
       <div
         className="cea-input-editor-table"
@@ -300,7 +327,7 @@ const InputTable = () => {
           paddingBottom: 12,
         }}
       >
-        <Table tab={tab} />
+        <Table tab={tab} tables={tables} columns={columns} />
       </div>
     </div>
   );

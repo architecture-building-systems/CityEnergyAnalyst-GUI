@@ -1,14 +1,20 @@
 import { useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Form } from '@ant-design/compatible';
 import { Modal, Input, Select } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
-import { updateInputData } from '../../actions/inputEditor';
 import { INDEX_COLUMN } from './constants';
+import { useUpdateInputs } from '../../hooks/updates/useUpdateInputs';
 
-const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
-  const dispatch = useDispatch();
+const EditSelectedModal = ({
+  visible,
+  setVisible,
+  inputTable,
+  table,
+  columns,
+}) => {
   const formRef = useRef();
+
+  const updateInputData = useUpdateInputs();
 
   const handleOk = () => {
     formRef.current.validateFields((err, values) => {
@@ -18,12 +24,10 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
         for (const prop in values) {
           values[prop] && updates.push({ property: prop, value: values[prop] });
         }
-        dispatch(
-          updateInputData(
-            table,
-            inputTable.getSelectedData().map((data) => data[INDEX_COLUMN]),
-            updates,
-          ),
+        updateInputData(
+          table,
+          inputTable.getSelectedData().map((data) => data[INDEX_COLUMN]),
+          updates,
         );
         setVisible(false);
       }
@@ -44,7 +48,12 @@ const EditSelectedModal = ({ visible, setVisible, inputTable, table }) => {
       destroyOnClose
     >
       <div style={{ overflow: 'auto', maxHeight: 400 }}>
-        <InputDataForm ref={formRef} inputTable={inputTable} table={table} />
+        <InputDataForm
+          ref={formRef}
+          inputTable={inputTable}
+          table={table}
+          columns={columns}
+        />
       </div>
       <details style={{ marginTop: 15 }}>
         <summary>Show selected data table</summary>
@@ -83,8 +92,7 @@ const Table = ({ inputTable }) => {
   );
 };
 
-const InputDataForm = Form.create()(({ form, inputTable, table }) => {
-  const { columns } = useSelector((state) => state.inputData);
+const InputDataForm = Form.create()(({ form, inputTable, table, columns }) => {
   return (
     <Form>
       {inputTable.getColumnDefinitions().map((columnDef) => {

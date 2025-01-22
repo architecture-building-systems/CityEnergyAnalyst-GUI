@@ -10,10 +10,10 @@ import {
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchInputData } from '../../../../actions/inputEditor';
-import { useProjectStore } from '../../store';
+import { useInitProjectStore, useProjectStore } from '../../store';
 import { useOpenScenario } from '../../hooks';
+import { useInputs } from '../../../../hooks/queries/useInputs';
+import { useChangesExist } from '../../../InputEditor/store';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -92,18 +92,16 @@ const NewProjectIconButton = () => {
 
 const RefreshIconButton = () => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+  const { initProject } = useInitProjectStore();
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
-  const changes = useSelector(
-    (state) =>
-      Object.keys(state.inputData?.changes?.delete).length > 0 ||
-      Object.keys(state.inputData?.changes?.update).length > 0,
-  );
+  const changes = useChangesExist();
 
-  const dispatch = useDispatch();
+  const { refetch } = useInputs();
+
   const openScenario = useOpenScenario();
 
   const onRefresh = () => {
@@ -122,10 +120,12 @@ const RefreshIconButton = () => {
       return;
     }
 
+    // Try to fetch from config if project is empty
+    if (!project) initProject();
     // Refresh scenario if scenario name is given
-    if (scenarioName) {
+    else if (scenarioName) {
       openScenario(project, scenarioName).then((exists) => {
-        if (exists) dispatch(fetchInputData());
+        if (exists) refetch();
       });
     } else {
       // Otherwise, refresh project

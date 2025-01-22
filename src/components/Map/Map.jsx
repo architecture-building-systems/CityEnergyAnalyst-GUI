@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 
 import { DeckGL } from '@deck.gl/react';
 import { GeoJsonLayer, PointCloudLayer } from '@deck.gl/layers';
@@ -9,13 +8,12 @@ import positron from '../../constants/mapStyles/positron.json';
 import no_label from '../../constants/mapStyles/positron_nolabel.json';
 
 import * as turf from '@turf/turf';
-import { setSelected } from '../../actions/inputEditor';
 import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
-import { useMapStore } from './store/store';
+import { useCameraOptionsCalulated, useMapStore } from './store/store';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -29,6 +27,7 @@ import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
 import { INDEX_COLUMN } from '../InputEditor/constants';
+import { useSelected, useSetSelected } from '../InputEditor/store';
 
 const useMapStyle = () => {
   const showMapStyleLabels = useMapStore((state) => state.mapLabels);
@@ -249,12 +248,11 @@ const useMapLayers = () => {
 const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
-  const cameraOptionsCalculated = useRef(false);
 
   const [selectedLayer, setSelectedLayer] = useState();
 
-  const dispatch = useDispatch();
-  const selected = useSelector((state) => state.inputData.selected);
+  const selected = useSelected();
+  const setSelected = useSetSelected();
 
   const viewState = useMapStore((state) => state.viewState);
   const setViewState = useMapStore((state) => state.setViewState);
@@ -264,6 +262,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   const setCameraOptions = useMapStore((state) => state.setCameraOptions);
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+  const cameraOptionsCalulated = useCameraOptionsCalulated();
 
   const visibility = useMapStore((state) => state.visibility);
 
@@ -275,13 +274,13 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   useEffect(() => {
-    if (mapRef.current && data?.zone && !cameraOptionsCalculated.current) {
+    if (!data?.zone) resetCameraOptions();
+    else if (mapRef.current && !cameraOptionsCalulated) {
       const zoomToBounds = () => {
         const mapbox = mapRef.current.getMap();
-        const zone = data?.zone;
 
         // Calculate total bounds with other geometries
-        let bboxPoly = turf.bboxPolygon(turf.bbox(zone));
+        let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
 
         if (data?.surroundings !== null && data.surroundings?.features?.length)
           bboxPoly = turf.union(
@@ -316,19 +315,14 @@ const DeckGLMap = ({ data, colors }) => {
         }));
       };
       zoomToBounds();
-      cameraOptionsCalculated.current = true;
-    } else if (!data?.zone) {
-      // Reset camera options if no zone data is present
-      resetCameraOptions();
-      cameraOptionsCalculated.current = false;
     }
-  }, [data, mapRef, resetCameraOptions, setCameraOptions, setViewState]);
+  }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
       const name = object.properties[INDEX_COLUMN];
       if (layer.id !== selectedLayer) {
-        dispatch(setSelected([name]));
+        setSelected([name]);
         setSelectedLayer(layer.id);
       } else {
         let index = -1;
@@ -340,13 +334,13 @@ const DeckGLMap = ({ data, colors }) => {
           index = newSelected.findIndex((x) => x === name);
           if (index !== -1) {
             newSelected.splice(index, 1);
-            dispatch(setSelected(newSelected));
+            setSelected(newSelected);
           } else {
             newSelected.push(name);
-            dispatch(setSelected(newSelected));
+            setSelected(newSelected);
           }
         } else {
-          dispatch(setSelected([name]));
+          setSelected([name]);
         }
       }
     };
@@ -454,15 +448,7 @@ const DeckGLMap = ({ data, colors }) => {
     }
 
     return _layers;
-  }, [
-    visibility,
-    data,
-    selectedLayer,
-    dispatch,
-    selected,
-    extruded,
-    buildingColor,
-  ]);
+  }, [visibility, data, selectedLayer, selected, extruded, buildingColor]);
 
   const mapLayers = useMapLayers();
 
