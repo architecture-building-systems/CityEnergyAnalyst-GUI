@@ -11,7 +11,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn
 COPY . .
 
-RUN yarn build
+RUN yarn build && rm -fr node_modules
 EXPOSE 4173
 
 CMD [ "yarn", "preview", "--host" ]
