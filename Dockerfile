@@ -1,5 +1,8 @@
 FROM node:current-alpine
 
+ARG VITE_CEA_URL=""
+ENV VITE_CEA_URL=$VITE_CEA_URL
+
 RUN corepack enable
 
 WORKDIR /app
