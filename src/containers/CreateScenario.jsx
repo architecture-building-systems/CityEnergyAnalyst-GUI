@@ -46,23 +46,25 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
   const [error, setError] = useState();
 
   const createScenario = async (data) => {
-    console.log(data);
     setError(null);
     setFetching(true);
 
     try {
-      // Submit formdata to API
-      const _formData = new FormData();
+      const formattedData = {};
+
       Object.keys(data).forEach((key) => {
-        if (typeof data[key] === 'object' && !(data[key] instanceof File))
-          _formData.append(key, JSON.stringify(data[key]));
-        else _formData.append(key, data[key]);
+        // Convert objects to strings
+        if (typeof data[key] === 'object' && !(data[key] instanceof File)) {
+          formattedData[key] = JSON.stringify(data[key]);
+        } else {
+          formattedData[key] = data[key];
+        }
       });
-      _formData.append('project', projectPath);
-      console.log(_formData);
-      const response = await axios.post(
+      formattedData['project'] = projectPath;
+
+      const response = await axios.postForm(
         `${import.meta.env.VITE_CEA_URL}/api/project/scenario/v2`,
-        _formData,
+        formattedData,
       );
       onSuccess?.(response.data);
     } catch (error) {
