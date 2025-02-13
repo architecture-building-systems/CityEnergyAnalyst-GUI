@@ -36,6 +36,7 @@ import { FlyToInterpolator } from 'deck.gl';
 import routes from '../constants/routes.json';
 import { useProjectStore } from '../components/Project/store';
 import { useOpenScenario } from '../components/Project/hooks';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -98,50 +99,54 @@ const CreateScenarioProgressModal = ({
       width="50vw"
     >
       <div>
-        {fetching && (
-          <Spin
-            tip="Creating scenario..."
-            indicator={<LoadingOutlined spin />}
-            size="large"
-          >
-            <div style={{ height: 300 }} />
-          </Spin>
-        )}
-        {error && (
-          <Result
-            status="warning"
-            title="Scenario creation failed"
-            subTitle={
-              error?.detail || 'There was an error while creating the scenario'
-            }
-            extra={[
-              <Button
-                type="primary"
-                key="console"
-                onClick={() => setShowModal(false)}
-              >
-                Back
-              </Button>,
-            ]}
-          />
-        )}
-        {success && (
-          <Result
-            status="success"
-            title="Scenario created successfully!"
-            subTitle={
-              <>
-                <div>Redirecting to Scenario...</div>
-                <div>Click below if you are not redirected.</div>
-              </>
-            }
-            extra={[
-              <Button key="ok" type="primary" onClick={onOk}>
-                Open Scenario
-              </Button>,
-            ]}
-          ></Result>
-        )}
+        <ErrorBoundary>
+          {fetching && (
+            <Spin
+              tip="Creating scenario..."
+              indicator={<LoadingOutlined spin />}
+              size="large"
+            >
+              <div style={{ height: 300 }} />
+            </Spin>
+          )}
+          {error && (
+            <Result
+              status="warning"
+              title="Scenario creation failed"
+              subTitle={
+                error?.detail
+                  ? JSON.stringify(error.detail)
+                  : 'There was an error while creating the scenario'
+              }
+              extra={[
+                <Button
+                  type="primary"
+                  key="console"
+                  onClick={() => setShowModal(false)}
+                >
+                  Back
+                </Button>,
+              ]}
+            />
+          )}
+          {success && (
+            <Result
+              status="success"
+              title="Scenario created successfully!"
+              subTitle={
+                <>
+                  <div>Redirecting to Scenario...</div>
+                  <div>Click below if you are not redirected.</div>
+                </>
+              }
+              extra={[
+                <Button key="ok" type="primary" onClick={onOk}>
+                  Open Scenario
+                </Button>,
+              ]}
+            ></Result>
+          )}
+        </ErrorBoundary>
       </div>
     </Modal>
   );
