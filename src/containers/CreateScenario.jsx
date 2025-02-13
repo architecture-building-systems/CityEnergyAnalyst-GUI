@@ -59,7 +59,7 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
         else _formData.append(key, data[key]);
       });
       _formData.append('project', projectPath);
-
+      console.log(_formData);
       const response = await axios.post(
         `${import.meta.env.VITE_CEA_URL}/api/project/scenario/v2`,
         _formData,
