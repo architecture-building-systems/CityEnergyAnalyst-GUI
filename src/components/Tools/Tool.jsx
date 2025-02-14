@@ -66,41 +66,49 @@ const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
         Checking for missing inputs...
       </div>
     );
-  if (error)
+  if (error?.length)
     return (
       <Alert
         message="Missing inputs detected"
         description={
           <div>
             <p>Run the following scripts to create the missing inputs:</p>
-            {error?.length ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {error.map(({ label, name }) => {
-                  return (
-                    <div key={name} style={{ display: 'flex', gap: 8 }}>
-                      -
-                      <b
-                        className="cea-tool-suggestions"
-                        onClick={() => onToolSelected?.(name)}
-                        style={{ marginRight: 'auto' }}
-                        aria-hidden
-                      >
-                        {label}
-                        <ExternalLinkIcon style={{ fontSize: 18 }} />
-                      </b>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div>Something went wrong</div>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {error.map(({ label, name }) => {
+                return (
+                  <div key={name} style={{ display: 'flex', gap: 8 }}>
+                    -
+                    <b
+                      className="cea-tool-suggestions"
+                      onClick={() => onToolSelected?.(name)}
+                      style={{ marginRight: 'auto' }}
+                      aria-hidden
+                    >
+                      {label}
+                      <ExternalLinkIcon style={{ fontSize: 18 }} />
+                    </b>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         }
         type="info"
         showIcon
       />
     );
+
+  // Error should be null if there is no error
+  if (error !== null) {
+    return (
+      <Alert
+        message="Error"
+        description="Something went wrong while checking for missing inputs."
+        type="error"
+        showIcon
+      />
+    );
+  }
   return null;
 };
 
