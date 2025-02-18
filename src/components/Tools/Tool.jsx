@@ -5,7 +5,7 @@ import {
   Divider,
   Collapse,
   Button,
-  Spin as AntSpin,
+  Spin,
   Alert,
   message,
   Form,
@@ -190,6 +190,10 @@ const useToolForm = (
 
 const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
+  const { isSaving, error: savingError } = useSelector(
+    (state) => state.toolSaving,
+  );
+
   const dispatch = useDispatch();
   const {
     category,
@@ -221,6 +225,16 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   };
 
   useEffect(() => {
+    if (savingError) {
+      message.config({
+        top: 120,
+      });
+      console.error(savingError);
+      message.error(savingError?.message ?? 'Something went wrong.');
+    }
+  }, [savingError]);
+
+  useEffect(() => {
     dispatch(fetchToolParams(script));
     return () => dispatch(resetToolParams());
   }, [script]);
@@ -232,12 +246,13 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   if (!label) return null;
 
   return (
-    <Spin>
+    <Spin wrapperClassName="cea-tool-form-spinner" spinning={isSaving}>
       <div
         style={{
+          // position: 'relative', // Add this to ensure proper spin overlay
           display: 'flex',
           flexDirection: 'column',
-          height: '85vh',
+          height: '100%',
         }}
       >
         <div>
@@ -349,22 +364,6 @@ const ToolFormButtons = ({
       <Button onClick={setDefault}>Reset</Button>
     </>
   );
-};
-
-const Spin = ({ children }) => {
-  const { isSaving, error } = useSelector((state) => state.toolSaving);
-
-  useEffect(() => {
-    if (error) {
-      message.config({
-        top: 120,
-      });
-      console.log(error);
-      message.error(error?.message ?? 'Something went wrong.');
-    }
-  }, [error]);
-
-  return <AntSpin spinning={isSaving}>{children}</AntSpin>;
 };
 
 export default Tool;
