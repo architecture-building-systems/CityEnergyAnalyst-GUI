@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Form } from '@ant-design/compatible';
 import {
   Skeleton,
   Divider,
@@ -9,6 +8,7 @@ import {
   Spin as AntSpin,
   Alert,
   message,
+  Form,
 } from 'antd';
 import {
   fetchToolParams,
@@ -112,6 +112,86 @@ const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   return null;
 };
 
+const useToolForm = (
+  script,
+  parameters,
+  categoricalParameters,
+  callbacks = {
+    onSave: null,
+    onReset: null,
+  },
+) => {
+  const [form] = Form.useForm();
+  const dispatch = useDispatch();
+
+  // TODO: Add error callback
+  const getForm = async (callback) => {
+    let out = null;
+    if (!parameters) return out;
+
+    try {
+      const values = await form.validateFields();
+
+      // Add scenario information to the form
+      const index = parameters.findIndex((x) => x.type === 'ScenarioParameter');
+      let scenario = {};
+      if (index >= 0) scenario = { scenario: parameters[index].value };
+
+      out = {
+        ...scenario,
+        ...values,
+      };
+      console.log('Received values of form: ', out);
+      callback?.(out);
+    } catch (err) {
+      console.log('Error', err);
+      // Expand collapsed categories if errors are found inside
+      if (categoricalParameters) {
+        let categoriesWithErrors = [];
+        for (const parameterName in err) {
+          for (const category in categoricalParameters) {
+            if (
+              typeof categoricalParameters[category].find(
+                (x) => x.name === parameterName,
+              ) !== 'undefined'
+            ) {
+              categoriesWithErrors.push(category);
+              break;
+            }
+          }
+        }
+        // FIXME: show errors in categories
+        // categoriesWithErrors.length &&
+        //   setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
+      }
+    }
+  };
+
+  const runScript = () => {
+    getForm((params) => {
+      dispatch(createJob(script, params));
+    });
+  };
+
+  const saveParams = () => {
+    getForm((params) => {
+      dispatch(saveToolParams(script, params)).then(() => {
+        callbacks?.onSave?.(params);
+      });
+    });
+  };
+
+  const setDefault = () => {
+    dispatch(setDefaultToolParams(script)).then(() => {
+      getForm((params) => {
+        callbacks?.onReset?.(params);
+      });
+    });
+  };
+
+  return { form, getForm, runScript, saveParams, setDefault };
+};
+
 const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const dispatch = useDispatch();
@@ -124,11 +204,24 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   } = params;
 
   const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
-
   const disableButtons = fetching || _error !== null;
 
   const checkMissingInputs = (params) => {
     fetch?.(params);
+  };
+
+  const { form, getForm, runScript, saveParams, setDefault } = useToolForm(
+    script,
+    parameters,
+    categoricalParameters,
+    {
+      onSave: checkMissingInputs,
+      onReset: checkMissingInputs,
+    },
+  );
+
+  const onMount = () => {
+    getForm((params) => checkMissingInputs(params));
   };
 
   useEffect(() => {
@@ -145,26 +238,47 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   return (
     <div>
       <Spin>
-        <h3>{category}</h3>
-        <h2 style={{ display: 'inline' }}>{label}</h2>
-        <p>
-          <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
-        </p>
+        <div>
+          <h3>{category}</h3>
+          <h2 style={{ display: 'inline' }}>{label}</h2>
+          <p>
+            <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
+          </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <ScriptSuggestions
-            onToolSelected={onToolSelected}
-            fetching={fetching}
-            error={_error}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div className="cea-tool-form-buttongroup">
+              <ToolFormButtons
+                runScript={runScript}
+                saveParams={saveParams}
+                setDefault={setDefault}
+                disabled={disableButtons}
+              />
+            </div>
 
+            <ScriptSuggestions
+              onToolSelected={onToolSelected}
+              fetching={fetching}
+              error={_error}
+            />
+          </div>
+        </div>
+
+        <Divider />
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
           <ToolForm
+            form={form}
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
             disableButtons={disableButtons}
-            onSave={checkMissingInputs}
-            onMount={checkMissingInputs}
+            onMount={onMount}
           />
         </div>
       </Spin>
@@ -172,84 +286,8 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   );
 });
 
-const ToolForm = Form.create()(({
-  parameters,
-  categoricalParameters,
-  script,
-  form,
-  disableButtons,
-  onSave,
-  onReset,
-  onMount,
-}) => {
-  const dispatch = useDispatch();
+const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
   const [activeKey, setActiveKey] = useState([]);
-
-  // TODO: Add error callback
-  const getForm = (callback) => {
-    let out = null;
-    form.validateFields((err, values) => {
-      if (!err) {
-        const index = parameters.findIndex(
-          (x) => x.type === 'ScenarioParameter',
-        );
-        let scenario = {};
-        if (index >= 0) scenario = { scenario: parameters[index].value };
-        out = {
-          ...scenario,
-          ...values,
-        };
-        console.log('Received values of form: ', out);
-        callback?.(out);
-      } // Expand collapsed categories if errors are found inside
-      else if (categoricalParameters) {
-        let categoriesWithErrors = [];
-        for (const parameterName in err) {
-          for (const category in categoricalParameters) {
-            if (
-              typeof categoricalParameters[category].find(
-                (x) => x.name === parameterName,
-              ) !== 'undefined'
-            ) {
-              categoriesWithErrors.push(category);
-              break;
-            }
-          }
-        }
-        categoriesWithErrors.length &&
-          setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
-      }
-    });
-    return out;
-  };
-
-  useEffect(() => {
-    getForm((params) => {
-      onMount?.(params);
-    });
-  }, []);
-
-  const runScript = () => {
-    getForm((params) => {
-      dispatch(createJob(script, params));
-    });
-  };
-
-  const saveParams = () => {
-    getForm((params) => {
-      dispatch(saveToolParams(script, params)).then(() => {
-        onSave?.(params);
-      });
-    });
-  };
-
-  const setDefault = () => {
-    dispatch(setDefaultToolParams(script)).then(() => {
-      getForm((params) => {
-        onReset?.(params);
-      });
-    });
-  };
 
   let toolParams = null;
   if (parameters) {
@@ -277,8 +315,12 @@ const ToolForm = Form.create()(({
     );
   }
 
+  useEffect(() => {
+    onMount?.();
+  }, []);
+
   return (
-    <Form layout="vertical" className="cea-tool-form">
+    <Form form={form} layout="vertical" className="cea-tool-form">
       <div
         style={{
           postion: 'absolute',
@@ -287,24 +329,12 @@ const ToolForm = Form.create()(({
           background: '#fff',
         }}
       />
-      <Form.Item className="formButtons">
-        <div className="cea-tool-form-buttongroup">
-          <ToolFormButtons
-            runScript={runScript}
-            saveParams={saveParams}
-            setDefault={setDefault}
-            disabled={disableButtons}
-          />
-        </div>
-      </Form.Item>
-      <Divider />
-
       {toolParams}
       {categoricalParams}
       <br />
     </Form>
   );
-});
+};
 
 const ToolFormButtons = ({
   runScript,
