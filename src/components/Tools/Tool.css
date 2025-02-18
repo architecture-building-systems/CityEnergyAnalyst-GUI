@@ -19,3 +19,8 @@
   text-decoration: underline;
   color: #1677ff;
 }
+
+.cea-tool-form-spinner,
+.cea-tool-form-spinner .ant-spin-container {
+  height: 100%;
+}

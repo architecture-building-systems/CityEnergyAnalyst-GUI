@@ -13,12 +13,11 @@ const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
 
         display: 'flex',
         flexDirection: 'column',
+        gap: 12,
 
         height: '100%',
         boxSizing: 'border-box',
         padding: 24,
-
-        overflow: 'auto',
 
         width: '33vw',
         minWidth: 450,
@@ -29,7 +28,9 @@ const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
         onClick={() => onClose?.(true)}
         style={{ marginRight: 'auto', padding: 12 }}
       />
-      <Tool script={selectedTool} onToolSelected={onToolSelected} />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <Tool script={selectedTool} onToolSelected={onToolSelected} />
+      </div>
     </div>
   );
 };

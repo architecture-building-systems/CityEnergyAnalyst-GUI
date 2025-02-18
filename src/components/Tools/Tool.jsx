@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Form } from '@ant-design/compatible';
 import {
   Skeleton,
   Divider,
   Collapse,
   Button,
-  Spin as AntSpin,
+  Spin,
   Alert,
   message,
+  Form,
 } from 'antd';
 import {
   fetchToolParams,
@@ -27,10 +27,6 @@ import { ExternalLinkIcon, RunIcon } from '../../assets/icons';
 import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
-
-export const ToolRoute = ({ match }) => {
-  return <Tool script={match.params.script} />;
-};
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -112,97 +108,41 @@ const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   return null;
 };
 
-const Tool = withErrorBoundary(({ script, onToolSelected }) => {
-  const { status, error, params } = useSelector((state) => state.toolParams);
-  const dispatch = useDispatch();
-  const {
-    category,
-    label,
-    description,
-    parameters,
-    categorical_parameters: categoricalParameters,
-  } = params;
-
-  const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
-
-  const disableButtons = fetching || _error !== null;
-
-  const checkMissingInputs = (params) => {
-    fetch?.(params);
-  };
-
-  useEffect(() => {
-    dispatch(fetchToolParams(script));
-    return () => dispatch(resetToolParams());
-  }, [script]);
-
-  if (status == 'fetching') return <Skeleton active />;
-  if (status == 'failed') {
-    return <AsyncError error={error} />;
-  }
-  if (!label) return null;
-
-  return (
-    <div>
-      <Spin>
-        <h3>{category}</h3>
-        <h2 style={{ display: 'inline' }}>{label}</h2>
-        <p>
-          <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
-        </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <ScriptSuggestions
-            onToolSelected={onToolSelected}
-            fetching={fetching}
-            error={_error}
-          />
-
-          <ToolForm
-            parameters={parameters}
-            categoricalParameters={categoricalParameters}
-            script={script}
-            disableButtons={disableButtons}
-            onSave={checkMissingInputs}
-            onMount={checkMissingInputs}
-          />
-        </div>
-      </Spin>
-    </div>
-  );
-});
-
-const ToolForm = Form.create()(({
+const useToolForm = (
+  script,
   parameters,
   categoricalParameters,
-  script,
-  form,
-  disableButtons,
-  onSave,
-  onReset,
-  onMount,
-}) => {
+  callbacks = {
+    onSave: null,
+    onReset: null,
+  },
+) => {
+  const [form] = Form.useForm();
   const dispatch = useDispatch();
-  const [activeKey, setActiveKey] = useState([]);
 
   // TODO: Add error callback
-  const getForm = (callback) => {
+  const getForm = async (callback) => {
     let out = null;
-    form.validateFields((err, values) => {
-      if (!err) {
-        const index = parameters.findIndex(
-          (x) => x.type === 'ScenarioParameter',
-        );
-        let scenario = {};
-        if (index >= 0) scenario = { scenario: parameters[index].value };
-        out = {
-          ...scenario,
-          ...values,
-        };
-        console.log('Received values of form: ', out);
-        callback?.(out);
-      } // Expand collapsed categories if errors are found inside
-      else if (categoricalParameters) {
+    if (!parameters) return out;
+
+    try {
+      const values = await form.validateFields();
+
+      // Add scenario information to the form
+      const index = parameters.findIndex((x) => x.type === 'ScenarioParameter');
+      let scenario = {};
+      if (index >= 0) scenario = { scenario: parameters[index].value };
+
+      out = {
+        ...scenario,
+        ...values,
+      };
+      console.log('Received values of form: ', out);
+      callback?.(out);
+    } catch (err) {
+      console.log('Error', err);
+      // Expand collapsed categories if errors are found inside
+      if (categoricalParameters) {
         let categoriesWithErrors = [];
         for (const parameterName in err) {
           for (const category in categoricalParameters) {
@@ -216,18 +156,12 @@ const ToolForm = Form.create()(({
             }
           }
         }
-        categoriesWithErrors.length &&
-          setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
+        // FIXME: show errors in categories
+        // categoriesWithErrors.length &&
+        //   setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
       }
-    });
-    return out;
+    }
   };
-
-  useEffect(() => {
-    getForm((params) => {
-      onMount?.(params);
-    });
-  }, []);
 
   const runScript = () => {
     getForm((params) => {
@@ -238,7 +172,7 @@ const ToolForm = Form.create()(({
   const saveParams = () => {
     getForm((params) => {
       dispatch(saveToolParams(script, params)).then(() => {
-        onSave?.(params);
+        callbacks?.onSave?.(params);
       });
     });
   };
@@ -246,10 +180,125 @@ const ToolForm = Form.create()(({
   const setDefault = () => {
     dispatch(setDefaultToolParams(script)).then(() => {
       getForm((params) => {
-        onReset?.(params);
+        callbacks?.onReset?.(params);
       });
     });
   };
+
+  return { form, getForm, runScript, saveParams, setDefault };
+};
+
+const Tool = withErrorBoundary(({ script, onToolSelected }) => {
+  const { status, error, params } = useSelector((state) => state.toolParams);
+  const { isSaving, error: savingError } = useSelector(
+    (state) => state.toolSaving,
+  );
+
+  const dispatch = useDispatch();
+  const {
+    category,
+    label,
+    description,
+    parameters,
+    categorical_parameters: categoricalParameters,
+  } = params;
+
+  const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
+  const disableButtons = fetching || _error !== null;
+
+  const checkMissingInputs = (params) => {
+    fetch?.(params);
+  };
+
+  const { form, getForm, runScript, saveParams, setDefault } = useToolForm(
+    script,
+    parameters,
+    categoricalParameters,
+    {
+      onSave: checkMissingInputs,
+      onReset: checkMissingInputs,
+    },
+  );
+
+  const onMount = () => {
+    getForm((params) => checkMissingInputs(params));
+  };
+
+  useEffect(() => {
+    if (savingError) {
+      message.config({
+        top: 120,
+      });
+      console.error(savingError);
+      message.error(savingError?.message ?? 'Something went wrong.');
+    }
+  }, [savingError]);
+
+  useEffect(() => {
+    dispatch(fetchToolParams(script));
+    return () => dispatch(resetToolParams());
+  }, [script]);
+
+  if (status == 'fetching') return <Skeleton active />;
+  if (status == 'failed') {
+    return <AsyncError error={error} />;
+  }
+  if (!label) return null;
+
+  return (
+    <Spin wrapperClassName="cea-tool-form-spinner" spinning={isSaving}>
+      <div
+        style={{
+          // position: 'relative', // Add this to ensure proper spin overlay
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+        }}
+      >
+        <div>
+          <h3>{category}</h3>
+          <h2 style={{ display: 'inline' }}>{label}</h2>
+          <p>
+            <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div className="cea-tool-form-buttongroup">
+              <ToolFormButtons
+                runScript={runScript}
+                saveParams={saveParams}
+                setDefault={setDefault}
+                disabled={disableButtons}
+              />
+            </div>
+
+            <ScriptSuggestions
+              onToolSelected={onToolSelected}
+              fetching={fetching}
+              error={_error}
+            />
+          </div>
+        </div>
+
+        <Divider />
+
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          <ToolForm
+            form={form}
+            parameters={parameters}
+            categoricalParameters={categoricalParameters}
+            script={script}
+            disableButtons={disableButtons}
+            onMount={onMount}
+          />
+        </div>
+      </div>
+    </Spin>
+  );
+});
+
+const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
+  const [activeKey, setActiveKey] = useState([]);
 
   let toolParams = null;
   if (parameters) {
@@ -277,34 +326,17 @@ const ToolForm = Form.create()(({
     );
   }
 
-  return (
-    <Form layout="vertical" className="cea-tool-form">
-      <div
-        style={{
-          postion: 'absolute',
-          height: '100%',
-          width: '100%',
-          background: '#fff',
-        }}
-      />
-      <Form.Item className="formButtons">
-        <div className="cea-tool-form-buttongroup">
-          <ToolFormButtons
-            runScript={runScript}
-            saveParams={saveParams}
-            setDefault={setDefault}
-            disabled={disableButtons}
-          />
-        </div>
-      </Form.Item>
-      <Divider />
+  useEffect(() => {
+    onMount?.();
+  }, []);
 
+  return (
+    <Form form={form} layout="vertical" className="cea-tool-form">
       {toolParams}
       {categoricalParams}
-      <br />
     </Form>
   );
-});
+};
 
 const ToolFormButtons = ({
   runScript,
@@ -332,22 +364,6 @@ const ToolFormButtons = ({
       <Button onClick={setDefault}>Reset</Button>
     </>
   );
-};
-
-const Spin = ({ children }) => {
-  const { isSaving, error } = useSelector((state) => state.toolSaving);
-
-  useEffect(() => {
-    if (error) {
-      message.config({
-        top: 120,
-      });
-      console.log(error);
-      message.error(error?.message ?? 'Something went wrong.');
-    }
-  }, [error]);
-
-  return <AntSpin spinning={isSaving}>{children}</AntSpin>;
 };
 
 export default Tool;

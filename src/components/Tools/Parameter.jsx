@@ -1,10 +1,18 @@
-import { Form } from '@ant-design/compatible';
 import {
   FileSearchOutlined,
   PlusOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { Input, Switch, Select, Divider, Button, Space, Upload } from 'antd';
+import {
+  Input,
+  Switch,
+  Select,
+  Divider,
+  Button,
+  Space,
+  Upload,
+  Form,
+} from 'antd';
 import { basename, checkExist, dirname } from '../../utils/file';
 import { forwardRef, useState } from 'react';
 
@@ -329,10 +337,9 @@ const Parameter = ({ parameter, form }) => {
 };
 
 export const FormItemWrapper = ({
-  form,
   name,
-  initialValue,
   help,
+  initialValue = null,
   required = false,
   rules = [],
   config = {},
@@ -343,13 +350,13 @@ export const FormItemWrapper = ({
       label={<b>{name}</b>}
       wrapperCol={{ offset: 1, span: 22 }}
       key={name}
+      name={name}
       extra={<div style={{ fontSize: 12 }}>{help}</div>}
+      rules={[{ required: required }, ...rules]}
+      initialValue={initialValue}
+      {...config}
     >
-      {form.getFieldDecorator(name, {
-        ...(typeof initialValue === 'undefined' ? {} : { initialValue }),
-        rules: [{ required: required }, ...rules],
-        ...config,
-      })(inputComponent)}
+      {inputComponent}
     </Form.Item>
   );
 };
