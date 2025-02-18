@@ -28,10 +28,6 @@ import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
 
-export const ToolRoute = ({ match }) => {
-  return <Tool script={match.params.script} />;
-};
-
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState([]);
