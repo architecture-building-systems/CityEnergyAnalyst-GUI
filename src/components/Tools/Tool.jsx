@@ -282,7 +282,14 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
 
         <Divider />
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            paddingInline: 12,
+          }}
+        >
           <ToolForm
             form={form}
             parameters={parameters}
