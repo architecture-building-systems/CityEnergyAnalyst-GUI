@@ -232,8 +232,14 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
   if (!label) return null;
 
   return (
-    <div>
-      <Spin>
+    <Spin>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '85vh',
+        }}
+      >
         <div>
           <h3>{category}</h3>
           <h2 style={{ display: 'inline' }}>{label}</h2>
@@ -261,13 +267,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
 
         <Divider />
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-          }}
-        >
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           <ToolForm
             form={form}
             parameters={parameters}
@@ -277,8 +277,8 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
             onMount={onMount}
           />
         </div>
-      </Spin>
-    </div>
+      </div>
+    </Spin>
   );
 });
 
@@ -317,17 +317,8 @@ const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
 
   return (
     <Form form={form} layout="vertical" className="cea-tool-form">
-      <div
-        style={{
-          postion: 'absolute',
-          height: '100%',
-          width: '100%',
-          background: '#fff',
-        }}
-      />
       {toolParams}
       {categoricalParams}
-      <br />
     </Form>
   );
 };
