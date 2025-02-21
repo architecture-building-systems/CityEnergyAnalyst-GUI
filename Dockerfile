@@ -1,4 +1,4 @@
-FROM node:current-alpine as builder
+FROM node:current-alpine AS builder
 
 ARG VITE_CEA_URL=""
 ENV VITE_CEA_URL=$VITE_CEA_URL
