@@ -22,6 +22,8 @@ RUN yarn build
 # Create production image
 FROM nginx:alpine
 
+LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst-GUI
+
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
