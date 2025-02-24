@@ -578,6 +578,9 @@ const useTableData = (tab, columns, tables) => {
                       ...(columns[tab][column]?.nullable ? [] : ['required']),
                     ],
                   };
+                case 'Polygon':
+                  // Ignore polygons for now
+                  return columnDef;
                 default:
                   console.error(
                     `Could not find column validation for type "${dataType}" for column "${column}"`,
