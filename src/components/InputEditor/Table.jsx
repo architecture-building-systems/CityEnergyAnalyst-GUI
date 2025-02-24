@@ -24,6 +24,7 @@ import {
   useSelected,
   useSetSelected,
 } from './store';
+import ErrorBoundary from 'antd/lib/alert/ErrorBoundary';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
@@ -55,21 +56,23 @@ const Table = ({ tab, tables, columns }) => {
           />
         }
       >
-        {tab == 'schedules' ? (
-          <ScheduleEditor
-            tabulator={tabulator}
-            selected={selected}
-            tables={tables}
-          />
-        ) : (
-          <TableEditor
-            tabulator={tabulator}
-            tab={tab}
-            selected={selected}
-            tables={tables}
-            columns={columns}
-          />
-        )}
+        <ErrorBoundary>
+          {tab == 'schedules' ? (
+            <ScheduleEditor
+              tabulator={tabulator}
+              selected={selected}
+              tables={tables}
+            />
+          ) : (
+            <TableEditor
+              tabulator={tabulator}
+              tab={tab}
+              selected={selected}
+              tables={tables}
+              columns={columns}
+            />
+          )}
+        </ErrorBoundary>
       </Card>
     </>
   );
@@ -488,12 +491,14 @@ const useTableData = (tab, columns, tables) => {
   };
 
   const getData = () =>
-    Object.keys(tables[tab])
-      .sort()
-      .map((row) => ({
-        [INDEX_COLUMN]: row,
-        ...tables[tab][row],
-      }));
+    tables?.[tab]
+      ? Object.keys(tables[tab])
+          .sort()
+          .map((row) => ({
+            [INDEX_COLUMN]: row,
+            ...tables[tab][row],
+          }))
+      : null;
 
   useEffect(() => {
     if (columns[tab] === null) {
@@ -546,7 +551,7 @@ const useTableData = (tab, columns, tables) => {
                     validator: [
                       'required',
                       'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
-                      ...(columns[tab][column].constraints
+                      ...(columns[tab][column]?.constraints
                         ? Object.keys(columns[tab][column].constraints).map(
                             (constraint) =>
                               `${constraint}:${columns[tab][column].constraints[constraint]}`,
