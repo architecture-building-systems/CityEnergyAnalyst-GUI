@@ -1,5 +1,4 @@
 import routes from '../../constants/routes.json';
-import './Project.css';
 import { useChangeRoute } from '../../utils/hooks';
 import { useProjectStore } from './store';
 import axios from 'axios';
