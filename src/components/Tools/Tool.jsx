@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Skeleton,
@@ -188,7 +194,6 @@ const useToolForm = (
   return { form, getForm, runScript, saveParams, setDefault };
 };
 
-const SCROLL_THRESHOLD = 50;
 const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const { isSaving, error: savingError } = useSelector(
@@ -208,21 +213,35 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const disableButtons = fetching || _error !== null;
 
   const [headerVisible, setHeaderVisible] = useState(true);
-  const [lastScrollPosition, setLastScrollPosition] = useState(0);
+  const lastScrollPositionRef = useRef(0);
 
-  const handleScroll = (e) => {
+  const descriptionRef = useRef(null);
+  const descriptionHeightRef = useRef('auto');
+
+  // This effect will measure the actual height of the description
+  useLayoutEffect(() => {
+    if (descriptionRef.current) {
+      const height = descriptionRef.current.scrollHeight;
+      descriptionHeightRef.current = height;
+    }
+  }, [description, descriptionRef.current]);
+
+  const handleScroll = useCallback((e) => {
+    // Ensure the scroll threshold greater than the description height to prevent layout shifts
+    const scrollThreshold = descriptionHeightRef.current;
     const currentScrollPosition = e.target.scrollTop;
+
     // Determine scroll direction and update header visibility
     if (
-      currentScrollPosition > lastScrollPosition &&
-      currentScrollPosition > SCROLL_THRESHOLD
+      currentScrollPosition > lastScrollPositionRef.current &&
+      currentScrollPosition > scrollThreshold
     ) {
       setHeaderVisible(false); // Hide header when scrolling down past threshold
-    } else if (currentScrollPosition < SCROLL_THRESHOLD) {
+    } else if (currentScrollPosition == 0) {
       setHeaderVisible(true); // Show header when scrolling up or near top
     }
-    setLastScrollPosition(currentScrollPosition);
-  };
+    lastScrollPositionRef.current = currentScrollPosition;
+  }, []);
 
   const checkMissingInputs = (params) => {
     fetch?.(params);
@@ -255,8 +274,9 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   useEffect(() => {
     dispatch(fetchToolParams(script));
     // Reset header visibility when the component mounts
-    setLastScrollPosition(0);
     setHeaderVisible(true);
+    lastScrollPositionRef.current = 0;
+    descriptionHeightRef.current = 'auto';
 
     return () => dispatch(resetToolParams());
   }, [script]);
@@ -301,20 +321,27 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
             </div>
             <div
               id="cea-tool-header-description"
+              ref={descriptionRef}
               style={{
-                height: headerVisible ? 'auto' : '0px',
+                height: headerVisible ? `${descriptionHeightRef.current}px` : 0,
                 opacity: headerVisible ? 1 : 0,
                 overflow: 'hidden',
-                transition: 'all 0.3s ease-in-out',
+                transition:
+                  'height 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
                 transform: headerVisible
                   ? 'translateY(0)'
                   : 'translateY(-10px)',
+                transformOrigin: 'top',
               }}
             >
-              <h2>{label}</h2>
-              <p>
-                <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
-              </p>
+              <div>
+                <h2>{label}</h2>
+                <p>
+                  <small style={{ whiteSpace: 'pre-line' }}>
+                    {description}
+                  </small>
+                </p>
+              </div>
             </div>
           </div>
 
