@@ -255,40 +255,37 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
           height: '100%',
         }}
       >
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            {header}
-            <span style={{ fontWeight: 'bold', fontSize: '0.8em' }}>
-              {category}
-            </span>
-          </div>
-          <h2>{label}</h2>
-          <p>
-            <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <div className="cea-tool-form-buttongroup">
-              <ToolFormButtons
-                runScript={runScript}
-                saveParams={saveParams}
-                setDefault={setDefault}
-                disabled={disableButtons}
-              />
+        <div
+          id="cea-tool-header"
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+        >
+          <div id="cea-tool-header-content">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {header}
+              <span style={{ fontWeight: 'bold', fontSize: '0.8em' }}>
+                {category}
+              </span>
             </div>
+            <h2>{label}</h2>
+            <p>
+              <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
+            </p>
+          </div>
 
-            <ScriptSuggestions
-              onToolSelected={onToolSelected}
-              fetching={fetching}
-              error={_error}
+          <div className="cea-tool-form-buttongroup">
+            <ToolFormButtons
+              runScript={runScript}
+              saveParams={saveParams}
+              setDefault={setDefault}
+              disabled={disableButtons}
             />
           </div>
+
+          <ScriptSuggestions
+            onToolSelected={onToolSelected}
+            fetching={fetching}
+            error={_error}
+          />
         </div>
 
         <Divider />
