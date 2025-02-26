@@ -188,7 +188,7 @@ const useToolForm = (
   return { form, getForm, runScript, saveParams, setDefault };
 };
 
-const Tool = withErrorBoundary(({ script, onToolSelected }) => {
+const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const { isSaving, error: savingError } = useSelector(
     (state) => state.toolSaving,
@@ -256,8 +256,19 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
         }}
       >
         <div>
-          <h3>{category}</h3>
-          <h2 style={{ display: 'inline' }}>{label}</h2>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            {header}
+            <span style={{ fontWeight: 'bold', fontSize: '0.8em' }}>
+              {category}
+            </span>
+          </div>
+          <h2>{label}</h2>
           <p>
             <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
           </p>
