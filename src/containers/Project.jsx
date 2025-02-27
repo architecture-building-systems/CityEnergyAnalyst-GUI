@@ -222,7 +222,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         <div id="cea-project-overlay-right-bottom">
           <div
             className="cea-overlay-card"
-            style={{ width: '33vw', minWidth: 450 }}
+            style={{ height: '100%', width: '33vw', minWidth: 450 }}
           >
             <JobListPopoverContent />
           </div>
