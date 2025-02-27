@@ -5,7 +5,6 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  DownOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
@@ -153,20 +152,6 @@ const JobStatusBar = () => {
   ) : null;
 };
 
-const JobListPopoverTitle = ({ jobs, setVisible }) => {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        {!Object.keys(jobs).length ? 'No Jobs Running' : 'Current Jobs'}
-      </div>
-      <DownOutlined
-        style={{ fontSize: 10, alignSelf: 'center' }}
-        onClick={() => setVisible(false)}
-      />
-    </div>
-  );
-};
-
 export const JobListPopoverContent = () => {
   const jobs = useSelector((state) => state.jobs);
 
@@ -224,6 +209,10 @@ export const JobListPopoverContent = () => {
 };
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
+  const executionTime = job?.execution_time
+    ? Math.round((job?.execution_time / 60) * 10) / 10
+    : '-';
+
   const StateIcon = ({ state }) => {
     switch (state) {
       case 0:
@@ -267,8 +256,12 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
         }}
       >
         <div id="cea-status-bar-content-left">
-          <div style={{ fontWeight: 'bold' }}>{`${job.script} `}</div>
-          <small>scenario: {job.parameters?.scenario}</small>
+          <div>
+            <b>{job?.script_label ?? job?.script}</b>
+          </div>
+          <small>
+            scenario: <b>{job?.scenario_name} </b>
+          </small>
 
           <div>
             <div
@@ -278,9 +271,18 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
               }}
             >
               <small>
-                started: <i>{job.start_time}</i>
+                started: <i>{job?.start_time ?? '-'}</i>
               </small>
-              <i></i>
+              <small>
+                execution time:{' '}
+                <i>
+                  {typeof executionTime == 'number'
+                    ? executionTime >= 1
+                      ? executionTime + ' minutes'
+                      : '< 1 minute'
+                    : executionTime}
+                </i>
+              </small>
             </div>
           </div>
         </div>
