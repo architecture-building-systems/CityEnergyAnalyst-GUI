@@ -218,12 +218,26 @@ export const JobListPopoverContent = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const jobArray = Object.keys(jobs);
+  const containerRef = useRef(null);
+
+  // Scroll to top when jobs array changes
+  useEffect(() => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      // Scroll to bottom when new job is added
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [jobArray.length]);
 
   return (
     <div
+      ref={containerRef}
       style={{
+        height: '100%',
         width: '100%',
-        maxHeight: 200,
         overflow: 'auto',
         padding: 4,
         display: 'flex',
@@ -231,7 +245,7 @@ export const JobListPopoverContent = () => {
         gap: 4,
       }}
     >
-      {jobArray.map((_, index) => {
+      {jobArray.reverse().map((_, index) => {
         const id = jobArray[jobArray.length - 1 - index];
         return (
           <JobInfoCard
