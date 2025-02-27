@@ -95,6 +95,13 @@ const JobOutputLogger = () => {
       console.log('cea-worker-canceled: job_info', job_info);
       setMessage(`jobID: ${job_info.id} - canceled`);
     });
+
+    return () => {
+      socket.off('cea-worker-message');
+      socket.off('cea-worker-success');
+      socket.off('cea-worker-error');
+      socket.off('cea-worker-canceled');
+    };
   }, []);
 
   if (message.length < 1) return null;
