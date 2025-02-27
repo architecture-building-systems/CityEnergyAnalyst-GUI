@@ -11,11 +11,12 @@ import {
   ToolFilled,
 } from '@ant-design/icons';
 
-import { Popover, notification, Button, Modal, Space } from 'antd';
+import { notification, Button, Modal, Space } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
 import './StatusBar.css';
+import { useProjectStore } from '../../Project/store';
 
 const socket = io(`${import.meta.env.VITE_CEA_URL}`);
 
@@ -26,7 +27,7 @@ const StatusBar = () => {
         <CEAVersion />
       </div>
       <div id="cea-status-bar-right">
-        <JobListPopover />
+        <JobStatusBar />
       </div>
     </div>
   );
@@ -101,10 +102,11 @@ const JobOutputLogger = () => {
   return <span>{message}</span>;
 };
 
-const JobListPopover = () => {
-  const [visible, setVisible] = useState(false);
+const JobStatusBar = () => {
   const jobs = useSelector((state) => state.jobs);
   const dispatch = useDispatch();
+
+  const project = useProjectStore((state) => state.project);
 
   const openNotification = (type, { id, script }) => {
     const title = <i>{`jobID: ${id} - ${script}`}</i>;
@@ -166,28 +168,26 @@ const JobListPopover = () => {
       openNotification('error', job);
       dispatch(updateJob(job));
     });
+
+    return () => {
+      socket.off('cea-job-created');
+      socket.off('cea-worker-started');
+      socket.off('cea-worker-success');
+      socket.off('cea-worker-canceled');
+      socket.off('cea-worker-error');
+    };
   }, []);
 
   useEffect(() => {
+    // Refresh job list when project changes
     dispatch(fetchJobs());
-  }, []);
+  }, [project]);
 
   return jobs ? (
-    <Popover
-      overlayClassName="cea-job-list-popover"
-      placement="topRight"
-      title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
-      content={<JobListPopoverContent jobs={jobs} />}
-      open={visible}
-    >
-      <div
-        className="cea-status-bar-button"
-        onClick={() => setVisible((visible) => !visible)}
-      >
-        <JobOutputLogger />
-        <ToolFilled className="cea-job-list-popover-collapse" />
-      </div>
-    </Popover>
+    <div className="cea-status-bar-button">
+      <JobOutputLogger />
+      <ToolFilled className="cea-job-list-popover-collapse" />
+    </div>
   ) : null;
 };
 
@@ -205,13 +205,25 @@ const JobListPopoverTitle = ({ jobs, setVisible }) => {
   );
 };
 
-const JobListPopoverContent = ({ jobs }) => {
+export const JobListPopoverContent = () => {
+  const jobs = useSelector((state) => state.jobs);
+
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const jobArray = Object.keys(jobs);
 
   return (
-    <div style={{ maxHeight: 350 }}>
+    <div
+      style={{
+        width: '100%',
+        maxHeight: 200,
+        overflow: 'auto',
+        padding: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+      }}
+    >
       {jobArray.map((_, index) => {
         const id = jobArray[jobArray.length - 1 - index];
         return (
@@ -236,34 +248,67 @@ const JobListPopoverContent = ({ jobs }) => {
 };
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
-  const JOB_STATES = ['Pending', 'Running...', 'Success', 'ERROR', 'Canceled'];
-
   const StateIcon = ({ state }) => {
     switch (state) {
       case 0:
-        return <ClockCircleOutlined style={{ color: 'blue', margin: 5 }} />;
+        return <ClockCircleOutlined style={{ color: 'blue' }} />;
       case 1:
-        return <LoadingOutlined style={{ color: 'blue', margin: 5 }} />;
+        return <LoadingOutlined style={{ color: 'blue' }} />;
       case 2:
-        return <CheckCircleOutlined style={{ color: 'green', margin: 5 }} />;
+        return <CheckCircleOutlined style={{ color: 'green' }} />;
       case 3:
-        return (
-          <ExclamationCircleOutlined style={{ color: 'red', margin: 5 }} />
-        );
+        return <ExclamationCircleOutlined style={{ color: 'red' }} />;
       case 4:
-        return <CloseCircleOutlined style={{ color: 'grey', margin: 5 }} />;
+        return <CloseCircleOutlined style={{ color: 'grey' }} />;
       default:
         return null;
     }
   };
   return (
     <div className="cea-job-info-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div>
-          <StateIcon state={job.state} />
-          <b>{`jobID: ${id} - ${job.script}`}</b>
+      <div
+        id="cea-status-bar-icon"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          fontSize: 16,
+          margin: 6,
+        }}
+      >
+        <StateIcon state={job.state} />
+      </div>
+
+      <div
+        id="cea-status-bar-content"
+        style={{
+          flexGrow: 1,
+          padding: 4,
+
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <div id="cea-status-bar-content-left">
+          <div style={{ fontWeight: 'bold' }}>{`${job.script} `}</div>
+          <small>scenario: {job.parameters?.scenario}</small>
+
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <small>
+                started: <i>{job.start_time}</i>
+              </small>
+              <i></i>
+            </div>
+          </div>
         </div>
-        <Space>
+        <div id="cea-status-bar-content-buttons">
           {job.state < 2 && (
             <Button
               size="small"
@@ -280,40 +325,9 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
               setModalVisible(true);
             }}
           >
-            Show Logs
+            More Info
           </Button>
-        </Space>
-      </div>
-      <div>
-        <div>
-          <small>status:</small>
-          <i>{` ${JOB_STATES[job.state]}`}</i>
         </div>
-
-        <div>
-          <small>
-            scenario: <i>{job.parameters?.scenario}</i>
-          </small>
-          <i></i>
-        </div>
-
-        <details>
-          <summary>
-            <small>Show parameters</small>
-          </summary>
-          <pre
-            style={{
-              padding: 12,
-              fontSize: 10,
-              backgroundColor: '#f1f1f1',
-              overflow: 'auto',
-              maxHeight: 240,
-              borderRadius: 6,
-            }}
-          >
-            {JSON.stringify(job.parameters, null, 2)}
-          </pre>
-        </details>
       </div>
     </div>
   );

@@ -51,8 +51,11 @@
 
 .cea-job-info-card {
   background-color: rgba(255, 255, 255, 1);
-  padding: 10px;
-  margin-bottom: 1px;
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+
+  display: flex;
 }
 
 .cea-job-info-card:hover {
