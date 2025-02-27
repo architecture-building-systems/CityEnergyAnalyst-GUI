@@ -8,10 +8,9 @@ import {
   DownOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
-  ToolFilled,
 } from '@ant-design/icons';
 
-import { notification, Button, Modal, Space } from 'antd';
+import { Button, Modal } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
@@ -115,64 +114,20 @@ const JobStatusBar = () => {
 
   const project = useProjectStore((state) => state.project);
 
-  const openNotification = (type, { id, script }) => {
-    const title = <i>{`jobID: ${id} - ${script}`}</i>;
-    const message = {
-      created: (
-        <div>
-          {title} has been <b>created</b>
-        </div>
-      ),
-      started: (
-        <div>
-          {title} has <b>started</b>
-        </div>
-      ),
-      success: (
-        <div>
-          {title} has <b>completed</b>
-        </div>
-      ),
-      canceled: (
-        <div>
-          {title} was <b>canceled</b> by user
-        </div>
-      ),
-      error: <div>{title} has encounted an error</div>,
-    };
-
-    const config = {
-      key: id,
-      message: message[type],
-      placement: 'bottomRight',
-    };
-    if (type === 'started')
-      notification.open({ ...config, icon: <LoadingOutlined /> });
-    else if (type === 'created') notification['info'](config);
-    else if (type === 'canceled') notification['info'](config);
-    else {
-      notification[type](config);
-    }
-  };
-
   useEffect(() => {
     socket.on('cea-job-created', (job) => {
-      openNotification('created', job);
+      console.log('cea-job-created: job', job);
     });
     socket.on('cea-worker-started', (job) => {
-      openNotification('started', job);
       dispatch(updateJob(job));
     });
     socket.on('cea-worker-success', (job) => {
-      openNotification('success', job);
       dispatch(updateJob(job));
     });
     socket.on('cea-worker-canceled', (job) => {
-      openNotification('canceled', job);
       dispatch(dismissJob(job));
     });
     socket.on('cea-worker-error', (job) => {
-      openNotification('error', job);
       dispatch(updateJob(job));
     });
 
@@ -193,7 +148,7 @@ const JobStatusBar = () => {
   return jobs ? (
     <div className="cea-status-bar-button">
       <JobOutputLogger />
-      <ToolFilled className="cea-job-list-popover-collapse" />
+      {/* <ToolFilled className="cea-job-list-popover-collapse" /> */}
     </div>
   ) : null;
 };
