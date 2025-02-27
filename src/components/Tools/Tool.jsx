@@ -303,6 +303,9 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
+
+            paddingTop: 12,
+            paddingInline: 12,
           }}
         >
           <div id="cea-tool-header-content">

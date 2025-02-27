@@ -17,7 +17,7 @@ const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
 
         height: '100%',
         boxSizing: 'border-box',
-        padding: 24,
+        padding: 12,
 
         width: '33vw',
         minWidth: 450,
