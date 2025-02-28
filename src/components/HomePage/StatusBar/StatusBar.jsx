@@ -160,7 +160,7 @@ export const JobListPopoverContent = () => {
 
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const jobArray = Object.keys(jobs);
+  const jobArray = Object.keys(jobs ?? {});
   const containerRef = useRef(null);
 
   // Scroll to top when jobs array changes
