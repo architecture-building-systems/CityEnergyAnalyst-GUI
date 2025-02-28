@@ -9,7 +9,7 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
@@ -17,7 +17,11 @@ import './StatusBar.css';
 import { useProjectStore } from '../../Project/store';
 
 import { parseISO, formatDistanceToNow } from 'date-fns';
-import { BinIcon, InformationIcon, StopIcon } from '../../../assets/icons';
+import {
+  BinAnimationIcon,
+  InformationIcon,
+  StopIcon,
+} from '../../../assets/icons';
 
 const socket = io(`${import.meta.env.VITE_CEA_URL}`);
 
@@ -317,35 +321,29 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           style={{
             fontSize: 18,
             display: 'flex',
-            gap: 12,
+            gap: 2,
             justifyContent: 'center',
           }}
         >
           {job.state > 1 && isHovered && (
-            <div style={{ color: 'red' }}>
-              <BinIcon
-                className="cea-job-info-icon"
-                // onClick={() => deleteCeaJob({ id, ...job })}
-              />
-            </div>
+            <BinAnimationIcon
+              className="cea-job-info-icon danger"
+              // onClick={() => deleteCeaJob({ id, ...job })}
+            />
           )}
           {job.state < 2 && (
-            <div style={{ color: 'red' }}>
-              <StopIcon
-                className="cea-job-info-icon"
-                onClick={() => cancelCeaJob({ id, ...job })}
-              />
-            </div>
-          )}
-          <div style={{ color: 'blue' }}>
-            <InformationIcon
-              className="cea-job-info-icon"
-              onClick={() => {
-                setSelectedJob({ id, ...job });
-                setModalVisible(true);
-              }}
+            <StopIcon
+              className="cea-job-info-icon danger"
+              onClick={() => cancelCeaJob({ id, ...job })}
             />
-          </div>
+          )}
+          <InformationIcon
+            className="cea-job-info-icon info"
+            onClick={() => {
+              setSelectedJob({ id, ...job });
+              setModalVisible(true);
+            }}
+          />
         </div>
       </div>
     </div>

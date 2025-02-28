@@ -30,6 +30,7 @@ import PlugInIcon from './plug_in.svg';
 import InformationIcon from './information.svg';
 import StopIcon from './stop.svg';
 import BinIcon from './bin.svg';
+import BinAnimationIcon from './bin_animation.svg';
 
 export {
   DataManagementIcon,
@@ -58,4 +59,5 @@ export {
   InformationIcon,
   StopIcon,
   BinIcon,
+  BinAnimationIcon,
 };
