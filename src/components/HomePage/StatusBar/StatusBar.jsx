@@ -211,8 +211,8 @@ export const JobListPopoverContent = () => {
 };
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
-  const executionTime = job?.execution_time
-    ? Math.round((job?.execution_time / 60) * 10) / 10
+  const duration = job?.duration
+    ? Math.round((job?.duration / 60) * 10) / 10
     : '-';
 
   // ASSUMPTION: start_time is in UTC
@@ -293,13 +293,13 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
                 </i>
               </small>
               <small>
-                execution time:{' '}
+                duration:{' '}
                 <i>
-                  {typeof executionTime == 'number'
-                    ? executionTime >= 1
-                      ? executionTime + ' minutes'
+                  {typeof duration == 'number'
+                    ? duration >= 1
+                      ? duration + ' minutes'
                       : '< 1 minute'
-                    : executionTime}
+                    : duration}
                 </i>
               </small>
             </div>
