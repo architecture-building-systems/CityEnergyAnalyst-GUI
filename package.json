@@ -65,6 +65,7 @@
     "axios": "^1.6.7",
     "color-interpolate": "^1.0.5",
     "connected-react-router": "^6.5.2",
+    "date-fns": "^4.1.0",
     "deck.gl": "^9.0.27",
     "electron-log": "^5.1.2",
     "electron-updater": "^6.3.9",
