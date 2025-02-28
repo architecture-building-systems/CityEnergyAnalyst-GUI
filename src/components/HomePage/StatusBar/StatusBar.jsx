@@ -377,7 +377,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       }
     };
     listenerFuncRef.current &&
-      socket.removeEventListener('cea-worker-message', listenerFuncRef.current);
+      socket.off('cea-worker-message', listenerFuncRef.current);
     isFirst.current = true;
     getJobOutput();
   }, [job]);
