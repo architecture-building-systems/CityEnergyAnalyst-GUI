@@ -48,3 +48,8 @@
   background-color: #fafafa;
   transform: scale(0.99);
 }
+
+.cea-job-info-icon:hover {
+  transform: scale(1.2);
+  cursor: pointer;
+}

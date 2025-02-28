@@ -27,6 +27,10 @@ import Compass from './compass.svg';
 
 import PlugInIcon from './plug_in.svg';
 
+import InformationIcon from './information.svg';
+import StopIcon from './stop.svg';
+import BinIcon from './bin.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -51,4 +55,7 @@ export {
   Compass,
   ImportExportIcon,
   PlugInIcon,
+  InformationIcon,
+  StopIcon,
+  BinIcon,
 };
