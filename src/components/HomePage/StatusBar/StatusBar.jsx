@@ -16,6 +16,8 @@ import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
 import './StatusBar.css';
 import { useProjectStore } from '../../Project/store';
 
+import { parseISO, formatDistanceToNow } from 'date-fns';
+
 const socket = io(`${import.meta.env.VITE_CEA_URL}`);
 
 const StatusBar = () => {
@@ -213,6 +215,15 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
     ? Math.round((job?.execution_time / 60) * 10) / 10
     : '-';
 
+  // ASSUMPTION: start_time is in UTC
+  const start_time = job?.start_time
+    ? typeof job.start_time === 'string'
+      ? parseISO(
+          job.start_time.includes('Z') ? job.start_time : job.start_time + 'Z',
+        ) // Ensure UTC interpretation by adding Z
+      : new Date(job.start_time)
+    : null;
+
   const StateIcon = ({ state }) => {
     switch (state) {
       case 0:
@@ -271,7 +282,15 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
               }}
             >
               <small>
-                started: <i>{job?.start_time ?? '-'}</i>
+                started:{' '}
+                <i title={start_time ? start_time.toLocaleString() : ''}>
+                  {start_time
+                    ? formatDistanceToNow(start_time, {
+                        addSuffix: true,
+                        includeSeconds: true,
+                      })
+                    : '-'}
+                </i>
               </small>
               <small>
                 execution time:{' '}
