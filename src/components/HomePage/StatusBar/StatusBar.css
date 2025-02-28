@@ -45,7 +45,7 @@
 }
 
 .cea-job-info-card:hover {
-  background-color: #fafafa;
+  /* background-color: #fafafa; */
   transform: scale(0.99);
 }
 
