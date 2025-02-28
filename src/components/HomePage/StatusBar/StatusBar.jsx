@@ -212,6 +212,8 @@ export const JobListPopoverContent = () => {
 };
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const duration = job?.duration
     ? Math.round((job?.duration / 60) * 10) / 10
     : '-';
@@ -242,7 +244,11 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
     }
   };
   return (
-    <div className="cea-job-info-card">
+    <div
+      className="cea-job-info-card"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div
         id="cea-status-bar-icon"
         style={{
@@ -315,11 +321,11 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
             justifyContent: 'center',
           }}
         >
-          {job.state > 1 && (
+          {job.state > 1 && isHovered && (
             <div style={{ color: 'red' }}>
               <BinIcon
                 className="cea-job-info-icon"
-                onClick={() => cancelCeaJob({ id, ...job })}
+                // onClick={() => deleteCeaJob({ id, ...job })}
               />
             </div>
           )}
