@@ -71,15 +71,15 @@ const JobStatusBar = () => {
     });
     socket.on('cea-worker-success', (job) => {
       dispatch(updateJob(job));
-      setMessage(`jobID: ${job.id} - completed`);
+      setMessage(`jobID: ${job.id} - completed ✅`);
     });
     socket.on('cea-worker-canceled', (job) => {
       dispatch(dismissJob(job));
-      setMessage(`jobID: ${job.id} - canceled`);
+      setMessage(`jobID: ${job.id} - canceled ✖️`);
     });
     socket.on('cea-worker-error', (job) => {
       dispatch(updateJob(job));
-      setMessage(`jobID: ${job.id} - error`);
+      setMessage(`jobID: ${job.id} - error ❗`);
     });
 
     socket.on('cea-worker-message', (data) => {
