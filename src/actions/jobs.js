@@ -56,6 +56,24 @@ export const startJob = (jobID) => {
   };
 };
 
+export const DELETED_JOB = 'DELETED_JOB';
+export const DELETED_JOB_SUCCESS = 'DELETED_JOB_SUCCESS';
+export const DELETED_JOB_FAILED = 'DELETED_JOB_FAILED';
+
+export const deleteJob = (jobID) => {
+  return async (dispatch) => {
+    dispatch({ type: DELETED_JOB });
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_CEA_URL}/server/jobs/${jobID}`,
+      );
+      dispatch({ type: DELETED_JOB_SUCCESS, payload: jobID });
+    } catch (error) {
+      dispatch({ type: DELETED_JOB_FAILED, payload: error });
+    }
+  };
+};
+
 export const UPDATE_JOB = 'UPDATE_JOB';
 
 export const updateJob = (job) => {

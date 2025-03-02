@@ -12,7 +12,12 @@ import {
 import { Modal } from 'antd';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
+import {
+  fetchJobs,
+  updateJob,
+  dismissJob,
+  deleteJob,
+} from '../../../actions/jobs';
 import './StatusBar.css';
 import { useProjectStore } from '../../Project/store';
 
@@ -217,6 +222,7 @@ export const JobListPopoverContent = () => {
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const dispatch = useDispatch();
 
   const duration = job?.duration
     ? Math.round((job?.duration / 60) * 10) / 10
@@ -328,7 +334,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           {job.state > 1 && isHovered && (
             <BinAnimationIcon
               className="cea-job-info-icon danger"
-              // onClick={() => deleteCeaJob({ id, ...job })}
+              onClick={() => dispatch(deleteJob(id))}
             />
           )}
           {job.state < 2 && (
