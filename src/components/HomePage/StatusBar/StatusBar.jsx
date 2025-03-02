@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
 import './StatusBar.css';
@@ -55,10 +55,33 @@ const CEAVersion = () => {
   );
 };
 
-const JobOutputLogger = () => {
+const JobStatusBar = () => {
   const [message, setMessage] = useState('');
+  const dispatch = useDispatch();
+
+  const project = useProjectStore((state) => state.project);
 
   useEffect(() => {
+    socket.on('cea-job-created', (job) => {
+      console.log('cea-job-created: job', job);
+    });
+
+    socket.on('cea-worker-started', (job) => {
+      dispatch(updateJob(job));
+    });
+    socket.on('cea-worker-success', (job) => {
+      dispatch(updateJob(job));
+      setMessage(`jobID: ${job.id} - completed`);
+    });
+    socket.on('cea-worker-canceled', (job) => {
+      dispatch(dismissJob(job));
+      setMessage(`jobID: ${job.id} - canceled`);
+    });
+    socket.on('cea-worker-error', (job) => {
+      dispatch(updateJob(job));
+      setMessage(`jobID: ${job.id} - error`);
+    });
+
     socket.on('cea-worker-message', (data) => {
       let lines = data.message
         .split(/\r?\n/)
@@ -69,62 +92,15 @@ const JobOutputLogger = () => {
         setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
     });
 
-    socket.on('cea-worker-success', (job_info) => {
-      setMessage(`jobID: ${job_info.id} - completed`);
-    });
-
-    socket.on('cea-worker-error', (job_info) => {
-      console.log('cea-worker-error: job_info:', job_info);
-      setMessage(`jobID: ${job_info.id} - error`);
-    });
-
-    socket.on('cea-worker-canceled', (job_info) => {
-      console.log('cea-worker-canceled: job_info', job_info);
-      setMessage(`jobID: ${job_info.id} - canceled`);
-    });
-
-    return () => {
-      socket.off('cea-worker-message');
-      socket.off('cea-worker-success');
-      socket.off('cea-worker-error');
-      socket.off('cea-worker-canceled');
-    };
-  }, []);
-
-  if (message.length < 1) return null;
-
-  return <span>{message}</span>;
-};
-
-const JobStatusBar = () => {
-  const jobs = useSelector((state) => state.jobs);
-  const dispatch = useDispatch();
-
-  const project = useProjectStore((state) => state.project);
-
-  useEffect(() => {
-    socket.on('cea-job-created', (job) => {
-      console.log('cea-job-created: job', job);
-    });
-    socket.on('cea-worker-started', (job) => {
-      dispatch(updateJob(job));
-    });
-    socket.on('cea-worker-success', (job) => {
-      dispatch(updateJob(job));
-    });
-    socket.on('cea-worker-canceled', (job) => {
-      dispatch(dismissJob(job));
-    });
-    socket.on('cea-worker-error', (job) => {
-      dispatch(updateJob(job));
-    });
-
     return () => {
       socket.off('cea-job-created');
+
       socket.off('cea-worker-started');
       socket.off('cea-worker-success');
       socket.off('cea-worker-canceled');
       socket.off('cea-worker-error');
+
+      socket.off('cea-worker-message');
     };
   }, []);
 
@@ -133,12 +109,13 @@ const JobStatusBar = () => {
     dispatch(fetchJobs());
   }, [project]);
 
-  return jobs ? (
+  if (message.length < 1) return null;
+
+  return (
     <div className="cea-status-bar-button">
-      <JobOutputLogger />
-      {/* <ToolFilled className="cea-job-list-popover-collapse" /> */}
+      <span>{message}</span>
     </div>
-  ) : null;
+  );
 };
 
 export default StatusBar;
