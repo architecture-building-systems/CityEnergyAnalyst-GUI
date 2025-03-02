@@ -20,7 +20,7 @@ import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/Ma
 import { useProjectStore } from '../components/Project/store';
 import { useInputs } from '../hooks/queries/useInputs';
 import { useMapStore } from '../components/Map/store/store';
-import { JobListPopoverContent } from '../components/HomePage/StatusBar/StatusBar';
+import JobInfoList from '../components/Jobs/JobInfoList';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -224,7 +224,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             className="cea-overlay-card"
             style={{ height: '100%', width: '33vw', minWidth: 450 }}
           >
-            <JobListPopoverContent />
+            <JobInfoList />
           </div>
         </div>
       </div>
