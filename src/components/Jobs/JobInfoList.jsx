@@ -44,30 +44,31 @@ export const JobInfoList = () => {
   }, [jobArray.length]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        height: '100%',
-        width: '100%',
-        overflow: 'auto',
-        padding: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-      }}
-    >
-      {jobArray.reverse().map((_, index) => {
-        const id = jobArray[jobArray.length - 1 - index];
-        return (
-          <JobInfoCard
-            key={id}
-            id={id}
-            job={jobs[id]}
-            setModalVisible={setModalVisible}
-            setSelectedJob={setSelectedJob}
-          />
-        );
-      })}
+    <>
+      <div
+        className="cea-job-info-card-list"
+        ref={containerRef}
+        style={{
+          width: '100%',
+          padding: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+        }}
+      >
+        {jobArray.reverse().map((_, index) => {
+          const id = jobArray[jobArray.length - 1 - index];
+          return (
+            <JobInfoCard
+              key={id}
+              id={id}
+              job={jobs[id]}
+              setModalVisible={setModalVisible}
+              setSelectedJob={setSelectedJob}
+            />
+          );
+        })}
+      </div>
       {selectedJob && (
         <JobOutputModal
           job={selectedJob}
@@ -75,7 +76,7 @@ export const JobInfoList = () => {
           setVisible={setModalVisible}
         />
       )}
-    </div>
+    </>
   );
 };
 

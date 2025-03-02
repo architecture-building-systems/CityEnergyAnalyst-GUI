@@ -1,3 +1,13 @@
+.cea-job-info-card-list {
+  height: 80px;
+  overflow: none;
+}
+
+.cea-job-info-card-list:hover {
+  height: 100%;
+  overflow: auto;
+}
+
 .cea-job-info-card {
   background-color: rgba(255, 255, 255, 1);
   padding: 8px;
