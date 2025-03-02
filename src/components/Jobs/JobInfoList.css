@@ -5,6 +5,7 @@
   font-size: 14px;
 
   display: flex;
+  user-select: none;
 }
 
 .cea-job-info-card:hover {
