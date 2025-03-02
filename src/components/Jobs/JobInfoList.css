@@ -1,0 +1,31 @@
+.cea-job-info-card {
+  background-color: rgba(255, 255, 255, 1);
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+
+  display: flex;
+}
+
+.cea-job-info-card:hover {
+  /* background-color: #fafafa; */
+  transform: scale(0.99);
+}
+
+.cea-job-info-icon.danger {
+  color: red;
+}
+.cea-job-info-icon.info {
+  color: blue;
+}
+
+.cea-job-info-icon {
+  overflow: visible;
+  padding: 8px;
+  border-radius: 4px;
+}
+.cea-job-info-icon:hover {
+  transform: scale(1.2);
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}

@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { deleteJob } from '../../actions/jobs';
 
+import './JobInfoList.css';
 import socket from '../../socket';
 
 export const JobInfoList = () => {
