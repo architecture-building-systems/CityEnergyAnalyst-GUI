@@ -78,9 +78,26 @@ export const JobInfoList = () => {
   );
 };
 
+const useRefreshInterval = () => {
+  const [refreshInterval, setRefreshInterval] = useState(30 * 1000); // Start with 30s
+
+  // Set up exponential interval for refreshing the component
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Increase the interval exponentially, but cap it at 5 minutes (300000ms)
+      setRefreshInterval((prevInterval) =>
+        Math.min(prevInterval * 1.5, 5 * 60 * 1000),
+      );
+    }, refreshInterval);
+
+    return () => clearInterval(intervalId);
+  }, [refreshInterval]); // Recreate the interval when refreshInterval changes
+};
+
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
   const [isHovered, setIsHovered] = useState(false);
   const dispatch = useDispatch();
+  useRefreshInterval();
 
   const duration = job?.duration
     ? Math.round((job?.duration / 60) * 10) / 10
