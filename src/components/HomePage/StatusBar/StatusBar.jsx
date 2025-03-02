@@ -170,11 +170,12 @@ export const JobListPopoverContent = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const jobArray = Object.keys(jobs ?? {});
+  const jobLengthRef = useRef(jobArray.length);
   const containerRef = useRef(null);
 
-  // Scroll to top when jobs array changes
+  // Scroll to top when new job is added
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && jobLengthRef.current < jobArray.length) {
       const container = containerRef.current;
       // Scroll to bottom when new job is added
       container.scrollTo({
@@ -182,6 +183,7 @@ export const JobListPopoverContent = () => {
         behavior: 'smooth',
       });
     }
+    jobLengthRef.current = jobArray.length;
   }, [jobArray.length]);
 
   return (
