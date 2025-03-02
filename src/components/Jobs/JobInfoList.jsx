@@ -136,7 +136,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        id="cea-status-bar-icon"
+        className="cea-status-bar-icon"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -148,7 +148,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
       </div>
 
       <div
-        id="cea-job-info-content"
+        className="cea-job-info-content"
         style={{
           flexGrow: 1,
           padding: 4,
@@ -159,7 +159,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           gap: 12,
         }}
       >
-        <div id="cea-job-info-content-left">
+        <div className="cea-job-info-content-left">
           <div>
             <b>{job?.script_label ?? job?.script}</b>
           </div>
@@ -199,7 +199,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
           </div>
         </div>
         <div
-          id="cea-job-info-content-actions"
+          className="cea-job-info-content-actions"
           style={{
             fontSize: 18,
             display: 'flex',
