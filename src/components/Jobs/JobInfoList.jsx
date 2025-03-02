@@ -85,9 +85,9 @@ const useRefreshInterval = () => {
   // Set up exponential interval for refreshing the component
   useEffect(() => {
     const intervalId = setInterval(() => {
-      // Increase the interval exponentially, but cap it at 5 minutes (300000ms)
+      // Increase the interval exponentially
       setRefreshInterval((prevInterval) =>
-        Math.min(prevInterval * 1.5, 5 * 60 * 1000),
+        Math.min(prevInterval * 2, 30 * 60 * 1000),
       );
     }, refreshInterval);
 
