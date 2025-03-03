@@ -73,14 +73,43 @@ const JobStatusBar = () => {
 
     socket.on('cea-worker-started', (job) => {
       dispatch(updateJob(job));
+      api.info({
+        message: job.script_label,
+        description: 'Job started.',
+        placement: 'top',
+
+        duration: 1,
+      });
     });
     socket.on('cea-worker-success', (job) => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - completed ✅`);
+
+      const key = `open${Date.now()}`;
       api.success({
         message: job.script_label,
         description: 'Job completed.',
         placement: 'top',
+
+        duration: 3,
+        key,
+        btn: (
+          <>
+            <Button type="link" onClick={() => api.destroy(key)}>
+              Dismiss
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                api.destroy(key);
+                setSelectedJob(job);
+                setModalVisible(true);
+              }}
+            >
+              View Logs
+            </Button>
+          </>
+        ),
       });
     });
     socket.on('cea-worker-canceled', (job) => {
@@ -100,16 +129,21 @@ const JobStatusBar = () => {
         duration: 0,
         key,
         btn: (
-          <Button
-            type="primary"
-            onClick={() => {
-              api.destroy(key);
-              setSelectedJob(job);
-              setModalVisible(true);
-            }}
-          >
-            View Logs
-          </Button>
+          <>
+            <Button type="link" onClick={() => api.destroy(key)}>
+              Dismiss
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                api.destroy(key);
+                setSelectedJob(job);
+                setModalVisible(true);
+              }}
+            >
+              View Logs
+            </Button>
+          </>
         ),
       });
     });
