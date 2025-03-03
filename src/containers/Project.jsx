@@ -222,7 +222,17 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         <div id="cea-project-overlay-right-bottom">
           <div
             className="cea-overlay-card"
-            style={{ height: '100%', width: '33vw', minWidth: 450 }}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+
+              height: '33vh',
+              width: '33vw',
+              minWidth: 450,
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+            }}
           >
             <JobInfoList />
           </div>

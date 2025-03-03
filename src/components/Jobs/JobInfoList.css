@@ -1,13 +1,16 @@
 .cea-job-info-card-list.collapsed {
-  max-height: 104px;
+  max-height: 110px;
 }
 
 .cea-job-info-card-list.expanded {
   max-height: 100%;
 }
 
-.cea-job-info-card-list.collapsed .cea-job-info-card {
+.cea-job-info-card-list .cea-job-info-card {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  border: 0.1px solid rgba(0, 0, 0, 0.12);
+
+  transition: transform 0.2s ease;
 }
 
 .cea-job-info-card-list.collapsed
