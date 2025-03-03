@@ -139,14 +139,18 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
           }}
           onScroll={handleScroll}
         >
-          <pre
-            style={{
-              fontSize: 12,
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {message}
-          </pre>
+          {message ? (
+            <pre
+              style={{
+                fontSize: 12,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {message}
+            </pre>
+          ) : (
+            <div>No output found.</div>
+          )}
         </div>
       </div>
     </Modal>
