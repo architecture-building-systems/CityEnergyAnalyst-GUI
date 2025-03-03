@@ -149,6 +149,15 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
             justifyContent: 'center',
           }}
         >
+          {verbose && isHovered && (
+            <InformationIcon
+              className="cea-job-info-icon info"
+              onClick={() => {
+                setSelectedJob({ id, ...job });
+                setModalVisible(true);
+              }}
+            />
+          )}
           {job.state > 1 && isHovered && (
             <BinAnimationIcon
               className="cea-job-info-icon danger shake"
@@ -161,13 +170,6 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
               onClick={() => cancelCeaJob({ id, ...job })}
             />
           )}
-          <InformationIcon
-            className="cea-job-info-icon info"
-            onClick={() => {
-              setSelectedJob({ id, ...job });
-              setModalVisible(true);
-            }}
-          />
         </div>
       </div>
     </div>
