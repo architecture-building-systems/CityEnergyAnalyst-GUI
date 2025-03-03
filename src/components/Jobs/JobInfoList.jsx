@@ -41,6 +41,7 @@ export const JobInfoList = () => {
         job={jobs[id]}
         setModalVisible={setModalVisible}
         setSelectedJob={setSelectedJob}
+        verbose={expanded}
       />
     );
   });
@@ -114,7 +115,7 @@ const useRefreshInterval = () => {
   }, [refreshInterval]); // Recreate the interval when refreshInterval changes
 };
 
-const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
+const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   const [isHovered, setIsHovered] = useState(false);
   const dispatch = useDispatch();
   useRefreshInterval();
@@ -204,16 +205,18 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
                     : '-'}
                 </i>
               </small>
-              <small>
-                duration:{' '}
-                <i>
-                  {typeof duration == 'number'
-                    ? duration >= 1
-                      ? duration + ' minutes'
-                      : '< 1 minute'
-                    : duration}
-                </i>
-              </small>
+              {verbose && (
+                <small>
+                  duration:{' '}
+                  <i>
+                    {typeof duration == 'number'
+                      ? duration >= 1
+                        ? duration + ' minutes'
+                        : '< 1 minute'
+                      : duration}
+                  </i>
+                </small>
+              )}
             </div>
           </div>
         </div>
