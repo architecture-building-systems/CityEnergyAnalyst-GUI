@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import JobInfoModal from './JobInfoModal';
-import { useSelectedJob } from './store';
+import { useSelectedJob, useShowJobInfo } from './store';
 
 export const JobInfoList = () => {
   const jobs = useSelector((state) => state.jobs);
 
   const [selectedJob, setSelectedJob] = useSelectedJob();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useShowJobInfo();
   const [expanded, setExpanded] = useState(false);
 
   const jobArray = Object.keys(jobs ?? {});

@@ -6,7 +6,8 @@ import './StatusBar.css';
 import { useProjectStore } from '../../Project/store';
 
 import socket from '../../../socket';
-import { notification } from 'antd';
+import { Button, notification } from 'antd';
+import { useSelectedJob, useShowJobInfo } from '../../Jobs/store';
 
 const StatusBar = () => {
   return (
@@ -62,6 +63,8 @@ const JobStatusBar = () => {
   const dispatch = useDispatch();
 
   const project = useProjectStore((state) => state.project);
+  const [, setModalVisible] = useShowJobInfo();
+  const [, setSelectedJob] = useSelectedJob();
 
   useEffect(() => {
     socket.on('cea-job-created', (job) => {
@@ -87,11 +90,27 @@ const JobStatusBar = () => {
     socket.on('cea-worker-error', (job) => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - error ❗`);
+
+      const key = `open${Date.now()}`;
       api.error({
         message: job.script_label,
         description: job.error,
         placement: 'top',
+
         duration: 0,
+        key,
+        btn: (
+          <Button
+            type="primary"
+            onClick={() => {
+              api.destroy(key);
+              setSelectedJob(job);
+              setModalVisible(true);
+            }}
+          >
+            View Logs
+          </Button>
+        ),
       });
     });
 
