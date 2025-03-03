@@ -96,7 +96,7 @@
 
 .cea-job-info-card:hover {
   /* background-color: #fafafa; */
-  /* transform: scale(0.99); */
+  transform: scale(0.99);
 }
 
 .cea-job-info-icon.danger {
