@@ -114,6 +114,19 @@ const Toolbar = ({ onToolSelected, showTools }) => {
 
   const [showTooltip, setShowTooltip] = useState(true);
 
+  const toolMenus = useMemo(() => {
+    return Object.keys(tools).map((category) => (
+      <ToolMenu
+        key={category}
+        category={category}
+        tools={tools?.[category]}
+        onToolSelected={onToolSelected}
+        showTooltip={showTooltip}
+        onMenuOpenChange={(value) => setShowTooltip(!value)}
+      />
+    ));
+  }, [tools, showTooltip, onToolSelected]);
+
   return (
     <div
       id="cea-card-toolbar"
@@ -131,24 +144,7 @@ const Toolbar = ({ onToolSelected, showTools }) => {
     >
       {/* <HomeOutlined className="cea-card-toolbar-icon" />
       <Divider className="cea-card-toolbar-divider" type="vertical" /> */}
-      {status == 'fetching' ? (
-        <div>Loading Tools</div>
-      ) : (
-        showTools && (
-          <>
-            {Object.keys(tools).map((category) => (
-              <ToolMenu
-                key={category}
-                category={category}
-                tools={tools?.[category]}
-                onToolSelected={onToolSelected}
-                showTooltip={showTooltip}
-                onMenuOpenChange={(value) => setShowTooltip(!value)}
-              />
-            ))}
-          </>
-        )
-      )}
+      {status == 'fetching' ? <div>Loading Tools</div> : showTools && toolMenus}
     </div>
   );
 };
