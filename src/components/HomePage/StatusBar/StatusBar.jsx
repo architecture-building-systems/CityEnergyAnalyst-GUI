@@ -6,6 +6,7 @@ import './StatusBar.css';
 import { useProjectStore } from '../../Project/store';
 
 import socket from '../../../socket';
+import { message } from 'antd';
 
 const StatusBar = () => {
   return (
@@ -56,12 +57,16 @@ const CEAVersion = () => {
 };
 
 const JobStatusBar = () => {
-  const [message, setMessage] = useState('');
+  const [output, setMessage] = useState('');
   const dispatch = useDispatch();
 
   const project = useProjectStore((state) => state.project);
 
   useEffect(() => {
+    message.config({
+      top: 80,
+    });
+
     socket.on('cea-job-created', (job) => {
       console.log('cea-job-created: job', job);
     });
@@ -72,6 +77,7 @@ const JobStatusBar = () => {
     socket.on('cea-worker-success', (job) => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - completed ✅`);
+      message.success(`job: ${job.script_label} - completed`);
     });
     socket.on('cea-worker-canceled', (job) => {
       dispatch(dismissJob(job));
@@ -80,6 +86,7 @@ const JobStatusBar = () => {
     socket.on('cea-worker-error', (job) => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - error ❗`);
+      message.error(`job: ${job.script_label} - ${job.error}`);
     });
 
     socket.on('cea-worker-message', (data) => {
@@ -109,11 +116,11 @@ const JobStatusBar = () => {
     dispatch(fetchJobs());
   }, [project]);
 
-  if (message.length < 1) return null;
+  if (output.length < 1) return null;
 
   return (
     <div className="cea-status-bar-button">
-      <span>{message}</span>
+      <span>{output}</span>
     </div>
   );
 };
