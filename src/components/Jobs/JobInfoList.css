@@ -6,10 +6,12 @@
   display: flex;
   flex-direction: column-reverse;
   gap: 4px;
+
+  pointer-events: auto;
 }
 
 .cea-job-info-card-list.collapsed {
-  height: 110px;
+  height: 90px;
 }
 
 .cea-job-info-card-list.expanded {
