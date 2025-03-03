@@ -30,6 +30,15 @@ export const JobInfoList = () => {
   const jobLengthRef = useRef(jobArray.length);
   const containerRef = useRef(null);
 
+  const goToBottom = () => {
+    if (containerRef.current) {
+      requestAnimationFrame(() => {
+        const container = containerRef.current;
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+  };
+
   // Scroll to top when new job is added
   useEffect(() => {
     if (containerRef.current && jobLengthRef.current < jobArray.length) {
@@ -43,10 +52,15 @@ export const JobInfoList = () => {
     jobLengthRef.current = jobArray.length;
   }, [jobArray.length]);
 
+  useEffect(() => {
+    goToBottom();
+  }, []);
+
   return (
     <>
       <div
         className="cea-job-info-card-list"
+        onMouseLeave={goToBottom}
         ref={containerRef}
         style={{
           width: '100%',
