@@ -89,20 +89,22 @@ const ToolMenu = ({
       open={showTooltip && tooltipVisible}
       onOpenChange={setTooltipVisible}
     >
-      <Dropdown
-        menu={{ items, onClick: ({ key }) => onToolSelected(key) }}
-        trigger={['click']}
-        onOpenChange={onMenuOpenChange}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <div className="cea-card-toolbar-icon">
-          {icon}
-          <animated.div style={styles}>
-            <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
-          </animated.div>
-        </div>
-      </Dropdown>
+      <div>
+        <Dropdown
+          menu={{ items, onClick: ({ key }) => onToolSelected(key) }}
+          trigger={['click']}
+          onOpenChange={onMenuOpenChange}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
+          <div className="cea-card-toolbar-icon">
+            {icon}
+            <animated.div style={styles}>
+              <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
+            </animated.div>
+          </div>
+        </Dropdown>
+      </div>
     </Tooltip>
   );
 };
