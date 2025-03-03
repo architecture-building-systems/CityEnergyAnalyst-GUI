@@ -231,7 +231,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
         >
           {job.state > 1 && isHovered && (
             <BinAnimationIcon
-              className="cea-job-info-icon danger"
+              className="cea-job-info-icon danger shake"
               onClick={() => dispatch(deleteJob(id))}
             />
           )}

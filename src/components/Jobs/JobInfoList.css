@@ -108,6 +108,25 @@
   color: blue;
 }
 
+@keyframes shake {
+  0% {
+    transform: rotate(-8deg);
+  }
+  25% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.cea-job-info-icon.shake {
+  animation: shake 0.2s ease-in-out;
+}
+
 .cea-job-info-icon {
   overflow: visible;
   padding: 8px;
