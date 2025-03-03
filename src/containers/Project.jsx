@@ -230,7 +230,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               width: '33vw',
               minWidth: 450,
               position: 'absolute',
-              bottom: 8,
+              bottom: 0,
               right: 8,
             }}
           >
