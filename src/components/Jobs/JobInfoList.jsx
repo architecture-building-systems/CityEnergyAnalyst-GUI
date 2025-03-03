@@ -81,12 +81,6 @@ export const JobInfoList = () => {
           onMouseLeave={() => setExpanded(false)}
           ref={containerRef}
           style={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column-reverse',
-            gap: 4,
-
-            position: 'relative',
             overflow: expanded ? 'auto' : 'hidden',
           }}
         >
