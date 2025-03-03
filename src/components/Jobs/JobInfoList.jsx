@@ -20,6 +20,7 @@ import { deleteJob } from '../../actions/jobs';
 
 import './JobInfoList.css';
 import socket from '../../socket';
+import LazyJobInfoCard from './LazyJobInfoCard';
 
 export const JobInfoList = () => {
   const jobs = useSelector((state) => state.jobs);
@@ -73,13 +74,15 @@ export const JobInfoList = () => {
         {jobArray.reverse().map((_, index) => {
           const id = jobArray[jobArray.length - 1 - index];
           return (
-            <JobInfoCard
-              key={id}
-              id={id}
-              job={jobs[id]}
-              setModalVisible={setModalVisible}
-              setSelectedJob={setSelectedJob}
-            />
+            <LazyJobInfoCard key={id}>
+              <JobInfoCard
+                key={id}
+                id={id}
+                job={jobs[id]}
+                setModalVisible={setModalVisible}
+                setSelectedJob={setSelectedJob}
+              />
+            </LazyJobInfoCard>
           );
         })}
       </div>
