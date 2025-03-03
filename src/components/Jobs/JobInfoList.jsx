@@ -20,16 +20,30 @@ import { deleteJob } from '../../actions/jobs';
 
 import './JobInfoList.css';
 import socket from '../../socket';
-import LazyJobInfoCard from './LazyJobInfoCard';
 
 export const JobInfoList = () => {
   const jobs = useSelector((state) => state.jobs);
 
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
   const jobArray = Object.keys(jobs ?? {});
   const jobLengthRef = useRef(jobArray.length);
   const containerRef = useRef(null);
+
+  const jobInfos = jobArray.map((_, index) => {
+    const id = jobArray[jobArray.length - 1 - index];
+    return (
+      <JobInfoCard
+        key={id}
+        id={id}
+        job={jobs[id]}
+        setModalVisible={setModalVisible}
+        setSelectedJob={setSelectedJob}
+      />
+    );
+  });
 
   const goToBottom = () => {
     if (containerRef.current) {
@@ -40,52 +54,45 @@ export const JobInfoList = () => {
     }
   };
 
-  // Scroll to top when new job is added
   useEffect(() => {
-    if (containerRef.current && jobLengthRef.current < jobArray.length) {
-      const container = containerRef.current;
-      // Scroll to bottom when new job is added
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-    jobLengthRef.current = jobArray.length;
+    if (!jobArray.length) setExpanded(false);
+
+    // if (containerRef.current && jobLengthRef.current < jobArray.length) {
+    //   const container = containerRef.current;
+    //   // Scroll to bottom when new job is added
+    //   container.scrollTo({
+    //     top: container.scrollHeight,
+    //     behavior: 'smooth',
+    //   });
+    // }
+    // jobLengthRef.current = jobArray.length;
   }, [jobArray.length]);
 
   useEffect(() => {
     goToBottom();
-  }, []);
+  }, [expanded]);
 
   return (
     <>
-      <div
-        className="cea-job-info-card-list"
-        onMouseLeave={goToBottom}
-        ref={containerRef}
-        style={{
-          width: '100%',
-          padding: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-        }}
-      >
-        {jobArray.reverse().map((_, index) => {
-          const id = jobArray[jobArray.length - 1 - index];
-          return (
-            <LazyJobInfoCard key={id}>
-              <JobInfoCard
-                key={id}
-                id={id}
-                job={jobs[id]}
-                setModalVisible={setModalVisible}
-                setSelectedJob={setSelectedJob}
-              />
-            </LazyJobInfoCard>
-          );
-        })}
-      </div>
+      {jobArray.length > 0 && (
+        <div
+          className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
+          onMouseEnter={() => setExpanded(true)}
+          onMouseLeave={() => setExpanded(false)}
+          ref={containerRef}
+          style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column-reverse',
+            gap: 4,
+
+            position: 'relative',
+            overflow: expanded ? 'auto' : 'hidden',
+          }}
+        >
+          {jobInfos}
+        </div>
+      )}
       {selectedJob && (
         <JobOutputModal
           job={selectedJob}
