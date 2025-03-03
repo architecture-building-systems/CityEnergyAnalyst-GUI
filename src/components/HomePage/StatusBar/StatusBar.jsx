@@ -57,6 +57,30 @@ const CEAVersion = () => {
   );
 };
 
+const DismissCountdown = ({ duration, onComplete }) => {
+  const [timeLeft, setTimeLeft] = useState(duration);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onComplete && onComplete();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [timeLeft, onComplete]);
+
+  return (
+    <>
+      Dismiss
+      {timeLeft > 0 && <span style={{ fontWeight: 'bold' }}>({timeLeft})</span>}
+    </>
+  );
+};
+
 const JobStatusBar = () => {
   const [api, contextHolder] = notification.useNotification({ top: 80 });
   const [output, setMessage] = useState('');
@@ -86,17 +110,21 @@ const JobStatusBar = () => {
       setMessage(`jobID: ${job.id} - completed ✅`);
 
       const key = `open${Date.now()}`;
+      const duration = 3;
       api.success({
         message: job.script_label,
         description: 'Job completed.',
         placement: 'top',
 
-        duration: 3,
+        duration,
         key,
         btn: (
           <>
             <Button type="link" onClick={() => api.destroy(key)}>
-              Dismiss
+              <DismissCountdown
+                duration={duration}
+                onComplete={() => api.destroy(key)}
+              />
             </Button>
             <Button
               type="primary"
