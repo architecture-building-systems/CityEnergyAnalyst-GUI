@@ -74,7 +74,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
 
   return (
     <Modal
-      title={`[${job.id}] - ${job.script_label}`}
+      title={`Job Info - ${job.script_label} [${job.scenario_name}]`}
       open={visible}
       width={800}
       footer={false}
@@ -85,6 +85,46 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         {job.state == 1 && <Alert message="Job running..." type="info" />}
         {job.state == 2 && <Alert message="Job completed" type="success" />}
         {job?.error && <Alert message={job.error} type="error" />}
+
+        <details>
+          <summary>More Info</summary>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+
+              marginBlock: 12,
+              fontFamily: 'monospace',
+            }}
+          >
+            <div>
+              id:{' '}
+              <span
+                style={{
+                  background: 'ghostwhite',
+                  borderRadius: 8,
+                  padding: 4,
+                }}
+              >
+                {job.id}
+              </span>
+            </div>
+            <div>
+              created_time: {new Date(job.created_time).toLocaleString()}
+            </div>
+            <div>
+              start_time:{' '}
+              {job?.start_time
+                ? new Date(job.start_time).toLocaleString()
+                : '-'}
+            </div>
+            <div>
+              end_time:{' '}
+              {job?.end_time ? new Date(job.end_time).toLocaleString() : '-'}
+            </div>
+          </div>
+        </details>
 
         <b>Output log:</b>
         <div
