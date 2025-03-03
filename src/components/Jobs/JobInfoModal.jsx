@@ -9,10 +9,28 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   const isFirst = useRef(true);
   const listenerFuncRef = useRef(null);
   const containerRef = useRef();
+  const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
 
   const message_appender = (data) => {
     if (data.jobid == job.id) {
       setMessage((message) => message.concat(data.message));
+    }
+  };
+
+  // Scroll to bottom if shouldScroll is true
+  const scrollToBottom = () => {
+    if (containerRef.current && shouldScrollRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  };
+
+  // Check if scroll is near bottom
+  const handleScroll = () => {
+    if (containerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      // Consider "near bottom" if within 50px of the bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+      shouldScrollRef.current = isNearBottom;
     }
   };
 
@@ -24,7 +42,9 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
           null,
           { responseType: 'text' },
         );
-        setMessage(resp.data);
+        setMessage(resp?.data ?? '');
+        // Reset shouldScroll when loading a new job
+        shouldScrollRef.current = true;
       } catch (error) {
         console.error(error);
       }
@@ -41,7 +61,16 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       socket.on('cea-worker-message', message_appender);
       isFirst.current = false;
     }
+    // Scroll to bottom when message changes
+    scrollToBottom();
   }, [message]);
+
+  // Scroll to bottom when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      setTimeout(scrollToBottom, 100); // Small delay to ensure content is rendered
+    }
+  }, [visible]);
 
   return (
     <Modal
@@ -64,11 +93,11 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
             maxHeight: 400,
             overflow: 'auto',
             fontSize: 12,
-
             border: '1px solid #ccc',
             borderRadius: 12,
             paddingInline: 18,
           }}
+          onScroll={handleScroll}
         >
           <pre
             style={{
