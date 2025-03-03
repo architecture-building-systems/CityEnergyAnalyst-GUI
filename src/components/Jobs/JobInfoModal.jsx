@@ -8,6 +8,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
   const isFirst = useRef(true);
   const listenerFuncRef = useRef(null);
+  const containerRef = useRef();
 
   const message_appender = (data) => {
     if (data.jobid == job.id) {
@@ -56,35 +57,28 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         {job.state == 2 && <Alert message="Job completed" type="success" />}
         {job?.error && <Alert message={job.error} type="error" />}
 
-        <details
+        <b>Output log:</b>
+        <div
+          ref={containerRef}
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
+            maxHeight: 400,
+            overflow: 'auto',
+            fontSize: 12,
+
+            border: '1px solid #ccc',
+            borderRadius: 12,
+            paddingInline: 18,
           }}
         >
-          <summary>Show output log</summary>
-          <div
+          <pre
             style={{
-              maxHeight: 400,
-              overflow: 'auto',
               fontSize: 12,
-
-              border: '1px solid #ccc',
-              borderRadius: 4,
-              padding: 12,
+              whiteSpace: 'pre-wrap',
             }}
           >
-            <pre
-              style={{
-                fontSize: 12,
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {message}
-            </pre>
-          </div>
-        </details>
+            {message}
+          </pre>
+        </div>
       </div>
     </Modal>
   );
