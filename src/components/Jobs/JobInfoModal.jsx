@@ -1,4 +1,4 @@
-import { Modal } from 'antd';
+import { Alert, Modal } from 'antd';
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 
@@ -44,24 +44,46 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
 
   return (
     <Modal
-      title={`Job Output for ${job.id} - ${job.script}`}
+      title={`[${job.id}] - ${job.script_label}`}
       open={visible}
       width={800}
       footer={false}
       onCancel={() => setVisible(false)}
       destroyOnClose
     >
-      <div style={{ height: '35vh' }}>
-        <pre
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {job.state == 2 && <Alert message="Job completed" type="success" />}
+        {job?.error && <Alert message={job.error} type="error" />}
+
+        <details
           style={{
-            height: '90%',
-            overflow: 'auto',
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
           }}
         >
-          {message}
-        </pre>
+          <summary>Show output log</summary>
+          <div
+            style={{
+              maxHeight: 400,
+              overflow: 'auto',
+              fontSize: 12,
+
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              padding: 12,
+            }}
+          >
+            <pre
+              style={{
+                fontSize: 12,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {message}
+            </pre>
+          </div>
+        </details>
       </div>
     </Modal>
   );
