@@ -52,6 +52,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       destroyOnClose
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {job.state == 1 && <Alert message="Job running..." type="info" />}
         {job.state == 2 && <Alert message="Job completed" type="success" />}
         {job?.error && <Alert message={job.error} type="error" />}
 
