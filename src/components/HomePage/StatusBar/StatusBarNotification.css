@@ -1,0 +1,25 @@
+.cea-job-status-notification {
+  padding: 12px !important;
+  padding-top: 18px !important;
+}
+
+.cea-job-status-notification .ant-notification-notice-icon {
+  font-size: 18px !important;
+}
+
+.cea-job-status-notification .ant-notification-notice-close-icon {
+  font-size: 12px !important;
+}
+
+.cea-job-status-notification .ant-notification-notice-message {
+  font-size: 12px !important;
+  font-weight: bold !important;
+}
+
+.cea-job-status-notification .ant-notification-notice-description {
+  font-size: 12px !important;
+}
+
+.cea-job-status-notification button {
+  font-size: 12px !important;
+}

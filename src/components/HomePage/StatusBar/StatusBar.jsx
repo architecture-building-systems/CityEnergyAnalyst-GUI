@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
 import './StatusBar.css';
+import './StatusBarNotification.css';
 import { useProjectStore } from '../../Project/store';
 
 import socket from '../../../socket';
@@ -82,7 +83,9 @@ const DismissCountdown = ({ duration, onComplete }) => {
 };
 
 const JobStatusBar = () => {
-  const [api, contextHolder] = notification.useNotification({ top: 80 });
+  const [api, contextHolder] = notification.useNotification({
+    top: 80,
+  });
   const [output, setMessage] = useState('');
   const dispatch = useDispatch();
 
@@ -101,7 +104,7 @@ const JobStatusBar = () => {
         message: job.script_label,
         description: 'Job started.',
         placement: 'top',
-
+        className: 'cea-job-status-notification',
         duration: 1,
       });
     });
@@ -115,28 +118,21 @@ const JobStatusBar = () => {
         message: job.script_label,
         description: 'Job completed.',
         placement: 'top',
-
+        className: 'cea-job-status-notification',
         duration,
         key,
         btn: (
-          <>
-            <Button type="link" onClick={() => api.destroy(key)}>
-              <DismissCountdown
-                duration={duration}
-                onComplete={() => api.destroy(key)}
-              />
-            </Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                api.destroy(key);
-                setSelectedJob(job);
-                setModalVisible(true);
-              }}
-            >
-              View Logs
-            </Button>
-          </>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              api.destroy(key);
+              setSelectedJob(job);
+              setModalVisible(true);
+            }}
+          >
+            View Logs
+          </Button>
         ),
       });
     });
@@ -153,25 +149,21 @@ const JobStatusBar = () => {
         message: job.script_label,
         description: job.error,
         placement: 'top',
-
+        className: 'cea-job-status-notification',
         duration: 0,
         key,
         btn: (
-          <>
-            <Button type="link" onClick={() => api.destroy(key)}>
-              Dismiss
-            </Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                api.destroy(key);
-                setSelectedJob(job);
-                setModalVisible(true);
-              }}
-            >
-              View Logs
-            </Button>
-          </>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              api.destroy(key);
+              setSelectedJob(job);
+              setModalVisible(true);
+            }}
+          >
+            View Logs
+          </Button>
         ),
       });
     });
