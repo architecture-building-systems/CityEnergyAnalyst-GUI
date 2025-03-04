@@ -75,11 +75,27 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
         return null;
     }
   };
+
+  const handleClick = () => {
+    setSelectedJob({ id, ...job });
+    setModalVisible(true);
+  };
+
   return (
     <div
       className="cea-job-info-card"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleClick();
+          e.preventDefault();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Job: ${job?.script_label ?? job?.script}`}
     >
       <div
         className="cea-status-bar-icon"
@@ -156,10 +172,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
           {verbose && isHovered && (
             <InformationIcon
               className="cea-job-info-icon info"
-              onClick={() => {
-                setSelectedJob({ id, ...job });
-                setModalVisible(true);
-              }}
+              onClick={handleClick}
             />
           )}
           {job.state > 1 && isHovered && (
