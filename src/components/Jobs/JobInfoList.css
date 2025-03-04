@@ -62,7 +62,7 @@
 }
 
 .cea-job-info-card-list.collapsed
-  .cea-job-info-card:not(:first-child):not(:nth-child(2)):not(:nth-child(3)) {
+  .cea-job-info-card:not(:first-child):not(:nth-child(2)) {
   display: none;
 }
 
@@ -73,15 +73,15 @@
 }
 
 .cea-job-info-card-list.collapsed .cea-job-info-card:nth-child(2) {
-  transform: translateY(-10px) scale(0.95);
+  transform: translateY(-10px) scale(0.98);
   pointer-events: none;
 
   opacity: 0.98;
 }
 
-.cea-job-info-card-list.collapsed .cea-job-info-card:nth-child(3) {
+/* .cea-job-info-card-list.collapsed .cea-job-info-card:nth-child(3) {
   transform: translateY(-20px) scale(0.9);
   pointer-events: none;
 
   opacity: 0.9;
-}
+} */

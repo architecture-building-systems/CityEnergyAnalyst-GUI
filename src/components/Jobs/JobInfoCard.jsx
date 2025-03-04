@@ -52,6 +52,12 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
         ) // Ensure UTC interpretation by adding Z
       : new Date(job.start_time)
     : null;
+  const started_ago = start_time
+    ? formatDistanceToNow(start_time, {
+        addSuffix: true,
+        includeSeconds: true,
+      })
+    : '-';
 
   const StateIcon = ({ state }) => {
     switch (state) {
@@ -97,36 +103,34 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: 12,
+
+          fontSize: 12,
         }}
       >
         <div className="cea-job-info-content-left">
           <div>
             <b>{job?.script_label ?? job?.script}</b>
           </div>
-          <small>
-            scenario: <b>{job?.scenario_name} </b>
-          </small>
-
           <div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <small>
-                started:{' '}
-                <i title={start_time ? start_time.toLocaleString() : ''}>
-                  {start_time
-                    ? formatDistanceToNow(start_time, {
-                        addSuffix: true,
-                        includeSeconds: true,
-                      })
-                    : '-'}
-                </i>
-              </small>
-              {verbose && (
-                <small>
+            scenario: <b>{job?.scenario_name} </b>
+            {!verbose && start_time && <span>[started {started_ago}]</span>}
+          </div>
+
+          {verbose && (
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div>
+                  started:{' '}
+                  <i title={start_time ? start_time.toLocaleString() : ''}>
+                    {started_ago}
+                  </i>
+                </div>
+                <div>
                   duration:{' '}
                   <i>
                     {typeof duration == 'number'
@@ -135,10 +139,10 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
                         : '< 1 minute'
                       : duration}
                   </i>
-                </small>
-              )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <div
           className="cea-job-info-content-actions"

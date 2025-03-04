@@ -234,7 +234,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           bottom: 0,
           right: 0,
 
-          marginBlock: 4,
+          marginBlock: 9,
           marginInline: 12,
         }}
       >
