@@ -234,8 +234,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           bottom: 0,
           right: 0,
 
-          marginBlock: 9,
-          marginInline: 12,
+          margin: 12,
         }}
       >
         <JobInfoList />
