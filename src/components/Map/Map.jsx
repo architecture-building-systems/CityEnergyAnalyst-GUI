@@ -28,6 +28,17 @@ import { hexToRgb } from './utils';
 
 import { INDEX_COLUMN } from '../InputEditor/constants';
 import { useSelected, useSetSelected } from '../InputEditor/store';
+import { AttributionControl } from 'maplibre-gl';
+
+const useMapAttribution = (mapRef) => {
+  // Effect to handle map attribution
+  useEffect(() => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      map.addControl(new AttributionControl(), 'top-right');
+    }
+  }, [mapRef.current]);
+};
 
 const useMapStyle = () => {
   const showMapStyleLabels = useMapStore((state) => state.mapLabels);
@@ -267,6 +278,7 @@ const DeckGLMap = ({ data, colors }) => {
   const visibility = useMapStore((state) => state.visibility);
 
   const mapStyle = useMapStyle();
+  useMapAttribution(mapRef);
 
   const buildingColor = useMemo(
     () => buildingColorFunction(colors, selected),
@@ -485,7 +497,12 @@ const DeckGLMap = ({ data, colors }) => {
         onDragStart={onDragStart}
         onContextMenu={onContextMenu}
       >
-        <Map ref={mapRef} mapStyle={mapStyle} minZoom={1} />
+        <Map
+          ref={mapRef}
+          mapStyle={mapStyle}
+          minZoom={1}
+          attributionControl={false} // Disable default attribution control
+        />
       </DeckGL>
       <div id="map-tooltip"></div>
     </>
