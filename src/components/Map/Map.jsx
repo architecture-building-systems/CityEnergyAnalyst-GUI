@@ -303,6 +303,7 @@ const DeckGLMap = ({ data, colors }) => {
           padding: 8,
         });
 
+        console.log('Camera options calculated:', cameraOptions);
         setCameraOptions(cameraOptions);
         setViewState((state) => ({
           ...state,
@@ -315,7 +316,7 @@ const DeckGLMap = ({ data, colors }) => {
         }));
       };
       zoomToBounds();
-    }
+    } else console.log('Skipping camera options calculation');
   }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
   const dataLayers = useMemo(() => {
