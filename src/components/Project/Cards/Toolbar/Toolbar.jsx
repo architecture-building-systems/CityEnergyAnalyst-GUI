@@ -8,7 +8,7 @@ import { DownOutlined } from '@ant-design/icons';
 import './Toolbar.css';
 import { useHoverGrow } from '../OverviewCard/hooks';
 
-import { animated } from '@react-spring/web';
+import { animated, to } from '@react-spring/web';
 
 import {
   DataManagementIcon,
@@ -127,6 +127,9 @@ const Toolbar = ({ onToolSelected, showTools }) => {
     ));
   }, [tools, showTooltip, onToolSelected]);
 
+  if (status == 'fetching') return <div>Loading Tools...</div>;
+  if (!showTools) return null;
+
   return (
     <div
       id="cea-card-toolbar"
@@ -142,9 +145,7 @@ const Toolbar = ({ onToolSelected, showTools }) => {
         gap: 2,
       }}
     >
-      {/* <HomeOutlined className="cea-card-toolbar-icon" />
-      <Divider className="cea-card-toolbar-divider" type="vertical" /> */}
-      {status == 'fetching' ? <div>Loading Tools</div> : showTools && toolMenus}
+      {toolMenus}
     </div>
   );
 };
