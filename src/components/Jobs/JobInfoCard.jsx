@@ -81,6 +81,12 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
     setModalVisible(true);
   };
 
+  // Add this function to prevent event propagation
+  const stopPropagation = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
     <div
       className="cea-job-info-card"
@@ -172,19 +178,28 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
           {verbose && isHovered && (
             <InformationIcon
               className="cea-job-info-icon info"
-              onClick={handleClick}
+              onClick={(e) => {
+                stopPropagation(e);
+                handleClick();
+              }}
             />
           )}
           {job.state > 1 && isHovered && (
             <BinAnimationIcon
               className="cea-job-info-icon danger shake"
-              onClick={() => dispatch(deleteJob(id))}
+              onClick={(e) => {
+                stopPropagation(e);
+                dispatch(deleteJob(id));
+              }}
             />
           )}
           {job.state < 2 && (
             <StopIcon
               className="cea-job-info-icon danger"
-              onClick={() => cancelCeaJob({ id, ...job })}
+              onClick={(e) => {
+                stopPropagation(e);
+                cancelCeaJob({ id, ...job });
+              }}
             />
           )}
         </div>
