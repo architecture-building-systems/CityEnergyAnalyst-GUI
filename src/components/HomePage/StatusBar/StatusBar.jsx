@@ -1,23 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  DownOutlined,
-  ExclamationCircleOutlined,
-  LoadingOutlined,
-  ToolFilled,
-} from '@ant-design/icons';
-
-import { Popover, notification, Button, Modal, Space } from 'antd';
-import io from 'socket.io-client';
-import axios from 'axios';
 import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
 import './StatusBar.css';
+import './StatusBarNotification.css';
+import { useProjectStore } from '../../Project/store';
 
-const socket = io(`${import.meta.env.VITE_CEA_URL}`);
+import socket from '../../../socket';
+import { Button, notification } from 'antd';
+import { useSelectedJob, useShowJobInfo } from '../../Jobs/store';
 
 const StatusBar = () => {
   return (
@@ -26,7 +17,7 @@ const StatusBar = () => {
         <CEAVersion />
       </div>
       <div id="cea-status-bar-right">
-        <JobListPopover />
+        <JobStatusBar />
       </div>
     </div>
   );
@@ -67,10 +58,116 @@ const CEAVersion = () => {
   );
 };
 
-const JobOutputLogger = () => {
-  const [message, setMessage] = useState('');
+const DismissCountdown = ({ duration, onComplete }) => {
+  const [timeLeft, setTimeLeft] = useState(duration);
 
   useEffect(() => {
+    if (timeLeft <= 0) {
+      onComplete && onComplete();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [timeLeft, onComplete]);
+
+  return (
+    <>
+      Dismiss
+      {timeLeft > 0 && <span style={{ fontWeight: 'bold' }}>({timeLeft})</span>}
+    </>
+  );
+};
+
+const JobStatusBar = () => {
+  const [api, contextHolder] = notification.useNotification({
+    top: 80,
+  });
+  const [output, setMessage] = useState('');
+  const dispatch = useDispatch();
+
+  const project = useProjectStore((state) => state.project);
+  const [, setModalVisible] = useShowJobInfo();
+  const [, setSelectedJob] = useSelectedJob();
+
+  useEffect(() => {
+    socket.on('cea-job-created', (job) => {
+      console.log('cea-job-created: job', job);
+    });
+
+    socket.on('cea-worker-started', (job) => {
+      dispatch(updateJob(job));
+      api.info({
+        message: job.script_label,
+        description: 'Job started.',
+        placement: 'top',
+        className: 'cea-job-status-notification',
+        duration: 1,
+      });
+    });
+    socket.on('cea-worker-success', (job) => {
+      dispatch(updateJob(job));
+      setMessage(`jobID: ${job.id} - completed ✅`);
+
+      const key = `open${Date.now()}`;
+      const duration = 3;
+      api.success({
+        message: job.script_label,
+        description: 'Job completed.',
+        placement: 'top',
+        className: 'cea-job-status-notification',
+        duration,
+        key,
+        btn: (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              api.destroy(key);
+              setSelectedJob(job);
+              setModalVisible(true);
+            }}
+          >
+            View Logs
+          </Button>
+        ),
+      });
+    });
+    socket.on('cea-worker-canceled', (job) => {
+      dispatch(dismissJob(job));
+      setMessage(`jobID: ${job.id} - canceled ✖️`);
+    });
+    socket.on('cea-worker-error', (job) => {
+      dispatch(updateJob(job));
+      setMessage(`jobID: ${job.id} - error ❗`);
+
+      const key = `open${Date.now()}`;
+      api.error({
+        message: job.script_label,
+        description: job.error,
+        placement: 'top',
+        className: 'cea-job-status-notification',
+        duration: 0,
+        key,
+        btn: (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              api.destroy(key);
+              setSelectedJob(job);
+              setModalVisible(true);
+            }}
+          >
+            View Logs
+          </Button>
+        ),
+      });
+    });
+
     socket.on('cea-worker-message', (data) => {
       let lines = data.message
         .split(/\r?\n/)
@@ -81,309 +178,31 @@ const JobOutputLogger = () => {
         setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
     });
 
-    socket.on('cea-worker-success', (job_info) => {
-      setMessage(`jobID: ${job_info.id} - completed`);
-    });
+    return () => {
+      socket.off('cea-job-created');
 
-    socket.on('cea-worker-error', (job_info) => {
-      console.log('cea-worker-error: job_info:', job_info);
-      setMessage(`jobID: ${job_info.id} - error`);
-    });
+      socket.off('cea-worker-started');
+      socket.off('cea-worker-success');
+      socket.off('cea-worker-canceled');
+      socket.off('cea-worker-error');
 
-    socket.on('cea-worker-canceled', (job_info) => {
-      console.log('cea-worker-canceled: job_info', job_info);
-      setMessage(`jobID: ${job_info.id} - canceled`);
-    });
-  }, []);
-
-  if (message.length < 1) return null;
-
-  return <span>{message}</span>;
-};
-
-const JobListPopover = () => {
-  const [visible, setVisible] = useState(false);
-  const jobs = useSelector((state) => state.jobs);
-  const dispatch = useDispatch();
-
-  const openNotification = (type, { id, script }) => {
-    const title = <i>{`jobID: ${id} - ${script}`}</i>;
-    const message = {
-      created: (
-        <div>
-          {title} has been <b>created</b>
-        </div>
-      ),
-      started: (
-        <div>
-          {title} has <b>started</b>
-        </div>
-      ),
-      success: (
-        <div>
-          {title} has <b>completed</b>
-        </div>
-      ),
-      canceled: (
-        <div>
-          {title} was <b>canceled</b> by user
-        </div>
-      ),
-      error: <div>{title} has encounted an error</div>,
+      socket.off('cea-worker-message');
     };
-
-    const config = {
-      key: id,
-      message: message[type],
-      placement: 'bottomRight',
-    };
-    if (type === 'started')
-      notification.open({ ...config, icon: <LoadingOutlined /> });
-    else if (type === 'created') notification['info'](config);
-    else if (type === 'canceled') notification['info'](config);
-    else {
-      notification[type](config);
-    }
-  };
-
-  useEffect(() => {
-    socket.on('cea-job-created', (job) => {
-      openNotification('created', job);
-    });
-    socket.on('cea-worker-started', (job) => {
-      openNotification('started', job);
-      dispatch(updateJob(job));
-    });
-    socket.on('cea-worker-success', (job) => {
-      openNotification('success', job);
-      dispatch(updateJob(job));
-    });
-    socket.on('cea-worker-canceled', (job) => {
-      openNotification('canceled', job);
-      dispatch(dismissJob(job));
-    });
-    socket.on('cea-worker-error', (job) => {
-      openNotification('error', job);
-      dispatch(updateJob(job));
-    });
   }, []);
 
   useEffect(() => {
+    // Refresh job list when project changes
     dispatch(fetchJobs());
-  }, []);
+  }, [project]);
 
-  return jobs ? (
-    <Popover
-      overlayClassName="cea-job-list-popover"
-      placement="topRight"
-      title={<JobListPopoverTitle jobs={jobs} setVisible={setVisible} />}
-      content={<JobListPopoverContent jobs={jobs} />}
-      open={visible}
-    >
-      <div
-        className="cea-status-bar-button"
-        onClick={() => setVisible((visible) => !visible)}
-      >
-        <JobOutputLogger />
-        <ToolFilled className="cea-job-list-popover-collapse" />
-      </div>
-    </Popover>
-  ) : null;
-};
+  if (output.length < 1) return null;
 
-const JobListPopoverTitle = ({ jobs, setVisible }) => {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        {!Object.keys(jobs).length ? 'No Jobs Running' : 'Current Jobs'}
-      </div>
-      <DownOutlined
-        style={{ fontSize: 10, alignSelf: 'center' }}
-        onClick={() => setVisible(false)}
-      />
+    <div className="cea-status-bar-button">
+      {contextHolder}
+      <span>{output}</span>
     </div>
   );
-};
-
-const JobListPopoverContent = ({ jobs }) => {
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const jobArray = Object.keys(jobs);
-
-  return (
-    <div style={{ maxHeight: 350 }}>
-      {jobArray.map((_, index) => {
-        const id = jobArray[jobArray.length - 1 - index];
-        return (
-          <JobInfoCard
-            key={id}
-            id={id}
-            job={jobs[id]}
-            setModalVisible={setModalVisible}
-            setSelectedJob={setSelectedJob}
-          />
-        );
-      })}
-      {selectedJob && (
-        <JobOutputModal
-          job={selectedJob}
-          visible={modalVisible}
-          setVisible={setModalVisible}
-        />
-      )}
-    </div>
-  );
-};
-
-const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob }) => {
-  const JOB_STATES = ['Pending', 'Running...', 'Success', 'ERROR', 'Canceled'];
-
-  const StateIcon = ({ state }) => {
-    switch (state) {
-      case 0:
-        return <ClockCircleOutlined style={{ color: 'blue', margin: 5 }} />;
-      case 1:
-        return <LoadingOutlined style={{ color: 'blue', margin: 5 }} />;
-      case 2:
-        return <CheckCircleOutlined style={{ color: 'green', margin: 5 }} />;
-      case 3:
-        return (
-          <ExclamationCircleOutlined style={{ color: 'red', margin: 5 }} />
-        );
-      case 4:
-        return <CloseCircleOutlined style={{ color: 'grey', margin: 5 }} />;
-      default:
-        return null;
-    }
-  };
-  return (
-    <div className="cea-job-info-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div>
-          <StateIcon state={job.state} />
-          <b>{`jobID: ${id} - ${job.script}`}</b>
-        </div>
-        <Space>
-          {job.state < 2 && (
-            <Button
-              size="small"
-              danger
-              onClick={() => cancelCeaJob({ id, ...job })}
-            >
-              Cancel
-            </Button>
-          )}
-          <Button
-            size="small"
-            onClick={() => {
-              setSelectedJob({ id, ...job });
-              setModalVisible(true);
-            }}
-          >
-            Show Logs
-          </Button>
-        </Space>
-      </div>
-      <div>
-        <div>
-          <small>status:</small>
-          <i>{` ${JOB_STATES[job.state]}`}</i>
-        </div>
-
-        <div>
-          <small>
-            scenario: <i>{job.parameters?.scenario}</i>
-          </small>
-          <i></i>
-        </div>
-
-        <details>
-          <summary>
-            <small>Show parameters</small>
-          </summary>
-          <pre
-            style={{
-              padding: 12,
-              fontSize: 10,
-              backgroundColor: '#f1f1f1',
-              overflow: 'auto',
-              maxHeight: 240,
-              borderRadius: 6,
-            }}
-          >
-            {JSON.stringify(job.parameters, null, 2)}
-          </pre>
-        </details>
-      </div>
-    </div>
-  );
-};
-
-const JobOutputModal = ({ job, visible, setVisible }) => {
-  const [message, setMessage] = useState('');
-  const isFirst = useRef(true);
-  const listenerFuncRef = useRef(null);
-
-  const message_appender = (data) => {
-    if (data.jobid == job.id) {
-      setMessage((message) => message.concat(data.message));
-    }
-  };
-
-  useEffect(() => {
-    const getJobOutput = async () => {
-      try {
-        const resp = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/server/streams/read/${job.id}`,
-          null,
-          { responseType: 'text' },
-        );
-        setMessage(resp.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    listenerFuncRef.current &&
-      socket.removeEventListener('cea-worker-message', listenerFuncRef.current);
-    isFirst.current = true;
-    getJobOutput();
-  }, [job]);
-
-  useEffect(() => {
-    if (isFirst.current) {
-      listenerFuncRef.current = message_appender;
-      socket.on('cea-worker-message', message_appender);
-      isFirst.current = false;
-    }
-  }, [message]);
-
-  return (
-    <Modal
-      title={`Job Output for ${job.id} - ${job.script}`}
-      open={visible}
-      width={800}
-      footer={false}
-      onCancel={() => setVisible(false)}
-      destroyOnClose
-    >
-      <div style={{ height: '35vh' }}>
-        <pre
-          style={{
-            height: '90%',
-            overflow: 'auto',
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          {message}
-        </pre>
-      </div>
-    </Modal>
-  );
-};
-
-const cancelCeaJob = (job) => {
-  axios.post(`${import.meta.env.VITE_CEA_URL}/server/jobs/cancel/${job.id}`);
 };
 
 export default StatusBar;

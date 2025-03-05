@@ -34,35 +34,3 @@
 .cea-status-bar-button:active {
   background-color: #777;
 }
-
-.cea-job-list-popover .ant-popover-inner {
-  width: 500px;
-}
-
-.cea-job-list-popover .ant-popover-inner-content {
-  background-color: #aaaaaa;
-  padding: unset;
-  overflow: auto;
-}
-
-.cea-job-list-popover-collapse:hover {
-  cursor: pointer;
-}
-
-.cea-job-info-card {
-  background-color: rgba(255, 255, 255, 1);
-  padding: 10px;
-  margin-bottom: 1px;
-}
-
-.cea-job-info-card:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-.ant-notification {
-  z-index: 1050;
-}
-
-.ant-notification:hover {
-  cursor: pointer;
-}

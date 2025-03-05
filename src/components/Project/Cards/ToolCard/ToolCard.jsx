@@ -17,20 +17,20 @@ const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
 
         height: '100%',
         boxSizing: 'border-box',
-        padding: 24,
-
-        width: '33vw',
-        minWidth: 450,
+        padding: 12,
       }}
     >
-      <Button
-        icon={<VerticalLeftOutlined />}
-        onClick={() => onClose?.(true)}
-        style={{ marginRight: 'auto', padding: 12 }}
+      <Tool
+        script={selectedTool}
+        onToolSelected={onToolSelected}
+        header={
+          <Button
+            icon={<VerticalLeftOutlined />}
+            onClick={() => onClose?.(true)}
+            style={{ marginRight: 'auto', padding: 12 }}
+          />
+        }
       />
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <Tool script={selectedTool} onToolSelected={onToolSelected} />
-      </div>
     </div>
   );
 };

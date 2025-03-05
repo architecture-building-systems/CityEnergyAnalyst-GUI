@@ -20,6 +20,7 @@ import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/Ma
 import { useProjectStore } from '../components/Project/store';
 import { useInputs } from '../hooks/queries/useInputs';
 import { useMapStore } from '../components/Map/store/store';
+import JobInfoList from '../components/Jobs/JobInfoList';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -195,24 +196,48 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         </div>
       </div>
       <div id="cea-project-overlay-right">
-        {transitionFromRight((styles, item) =>
-          item ? (
-            <animated.div
-              className="cea-overlay-card"
-              style={{
-                ...styles,
-                height: '100%',
-              }}
-            >
-              <ToolCard
+        <div id="cea-project-overlay-right-top">
+          {transitionFromRight((styles, item) =>
+            item ? (
+              <animated.div
                 className="cea-overlay-card"
-                selectedTool={selectedTool}
-                onClose={() => setShowTools(false)}
-                onToolSelected={handleToolSelected}
-              />
-            </animated.div>
-          ) : null,
-        )}
+                style={{
+                  ...styles,
+
+                  width: '33vw',
+                  minWidth: 450,
+                  height: '100%', // Make it full height
+                }}
+              >
+                <ToolCard
+                  className="cea-overlay-card"
+                  selectedTool={selectedTool}
+                  onClose={() => setShowTools(false)}
+                  onToolSelected={handleToolSelected}
+                />
+              </animated.div>
+            ) : null,
+          )}
+        </div>
+        <div id="cea-project-overlay-right-bottom"></div>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+
+          height: '33vh',
+          width: '33vw',
+          minWidth: 450,
+
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+
+          margin: 12,
+        }}
+      >
+        <JobInfoList />
       </div>
     </div>
   );

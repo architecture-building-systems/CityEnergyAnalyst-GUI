@@ -18,6 +18,10 @@
   overflow: hidden;
 }
 
+#cea-project-overlay .cea-overlay-card {
+  pointer-events: auto;
+}
+
 #cea-project-overlay-left {
   height: 100%;
   width: 100%;
@@ -31,15 +35,17 @@
 
 #cea-project-overlay-right {
   height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  gap: 12px;
 }
 
 #cea-project-overlay-left-top {
   display: flex;
   gap: 12px;
-}
-
-#cea-project-overlay .cea-overlay-card {
-  pointer-events: auto;
 }
 
 #cea-project-overlay-left-bottom {
@@ -49,6 +55,14 @@
   justify-content: flex-end;
 
   gap: 12px;
+}
+
+#cea-project-overlay-right-top {
+  height: calc(100% - 67px);
+  overflow: auto;
+}
+
+#cea-project-overlay-right-bottom {
 }
 
 #bottom-buttons .cea-card-toolbar-icon {

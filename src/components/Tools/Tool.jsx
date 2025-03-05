@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Skeleton,
@@ -188,7 +194,7 @@ const useToolForm = (
   return { form, getForm, runScript, saveParams, setDefault };
 };
 
-const Tool = withErrorBoundary(({ script, onToolSelected }) => {
+const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
   const { isSaving, error: savingError } = useSelector(
     (state) => state.toolSaving,
@@ -205,6 +211,37 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
 
   const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
   const disableButtons = fetching || _error !== null;
+
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollPositionRef = useRef(0);
+
+  const descriptionRef = useRef(null);
+  const descriptionHeightRef = useRef('auto');
+
+  // This effect will measure the actual height of the description
+  useLayoutEffect(() => {
+    if (descriptionRef.current) {
+      const height = descriptionRef.current.scrollHeight;
+      descriptionHeightRef.current = height;
+    }
+  }, [description, descriptionRef.current]);
+
+  const handleScroll = useCallback((e) => {
+    // Ensure the scroll threshold greater than the description height to prevent layout shifts
+    const scrollThreshold = descriptionHeightRef.current;
+    const currentScrollPosition = e.target.scrollTop;
+
+    // Determine scroll direction and update header visibility
+    if (
+      currentScrollPosition > lastScrollPositionRef.current &&
+      currentScrollPosition > scrollThreshold
+    ) {
+      setHeaderVisible(false); // Hide header when scrolling down past threshold
+    } else if (currentScrollPosition == 0) {
+      setHeaderVisible(true); // Show header when scrolling up or near top
+    }
+    lastScrollPositionRef.current = currentScrollPosition;
+  }, []);
 
   const checkMissingInputs = (params) => {
     fetch?.(params);
@@ -236,6 +273,11 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
 
   useEffect(() => {
     dispatch(fetchToolParams(script));
+    // Reset header visibility when the component mounts
+    setHeaderVisible(true);
+    lastScrollPositionRef.current = 0;
+    descriptionHeightRef.current = 'auto';
+
     return () => dispatch(resetToolParams());
   }, [script]);
 
@@ -255,29 +297,71 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
           height: '100%',
         }}
       >
-        <div>
-          <h3>{category}</h3>
-          <h2 style={{ display: 'inline' }}>{label}</h2>
-          <p>
-            <small style={{ whiteSpace: 'pre-line' }}>{description}</small>
-          </p>
+        <div
+          id="cea-tool-header"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <div className="cea-tool-form-buttongroup">
-              <ToolFormButtons
-                runScript={runScript}
-                saveParams={saveParams}
-                setDefault={setDefault}
-                disabled={disableButtons}
-              />
+            paddingTop: 12,
+            paddingInline: 12,
+          }}
+        >
+          <div id="cea-tool-header-content">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {header}
+              <small
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                }}
+              >
+                <span>{category}</span>
+                {!headerVisible && <b>{label}</b>}
+              </small>
             </div>
+            <div
+              id="cea-tool-header-description"
+              ref={descriptionRef}
+              style={{
+                height: headerVisible ? `${descriptionHeightRef.current}px` : 0,
+                opacity: headerVisible ? 1 : 0,
+                overflow: 'hidden',
+                transition:
+                  'height 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
+                transform: headerVisible
+                  ? 'translateY(0)'
+                  : 'translateY(-10px)',
+                transformOrigin: 'top',
+              }}
+            >
+              <div>
+                <h2>{label}</h2>
+                <p>
+                  <small style={{ whiteSpace: 'pre-line' }}>
+                    {description}
+                  </small>
+                </p>
+              </div>
+            </div>
+          </div>
 
-            <ScriptSuggestions
-              onToolSelected={onToolSelected}
-              fetching={fetching}
-              error={_error}
+          <div className="cea-tool-form-buttongroup">
+            <ToolFormButtons
+              runScript={runScript}
+              saveParams={saveParams}
+              setDefault={setDefault}
+              disabled={disableButtons}
             />
           </div>
+
+          <ScriptSuggestions
+            onToolSelected={onToolSelected}
+            fetching={fetching}
+            error={_error}
+          />
         </div>
 
         <Divider />
@@ -289,6 +373,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected }) => {
             overflowY: 'auto',
             paddingInline: 12,
           }}
+          onScroll={handleScroll}
         >
           <ToolForm
             form={form}
