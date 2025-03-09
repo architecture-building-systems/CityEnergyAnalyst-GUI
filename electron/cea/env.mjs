@@ -80,7 +80,7 @@ export const getCEAenvVersion = async () => {
 export const checkCEAenv = async () => {
   try {
     await execAsync(
-      `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run cea --help`,
+      `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run cea --version`,
     );
   } catch (error) {
     console.error(error);
