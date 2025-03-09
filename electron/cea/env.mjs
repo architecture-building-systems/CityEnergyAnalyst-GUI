@@ -113,20 +113,16 @@ const installCEA = async (ceaVersion) => {
   // Install CEA to CEA env
   try {
     await new Promise((resolve, reject) => {
-      const child = spawn(
-        `"${getMicromambaPath()}"`,
-        [
-          '-r',
-          getCEARootPath(),
-          '-n',
-          'cea',
-          'run',
-          'pip',
-          'install',
-          `git+${ceaGitUrl}`,
-        ],
-        { shell: true },
-      );
+      const child = spawn(`"${getMicromambaPath()}"`, [
+        '-r',
+        getCEARootPath(),
+        '-n',
+        'cea',
+        'run',
+        'pip',
+        'install',
+        `git+${ceaGitUrl}`,
+      ]);
 
       child.stdout.on('data', (data) => {
         console.debug(data.toString().trim());
