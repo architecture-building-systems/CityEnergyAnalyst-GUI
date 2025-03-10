@@ -55,7 +55,7 @@ export const getCEARootPath = () => {
   const _path = paths?.[process.platform]?.['root'];
 
   if (_path == null) {
-  console.debug({ ceaPath: _path });
+    console.debug({ ceaPath: _path });
     throw new CEAError('Unable to determine path to CEA environment.');
   }
 
