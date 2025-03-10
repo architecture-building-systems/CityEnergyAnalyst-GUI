@@ -41,10 +41,11 @@ const paths = {
 
 export const getMicromambaPath = (check = false) => {
   const _path = paths?.[process.platform]?.['micromamba'];
-  console.debug({ micromambaPath: _path });
 
-  if (_path == null || !existsSync(_path))
+  if (_path == null || !existsSync(_path)) {
+    console.debug({ micromambaPath: _path });
     throw new MicromambaError('Unable to find path to micromamba.');
+  }
 
   // Try running micromamba
   if (check) {
@@ -61,10 +62,11 @@ export const getMicromambaPath = (check = false) => {
 
 export const getCEARootPath = () => {
   const _path = paths?.[process.platform]?.['root'];
-  console.debug({ ceaPath: _path });
 
-  if (_path == null)
+  if (_path == null) {
+    console.debug({ ceaPath: _path });
     throw new CEAError('Unable to determine path to CEA environment.');
+  }
 
   return _path;
 };
@@ -90,7 +92,7 @@ export const checkCEAenv = async () => {
   // Check if CEA is in the environment
   try {
     await execAsync(
-      `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run cea --help`,
+      `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run cea --version`,
     );
 
     // Check if CEA is installed as editable package (i.e. dev mode)
@@ -129,20 +131,16 @@ const installCEA = async (ceaVersion) => {
   // Install CEA to CEA env
   try {
     await new Promise((resolve, reject) => {
-      const child = spawn(
-        `"${getMicromambaPath()}"`,
-        [
-          '-r',
-          getCEARootPath(),
-          '-n',
-          'cea',
-          'run',
-          'pip',
-          'install',
-          `git+${ceaGitUrl}`,
-        ],
-        { shell: true },
-      );
+      const child = spawn(getMicromambaPath(), [
+        '-r',
+        getCEARootPath(),
+        '-n',
+        'cea',
+        'run',
+        'pip',
+        'install',
+        `git+${ceaGitUrl}`,
+      ]);
 
       child.stdout.on('data', (data) => {
         console.debug(data.toString().trim());
