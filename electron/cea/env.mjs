@@ -32,10 +32,11 @@ const paths = {
 
 export const getMicromambaPath = (check = false) => {
   const _path = paths?.[process.platform]?.['micromamba'];
-  console.debug({ micromambaPath: _path });
 
-  if (_path == null || !existsSync(_path))
+  if (_path == null || !existsSync(_path)) {
+    console.debug({ micromambaPath: _path });
     throw new MicromambaError('Unable to find path to micromamba.');
+  }
 
   // Try running micromamba
   if (check) {
@@ -52,10 +53,11 @@ export const getMicromambaPath = (check = false) => {
 
 export const getCEARootPath = () => {
   const _path = paths?.[process.platform]?.['root'];
-  console.debug({ ceaPath: _path });
 
-  if (_path == null)
+  if (_path == null) {
+  console.debug({ ceaPath: _path });
     throw new CEAError('Unable to determine path to CEA environment.');
+  }
 
   return _path;
 };
