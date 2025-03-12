@@ -6,7 +6,7 @@ import {
   SolarRadiationIcon,
   GraphsIcon,
   NetworksIcon,
-  DemandForecastingIcon,
+  PlugInIcon,
   EnergyPotentialsIcon,
   LifeCycleAnalysisIcon,
 } from '../../../../assets/icons';
@@ -87,7 +87,7 @@ const MapLayersCard = () => {
 const iconMap = {
   [SOLAR_IRRADIATION]: SolarRadiationIcon,
   [THERMAL_NETWORK]: NetworksIcon,
-  [DEMAND]: DemandForecastingIcon,
+  [DEMAND]: PlugInIcon,
   [RENEWABLE_ENERGY_POTENTIALS]: EnergyPotentialsIcon,
   [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
 };
