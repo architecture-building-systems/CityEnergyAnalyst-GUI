@@ -14,6 +14,8 @@ import { push } from 'connected-react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from '../components/Project/store';
 
+import Loading from '../components/Loading/Loading';
+
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
@@ -80,7 +82,7 @@ const HomePageContent = () => {
           </Suspense>
         </Route>
         <Route path={routes.PROJECT}>
-          <Suspense>
+          <Suspense fallback={<Loading />}>
             <Project />
           </Suspense>
         </Route>
