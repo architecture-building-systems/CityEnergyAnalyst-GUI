@@ -4,7 +4,7 @@ const NumberCircleIcon = ({
   textColor = 'currentColor',
   fontSize = 12,
   strokeColor = 'currentColor',
-  strokeWidth = 1,
+  strokeWidth = 2,
   fill = 'none',
   ...props
 }) => {
