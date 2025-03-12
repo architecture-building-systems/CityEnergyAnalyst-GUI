@@ -304,7 +304,7 @@ function createSplashWindow(url) {
       }
 
       // Check if CEA server is already running, only start if not
-      sendPreflightEvent('Starting CEA Dashboard...');
+      sendPreflightEvent('Starting CEA Desktop...');
       const alive = await isCEAAlive(url);
       if (alive) {
         console.log('cea dashboard already running...');
