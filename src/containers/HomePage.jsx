@@ -22,7 +22,6 @@ const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
   () => import('../components/DatabaseEditor/DatabaseEditor'),
 );
-// const Landing = lazy(() => import('../components/Landing/Landing'));
 
 const HomePageContent = () => {
   const { initProject } = useInitProjectStore();
@@ -86,11 +85,6 @@ const HomePageContent = () => {
             <Project />
           </Suspense>
         </Route>
-        {/* <Route exact path={routes.HOME}>
-          <Suspense>
-            <Landing />
-          </Suspense>
-        </Route> */}
       </Switch>
     </ErrorBoundary>
   );
