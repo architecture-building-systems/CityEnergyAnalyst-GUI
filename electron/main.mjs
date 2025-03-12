@@ -250,7 +250,7 @@ function createSplashWindow(url) {
 
       // Start immediately if cea is already running
       if (await isCEAAlive(url)) {
-        console.log('cea dashboard already running...');
+        console.log('cea backend already running...');
         createMainWindow();
         return;
       }
@@ -307,13 +307,13 @@ function createSplashWindow(url) {
       sendPreflightEvent('Starting CEA Desktop...');
       const alive = await isCEAAlive(url);
       if (alive) {
-        console.log('cea dashboard already running...');
+        console.log('cea backend already running...');
         createMainWindow();
         return;
       } else {
-        console.log('cea dashboard not running, starting...');
+        console.log('cea backend not running, starting...');
         createCEAProcess(url, splashWindow, () => {
-          console.log('cea dashboard process created...');
+          console.log('cea backend process created...');
           createMainWindow();
           return;
         });
