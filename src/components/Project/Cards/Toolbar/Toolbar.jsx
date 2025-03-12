@@ -8,12 +8,11 @@ import { DownOutlined } from '@ant-design/icons';
 import './Toolbar.css';
 import { useHoverGrow } from '../OverviewCard/hooks';
 
-import { animated, to } from '@react-spring/web';
+import { animated } from '@react-spring/web';
 
 import {
   DataManagementIcon,
   SolarRadiationIcon,
-  DemandForecastingIcon,
   OptimisationIcon,
   UtilitiesIcon,
   EnergyPotentialsIcon,
@@ -21,6 +20,7 @@ import {
   NetworksIcon,
   ImportExportIcon,
   PlugInIcon,
+  NumberCircleIcon,
 } from '../../../../assets/icons';
 
 const useFetchTools = () => {
@@ -34,10 +34,11 @@ const useFetchTools = () => {
   return { status, tools };
 };
 
+const FALLBACK_ICON = <NumberCircleIcon number={'?'} />;
 const toolIconMap = {
   'Data Management': <DataManagementIcon />,
   'Solar Radiation Analysis': <SolarRadiationIcon />,
-  'Energy Demand Forecasting': <DemandForecastingIcon />,
+  'Energy Demand Forecasting': <PlugInIcon />,
   'Renewable Energy Potential Assessment': <EnergyPotentialsIcon />,
   'Life Cycle Analysis': <LifeCycleAnalysisIcon />,
   'Thermal Network Design': <NetworksIcon />,
@@ -52,11 +53,12 @@ const ToolMenu = ({
   onToolSelected,
   showTooltip,
   onMenuOpenChange,
+  customIcon,
 }) => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
-  const icon = toolIconMap?.[category] || <PlugInIcon />;
+  const icon = customIcon || toolIconMap?.[category] || FALLBACK_ICON;
 
   const items = useMemo(
     () =>
@@ -115,16 +117,18 @@ const Toolbar = ({ onToolSelected, showTools }) => {
   const [showTooltip, setShowTooltip] = useState(true);
 
   const toolMenus = useMemo(() => {
-    return Object.keys(tools).map((category) => (
-      <ToolMenu
-        key={category}
-        category={category}
-        tools={tools?.[category]}
-        onToolSelected={onToolSelected}
-        showTooltip={showTooltip}
-        onMenuOpenChange={(value) => setShowTooltip(!value)}
-      />
-    ));
+    return Object.keys(tools).map((category) => {
+      return (
+        <ToolMenu
+          key={category}
+          category={category}
+          tools={tools?.[category]}
+          onToolSelected={onToolSelected}
+          showTooltip={showTooltip}
+          onMenuOpenChange={(value) => setShowTooltip(!value)}
+        />
+      );
+    });
   }, [tools, showTooltip, onToolSelected]);
 
   if (status == 'fetching') return <div>Loading Tools...</div>;

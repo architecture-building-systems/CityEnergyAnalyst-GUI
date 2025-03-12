@@ -32,6 +32,8 @@ import StopIcon from './stop.svg';
 import BinIcon from './bin.svg';
 import BinAnimationIcon from './bin_animation.svg';
 
+import NumberCircleIcon from './NumberCircleIcon';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -60,4 +62,5 @@ export {
   StopIcon,
   BinIcon,
   BinAnimationIcon,
+  NumberCircleIcon,
 };
