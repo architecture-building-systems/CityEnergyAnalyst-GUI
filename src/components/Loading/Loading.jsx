@@ -70,20 +70,20 @@ const Loading = () => {
         <div style={{ width: '60%' }}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 85 33"
+            viewBox="0 0 92 33"
             fontSize={24}
           >
             <g>
               <rect
                 x="0"
                 y="0"
-                width="85"
+                width="92"
                 height="33"
                 rx="8"
                 fill="rgb(69,77,84)"
               />
               <text x="8" y="25" fill="white" fontWeight="bold">
-                CEA 4
+                CEA-<tspan dx="3">4</tspan>
               </text>
             </g>
           </svg>
