@@ -90,6 +90,7 @@
   "main": "electron/main.mjs",
   "build": {
     "appId": "com.cityenergyanalyst.gui",
+    "productName": "CEA-4 Desktop",
     "directories": {
       "output": "out"
     },
