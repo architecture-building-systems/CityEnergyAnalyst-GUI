@@ -84,6 +84,7 @@ const createMainWindow = () => {
     );
 
   mainWindow = new BrowserWindow({
+    title: 'CEA-4 Desktop',
     show: false,
     width: Math.min(display.workArea.width, 1920),
     height: Math.min(display.workArea.height, 1080),
