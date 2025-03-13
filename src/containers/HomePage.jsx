@@ -3,7 +3,7 @@ import { Route, Switch } from 'react-router-dom';
 
 import routes from '../constants/routes.json';
 import { useDispatch } from 'react-redux';
-import StatusBar from '../components/HomePage/StatusBar/StatusBar';
+import StatusBar from '../components/StatusBar/StatusBar';
 
 import './HomePage.css';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
+import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
 import './StatusBar.css';
 import './StatusBarNotification.css';
-import { useProjectStore } from '../../Project/store';
+import { useProjectStore } from '../Project/store';
 
-import socket from '../../../socket';
+import socket from '../../socket';
 import { Button, notification } from 'antd';
-import { useSelectedJob, useShowJobInfo } from '../../Jobs/store';
+import { useSelectedJob, useShowJobInfo } from '../Jobs/store';
 
 const StatusBar = () => {
   return (
@@ -96,11 +96,24 @@ const JobStatusBar = () => {
   useEffect(() => {
     socket.on('cea-job-created', (job) => {
       console.log('cea-job-created: job', job);
+
+      const key = job.id;
+      api.info({
+        key,
+        message: job.script_label,
+        description: 'Job created.',
+        placement: 'top',
+        className: 'cea-job-status-notification',
+        duration: 1,
+      });
     });
 
     socket.on('cea-worker-started', (job) => {
       dispatch(updateJob(job));
+
+      const key = job.id;
       api.info({
+        key,
         message: job.script_label,
         description: 'Job started.',
         placement: 'top',
@@ -112,18 +125,18 @@ const JobStatusBar = () => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - completed ✅`);
 
-      const key = `open${Date.now()}`;
+      const key = job.id;
       const duration = 3;
       api.success({
+        key,
         message: job.script_label,
         description: 'Job completed.',
         placement: 'top',
         className: 'cea-job-status-notification',
         duration,
-        key,
         btn: (
           <Button
-            type="primary"
+            type="default"
             size="small"
             onClick={() => {
               api.destroy(key);
@@ -144,14 +157,14 @@ const JobStatusBar = () => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - error ❗`);
 
-      const key = `open${Date.now()}`;
+      const key = job.id;
       api.error({
+        key,
         message: job.script_label,
         description: job.error,
         placement: 'top',
         className: 'cea-job-status-notification',
         duration: 0,
-        key,
         btn: (
           <Button
             type="primary"
