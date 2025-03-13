@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { fetchJobs, updateJob, dismissJob } from '../../../actions/jobs';
+import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
 import './StatusBar.css';
 import './StatusBarNotification.css';
-import { useProjectStore } from '../../Project/store';
+import { useProjectStore } from '../Project/store';
 
-import socket from '../../../socket';
+import socket from '../../socket';
 import { Button, notification } from 'antd';
-import { useSelectedJob, useShowJobInfo } from '../../Jobs/store';
+import { useSelectedJob, useShowJobInfo } from '../Jobs/store';
 
 const StatusBar = () => {
   return (
