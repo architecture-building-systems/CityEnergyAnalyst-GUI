@@ -124,6 +124,23 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
               {job?.end_time ? new Date(job.end_time).toLocaleString() : '-'}
             </div>
           </div>
+          {job?.stderr && (
+            <details>
+              <summary>Show full error log</summary>
+              <div
+                style={{
+                  maxHeight: 100,
+                  overflow: 'auto',
+                  fontSize: 9,
+                  border: '1px solid #ccc',
+                  borderRadius: 12,
+                  paddingInline: 18,
+                }}
+              >
+                <pre>{job.stderr}</pre>
+              </div>
+            </details>
+          )}
         </details>
 
         <b>Output log:</b>
