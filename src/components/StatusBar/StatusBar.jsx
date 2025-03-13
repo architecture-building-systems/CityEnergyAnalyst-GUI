@@ -136,7 +136,7 @@ const JobStatusBar = () => {
         duration,
         btn: (
           <Button
-            type="primary"
+            type="default"
             size="small"
             onClick={() => {
               api.destroy(key);
