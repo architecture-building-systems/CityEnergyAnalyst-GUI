@@ -96,11 +96,24 @@ const JobStatusBar = () => {
   useEffect(() => {
     socket.on('cea-job-created', (job) => {
       console.log('cea-job-created: job', job);
+
+      const key = job.id;
+      api.info({
+        key,
+        message: job.script_label,
+        description: 'Job created.',
+        placement: 'top',
+        className: 'cea-job-status-notification',
+        duration: 1,
+      });
     });
 
     socket.on('cea-worker-started', (job) => {
       dispatch(updateJob(job));
+
+      const key = job.id;
       api.info({
+        key,
         message: job.script_label,
         description: 'Job started.',
         placement: 'top',
@@ -112,15 +125,15 @@ const JobStatusBar = () => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - completed ✅`);
 
-      const key = `open${Date.now()}`;
+      const key = job.id;
       const duration = 3;
       api.success({
+        key,
         message: job.script_label,
         description: 'Job completed.',
         placement: 'top',
         className: 'cea-job-status-notification',
         duration,
-        key,
         btn: (
           <Button
             type="primary"
@@ -144,14 +157,14 @@ const JobStatusBar = () => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - error ❗`);
 
-      const key = `open${Date.now()}`;
+      const key = job.id;
       api.error({
+        key,
         message: job.script_label,
         description: job.error,
         placement: 'top',
         className: 'cea-job-status-notification',
         duration: 0,
-        key,
         btn: (
           <Button
             type="primary"
