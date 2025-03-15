@@ -186,9 +186,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 fontSize: 12,
               }}
             >
-              <div style={{ maxWidth: 240, margin: 12 }}>
-                <LayerToggle />
-              </div>
+              <LayerToggle />
               <MapControls />
             </div>
 
