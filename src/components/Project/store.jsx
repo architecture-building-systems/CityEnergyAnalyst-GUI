@@ -78,11 +78,15 @@ const DEFAULT_PROJECT_PROPS = {
 export const saveProjectToLocalStorage = (project) => {
   // Update recent projects in localStorage
   const storedProject = JSON.parse(
-    localStorage.getItem('cea-projects') || '{}',
+    localStorage.getItem('cea-projects') ||
+      JSON.stringify(DEFAULT_PROJECT_PROPS),
   );
 
   // Add project to recent projects if not already in the list
-  if (!storedProject.recentProjects.includes(project)) {
+  if (
+    Array.isArray(storedProject?.recentProjects) &&
+    !storedProject.recentProjects.includes(project)
+  ) {
     console.log('Adding project to recent projects:', project);
     storedProject.recentProjects = [
       project,
@@ -99,11 +103,15 @@ export const saveProjectToLocalStorage = (project) => {
 export const removeProjectFromLocalStorage = (project) => {
   // Update recent projects in localStorage
   const storedProject = JSON.parse(
-    localStorage.getItem('cea-projects') || '{}',
+    localStorage.getItem('cea-projects') ||
+      JSON.stringify(DEFAULT_PROJECT_PROPS),
   );
 
   // Remove project from recent projects if it exists
-  if (storedProject.recentProjects.includes(project)) {
+  if (
+    Array.isArray(storedProject?.recentProjects) &&
+    storedProject.recentProjects.includes(project)
+  ) {
     console.log('Removing project from recent projects:', project);
     storedProject.recentProjects = storedProject.recentProjects.filter(
       (p) => p !== project,
