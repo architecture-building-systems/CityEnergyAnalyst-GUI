@@ -185,6 +185,7 @@ const useToolForm = (
 
   const setDefault = () => {
     dispatch(setDefaultToolParams(script)).then(() => {
+      form.resetFields();
       getForm((params) => {
         callbacks?.onReset?.(params);
       });
