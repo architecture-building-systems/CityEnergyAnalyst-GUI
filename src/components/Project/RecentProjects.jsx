@@ -15,19 +15,21 @@ const OpenProjectButton = ({ onSuccess }) => {
   const [visible, setVisible] = useState(false);
 
   return (
-    <Button
-      type="primary"
-      icon={<FolderOpenOutlined />}
-      className="open-new-project-btn"
-      onClick={() => setVisible(true)}
-    >
-      Open Project
+    <>
+      <Button
+        type="primary"
+        icon={<FolderOpenOutlined />}
+        className="open-new-project-btn"
+        onClick={() => setVisible(true)}
+      >
+        Open Project
+      </Button>
       <OpenProjectModal
         visible={visible}
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
-    </Button>
+    </>
   );
 };
 
