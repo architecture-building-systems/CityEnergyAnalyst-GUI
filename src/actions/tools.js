@@ -33,7 +33,7 @@ export const fetchToolParams = (tool) =>
 export const resetToolParams = () => ({ type: RESET_TOOLPARAMS });
 
 export const saveToolParams = (tool, params) => {
-  return (dispatch) => {
+  return async (dispatch) => {
     dispatch({
       type: SAVING_TOOLPARAMS,
       payload: { isSaving: true, error: null },
@@ -65,7 +65,7 @@ export const saveToolParams = (tool, params) => {
 };
 
 export const setDefaultToolParams = (tool) => {
-  return (dispatch) => {
+  return async (dispatch) => {
     dispatch({
       type: SAVING_TOOLPARAMS,
       payload: { isSaving: true, error: null },

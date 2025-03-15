@@ -578,6 +578,15 @@ const useTableData = (tab, columns, tables) => {
                       ...(columns[tab][column]?.nullable ? [] : ['required']),
                     ],
                   };
+                case 'boolean':
+                  return {
+                    ...columnDef,
+                    editor: 'select',
+                    editorParams: {
+                      values: [true, false],
+                    },
+                    mutator: (value) => !!value,
+                  };
                 case 'Polygon':
                   // Ignore polygons for now
                   return columnDef;
