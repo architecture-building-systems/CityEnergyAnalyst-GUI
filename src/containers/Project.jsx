@@ -21,6 +21,7 @@ import { useProjectStore } from '../components/Project/store';
 import { useInputs } from '../hooks/queries/useInputs';
 import { useMapStore } from '../components/Map/store/store';
 import JobInfoList from '../components/Jobs/JobInfoList';
+import RecentProjects from '../components/Project/RecentProjects';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -32,7 +33,7 @@ const Project = () => {
 
       <InputMap project={project} scenario={scenarioName} />
 
-      {!scenarioName && <ScenarioAlert />}
+      {!project ? <RecentProjects /> : !scenarioName && <ScenarioAlert />}
     </div>
   );
 };

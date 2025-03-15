@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { useEffect } from 'react';
 import { create } from 'zustand';
 
-export const fetchInfo = async (project) => {
+const fetchInfo = async (project) => {
   if (!project) throw new Error('Project cannot be empty');
 
   const response = await axios.get(
@@ -30,48 +31,35 @@ export const useProjectStore = create((set) => ({
   isFetching: false,
   error: null,
 
+  recentProjects: [],
+
+  fetchInfo: async (project) => {
+    console.log('Fetcthing project info', project);
+    set({ isFetching: true, error: null });
+    try {
+      const { name, scenarios_list: scenariosList } = await fetchInfo(project);
+      const out = {
+        name,
+        project,
+        scenariosList,
+        isFetching: false,
+      };
+      set(out);
+      return out;
+    } catch (error) {
+      console.error('Error fetching project info:', error?.response?.data);
+      set({ isFetching: false, error });
+
+      throw error;
+    }
+  },
+
   updateScenario: (scenario) => {
     set({ scenario });
   },
 
-  fetchConfig: async () => {
-    console.log('Loading project state from config');
-    try {
-      const data = await fetchConfig();
-      const { project, scenario } = data;
-      set({
-        project,
-        scenario,
-      });
-      return data;
-    } catch (error) {
-      console.error(error);
-      set({ error });
-    }
-  },
-  fetchInfo: async (project) => {
-    console.log('Updating project info state', project);
-    set({ isFetching: true, error: null });
-    try {
-      const { name, scenarios_list: scenariosList } = await fetchInfo(project);
-      set((state) => {
-        // Set scenario to null if it does not exist in project
-        const scenario = scenariosList.includes(state.scenario)
-          ? state.scenario
-          : null;
-        return {
-          name,
-          project,
-          scenario,
-          scenariosList,
-          isFetching: false,
-        };
-      });
-      return { name, scenariosList };
-    } catch (error) {
-      console.error(error);
-      set({ isFetching: false, error });
-    }
+  setRecentProjects: (projects) => {
+    set({ recentProjects: projects });
   },
 }));
 
@@ -80,18 +68,103 @@ export const useSettingsStore = create((set) => ({
   setSettings: (value) => set({ settings: value }),
 }));
 
-export const useFetchFromConfig = () =>
-  useProjectStore((state) => state.fetchConfig);
+const DEFAULT_PROJECT_PROPS = {
+  project: null,
+  scenario: null,
+
+  recentProjects: [],
+};
+
+export const saveProjectToLocalStorage = (project) => {
+  // Update recent projects in localStorage
+  const storedProject = JSON.parse(
+    localStorage.getItem('cea-projects') || '{}',
+  );
+
+  // Add project to recent projects if not already in the list
+  if (!storedProject.recentProjects.includes(project)) {
+    console.log('Adding project to recent projects:', project);
+    storedProject.recentProjects = [
+      project,
+      ...storedProject.recentProjects.filter((p) => p !== project),
+    ].slice(0, 10); // Keep only the 10 most recent
+  }
+
+  storedProject.project = project;
+  localStorage.setItem('cea-projects', JSON.stringify(storedProject));
+
+  return storedProject;
+};
+
+export const removeProjectFromLocalStorage = (project) => {
+  // Update recent projects in localStorage
+  const storedProject = JSON.parse(
+    localStorage.getItem('cea-projects') || '{}',
+  );
+
+  // Remove project from recent projects if it exists
+  if (storedProject.recentProjects.includes(project)) {
+    console.log('Removing project from recent projects:', project);
+    storedProject.recentProjects = storedProject.recentProjects.filter(
+      (p) => p !== project,
+    );
+  }
+
+  storedProject.project = null;
+  localStorage.setItem('cea-projects', JSON.stringify(storedProject));
+
+  return storedProject;
+};
 
 export const useInitProjectStore = () => {
-  const fetchConfig = useFetchFromConfig();
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
+  const setRecentProjects = useProjectStore((state) => state.setRecentProjects);
+  const updateScenario = useProjectStore((state) => state.updateScenario);
 
-  const initProject = async () => {
-    const { project } = await fetchConfig();
-    if (project) await fetchInfo(project);
-    else console.error('Project not found', project);
-  };
+  useEffect(() => {
+    const initializeProjectFromLocalStorage = async () => {
+      try {
+        // Check localStorage for stored project and scenario
+        const storedProject = JSON.parse(
+          localStorage.getItem('cea-projects') ||
+            JSON.stringify(DEFAULT_PROJECT_PROPS),
+        );
+        console.log('storedProject:', storedProject);
 
-  return { initProject };
+        // Set recent projects
+        if (Array.isArray(storedProject?.recentProjects)) {
+          setRecentProjects(storedProject.recentProjects);
+        } else {
+          setRecentProjects([]);
+        }
+
+        // Try to fetch project info
+        if (storedProject?.project) {
+          console.log(
+            'Loading project from localStorage:',
+            storedProject.project,
+          );
+          const result = await fetchInfo(storedProject.project);
+
+          // Set scenario if it exists
+          if (
+            storedProject?.scenario &&
+            result?.scenariosList?.includes(storedProject.scenario)
+          ) {
+            updateScenario(storedProject.scenario);
+          }
+
+          return result;
+        } else {
+          console.log('No project in localStorage');
+          return DEFAULT_PROJECT_PROPS;
+        }
+      } catch (error) {
+        console.error('Error initializing project:', error);
+        return DEFAULT_PROJECT_PROPS;
+      }
+    };
+
+    initializeProjectFromLocalStorage();
+  }, []);
 };

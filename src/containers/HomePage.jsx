@@ -24,11 +24,7 @@ const DatabaseEditor = lazy(
 );
 
 const HomePageContent = () => {
-  const { initProject } = useInitProjectStore();
-
-  useEffect(() => {
-    initProject();
-  }, []);
+  useInitProjectStore();
 
   return (
     <ErrorBoundary>
