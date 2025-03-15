@@ -10,7 +10,7 @@ import {
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
-import { useInitProjectStore, useProjectStore } from '../../store';
+import { useProjectStore } from '../../store';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 import { useChangesExist } from '../../../InputEditor/store';
@@ -46,8 +46,6 @@ const OpenProjectIconButton = () => {
   const [visible, setVisible] = useState(false);
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
-  const onSuccess = async () => {};
-
   return (
     <Tooltip title="Open Project" overlayInnerStyle={{ fontSize: 12 }}>
       <animated.div
@@ -57,11 +55,7 @@ const OpenProjectIconButton = () => {
       >
         <OpenProjectIcon onClick={() => setVisible(true)} />
       </animated.div>
-      <OpenProjectModal
-        visible={visible}
-        setVisible={setVisible}
-        onSuccess={onSuccess}
-      />
+      <OpenProjectModal visible={visible} setVisible={setVisible} />
     </Tooltip>
   );
 };
@@ -92,7 +86,6 @@ const NewProjectIconButton = () => {
 
 const RefreshIconButton = () => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-  const { initProject } = useInitProjectStore();
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
@@ -120,10 +113,8 @@ const RefreshIconButton = () => {
       return;
     }
 
-    // Try to fetch from config if project is empty
-    if (!project) initProject();
-    // Refresh scenario if scenario name is given
-    else if (scenarioName) {
+    // FIXME: Implement scenario refresh
+    if (scenarioName) {
       openScenario(project, scenarioName).then((exists) => {
         if (exists) refetch();
       });
