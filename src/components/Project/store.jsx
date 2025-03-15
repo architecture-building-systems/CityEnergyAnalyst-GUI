@@ -33,6 +33,8 @@ export const useProjectStore = create((set) => ({
 
   recentProjects: [],
 
+  setProject: (project) => set({ project }),
+
   fetchInfo: async (project) => {
     console.log('Fetcthing project info', project);
     set({ isFetching: true, error: null });
@@ -63,11 +65,6 @@ export const useProjectStore = create((set) => ({
   },
 }));
 
-export const useSettingsStore = create((set) => ({
-  settings: {},
-  setSettings: (value) => set({ settings: value }),
-}));
-
 const DEFAULT_PROJECT_PROPS = {
   project: null,
   scenario: null,
@@ -75,7 +72,7 @@ const DEFAULT_PROJECT_PROPS = {
   recentProjects: [],
 };
 
-export const saveProjectToLocalStorage = (project) => {
+export const saveProjectToLocalStorage = (project, scenario = null) => {
   // Update recent projects in localStorage
   const storedProject = JSON.parse(
     localStorage.getItem('cea-projects') ||
@@ -93,8 +90,11 @@ export const saveProjectToLocalStorage = (project) => {
       ...storedProject.recentProjects.filter((p) => p !== project),
     ].slice(0, 10); // Keep only the 10 most recent
   }
-
   storedProject.project = project;
+
+  if (scenario) {
+    storedProject.scenario = scenario;
+  }
   localStorage.setItem('cea-projects', JSON.stringify(storedProject));
 
   return storedProject;
@@ -119,6 +119,7 @@ export const removeProjectFromLocalStorage = (project) => {
   }
 
   storedProject.project = null;
+  storedProject.scenario = null;
   localStorage.setItem('cea-projects', JSON.stringify(storedProject));
 
   return storedProject;
