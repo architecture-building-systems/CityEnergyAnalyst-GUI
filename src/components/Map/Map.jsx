@@ -294,49 +294,55 @@ const DeckGLMap = ({ data, colors }) => {
     [colors, selected],
   );
 
+  const calculateCameraOptions = useCallback(() => {
+    if (!mapRef.current) {
+      console.error('Map ref not found');
+      return;
+    }
+    const mapbox = mapRef.current.getMap();
+
+    // Calculate total bounds with other geometries
+    let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
+
+    if (data?.surroundings !== null && data.surroundings?.features?.length)
+      bboxPoly = turf.union(
+        turf.featureCollection([
+          bboxPoly,
+          turf.bboxPolygon(turf.bbox(data.surroundings)),
+        ]),
+      );
+
+    if (data?.trees !== null && data.trees?.features?.length)
+      bboxPoly = turf.union(
+        turf.featureCollection([
+          bboxPoly,
+          turf.bboxPolygon(turf.bbox(data.trees)),
+        ]),
+      );
+
+    const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
+      maxZoom: 16,
+      padding: 8,
+    });
+
+    console.log('Camera options calculated:', cameraOptions);
+    setCameraOptions(cameraOptions);
+    setViewState((state) => ({
+      ...state,
+      zoom: cameraOptions.zoom,
+      bearing: cameraOptions.bearing,
+      latitude: cameraOptions.center.lat,
+      longitude: cameraOptions.center.lng,
+      transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+      transitionDuration: 1000,
+    }));
+  }, [data]);
+
   useEffect(() => {
+    console.log('Calculating camera options');
     if (!data?.zone) resetCameraOptions();
     else if (mapRef.current && !cameraOptionsCalulated) {
-      const zoomToBounds = () => {
-        const mapbox = mapRef.current.getMap();
-
-        // Calculate total bounds with other geometries
-        let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
-
-        if (data?.surroundings !== null && data.surroundings?.features?.length)
-          bboxPoly = turf.union(
-            turf.featureCollection([
-              bboxPoly,
-              turf.bboxPolygon(turf.bbox(data.surroundings)),
-            ]),
-          );
-
-        if (data?.trees !== null && data.trees?.features?.length)
-          bboxPoly = turf.union(
-            turf.featureCollection([
-              bboxPoly,
-              turf.bboxPolygon(turf.bbox(data.trees)),
-            ]),
-          );
-
-        const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
-          maxZoom: 16,
-          padding: 8,
-        });
-
-        console.log('Camera options calculated:', cameraOptions);
-        setCameraOptions(cameraOptions);
-        setViewState((state) => ({
-          ...state,
-          zoom: cameraOptions.zoom,
-          bearing: cameraOptions.bearing,
-          latitude: cameraOptions.center.lat,
-          longitude: cameraOptions.center.lng,
-          transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-          transitionDuration: 1000,
-        }));
-      };
-      zoomToBounds();
+      calculateCameraOptions();
     } else console.log('Skipping camera options calculation');
   }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
