@@ -47,8 +47,14 @@ export const NetworkToggle = ({
 };
 
 const LayerToggleRadio = ({ label, value, onChange }) => {
+  const handleClick = (e) => {
+    // Prevent the click from closing the dropdown
+    e.stopPropagation();
+  };
+
   return (
-    <div className="layer-toggle">
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div className="layer-toggle" onClick={handleClick}>
       <label className="layer-toggle-label">
         <input
           type="checkbox"
@@ -176,7 +182,7 @@ export const LayerToggle = () => {
   }, [data]);
 
   return (
-    <Dropdown menu={{ items, onClick: (e) => e.preventDefault() }}>
+    <Dropdown menu={{ items }}>
       <EyeOutlined style={{ fontSize: 24, padding: 8 }} />
     </Dropdown>
   );
