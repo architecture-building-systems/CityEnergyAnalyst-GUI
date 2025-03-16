@@ -35,7 +35,16 @@ const useMapAttribution = (mapRef) => {
   useEffect(() => {
     if (mapRef.current) {
       const map = mapRef.current.getMap();
-      map.addControl(new AttributionControl(), 'top-right');
+
+      // Check if AttributionControl already exists
+      const hasAttributionControl = map._controls.some(
+        (control) => control instanceof AttributionControl,
+      );
+
+      // Only add if it doesn't exist
+      if (!hasAttributionControl) {
+        map.addControl(new AttributionControl(), 'top-right');
+      }
     }
   }, [mapRef.current]);
 };
