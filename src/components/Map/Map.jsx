@@ -113,7 +113,10 @@ const useMapLayers = () => {
           new PointCloudLayer({
             id: 'PointCloudLayer',
             data: mapLayers[name].data,
-            material: false,
+            material: {
+              ambient: 0.65,
+              specularColor: [0, 0, 0],
+            },
 
             getColor: (d) => getColor(d.value, minParam, maxParam),
             getPosition: (d) => d.position,
@@ -385,6 +388,10 @@ const DeckGLMap = ({ data, colors }) => {
           extruded: extruded,
           visible: visibility.zone,
 
+          material: {
+            specularColor: [0, 0, 0],
+          },
+
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>
             buildingColor(f.properties[INDEX_COLUMN], 'zone'),
@@ -411,6 +418,10 @@ const DeckGLMap = ({ data, colors }) => {
           filled: true,
           extruded: extruded,
           visible: visibility.surroundings,
+
+          material: {
+            specularColor: [0, 0, 0],
+          },
 
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>
