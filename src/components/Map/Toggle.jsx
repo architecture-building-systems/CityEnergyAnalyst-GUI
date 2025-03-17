@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMapStore } from './store/store';
 import { useInputs } from '../../hooks/queries/useInputs';
 import { Dropdown } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { LayersIcon } from '../../assets/icons';
 
 export const NetworkToggle = ({
   cooling,
@@ -183,7 +183,7 @@ export const LayerToggle = () => {
 
   return (
     <Dropdown menu={{ items }}>
-      <EyeOutlined style={{ fontSize: 24, padding: 8 }} />
+      <LayersIcon style={{ fontSize: 24, padding: 8 }} />
     </Dropdown>
   );
 };

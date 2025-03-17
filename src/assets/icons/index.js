@@ -21,6 +21,7 @@ import DuplicateIcon from './duplicate.svg';
 import RunIcon from './run.svg';
 import ShowHideCardsIcon from './show_hide_cards.svg';
 
+import LayersIcon from './layers.svg';
 import ExtrudeIcon from './3d.svg';
 import CameraView from './camera_view.svg';
 import Compass from './compass.svg';
@@ -53,6 +54,7 @@ export {
   DuplicateIcon,
   RunIcon,
   ShowHideCardsIcon,
+  LayersIcon,
   ExtrudeIcon,
   CameraView,
   Compass,
