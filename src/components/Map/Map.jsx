@@ -35,7 +35,16 @@ const useMapAttribution = (mapRef) => {
   useEffect(() => {
     if (mapRef.current) {
       const map = mapRef.current.getMap();
-      map.addControl(new AttributionControl(), 'top-right');
+
+      // Check if AttributionControl already exists
+      const hasAttributionControl = map._controls.some(
+        (control) => control instanceof AttributionControl,
+      );
+
+      // Only add if it doesn't exist
+      if (!hasAttributionControl) {
+        map.addControl(new AttributionControl(), 'top-right');
+      }
     }
   }, [mapRef.current]);
 };
@@ -104,7 +113,10 @@ const useMapLayers = () => {
           new PointCloudLayer({
             id: 'PointCloudLayer',
             data: mapLayers[name].data,
-            material: false,
+            material: {
+              ambient: 0.65,
+              specularColor: [0, 0, 0],
+            },
 
             getColor: (d) => getColor(d.value, minParam, maxParam),
             getPosition: (d) => d.position,
@@ -285,49 +297,55 @@ const DeckGLMap = ({ data, colors }) => {
     [colors, selected],
   );
 
+  const calculateCameraOptions = useCallback(() => {
+    if (!mapRef.current) {
+      console.error('Map ref not found');
+      return;
+    }
+    const mapbox = mapRef.current.getMap();
+
+    // Calculate total bounds with other geometries
+    let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
+
+    if (data?.surroundings !== null && data.surroundings?.features?.length)
+      bboxPoly = turf.union(
+        turf.featureCollection([
+          bboxPoly,
+          turf.bboxPolygon(turf.bbox(data.surroundings)),
+        ]),
+      );
+
+    if (data?.trees !== null && data.trees?.features?.length)
+      bboxPoly = turf.union(
+        turf.featureCollection([
+          bboxPoly,
+          turf.bboxPolygon(turf.bbox(data.trees)),
+        ]),
+      );
+
+    const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
+      maxZoom: 16,
+      padding: 8,
+    });
+
+    console.log('Camera options calculated:', cameraOptions);
+    setCameraOptions(cameraOptions);
+    setViewState((state) => ({
+      ...state,
+      zoom: cameraOptions.zoom,
+      bearing: cameraOptions.bearing,
+      latitude: cameraOptions.center.lat,
+      longitude: cameraOptions.center.lng,
+      transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+      transitionDuration: 1000,
+    }));
+  }, [data]);
+
   useEffect(() => {
+    console.log('Calculating camera options');
     if (!data?.zone) resetCameraOptions();
     else if (mapRef.current && !cameraOptionsCalulated) {
-      const zoomToBounds = () => {
-        const mapbox = mapRef.current.getMap();
-
-        // Calculate total bounds with other geometries
-        let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
-
-        if (data?.surroundings !== null && data.surroundings?.features?.length)
-          bboxPoly = turf.union(
-            turf.featureCollection([
-              bboxPoly,
-              turf.bboxPolygon(turf.bbox(data.surroundings)),
-            ]),
-          );
-
-        if (data?.trees !== null && data.trees?.features?.length)
-          bboxPoly = turf.union(
-            turf.featureCollection([
-              bboxPoly,
-              turf.bboxPolygon(turf.bbox(data.trees)),
-            ]),
-          );
-
-        const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
-          maxZoom: 16,
-          padding: 8,
-        });
-
-        console.log('Camera options calculated:', cameraOptions);
-        setCameraOptions(cameraOptions);
-        setViewState((state) => ({
-          ...state,
-          zoom: cameraOptions.zoom,
-          bearing: cameraOptions.bearing,
-          latitude: cameraOptions.center.lat,
-          longitude: cameraOptions.center.lng,
-          transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-          transitionDuration: 1000,
-        }));
-      };
-      zoomToBounds();
+      calculateCameraOptions();
     } else console.log('Skipping camera options calculation');
   }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
@@ -370,6 +388,10 @@ const DeckGLMap = ({ data, colors }) => {
           extruded: extruded,
           visible: visibility.zone,
 
+          material: {
+            specularColor: [0, 0, 0],
+          },
+
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>
             buildingColor(f.properties[INDEX_COLUMN], 'zone'),
@@ -396,6 +418,10 @@ const DeckGLMap = ({ data, colors }) => {
           filled: true,
           extruded: extruded,
           visible: visibility.surroundings,
+
+          material: {
+            specularColor: [0, 0, 0],
+          },
 
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) =>

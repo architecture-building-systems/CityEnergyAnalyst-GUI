@@ -31,7 +31,7 @@ export const toolParams = (
 ) => {
   switch (type) {
     case REQUEST_TOOLPARAMS:
-      return { ...state, status: 'fetching', error: null };
+      return { ...state, status: 'fetching', error: null, params: {} };
     case REQUEST_TOOLPARAMS_SUCCESS:
       return { ...state, params: payload, status: 'received' };
     case REQUEST_TOOLPARAMS_FAILED:

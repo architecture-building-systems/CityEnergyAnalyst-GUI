@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Form, Modal, Select } from 'antd';
 import { OpenDialogInput } from '../Tools/Parameter';
 import { checkExist } from '../../utils/file';
-import { useProjectStore } from './store';
+import { saveProjectToLocalStorage, useProjectStore } from './store';
 import { isElectron } from '../../utils/electron';
 import { useFetchProjectChoices } from './hooks';
 
@@ -21,7 +21,9 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
       await fetchInfo(project);
       setConfirmLoading(false);
       setVisible(false);
-      onSuccess?.();
+
+      saveProjectToLocalStorage(project);
+      onSuccess?.(project);
     } catch (e) {
       console.log(e);
       setConfirmLoading(false);

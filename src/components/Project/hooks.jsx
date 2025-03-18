@@ -1,6 +1,6 @@
 import routes from '../../constants/routes.json';
 import { useChangeRoute } from '../../utils/hooks';
-import { useProjectStore } from './store';
+import { saveProjectToLocalStorage, useProjectStore } from './store';
 import axios from 'axios';
 import { message } from 'antd';
 import { useEffect, useState } from 'react';
@@ -37,6 +37,8 @@ export const useOpenScenario = (route = routes.PROJECT) => {
       await updateConfigProjectInfo(project, scenarioName);
       // Change scenario
       updateScenario(scenarioName);
+      // Save to localStorage
+      saveProjectToLocalStorage(project, scenarioName);
       changeRoute();
       return true;
     } else {

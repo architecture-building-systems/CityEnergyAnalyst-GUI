@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMapStore } from './store/store';
 import { useInputs } from '../../hooks/queries/useInputs';
+import { Dropdown } from 'antd';
+import { LayersIcon } from '../../assets/icons';
 
 export const NetworkToggle = ({
   cooling,
@@ -45,8 +47,14 @@ export const NetworkToggle = ({
 };
 
 const LayerToggleRadio = ({ label, value, onChange }) => {
+  const handleClick = (e) => {
+    // Prevent the click from closing the dropdown
+    e.stopPropagation();
+  };
+
   return (
-    <div className="layer-toggle">
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div className="layer-toggle" onClick={handleClick}>
       <label className="layer-toggle-label">
         <input
           type="checkbox"
@@ -61,6 +69,79 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
   );
 };
 
+const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
+  const out = [];
+
+  if (data?.zone) {
+    out.push({
+      label: (
+        <LayerToggleRadio
+          label="Zone"
+          value="zone"
+          onChange={handleChange}
+          checked
+        />
+      ),
+    });
+  }
+
+  if (data?.surroundings) {
+    out.push({
+      label: (
+        <LayerToggleRadio
+          label="Surroundings"
+          value="surroundings"
+          onChange={handleChange}
+        />
+      ),
+    });
+  }
+
+  if (data?.trees) {
+    out.push({
+      label: (
+        <LayerToggleRadio label="Trees" value="trees" onChange={handleChange} />
+      ),
+    });
+  }
+
+  if (data?.streets) {
+    out.push({
+      label: (
+        <LayerToggleRadio
+          label="Streets"
+          value="streets"
+          onChange={handleChange}
+        />
+      ),
+    });
+  }
+
+  if (data?.dh || data?.dc) {
+    out.push({
+      label: (
+        <LayerToggleRadio
+          label="Network"
+          value="network"
+          onChange={handleChange}
+        />
+      ),
+    });
+  }
+
+  out.push({
+    label: (
+      <LayerToggleRadio
+        label="Map labels"
+        value="map_labels"
+        onChange={handleMapLabelsChange}
+      />
+    ),
+  });
+
+  return out;
+};
+
 export const LayerToggle = () => {
   const { data: inputData } = useInputs();
   const { geojsons: data } = inputData;
@@ -68,16 +149,6 @@ export const LayerToggle = () => {
   const dataLoaded = useRef(false);
   const setVisibility = useMapStore((state) => state.setVisibility);
   const setMapLabels = useMapStore((state) => state.setMapLabels);
-
-  const handleChange = (e) => {
-    const { value, checked } = e.target;
-    setVisibility(value, checked);
-  };
-
-  const handleMapLabelsChange = (e) => {
-    const { checked } = e.target;
-    setMapLabels(checked);
-  };
 
   useEffect(() => {
     // Set all layers to visible by default
@@ -96,47 +167,23 @@ export const LayerToggle = () => {
     }
   }, [data]);
 
+  const items = useMemo(() => {
+    const handleChange = (e) => {
+      const { value, checked } = e.target;
+      setVisibility(value, checked);
+    };
+
+    const handleMapLabelsChange = (e) => {
+      const { checked } = e.target;
+      setMapLabels(checked);
+    };
+
+    return generateLayerToggle(data, handleChange, handleMapLabelsChange);
+  }, [data]);
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
-        alignItems: 'center',
-      }}
-    >
-      {data?.zone && (
-        <LayerToggleRadio label="Zone" value="zone" onChange={handleChange} />
-      )}
-      {data?.surroundings && (
-        <LayerToggleRadio
-          label="Surroundings"
-          value="surroundings"
-          onChange={handleChange}
-        />
-      )}
-      {data?.trees && (
-        <LayerToggleRadio label="Trees" value="trees" onChange={handleChange} />
-      )}
-      {data?.streets && (
-        <LayerToggleRadio
-          label="Streets"
-          value="streets"
-          onChange={handleChange}
-        />
-      )}
-      {(data?.dh || data?.dc) && (
-        <LayerToggleRadio
-          label="Network"
-          value="network"
-          onChange={handleChange}
-        />
-      )}
-      <LayerToggleRadio
-        label="Map labels"
-        value="map_labels"
-        onChange={handleMapLabelsChange}
-      />
-    </div>
+    <Dropdown menu={{ items }}>
+      <LayersIcon style={{ fontSize: 24, padding: 8 }} />
+    </Dropdown>
   );
 };

@@ -42,7 +42,7 @@ const OverviewCard = ({
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 
         boxSizing: 'border-box',
-        height: '100%',
+        maxHeight: '100%',
 
         display: 'flex',
         flexDirection: 'column',
@@ -75,6 +75,26 @@ const OverviewCard = ({
           }}
         />
       </div>
+      <OverviewCardProjectInfo
+        project={project}
+        projectName={projectName}
+        scenarioName={scenarioName}
+        scenarioList={scenarioList}
+      />
+    </div>
+  );
+};
+
+const OverviewCardProjectInfo = ({
+  project,
+  projectName,
+  scenarioName,
+  scenarioList,
+}) => {
+  if (!project) return null;
+
+  return (
+    <>
       <Divider
         orientation="right"
         orientationMargin={2}
@@ -97,7 +117,7 @@ const OverviewCard = ({
         scenarioName={scenarioName}
         scenarioList={scenarioList}
       />
-    </div>
+    </>
   );
 };
 
