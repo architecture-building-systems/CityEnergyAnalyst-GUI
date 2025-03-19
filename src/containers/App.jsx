@@ -8,7 +8,7 @@ import Loading from '../components/Loading/Loading';
 
 import axios from 'axios';
 
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = process.env.NODE_ENV === 'production';
 
 const HomePage = lazy(() =>
   Promise.all([
