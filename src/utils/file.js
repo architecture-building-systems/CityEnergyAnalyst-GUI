@@ -1,5 +1,5 @@
-import axios from 'axios';
 import path from 'path-browserify';
+import { apiClient } from '../api/axios';
 
 export class FileNotFoundError extends Error {
   constructor(message, options) {
@@ -20,8 +20,7 @@ export const getContentInfo = async (
   content_type = 'directory',
 ) => {
   try {
-    const url = `${import.meta.env.VITE_CEA_URL}/api/contents`;
-    const { data } = await axios.get(url, {
+    const { data } = await apiClient.get('/api/contents', {
       params: { content_type, content_path },
     });
     return data;

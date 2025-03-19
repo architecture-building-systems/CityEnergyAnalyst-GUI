@@ -1,7 +1,6 @@
 import { Form, InputNumber, Alert } from 'antd';
 import { useContext, useEffect, useState } from 'react';
 import { FileSearchOutlined } from '@ant-design/icons';
-import axios from 'axios';
 import {
   GENERATE_ZONE_CEA,
   GENERATE_SURROUNDINGS_CEA,
@@ -11,6 +10,7 @@ import { FileDialog, SelectWithFileDialog } from './FormInput';
 import { MapFormContext } from './hooks';
 import { useFetchBuildingsFromPath } from '../../Map/hooks';
 import { isElectron } from '../../../utils/electron';
+import { apiClient } from '../../../api/axios';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -22,14 +22,11 @@ const validateGeometry = async (value, buildingType) => {
   else if (value === undefined) return Promise.reject();
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings/validate`,
-      {
-        type: 'path',
-        building: buildingType,
-        path: value,
-      },
-    );
+    const response = await apiClient.post(`/api/geometry/buildings/validate`, {
+      type: 'path',
+      building: buildingType,
+      path: value,
+    });
     console.log(response);
     return Promise.resolve();
   } catch (error) {
@@ -43,13 +40,10 @@ const validateTypology = async (value) => {
   if (value === undefined) return Promise.reject();
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_CEA_URL}/api/geometry/typology/validate`,
-      {
-        type: 'path',
-        path: value,
-      },
-    );
+    const response = await apiClient.post(`/api/geometry/typology/validate`, {
+      type: 'path',
+      path: value,
+    });
     console.log(response);
     return Promise.resolve();
   } catch (error) {

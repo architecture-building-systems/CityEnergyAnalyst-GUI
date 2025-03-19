@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { apiClient } from '../../api/axios';
 
 export const getGeocodeLocation = async (address) => {
   try {
@@ -92,14 +93,11 @@ export const useFetchBuildingsFromPath = (onFetchedBuildings) => {
     }
 
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
-        {
-          params: {
-            path,
-          },
+      const resp = await apiClient.get(`/api/geometry/buildings`, {
+        params: {
+          path,
         },
-      );
+      });
       setBuildings(resp.data);
       onFetchedBuildings?.(resp.data);
     } catch (error) {
@@ -125,15 +123,12 @@ export const useFetchBuildings = (onFetchedBuildings) => {
     setError(null);
     setFetching(true);
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
-        {
-          params: {
-            generate: true,
-            polygon: JSON.stringify(polygon),
-          },
+      const resp = await apiClient.get(`/api/geometry/buildings`, {
+        params: {
+          generate: true,
+          polygon: JSON.stringify(polygon),
         },
-      );
+      });
       setBuildings(resp.data);
       onFetchedBuildings?.(resp.data);
     } catch (error) {

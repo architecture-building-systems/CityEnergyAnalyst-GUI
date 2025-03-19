@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
@@ -19,6 +18,7 @@ import Database from './Database';
 import UseTypesDatabase from './UseTypesDatabase';
 import ValidationErrors from './ValidationErrors';
 import { useProjectStore } from '../Project/store';
+import { apiClient } from '../../api/axios';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -28,9 +28,7 @@ const useValidateDatabasePath = () => {
     try {
       setValid(null);
       setError(null);
-      await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/check`,
-      );
+      await apiClient.get(`/api/inputs/databases/check`);
       setValid(true);
     } catch (err) {
       if (err.response) setError(err.response.data.message);
@@ -176,10 +174,7 @@ const SaveDatabaseButton = () => {
     setModalVisible(true);
     try {
       console.log(databasesData);
-      await axios.put(
-        `${import.meta.env.VITE_CEA_URL}/api/inputs/databases`,
-        databasesData,
-      );
+      await apiClient.put(`/api/inputs/databases`, databasesData);
       setSuccess(true);
       dispatch(resetDatabaseChanges());
     } catch (err) {

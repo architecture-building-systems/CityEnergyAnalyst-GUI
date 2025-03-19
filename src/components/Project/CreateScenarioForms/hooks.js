@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { createContext, useEffect, useState } from 'react';
+import { apiClient } from '../../../api/axios';
 
 export const MapFormContext = createContext();
 
@@ -7,9 +7,7 @@ export const useFetchDatabases = () => {
   const [databases, setDatabases] = useState([]);
 
   const fetchDatabases = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/databases/region`,
-    );
+    const { data } = await apiClient.get(`/api/databases/region`);
     return data;
   };
 
@@ -24,9 +22,7 @@ export const useFetchWeather = () => {
   const [weather, setWeather] = useState([]);
 
   const fetchWeather = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/weather`,
-    );
+    const { data } = await apiClient.get(`/api/weather`);
     return data;
   };
 

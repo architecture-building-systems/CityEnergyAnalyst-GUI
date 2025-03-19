@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useMapStore } from '../store/store';
 import {
@@ -8,15 +7,14 @@ import {
   LIFE_CYCLE_ANALYSIS,
 } from './constants';
 import { useProjectStore } from '../../Project/store';
+import { apiClient } from '../../../api/axios';
 
 export const useGetMapLayerCategories = () => {
   const [mapLayers, setMapLayers] = useState({});
 
   const fetchMapLayerCategories = async () => {
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/map_layers/`,
-      );
+      const resp = await apiClient.get(`/api/map_layers/`);
       setMapLayers(resp.data);
     } catch (err) {
       console.error(err.response.data);
@@ -187,8 +185,8 @@ export const useMapLegends = () => {
 };
 
 const fetchMapLayer = async (category, layer_name, params) => {
-  const resp = await axios.post(
-    `${import.meta.env.VITE_CEA_URL}/api/map_layers/${category}/${layer_name}/generate`,
+  const resp = await apiClient.post(
+    `/api/map_layers/${category}/${layer_name}/generate`,
     params,
   );
   return resp.data;

@@ -9,8 +9,8 @@ import Icon, {
 } from '@ant-design/icons';
 import { Button, Card, Tooltip, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
-import axios from 'axios';
 import { ModalContext } from '../../utils/ModalManager';
+import { apiClient } from '../../api/axios';
 
 const defaultPlotStyle = {
   height: 'calc(50vh - 160px)',
@@ -28,8 +28,8 @@ const useFetchPlotDiv = (dashIndex, index, hash) => {
     const controller = new AbortController();
     const fetch = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/plots/div/${dashIndex}/${index}`,
+        const response = await apiClient.get(
+          `/plots/div/${dashIndex}/${index}`,
           {
             signal: controller.signal,
           },

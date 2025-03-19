@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from '../api/axios';
 import { httpAction } from '../store/httpMiddleware';
 
 export const REQUEST_TOOLLIST = 'REQUEST_TOOLLIST';
@@ -38,11 +38,8 @@ export const saveToolParams = (tool, params) => {
       type: SAVING_TOOLPARAMS,
       payload: { isSaving: true, error: null },
     });
-    return axios
-      .post(
-        `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/save-config`,
-        params,
-      )
+    return apiClient
+      .post(`/api/tools/${tool}/save-config`, params)
       .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,
@@ -70,8 +67,8 @@ export const setDefaultToolParams = (tool) => {
       type: SAVING_TOOLPARAMS,
       payload: { isSaving: true, error: null },
     });
-    return axios
-      .post(`${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/default`)
+    return apiClient
+      .post(`/api/tools/${tool}/default`)
       .then((response) => {
         dispatch({
           type: SAVING_TOOLPARAMS,

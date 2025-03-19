@@ -28,11 +28,11 @@ import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
 import './Tool.css';
-import axios from 'axios';
 import { ExternalLinkIcon, RunIcon } from '../../assets/icons';
 import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
+import { apiClient } from '../../api/axios';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -41,10 +41,7 @@ const useCheckMissingInputs = (tool) => {
   const fetch = async (parameters) => {
     setFetching(true);
     try {
-      await axios.post(
-        `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
-        parameters,
-      );
+      await apiClient.post(`/api/tools/${tool}/check`, parameters);
       setError(null);
     } catch (err) {
       setError(err.response.data?.detail?.script_suggestions);

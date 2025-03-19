@@ -1,19 +1,16 @@
 import routes from '../../constants/routes.json';
 import { useChangeRoute } from '../../utils/hooks';
 import { saveProjectToLocalStorage, useProjectStore } from './store';
-import axios from 'axios';
 import { message } from 'antd';
 import { useEffect, useState } from 'react';
+import { apiClient } from '../../api/axios';
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
-    const resp = await axios.put(
-      `${import.meta.env.VITE_CEA_URL}/api/project/`,
-      {
-        project,
-        scenario_name: scenarioName,
-      },
-    );
+    const resp = await apiClient.put(`/api/project/`, {
+      project,
+      scenario_name: scenarioName,
+    });
     console.log(resp.data);
     return resp.data;
   } catch (err) {
@@ -61,9 +58,7 @@ export const useFetchProjectChoices = () => {
 
   const fetchInfo = async () => {
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/project/choices`,
-      );
+      const resp = await apiClient.get(`/api/project/choices`);
       const _choices = resp.data?.projects;
       setChoices(_choices);
     } catch (err) {

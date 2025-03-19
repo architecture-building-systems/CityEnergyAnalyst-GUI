@@ -1,23 +1,18 @@
-import axios from 'axios';
 import { useEffect } from 'react';
 import { create } from 'zustand';
+import { apiClient } from '../../api/axios';
 
 const fetchInfo = async (project) => {
   if (!project) throw new Error('Project cannot be empty');
 
-  const response = await axios.get(
-    `${import.meta.env.VITE_CEA_URL}/api/project/`,
-    {
-      params: { project },
-    },
-  );
+  const response = await apiClient.get(`/api/project/`, {
+    params: { project },
+  });
   return response.data;
 };
 
 export const fetchConfig = async () => {
-  const response = await axios.get(
-    `${import.meta.env.VITE_CEA_URL}/api/project/config`,
-  );
+  const response = await apiClient.get(`/api/project/config`);
   return response.data;
 };
 

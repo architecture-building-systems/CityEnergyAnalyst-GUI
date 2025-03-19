@@ -1,8 +1,8 @@
 import { Alert, Modal } from 'antd';
-import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 
 import socket from '../../socket';
+import { apiClient } from '../../api/axios';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
@@ -37,8 +37,8 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   useEffect(() => {
     const getJobOutput = async () => {
       try {
-        const resp = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/server/streams/read/${job.id}`,
+        const resp = await apiClient.get(
+          `/server/streams/read/${job.id}`,
           null,
           { responseType: 'text' },
         );
