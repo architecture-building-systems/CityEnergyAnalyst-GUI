@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const COOKIE_NAME = import.meta.env.VITE_AUTH_COOKIE_NAME;
 
-const accessTokenCookieExists = () => {
+export const accessTokenCookieExists = () => {
   const cookies = document.cookie.split(';');
   return cookies.some((cookie) => cookie.trim().startsWith(`${COOKIE_NAME}=`));
 };
