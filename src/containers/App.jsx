@@ -6,10 +6,6 @@ import { ConnectedRouter } from 'connected-react-router';
 import routes from '../constants/routes.json';
 import Loading from '../components/Loading/Loading';
 
-import axios from 'axios';
-
-axios.defaults.withCredentials = true;
-
 const HomePage = lazy(() =>
   Promise.all([
     import('./HomePage'),
