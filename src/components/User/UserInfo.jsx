@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiClient, COOKIE_NAME } from '../../api/axios';
 import { Avatar, Button } from 'antd';
+import { useInitUserInfo, useUserInfo } from './store';
 
 const useUserLoggedIn = () => {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -29,26 +30,6 @@ const parseCookies = () => {
   return cookieObj;
 };
 
-const useUserInfo = () => {
-  const [userInfo, setUserInfo] = useState();
-
-  useEffect(() => {
-    const getUserInfoAsync = async () => {
-      try {
-        const resp = await apiClient.get('/api/user');
-        console.log('User info:', resp.data);
-        setUserInfo(resp.data);
-      } catch (error) {
-        console.log('Error getting user info:', error);
-      }
-    };
-
-    getUserInfoAsync();
-  }, []);
-
-  return userInfo;
-};
-
 const logout = async () => {
   try {
     const resp = await apiClient.delete('/api/user/logout');
@@ -61,6 +42,11 @@ const logout = async () => {
 
 const UserInfoCard = () => {
   const userInfo = useUserInfo();
+  const initUserInfo = useInitUserInfo();
+
+  useEffect(() => {
+    initUserInfo();
+  }, []);
 
   const handleLogout = async () => {
     const success = await logout();
@@ -113,11 +99,13 @@ const UserInfoCard = () => {
 };
 
 const LoginButton = () => {
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
     const currentUrl = encodeURIComponent(`${window.location.origin}`);
     const callbackUrl = encodeURIComponent(`/callback?url=${currentUrl}`);
-    window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?after_auth_return_to=${callbackUrl}`;
-  };
+    const authUrl = `${import.meta.env.VITE_AUTH_URL}/login?after_auth_return_to=${callbackUrl}`;
+
+    window.location.href = authUrl;
+  }, []);
 
   return <Button onClick={handleLogin}>Login</Button>;
 };
