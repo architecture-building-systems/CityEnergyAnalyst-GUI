@@ -159,7 +159,6 @@ const BrowserForm = () => {
         { required: true, message: 'Project name cannot be empty' },
         {
           validator: async (_, value) => {
-            console.log(choices, value);
             if (choices) {
               if (choices.includes(value)) {
                 return Promise.reject('Project name already exists');
