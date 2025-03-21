@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { COOKIE_NAME } from '../../api/axios';
 import { Avatar } from 'antd';
-import { useInitUserInfo, useUserInfo } from './store';
+import { useUserInfo } from './store';
 import LoginModal from '../Login/LoginModal';
 import LoginButton from '../Login/LoginButton';
 import LogoutButton from '../Login/LogoutButton';
@@ -35,11 +35,6 @@ const parseCookies = () => {
 
 const UserInfoCard = () => {
   const userInfo = useUserInfo();
-  const initUserInfo = useInitUserInfo();
-
-  useEffect(() => {
-    initUserInfo();
-  }, []);
 
   if (!userInfo) return null;
 
