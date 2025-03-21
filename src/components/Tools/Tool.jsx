@@ -6,16 +6,7 @@ import {
   useCallback,
 } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  Skeleton,
-  Divider,
-  Collapse,
-  Button,
-  Spin,
-  Alert,
-  message,
-  Form,
-} from 'antd';
+import { Skeleton, Divider, Collapse, Button, Spin, Alert, Form } from 'antd';
 import {
   fetchToolParams,
   saveToolParams,

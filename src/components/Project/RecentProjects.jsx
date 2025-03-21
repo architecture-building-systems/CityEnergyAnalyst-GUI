@@ -1,18 +1,20 @@
 import { useCallback, useState } from 'react';
-import { Button, Card, List, Typography } from 'antd';
+import { Button, Card, List, Spin, Typography } from 'antd';
 import {
   FolderOpenOutlined,
   HistoryOutlined,
   PlusCircleOutlined,
 } from '@ant-design/icons';
 import {
-  removeProjectFromLocalStorage,
-  saveProjectToLocalStorage,
+  useRemoveProjectFromLocalStorage,
+  useSaveProjectToLocalStorage,
   useProjectStore,
+  useProjectLoading,
 } from './store';
 import './RecentProjects.css';
 import OpenProjectModal from './OpenProjectModal';
 import NewProjectModal from './NewProjectModal';
+import { useUserInfo } from '../User/store';
 
 const { Title, Text } = Typography;
 
@@ -61,9 +63,15 @@ const NewProjectButton = ({ onSuccess }) => {
 
 const RecentProjects = () => {
   const [error, setError] = useState(null);
+  const isFetching = useProjectLoading();
+
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
   const recentProjects = useProjectStore((state) => state.recentProjects);
   const setRecentProjects = useProjectStore((state) => state.setRecentProjects);
+
+  const userInfo = useUserInfo();
+  const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
+  const removeProjectFromLocalStorage = useRemoveProjectFromLocalStorage();
 
   const handleProjectSelect = useCallback(
     async (projectPath) => {
@@ -79,6 +87,10 @@ const RecentProjects = () => {
     },
     [fetchInfo],
   );
+
+  // Project in localStorage depends on user ID
+  // Only show recent projects once user info is initialized
+  if (userInfo == null || isFetching) return null;
 
   if (!recentProjects || recentProjects.length === 0) {
     return (

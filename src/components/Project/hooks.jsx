@@ -1,6 +1,6 @@
 import routes from '../../constants/routes.json';
 import { useChangeRoute } from '../../utils/hooks';
-import { saveProjectToLocalStorage, useProjectStore } from './store';
+import { useSaveProjectToLocalStorage, useProjectStore } from './store';
 import { message } from 'antd';
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../api/axios';
@@ -22,6 +22,8 @@ export const useOpenScenario = (route = routes.PROJECT) => {
   const fetchProject = useProjectStore((state) => state.fetchInfo);
   const updateScenario = useProjectStore((state) => state.updateScenario);
   const changeRoute = useChangeRoute(route);
+
+  const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
 
   return async (project, scenarioName) => {
     console.log('Opening scenario', project, scenarioName);
