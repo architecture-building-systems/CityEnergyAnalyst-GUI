@@ -32,6 +32,7 @@ export const createJob = (script, parameters) => {
       dispatch(startJob(job_info.data.id));
     } catch (error) {
       dispatch({ type: CREATE_JOB_FAILED, payload: error });
+      throw error;
     }
   };
 };

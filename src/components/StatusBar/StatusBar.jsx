@@ -204,8 +204,8 @@ const JobStatusBar = () => {
   }, []);
 
   useEffect(() => {
-    // Refresh job list when project changes
-    dispatch(fetchJobs());
+    // Refresh job list when project changes. Only fetch if project is set.
+    if (project) dispatch(fetchJobs());
   }, [project]);
 
   if (output.length < 1) return null;

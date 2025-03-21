@@ -36,26 +36,17 @@ export const saveToolParams = (tool, params) => {
   return async (dispatch) => {
     dispatch({
       type: SAVING_TOOLPARAMS,
-      payload: { isSaving: true, error: null },
+      payload: { isSaving: true },
     });
     return apiClient
       .post(`/api/tools/${tool}/save-config`, params)
       .then((response) => {
+        return response.data;
+      })
+      .finally(() => {
         dispatch({
           type: SAVING_TOOLPARAMS,
           payload: { isSaving: false },
-        });
-        return response.data;
-      })
-      .catch((error) => {
-        dispatch({
-          type: SAVING_TOOLPARAMS,
-          payload: {
-            error: {
-              message: error?.response?.data?.message ?? error?.message,
-            },
-            isSaving: false,
-          },
         });
       });
   };
@@ -63,30 +54,21 @@ export const saveToolParams = (tool, params) => {
 
 export const setDefaultToolParams = (tool) => {
   return async (dispatch) => {
+    // Set config to default and retrieve new config
     dispatch({
       type: SAVING_TOOLPARAMS,
-      payload: { isSaving: true, error: null },
+      payload: { isSaving: true },
     });
     return apiClient
       .post(`/api/tools/${tool}/default`)
       .then((response) => {
-        dispatch({
-          type: SAVING_TOOLPARAMS,
-          payload: { isSaving: false },
-        });
         dispatch(fetchToolParams(tool));
         return response.data;
       })
-      .catch((error) => {
-        console.log(error);
+      .finally(() => {
         dispatch({
           type: SAVING_TOOLPARAMS,
-          payload: {
-            error: {
-              message: error?.response?.data?.message ?? error?.message,
-            },
-            isSaving: false,
-          },
+          payload: { isSaving: false },
         });
       });
   };

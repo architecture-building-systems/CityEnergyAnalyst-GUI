@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { apiClient, COOKIE_NAME } from '../../api/axios';
-import { Avatar, Button } from 'antd';
+import { useEffect, useState } from 'react';
+import { COOKIE_NAME } from '../../api/axios';
+import { Avatar } from 'antd';
 import { useInitUserInfo, useUserInfo } from './store';
+import LoginModal from '../Login/LoginModal';
+import LoginButton from '../Login/LoginButton';
+import LogoutButton from '../Login/LogoutButton';
 
 const useUserLoggedIn = () => {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -30,16 +33,6 @@ const parseCookies = () => {
   return cookieObj;
 };
 
-const logout = async () => {
-  try {
-    const resp = await apiClient.delete('/api/user/logout');
-    console.log('Logout:', resp.data);
-    return true;
-  } catch (error) {
-    console.log('Error logging out:', error);
-  }
-};
-
 const UserInfoCard = () => {
   const userInfo = useUserInfo();
   const initUserInfo = useInitUserInfo();
@@ -47,11 +40,6 @@ const UserInfoCard = () => {
   useEffect(() => {
     initUserInfo();
   }, []);
-
-  const handleLogout = async () => {
-    const success = await logout();
-    if (success) window.location.reload();
-  };
 
   if (!userInfo) return null;
 
@@ -90,24 +78,10 @@ const UserInfoCard = () => {
           </Avatar>
           <b>{userInfo?.display_name}</b>
         </div>
-        <Button size="small" onClick={handleLogout}>
-          Logout
-        </Button>
+        <LogoutButton />
       </div>
     </div>
   );
-};
-
-const LoginButton = () => {
-  const handleLogin = useCallback(async () => {
-    const currentUrl = encodeURIComponent(`${window.location.origin}`);
-    const callbackUrl = encodeURIComponent(`/callback?url=${currentUrl}`);
-    const authUrl = `${import.meta.env.VITE_AUTH_URL}/login?after_auth_return_to=${callbackUrl}`;
-
-    window.location.href = authUrl;
-  }, []);
-
-  return <Button onClick={handleLogin}>Login</Button>;
 };
 
 const UserInfo = () => {
@@ -117,6 +91,7 @@ const UserInfo = () => {
     return (
       <div>
         <LoginButton />
+        <LoginModal />
       </div>
     );
   }

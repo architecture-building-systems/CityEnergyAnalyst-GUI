@@ -33,6 +33,7 @@ import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
 import { apiClient } from '../../api/axios';
+import { useSetShowLoginModal } from '../Login/store';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -123,6 +124,11 @@ const useToolForm = (
   const [form] = Form.useForm();
   const dispatch = useDispatch();
 
+  const setShowLoginModal = useSetShowLoginModal();
+  const handleLogin = () => {
+    setShowLoginModal(true);
+  };
+
   // TODO: Add error callback
   const getForm = async (callback) => {
     let out = null;
@@ -168,25 +174,38 @@ const useToolForm = (
 
   const runScript = () => {
     getForm((params) => {
-      dispatch(createJob(script, params));
+      dispatch(createJob(script, params)).catch((err) => {
+        if (err.response.status === 401) handleLogin();
+        else console.log(`Error creating job: ${err}`);
+      });
     });
   };
 
   const saveParams = () => {
     getForm((params) => {
-      dispatch(saveToolParams(script, params)).then(() => {
-        callbacks?.onSave?.(params);
-      });
+      dispatch(saveToolParams(script, params))
+        .then(() => {
+          callbacks?.onSave?.(params);
+        })
+        .catch((err) => {
+          if (err.response.status === 401) return;
+          else console.log(`Error saving tool parameters: ${err}`);
+        });
     });
   };
 
   const setDefault = () => {
-    dispatch(setDefaultToolParams(script)).then(() => {
-      form.resetFields();
-      getForm((params) => {
-        callbacks?.onReset?.(params);
+    dispatch(setDefaultToolParams(script))
+      .then(() => {
+        form.resetFields();
+        getForm((params) => {
+          callbacks?.onReset?.(params);
+        });
+      })
+      .catch((err) => {
+        if (err.response.status === 401) return;
+        else console.log(`Error setting default tool parameters: ${err}`);
       });
-    });
   };
 
   return { form, getForm, runScript, saveParams, setDefault };
@@ -194,9 +213,7 @@ const useToolForm = (
 
 const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
-  const { isSaving, error: savingError } = useSelector(
-    (state) => state.toolSaving,
-  );
+  const { isSaving } = useSelector((state) => state.toolSaving);
 
   const dispatch = useDispatch();
   const {
@@ -250,7 +267,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     parameters,
     categoricalParameters,
     {
-      onSave: checkMissingInputs,
+      onSave: checkMissingInputs, // Check inputs when saving to make sure they are valid if changed
       onReset: checkMissingInputs,
     },
   );
@@ -258,16 +275,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const onMount = () => {
     getForm((params) => checkMissingInputs(params));
   };
-
-  useEffect(() => {
-    if (savingError) {
-      message.config({
-        top: 120,
-      });
-      console.error(savingError);
-      message.error(savingError?.message ?? 'Something went wrong.');
-    }
-  }, [savingError]);
 
   useEffect(() => {
     dispatch(fetchToolParams(script));
