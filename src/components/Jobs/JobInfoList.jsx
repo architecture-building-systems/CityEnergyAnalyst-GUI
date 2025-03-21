@@ -5,8 +5,10 @@ import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import JobInfoModal from './JobInfoModal';
 import { useSelectedJob, useShowJobInfo } from './store';
+import { useProjectStore } from '../Project/store';
 
 export const JobInfoList = () => {
+  const project = useProjectStore((state) => state.project);
   const jobs = useSelector((state) => state.jobs);
 
   const [selectedJob, setSelectedJob] = useSelectedJob();
@@ -56,6 +58,9 @@ export const JobInfoList = () => {
   useEffect(() => {
     goToBottom();
   }, [expanded]);
+
+  // Don't render if no project is selected
+  if (!project) return null;
 
   return (
     <>
