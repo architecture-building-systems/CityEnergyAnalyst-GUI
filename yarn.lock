@@ -1817,6 +1817,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mapbox/geojson-area@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@mapbox/geojson-area@npm:0.2.2"
+  dependencies:
+    wgs84: "npm:0.0.0"
+  checksum: 10c0/46a85e14877bbd24486f4352810b2d078ce072f4a81120b9481eb967334e5cc9d2c5ae8b2ddab2dfbe1c0822b18758b39f078339b43a18754ef514a32e95fb1c
+  languageName: node
+  linkType: hard
+
+"@mapbox/geojson-normalize@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "@mapbox/geojson-normalize@npm:0.0.1"
+  bin:
+    geojson-normalize: geojson-normalize
+  checksum: 10c0/c51e7fa1462a9152493e2b639ce0b50d4c59ed8615f79c6be509312e4db2f29741cae50ecba1b8e290ce50c50f00c892039df3a5306d15712e51a6a28fcd4ecf
+  languageName: node
+  linkType: hard
+
 "@mapbox/geojson-rewind@npm:^0.5.2":
   version: 0.5.2
   resolution: "@mapbox/geojson-rewind@npm:0.5.2"
@@ -1836,6 +1854,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mapbox/mapbox-gl-draw-static-mode@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@mapbox/mapbox-gl-draw-static-mode@npm:1.0.1"
+  checksum: 10c0/f2a7f33d2ee09d48131a798ad26c201d68781aec8ba244948ecb23ea131c564673840adad5022d75cb7e0ab228167addc81c04cad69794658f24a4f9320a7b40
+  languageName: node
+  linkType: hard
+
+"@mapbox/mapbox-gl-draw@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@mapbox/mapbox-gl-draw@npm:1.5.0"
+  dependencies:
+    "@mapbox/geojson-area": "npm:^0.2.2"
+    "@mapbox/geojson-normalize": "npm:^0.0.1"
+    "@mapbox/point-geometry": "npm:^1.1.0"
+    fast-deep-equal: "npm:^3.1.3"
+    nanoid: "npm:^5.0.9"
+  checksum: 10c0/435e55979ac7b198342568145cdd7c935a75e73f316bcb60ec89663731037c076abd030f129ee1f294a83fbd172c13d8db81666b88fe427c0846ba1574eff472
+  languageName: node
+  linkType: hard
+
 "@mapbox/martini@npm:^0.2.0":
   version: 0.2.0
   resolution: "@mapbox/martini@npm:0.2.0"
@@ -1847,6 +1885,13 @@ __metadata:
   version: 0.1.0
   resolution: "@mapbox/point-geometry@npm:0.1.0"
   checksum: 10c0/e4d861908574cb3165f5ad37b000416ebc90a2d6b3e0073191e6b6dc5074a6159d84ac5114d78557399bb429134f0d05bfb529e7902d1cb2b36d722b72ab662c
+  languageName: node
+  linkType: hard
+
+"@mapbox/point-geometry@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@mapbox/point-geometry@npm:1.1.0"
+  checksum: 10c0/fe43d00a92592a28835090722df771be50182ff5fc40705cbd571534e2397beef884a97f701869b4a99a61289700cf709f588883f4b085c034bbe722cf17155d
   languageName: node
   linkType: hard
 
@@ -6414,6 +6459,8 @@ __metadata:
     "@babel/polyfill": "npm:^7.12.1"
     "@deck.gl-community/editable-layers": "npm:9.0.0-alpha.1"
     "@handsontable/react": "npm:^3.1.2"
+    "@mapbox/mapbox-gl-draw": "npm:^1.5.0"
+    "@mapbox/mapbox-gl-draw-static-mode": "npm:^1.0.1"
     "@react-spring/web": "npm:^9.7.3"
     "@tanstack/react-query": "npm:^5.64.1"
     "@turf/turf": "npm:^7.0.0"
@@ -10310,6 +10357,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^5.0.9":
+  version: 5.1.5
+  resolution: "nanoid@npm:5.1.5"
+  bin:
+    nanoid: bin/nanoid.js
+  checksum: 10c0/e6004f1ad6c7123eeb037062c4441d44982037dc043aabb162457ef6986e99964ba98c63c975f96c547403beb0bf95bc537bd7bf9a09baf381656acdc2975c3c
+  languageName: node
+  linkType: hard
+
 "natural-compare@npm:^1.4.0":
   version: 1.4.0
   resolution: "natural-compare@npm:1.4.0"
@@ -13467,6 +13523,13 @@ __metadata:
   dependencies:
     defaults: "npm:^1.0.3"
   checksum: 10c0/5b61ca583a95e2dd85d7078400190efd452e05751a64accb8c06ce4db65d7e0b0cde9917d705e826a2e05cc2548f61efde115ffa374c3e436d04be45c889e5b4
+  languageName: node
+  linkType: hard
+
+"wgs84@npm:0.0.0":
+  version: 0.0.0
+  resolution: "wgs84@npm:0.0.0"
+  checksum: 10c0/4f4094c7149fbb50e89ab415aeb2db565c66746be18702ea82ab75c6e6e2a58b552d0898f4b8d6a16bf5824a14917577e46e04a8b20fbf9f09f06d755d381c0b
   languageName: node
   linkType: hard
 

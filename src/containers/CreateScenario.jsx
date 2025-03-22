@@ -375,12 +375,10 @@ const CreateScenario = () => {
   const { setLocation } = useCameraForBounds(
     mapRef,
     ({ cameraOptions, location }) => {
-      setViewState({
-        latitude: location.latitude,
-        longitude: location.longitude,
+      mapRef.current.flyTo({
+        center: [location.longitude, location.latitude],
         zoom: cameraOptions.zoom,
-        transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-        transitionDuration: 1000,
+        speed: 8,
       });
     },
   );

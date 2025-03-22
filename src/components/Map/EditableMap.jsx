@@ -1,77 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Map } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
+
 import positron from '../../constants/mapStyles/positron.json';
-import {
-  EditableGeoJsonLayer,
-  DrawPolygonMode,
-  ModifyMode,
-  ViewMode,
-} from '@deck.gl-community/editable-layers';
 import { Button, Input } from 'antd';
-import './EditableMap.css';
-import { DeckGL } from '@deck.gl/react';
-import { FlyToInterpolator, GeoJsonLayer } from 'deck.gl';
-import { EXAMPLE_CITIES } from '../Project/CreateScenarioForms/constants';
-import {
-  useCameraForBounds,
-  useGeocodeLocation,
-  useFetchBuildings,
-} from './hooks';
+
+import { GeoJsonLayer } from 'deck.gl';
+import { MapboxOverlay } from '@deck.gl/mapbox';
+
+import { useCameraForBounds, useFetchBuildings } from './hooks';
 import { calcBoundsAndCenter, EMPTY_FEATURE } from './utils';
 
-const defaultViewState = {
-  longitude: 0,
-  latitude: 0,
-  zoom: 0,
-  pitch: 0,
-  bearing: 0,
-};
+import { Map, useControl } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
+import LocationSearchBar from './LocationSearchBar';
+import DrawControl, { DRAW_MODES } from './DrawControl';
 
-const LocationSearchBar = ({ onLocationResult }) => {
-  const randomCity = useRef(
-    EXAMPLE_CITIES[Math.floor(Math.random() * EXAMPLE_CITIES.length)],
-  );
+import './EditableMap.css';
 
-  const { locationAddress, searchAddress, loading } =
-    useGeocodeLocation(onLocationResult);
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      Search for a location
-      <Input.Search
-        placeholder={`Example: type "${randomCity.current}”`}
-        allowClear
-        loading={loading}
-        onSearch={searchAddress}
-      />
-      {loading ? (
-        <small>Searching...</small>
-      ) : locationAddress instanceof Error ? (
-        <small style={{ color: 'red', fontStyle: 'italic' }}>
-          Location not found
-        </small>
-      ) : (
-        locationAddress && (
-          <small>
-            <i>Found location: {locationAddress?.display_name || 'Unknown'}</i>
-          </small>
-        )
-      )}
-    </div>
-  );
-};
-
-const drawModes = {
-  draw: 'Draw',
-  edit: 'Edit',
-  view: null,
-};
-
-const modeLayers = {
-  [drawModes.draw]: DrawPolygonMode,
-  [drawModes.edit]: ModifyMode,
-  [drawModes.view]: ViewMode,
+const DeckGLOverlay = (props) => {
+  const overlay = useControl(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
 };
 
 const DrawModeInterface = ({
@@ -91,7 +40,7 @@ const DrawModeInterface = ({
 
   useEffect(() => {
     // Only fetch buildings if in view mode and buildings are not already loaded
-    mode == drawModes.view &&
+    mode == DRAW_MODES.view &&
       !buildings?.features?.length &&
       polygon?.features?.length &&
       fetchBuildings(polygon);
@@ -140,15 +89,15 @@ const DrawModeInterface = ({
         {polygon?.features?.length && !fetching ? (
           <>
             <Button
-              type={mode == drawModes.edit ? 'primary' : 'default'}
+              type={mode == DRAW_MODES.edit ? 'primary' : 'default'}
               onClick={() => {
                 onModeChange(
-                  mode == drawModes.edit ? drawModes.view : drawModes.edit,
+                  mode == DRAW_MODES.edit ? DRAW_MODES.view : DRAW_MODES.edit,
                 );
-                if (mode == drawModes.edit) fetchBuildings(polygon);
+                if (mode == DRAW_MODES.edit) fetchBuildings(polygon);
               }}
             >
-              {mode == drawModes.edit ? 'Done' : 'Edit'}
+              {mode == DRAW_MODES.edit ? 'Done' : 'Edit'}
             </Button>
             <Button type="primary" onClick={onDelete} danger>
               Delete
@@ -156,8 +105,8 @@ const DrawModeInterface = ({
           </>
         ) : (
           <Button
-            type={mode === drawModes.draw ? 'primary' : 'default'}
-            onClick={() => onModeChange(drawModes.draw)}
+            type={mode === DRAW_MODES.draw ? 'primary' : 'default'}
+            onClick={() => onModeChange(DRAW_MODES.draw)}
             loading={fetching}
           >
             Draw
@@ -174,8 +123,6 @@ const EditableMap = ({
   viewState,
   onViewStateChange,
 
-  controller,
-
   onMapLoad,
 
   onPolygonChange,
@@ -186,6 +133,18 @@ const EditableMap = ({
   drawingMode = false,
 }) => {
   const mapRef = useRef();
+  const drawRef = useRef(null);
+
+  const { setLocation } = useCameraForBounds(
+    mapRef,
+    ({ cameraOptions, location }) => {
+      mapRef.current.flyTo({
+        center: [location.longitude, location.latitude],
+        zoom: cameraOptions.zoom,
+        speed: 8,
+      });
+    },
+  );
 
   const handleViewStateChange = useCallback(
     ({ viewState }) => {
@@ -194,24 +153,30 @@ const EditableMap = ({
     [onViewStateChange],
   );
 
-  const { setLocation } = useCameraForBounds(
-    mapRef,
-    ({ cameraOptions, location }) => {
-      onViewStateChange({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        zoom: cameraOptions.zoom,
-        transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-        transitionDuration: 1000,
-      });
-
-      // Trigger a refresh so that map is zoomed correctly
-      mapRef.current.zoomTo(cameraOptions.zoom);
-    },
-  );
-
-  const [mode, setMode] = useState(drawModes.view);
+  const [mode, setMode] = useState(DRAW_MODES.view);
   const [data, setData] = useState(initialValues?.polygon || EMPTY_FEATURE);
+
+  const handleModeChange = (mode) => {
+    console.log('handleModeChange:', mode);
+    if (!drawRef.current || !mapRef.current) return;
+
+    if (mode === DRAW_MODES.draw) {
+      drawRef.current.changeMode(DRAW_MODES.draw);
+    } else if (mode === DRAW_MODES.edit) {
+      // Select the first feature if there is one
+      const features = drawRef.current.getAll().features;
+      if (features.length > 0) {
+        drawRef.current.changeMode(DRAW_MODES.edit, {
+          featureId: features[0].id,
+        });
+      }
+    } else {
+      drawRef.current.changeMode(DRAW_MODES.view);
+    }
+
+    setMode(mode);
+  };
+
   const triggerDataChange = useCallback(
     (data) => {
       setData(data);
@@ -231,27 +196,49 @@ const EditableMap = ({
     [onFetchedBuildings],
   );
 
-  const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState([]);
-
-  const editableLayer = new EditableGeoJsonLayer({
-    id: 'editable-layer',
-    data: data,
-    mode: modeLayers[mode],
-    selectedFeatureIndexes: selectedFeatureIndexes,
-
-    onEdit: (e) => {
-      if (e.editType === 'addFeature') {
-        triggerDataChange(e.updatedData);
-        setMode(drawModes.view);
-      } else if (
-        ['removePosition', 'movePosition', 'addPosition'].includes(e.editType)
-      ) {
-        triggerDataChange(e.updatedData);
-      }
+  // Handle draw events
+  const handleDrawCreate = useCallback(
+    (e) => {
+      console.log('draw create:', e);
+      const updatedData = {
+        type: 'FeatureCollection',
+        features: e.features,
+      };
+      triggerDataChange(updatedData);
     },
+    [triggerDataChange, mode],
+  );
 
-    visible: drawingMode,
-  });
+  const handleDrawUpdate = useCallback(
+    (e) => {
+      console.log('draw update:', e);
+      const updatedData = {
+        type: 'FeatureCollection',
+        features: e.features,
+      };
+      triggerDataChange(updatedData);
+    },
+    [triggerDataChange],
+  );
+
+  const handleDrawDelete = useCallback(() => {
+    // Remove polygon
+    triggerDataChange(EMPTY_FEATURE);
+    // Remove buildings
+    handleFetchedBuildingsChange(EMPTY_FEATURE);
+
+    // Clear draw
+    if (drawRef.current) {
+      console.log('Clearing draw');
+      drawRef.current.deleteAll();
+    }
+  }, [drawRef.current]);
+
+  // Calculate bounds and center for fetched buildings
+  useEffect(() => {
+    if (drawingMode && fetchedBuildings?.features?.length)
+      setLocation(calcBoundsAndCenter(fetchedBuildings));
+  }, [drawingMode, fetchedBuildings, setLocation]);
 
   const fetchedBuildingsLayer = new GeoJsonLayer({
     id: 'fetched-buildings-layer',
@@ -273,26 +260,6 @@ const EditableMap = ({
     visible: !drawingMode,
   });
 
-  const clearGeometries = () => {
-    // Remove polygon
-    triggerDataChange(EMPTY_FEATURE);
-    // Remove buildings
-    handleFetchedBuildingsChange(EMPTY_FEATURE);
-    setSelectedFeatureIndexes([]);
-  };
-
-  useEffect(() => {
-    if (mode === drawModes.draw) triggerDataChange(EMPTY_FEATURE);
-    else if (mode === drawModes.edit) setSelectedFeatureIndexes([0]);
-    // view mode
-    else setSelectedFeatureIndexes([]);
-  }, [mode]);
-
-  useEffect(() => {
-    if (drawingMode && fetchedBuildings?.features?.length)
-      setLocation(calcBoundsAndCenter(fetchedBuildings));
-  }, [drawingMode]);
-
   return (
     <>
       {drawingMode && (
@@ -302,31 +269,44 @@ const EditableMap = ({
           polygon={data}
           onFetchedBuildings={handleFetchedBuildingsChange}
           onLocationResult={setLocation}
-          onModeChange={setMode}
-          onDelete={clearGeometries}
+          onModeChange={handleModeChange}
+          onDelete={handleDrawDelete}
         />
       )}
 
-      <div onContextMenu={(e) => e.preventDefault()}>
-        <DeckGL
-          viewState={viewState || defaultViewState}
-          controller={
-            controller ? { dragRotate: false, doubleClickZoom: false } : false
-          }
-          layers={[editableLayer, fetchedBuildingsLayer, zoneBuildingsLayer]}
-          onViewStateChange={handleViewStateChange}
-        >
-          <Map
-            mapStyle={positron}
-            onLoad={(e) => {
-              const mapbox = e.target;
-              // Store the map instance in the ref
-              mapRef.current = mapbox;
+      <div
+        onContextMenu={(e) => e.preventDefault()}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <Map
+          {...viewState}
+          onMove={handleViewStateChange}
+          mapStyle={positron}
+          onLoad={(e) => {
+            const mapbox = e.target;
+            // Store the map instance in the ref
+            mapRef.current = mapbox;
 
-              onMapLoad?.(e);
-            }}
-          />
-        </DeckGL>
+            // Disable default dragRotate
+            mapbox.dragRotate.disable();
+
+            onMapLoad?.(e);
+          }}
+        >
+          {drawingMode && (
+            <DrawControl
+              ref={drawRef}
+              position="top-right"
+              displayControlsDefault={false}
+              initialPolygon={data}
+              onCreate={handleDrawCreate}
+              onUpdate={handleDrawUpdate}
+              onDelete={handleDrawDelete}
+              onModeChange={({ mode }) => handleModeChange(mode)}
+            />
+          )}
+          <DeckGLOverlay layers={[fetchedBuildingsLayer, zoneBuildingsLayer]} />
+        </Map>
       </div>
     </>
   );
