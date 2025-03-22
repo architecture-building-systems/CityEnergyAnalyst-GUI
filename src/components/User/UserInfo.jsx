@@ -38,6 +38,9 @@ const UserInfoCard = () => {
 
   if (!userInfo) return null;
 
+  console.log('userInfo:', userInfo);
+  const displayName = userInfo?.display_name || userInfo?.primary_email;
+
   return (
     <div
       style={{
@@ -69,9 +72,9 @@ const UserInfoCard = () => {
             size="large"
             src={userInfo?.profile_image_url}
           >
-            {userInfo?.display_name?.[0]}
+            {displayName?.[0]}
           </Avatar>
-          <b>{userInfo?.display_name}</b>
+          <b>{displayName}</b>
         </div>
         <LogoutButton />
       </div>
