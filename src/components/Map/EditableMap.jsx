@@ -35,6 +35,8 @@ const DrawModeInterface = ({
 
   onDelete,
 }) => {
+  const prevModeRef = useRef(null);
+
   const { fetchBuildings, fetching, error } =
     useFetchBuildings(onFetchedBuildings); // Store fetched buildings in parent context
 
@@ -45,6 +47,15 @@ const DrawModeInterface = ({
       polygon?.features?.length &&
       fetchBuildings(polygon);
   }, [mode, polygon, fetchBuildings, buildings?.features?.length]);
+
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      if (prevModeRef.current === DRAW_MODES.edit && mode === DRAW_MODES.view)
+        fetchBuildings(polygon);
+
+      prevModeRef.current = mode;
+    }
+  }, [mode]);
 
   return (
     <>
@@ -94,7 +105,6 @@ const DrawModeInterface = ({
                 onModeChange(
                   mode == DRAW_MODES.edit ? DRAW_MODES.view : DRAW_MODES.edit,
                 );
-                if (mode == DRAW_MODES.edit) fetchBuildings(polygon);
               }}
             >
               {mode == DRAW_MODES.edit ? 'Done' : 'Edit'}
