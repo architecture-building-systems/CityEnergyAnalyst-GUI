@@ -3,6 +3,10 @@
   cursor: pointer;
 }
 
+.cea-card-toolbar-icon.inverted:not(.active):hover {
+  background-color: #dadada;
+}
+
 .cea-card-toolbar-icon {
   padding: 12px;
   border-radius: 12px;
