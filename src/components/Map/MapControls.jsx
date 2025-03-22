@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import { useMapStore } from './store/store';
 import { CameraView, Compass, ExtrudeIcon } from '../../assets/icons';
 import { useInputs } from '../../hooks/queries/useInputs';
+import LayerToggle from './LayerToggle';
 
 const buttonStyle = {
   fontSize: 24,
@@ -81,6 +82,7 @@ const MapControls = () => {
     <div id="map-controls">
       {data?.zone && (
         <>
+          <LayerToggle />
           <ExtrudeButton />
           <ResetCameraButton />
         </>

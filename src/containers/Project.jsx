@@ -12,7 +12,6 @@ import BottomToolButtons from '../components/Project/Cards/BottomToolBottons/Bot
 import { useTransition, animated } from '@react-spring/web';
 import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
-import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
 import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
 import { useToolStore } from '../components/Tools/store';
@@ -198,7 +197,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 fontSize: 12,
               }}
             >
-              <LayerToggle />
               <MapControls />
             </div>
 

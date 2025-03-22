@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMapStore } from './store/store';
 import { useInputs } from '../../hooks/queries/useInputs';
-import { Dropdown } from 'antd';
+import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from '../../assets/icons';
 
 export const NetworkToggle = ({
@@ -128,8 +128,15 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
       ),
     });
   }
+  if (out.length > 0) out.unshift({ type: 'group', label: 'Data' });
 
   out.push({
+    type: 'group',
+    label: 'Map Style',
+  });
+
+  out.push({
+    key: 'map_labels',
     label: (
       <LayerToggleRadio
         label="Map labels"
@@ -142,7 +149,7 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
   return out;
 };
 
-export const LayerToggle = () => {
+const LayerToggle = () => {
   const { data: inputData } = useInputs();
   const { geojsons: data } = inputData;
 
@@ -182,8 +189,27 @@ export const LayerToggle = () => {
   }, [data]);
 
   return (
-    <Dropdown menu={{ items }}>
-      <LayersIcon style={{ fontSize: 24, padding: 8 }} />
-    </Dropdown>
+    <Tooltip title="Toggle Layers" overlayInnerStyle={{ fontSize: 12 }}>
+      <div>
+        <Dropdown
+          menu={{ items }}
+          trigger={['click']}
+          dropdownRender={(menu) => (
+            <div style={{ marginBottom: '10px' }}>{menu}</div>
+          )}
+          placement="top"
+        >
+          <LayersIcon
+            style={{
+              fontSize: 24,
+              padding: 8,
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      </div>
+    </Tooltip>
   );
 };
+
+export default LayerToggle;

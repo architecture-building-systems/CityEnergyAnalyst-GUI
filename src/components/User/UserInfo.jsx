@@ -38,7 +38,6 @@ const UserInfoCard = () => {
 
   if (!userInfo) return null;
 
-  console.log('userInfo:', userInfo);
   const displayName = userInfo?.display_name || userInfo?.primary_email;
 
   return (
