@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import routes from '../constants/routes.json';
@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from '../components/Project/store';
 
 import Loading from '../components/Loading/Loading';
+import { apiClient } from '../api/axios';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -22,6 +23,26 @@ const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
   () => import('../components/DatabaseEditor/DatabaseEditor'),
 );
+
+const useCheckServerStatus = () => {
+  const [isServerUp, setIsServerUp] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      apiClient.get('/server/version').then(({ data }) => {
+        if (data?.version) {
+          console.log(`City Energy Analyst v${data.version}`);
+          setIsServerUp(true);
+          clearInterval(interval);
+        } else {
+          console.log('Waiting for connetion to server...');
+        }
+      });
+    }, 1500);
+  }, []);
+
+  return isServerUp;
+};
 
 const HomePageContent = () => {
   useInitProjectStore();
@@ -121,6 +142,9 @@ const Cardwrapper = ({ children, style }) => {
 
 const queryClient = new QueryClient();
 const HomePage = () => {
+  const isServerUp = useCheckServerStatus();
+  if (!isServerUp) return <Loading />;
+
   return (
     <ConfigProvider
       theme={{
