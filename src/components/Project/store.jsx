@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 import { apiClient } from '../../api/axios';
-import { useInitUserInfo, useUserInfo } from '../User/store';
+import { useUserInfo } from '../User/store';
 
 const DEFAULT_PROJECT_PROPS = {
   project: 'reference-case-open',
@@ -151,15 +151,10 @@ export const useInitProjectStore = () => {
   // Require user info to be initialized before initializing project store
   const userInfo = useUserInfo();
   const userID = userInfo?.id;
-  const initUserInfo = useInitUserInfo();
 
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
   const setRecentProjects = useProjectStore((state) => state.setRecentProjects);
   const updateScenario = useProjectStore((state) => state.updateScenario);
-
-  useEffect(() => {
-    initUserInfo();
-  }, []);
 
   useEffect(() => {
     const initializeProjectFromLocalStorage = async () => {
