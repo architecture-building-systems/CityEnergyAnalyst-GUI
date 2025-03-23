@@ -2,9 +2,18 @@ import axios from 'axios';
 
 export const COOKIE_NAME = import.meta.env.VITE_AUTH_COOKIE_NAME;
 
-export const accessTokenCookieExists = () => {
+export const getAccessTokenFromCookies = () => {
   const cookies = document.cookie.split(';');
-  return cookies.some((cookie) => cookie.trim().startsWith(`${COOKIE_NAME}=`));
+
+  const tokenCookie = cookies.find((cookie) =>
+    cookie.trim().startsWith(`${COOKIE_NAME}=`),
+  );
+
+  if (tokenCookie) {
+    return tokenCookie.trim().substring(`${COOKIE_NAME}=`.length);
+  }
+
+  return null;
 };
 
 export const apiClient = axios.create({
@@ -13,7 +22,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    config.withCredentials = accessTokenCookieExists();
+    config.withCredentials = !!getAccessTokenFromCookies();
     return config;
   },
   (error) => {
