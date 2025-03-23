@@ -59,7 +59,6 @@
 
 #cea-project-overlay-right-top {
   height: calc(100% - 67px);
-  overflow: auto;
 }
 
 #cea-project-overlay-right-bottom {
