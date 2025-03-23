@@ -25,6 +25,7 @@ import {
   useSetSelected,
 } from './store';
 import ErrorBoundary from 'antd/lib/alert/ErrorBoundary';
+import { useSetShowLoginModal } from '../Login/store';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
@@ -83,6 +84,8 @@ const InputEditorButtons = ({ changes }) => {
   const resyncInputs = useResyncInputs();
   const discardChangesFunc = useDiscardChanges();
 
+  const setShowLoginModal = useSetShowLoginModal();
+
   const discardChanges = async () => {
     // TODO: Throw error
     await resyncInputs();
@@ -115,11 +118,14 @@ const InputEditorButtons = ({ changes }) => {
             message.success('Changes Saved!');
           })
           .catch((error) => {
-            Modal.error({
-              title: 'Could not save changes',
-              content: <AsyncError error={error} />,
-              width: '80vw',
-            });
+            if (error.response.status === 401) setShowLoginModal(true);
+            else {
+              Modal.error({
+                title: 'Could not save changes',
+                content: <AsyncError error={error} />,
+                width: '80vw',
+              });
+            }
           });
       },
     });
