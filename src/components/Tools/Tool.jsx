@@ -277,15 +277,29 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     return () => dispatch(resetToolParams());
   }, [script]);
 
-  if (status == 'fetching') return <Skeleton active />;
-  if (status == 'failed') {
+  if (status == 'fetching')
+    return (
+      <div style={{ padding: 12 }}>
+        {header}
+        <Skeleton active />
+        <div className="cea-tool-form-buttongroup">
+          <Skeleton.Button active />
+          <Skeleton.Button active />
+          <Skeleton.Button active />
+        </div>
+        <Divider />
+        <Skeleton active />
+        <Skeleton active />
+        <Skeleton active />
+      </div>
+    );
+  if (status == 'failed')
     return (
       <div>
         {header}
         <AsyncError error={error} />
       </div>
     );
-  }
   if (!label) return null;
 
   return (
