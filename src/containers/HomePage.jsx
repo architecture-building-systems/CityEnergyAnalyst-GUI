@@ -29,17 +29,29 @@ const useCheckServerStatus = () => {
   const [isServerUp, setIsServerUp] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      apiClient.get('/server/version').then(({ data }) => {
-        if (data?.version) {
-          console.log(`City Energy Analyst v${data.version}`);
-          setIsServerUp(true);
-          clearInterval(interval);
-        } else {
-          console.log('Waiting for connetion to server...');
-        }
-      });
-    }, 1500);
+    const checkServerStatus = () => {
+      apiClient
+        .get('/server/version')
+        .then(({ data }) => {
+          if (data?.version) {
+            console.log(`City Energy Analyst v${data.version}`);
+            setIsServerUp(true);
+            clearInterval(interval);
+          } else {
+            console.log('Waiting for connection to server...');
+          }
+        })
+        .catch((error) => {
+          console.log('Error connecting to server:', error.message);
+        });
+    };
+
+    // Run immediately on mount
+    checkServerStatus();
+    const interval = setInterval(checkServerStatus, 1500);
+
+    // Clean up interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   return isServerUp;
