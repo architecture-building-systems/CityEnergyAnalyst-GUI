@@ -279,7 +279,12 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
 
   if (status == 'fetching') return <Skeleton active />;
   if (status == 'failed') {
-    return <AsyncError error={error} />;
+    return (
+      <div>
+        {header}
+        <AsyncError error={error} />
+      </div>
+    );
   }
   if (!label) return null;
 
