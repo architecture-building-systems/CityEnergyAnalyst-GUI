@@ -147,6 +147,9 @@ const useToolForm = (
       console.log('Received values of form: ', out);
       callback?.(out);
     } catch (err) {
+      // Ignore out of date error
+      if (err?.outOfDate) return;
+
       console.log('Error', err);
       // Expand collapsed categories if errors are found inside
       if (categoricalParameters) {
