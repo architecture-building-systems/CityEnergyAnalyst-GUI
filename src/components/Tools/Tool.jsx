@@ -363,37 +363,35 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
             >
               <div>
                 <h2>{label}</h2>
-                <p>
-                  <small>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeRaw]}
-                      components={{
-                        a: ({ node, href, children, ...props }) => {
-                          if (isElectron())
-                            return (
-                              <a {...props} onClick={() => openExternal(href)}>
-                                {children}
-                              </a>
-                            );
-                          else
-                            return (
-                              <a
-                                {...props}
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {children}
-                              </a>
-                            );
-                        },
-                      }}
-                    >
-                      {description}
-                    </ReactMarkdown>
-                  </small>
-                </p>
+                <small>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      a: ({ node, href, children, ...props }) => {
+                        if (isElectron())
+                          return (
+                            <a {...props} onClick={() => openExternal(href)}>
+                              {children}
+                            </a>
+                          );
+                        else
+                          return (
+                            <a
+                              {...props}
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {children}
+                            </a>
+                          );
+                      },
+                    }}
+                  >
+                    {description}
+                  </ReactMarkdown>
+                </small>
               </div>
             </div>
           </div>
