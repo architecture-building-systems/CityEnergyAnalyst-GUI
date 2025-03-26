@@ -33,7 +33,7 @@ import { isElectron, openExternal } from '../../utils/electron';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
-  const [error, setError] = useState([]);
+  const [error, setError] = useState();
 
   const fetch = async (parameters) => {
     setFetching(true);
@@ -49,7 +49,7 @@ const useCheckMissingInputs = (tool) => {
 
   // reset error when tool changes
   useEffect(() => {
-    setError([]);
+    setError();
   }, [tool]);
 
   return { fetch, fetching, error };
@@ -62,6 +62,10 @@ const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
         Checking for missing inputs...
       </div>
     );
+
+  // Checks have not been run, so ignore
+  if (error == undefined) return null;
+
   if (error?.length)
     return (
       <Alert
