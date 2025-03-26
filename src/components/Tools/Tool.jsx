@@ -29,6 +29,7 @@ import { useSetShowLoginModal } from '../Login/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { isElectron, openExternal } from '../../utils/electron';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -363,6 +364,27 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       rehypePlugins={[rehypeRaw]}
+                      components={{
+                        a: ({ node, href, children, ...props }) => {
+                          if (isElectron())
+                            return (
+                              <a {...props} onClick={() => openExternal(href)}>
+                                {children}
+                              </a>
+                            );
+                          else
+                            return (
+                              <a
+                                {...props}
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {children}
+                              </a>
+                            );
+                        },
+                      }}
                     >
                       {description}
                     </ReactMarkdown>
