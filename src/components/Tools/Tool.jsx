@@ -26,6 +26,10 @@ import { animated } from '@react-spring/web';
 import { apiClient } from '../../api/axios';
 import { useSetShowLoginModal } from '../Login/store';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState([]);
@@ -355,8 +359,13 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
               <div>
                 <h2>{label}</h2>
                 <p>
-                  <small style={{ whiteSpace: 'pre-line' }}>
-                    {description}
+                  <small>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                    >
+                      {description}
+                    </ReactMarkdown>
                   </small>
                 </p>
               </div>
