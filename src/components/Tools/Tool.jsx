@@ -6,7 +6,7 @@ import {
   useCallback,
 } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Skeleton, Divider, Collapse, Button, Spin, Alert, Form } from 'antd';
+import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
 import {
   fetchToolParams,
   saveToolParams,
@@ -14,15 +14,12 @@ import {
   resetToolParams,
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
-import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
 import './Tool.css';
-import { ExternalLinkIcon, RunIcon } from '../../assets/icons';
-import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
+import { ExternalLinkIcon } from '../../assets/icons';
 
-import { animated } from '@react-spring/web';
 import { apiClient } from '../../api/axios';
 import { useSetShowLoginModal } from '../Login/store';
 
@@ -30,6 +27,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { isElectron, openExternal } from '../../utils/electron';
+import ToolForm, { ToolFormButtons } from './ToolForm';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -436,74 +434,5 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     </Spin>
   );
 });
-
-const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
-  const [activeKey, setActiveKey] = useState([]);
-
-  let toolParams = null;
-  if (parameters) {
-    toolParams = parameters.map((param) => {
-      if (param.type === 'ScenarioParameter') return null;
-      return <Parameter key={param.name} form={form} parameter={param} />;
-    });
-  }
-
-  let categoricalParams = null;
-  if (categoricalParameters && Object.keys(categoricalParameters).length) {
-    const categories = Object.keys(categoricalParameters).map((category) => ({
-      key: category,
-      label: category,
-      children: categoricalParameters[category].map((param) => (
-        <Parameter key={param.name} form={form} parameter={param} />
-      )),
-    }));
-    categoricalParams = (
-      <Collapse
-        activeKey={activeKey}
-        onChange={setActiveKey}
-        items={categories}
-      />
-    );
-  }
-
-  useEffect(() => {
-    onMount?.();
-  }, []);
-
-  return (
-    <Form form={form} layout="vertical" className="cea-tool-form">
-      {toolParams}
-      {categoricalParams}
-    </Form>
-  );
-};
-
-const ToolFormButtons = ({
-  runScript,
-  saveParams,
-  setDefault,
-  disabled = false,
-}) => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-  return (
-    <>
-      <animated.div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        style={disabled ? null : styles}
-      >
-        <Button type="primary" onClick={runScript} disabled={disabled}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Run
-            <RunIcon style={{ fontSize: 18 }} />
-          </div>
-        </Button>
-      </animated.div>
-
-      <Button onClick={saveParams}>Save Settings</Button>
-      <Button onClick={setDefault}>Reset</Button>
-    </>
-  );
-};
 
 export default Tool;
