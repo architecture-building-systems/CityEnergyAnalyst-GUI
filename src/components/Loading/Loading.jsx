@@ -58,7 +58,7 @@ const Loading = ({ children }) => {
           justifyContent: 'center',
           width: '100vw',
 
-          gap: 24,
+          gap: 32,
         }}
       >
         <div style={{ width: '10%', minWidth: 100 }}>
@@ -69,8 +69,7 @@ const Loading = ({ children }) => {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 24,
-
+            gap: 4,
             width: '10%',
             minWidth: 100,
 
