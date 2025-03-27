@@ -222,7 +222,7 @@ export const updateCEAenv = async (ceaVersion) => {
         getCEARootPath(),
         '-n',
         'cea',
-        'update',
+        'create',
         '-f',
         condaLockPath,
         '-y',
