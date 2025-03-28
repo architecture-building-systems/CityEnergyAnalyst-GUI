@@ -346,7 +346,7 @@ const DeckGLMap = ({ data, colors }) => {
     else if (mapRef.current && !cameraOptionsCalulated) {
       console.log('Calculating camera options');
       calculateCameraOptions();
-    } else console.log('Skipping camera options calculation');
+    }
   }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
   const dataLayers = useMemo(() => {

@@ -6,7 +6,7 @@ export const useMapStore = create((set) => ({
   mapLabels: true,
   viewState: defaultViewState,
   extruded: false,
-  cameraOptions: {},
+  cameraOptions: null,
   selectedMapCategory: null,
   mapLayerParameters: null,
   mapLayerLegends: null,
@@ -23,7 +23,7 @@ export const useMapStore = create((set) => ({
     })),
   setExtruded: (value) => set({ extruded: value }),
   setCameraOptions: (value) => set({ cameraOptions: value }),
-  resetCameraOptions: () => set({ cameraOptions: {} }),
+  resetCameraOptions: () => set({ cameraOptions: null }),
   setSelectedMapCategory: (value) => set({ selectedMapCategory: value }),
   setMapLayerParameters: (value) =>
     set((state) => ({
@@ -55,4 +55,4 @@ export const useMapStore = create((set) => ({
 }));
 
 export const useCameraOptionsCalulated = () =>
-  useMapStore((state) => Object.keys(state.cameraOptions).length != 0);
+  useMapStore((state) => state.cameraOptions !== null);
