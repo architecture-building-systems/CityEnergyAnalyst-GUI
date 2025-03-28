@@ -12,6 +12,9 @@ import { useHoverGrow } from '../OverviewCard/hooks';
 
 import { animated } from '@react-spring/web';
 
+// TODO: Remove this
+const TEMP_DISABLED = ['Database Editor', 'Plots'];
+
 const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   const dispatch = useDispatch();
 
@@ -32,6 +35,7 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
       icon: GraphsIcon,
       title: 'Plots',
       onClick: () => dispatch(push(routes.DASHBOARD)),
+      hidden: !showTools,
     },
   ];
 
@@ -62,6 +66,16 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
   const _icon = icon;
 
   if (hidden) return null;
+
+  if (TEMP_DISABLED.includes(title))
+    return (
+      <Tooltip
+        title={`${title} [Under development]`}
+        overlayInnerStyle={{ fontSize: 12 }}
+      >
+        <_icon className="cea-card-toolbar-icon" />
+      </Tooltip>
+    );
 
   return (
     <Tooltip title={title} overlayInnerStyle={{ fontSize: 12 }}>
