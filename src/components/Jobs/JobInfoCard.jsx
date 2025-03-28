@@ -6,7 +6,6 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 
-import axios from 'axios';
 import { parseISO, formatDistanceToNow } from 'date-fns';
 import {
   BinAnimationIcon,
@@ -18,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { deleteJob } from '../../actions/jobs';
 
 import './JobInfoCard.css';
+import { apiClient } from '../../api/axios';
 
 const useRefreshInterval = () => {
   const [refreshInterval, setRefreshInterval] = useState(30 * 1000); // Start with 30s
@@ -209,7 +209,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
 };
 
 const cancelCeaJob = (job) => {
-  axios.post(`${import.meta.env.VITE_CEA_URL}/server/jobs/cancel/${job.id}`);
+  apiClient.post(`/server/jobs/cancel/${job.id}`);
 };
 
 export default JobInfoCard;

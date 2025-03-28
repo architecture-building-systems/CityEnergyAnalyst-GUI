@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessTokenFromCookies } from '../api/axios';
 
 export const httpAction = ({
   type = '',
@@ -50,6 +51,8 @@ const httpMiddleware =
       method,
       headers,
       [dataOrParams]: data,
+      // Add credential only if cookie exists
+      withCredentials: !!getAccessTokenFromCookies(),
     };
 
     const fetch = async () => {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from '../api/axios';
 
 export const FETCH_JOBS = 'FETCH_JOBS';
 export const FETCH_JOBS_SUCCESS = 'FETCH_JOBS_SUCCESS';
@@ -8,9 +8,7 @@ export const fetchJobs = () => {
   return async (dispatch) => {
     dispatch({ type: FETCH_JOBS });
     try {
-      const jobs = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs/`,
-      );
+      const jobs = await apiClient.get(`/server/jobs/`);
       dispatch({ type: FETCH_JOBS_SUCCESS, payload: jobs.data });
     } catch (error) {
       dispatch({ type: FETCH_JOBS_FAILED, payload: error });
@@ -26,14 +24,15 @@ export const createJob = (script, parameters) => {
   return async (dispatch) => {
     dispatch({ type: CREATE_JOB });
     try {
-      const job_info = await axios.post(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs/new`,
-        { script, parameters },
-      );
+      const job_info = await apiClient.post(`/server/jobs/new`, {
+        script,
+        parameters,
+      });
       dispatch({ type: CREATE_JOB_SUCCESS, payload: job_info.data });
       dispatch(startJob(job_info.data.id));
     } catch (error) {
       dispatch({ type: CREATE_JOB_FAILED, payload: error });
+      throw error;
     }
   };
 };
@@ -46,9 +45,7 @@ export const startJob = (jobID) => {
   return async (dispatch) => {
     dispatch({ type: START_JOB });
     try {
-      const job = await axios.post(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs/start/${jobID}`,
-      );
+      const job = await apiClient.post(`/server/jobs/start/${jobID}`);
       dispatch({ type: START_JOB_SUCCESS, payload: job.data });
     } catch (error) {
       dispatch({ type: START_JOB_FAILED, payload: error });
@@ -64,9 +61,7 @@ export const deleteJob = (jobID) => {
   return async (dispatch) => {
     dispatch({ type: DELETED_JOB });
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_CEA_URL}/server/jobs/${jobID}`,
-      );
+      await apiClient.delete(`/server/jobs/${jobID}`);
       dispatch({ type: DELETED_JOB_SUCCESS, payload: jobID });
     } catch (error) {
       dispatch({ type: DELETED_JOB_FAILED, payload: error });

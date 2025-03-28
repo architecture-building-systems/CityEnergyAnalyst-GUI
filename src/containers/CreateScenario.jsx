@@ -27,7 +27,6 @@ import {
   useFetchDatabases,
   useFetchWeather,
 } from '../components/Project/CreateScenarioForms/hooks';
-import axios from 'axios';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
@@ -37,6 +36,7 @@ import routes from '../constants/routes.json';
 import { useProjectStore } from '../components/Project/store';
 import { useOpenScenario } from '../components/Project/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import { apiClient } from '../api/axios';
 
 const EditableMap = lazy(() => import('../components/Map/EditableMap'));
 
@@ -62,8 +62,8 @@ const useCreateScenario = (projectPath, { onSuccess }) => {
       });
       formattedData['project'] = projectPath;
 
-      const response = await axios.postForm(
-        `${import.meta.env.VITE_CEA_URL}/api/project/scenario/v2`,
+      const response = await apiClient.postForm(
+        `/api/project/scenario/v2`,
         formattedData,
       );
       onSuccess?.(response.data);
@@ -375,12 +375,10 @@ const CreateScenario = () => {
   const { setLocation } = useCameraForBounds(
     mapRef,
     ({ cameraOptions, location }) => {
-      setViewState({
-        latitude: location.latitude,
-        longitude: location.longitude,
+      mapRef.current.flyTo({
+        center: [location.longitude, location.latitude],
         zoom: cameraOptions.zoom,
-        transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-        transitionDuration: 1000,
+        speed: 8,
       });
     },
   );

@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, message, Alert } from 'antd';
-import axios from 'axios';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
 import { useSelector } from 'react-redux';
 import { checkExist, joinPath } from '../../utils/file';
+import { apiClient } from '../../api/axios';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
   const databaseChanges = useSelector((state) => state.databaseEditor.changes);
@@ -17,10 +17,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         try {
-          axios.put(
-            `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/copy`,
-            values,
-          );
+          apiClient.put(`/api/inputs/databases/copy`, values);
           setConfirmLoading(false);
           setVisible(false);
           message.config({

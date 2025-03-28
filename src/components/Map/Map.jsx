@@ -342,9 +342,9 @@ const DeckGLMap = ({ data, colors }) => {
   }, [data]);
 
   useEffect(() => {
-    console.log('Calculating camera options');
     if (!data?.zone) resetCameraOptions();
     else if (mapRef.current && !cameraOptionsCalulated) {
+      console.log('Calculating camera options');
       calculateCameraOptions();
     } else console.log('Skipping camera options calculation');
   }, [cameraOptionsCalulated, data?.zone, mapRef]);

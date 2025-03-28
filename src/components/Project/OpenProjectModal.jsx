@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Form, Modal, Select } from 'antd';
 import { OpenDialogInput } from '../Tools/Parameter';
 import { checkExist } from '../../utils/file';
-import { saveProjectToLocalStorage, useProjectStore } from './store';
+import { useSaveProjectToLocalStorage, useProjectStore } from './store';
 import { isElectron } from '../../utils/electron';
 import { useFetchProjectChoices } from './hooks';
 
@@ -10,6 +10,7 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
   const project = useProjectStore((state) => state.project);
   const updateScenario = useProjectStore((state) => state.updateScenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
+  const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
 
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [form] = Form.useForm();

@@ -8,9 +8,9 @@ import {
   joinPath,
 } from '../../utils/file';
 import { fetchConfig, useProjectStore } from './store';
-import axios from 'axios';
 import { isElectron } from '../../utils/electron';
 import { useFetchProjectChoices } from './hooks';
+import { apiClient } from '../../api/axios';
 
 const useFetchConfigProjectInfo = () => {
   const [info, setInfo] = useState({});
@@ -47,10 +47,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
     try {
       setConfirmLoading(true);
       console.log('Received values of form: ', values);
-      const resp = await axios.post(
-        `${import.meta.env.VITE_CEA_URL}/api/project/`,
-        values,
-      );
+      const resp = await apiClient.post(`/api/project/`, values);
       const { project } = resp.data;
       await fetchProject(project);
       setConfirmLoading(false);
@@ -162,7 +159,6 @@ const BrowserForm = () => {
         { required: true, message: 'Project name cannot be empty' },
         {
           validator: async (_, value) => {
-            console.log(choices, value);
             if (choices) {
               if (choices.includes(value)) {
                 return Promise.reject('Project name already exists');

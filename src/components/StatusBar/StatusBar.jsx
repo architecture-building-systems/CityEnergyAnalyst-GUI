@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { fetchJobs, updateJob, dismissJob } from '../../actions/jobs';
+import { updateJob, dismissJob } from '../../actions/jobs';
 import './StatusBar.css';
 import './StatusBarNotification.css';
-import { useProjectStore } from '../Project/store';
 
 import socket from '../../socket';
 import { Button, notification } from 'antd';
@@ -89,7 +88,6 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const dispatch = useDispatch();
 
-  const project = useProjectStore((state) => state.project);
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();
 
@@ -202,11 +200,6 @@ const JobStatusBar = () => {
       socket.off('cea-worker-message');
     };
   }, []);
-
-  useEffect(() => {
-    // Refresh job list when project changes
-    dispatch(fetchJobs());
-  }, [project]);
 
   if (output.length < 1) return null;
 

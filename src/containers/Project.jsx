@@ -12,7 +12,6 @@ import BottomToolButtons from '../components/Project/Cards/BottomToolBottons/Bot
 import { useTransition, animated } from '@react-spring/web';
 import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
-import { LayerToggle } from '../components/Map/Toggle';
 import MapControls from '../components/Map/MapControls';
 import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
 import { useToolStore } from '../components/Tools/store';
@@ -22,6 +21,8 @@ import { useInputs } from '../hooks/queries/useInputs';
 import { useMapStore } from '../components/Map/store/store';
 import JobInfoList from '../components/Jobs/JobInfoList';
 import RecentProjects from '../components/Project/RecentProjects';
+import UserInfo from '../components/User/UserInfo';
+import { isElectron } from '../utils/electron';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -109,21 +110,31 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 }}
               >
                 <div
-                  className="cea-overlay-card"
-                  style={{
-                    // TODO: Make this dynamic
-                    height: '33vh',
-                    minWidth: 280,
-                    width: '15vw',
-                  }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
                 >
-                  <OverviewCard
-                    project={project}
-                    projectName={name}
-                    scenarioName={scenarioName}
-                    scenarioList={scenarioList}
-                    onToggleHideAll={handleHideAll}
-                  />
+                  <div
+                    className="cea-overlay-card"
+                    style={{
+                      // TODO: Make this dynamic
+                      // height: '33vh',
+                      minWidth: 280,
+                      width: '15vw',
+                    }}
+                  >
+                    <OverviewCard
+                      project={project}
+                      projectName={name}
+                      scenarioName={scenarioName}
+                      scenarioList={scenarioList}
+                      onToggleHideAll={handleHideAll}
+                    />
+                  </div>
+                  {!isElectron() && (
+                    // FIXME: Login disabled for electron
+                    <div className="cea-overlay-card">
+                      <UserInfo />
+                    </div>
+                  )}
                 </div>
                 <Toolbar
                   showTools={!!scenarioName}
@@ -186,7 +197,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 fontSize: 12,
               }}
             >
-              <LayerToggle />
               <MapControls />
             </div>
 

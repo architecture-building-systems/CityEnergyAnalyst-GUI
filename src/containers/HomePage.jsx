@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import routes from '../constants/routes.json';
@@ -15,6 +15,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from '../components/Project/store';
 
 import Loading from '../components/Loading/Loading';
+import { apiClient } from '../api/axios';
+import { useInitUserInfo } from '../components/User/store';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -23,7 +25,45 @@ const DatabaseEditor = lazy(
   () => import('../components/DatabaseEditor/DatabaseEditor'),
 );
 
+const useCheckServerStatus = () => {
+  const [isServerUp, setIsServerUp] = useState(false);
+
+  useEffect(() => {
+    const checkServerStatus = () => {
+      apiClient
+        .get('/server/version')
+        .then(({ data }) => {
+          if (data?.version) {
+            console.log(`City Energy Analyst v${data.version}`);
+            setIsServerUp(true);
+            clearInterval(interval);
+          } else {
+            console.log('Waiting for connection to server...');
+          }
+        })
+        .catch((error) => {
+          console.log('Error connecting to server:', error.message);
+        });
+    };
+
+    // Run immediately on mount
+    checkServerStatus();
+    const interval = setInterval(checkServerStatus, 1500);
+
+    // Clean up interval on unmount
+    return () => clearInterval(interval);
+  }, []);
+
+  return isServerUp;
+};
+
 const HomePageContent = () => {
+  const initUserInfo = useInitUserInfo();
+
+  useEffect(() => {
+    initUserInfo();
+  }, []);
+
   useInitProjectStore();
 
   return (
@@ -121,6 +161,9 @@ const Cardwrapper = ({ children, style }) => {
 
 const queryClient = new QueryClient();
 const HomePage = () => {
+  const isServerUp = useCheckServerStatus();
+  if (!isServerUp) return <Loading />;
+
   return (
     <ConfigProvider
       theme={{

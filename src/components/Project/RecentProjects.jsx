@@ -1,13 +1,20 @@
 import { useCallback, useState } from 'react';
-import { Button, Card, List, Typography } from 'antd';
-import { FolderOpenOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Button, Card, List, Spin, Typography } from 'antd';
 import {
-  removeProjectFromLocalStorage,
-  saveProjectToLocalStorage,
+  FolderOpenOutlined,
+  HistoryOutlined,
+  PlusCircleOutlined,
+} from '@ant-design/icons';
+import {
+  useRemoveProjectFromLocalStorage,
+  useSaveProjectToLocalStorage,
   useProjectStore,
+  useProjectLoading,
 } from './store';
 import './RecentProjects.css';
 import OpenProjectModal from './OpenProjectModal';
+import NewProjectModal from './NewProjectModal';
+import { useUserInfo } from '../User/store';
 
 const { Title, Text } = Typography;
 
@@ -33,11 +40,38 @@ const OpenProjectButton = ({ onSuccess }) => {
   );
 };
 
+const NewProjectButton = ({ onSuccess }) => {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <>
+      <Button
+        icon={<PlusCircleOutlined />}
+        className="open-new-project-btn"
+        onClick={() => setVisible(true)}
+      >
+        New Project
+      </Button>
+      <NewProjectModal
+        visible={visible}
+        setVisible={setVisible}
+        onSuccess={onSuccess}
+      />
+    </>
+  );
+};
+
 const RecentProjects = () => {
   const [error, setError] = useState(null);
+  const isFetching = useProjectLoading();
+
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
   const recentProjects = useProjectStore((state) => state.recentProjects);
   const setRecentProjects = useProjectStore((state) => state.setRecentProjects);
+
+  const userInfo = useUserInfo();
+  const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
+  const removeProjectFromLocalStorage = useRemoveProjectFromLocalStorage();
 
   const handleProjectSelect = useCallback(
     async (projectPath) => {
@@ -54,6 +88,10 @@ const RecentProjects = () => {
     [fetchInfo],
   );
 
+  // Project in localStorage depends on user ID
+  // Only show recent projects once user info is initialized
+  if (userInfo == null || isFetching) return null;
+
   if (!recentProjects || recentProjects.length === 0) {
     return (
       <div className="recent-projects-container">
@@ -63,7 +101,10 @@ const RecentProjects = () => {
           <Text type="secondary" className="empty-state-text">
             You haven't opened any projects yet.
           </Text>
-          <OpenProjectButton onSuccess={handleProjectSelect} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <OpenProjectButton onSuccess={handleProjectSelect} />
+            <NewProjectButton onSuccess={handleProjectSelect} />
+          </div>
         </div>
       </div>
     );

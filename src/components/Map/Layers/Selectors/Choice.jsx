@@ -1,8 +1,8 @@
 import { Select } from 'antd';
 import { useMapStore } from '../../store/store';
 import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { useProjectStore } from '../../../Project/store';
+import { apiClient } from '../../../../api/axios';
 
 const getChoices = async (
   layerCategory,
@@ -12,8 +12,8 @@ const getChoices = async (
   scenarioName,
   parameters,
 ) => {
-  const resp = await axios.post(
-    `${import.meta.env.VITE_CEA_URL}/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
+  const resp = await apiClient.post(
+    `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
     {
       project,
       scenario_name: scenarioName,

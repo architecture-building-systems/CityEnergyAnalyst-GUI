@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { apiClient } from '../../api/axios';
 
 export const getGeocodeLocation = async (address) => {
   try {
     const _address = encodeURIComponent(address);
     const resp = await axios.get(
-      `https://nominatim.openstreetmap.org/?format=json&q=${_address}&limit=1`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${_address}&limit=1`,
     );
     if (resp?.data && resp.data.length) {
       return resp.data[0];
@@ -32,17 +33,19 @@ export const useGeocodeLocation = (onLocationResult) => {
       }
 
       const { lat, lon, boundingbox } = data;
+
       const location = {
         ...data,
+        // Parse lat and lon to floats
         latitude: parseFloat(lat),
         longitude: parseFloat(lon),
         zoom: 16,
         // Rearrange bbox to match mapbox format
         boundingbox: [
-          boundingbox[2],
-          boundingbox[0],
-          boundingbox[3],
-          boundingbox[1],
+          parseFloat(boundingbox[2]),
+          parseFloat(boundingbox[0]),
+          parseFloat(boundingbox[3]),
+          parseFloat(boundingbox[1]),
         ],
       };
       onLocationResult?.(location);
@@ -92,14 +95,11 @@ export const useFetchBuildingsFromPath = (onFetchedBuildings) => {
     }
 
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
-        {
-          params: {
-            path,
-          },
+      const resp = await apiClient.get(`/api/geometry/buildings`, {
+        params: {
+          path,
         },
-      );
+      });
       setBuildings(resp.data);
       onFetchedBuildings?.(resp.data);
     } catch (error) {
@@ -125,15 +125,12 @@ export const useFetchBuildings = (onFetchedBuildings) => {
     setError(null);
     setFetching(true);
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/geometry/buildings`,
-        {
-          params: {
-            generate: true,
-            polygon: JSON.stringify(polygon),
-          },
+      const resp = await apiClient.get(`/api/geometry/buildings`, {
+        params: {
+          generate: true,
+          polygon: JSON.stringify(polygon),
         },
-      );
+      });
       setBuildings(resp.data);
       onFetchedBuildings?.(resp.data);
     } catch (error) {

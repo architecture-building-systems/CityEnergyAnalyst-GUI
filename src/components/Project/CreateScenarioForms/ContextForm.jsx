@@ -5,9 +5,9 @@ import {
   GENERATE_STREET_CEA,
   GENERATE_TERRAIN_CEA,
 } from './constants';
-import axios from 'axios';
 import { isElectron, openExternal } from '../../../utils/electron';
 import { SelectWithFileDialog } from './FormInput';
+import { apiClient } from '../../../api/axios';
 
 const countryMap = {
   SG: 'Singapore',
@@ -35,13 +35,10 @@ const validateDatabase = async (value, databases) => {
   if (databases.includes(value)) return Promise.resolve();
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_CEA_URL}/api/databases/validate`,
-      {
-        type: 'path',
-        path: value,
-      },
-    );
+    const response = await apiClient.post(`/api/databases/validate`, {
+      type: 'path',
+      path: value,
+    });
     console.log(response);
     return Promise.resolve();
   } catch (error) {

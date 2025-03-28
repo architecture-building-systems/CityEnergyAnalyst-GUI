@@ -1,13 +1,28 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import JobInfoModal from './JobInfoModal';
 import { useSelectedJob, useShowJobInfo } from './store';
+import { useProjectStore } from '../Project/store';
+import { fetchJobs } from '../../actions/jobs';
+
+const useFetchJobs = (project) => {
+  const dispatch = useDispatch();
+  const jobs = useSelector((state) => state.jobs);
+
+  useEffect(() => {
+    // Refresh job list when project changes. Only fetch if project is set.
+    if (project) dispatch(fetchJobs());
+  }, [project]);
+
+  return jobs;
+};
 
 export const JobInfoList = () => {
-  const jobs = useSelector((state) => state.jobs);
+  const project = useProjectStore((state) => state.project);
+  const jobs = useFetchJobs(project);
 
   const [selectedJob, setSelectedJob] = useSelectedJob();
   const [modalVisible, setModalVisible] = useShowJobInfo();
@@ -56,6 +71,9 @@ export const JobInfoList = () => {
   useEffect(() => {
     goToBottom();
   }, [expanded]);
+
+  // Don't render if no project is selected
+  if (!project) return null;
 
   return (
     <>

@@ -6,16 +6,7 @@ import {
   useCallback,
 } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  Skeleton,
-  Divider,
-  Collapse,
-  Button,
-  Spin,
-  Alert,
-  message,
-  Form,
-} from 'antd';
+import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
 import {
   fetchToolParams,
   saveToolParams,
@@ -23,28 +14,29 @@ import {
   resetToolParams,
 } from '../../actions/tools';
 import { createJob } from '../../actions/jobs';
-import Parameter from './Parameter';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
 import './Tool.css';
-import axios from 'axios';
-import { ExternalLinkIcon, RunIcon } from '../../assets/icons';
-import { useHoverGrow } from '../Project/Cards/OverviewCard/hooks';
+import { ExternalLinkIcon } from '../../assets/icons';
 
-import { animated } from '@react-spring/web';
+import { apiClient } from '../../api/axios';
+import { useSetShowLoginModal } from '../Login/store';
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { isElectron, openExternal } from '../../utils/electron';
+import ToolForm, { ToolFormButtons } from './ToolForm';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
-  const [error, setError] = useState([]);
+  const [error, setError] = useState();
 
   const fetch = async (parameters) => {
     setFetching(true);
     try {
-      await axios.post(
-        `${import.meta.env.VITE_CEA_URL}/api/tools/${tool}/check`,
-        parameters,
-      );
+      await apiClient.post(`/api/tools/${tool}/check`, parameters);
       setError(null);
     } catch (err) {
       setError(err.response.data?.detail?.script_suggestions);
@@ -55,7 +47,7 @@ const useCheckMissingInputs = (tool) => {
 
   // reset error when tool changes
   useEffect(() => {
-    setError([]);
+    setError();
   }, [tool]);
 
   return { fetch, fetching, error };
@@ -68,6 +60,10 @@ const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
         Checking for missing inputs...
       </div>
     );
+
+  // Checks have not been run, so ignore
+  if (error == undefined) return null;
+
   if (error?.length)
     return (
       <Alert
@@ -126,6 +122,11 @@ const useToolForm = (
   const [form] = Form.useForm();
   const dispatch = useDispatch();
 
+  const setShowLoginModal = useSetShowLoginModal();
+  const handleLogin = () => {
+    setShowLoginModal(true);
+  };
+
   // TODO: Add error callback
   const getForm = async (callback) => {
     let out = null;
@@ -146,6 +147,9 @@ const useToolForm = (
       console.log('Received values of form: ', out);
       callback?.(out);
     } catch (err) {
+      // Ignore out of date error
+      if (err?.outOfDate) return;
+
       console.log('Error', err);
       // Expand collapsed categories if errors are found inside
       if (categoricalParameters) {
@@ -171,25 +175,38 @@ const useToolForm = (
 
   const runScript = () => {
     getForm((params) => {
-      dispatch(createJob(script, params));
+      dispatch(createJob(script, params)).catch((err) => {
+        if (err.response.status === 401) handleLogin();
+        else console.log(`Error creating job: ${err}`);
+      });
     });
   };
 
   const saveParams = () => {
     getForm((params) => {
-      dispatch(saveToolParams(script, params)).then(() => {
-        callbacks?.onSave?.(params);
-      });
+      dispatch(saveToolParams(script, params))
+        .then(() => {
+          callbacks?.onSave?.(params);
+        })
+        .catch((err) => {
+          if (err.response.status === 401) return;
+          else console.log(`Error saving tool parameters: ${err}`);
+        });
     });
   };
 
   const setDefault = () => {
-    dispatch(setDefaultToolParams(script)).then(() => {
-      form.resetFields();
-      getForm((params) => {
-        callbacks?.onReset?.(params);
+    dispatch(setDefaultToolParams(script))
+      .then(() => {
+        form.resetFields();
+        getForm((params) => {
+          callbacks?.onReset?.(params);
+        });
+      })
+      .catch((err) => {
+        if (err.response.status === 401) return;
+        else console.log(`Error setting default tool parameters: ${err}`);
       });
-    });
   };
 
   return { form, getForm, runScript, saveParams, setDefault };
@@ -197,9 +214,7 @@ const useToolForm = (
 
 const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const { status, error, params } = useSelector((state) => state.toolParams);
-  const { isSaving, error: savingError } = useSelector(
-    (state) => state.toolSaving,
-  );
+  const { isSaving } = useSelector((state) => state.toolSaving);
 
   const dispatch = useDispatch();
   const {
@@ -253,7 +268,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     parameters,
     categoricalParameters,
     {
-      onSave: checkMissingInputs,
+      onSave: checkMissingInputs, // Check inputs when saving to make sure they are valid if changed
       onReset: checkMissingInputs,
     },
   );
@@ -261,16 +276,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   const onMount = () => {
     getForm((params) => checkMissingInputs(params));
   };
-
-  useEffect(() => {
-    if (savingError) {
-      message.config({
-        top: 120,
-      });
-      console.error(savingError);
-      message.error(savingError?.message ?? 'Something went wrong.');
-    }
-  }, [savingError]);
 
   useEffect(() => {
     dispatch(fetchToolParams(script));
@@ -282,10 +287,29 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     return () => dispatch(resetToolParams());
   }, [script]);
 
-  if (status == 'fetching') return <Skeleton active />;
-  if (status == 'failed') {
-    return <AsyncError error={error} />;
-  }
+  if (status == 'fetching')
+    return (
+      <div style={{ padding: 12 }}>
+        {header}
+        <Skeleton active />
+        <div className="cea-tool-form-buttongroup">
+          <Skeleton.Button active />
+          <Skeleton.Button active />
+          <Skeleton.Button active />
+        </div>
+        <Divider />
+        <Skeleton active />
+        <Skeleton active />
+        <Skeleton active />
+      </div>
+    );
+  if (status == 'failed')
+    return (
+      <div>
+        {header}
+        <AsyncError error={error} />
+      </div>
+    );
   if (!label) return null;
 
   return (
@@ -340,11 +364,35 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
             >
               <div>
                 <h2>{label}</h2>
-                <p>
-                  <small style={{ whiteSpace: 'pre-line' }}>
+                <small>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      a: ({ node, href, children, ...props }) => {
+                        if (isElectron())
+                          return (
+                            <a {...props} onClick={() => openExternal(href)}>
+                              {children}
+                            </a>
+                          );
+                        else
+                          return (
+                            <a
+                              {...props}
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {children}
+                            </a>
+                          );
+                      },
+                    }}
+                  >
                     {description}
-                  </small>
-                </p>
+                  </ReactMarkdown>
+                </small>
               </div>
             </div>
           </div>
@@ -389,74 +437,5 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     </Spin>
   );
 });
-
-const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
-  const [activeKey, setActiveKey] = useState([]);
-
-  let toolParams = null;
-  if (parameters) {
-    toolParams = parameters.map((param) => {
-      if (param.type === 'ScenarioParameter') return null;
-      return <Parameter key={param.name} form={form} parameter={param} />;
-    });
-  }
-
-  let categoricalParams = null;
-  if (categoricalParameters && Object.keys(categoricalParameters).length) {
-    const categories = Object.keys(categoricalParameters).map((category) => ({
-      key: category,
-      label: category,
-      children: categoricalParameters[category].map((param) => (
-        <Parameter key={param.name} form={form} parameter={param} />
-      )),
-    }));
-    categoricalParams = (
-      <Collapse
-        activeKey={activeKey}
-        onChange={setActiveKey}
-        items={categories}
-      />
-    );
-  }
-
-  useEffect(() => {
-    onMount?.();
-  }, []);
-
-  return (
-    <Form form={form} layout="vertical" className="cea-tool-form">
-      {toolParams}
-      {categoricalParams}
-    </Form>
-  );
-};
-
-const ToolFormButtons = ({
-  runScript,
-  saveParams,
-  setDefault,
-  disabled = false,
-}) => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-  return (
-    <>
-      <animated.div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        style={disabled ? null : styles}
-      >
-        <Button type="primary" onClick={runScript} disabled={disabled}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Run
-            <RunIcon style={{ fontSize: 18 }} />
-          </div>
-        </Button>
-      </animated.div>
-
-      <Button onClick={saveParams}>Save Settings</Button>
-      <Button onClick={setDefault}>Reset</Button>
-    </>
-  );
-};
 
 export default Tool;

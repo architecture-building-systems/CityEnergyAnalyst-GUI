@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import { Input } from 'antd';
-import axios from 'axios';
 import './SearchBar.css';
+import { apiClient } from '../../api/axios';
 
 const DOCS_URL = 'https://city-energy-analyst.readthedocs.io/en/latest/';
 
@@ -12,9 +12,7 @@ const useGlossaryData = () => {
   useEffect(() => {
     const getSearchResults = async () => {
       try {
-        const result = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/api/glossary/`,
-        );
+        const result = await apiClient.get(`/api/glossary/`);
         setData(result.data);
       } catch (error) {
         console.error(error);
