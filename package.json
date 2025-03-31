@@ -35,7 +35,7 @@
     "@vitejs/plugin-react-swc": "^3.7.0",
     "concurrently": "^9.0.1",
     "electron": "^35.0.2",
-    "electron-builder": "25.1.8",
+    "electron-builder": "^26.0.12",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
