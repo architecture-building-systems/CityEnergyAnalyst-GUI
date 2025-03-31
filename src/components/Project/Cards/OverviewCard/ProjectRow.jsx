@@ -14,6 +14,7 @@ import { useProjectStore } from '../../store';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 import { useChangesExist } from '../../../InputEditor/store';
+import { useMapStore } from '../../../Map/store/store';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -90,6 +91,7 @@ const RefreshIconButton = () => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
+  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
   const changes = useChangesExist();
 
@@ -116,7 +118,7 @@ const RefreshIconButton = () => {
     // FIXME: Implement scenario refresh
     if (scenarioName) {
       openScenario(project, scenarioName).then((exists) => {
-        if (exists) refetch();
+        if (exists) refetch().then(resetCameraOptions);
       });
     } else {
       // Otherwise, refresh project
