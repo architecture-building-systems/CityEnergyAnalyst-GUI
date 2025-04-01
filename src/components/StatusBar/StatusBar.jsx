@@ -16,15 +16,28 @@ import {
   LIFE_CYCLE_ANALYSIS,
 } from '../Map/Layers/constants';
 import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
+import { useToolStore } from '../Tools/store';
 
-// TODO: get from backend
-const VIEW_RESULTS = {
+// TODO: get mappings from backend
+// Maps script name to map layer button name
+const VIEW_MAP_RESULTS = {
   demand: DEMAND,
   radiation: SOLAR_IRRADIATION,
   'radiation-crax': SOLAR_IRRADIATION,
   photovoltaic: RENEWABLE_ENERGY_POTENTIALS,
+  'photovoltaic-thermal': RENEWABLE_ENERGY_POTENTIALS,
+  'solar-collector': RENEWABLE_ENERGY_POTENTIALS,
   'thermal-network': THERMAL_NETWORK,
   emissions: LIFE_CYCLE_ANALYSIS,
+};
+
+// Maps script name to plot script name
+export const VIEW_PLOT_RESULTS = {
+  [DEMAND]: 'plot-demand',
+  [SOLAR_IRRADIATION]: null,
+  [RENEWABLE_ENERGY_POTENTIALS]: null,
+  [THERMAL_NETWORK]: null,
+  [LIFE_CYCLE_ANALYSIS]: null,
 };
 
 const StatusBar = () => {
@@ -106,6 +119,7 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const dispatch = useDispatch();
   const setActiveMapLayer = useSetActiveMapLayer();
+  const setSelectedTool = useToolStore((state) => state.setVisibility);
 
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();
@@ -164,13 +178,16 @@ const JobStatusBar = () => {
               View Logs
             </Button>
 
-            {Object.keys(VIEW_RESULTS).includes(job.script) && (
+            {Object.keys(VIEW_MAP_RESULTS).includes(job.script) && (
               <Button
                 type="primary"
                 size="small"
                 onClick={() => {
                   api.destroy(key);
-                  setActiveMapLayer(VIEW_RESULTS[job.script]);
+                  setSelectedTool(
+                    VIEW_PLOT_RESULTS?.[VIEW_MAP_RESULTS[job.script]] ?? null,
+                  );
+                  setActiveMapLayer(VIEW_MAP_RESULTS[job.script]);
                 }}
               >
                 View Results

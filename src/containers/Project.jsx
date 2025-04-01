@@ -23,6 +23,7 @@ import JobInfoList from '../components/Jobs/JobInfoList';
 import RecentProjects from '../components/Project/RecentProjects';
 import UserInfo from '../components/User/UserInfo';
 import { isElectron } from '../utils/electron';
+import { VIEW_PLOT_RESULTS } from '../components/StatusBar/StatusBar';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -60,7 +61,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const handleLayerSelected = (layer) => {
     if (layer) {
-      setVisualisation(true);
+      const plotScriptName = VIEW_PLOT_RESULTS?.[layer?.name] ?? null;
+      setSelectedTool(plotScriptName);
+      setVisualisation(!!plotScriptName);
       setShowTools(false);
     } else {
       setVisualisation(false);
@@ -272,7 +275,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   >
                     <ToolCard
                       className="cea-overlay-card"
-                      selectedTool={'plot-demand'}
+                      selectedTool={selectedTool}
                       onClose={() => setVisualisation(false)}
                     />
                   </ConfigProvider>
