@@ -8,6 +8,24 @@ import './StatusBarNotification.css';
 import socket from '../../socket';
 import { Button, notification } from 'antd';
 import { useSelectedJob, useShowJobInfo } from '../Jobs/store';
+import {
+  DEMAND,
+  SOLAR_IRRADIATION,
+  RENEWABLE_ENERGY_POTENTIALS,
+  THERMAL_NETWORK,
+  LIFE_CYCLE_ANALYSIS,
+} from '../Map/Layers/constants';
+import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
+
+// TODO: get from backend
+const VIEW_RESULTS = {
+  demand: DEMAND,
+  radiation: SOLAR_IRRADIATION,
+  'radiation-crax': SOLAR_IRRADIATION,
+  photovoltaic: RENEWABLE_ENERGY_POTENTIALS,
+  'thermal-network': THERMAL_NETWORK,
+  emissions: LIFE_CYCLE_ANALYSIS,
+};
 
 const StatusBar = () => {
   return (
@@ -87,6 +105,7 @@ const JobStatusBar = () => {
   });
   const [output, setMessage] = useState('');
   const dispatch = useDispatch();
+  const setActiveMapLayer = useSetActiveMapLayer();
 
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();
@@ -124,7 +143,7 @@ const JobStatusBar = () => {
       setMessage(`jobID: ${job.id} - completed ✅`);
 
       const key = job.id;
-      const duration = 3;
+      const duration = 5;
       api.success({
         key,
         message: job.script_label,
@@ -133,17 +152,31 @@ const JobStatusBar = () => {
         className: 'cea-job-status-notification',
         duration,
         btn: (
-          <Button
-            type="default"
-            size="small"
-            onClick={() => {
-              api.destroy(key);
-              setSelectedJob(job);
-              setModalVisible(true);
-            }}
-          >
-            View Logs
-          </Button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Button
+              size="small"
+              onClick={() => {
+                api.destroy(key);
+                setSelectedJob(job);
+                setModalVisible(true);
+              }}
+            >
+              View Logs
+            </Button>
+
+            {Object.keys(VIEW_RESULTS).includes(job.script) && (
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => {
+                  api.destroy(key);
+                  setActiveMapLayer(VIEW_RESULTS[job.script]);
+                }}
+              >
+                View Results
+              </Button>
+            )}
+          </div>
         ),
       });
     });
