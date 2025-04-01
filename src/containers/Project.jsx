@@ -1,7 +1,7 @@
 import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, message, Spin, Tabs, Tooltip } from 'antd';
+import { Alert, ConfigProvider, message, Spin, Tabs, Tooltip } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
@@ -45,6 +45,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
+  const [showVisualisation, setVisualisation] = useState(false);
 
   const showTools = useToolStore((state) => state.showTools);
   const setShowTools = useToolStore((state) => state.setShowTools);
@@ -54,6 +55,16 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
     setShowTools(true);
+    setVisualisation(false);
+  };
+
+  const handleLayerSelected = (layer) => {
+    if (layer) {
+      setVisualisation(true);
+      setShowTools(false);
+    } else {
+      setVisualisation(false);
+    }
   };
 
   const handleHideAll = () => {
@@ -62,12 +73,22 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const tension = 150;
   const friction = 20;
-  const transitionFromRight = useTransition(!hideAll & showTools, {
+  const transitionToolsFromRight = useTransition(!hideAll & showTools, {
     from: { transform: 'translateX(100%)', opacity: 0 }, // Start off-screen (right) and invisible
     enter: { transform: 'translateX(0%)', opacity: 1 }, // Slide in to the screen and become visible
     leave: { transform: 'translateX(100%)', opacity: 0 }, // Slide out to the right and fade out
     config: { tension, friction }, // Control the speed of the animation
   });
+
+  const transitionVisualisationFromRight = useTransition(
+    !hideAll & showVisualisation,
+    {
+      from: { transform: 'translateX(100%)', opacity: 0 }, // Start off-screen (right) and invisible
+      enter: { transform: 'translateX(0%)', opacity: 1 }, // Slide in to the screen and become visible
+      leave: { transform: 'translateX(100%)', opacity: 0 }, // Slide out to the right and fade out
+      config: { tension, friction }, // Control the speed of the animation
+    },
+  );
 
   const transitionFromLeft = useTransition(!hideAll, {
     from: { transform: 'translateX(-100%)', opacity: 0 }, // Start off-screen (left) and invisible
@@ -200,33 +221,64 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               <MapControls />
             </div>
 
-            <MapLayersCard />
+            <MapLayersCard onLayerSelected={handleLayerSelected} />
           </div>
         </div>
       </div>
       <div id="cea-project-overlay-right">
         <div id="cea-project-overlay-right-top">
-          {transitionFromRight((styles, item) =>
-            item ? (
-              <animated.div
-                className="cea-overlay-card"
-                style={{
-                  ...styles,
-
-                  width: '33vw',
-                  minWidth: 450,
-                  height: '100%', // Make it full height
-                }}
-              >
-                <ToolCard
+          {showTools &&
+            transitionToolsFromRight((styles, item) =>
+              item ? (
+                <animated.div
                   className="cea-overlay-card"
-                  selectedTool={selectedTool}
-                  onClose={() => setShowTools(false)}
-                  onToolSelected={handleToolSelected}
-                />
-              </animated.div>
-            ) : null,
-          )}
+                  style={{
+                    ...styles,
+
+                    width: '33vw',
+                    minWidth: 450,
+                    height: '100%', // Make it full height
+                  }}
+                >
+                  <ToolCard
+                    className="cea-overlay-card"
+                    selectedTool={selectedTool}
+                    onClose={() => setShowTools(false)}
+                    onToolSelected={handleToolSelected}
+                  />
+                </animated.div>
+              ) : null,
+            )}
+
+          {showVisualisation &&
+            transitionVisualisationFromRight((styles, item) =>
+              item ? (
+                <animated.div
+                  className="cea-overlay-card"
+                  style={{
+                    ...styles,
+
+                    width: '33vw',
+                    minWidth: 450,
+                    height: '100%', // Make it full height
+                  }}
+                >
+                  <ConfigProvider
+                    theme={{
+                      token: {
+                        colorPrimary: '#ac6080',
+                      },
+                    }}
+                  >
+                    <ToolCard
+                      className="cea-overlay-card"
+                      selectedTool={'plot-demand'}
+                      onClose={() => setVisualisation(false)}
+                    />
+                  </ConfigProvider>
+                </animated.div>
+              ) : null,
+            )}
         </div>
         <div id="cea-project-overlay-right-bottom"></div>
       </div>

@@ -20,12 +20,17 @@ import {
 import { useGetMapLayerCategories } from '../../../Map/Layers/hooks';
 import { useProjectStore } from '../../store';
 
-const MapLayersCard = () => {
+const MapLayersCard = ({ onLayerSelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const [active, setActive] = useState(null);
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
   );
+
+  const handleLayerSelected = (layer) => {
+    setSelectedMapCategory(layer);
+    onLayerSelected?.(layer);
+  };
 
   const mapLayerCategories = useGetMapLayerCategories();
 
@@ -40,12 +45,12 @@ const MapLayersCard = () => {
 
   useEffect(() => {
     if (active == null) {
-      setSelectedMapCategory(null);
+      handleLayerSelected(null);
     } else {
       const layers = mapLayerCategories?.categories?.find(
         (l) => l.name == active,
       );
-      setSelectedMapCategory(layers);
+      handleLayerSelected(layers);
     }
   }, [active]);
 
@@ -97,7 +102,7 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
   const style = active
     ? {
         color: 'white',
-        backgroundColor: '#333',
+        backgroundColor: '#ac6080',
       }
     : {
         color: 'black',
