@@ -230,58 +230,64 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       </div>
       <div id="cea-project-overlay-right">
         <div id="cea-project-overlay-right-top">
-          {showTools &&
-            transitionToolsFromRight((styles, item) =>
-              item ? (
-                <animated.div
-                  className="cea-overlay-card"
-                  style={{
-                    ...styles,
+          {transitionToolsFromRight((styles, item) =>
+            item ? (
+              <animated.div
+                className="cea-overlay-card"
+                style={{
+                  ...styles,
 
-                    width: '33vw',
-                    minWidth: 450,
-                    height: '100%', // Make it full height
-                  }}
-                >
+                  width: '33vw',
+                  minWidth: 450,
+                  height: '100%', // Make it full height
+                }}
+              >
+                {showTools ? (
                   <ToolCard
                     className="cea-overlay-card"
                     selectedTool={selectedTool}
                     onClose={() => setShowTools(false)}
                     onToolSelected={handleToolSelected}
                   />
-                </animated.div>
-              ) : null,
-            )}
+                ) : (
+                  <div style={{ height: '100%', background: 'white' }}></div>
+                )}
+              </animated.div>
+            ) : null,
+          )}
 
-          {showVisualisation &&
-            transitionVisualisationFromRight((styles, item) =>
-              item ? (
-                <animated.div
-                  className="cea-overlay-card"
-                  style={{
-                    ...styles,
+          {transitionVisualisationFromRight((styles, item) =>
+            item ? (
+              <animated.div
+                className="cea-overlay-card"
+                style={{
+                  ...styles,
 
-                    width: '33vw',
-                    minWidth: 450,
-                    height: '100%', // Make it full height
+                  width: '33vw',
+                  minWidth: 450,
+                  height: '100%', // Make it full height
+                }}
+              >
+                <ConfigProvider
+                  theme={{
+                    token: {
+                      colorPrimary: '#ac6080',
+                    },
                   }}
                 >
-                  <ConfigProvider
-                    theme={{
-                      token: {
-                        colorPrimary: '#ac6080',
-                      },
-                    }}
-                  >
+                  {showVisualisation ? (
                     <ToolCard
                       className="cea-overlay-card"
                       selectedTool={selectedTool}
                       onClose={() => setVisualisation(false)}
                     />
-                  </ConfigProvider>
-                </animated.div>
-              ) : null,
-            )}
+                  ) : (
+                    <div style={{ height: '100%', background: 'white' }}></div>
+                  )}
+                </ConfigProvider>
+              </animated.div>
+            ) : null,
+          )}
         </div>
         <div id="cea-project-overlay-right-bottom"></div>
       </div>
