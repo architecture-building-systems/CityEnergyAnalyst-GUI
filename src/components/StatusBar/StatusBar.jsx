@@ -184,9 +184,11 @@ const JobStatusBar = () => {
                 size="small"
                 onClick={() => {
                   api.destroy(key);
-                  setSelectedTool(
-                    VIEW_PLOT_RESULTS?.[VIEW_MAP_RESULTS[job.script]] ?? null,
-                  );
+
+                  const plotScriptName =
+                    VIEW_PLOT_RESULTS?.[VIEW_MAP_RESULTS[job.script]] ?? null;
+                  setSelectedTool(plotScriptName);
+
                   setActiveMapLayer(VIEW_MAP_RESULTS[job.script]);
                 }}
               >
