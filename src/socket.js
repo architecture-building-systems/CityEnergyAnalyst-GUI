@@ -1,8 +1,8 @@
 import { io } from 'socket.io-client';
-import { getAccessTokenFromCookies } from './api/axios';
+import { getAccessTokenStringFromCookies } from './api/axios';
 
 const socket = io(`${import.meta.env.VITE_CEA_URL}`, {
-  withCredentials: !!getAccessTokenFromCookies(),
+  withCredentials: !!getAccessTokenStringFromCookies(),
 });
 
 export default socket;
