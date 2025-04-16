@@ -17,6 +17,7 @@ import {
 } from '../Map/Layers/constants';
 import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
 import { useToolStore } from '../Tools/store';
+import { PLOTS_PRIMARY_COLOR } from '../../constants/theme';
 
 // TODO: get mappings from backend
 // Maps script name to map layer button name
@@ -156,8 +157,12 @@ const JobStatusBar = () => {
       dispatch(updateJob(job));
       setMessage(`jobID: ${job.id} - completed ✅`);
 
+      // FIXME: check for exact plot script names instead
+      const isPlotJob = job.script.startsWith('plot-') && job?.output;
+
       const key = job.id;
-      const duration = 5;
+      let duration = isPlotJob ? 0 : 5;
+
       api.success({
         key,
         message: job.script_label,
@@ -193,6 +198,38 @@ const JobStatusBar = () => {
                 }}
               >
                 View Results
+              </Button>
+            )}
+
+            {isPlotJob && (
+              <Button
+                type="primary"
+                size="small"
+                style={{ background: PLOTS_PRIMARY_COLOR }}
+                onClick={() => {
+                  api.destroy(key);
+                  const plothtml = job.output;
+                  // Create a blob from the HTML content
+                  const blob = new Blob([plothtml], { type: 'text/html' });
+
+                  // Create a URL for the blob
+                  const url = URL.createObjectURL(blob);
+                  const windowFeatures =
+                    'width=1000,height=800,resizable=yes,status=yes';
+
+                  // Open the URL in a new window/tab
+                  const newWindow = window.open(url, '_blank', windowFeatures);
+
+                  // Clean up the URL object when the window has loaded
+                  if (newWindow) {
+                    newWindow.onload = () => {
+                      // Revoke the URL after a delay to ensure it's loaded
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    };
+                  }
+                }}
+              >
+                View Plot
               </Button>
             )}
           </div>

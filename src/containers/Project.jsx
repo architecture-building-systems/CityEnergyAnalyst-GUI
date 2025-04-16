@@ -24,6 +24,7 @@ import RecentProjects from '../components/Project/RecentProjects';
 import UserInfo from '../components/User/UserInfo';
 import { isElectron } from '../utils/electron';
 import { VIEW_PLOT_RESULTS } from '../components/StatusBar/StatusBar';
+import { PLOTS_PRIMARY_COLOR } from '../constants/theme';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -271,7 +272,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 <ConfigProvider
                   theme={{
                     token: {
-                      colorPrimary: '#ac6080',
+                      colorPrimary: PLOTS_PRIMARY_COLOR,
                     },
                   }}
                 >
