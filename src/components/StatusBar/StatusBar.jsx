@@ -114,9 +114,6 @@ const DismissCountdown = ({ duration, onComplete }) => {
 };
 
 const JobStatusBar = () => {
-  const [api, contextHolder] = notification.useNotification({
-    top: 80,
-  });
   const [output, setMessage] = useState('');
   const dispatch = useDispatch();
   const setActiveMapLayer = useSetActiveMapLayer();
@@ -126,11 +123,15 @@ const JobStatusBar = () => {
   const [, setSelectedJob] = useSelectedJob();
 
   useEffect(() => {
+    notification.config({
+      top: 80,
+    });
+
     socket.on('cea-job-created', (job) => {
       console.log('cea-job-created: job', job);
 
       const key = job.id;
-      api.info({
+      notification.info({
         key,
         message: job.script_label,
         description: 'Job created.',
@@ -144,7 +145,7 @@ const JobStatusBar = () => {
       dispatch(updateJob(job));
 
       const key = job.id;
-      api.info({
+      notification.info({
         key,
         message: job.script_label,
         description: 'Job started.',
@@ -163,7 +164,7 @@ const JobStatusBar = () => {
       const key = job.id;
       let duration = isPlotJob ? 0 : 5;
 
-      api.success({
+      notification.success({
         key,
         message: job.script_label,
         description: 'Job completed.',
@@ -175,7 +176,7 @@ const JobStatusBar = () => {
             <Button
               size="small"
               onClick={() => {
-                api.destroy(key);
+                notification.destroy(key);
                 setSelectedJob(job);
                 setModalVisible(true);
               }}
@@ -188,7 +189,7 @@ const JobStatusBar = () => {
                 type="primary"
                 size="small"
                 onClick={() => {
-                  api.destroy(key);
+                  notification.destroy(key);
 
                   const plotScriptName =
                     VIEW_PLOT_RESULTS?.[VIEW_MAP_RESULTS[job.script]] ?? null;
@@ -207,7 +208,7 @@ const JobStatusBar = () => {
                 size="small"
                 style={{ background: PLOTS_PRIMARY_COLOR }}
                 onClick={() => {
-                  api.destroy(key);
+                  notification.destroy(key);
                   const plothtml = job.output;
                   // Create a blob from the HTML content
                   const blob = new Blob([plothtml], { type: 'text/html' });
@@ -245,7 +246,7 @@ const JobStatusBar = () => {
       setMessage(`jobID: ${job.id} - error ❗`);
 
       const key = job.id;
-      api.error({
+      notification.error({
         key,
         message: job.script_label,
         description: job.error,
@@ -257,7 +258,7 @@ const JobStatusBar = () => {
             type="primary"
             size="small"
             onClick={() => {
-              api.destroy(key);
+              notification.destroy(key);
               setSelectedJob(job);
               setModalVisible(true);
             }}
@@ -294,7 +295,6 @@ const JobStatusBar = () => {
 
   return (
     <div className="cea-status-bar-button">
-      {contextHolder}
       <span>{output}</span>
     </div>
   );
