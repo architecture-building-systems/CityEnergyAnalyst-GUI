@@ -1,7 +1,7 @@
 import DeckGLMap from '../components/Map/Map';
 import OverviewCard from '../components/Project/Cards/OverviewCard/OverviewCard';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, message, Spin, Tabs, Tooltip } from 'antd';
+import { Alert, ConfigProvider, message, Spin, Tabs, Tooltip } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import Table from '../components/InputEditor/Table';
 import Toolbar from '../components/Project/Cards/Toolbar/Toolbar';
@@ -23,6 +23,8 @@ import JobInfoList from '../components/Jobs/JobInfoList';
 import RecentProjects from '../components/Project/RecentProjects';
 import UserInfo from '../components/User/UserInfo';
 import { isElectron } from '../utils/electron';
+import { VIEW_PLOT_RESULTS } from '../components/StatusBar/StatusBar';
+import { PLOTS_PRIMARY_COLOR } from '../constants/theme';
 
 const Project = () => {
   const project = useProjectStore((state) => state.project);
@@ -45,6 +47,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
+  const [showVisualisation, setVisualisation] = useState(false);
 
   const showTools = useToolStore((state) => state.showTools);
   const setShowTools = useToolStore((state) => state.setShowTools);
@@ -54,6 +57,18 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
     setShowTools(true);
+    setVisualisation(false);
+  };
+
+  const handleLayerSelected = (layer) => {
+    if (layer) {
+      const plotScriptName = VIEW_PLOT_RESULTS?.[layer?.name] ?? null;
+      setSelectedTool(plotScriptName);
+      setVisualisation(!!plotScriptName);
+      setShowTools(false);
+    } else {
+      setVisualisation(false);
+    }
   };
 
   const handleHideAll = () => {
@@ -62,12 +77,22 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const tension = 150;
   const friction = 20;
-  const transitionFromRight = useTransition(!hideAll & showTools, {
+  const transitionToolsFromRight = useTransition(!hideAll & showTools, {
     from: { transform: 'translateX(100%)', opacity: 0 }, // Start off-screen (right) and invisible
     enter: { transform: 'translateX(0%)', opacity: 1 }, // Slide in to the screen and become visible
     leave: { transform: 'translateX(100%)', opacity: 0 }, // Slide out to the right and fade out
     config: { tension, friction }, // Control the speed of the animation
   });
+
+  const transitionVisualisationFromRight = useTransition(
+    !hideAll & showVisualisation,
+    {
+      from: { transform: 'translateX(100%)', opacity: 0 }, // Start off-screen (right) and invisible
+      enter: { transform: 'translateX(0%)', opacity: 1 }, // Slide in to the screen and become visible
+      leave: { transform: 'translateX(100%)', opacity: 0 }, // Slide out to the right and fade out
+      config: { tension, friction }, // Control the speed of the animation
+    },
+  );
 
   const transitionFromLeft = useTransition(!hideAll, {
     from: { transform: 'translateX(-100%)', opacity: 0 }, // Start off-screen (left) and invisible
@@ -200,13 +225,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               <MapControls />
             </div>
 
-            <MapLayersCard />
+            <MapLayersCard onLayerSelected={handleLayerSelected} />
           </div>
         </div>
       </div>
       <div id="cea-project-overlay-right">
         <div id="cea-project-overlay-right-top">
-          {transitionFromRight((styles, item) =>
+          {transitionToolsFromRight((styles, item) =>
             item ? (
               <animated.div
                 className="cea-overlay-card"
@@ -218,12 +243,49 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   height: '100%', // Make it full height
                 }}
               >
-                <ToolCard
-                  className="cea-overlay-card"
-                  selectedTool={selectedTool}
-                  onClose={() => setShowTools(false)}
-                  onToolSelected={handleToolSelected}
-                />
+                {showTools ? (
+                  <ToolCard
+                    className="cea-overlay-card"
+                    selectedTool={selectedTool}
+                    onClose={() => setShowTools(false)}
+                    onToolSelected={handleToolSelected}
+                  />
+                ) : (
+                  <div style={{ height: '100%', background: 'white' }}></div>
+                )}
+              </animated.div>
+            ) : null,
+          )}
+
+          {transitionVisualisationFromRight((styles, item) =>
+            item ? (
+              <animated.div
+                className="cea-overlay-card"
+                style={{
+                  ...styles,
+
+                  width: '33vw',
+                  minWidth: 450,
+                  height: '100%', // Make it full height
+                }}
+              >
+                <ConfigProvider
+                  theme={{
+                    token: {
+                      colorPrimary: PLOTS_PRIMARY_COLOR,
+                    },
+                  }}
+                >
+                  {showVisualisation ? (
+                    <ToolCard
+                      className="cea-overlay-card"
+                      selectedTool={selectedTool}
+                      onClose={() => setVisualisation(false)}
+                    />
+                  ) : (
+                    <div style={{ height: '100%', background: 'white' }}></div>
+                  )}
+                </ConfigProvider>
               </animated.div>
             ) : null,
           )}

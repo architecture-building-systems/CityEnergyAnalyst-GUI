@@ -1,6 +1,6 @@
 import { Tooltip } from 'antd';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useMapStore } from '../../../Map/store/store';
 import {
   SolarRadiationIcon,
@@ -19,13 +19,21 @@ import {
 } from '../../../Map/Layers/constants';
 import { useGetMapLayerCategories } from '../../../Map/Layers/hooks';
 import { useProjectStore } from '../../store';
+import { useActiveMapLayer, useSetActiveMapLayer } from './store';
 
-const MapLayersCard = () => {
+const MapLayersCard = ({ onLayerSelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
-  const [active, setActive] = useState(null);
+  const active = useActiveMapLayer();
+  const setActive = useSetActiveMapLayer();
+
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
   );
+
+  const handleLayerSelected = (layer) => {
+    setSelectedMapCategory(layer);
+    onLayerSelected?.(layer);
+  };
 
   const mapLayerCategories = useGetMapLayerCategories();
 
@@ -40,12 +48,12 @@ const MapLayersCard = () => {
 
   useEffect(() => {
     if (active == null) {
-      setSelectedMapCategory(null);
+      handleLayerSelected(null);
     } else {
       const layers = mapLayerCategories?.categories?.find(
         (l) => l.name == active,
       );
-      setSelectedMapCategory(layers);
+      handleLayerSelected(layers);
     }
   }, [active]);
 
@@ -97,7 +105,7 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
   const style = active
     ? {
         color: 'white',
-        backgroundColor: '#333',
+        backgroundColor: '#ac6080',
       }
     : {
         color: 'black',

@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { getAccessTokenFromCookies } from '../api/axios';
+import { apiClient } from '../api/axios';
 
 export const httpAction = ({
   type = '',
@@ -51,13 +50,11 @@ const httpMiddleware =
       method,
       headers,
       [dataOrParams]: data,
-      // Add credential only if cookie exists
-      withCredentials: !!getAccessTokenFromCookies(),
     };
 
     const fetch = async () => {
       try {
-        const { data } = await axios.request(axiosOptions);
+        const { data } = await apiClient.request(axiosOptions);
         dispatch({
           type: type + '_SUCCESS',
           payload: editPayload(data) || data,

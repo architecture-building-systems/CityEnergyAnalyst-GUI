@@ -23,6 +23,8 @@ import {
   NumberCircleIcon,
 } from '../../../../assets/icons';
 
+const IGNORED_SECTIONS = ['Visualisation'];
+
 const useFetchTools = () => {
   const dispatch = useDispatch();
   const { status, tools } = useSelector((state) => state.toolList);
@@ -118,6 +120,8 @@ const Toolbar = ({ onToolSelected, showTools }) => {
 
   const toolMenus = useMemo(() => {
     return Object.keys(tools).map((category) => {
+      if (IGNORED_SECTIONS.includes(category)) return null;
+
       return (
         <ToolMenu
           key={category}
