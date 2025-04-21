@@ -128,7 +128,7 @@ const useToolForm = (
   };
 
   // TODO: Add error callback
-  const getForm = async (callback) => {
+  const getForm = async () => {
     let out = null;
     if (!parameters) return out;
 
@@ -145,7 +145,7 @@ const useToolForm = (
         ...values,
       };
       console.log('Received values of form: ', out);
-      callback?.(out);
+      return out;
     } catch (err) {
       // Ignore out of date error
       if (err?.outOfDate) return;
@@ -173,35 +173,37 @@ const useToolForm = (
     }
   };
 
-  const runScript = () => {
-    getForm((params) => {
-      dispatch(createJob(script, params)).catch((err) => {
-        if (err.response.status === 401) handleLogin();
-        else console.log(`Error creating job: ${err}`);
+  const runScript = async () => {
+    const params = await getForm();
+
+    return dispatch(createJob(script, params)).catch((err) => {
+      if (err.response.status === 401) handleLogin();
+      else console.log(`Error creating job: ${err}`);
+    });
+  };
+
+  const saveParams = async () => {
+    const params = await getForm();
+
+    return dispatch(saveToolParams(script, params))
+      .then(() => {
+        return callbacks?.onSave?.(params);
+      })
+      .catch((err) => {
+        if (err.response.status === 401) return;
+        else console.log(`Error saving tool parameters: ${err}`);
       });
-    });
   };
 
-  const saveParams = () => {
-    getForm((params) => {
-      dispatch(saveToolParams(script, params))
-        .then(() => {
-          callbacks?.onSave?.(params);
-        })
-        .catch((err) => {
-          if (err.response.status === 401) return;
-          else console.log(`Error saving tool parameters: ${err}`);
-        });
-    });
-  };
-
-  const setDefault = () => {
-    dispatch(setDefaultToolParams(script))
+  const setDefault = async () => {
+    return dispatch(setDefaultToolParams(script))
       .then(() => {
         form.resetFields();
-        getForm((params) => {
-          callbacks?.onReset?.(params);
-        });
+        return getForm();
+      })
+      .then((params) => {
+        console.log('Received form params', params);
+        return callbacks?.onReset?.(params);
       })
       .catch((err) => {
         if (err.response.status === 401) return;
@@ -273,8 +275,9 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
     },
   );
 
-  const onMount = () => {
-    getForm((params) => checkMissingInputs(params));
+  const onMount = async () => {
+    const params = await getForm();
+    if (params) checkMissingInputs(params);
   };
 
   useEffect(() => {
