@@ -55,18 +55,40 @@ export const ToolFormButtons = ({
   disabled = false,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+  const [loading, setLoading] = useState(false);
+
+  const handleRunScript = async () => {
+    setLoading(true);
+    try {
+      await runScript?.();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <animated.div
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        style={disabled ? null : styles}
+        style={disabled || loading ? null : styles}
       >
-        <Button type="primary" onClick={runScript} disabled={disabled}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Run
-            <RunIcon style={{ fontSize: 18 }} />
-          </div>
+        <Button
+          type="primary"
+          onClick={handleRunScript}
+          disabled={disabled}
+          loading={loading}
+        >
+          {loading ? (
+            <div>Staring job...</div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Run
+              <RunIcon style={{ fontSize: 18 }} />
+            </div>
+          )}
         </Button>
       </animated.div>
 

@@ -16,7 +16,7 @@ import { useInitProjectStore } from '../components/Project/store';
 
 import Loading from '../components/Loading/Loading';
 import { apiClient } from '../api/axios';
-import { useInitUserInfo } from '../components/User/store';
+import { useInitUserInfo, useUserInfo } from '../components/User/store';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -58,6 +58,7 @@ const useCheckServerStatus = () => {
 };
 
 const HomePageContent = () => {
+  const userInfo = useUserInfo();
   const initUserInfo = useInitUserInfo();
 
   useEffect(() => {
@@ -65,6 +66,9 @@ const HomePageContent = () => {
   }, []);
 
   useInitProjectStore();
+
+  // Load user info before rendering
+  if (userInfo == null) return <Loading />;
 
   return (
     <ErrorBoundary>
