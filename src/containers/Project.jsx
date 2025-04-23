@@ -281,6 +281,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                       className="cea-overlay-card"
                       selectedTool={selectedTool}
                       onClose={() => setVisualisation(false)}
+                      onToolSelected={handleToolSelected}
                     />
                   ) : (
                     <div style={{ height: '100%', background: 'white' }}></div>
