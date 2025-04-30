@@ -58,6 +58,7 @@ function isTokenExpiredOrCloseToExpiry(token) {
 
     return payload.exp < now + buffer;
   } catch (e) {
+    console.error(e);
     return true; // If there's an error parsing, assume expired
   }
 }
@@ -77,19 +78,23 @@ apiClient.interceptors.request.use(
       // Try to refresh token if near expiry
       if (isTokenExpiredOrCloseToExpiry(accessToken)) {
         // FIXME: Queue request to refresh token
-        const response = await axios.post(
-          `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
-          {},
-          { withCredentials: true },
-        );
+        try {
+          const response = await axios.post(
+            `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
+            {},
+            { withCredentials: true },
+          );
 
-        const newAccessToken = response.data.access_token;
-        document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
-          JSON.stringify([refreshToken, newAccessToken]),
-        )}`;
+          const newAccessToken = response.data.access_token;
+          document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
+            JSON.stringify([refreshToken, newAccessToken]),
+          )}`;
+
+          config.withCredentials = true;
+        } catch (e) {
+          console.error(e);
+        }
       }
-
-      config.withCredentials = true;
     }
     return config;
   },
