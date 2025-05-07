@@ -85,13 +85,23 @@ apiClient.interceptors.request.use(
             { withCredentials: true },
           );
 
-          const newAccessToken = response.data.access_token;
+          const newAccessToken = response.data?.access_token;
+          if (!newAccessToken) {
+            throw new Error(
+              'Failed to refresh access token: No access token returned',
+            );
+          }
+
           document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
             JSON.stringify([refreshToken, newAccessToken]),
           )}`;
 
           config.withCredentials = true;
         } catch (e) {
+          // Assume token used is invalid or expired if status is 401 and remove cookie
+          if (e.response?.status == 401) {
+            document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+          }
           console.error(e);
         }
       }
