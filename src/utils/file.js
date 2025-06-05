@@ -38,8 +38,8 @@ export const checkExist = async (content_path, content_type) => {
 };
 
 const isWin = (fullPath) => {
-  const { base } = path.parse(fullPath);
-  return base == fullPath;
+  // Check if the path contains backslashes or starts with a drive letter pattern
+  return fullPath.includes('\\') || /^[a-zA-Z]:/.test(fullPath);
 };
 
 export const dirname = (fullPath) => {
@@ -49,7 +49,18 @@ export const dirname = (fullPath) => {
 };
 
 export const joinPath = (dir, suffix) => {
-  return path.join(dir, suffix);
+  // Determine if we should use Windows-style path separators
+  const useWindowsFormat = isWin(dir) || isWin(suffix);
+
+  // Normalize paths to forward slashes for joining
+  const normalizedDir = dir.replace(/\\/g, '/');
+  const normalizedSuffix = suffix.replace(/\\/g, '/');
+
+  // Join the paths
+  const joined = path.join(normalizedDir, normalizedSuffix);
+
+  // Convert back to Windows format if needed
+  return useWindowsFormat ? joined.replace(/\//g, '\\') : joined;
 };
 
 export const basename = (fullPath) => {
