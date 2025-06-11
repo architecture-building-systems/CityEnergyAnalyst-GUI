@@ -1,0 +1,26 @@
+.cea-tool-form-buttongroup {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+.cea-tool-form-buttongroup button {
+  font-size: 12px;
+}
+
+.cea-tool-suggestions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.cea-tool-suggestions:hover {
+  text-decoration: underline;
+  color: #1677ff;
+}
+
+.cea-tool-form-spinner,
+.cea-tool-form-spinner .ant-spin-container {
+  height: 100%;
+}

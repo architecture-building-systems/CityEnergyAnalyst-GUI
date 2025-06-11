@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <g>
+    <polygon points="2 7 0 7 0 0 7 0 7 2 2 2 2 7"/>
+    <polygon points="17 2 17 0 24 0 24 7 22 7 22 2 17 2"/>
+    <polygon points="7 22 7 24 0 24 0 17 2 17 2 22 7 22"/>
+    <polygon points="24 24 17 24 17 22 22 22 22 17 24 17 24 24"/>
+  </g>
+  <g>
+    <path d="m12.6,16.48c-2.21,0-4-1.79-4-4s1.79-4,4-4,4,1.79,4,4-1.79,4-4,4Zm0-6c-1.1,0-2,.9-2,2s.9,2,2,2,2-.9,2-2-.9-2-2-2Z"/>
+  </g>
+</svg>

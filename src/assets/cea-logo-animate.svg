@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 394.11 516.83">
+  <style>
+    @keyframes fadeInOut {
+
+      0%,
+      50%{
+        opacity: 1;
+      }
+
+      25% {
+        opacity: 0;
+      }
+    }
+
+    /* Each color has the same animation but different delays */
+    #purple {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0s;
+    }
+
+    #red {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.1s;
+    }
+
+    #blue {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.2s;
+    }
+
+    #yellow {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.3s;
+    }
+
+    #green {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.4s;
+    }
+
+    #brown {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.5s;
+    }
+
+    #white {
+      animation: fadeInOut 1s infinite;
+      animation-delay: 0.2s;
+    }
+  </style>
+  <g id="purple">
+    <polygon points="258.41 459.47 201.05 516.83 201.05 402.11 258.41 459.47" fill="#ac6080" />
+    <polygon points="260.07 335.09 260.07 449.81 202.71 392.45 260.07 335.09" fill="#ac6080" />
+  </g>
+  <g id="red">
+    <polygon points="193.05 268.07 193.05 382.79 135.69 325.43 193.05 268.07" fill="#f04d5b" />
+    <polygon points="327.09 134.03 327.09 248.75 269.73 191.4 327.09 134.03" fill="#f04d5b" />
+    <polygon points="191.39 258.41 134.03 315.78 134.03 201.06 191.39 258.41" fill="#f04d5b" />
+    <polygon points="325.43 258.41 325.43 258.42 268.07 315.77 268.07 201.06 325.43 258.41" fill="#f04d5b" />
+    <polygon points="126.03 59.02 126.03 181.74 67.01 122.72 67.01 0 126.03 59.02" fill="#f04d5b" />
+  </g>
+  <g id="blue">
+    <polygon points="392.45 325.43 335.09 382.79 335.09 268.07 392.45 325.43" fill="#41c0c2" />
+    <polygon points="394.11 201.05 394.11 315.78 336.75 258.42 336.75 258.41 394.11 201.05" fill="#41c0c2" />
+    <polygon points="126.03 201.06 126.03 315.77 68.67 258.42 68.67 258.41 126.03 201.06" fill="#41c0c2" />
+    <polygon points="124.37 191.4 67.01 248.75 67.01 134.04 124.37 191.4" fill="#41c0c2" />
+  </g>
+  <g id="yellow">
+    <polygon points="57.36 258.41 0 315.77 0 201.05 57.36 258.41" fill="#ffd21f" />
+    <polygon points="59.01 268.07 59.01 382.79 1.65 325.43 59.01 268.07" fill="#ffd21f" />
+    <polygon points="325.43 392.45 268.07 449.81 268.07 335.09 325.43 392.45" fill="#ffd21f" />
+    <polygon points="327.09 268.07 327.09 382.79 269.73 325.43 327.09 268.07" fill="#ffd21f" />
+    <polygon points="260.07 201.05 260.07 315.77 202.71 258.41 260.07 201.05" fill="#ffd21f" />
+    <polygon points="258.41 325.43 201.05 382.79 201.05 268.07 258.41 325.43" fill="#ffd21f" />
+  </g>
+  <g id="green">
+    <polygon points="124.38 325.43 67.01 382.79 67.01 268.07 124.38 325.43" fill="#7ec890" />
+    <polygon points="126.03 335.09 126.03 449.81 68.67 392.45 126.03 335.09" fill="#7ec890" />
+  </g>
+  <g id="brown">
+    <polygon points="191.39 392.45 134.03 449.81 134.03 335.09 191.39 392.45" fill="#ae9347" />
+    <polygon points="193.05 402.11 193.05 516.83 135.69 459.47 193.05 402.11" fill="#ae9347" />
+  </g>
+  <g id="white">
+    <rect x="154.16" y="148.43" width="85.78" height="85.78" transform="translate(-77.57 195.37) rotate(-45)"
+      fill="#fff" stroke="black" />
+  </g>
+</svg>

@@ -11,8 +11,9 @@ export const openDialog = async (form, type, filters, name) => {
 
   try {
     const paths = await window.api.openDialog(options);
-    if (paths && paths.length) {
-      form.setFieldsValue({ [name]: paths[0] });
+    if (paths?.length) {
+      form?.setFieldsValue({ [name]: paths[0] });
+      return paths[0];
     }
   } catch (e) {
     console.error(e);

@@ -8,5 +8,7 @@ export function getAutoUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
 
+  // autoUpdater.forceDevUpdateConfig = true;
+
   return autoUpdater;
 }

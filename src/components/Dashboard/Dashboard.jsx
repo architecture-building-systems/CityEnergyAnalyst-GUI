@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import { CopyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
-import axios from 'axios';
+import { apiClient } from '../../api/axios';
 import {
   ModalAddPlot,
   ModalChangePlot,
@@ -44,7 +44,7 @@ const Dashboard = () => {
 
   return (
     <ModalManager modals={modals}>
-      <div id="cea-dashboard-content" style={{ minHeight: '100%' }}>
+      <div id="cea-dashboard-content">
         <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
           <DashSelect
             dashIndex={dashIndex}
@@ -173,9 +173,7 @@ const useDashboardData = () => {
 
   const fetchDashboards = async () => {
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/`,
-      );
+      const resp = await apiClient.get(`/api/dashboards/`);
       setDashboards(resp.data);
     } catch (error) {
       console.error(error);
@@ -183,9 +181,7 @@ const useDashboardData = () => {
   };
   const fetchCategories = async () => {
     try {
-      const resp = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories`,
-      );
+      const resp = await apiClient.get(`/api/dashboards/plot-categories`);
       setCategories(resp.data);
     } catch (error) {
       console.error(error);

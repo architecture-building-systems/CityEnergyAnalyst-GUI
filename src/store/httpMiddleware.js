@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from '../api/axios';
 
 export const httpAction = ({
   type = '',
@@ -54,7 +54,7 @@ const httpMiddleware =
 
     const fetch = async () => {
       try {
-        const { data } = await axios.request(axiosOptions);
+        const { data } = await apiClient.request(axiosOptions);
         dispatch({
           type: type + '_SUCCESS',
           payload: editPayload(data) || data,

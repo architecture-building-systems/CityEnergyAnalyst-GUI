@@ -1,9 +1,10 @@
 {
-  "HOME": "/",
   "TOOLS": "/tools",
   "DATABASE_EDITOR": "/database-editor",
   "INPUT_EDITOR": "/input-editor",
-  "DASHBOARD": "/dashboard",
-  "PROJECT_OVERVIEW": "/project",
+  "DASHBOARD": "/plots",
+  "PROJECT": "/",
+  "PROJECT_OVERVIEW": "/overview",
+  "CREATE_SCENARIO": "/create-scenario",
   "SPLASH": "/splash"
 }

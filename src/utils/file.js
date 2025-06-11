@@ -1,14 +1,14 @@
-import axios from 'axios';
 import path from 'path-browserify';
+import { apiClient } from '../api/axios';
 
-class FileNotFoundError extends Error {
+export class FileNotFoundError extends Error {
   constructor(message, options) {
     // Need to pass `options` as the second parameter to install the "cause" property.
     super(message, options);
   }
 }
 
-class InvalidContentType extends Error {
+export class InvalidContentType extends Error {
   constructor(message, options) {
     // Need to pass `options` as the second parameter to install the "cause" property.
     super(message, options);
@@ -18,42 +18,28 @@ class InvalidContentType extends Error {
 export const getContentInfo = async (
   content_path = '',
   content_type = 'directory',
-  root_path = null,
 ) => {
   try {
-    const url = `${import.meta.env.VITE_CEA_URL}/api/contents/${content_path}`;
-    const { data } = await axios.get(url, {
-      params: { type: content_type, ...(root_path && { root: root_path }) },
+    const { data } = await apiClient.get('/api/contents', {
+      params: { content_type, content_path },
     });
     return data;
   } catch (error) {
-    if (error.response.status == 404) throw new FileNotFoundError();
-    if (error.response.status == 400) throw new InvalidContentType();
+    const message = error?.response?.data?.detail ?? 'Unknown error';
+    if (error.response.status == 404) throw new FileNotFoundError(message);
+    if (error.response.status == 400) throw new InvalidContentType(message);
     else throw error;
   }
 };
 
-export const checkExist = async (
-  content_path,
-  content_type,
-  root_path = null,
-) => {
-  try {
-    await getContentInfo(content_path, content_type, root_path);
-    return true;
-  } catch (error) {
-    if (
-      error instanceof FileNotFoundError ||
-      error instanceof InvalidContentType
-    )
-      return false;
-    else throw error;
-  }
+export const checkExist = async (content_path, content_type) => {
+  await getContentInfo(content_path, content_type);
+  return true;
 };
 
 const isWin = (fullPath) => {
-  const { base } = path.parse(fullPath);
-  return base == fullPath;
+  // Check if the path contains backslashes or starts with a drive letter pattern
+  return fullPath.includes('\\') || /^[a-zA-Z]:/.test(fullPath);
 };
 
 export const dirname = (fullPath) => {
@@ -63,7 +49,18 @@ export const dirname = (fullPath) => {
 };
 
 export const joinPath = (dir, suffix) => {
-  return path.join(dir, suffix);
+  // Determine if we should use Windows-style path separators
+  const useWindowsFormat = isWin(dir) || isWin(suffix);
+
+  // Normalize paths to forward slashes for joining
+  const normalizedDir = dir.replace(/\\/g, '/');
+  const normalizedSuffix = suffix.replace(/\\/g, '/');
+
+  // Join the paths
+  const joined = path.join(normalizedDir, normalizedSuffix);
+
+  // Convert back to Windows format if needed
+  return useWindowsFormat ? joined.replace(/\//g, '\\') : joined;
 };
 
 export const basename = (fullPath) => {

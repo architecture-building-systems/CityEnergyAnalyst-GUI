@@ -1,17 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card, Button, Modal, message, Tooltip, Space } from 'antd';
-import {
-  setSelected,
-  updateInputData,
-  deleteBuildings,
-  discardChanges,
-  saveChanges,
-} from '../../actions/inputEditor';
 import EditSelectedModal from './EditSelectedModal';
-import routes from '../../constants/routes.json';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
@@ -19,17 +9,36 @@ import { getOperatingSystem } from '../../utils';
 import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from '../../utils/electron';
+import { useToolStore } from '../Tools/store';
+
+import { INDEX_COLUMN } from './constants';
+import { useSaveInputs } from '../../hooks/mutations/useSaveInputs';
+import {
+  useDeleteBuildings,
+  useResyncInputs,
+  useUpdateInputs,
+} from '../../hooks/updates/useUpdateInputs';
+import {
+  useChanges,
+  useDiscardChanges,
+  useSelected,
+  useSetSelected,
+} from './store';
+import ErrorBoundary from 'antd/lib/alert/ErrorBoundary';
+import { useSetShowLoginModal } from '../Login/store';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
-const Table = ({ tab }) => {
-  const { selected, changes, schedules } = useSelector(
-    (state) => state.inputData,
-  );
+const Table = ({ tab, tables, columns }) => {
+  const selected = useSelected();
+  const changes = useChanges();
+
   const tabulator = useRef(null);
 
   return (
     <>
+      <InputEditorButtons changes={changes} />
+
       <Card
         styles={{ header: { backgroundColor: '#f1f1f1' } }}
         size="small"
@@ -39,26 +48,50 @@ const Table = ({ tab }) => {
           </Tooltip>
         }
         extra={
-          <TableButtons selected={selected} tabulator={tabulator} tab={tab} />
+          <TableButtons
+            selected={selected}
+            tabulator={tabulator}
+            tab={tab}
+            tables={tables}
+            columns={columns}
+          />
         }
       >
-        {tab == 'schedules' ? (
-          <ScheduleEditor
-            tabulator={tabulator}
-            selected={selected}
-            schedules={schedules}
-          />
-        ) : (
-          <TableEditor tabulator={tabulator} tab={tab} selected={selected} />
-        )}
+        <ErrorBoundary>
+          {tab == 'schedules' ? (
+            <ScheduleEditor
+              tabulator={tabulator}
+              selected={selected}
+              tables={tables}
+            />
+          ) : (
+            <TableEditor
+              tabulator={tabulator}
+              tab={tab}
+              selected={selected}
+              tables={tables}
+              columns={columns}
+            />
+          )}
+        </ErrorBoundary>
       </Card>
-      <InputEditorButtons changes={changes} />
     </>
   );
 };
 
 const InputEditorButtons = ({ changes }) => {
-  const dispatch = useDispatch();
+  const saveChanges = useSaveInputs();
+  const resyncInputs = useResyncInputs();
+  const discardChangesFunc = useDiscardChanges();
+
+  const setShowLoginModal = useSetShowLoginModal();
+
+  const discardChanges = async () => {
+    // TODO: Throw error
+    await resyncInputs();
+    discardChangesFunc();
+  };
+
   const noChanges =
     !Object.keys(changes.update).length && !Object.keys(changes.delete).length;
 
@@ -76,7 +109,8 @@ const InputEditorButtons = ({ changes }) => {
       okType: 'primary',
       cancelText: 'Cancel',
       async onOk() {
-        await dispatch(saveChanges())
+        await saveChanges
+          .mutateAsync()
           .then(() => {
             message.config({
               top: 120,
@@ -84,11 +118,14 @@ const InputEditorButtons = ({ changes }) => {
             message.success('Changes Saved!');
           })
           .catch((error) => {
-            Modal.error({
-              title: 'Could not save changes',
-              content: <AsyncError error={error} />,
-              width: '80vw',
-            });
+            if (error.response.status === 401) setShowLoginModal(true);
+            else {
+              Modal.error({
+                title: 'Could not save changes',
+                content: <AsyncError error={error} />,
+                width: '80vw',
+              });
+            }
           });
       },
     });
@@ -108,9 +145,8 @@ const InputEditorButtons = ({ changes }) => {
       okType: 'danger',
       cancelText: 'Cancel',
       async onOk() {
-        await dispatch(discardChanges())
-          .then((data) => {
-            console.log(data);
+        await discardChanges()
+          .then(() => {
             message.config({
               top: 120,
             });
@@ -125,17 +161,11 @@ const InputEditorButtons = ({ changes }) => {
   };
 
   return (
-    <div style={{ marginTop: 10 }}>
-      <Button
-        style={{ margin: 5 }}
-        type="primary"
-        disabled={noChanges}
-        onClick={_saveChanges}
-      >
+    <div style={{ display: 'flex', gap: 10 }}>
+      <Button type="primary" disabled={noChanges} onClick={_saveChanges}>
         Save
       </Button>
       <Button
-        style={{ margin: 5 }}
         type="primary"
         disabled={noChanges}
         onClick={_discardChanges}
@@ -200,12 +230,16 @@ const ChangesSummary = ({ changes }) => {
   );
 };
 
-const TableButtons = ({ selected, tabulator, tab }) => {
+const TableButtons = ({ selected, tabulator, tables, tab, columns }) => {
+  const deleteBuildings = useDeleteBuildings();
+
+  const setSelected = useSetSelected();
+
   const [filterToggle, setFilterToggle] = useState(false);
   const [selectedInTable, setSelectedInTable] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const data = useSelector((state) => state.inputData.tables);
-  const dispatch = useDispatch();
+
+  const data = tables;
 
   useEffect(() => {
     const selectedType = ['surroundings', 'trees'].includes(tab) ? tab : 'zone';
@@ -215,21 +249,21 @@ const TableButtons = ({ selected, tabulator, tab }) => {
   }, [tab, selected]);
 
   const selectAll = () => {
-    dispatch(setSelected(tabulator.current.getData().map((data) => data.Name)));
+    setSelected(tabulator.current.getData().map((data) => data[INDEX_COLUMN]));
   };
 
   const filterSelected = () => {
     if (filterToggle) {
       tabulator.current.clearFilter();
     } else {
-      tabulator.current.setFilter('Name', 'in', selected);
+      tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
     }
     tabulator.current.redraw();
     setFilterToggle((oldValue) => !oldValue);
   };
 
   const clearSelected = () => {
-    dispatch(setSelected([]));
+    setSelected([]);
   };
 
   const deleteSelected = () => {
@@ -251,7 +285,7 @@ const TableButtons = ({ selected, tabulator, tab }) => {
       okType: 'danger',
       cancelText: 'Cancel',
       onOk() {
-        dispatch(deleteBuildings([...selected]));
+        deleteBuildings([...selected]);
       },
     });
   };
@@ -285,14 +319,15 @@ const TableButtons = ({ selected, tabulator, tab }) => {
         setVisible={setModalVisible}
         inputTable={tabulator.current}
         table={tab}
+        columns={columns}
       />
     </Space>
   );
 };
 
-const TableEditor = ({ tab, selected, tabulator }) => {
-  const [data, columnDef] = useTableData(tab);
-  const dispatch = useDispatch();
+const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
+  const updateInputData = useUpdateInputs();
+  const [data, columnDef] = useTableData(tab, columns, tables);
   const divRef = useRef(null);
   const tableRef = useRef(tab);
   const columnDescriptionRef = useRef();
@@ -301,7 +336,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
     tabulator.current = new Tabulator(divRef.current, {
       data: [],
-      index: 'Name',
+      index: INDEX_COLUMN,
       columns: [],
       layout: 'fitDataFill',
       height: '300px',
@@ -323,17 +358,15 @@ const TableEditor = ({ tab, selected, tabulator }) => {
         cell.cancelEdit();
       },
       cellEdited: (cell) => {
-        dispatch(
-          updateInputData(
-            tableRef.current,
-            [cell.getData()['Name']],
-            [{ property: cell.getField(), value: cell.getValue() }],
-          ),
+        updateInputData(
+          tableRef.current,
+          [cell.getData()[INDEX_COLUMN]],
+          [{ property: cell.getField(), value: cell.getValue() }],
         );
       },
       placeholder: '<div>No matching records found.</div>',
     });
-    filtered && tabulator.current.setFilter('Name', 'in', selected);
+    filtered && tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
   }, []);
 
   // Keep reference of current table name
@@ -395,7 +428,7 @@ const TableEditor = ({ tab, selected, tabulator }) => {
       tabulator.current.deselectRow();
       tabulator.current.selectRow(selected);
       tabulator.current.getFilters().length &&
-        tabulator.current.setFilter('Name', 'in', selected);
+        tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
     }
   }, [selected]);
 
@@ -409,60 +442,69 @@ const TableEditor = ({ tab, selected, tabulator }) => {
 
 // FIXME: Could get info from backend instead of hardcoding
 const ScriptSuggestion = ({ tab }) => {
+  const tabScriptMap = {
+    typology: 'data-migrator',
+    surroundings: 'surroundings-helper',
+    trees: 'trees-helper',
+  };
+
+  const script = tabScriptMap?.[tab] ?? 'archetypes-mapper';
+  const setShowTools = useToolStore((state) => state.setShowTools);
+  const setSelectedTool = useToolStore((state) => state.setVisibility);
+
   return (
     <div style={{ margin: 8 }}>
-      Input file could not be found. You can import/create the file using the
-      {tab == 'typology' ? (
-        <Link to={`${routes.TOOLS}/data-migrator`}>{' data-migrator '}</Link>
-      ) : tab == 'surroundings' ? (
-        <Link to={`${routes.TOOLS}/surroundings-helper`}>
-          {' surroundings-helper '}
-        </Link>
-      ) : tab == 'trees' ? (
-        <Link to={`${routes.TOOLS}/trees-helper`}>{' trees-helper '}</Link>
-      ) : (
-        <Link to={`${routes.TOOLS}/archetypes-mapper`}>
-          {' archetypes-mapper '}
-        </Link>
-      )}
+      Input file could not be found. You can import/create the file using the{' '}
+      <span
+        style={{
+          cursor: 'pointer',
+          textDecoration: 'underline',
+          color: 'blue',
+        }}
+        onClick={() => {
+          setSelectedTool(script);
+          setShowTools(true);
+        }}
+      >
+        {script}
+      </span>{' '}
       tool.
     </div>
   );
 };
 
-const useTableData = (tab) => {
-  const { columns, tables } = useSelector((state) => state.inputData);
+const useTableData = (tab, columns, tables) => {
   const [data, setData] = useState(null);
   const [columnDef, setColumnDef] = useState(null);
 
-  const dispatch = useDispatch();
+  const setSelected = useSetSelected();
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();
     const selectedRows = cell
       .getTable()
       .getSelectedData()
-      .map((data) => data.Name);
+      .map((data) => data[INDEX_COLUMN]);
     if (e.ctrlKey || e.metaKey) {
       if (cell.getRow().isSelected())
-        dispatch(
-          setSelected(selectedRows.filter((name) => name !== row.getIndex())),
-        );
-      else dispatch(setSelected([...selectedRows, row.getIndex()]));
+        setSelected(selectedRows.filter((name) => name !== row.getIndex()));
+      else setSelected([...selectedRows, row.getIndex()]);
     } else if (
       selectedRows.length !== [row.getIndex()].length ||
       !cell.getRow().isSelected()
     )
-      dispatch(setSelected([row.getIndex()]));
+      setSelected([row.getIndex()]);
   };
 
   const getData = () =>
-    Object.keys(tables[tab])
-      .sort()
-      .map((row) => ({
-        Name: row,
-        ...tables[tab][row],
-      }));
+    tables?.[tab]
+      ? Object.keys(tables[tab])
+          .sort()
+          .map((row) => ({
+            [INDEX_COLUMN]: row,
+            ...tables[tab][row],
+          }))
+      : null;
 
   useEffect(() => {
     if (columns[tab] === null) {
@@ -476,7 +518,7 @@ const useTableData = (tab) => {
           switch (column) {
             case 'REFERENCE':
               return columnDef;
-            case 'Name':
+            case INDEX_COLUMN:
               return { ...columnDef, frozen: true, cellClick: selectRow };
             default: {
               const dataType = columns[tab][column].type;
@@ -515,7 +557,7 @@ const useTableData = (tab) => {
                     validator: [
                       'required',
                       'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
-                      ...(columns[tab][column].constraints
+                      ...(columns[tab][column]?.constraints
                         ? Object.keys(columns[tab][column].constraints).map(
                             (constraint) =>
                               `${constraint}:${columns[tab][column].constraints[constraint]}`,
@@ -542,6 +584,18 @@ const useTableData = (tab) => {
                       ...(columns[tab][column]?.nullable ? [] : ['required']),
                     ],
                   };
+                case 'boolean':
+                  return {
+                    ...columnDef,
+                    editor: 'select',
+                    editorParams: {
+                      values: [true, false],
+                    },
+                    mutator: (value) => !!value,
+                  };
+                case 'Polygon':
+                  // Ignore polygons for now
+                  return columnDef;
                 default:
                   console.error(
                     `Could not find column validation for type "${dataType}" for column "${column}"`,

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <path d="m0,0v32h32V0H0Zm30,30H2V2h28v28Z" fill="currentColor"/>
+  <g>
+    <polygon points="14 9 14 11 11 11 11 14 9 14 9 11 6 11 6 9 9 9 9 6 11 6 11 9 14 9" fill="currentColor"/>
+    <rect x="18" y="9" width="8" height="2" fill="currentColor"/>
+    <rect x="18" y="19" width="2" height="2" fill="currentColor"/>
+    <rect x="23" y="23" width="2" height="2" fill="currentColor"/>
+  </g>
+  <g>
+    <polygon points="11.41 22.01 13.7 24.3 12.29 25.71 10 23.42 7.7 25.71 6.29 24.3 8.59 22.01 6.29 19.71 7.7 18.3 10 20.6 12.29 18.3 13.7 19.71 11.41 22.01" fill="currentColor"/>
+    <rect x="17.75" y="21" width="8.49" height="2" transform="translate(-9.12 22) rotate(-45)" fill="currentColor"/>
+  </g>
+</svg>

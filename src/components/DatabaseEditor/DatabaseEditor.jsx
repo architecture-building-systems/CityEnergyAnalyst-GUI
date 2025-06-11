@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
-import {
-  ImportOutlined,
-  LoadingOutlined,
-  UploadOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import CenterSpinner from '../HomePage/CenterSpinner';
@@ -17,13 +12,13 @@ import {
   resetDatabaseChanges,
 } from '../../actions/databaseEditor';
 import { AsyncError } from '../../utils/AsyncError';
-import routes from '../../constants/routes.json';
 import SavingDatabaseModal from './SavingDatabaseModal';
 import DatabaseTopMenu from './DatabaseTopMenu';
 import Database from './Database';
 import UseTypesDatabase from './UseTypesDatabase';
 import ValidationErrors from './ValidationErrors';
-import { useChangeRoute } from '../../utils/hooks';
+import { useProjectStore } from '../Project/store';
+import { apiClient } from '../../api/axios';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -33,9 +28,7 @@ const useValidateDatabasePath = () => {
     try {
       setValid(null);
       setError(null);
-      await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/inputs/databases/check`,
-      );
+      await apiClient.get(`/api/inputs/databases/check`);
       setValid(true);
     } catch (err) {
       if (err.response) setError(err.response.data.message);
@@ -52,12 +45,9 @@ const useValidateDatabasePath = () => {
 };
 
 const DatabaseEditor = () => {
-  const {
-    info: { scenario_name: scenarioName },
-  } = useSelector((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
 
   const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
-  const goToScript = useChangeRoute(`${routes.TOOLS}/data-initializer`);
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
   if (valid === null)
@@ -74,9 +64,6 @@ const DatabaseEditor = () => {
         <h2>Database Editor</h2>
         <div>
           <ExportDatabaseButton />
-          <Button type="primary" icon={<ImportOutlined />} onClick={goToScript}>
-            Import Database
-          </Button>
         </div>
       </div>
       <div className="cea-database-editor-content">
@@ -187,10 +174,7 @@ const SaveDatabaseButton = () => {
     setModalVisible(true);
     try {
       console.log(databasesData);
-      await axios.put(
-        `${import.meta.env.VITE_CEA_URL}/api/inputs/databases`,
-        databasesData,
-      );
+      await apiClient.put(`/api/inputs/databases`, databasesData);
       setSuccess(true);
       dispatch(resetDatabaseChanges());
     } catch (err) {

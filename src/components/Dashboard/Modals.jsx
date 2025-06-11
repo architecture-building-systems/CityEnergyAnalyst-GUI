@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { FolderOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
 import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
-import axios from 'axios';
+import { apiClient } from '../../api/axios';
 import { ModalContext } from '../../utils/ModalManager';
 import Parameter from '../Tools/Parameter';
 import { basename, dirname } from '../../utils/file';
@@ -24,8 +24,8 @@ export const ModalNewDashboard = ({
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
-        axios
-          .post(`${import.meta.env.VITE_CEA_URL}/api/dashboards/`, values)
+        apiClient
+          .post(`/api/dashboards/`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -133,8 +133,8 @@ export const ModalDuplicateDashboard = ({
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
-        axios
-          .post(`${import.meta.env.VITE_CEA_URL}/api/dashboards/duplicate`, {
+        apiClient
+          .post(`/api/dashboards/duplicate`, {
             ...values,
             dashboard_index: dashIndex,
           })
@@ -219,11 +219,8 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
-        axios
-          .patch(
-            `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}`,
-            values,
-          )
+        apiClient
+          .patch(`/api/dashboards/${dashIndex}`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -246,18 +243,16 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
 
   useEffect(() => {
     if (visible.setScenario) {
-      axios
-        .get(`${import.meta.env.VITE_CEA_URL}/api/project/`)
-        .then((response) => {
-          const { scenario, scenarios } = response.data;
-          setScenarios({
-            type: 'ScenarioNameParameter',
-            name: 'scenario',
-            value: scenario,
-            help: 'Change the scenario parameter of all plots in this dashboard',
-            choices: scenarios,
-          });
+      apiClient.get(`/api/project/`).then((response) => {
+        const { scenario, scenarios } = response.data;
+        setScenarios({
+          type: 'ScenarioNameParameter',
+          name: 'scenario',
+          value: scenario,
+          help: 'Change the scenario parameter of all plots in this dashboard',
+          choices: scenarios,
         });
+      });
     } else setScenarios(null);
   }, [visible.setScenario]);
 
@@ -296,8 +291,8 @@ export const ModalDeleteDashboard = ({
 
   const handleOk = () => {
     setConfirmLoading(true);
-    axios
-      .delete(`${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}`)
+    apiClient
+      .delete(`/api/dashboards/${dashIndex}`)
       .then((response) => {
         if (response) {
           console.log(response.data);
@@ -354,8 +349,8 @@ const ModalAddPlotTemplate = ({
   const prevPage = () => setPage((oldValue) => oldValue - 1);
   const getParameters = async (scenario) => {
     try {
-      const params = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/plot-categories/${
+      const params = await apiClient.get(
+        `/api/dashboards/plot-categories/${
           category.category
         }/plots/${category.plot_id}/parameters`,
         scenario ? { params: { scenario } } : {},
@@ -372,13 +367,11 @@ const ModalAddPlotTemplate = ({
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
-        axios
-          .put(
-            `${
-              import.meta.env.VITE_CEA_URL
-            }/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
-            { ...category, parameters: values },
-          )
+        apiClient
+          .put(`/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`, {
+            ...category,
+            parameters: values,
+          })
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -553,8 +546,8 @@ export const ModalEditParameters = ({
   const formRef = useRef();
   const getParameters = async (scenario) => {
     try {
-      const params = await axios.get(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
+      const params = await apiClient.get(
+        `/api/dashboards/${dashIndex}/plots/${
           activePlotRef.current
         }/parameters`,
         scenario ? { params: { scenario } } : {},
@@ -571,13 +564,10 @@ export const ModalEditParameters = ({
       if (!err) {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
-        axios
-          .put(
-            `${
-              import.meta.env.VITE_CEA_URL
-            }/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`,
-            { parameters: values },
-          )
+        apiClient
+          .put(`/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`, {
+            parameters: values,
+          })
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -660,12 +650,8 @@ export const ModalDeletePlot = ({
 
   const handleOk = () => {
     setConfirmLoading(true);
-    axios
-      .delete(
-        `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
-          activePlotRef.current
-        }`,
-      )
+    apiClient
+      .delete(`/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`)
       .then((response) => {
         if (response) {
           console.log(response.data);
@@ -768,8 +754,8 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
     const fetchFileLocations = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(
-          `${import.meta.env.VITE_CEA_URL}/api/dashboards/${dashIndex}/plots/${
+        const { data } = await apiClient.get(
+          `/api/dashboards/${dashIndex}/plots/${
             activePlotRef.current
           }/input-files`,
         );

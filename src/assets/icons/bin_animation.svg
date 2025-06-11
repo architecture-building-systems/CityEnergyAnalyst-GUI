@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32">
+    <style>
+    .lid-group {
+      transform: translateY(0);
+      transition: transform 0.1s ease-out;
+    }
+    svg:hover .lid-group {
+      transform: translateY(-4px);
+    }
+  </style>
+  <g>
+    <polygon points="20.96 32 3.04 32 2 9.05 4 8.96 4.96 30 19.04 30 20 8.96 22 9.05 20.96 32" fill="currentColor"/>
+    <path class="lid-group" d="m19.82,5l-1-5H5.18l-1,5H0v2h24v-2h-4.18Zm-13.6,0l.6-3h10.36l.6,3H6.22Z" fill="currentColor"/>
+  </g>
+  <rect x="8.23" y="14.39" width="2" height="12" fill="currentColor"/>
+  <rect x="13.54" y="14.39" width="2" height="12" fill="currentColor"/>
+</svg>

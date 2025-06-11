@@ -3,7 +3,7 @@ import { useSpring, animated } from '@react-spring/web';
 import ceaLogo from '../../assets/cea-logo.png';
 
 const useLoadingMessages = () => {
-  const [message, setMessage] = useState('Initalizing CEA Dashboard...');
+  const [message, setMessage] = useState('Initalizing CEA Desktop...');
 
   useEffect(() => {
     const updateMessage = (msg) => {

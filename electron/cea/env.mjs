@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import os from 'os';
 import { exec, execSync, spawn } from 'child_process';
@@ -11,7 +12,15 @@ const execAsync = promisify(exec);
 
 const paths = {
   darwin: {
-    micromamba: path.join(process.resourcesPath, os.arch(), 'micromamba'),
+    micromamba: app.isPackaged
+      ? path.join(process.resourcesPath, os.arch(), 'micromamba')
+      : // FIXME: Temp fix for dev env
+        path.join(
+          fileURLToPath(import.meta.url),
+          '../../../dependencies',
+          os.arch(),
+          'micromamba',
+        ),
     root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
   },
   win32: {
@@ -80,10 +89,17 @@ export const getCEAenvVersion = async () => {
 };
 
 export const checkCEAenv = async () => {
+  // Check if CEA is in the environment
   try {
     await execAsync(
       `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run cea --version`,
     );
+
+    // Check if CEA is installed as editable package (i.e. dev mode)
+    const { stdout } = await execAsync(
+      `"${getMicromambaPath(true)}" -r "${getCEARootPath()}" -n cea run pip show cityenergyanalyst`,
+    );
+    return stdout.toString().trim().includes('Editable project location');
   } catch (error) {
     console.error(error);
     throw new CEAError(
@@ -104,7 +120,7 @@ const fetchCondaLock = async (ceaVersion, condaLockPath) => {
     await downloadFile(condaLockUrl, condaLockPath);
   } catch (error) {
     console.error(error);
-    new Error(`Unable to download file from ${condaLockUrl}`);
+    throw new Error(`Unable to fetch conda environment file.`);
   }
 };
 
@@ -206,7 +222,7 @@ export const updateCEAenv = async (ceaVersion) => {
         getCEARootPath(),
         '-n',
         'cea',
-        'update',
+        'create',
         '-f',
         condaLockPath,
         '-y',

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
-import { getProject } from '../actions/project';
 
 export const useAsyncData = (
   url = '',
@@ -58,9 +57,4 @@ export const useEventListener = (eventName, handler, element = window) => {
 export const useChangeRoute = (route) => {
   const dispatch = useDispatch();
   return () => dispatch(push(route));
-};
-
-export const useFetchProject = () => {
-  const dispatch = useDispatch();
-  return (project) => dispatch(getProject(project));
 };

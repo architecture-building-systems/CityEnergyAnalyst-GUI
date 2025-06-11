@@ -1,0 +1,58 @@
+.cea-job-info-card {
+  background-color: rgba(255, 255, 255, 1);
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+
+  display: flex;
+  user-select: none;
+}
+
+.cea-job-info-card:hover {
+  /* background-color: #fafafa; */
+  transition: transform 0.1s ease-out;
+  transform: scale(0.99);
+}
+
+.cea-job-info-icon.danger {
+  color: rgb(240, 77, 91);
+}
+.cea-job-info-icon.info {
+  color: #1470af;
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(-8deg);
+  }
+  25% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.cea-job-info-icon.shake {
+  animation: shake 0.2s ease-in-out;
+}
+
+.cea-job-info-icon {
+  overflow: visible;
+  padding: 8px;
+  border-radius: 8px;
+
+  transition: transform 0.2s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cea-job-info-icon:hover {
+  transform: scale(1.2);
+  cursor: pointer;
+  background: rgba(129, 139, 152, 0.1);
+}

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from '../api/axios';
 
 export const INIT_DATABASE_STATE = 'INIT_DATABASE_STATE';
 export const INIT_DATABASE_STATE_SUCCESS = 'INIT_DATABASE_STATE_SUCCESS';
@@ -22,9 +22,7 @@ export const FETCH_DATABASE_DATA_FAILURE = 'FETCH_DATABASE_DATA_FAILURE';
 export const fetchDatabaseData = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_DATA });
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/inputs/databases`,
-    );
+    const { data } = await apiClient.get(`/api/inputs/databases`);
     return dispatch({
       type: FETCH_DATABASE_DATA_SUCCESS,
       payload: data,
@@ -43,9 +41,7 @@ export const FETCH_DATABASE_SCHEMA_FAILURE = 'FETCH_DATABASE_SCHEMA_FAILURE';
 export const fetchDatabaseSchema = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_SCHEMA });
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/databases/schema`,
-    );
+    const { data } = await apiClient.get(`/api/databases/schema`);
     return dispatch({
       type: FETCH_DATABASE_SCHEMA_SUCCESS,
       payload: data,
@@ -66,9 +62,7 @@ export const FETCH_DATABASE_GLOSSARY_FAILURE =
 export const fetchDatabaseGlossary = () => async (dispatch) => {
   try {
     dispatch({ type: FETCH_DATABASE_GLOSSARY });
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_CEA_URL}/api/glossary/`,
-    );
+    const { data } = await apiClient.get(`/api/glossary/`);
     return dispatch({
       type: FETCH_DATABASE_GLOSSARY_SUCCESS,
       payload: data,

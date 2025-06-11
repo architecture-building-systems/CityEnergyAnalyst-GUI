@@ -1,33 +1,32 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { Form, Modal, Select } from 'antd';
 import { OpenDialogInput } from '../Tools/Parameter';
-import { useFetchConfigProjectInfo } from '../Project/Project';
-import { checkExist, dirname, joinPath } from '../../utils/file';
-import { useFetchProject } from '../../utils/hooks';
+import { checkExist } from '../../utils/file';
+import { useSaveProjectToLocalStorage, useProjectStore } from './store';
+import { isElectron } from '../../utils/electron';
+import { useFetchProjectChoices } from './hooks';
 
-const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
+const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
+  const project = useProjectStore((state) => state.project);
+  const updateScenario = useProjectStore((state) => state.updateScenario);
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
+  const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
+
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [form] = Form.useForm();
-  const { info, fetchInfo } = useFetchConfigProjectInfo();
-  const { project } = info;
-  const fetchProject = useFetchProject();
 
-  useEffect(() => {
-    if (visible) fetchInfo();
-  }, [visible]);
-
-  const onFinish = (values) => {
+  const onFinish = async ({ project }) => {
+    setConfirmLoading(true);
     try {
-      setConfirmLoading(true);
-      const { project } = values;
-      fetchProject(project).then(() => {
-        setConfirmLoading(false);
-        setVisible(false);
-        onSuccess();
-      });
+      updateScenario(null);
+      await fetchInfo(project);
+      setConfirmLoading(false);
+      setVisible(false);
+
+      saveProjectToLocalStorage(project);
+      onSuccess?.(project);
     } catch (e) {
       console.log(e);
-    } finally {
       setConfirmLoading(false);
     }
   };
@@ -47,32 +46,51 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess = () => {} }) => {
       confirmLoading={confirmLoading}
       destroyOnClose
     >
-      {project && (
-        <OpenProjectForm
-          form={form}
-          onFinish={onFinish}
-          initialValue={project}
-          project={info}
-        />
-      )}
+      <OpenProjectForm form={form} onFinish={onFinish} initialValue={project} />
     </Modal>
   );
 };
 
-const OpenProjectForm = ({ form, onFinish, initialValue, project }) => {
-  const projectOptions = useMemo(() => {
-    // FIXME: This is a workaround to get the project root
-    const projectRoot = project?.project ? dirname(project?.project) : '';
-    const projectList = project?.projects;
+const PathDialog = ({ initialValue }) => {
+  return (
+    <Form.Item
+      label="Project"
+      name="project"
+      initialValue={initialValue}
+      extra="Path of Project"
+      rules={[
+        {
+          validator: async (_, value) => {
+            if (!value) return Promise.reject('Project cannot be empty');
+            await checkExist(value, 'directory');
+            return Promise.resolve();
+          },
+        },
+      ]}
+    >
+      <OpenDialogInput type="directory" />
+    </Form.Item>
+  );
+};
 
-    if (!projectList) return null;
+const ProjectChoice = ({ initialValue }) => {
+  const choices = useFetchProjectChoices();
 
-    return projectList.map((projectName) => ({
-      label: projectName,
-      value: joinPath(projectRoot, projectName),
-    }));
-  }, [project]);
+  const options = choices
+    ? choices.map((choice) => ({
+        label: choice,
+        value: choice,
+      }))
+    : [];
 
+  return (
+    <Form.Item label="Project" name="project">
+      <Select placeholder="Select a project" options={options} />
+    </Form.Item>
+  );
+};
+
+const OpenProjectForm = ({ form, onFinish, initialValue }) => {
   return (
     <Form
       form={form}
@@ -80,29 +98,11 @@ const OpenProjectForm = ({ form, onFinish, initialValue, project }) => {
       labelCol={{ span: 6 }}
       wrapperCol={{ span: 15, offset: 1 }}
     >
-      <Form.Item
-        label="Project"
-        name="project"
-        initialValue={initialValue}
-        extra="Path of Project"
-        rules={[
-          {
-            validator: async (_, value) => {
-              const pathExists = await checkExist('', 'directory', value);
-              if (!pathExists) {
-                return Promise.reject('Path entered is invalid');
-              }
-              return Promise.resolve();
-            },
-          },
-        ]}
-      >
-        {projectOptions ? (
-          <Select placeholder="project_root" options={projectOptions} />
-        ) : (
-          <OpenDialogInput form={form} type="directory" />
-        )}
-      </Form.Item>
+      {isElectron() ? (
+        <PathDialog initialValue={initialValue} />
+      ) : (
+        <ProjectChoice initialValue={initialValue} />
+      )}
     </Form>
   );
 };

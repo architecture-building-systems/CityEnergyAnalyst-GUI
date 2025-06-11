@@ -4,30 +4,40 @@ import { Switch, Route } from 'react-router';
 import { ConnectedRouter } from 'connected-react-router';
 
 import routes from '../constants/routes.json';
+import Loading from '../components/Loading/Loading';
 
-const HomePage = lazy(() => import('./HomePage'));
+const HomePage = lazy(() =>
+  Promise.all([
+    import('./HomePage'),
+    new Promise((resolve) => setTimeout(resolve, 1000)),
+  ]).then(([moduleExports]) => moduleExports),
+);
+
 const Splash = lazy(() => import('../components/Splash/Splash'));
 
 class App extends Component {
   render() {
     const { store, history } = this.props;
+
     return (
-      <Provider store={store}>
-        <ConnectedRouter history={history}>
-          <Switch>
-            <Route exact path={routes.SPLASH}>
-              <Suspense>
-                <Splash />
-              </Suspense>
-            </Route>
-            <Route path={routes.HOME}>
-              <Suspense>
-                <HomePage />
-              </Suspense>
-            </Route>
-          </Switch>
-        </ConnectedRouter>
-      </Provider>
+      <div>
+        <Provider store={store}>
+          <ConnectedRouter history={history}>
+            <Switch>
+              <Route exact path={routes.SPLASH}>
+                <Suspense>
+                  <Splash />
+                </Suspense>
+              </Route>
+              <Route path={routes.HOME}>
+                <Suspense fallback={<Loading />}>
+                  <HomePage />
+                </Suspense>
+              </Route>
+            </Switch>
+          </ConnectedRouter>
+        </Provider>
+      </div>
     );
   }
 }

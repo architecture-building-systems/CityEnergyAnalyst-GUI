@@ -1,8 +1,20 @@
-import { Form } from '@ant-design/compatible';
-import { FileSearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { Input, Switch, Select, Divider, Button, Space } from 'antd';
+import {
+  FileSearchOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import {
+  Input,
+  Switch,
+  Select,
+  Divider,
+  Button,
+  Space,
+  Upload,
+  Form,
+} from 'antd';
 import { basename, checkExist, dirname } from '../../utils/file';
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 
 import { isElectron, openDialog } from '../../utils/electron';
 
@@ -36,7 +48,9 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={<Input />}
+          inputComponent={
+            <Input placeholder={nullable ? 'Leave blank for default' : null} />
+          }
         />
       );
     }
@@ -92,6 +106,7 @@ const Parameter = ({ parameter, form }) => {
     case 'SingleBuildingParameter':
     case 'GenerationParameter':
     case 'SystemParameter':
+    case 'ColumnChoiceParameter':
       return (
         <FormItemWrapper
           form={form}
@@ -128,7 +143,9 @@ const Parameter = ({ parameter, form }) => {
       );
     case 'MultiChoiceParameter':
     case 'BuildingsParameter':
-    case 'MultiSystemParameter': {
+    case 'MultiSystemParameter':
+    case 'ColumnMultiChoiceParameter':
+    case 'ScenarioNameMultiChoiceParameter': {
       const placeholder =
         type == 'BuildingsParameter' ? 'All Buildings' : 'Nothing Selected';
       const selectAll = (e) => {
@@ -222,7 +239,12 @@ const Parameter = ({ parameter, form }) => {
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
-                  <OpenDialogButton form={form} type="directory" id={name}>
+                  <OpenDialogButton
+                    form={form}
+                    type="directory"
+                    id={name}
+                    onChange={(value) => setFieldsValue({ [name]: value })}
+                  >
                     <PlusOutlined />
                     Browse for databases path
                   </OpenDialogButton>
@@ -255,6 +277,7 @@ const Parameter = ({ parameter, form }) => {
                     type="file"
                     filters={[{ name: 'Weather files', extensions: ['epw'] }]}
                     id={name}
+                    onChange={(value) => setFieldsValue({ [name]: value })}
                   >
                     <PlusOutlined />
                     Browse for weather file
@@ -314,10 +337,9 @@ const Parameter = ({ parameter, form }) => {
 };
 
 export const FormItemWrapper = ({
-  form,
   name,
-  initialValue,
   help,
+  initialValue = null,
   required = false,
   rules = [],
   config = {},
@@ -325,58 +347,176 @@ export const FormItemWrapper = ({
 }) => {
   return (
     <Form.Item
-      label={name}
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 15, offset: 1 }}
+      label={<b>{name}</b>}
+      wrapperCol={{ offset: 1, span: 22 }}
       key={name}
+      name={name}
+      extra={<div style={{ fontSize: 12 }}>{help}</div>}
+      rules={[{ required: required }, ...rules]}
+      initialValue={initialValue}
+      {...config}
     >
-      {form.getFieldDecorator(name, {
-        ...(typeof initialValue === 'undefined' ? {} : { initialValue }),
-        rules: [{ required: required }, ...rules],
-        ...config,
-      })(inputComponent)}
-      <small style={{ display: 'block', lineHeight: 'normal' }}>{help}</small>
+      {inputComponent}
     </Form.Item>
   );
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const { form, type, filters = [], id, ...rest } = props;
+const PathInput = ({ value, onChange, form, name, ...rest }) => {
+  const [inputValue, setValue] = useState(value);
 
-  if (!isElectron()) return <Input ref={ref} {...props} />;
+  const onClick = () => {
+    form?.setFieldsValue({ [name]: inputValue });
+  };
+
+  const onValueChange = (e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    onChange?.(newValue);
+  };
+
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <Space.Compact style={{ width: '100%' }}>
+        <Input
+          {...rest}
+          value={value || inputValue}
+          onChange={onValueChange}
+          type="text"
+        />
+        <Button type="primary" onClick={onClick}>
+          Select
+        </Button>
+      </Space.Compact>
+    </Space>
+  );
+};
+
+const UploadInput = (props) => {
+  const { children, onChange, ...rest } = props;
+
+  const handlePreview = async (file) => {
+    console.log(file);
+  };
+
+  // TODO: Add support for multiple files
+  return (
+    <Upload
+      showUploadList={false}
+      onPreview={handlePreview}
+      beforeUpload={(file) => {
+        onChange(file);
+        return false; // Prevent automatic upload
+      }}
+      {...rest}
+    >
+      <Button block>{children}</Button>
+    </Upload>
+  );
+};
+
+const covertFiltersToExtensions = (filters) => {
+  return filters
+    .map((filter) => (filter.extensions ? `.${filter.extensions}` : ''))
+    .join(',');
+};
+
+export const OpenDialogInput = forwardRef((props, ref) => {
+  const {
+    form,
+    name,
+    type,
+    onChange,
+    filters = [],
+    children,
+    value,
+    ...rest
+  } = props;
+
+  const _value = value instanceof File ? value.name : value;
+  const extensions = covertFiltersToExtensions(filters);
+
+  const input = isElectron() ? (
+    <Button
+      type="primary"
+      style={{ width: 60 }}
+      icon={<FileSearchOutlined />}
+      onClick={async () => {
+        // TODO: Remove need for form
+        const path = await openDialog(form, type, filters, name);
+        onChange?.(path);
+        form?.validateFields([name]);
+      }}
+    />
+  ) : (
+    <UploadInput
+      form={form}
+      name={name}
+      onChange={onChange}
+      type={type}
+      accept={extensions}
+      {...rest}
+    >
+      {children || <UploadOutlined />}
+    </UploadInput>
+  );
 
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
-      <Input ref={ref} style={{ width: '100%' }} {...rest} />
-      <Button
-        type="primary"
-        style={{ width: 60 }}
-        icon={<FileSearchOutlined />}
-        onClick={async () => {
-          await openDialog(form, type, filters, id);
-        }}
-      ></Button>
+      <Input
+        ref={ref}
+        style={{ width: '100%' }}
+        onChange={onChange}
+        value={_value}
+        {...rest}
+      />
+      {input}
     </Space.Compact>
   );
 });
 OpenDialogInput.displayName = 'OpenDialogInput';
 
-export const OpenDialogButton = (props) => {
-  const { form, type, filters = [], id, children } = props;
+export const OpenDialogButton = ({
+  form,
+  name,
+  type,
+  filters = [],
+  children,
+  buttonType = 'default',
+  onChange,
+  ...rest
+}) => {
+  if (!isElectron()) {
+    const extensions = covertFiltersToExtensions(filters);
 
-  // ignore if not electron for now
-  if (!isElectron()) return null;
-
-  return (
-    <Button
-      style={{ width: '100%' }}
-      onClick={async () => {
-        await openDialog(form, type, filters, id);
-      }}
-    >
-      {children}
-    </Button>
-  );
+    return (
+      <UploadInput
+        form={form}
+        name={name}
+        onChange={onChange}
+        type={type}
+        accept={extensions}
+        {...rest}
+      >
+        {children}
+      </UploadInput>
+    );
+  } else {
+    return (
+      <Button
+        type={buttonType}
+        style={{ width: '100%' }}
+        onClick={async () => {
+          // TODO: Remove need for form
+          const path = await openDialog(form, type, filters, name);
+          onChange?.(path);
+          form?.validateFields([name]);
+        }}
+      >
+        {children}
+      </Button>
+    );
+  }
 };
 
 export default Parameter;

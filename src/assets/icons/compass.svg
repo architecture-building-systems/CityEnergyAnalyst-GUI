@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <polygon points="15.99 25.31 12.29 17.86 14.08 16.96 15.99 20.83 17.93 16.96 19.71 17.86 15.99 25.31" fill="currentColor"/>
+  <polygon points="19.72 14.14 17.93 15.03 16.01 15 14.08 15.03 12.29 14.13 16.02 6.68 19.72 14.14" fill="currentColor"/>
+  <path d="m16,32C7.18,32,0,24.82,0,16S7.18,0,16,0s16,7.18,16,16-7.18,16-16,16Zm0-30c-7.72,0-14,6.28-14,14s6.28,14,14,14,14-6.28,14-14S23.72,2,16,2Z" fill="currentColor"/>
+</svg>

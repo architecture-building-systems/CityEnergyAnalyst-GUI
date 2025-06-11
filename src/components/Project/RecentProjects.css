@@ -1,0 +1,60 @@
+.recent-projects-container {
+  margin: 20px 0;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+
+  height: 30vh;
+  width: 30vw;
+  min-width: 450px;
+  max-height: 500px;
+
+  padding: 18px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recent-projects-title {
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+
+.project-card {
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.project-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  border-radius: 4px;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  color: #bfbfbf;
+}
+
+.empty-state-text {
+  margin-bottom: 20px;
+}
+
+.open-new-project-btn {
+  margin-top: 16px;
+}
