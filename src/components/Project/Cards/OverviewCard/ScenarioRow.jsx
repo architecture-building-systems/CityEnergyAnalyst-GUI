@@ -6,7 +6,11 @@ import { useDispatch } from 'react-redux';
 import { useHoverGrow } from './hooks';
 import { useMemo } from 'react';
 import { Badge, message, Tooltip } from 'antd';
-import { CreateNewIcon, DuplicateIcon } from '../../../../assets/icons';
+import {
+  CreateNewIcon,
+  DuplicateIcon,
+  UploadDownloadIcon,
+} from '../../../../assets/icons';
 
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
@@ -65,6 +69,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         <div style={{ fontSize: 20, display: 'flex', gap: 8 }}>
           <DuplicateScenarioIcon />
           <NewScenarioIcon />
+          <UploadDownloadScenarioIcon />
         </div>
       </div>
       <div
@@ -153,6 +158,29 @@ const DuplicateScenarioIcon = () => {
         onMouseLeave={onMouseLeave}
       >
         <DuplicateIcon onClick={onClick} />
+      </animated.div>
+    </Tooltip>
+  );
+};
+
+const UploadDownloadScenarioIcon = () => {
+  const dispatch = useDispatch();
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+
+  const onClick = () => dispatch(push(routes.CREATE_SCENARIO));
+
+  return (
+    <Tooltip
+      title="Upload/Download"
+      placement="bottom"
+      styles={{ body: { fontSize: 12 } }}
+    >
+      <animated.div
+        style={styles}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <UploadDownloadIcon onClick={onClick} />
       </animated.div>
     </Tooltip>
   );

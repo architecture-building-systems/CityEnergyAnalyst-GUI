@@ -17,6 +17,7 @@ import ExternalLinkIcon from './external_link.svg';
 import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
 import DuplicateIcon from './duplicate.svg';
+import UploadDownloadIcon from './upload_download.svg';
 
 import RunIcon from './run.svg';
 import ShowHideCardsIcon from './show_hide_cards.svg';
@@ -65,4 +66,5 @@ export {
   BinIcon,
   BinAnimationIcon,
   NumberCircleIcon,
+  UploadDownloadIcon,
 };
