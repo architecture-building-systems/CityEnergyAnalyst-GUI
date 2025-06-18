@@ -45,7 +45,7 @@ const EditSelectedModal = ({
       width={800}
       onOk={handleOk}
       onCancel={handleCancel}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ overflow: 'auto', maxHeight: 400 }}>
         <InputDataForm

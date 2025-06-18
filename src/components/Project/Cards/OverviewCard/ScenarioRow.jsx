@@ -123,7 +123,7 @@ const NewScenarioIcon = () => {
     <Tooltip
       title="New Scenario"
       placement="bottom"
-      overlayInnerStyle={{ fontSize: 12 }}
+      styles={{ body: { fontSize: 12 } }}
     >
       <animated.div
         style={styles}
@@ -145,7 +145,7 @@ const DuplicateScenarioIcon = () => {
     <Tooltip
       title="Duplicate Scenario"
       placement="bottom"
-      overlayInnerStyle={{ fontSize: 12 }}
+      styles={{ body: { fontSize: 12 } }}
     >
       <animated.div
         style={styles}

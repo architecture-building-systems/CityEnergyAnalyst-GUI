@@ -70,7 +70,7 @@ const ToolMenu = ({
           <Tooltip
             title={tool.description}
             placement="right"
-            overlayInnerStyle={{ fontSize: 12 }}
+            styles={{ body: { fontSize: 12 } }}
           >
             <div style={{ width: '100%', display: 'flex', gap: 10 }}>
               <span>-</span>
@@ -89,7 +89,7 @@ const ToolMenu = ({
   return (
     <Tooltip
       title={showTooltip ? category : ''}
-      overlayInnerStyle={{ fontSize: 12 }}
+      styles={{ body: { fontSize: 12 } }}
       open={showTooltip && tooltipVisible}
       onOpenChange={setTooltipVisible}
     >

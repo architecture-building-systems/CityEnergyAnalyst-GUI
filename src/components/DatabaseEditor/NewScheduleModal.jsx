@@ -33,7 +33,7 @@ const NewScheduleModal = ({
       okText="Add"
       onOk={handleOk}
       onCancel={handleCancel}
-      destroyOnClose
+      destroyOnHidden
     >
       <NewProjectForm ref={formRef} scheduleNames={scheduleNames} />
     </Modal>

@@ -194,7 +194,7 @@ const Parameter = ({ parameter, form }) => {
               style={{ width: '100%' }}
               placeholder={placeholder}
               maxTagCount={10}
-              dropdownRender={(menu) => (
+              popupRender={(menu) => (
                 <div>
                   <div style={{ padding: '8px', textAlign: 'center' }}>
                     <Button onMouseDown={selectAll} style={{ width: '45%' }}>
@@ -235,7 +235,7 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           inputComponent={
             <Select
-              dropdownRender={(menu) => (
+              popupRender={(menu) => (
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />
@@ -268,7 +268,7 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           inputComponent={
             <Select
-              dropdownRender={(menu) => (
+              popupRender={(menu) => (
                 <div>
                   {menu}
                   <Divider style={{ margin: '4px 0' }} />

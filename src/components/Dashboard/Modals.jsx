@@ -62,7 +62,7 @@ export const ModalNewDashboard = ({
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
       <DashForm ref={formRef} />
     </Modal>
@@ -173,7 +173,7 @@ export const ModalDuplicateDashboard = ({
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
       <DashDuplicateForm
         ref={formRef}
@@ -443,7 +443,7 @@ const ModalAddPlotTemplate = ({
           Ok
         </Button>,
       ]}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ display: page == 0 ? 'block' : 'none' }}>
         <CategoriesForm categories={categories} setValues={setCategory} />
@@ -603,7 +603,7 @@ export const ModalEditParameters = ({
       onCancel={handleCancel}
       okButtonProps={{ disabled: parameters === null }}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
       <ParamsForm
         ref={formRef}
@@ -780,7 +780,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
       width={800}
       onCancel={handleCancel}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       {loading ? (
         <Skeleton />

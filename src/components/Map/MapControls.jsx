@@ -21,52 +21,48 @@ const ExtrudeButton = () => {
   };
 
   return (
-    <Tooltip title="Toggle 3D" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="Toggle 3D" styles={{ body: { fontSize: 12 } }}>
       <ExtrudeIcon style={buttonStyle} onClick={toggleExtruded} />
     </Tooltip>
   );
 };
 
 const ResetCameraButton = () => {
-  const setViewState = useMapStore((state) => state.setViewState);
+  const updateViewState = useMapStore((state) => state.updateViewState);
   const cameraOptions = useMapStore((state) => state.cameraOptions);
 
   const resetCamera = () => {
-    setViewState((state) => ({
-      ...state,
+    updateViewState({
       pitch: 0,
       zoom: cameraOptions.zoom,
       bearing: cameraOptions.bearing,
       latitude: cameraOptions.center.lat,
       longitude: cameraOptions.center.lng,
-    }));
+    });
   };
   return (
-    <Tooltip title="Reset Camera" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="Reset Camera" styles={{ body: { fontSize: 12 } }}>
       <CameraView style={buttonStyle} onClick={resetCamera} />
     </Tooltip>
   );
 };
 
 const ResetCompassButton = () => {
-  const viewState = useMapStore((state) => state.viewState);
-  const setViewState = useMapStore((state) => state.setViewState);
-
-  const bearings = -(viewState?.bearing ?? 0);
+  const bearings = useMapStore((state) => state.viewState?.bearing ?? 0);
+  const updateViewState = useMapStore((state) => state.updateViewState);
 
   const resetCompass = () => {
-    setViewState((state) => ({
-      ...state,
+    updateViewState({
       bearing: 0,
-    }));
+    });
   };
 
   return (
-    <Tooltip title="Reset Compass" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="Reset Compass" styles={{ body: { fontSize: 12 } }}>
       <Compass
         style={{
           ...buttonStyle,
-          transform: `rotate(${bearings}deg)`,
+          transform: `rotate(${-bearings}deg)`,
         }}
         onClick={resetCompass}
       />
