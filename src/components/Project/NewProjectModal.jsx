@@ -75,7 +75,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
       onOk={form.submit}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
       {initialValue && (
         <NewProjectForm

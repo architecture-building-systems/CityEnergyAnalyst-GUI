@@ -451,7 +451,7 @@ export const ShowHideCardsButton = ({ hideAll, onToggle, style }) => {
   return (
     <Tooltip
       title={!hideAll ? 'Show Overlays' : 'Hide Overlays'}
-      overlayInnerStyle={{ fontSize: 12 }}
+      styles={{ body: { fontSize: 12 } }}
     >
       <animated.div
         className="cea-overlay-card"

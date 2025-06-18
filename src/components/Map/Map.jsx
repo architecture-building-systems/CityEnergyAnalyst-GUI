@@ -14,6 +14,8 @@ import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
 import { useCameraOptionsCalulated, useMapStore } from './store/store';
+import { useShallow } from 'zustand/react/shallow';
+
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -277,7 +279,7 @@ const DeckGLMap = ({ data, colors }) => {
   const selected = useSelected();
   const setSelected = useSetSelected();
 
-  const viewState = useMapStore((state) => state.viewState);
+  const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);
 
   const extruded = useMapStore((state) => state.extruded);
@@ -330,15 +332,15 @@ const DeckGLMap = ({ data, colors }) => {
 
     console.log('Camera options calculated:', cameraOptions);
     setCameraOptions(cameraOptions);
-    setViewState((state) => ({
-      ...state,
+    setViewState({
+      ...viewState,
       zoom: cameraOptions.zoom,
       bearing: cameraOptions.bearing,
       latitude: cameraOptions.center.lat,
       longitude: cameraOptions.center.lng,
       transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
       transitionDuration: 1000,
-    }));
+    });
   }, [data]);
 
   useEffect(() => {

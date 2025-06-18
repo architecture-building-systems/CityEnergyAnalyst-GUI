@@ -44,7 +44,7 @@ const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
       onOk={form.submit}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
       <OpenProjectForm form={form} onFinish={onFinish} initialValue={project} />
     </Modal>

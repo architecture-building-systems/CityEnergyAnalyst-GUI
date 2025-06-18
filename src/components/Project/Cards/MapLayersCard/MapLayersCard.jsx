@@ -116,7 +116,7 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
   };
 
   return (
-    <Tooltip title={label || category} overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title={label || category} styles={{ body: { fontSize: 12 } }}>
       <_icon
         className={`cea-card-toolbar-icon inverted ${active ? 'active' : ''}`}
         style={style}

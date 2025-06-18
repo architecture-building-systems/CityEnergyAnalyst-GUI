@@ -48,7 +48,7 @@ const OpenProjectIconButton = () => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
   return (
-    <Tooltip title="Open Project" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="Open Project" styles={{ body: { fontSize: 12 } }}>
       <animated.div
         style={styles}
         onMouseEnter={onMouseEnter}
@@ -68,7 +68,7 @@ const NewProjectIconButton = () => {
   const onSuccess = () => {};
 
   return (
-    <Tooltip title="New Project" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="New Project" styles={{ body: { fontSize: 12 } }}>
       <animated.div
         style={styles}
         onMouseEnter={onMouseEnter}
@@ -127,7 +127,7 @@ const RefreshIconButton = () => {
   };
 
   return (
-    <Tooltip title="Refresh" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="Refresh" styles={{ body: { fontSize: 12 } }}>
       <animated.div
         style={styles}
         onMouseEnter={onMouseEnter}

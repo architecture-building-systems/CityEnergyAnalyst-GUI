@@ -71,14 +71,14 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
     return (
       <Tooltip
         title={`${title} [Under development]`}
-        overlayInnerStyle={{ fontSize: 12 }}
+        styles={{ body: { fontSize: 12 } }}
       >
         <_icon className="cea-card-toolbar-icon" />
       </Tooltip>
     );
 
   return (
-    <Tooltip title={title} overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title={title} styles={{ body: { fontSize: 12 } }}>
       <animated.div
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}

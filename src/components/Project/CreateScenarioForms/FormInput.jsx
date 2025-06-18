@@ -38,7 +38,7 @@ export const SelectWithFileDialog = ({
       value={_value}
       placeholder={placeholder}
       onSelect={onChange}
-      dropdownRender={(menu) => (
+      popupRender={(menu) => (
         <div>
           {menu}
           <Divider style={{ margin: '4px 0' }} />

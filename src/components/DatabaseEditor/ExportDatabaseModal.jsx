@@ -49,7 +49,7 @@ const ExportDatabaseModal = ({ visible, setVisible }) => {
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
       {!!databaseChanges.length && (
         <div style={{ marginBottom: 30 }}>

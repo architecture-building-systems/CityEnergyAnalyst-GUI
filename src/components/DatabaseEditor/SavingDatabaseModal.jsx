@@ -15,7 +15,7 @@ const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
       onCancel={hideModal}
       closable={false}
       maskClosable={false}
-      destroyOnClose={true}
+      destroyOnHidden={true}
       footer={
         error ? (
           <Button onClick={hideModal}>Back</Button>

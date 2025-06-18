@@ -189,12 +189,12 @@ const LayerToggle = () => {
   }, [data]);
 
   return (
-    <Tooltip title="Toggle Layers" overlayInnerStyle={{ fontSize: 12 }}>
+    <Tooltip title="Toggle Layers" styles={{ body: { fontSize: 12 } }}>
       <div>
         <Dropdown
           menu={{ items }}
           trigger={['click']}
-          dropdownRender={(menu) => (
+          popupRender={(menu) => (
             <div style={{ marginBottom: '10px' }}>{menu}</div>
           )}
           placement="top"
