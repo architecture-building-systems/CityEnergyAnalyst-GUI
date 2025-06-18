@@ -167,7 +167,7 @@ const UploadDownloadScenarioIcon = () => {
   const dispatch = useDispatch();
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
-  const onClick = () => dispatch(push(routes.CREATE_SCENARIO));
+  const onClick = () => dispatch(push(routes.UPLOAD_DOWNLOAD));
 
   return (
     <Tooltip

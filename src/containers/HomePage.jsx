@@ -17,6 +17,7 @@ import { useInitProjectStore } from '../components/Project/store';
 import Loading from '../components/Loading/Loading';
 import { apiClient } from '../api/axios';
 import { useInitUserInfo, useUserInfo } from '../components/User/store';
+import UploadDownload from './UploadDownload';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
@@ -77,6 +78,13 @@ const HomePageContent = () => {
           <Suspense>
             <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
               <CreateScenario />
+            </Cardwrapper>
+          </Suspense>
+        </Route>
+        <Route path={routes.UPLOAD_DOWNLOAD}>
+          <Suspense>
+            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+              <UploadDownload />
             </Cardwrapper>
           </Suspense>
         </Route>

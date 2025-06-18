@@ -6,5 +6,6 @@
   "PROJECT": "/",
   "PROJECT_OVERVIEW": "/overview",
   "CREATE_SCENARIO": "/create-scenario",
-  "SPLASH": "/splash"
+  "SPLASH": "/splash",
+  "UPLOAD_DOWNLOAD": "/upload-download"
 }
