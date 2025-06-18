@@ -7,14 +7,16 @@ import JobInfoModal from './JobInfoModal';
 import { useSelectedJob, useShowJobInfo } from './store';
 import { useProjectStore } from '../Project/store';
 import { fetchJobs } from '../../actions/jobs';
+import { useIsValidUser } from '../User/store';
 
 const useFetchJobs = (project) => {
   const dispatch = useDispatch();
   const jobs = useSelector((state) => state.jobs);
+  const isValidUser = useIsValidUser();
 
   useEffect(() => {
     // Refresh job list when project changes. Only fetch if project is set.
-    if (project) dispatch(fetchJobs());
+    if (isValidUser && project) dispatch(fetchJobs());
   }, [project]);
 
   return jobs;
