@@ -1,6 +1,7 @@
 import { Button, Checkbox, Form } from 'antd';
 import { useProjectStore } from './Project/store';
 import { useState } from 'react';
+import { CloudDownloadOutlined } from '@ant-design/icons';
 
 const DownloadForm = () => {
   const [form] = Form.useForm();
@@ -13,13 +14,16 @@ const DownloadForm = () => {
 
   return (
     <div style={{ userSelect: 'none', padding: '12px 24px' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1>Download Scenario(s)</h1>
+      <div>
+        <h1>
+          <CloudDownloadOutlined style={{ fontSize: 36 }} /> Download
+          Scenario(s)
+        </h1>
         <p>Select one or more Scenarios to download.</p>
-        <Button type="primary" onClick={form.submit}>
-          Download
-        </Button>
       </div>
+      <Button type="primary" onClick={form.submit}>
+        Download
+      </Button>
       <FormContent form={form} onFinish={onFinish} />
     </div>
   );
@@ -99,9 +103,12 @@ const FormContent = ({ form, onFinish }) => {
         </Checkbox>
       </Form.Item>
 
-      <Form.Item name="scenarios" initialValue={[]}>
-        <ScenarioCheckboxes />
-      </Form.Item>
+      <div>
+        <h2>Available Scenarios</h2>
+        <Form.Item name="scenarios" initialValue={[]}>
+          <ScenarioCheckboxes />
+        </Form.Item>
+      </div>
     </Form>
   );
 };
