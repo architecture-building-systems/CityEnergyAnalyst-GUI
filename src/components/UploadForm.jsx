@@ -1,10 +1,19 @@
 import { CloudUploadOutlined } from '@ant-design/icons';
-import { Checkbox, Form, Input, message, Select, Upload } from 'antd';
+import { Button, Form, Input, message, Radio, Select, Upload } from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
 import { useState } from 'react';
+import { useFetchProjectChoices } from './Project/hooks';
+import { useProjectStore } from './Project/store';
 
 const UploadForm = () => {
+  const [form] = Form.useForm();
+
+  const onFinish = async (values) => {
+    // TODO: Implement download
+    console.log(values);
+  };
+
   return (
     <div style={{ userSelect: 'none', padding: '12px 24px' }}>
       <div style={{ marginBottom: 24 }}>
@@ -14,7 +23,7 @@ const UploadForm = () => {
         <p>Upload one or more CEA Scenarios.</p>
       </div>
 
-      <FormContent />
+      <FormContent form={form} onFinish={onFinish} />
     </div>
   );
 };
@@ -47,6 +56,65 @@ const UploadScenarioList = ({ scenarioList }) => {
         ))}
       </div>
     </div>
+  );
+};
+
+const UploadProjectSelection = ({ onChange }) => {
+  const [value, setValue] = useState({ value: 'current', project: null });
+  const projectList = useFetchProjectChoices();
+  const project = useProjectStore((state) => state.project);
+
+  const options = projectList
+    ? projectList
+        .filter((choice) => choice !== project)
+        .map((choice) => ({
+          label: choice,
+          value: choice,
+        }))
+    : [];
+
+  const handleValueChange = (e) => {
+    const newValue = e?.target?.value ?? value;
+    setValue({ ...value, value: newValue });
+    onChange?.({ ...value, value: newValue });
+  };
+
+  const handleProjectChange = (e) => {
+    const newValue = e?.target?.value ?? value;
+    setValue({ ...value, project: newValue });
+    onChange?.({ ...value, project: newValue });
+  };
+
+  return (
+    <Radio.Group
+      value={value?.value}
+      onChange={handleValueChange}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+      }}
+    >
+      <Radio value="current">
+        Add to current Project:{' '}
+        <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+          {project}
+        </span>
+      </Radio>
+      <Radio value="extisting">Add to an existing Project</Radio>
+      {value?.value === 'extisting' && (
+        <Select
+          options={options}
+          placeholder="Select a Project"
+          onChange={handleProjectChange}
+        />
+      )}
+
+      <Radio value="new">Create a new Project</Radio>
+      {value?.value === 'new' && (
+        <Input placeholder="Project Name" onChange={handleProjectChange} />
+      )}
+    </Radio.Group>
   );
 };
 
@@ -89,23 +157,32 @@ const extractScenarios = (zipName, files) => {
   return scenarioNames;
 };
 
-const FileUploadBox = ({ onFinish, onRemove }) => {
+const FileUploadBox = ({ onChange, onFinish, onRemove }) => {
+  const [hideBox, setHideBox] = useState(false);
+
   const beforeUpload = async (file) => {
-    if (file.type !== 'application/zip') {
-      console.error('File type must be .zip');
+    // Do basic checks first
+    try {
+      if (file.type !== 'application/zip') {
+        throw new Error('File type must be .zip');
+      }
+
+      const fileSizeInGB = file.size / 1024 ** 3;
+      if (fileSizeInGB > 1) {
+        throw new Error('File size must be less than 1GB');
+      }
+    } catch (e) {
+      console.error(e);
+      message.error(e.message);
       return Upload.LIST_IGNORE;
     }
 
-    const fileSizeInGB = file.size / 1024 ** 3;
-    if (fileSizeInGB > 1) {
-      console.error('File size must be less than 1GB');
-      return Upload.LIST_IGNORE;
-    }
-
+    // Check files in archive
     const jszip = new JSZip();
     try {
       const zip = await jszip.loadAsync(file);
       const scenarios = extractScenarios(file.name, zip.files);
+      setHideBox(true);
       onFinish?.(scenarios);
     } catch (e) {
       onFinish?.([]);
@@ -116,21 +193,31 @@ const FileUploadBox = ({ onFinish, onRemove }) => {
     return false;
   };
 
+  const handleOnRemove = () => {
+    setHideBox(false);
+    onRemove?.();
+  };
+
   return (
     <Dragger
       accept=".zip"
       maxCount={1}
       beforeUpload={beforeUpload}
-      onChange={(e) => console.log('onChange', e)}
-      onRemove={onRemove}
+      onChange={onChange}
+      onRemove={handleOnRemove}
       showUploadList={{
         extra: ({ size = 0 }) => (
           <span style={{ color: '#cccccc' }}>
+            {' '}
             ({(size / 1024 / 1024).toFixed(2)}MB)
           </span>
         ),
       }}
-      style={{ background: '#8eb6dc', color: '#fff' }}
+      style={{
+        background: '#8eb6dc',
+        color: '#fff',
+        display: hideBox ? 'none' : 'block',
+      }}
     >
       <p className="antd-upload-text">
         {'Click or drag your .zip file containing CEA Scenarios.'}
@@ -149,7 +236,7 @@ const FormContent = ({ form, onFinish }) => {
       style={{ display: 'flex', flexDirection: 'column', margin: 12 }}
     >
       <Form.Item
-        name="input-files"
+        name="upload"
         valuePropName="fileList"
         getValueFromEvent={(e) => {
           if (Array.isArray(e)) {
@@ -163,28 +250,17 @@ const FormContent = ({ form, onFinish }) => {
           onRemove={() => setScenarios([])}
         />
       </Form.Item>
-
       <UploadScenarioList scenarioList={scenarios} />
-
       {scenarios.length > 0 && (
-        <Form.Item name="project">
-          <Checkbox.Group
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <Checkbox value="current">
-              Add to Current Project
-              <Select />
-            </Checkbox>
-            <Checkbox value="new">
-              Create a new Project
-              <Input />
-            </Checkbox>
-          </Checkbox.Group>
-        </Form.Item>
+        <>
+          <Form.Item name="project">
+            <UploadProjectSelection />
+          </Form.Item>
+
+          <Button type="primary" htmlType="submit">
+            Upload
+          </Button>
+        </>
       )}
     </Form>
   );
