@@ -2,7 +2,7 @@ import { CloudUploadOutlined } from '@ant-design/icons';
 import { Button, Form, Input, message, Radio, Select, Upload } from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFetchProjectChoices } from './Project/hooks';
 import { useProjectStore } from './Project/store';
 
@@ -59,36 +59,71 @@ const UploadScenarioList = ({ scenarioList }) => {
   );
 };
 
-const UploadProjectSelection = ({ onChange }) => {
-  const [value, setValue] = useState({ value: 'current', project: null });
+const UploadProjectSelection = ({ value = {}, onChange }) => {
+  const [typeValue, setTypeValue] = useState('current');
+  const [existingProject, setExistingProject] = useState(null);
+  const [newProject, setNewProject] = useState(null);
+
   const projectList = useFetchProjectChoices();
   const project = useProjectStore((state) => state.project);
 
-  const options = projectList
-    ? projectList
-        .filter((choice) => choice !== project)
-        .map((choice) => ({
-          label: choice,
-          value: choice,
-        }))
-    : [];
+  const options = useMemo(
+    () =>
+      projectList
+        ? projectList
+            .filter((choice) => choice !== project)
+            .map((choice) => ({
+              label: choice,
+              value: choice,
+            }))
+        : [],
+    [projectList, project],
+  );
 
-  const handleValueChange = (e) => {
-    const newValue = e?.target?.value ?? value;
-    setValue({ ...value, value: newValue });
-    onChange?.({ ...value, value: newValue });
+  const handleTypeChange = (e) => {
+    const newValue = e.target.value;
+    setTypeValue(newValue);
+
+    switch (newValue) {
+      case 'current':
+        onChange?.({
+          type: newValue,
+          project: project,
+        });
+        break;
+      case 'extisting':
+        onChange?.({
+          type: newValue,
+          project: existingProject,
+        });
+        break;
+      case 'new':
+        onChange?.({
+          type: newValue,
+          project: newProject,
+        });
+        break;
+      default:
+        throw new Error('Invalid type');
+    }
   };
 
-  const handleProjectChange = (e) => {
-    const newValue = e?.target?.value ?? value;
-    setValue({ ...value, project: newValue });
+  const handleExistingProjectChange = (e) => {
+    const newValue = e;
+    setExistingProject(newValue);
+    onChange?.({ ...value, project: newValue });
+  };
+
+  const handleNewProjectChange = (e) => {
+    const newValue = e.target.value;
+    setNewProject(newValue);
     onChange?.({ ...value, project: newValue });
   };
 
   return (
     <Radio.Group
-      value={value?.value}
-      onChange={handleValueChange}
+      value={value?.type ?? typeValue}
+      onChange={handleTypeChange}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -102,17 +137,22 @@ const UploadProjectSelection = ({ onChange }) => {
         </span>
       </Radio>
       <Radio value="extisting">Add to an existing Project</Radio>
-      {value?.value === 'extisting' && (
+      {value?.type === 'extisting' && (
         <Select
           options={options}
           placeholder="Select a Project"
-          onChange={handleProjectChange}
+          onChange={handleExistingProjectChange}
+          value={existingProject}
         />
       )}
 
       <Radio value="new">Create a new Project</Radio>
-      {value?.value === 'new' && (
-        <Input placeholder="Project Name" onChange={handleProjectChange} />
+      {value?.type === 'new' && (
+        <Input
+          placeholder="Project Name"
+          onChange={handleNewProjectChange}
+          value={newProject}
+        />
       )}
     </Radio.Group>
   );
@@ -253,7 +293,7 @@ const FormContent = ({ form, onFinish }) => {
       <UploadScenarioList scenarioList={scenarios} />
       {scenarios.length > 0 && (
         <>
-          <Form.Item name="project">
+          <Form.Item name="project" initialValue={{ type: 'current' }}>
             <UploadProjectSelection />
           </Form.Item>
 
