@@ -59,25 +59,27 @@ const UploadScenarioList = ({ scenarioList }) => {
   );
 };
 
-const UploadProjectSelection = ({ value = {}, onChange }) => {
+const UploadProjectSelection = ({
+  value = {},
+  onChange,
+  currentProject,
+  projectList,
+}) => {
   const [typeValue, setTypeValue] = useState('current');
   const [existingProject, setExistingProject] = useState(null);
   const [newProject, setNewProject] = useState(null);
-
-  const projectList = useFetchProjectChoices();
-  const project = useProjectStore((state) => state.project);
 
   const options = useMemo(
     () =>
       projectList
         ? projectList
-            .filter((choice) => choice !== project)
+            .filter((choice) => choice !== currentProject)
             .map((choice) => ({
               label: choice,
               value: choice,
             }))
         : [],
-    [projectList, project],
+    [projectList, currentProject],
   );
 
   const handleTypeChange = (e) => {
@@ -88,7 +90,7 @@ const UploadProjectSelection = ({ value = {}, onChange }) => {
       case 'current':
         onChange?.({
           type: newValue,
-          project: project,
+          project: currentProject,
         });
         break;
       case 'existing':
@@ -127,13 +129,13 @@ const UploadProjectSelection = ({ value = {}, onChange }) => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 24,
+        gap: 12,
       }}
     >
       <Radio value="current">
         Add to current Project:{' '}
         <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-          {project}
+          {currentProject}
         </span>
       </Radio>
       <Radio value="existing">Add to an existing Project</Radio>
@@ -269,11 +271,30 @@ const FileUploadBox = ({ onChange, onFinish, onRemove }) => {
 const FormContent = ({ form, onFinish }) => {
   const [scenarios, setScenarios] = useState([]);
 
+  const projectList = useFetchProjectChoices();
+  const currentProject = useProjectStore((state) => state.project);
+
+  const validateProject = (_, value) => {
+    if (value?.type == 'existing' && !value?.project) {
+      return Promise.reject(new Error('Select a project.'));
+    }
+
+    if (value?.type == 'new' && !value?.project) {
+      return Promise.reject(new Error('Enter a project name.'));
+    }
+
+    if (value?.type == 'new' && projectList.includes(value?.project)) {
+      return Promise.reject(new Error('Project name already exists.'));
+    }
+
+    return Promise.resolve();
+  };
+
   return (
     <Form
       form={form}
       onFinish={onFinish}
-      style={{ display: 'flex', flexDirection: 'column', margin: 12 }}
+      style={{ display: 'flex', flexDirection: 'column', margin: 12, gap: 12 }}
     >
       <Form.Item
         name="upload"
@@ -293,8 +314,15 @@ const FormContent = ({ form, onFinish }) => {
       <UploadScenarioList scenarioList={scenarios} />
       {scenarios.length > 0 && (
         <>
-          <Form.Item name="project" initialValue={{ type: 'current' }}>
-            <UploadProjectSelection />
+          <Form.Item
+            name="project"
+            initialValue={{ type: 'current' }}
+            rules={[{ validator: validateProject }]}
+          >
+            <UploadProjectSelection
+              currentProject={currentProject}
+              projectList={projectList}
+            />
           </Form.Item>
 
           <Button type="primary" htmlType="submit">
