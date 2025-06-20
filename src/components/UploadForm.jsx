@@ -1,4 +1,4 @@
-import { CloudUploadOutlined } from '@ant-design/icons';
+import { CloudUploadIcon } from '../assets/icons';
 import { Button, Form, Input, message, Radio, Select, Upload } from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
@@ -17,8 +17,8 @@ const UploadForm = () => {
   return (
     <div style={{ userSelect: 'none', padding: '12px 24px' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1>
-          <CloudUploadOutlined style={{ fontSize: 36 }} /> Upload Scenario(s)
+        <h1 style={{ display: 'flex', gap: 12 }}>
+          <CloudUploadIcon style={{ fontSize: 36 }} /> Upload Scenario(s)
         </h1>
         <p>Upload one or more CEA Scenarios.</p>
       </div>
