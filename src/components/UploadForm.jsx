@@ -91,7 +91,7 @@ const UploadProjectSelection = ({ value = {}, onChange }) => {
           project: project,
         });
         break;
-      case 'extisting':
+      case 'existing':
         onChange?.({
           type: newValue,
           project: existingProject,
@@ -136,8 +136,8 @@ const UploadProjectSelection = ({ value = {}, onChange }) => {
           {project}
         </span>
       </Radio>
-      <Radio value="extisting">Add to an existing Project</Radio>
-      {value?.type === 'extisting' && (
+      <Radio value="existing">Add to an existing Project</Radio>
+      {value?.type === 'existing' && (
         <Select
           options={options}
           placeholder="Select a Project"
