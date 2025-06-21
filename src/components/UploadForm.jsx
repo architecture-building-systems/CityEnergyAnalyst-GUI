@@ -7,13 +7,6 @@ import { useFetchProjectChoices } from './Project/hooks';
 import { useProjectStore } from './Project/store';
 
 const UploadForm = () => {
-  const [form] = Form.useForm();
-
-  const onFinish = async (values) => {
-    // TODO: Implement download
-    console.log(values);
-  };
-
   return (
     <div style={{ userSelect: 'none', padding: '12px 24px' }}>
       <div style={{ marginBottom: 24 }}>
@@ -23,7 +16,7 @@ const UploadForm = () => {
         <p>Upload one or more CEA Scenarios.</p>
       </div>
 
-      <FormContent form={form} onFinish={onFinish} />
+      <FormContent />
     </div>
   );
 };
@@ -162,7 +155,6 @@ const UploadProjectSelection = ({
 
 const extractScenarios = (zipName, files) => {
   // FIXME: We are only using zone geometry folder structure to determine if a folder is a valid scenario
-  console.log(zipName, files);
   // Find zone.shp files in archive to determine scenario
   const zoneFiles = Object.keys(files).filter((name) =>
     name.endsWith('inputs/building-geometry/zone.shp'),
@@ -190,8 +182,6 @@ const extractScenarios = (zipName, files) => {
     })
     .filter((name) => name !== null);
 
-  console.log('scenarioNames', scenarioNames);
-
   if (scenarioNames.length === 0) {
     throw new Error('No scenarios found in archive.');
   }
@@ -199,8 +189,13 @@ const extractScenarios = (zipName, files) => {
   return scenarioNames;
 };
 
-const FileUploadBox = ({ onChange, onFinish, onRemove }) => {
+const FileUploadBox = ({ onChange, onFinish, onRemove, fileList, status }) => {
   const [hideBox, setHideBox] = useState(false);
+
+  const _fileList = useMemo(
+    () => fileList?.map((file) => ({ ...file, ...status })),
+    [fileList, status],
+  );
 
   const beforeUpload = async (file) => {
     // Do basic checks first
@@ -260,6 +255,7 @@ const FileUploadBox = ({ onChange, onFinish, onRemove }) => {
         color: '#fff',
         display: hideBox ? 'none' : 'block',
       }}
+      fileList={_fileList}
     >
       <p className="antd-upload-text">
         {'Click or drag your .zip file containing CEA Scenarios.'}
@@ -268,11 +264,63 @@ const FileUploadBox = ({ onChange, onFinish, onRemove }) => {
   );
 };
 
-const FormContent = ({ form, onFinish }) => {
+const FormContent = () => {
+  const [form] = Form.useForm();
   const [scenarios, setScenarios] = useState([]);
 
   const projectList = useFetchProjectChoices();
   const currentProject = useProjectStore((state) => state.project);
+
+  const [uploadStatus, setUploadStatus] = useState({
+    status: null,
+    progress: null,
+  });
+
+  const onUploadRemove = () => {
+    setUploadStatus({ status: null, progress: null });
+    setScenarios([]);
+    // Ensure form is reset
+    form.resetFields();
+  };
+
+  const onFinish = async (values) => {
+    // Create FormData and append file
+    const formData = new FormData();
+    const file = values.upload?.[0]?.originFileObj;
+    formData.append('file', file);
+    formData.append('type', values.project.type);
+    formData.append('project', values.project.project);
+
+    // Use fetch with progress tracking
+    const xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        console.log(percent);
+        // Update progress state here
+        setUploadStatus({ status: 'uploading', progress: percent });
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        message.success('Upload completed');
+        setUploadStatus({ status: 'done', progress: null });
+      } else {
+        message.error('Upload failed');
+        setUploadStatus({ status: 'error', progress: null });
+      }
+    };
+
+    xhr.open(
+      'POST',
+      `${import.meta.env.VITE_CEA_URL}/api/contents/scenario/upload`,
+      true,
+    );
+    xhr.send(formData);
+  };
 
   const validateProject = (_, value) => {
     if (value?.type == 'existing' && !value?.project) {
@@ -308,7 +356,8 @@ const FormContent = ({ form, onFinish }) => {
       >
         <FileUploadBox
           onFinish={setScenarios}
-          onRemove={() => setScenarios([])}
+          onRemove={onUploadRemove}
+          status={uploadStatus}
         />
       </Form.Item>
       <UploadScenarioList scenarioList={scenarios} />
@@ -316,7 +365,7 @@ const FormContent = ({ form, onFinish }) => {
         <>
           <Form.Item
             name="project"
-            initialValue={{ type: 'current' }}
+            initialValue={{ type: 'current', project: currentProject }}
             rules={[{ validator: validateProject }]}
           >
             <UploadProjectSelection
