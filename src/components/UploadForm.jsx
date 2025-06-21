@@ -244,6 +244,7 @@ const FileUploadBox = ({ onChange, onFinish, onRemove, fileList, status }) => {
       beforeUpload={beforeUpload}
       onChange={onChange}
       onRemove={handleOnRemove}
+      disabled={status.status === 'uploading'}
       showUploadList={{
         extra: ({ size = 0 }) => (
           <span style={{ color: '#cccccc' }}>
