@@ -275,11 +275,11 @@ const FormContent = () => {
 
   const [uploadStatus, setUploadStatus] = useState({
     status: null,
-    progress: null,
+    percent: null,
   });
 
   const onUploadRemove = () => {
-    setUploadStatus({ status: null, progress: null });
+    setUploadStatus({ status: null, percent: null });
     setScenarios([]);
     // Ensure form is reset
     form.resetFields();
@@ -300,16 +300,15 @@ const FormContent = () => {
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
-        console.log(percent);
         // Update progress state here
-        setUploadStatus({ status: 'uploading', progress: percent });
+        setUploadStatus({ status: 'uploading', percent });
       }
     };
 
     xhr.onload = () => {
       if (xhr.status === 200) {
         message.success('Upload completed');
-        setUploadStatus({ status: 'done', progress: null });
+        setUploadStatus({ status: 'done', percent: null });
       } else {
         try {
           const errorResponse = JSON.parse(xhr.responseText);
@@ -319,7 +318,7 @@ const FormContent = () => {
         } catch (e) {
           message.error(`Upload failed`);
         }
-        setUploadStatus({ status: 'error', progress: null });
+        setUploadStatus({ status: 'error', percent: null });
       }
     };
 
