@@ -55,6 +55,7 @@ const UploadScenarioList = ({ scenarioList }) => {
 const UploadProjectSelection = ({
   value = {},
   onChange,
+  disabled,
   currentProject,
   projectList,
 }) => {
@@ -119,6 +120,7 @@ const UploadProjectSelection = ({
     <Radio.Group
       value={value?.type ?? typeValue}
       onChange={handleTypeChange}
+      disabled={disabled}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -378,10 +380,15 @@ const FormContent = () => {
             <UploadProjectSelection
               currentProject={currentProject}
               projectList={projectList}
+              disabled={uploadStatus.status === 'uploading'}
             />
           </Form.Item>
 
-          <Button type="primary" htmlType="submit">
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={uploadStatus.status === 'uploading'}
+          >
             Upload
           </Button>
         </>
