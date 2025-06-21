@@ -309,7 +309,14 @@ const FormContent = () => {
         message.success('Upload completed');
         setUploadStatus({ status: 'done', progress: null });
       } else {
-        message.error('Upload failed');
+        try {
+          const errorResponse = JSON.parse(xhr.responseText);
+          message.error(
+            `Upload failed: ${errorResponse.detail || errorResponse.message}`,
+          );
+        } catch (e) {
+          message.error(`Upload failed`);
+        }
         setUploadStatus({ status: 'error', progress: null });
       }
     };
