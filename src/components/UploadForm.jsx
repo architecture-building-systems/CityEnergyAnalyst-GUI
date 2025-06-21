@@ -273,6 +273,7 @@ const FormContent = () => {
 
   const projectList = useFetchProjectChoices();
   const currentProject = useProjectStore((state) => state.project);
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
   const [uploadStatus, setUploadStatus] = useState({
     status: null,
@@ -306,9 +307,15 @@ const FormContent = () => {
       }
     };
 
-    xhr.onload = () => {
+    xhr.onload = async () => {
       if (xhr.status === 200) {
         message.success('Upload completed');
+        try {
+          if (currentProject == values.project.project)
+            await fetchInfo(currentProject);
+        } catch (e) {
+          console.error('Error fetching project info:', e);
+        }
         setUploadStatus({ status: 'done', percent: null });
       } else {
         try {
