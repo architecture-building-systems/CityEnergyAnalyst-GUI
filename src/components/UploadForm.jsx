@@ -69,7 +69,7 @@ const UploadSucessModal = ({
     >
       <div>
         <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <CheckCircleFilled /> Successfully uploaded scenarios
+          <CheckCircleFilled /> Successfully uploaded Scenario(s)
         </h2>
         {newProjectInfo?.scenarios &&
           newProjectInfo.scenarios.map((scenario) => (
