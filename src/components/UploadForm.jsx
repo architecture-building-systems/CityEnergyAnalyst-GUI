@@ -71,8 +71,7 @@ const UploadSucessModal = ({
         <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <CheckCircleFilled /> Successfully uploaded Scenario(s)
         </h2>
-        {newProjectInfo?.scenarios &&
-          newProjectInfo.scenarios.map((scenario) => (
+        {newProjectInfo?.scenarios?.map((scenario) => (
             <div
               key={scenario}
               style={{
@@ -83,7 +82,6 @@ const UploadSucessModal = ({
                 border: '1px solid #eee',
                 borderRadius: 8,
                 padding: 8,
-
                 marginBottom: 8,
               }}
             >
@@ -92,8 +90,8 @@ const UploadSucessModal = ({
               </div>
               <Button
                 type="primary"
-                loading={selected == scenario}
-                disabled={selected != null && selected != scenario}
+                loading={selected === scenario}
+                disabled={selected !== null && selected !== scenario}
                 onClick={async () => {
                   setSelected(scenario);
                   try {
