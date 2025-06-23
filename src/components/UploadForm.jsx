@@ -355,7 +355,7 @@ const FormContent = () => {
   };
 
   const handdleFormValuesChange = (changedValues) => {
-    setProjectFormValue(changedValues.project);
+    if (changedValues?.project) setProjectFormValue(changedValues.project);
   };
 
   const onFinish = async (values) => {
