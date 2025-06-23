@@ -147,7 +147,7 @@ const ElectronForm = ({ form, initialValue }) => {
 };
 
 const BrowserForm = () => {
-  const choices = useFetchProjectChoices();
+  const [choices] = useFetchProjectChoices();
 
   return (
     <Form.Item

@@ -26,3 +26,8 @@ export const useInitUserInfo = () =>
 
 export const useResetUserInfo = () =>
   useUserInfoStore((state) => state.resetUserInfo);
+
+export const useIsValidUser = () =>
+  useUserInfoStore(
+    (state) => state.userInfo && state.userInfo?.id != 'localuser',
+  );

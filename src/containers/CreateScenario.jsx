@@ -343,10 +343,10 @@ const ScenarioList = () => {
           <List
             dataSource={scenarioNames}
             renderItem={(item) => (
-              <List.Item>
-                <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                  {item}
-                </div>
+              <List.Item
+                style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
+              >
+                {item}
               </List.Item>
             )}
           />

@@ -15,6 +15,20 @@ export const fetchConfig = async () => {
   return response.data;
 };
 
+export const fetchProjectInfo = async (project) => {
+  if (!project) throw new Error('Project cannot be empty');
+  try {
+    const { data } = await apiClient.get(`/api/project/`, {
+      params: { project },
+    });
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching project info:', error?.response?.data);
+    throw error;
+  }
+};
+
 // TODO: Handle errors when fetching project info e.g. path not found
 export const useProjectStore = create((set) => ({
   name: null,
@@ -31,13 +45,10 @@ export const useProjectStore = create((set) => ({
 
   fetchInfo: async (project) => {
     console.log('Fetcthing project info', project);
-    if (!project) throw new Error('Project cannot be empty');
 
     set({ isFetching: true, error: null });
     try {
-      const { data } = await apiClient.get(`/api/project/`, {
-        params: { project },
-      });
+      const data = await fetchProjectInfo(project);
       const { name, scenarios_list: scenariosList } = data;
 
       const out = {
@@ -49,7 +60,6 @@ export const useProjectStore = create((set) => ({
       set(out);
       return out;
     } catch (error) {
-      console.error('Error fetching project info:', error?.response?.data);
       set({ isFetching: false, error });
       throw error;
     }

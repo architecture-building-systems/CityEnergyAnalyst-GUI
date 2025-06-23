@@ -75,6 +75,9 @@ apiClient.interceptors.request.use(
       const refreshToken = decodedString[0];
       const accessToken = decodedString[1];
 
+      // Ignore request if no access token is present
+      if (!accessToken) return config;
+
       // Try to refresh token if near expiry
       if (isTokenExpiredOrCloseToExpiry(accessToken)) {
         // FIXME: Queue request to refresh token
@@ -95,7 +98,6 @@ apiClient.interceptors.request.use(
           document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
             JSON.stringify([refreshToken, newAccessToken]),
           )}`;
-
           config.withCredentials = true;
         } catch (e) {
           // Assume token used is invalid or expired if status is 401 and remove cookie
@@ -104,6 +106,9 @@ apiClient.interceptors.request.use(
           }
           console.error(e);
         }
+      } else {
+        // Attach access token to request if access token is valid
+        config.withCredentials = true;
       }
     }
     return config;

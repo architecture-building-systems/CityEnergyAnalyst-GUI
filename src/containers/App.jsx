@@ -1,4 +1,4 @@
-import { Component, Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { Switch, Route } from 'react-router';
 import { ConnectedRouter } from 'connected-react-router';
@@ -15,30 +15,40 @@ const HomePage = lazy(() =>
 
 const Splash = lazy(() => import('../components/Splash/Splash'));
 
-class App extends Component {
-  render() {
-    const { store, history } = this.props;
+const useDevTitle = () => {
+  useEffect(() => {
+    const prevTitle = document.title;
+    if (process.env.NODE_ENV === 'development')
+      document.title = `[DEV] ${document.title}`;
+    return () => {
+      document.title = prevTitle;
+    };
+  }, []);
+};
 
-    return (
-      <div>
-        <Provider store={store}>
-          <ConnectedRouter history={history}>
-            <Switch>
-              <Route exact path={routes.SPLASH}>
-                <Suspense>
-                  <Splash />
-                </Suspense>
-              </Route>
-              <Route path={routes.HOME}>
-                <Suspense fallback={<Loading />}>
-                  <HomePage />
-                </Suspense>
-              </Route>
-            </Switch>
-          </ConnectedRouter>
-        </Provider>
-      </div>
-    );
-  }
-}
+const App = ({ store, history }) => {
+  useDevTitle();
+
+  return (
+    <div>
+      <Provider store={store}>
+        <ConnectedRouter history={history}>
+          <Switch>
+            <Route exact path={routes.SPLASH}>
+              <Suspense>
+                <Splash />
+              </Suspense>
+            </Route>
+            <Route path={routes.HOME}>
+              <Suspense fallback={<Loading />}>
+                <HomePage />
+              </Suspense>
+            </Route>
+          </Switch>
+        </ConnectedRouter>
+      </Provider>
+    </div>
+  );
+};
+
 export default App;
