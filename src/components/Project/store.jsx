@@ -15,6 +15,13 @@ export const fetchConfig = async () => {
   return response.data;
 };
 
+export const fetchProjectInfo = async (project) => {
+  const { data } = await apiClient.get(`/api/project/`, {
+    params: { project },
+  });
+  return data;
+};
+
 // TODO: Handle errors when fetching project info e.g. path not found
 export const useProjectStore = create((set) => ({
   name: null,

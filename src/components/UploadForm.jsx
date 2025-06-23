@@ -1,10 +1,19 @@
 import { CloudUploadIcon } from '../assets/icons';
-import { Button, Form, Input, message, Radio, Select, Upload } from 'antd';
+import {
+  Button,
+  Form,
+  Input,
+  message,
+  Radio,
+  Select,
+  Spin,
+  Upload,
+} from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFetchProjectChoices } from './Project/hooks';
-import { useProjectStore } from './Project/store';
+import { fetchProjectInfo, useProjectStore } from './Project/store';
 
 const UploadForm = () => {
   return (
@@ -21,7 +30,23 @@ const UploadForm = () => {
   );
 };
 
-const UploadScenarioList = ({ scenarioList }) => {
+const ScenarioListName = ({ name, existingScenarios }) => {
+  return existingScenarios?.includes(name) ? (
+    <span style={{ color: '#ff4d4f' }}>
+      <span style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+        {name}
+      </span>
+      <span style={{ color: '#ff4d4f', fontStyle: 'italic' }}>
+        {' '}
+        (name exists in selected project)
+      </span>
+    </span>
+  ) : (
+    <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>{name}</div>
+  );
+};
+
+const UploadScenarioList = ({ scenarioList, existingScenarios }) => {
   if (!scenarioList || scenarioList.length === 0) return null;
 
   return (
@@ -37,15 +62,15 @@ const UploadScenarioList = ({ scenarioList }) => {
           borderRadius: 12,
           border: '1px solid #eee',
           padding: 12,
-          marginBottom: 24,
+          marginBottom: 12,
         }}
       >
         {scenarioList.map((file) => (
-          <div key={file} style={{ marginLeft: 12 }}>
-            <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
-              {file}
-            </div>
-          </div>
+          <ScenarioListName
+            key={file}
+            name={file}
+            existingScenarios={existingScenarios}
+          />
         ))}
       </div>
     </div>
@@ -267,24 +292,73 @@ const FileUploadBox = ({ onChange, onFinish, onRemove, fileList, status }) => {
   );
 };
 
+const useProjectScenarios = (projectName, projectType) => {
+  const currentScenarios = useProjectStore((state) => state.scenariosList);
+  const [scenarios, setScenarios] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (projectType === 'current') {
+      setScenarios(currentScenarios);
+    } else if (projectType === 'existing') {
+      if (projectName == null) return;
+      const fetchScenarios = async () => {
+        setLoading(true);
+        try {
+          const data = await fetchProjectInfo(projectName);
+          const { scenarios_list: scenariosList } = data;
+          setScenarios(scenariosList);
+        } catch (error) {
+          console.error('Error fetching project scenarios:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchScenarios();
+    } else if (projectType === 'new') {
+      setScenarios([]);
+    }
+  }, [projectName, projectType, currentScenarios]);
+
+  return { scenarios, loading };
+};
+
+const PROJECT_INITIAL_VALUE = {
+  type: 'current',
+  project: null,
+};
 const FormContent = () => {
   const [form] = Form.useForm();
   const [scenarios, setScenarios] = useState([]);
 
+  // FIXME: Refresh project list when new project is created
   const projectList = useFetchProjectChoices();
   const currentProject = useProjectStore((state) => state.project);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
+
+  const [projectFormValue, setProjectFormValue] = useState(
+    PROJECT_INITIAL_VALUE,
+  );
+  const { loading, scenarios: projectScenarios } = useProjectScenarios(
+    projectFormValue?.project,
+    projectFormValue?.type,
+  );
 
   const [uploadStatus, setUploadStatus] = useState({
     status: null,
     percent: null,
   });
+  const disabled = uploadStatus.status === 'uploading';
 
   const onUploadRemove = () => {
     setUploadStatus({ status: null, percent: null });
     setScenarios([]);
     // Ensure form is reset
     form.resetFields();
+  };
+
+  const handdleFormValuesChange = (changedValues) => {
+    setProjectFormValue(changedValues.project);
   };
 
   const onFinish = async (values) => {
@@ -357,6 +431,7 @@ const FormContent = () => {
   return (
     <Form
       form={form}
+      onValuesChange={handdleFormValuesChange}
       onFinish={onFinish}
       style={{ display: 'flex', flexDirection: 'column', margin: 12, gap: 12 }}
     >
@@ -376,26 +451,27 @@ const FormContent = () => {
           status={uploadStatus}
         />
       </Form.Item>
-      <UploadScenarioList scenarioList={scenarios} />
+      <Spin spinning={loading} tip="Checking scenarios...">
+        <UploadScenarioList
+          scenarioList={scenarios}
+          existingScenarios={projectScenarios}
+        />
+      </Spin>
       {scenarios.length > 0 && (
         <>
           <Form.Item
             name="project"
-            initialValue={{ type: 'current', project: currentProject }}
+            initialValue={PROJECT_INITIAL_VALUE}
             rules={[{ validator: validateProject }]}
           >
             <UploadProjectSelection
               currentProject={currentProject}
               projectList={projectList}
-              disabled={uploadStatus.status === 'uploading'}
+              disabled={disabled}
             />
           </Form.Item>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={uploadStatus.status === 'uploading'}
-          >
+          <Button type="primary" htmlType="submit" loading={disabled}>
             Upload
           </Button>
         </>
