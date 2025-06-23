@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useFetchProjectChoices } from './Project/hooks';
 import { fetchProjectInfo, useProjectStore } from './Project/store';
 
@@ -277,6 +277,7 @@ const FileUploadBox = ({ onChange, onFinish, onRemove, fileList, status }) => {
             ({(size / 1024 / 1024).toFixed(2)}MB)
           </span>
         ),
+        showRemoveIcon: true,
       }}
       style={{
         background: '#8eb6dc',
@@ -358,6 +359,12 @@ const FormContent = () => {
     if (changedValues?.project) setProjectFormValue(changedValues.project);
   };
 
+  // Revalidate form when project scenarios change
+  useEffect(() => {
+    console.log('Revalidating form');
+    form.validateFields(['project']);
+  }, [scenarios, projectScenarios, form]);
+
   const onFinish = async (values) => {
     // Create FormData and append file
     const formData = new FormData();
@@ -426,11 +433,15 @@ const FormContent = () => {
     }
 
     if (scenarios.some((scenario) => projectScenarios.includes(scenario))) {
+      setUploadStatus({ status: 'error', percent: null });
       return Promise.reject(
         new Error('Scenario name already exists in selected project.'),
       );
     }
 
+    // Reset upload error if no validation error
+    if (uploadStatus.status === 'error')
+      setUploadStatus({ status: null, percent: null });
     return Promise.resolve();
   };
 
