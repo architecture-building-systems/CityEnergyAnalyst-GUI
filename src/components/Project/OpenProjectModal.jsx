@@ -74,7 +74,7 @@ const PathDialog = ({ initialValue }) => {
 };
 
 const ProjectChoice = ({ initialValue }) => {
-  const choices = useFetchProjectChoices();
+  const [choices] = useFetchProjectChoices();
 
   const options = choices
     ? choices.map((choice) => ({

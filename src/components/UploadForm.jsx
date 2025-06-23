@@ -332,7 +332,7 @@ const FormContent = () => {
   const [scenarios, setScenarios] = useState([]);
 
   // FIXME: Refresh project list when new project is created
-  const projectList = useFetchProjectChoices();
+  const [projectList, fetchProjectList] = useFetchProjectChoices();
   const currentProject = useProjectStore((state) => state.project);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
@@ -387,6 +387,9 @@ const FormContent = () => {
         try {
           if (currentProject == values.project.project)
             await fetchInfo(currentProject);
+          if (values?.project?.type === 'new') {
+            await fetchProjectList();
+          }
         } catch (e) {
           console.error('Error fetching project info:', e);
         }

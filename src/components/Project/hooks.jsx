@@ -72,5 +72,5 @@ export const useFetchProjectChoices = () => {
     fetchInfo();
   }, []);
 
-  return choices;
+  return [choices, fetchInfo];
 };
