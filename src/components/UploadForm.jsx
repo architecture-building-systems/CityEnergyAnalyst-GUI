@@ -18,7 +18,6 @@ import { fetchProjectInfo, useProjectStore } from './Project/store';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {
-  const openProject = useOpenScenario();
   const [newProjectInfo, setNewProjectInfo] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const onSuccess = (project, scenarios) => {
@@ -37,51 +36,79 @@ const UploadForm = () => {
       </div>
 
       <FormContent onSuccess={onSuccess} />
-      <Modal
-        open={showModal}
-        closable={false}
-        afterClose={() => setNewProjectInfo(null)}
-        centered
-        footer={
-          <Button style={{ margin: 12 }} onClick={() => setShowModal(false)}>
-            Close
-          </Button>
-        }
-      >
-        <div>
-          <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <CheckCircleFilled /> Successfully uploaded scenarios
-          </h2>
-          {newProjectInfo?.scenarios &&
-            newProjectInfo.scenarios.map((scenario) => (
-              <div
-                key={scenario}
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  border: '1px solid #eee',
-                  borderRadius: 8,
-                  padding: 8,
+      <UploadSucessModal
+        visible={showModal}
+        setVisible={setShowModal}
+        newProjectInfo={newProjectInfo}
+        setNewProjectInfo={setNewProjectInfo}
+      />
+    </div>
+  );
+};
 
-                  marginBottom: 8,
+const UploadSucessModal = ({
+  newProjectInfo,
+  setNewProjectInfo,
+  visible,
+  setVisible,
+}) => {
+  const openProject = useOpenScenario();
+  const [selected, setSelected] = useState(null);
+
+  return (
+    <Modal
+      open={visible}
+      closable={false}
+      afterClose={() => setNewProjectInfo(null)}
+      centered
+      footer={
+        <Button style={{ margin: 12 }} onClick={() => setVisible(false)}>
+          Close
+        </Button>
+      }
+    >
+      <div>
+        <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <CheckCircleFilled /> Successfully uploaded scenarios
+        </h2>
+        {newProjectInfo?.scenarios &&
+          newProjectInfo.scenarios.map((scenario) => (
+            <div
+              key={scenario}
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                border: '1px solid #eee',
+                borderRadius: 8,
+                padding: 8,
+
+                marginBottom: 8,
+              }}
+            >
+              <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+                {scenario}
+              </div>
+              <Button
+                type="primary"
+                loading={selected == scenario}
+                disabled={selected != null && selected != scenario}
+                onClick={async () => {
+                  setSelected(scenario);
+                  try {
+                    await openProject(newProjectInfo.project, scenario);
+                  } finally {
+                    setSelected(null);
+                  }
                 }}
               >
-                <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
-                  {scenario}
-                </div>
-                <Button
-                  type="primary"
-                  onClick={() => openProject(newProjectInfo.project, scenario)}
-                >
-                  Open
-                </Button>
-              </div>
-            ))}
-        </div>
-      </Modal>
-    </div>
+                Open
+              </Button>
+            </div>
+          ))}
+      </div>
+    </Modal>
   );
 };
 
