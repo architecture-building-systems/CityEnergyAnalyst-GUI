@@ -315,9 +315,7 @@ const useProjectScenarios = (projectName, projectType) => {
     if (projectType === 'current') {
       setScenarios(currentScenarios);
     } else if (projectType === 'existing') {
-      if (projectName == null) return;
-
-      fetchScenarios();
+      if (projectName !== null) fetchScenarios();
     } else if (projectType === 'new') {
       setScenarios([]);
     }
@@ -345,6 +343,7 @@ const FormContent = () => {
     fetchScenarios,
   } = useProjectScenarios(projectFormValue?.project, projectFormValue?.type);
 
+  const [selectedFile, setSelectedFile] = useState(false);
   const [uploadStatus, setUploadStatus] = useState({
     status: null,
     percent: null,
@@ -360,6 +359,7 @@ const FormContent = () => {
 
   const handdleFormValuesChange = (changedValues) => {
     if (changedValues?.project) setProjectFormValue(changedValues.project);
+    if (changedValues?.upload) setSelectedFile(changedValues.upload.length > 0);
   };
 
   // Revalidate form when project scenarios change
@@ -391,6 +391,12 @@ const FormContent = () => {
       if (xhr.status === 200) {
         message.success('Upload completed');
         try {
+          // Reset form
+          setSelectedFile(false);
+          setUploadStatus({ status: null, percent: null });
+          form.resetFields();
+
+          // Fetch new info after successful upload
           if (currentProject == values.project.project)
             await fetchInfo(currentProject);
           if (values?.project?.type === 'new') {
@@ -400,8 +406,6 @@ const FormContent = () => {
         } catch (e) {
           console.error('Error fetching project info:', e);
         }
-        form.validateFields();
-        setUploadStatus({ status: 'done', percent: null });
       } else {
         try {
           const errorResponse = JSON.parse(xhr.responseText);
@@ -478,14 +482,16 @@ const FormContent = () => {
           status={uploadStatus}
         />
       </Form.Item>
-      <Spin spinning={loading} tip="Checking scenarios...">
-        <UploadScenarioList
-          scenarioList={scenarios}
-          existingScenarios={projectScenarios}
-        />
-      </Spin>
-      {scenarios.length > 0 && (
+
+      {selectedFile && scenarios.length > 0 && (
         <>
+          <Spin spinning={loading} tip="Checking scenarios...">
+            <UploadScenarioList
+              scenarioList={scenarios}
+              existingScenarios={projectScenarios}
+            />
+          </Spin>
+
           <Form.Item
             name="project"
             initialValue={{
