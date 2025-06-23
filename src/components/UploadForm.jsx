@@ -292,7 +292,7 @@ const extractScenarios = (zipName, files) => {
     .filter((name) => name !== null);
 
   if (scenarioNames.length === 0) {
-    throw new Error('No scenarios found in archive.');
+    throw new Error('No Scenarios found in archive.');
   }
 
   return scenarioNames;
@@ -568,7 +568,7 @@ const FormContent = ({ onSuccess }) => {
 
       {selectedFile && scenarios.length > 0 && (
         <>
-          <Spin spinning={loading} tip="Checking scenarios...">
+          <Spin spinning={loading} tip="Checking Scenario(s)...">
             <UploadScenarioList
               scenarioList={scenarios}
               existingScenarios={projectScenarios}
