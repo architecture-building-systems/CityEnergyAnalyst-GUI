@@ -234,22 +234,25 @@ const UploadProjectSelection = ({
         gap: 12,
       }}
     >
-      <Radio value="current">
-        Add to current Project:{' '}
-        <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-          {currentProject}
-        </span>
-      </Radio>
-      <Radio value="existing">Add to an existing Project</Radio>
-      {value?.type === 'existing' && (
-        <Select
-          options={options}
-          placeholder="Select a Project"
-          onChange={handleExistingProjectChange}
-          value={existingProject}
-        />
+      {currentProject !== null && (
+        <Radio value="current">
+          Add to current Project:{' '}
+          <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+            {currentProject}
+          </span>
+        </Radio>
       )}
-
+      {options.length > 0 && (
+        <>
+          <Radio value="existing">Add to an existing Project</Radio>
+          <Select
+            options={options}
+            placeholder="Select a Project"
+            onChange={handleExistingProjectChange}
+            value={existingProject}
+          />
+        </>
+      )}
       <Radio value="new">Create a new Project</Radio>
       {value?.type === 'new' && (
         <Input
