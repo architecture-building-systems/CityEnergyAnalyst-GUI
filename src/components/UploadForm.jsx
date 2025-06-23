@@ -4,6 +4,7 @@ import {
   Form,
   Input,
   message,
+  Modal,
   Radio,
   Select,
   Spin,
@@ -12,10 +13,20 @@ import {
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
 import { useEffect, useMemo, useState } from 'react';
-import { useFetchProjectChoices } from './Project/hooks';
+import { useFetchProjectChoices, useOpenScenario } from './Project/hooks';
 import { fetchProjectInfo, useProjectStore } from './Project/store';
+import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {
+  const openProject = useOpenScenario();
+  const [newProjectInfo, setNewProjectInfo] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const onSuccess = (project, scenarios) => {
+    console.log('Successfully uploaded scenarios', project, scenarios);
+    setNewProjectInfo({ project, scenarios });
+    setShowModal(true);
+  };
+
   return (
     <div style={{ userSelect: 'none', padding: '12px 24px' }}>
       <div style={{ marginBottom: 24 }}>
@@ -25,7 +36,51 @@ const UploadForm = () => {
         <p>Upload one or more CEA Scenarios.</p>
       </div>
 
-      <FormContent />
+      <FormContent onSuccess={onSuccess} />
+      <Modal
+        open={showModal}
+        closable={false}
+        afterClose={() => setNewProjectInfo(null)}
+        centered
+        footer={
+          <Button style={{ margin: 12 }} onClick={() => setShowModal(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div>
+          <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <CheckCircleFilled /> Successfully uploaded scenarios
+          </h2>
+          {newProjectInfo?.scenarios &&
+            newProjectInfo.scenarios.map((scenario) => (
+              <div
+                key={scenario}
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  border: '1px solid #eee',
+                  borderRadius: 8,
+                  padding: 8,
+
+                  marginBottom: 8,
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+                  {scenario}
+                </div>
+                <Button
+                  type="primary"
+                  onClick={() => openProject(newProjectInfo.project, scenario)}
+                >
+                  Open
+                </Button>
+              </div>
+            ))}
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -299,6 +354,7 @@ const useProjectScenarios = (projectName, projectType) => {
   const [loading, setLoading] = useState(false);
 
   const fetchScenarios = async () => {
+    if (projectName == null) return;
     setLoading(true);
     try {
       const data = await fetchProjectInfo(projectName);
@@ -315,7 +371,7 @@ const useProjectScenarios = (projectName, projectType) => {
     if (projectType === 'current') {
       setScenarios(currentScenarios);
     } else if (projectType === 'existing') {
-      if (projectName !== null) fetchScenarios();
+      fetchScenarios();
     } else if (projectType === 'new') {
       setScenarios([]);
     }
@@ -324,11 +380,10 @@ const useProjectScenarios = (projectName, projectType) => {
   return { scenarios, loading, fetchScenarios };
 };
 
-const FormContent = () => {
+const FormContent = ({ onSuccess }) => {
   const [form] = Form.useForm();
   const [scenarios, setScenarios] = useState([]);
 
-  // FIXME: Refresh project list when new project is created
   const [projectList, fetchProjectList] = useFetchProjectChoices();
   const currentProject = useProjectStore((state) => state.project);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
@@ -389,13 +444,12 @@ const FormContent = () => {
 
     xhr.onload = async () => {
       if (xhr.status === 200) {
-        message.success('Upload completed');
-        try {
-          // Reset form
-          setSelectedFile(false);
-          setUploadStatus({ status: null, percent: null });
-          form.resetFields();
+        // Reset form
+        setSelectedFile(false);
+        setUploadStatus({ status: null, percent: null });
+        onSuccess?.(values.project.project, scenarios);
 
+        try {
           // Fetch new info after successful upload
           if (currentProject == values.project.project)
             await fetchInfo(currentProject);
@@ -405,6 +459,8 @@ const FormContent = () => {
           await fetchScenarios();
         } catch (e) {
           console.error('Error fetching project info:', e);
+        } finally {
+          form.resetFields();
         }
       } else {
         try {
