@@ -323,10 +323,6 @@ const useProjectScenarios = (projectName, projectType) => {
   return { scenarios, loading };
 };
 
-const PROJECT_INITIAL_VALUE = {
-  type: 'current',
-  project: null,
-};
 const FormContent = () => {
   const [form] = Form.useForm();
   const [scenarios, setScenarios] = useState([]);
@@ -336,9 +332,10 @@ const FormContent = () => {
   const currentProject = useProjectStore((state) => state.project);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
-  const [projectFormValue, setProjectFormValue] = useState(
-    PROJECT_INITIAL_VALUE,
-  );
+  const [projectFormValue, setProjectFormValue] = useState({
+    type: 'current',
+    project: currentProject,
+  });
   const { loading, scenarios: projectScenarios } = useProjectScenarios(
     projectFormValue?.project,
     projectFormValue?.type,
@@ -428,6 +425,12 @@ const FormContent = () => {
       return Promise.reject(new Error('Project name already exists.'));
     }
 
+    if (scenarios.some((scenario) => projectScenarios.includes(scenario))) {
+      return Promise.reject(
+        new Error('Scenario name already exists in selected project.'),
+      );
+    }
+
     return Promise.resolve();
   };
 
@@ -464,7 +467,10 @@ const FormContent = () => {
         <>
           <Form.Item
             name="project"
-            initialValue={PROJECT_INITIAL_VALUE}
+            initialValue={{
+              type: 'current',
+              project: currentProject,
+            }}
             rules={[{ validator: validateProject }]}
           >
             <UploadProjectSelection
