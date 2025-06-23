@@ -411,6 +411,12 @@ const FormContent = () => {
       }
     };
 
+    xhr.onerror = () => {
+      message.error('Upload failed');
+      setUploadStatus({ status: 'error', percent: null });
+      form.validateFields();
+    };
+
     xhr.open(
       'POST',
       `${import.meta.env.VITE_CEA_URL}/api/contents/scenario/upload`,
