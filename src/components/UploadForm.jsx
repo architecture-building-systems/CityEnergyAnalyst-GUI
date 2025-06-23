@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
-import { use, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFetchProjectChoices } from './Project/hooks';
 import { fetchProjectInfo, useProjectStore } from './Project/store';
 
@@ -298,30 +298,32 @@ const useProjectScenarios = (projectName, projectType) => {
   const [scenarios, setScenarios] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const fetchScenarios = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchProjectInfo(projectName);
+      const { scenarios_list: scenariosList } = data;
+      setScenarios(scenariosList);
+    } catch (error) {
+      console.error('Error fetching project scenarios:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (projectType === 'current') {
       setScenarios(currentScenarios);
     } else if (projectType === 'existing') {
       if (projectName == null) return;
-      const fetchScenarios = async () => {
-        setLoading(true);
-        try {
-          const data = await fetchProjectInfo(projectName);
-          const { scenarios_list: scenariosList } = data;
-          setScenarios(scenariosList);
-        } catch (error) {
-          console.error('Error fetching project scenarios:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+
       fetchScenarios();
     } else if (projectType === 'new') {
       setScenarios([]);
     }
   }, [projectName, projectType, currentScenarios]);
 
-  return { scenarios, loading };
+  return { scenarios, loading, fetchScenarios };
 };
 
 const FormContent = () => {
@@ -337,10 +339,11 @@ const FormContent = () => {
     type: 'current',
     project: currentProject,
   });
-  const { loading, scenarios: projectScenarios } = useProjectScenarios(
-    projectFormValue?.project,
-    projectFormValue?.type,
-  );
+  const {
+    loading,
+    scenarios: projectScenarios,
+    fetchScenarios,
+  } = useProjectScenarios(projectFormValue?.project, projectFormValue?.type);
 
   const [uploadStatus, setUploadStatus] = useState({
     status: null,
@@ -361,8 +364,7 @@ const FormContent = () => {
 
   // Revalidate form when project scenarios change
   useEffect(() => {
-    console.log('Revalidating form');
-    form.validateFields(['project']);
+    form.validateFields();
   }, [scenarios, projectScenarios, form]);
 
   const onFinish = async (values) => {
@@ -394,9 +396,11 @@ const FormContent = () => {
           if (values?.project?.type === 'new') {
             await fetchProjectList();
           }
+          await fetchScenarios();
         } catch (e) {
           console.error('Error fetching project info:', e);
         }
+        form.validateFields();
         setUploadStatus({ status: 'done', percent: null });
       } else {
         try {
