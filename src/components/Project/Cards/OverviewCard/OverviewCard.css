@@ -6,6 +6,10 @@
   background-color: #fff;
 
   transition: background-color 0.3s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .cea-card-scenario-item:hover {

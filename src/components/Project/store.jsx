@@ -29,6 +29,23 @@ export const fetchProjectInfo = async (project) => {
   }
 };
 
+export const deleteScenario = async (project, scenario) => {
+  if (!project) throw new Error('Project cannot be empty');
+  if (!scenario) throw new Error('Scenario cannot be empty');
+
+  try {
+    const { data } = await apiClient.delete(
+      `/api/project/scenario/${scenario}`,
+      { data: { project } },
+    );
+
+    return data;
+  } catch (error) {
+    console.error(error?.response?.data);
+    throw error;
+  }
+};
+
 // TODO: Handle errors when fetching project info e.g. path not found
 export const useProjectStore = create((set) => ({
   name: null,
@@ -64,14 +81,22 @@ export const useProjectStore = create((set) => ({
       throw error;
     }
   },
+  deleteScenario: async (scenario) => {
+    const { project } = useProjectStore.getState();
 
-  updateScenario: (scenario) => {
-    set({ scenario });
-  },
+    try {
+      const data = await deleteScenario(project, scenario);
+      const { scenarios: scenariosList } = data;
 
-  setRecentProjects: (projects) => {
-    set({ recentProjects: projects });
+      set({ scenariosList });
+      return scenariosList;
+    } catch (error) {
+      console.error('Error deleting scenario:', error);
+      throw error;
+    }
   },
+  updateScenario: (scenario) => set({ scenario }),
+  setRecentProjects: (projects) => set({ recentProjects: projects }),
 }));
 
 export const useProjectLoading = () =>

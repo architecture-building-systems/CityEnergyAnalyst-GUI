@@ -4,9 +4,10 @@ import { push } from 'connected-react-router';
 import routes from '../../../../constants/routes.json';
 import { useDispatch } from 'react-redux';
 import { useHoverGrow } from './hooks';
-import { useMemo } from 'react';
-import { Badge, message, Tooltip } from 'antd';
+import { useMemo, useState } from 'react';
+import { Badge, message, Modal, Tooltip } from 'antd';
 import {
+  BinAnimationIcon,
   CreateNewIcon,
   DuplicateIcon,
   UploadDownloadIcon,
@@ -15,6 +16,7 @@ import {
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
 import { useChangesExist } from '../../../InputEditor/store';
+import { useProjectStore } from '../../store';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -88,8 +90,10 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
 };
 
 const ScenarioItem = ({ project, scenario }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const changes = useChangesExist();
 
+  const deleteScenario = useProjectStore((state) => state.deleteScenario);
   const openScenario = useOpenScenario(routes.PROJECT);
   const handleOpenScenario = () => {
     if (changes) {
@@ -104,6 +108,24 @@ const ScenarioItem = ({ project, scenario }) => {
     openScenario(project, scenario);
   };
 
+  const handleDeleteScenario = async (e) => {
+    e.stopPropagation();
+
+    const confirmed = await new Promise((resolve) => {
+      Modal.warning({
+        title: 'Delete Scenario',
+        content: 'Are you sure you want to delete this scenario?',
+        okText: 'Delete',
+        cancelText: 'Cancel',
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+
+    if (!confirmed) return;
+    await deleteScenario(scenario);
+  };
+
   return (
     <div
       className="cea-card-scenario-item"
@@ -112,8 +134,18 @@ const ScenarioItem = ({ project, scenario }) => {
       onKeyDown={(e) => e.key === 'Enter' && handleOpenScenario()}
       role="button"
       tabIndex={0}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {scenario}
+
+      {!changes && isHovered && (
+        <BinAnimationIcon
+          style={{ padding: '2px 8px' }}
+          className="cea-job-info-icon danger shake"
+          onClick={handleDeleteScenario}
+        />
+      )}
     </div>
   );
 };
