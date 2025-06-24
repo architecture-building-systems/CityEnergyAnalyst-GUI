@@ -72,39 +72,39 @@ const UploadSucessModal = ({
           <CheckCircleFilled /> Successfully uploaded Scenario(s)
         </h2>
         {newProjectInfo?.scenarios?.map((scenario) => (
-            <div
-              key={scenario}
-              style={{
-                display: 'flex',
-                gap: 8,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                border: '1px solid #eee',
-                borderRadius: 8,
-                padding: 8,
-                marginBottom: 8,
+          <div
+            key={scenario}
+            style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              border: '1px solid #eee',
+              borderRadius: 8,
+              padding: 8,
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+              {scenario}
+            </div>
+            <Button
+              type="primary"
+              loading={selected === scenario}
+              disabled={selected !== null && selected !== scenario}
+              onClick={async () => {
+                setSelected(scenario);
+                try {
+                  await openProject(newProjectInfo.project, scenario);
+                } finally {
+                  setSelected(null);
+                }
               }}
             >
-              <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
-                {scenario}
-              </div>
-              <Button
-                type="primary"
-                loading={selected === scenario}
-                disabled={selected !== null && selected !== scenario}
-                onClick={async () => {
-                  setSelected(scenario);
-                  try {
-                    await openProject(newProjectInfo.project, scenario);
-                  } finally {
-                    setSelected(null);
-                  }
-                }}
-              >
-                Open
-              </Button>
-            </div>
-          ))}
+              Open
+            </Button>
+          </div>
+        ))}
       </div>
     </Modal>
   );
@@ -232,7 +232,7 @@ const UploadProjectSelection = ({
         gap: 12,
       }}
     >
-      {currentProject !== null && (
+      {options.length > 0 && currentProject !== null && (
         <Radio value="current">
           Add to current Project:{' '}
           <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
@@ -243,12 +243,14 @@ const UploadProjectSelection = ({
       {options.length > 0 && (
         <>
           <Radio value="existing">Add to an existing Project</Radio>
-          <Select
-            options={options}
-            placeholder="Select a Project"
-            onChange={handleExistingProjectChange}
-            value={existingProject}
-          />
+          {value?.type === 'existing' && (
+            <Select
+              options={options}
+              placeholder="Select a Project"
+              onChange={handleExistingProjectChange}
+              value={existingProject}
+            />
+          )}
         </>
       )}
       <Radio value="new">Create a new Project</Radio>
