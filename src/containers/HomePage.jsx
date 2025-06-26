@@ -183,6 +183,11 @@ const HomePage = () => {
           colorPrimary: '#1470AF',
           colorInfo: '#1470AF',
         },
+        components: {
+          Tooltip: {
+            fontSize: 12,
+          },
+        },
       }}
     >
       <QueryClientProvider client={queryClient}>

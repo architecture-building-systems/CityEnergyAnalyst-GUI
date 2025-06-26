@@ -67,11 +67,7 @@ const ToolMenu = ({
       tools.map((tool) => ({
         key: tool.name,
         label: (
-          <Tooltip
-            title={tool.description}
-            placement="right"
-            styles={{ body: { fontSize: 12 } }}
-          >
+          <Tooltip title={tool.description} placement="right">
             <div style={{ width: '100%', display: 'flex', gap: 10 }}>
               <span>-</span>
               {tool.label}
@@ -89,7 +85,6 @@ const ToolMenu = ({
   return (
     <Tooltip
       title={showTooltip ? category : ''}
-      styles={{ body: { fontSize: 12 } }}
       open={showTooltip && tooltipVisible}
       onOpenChange={setTooltipVisible}
     >

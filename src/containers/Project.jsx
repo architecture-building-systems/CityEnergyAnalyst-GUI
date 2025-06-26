@@ -449,10 +449,7 @@ const ScenarioAlert = () => {
 export const ShowHideCardsButton = ({ hideAll, onToggle, style }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   return (
-    <Tooltip
-      title={!hideAll ? 'Show Overlays' : 'Hide Overlays'}
-      styles={{ body: { fontSize: 12 } }}
-    >
+    <Tooltip title={!hideAll ? 'Show Overlays' : 'Hide Overlays'}>
       <animated.div
         className="cea-overlay-card"
         onMouseEnter={onMouseEnter}
