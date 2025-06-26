@@ -1,9 +1,7 @@
 import OpenProjectModal from '../../OpenProjectModal';
 import { useState } from 'react';
 
-import { animated } from '@react-spring/web';
 import NewProjectModal from '../../NewProjectModal';
-import { useHoverGrow } from './hooks';
 import { message, Tooltip } from 'antd';
 import {
   CreateNewIcon,
@@ -34,7 +32,7 @@ const ProjectRow = ({ projectName }) => {
         {':'}
         <b>{projectName}</b>
       </div>
-      <div style={{ display: 'flex', gap: 8, fontSize: 20 }}>
+      <div className="cea-card-icon-button-container">
         <RefreshIconButton />
         <OpenProjectIconButton />
         <NewProjectIconButton />
@@ -45,49 +43,37 @@ const ProjectRow = ({ projectName }) => {
 
 const OpenProjectIconButton = () => {
   const [visible, setVisible] = useState(false);
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
   return (
-    <Tooltip title="Open Project" styles={{ body: { fontSize: 12 } }}>
-      <animated.div
-        style={styles}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+    <>
+      <Tooltip title="Open Project">
         <OpenProjectIcon onClick={() => setVisible(true)} />
-      </animated.div>
+      </Tooltip>
       <OpenProjectModal visible={visible} setVisible={setVisible} />
-    </Tooltip>
+    </>
   );
 };
 
 const NewProjectIconButton = () => {
   const [visible, setVisible] = useState(false);
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
 
   const onSuccess = () => {};
 
   return (
-    <Tooltip title="New Project" styles={{ body: { fontSize: 12 } }}>
-      <animated.div
-        style={styles}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+    <>
+      <Tooltip title="New Project">
         <CreateNewIcon onClick={() => setVisible(true)} />
-      </animated.div>
+      </Tooltip>
       <NewProjectModal
         visible={visible}
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
-    </Tooltip>
+    </>
   );
 };
 
 const RefreshIconButton = () => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
@@ -127,14 +113,8 @@ const RefreshIconButton = () => {
   };
 
   return (
-    <Tooltip title="Refresh" styles={{ body: { fontSize: 12 } }}>
-      <animated.div
-        style={styles}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <RefreshIcon onClick={onRefresh} />
-      </animated.div>
+    <Tooltip title="Refresh">
+      <RefreshIcon onClick={onRefresh} />
     </Tooltip>
   );
 };

@@ -15,3 +15,24 @@
 .cea-card-scenario-item:hover {
   background-color: #f5f5f5;
 }
+
+.cea-card-icon-button-container {
+  /* background-color: #f1f1f1; */
+  border-radius: 12px;
+  outline: 1px solid #dddddd;
+  padding: 3px;
+
+  display: flex;
+  align-items: center;
+}
+
+.cea-card-icon-button-container svg {
+  padding: 6px;
+  border-radius: 8px;
+
+  font-size: 18px;
+}
+
+.cea-card-icon-button-container svg:hover {
+  background: #dddddd;
+}

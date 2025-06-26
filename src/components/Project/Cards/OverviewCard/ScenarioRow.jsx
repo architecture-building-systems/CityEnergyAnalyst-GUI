@@ -1,9 +1,7 @@
-import { animated } from '@react-spring/web';
 import { push } from 'connected-react-router';
 
 import routes from '../../../../constants/routes.json';
 import { useDispatch } from 'react-redux';
-import { useHoverGrow } from './hooks';
 import { useMemo, useState } from 'react';
 import { Badge, message, Modal, Tooltip } from 'antd';
 import {
@@ -68,7 +66,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
                 : 'Create Scenario'}
           </div>
         </Badge>
-        <div style={{ fontSize: 20, display: 'flex', gap: 8 }}>
+        <div className="cea-card-icon-button-container">
           <DuplicateScenarioIcon />
           <NewScenarioIcon />
           <UploadDownloadScenarioIcon />
@@ -152,68 +150,32 @@ const ScenarioItem = ({ project, scenario }) => {
 
 const NewScenarioIcon = () => {
   const dispatch = useDispatch();
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-
   const onClick = () => dispatch(push(routes.CREATE_SCENARIO));
 
   return (
-    <Tooltip
-      title="New Scenario"
-      placement="bottom"
-      styles={{ body: { fontSize: 12 } }}
-    >
-      <animated.div
-        style={styles}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <CreateNewIcon onClick={onClick} />
-      </animated.div>
+    <Tooltip title="New Scenario" placement="bottom">
+      <CreateNewIcon onClick={onClick} />
     </Tooltip>
   );
 };
 
 const DuplicateScenarioIcon = () => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-
   const onClick = () => {};
 
   return (
-    <Tooltip
-      title="Duplicate Scenario"
-      placement="bottom"
-      styles={{ body: { fontSize: 12 } }}
-    >
-      <animated.div
-        style={styles}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <DuplicateIcon onClick={onClick} />
-      </animated.div>
+    <Tooltip title="Duplicate Scenario" placement="bottom">
+      <DuplicateIcon onClick={onClick} />
     </Tooltip>
   );
 };
 
 const UploadDownloadScenarioIcon = () => {
   const dispatch = useDispatch();
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-
   const onClick = () => dispatch(push(routes.UPLOAD_DOWNLOAD));
 
   return (
-    <Tooltip
-      title="Upload/Download"
-      placement="bottom"
-      styles={{ body: { fontSize: 12 } }}
-    >
-      <animated.div
-        style={styles}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <UploadDownloadIcon onClick={onClick} />
-      </animated.div>
+    <Tooltip title="Upload/Download" placement="bottom">
+      <UploadDownloadIcon onClick={onClick} />
     </Tooltip>
   );
 };
