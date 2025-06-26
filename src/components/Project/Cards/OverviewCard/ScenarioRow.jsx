@@ -3,7 +3,7 @@ import { push } from 'connected-react-router';
 import routes from '../../../../constants/routes.json';
 import { useDispatch } from 'react-redux';
 import { useMemo, useState } from 'react';
-import { Badge, message, Modal, Tooltip } from 'antd';
+import { Badge, Button, message, Modal, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
   CreateNewIcon,
@@ -154,7 +154,7 @@ const NewScenarioIcon = () => {
 
   return (
     <Tooltip title="New Scenario" placement="bottom">
-      <CreateNewIcon onClick={onClick} />
+      <Button icon={<CreateNewIcon />} type="text" onClick={onClick} />
     </Tooltip>
   );
 };
@@ -164,7 +164,7 @@ const DuplicateScenarioIcon = () => {
 
   return (
     <Tooltip title="Duplicate Scenario" placement="bottom">
-      <DuplicateIcon onClick={onClick} />
+      <Button icon={<DuplicateIcon />} type="text" onClick={onClick} />
     </Tooltip>
   );
 };
@@ -175,7 +175,7 @@ const UploadDownloadScenarioIcon = () => {
 
   return (
     <Tooltip title="Upload/Download" placement="bottom">
-      <UploadDownloadIcon onClick={onClick} />
+      <Button icon={<UploadDownloadIcon />} type="text" onClick={onClick} />
     </Tooltip>
   );
 };

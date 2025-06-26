@@ -17,7 +17,6 @@
 }
 
 .cea-card-icon-button-container {
-  /* background-color: #f1f1f1; */
   border-radius: 12px;
   outline: 1px solid #dddddd;
   padding: 3px;
@@ -26,13 +25,16 @@
   align-items: center;
 }
 
-.cea-card-icon-button-container svg {
-  padding: 6px;
+.cea-card-icon-button-container button {
   border-radius: 8px;
-
-  font-size: 18px;
+  width: 30px !important;
+  height: 30px !important;
 }
 
-.cea-card-icon-button-container svg:hover {
-  background: #dddddd;
+.cea-card-icon-button-container button:hover {
+  background: #eee !important;
+}
+
+.cea-card-icon-button-container svg {
+  font-size: 18px;
 }

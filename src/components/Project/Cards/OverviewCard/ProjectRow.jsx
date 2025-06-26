@@ -2,7 +2,7 @@ import OpenProjectModal from '../../OpenProjectModal';
 import { useState } from 'react';
 
 import NewProjectModal from '../../NewProjectModal';
-import { message, Tooltip } from 'antd';
+import { Button, message, Tooltip } from 'antd';
 import {
   CreateNewIcon,
   OpenProjectIcon,
@@ -47,7 +47,11 @@ const OpenProjectIconButton = () => {
   return (
     <>
       <Tooltip title="Open Project">
-        <OpenProjectIcon onClick={() => setVisible(true)} />
+        <Button
+          icon={<OpenProjectIcon />}
+          type="text"
+          onClick={() => setVisible(true)}
+        />
       </Tooltip>
       <OpenProjectModal visible={visible} setVisible={setVisible} />
     </>
@@ -62,7 +66,11 @@ const NewProjectIconButton = () => {
   return (
     <>
       <Tooltip title="New Project">
-        <CreateNewIcon onClick={() => setVisible(true)} />
+        <Button
+          icon={<CreateNewIcon />}
+          type="text"
+          onClick={() => setVisible(true)}
+        />
       </Tooltip>
       <NewProjectModal
         visible={visible}
@@ -74,6 +82,7 @@ const NewProjectIconButton = () => {
 };
 
 const RefreshIconButton = () => {
+  const [loading, setLoading] = useState(false);
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
@@ -85,7 +94,7 @@ const RefreshIconButton = () => {
 
   const openScenario = useOpenScenario();
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     if (changes) {
       message.config({
         top: 120,
@@ -101,20 +110,30 @@ const RefreshIconButton = () => {
       return;
     }
 
-    // FIXME: Implement scenario refresh
-    if (scenarioName) {
-      openScenario(project, scenarioName).then((exists) => {
-        if (exists) refetch().then(resetCameraOptions);
-      });
-    } else {
-      // Otherwise, refresh project
-      fetchInfo(project);
+    try {
+      setLoading(true);
+      // FIXME: Implement scenario refresh
+      if (scenarioName) {
+        await openScenario(project, scenarioName).then((exists) => {
+          if (exists) refetch().then(resetCameraOptions);
+        });
+      } else {
+        // Otherwise, refresh project
+        await fetchInfo(project);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Tooltip title="Refresh">
-      <RefreshIcon onClick={onRefresh} />
+      <Button
+        icon={<RefreshIcon />}
+        type="text"
+        onClick={onRefresh}
+        loading={loading}
+      />
     </Tooltip>
   );
 };
