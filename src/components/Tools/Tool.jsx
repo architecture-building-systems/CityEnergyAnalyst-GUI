@@ -144,13 +144,13 @@ const useToolForm = (
         ...scenario,
         ...values,
       };
-      console.log('Received values of form: ', out);
+
       return out;
     } catch (err) {
       // Ignore out of date error
       if (err?.outOfDate) return;
 
-      console.log('Error', err);
+      console.error('Error', err);
       // Expand collapsed categories if errors are found inside
       if (categoricalParameters) {
         let categoriesWithErrors = [];
@@ -178,7 +178,7 @@ const useToolForm = (
 
     return dispatch(createJob(script, params)).catch((err) => {
       if (err.response.status === 401) handleLogin();
-      else console.log(`Error creating job: ${err}`);
+      else console.error(`Error creating job: ${err}`);
     });
   };
 
@@ -191,7 +191,7 @@ const useToolForm = (
       })
       .catch((err) => {
         if (err.response.status === 401) return;
-        else console.log(`Error saving tool parameters: ${err}`);
+        else console.error(`Error saving tool parameters: ${err}`);
       });
   };
 
@@ -202,12 +202,11 @@ const useToolForm = (
         return getForm();
       })
       .then((params) => {
-        console.log('Received form params', params);
         return callbacks?.onReset?.(params);
       })
       .catch((err) => {
         if (err.response.status === 401) return;
-        else console.log(`Error setting default tool parameters: ${err}`);
+        else console.error(`Error setting default tool parameters: ${err}`);
       });
   };
 
