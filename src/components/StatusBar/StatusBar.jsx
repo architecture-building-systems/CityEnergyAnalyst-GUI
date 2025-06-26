@@ -18,6 +18,7 @@ import {
 import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
 import { useToolStore } from '../Tools/store';
 import { PLOTS_PRIMARY_COLOR } from '../../constants/theme';
+import { apiClient } from '../../api/axios';
 
 // TODO: get mappings from backend
 // Maps script name to map layer button name
@@ -58,13 +59,23 @@ const CEAVersion = () => {
   const [version, setVersion] = useState();
   const getVersion = async () => {
     try {
-      const _version = await window?.api?.getAppVersion();
-      if (_version === undefined)
-        throw new Error('Unable to determine CEA version.');
+      // First try to get version from browser API
+      const electronVersion = await window?.api?.getAppVersion();
+      if (electronVersion) {
+        setVersion(`v${electronVersion}`);
+        return;
+      }
 
-      setVersion(`v${_version}`);
-    } catch (e) {
-      setVersion('');
+      // If that fails, try the server API
+      const { data } = await apiClient.get('/server/version');
+      if (data?.version) {
+        setVersion(`v${data.version}`);
+        return;
+      }
+
+      throw new Error('No version found');
+    } catch (error) {
+      console.error('Unable to determine CEA version:', error);
     }
   };
 
