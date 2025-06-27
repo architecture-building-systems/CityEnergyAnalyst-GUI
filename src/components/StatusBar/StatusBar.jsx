@@ -60,9 +60,8 @@ const StatusBar = () => {
       >
         <JobStatusBar />
         <div
-          className="cea-status-bar-button"
+          className="cea-status-bar-button primary"
           style={{
-            background: '#1470AF',
             fontSize: 16,
           }}
         >

@@ -35,3 +35,11 @@
 .cea-status-bar-button:active {
   background-color: #777;
 }
+
+.cea-status-bar-button.primary {
+  background: #1470af;
+}
+
+.cea-status-bar-button.primary:hover {
+  background-color: #4080ab;
+}
