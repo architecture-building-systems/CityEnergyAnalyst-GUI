@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { updateJob, dismissJob } from '../../actions/jobs';
@@ -6,7 +6,7 @@ import './StatusBar.css';
 import './StatusBarNotification.css';
 
 import socket from '../../socket';
-import { Button, notification } from 'antd';
+import { Button, Dropdown, notification } from 'antd';
 import { useSelectedJob, useShowJobInfo } from '../Jobs/store';
 import {
   DEMAND,
@@ -19,6 +19,12 @@ import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
 import { useToolStore } from '../Tools/store';
 import { PLOTS_PRIMARY_COLOR } from '../../constants/theme';
 import { apiClient } from '../../api/axios';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import {
+  helpMenuItems,
+  HelpMenuItemsLabel,
+  helpMenuUrls,
+} from '../../components/Project/Cards/OverviewCard/constants';
 
 // TODO: get mappings from backend
 // Maps script name to map layer button name
@@ -48,8 +54,20 @@ const StatusBar = () => {
       <div id="cea-status-bar-left">
         <CEAVersion />
       </div>
-      <div id="cea-status-bar-right">
+      <div
+        id="cea-status-bar-right"
+        style={{ display: 'flex', padding: '0 4px' }}
+      >
         <JobStatusBar />
+        <div
+          className="cea-status-bar-button"
+          style={{
+            background: '#1470AF',
+            fontSize: 16,
+          }}
+        >
+          <DropdownMenu />
+        </div>
       </div>
     </div>
   );
@@ -308,6 +326,34 @@ const JobStatusBar = () => {
     <div className="cea-status-bar-button">
       <span>{output}</span>
     </div>
+  );
+};
+
+const DropdownMenu = () => {
+  const menuItems = useMemo(
+    () =>
+      helpMenuItems.map((item) => {
+        const { label, key } = item;
+        const url = helpMenuUrls[key];
+
+        return {
+          ...item,
+          label: <HelpMenuItemsLabel url={url} name={label} />,
+        };
+      }),
+    [],
+  );
+
+  return (
+    <Dropdown
+      menu={{
+        items: menuItems,
+      }}
+      arrow
+      trigger={['click']}
+    >
+      <QuestionCircleOutlined />
+    </Dropdown>
   );
 };
 

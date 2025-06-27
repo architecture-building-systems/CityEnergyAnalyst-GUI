@@ -1,14 +1,9 @@
-import { Divider, Dropdown } from 'antd';
+import { Divider } from 'antd';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import { ShowHideCardsButton } from '../../../../containers/Project';
-import { helpMenuItems, HelpMenuItemsLabel, helpMenuUrls } from './constants';
-import { DownOutlined } from '@ant-design/icons';
-import { useMemo } from 'react';
 
 import CeaLogoSVG from '../../../../assets/cea-logo.svg';
-import { animated } from '@react-spring/web';
-import { useHoverGrow } from './hooks';
 
 const OverviewCard = ({
   project,
@@ -17,20 +12,6 @@ const OverviewCard = ({
   scenarioList,
   onToggleHideAll,
 }) => {
-  const menuItems = useMemo(
-    () =>
-      helpMenuItems.map((item) => {
-        const { label, key } = item;
-        const url = helpMenuUrls[key];
-
-        return {
-          ...item,
-          label: <HelpMenuItemsLabel url={url} name={label} />,
-        };
-      }),
-    [],
-  );
-
   return (
     <div
       id="cea-overview-card"
@@ -61,7 +42,6 @@ const OverviewCard = ({
       >
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Logo height={48} />
-          <DropdownMenu menuItems={menuItems} />
         </div>
 
         <ShowHideCardsButton
@@ -134,22 +114,6 @@ const Logo = ({ height }) => {
     >
       <CeaLogoSVG style={{ height: '100%' }} />
     </div>
-  );
-};
-
-const DropdownMenu = ({ menuItems }) => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-
-  return (
-    <animated.div style={styles}>
-      <Dropdown
-        menu={{ items: menuItems }}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <DownOutlined style={{ padding: 8 }} />
-      </Dropdown>
-    </animated.div>
   );
 };
 
