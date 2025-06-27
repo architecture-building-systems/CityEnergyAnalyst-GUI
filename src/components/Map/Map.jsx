@@ -450,8 +450,8 @@ const DeckGLMap = ({ data, colors }) => {
           getLineWidth: 0.75,
           visible: visibility.streets,
 
-          pickable: true,
-          autoHighlight: true,
+          // pickable: true,
+          // autoHighlight: true,
 
           onHover: updateTooltip,
         }),
