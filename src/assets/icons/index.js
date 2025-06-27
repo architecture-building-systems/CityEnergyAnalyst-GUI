@@ -39,6 +39,9 @@ import BinAnimationIcon from './bin_animation.svg';
 
 import NumberCircleIcon from './NumberCircleIcon';
 
+import AiIcon from './ai.svg';
+import ProIcon from './pro.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -72,4 +75,6 @@ export {
   UploadDownloadIcon,
   CloudUploadIcon,
   CloudDownloadIcon,
+  AiIcon,
+  ProIcon,
 };

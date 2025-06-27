@@ -21,6 +21,8 @@ import {
   ImportExportIcon,
   PlugInIcon,
   NumberCircleIcon,
+  AiIcon,
+  ProIcon,
 } from '../../../../assets/icons';
 
 const IGNORED_SECTIONS = ['Visualisation'];
@@ -98,11 +100,42 @@ const ToolMenu = ({
         >
           <div className="cea-card-toolbar-icon">
             {icon}
-            <animated.div style={styles}>
-              <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
-            </animated.div>
+            <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
           </div>
         </Dropdown>
+      </div>
+    </Tooltip>
+  );
+};
+
+const CEACopilot = () => {
+  return (
+    <Tooltip
+      title={
+        <div>
+          CEA Copilot <br /> [Under Development]
+        </div>
+      }
+    >
+      <div className="cea-card-toolbar-icon">
+        <AiIcon />
+      </div>
+    </Tooltip>
+  );
+};
+
+const CEAPro = () => {
+  return (
+    <Tooltip
+      title={
+        <div>
+          CEA Pro <br /> [Under Development]
+        </div>
+      }
+    >
+      <div className="cea-card-toolbar-icon">
+        <ProIcon />
+        <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
       </div>
     </Tooltip>
   );
@@ -141,14 +174,18 @@ const Toolbar = ({ onToolSelected, showTools }) => {
         display: 'flex',
         background: '#000',
         borderRadius: 12,
-        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
         height: 'fit-content',
 
         gap: 2,
+        padding: 4,
       }}
     >
       {toolMenus}
+
+      <CEAPro />
+      <div style={{ width: 1, background: '#eee', margin: '8px 1px' }} />
+      <CEACopilot />
     </div>
   );
 };

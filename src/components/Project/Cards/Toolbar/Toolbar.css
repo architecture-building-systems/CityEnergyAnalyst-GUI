@@ -9,7 +9,7 @@
 
 .cea-card-toolbar-icon {
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 8px;
 
   display: flex;
   align-items: center;
@@ -17,7 +17,6 @@
 
   font-size: 24px;
   color: #fff;
-  margin: auto;
 }
 
 .cea-card-toolbar-divider {
