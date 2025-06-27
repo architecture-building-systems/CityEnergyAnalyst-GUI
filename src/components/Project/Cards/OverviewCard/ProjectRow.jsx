@@ -21,15 +21,21 @@ const ProjectRow = ({ projectName }) => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: 12,
       }}
     >
       <div
         style={{
           display: 'flex',
           gap: 8,
+
+          outline: '1px solid #dddddd',
+          width: '100%',
+
+          padding: '10px 12px',
+          borderRadius: 12,
         }}
       >
-        {':'}
         <b>{projectName}</b>
       </div>
       <div className="cea-card-icon-button-container">
