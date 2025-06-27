@@ -1,9 +1,9 @@
 import {
   BookOutlined,
-  ExceptionOutlined,
   FlagOutlined,
   MailOutlined,
   RocketOutlined,
+  StarOutlined,
   YoutubeOutlined,
 } from '@ant-design/icons';
 
@@ -15,9 +15,9 @@ export const helpMenuUrls = {
   documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
   'report-issue':
     'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new?template=bug_report.yml',
-  'known-issue':
-    'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
   contact: 'https://www.cityenergyanalyst.com/contact',
+  'github-repo':
+    'https://github.com/architecture-building-systems/CityEnergyAnalyst',
 };
 
 export const HelpMenuItemsLabel = ({ url, name }) => {
@@ -51,13 +51,13 @@ export const helpMenuItems = [
     icon: <FlagOutlined />,
   },
   {
-    label: 'Known Issues',
-    key: 'known-issue',
-    icon: <ExceptionOutlined />,
-  },
-  {
     label: 'Contact Us',
     key: 'contact',
     icon: <MailOutlined />,
+  },
+  {
+    label: 'Star us on GitHub!',
+    key: 'github-repo',
+    icon: <StarOutlined />,
   },
 ];
