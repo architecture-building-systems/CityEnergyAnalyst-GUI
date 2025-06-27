@@ -60,7 +60,7 @@ const OverviewCard = ({
         }}
       >
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Logo height={60} />
+          <Logo height={48} />
           <DropdownMenu menuItems={menuItems} />
         </div>
 
