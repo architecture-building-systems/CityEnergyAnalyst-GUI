@@ -14,7 +14,7 @@ export const helpMenuUrls = {
   'video-tutorials': 'https://www.cityenergyanalyst.com/video',
   documentation: 'http://city-energy-analyst.readthedocs.io/en/latest/',
   'report-issue':
-    'https://github.com/architecture-building-systems/cityenergyanalyst/issues/new',
+    'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues/new?template=bug_report.yml',
   'known-issue':
     'https://github.com/architecture-building-systems/CityEnergyAnalyst/issues?utf8=%E2%9C%93&q=is%3Aopen%26closed+label%3A%22known+issue%22+',
   contact: 'https://www.cityenergyanalyst.com/contact',
