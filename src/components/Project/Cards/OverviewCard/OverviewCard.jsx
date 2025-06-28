@@ -38,6 +38,7 @@ const OverviewCard = ({
           gap: 12,
           alignItems: 'center',
           justifyContent: 'space-between',
+          marginBottom: 8,
         }}
       >
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
