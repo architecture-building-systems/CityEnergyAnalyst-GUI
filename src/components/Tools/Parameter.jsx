@@ -106,7 +106,12 @@ const Parameter = ({ parameter, form }) => {
     case 'SingleBuildingParameter':
     case 'GenerationParameter':
     case 'SystemParameter':
-    case 'ColumnChoiceParameter':
+    case 'ColumnChoiceParameter': {
+      const options = choices.map((choice) => ({
+        label: choice,
+        value: choice,
+      }));
+
       return (
         <FormItemWrapper
           form={form}
@@ -131,21 +136,21 @@ const Parameter = ({ parameter, form }) => {
             },
           ]}
           inputComponent={
-            <Select disabled={!choices.length}>
-              {choices.map((choice) => (
-                <Select.Option key={choice} value={choice}>
-                  {choice}
-                </Select.Option>
-              ))}
-            </Select>
+            <Select options={options} disabled={!choices.length} />
           }
         />
       );
+    }
     case 'MultiChoiceParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter': {
+      const options = choices.map((choice) => ({
+        label: choice,
+        value: choice,
+      }));
+
       const placeholder =
         type == 'BuildingsParameter' ? 'All Buildings' : 'Nothing Selected';
       const selectAll = (e) => {
@@ -190,6 +195,7 @@ const Parameter = ({ parameter, form }) => {
           ]}
           inputComponent={
             <Select
+              options={options}
               mode="multiple"
               style={{ width: '100%' }}
               placeholder={placeholder}
@@ -208,13 +214,7 @@ const Parameter = ({ parameter, form }) => {
                   {menu}
                 </div>
               )}
-            >
-              {choices.map((choice) => (
-                <Select.Option key={choice} value={choice}>
-                  {choice}
-                </Select.Option>
-              ))}
-            </Select>
+            />
           }
         />
       );

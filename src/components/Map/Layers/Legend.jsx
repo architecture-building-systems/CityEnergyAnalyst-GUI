@@ -12,6 +12,11 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
 
   const { min, max } = range?.[value] ?? { min: 0, max: 0 };
 
+  const options = Object.keys(range).map((key) => ({
+    label: range[key].label,
+    value: key,
+  }));
+
   const gradientArray = new Gradient()
     .setColorGradient(...colours)
     .setMidpoint(points)
@@ -32,15 +37,12 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
     >
       <b>{label}</b>
       <div>Range</div>
-      <Select value={value} onChange={setValue} defaultValue={0}>
-        {Object.keys(range).map((key) => {
-          return (
-            <Select.Option key={key} value={key}>
-              {range[key].label}
-            </Select.Option>
-          );
-        })}
-      </Select>
+      <Select
+        value={value}
+        onChange={setValue}
+        defaultValue={0}
+        options={options}
+      />
       <div
         style={{
           display: 'flex',
