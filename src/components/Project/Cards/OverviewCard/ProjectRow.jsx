@@ -94,6 +94,7 @@ const RefreshIconButton = () => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
+  const [_, fetchProjectChoices] = useFetchProjectChoices();
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
   const changes = useChangesExist();
@@ -128,6 +129,7 @@ const RefreshIconButton = () => {
       } else {
         // Otherwise, refresh project
         await fetchInfo(project);
+        await fetchProjectChoices();
       }
     } finally {
       setLoading(false);
