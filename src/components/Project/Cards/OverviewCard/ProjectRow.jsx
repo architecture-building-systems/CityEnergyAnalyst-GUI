@@ -60,9 +60,14 @@ const OpenProjectIconButton = () => {
   );
 };
 
-const NewProjectIconButton = ({ children, style, onSuccess }) => {
+const NewProjectIconButton = ({ children, style, onSuccess, onClick }) => {
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const handleClick = () => {
+    setVisible(true);
+    onClick?.();
+  };
 
   return (
     <>
@@ -74,7 +79,7 @@ const NewProjectIconButton = ({ children, style, onSuccess }) => {
         <Button
           icon={<CreateNewIcon />}
           type="text"
-          onClick={() => setVisible(true)}
+          onClick={handleClick}
           style={style}
         >
           {children}
@@ -179,6 +184,7 @@ const ProjectOption = ({ projectName, onDelete }) => {
 };
 
 const ProjectSelect = ({ projectName }) => {
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [choices] = useFetchProjectChoices();
@@ -224,17 +230,22 @@ const ProjectSelect = ({ projectName }) => {
 
   const options = useMemo(() => {
     return choices
-      ? choices
-          .filter((choice) => choice !== projectName)
-          .map((choice) => ({
-            label: (
-              <ProjectOption
-                projectName={choice}
-                onDelete={handleDeleteProject}
-              />
-            ),
-            value: choice,
-          }))
+      ? [
+          {
+            label: 'Projects',
+            options: choices
+              .filter((choice) => choice !== projectName)
+              .map((choice) => ({
+                label: (
+                  <ProjectOption
+                    projectName={choice}
+                    onDelete={handleDeleteProject}
+                  />
+                ),
+                value: choice,
+              })),
+          },
+        ]
       : [];
   }, [choices, projectName]);
 
@@ -249,11 +260,16 @@ const ProjectSelect = ({ projectName }) => {
       value={projectName}
       onChange={handleChange}
       loading={loading}
+      open={open}
+      onOpenChange={setOpen}
       popupRender={(menu) => (
         <>
           {menu}
           <Divider style={{ margin: '8px 0' }} />
-          <NewProjectIconButton style={{ width: '100%' }}>
+          <NewProjectIconButton
+            style={{ width: '100%' }}
+            onClick={() => setOpen(false)}
+          >
             Create New Project
           </NewProjectIconButton>
         </>
