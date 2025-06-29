@@ -1,18 +1,19 @@
-import OpenProjectModal from '../../OpenProjectModal';
-import { useState } from 'react';
-
+import { useMemo, useState } from 'react';
 import NewProjectModal from '../../NewProjectModal';
-import { Button, message, Tooltip } from 'antd';
+import { Button, message, Modal, Select, Tooltip } from 'antd';
 import {
+  BinAnimationIcon,
   CreateNewIcon,
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
-import { useProjectStore } from '../../store';
-import { useOpenScenario } from '../../hooks';
+import { useProjectStore, useSaveProjectToLocalStorage } from '../../store';
+import { useFetchProjectChoices, useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 import { useChangesExist } from '../../../InputEditor/store';
 import { useMapStore } from '../../../Map/store/store';
+import { isElectron } from '../../../../utils/electron';
+import OpenProjectModal from '../../OpenProjectModal';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -24,24 +25,19 @@ const ProjectRow = ({ projectName }) => {
         gap: 12,
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-
-          outline: '1px solid #dddddd',
-          width: '100%',
-
-          padding: '10px 12px',
-          borderRadius: 12,
-        }}
-      >
-        <b>{projectName}</b>
-      </div>
+      {!isElectron() && (
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <ProjectSelect projectName={projectName} />
+        </div>
+      )}
       <div className="cea-card-icon-button-container">
         <RefreshIconButton />
-        <OpenProjectIconButton />
-        <NewProjectIconButton />
+        {isElectron() && (
+          <>
+            <OpenProjectIconButton />
+            <NewProjectIconButton />
+          </>
+        )}
       </div>
     </div>
   );
@@ -141,6 +137,113 @@ const RefreshIconButton = () => {
         loading={loading}
       />
     </Tooltip>
+  );
+};
+
+const ProjectOption = ({ projectName, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const onClick = (e) => {
+    e.stopPropagation();
+    onDelete?.(projectName);
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span>{projectName}</span>
+      {isHovered && (
+        <BinAnimationIcon
+          style={{ padding: '2px 8px' }}
+          className="cea-job-info-icon danger shake"
+          onClick={onClick}
+        />
+      )}
+    </div>
+  );
+};
+
+const ProjectSelect = ({ projectName }) => {
+  const [loading, setLoading] = useState(false);
+  const [value, setValue] = useState(projectName);
+
+  const [choices] = useFetchProjectChoices();
+  const updateScenario = useProjectStore((state) => state.updateScenario);
+  const fetchInfo = useProjectStore((state) => state.fetchInfo);
+  const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
+
+  const handleChange = async (value) => {
+    setLoading(true);
+    try {
+      updateScenario(null);
+      await fetchInfo(value);
+      setValue(value);
+      saveProjectToLocalStorage(value);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async (project) => {
+    console.log('handleDeleteProject', project);
+    Modal.confirm({
+      title: 'Are you sure you want to delete this project?',
+      content: 'This action cannot be undone.',
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      async onOk() {
+        try {
+          return await deleteProject(project);
+        } catch (e) {
+          console.error(e);
+          message.error('Failed to delete project');
+          return e;
+        }
+      },
+      onCancel() {
+        console.log('Cancel');
+      },
+    });
+  };
+
+  const options = useMemo(() => {
+    return choices
+      ? choices
+          .filter((choice) => choice !== projectName)
+          .map((choice) => ({
+            label: (
+              <ProjectOption
+                projectName={choice}
+                onDelete={handleDeleteProject}
+              />
+            ),
+            value: choice,
+          }))
+      : [];
+  }, [choices, projectName]);
+
+  if (projectName == null) return null;
+  return (
+    <Select
+      style={{ width: '100%' }}
+      styles={{ popup: { root: { width: 270 } } }}
+      placeholder="Select a project"
+      options={options}
+      filterOption={true}
+      value={value}
+      onChange={handleChange}
+      loading={loading}
+    />
   );
 };
 
