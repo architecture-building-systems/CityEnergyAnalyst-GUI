@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import NewProjectModal from '../../NewProjectModal';
-import { Button, message, Modal, Select, Tooltip } from 'antd';
+import { Button, Divider, message, Modal, Select, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
   CreateNewIcon,
@@ -60,10 +60,8 @@ const OpenProjectIconButton = () => {
   );
 };
 
-const NewProjectIconButton = () => {
+const NewProjectIconButton = ({ children, style, onSuccess }) => {
   const [visible, setVisible] = useState(false);
-
-  const onSuccess = () => {};
 
   return (
     <>
@@ -72,7 +70,10 @@ const NewProjectIconButton = () => {
           icon={<CreateNewIcon />}
           type="text"
           onClick={() => setVisible(true)}
-        />
+          style={style}
+        >
+          {children}
+        </Button>
       </Tooltip>
       <NewProjectModal
         visible={visible}
@@ -172,7 +173,6 @@ const ProjectOption = ({ projectName, onDelete }) => {
 
 const ProjectSelect = ({ projectName }) => {
   const [loading, setLoading] = useState(false);
-  const [value, setValue] = useState(projectName);
 
   const [choices] = useFetchProjectChoices();
   const updateScenario = useProjectStore((state) => state.updateScenario);
@@ -184,7 +184,6 @@ const ProjectSelect = ({ projectName }) => {
     try {
       updateScenario(null);
       await fetchInfo(value);
-      setValue(value);
       saveProjectToLocalStorage(value);
     } catch (e) {
       console.log(e);
@@ -240,9 +239,18 @@ const ProjectSelect = ({ projectName }) => {
       placeholder="Select a project"
       options={options}
       filterOption={true}
-      value={value}
+      value={projectName}
       onChange={handleChange}
       loading={loading}
+      popupRender={(menu) => (
+        <>
+          {menu}
+          <Divider style={{ margin: '8px 0' }} />
+          <NewProjectIconButton style={{ width: '100%' }}>
+            Create New Project
+          </NewProjectIconButton>
+        </>
+      )}
     />
   );
 };
