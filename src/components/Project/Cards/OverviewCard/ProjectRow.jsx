@@ -62,10 +62,15 @@ const OpenProjectIconButton = () => {
 
 const NewProjectIconButton = ({ children, style, onSuccess }) => {
   const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Tooltip title="New Project">
+      <Tooltip
+        title="New Project"
+        open={open && children == null}
+        onOpenChange={setOpen}
+      >
         <Button
           icon={<CreateNewIcon />}
           type="text"
