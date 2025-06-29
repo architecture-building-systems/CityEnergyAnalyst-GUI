@@ -31,6 +31,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [form] = Form.useForm();
 
+  const updateScenario = useProjectStore((state) => state.updateScenario);
   const fetchProject = useProjectStore((state) => state.fetchInfo);
   const { info, fetchInfo } = useFetchConfigProjectInfo();
 
@@ -49,10 +50,12 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
       console.log('Received values of form: ', values);
       const resp = await apiClient.post(`/api/project/`, values);
       const { project } = resp.data;
+
+      updateScenario(null);
       await fetchProject(project);
       setConfirmLoading(false);
       setVisible(false);
-      onSuccess();
+      onSuccess?.(project);
 
       form.resetFields();
     } catch (e) {
