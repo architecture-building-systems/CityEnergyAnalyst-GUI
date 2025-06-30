@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import NewProjectModal from '../../NewProjectModal';
-import { Button, Divider, message, Modal, Select, Tooltip } from 'antd';
+import { Button, Divider, message, Select, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
   CreateNewIcon,
@@ -14,6 +14,7 @@ import { useChangesExist } from '../../../InputEditor/store';
 import { useMapStore } from '../../../Map/store/store';
 import { isElectron } from '../../../../utils/electron';
 import OpenProjectModal from '../../OpenProjectModal';
+import DeleteProjectModal from '../../DeleteProjectModal';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -187,6 +188,9 @@ const ProjectSelect = ({ projectName }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [deleteProjectVisible, setDeleteProjectVisible] = useState(false);
+
   const [choices] = useFetchProjectChoices();
   const updateScenario = useProjectStore((state) => state.updateScenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
@@ -205,27 +209,9 @@ const ProjectSelect = ({ projectName }) => {
     }
   };
 
-  const handleDeleteProject = async (project) => {
-    console.log('handleDeleteProject', project);
-    Modal.confirm({
-      title: 'Are you sure you want to delete this project?',
-      content: 'This action cannot be undone.',
-      okText: 'Delete',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      async onOk() {
-        try {
-          return await deleteProject(project);
-        } catch (e) {
-          console.error(e);
-          message.error('Failed to delete project');
-          return e;
-        }
-      },
-      onCancel() {
-        console.log('Cancel');
-      },
-    });
+  const handleDeleteProject = (project) => {
+    setProjectToDelete(project);
+    setDeleteProjectVisible(true);
   };
 
   const options = useMemo(() => {
@@ -251,30 +237,37 @@ const ProjectSelect = ({ projectName }) => {
 
   if (projectName == null) return null;
   return (
-    <Select
-      style={{ width: '100%' }}
-      styles={{ popup: { root: { width: 270 } } }}
-      placeholder="Select a project"
-      options={options}
-      filterOption={true}
-      value={projectName}
-      onChange={handleChange}
-      loading={loading}
-      open={open}
-      onOpenChange={setOpen}
-      popupRender={(menu) => (
-        <>
-          {menu}
-          <Divider style={{ margin: '8px 0' }} />
-          <NewProjectIconButton
-            style={{ width: '100%' }}
-            onClick={() => setOpen(false)}
-          >
-            Create New Project
-          </NewProjectIconButton>
-        </>
-      )}
-    />
+    <>
+      <Select
+        style={{ width: '100%' }}
+        styles={{ popup: { root: { width: 270 } } }}
+        placeholder="Select a project"
+        options={options}
+        filterOption={true}
+        value={projectName}
+        onChange={handleChange}
+        loading={loading}
+        open={open}
+        onOpenChange={setOpen}
+        popupRender={(menu) => (
+          <>
+            {menu}
+            <Divider style={{ margin: '8px 0' }} />
+            <NewProjectIconButton
+              style={{ width: '100%' }}
+              onClick={() => setOpen(false)}
+            >
+              Create New Project
+            </NewProjectIconButton>
+          </>
+        )}
+      />
+      <DeleteProjectModal
+        visible={deleteProjectVisible}
+        setVisible={setDeleteProjectVisible}
+        project={projectToDelete}
+      />
+    </>
   );
 };
 
