@@ -7,9 +7,8 @@ import {
   FileNotFoundError,
   joinPath,
 } from '../../utils/file';
-import { fetchConfig, useProjectStore } from './store';
+import { fetchConfig, useFetchProjectChoices, useProjectStore } from './store';
 import { isElectron } from '../../utils/electron';
-import { useFetchProjectChoices } from './hooks';
 import { apiClient } from '../../api/axios';
 
 const useFetchConfigProjectInfo = () => {

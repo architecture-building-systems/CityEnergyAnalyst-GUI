@@ -7,8 +7,12 @@ import {
   OpenProjectIcon,
   RefreshIcon,
 } from '../../../../assets/icons';
-import { useProjectStore, useSaveProjectToLocalStorage } from '../../store';
-import { useFetchProjectChoices, useOpenScenario } from '../../hooks';
+import {
+  useProjectStore,
+  useFetchProjectChoices,
+  useSaveProjectToLocalStorage,
+} from '../../store';
+import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 import { useChangesExist } from '../../../InputEditor/store';
 import { useMapStore } from '../../../Map/store/store';

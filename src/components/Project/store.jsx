@@ -45,12 +45,24 @@ export const deleteScenario = async (project, scenario) => {
   }
 };
 
+export const fetchProjectChoices = async () => {
+  try {
+    const { data } = await apiClient.get(`/api/project/choices`);
+
+    return data;
+  } catch (error) {
+    console.error(error?.response?.data);
+    throw error;
+  }
+};
+
 // TODO: Handle errors when fetching project info e.g. path not found
 export const useProjectStore = create((set) => ({
   name: null,
   project: null,
   scenario: null,
   scenariosList: [],
+  projectChoices: null,
 
   isFetching: false,
   error: null,
@@ -77,6 +89,18 @@ export const useProjectStore = create((set) => ({
       return out;
     } catch (error) {
       set({ isFetching: false, error });
+      throw error;
+    }
+  },
+  fetchProjectChoices: async () => {
+    try {
+      const data = await fetchProjectChoices();
+      const { projects } = data;
+
+      set({ projectChoices: projects });
+      return projects;
+    } catch (error) {
+      console.error('Error fetching project choices:', error);
       throw error;
     }
   },
@@ -236,4 +260,17 @@ export const useInitProjectStore = () => {
 
     if (userID) initializeProjectFromLocalStorage();
   }, [userID]);
+};
+
+export const useFetchProjectChoices = () => {
+  const projectChoices = useProjectStore((state) => state.projectChoices);
+  const fetchProjectChoices = useProjectStore(
+    (state) => state.fetchProjectChoices,
+  );
+
+  useEffect(() => {
+    fetchProjectChoices();
+  }, []);
+
+  return [projectChoices, fetchProjectChoices];
 };

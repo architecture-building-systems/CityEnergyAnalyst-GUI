@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Form, Modal, Select } from 'antd';
 import { OpenDialogInput } from '../Tools/Parameter';
 import { checkExist } from '../../utils/file';
-import { useSaveProjectToLocalStorage, useProjectStore } from './store';
+import {
+  useSaveProjectToLocalStorage,
+  useFetchProjectChoices,
+  useProjectStore,
+} from './store';
 import { isElectron } from '../../utils/electron';
-import { useFetchProjectChoices } from './hooks';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
   const project = useProjectStore((state) => state.project);

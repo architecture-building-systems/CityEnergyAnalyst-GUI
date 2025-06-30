@@ -13,8 +13,12 @@ import {
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
 import { useEffect, useMemo, useState } from 'react';
-import { useFetchProjectChoices, useOpenScenario } from './Project/hooks';
-import { fetchProjectInfo, useProjectStore } from './Project/store';
+import { useOpenScenario } from './Project/hooks';
+import {
+  fetchProjectInfo,
+  useFetchProjectChoices,
+  useProjectStore,
+} from './Project/store';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {

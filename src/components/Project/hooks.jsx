@@ -2,7 +2,6 @@ import routes from '../../constants/routes.json';
 import { useChangeRoute } from '../../utils/hooks';
 import { useSaveProjectToLocalStorage, useProjectStore } from './store';
 import { message } from 'antd';
-import { useEffect, useState } from 'react';
 import { apiClient } from '../../api/axios';
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
@@ -53,24 +52,4 @@ export const useOpenScenario = (route = routes.PROJECT) => {
       return false;
     }
   };
-};
-
-export const useFetchProjectChoices = () => {
-  const [choices, setChoices] = useState();
-
-  const fetchInfo = async () => {
-    try {
-      const resp = await apiClient.get(`/api/project/choices`);
-      const _choices = resp.data?.projects;
-      setChoices(_choices);
-    } catch (err) {
-      console.error(err?.response?.data);
-    }
-  };
-
-  useEffect(() => {
-    fetchInfo();
-  }, []);
-
-  return [choices, fetchInfo];
 };
