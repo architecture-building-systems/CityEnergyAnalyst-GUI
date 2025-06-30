@@ -31,11 +31,20 @@ export const useScenarioLimits = () => {
   const scenarioLimit = useServerStore(
     (state) => state.limits?.num_scenarios ?? 0,
   );
+
+  // FIXME: Consider when uploading to other project
   const numScenarios = useProjectStore(
     (state) => state.scenariosList?.length ?? 0,
   );
 
   return { limit: scenarioLimit, count: scenarioLimit - numScenarios };
+};
+
+export const useBuildingLimits = (numBuildings) => {
+  const buildingLimit = useServerStore(
+    (state) => state.limits?.num_buildings ?? 0,
+  );
+  return { limit: buildingLimit, count: buildingLimit - numBuildings };
 };
 
 export const useFetchServerLimits = () =>

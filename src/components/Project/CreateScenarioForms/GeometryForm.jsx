@@ -11,6 +11,7 @@ import { MapFormContext } from './hooks';
 import { useFetchBuildingsFromPath } from '../../Map/hooks';
 import { isElectron } from '../../../utils/electron';
 import { apiClient } from '../../../api/axios';
+import { useBuildingLimits } from '../../../store/server';
 
 const validateGeometry = async (value, buildingType) => {
   if (
@@ -131,6 +132,7 @@ const ZoneGeometryFormItem = ({ onValidated }) => {
 const GenerateZoneFormItem = ({ form }) => {
   const { fetchedBuildings, polygon, setDrawingMode } =
     useContext(MapFormContext);
+
   useEffect(() => {
     form.setFieldValue('generate_zone', polygon);
   }, [polygon]);
@@ -141,19 +143,33 @@ const GenerateZoneFormItem = ({ form }) => {
     return () => setDrawingMode(false);
   }, []);
 
+  const { limit, count } = useBuildingLimits(
+    fetchedBuildings?.features?.length,
+  );
   const [error, setError] = useState(null);
 
   const generateZoneValidator = (_, value) => {
-    if (value?.features?.length) {
-      if (!fetchedBuildings?.features?.length) {
-        setError('No buildings found in the selected area.');
-        return Promise.reject();
+    console.log(limit, count, fetchedBuildings?.features?.length);
+    try {
+      if (value?.features?.length) {
+        if (!fetchedBuildings?.features?.length) {
+          throw new Error('No buildings found in the selected area.');
+        }
+        if (count <= 0) {
+          throw new Error(
+            `You have reached the maximum number of buildings (${limit}). Please select a smaller area to continue.`,
+          );
+        }
+      } else {
+        throw new Error(
+          'Boundary not found. Please draw a boundary on the map.',
+        );
       }
 
       setError(null);
       return Promise.resolve();
-    } else {
-      setError('Boundary not found. Please draw a boundary on the map.');
+    } catch (error) {
+      setError(error.message);
       return Promise.reject();
     }
   };
