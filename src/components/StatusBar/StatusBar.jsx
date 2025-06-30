@@ -348,8 +348,9 @@ const DropdownMenu = () => {
       menu={{
         items: menuItems,
       }}
-      arrow
       trigger={['click']}
+      placement="topLeft"
+      arrow
     >
       <QuestionCircleOutlined />
     </Dropdown>
