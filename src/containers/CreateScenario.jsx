@@ -30,7 +30,6 @@ import {
 import { LoadingOutlined } from '@ant-design/icons';
 import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
-import { FlyToInterpolator } from 'deck.gl';
 
 import routes from '../constants/routes.json';
 import { useProjectStore } from '../components/Project/store';
