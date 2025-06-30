@@ -16,6 +16,7 @@ import { useOpenScenario } from '../../hooks';
 import { useChangesExist } from '../../../InputEditor/store';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 import DeleteScenarioModal from '../../DeleteScenarioModal';
+import { useScenarioLimits } from '../../../../store/server';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -165,8 +166,24 @@ const ScenarioItem = ({ project, scenario, onDelete }) => {
 };
 
 const NewScenarioIcon = () => {
+  const { limit, count } = useScenarioLimits();
+
   const dispatch = useDispatch();
-  const onClick = () => dispatch(push(routes.CREATE_SCENARIO));
+  const onClick = () => {
+    if (count <= 0) {
+      message.config({
+        top: 60,
+      });
+      message.warning(
+        <div style={{ padding: 8 }}>
+          You have reached the maximum number of scenarios ({limit}). Please
+          delete a scenario before creating a new one.
+        </div>,
+      );
+      return;
+    }
+    dispatch(push(routes.CREATE_SCENARIO));
+  };
 
   return (
     <Tooltip title="New Scenario" placement="bottom">
