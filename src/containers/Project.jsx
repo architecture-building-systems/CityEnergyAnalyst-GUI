@@ -441,7 +441,10 @@ const ScenarioAlert = () => {
         userSelect: 'none',
       }}
     >
-      <Alert message="Create or select a Scenario to start" type="info" />
+      <Alert
+        message="Create / Select / Upload a Scenario to start"
+        type="info"
+      />
     </div>
   );
 };
