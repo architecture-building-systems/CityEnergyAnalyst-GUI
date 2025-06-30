@@ -18,11 +18,12 @@ import { fetchProjectInfo, useProjectStore } from './Project/store';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {
-  const [newProjectInfo, setNewProjectInfo] = useState(null);
+  const [uploadResponse, setUploadResponse] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const onSuccess = (project, scenarios) => {
-    console.log('Successfully uploaded scenarios', project, scenarios);
-    setNewProjectInfo({ project, scenarios });
+
+  const onSuccess = (response) => {
+    console.log('Successfully uploaded scenarios', response);
+    setUploadResponse(response);
     setShowModal(true);
   };
 
@@ -39,16 +40,16 @@ const UploadForm = () => {
       <UploadSucessModal
         visible={showModal}
         setVisible={setShowModal}
-        newProjectInfo={newProjectInfo}
-        setNewProjectInfo={setNewProjectInfo}
+        uploadResponse={uploadResponse}
+        setUploadResponse={setUploadResponse}
       />
     </div>
   );
 };
 
 const UploadSucessModal = ({
-  newProjectInfo,
-  setNewProjectInfo,
+  uploadResponse,
+  setUploadResponse,
   visible,
   setVisible,
 }) => {
@@ -59,7 +60,7 @@ const UploadSucessModal = ({
     <Modal
       open={visible}
       closable={false}
-      afterClose={() => setNewProjectInfo(null)}
+      afterClose={() => setUploadResponse?.(null)}
       centered
       footer={
         <Button style={{ margin: 12 }} onClick={() => setVisible(false)}>
@@ -69,11 +70,11 @@ const UploadSucessModal = ({
     >
       <div>
         <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <CheckCircleFilled /> Successfully uploaded Scenario(s)
+          <CheckCircleFilled /> Upload Complete
         </h2>
-        {newProjectInfo?.scenarios?.map((scenario) => (
+        {uploadResponse?.scenarios?.map((scenario) => (
           <div
-            key={scenario}
+            key={scenario.name}
             style={{
               display: 'flex',
               gap: 8,
@@ -85,17 +86,31 @@ const UploadSucessModal = ({
               marginBottom: 8,
             }}
           >
-            <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
-              {scenario}
+            <div>
+              <div style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+                {scenario.name}{' '}
+                {scenario.status == 'success'
+                  ? '✅'
+                  : scenario.status == 'warning'
+                    ? '⚠️'
+                    : scenario.status == 'failed'
+                      ? '❌'
+                      : null}
+              </div>
+              {scenario?.message && (
+                <div style={{ fontSize: 12, marginTop: 8 }}>
+                  {scenario.message}
+                </div>
+              )}
             </div>
             <Button
               type="primary"
-              loading={selected === scenario}
-              disabled={selected !== null && selected !== scenario}
+              loading={selected === scenario.name}
+              disabled={selected !== null && selected !== scenario.name}
               onClick={async () => {
-                setSelected(scenario);
+                setSelected(scenario.name);
                 try {
-                  await openProject(newProjectInfo.project, scenario);
+                  await openProject(uploadResponse?.project, scenario.name);
                 } finally {
                   setSelected(null);
                 }
@@ -477,7 +492,9 @@ const FormContent = ({ onSuccess }) => {
         // Reset form
         setSelectedFile(false);
         setUploadStatus({ status: null, percent: null });
-        onSuccess?.(values.project.project, scenarios);
+
+        const response = JSON.parse(xhr.responseText);
+        onSuccess?.(response);
 
         try {
           // Fetch new info after successful upload
@@ -568,6 +585,9 @@ const FormContent = ({ onSuccess }) => {
           status={uploadStatus}
         />
       </Form.Item>
+      {uploadStatus?.status === 'uploading' && uploadStatus?.percent == 100 && (
+        <div>Verifying files...</div>
+      )}
 
       {selectedFile && scenarios.length > 0 && (
         <>
