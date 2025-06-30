@@ -74,6 +74,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
             <DuplicateScenarioIcon
               project={project}
               currentScenarioName={scenarioName}
+              scenarioList={scenarioList}
             />
           )}
           <NewScenarioIcon />
@@ -167,7 +168,11 @@ const NewScenarioIcon = () => {
   );
 };
 
-const DuplicateScenarioIcon = ({ project, currentScenarioName }) => {
+const DuplicateScenarioIcon = ({
+  project,
+  currentScenarioName,
+  scenarioList,
+}) => {
   const [visible, setVisible] = useState(false);
   const onClick = () => setVisible(true);
 
@@ -181,6 +186,7 @@ const DuplicateScenarioIcon = ({ project, currentScenarioName }) => {
         setVisible={setVisible}
         project={project}
         currentScenarioName={currentScenarioName}
+        scenarioList={scenarioList}
       />
     </>
   );

@@ -2,16 +2,20 @@ import { Button, Form, Input, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../api/axios';
 import { useProjectStore } from './store';
+import { getValidateScenarioNameFunc } from '../../utils/project';
 
 const DuplicateScenarioModal = ({
   visible,
   setVisible,
   project,
   currentScenarioName,
+  scenarioList,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
+
+  const validateScenarioName = getValidateScenarioNameFunc(scenarioList);
 
   const onFinish = async (values) => {
     console.log('Received values of form: ', values);
@@ -87,6 +91,7 @@ const DuplicateScenarioModal = ({
               name="scenario_name"
               rules={[
                 { required: true, message: 'Scenario name cannot be empty' },
+                { validator: validateScenarioName },
               ]}
             >
               <Input placeholder="New Scenario Name" />

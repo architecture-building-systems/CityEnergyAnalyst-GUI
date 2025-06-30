@@ -1,10 +1,12 @@
 import { Form, Input } from 'antd';
 import { useState } from 'react';
 import { useProjectStore } from '../store';
+import { getValidateScenarioNameFunc } from '../../../utils/project';
 
 const NameForm = ({ initialValues, onFinish, formButtons }) => {
   const scenariosList = useProjectStore((state) => state.scenariosList);
   const scenarioNames = scenariosList || [];
+  const validateScenarioName = getValidateScenarioNameFunc(scenarioNames);
 
   const [value, setValue] = useState(initialValues.name);
 
@@ -21,30 +23,6 @@ const NameForm = ({ initialValues, onFinish, formButtons }) => {
     // Remove whitespace from name
     const scenario_name = value.scenario_name.replace(/\s/g, '_');
     onFinish?.({ scenario_name });
-  };
-
-  const validateScenarioName = (_, value) => {
-    if (scenarioNames.includes(value)) {
-      return Promise.reject('Scenario name already exists.');
-    }
-    // Path traversal and separator checks
-    if (value && (/\.\./.test(value) || /\//.test(value) || /\\/.test(value))) {
-      return Promise.reject(
-        'Scenario name cannot contain characters like "..", "/", or "\\".',
-      );
-    }
-    // Windows invalid characters
-    if (value && /[<>:"'|?*]/.test(value)) {
-      return Promise.reject(
-        'Scenario name cannot contain the characters < > : " \' | ? *',
-      );
-    }
-    // Check length
-    if (value && value.length > 255) {
-      return Promise.reject('Scenario name cannot exceed 255 characters.');
-    }
-
-    return Promise.resolve();
   };
 
   return (
