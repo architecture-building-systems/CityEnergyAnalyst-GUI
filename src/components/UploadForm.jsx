@@ -290,31 +290,40 @@ const extractScenarios = (zipName, files) => {
   const zoneFiles = Object.keys(files).filter((name) =>
     name.endsWith('inputs/building-geometry/zone.shp'),
   );
+  const ghFiles = Object.keys(files).filter((name) =>
+    name.endsWith('export/rhino/to_cea/zone_in.csv'),
+  );
 
-  // Ignore if no zone files found
-  if (zoneFiles.length === 0) {
-    throw new Error('No zone geometry files found in archive.');
+  // Ignore if no zone files or gh files found
+  if (zoneFiles.length === 0 && ghFiles.length === 0) {
+    throw new Error('No valid Scenarios found in archive.');
   }
 
-  // Case 1: Only one scenario and name is zip name e.g. inputs/
-  if (zoneFiles.length === 1 && zoneFiles[0].startsWith('inputs/')) {
+  // Case 1: Only one scenario and name is zip name e.g. inputs/ or export/
+  if (
+    (zoneFiles.length === 1 && zoneFiles[0].startsWith('inputs/')) ||
+    (ghFiles.length === 1 && ghFiles[0].startsWith('export/'))
+  ) {
     const scenarioName = zipName.slice(0, -4);
     return [scenarioName];
   }
-  const scenarioNames = zoneFiles
+  let scenarioNames = zoneFiles
+    .concat(ghFiles)
     .map((name) => {
       // FIXME: Split might not work if there are multiple slashes in a row
       const parts = name.split('/');
-      // Case 2: Scenario names are the first level folder names e.g. scenario/inputs/..
-      if (parts[1] === 'inputs') return parts[0];
-      // Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
-      else if (parts[2] === 'inputs') return parts[1];
+      // Case 2: Scenario names are the first level folder names e.g. scenario/inputs/.. or scenario/export/..
+      if (parts[1] === 'inputs' || parts[1] === 'export') return parts[0];
+      // Case 3: Project name is the first level folder name e.g. project/scenario/inputs/.. or project/scenario/export/..
+      else if (parts[2] === 'inputs' || parts[2] === 'export') return parts[1];
       return null;
     })
     .filter((name) => name !== null);
+  // Remove duplicates
+  scenarioNames = [...new Set(scenarioNames)];
 
   if (scenarioNames.length === 0) {
-    throw new Error('No Scenarios found in archive.');
+    throw new Error('No valid Scenarios found in archive.');
   }
 
   return scenarioNames;
