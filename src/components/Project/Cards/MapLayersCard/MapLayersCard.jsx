@@ -72,8 +72,11 @@ const MapLayersCard = ({ onLayerSelected }) => {
 
         display: 'flex',
         alignItems: 'center',
+        gap: 4,
 
         fontSize: 12,
+
+        paddingInline: 8,
       }}
     >
       {mapLayerCategories?.categories?.map((category) => {
