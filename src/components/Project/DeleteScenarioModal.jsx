@@ -1,6 +1,7 @@
 import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { useProjectStore } from './store';
+import { CopyOutlined, CopyTwoTone } from '@ant-design/icons';
 
 const DeleteScenarioModal = ({ visible, setVisible, project, scenario }) => {
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,16 @@ const DeleteScenarioModal = ({ visible, setVisible, project, scenario }) => {
       message.error('Failed to delete Scenario');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(scenario);
+      message.success('Scenario name copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      message.error('Failed to copy to clipboard');
     }
   };
 
@@ -66,7 +77,24 @@ const DeleteScenarioModal = ({ visible, setVisible, project, scenario }) => {
         </div>
         <p>Are you sure you want to delete this Scenario?</p>
 
-        <div style={{ fontWeight: 'bold' }}>{scenario}</div>
+        <div
+          style={{
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 0',
+          }}
+        >
+          {scenario}
+          <Button
+            style={{ fontSize: 18 }}
+            size="small"
+            icon={<CopyTwoTone />}
+            onClick={copyToClipboard}
+            title="Copy scenario name to clipboard"
+          />
+        </div>
 
         <p>
           This will delete all data associated with this Scenario.

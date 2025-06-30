@@ -2,6 +2,7 @@ import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { apiClient } from '../../api/axios';
 import { useFetchProjectChoices } from './store';
+import { CopyTwoTone } from '@ant-design/icons';
 
 const DeleteProjectModal = ({ visible, setVisible, project }) => {
   const [loading, setLoading] = useState(false);
@@ -29,6 +30,16 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
       message.error('Failed to delete project');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(project);
+      message.success('Project name copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      message.error('Failed to copy to clipboard');
     }
   };
 
@@ -66,7 +77,24 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
         </div>
         <p>Are you sure you want to delete this Project?</p>
 
-        <div style={{ fontWeight: 'bold' }}>{project}</div>
+        <div
+          style={{
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 0',
+          }}
+        >
+          {project}
+          <Button
+            style={{ fontSize: 18 }}
+            size="small"
+            icon={<CopyTwoTone />}
+            onClick={copyToClipboard}
+            title="Copy scenario name to clipboard"
+          />
+        </div>
 
         <p>
           This will delete all Scenarios and data associated with this Project.
