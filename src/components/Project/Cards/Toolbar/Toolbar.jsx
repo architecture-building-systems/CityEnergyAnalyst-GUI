@@ -120,12 +120,12 @@ const CEACopilot = () => {
   );
 };
 
-const CEAPro = () => {
+const CEAInsights = () => {
   return (
     <Tooltip
       title={
         <div>
-          CEA Pro <br /> [Under Development]
+          CEA Insights <br /> [Under Development]
         </div>
       }
     >
@@ -169,7 +169,7 @@ const Toolbar = ({ onToolSelected, showTools }) => {
     >
       {toolMenus}
 
-      <CEAPro />
+      <CEAInsights />
       <div style={{ width: 1, background: '#eee', margin: '8px 4px' }} />
       <CEACopilot />
     </div>
