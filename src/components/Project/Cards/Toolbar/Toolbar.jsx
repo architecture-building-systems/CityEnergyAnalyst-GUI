@@ -64,7 +64,7 @@ const ToolMenu = ({
       tools.map((tool) => ({
         key: tool.name,
         label: (
-          <Tooltip title={tool.description} placement="right">
+          <Tooltip title={tool?.short_description} placement="right">
             <div style={{ width: '100%', display: 'flex', gap: 10 }}>
               <span>-</span>
               {tool.label}
