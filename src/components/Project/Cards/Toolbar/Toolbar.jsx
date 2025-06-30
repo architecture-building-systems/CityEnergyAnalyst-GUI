@@ -6,9 +6,6 @@ import { fetchToolList } from '../../../../actions/tools';
 import { DownOutlined } from '@ant-design/icons';
 
 import './Toolbar.css';
-import { useHoverGrow } from '../OverviewCard/hooks';
-
-import { animated } from '@react-spring/web';
 
 import {
   DataManagementIcon,
@@ -60,8 +57,6 @@ const ToolMenu = ({
   customIcon,
 }) => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-
   const icon = customIcon || toolIconMap?.[category] || FALLBACK_ICON;
 
   const items = useMemo(
@@ -95,12 +90,13 @@ const ToolMenu = ({
           menu={{ items, onClick: ({ key }) => onToolSelected(key) }}
           trigger={['click']}
           onOpenChange={onMenuOpenChange}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
         >
-          <div className="cea-card-toolbar-icon">
+          <div
+            className="cea-card-toolbar-icon"
+            style={{ display: 'flex', gap: 8 }}
+          >
             {icon}
-            <DownOutlined style={{ marginLeft: 4, fontSize: 8 }} />
+            <DownOutlined style={{ fontSize: 8 }} />
           </div>
         </Dropdown>
       </div>
@@ -169,22 +165,12 @@ const Toolbar = ({ onToolSelected, showTools }) => {
   return (
     <div
       id="cea-card-toolbar"
-      className="cea-overlay-card"
-      style={{
-        display: 'flex',
-        background: '#000',
-        borderRadius: 12,
-
-        height: 'fit-content',
-
-        gap: 2,
-        padding: 4,
-      }}
+      className="cea-overlay-card cea-card-toolbar-icon-container"
     >
       {toolMenus}
 
       <CEAPro />
-      <div style={{ width: 1, background: '#eee', margin: '8px 1px' }} />
+      <div style={{ width: 1, background: '#eee', margin: '8px 4px' }} />
       <CEACopilot />
     </div>
   );

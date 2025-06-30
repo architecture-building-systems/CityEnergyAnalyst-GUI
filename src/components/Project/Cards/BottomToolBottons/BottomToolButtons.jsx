@@ -41,7 +41,6 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
 
   return (
     <div
-      id="bottom-buttons"
       className="cea-overlay-card"
       style={{
         display: 'flex',
@@ -73,7 +72,9 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
         title={`${title} [Under development]`}
         styles={{ body: { fontSize: 12 } }}
       >
-        <_icon className="cea-card-toolbar-icon" />
+        <div className="cea-card-toolbar-icon-container">
+          <_icon className="cea-card-toolbar-icon no-hover-color" />
+        </div>
       </Tooltip>
     );
 
@@ -84,7 +85,12 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
         onMouseLeave={onMouseLeave}
         style={styles}
       >
-        <_icon className="cea-card-toolbar-icon" onClick={onClick} />
+        <div className="cea-card-toolbar-icon-container">
+          <_icon
+            className="cea-card-toolbar-icon no-hover-color"
+            onClick={onClick}
+          />
+        </div>
       </animated.div>
     </Tooltip>
   );

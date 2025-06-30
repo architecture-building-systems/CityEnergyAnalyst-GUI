@@ -8,7 +8,7 @@
 }
 
 .cea-card-toolbar-icon {
-  padding: 12px;
+  padding: 8px;
   border-radius: 8px;
 
   display: flex;
@@ -19,9 +19,24 @@
   color: #fff;
 }
 
+.cea-card-toolbar-icon.no-hover-color:hover {
+  background-color: inherit;
+}
+
 .cea-card-toolbar-divider {
   height: 60%;
   margin: auto 3px;
 
   border-inline-start: 1px solid rgba(5, 5, 5, 0.3);
+}
+
+.cea-card-toolbar-icon-container {
+  display: flex;
+  background: #000;
+  border-radius: 12px;
+
+  height: fit-content;
+
+  gap: 4px;
+  padding: 6px;
 }
