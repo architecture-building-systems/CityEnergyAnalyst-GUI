@@ -23,29 +23,43 @@ import { useProjectLimits } from '../../../../store/server';
 
 const ProjectRow = ({ projectName }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 12,
-      }}
-    >
-      {!isElectron() && (
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <ProjectSelect projectName={projectName} />
-        </div>
+    <>
+      {isElectron() && (
+        <Divider
+          orientation="right"
+          orientationMargin={2}
+          plain
+          style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
+        >
+          Project
+        </Divider>
       )}
-      <div className="cea-card-icon-button-container">
-        <RefreshIconButton />
-        {isElectron() && (
-          <>
-            <OpenProjectIconButton />
-            <NewProjectIconButton />
-          </>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        {isElectron() ? (
+          <b>: {projectName}</b>
+        ) : (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <ProjectSelect projectName={projectName} />
+          </div>
         )}
+        <div className="cea-card-icon-button-container">
+          <RefreshIconButton />
+          {isElectron() && (
+            <>
+              <OpenProjectIconButton />
+              <NewProjectIconButton />
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
