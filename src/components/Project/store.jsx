@@ -34,10 +34,9 @@ export const deleteScenario = async (project, scenario) => {
   if (!scenario) throw new Error('Scenario cannot be empty');
 
   try {
-    const { data } = await apiClient.delete(
-      `/api/project/scenario/${scenario}`,
-      { data: { project } },
-    );
+    const { data } = await apiClient.delete(`/api/project/scenario`, {
+      data: { project, scenario_name: scenario },
+    });
 
     return data;
   } catch (error) {
@@ -81,9 +80,7 @@ export const useProjectStore = create((set) => ({
       throw error;
     }
   },
-  deleteScenario: async (scenario) => {
-    const { project } = useProjectStore.getState();
-
+  deleteScenario: async (project, scenario) => {
     try {
       const data = await deleteScenario(project, scenario);
       const { scenarios: scenariosList } = data;

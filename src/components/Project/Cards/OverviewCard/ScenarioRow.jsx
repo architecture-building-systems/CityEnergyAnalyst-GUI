@@ -107,6 +107,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         <DeleteScenarioModal
           visible={deleteScenarioVisible}
           setVisible={setDeleteScenarioVisible}
+          project={project}
           scenario={scenarioToDelete}
         />
       </div>

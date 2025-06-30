@@ -2,10 +2,9 @@ import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { useProjectStore } from './store';
 
-const DeleteScenarioModal = ({ visible, setVisible, scenario }) => {
+const DeleteScenarioModal = ({ visible, setVisible, project, scenario }) => {
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState(null);
-  const fetchInfo = useProjectStore((state) => state.fetchInfo);
   const deleteScenario = useProjectStore((state) => state.deleteScenario);
 
   const disabled = value !== scenario;
@@ -18,7 +17,7 @@ const DeleteScenarioModal = ({ visible, setVisible, scenario }) => {
   const onClick = async () => {
     setLoading(true);
     try {
-      await deleteScenario(scenario);
+      await deleteScenario(project, scenario);
       setVisible(false);
       message.success('Successfully deleted Scenario ' + scenario);
 
