@@ -18,7 +18,6 @@ const OverviewCard = ({
       style={{
         background: '#fff',
         padding: 12,
-        paddingBottom: 18,
         borderRadius: 12,
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 
