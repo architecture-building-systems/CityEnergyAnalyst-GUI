@@ -66,8 +66,10 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
                 : 'Create Scenario'}
           </div>
         </Badge>
-        <div className="cea-card-icon-button-container">
-          <DuplicateScenarioIcon />
+        <div
+          className={`cea-card-icon-button-container ${scenarioName !== null ? '' : 'active'}`}
+        >
+          {scenarioName !== null && <DuplicateScenarioIcon />}
           <NewScenarioIcon />
           <UploadDownloadScenarioIcon />
         </div>
