@@ -15,6 +15,7 @@ import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
 import { useChangesExist } from '../../../InputEditor/store';
 import { useProjectStore } from '../../store';
+import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -69,7 +70,12 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         <div
           className={`cea-card-icon-button-container ${scenarioName !== null ? '' : 'active'}`}
         >
-          {scenarioName !== null && <DuplicateScenarioIcon />}
+          {scenarioName !== null && (
+            <DuplicateScenarioIcon
+              project={project}
+              currentScenarioName={scenarioName}
+            />
+          )}
           <NewScenarioIcon />
           <UploadDownloadScenarioIcon />
         </div>
@@ -161,13 +167,22 @@ const NewScenarioIcon = () => {
   );
 };
 
-const DuplicateScenarioIcon = () => {
-  const onClick = () => {};
+const DuplicateScenarioIcon = ({ project, currentScenarioName }) => {
+  const [visible, setVisible] = useState(false);
+  const onClick = () => setVisible(true);
 
   return (
-    <Tooltip title="Duplicate Scenario" placement="bottom">
-      <Button icon={<DuplicateIcon />} type="text" onClick={onClick} />
-    </Tooltip>
+    <>
+      <Tooltip title="Duplicate Scenario" placement="bottom">
+        <Button icon={<DuplicateIcon />} type="text" onClick={onClick} />
+      </Tooltip>
+      <DuplicateScenarioModal
+        visible={visible}
+        setVisible={setVisible}
+        project={project}
+        currentScenarioName={currentScenarioName}
+      />
+    </>
   );
 };
 
