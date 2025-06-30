@@ -3,7 +3,7 @@ import { push } from 'connected-react-router';
 import routes from '../../../../constants/routes.json';
 import { useDispatch } from 'react-redux';
 import { useMemo, useState } from 'react';
-import { Badge, Button, message, Modal, Tooltip } from 'antd';
+import { Badge, Button, message, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
   CreateNewIcon,
@@ -14,8 +14,8 @@ import {
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
 import { useChangesExist } from '../../../InputEditor/store';
-import { useProjectStore } from '../../store';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
+import DeleteScenarioModal from '../../DeleteScenarioModal';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -29,6 +29,14 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   }, [sortedScenarios, scenarioName]);
 
   const changesExist = useChangesExist();
+
+  const [deleteScenarioVisible, setDeleteScenarioVisible] = useState(false);
+  const [scenarioToDelete, setScenarioToDelete] = useState(null);
+
+  const onDelete = (scenario) => {
+    setScenarioToDelete(scenario);
+    setDeleteScenarioVisible(true);
+  };
 
   return (
     <div
@@ -89,18 +97,27 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         }}
       >
         {remainingScenarios.map((scenario) => (
-          <ScenarioItem key={scenario} project={project} scenario={scenario} />
+          <ScenarioItem
+            key={scenario}
+            project={project}
+            scenario={scenario}
+            onDelete={onDelete}
+          />
         ))}
+        <DeleteScenarioModal
+          visible={deleteScenarioVisible}
+          setVisible={setDeleteScenarioVisible}
+          scenario={scenarioToDelete}
+        />
       </div>
     </div>
   );
 };
 
-const ScenarioItem = ({ project, scenario }) => {
+const ScenarioItem = ({ project, scenario, onDelete }) => {
   const [isHovered, setIsHovered] = useState(false);
   const changes = useChangesExist();
 
-  const deleteScenario = useProjectStore((state) => state.deleteScenario);
   const openScenario = useOpenScenario(routes.PROJECT);
   const handleOpenScenario = () => {
     if (changes) {
@@ -117,20 +134,7 @@ const ScenarioItem = ({ project, scenario }) => {
 
   const handleDeleteScenario = async (e) => {
     e.stopPropagation();
-
-    const confirmed = await new Promise((resolve) => {
-      Modal.warning({
-        title: 'Delete Scenario',
-        content: 'Are you sure you want to delete this scenario?',
-        okText: 'Delete',
-        cancelText: 'Cancel',
-        onOk: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
-
-    if (!confirmed) return;
-    await deleteScenario(scenario);
+    onDelete?.(scenario);
   };
 
   return (
