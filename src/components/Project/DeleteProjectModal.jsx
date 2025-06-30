@@ -1,10 +1,13 @@
 import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { apiClient } from '../../api/axios';
+import { useFetchProjectChoices } from './store';
 
 const DeleteProjectModal = ({ visible, setVisible, project }) => {
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState(null);
+
+  const [_, fetchProjectChoices] = useFetchProjectChoices();
 
   const disabled = value !== project;
 
@@ -19,7 +22,7 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
       await apiClient.delete(`/api/project/`, { data: { project } });
       setVisible(false);
       message.success('Successfully deleted project ' + project);
-
+      await fetchProjectChoices();
       onCancel();
     } catch (error) {
       console.error(error);

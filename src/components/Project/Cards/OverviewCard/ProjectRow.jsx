@@ -139,8 +139,8 @@ const RefreshIconButton = () => {
       } else {
         // Otherwise, refresh project
         await fetchInfo(project);
-        await fetchProjectChoices();
       }
+      await fetchProjectChoices();
     } finally {
       setLoading(false);
     }
