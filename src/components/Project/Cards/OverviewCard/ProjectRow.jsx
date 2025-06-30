@@ -215,7 +215,7 @@ const ProjectSelect = ({ projectName }) => {
   };
 
   const options = useMemo(() => {
-    return choices
+    return choices?.length > 1
       ? [
           {
             label: 'Projects',
@@ -261,6 +261,7 @@ const ProjectSelect = ({ projectName }) => {
             </NewProjectIconButton>
           </>
         )}
+        notFoundContent={<div>No Projects found</div>}
       />
       <DeleteProjectModal
         visible={deleteProjectVisible}
