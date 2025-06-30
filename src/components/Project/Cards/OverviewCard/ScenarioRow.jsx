@@ -68,11 +68,13 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
               fontWeight: 'bold',
             }}
           >
-            {scenarioName
-              ? scenarioName
-              : scenarioList?.length
-                ? 'Select Scenario'
-                : 'Create Scenario'}
+            {scenarioName ? (
+              scenarioName
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {'>'}
+              </div>
+            )}
           </div>
         </Badge>
         <div
