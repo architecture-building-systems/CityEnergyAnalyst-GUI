@@ -261,7 +261,7 @@ const ProjectSelect = ({ projectName }) => {
             </NewProjectIconButton>
           </>
         )}
-        notFoundContent={<div>No Projects found</div>}
+        notFoundContent={<small>No Projects found</small>}
       />
       <DeleteProjectModal
         visible={deleteProjectVisible}
