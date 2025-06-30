@@ -19,6 +19,7 @@ import { useMapStore } from '../../../Map/store/store';
 import { isElectron } from '../../../../utils/electron';
 import OpenProjectModal from '../../OpenProjectModal';
 import DeleteProjectModal from '../../DeleteProjectModal';
+import { useProjectLimits } from '../../../../store/server';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -69,7 +70,22 @@ const NewProjectIconButton = ({ children, style, onSuccess, onClick }) => {
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
 
+  const { limit, count } = useProjectLimits();
+
   const handleClick = () => {
+    if (count <= 0) {
+      message.config({
+        top: 60,
+      });
+      message.warning(
+        <div style={{ padding: 8 }}>
+          You have reached the maximum number of projects ({limit}). Please
+          delete a project before creating a new one.
+        </div>,
+      );
+      return;
+    }
+
     setVisible(true);
     onClick?.();
   };
