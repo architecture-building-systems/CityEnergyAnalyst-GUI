@@ -276,7 +276,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                     },
                   }}
                 >
-                  {showVisualisation ? (
+                  {showVisualisation && selectedTool ? (
                     <ToolCard
                       className="cea-overlay-card"
                       selectedTool={selectedTool}
