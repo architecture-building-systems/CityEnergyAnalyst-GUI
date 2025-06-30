@@ -73,7 +73,7 @@ const NewProjectIconButton = ({ children, style, onSuccess, onClick }) => {
   const { limit, count } = useProjectLimits();
 
   const handleClick = () => {
-    if (count <= 0) {
+    if (limit && count <= 0) {
       message.config({
         top: 60,
       });

@@ -170,7 +170,7 @@ const NewScenarioIcon = () => {
 
   const dispatch = useDispatch();
   const onClick = () => {
-    if (count <= 0) {
+    if (limit && count <= 0) {
       message.config({
         top: 60,
       });

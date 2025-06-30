@@ -149,13 +149,12 @@ const GenerateZoneFormItem = ({ form }) => {
   const [error, setError] = useState(null);
 
   const generateZoneValidator = (_, value) => {
-    console.log(limit, count, fetchedBuildings?.features?.length);
     try {
       if (value?.features?.length) {
         if (!fetchedBuildings?.features?.length) {
           throw new Error('No buildings found in the selected area.');
         }
-        if (count <= 0) {
+        if (limit && count <= 0) {
           throw new Error(
             `You have reached the maximum number of buildings (${limit}). Please select a smaller area to continue.`,
           );

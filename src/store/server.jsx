@@ -17,9 +17,7 @@ const useServerStore = create((set) => ({
 }));
 
 export const useProjectLimits = () => {
-  const projectLimit = useServerStore(
-    (state) => state.limits?.num_projects ?? 0,
-  );
+  const projectLimit = useServerStore((state) => state.limits?.num_projects);
   const numProjects = useProjectStore(
     (state) => state.projectChoices?.length ?? 0,
   );
@@ -28,9 +26,7 @@ export const useProjectLimits = () => {
 };
 
 export const useScenarioLimits = () => {
-  const scenarioLimit = useServerStore(
-    (state) => state.limits?.num_scenarios ?? 0,
-  );
+  const scenarioLimit = useServerStore((state) => state.limits?.num_scenarios);
 
   // FIXME: Consider when uploading to other project
   const numScenarios = useProjectStore(
@@ -41,9 +37,7 @@ export const useScenarioLimits = () => {
 };
 
 export const useBuildingLimits = (numBuildings) => {
-  const buildingLimit = useServerStore(
-    (state) => state.limits?.num_buildings ?? 0,
-  );
+  const buildingLimit = useServerStore((state) => state.limits?.num_buildings);
   return { limit: buildingLimit, count: buildingLimit - numBuildings };
 };
 
