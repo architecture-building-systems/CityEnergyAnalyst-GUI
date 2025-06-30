@@ -232,7 +232,7 @@ const UploadProjectSelection = ({
         gap: 12,
       }}
     >
-      {options.length > 0 && currentProject !== null && (
+      {projectList.length > 0 && currentProject !== null && (
         <Radio value="current">
           Add to current Project:{' '}
           <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
