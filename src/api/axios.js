@@ -48,6 +48,17 @@ function decodeJWT(token) {
   }
 }
 
+// TODO: Find a better way, e.g. using env var or store in localStorage/cookie
+const getCookieDomain = () => {
+  const hostname = window.location.hostname;
+  // Extract the root domain (e.g., "a.b.c" -> ".b.c")
+  const parts = hostname.split('.');
+  if (parts.length > 2) {
+    return `.${parts.slice(-2).join('.')}`;
+  }
+  return hostname;
+};
+
 function isTokenExpiredOrCloseToExpiry(token) {
   if (!token) return true;
 
@@ -97,12 +108,12 @@ apiClient.interceptors.request.use(
 
           document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
             JSON.stringify([refreshToken, newAccessToken]),
-          )}`;
+          )}; domain=${getCookieDomain()}; path=/`;
           config.withCredentials = true;
         } catch (e) {
           // Assume token used is invalid or expired if status is 401 and remove cookie
           if (e.response?.status == 401) {
-            document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+            document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${getCookieDomain()}; path=/`;
           }
           console.error(e);
         }
