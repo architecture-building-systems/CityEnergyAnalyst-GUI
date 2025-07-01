@@ -17,6 +17,7 @@ import { useChangesExist } from '../../../InputEditor/store';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 import DeleteScenarioModal from '../../DeleteScenarioModal';
 import { useScenarioLimits } from '../../../../store/server';
+import { isElectron } from '../../../../utils/electron';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -89,7 +90,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
             />
           )}
           <NewScenarioIcon />
-          <UploadDownloadScenarioIcon />
+          {!isElectron() && <UploadDownloadScenarioIcon />}
         </div>
       </div>
       <div
