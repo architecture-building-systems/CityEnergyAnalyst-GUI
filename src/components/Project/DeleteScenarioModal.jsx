@@ -1,4 +1,4 @@
-import { Button, Input, message, Modal } from 'antd';
+import { Alert, Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { useProjectStore } from './store';
 import { CopyOutlined, CopyTwoTone } from '@ant-design/icons';
@@ -96,11 +96,19 @@ const DeleteScenarioModal = ({ visible, setVisible, project, scenario }) => {
           />
         </div>
 
-        <p>
+        <div
+          style={{
+            outline: 'rgba(255, 0, 0, 0.5) solid 1px',
+            padding: 12,
+            borderRadius: 8,
+            margin: 12,
+            background: 'rgba(255, 0, 0, 0.1)',
+          }}
+        >
           This will delete all data associated with this Scenario.
           <br />
           <i>This action cannot be undone.</i>
-        </p>
+        </div>
 
         <p>Enter the name of the Scenario below to confirm.</p>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>

@@ -96,11 +96,19 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
           />
         </div>
 
-        <p>
+        <div
+          style={{
+            outline: 'rgba(255, 0, 0, 0.5) solid 1px',
+            padding: 12,
+            borderRadius: 8,
+            margin: 12,
+            background: 'rgba(255, 0, 0, 0.1)',
+          }}
+        >
           This will delete all Scenarios and data associated with this Project.
           <br />
           <i>This action cannot be undone.</i>
-        </p>
+        </div>
 
         <p>Enter the name of the Project below to confirm.</p>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
