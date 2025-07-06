@@ -2,14 +2,13 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import routes from '../constants/routes.json';
-import { useDispatch } from 'react-redux';
+import useNavigationStore from '../stores/navigationStore';
 import StatusBar from '../components/StatusBar/StatusBar';
 
 import './HomePage.css';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { Button, ConfigProvider } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
-import { push } from 'connected-react-router';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from '../components/Project/store';
@@ -142,7 +141,7 @@ const HomePageContent = () => {
 };
 
 const Cardwrapper = ({ children, style }) => {
-  const dispatch = useDispatch();
+  const { push } = useNavigationStore();
 
   return (
     <div
@@ -165,7 +164,7 @@ const Cardwrapper = ({ children, style }) => {
     >
       <Button
         style={{ marginRight: 'auto', position: 'sticky', top: 0, zIndex: 1 }}
-        onClick={() => dispatch(push(routes.PROJECT))}
+        onClick={() => push(routes.PROJECT)}
       >
         <LeftOutlined /> Return
       </Button>
