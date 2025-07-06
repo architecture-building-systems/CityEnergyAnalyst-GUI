@@ -17,7 +17,7 @@ import Loading from '../components/Loading/Loading';
 import { apiClient } from '../api/axios';
 import { useInitUserInfo, useUserInfo } from '../components/User/store';
 import UploadDownload from './UploadDownload';
-import { useFetchServerLimits } from '../store/server';
+import { useFetchServerLimits } from '../stores/server';
 
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
