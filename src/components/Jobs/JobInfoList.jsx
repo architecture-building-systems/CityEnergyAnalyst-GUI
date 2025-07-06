@@ -7,7 +7,7 @@ import useJobsStore, {
   useSelectedJob,
   useShowJobInfo,
 } from '../../stores/jobsStore';
-import { useProjectStore } from '../Project/store';
+import { useProjectStore } from '../../stores/projectStore';
 import { useIsValidUser } from '../User/store';
 
 const useFetchJobs = (project) => {

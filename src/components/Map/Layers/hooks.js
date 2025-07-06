@@ -6,7 +6,7 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   LIFE_CYCLE_ANALYSIS,
 } from './constants';
-import { useProjectStore } from '../../Project/store';
+import { useProjectStore } from '../../../stores/projectStore';
 import { apiClient } from '../../../api/axios';
 
 export const useGetMapLayerCategories = () => {

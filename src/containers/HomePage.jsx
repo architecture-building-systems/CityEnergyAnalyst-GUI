@@ -11,7 +11,7 @@ import { Button, ConfigProvider } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useInitProjectStore } from '../components/Project/store';
+import { useInitProjectStore } from '../stores/projectStore';
 
 import Loading from '../components/Loading/Loading';
 import { apiClient } from '../api/axios';

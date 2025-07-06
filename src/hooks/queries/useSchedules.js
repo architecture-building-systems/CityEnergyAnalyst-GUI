@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { apiClient } from '../../api/axios';
 import { API_ENDPOINTS } from '../../api/endpoints';
-import { useProjectStore } from '../../components/Project/store';
+import { useProjectStore } from '../../stores/projectStore';
 import { useFetchedSchedules } from '../../stores/inputEditorStore';
 
 export function useSchedules() {

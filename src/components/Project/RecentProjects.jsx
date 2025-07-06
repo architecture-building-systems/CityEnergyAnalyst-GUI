@@ -10,7 +10,7 @@ import {
   useSaveProjectToLocalStorage,
   useProjectStore,
   useProjectLoading,
-} from './store';
+} from '../../stores/projectStore';
 import './RecentProjects.css';
 import OpenProjectModal from './OpenProjectModal';
 import NewProjectModal from './NewProjectModal';

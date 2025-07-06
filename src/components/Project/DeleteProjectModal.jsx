@@ -1,7 +1,7 @@
 import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { apiClient } from '../../api/axios';
-import { useFetchProjectChoices } from './store';
+import { useFetchProjectChoices } from '../../stores/projectStore';
 import { CopyTwoTone } from '@ant-design/icons';
 
 const DeleteProjectModal = ({ visible, setVisible, project }) => {

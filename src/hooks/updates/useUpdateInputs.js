@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useProjectStore } from '../../components/Project/store';
+import { useProjectStore } from '../../stores/projectStore';
 import { INDEX_COLUMN } from '../../components/InputEditor/constants';
 import {
   useChanges,

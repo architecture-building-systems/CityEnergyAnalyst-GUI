@@ -1,5 +1,5 @@
 import { Button, Checkbox, Form, message, Progress } from 'antd';
-import { useProjectStore } from './Project/store';
+import { useProjectStore } from '../stores/projectStore';
 import { useState } from 'react';
 import { CloudDownloadIcon } from '../assets/icons';
 

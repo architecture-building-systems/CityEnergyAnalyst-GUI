@@ -16,7 +16,7 @@ import DatabaseTopMenu from './DatabaseTopMenu';
 import Database from './Database';
 import UseTypesDatabase from './UseTypesDatabase';
 import ValidationErrors from './ValidationErrors';
-import { useProjectStore } from '../Project/store';
+import { useProjectStore } from '../../stores/projectStore';
 import { apiClient } from '../../api/axios';
 
 const useValidateDatabasePath = () => {

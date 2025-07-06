@@ -32,7 +32,7 @@ import { useCameraForBounds } from '../components/Map/hooks';
 import { calcBoundsAndCenter } from '../components/Map/utils';
 
 import routes from '../constants/routes.json';
-import { useProjectStore } from '../components/Project/store';
+import { useProjectStore } from '../stores/projectStore';
 import { useOpenScenario } from '../components/Project/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { apiClient } from '../api/axios';

@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { useMapStore } from '../../../../stores/mapStore';
 import { useEffect, useMemo, useState } from 'react';
-import { useProjectStore } from '../../../Project/store';
+import { useProjectStore } from '../../../../stores/projectStore';
 import { apiClient } from '../../../../api/axios';
 
 const getChoices = async (

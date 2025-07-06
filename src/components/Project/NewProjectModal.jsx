@@ -7,7 +7,11 @@ import {
   FileNotFoundError,
   joinPath,
 } from '../../utils/file';
-import { fetchConfig, useFetchProjectChoices, useProjectStore } from './store';
+import {
+  fetchConfig,
+  useFetchProjectChoices,
+  useProjectStore,
+} from '../../stores/projectStore';
 import { isElectron } from '../../utils/electron';
 import { apiClient } from '../../api/axios';
 

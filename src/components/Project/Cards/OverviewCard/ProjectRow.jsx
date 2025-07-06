@@ -11,7 +11,7 @@ import {
   useProjectStore,
   useFetchProjectChoices,
   useSaveProjectToLocalStorage,
-} from '../../store';
+} from '../../../../stores/projectStore';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 import { useChangesExist } from '../../../../stores/inputEditorStore';
