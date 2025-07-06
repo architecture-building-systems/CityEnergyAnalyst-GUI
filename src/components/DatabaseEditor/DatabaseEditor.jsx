@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
 import { Tabs } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';

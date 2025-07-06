@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, message, Alert } from 'antd';
 import { FormItemWrapper, OpenDialogInput } from '../Tools/Parameter';
-import { useSelector } from 'react-redux';
 import { checkExist, joinPath } from '../../utils/file';
 import { apiClient } from '../../api/axios';
 

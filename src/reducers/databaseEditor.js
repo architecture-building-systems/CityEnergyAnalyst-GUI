@@ -14,7 +14,6 @@ import {
   RESET_DATABASE_CHANGES,
   COPY_SCHEDULE_DATA,
 } from '../actions/databaseEditor';
-import { combineReducers } from 'redux';
 import { createNestedProp, deleteNestedProp } from '../utils';
 
 const databaseValidation = (state = {}, { type, payload }) => {
