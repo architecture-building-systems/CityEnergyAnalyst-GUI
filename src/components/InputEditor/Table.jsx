@@ -23,7 +23,7 @@ import {
   useDiscardChanges,
   useSelected,
   useSetSelected,
-} from './store';
+} from '../../stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { useSetShowLoginModal } from '../Login/store';
 

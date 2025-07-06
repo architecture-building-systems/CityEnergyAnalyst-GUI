@@ -14,7 +14,7 @@ import {
 } from '../../store';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
-import { useChangesExist } from '../../../InputEditor/store';
+import { useChangesExist } from '../../../../stores/inputEditorStore';
 import { useMapStore } from '../../../Map/store/store';
 import { isElectron } from '../../../../utils/electron';
 import OpenProjectModal from '../../OpenProjectModal';

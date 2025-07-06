@@ -11,7 +11,7 @@ import {
 
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
-import { useChangesExist } from '../../../InputEditor/store';
+import { useChangesExist } from '../../../../stores/inputEditorStore';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 import DeleteScenarioModal from '../../DeleteScenarioModal';
 import { useScenarioLimits } from '../../../../stores/server';

@@ -5,7 +5,7 @@ import {
   useChanges,
   useSetChanges,
   useUpdateChanges,
-} from '../../components/InputEditor/store';
+} from '../../stores/inputEditorStore';
 import { months_short } from '../../constants/months';
 
 const BUILDING_GEOMETRY_NAMES = ['zone', 'surroundings'];
