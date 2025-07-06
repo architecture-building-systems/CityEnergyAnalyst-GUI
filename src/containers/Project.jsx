@@ -21,7 +21,7 @@ import { useInputs } from '../hooks/queries/useInputs';
 import { useMapStore } from '../stores/mapStore';
 import JobInfoList from '../components/Jobs/JobInfoList';
 import RecentProjects from '../components/Project/RecentProjects';
-import UserInfo from '../components/User/UserInfo';
+import UserInfo from '../components/UserInfo';
 import { isElectron } from '../utils/electron';
 import { VIEW_PLOT_RESULTS } from '../components/StatusBar/StatusBar';
 import { PLOTS_PRIMARY_COLOR } from '../constants/theme';
