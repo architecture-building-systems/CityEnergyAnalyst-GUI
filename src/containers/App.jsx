@@ -30,24 +30,22 @@ const App = ({ store, history }) => {
   useDevTitle();
 
   return (
-    <div>
-      <Provider store={store}>
-        <ConnectedRouter history={history}>
-          <Switch>
-            <Route exact path={routes.SPLASH}>
-              <Suspense>
-                <Splash />
-              </Suspense>
-            </Route>
-            <Route path={routes.HOME}>
-              <Suspense fallback={<Loading />}>
-                <HomePage />
-              </Suspense>
-            </Route>
-          </Switch>
-        </ConnectedRouter>
-      </Provider>
-    </div>
+    <Provider store={store}>
+      <ConnectedRouter history={history}>
+        <Switch>
+          <Route exact path={routes.SPLASH}>
+            <Suspense>
+              <Splash />
+            </Suspense>
+          </Route>
+          <Route path={routes.HOME}>
+            <Suspense fallback={<Loading />}>
+              <HomePage />
+            </Suspense>
+          </Route>
+        </Switch>
+      </ConnectedRouter>
+    </Provider>
   );
 };
 
