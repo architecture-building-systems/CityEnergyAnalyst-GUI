@@ -1,7 +1,6 @@
 import { Dropdown, Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchToolList } from '../../../../actions/tools';
+import useToolsStore from '../../../../stores/toolsStore';
 
 import { DownOutlined } from '@ant-design/icons';
 
@@ -25,12 +24,12 @@ import {
 const IGNORED_SECTIONS = ['Visualisation'];
 
 const useFetchTools = () => {
-  const dispatch = useDispatch();
-  const { status, tools } = useSelector((state) => state.toolList);
+  const { toolList, fetchToolList } = useToolsStore();
+  const { status, tools } = toolList;
 
   useEffect(() => {
-    dispatch(fetchToolList());
-  }, []);
+    fetchToolList();
+  }, [fetchToolList]);
 
   return { status, tools };
 };

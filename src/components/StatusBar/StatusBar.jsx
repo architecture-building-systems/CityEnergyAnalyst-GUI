@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
-import { updateJob, dismissJob } from '../../actions/jobs';
+import useJobsStore from '../../stores/jobsStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
@@ -143,7 +142,7 @@ const DismissCountdown = ({ duration, onComplete }) => {
 
 const JobStatusBar = () => {
   const [output, setMessage] = useState('');
-  const dispatch = useDispatch();
+  const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapLayer = useSetActiveMapLayer();
   const setSelectedTool = useToolStore((state) => state.setVisibility);
 
@@ -170,7 +169,7 @@ const JobStatusBar = () => {
     });
 
     socket.on('cea-worker-started', (job) => {
-      dispatch(updateJob(job));
+      updateJob(job);
 
       const key = job.id;
       notification.info({
@@ -183,7 +182,7 @@ const JobStatusBar = () => {
       });
     });
     socket.on('cea-worker-success', (job) => {
-      dispatch(updateJob(job));
+      updateJob(job);
       setMessage(`jobID: ${job.id} - completed ✅`);
 
       // FIXME: check for exact plot script names instead
@@ -266,11 +265,11 @@ const JobStatusBar = () => {
       });
     });
     socket.on('cea-worker-canceled', (job) => {
-      dispatch(dismissJob(job));
+      dismissJob(job);
       setMessage(`jobID: ${job.id} - canceled ✖️`);
     });
     socket.on('cea-worker-error', (job) => {
-      dispatch(updateJob(job));
+      updateJob(job);
       setMessage(`jobID: ${job.id} - error ❗`);
 
       const key = job.id;
