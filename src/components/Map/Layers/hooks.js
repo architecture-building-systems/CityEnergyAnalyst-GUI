@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMapStore } from '../store/store';
+import { useMapStore } from '../../../stores/mapStore';
 import {
   DEMAND,
   SOLAR_IRRADIATION,

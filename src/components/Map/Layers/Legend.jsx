@@ -1,5 +1,5 @@
 import Gradient from 'javascript-color-gradient';
-import { useMapStore } from '../store/store';
+import { useMapStore } from '../../../stores/mapStore';
 import { Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { useMapLegends } from './hooks';

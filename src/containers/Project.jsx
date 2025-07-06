@@ -18,7 +18,7 @@ import { useToolStore } from '../components/Tools/store';
 import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 import { useProjectStore } from '../components/Project/store';
 import { useInputs } from '../hooks/queries/useInputs';
-import { useMapStore } from '../components/Map/store/store';
+import { useMapStore } from '../stores/mapStore';
 import JobInfoList from '../components/Jobs/JobInfoList';
 import RecentProjects from '../components/Project/RecentProjects';
 import UserInfo from '../components/User/UserInfo';

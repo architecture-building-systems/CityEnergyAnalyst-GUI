@@ -1,5 +1,5 @@
 import { Button, Slider } from 'antd';
-import { useMapStore } from '../../store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import { useEffect, useMemo, useState } from 'react';
 
 const dayToDateTime = (dayOfYear, year = 2023) => {

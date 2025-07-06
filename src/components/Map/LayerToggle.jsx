@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMapStore } from './store/store';
+import { useMapStore } from '../../stores/mapStore';
 import { useInputs } from '../../hooks/queries/useInputs';
 import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from '../../assets/icons';

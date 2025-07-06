@@ -1,7 +1,7 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
 import { useMemo, useCallback, useEffect } from 'react';
-import { useMapStore } from '../../store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';

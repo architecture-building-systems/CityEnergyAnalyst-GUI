@@ -15,7 +15,7 @@ import {
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
 import { useChangesExist } from '../../../../stores/inputEditorStore';
-import { useMapStore } from '../../../Map/store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import { isElectron } from '../../../../utils/electron';
 import OpenProjectModal from '../../OpenProjectModal';
 import DeleteProjectModal from '../../DeleteProjectModal';

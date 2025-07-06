@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { useMapStore } from '../../store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from '../../../Project/store';
 import { apiClient } from '../../../../api/axios';
