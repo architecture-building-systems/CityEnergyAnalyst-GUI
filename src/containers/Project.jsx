@@ -14,7 +14,7 @@ import { ShowHideCardsIcon } from '../assets/icons';
 import { useHoverGrow } from '../components/Project/Cards/OverviewCard/hooks';
 import MapControls from '../components/Map/MapControls';
 import MapLayersCard from '../components/Project/Cards/MapLayersCard/MapLayersCard';
-import { useToolStore } from '../components/Tools/store';
+import { useToolCardStore } from '../stores/toolCardStore';
 import MapLayerPropertiesCard from '../components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
 import { useProjectStore } from '../stores/projectStore';
 import { useInputs } from '../hooks/queries/useInputs';
@@ -49,10 +49,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [showInputEditor, setInputEditor] = useState(false);
   const [showVisualisation, setVisualisation] = useState(false);
 
-  const showTools = useToolStore((state) => state.showTools);
-  const setShowTools = useToolStore((state) => state.setShowTools);
-  const selectedTool = useToolStore((state) => state.selectedTool);
-  const setSelectedTool = useToolStore((state) => state.setVisibility);
+  const showTools = useToolCardStore((state) => state.showTools);
+  const setShowTools = useToolCardStore((state) => state.setShowTools);
+  const selectedTool = useToolCardStore((state) => state.selectedTool);
+  const setSelectedTool = useToolCardStore((state) => state.setVisibility);
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);

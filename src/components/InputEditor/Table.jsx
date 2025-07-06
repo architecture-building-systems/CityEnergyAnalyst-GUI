@@ -9,7 +9,7 @@ import { getOperatingSystem } from '../../utils';
 import { AsyncError } from '../../utils/AsyncError';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from '../../utils/electron';
-import { useToolStore } from '../Tools/store';
+import { useToolCardStore } from '../../stores/toolCardStore';
 
 import { INDEX_COLUMN } from './constants';
 import { useSaveInputs } from '../../hooks/mutations/useSaveInputs';
@@ -449,8 +449,8 @@ const ScriptSuggestion = ({ tab }) => {
   };
 
   const script = tabScriptMap?.[tab] ?? 'archetypes-mapper';
-  const setShowTools = useToolStore((state) => state.setShowTools);
-  const setSelectedTool = useToolStore((state) => state.setVisibility);
+  const setShowTools = useToolCardStore((state) => state.setShowTools);
+  const setSelectedTool = useToolCardStore((state) => state.setVisibility);
 
   return (
     <div style={{ margin: 8 }}>
