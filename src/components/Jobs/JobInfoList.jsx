@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import JobInfoModal from './JobInfoModal';
-import { useSelectedJob, useShowJobInfo } from './store';
+import useJobsStore, {
+  useSelectedJob,
+  useShowJobInfo,
+} from '../../stores/jobsStore';
 import { useProjectStore } from '../Project/store';
-import useJobsStore from '../../stores/jobsStore';
 import { useIsValidUser } from '../User/store';
 
 const useFetchJobs = (project) => {

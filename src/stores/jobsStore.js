@@ -17,7 +17,12 @@ const transformJobPayload = (payload) => {
 
 const useJobsStore = create((set, get) => ({
   jobs: null,
-  
+
+  selectedJob: null,
+  showJobInfo: false,
+  setSeletedJob: (selectedJob) => set({ selectedJob }),
+  setShowJobInfo: (showJobInfo) => set({ showJobInfo }),
+
   // Actions
   fetchJobs: async () => {
     try {
@@ -34,15 +39,15 @@ const useJobsStore = create((set, get) => ({
         script,
         parameters,
       });
-      
+
       const jobData = response.data;
       set((state) => ({
         jobs: { ...state.jobs, ...transformJobPayload(jobData) },
       }));
-      
+
       // Start the job after creation
       await get().startJob(jobData.id);
-      
+
       return jobData;
     } catch (error) {
       console.error('Failed to create job:', error);
@@ -88,5 +93,19 @@ const useJobsStore = create((set, get) => ({
     }
   },
 }));
+
+export const useSelectedJob = () => [
+  useJobsStore((state) => state.selectedJob),
+  (selectedJob) => {
+    useJobsStore.setState({ selectedJob });
+  },
+];
+
+export const useShowJobInfo = () => [
+  useJobsStore((state) => state.showJobInfo),
+  (showJobInfo) => {
+    useJobsStore.setState({ showJobInfo });
+  },
+];
 
 export default useJobsStore;

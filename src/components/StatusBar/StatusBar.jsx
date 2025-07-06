@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 
-import useJobsStore from '../../stores/jobsStore';
+import useJobsStore, {
+  useSelectedJob,
+  useShowJobInfo,
+} from '../../stores/jobsStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
 import socket from '../../socket';
 import { Button, Dropdown, notification } from 'antd';
-import { useSelectedJob, useShowJobInfo } from '../Jobs/store';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
