@@ -23,7 +23,7 @@ const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(
-  () => import('./DatabaseEditorWithRedux'),
+  () => import('../components/DatabaseEditor/DatabaseEditor'),
 );
 
 const useCheckServerStatus = () => {
