@@ -558,8 +558,13 @@ function updateTooltip({ x, y, object, layer }) {
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
       if (layer.id === 'zone')
         innerHTML += `<div><b>GFA</b>: ${
+          // Remove void_deck from GFA calculation
           Math.round(
-            (properties['floors_ag'] + properties['floors_bg']) * area * 1000,
+            (properties?.floors_ag +
+              properties?.floors_bg -
+              properties?.void_deck) *
+              area *
+              1000,
           ) / 1000
         }m<sup>2</sup></div>`;
     } else if (layer.id === 'dc' || layer.id === 'dh') {
