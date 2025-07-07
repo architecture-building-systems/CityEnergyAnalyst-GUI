@@ -4,6 +4,7 @@ import {
   MailOutlined,
   RocketOutlined,
   StarOutlined,
+  StarTwoTone,
   YoutubeOutlined,
 } from '@ant-design/icons';
 
@@ -56,8 +57,11 @@ export const helpMenuItems = [
     icon: <MailOutlined />,
   },
   {
+    type: 'divider',
+  },
+  {
     label: 'Star us on GitHub!',
     key: 'github-repo',
-    icon: <StarOutlined />,
+    icon: <StarTwoTone twoToneColor="#bb0" />,
   },
 ];
