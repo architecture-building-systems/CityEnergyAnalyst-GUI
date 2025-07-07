@@ -14,7 +14,7 @@ import {
 import './RecentProjects.css';
 import OpenProjectModal from './OpenProjectModal';
 import NewProjectModal from './NewProjectModal';
-import { useUserInfo } from '../User/store';
+import { useUserInfo } from '../../stores/userStore';
 
 const { Title, Text } = Typography;
 

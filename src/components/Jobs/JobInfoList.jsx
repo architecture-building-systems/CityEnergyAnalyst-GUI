@@ -8,7 +8,7 @@ import useJobsStore, {
   useShowJobInfo,
 } from '../../stores/jobsStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { useIsValidUser } from '../User/store';
+import { useIsValidUser } from '../../stores/userStore';
 
 const useFetchJobs = (project) => {
   const { jobs, fetchJobs } = useJobsStore();

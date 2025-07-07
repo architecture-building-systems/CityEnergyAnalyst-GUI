@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 import { apiClient } from '../api/axios';
-import { useUserInfo } from '../components/User/store';
+import { useUserInfo } from './userStore';
 
 const DEFAULT_PROJECT_PROPS = {
   project: 'reference-case-open',
