@@ -6,11 +6,7 @@
   display: flex;
   justify-content: space-between;
   z-index: 9999;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
-  font-size: 14px;
+  font-size: 12px;
   box-sizing: border-box;
 }
 
@@ -42,4 +38,14 @@
 
 .cea-status-bar-button.primary:hover {
   background-color: #4080ab;
+}
+
+.cea-status-bar-button svg {
+  font-size: 16px;
+}
+
+#cea-status-bar-left,
+#cea-status-bar-right {
+  display: flex;
+  align-items: center;
 }

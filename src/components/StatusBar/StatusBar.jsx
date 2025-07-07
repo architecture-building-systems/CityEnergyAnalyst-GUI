@@ -55,17 +55,9 @@ const StatusBar = () => {
       <div id="cea-status-bar-left">
         <CEAVersion />
       </div>
-      <div
-        id="cea-status-bar-right"
-        style={{ display: 'flex', padding: '0 4px' }}
-      >
+      <div id="cea-status-bar-right">
         <JobStatusBar />
-        <div
-          className="cea-status-bar-button primary"
-          style={{
-            fontSize: 16,
-          }}
-        >
+        <div className="cea-status-bar-button primary">
           <DropdownMenu />
         </div>
       </div>
@@ -104,7 +96,6 @@ const CEAVersion = () => {
   return (
     <div
       style={{
-        fontSize: 12,
         display: 'flex',
         alignItems: 'center',
         height: '100%',
