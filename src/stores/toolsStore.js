@@ -24,7 +24,7 @@ const useToolsStore = create((set, get) => ({
   // Actions
   fetchToolList: async () => {
     const { toolList } = get();
-    
+
     // Don't fetch if already have tools
     if (Object.keys(toolList.tools).length > 0) {
       return;
@@ -37,7 +37,11 @@ const useToolsStore = create((set, get) => ({
     try {
       const response = await apiClient.get('/api/tools/');
       set((state) => ({
-        toolList: { ...state.toolList, tools: response.data, status: 'received' },
+        toolList: {
+          ...state.toolList,
+          tools: response.data,
+          status: 'received',
+        },
       }));
     } catch (error) {
       set((state) => ({
@@ -48,13 +52,22 @@ const useToolsStore = create((set, get) => ({
 
   fetchToolParams: async (tool) => {
     set((state) => ({
-      toolParams: { ...state.toolParams, status: 'fetching', error: null, params: {} },
+      toolParams: {
+        ...state.toolParams,
+        status: 'fetching',
+        error: null,
+        params: {},
+      },
     }));
 
     try {
       const response = await apiClient.get(`/api/tools/${tool}`);
       set((state) => ({
-        toolParams: { ...state.toolParams, params: response.data, status: 'received' },
+        toolParams: {
+          ...state.toolParams,
+          params: response.data,
+          status: 'received',
+        },
       }));
     } catch (error) {
       set((state) => ({
@@ -75,7 +88,10 @@ const useToolsStore = create((set, get) => ({
     }));
 
     try {
-      const response = await apiClient.post(`/api/tools/${tool}/save-config`, params);
+      const response = await apiClient.post(
+        `/api/tools/${tool}/save-config`,
+        params,
+      );
       return response.data;
     } catch (error) {
       throw error;

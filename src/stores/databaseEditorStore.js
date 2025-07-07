@@ -76,7 +76,9 @@ const useDatabaseEditorStore = create((set, get) => ({
   fetchDatabaseGlossary: async () => {
     try {
       const response = await apiClient.get('/api/database/glossary');
-      const glossary = response.data.find((script) => script.script === 'data_initializer')?.variables || [];
+      const glossary =
+        response.data.find((script) => script.script === 'data_initializer')
+          ?.variables || [];
       set({ glossary });
     } catch (error) {
       console.error(error);
@@ -88,10 +90,17 @@ const useDatabaseEditorStore = create((set, get) => ({
     set({ menu: { category, name } });
   },
 
-  updateDatabaseValidation: ({ isValid, database, sheet, column, row, value }) => {
+  updateDatabaseValidation: ({
+    isValid,
+    database,
+    sheet,
+    column,
+    row,
+    value,
+  }) => {
     set((state) => {
       const newValidation = { ...state.validation };
-      
+
       // Check if invalid value exists in store
       if (newValidation?.database?.sheet?.row?.column) {
         // Remove value if it is corrected else add it to store
@@ -105,7 +114,7 @@ const useDatabaseEditorStore = create((set, get) => ({
         createNestedProp(newValidation, database, sheet, row, column);
         newValidation[database][sheet][row][column] = value;
       }
-      
+
       return { validation: newValidation };
     });
   },

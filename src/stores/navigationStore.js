@@ -6,7 +6,7 @@ export const history = createBrowserHistory();
 
 const useNavigationStore = create((set, get) => ({
   location: history.location,
-  
+
   // Actions
   push: (path) => {
     history.push(path);
