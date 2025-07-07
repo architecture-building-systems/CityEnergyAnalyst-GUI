@@ -352,6 +352,8 @@ const DeckGLMap = ({ data, tables, colors }) => {
   }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
   const dataLayers = useMemo(() => {
+    const envelopeTable = tables?.envelope;
+
     const onClick = ({ object, layer }, event) => {
       const name = object.properties[INDEX_COLUMN];
       if (layer.id !== selectedLayer) {
@@ -380,7 +382,6 @@ const DeckGLMap = ({ data, tables, colors }) => {
 
     let _layers = [];
     if (data?.zone) {
-      const envelopeTable = tables?.envelope;
       _layers.push(
         new PolygonLayer({
           id: 'zone',
@@ -408,7 +409,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
           autoHighlight: true,
           highlightColor: [255, 255, 0, 128],
 
-          onHover: updateTooltip,
+          onHover: (f) => updateTooltip(f, envelopeTable),
           onClick: onClick,
         }),
       );
@@ -439,7 +440,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
           autoHighlight: true,
           highlightColor: [255, 255, 0, 128],
 
-          onHover: updateTooltip,
+          onHover: (f) => updateTooltip(f, envelopeTable),
           onClick: onClick,
         }),
       );
@@ -492,7 +493,16 @@ const DeckGLMap = ({ data, tables, colors }) => {
     }
 
     return _layers;
-  }, [visibility, data, selectedLayer, selected, extruded, buildingColor]);
+  }, [
+    visibility,
+    data,
+    selectedLayer,
+    selected,
+    extruded,
+    buildingColor,
+    tables?.envelope,
+    setSelected,
+  ]);
 
   const mapLayers = useMapLayers();
 
@@ -541,7 +551,8 @@ const DeckGLMap = ({ data, tables, colors }) => {
   );
 };
 
-function updateTooltip({ x, y, object, layer }) {
+function updateTooltip(feature, envelopeTable) {
+  const { x, y, object, layer } = feature;
   const tooltip = document.getElementById('map-tooltip');
   if (object) {
     const { properties } = object;
@@ -565,7 +576,7 @@ function updateTooltip({ x, y, object, layer }) {
           Math.round(
             (properties?.floors_ag +
               properties?.floors_bg -
-              properties?.void_deck) *
+              envelopeTable?.[properties?.[INDEX_COLUMN]]?.void_deck ?? 0) *
               area *
               1000,
           ) / 1000
