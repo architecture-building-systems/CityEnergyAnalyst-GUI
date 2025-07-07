@@ -19,7 +19,7 @@ import { useMapStore } from '../../../../stores/mapStore';
 import { isElectron } from '../../../../utils/electron';
 import OpenProjectModal from '../../OpenProjectModal';
 import DeleteProjectModal from '../../DeleteProjectModal';
-import { useProjectLimits } from '../../../../stores/server';
+import { useProjectLimits } from '../../../../stores/serverStore';
 
 const ProjectRow = ({ projectName }) => {
   return (

@@ -14,7 +14,7 @@ import { useOpenScenario } from '../../hooks';
 import { useChangesExist } from '../../../../stores/inputEditorStore';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 import DeleteScenarioModal from '../../DeleteScenarioModal';
-import { useScenarioLimits } from '../../../../stores/server';
+import { useScenarioLimits } from '../../../../stores/serverStore';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
