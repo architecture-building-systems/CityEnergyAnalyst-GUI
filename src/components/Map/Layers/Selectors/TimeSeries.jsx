@@ -1,6 +1,6 @@
 import { Button, Slider } from 'antd';
 import { useMapStore } from '../../../../stores/mapStore';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const dayToDateTime = (dayOfYear, year = 2023) => {
   // Start from January 1st of the given year

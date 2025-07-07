@@ -35,9 +35,6 @@ const ChoiceSelector = ({
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const removeMapLayerParameter = useMapStore(
-    (state) => state.removeMapLayerParameter,
-  );
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
 
   const [selected, setSelected] = useState(value ?? defaultValue);

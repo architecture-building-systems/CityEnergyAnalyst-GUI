@@ -366,7 +366,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
                     components={{
-                      a: ({ node, href, children, ...props }) => {
+                      a: ({ href, children, ...props }) => {
                         if (isElectron())
                           return (
                             <a {...props} onClick={() => openExternal(href)}>

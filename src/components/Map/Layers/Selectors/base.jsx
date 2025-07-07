@@ -35,7 +35,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
   useEffect(() => {
     layers.map((layer) => {
       const { parameters } = layer;
-      Object.entries(parameters).forEach(([key, parameter]) => {
+      Object.entries(parameters).forEach(([, parameter]) => {
         const { filter, default: defaultValue } = parameter;
         if (filter && !filters?.[filter]) {
           setFilters(filter, defaultValue);

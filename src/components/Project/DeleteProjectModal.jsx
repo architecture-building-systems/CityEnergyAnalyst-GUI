@@ -8,7 +8,7 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState(null);
 
-  const [_, fetchProjectChoices] = useFetchProjectChoices();
+  const [, fetchProjectChoices] = useFetchProjectChoices();
 
   const disabled = value !== project;
 

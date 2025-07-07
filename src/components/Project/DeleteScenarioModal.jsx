@@ -1,7 +1,7 @@
-import { Alert, Button, Input, message, Modal } from 'antd';
+import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { useProjectStore } from '../../stores/projectStore';
-import { CopyOutlined, CopyTwoTone } from '@ant-design/icons';
+import { CopyTwoTone } from '@ant-design/icons';
 
 const DeleteScenarioModal = ({ visible, setVisible, project, scenario }) => {
   const [loading, setLoading] = useState(false);
