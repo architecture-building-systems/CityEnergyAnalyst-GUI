@@ -1,6 +1,6 @@
 import { Form, Input } from 'antd';
 import { useState } from 'react';
-import { useProjectStore } from '../store';
+import { useProjectStore } from '../../../stores/projectStore';
 import { getValidateScenarioNameFunc } from '../../../utils/project';
 
 const NameForm = ({ initialValues, onFinish, formButtons }) => {

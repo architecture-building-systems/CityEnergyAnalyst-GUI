@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { defaultViewState } from '../utils';
+import { defaultViewState } from '../components/Map/utils';
 
 export const useMapStore = create((set) => ({
   visibility: {},

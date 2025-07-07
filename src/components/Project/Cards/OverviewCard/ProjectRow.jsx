@@ -11,15 +11,15 @@ import {
   useProjectStore,
   useFetchProjectChoices,
   useSaveProjectToLocalStorage,
-} from '../../store';
+} from '../../../../stores/projectStore';
 import { useOpenScenario } from '../../hooks';
 import { useInputs } from '../../../../hooks/queries/useInputs';
-import { useChangesExist } from '../../../InputEditor/store';
-import { useMapStore } from '../../../Map/store/store';
+import { useChangesExist } from '../../../../stores/inputEditorStore';
+import { useMapStore } from '../../../../stores/mapStore';
 import { isElectron } from '../../../../utils/electron';
 import OpenProjectModal from '../../OpenProjectModal';
 import DeleteProjectModal from '../../DeleteProjectModal';
-import { useProjectLimits } from '../../../../store/server';
+import { useProjectLimits } from '../../../../stores/serverStore';
 
 const ProjectRow = ({ projectName }) => {
   return (
@@ -134,7 +134,7 @@ const RefreshIconButton = () => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
-  const [_, fetchProjectChoices] = useFetchProjectChoices();
+  const [, fetchProjectChoices] = useFetchProjectChoices();
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
   const changes = useChangesExist();

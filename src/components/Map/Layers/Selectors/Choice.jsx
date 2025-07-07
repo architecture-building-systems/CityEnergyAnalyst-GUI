@@ -1,7 +1,7 @@
 import { Select } from 'antd';
-import { useMapStore } from '../../store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import { useEffect, useMemo, useState } from 'react';
-import { useProjectStore } from '../../../Project/store';
+import { useProjectStore } from '../../../../stores/projectStore';
 import { apiClient } from '../../../../api/axios';
 
 const getChoices = async (
@@ -35,9 +35,6 @@ const ChoiceSelector = ({
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const removeMapLayerParameter = useMapStore(
-    (state) => state.removeMapLayerParameter,
-  );
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
 
   const [selected, setSelected] = useState(value ?? defaultValue);

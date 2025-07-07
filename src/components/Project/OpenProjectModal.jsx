@@ -6,7 +6,7 @@ import {
   useSaveProjectToLocalStorage,
   useFetchProjectChoices,
   useProjectStore,
-} from './store';
+} from '../../stores/projectStore';
 import { isElectron } from '../../utils/electron';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
@@ -76,7 +76,7 @@ const PathDialog = ({ initialValue }) => {
   );
 };
 
-const ProjectChoice = ({ initialValue }) => {
+const ProjectChoice = () => {
   const [choices] = useFetchProjectChoices();
 
   const options = choices

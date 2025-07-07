@@ -11,7 +11,7 @@ import { MapFormContext } from './hooks';
 import { useFetchBuildingsFromPath } from '../../Map/hooks';
 import { isElectron } from '../../../utils/electron';
 import { apiClient } from '../../../api/axios';
-import { useBuildingLimits } from '../../../store/server';
+import { useBuildingLimits } from '../../../stores/serverStore';
 
 const validateGeometry = async (value, buildingType) => {
   if (

@@ -1,23 +1,23 @@
-import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import JobInfoModal from './JobInfoModal';
-import { useSelectedJob, useShowJobInfo } from './store';
-import { useProjectStore } from '../Project/store';
-import { fetchJobs } from '../../actions/jobs';
-import { useIsValidUser } from '../User/store';
+import useJobsStore, {
+  useSelectedJob,
+  useShowJobInfo,
+} from '../../stores/jobsStore';
+import { useProjectStore } from '../../stores/projectStore';
+import { useIsValidUser } from '../../stores/userStore';
 
 const useFetchJobs = (project) => {
-  const dispatch = useDispatch();
-  const jobs = useSelector((state) => state.jobs);
+  const { jobs, fetchJobs } = useJobsStore();
   const isValidUser = useIsValidUser();
 
   useEffect(() => {
     // Refresh job list when project changes. Only fetch if project is set.
-    if (isValidUser && project) dispatch(fetchJobs());
-  }, [project]);
+    if (isValidUser && project) fetchJobs();
+  }, [project, fetchJobs, isValidUser]);
 
   return jobs;
 };

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { COOKIE_NAME } from '../../api/axios';
+import { COOKIE_NAME } from '../api/axios';
 import { Avatar } from 'antd';
-import { useUserInfo } from './store';
-import LoginModal from '../Login/LoginModal';
-import LoginButton from '../Login/LoginButton';
-import LogoutButton from '../Login/LogoutButton';
+import { useUserInfo } from '../stores/userStore';
+import LoginModal from './Login/LoginModal';
+import LoginButton from './Login/LoginButton';
+import LogoutButton from './Login/LogoutButton';
 
 const useUserLoggedIn = () => {
   const [loggedIn, setLoggedIn] = useState(false);

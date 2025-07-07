@@ -1,7 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react';
-import { Provider } from 'react-redux';
-import { Switch, Route } from 'react-router';
-import { ConnectedRouter } from 'connected-react-router';
+import { Switch, Route, Router } from 'react-router';
+import useNavigationStore, { history } from '../stores/navigationStore';
 
 import routes from '../constants/routes.json';
 import Loading from '../components/Loading/Loading';
@@ -26,26 +25,29 @@ const useDevTitle = () => {
   }, []);
 };
 
-const App = ({ store, history }) => {
+const App = () => {
   useDevTitle();
+  const init = useNavigationStore((state) => state.init);
+
+  useEffect(() => {
+    return init();
+  }, [init]);
 
   return (
-    <Provider store={store}>
-      <ConnectedRouter history={history}>
-        <Switch>
-          <Route exact path={routes.SPLASH}>
-            <Suspense>
-              <Splash />
-            </Suspense>
-          </Route>
-          <Route path={routes.HOME}>
-            <Suspense fallback={<Loading />}>
-              <HomePage />
-            </Suspense>
-          </Route>
-        </Switch>
-      </ConnectedRouter>
-    </Provider>
+    <Router history={history}>
+      <Switch>
+        <Route exact path={routes.SPLASH}>
+          <Suspense>
+            <Splash />
+          </Suspense>
+        </Route>
+        <Route path={routes.HOME}>
+          <Suspense fallback={<Loading />}>
+            <HomePage />
+          </Suspense>
+        </Route>
+      </Switch>
+    </Router>
   );
 };
 

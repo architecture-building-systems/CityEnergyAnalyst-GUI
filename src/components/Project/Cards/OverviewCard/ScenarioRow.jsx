@@ -1,7 +1,5 @@
-import { push } from 'connected-react-router';
-
 import routes from '../../../../constants/routes.json';
-import { useDispatch } from 'react-redux';
+import useNavigationStore from '../../../../stores/navigationStore';
 import { useMemo, useState } from 'react';
 import { Badge, Button, message, Tooltip } from 'antd';
 import {
@@ -13,10 +11,10 @@ import {
 
 import './OverviewCard.css';
 import { useOpenScenario } from '../../hooks';
-import { useChangesExist } from '../../../InputEditor/store';
+import { useChangesExist } from '../../../../stores/inputEditorStore';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 import DeleteScenarioModal from '../../DeleteScenarioModal';
-import { useScenarioLimits } from '../../../../store/server';
+import { useScenarioLimits } from '../../../../stores/serverStore';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const sortedScenarios = useMemo(() => {
@@ -168,7 +166,7 @@ const ScenarioItem = ({ project, scenario, onDelete }) => {
 const NewScenarioIcon = () => {
   const { limit, count } = useScenarioLimits();
 
-  const dispatch = useDispatch();
+  const { push } = useNavigationStore();
   const onClick = () => {
     if (limit && count <= 0) {
       message.config({
@@ -182,7 +180,7 @@ const NewScenarioIcon = () => {
       );
       return;
     }
-    dispatch(push(routes.CREATE_SCENARIO));
+    push(routes.CREATE_SCENARIO);
   };
 
   return (
@@ -217,8 +215,8 @@ const DuplicateScenarioIcon = ({
 };
 
 const UploadDownloadScenarioIcon = () => {
-  const dispatch = useDispatch();
-  const onClick = () => dispatch(push(routes.UPLOAD_DOWNLOAD));
+  const { push } = useNavigationStore();
+  const onClick = () => push(routes.UPLOAD_DOWNLOAD);
 
   return (
     <Tooltip title="Upload/Download" placement="bottom">

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export const useToolStore = create((set) => ({
+export const useToolCardStore = create((set) => ({
   showTools: false,
   selectedTool: null,
   setVisibility: (selectedTool) => set({ selectedTool }),

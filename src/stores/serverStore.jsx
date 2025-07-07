@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from '../api/axios';
-import { useProjectStore } from '../components/Project/store';
+import { useProjectStore } from './projectStore';
 
 const useServerStore = create((set) => ({
   limits: null,
@@ -8,7 +8,6 @@ const useServerStore = create((set) => ({
   fetchLimits: async () => {
     try {
       const { data } = await apiClient.get('/server/settings');
-      console.log(data);
       set({ limits: data?.limits });
     } catch (error) {
       console.error('Error fetching limits:', error);

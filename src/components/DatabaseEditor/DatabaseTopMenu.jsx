@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Button, Modal, Menu } from 'antd';
 import './DatabaseEditor.css';
 import { setActiveDatabase } from '../../actions/databaseEditor';

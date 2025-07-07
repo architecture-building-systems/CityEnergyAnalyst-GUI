@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createNestedProp, deleteNestedProp } from '../../utils';
+import { createNestedProp, deleteNestedProp } from '../utils';
 
 export const useTableStore = create((set) => ({
   selected: [],

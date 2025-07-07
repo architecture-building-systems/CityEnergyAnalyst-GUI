@@ -5,15 +5,9 @@ import {
   useLayoutEffect,
   useCallback,
 } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
-import {
-  fetchToolParams,
-  saveToolParams,
-  setDefaultToolParams,
-  resetToolParams,
-} from '../../actions/tools';
-import { createJob } from '../../actions/jobs';
+import useToolsStore from '../../stores/toolsStore';
+import useJobsStore from '../../stores/jobsStore';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import { AsyncError } from '../../utils/AsyncError';
 
@@ -120,7 +114,8 @@ const useToolForm = (
   },
 ) => {
   const [form] = Form.useForm();
-  const dispatch = useDispatch();
+  const { saveToolParams, setDefaultToolParams } = useToolsStore();
+  const { createJob } = useJobsStore();
 
   const setShowLoginModal = useSetShowLoginModal();
   const handleLogin = () => {
@@ -176,7 +171,7 @@ const useToolForm = (
   const runScript = async () => {
     const params = await getForm();
 
-    return dispatch(createJob(script, params)).catch((err) => {
+    return createJob(script, params).catch((err) => {
       if (err.response.status === 401) handleLogin();
       else console.error(`Error creating job: ${err}`);
     });
@@ -185,7 +180,7 @@ const useToolForm = (
   const saveParams = async () => {
     const params = await getForm();
 
-    return dispatch(saveToolParams(script, params))
+    return saveToolParams(script, params)
       .then(() => {
         return callbacks?.onSave?.(params);
       })
@@ -196,7 +191,7 @@ const useToolForm = (
   };
 
   const setDefault = async () => {
-    return dispatch(setDefaultToolParams(script))
+    return setDefaultToolParams(script)
       .then(() => {
         form.resetFields();
         return getForm();
@@ -214,10 +209,10 @@ const useToolForm = (
 };
 
 const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
-  const { status, error, params } = useSelector((state) => state.toolParams);
-  const { isSaving } = useSelector((state) => state.toolSaving);
+  const { status, error, params } = useToolsStore((state) => state.toolParams);
+  const { isSaving } = useToolsStore((state) => state.toolSaving);
+  const { fetchToolParams, resetToolParams } = useToolsStore();
 
-  const dispatch = useDispatch();
   const {
     category,
     label,
@@ -280,14 +275,14 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
   };
 
   useEffect(() => {
-    dispatch(fetchToolParams(script));
+    fetchToolParams(script);
     // Reset header visibility when the component mounts
     setHeaderVisible(true);
     lastScrollPositionRef.current = 0;
     descriptionHeightRef.current = 'auto';
 
-    return () => dispatch(resetToolParams());
-  }, [script]);
+    return () => resetToolParams();
+  }, [script, fetchToolParams, resetToolParams]);
 
   if (status == 'fetching')
     return (
@@ -371,7 +366,7 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
                     components={{
-                      a: ({ node, href, children, ...props }) => {
+                      a: ({ href, children, ...props }) => {
                         if (isElectron())
                           return (
                             <a {...props} onClick={() => openExternal(href)}>

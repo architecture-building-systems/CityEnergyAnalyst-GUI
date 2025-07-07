@@ -1,7 +1,7 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threhold';
 import { useMemo, useCallback, useEffect } from 'react';
-import { useMapStore } from '../../store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
@@ -35,7 +35,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
   useEffect(() => {
     layers.map((layer) => {
       const { parameters } = layer;
-      Object.entries(parameters).forEach(([key, parameter]) => {
+      Object.entries(parameters).forEach(([, parameter]) => {
         const { filter, default: defaultValue } = parameter;
         if (filter && !filters?.[filter]) {
           setFilters(filter, defaultValue);

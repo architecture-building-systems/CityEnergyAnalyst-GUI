@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../../api/axios';
+import { apiClient } from '../api/axios';
 
 const useUserInfoStore = create((set) => ({
   userInfo: null,

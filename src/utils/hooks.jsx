@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useDispatch } from 'react-redux';
-import { push } from 'connected-react-router';
+import useNavigationStore from '../stores/navigationStore';
 
 export const useAsyncData = (
   url = '',
@@ -55,6 +54,6 @@ export const useEventListener = (eventName, handler, element = window) => {
 };
 
 export const useChangeRoute = (route) => {
-  const dispatch = useDispatch();
-  return () => dispatch(push(route));
+  const { push } = useNavigationStore();
+  return () => push(route);
 };

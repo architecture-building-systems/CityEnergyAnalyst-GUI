@@ -1,7 +1,7 @@
 import { apiClient } from '../../api/axios';
 import { API_ENDPOINTS } from '../../api/endpoints';
-import { useProjectStore } from '../../components/Project/store';
-import { useChanges, useResetStore } from '../../components/InputEditor/store';
+import { useProjectStore } from '../../stores/projectStore';
+import { useChanges, useResetStore } from '../../stores/inputEditorStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useResyncInputs } from '../updates/useUpdateInputs';
 

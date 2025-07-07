@@ -1,10 +1,10 @@
-import { useSelector } from 'react-redux';
+import useDatabaseEditorStore from '../../stores/databaseEditorStore';
 import { Alert } from 'antd';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';
 import './DatabaseEditor.css';
 
 const ValidationErrors = ({ databaseName }) => {
-  const validation = useSelector((state) => state.databaseEditor.validation);
+  const validation = useDatabaseEditorStore((state) => state.validation);
   if (typeof validation[databaseName] === 'undefined') return null;
 
   return (

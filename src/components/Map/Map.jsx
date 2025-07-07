@@ -13,7 +13,7 @@ import './Map.css';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
-import { useCameraOptionsCalulated, useMapStore } from './store/store';
+import { useCameraOptionsCalulated, useMapStore } from '../../stores/mapStore';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
@@ -29,7 +29,7 @@ import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
 import { INDEX_COLUMN } from '../InputEditor/constants';
-import { useSelected, useSetSelected } from '../InputEditor/store';
+import { useSelected, useSetSelected } from '../../stores/inputEditorStore';
 import { AttributionControl } from 'maplibre-gl';
 
 const useMapAttribution = (mapRef) => {

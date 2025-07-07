@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useProjectStore } from '../../components/Project/store';
+import { useProjectStore } from '../../stores/projectStore';
 import { INDEX_COLUMN } from '../../components/InputEditor/constants';
 import {
   useChanges,
   useSetChanges,
   useUpdateChanges,
-} from '../../components/InputEditor/store';
+} from '../../stores/inputEditorStore';
 import { months_short } from '../../constants/months';
 
 const BUILDING_GEOMETRY_NAMES = ['zone', 'surroundings'];

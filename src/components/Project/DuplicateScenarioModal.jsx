@@ -1,7 +1,7 @@
 import { Button, Form, Input, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../api/axios';
-import { useProjectStore } from './store';
+import { useProjectStore } from '../../stores/projectStore';
 import { getValidateScenarioNameFunc } from '../../utils/project';
 
 const DuplicateScenarioModal = ({

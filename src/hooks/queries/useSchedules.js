@@ -1,8 +1,8 @@
 import { useQueries } from '@tanstack/react-query';
 import { apiClient } from '../../api/axios';
 import { API_ENDPOINTS } from '../../api/endpoints';
-import { useProjectStore } from '../../components/Project/store';
-import { useFetchedSchedules } from '../../components/InputEditor/store';
+import { useProjectStore } from '../../stores/projectStore';
+import { useFetchedSchedules } from '../../stores/inputEditorStore';
 
 export function useSchedules() {
   const projectName = useProjectStore((state) => state.name);

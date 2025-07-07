@@ -10,7 +10,7 @@ import {
   useAddFetchedSchedule,
   useFetchedSchedules,
   useSetSelected,
-} from './store';
+} from '../../stores/inputEditorStore';
 import {
   useUpdateDaySchedule,
   useUpdateYearSchedule,

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
 import './DatabaseEditor.css';
 import Handsontable from 'handsontable';
 import { withErrorBoundary } from '../../utils/ErrorBoundary';

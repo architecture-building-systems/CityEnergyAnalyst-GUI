@@ -18,7 +18,7 @@ import {
   fetchProjectInfo,
   useFetchProjectChoices,
   useProjectStore,
-} from './Project/store';
+} from '../stores/projectStore';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {

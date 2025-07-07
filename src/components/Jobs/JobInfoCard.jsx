@@ -12,9 +12,8 @@ import {
   InformationIcon,
   StopIcon,
 } from '../../assets/icons';
-import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
-import { deleteJob } from '../../actions/jobs';
+import useJobsStore from '../../stores/jobsStore';
 
 import './JobInfoCard.css';
 import { apiClient } from '../../api/axios';
@@ -37,7 +36,7 @@ const useRefreshInterval = () => {
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const dispatch = useDispatch();
+  const { deleteJob } = useJobsStore();
   useRefreshInterval();
 
   const duration = job?.duration
@@ -189,7 +188,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
               className="cea-job-info-icon danger shake"
               onClick={(e) => {
                 stopPropagation(e);
-                dispatch(deleteJob(id));
+                deleteJob(id);
               }}
             />
           )}

@@ -4,8 +4,7 @@ import {
   GraphsIcon,
   InputEditorIcon,
 } from '../../../../assets/icons';
-import { useDispatch } from 'react-redux';
-import { push } from 'connected-react-router';
+import useNavigationStore from '../../../../stores/navigationStore';
 
 import routes from '../../../../constants/routes.json';
 import { useHoverGrow } from '../OverviewCard/hooks';
@@ -16,13 +15,13 @@ import { animated } from '@react-spring/web';
 const TEMP_DISABLED = ['Database Editor', 'Plots'];
 
 const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
-  const dispatch = useDispatch();
+  const { push } = useNavigationStore();
 
   const items = [
     {
       icon: DatabaseEditorIcon,
       title: 'Database Editor',
-      onClick: () => dispatch(push(routes.DATABASE_EDITOR)),
+      onClick: () => push(routes.DATABASE_EDITOR),
       hidden: !showTools,
     },
     {
@@ -34,7 +33,7 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
     {
       icon: GraphsIcon,
       title: 'Plots',
-      onClick: () => dispatch(push(routes.DASHBOARD)),
+      onClick: () => push(routes.DASHBOARD),
       hidden: !showTools,
     },
   ];

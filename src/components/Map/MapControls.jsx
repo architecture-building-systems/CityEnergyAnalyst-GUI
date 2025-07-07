@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import { useMapStore } from './store/store';
+import { useMapStore } from '../../stores/mapStore';
 import { CameraView, Compass, ExtrudeIcon } from '../../assets/icons';
 import { useInputs } from '../../hooks/queries/useInputs';
 import LayerToggle from './LayerToggle';

@@ -1,13 +1,7 @@
 import { forwardRef, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
-import {
-  updateDatabaseState,
-  updateDatabaseValidation,
-  updateDatabaseChanges,
-} from '../../actions/databaseEditor';
 import { RedoOutlined, UndoOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useEventListener } from '../../utils/hooks';

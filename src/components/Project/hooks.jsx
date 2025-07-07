@@ -1,6 +1,9 @@
 import routes from '../../constants/routes.json';
 import { useChangeRoute } from '../../utils/hooks';
-import { useSaveProjectToLocalStorage, useProjectStore } from './store';
+import {
+  useSaveProjectToLocalStorage,
+  useProjectStore,
+} from '../../stores/projectStore';
 import { message } from 'antd';
 import { apiClient } from '../../api/axios';
 

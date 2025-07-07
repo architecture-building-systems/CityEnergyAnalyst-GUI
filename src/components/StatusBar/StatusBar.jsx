@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
-import { updateJob, dismissJob } from '../../actions/jobs';
+import useJobsStore, {
+  useSelectedJob,
+  useShowJobInfo,
+} from '../../stores/jobsStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
 import socket from '../../socket';
 import { Button, Dropdown, notification } from 'antd';
-import { useSelectedJob, useShowJobInfo } from '../Jobs/store';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -16,7 +17,7 @@ import {
   LIFE_CYCLE_ANALYSIS,
 } from '../Map/Layers/constants';
 import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
-import { useToolStore } from '../Tools/store';
+import { useToolCardStore } from '../../stores/toolCardStore';
 import { PLOTS_PRIMARY_COLOR } from '../../constants/theme';
 import { apiClient } from '../../api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -143,9 +144,9 @@ const DismissCountdown = ({ duration, onComplete }) => {
 
 const JobStatusBar = () => {
   const [output, setMessage] = useState('');
-  const dispatch = useDispatch();
+  const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapLayer = useSetActiveMapLayer();
-  const setSelectedTool = useToolStore((state) => state.setVisibility);
+  const setSelectedTool = useToolCardStore((state) => state.setVisibility);
 
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();
@@ -170,7 +171,7 @@ const JobStatusBar = () => {
     });
 
     socket.on('cea-worker-started', (job) => {
-      dispatch(updateJob(job));
+      updateJob(job);
 
       const key = job.id;
       notification.info({
@@ -183,7 +184,7 @@ const JobStatusBar = () => {
       });
     });
     socket.on('cea-worker-success', (job) => {
-      dispatch(updateJob(job));
+      updateJob(job);
       setMessage(`jobID: ${job.id} - completed ✅`);
 
       // FIXME: check for exact plot script names instead
@@ -266,11 +267,11 @@ const JobStatusBar = () => {
       });
     });
     socket.on('cea-worker-canceled', (job) => {
-      dispatch(dismissJob(job));
+      dismissJob(job);
       setMessage(`jobID: ${job.id} - canceled ✖️`);
     });
     socket.on('cea-worker-error', (job) => {
-      dispatch(updateJob(job));
+      updateJob(job);
       setMessage(`jobID: ${job.id} - error ❗`);
 
       const key = job.id;

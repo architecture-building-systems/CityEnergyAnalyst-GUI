@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 
 import { useEffect } from 'react';
-import { useMapStore } from '../../../Map/store/store';
+import { useMapStore } from '../../../../stores/mapStore';
 import {
   SolarRadiationIcon,
   GraphsIcon,
@@ -18,7 +18,7 @@ import {
   LIFE_CYCLE_ANALYSIS,
 } from '../../../Map/Layers/constants';
 import { useGetMapLayerCategories } from '../../../Map/Layers/hooks';
-import { useProjectStore } from '../../store';
+import { useProjectStore } from '../../../../stores/projectStore';
 import { useActiveMapLayer, useSetActiveMapLayer } from './store';
 
 const MapLayersCard = ({ onLayerSelected }) => {
