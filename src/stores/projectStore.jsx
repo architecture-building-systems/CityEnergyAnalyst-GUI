@@ -72,8 +72,6 @@ export const useProjectStore = create((set) => ({
   setProject: (project) => set({ project }),
 
   fetchInfo: async (project) => {
-    console.log('Fetcthing project info', project);
-
     set({ isFetching: true, error: null });
     try {
       const data = await fetchProjectInfo(project);
@@ -222,7 +220,6 @@ export const useInitProjectStore = () => {
           localStorage.getItem(localStorageName) ||
             JSON.stringify(DEFAULT_PROJECT_PROPS),
         );
-        console.log('storedProject:', localStorageName, storedProject);
 
         // Set recent projects
         if (Array.isArray(storedProject?.recentProjects)) {
