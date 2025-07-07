@@ -317,7 +317,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
 const InputMap = ({ project, scenario }) => {
   const { data, refetch, isFetching, isError, error } = useInputs();
-  const { geojsons, colors } = data;
+  const { tables, geojsons, colors } = data;
 
   const [messageApi, contextHolder] = message.useMessage();
   const onError = (error) => {
@@ -370,7 +370,7 @@ const InputMap = ({ project, scenario }) => {
             fullscreen
           />
         )}
-        <DeckGLMap data={geojsons} colors={colors} />
+        <DeckGLMap data={geojsons} tables={tables} colors={colors} />
       </div>
     </>
   );

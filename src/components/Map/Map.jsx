@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 
 import { DeckGL } from '@deck.gl/react';
-import { GeoJsonLayer, PointCloudLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, PointCloudLayer, PolygonLayer } from '@deck.gl/layers';
 import { DataFilterExtension } from '@deck.gl/extensions';
 
 import positron from '../../constants/mapStyles/positron.json';
@@ -270,7 +270,7 @@ const useMapLayers = () => {
   return layers;
 };
 
-const DeckGLMap = ({ data, colors }) => {
+const DeckGLMap = ({ data, tables, colors }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
 
@@ -380,10 +380,11 @@ const DeckGLMap = ({ data, colors }) => {
 
     let _layers = [];
     if (data?.zone) {
+      const envelopeTable = tables?.envelope;
       _layers.push(
-        new GeoJsonLayer({
+        new PolygonLayer({
           id: 'zone',
-          data: data.zone,
+          data: data.zone?.features,
           opacity: 0.5,
           wireframe: true,
           filled: true,
@@ -394,7 +395,9 @@ const DeckGLMap = ({ data, colors }) => {
             specularColor: [0, 0, 0],
           },
 
-          getElevation: (f) => f.properties['height_ag'],
+          getPolygon: (f) => calcPolygonWithZ(f, envelopeTable),
+          getElevation: (f) =>
+            extruded ? calcPolygonElevation(f, envelopeTable) : 0,
           getFillColor: (f) =>
             buildingColor(f.properties[INDEX_COLUMN], 'zone'),
           updateTriggers: {
@@ -597,6 +600,30 @@ const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
   if (layer === 'surroundings') return colors.surroundings;
 
   return colors.disconnected;
+};
+
+const VOID_DECK_FLOOR_HEIGHT = 3;
+
+const calcPolygonWithZ = (feature, envelopeTable) => {
+  const name = feature?.properties?.name;
+  const coords = feature.geometry.coordinates;
+
+  if (name === null) return coords;
+
+  const voidDeckFloors = envelopeTable?.[name]?.void_deck ?? 0;
+  return coords.map((coord) =>
+    coord.map((c) => [c[0], c[1], voidDeckFloors * VOID_DECK_FLOOR_HEIGHT]),
+  );
+};
+
+const calcPolygonElevation = (feature, envelopeTable) => {
+  const name = feature?.properties?.name;
+  const height_ag = feature?.properties?.height_ag ?? 0;
+
+  if (name === null) return height_ag;
+
+  const voidDeckFloors = envelopeTable?.[name]?.void_deck ?? 0;
+  return height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT;
 };
 
 export default DeckGLMap;
