@@ -616,7 +616,7 @@ const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
 const VOID_DECK_FLOOR_HEIGHT = 3;
 
 const calcPolygonWithZ = (feature, envelopeTable) => {
-  const name = feature?.properties?.name;
+  const name = feature?.properties?.[INDEX_COLUMN];
   const coords = feature.geometry.coordinates;
 
   if (name === null) return coords;
@@ -628,7 +628,7 @@ const calcPolygonWithZ = (feature, envelopeTable) => {
 };
 
 const calcPolygonElevation = (feature, envelopeTable) => {
-  const name = feature?.properties?.name;
+  const name = feature?.properties?.[INDEX_COLUMN];
   const height_ag = feature?.properties?.height_ag ?? 0;
 
   if (name === null) return height_ag;
