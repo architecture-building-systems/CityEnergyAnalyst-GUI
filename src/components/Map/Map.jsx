@@ -617,7 +617,7 @@ const VOID_DECK_FLOOR_HEIGHT = 3;
 
 const calcPolygonWithZ = (feature, envelopeTable) => {
   const name = feature?.properties?.[INDEX_COLUMN];
-  const coords = feature.geometry.coordinates;
+  const coords = feature?.geometry?.coordinates ?? [];
 
   if (name === null) return coords;
 
