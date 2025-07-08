@@ -574,9 +574,9 @@ function updateTooltip(feature, envelopeTable) {
         innerHTML += `<div><b>GFA</b>: ${
           // Remove void_deck from GFA calculation
           Math.round(
-            (properties?.floors_ag +
-              properties?.floors_bg -
-              envelopeTable?.[properties?.[INDEX_COLUMN]]?.void_deck ?? 0) *
+            ((properties?.floors_ag ?? 0) +
+              (properties?.floors_bg ?? 0) -
+              (envelopeTable?.[properties?.[INDEX_COLUMN]]?.void_deck ?? 0)) *
               area *
               1000,
           ) / 1000
