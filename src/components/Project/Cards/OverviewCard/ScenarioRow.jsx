@@ -14,7 +14,7 @@ import { useOpenScenario } from '../../hooks';
 import { useChangesExist } from '../../../../stores/inputEditorStore';
 import DuplicateScenarioModal from '../../DuplicateScenarioModal';
 import DeleteScenarioModal from '../../DeleteScenarioModal';
-import { useScenarioLimits } from '../../../../stores/projectStore';
+import { useScenarioLimits } from '../../../../stores/serverStore';
 import { isElectron } from '../../../../utils/electron';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
