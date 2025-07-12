@@ -71,7 +71,6 @@
     "electron-log": "^5.4.0",
     "electron-updater": "^6.6.5",
     "handsontable": "^6",
-    "history": "^4.9.0",
     "html-react-parser": "^5.1.12",
     "javascript-color-gradient": "^2.5.0",
     "jszip": "^3.10.1",
@@ -81,8 +80,7 @@
     "react-dom": "^19.1.0",
     "react-map-gl": "^8.0.4",
     "react-markdown": "^10.1.0",
-    "react-router": "^5.0.1",
-    "react-router-dom": "^5.0.1",
+    "react-router": "^7.6.3",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.5.3",
@@ -94,18 +92,20 @@
     "appId": "com.cityenergyanalyst.gui",
     "productName": "CEA-4 Desktop",
     "directories": {
-      "output": "out"
+      "output": "out",
+      "buildResources": "build"
     },
     "files": [
       "dist/**",
-      "electron/**"
+      "electron/**",
+      "!node_modules/**/*",
+      "!src/**/*",
+      "!*.md",
+      "!.git/**/*"
     ],
     "mac": {
       "icon": "public/cea.png",
       "target": "default",
-      "files": [
-        "!node_modules/texture-compressor"
-      ],
       "extraResources": [
         {
           "from": "dependencies",

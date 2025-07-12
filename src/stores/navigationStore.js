@@ -1,39 +1,51 @@
 import { create } from 'zustand';
-import { createBrowserHistory } from 'history';
-
-// Create browser history instance
-export const history = createBrowserHistory();
 
 const useNavigationStore = create((set, get) => ({
-  location: history.location,
+  navigate: null,
+  location: null,
+
+  // Set navigate and location functions
+  setNavigation: (navigateFn, locationObj) => {
+    set({ navigate: navigateFn, location: locationObj });
+  },
 
   // Actions
   push: (path) => {
-    history.push(path);
-    set({ location: history.location });
+    const { navigate } = get();
+    if (navigate) {
+      navigate(path);
+    }
   },
 
   replace: (path) => {
-    history.replace(path);
-    set({ location: history.location });
+    const { navigate } = get();
+    if (navigate) {
+      navigate(path, { replace: true });
+    }
   },
 
   goBack: () => {
-    history.goBack();
-    set({ location: history.location });
+    const { navigate } = get();
+    if (navigate) {
+      navigate(-1);
+    }
   },
 
   goForward: () => {
-    history.goForward();
-    set({ location: history.location });
+    const { navigate } = get();
+    if (navigate) {
+      navigate(1);
+    }
   },
 
-  // Initialize listener
+  // Initialize - no longer needed with v7
   init: () => {
-    const unlisten = history.listen((location) => {
-      set({ location });
-    });
-    return unlisten;
+    return () => {}; // Return no-op cleanup function
+  },
+
+  // Update location from router
+  setLocation: (newLocation) => {
+    set({ location: newLocation });
   },
 }));
 

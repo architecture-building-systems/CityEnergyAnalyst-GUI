@@ -1,17 +1,21 @@
 import { Suspense, lazy, useEffect } from 'react';
-import { Switch, Route, Router } from 'react-router';
-import useNavigationStore, { history } from '../stores/navigationStore';
+import { Routes, Route, BrowserRouter, HashRouter } from 'react-router';
+import useNavigationStore from '../stores/navigationStore';
+import NavigationProvider from '../components/NavigationProvider';
+import { isElectron } from '../utils/electron';
 
 import routes from '../constants/routes.json';
 import Loading from '../components/Loading/Loading';
 
-const HomePage = lazy(() =>
-  Promise.all([
-    import('./HomePage'),
-    new Promise((resolve) => setTimeout(resolve, 1000)),
-  ]).then(([moduleExports]) => moduleExports),
-);
+// const HomePage = lazy(() =>
+//   Promise.all([
+//     import('./HomePage'),
+//     new Promise((resolve) => setTimeout(resolve, 1000)),
+//   ]).then(([moduleExports]) => moduleExports),
+// );
 
+// Route-level code splitting
+const HomePage = lazy(() => import('./HomePage'));
 const Splash = lazy(() => import('../components/Splash/Splash'));
 
 const useDevTitle = () => {
@@ -33,20 +37,31 @@ const App = () => {
     return init();
   }, [init]);
 
+  // Use HashRouter for Electron (file:// protocol), BrowserRouter for web
+  const Router = isElectron() ? HashRouter : BrowserRouter;
+
   return (
-    <Router history={history}>
-      <Switch>
-        <Route exact path={routes.SPLASH}>
-          <Suspense>
-            <Splash />
-          </Suspense>
-        </Route>
-        <Route path={routes.HOME}>
-          <Suspense fallback={<Loading />}>
-            <HomePage />
-          </Suspense>
-        </Route>
-      </Switch>
+    <Router>
+      <NavigationProvider>
+        <Routes>
+          <Route
+            path={routes.SPLASH}
+            element={
+              <Suspense>
+                <Splash />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/*"
+            element={
+              <Suspense fallback={<Loading />}>
+                <HomePage />
+              </Suspense>
+            }
+          />
+        </Routes>
+      </NavigationProvider>
     </Router>
   );
 };

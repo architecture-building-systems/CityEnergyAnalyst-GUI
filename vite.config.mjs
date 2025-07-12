@@ -14,13 +14,55 @@ export default defineConfig(({ mode }) => {
     },
     include: '**/*.svg',
   };
-  if (mode === 'electron')
+
+  const baseConfig = {
+    plugins: [react(), svgr(svgrOptions)],
+  };
+
+  if (mode === 'electron') {
     return {
-      plugins: [react(), svgr(svgrOptions)],
+      ...baseConfig,
       base: './',
     };
-  else
+  } else {
     return {
-      plugins: [react(), svgr(svgrOptions)],
+      ...baseConfig,
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: (id) => {
+              // Vendor chunks for better caching
+              if (id.includes('node_modules')) {
+                if (id.includes('react') || id.includes('react-dom')) {
+                  return 'react-vendor';
+                }
+                if (id.includes('react-router')) {
+                  return 'router-vendor';
+                }
+                if (id.includes('antd') || id.includes('@ant-design')) {
+                  return 'ui-vendor';
+                }
+                if (id.includes('@tanstack/react-query')) {
+                  return 'query-vendor';
+                }
+                if (id.includes('maplibre-gl') || id.includes('deck.gl')) {
+                  return 'map-vendor';
+                }
+                if (
+                  id.includes('zustand') ||
+                  id.includes('axios') ||
+                  id.includes('date-fns')
+                ) {
+                  return 'util-vendor';
+                }
+                return 'vendor';
+              }
+            },
+          },
+        },
+        // Optimize chunk size
+        chunkSizeWarningLimit: 1000,
+      },
     };
+  }
 });
