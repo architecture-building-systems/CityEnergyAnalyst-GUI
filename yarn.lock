@@ -6073,7 +6073,7 @@ __metadata:
     react-dom: "npm:^19.1.0"
     react-map-gl: "npm:^8.0.4"
     react-markdown: "npm:^10.1.0"
-    react-router: "npm:^7.0.2"
+    react-router: "npm:^7.6.3"
     rehype-raw: "npm:^7.0.0"
     remark-gfm: "npm:^4.0.1"
     socket.io-client: "npm:^4.5.3"
@@ -11996,7 +11996,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:^7.0.2":
+"react-router@npm:^7.6.3":
   version: 7.6.3
   resolution: "react-router@npm:7.6.3"
   dependencies:
