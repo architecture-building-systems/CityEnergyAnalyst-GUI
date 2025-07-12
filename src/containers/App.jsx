@@ -45,7 +45,6 @@ const App = () => {
       <NavigationProvider>
         <Routes>
           <Route
-            exact
             path={routes.SPLASH}
             element={
               <Suspense>
