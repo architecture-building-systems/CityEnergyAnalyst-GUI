@@ -92,18 +92,20 @@
     "appId": "com.cityenergyanalyst.gui",
     "productName": "CEA-4 Desktop",
     "directories": {
-      "output": "out"
+      "output": "out",
+      "buildResources": "build"
     },
     "files": [
       "dist/**",
-      "electron/**"
+      "electron/**",
+      "!node_modules/**/*",
+      "!src/**/*",
+      "!*.md",
+      "!.git/**/*"
     ],
     "mac": {
       "icon": "public/cea.png",
       "target": "default",
-      "files": [
-        "!node_modules/texture-compressor"
-      ],
       "extraResources": [
         {
           "from": "dependencies",

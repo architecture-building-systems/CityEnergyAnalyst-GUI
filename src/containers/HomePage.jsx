@@ -16,11 +16,12 @@ import { useInitProjectStore } from '../stores/projectStore';
 import Loading from '../components/Loading/Loading';
 import { apiClient } from '../api/axios';
 import { useInitUserInfo, useUserInfo } from '../stores/userStore';
-import UploadDownload from './UploadDownload';
 import { useFetchServerLimits } from '../stores/serverStore';
 
+// Route-level code splitting for better performance
 const Project = lazy(() => import('./Project'));
 const CreateScenario = lazy(() => import('./CreateScenario'));
+const UploadDownload = lazy(() => import('./UploadDownload'));
 // const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 // const DatabaseEditor = lazy(
 //   () => import('../components/DatabaseEditor/DatabaseEditor'),
@@ -76,20 +77,26 @@ const HomePageContent = () => {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path={routes.CREATE_SCENARIO} element={
-          <Suspense>
-            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
-              <CreateScenario />
-            </Cardwrapper>
-          </Suspense>
-        } />
-        <Route path={routes.UPLOAD_DOWNLOAD} element={
-          <Suspense>
-            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
-              <UploadDownload />
-            </Cardwrapper>
-          </Suspense>
-        } />
+        <Route
+          path={routes.CREATE_SCENARIO}
+          element={
+            <Suspense fallback={<Loading />}>
+              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+                <CreateScenario />
+              </Cardwrapper>
+            </Suspense>
+          }
+        />
+        <Route
+          path={routes.UPLOAD_DOWNLOAD}
+          element={
+            <Suspense fallback={<Loading />}>
+              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+                <UploadDownload />
+              </Cardwrapper>
+            </Suspense>
+          }
+        />
         {/* <Route path={routes.DASHBOARD} element={
           <Suspense>
             <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
@@ -130,11 +137,14 @@ const HomePageContent = () => {
             </Cardwrapper>
           </Suspense>
         } /> */}
-        <Route path={routes.PROJECT} element={
-          <Suspense fallback={<Loading />}>
-            <Project />
-          </Suspense>
-        } />
+        <Route
+          path={routes.PROJECT}
+          element={
+            <Suspense fallback={<Loading />}>
+              <Project />
+            </Suspense>
+          }
+        />
       </Routes>
     </ErrorBoundary>
   );
