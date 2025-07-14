@@ -21,11 +21,8 @@ import { useToolCardStore } from 'features/tools/stores/toolCardStore';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { apiClient } from 'lib/api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import {
-  helpMenuItems,
-  HelpMenuItemsLabel,
-  helpMenuUrls,
-} from 'features/project/components/Project/Cards/OverviewCard/constants';
+import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
+import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
 
 // TODO: get mappings from backend
 // Maps script name to map layer button name

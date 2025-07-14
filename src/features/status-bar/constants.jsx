@@ -3,12 +3,9 @@ import {
   FlagOutlined,
   MailOutlined,
   RocketOutlined,
-  StarOutlined,
   StarTwoTone,
   YoutubeOutlined,
 } from '@ant-design/icons';
-
-import { isElectron, openExternal } from 'utils/electron';
 
 export const helpMenuUrls = {
   'learning-camp': 'https://www.cityenergyanalyst.com/learning-camp',
@@ -19,15 +16,6 @@ export const helpMenuUrls = {
   contact: 'https://www.cityenergyanalyst.com/contact',
   'github-repo':
     'https://github.com/architecture-building-systems/CityEnergyAnalyst',
-};
-
-export const HelpMenuItemsLabel = ({ url, name }) => {
-  const navigate = () => {
-    if (isElectron()) openExternal(url);
-    else window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  return <div onClick={navigate}>{name}</div>;
 };
 
 export const helpMenuItems = [
