@@ -6,9 +6,10 @@
   display: flex;
   flex-direction: column;
 
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
 
   /* overflow: hidden; */
 }
@@ -20,4 +21,6 @@
   /* Minus the height of the status bar */
   height: calc(100% - 24px);
   width: 100%;
+
+  overflow: hidden;
 }
