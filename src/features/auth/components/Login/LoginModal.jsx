@@ -1,5 +1,8 @@
 import { Modal } from 'antd';
-import { useSetShowLoginModal, useShowLoginModal } from './store';
+import {
+  useSetShowLoginModal,
+  useShowLoginModal,
+} from '../../stores/login-modal';
 import LoginButton from './LoginButton';
 
 const LoginModal = () => {

@@ -15,7 +15,7 @@ import './Tool.css';
 import { ExternalLinkIcon } from 'assets/icons';
 
 import { apiClient } from 'lib/api/axios';
-import { useSetShowLoginModal } from 'features/auth/components/Login/store';
+import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';

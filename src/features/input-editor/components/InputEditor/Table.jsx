@@ -25,7 +25,7 @@ import {
   useSetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { useSetShowLoginModal } from 'features/auth/components/Login/store';
+import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
