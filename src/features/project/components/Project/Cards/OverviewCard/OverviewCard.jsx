@@ -22,7 +22,6 @@ const OverviewCard = ({
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 
         boxSizing: 'border-box',
-        maxHeight: '100%',
 
         display: 'flex',
         flexDirection: 'column',

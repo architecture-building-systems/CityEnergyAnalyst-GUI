@@ -36,6 +36,7 @@
   border-radius: 12px;
 
   height: fit-content;
+  max-width: fit-content;
 
   gap: 4px;
   padding: 6px;

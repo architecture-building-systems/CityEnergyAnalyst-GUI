@@ -1,8 +1,6 @@
 .cea-job-info-card-list {
   transition: max-height 0.3s ease-in-out;
 
-  width: 100%;
-  position: relative;
   display: flex;
   flex-direction: column-reverse;
   gap: 4px;
@@ -10,13 +8,10 @@
   pointer-events: auto;
 }
 
-.cea-job-info-card-list.collapsed {
-  height: fit-content;
-}
-
 .cea-job-info-card-list.expanded {
-  max-height: 100%;
-  border-radius: 16px;
+  position: relative;
+
+  overflow: auto;
 }
 
 .cea-job-info-card-list .cea-job-info-card {

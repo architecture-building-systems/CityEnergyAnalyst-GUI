@@ -32,6 +32,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const selectedTool = useToolCardStore((state) => state.selectedTool);
   const setSelectedTool = useToolCardStore((state) => state.setVisibility);
 
+  const showRightSidebar = !hideAll && (showTools || showVisualisation);
+
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
     setShowTools(true);
@@ -92,123 +94,81 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   }, [name, scenarioName]);
 
   return (
-    <div id="cea-project-overlay">
-      <div id="cea-project-overlay-left">
-        <div id="cea-project-overlay-left-top">
-          {hideAll && (
-            <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
-              <ShowHideCardsButton onToggle={handleHideAll} />
-            </div>
-          )}
+    <div
+      id="cea-project-overlay"
+      className={showRightSidebar ? 'show-right-sidebar' : ''}
+    >
+      <div id="cea-project-overlay-left-sidebar">
+        {hideAll && (
+          <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
+            <ShowHideCardsButton onToggle={handleHideAll} />
+          </div>
+        )}
 
-          {transitionFromLeft((styles, item) =>
-            item ? (
-              <animated.div
+        {transitionFromLeft((styles, item) =>
+          item ? (
+            <animated.div style={styles}>
+              <div
                 style={{
-                  ...styles,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
                   height: '100%',
                   width: '100%',
-                  display: 'flex',
-                  gap: 12,
                 }}
               >
-                <div
-                  style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
-                >
-                  <div
-                    className="cea-overlay-card"
-                    style={{
-                      // TODO: Make this dynamic
-                      // height: '33vh',
-                      minWidth: 280,
-                      width: '15vw',
-                    }}
-                  >
-                    <OverviewCard
-                      project={project}
-                      projectName={name}
-                      scenarioName={scenarioName}
-                      scenarioList={scenarioList}
-                      onToggleHideAll={handleHideAll}
-                    />
-                  </div>
-                  {!isElectron() && (
-                    // FIXME: Login disabled for electron
-                    <div className="cea-overlay-card">
-                      <UserInfo />
-                    </div>
-                  )}
+                <div className="cea-overlay-card">
+                  <OverviewCard
+                    project={project}
+                    projectName={name}
+                    scenarioName={scenarioName}
+                    scenarioList={scenarioList}
+                    onToggleHideAll={handleHideAll}
+                  />
                 </div>
-                <Toolbar
-                  showTools={!!scenarioName}
-                  onToolSelected={handleToolSelected}
-                />
-              </animated.div>
-            ) : null,
-          )}
-        </div>
-        <div id="cea-project-overlay-left-bottom">
-          <MapLayerPropertiesCard />
-          {transitionFromBottom((styles, item) =>
-            item ? (
-              <animated.div
-                className="cea-overlay-card"
-                style={{
-                  ...styles,
-                  borderRadius: 12,
-                  boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+                {!isElectron() && (
+                  // FIXME: Login disabled for electron
+                  <div className="cea-overlay-card">
+                    <UserInfo />
+                  </div>
+                )}
+              </div>
+            </animated.div>
+          ) : null,
+        )}
+      </div>
 
-                  // TODO: Make this dynamic
-                  maxHeight: '30vh',
-                  overflow: 'auto',
+      <div id="cea-project-header">
+        <Toolbar
+          showTools={!!scenarioName}
+          onToolSelected={handleToolSelected}
+        />
+      </div>
 
-                  flexGrow: 1,
-                }}
-              >
-                <InputTable />
-              </animated.div>
-            ) : null,
-          )}
+      <div id="cea-project-overlay-content" className="overlay-flex-column">
+        <MapLayerPropertiesCard />
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 12,
-              height: 55,
-              alignItems: 'center',
-            }}
-          >
-            {!hideAll && (
-              <BottomToolButtons
-                onOpenInputEditor={() => setInputEditor((prev) => !prev)}
-                showTools={!!scenarioName}
-              />
-            )}
-            <div
+        {transitionFromBottom((styles, item) =>
+          item ? (
+            <animated.div
               className="cea-overlay-card"
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                ...styles,
                 borderRadius: 12,
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
-                boxSizing: 'border-box',
-                height: '100%',
-
-                display: 'flex',
-                alignItems: 'center',
-
-                fontSize: 12,
+                overflow: 'auto',
+                maxHeight: '30vh',
               }}
             >
-              <MapControls />
-            </div>
-
-            <MapLayersCard onLayerSelected={handleLayerSelected} />
-          </div>
-        </div>
+              <InputTable />
+            </animated.div>
+          ) : null,
+        )}
       </div>
-      <div id="cea-project-overlay-right">
-        <div style={{ minHeight: 0, flexGrow: 1 }}>
+
+      <div id="cea-project-overlay-right-sidebar">
+        <div style={{ height: '100%' }}>
           {transitionToolsFromRight((styles, item) =>
             item ? (
               <animated.div className="cea-overlay-card-full" style={styles}>
@@ -249,7 +209,49 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             ) : null,
           )}
         </div>
-        <JobInfoList style={{ maxHeight: '33%' }} />
+      </div>
+
+      <div id="cea-project-overlay-bottom-bar">
+        <div
+          style={{
+            display: 'flex',
+            gap: 12,
+            height: 55,
+            alignItems: 'center',
+          }}
+        >
+          {!hideAll && (
+            <BottomToolButtons
+              onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+              showTools={!!scenarioName}
+            />
+          )}
+          <div
+            className="cea-overlay-card"
+            // FIXME: Move to CSS
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderRadius: 12,
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+
+              boxSizing: 'border-box',
+              height: '100%',
+
+              display: 'flex',
+              alignItems: 'center',
+
+              fontSize: 12,
+            }}
+          >
+            <MapControls />
+          </div>
+
+          <MapLayersCard onLayerSelected={handleLayerSelected} />
+        </div>
+      </div>
+
+      <div id="cea-project-overlay-status">
+        <JobInfoList />
       </div>
     </div>
   );
