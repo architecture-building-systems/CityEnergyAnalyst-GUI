@@ -12,7 +12,7 @@ import {
   useFetchProjectChoices,
   useSaveProjectToLocalStorage,
 } from 'features/project/stores/projectStore';
-import { useOpenScenario } from 'features/project/components/Project/hooks';
+import { useOpenScenario } from 'features/project/hooks';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { useMapStore } from 'features/map/stores/mapStore';

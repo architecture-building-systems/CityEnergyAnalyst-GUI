@@ -33,7 +33,7 @@ import { calcBoundsAndCenter } from 'features/map/components/Map/utils';
 
 import routes from 'constants/routes.json';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useOpenScenario } from 'features/project/components/Project/hooks';
+import { useOpenScenario } from 'features/project/hooks';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { apiClient } from 'lib/api/axios';
 

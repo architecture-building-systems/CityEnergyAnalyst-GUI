@@ -13,7 +13,7 @@ import {
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
 import { useEffect, useMemo, useState } from 'react';
-import { useOpenScenario } from 'features/project/components/Project/hooks';
+import { useOpenScenario } from 'features/project/hooks';
 import {
   fetchProjectInfo,
   useFetchProjectChoices,

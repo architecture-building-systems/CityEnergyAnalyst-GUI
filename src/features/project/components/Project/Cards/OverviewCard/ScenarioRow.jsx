@@ -10,7 +10,7 @@ import {
 } from 'assets/icons';
 
 import './OverviewCard.css';
-import { useOpenScenario } from 'features/project/components/Project/hooks';
+import { useOpenScenario } from 'features/project/hooks';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import DuplicateScenarioModal from 'features/project/components/Project/DuplicateScenarioModal';
 import DeleteScenarioModal from 'features/project/components/Project/DeleteScenarioModal';
