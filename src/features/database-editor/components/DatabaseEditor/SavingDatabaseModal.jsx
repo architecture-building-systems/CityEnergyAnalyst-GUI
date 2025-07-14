@@ -4,7 +4,7 @@ import { ExportDatabaseButton } from './DatabaseEditor';
 import './DatabaseEditor.css';
 import { AsyncError } from 'utils/AsyncError';
 import routes from 'constants/routes.json';
-import { useChangeRoute } from 'utils/hooks';
+import { useChangeRoute } from 'hooks';
 
 const SavingDatabaseModal = ({ visible, hideModal, error, success }) => {
   const goToScript = useChangeRoute(`${routes.TOOLS}/archetypes-mapper`);

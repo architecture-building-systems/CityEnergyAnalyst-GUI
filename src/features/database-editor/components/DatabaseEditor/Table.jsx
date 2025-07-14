@@ -4,7 +4,7 @@ import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import { RedoOutlined, UndoOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { useEventListener } from 'utils/hooks';
+import { useEventListener } from 'hooks';
 
 const Table = forwardRef((props, ref) => {
   // useResizeActiveTable(ref);

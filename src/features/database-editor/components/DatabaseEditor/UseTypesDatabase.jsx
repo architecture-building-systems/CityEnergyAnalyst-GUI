@@ -5,7 +5,7 @@ import './DatabaseEditor.css';
 import Table from './Table';
 import routes from 'constants/routes.json';
 import { getTableSchema } from './Database';
-import { useChangeRoute } from 'utils/hooks';
+import { useChangeRoute } from 'hooks';
 
 const UseTypesDatabase = ({ name, data, schema }) => {
   const useTypes = Object.keys(data['SCHEDULES']);

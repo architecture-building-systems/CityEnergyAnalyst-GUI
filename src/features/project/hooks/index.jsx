@@ -1,5 +1,5 @@
 import routes from 'constants/routes.json';
-import { useChangeRoute } from 'utils/hooks';
+import { useChangeRoute } from 'hooks';
 import {
   useSaveProjectToLocalStorage,
   useProjectStore,
