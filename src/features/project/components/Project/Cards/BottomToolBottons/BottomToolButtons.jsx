@@ -3,7 +3,7 @@ import { DatabaseEditorIcon, GraphsIcon, InputEditorIcon } from 'assets/icons';
 import useNavigationStore from 'stores/navigationStore';
 
 import routes from 'constants/routes.json';
-import { useHoverGrow } from 'features/project/components/Project/Cards/OverviewCard/hooks';
+import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { animated } from '@react-spring/web';
 

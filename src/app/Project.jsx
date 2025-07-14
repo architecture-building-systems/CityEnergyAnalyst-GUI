@@ -11,7 +11,7 @@ import './Project.css';
 import BottomToolButtons from 'features/project/components/Project/Cards/BottomToolBottons/BottomToolButtons';
 import { useTransition, animated } from '@react-spring/web';
 import { ShowHideCardsIcon } from 'assets/icons';
-import { useHoverGrow } from 'features/project/components/Project/Cards/OverviewCard/hooks';
+import { useHoverGrow } from 'features/project/hooks/hover-grow';
 import MapControls from 'features/map/components/Map/MapControls';
 import MapLayersCard from 'features/project/components/Project/Cards/MapLayersCard/MapLayersCard';
 import { useToolCardStore } from 'features/tools/stores/toolCardStore';

@@ -3,7 +3,7 @@ import Parameter from './Parameter';
 import { Button, Collapse, Form } from 'antd';
 import { animated } from '@react-spring/web';
 
-import { useHoverGrow } from 'features/project/components/Project/Cards/OverviewCard/hooks';
+import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 
