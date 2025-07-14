@@ -4,7 +4,7 @@ import {
   EMTPY_GEOMETRY,
   GENERATE_STREET_CEA,
   GENERATE_TERRAIN_CEA,
-} from './constants';
+} from 'features/scenario/constants';
 import { isElectron, openExternal } from 'utils/electron';
 import { SelectWithFileDialog } from './FormInput';
 import { apiClient } from 'lib/api/axios';

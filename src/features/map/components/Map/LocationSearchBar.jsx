@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 import { Input } from 'antd';
 
-import { EXAMPLE_CITIES } from 'features/project/components/Project/CreateScenarioForms/constants';
+import { EXAMPLE_CITIES } from 'features/scenario/constants';
 import { useGeocodeLocation } from 'features/map/hooks';
 
 const LocationSearchBar = ({ onLocationResult }) => {

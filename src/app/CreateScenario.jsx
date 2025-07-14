@@ -19,14 +19,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import NameForm from 'features/project/components/Project/CreateScenarioForms/NameForm';
-import GeometryForm from 'features/project/components/Project/CreateScenarioForms/GeometryForm';
-import ContextForm from 'features/project/components/Project/CreateScenarioForms/ContextForm';
+import NameForm from 'features/scenario/components/CreateScenarioForms/NameForm';
+import GeometryForm from 'features/scenario/components/CreateScenarioForms/GeometryForm';
+import ContextForm from 'features/scenario/components/CreateScenarioForms/ContextForm';
 import {
   MapFormContext,
   useFetchDatabases,
   useFetchWeather,
-} from 'features/project/hooks/create-scenario-forms';
+} from 'features/scenario/hooks/create-scenario-forms';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useCameraForBounds } from 'features/map/hooks';
 import { calcBoundsAndCenter } from 'features/map/components/Map/utils';

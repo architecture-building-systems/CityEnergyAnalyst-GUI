@@ -5,9 +5,9 @@ import {
   GENERATE_ZONE_CEA,
   GENERATE_SURROUNDINGS_CEA,
   EMTPY_GEOMETRY,
-} from './constants';
+} from 'features/scenario/constants';
 import { FileDialog, SelectWithFileDialog } from './FormInput';
-import { MapFormContext } from 'features/project/hooks/create-scenario-forms';
+import { MapFormContext } from 'features/scenario/hooks/create-scenario-forms';
 import { useFetchBuildingsFromPath } from 'features/map/hooks';
 import { isElectron } from 'utils/electron';
 import { apiClient } from 'lib/api/axios';
