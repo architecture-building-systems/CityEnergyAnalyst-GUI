@@ -249,9 +249,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             ) : null,
           )}
         </div>
-        <div style={{ maxHeight: '33%' }}>
-          <JobInfoList />
-        </div>
+        <JobInfoList style={{ maxHeight: '33%' }} />
       </div>
     </div>
   );
