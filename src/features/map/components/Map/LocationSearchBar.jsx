@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Input } from 'antd';
 
 import { EXAMPLE_CITIES } from 'features/project/components/Project/CreateScenarioForms/constants';
-import { useGeocodeLocation } from '../../hooks';
+import { useGeocodeLocation } from 'features/map/hooks';
 
 const LocationSearchBar = ({ onLocationResult }) => {
   const randomCity = useRef(

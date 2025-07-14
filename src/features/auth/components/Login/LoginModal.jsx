@@ -2,7 +2,7 @@ import { Modal } from 'antd';
 import {
   useSetShowLoginModal,
   useShowLoginModal,
-} from '../../stores/login-modal';
+} from 'features/auth/stores/login-modal';
 import LoginButton from './LoginButton';
 
 const LoginModal = () => {

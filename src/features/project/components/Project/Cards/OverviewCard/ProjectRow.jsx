@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import NewProjectModal from '../../NewProjectModal';
+import NewProjectModal from 'features/project/components/Project/NewProjectModal';
 import { Button, Divider, message, Select, Tooltip } from 'antd';
 import {
   BinAnimationIcon,

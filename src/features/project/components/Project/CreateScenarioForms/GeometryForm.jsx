@@ -7,7 +7,7 @@ import {
   EMTPY_GEOMETRY,
 } from './constants';
 import { FileDialog, SelectWithFileDialog } from './FormInput';
-import { MapFormContext } from './hooks';
+import { MapFormContext } from 'features/project/hooks/create-scenario-forms';
 import { useFetchBuildingsFromPath } from 'features/map/hooks';
 import { isElectron } from 'utils/electron';
 import { apiClient } from 'lib/api/axios';
