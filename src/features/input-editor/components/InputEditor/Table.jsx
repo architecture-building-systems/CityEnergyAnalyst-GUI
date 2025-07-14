@@ -6,7 +6,7 @@ import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
 import { getOperatingSystem } from 'utils';
-import { AsyncError } from 'utils/AsyncError';
+import { AsyncError } from 'components/AsyncError';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useToolCardStore } from 'features/tools/stores/toolCardStore';

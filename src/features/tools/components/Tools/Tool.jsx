@@ -9,7 +9,7 @@ import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
 import useToolsStore from 'features/tools/stores/toolsStore';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 import { withErrorBoundary } from 'utils/ErrorBoundary';
-import { AsyncError } from 'utils/AsyncError';
+import { AsyncError } from 'components/AsyncError';
 
 import './Tool.css';
 import { ExternalLinkIcon } from 'assets/icons';

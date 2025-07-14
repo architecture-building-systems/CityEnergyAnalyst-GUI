@@ -2,7 +2,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import { ExportDatabaseButton } from './DatabaseEditor';
 import './DatabaseEditor.css';
-import { AsyncError } from 'utils/AsyncError';
+import { AsyncError } from 'components/AsyncError';
 import routes from 'constants/routes.json';
 import { useChangeRoute } from 'hooks';
 

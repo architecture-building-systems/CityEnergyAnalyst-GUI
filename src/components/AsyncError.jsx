@@ -1,5 +1,5 @@
 import { Result } from 'antd';
-import { isElectron, openExternal } from './electron';
+import { isElectron, openExternal } from '../utils/electron';
 
 // TODO: Find way to show error log
 export function AsyncError({ title = 'Something went wrong', error }) {

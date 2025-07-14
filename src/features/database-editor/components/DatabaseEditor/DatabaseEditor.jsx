@@ -6,7 +6,7 @@ import CenterSpinner from 'components/CenterSpinner';
 import ExportDatabaseModal from './ExportDatabaseModal';
 import './DatabaseEditor.css';
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
-import { AsyncError } from 'utils/AsyncError';
+import { AsyncError } from 'components/AsyncError';
 import SavingDatabaseModal from './SavingDatabaseModal';
 import DatabaseTopMenu from './DatabaseTopMenu';
 import Database from './Database';
