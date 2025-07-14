@@ -1,7 +1,7 @@
 import { Divider } from 'antd';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
-import { ShowHideCardsButton } from 'app/Project';
+import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
 
 import CeaLogoSVG from 'assets/cea-logo.svg';
 
