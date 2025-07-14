@@ -7,7 +7,7 @@ import { GeoJsonLayer } from 'deck.gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 
 import { useCameraForBounds, useFetchBuildings } from 'features/map/hooks';
-import { calcBoundsAndCenter, EMPTY_FEATURE } from './utils';
+import { calcBoundsAndCenter, EMPTY_FEATURE } from '../../utils';
 
 import { Map, useControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';

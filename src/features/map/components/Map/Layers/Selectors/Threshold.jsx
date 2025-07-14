@@ -1,5 +1,5 @@
 import { Slider } from 'antd';
-import { formatNumber } from 'features/map/components/Map/utils';
+import { formatNumber } from 'features/map/utils';
 import { useMemo, useState } from 'react';
 
 const ceilToSignificantDigits = (num, digits) => {

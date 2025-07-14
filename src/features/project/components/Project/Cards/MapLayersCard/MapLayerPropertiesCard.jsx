@@ -1,7 +1,7 @@
 import ParameterSelectors from 'features/map/components/Map/Layers/Selectors/base';
 import Legend from 'features/map/components/Map/Layers/Legend';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { useGetMapLayers } from 'features/map/components/Map/Layers/hooks';
+import { useGetMapLayers } from 'features/map/hooks/map-layers';
 import { useEffect } from 'react';
 import { Alert } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';

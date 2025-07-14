@@ -16,8 +16,8 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
-} from 'features/map/components/Map/Layers/constants';
-import { useGetMapLayerCategories } from 'features/map/components/Map/Layers/hooks';
+} from 'features/map/constants';
+import { useGetMapLayerCategories } from 'features/map/hooks/map-layers';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useActiveMapLayer, useSetActiveMapLayer } from './store';
 

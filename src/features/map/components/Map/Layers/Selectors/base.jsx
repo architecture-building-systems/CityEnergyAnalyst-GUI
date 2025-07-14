@@ -1,5 +1,5 @@
 import TimeSeriesSelector from './TimeSeries';
-import ThresholdSelector from './Threhold';
+import ThresholdSelector from './Threshold';
 import { useMemo, useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import ChoiceSelector from './Choice';

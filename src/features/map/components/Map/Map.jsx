@@ -27,9 +27,9 @@ import {
   LIFE_CYCLE_ANALYSIS,
   DEFAULT_LEGEND_COLOUR_ARRAY,
   DEFAULT_LEGEND_POINTS,
-} from './Layers/constants';
+} from '../../constants';
 import Gradient from 'javascript-color-gradient';
-import { hexToRgb } from './utils';
+import { hexToRgb } from '../../utils';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {

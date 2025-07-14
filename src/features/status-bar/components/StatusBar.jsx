@@ -15,7 +15,7 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
-} from 'features/map/components/Map/Layers/constants';
+} from 'features/map/constants';
 import { useSetActiveMapLayer } from 'features/project/components/Project/Cards/MapLayersCard/store';
 import { useToolCardStore } from 'features/tools/stores/toolCardStore';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';

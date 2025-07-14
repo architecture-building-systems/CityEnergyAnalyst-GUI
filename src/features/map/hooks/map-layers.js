@@ -5,7 +5,7 @@ import {
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   LIFE_CYCLE_ANALYSIS,
-} from './constants';
+} from 'features/map/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
