@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router';
 
 import routes from 'constants/routes.json';
 import useNavigationStore from 'stores/navigationStore';
-import StatusBar from 'components/StatusBar/StatusBar';
+import StatusBar from 'features/status-bar/components/StatusBar';
 
 import './HomePage.css';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';

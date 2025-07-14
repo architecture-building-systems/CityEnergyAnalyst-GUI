@@ -23,7 +23,7 @@ import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import RecentProjects from 'features/project/components/Project/RecentProjects';
 import UserInfo from 'components/UserInfo';
 import { isElectron } from 'utils/electron';
-import { VIEW_PLOT_RESULTS } from 'components/StatusBar/StatusBar';
+import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 
 const Project = () => {
