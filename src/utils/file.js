@@ -1,5 +1,5 @@
 import path from 'path-browserify';
-import { apiClient } from '../api/axios';
+import { apiClient } from 'lib/api/axios';
 
 export class FileNotFoundError extends Error {
   constructor(message, options) {

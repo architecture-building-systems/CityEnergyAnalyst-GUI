@@ -1,0 +1,26 @@
+#homepage-container {
+  background: #fff;
+  height: 100vh;
+  width: 100vw;
+
+  display: flex;
+  flex-direction: column;
+
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* overflow: hidden; */
+}
+
+#homepage-content-container {
+  display: flex;
+  flex-direction: column;
+
+  /* Minus the height of the status bar */
+  height: calc(100% - 24px);
+  width: 100%;
+
+  overflow: hidden;
+}

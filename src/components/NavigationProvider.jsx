@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import useNavigationStore from '../stores/navigationStore';
+import useNavigationStore from 'stores/navigationStore';
 
 const NavigationProvider = ({ children }) => {
   const navigate = useNavigate();
