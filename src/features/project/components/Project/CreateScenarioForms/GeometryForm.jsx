@@ -8,7 +8,7 @@ import {
 } from './constants';
 import { FileDialog, SelectWithFileDialog } from './FormInput';
 import { MapFormContext } from './hooks';
-import { useFetchBuildingsFromPath } from 'features/map/components/Map/hooks';
+import { useFetchBuildingsFromPath } from 'features/map/hooks';
 import { isElectron } from 'utils/electron';
 import { apiClient } from 'lib/api/axios';
 import { useBuildingLimits } from 'stores/serverStore';

@@ -28,7 +28,7 @@ import {
   useFetchWeather,
 } from 'features/project/components/Project/CreateScenarioForms/hooks';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useCameraForBounds } from 'features/map/components/Map/hooks';
+import { useCameraForBounds } from 'features/map/hooks';
 import { calcBoundsAndCenter } from 'features/map/components/Map/utils';
 
 import routes from 'constants/routes.json';
