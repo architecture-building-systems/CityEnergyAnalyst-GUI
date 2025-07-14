@@ -3,12 +3,12 @@ import { ConfigProvider } from 'antd';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Project/Cards/OverviewCard/OverviewCard';
 import Toolbar from 'features/project/components/Project/Cards/Toolbar/Toolbar';
-import ToolCard from 'features/project/components/Project/Cards/ToolCard/ToolCard';
+import ToolCard from 'features/project/components/Project/Cards/ToolCard';
 import BottomToolButtons from 'features/project/components/Project/Cards/BottomToolBottons/BottomToolButtons';
 import MapControls from 'features/map/components/Map/MapControls';
 import MapLayersCard from 'features/project/components/Project/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
-import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
+
 import UserInfo from 'components/UserInfo';
 import ShowHideCardsButton from 'components/ShowHideCardsButton';
 import InputTable from './InputTable';
@@ -17,6 +17,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { isElectron } from 'utils/electron';
 import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -207,22 +208,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         </div>
       </div>
       <div id="cea-project-overlay-right">
-        <div id="cea-project-overlay-right-top">
+        <div style={{ minHeight: 0, flexGrow: 1 }}>
           {transitionToolsFromRight((styles, item) =>
             item ? (
-              <animated.div
-                className="cea-overlay-card"
-                style={{
-                  ...styles,
-
-                  width: '33vw',
-                  minWidth: 450,
-                  height: '100%', // Make it full height
-                }}
-              >
+              <animated.div className="cea-overlay-card-full" style={styles}>
                 {showTools ? (
                   <ToolCard
-                    className="cea-overlay-card"
                     selectedTool={selectedTool}
                     onClose={() => setShowTools(false)}
                     onToolSelected={handleToolSelected}
@@ -236,16 +227,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
           {transitionVisualisationFromRight((styles, item) =>
             item ? (
-              <animated.div
-                className="cea-overlay-card"
-                style={{
-                  ...styles,
-
-                  width: '33vw',
-                  minWidth: 450,
-                  height: '100%', // Make it full height
-                }}
-              >
+              <animated.div className="cea-overlay-card-full" style={styles}>
                 <ConfigProvider
                   theme={{
                     token: {
@@ -255,7 +237,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 >
                   {showVisualisation && selectedTool ? (
                     <ToolCard
-                      className="cea-overlay-card"
                       selectedTool={selectedTool}
                       onClose={() => setVisualisation(false)}
                       onToolSelected={handleToolSelected}
@@ -268,25 +249,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             ) : null,
           )}
         </div>
-        <div id="cea-project-overlay-right-bottom"></div>
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-
-          height: '33vh',
-          width: '33vw',
-          minWidth: 450,
-
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-
-          margin: 12,
-        }}
-      >
-        <JobInfoList />
+        <div style={{ maxHeight: '33%' }}>
+          <JobInfoList />
+        </div>
       </div>
     </div>
   );

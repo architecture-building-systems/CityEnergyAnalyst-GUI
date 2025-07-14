@@ -18,8 +18,14 @@
   overflow: hidden;
 }
 
-#cea-project-overlay .cea-overlay-card {
+.cea-overlay-card {
   pointer-events: auto;
+}
+
+.cea-overlay-card-full {
+  pointer-events: auto;
+  height: 100%;
+  width: 100%;
 }
 
 #cea-project-overlay-left {
@@ -35,6 +41,7 @@
 
 #cea-project-overlay-right {
   height: 100%;
+  width: 750px;
 
   display: flex;
   flex-direction: column;
@@ -55,11 +62,4 @@
   justify-content: flex-end;
 
   gap: 12px;
-}
-
-#cea-project-overlay-right-top {
-  height: calc(100% - 67px);
-}
-
-#cea-project-overlay-right-bottom {
 }
