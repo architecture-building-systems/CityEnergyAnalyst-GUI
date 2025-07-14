@@ -1,5 +1,5 @@
 import { Button, Steps } from 'antd';
-import { memo, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import NameForm from 'features/scenario/components/CreateScenarioForms/NameForm';
 import GeometryForm from 'features/scenario/components/CreateScenarioForms/GeometryForm';
 import ContextForm from 'features/scenario/components/CreateScenarioForms/ContextForm';
@@ -18,16 +18,28 @@ export const CreateScenarioForm = memo(function CreateScenarioForm({
   formIndex,
   onFormChange,
 }) {
+  const timeoutRef = useRef();
+
   const project = useProjectStore((state) => state.project);
   const openScenario = useOpenScenario(routes.PROJECT);
+
   const { setFormData, fetching, error } = useCreateScenario(project, {
     // Redirect to input editor when scenario is created
     onSuccess: ({ scenario_name }) => {
       setSuccess(true);
       // Delay before redirecting to input editor
-      setTimeout(() => openScenario(project, scenario_name), 2000);
+      timeoutRef.current = setTimeout(
+        () => openScenario(project, scenario_name),
+        2000,
+      );
     },
   });
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const [success, setSuccess] = useState(false);
   const [showModal, setShowModal] = useState(false);
