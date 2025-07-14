@@ -14,7 +14,7 @@ import {
 } from './Modals';
 import {
   ModalContext,
-  useModalManager,
+  ModalManager,
 } from 'features/dashboard/hooks/modal-manager';
 import { RowLayout, GridLayout } from './Layouts';
 import './Dashboard.css';
@@ -46,7 +46,7 @@ const Dashboard = () => {
   const dashboardNames = dashboards.map((dashboard) => dashboard.name);
 
   return (
-    <useModalManager modals={modals}>
+    <ModalManager modals={modals}>
       <div id="cea-dashboard-content">
         <div id="cea-dashboard-content-title" style={{ margin: 5 }}>
           <DashSelect
@@ -112,7 +112,7 @@ const Dashboard = () => {
         fetchDashboards={fetchDashboards}
       />
       <ModalPlotFiles activePlotRef={activePlotRef} dashIndex={dashIndex} />
-    </useModalManager>
+    </ModalManager>
   );
 };
 
