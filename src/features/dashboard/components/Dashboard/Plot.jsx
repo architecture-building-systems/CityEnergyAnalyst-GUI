@@ -9,7 +9,7 @@ import Icon, {
 } from '@ant-design/icons';
 import { Button, Card, Tooltip, Spin, Empty, Dropdown } from 'antd';
 import parser from 'html-react-parser';
-import { ModalContext } from 'utils/ModalManager';
+import { ModalContext } from 'features/dashboard/hooks/modal-manager';
 import { apiClient } from 'lib/api/axios';
 
 const defaultPlotStyle = {

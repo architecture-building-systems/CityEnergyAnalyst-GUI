@@ -3,7 +3,7 @@ import { FolderOutlined } from '@ant-design/icons';
 import { Form } from '@ant-design/compatible';
 import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import { apiClient } from 'lib/api/axios';
-import { ModalContext } from 'utils/ModalManager';
+import { ModalContext } from 'features/dashboard/hooks/modal-manager';
 import Parameter from 'features/tools/components/Tools/Parameter';
 import { basename, dirname } from 'utils/file';
 

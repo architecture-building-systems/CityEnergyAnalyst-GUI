@@ -1,7 +1,7 @@
 import { createContext, useState } from 'react';
 
 export const ModalContext = createContext();
-export const ModalManager = ({ modals, children }) => {
+export const useModalManager = ({ modals, children }) => {
   const [visible, setVisible] = useState(createState());
 
   function createState() {
