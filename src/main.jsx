@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './containers/App';
-import './app.global.css';
+
+import App from 'app/App';
+import 'app.global.css';
 
 import '@ant-design/v5-patch-for-react-19';
 

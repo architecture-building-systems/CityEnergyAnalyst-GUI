@@ -1,4 +1,4 @@
-import { CloudUploadIcon } from '../assets/icons';
+import { CloudUploadIcon } from 'assets/icons';
 import {
   Button,
   Form,
@@ -13,12 +13,12 @@ import {
 import Dragger from 'antd/es/upload/Dragger';
 import JSZip from 'jszip';
 import { useEffect, useMemo, useState } from 'react';
-import { useOpenScenario } from './Project/hooks';
+import { useOpenScenario } from 'features/project/components/Project/hooks';
 import {
   fetchProjectInfo,
   useFetchProjectChoices,
   useProjectStore,
-} from '../stores/projectStore';
+} from 'features/project/stores/projectStore';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {

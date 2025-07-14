@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import { Input } from 'antd';
 import './SearchBar.css';
-import { apiClient } from '../../api/axios';
+import { apiClient } from 'lib/api/axios';
 
 const DOCS_URL = 'https://city-energy-analyst.readthedocs.io/en/latest/';
 

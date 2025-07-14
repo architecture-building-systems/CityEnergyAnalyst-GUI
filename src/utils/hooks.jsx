@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import useNavigationStore from '../stores/navigationStore';
+import useNavigationStore from 'stores/navigationStore';
 
 export const useAsyncData = (
   url = '',

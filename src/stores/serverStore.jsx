@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/axios';
-import { useProjectStore } from './projectStore';
+import { apiClient } from 'lib/api/axios';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 const useServerStore = create((set) => ({
   limits: null,

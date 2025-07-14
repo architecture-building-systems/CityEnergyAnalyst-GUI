@@ -3,11 +3,11 @@ import { useState, useEffect, useMemo } from 'react';
 import useJobsStore, {
   useSelectedJob,
   useShowJobInfo,
-} from '../../stores/jobsStore';
+} from 'features/jobs/stores/jobsStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
-import socket from '../../socket';
+import socket from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
 import {
   DEMAND,
@@ -15,17 +15,17 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
-} from '../Map/Layers/constants';
-import { useSetActiveMapLayer } from '../Project/Cards/MapLayersCard/store';
-import { useToolCardStore } from '../../stores/toolCardStore';
-import { PLOTS_PRIMARY_COLOR } from '../../constants/theme';
-import { apiClient } from '../../api/axios';
+} from 'features/map/components/Map/Layers/constants';
+import { useSetActiveMapLayer } from 'features/project/components/Project/Cards/MapLayersCard/store';
+import { useToolCardStore } from 'features/tools/stores/toolCardStore';
+import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { apiClient } from 'lib/api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import {
   helpMenuItems,
   HelpMenuItemsLabel,
   helpMenuUrls,
-} from '../../components/Project/Cards/OverviewCard/constants';
+} from 'features/project/components/Project/Cards/OverviewCard/constants';
 
 // TODO: get mappings from backend
 // Maps script name to map layer button name

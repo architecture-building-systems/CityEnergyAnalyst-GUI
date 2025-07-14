@@ -49,6 +49,7 @@
     "prettier": "^3.2.5",
     "vite": "^7.0.0",
     "vite-plugin-svgr": "^4.2.0",
+    "vite-tsconfig-paths": "^5.1.4",
     "wait-on": "^8.0.1"
   },
   "dependencies": {
