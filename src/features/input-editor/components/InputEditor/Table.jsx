@@ -11,7 +11,7 @@ import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useToolCardStore } from 'features/tools/stores/toolCardStore';
 
-import { INDEX_COLUMN } from './constants';
+import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
 import {
   useDeleteBuildings,

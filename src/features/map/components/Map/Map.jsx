@@ -31,7 +31,7 @@ import {
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from './utils';
 
-import { INDEX_COLUMN } from 'features/input-editor/components/InputEditor/constants';
+import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
   useSelected,
   useSetSelected,

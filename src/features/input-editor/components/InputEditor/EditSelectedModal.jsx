@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, Input, Select } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
-import { INDEX_COLUMN } from './constants';
+import { INDEX_COLUMN } from 'features/input-editor/components/InputEditor/Table';
 import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 
 const EditSelectedModal = ({

@@ -5,7 +5,7 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import './ScheduleEditor.css';
 import { months_short } from 'constants/months';
 import { Tabs, Spin } from 'antd';
-import { INDEX_COLUMN } from './constants';
+import { INDEX_COLUMN } from '../../constants';
 import {
   useAddFetchedSchedule,
   useFetchedSchedules,
