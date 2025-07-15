@@ -2,6 +2,7 @@ import { Button } from 'antd';
 import { InformationIcon } from 'assets/icons';
 import {
   toolTypes,
+  useCloseToolCard,
   useSetToolType,
   useToolType,
 } from 'features/project/stores/tool-card';
@@ -9,6 +10,8 @@ import {
 export const ToolCardSideButtons = () => {
   const toolType = useToolType();
   const setToolType = useSetToolType();
+
+  const closeToolCard = useCloseToolCard();
 
   return (
     <div
@@ -26,13 +29,21 @@ export const ToolCardSideButtons = () => {
       }}
     >
       <Button
-        onClick={() => setToolType(toolTypes.TOOLS)}
+        onClick={() =>
+          toolType !== toolTypes.TOOLS
+            ? setToolType(toolTypes.TOOLS)
+            : closeToolCard()
+        }
         type={toolType === toolTypes.TOOLS ? 'primary' : 'default'}
       >
         Tools
       </Button>
       <Button
-        onClick={() => setToolType(toolTypes.BUILDING_INFO)}
+        onClick={() =>
+          toolType !== toolTypes.BUILDING_INFO
+            ? setToolType(toolTypes.BUILDING_INFO)
+            : closeToolCard()
+        }
         type={toolType === toolTypes.BUILDING_INFO ? 'primary' : 'default'}
       >
         <InformationIcon />

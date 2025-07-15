@@ -52,8 +52,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   };
 
   const handleLayerSelected = (layer) => {
-    if (layer) {
-      const plotScriptName = VIEW_PLOT_RESULTS?.[layer?.name] ?? null;
+    const plotScriptName = VIEW_PLOT_RESULTS?.[layer?.name];
+    if (plotScriptName) {
       setSelectedPlotTool(plotScriptName);
       setToolType(toolTypes.MAP_LAYERS);
     }
