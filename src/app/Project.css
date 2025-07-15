@@ -17,12 +17,12 @@
   display: grid;
   gap: 8px;
   grid-template-areas:
-    'left-sidebar header header'
-    'left-sidebar . right-sidebar'
-    'content content content'
-    'bottom-bar bottom-bar status';
+    'left-sidebar header header right-sidebar'
+    'left-sidebar . . right-sidebar'
+    'content content content right-sidebar'
+    'bottom-bar bottom-bar status right-sidebar';
 
-  grid-template-columns: 280px 1fr 480px;
+  grid-template-columns: 280px 1fr 480px 0px;
   grid-template-rows: auto 1fr auto auto;
 }
 
@@ -32,6 +32,8 @@
     'left-sidebar header right-sidebar'
     'content content right-sidebar'
     'bottom-bar bottom-bar status';
+
+  grid-template-columns: 280px 1fr 480px;
 }
 
 .cea-overlay-card {
@@ -71,6 +73,7 @@
 
 #cea-project-overlay-right-sidebar {
   grid-area: right-sidebar;
+  position: relative;
 }
 
 #cea-project-overlay-status {

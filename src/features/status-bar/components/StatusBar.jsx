@@ -17,7 +17,7 @@ import {
   LIFE_CYCLE_ANALYSIS,
 } from 'features/map/constants';
 import { useSetActiveMapLayer } from 'features/project/components/Project/Cards/MapLayersCard/store';
-import { useToolCardStore } from 'features/tools/stores/toolCardStore';
+import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { apiClient } from 'lib/api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -134,7 +134,7 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapLayer = useSetActiveMapLayer();
-  const setSelectedTool = useToolCardStore((state) => state.setVisibility);
+  const setSelectedTool = useSelectedToolStore((state) => state.setVisibility);
 
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();

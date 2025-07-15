@@ -1,8 +1,19 @@
 import { VerticalLeftOutlined } from '@ant-design/icons';
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button } from 'antd';
+import { Button, ConfigProvider } from 'antd';
 
-const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
+import {
+  useCloseToolCard,
+  toolTypes,
+  useToolType,
+} from 'features/project/stores/tool-card';
+import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+
+const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
+  const toolType = useToolType();
+  const closeToolCard = useCloseToolCard();
+
+  // TODO: Move to CSS
   return (
     <div
       style={{
@@ -20,17 +31,30 @@ const ToolCard = ({ selectedTool, onClose, onToolSelected }) => {
         padding: 12,
       }}
     >
-      <Tool
-        script={selectedTool}
-        onToolSelected={onToolSelected}
-        header={
-          <Button
-            icon={<VerticalLeftOutlined />}
-            onClick={() => onClose?.(true)}
-            style={{ marginRight: 'auto', padding: 12 }}
-          />
-        }
+      <Button
+        icon={<VerticalLeftOutlined />}
+        onClick={closeToolCard}
+        style={{ marginLeft: 'auto', padding: 12 }}
       />
+      {toolType == toolTypes.TOOLS &&
+        (selectedTool != null ? (
+          <Tool script={selectedTool} onToolSelected={onToolSelected} />
+        ) : (
+          <div>No tool selected</div>
+        ))}
+
+      {toolType == toolTypes.MAP_LAYERS && (
+        <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: PLOTS_PRIMARY_COLOR,
+            },
+          }}
+        >
+          <Tool script={selectedPlotTool} onToolSelected={onToolSelected} />
+        </ConfigProvider>
+      )}
+      {toolType == toolTypes.BUILDING_INFO && <div>Building Info</div>}
     </div>
   );
 };

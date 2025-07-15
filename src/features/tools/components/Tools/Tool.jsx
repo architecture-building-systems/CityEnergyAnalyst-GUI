@@ -338,6 +338,8 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-end',
+
+                  marginLeft: 'auto',
                 }}
               >
                 <span>{category}</span>
