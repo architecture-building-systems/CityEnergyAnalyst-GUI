@@ -20,6 +20,9 @@
   overflow: auto;
 
   backdrop-filter: blur(10px);
+
+  border-radius: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .cea-job-info-card-list .cea-job-info-card {
