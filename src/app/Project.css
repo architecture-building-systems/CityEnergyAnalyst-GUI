@@ -75,6 +75,7 @@
 
 #cea-project-overlay-status {
   grid-area: status;
+  position: relative;
 }
 
 /* #cea-project-overlay-left {
