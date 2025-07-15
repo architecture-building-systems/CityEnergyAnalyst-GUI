@@ -138,7 +138,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         )}
       </div>
 
-      <div id="cea-project-header">
+      <div id="cea-project-overlay-header">
         <Toolbar
           showTools={!!scenarioName}
           onToolSelected={handleToolSelected}
