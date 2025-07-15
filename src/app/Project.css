@@ -17,8 +17,8 @@
   display: grid;
   gap: 8px;
   grid-template-areas:
-    'left-sidebar header right-sidebar'
-    'left-sidebar header right-sidebar'
+    'left-sidebar header header'
+    'left-sidebar . right-sidebar'
     'content content content'
     'bottom-bar bottom-bar status';
 
@@ -56,6 +56,9 @@
 
 #cea-project-overlay-header {
   grid-area: header;
+
+  /* Allow shrinking below content size */
+  min-width: 0;
 }
 
 #cea-project-overlay-content {
