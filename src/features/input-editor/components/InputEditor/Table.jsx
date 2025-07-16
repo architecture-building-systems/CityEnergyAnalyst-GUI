@@ -158,9 +158,16 @@ const InputEditorButtons = ({ changes }) => {
     });
   };
 
+  if (!changes?.length) return <div></div>;
+
   return (
     <div style={{ display: 'flex', gap: 10 }}>
-      <Button type="primary" disabled={noChanges} onClick={_saveChanges}>
+      <Button
+        type="primary"
+        disabled={noChanges}
+        onClick={_saveChanges}
+        size="small"
+      >
         Save
       </Button>
       <Button
@@ -168,6 +175,7 @@ const InputEditorButtons = ({ changes }) => {
         disabled={noChanges}
         onClick={_discardChanges}
         danger
+        size="small"
       >
         Discard Changes
       </Button>
