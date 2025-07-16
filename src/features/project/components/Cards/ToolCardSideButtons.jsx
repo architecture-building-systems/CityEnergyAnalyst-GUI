@@ -1,5 +1,6 @@
-import { Button } from 'antd';
-import { InformationIcon } from 'assets/icons';
+import { Button, ConfigProvider } from 'antd';
+import { GraphsIcon, InformationIcon } from 'assets/icons';
+import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import {
   toolTypes,
   useCloseToolCard,
@@ -49,6 +50,24 @@ export const ToolCardSideButtons = () => {
         <InformationIcon />
         Building Info
       </Button>
+
+      {toolType == toolTypes.MAP_LAYERS && (
+        <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: PLOTS_PRIMARY_COLOR,
+            },
+          }}
+        >
+          <Button
+            onClick={closeToolCard}
+            type={toolType === toolTypes.MAP_LAYERS ? 'primary' : 'default'}
+          >
+            <GraphsIcon />
+            Visualization
+          </Button>
+        </ConfigProvider>
+      )}
     </div>
   );
 };
