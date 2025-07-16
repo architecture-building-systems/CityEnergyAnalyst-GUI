@@ -35,46 +35,45 @@ const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
 
   return (
-    <>
-      <InputEditorButtons changes={changes} />
+    <div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <InputEditorButtons changes={changes} />
 
-      <Card
-        styles={{ header: { backgroundColor: '#f1f1f1' } }}
-        size="small"
-        title={
-          <Tooltip placement="right" title={title}>
-            <InfoCircleOutlined />
-          </Tooltip>
-        }
-        extra={
-          <TableButtons
+        <TableButtons
+          selected={selected}
+          tabulator={tabulator}
+          tab={tab}
+          tables={tables}
+          columns={columns}
+        />
+      </div>
+
+      <ErrorBoundary>
+        {tab == 'schedules' ? (
+          <ScheduleEditor
+            tabulator={tabulator}
             selected={selected}
+            tables={tables}
+          />
+        ) : (
+          <TableEditor
             tabulator={tabulator}
             tab={tab}
+            selected={selected}
             tables={tables}
             columns={columns}
           />
-        }
-      >
-        <ErrorBoundary>
-          {tab == 'schedules' ? (
-            <ScheduleEditor
-              tabulator={tabulator}
-              selected={selected}
-              tables={tables}
-            />
-          ) : (
-            <TableEditor
-              tabulator={tabulator}
-              tab={tab}
-              selected={selected}
-              tables={tables}
-              columns={columns}
-            />
-          )}
-        </ErrorBoundary>
-      </Card>
-    </>
+        )}
+      </ErrorBoundary>
+    </div>
   );
 };
 
