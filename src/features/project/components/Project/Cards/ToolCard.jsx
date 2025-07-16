@@ -8,6 +8,8 @@ import {
   useToolType,
 } from 'features/project/stores/tool-card';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { BuildingEditor } from 'features/building-editor/components/building-editor';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
   const toolType = useToolType();
@@ -15,47 +17,61 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
 
   // TODO: Move to CSS
   return (
-    <div
-      style={{
-        background: '#fff',
+    <ErrorBoundary>
+      <div
+        style={{
+          background: '#fff',
 
-        borderRadius: 12,
-        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+          borderRadius: 12,
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: 12,
 
-        height: '100%',
-        boxSizing: 'border-box',
-        padding: 12,
-      }}
-    >
-      <Button
-        icon={<VerticalLeftOutlined />}
-        onClick={closeToolCard}
-        style={{ marginLeft: 'auto', padding: 12 }}
-      />
-      {toolType == toolTypes.TOOLS &&
-        (selectedTool != null ? (
-          <Tool script={selectedTool} onToolSelected={onToolSelected} />
-        ) : (
-          <div>No tool selected</div>
-        ))}
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: 14,
 
-      {toolType == toolTypes.MAP_LAYERS && (
-        <ConfigProvider
-          theme={{
-            token: {
-              colorPrimary: PLOTS_PRIMARY_COLOR,
-            },
+            flexShrink: 0,
           }}
         >
-          <Tool script={selectedPlotTool} onToolSelected={onToolSelected} />
-        </ConfigProvider>
-      )}
-      {toolType == toolTypes.BUILDING_INFO && <div>Building Info</div>}
-    </div>
+          <Button
+            icon={<VerticalLeftOutlined />}
+            onClick={closeToolCard}
+            style={{ marginLeft: 'auto', padding: 12 }}
+          />
+        </div>
+
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          {toolType == toolTypes.TOOLS &&
+            (selectedTool != null ? (
+              <Tool script={selectedTool} onToolSelected={onToolSelected} />
+            ) : (
+              <div>No tool selected</div>
+            ))}
+
+          {toolType == toolTypes.MAP_LAYERS && (
+            <ConfigProvider
+              theme={{
+                token: {
+                  colorPrimary: PLOTS_PRIMARY_COLOR,
+                },
+              }}
+            >
+              <Tool script={selectedPlotTool} onToolSelected={onToolSelected} />
+            </ConfigProvider>
+          )}
+          {toolType == toolTypes.BUILDING_INFO && <BuildingEditor />}
+        </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

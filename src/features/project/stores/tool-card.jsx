@@ -3,7 +3,7 @@ import { create } from 'zustand';
 
 export const toolTypes = {
   TOOLS: 'tools',
-  MAP_LAYERS: 'map-layers',
+  MAP_LAYERS: 'visualization',
   BUILDING_INFO: 'building-info',
 };
 
