@@ -18,6 +18,7 @@ import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
 import ToolForm, { ToolFormButtons } from './ToolForm';
 import { ToolDescription } from 'features/tools/components/tool-description';
+import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -209,6 +210,8 @@ const Tool = ({ script, onToolSelected, header }) => {
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const { fetchToolParams, resetToolParams } = useToolsStore();
 
+  const changes = useChangesExist();
+
   const {
     category,
     label,
@@ -359,6 +362,19 @@ const Tool = ({ script, onToolSelected, header }) => {
               disabled={disableButtons}
             />
           </div>
+
+          {changes && (
+            <Alert
+              message={
+                <>
+                  Unsaved changes detected. <br />
+                  Save or discard before proceeding.
+                </>
+              }
+              type="warning"
+              showIcon
+            />
+          )}
 
           <ScriptSuggestions
             onToolSelected={onToolSelected}
