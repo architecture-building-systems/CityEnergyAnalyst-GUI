@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import NewProjectModal from 'features/project/components/Project/NewProjectModal';
+import NewProjectModal from 'features/project/components/modals/NewProjectModal';
 import { Button, Divider, message, Select, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
@@ -17,8 +17,8 @@ import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { isElectron } from 'utils/electron';
-import OpenProjectModal from 'features/project/components/Project/OpenProjectModal';
-import DeleteProjectModal from 'features/project/components/Project/DeleteProjectModal';
+import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
+import DeleteProjectModal from 'features/project/components/modals/DeleteProjectModal';
 import { useProjectLimits } from 'stores/serverStore';
 
 const ProjectRow = ({ projectName }) => {
