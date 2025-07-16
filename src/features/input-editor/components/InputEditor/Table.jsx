@@ -91,7 +91,8 @@ const InputEditorButtons = ({ changes }) => {
   };
 
   const noChanges =
-    !Object.keys(changes.update).length && !Object.keys(changes.delete).length;
+    !Object.keys(changes?.update ?? {}).length &&
+    !Object.keys(changes?.delete ?? {}).length;
 
   const _saveChanges = () => {
     Modal.confirm({
@@ -158,7 +159,7 @@ const InputEditorButtons = ({ changes }) => {
     });
   };
 
-  if (!changes?.length) return <div></div>;
+  if (noChanges) return <div></div>;
 
   return (
     <div style={{ display: 'flex', gap: 10 }}>
