@@ -161,7 +161,9 @@ export const BuildingEditor = () => {
           <Form
             form={form}
             labelCol={{ span: 6 }}
+            size="small"
             onValuesChange={onValuesChange}
+            labelWrap
           >
             <CategoryForm
               category={category}
