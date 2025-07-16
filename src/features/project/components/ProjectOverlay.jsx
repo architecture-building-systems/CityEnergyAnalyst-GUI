@@ -26,6 +26,7 @@ import {
   useSelectedToolStore,
   useSelectedPlotToolStore,
 } from 'features/tools/stores/selected-tool';
+import { useSelected } from 'features/input-editor/stores/inputEditorStore';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -45,6 +46,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const setSelectedPlotTool = useSelectedPlotToolStore(
     (state) => state.setSelectedPlotTool,
   );
+  const selectedBuildings = useSelected();
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
@@ -90,10 +92,15 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
+  // Close tool card when project or scenario name changes
   useEffect(() => {
     closeToolCard();
     setInputEditor(false);
   }, [name, scenarioName, closeToolCard]);
+
+  useEffect(() => {
+    if (selectedBuildings.length > 0) setToolType(toolTypes.BUILDING_INFO);
+  }, [selectedBuildings, setToolType]);
 
   return (
     <div
@@ -178,6 +185,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 <ToolCard
                   selectedTool={selectedTool}
                   selectedPlotTool={selectedPlotTool}
+                  selectedBuildings={selectedBuildings}
                   onToolSelected={handleToolSelected}
                 />
               ) : (
