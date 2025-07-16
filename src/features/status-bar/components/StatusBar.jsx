@@ -16,7 +16,7 @@ import {
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
 } from 'features/map/constants';
-import { useSetActiveMapLayer } from 'features/project/components/Project/Cards/MapLayersCard/store';
+import { useSetActiveMapLayer } from 'features/project/components/Cards/MapLayersCard/store';
 import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { apiClient } from 'lib/api/axios';

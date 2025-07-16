@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTransition, animated } from '@react-spring/web';
-import OverviewCard from 'features/project/components/Project/Cards/OverviewCard/OverviewCard';
-import Toolbar from 'features/project/components/Project/Cards/Toolbar/Toolbar';
-import ToolCard from 'features/project/components/Project/Cards/ToolCard';
-import BottomToolButtons from 'features/project/components/Project/Cards/BottomToolBottons/BottomToolButtons';
+import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
+import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
+import ToolCard from 'features/project/components/Cards/ToolCard';
+import BottomToolButtons from 'features/project/components/Cards/BottomToolBottons/BottomToolButtons';
 import MapControls from 'features/map/components/Map/MapControls';
-import MapLayersCard from 'features/project/components/Project/Cards/MapLayersCard/MapLayersCard';
-import MapLayerPropertiesCard from 'features/project/components/Project/Cards/MapLayersCard/MapLayerPropertiesCard';
+import MapLayersCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
+import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 import UserInfo from 'components/UserInfo';
 import ShowHideCardsButton from 'components/ShowHideCardsButton';
@@ -21,7 +21,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { isElectron } from 'utils/electron';
 import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
-import { ToolCardSideButtons } from 'features/project/components/Project/Cards/ToolCardSideButtons';
+import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
 import {
   useSelectedToolStore,
   useSelectedPlotToolStore,
