@@ -225,12 +225,29 @@ const ProjectSelect = ({ projectName }) => {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [deleteProjectVisible, setDeleteProjectVisible] = useState(false);
 
+  const changes = useChangesExist();
+
   const [choices] = useFetchProjectChoices();
   const updateScenario = useProjectStore((state) => state.updateScenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
   const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
 
   const handleChange = async (value) => {
+    if (changes) {
+      message.config({
+        top: 120,
+        maxCount: 1,
+      });
+      message.warning(
+        <div style={{ padding: 8 }}>
+          There are still unsaved changes.
+          <br />
+          <i>Save or discard changes before refreshing.</i>
+        </div>,
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       updateScenario(null);
