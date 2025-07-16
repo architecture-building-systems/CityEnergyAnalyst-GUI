@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card, Button, Modal, message, Tooltip, Space } from 'antd';
+import { InfoCircleOutlined, MenuOutlined } from '@ant-design/icons';
+import { Card, Button, Modal, message, Tooltip, Dropdown } from 'antd';
 import EditSelectedModal from './EditSelectedModal';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -294,26 +294,39 @@ const TableButtons = ({ selected, tabulator, tables, tab, columns }) => {
     setModalVisible(true);
   };
 
+  const items = [
+    {
+      label: 'Select All',
+      onClick: selectAll,
+    },
+    {
+      label: 'Filter on Selection',
+      onClick: filterSelected,
+    },
+    selectedInTable && {
+      type: 'divider',
+    },
+    selectedInTable &&
+      tab != 'schedules' && {
+        label: 'Edit Selection',
+        onClick: editSelected,
+      },
+    selectedInTable && {
+      label: 'Clear Selection',
+      onClick: clearSelected,
+    },
+    selectedInTable && {
+      label: 'Delete Selection',
+      onClick: deleteSelected,
+      danger: true,
+    },
+  ];
+
   return (
-    <Space>
-      <Button onClick={selectAll}>Select All</Button>
-      <Button
-        type={filterToggle ? 'primary' : 'default'}
-        onClick={filterSelected}
-      >
-        Filter on Selection
-      </Button>
-      {selectedInTable ? (
-        <>
-          {tab != 'schedules' && (
-            <Button onClick={editSelected}>Edit Selection</Button>
-          )}
-          <Button onClick={clearSelected}>Clear Selection</Button>
-          <Button onClick={deleteSelected} danger>
-            Delete Selection
-          </Button>
-        </>
-      ) : null}
+    <>
+      <Dropdown menu={{ items }} placement="bottomRight">
+        <Button icon={<MenuOutlined />}></Button>
+      </Dropdown>
       <EditSelectedModal
         visible={modalVisible}
         setVisible={setModalVisible}
@@ -321,7 +334,7 @@ const TableButtons = ({ selected, tabulator, tables, tab, columns }) => {
         table={tab}
         columns={columns}
       />
-    </Space>
+    </>
   );
 };
 
