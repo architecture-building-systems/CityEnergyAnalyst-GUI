@@ -83,7 +83,6 @@ const CategoryForm = ({ data, columns, form, category }) => {
         <Collapse
           items={[
             {
-              // key: '1',
               label: 'Other Properties',
               children: others.map((property) => itemFromProperty(property)),
             },
@@ -98,6 +97,8 @@ export const BuildingEditor = () => {
   const [form] = Form.useForm();
   const buildings = useSelected();
   const building = buildings?.[0];
+
+  const category = 'zone';
 
   // Get first building for now
   const { data, columns, updateData } = useBuildingData(building);
@@ -123,7 +124,7 @@ export const BuildingEditor = () => {
     if (!building) return;
 
     updateData(
-      'zone',
+      category,
       [building],
       Object.keys(changedValues).map((key) => ({
         property: key,
@@ -157,7 +158,7 @@ export const BuildingEditor = () => {
             onValuesChange={onValuesChange}
           >
             <CategoryForm
-              category="zone"
+              category={category}
               data={data}
               columns={columns}
               form={form}
