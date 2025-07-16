@@ -65,6 +65,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [showInputEditor, setInputEditor] = useState(false);
   const showToolCard = !hideAll && toolType != null;
 
+  const closeInputEditor = () => {
+    setInputEditor(false);
+  };
+
   const handleHideAll = () => {
     setHideAll((prev) => !prev);
   };
@@ -173,7 +177,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 maxHeight: '30vh',
               }}
             >
-              <InputTable />
+              <InputTable onClose={closeInputEditor} />
             </animated.div>
           ) : null,
         )}

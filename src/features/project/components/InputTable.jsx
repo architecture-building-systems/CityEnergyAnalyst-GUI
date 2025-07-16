@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Tabs } from 'antd';
+import { Button, Tabs } from 'antd';
 import Table from 'features/input-editor/components/InputEditor/Table';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
+import { VerticalLeftOutlined } from '@ant-design/icons';
 
-const InputTable = () => {
+const InputTable = ({ onClose }) => {
   const { data } = useInputs();
   const { tables, columns } = data;
 
@@ -39,6 +40,17 @@ const InputTable = () => {
         onChange={setTab}
         animated={false}
         items={tabItems}
+        tabBarExtraContent={
+          <div style={{ marginBottom: 12 }}>
+            <Button
+              icon={<VerticalLeftOutlined rotate={90} />}
+              onClick={onClose}
+              style={{ marginLeft: 'auto', padding: 12 }}
+              size="small"
+              title="Minimize"
+            />
+          </div>
+        }
       />
       <div
         className="cea-input-editor-table"
