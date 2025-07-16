@@ -12,6 +12,7 @@ const InputItem = ({ form, property, initialValue, description }) => {
       initialValue={initialValue}
       help={description}
       inputComponent={<Input />}
+      required
     />
   );
 };
@@ -29,6 +30,7 @@ const SelectItem = ({ form, property, initialValue, description, choices }) => {
       initialValue={initialValue}
       help={description}
       inputComponent={<Select options={options} />}
+      required
     />
   );
 };
