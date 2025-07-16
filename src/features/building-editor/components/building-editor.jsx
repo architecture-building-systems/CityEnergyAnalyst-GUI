@@ -44,6 +44,12 @@ const CategoryForm = ({ data, columns, form, category }) => {
     const initialValue = properties[property];
     const columnProperties = categoryColumns?.[property];
 
+    const description = (
+      <div>
+        {columnProperties?.description} {columnProperties?.unit}
+      </div>
+    );
+
     return (
       <div key={property}>
         {columnProperties?.choices ? (
@@ -51,7 +57,7 @@ const CategoryForm = ({ data, columns, form, category }) => {
             form={form}
             property={property}
             initialValue={initialValue}
-            description={columnProperties?.description}
+            description={description}
             choices={columnProperties.choices}
           />
         ) : (
@@ -59,7 +65,7 @@ const CategoryForm = ({ data, columns, form, category }) => {
             form={form}
             property={property}
             initialValue={initialValue}
-            description={columnProperties?.description}
+            description={description}
           />
         )}
       </div>
