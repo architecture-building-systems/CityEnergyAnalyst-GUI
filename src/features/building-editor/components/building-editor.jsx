@@ -1,6 +1,6 @@
 import { useSelected } from 'features/input-editor/stores/inputEditorStore';
 import { useBuildingData } from '../hooks/building-data';
-import { Divider, Input, Form, Select } from 'antd';
+import { Divider, Input, Form, Select, Collapse } from 'antd';
 import { FormItemWrapper } from 'features/tools/components/Tools/Parameter';
 import { useEffect } from 'react';
 
@@ -35,41 +35,61 @@ const SelectItem = ({ form, property, initialValue, description, choices }) => {
 
 const CategoryForm = ({ data, columns, form, category }) => {
   const properties = data?.[category];
+  const categoryColumns = columns?.[category];
 
   if (properties == undefined) return null;
+  const others = [];
+
+  const itemFromProperty = (property) => {
+    const initialValue = properties[property];
+    const columnProperties = categoryColumns?.[property];
+
+    return (
+      <div key={property}>
+        {columnProperties?.choices ? (
+          <SelectItem
+            form={form}
+            property={property}
+            initialValue={initialValue}
+            description={columnProperties?.description}
+            choices={columnProperties.choices}
+          />
+        ) : (
+          <InputItem
+            form={form}
+            property={property}
+            initialValue={initialValue}
+            description={columnProperties?.description}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div style={{ height: '100%', overflow: 'auto' }}>
-      {/* <h3>{category}</h3> */}
-
+    <div style={{ height: '100%', overflow: 'auto', padding: 12 }}>
       {Object.keys(properties).map((property) => {
+        const columnProperties = categoryColumns?.[property];
+
         if (property == 'reference') return null;
-
-        const initialValue = properties[property];
-        const columnProperties = columns?.[category]?.[property];
-        console.log('columnProperties', columnProperties);
-
-        return (
-          <div key={property}>
-            {columnProperties?.choices ? (
-              <SelectItem
-                form={form}
-                property={property}
-                initialValue={initialValue}
-                description={columnProperties?.description}
-                choices={columnProperties.choices}
-              />
-            ) : (
-              <InputItem
-                form={form}
-                property={property}
-                initialValue={initialValue}
-                description={columnProperties?.description}
-              />
-            )}
-          </div>
-        );
+        if (columnProperties?.description == undefined) {
+          others.push(property);
+          return null;
+        }
+        return itemFromProperty(property);
       })}
+
+      {others.length > 0 && (
+        <Collapse
+          items={[
+            {
+              // key: '1',
+              label: 'Other Properties',
+              children: others.map((property) => itemFromProperty(property)),
+            },
+          ]}
+        />
+      )}
     </div>
   );
 };
@@ -116,14 +136,15 @@ export const BuildingEditor = () => {
     <div
       style={{
         height: '100%',
-        padding: 12,
 
         display: 'flex',
         flexDirection: 'column',
+
+        boxSizing: 'border-box',
       }}
     >
       <div>
-        <div>{building}</div>
+        <b>{building}</b>
       </div>
 
       <Divider />
