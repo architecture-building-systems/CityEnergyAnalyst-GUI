@@ -208,7 +208,7 @@ const useToolForm = (
   return { form, getForm, runScript, saveParams, setDefault };
 };
 
-const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
+const Tool = ({ script, onToolSelected, header }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const { fetchToolParams, resetToolParams } = useToolsStore();
@@ -435,6 +435,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
       </div>
     </Spin>
   );
-});
+};
 
 export default Tool;
