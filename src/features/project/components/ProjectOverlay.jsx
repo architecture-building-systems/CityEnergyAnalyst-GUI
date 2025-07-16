@@ -200,7 +200,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         )}
       </div>
 
-      <div id="cea-project-overlay-bottom-bar">
+      <div
+        id="cea-project-overlay-bottom-bar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
         <div
           style={{
             display: 'flex',
