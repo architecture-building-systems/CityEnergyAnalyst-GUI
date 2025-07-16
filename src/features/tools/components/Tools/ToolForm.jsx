@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Parameter from './Parameter';
+import Parameter from 'components/Parameter';
 import { Button, Collapse, Form } from 'antd';
 import { animated } from '@react-spring/web';
 

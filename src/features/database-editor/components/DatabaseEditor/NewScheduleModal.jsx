@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, Select } from 'antd';
-import { FormItemWrapper } from 'features/tools/components/Tools/Parameter';
+import { FormItemWrapper } from 'components/Parameter';
 
 const NewScheduleModal = ({
   scheduleNames,

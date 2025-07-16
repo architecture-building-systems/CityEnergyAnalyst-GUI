@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Form, Input, Modal } from 'antd';
-import { OpenDialogInput } from 'features/tools/components/Tools/Parameter';
+import { OpenDialogInput } from 'components/Parameter';
 import { checkExist, dirname, FileNotFoundError, joinPath } from 'utils/file';
 import {
   fetchConfig,

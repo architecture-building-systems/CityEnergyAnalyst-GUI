@@ -1,8 +1,5 @@
 import { Divider, Select } from 'antd';
-import {
-  OpenDialogButton,
-  OpenDialogInput,
-} from 'features/tools/components/Tools/Parameter';
+import { OpenDialogButton, OpenDialogInput } from 'components/Parameter';
 
 export const FileDialog = ({
   name,

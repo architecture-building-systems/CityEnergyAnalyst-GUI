@@ -1,7 +1,7 @@
 import { useSelected } from 'features/input-editor/stores/inputEditorStore';
 import { useBuildingData } from '../hooks/building-data';
 import { Divider, Input, Form, Select, Collapse } from 'antd';
-import { FormItemWrapper } from 'features/tools/components/Tools/Parameter';
+import { FormItemWrapper } from 'components/Parameter';
 import { useEffect } from 'react';
 
 const InputItem = ({ form, property, initialValue, description }) => {

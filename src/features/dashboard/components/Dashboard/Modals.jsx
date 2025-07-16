@@ -4,7 +4,7 @@ import { Form } from '@ant-design/compatible';
 import { Modal, Select, Input, Radio, Button, Skeleton } from 'antd';
 import { apiClient } from 'lib/api/axios';
 import { ModalContext } from 'features/dashboard/hooks/modal-manager';
-import Parameter from 'features/tools/components/Tools/Parameter';
+import Parameter from 'components/Parameter';
 import { basename, dirname } from 'utils/file';
 
 const { Option } = Select;
