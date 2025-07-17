@@ -54,7 +54,7 @@ const Table = ({ tab, tables, columns }) => {
           columns={columns}
         />
       </div>
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ minHeight: 0 }}>
         <ErrorBoundary>
           {tab == 'schedules' ? (
             <ScheduleEditor

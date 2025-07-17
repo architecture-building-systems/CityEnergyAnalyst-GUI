@@ -61,7 +61,6 @@ const InputTable = ({ onClose }) => {
           paddingBottom: 12,
 
           minHeight: 0,
-          flex: 1,
         }}
       >
         <Table tab={tab} tables={tables} columns={columns} />
