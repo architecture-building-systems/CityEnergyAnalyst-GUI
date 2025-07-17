@@ -171,6 +171,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               style={{
                 ...styles,
                 paddingInline: 12,
+                paddingBottom: 12,
                 borderRadius: 12,
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
