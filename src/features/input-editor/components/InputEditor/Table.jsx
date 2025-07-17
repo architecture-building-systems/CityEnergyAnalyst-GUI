@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card, Button, Modal, message, Tooltip } from 'antd';
+import { Button, Modal, message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
