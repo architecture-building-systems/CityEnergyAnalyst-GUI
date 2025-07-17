@@ -4,14 +4,6 @@ import { CameraView, Compass, ExtrudeIcon } from 'assets/icons';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import LayerToggle from './LayerToggle';
 
-const buttonStyle = {
-  fontSize: 24,
-  padding: 8,
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-};
-
 const ExtrudeButton = () => {
   const extruded = useMapStore((state) => state.extruded);
   const setExtruded = useMapStore((state) => state.setExtruded);
@@ -22,7 +14,9 @@ const ExtrudeButton = () => {
 
   return (
     <Tooltip title="Toggle 3D" styles={{ body: { fontSize: 12 } }}>
-      <ExtrudeIcon style={buttonStyle} onClick={toggleExtruded} />
+      <div className="cea-card-toolbar-icon no-hover-color">
+        <ExtrudeIcon onClick={toggleExtruded} />
+      </div>
     </Tooltip>
   );
 };
@@ -42,7 +36,9 @@ const ResetCameraButton = () => {
   };
   return (
     <Tooltip title="Reset Camera" styles={{ body: { fontSize: 12 } }}>
-      <CameraView style={buttonStyle} onClick={resetCamera} />
+      <div className="cea-card-toolbar-icon no-hover-color">
+        <CameraView onClick={resetCamera} />
+      </div>
     </Tooltip>
   );
 };
@@ -59,13 +55,14 @@ const ResetCompassButton = () => {
 
   return (
     <Tooltip title="Reset Compass" styles={{ body: { fontSize: 12 } }}>
-      <Compass
-        style={{
-          ...buttonStyle,
-          transform: `rotate(${-bearings}deg)`,
-        }}
-        onClick={resetCompass}
-      />
+      <div className="cea-card-toolbar-icon no-hover-color">
+        <Compass
+          style={{
+            transform: `rotate(${-bearings}deg)`,
+          }}
+          onClick={resetCompass}
+        />
+      </div>
     </Tooltip>
   );
 };

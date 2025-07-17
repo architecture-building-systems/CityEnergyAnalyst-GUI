@@ -61,7 +61,7 @@ const MapLayersCard = ({ onLayerSelected }) => {
 
   return (
     <div
-      className="cea-overlay-card"
+      className="cea-overlay-card cea-card-toolbar-icon-container inverted"
       style={{
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         borderRadius: 12,
@@ -120,11 +120,14 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
 
   return (
     <Tooltip title={label || category} styles={{ body: { fontSize: 12 } }}>
-      <_icon
-        className={`cea-card-toolbar-icon inverted ${active ? 'active' : ''}`}
+      <button
+        className={`cea-card-toolbar-icon ${active ? 'active' : ''}`}
         style={style}
         onClick={handleClick}
-      />
+        type="button"
+      >
+        <_icon />
+      </button>
     </Tooltip>
   );
 };

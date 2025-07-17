@@ -190,7 +190,7 @@ const LayerToggle = () => {
 
   return (
     <Tooltip title="Toggle Layers" styles={{ body: { fontSize: 12 } }}>
-      <div>
+      <div className="cea-card-toolbar-icon no-hover-color">
         <Dropdown
           menu={{ items }}
           trigger={['click']}
@@ -199,13 +199,7 @@ const LayerToggle = () => {
           )}
           placement="top"
         >
-          <LayersIcon
-            style={{
-              fontSize: 24,
-              padding: 8,
-              cursor: 'pointer',
-            }}
-          />
+          <LayersIcon />
         </Dropdown>
       </div>
     </Tooltip>
