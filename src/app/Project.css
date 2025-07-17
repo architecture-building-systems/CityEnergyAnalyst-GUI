@@ -20,20 +20,16 @@
     'left-sidebar header header right-sidebar'
     'left-sidebar . . right-sidebar'
     'content content content right-sidebar'
-    'bottom-bar bottom-bar status right-sidebar';
+    'bottom-bar bottom-bar status status';
 
   grid-template-columns: 280px 1fr 480px 0px;
   grid-template-rows: auto 1fr auto auto;
+
+  transition: grid-template-columns 0.3s ease-in-out;
 }
 
 #cea-project-overlay.show-right-sidebar {
-  grid-template-areas:
-    'left-sidebar header right-sidebar'
-    'left-sidebar header right-sidebar'
-    'content content right-sidebar'
-    'bottom-bar bottom-bar status';
-
-  grid-template-columns: 280px 1fr 480px;
+  grid-template-columns: 280px 1fr 0px 480px;
 }
 
 .cea-overlay-card {
