@@ -34,7 +34,7 @@ const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div
         style={{
           display: 'flex',
@@ -54,24 +54,25 @@ const Table = ({ tab, tables, columns }) => {
           columns={columns}
         />
       </div>
-
-      <ErrorBoundary>
-        {tab == 'schedules' ? (
-          <ScheduleEditor
-            tabulator={tabulator}
-            selected={selected}
-            tables={tables}
-          />
-        ) : (
-          <TableEditor
-            tabulator={tabulator}
-            tab={tab}
-            selected={selected}
-            tables={tables}
-            columns={columns}
-          />
-        )}
-      </ErrorBoundary>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <ErrorBoundary>
+          {tab == 'schedules' ? (
+            <ScheduleEditor
+              tabulator={tabulator}
+              selected={selected}
+              tables={tables}
+            />
+          ) : (
+            <TableEditor
+              tabulator={tabulator}
+              tab={tab}
+              selected={selected}
+              tables={tables}
+              columns={columns}
+            />
+          )}
+        </ErrorBoundary>
+      </div>
     </div>
   );
 };
@@ -250,7 +251,7 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
       index: INDEX_COLUMN,
       columns: [],
       layout: 'fitDataFill',
-      height: '300px',
+      height: '100%',
       validationFailed: (cell) => {
         const field = cell.getField();
         const { type, constraints } = columnDescriptionRef.current[field];
@@ -345,7 +346,14 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
 
   return (
     <>
-      <div ref={divRef} style={{ display: data !== null ? 'block' : 'none' }} />
+      <div
+        ref={divRef}
+        style={{
+          display: data !== null ? 'block' : 'none',
+          height: '100%',
+          width: '100%',
+        }}
+      />
       {data === null && <ScriptSuggestion tab={tab} />}
     </>
   );

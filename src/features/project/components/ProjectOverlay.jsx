@@ -170,11 +170,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               className="cea-overlay-card"
               style={{
                 ...styles,
+                paddingInline: 12,
                 borderRadius: 12,
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
-                overflow: 'auto',
-                maxHeight: '30vh',
+                background: '#fff',
+                maxHeight: '40vh',
               }}
             >
               <InputTable onClose={closeInputEditor} />
