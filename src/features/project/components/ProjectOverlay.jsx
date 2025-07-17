@@ -186,7 +186,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       </div>
 
       <div id="cea-project-overlay-right-sidebar">
-        <ToolCardSideButtons />
+        {!hideAll && <ToolCardSideButtons />}
         {transitionToolsFromRight((styles, item) =>
           item ? (
             <animated.div className="cea-overlay-card-full" style={styles}>
