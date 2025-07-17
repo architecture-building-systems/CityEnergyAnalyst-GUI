@@ -32,7 +32,7 @@ button.cea-card-toolbar-icon {
 }
 
 .cea-card-toolbar-icon.no-hover-color:hover {
-  background-color: inherit;
+  background-color: inherit !important;
 }
 
 .cea-card-toolbar-divider {
