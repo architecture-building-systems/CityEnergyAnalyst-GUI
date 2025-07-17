@@ -13,6 +13,13 @@
   background-color: #dadada;
 }
 
+/* Remove default button styles */
+button.cea-card-toolbar-icon {
+  background: none;
+  border: none;
+  color: inherit;
+}
+
 .cea-card-toolbar-icon {
   padding: 8px;
   border-radius: 8px;
