@@ -3,68 +3,12 @@ import { Button, Modal, message } from 'antd';
 import { AsyncError } from 'components/AsyncError';
 import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
 import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
-import {
-  useChanges,
-  useDiscardChanges,
-} from 'features/input-editor/stores/inputEditorStore';
+import { useDiscardChanges } from 'features/input-editor/stores/inputEditorStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
+import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
+import { ChangesSummary } from 'features/input-editor/components/changes-summary';
 
-const ChangesSummary = () => {
-  const changes = useChanges();
-
-  return (
-    <div style={{ overflow: 'auto', maxHeight: 400 }}>
-      {Object.keys(changes.delete).length ? (
-        <div>
-          <b>DELETE:</b>
-          {Object.keys(changes.delete).map((table) => (
-            <div key={table}>
-              <u>
-                <b>{table}</b>
-              </u>
-              <div>
-                {changes.delete[table].reduce(
-                  (out, building) => `${out}, ${building}`,
-                )}
-              </div>
-              <br />
-            </div>
-          ))}
-        </div>
-      ) : null}
-      {Object.keys(changes.update).length ? (
-        <div>
-          <b>UPDATE:</b>
-          {Object.keys(changes.update).map((table) => (
-            <div key={table}>
-              <u>
-                <b>{table}</b>
-              </u>
-              {Object.keys(changes.update[table]).map((building) => (
-                <div key={building}>
-                  {building}
-                  {Object.keys(changes.update[table][building]).map(
-                    (property) => (
-                      <div key={property}>
-                        <i>{property}</i>
-                        {` : ${changes.update[table][building][property].oldValue}
-                        → 
-                        ${changes.update[table][building][property].newValue}`}
-                      </div>
-                    ),
-                  )}
-                </div>
-              ))}
-              <br />
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-};
-
-export const InputEditorButtons = ({ changes }) => {
+export const InputChangesButtons = ({ changes }) => {
   const saveChanges = useSaveInputs();
   const resyncInputs = useResyncInputs();
   const discardChangesFunc = useDiscardChanges();
@@ -149,23 +93,25 @@ export const InputEditorButtons = ({ changes }) => {
   if (noChanges) return <div></div>;
 
   return (
-    <div style={{ display: 'flex', gap: 10 }}>
+    <div style={{ display: 'flex', gap: 8 }}>
+      <Button
+        disabled={noChanges}
+        onClick={_discardChanges}
+        danger
+        size="small"
+        variant="outlined"
+        icon={<DeleteOutlined />}
+      >
+        Discard
+      </Button>
       <Button
         type="primary"
         disabled={noChanges}
         onClick={_saveChanges}
         size="small"
+        icon={<SaveOutlined />}
       >
         Save
-      </Button>
-      <Button
-        type="primary"
-        disabled={noChanges}
-        onClick={_discardChanges}
-        danger
-        size="small"
-      >
-        Discard Changes
       </Button>
     </div>
   );

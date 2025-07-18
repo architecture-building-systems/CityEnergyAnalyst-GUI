@@ -27,6 +27,7 @@ import {
   useSelectedPlotToolStore,
 } from 'features/tools/stores/selected-tool';
 import { useSelected } from 'features/input-editor/stores/inputEditorStore';
+import { InputChangesCard } from './Cards/input-changes-card';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -149,12 +150,15 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                     onToggleHideAll={handleHideAll}
                   />
                 </div>
+
                 {!isElectron() && (
                   // FIXME: Login disabled for electron
                   <div className="cea-overlay-card">
                     <UserInfo />
                   </div>
                 )}
+
+                <InputChangesCard />
               </div>
             </animated.div>
           ) : null,
