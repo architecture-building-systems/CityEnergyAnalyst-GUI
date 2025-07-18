@@ -64,7 +64,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
-  const showToolCard = !hideAll && toolType != null;
+  const showToolCard = scenarioName != null && !hideAll && toolType != null;
 
   const closeInputEditor = () => {
     setInputEditor(false);
