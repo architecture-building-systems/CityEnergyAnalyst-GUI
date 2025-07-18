@@ -1,37 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Modal, message, Tooltip } from 'antd';
+import { message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
 import { getOperatingSystem } from 'utils';
-import { AsyncError } from 'components/AsyncError';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
-import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
+import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 import {
-  useResyncInputs,
-  useUpdateInputs,
-} from 'features/input-editor/hooks/updates/useUpdateInputs';
-import {
-  useChanges,
-  useDiscardChanges,
   useSelected,
   useSetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
 
 const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
 const Table = ({ tab, tables, columns }) => {
-  const selected = useSelected();
-  const changes = useChanges();
-
   const tabulator = useRef(null);
+
+  const selected = useSelected();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -44,8 +35,6 @@ const Table = ({ tab, tables, columns }) => {
           marginBottom: 12,
         }}
       >
-        <InputEditorButtons changes={changes} />
-
         <TableButtons
           selected={selected}
           tabulator={tabulator}
@@ -73,166 +62,6 @@ const Table = ({ tab, tables, columns }) => {
           )}
         </ErrorBoundary>
       </div>
-    </div>
-  );
-};
-
-const InputEditorButtons = ({ changes }) => {
-  const saveChanges = useSaveInputs();
-  const resyncInputs = useResyncInputs();
-  const discardChangesFunc = useDiscardChanges();
-
-  const setShowLoginModal = useSetShowLoginModal();
-
-  const discardChanges = async () => {
-    // TODO: Throw error
-    await resyncInputs();
-    discardChangesFunc();
-  };
-
-  const noChanges =
-    !Object.keys(changes?.update ?? {}).length &&
-    !Object.keys(changes?.delete ?? {}).length;
-
-  const _saveChanges = () => {
-    Modal.confirm({
-      title: 'Save these changes?',
-      content: (
-        <details>
-          <summary>Show changes</summary>
-          <ChangesSummary changes={changes} />
-        </details>
-      ),
-      centered: true,
-      okText: 'SAVE',
-      okType: 'primary',
-      cancelText: 'Cancel',
-      async onOk() {
-        await saveChanges
-          .mutateAsync()
-          .then(() => {
-            message.config({
-              top: 120,
-            });
-            message.success('Changes Saved!');
-          })
-          .catch((error) => {
-            if (error.response.status === 401) setShowLoginModal(true);
-            else {
-              Modal.error({
-                title: 'Could not save changes',
-                content: <AsyncError error={error} />,
-                width: '80vw',
-              });
-            }
-          });
-      },
-    });
-  };
-
-  const _discardChanges = () => {
-    Modal.confirm({
-      title: 'This will discard all unsaved changes.',
-      content: (
-        <details>
-          <summary>Show changes</summary>
-          <ChangesSummary changes={changes} />
-        </details>
-      ),
-      centered: true,
-      okText: 'DISCARD',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      async onOk() {
-        await discardChanges()
-          .then(() => {
-            message.config({
-              top: 120,
-            });
-            message.info('Unsaved changes have been discarded.');
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error('Something went wrong.', 0);
-          });
-      },
-    });
-  };
-
-  if (noChanges) return <div></div>;
-
-  return (
-    <div style={{ display: 'flex', gap: 10 }}>
-      <Button
-        type="primary"
-        disabled={noChanges}
-        onClick={_saveChanges}
-        size="small"
-      >
-        Save
-      </Button>
-      <Button
-        type="primary"
-        disabled={noChanges}
-        onClick={_discardChanges}
-        danger
-        size="small"
-      >
-        Discard Changes
-      </Button>
-    </div>
-  );
-};
-
-const ChangesSummary = ({ changes }) => {
-  return (
-    <div style={{ overflow: 'auto', maxHeight: 400 }}>
-      {Object.keys(changes.delete).length ? (
-        <div>
-          <b>DELETE:</b>
-          {Object.keys(changes.delete).map((table) => (
-            <div key={table}>
-              <u>
-                <b>{table}</b>
-              </u>
-              <div>
-                {changes.delete[table].reduce(
-                  (out, building) => `${out}, ${building}`,
-                )}
-              </div>
-              <br />
-            </div>
-          ))}
-        </div>
-      ) : null}
-      {Object.keys(changes.update).length ? (
-        <div>
-          <b>UPDATE:</b>
-          {Object.keys(changes.update).map((table) => (
-            <div key={table}>
-              <u>
-                <b>{table}</b>
-              </u>
-              {Object.keys(changes.update[table]).map((building) => (
-                <div key={building}>
-                  {building}
-                  {Object.keys(changes.update[table][building]).map(
-                    (property) => (
-                      <div key={property}>
-                        <i>{property}</i>
-                        {` : ${changes.update[table][building][property].oldValue}
-                        → 
-                        ${changes.update[table][building][property].newValue}`}
-                      </div>
-                    ),
-                  )}
-                </div>
-              ))}
-              <br />
-            </div>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 };
