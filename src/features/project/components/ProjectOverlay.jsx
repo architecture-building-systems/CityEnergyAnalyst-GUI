@@ -126,7 +126,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     ) {
       setToolType(toolTypes.BUILDING_INFO);
     }
-  }, [selectedBuildings, selectionSource, setToolType, showInputEditor]);
+  }, [selectedBuildings, selectionSource, setToolType]);
 
   return (
     <div
