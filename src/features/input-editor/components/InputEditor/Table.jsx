@@ -30,7 +30,7 @@ const Table = ({ tab, tables, columns }) => {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           gap: 12,
           marginBottom: 12,
         }}
