@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MenuOutlined } from '@ant-design/icons';
 import { Button, Modal, Dropdown } from 'antd';
 import EditSelectedModal from 'features/input-editor/components/InputEditor/EditSelectedModal';
@@ -6,25 +6,27 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { useDeleteBuildings } from 'features/input-editor/hooks/updates/useUpdateInputs';
-import { useSetSelected } from 'features/input-editor/stores/inputEditorStore';
 
-export const TableButtons = ({ selected, tabulator, tables, tab, columns }) => {
+export const TableButtons = ({
+  selected,
+  tabulator,
+  tables,
+  tab,
+  columns,
+  setSelected,
+}) => {
   const deleteBuildings = useDeleteBuildings();
 
-  const setSelected = useSetSelected();
-
   const [filterToggle, setFilterToggle] = useState(false);
-  const [selectedInTable, setSelectedInTable] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const data = tables;
-
-  useEffect(() => {
-    const selectedType = ['surroundings', 'trees'].includes(tab) ? tab : 'zone';
-    setSelectedInTable(
-      Object.keys(data?.[selectedType] || {}).includes(selected[0]),
-    );
-  }, [tab, selected]);
+  const currentTableIndexes = useMemo(
+    () => Object.keys(tables?.[tab] || {}),
+    [tables, tab],
+  );
+  const selectedInTable = useMemo(() => {
+    return currentTableIndexes.includes(selected[0]);
+  }, [currentTableIndexes, selected]);
 
   const selectAll = () => {
     setSelected(tabulator.current.getData().map((data) => data[INDEX_COLUMN]));

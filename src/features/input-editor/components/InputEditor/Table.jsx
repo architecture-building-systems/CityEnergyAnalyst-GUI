@@ -23,6 +23,7 @@ const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
 
   const selected = useSelected();
+  const setSelected = useSetSelected();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -41,6 +42,7 @@ const Table = ({ tab, tables, columns }) => {
           tab={tab}
           tables={tables}
           columns={columns}
+          setSelected={setSelected}
         />
       </div>
       <div style={{ minHeight: 0 }}>
