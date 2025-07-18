@@ -136,7 +136,7 @@ const CEAInsights = () => {
   );
 };
 
-const Toolbar = ({ onToolSelected, showTools }) => {
+const Toolbar = ({ onToolSelected }) => {
   const { status, tools } = useFetchTools();
 
   const [showTooltip, setShowTooltip] = useState(true);
@@ -159,7 +159,6 @@ const Toolbar = ({ onToolSelected, showTools }) => {
   }, [tools, showTooltip, onToolSelected]);
 
   if (status == 'fetching') return <div>Loading Tools...</div>;
-  if (!showTools) return null;
 
   return (
     <div

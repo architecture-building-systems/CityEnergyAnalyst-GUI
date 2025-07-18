@@ -64,6 +64,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
+  const showToolBar = scenarioName != null && !hideAll;
   const showToolCard = scenarioName != null && !hideAll && toolType != null;
 
   const closeInputEditor = () => {
@@ -97,7 +98,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  const transitionFromTop = useTransition(!hideAll, {
+  const transitionFromTop = useTransition(showToolBar, {
     from: { transform: 'translateY(-100%)', opacity: 0 }, // Start off-screen (top) and invisible
     enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in from top and become visible
     leave: { transform: 'translateY(-100%)', opacity: 0 }, // Slide out to top and fade out
@@ -168,10 +169,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         {transitionFromTop((styles, item) =>
           item ? (
             <animated.div style={styles}>
-              <Toolbar
-                showTools={!!scenarioName}
-                onToolSelected={handleToolSelected}
-              />
+              <Toolbar onToolSelected={handleToolSelected} />
             </animated.div>
           ) : null,
         )}
