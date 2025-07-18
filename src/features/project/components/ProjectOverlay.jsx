@@ -113,9 +113,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   useEffect(() => {
     if (selectedBuildings.length > 0) {
       setToolType(toolTypes.BUILDING_INFO);
-      setInputEditor(true);
     }
-  }, [selectedBuildings, setToolType, setInputEditor]);
+  }, [selectedBuildings, setToolType]);
 
   return (
     <div
