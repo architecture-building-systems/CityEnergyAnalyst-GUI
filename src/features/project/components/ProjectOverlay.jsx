@@ -206,17 +206,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         {transitionToolsFromRight((styles, item) =>
           item ? (
             <animated.div className="cea-overlay-card-full" style={styles}>
-              {showToolCard ? (
-                <ToolCard
-                  selectedTool={selectedTool}
-                  selectedPlotTool={selectedPlotTool}
-                  selectedBuildings={selectedBuildings}
-                  onToolSelected={handleToolSelected}
-                />
-              ) : (
-                // For fade out animation
-                <div style={{ height: '100%', background: 'white' }}></div>
-              )}
+              <ToolCard
+                selectedTool={selectedTool}
+                selectedPlotTool={selectedPlotTool}
+                selectedBuildings={selectedBuildings}
+                onToolSelected={handleToolSelected}
+              />
             </animated.div>
           ) : null,
         )}
