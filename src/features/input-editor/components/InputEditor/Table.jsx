@@ -12,7 +12,7 @@ import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 import {
   useSelected,
-  useSetSelected,
+  useSetSelectedFromTable,
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
@@ -23,7 +23,7 @@ const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
 
   const selected = useSelected();
-  const setSelected = useSetSelected();
+  const setSelected = useSetSelectedFromTable();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -227,7 +227,7 @@ const useTableData = (tab, columns, tables) => {
   const [data, setData] = useState(null);
   const [columnDef, setColumnDef] = useState(null);
 
-  const setSelected = useSetSelected();
+  const setSelected = useSetSelectedFromTable();
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();

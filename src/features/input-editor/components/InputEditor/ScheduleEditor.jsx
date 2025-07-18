@@ -9,7 +9,7 @@ import { INDEX_COLUMN } from '../../constants';
 import {
   useAddFetchedSchedule,
   useFetchedSchedules,
-  useSetSelected,
+  useSetSelectedFromTable,
 } from 'features/input-editor/stores/inputEditorStore';
 import {
   useUpdateDaySchedule,
@@ -20,7 +20,7 @@ import { useSchedules } from 'features/input-editor/hooks/queries/useSchedules';
 const colormap = interpolate(['white', '#006ad5']);
 
 const ScheduleEditor = ({ selected, tabulator, tables }) => {
-  const setSelected = useSetSelected();
+  const setSelected = useSetSelectedFromTable();
 
   const { isLoading, schedules } = useSchedules();
   const selectedBuildings = useFetchedSchedules();

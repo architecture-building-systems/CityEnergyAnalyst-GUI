@@ -26,7 +26,10 @@ import {
   useSelectedToolStore,
   useSelectedPlotToolStore,
 } from 'features/tools/stores/selected-tool';
-import { useSelected } from 'features/input-editor/stores/inputEditorStore';
+import {
+  useSelected,
+  useSelectionSource,
+} from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
@@ -48,6 +51,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     (state) => state.setSelectedPlotTool,
   );
   const selectedBuildings = useSelected();
+  const selectionSource = useSelectionSource();
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
@@ -114,10 +118,15 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   }, [name, scenarioName, closeToolCard]);
 
   useEffect(() => {
-    if (selectedBuildings.length > 0) {
+    // Show building info tool card when buildings are selected on map and input editor is not open
+    if (
+      selectedBuildings.length > 0 &&
+      selectionSource === 'map' &&
+      !showInputEditor
+    ) {
       setToolType(toolTypes.BUILDING_INFO);
     }
-  }, [selectedBuildings, setToolType]);
+  }, [selectedBuildings, selectionSource, setToolType, showInputEditor]);
 
   return (
     <div
