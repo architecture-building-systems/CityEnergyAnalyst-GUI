@@ -96,6 +96,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
+  const transitionFromTop = useTransition(!hideAll, {
+    from: { transform: 'translateY(-100%)', opacity: 0 }, // Start off-screen (top) and invisible
+    enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in from top and become visible
+    leave: { transform: 'translateY(-100%)', opacity: 0 }, // Slide out to top and fade out
+    config: { tension, friction }, // Control the speed of the animation
+  });
+
   // Close tool card when project or scenario name changes
   useEffect(() => {
     closeToolCard();
@@ -155,10 +162,16 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       </div>
 
       <div id="cea-project-overlay-header">
-        <Toolbar
-          showTools={!!scenarioName}
-          onToolSelected={handleToolSelected}
-        />
+        {transitionFromTop((styles, item) =>
+          item ? (
+            <animated.div style={styles}>
+              <Toolbar
+                showTools={!!scenarioName}
+                onToolSelected={handleToolSelected}
+              />
+            </animated.div>
+          ) : null,
+        )}
       </div>
 
       <div id="cea-project-overlay-content" className="overlay-flex-column">
