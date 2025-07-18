@@ -64,7 +64,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
+
   const showToolBar = scenarioName != null && !hideAll;
+  const showToolCardSideButtons = scenarioName != null && !hideAll;
   const showToolCard = scenarioName != null && !hideAll && toolType != null;
 
   const closeInputEditor = () => {
@@ -200,7 +202,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       </div>
 
       <div id="cea-project-overlay-right-sidebar">
-        {!hideAll && <ToolCardSideButtons />}
+        {showToolCardSideButtons && <ToolCardSideButtons />}
         {transitionToolsFromRight((styles, item) =>
           item ? (
             <animated.div className="cea-overlay-card-full" style={styles}>
