@@ -56,7 +56,7 @@ export const TableButtons = ({
             {tab == 'trees' ? 'trees ' : 'buildings'} from every table:
           </i>
           <div style={{ overflow: 'auto', maxHeight: 200, margin: 10 }}>
-            {selected.reduce((out, building) => `${out}, ${building}`)}
+            {selected.join(', ')}
           </div>
         </div>
       ),

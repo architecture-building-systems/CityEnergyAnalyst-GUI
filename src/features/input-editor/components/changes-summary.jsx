@@ -9,11 +9,7 @@ export const ChangesSummary = ({ changes }) => {
               <u>
                 <b>{table}</b>
               </u>
-              <div>
-                {changes.delete[table].reduce(
-                  (out, building) => `${out}, ${building}`,
-                )}
-              </div>
+              <div>{changes.delete[table].join(', ')}</div>
               <br />
             </div>
           ))}
