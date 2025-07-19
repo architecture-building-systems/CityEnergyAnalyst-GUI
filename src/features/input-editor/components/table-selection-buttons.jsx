@@ -25,7 +25,7 @@ export const TableButtons = ({
     [tables, tab],
   );
   const selectedInTable = useMemo(() => {
-    return currentTableIndexes.includes(selected[0]);
+    return selected.length > 0 && currentTableIndexes.includes(selected[0]);
   }, [currentTableIndexes, selected]);
 
   const selectAll = () => {
