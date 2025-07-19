@@ -224,18 +224,28 @@ const Tool = ({ script, onToolSelected, header }) => {
   const disableButtons = fetching || _error !== null;
 
   const [headerVisible, setHeaderVisible] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(true);
   const lastScrollPositionRef = useRef(0);
 
   const descriptionRef = useRef(null);
   const descriptionHeightRef = useRef('auto');
 
+  // Hide skeleton after grid transition completes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSkeleton(false);
+    }, 350); // 50ms buffer after 300ms transition
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // This effect will measure the actual height of the description
   useLayoutEffect(() => {
-    if (descriptionRef.current) {
+    if (descriptionRef.current && !showSkeleton) {
       const height = descriptionRef.current.scrollHeight;
       descriptionHeightRef.current = height;
     }
-  }, [description, descriptionRef.current]);
+  }, [description, showSkeleton]);
 
   const handleScroll = useCallback((e) => {
     // Ensure the scroll threshold greater than the description height to prevent layout shifts
@@ -283,7 +293,7 @@ const Tool = ({ script, onToolSelected, header }) => {
     return () => resetToolParams();
   }, [script, fetchToolParams, resetToolParams]);
 
-  if (status == 'fetching')
+  if (status == 'fetching' || showSkeleton)
     return (
       <div style={{ padding: 12 }}>
         {header}
