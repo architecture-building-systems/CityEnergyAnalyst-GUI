@@ -7,10 +7,13 @@ import {
   useSetToolType,
   useToolType,
 } from 'features/project/stores/tool-card';
+import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 
 export const ToolCardSideButtons = () => {
   const toolType = useToolType();
   const setToolType = useSetToolType();
+
+  const selectedTool = useSelectedToolStore((state) => state.selectedTool);
 
   const closeToolCard = useCloseToolCard();
 
@@ -29,16 +32,18 @@ export const ToolCardSideButtons = () => {
         gap: 8,
       }}
     >
-      <Button
-        onClick={() =>
-          toolType !== toolTypes.TOOLS
-            ? setToolType(toolTypes.TOOLS)
-            : closeToolCard()
-        }
-        type={toolType === toolTypes.TOOLS ? 'primary' : 'default'}
-      >
-        Tools
-      </Button>
+      {selectedTool != null && (
+        <Button
+          onClick={() =>
+            toolType !== toolTypes.TOOLS
+              ? setToolType(toolTypes.TOOLS)
+              : closeToolCard()
+          }
+          type={toolType === toolTypes.TOOLS ? 'primary' : 'default'}
+        >
+          Tools
+        </Button>
+      )}
       <Button
         onClick={() =>
           toolType !== toolTypes.BUILDING_INFO
