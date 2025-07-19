@@ -5,7 +5,7 @@ import {
   useLayoutEffect,
   useCallback,
 } from 'react';
-import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
+import { Divider, Spin, Alert, Form } from 'antd';
 import useToolsStore from 'features/tools/stores/toolsStore';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 import { AsyncError } from 'components/AsyncError';
@@ -19,6 +19,7 @@ import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import ToolForm, { ToolFormButtons } from './ToolForm';
 import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
+import { ToolSkeleton } from '../tool-skeleton';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -297,16 +298,7 @@ const Tool = ({ script, onToolSelected, header }) => {
     return (
       <div style={{ padding: 12 }}>
         {header}
-        <Skeleton active />
-        <div className="cea-tool-form-buttongroup">
-          <Skeleton.Button active />
-          <Skeleton.Button active />
-          <Skeleton.Button active />
-        </div>
-        <Divider />
-        <Skeleton active />
-        <Skeleton active />
-        <Skeleton active />
+        <ToolSkeleton loadingText="Loading parameters..." />
       </div>
     );
   if (status == 'failed')
