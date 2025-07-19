@@ -43,7 +43,7 @@ const Table = ({ tab, tables, columns }) => {
           setSelected={setSelected}
         />
       </div>
-      <div style={{ minHeight: 0 }}>
+      <div style={{ minHeight: 0, flex: 1 }}>
         <ErrorBoundary>
           {tab == 'schedules' ? (
             <ScheduleEditor
