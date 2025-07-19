@@ -128,7 +128,6 @@ export const BuildingEditor = () => {
   }, [form, data]);
 
   const onValuesChange = (changedValues) => {
-    console.log('changedValues', changedValues, building);
     if (!building) return;
 
     updateData(
