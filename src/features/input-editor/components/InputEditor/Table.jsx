@@ -15,6 +15,7 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
+import { toolTypes, useToolCardStore } from 'features/project/stores/tool-card';
 
 const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
@@ -196,8 +197,15 @@ const ScriptSuggestion = ({ tab }) => {
   };
 
   const script = tabScriptMap?.[tab] ?? 'archetypes-mapper';
-  const setShowTools = useSelectedToolStore((state) => state.setShowTools);
-  const setSelectedTool = useSelectedToolStore((state) => state.setVisibility);
+  const setSelectedTool = useSelectedToolStore(
+    (state) => state.setSelectedTool,
+  );
+  const setToolType = useToolCardStore((state) => state.setToolType);
+
+  const handleClick = () => {
+    setSelectedTool(script);
+    setToolType(toolTypes.TOOLS);
+  };
 
   return (
     <div style={{ margin: 8 }}>
@@ -208,10 +216,7 @@ const ScriptSuggestion = ({ tab }) => {
           textDecoration: 'underline',
           color: 'blue',
         }}
-        onClick={() => {
-          setSelectedTool(script);
-          setShowTools(true);
-        }}
+        onClick={handleClick}
       >
         {script}
       </span>{' '}
