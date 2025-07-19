@@ -210,16 +210,21 @@ const ScriptSuggestion = ({ tab }) => {
   return (
     <div style={{ margin: 8 }}>
       Input file could not be found. You can import/create the file using the{' '}
-      <span
+      <button
+        type="button"
         style={{
-          cursor: 'pointer',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          color: '#1890ff',
           textDecoration: 'underline',
-          color: 'blue',
+          cursor: 'pointer',
+          font: 'inherit',
         }}
         onClick={handleClick}
       >
         {script}
-      </span>{' '}
+      </button>{' '}
       tool.
     </div>
   );
