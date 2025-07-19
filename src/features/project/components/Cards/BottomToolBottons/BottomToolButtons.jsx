@@ -68,7 +68,9 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
         styles={{ body: { fontSize: 12 } }}
       >
         <div className="cea-card-toolbar-icon-container">
-          <_icon className="cea-card-toolbar-icon no-hover-color" />
+          <div className="cea-card-toolbar-icon no-hover-color">
+            <_icon />
+          </div>
         </div>
       </Tooltip>
     );
@@ -81,10 +83,13 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
         style={styles}
       >
         <div className="cea-card-toolbar-icon-container">
-          <_icon
+          <button
             className="cea-card-toolbar-icon no-hover-color"
             onClick={onClick}
-          />
+            type="button"
+          >
+            <_icon />
+          </button>
         </div>
       </animated.div>
     </Tooltip>

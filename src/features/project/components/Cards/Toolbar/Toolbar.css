@@ -1,10 +1,23 @@
-.cea-card-toolbar-icon:hover {
+.cea-card-toolbar-icon:not(.active):hover {
   background-color: #4d4d4d;
   cursor: pointer;
 }
 
-.cea-card-toolbar-icon.inverted:not(.active):hover {
+.cea-card-toolbar-icon-container.inverted {
+  color: #000;
+  background-color: #fff;
+}
+
+.cea-card-toolbar-icon-container.inverted
+  .cea-card-toolbar-icon:not(.active):hover {
   background-color: #dadada;
+}
+
+/* Remove default button styles */
+button.cea-card-toolbar-icon {
+  background: none;
+  border: none;
+  color: inherit;
 }
 
 .cea-card-toolbar-icon {
@@ -16,11 +29,10 @@
   justify-content: center;
 
   font-size: 24px;
-  color: #fff;
 }
 
 .cea-card-toolbar-icon.no-hover-color:hover {
-  background-color: inherit;
+  background-color: inherit !important;
 }
 
 .cea-card-toolbar-divider {
@@ -33,9 +45,12 @@
 .cea-card-toolbar-icon-container {
   display: flex;
   background: #000;
+  color: #fff;
+
   border-radius: 12px;
 
   height: fit-content;
+  max-width: fit-content;
 
   gap: 4px;
   padding: 6px;

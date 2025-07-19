@@ -8,7 +8,6 @@ import {
 import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
 import useToolsStore from 'features/tools/stores/toolsStore';
 import useJobsStore from 'features/jobs/stores/jobsStore';
-import { withErrorBoundary } from 'utils/ErrorBoundary';
 import { AsyncError } from 'components/AsyncError';
 
 import './Tool.css';
@@ -17,11 +16,9 @@ import { ExternalLinkIcon } from 'assets/icons';
 import { apiClient } from 'lib/api/axios';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import { isElectron, openExternal } from 'utils/electron';
 import ToolForm, { ToolFormButtons } from './ToolForm';
+import { ToolDescription } from 'features/tools/components/tool-description';
+import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -208,10 +205,12 @@ const useToolForm = (
   return { form, getForm, runScript, saveParams, setDefault };
 };
 
-const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
+const Tool = ({ script, onToolSelected, header }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const { fetchToolParams, resetToolParams } = useToolsStore();
+
+  const changes = useChangesExist();
 
   const {
     category,
@@ -338,60 +337,21 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-end',
+
+                  marginLeft: 'auto',
                 }}
               >
                 <span>{category}</span>
                 {!headerVisible && <b>{label}</b>}
               </small>
             </div>
-            <div
-              id="cea-tool-header-description"
+            <ToolDescription
               ref={descriptionRef}
-              style={{
-                height: headerVisible ? `${descriptionHeightRef.current}px` : 0,
-                opacity: headerVisible ? 1 : 0,
-                overflow: 'hidden',
-                transition:
-                  'height 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
-                transform: headerVisible
-                  ? 'translateY(0)'
-                  : 'translateY(-10px)',
-                transformOrigin: 'top',
-              }}
-            >
-              <div>
-                <h2>{label}</h2>
-                <small>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw]}
-                    components={{
-                      a: ({ href, children, ...props }) => {
-                        if (isElectron())
-                          return (
-                            <a {...props} onClick={() => openExternal(href)}>
-                              {children}
-                            </a>
-                          );
-                        else
-                          return (
-                            <a
-                              {...props}
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {children}
-                            </a>
-                          );
-                      },
-                    }}
-                  >
-                    {description}
-                  </ReactMarkdown>
-                </small>
-              </div>
-            </div>
+              description={description}
+              height={descriptionHeightRef.current}
+              label={label}
+              visible={headerVisible}
+            />
           </div>
 
           <div className="cea-tool-form-buttongroup">
@@ -402,6 +362,19 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
               disabled={disableButtons}
             />
           </div>
+
+          {changes && (
+            <Alert
+              message={
+                <>
+                  Unsaved changes detected. <br />
+                  Save or discard before proceeding.
+                </>
+              }
+              type="warning"
+              showIcon
+            />
+          )}
 
           <ScriptSuggestions
             onToolSelected={onToolSelected}
@@ -433,6 +406,6 @@ const Tool = withErrorBoundary(({ script, onToolSelected, header }) => {
       </div>
     </Spin>
   );
-});
+};
 
 export default Tool;

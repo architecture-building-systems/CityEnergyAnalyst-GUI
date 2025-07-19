@@ -6,9 +6,6 @@
 
   pointer-events: none;
 
-  display: flex;
-  gap: 12px;
-
   height: calc(100vh - 24px);
   width: 100vw;
 
@@ -16,13 +13,71 @@
   box-sizing: border-box;
 
   overflow: hidden;
+
+  display: grid;
+  gap: 8px;
+  grid-template-areas:
+    'left-sidebar header header right-sidebar'
+    'left-sidebar . . right-sidebar'
+    'content content content right-sidebar'
+    'bottom-bar bottom-bar status status';
+
+  grid-template-columns: 280px 1fr 480px 0px;
+  grid-template-rows: auto 1fr auto auto;
+
+  transition: grid-template-columns 0.3s ease-in-out;
 }
 
-#cea-project-overlay .cea-overlay-card {
+#cea-project-overlay.show-right-sidebar {
+  grid-template-columns: 280px 1fr 0px 480px;
+}
+
+.cea-overlay-card {
   pointer-events: auto;
 }
 
-#cea-project-overlay-left {
+.cea-overlay-card-full {
+  pointer-events: auto;
+  height: 100%;
+  width: 100%;
+}
+
+.overlay-flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#cea-project-overlay-left-sidebar {
+  grid-area: left-sidebar;
+}
+
+#cea-project-overlay-header {
+  grid-area: header;
+
+  /* Allow shrinking below content size */
+  min-width: 0;
+}
+
+#cea-project-overlay-content {
+  grid-area: content;
+}
+
+#cea-project-overlay-bottom-bar {
+  grid-area: bottom-bar;
+}
+
+#cea-project-overlay-right-sidebar {
+  grid-area: right-sidebar;
+  position: relative;
+}
+
+#cea-project-overlay-status {
+  grid-area: status;
+  position: relative;
+}
+
+/* #cea-project-overlay-left {
   height: 100%;
   width: 100%;
 
@@ -35,6 +90,7 @@
 
 #cea-project-overlay-right {
   height: 100%;
+  width: 750px;
 
   display: flex;
   flex-direction: column;
@@ -55,11 +111,4 @@
   justify-content: flex-end;
 
   gap: 12px;
-}
-
-#cea-project-overlay-right-top {
-  height: calc(100% - 67px);
-}
-
-#cea-project-overlay-right-bottom {
-}
+} */

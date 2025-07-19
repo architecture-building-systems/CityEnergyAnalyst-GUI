@@ -1,10 +1,7 @@
 import { useState, useRef } from 'react';
 import { Form } from '@ant-design/compatible';
 import { Modal, message, Alert } from 'antd';
-import {
-  FormItemWrapper,
-  OpenDialogInput,
-} from 'features/tools/components/Tools/Parameter';
+import { FormItemWrapper, OpenDialogInput } from 'components/Parameter';
 import { checkExist, joinPath } from 'utils/file';
 import { apiClient } from 'lib/api/axios';
 

@@ -22,7 +22,7 @@ const useFetchJobs = (project) => {
   return jobs;
 };
 
-export const JobInfoList = () => {
+export const JobInfoList = ({ style }) => {
   const project = useProjectStore((state) => state.project);
   const jobs = useFetchJobs(project);
 
@@ -75,23 +75,22 @@ export const JobInfoList = () => {
   }, [expanded]);
 
   // Don't render if no project is selected
-  if (!project) return null;
+  if (!project || jobArray.length === 0) return null;
 
   return (
     <>
-      {jobArray.length > 0 && (
-        <div
-          className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
-          onMouseEnter={() => setExpanded(true)}
-          onMouseLeave={() => setExpanded(false)}
-          ref={containerRef}
-          style={{
-            overflow: expanded ? 'auto' : 'hidden',
-          }}
-        >
-          {jobInfos}
-        </div>
-      )}
+      <div
+        className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+        ref={containerRef}
+        style={{
+          overflow: expanded ? 'auto' : 'hidden',
+          ...style,
+        }}
+      >
+        {jobInfos}
+      </div>
       {selectedJob && (
         <JobInfoModal
           job={selectedJob}

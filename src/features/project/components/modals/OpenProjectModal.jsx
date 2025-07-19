@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Form, Modal, Select } from 'antd';
-import { OpenDialogInput } from 'features/tools/components/Tools/Parameter';
+import { OpenDialogInput } from 'components/Parameter';
 import { checkExist } from 'utils/file';
 import {
   useSaveProjectToLocalStorage,

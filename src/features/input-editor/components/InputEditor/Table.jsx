@@ -1,62 +1,49 @@
 import { useEffect, useRef, useState } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card, Button, Modal, message, Tooltip, Space } from 'antd';
-import EditSelectedModal from './EditSelectedModal';
+import { message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
-import { getOperatingSystem } from 'utils';
-import { AsyncError } from 'components/AsyncError';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
-import { useToolCardStore } from 'features/tools/stores/toolCardStore';
+import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
-import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
+import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 import {
-  useDeleteBuildings,
-  useResyncInputs,
-  useUpdateInputs,
-} from 'features/input-editor/hooks/updates/useUpdateInputs';
-import {
-  useChanges,
-  useDiscardChanges,
   useSelected,
-  useSetSelected,
+  useSetSelectedFromTable,
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
-
-const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
+import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
+import { toolTypes, useToolCardStore } from 'features/project/stores/tool-card';
 
 const Table = ({ tab, tables, columns }) => {
-  const selected = useSelected();
-  const changes = useChanges();
-
   const tabulator = useRef(null);
 
-  return (
-    <>
-      <InputEditorButtons changes={changes} />
+  const selected = useSelected();
+  const setSelected = useSetSelectedFromTable();
 
-      <Card
-        styles={{ header: { backgroundColor: '#f1f1f1' } }}
-        size="small"
-        title={
-          <Tooltip placement="right" title={title}>
-            <InfoCircleOutlined />
-          </Tooltip>
-        }
-        extra={
-          <TableButtons
-            selected={selected}
-            tabulator={tabulator}
-            tab={tab}
-            tables={tables}
-            columns={columns}
-          />
-        }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: 12,
+          marginBottom: 12,
+        }}
       >
+        <TableButtons
+          selected={selected}
+          tabulator={tabulator}
+          tab={tab}
+          tables={tables}
+          columns={columns}
+          setSelected={setSelected}
+        />
+      </div>
+      <div style={{ minHeight: 0, flex: 1 }}>
         <ErrorBoundary>
           {tab == 'schedules' ? (
             <ScheduleEditor
@@ -74,254 +61,8 @@ const Table = ({ tab, tables, columns }) => {
             />
           )}
         </ErrorBoundary>
-      </Card>
-    </>
-  );
-};
-
-const InputEditorButtons = ({ changes }) => {
-  const saveChanges = useSaveInputs();
-  const resyncInputs = useResyncInputs();
-  const discardChangesFunc = useDiscardChanges();
-
-  const setShowLoginModal = useSetShowLoginModal();
-
-  const discardChanges = async () => {
-    // TODO: Throw error
-    await resyncInputs();
-    discardChangesFunc();
-  };
-
-  const noChanges =
-    !Object.keys(changes.update).length && !Object.keys(changes.delete).length;
-
-  const _saveChanges = () => {
-    Modal.confirm({
-      title: 'Save these changes?',
-      content: (
-        <details>
-          <summary>Show changes</summary>
-          <ChangesSummary changes={changes} />
-        </details>
-      ),
-      centered: true,
-      okText: 'SAVE',
-      okType: 'primary',
-      cancelText: 'Cancel',
-      async onOk() {
-        await saveChanges
-          .mutateAsync()
-          .then(() => {
-            message.config({
-              top: 120,
-            });
-            message.success('Changes Saved!');
-          })
-          .catch((error) => {
-            if (error.response.status === 401) setShowLoginModal(true);
-            else {
-              Modal.error({
-                title: 'Could not save changes',
-                content: <AsyncError error={error} />,
-                width: '80vw',
-              });
-            }
-          });
-      },
-    });
-  };
-
-  const _discardChanges = () => {
-    Modal.confirm({
-      title: 'This will discard all unsaved changes.',
-      content: (
-        <details>
-          <summary>Show changes</summary>
-          <ChangesSummary changes={changes} />
-        </details>
-      ),
-      centered: true,
-      okText: 'DISCARD',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      async onOk() {
-        await discardChanges()
-          .then(() => {
-            message.config({
-              top: 120,
-            });
-            message.info('Unsaved changes have been discarded.');
-          })
-          .catch((error) => {
-            console.error(error);
-            message.error('Something went wrong.', 0);
-          });
-      },
-    });
-  };
-
-  return (
-    <div style={{ display: 'flex', gap: 10 }}>
-      <Button type="primary" disabled={noChanges} onClick={_saveChanges}>
-        Save
-      </Button>
-      <Button
-        type="primary"
-        disabled={noChanges}
-        onClick={_discardChanges}
-        danger
-      >
-        Discard Changes
-      </Button>
+      </div>
     </div>
-  );
-};
-
-const ChangesSummary = ({ changes }) => {
-  return (
-    <div style={{ overflow: 'auto', maxHeight: 400 }}>
-      {Object.keys(changes.delete).length ? (
-        <div>
-          <b>DELETE:</b>
-          {Object.keys(changes.delete).map((table) => (
-            <div key={table}>
-              <u>
-                <b>{table}</b>
-              </u>
-              <div>
-                {changes.delete[table].reduce(
-                  (out, building) => `${out}, ${building}`,
-                )}
-              </div>
-              <br />
-            </div>
-          ))}
-        </div>
-      ) : null}
-      {Object.keys(changes.update).length ? (
-        <div>
-          <b>UPDATE:</b>
-          {Object.keys(changes.update).map((table) => (
-            <div key={table}>
-              <u>
-                <b>{table}</b>
-              </u>
-              {Object.keys(changes.update[table]).map((building) => (
-                <div key={building}>
-                  {building}
-                  {Object.keys(changes.update[table][building]).map(
-                    (property) => (
-                      <div key={property}>
-                        <i>{property}</i>
-                        {` : ${changes.update[table][building][property].oldValue}
-                        → 
-                        ${changes.update[table][building][property].newValue}`}
-                      </div>
-                    ),
-                  )}
-                </div>
-              ))}
-              <br />
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-};
-
-const TableButtons = ({ selected, tabulator, tables, tab, columns }) => {
-  const deleteBuildings = useDeleteBuildings();
-
-  const setSelected = useSetSelected();
-
-  const [filterToggle, setFilterToggle] = useState(false);
-  const [selectedInTable, setSelectedInTable] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const data = tables;
-
-  useEffect(() => {
-    const selectedType = ['surroundings', 'trees'].includes(tab) ? tab : 'zone';
-    setSelectedInTable(
-      Object.keys(data?.[selectedType] || {}).includes(selected[0]),
-    );
-  }, [tab, selected]);
-
-  const selectAll = () => {
-    setSelected(tabulator.current.getData().map((data) => data[INDEX_COLUMN]));
-  };
-
-  const filterSelected = () => {
-    if (filterToggle) {
-      tabulator.current.clearFilter();
-    } else {
-      tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
-    }
-    tabulator.current.redraw();
-    setFilterToggle((oldValue) => !oldValue);
-  };
-
-  const clearSelected = () => {
-    setSelected([]);
-  };
-
-  const deleteSelected = () => {
-    Modal.confirm({
-      title: `Are you sure delete these ${tab == 'trees' ? 'trees ' : 'buildings'}?`,
-      content: (
-        <div>
-          <i style={{ fontSize: '1vw' }}>
-            This will delete the following{' '}
-            {tab == 'trees' ? 'trees ' : 'buildings'} from every table:
-          </i>
-          <div style={{ overflow: 'auto', maxHeight: 200, margin: 10 }}>
-            {selected.reduce((out, building) => `${out}, ${building}`)}
-          </div>
-        </div>
-      ),
-      centered: true,
-      okText: 'DELETE',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk() {
-        deleteBuildings([...selected]);
-      },
-    });
-  };
-
-  const editSelected = () => {
-    setModalVisible(true);
-  };
-
-  return (
-    <Space>
-      <Button onClick={selectAll}>Select All</Button>
-      <Button
-        type={filterToggle ? 'primary' : 'default'}
-        onClick={filterSelected}
-      >
-        Filter on Selection
-      </Button>
-      {selectedInTable ? (
-        <>
-          {tab != 'schedules' && (
-            <Button onClick={editSelected}>Edit Selection</Button>
-          )}
-          <Button onClick={clearSelected}>Clear Selection</Button>
-          <Button onClick={deleteSelected} danger>
-            Delete Selection
-          </Button>
-        </>
-      ) : null}
-      <EditSelectedModal
-        visible={modalVisible}
-        setVisible={setModalVisible}
-        inputTable={tabulator.current}
-        table={tab}
-        columns={columns}
-      />
-    </Space>
   );
 };
 
@@ -339,7 +80,7 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
       index: INDEX_COLUMN,
       columns: [],
       layout: 'fitDataFill',
-      height: '300px',
+      height: '100%',
       validationFailed: (cell) => {
         const field = cell.getField();
         const { type, constraints } = columnDescriptionRef.current[field];
@@ -434,7 +175,14 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
 
   return (
     <>
-      <div ref={divRef} style={{ display: data !== null ? 'block' : 'none' }} />
+      <div
+        ref={divRef}
+        style={{
+          display: data !== null ? 'block' : 'none',
+          height: '100%',
+          width: '100%',
+        }}
+      />
       {data === null && <ScriptSuggestion tab={tab} />}
     </>
   );
@@ -449,8 +197,15 @@ const ScriptSuggestion = ({ tab }) => {
   };
 
   const script = tabScriptMap?.[tab] ?? 'archetypes-mapper';
-  const setShowTools = useToolCardStore((state) => state.setShowTools);
-  const setSelectedTool = useToolCardStore((state) => state.setVisibility);
+  const setSelectedTool = useSelectedToolStore(
+    (state) => state.setSelectedTool,
+  );
+  const setToolType = useToolCardStore((state) => state.setToolType);
+
+  const handleClick = () => {
+    setSelectedTool(script);
+    setToolType(toolTypes.TOOLS);
+  };
 
   return (
     <div style={{ margin: 8 }}>
@@ -461,10 +216,7 @@ const ScriptSuggestion = ({ tab }) => {
           textDecoration: 'underline',
           color: 'blue',
         }}
-        onClick={() => {
-          setSelectedTool(script);
-          setShowTools(true);
-        }}
+        onClick={handleClick}
       >
         {script}
       </span>{' '}
@@ -477,7 +229,7 @@ const useTableData = (tab, columns, tables) => {
   const [data, setData] = useState(null);
   const [columnDef, setColumnDef] = useState(null);
 
-  const setSelected = useSetSelected();
+  const setSelected = useSetSelectedFromTable();
 
   const selectRow = (e, cell) => {
     const row = cell.getRow();

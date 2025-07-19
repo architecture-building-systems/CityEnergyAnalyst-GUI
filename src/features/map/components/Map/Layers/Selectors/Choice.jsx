@@ -107,7 +107,7 @@ const ChoiceSelector = ({
         placement="topLeft"
         style={{ minWidth: 200 }}
         popupMatchSelectWidth={false}
-        dropdownStyle={{ width: 'auto', maxWidth: 300 }}
+        styles={{ popup: { root: { overflow: 'hidden', maxWidth: 300 } } }}
       />
     </div>
   );

@@ -34,7 +34,7 @@ import { hexToRgb } from 'features/map/utils';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
   useSelected,
-  useSetSelected,
+  useSetSelectedFromMap,
 } from 'features/input-editor/stores/inputEditorStore';
 import { AttributionControl } from 'maplibre-gl';
 
@@ -283,7 +283,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
   const [selectedLayer, setSelectedLayer] = useState();
 
   const selected = useSelected();
-  const setSelected = useSetSelected();
+  const setSelected = useSetSelectedFromMap();
 
   const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);

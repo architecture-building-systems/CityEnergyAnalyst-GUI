@@ -12,8 +12,8 @@ import {
   useProjectLoading,
 } from 'features/project/stores/projectStore';
 import './RecentProjects.css';
-import OpenProjectModal from 'features/project/components/Project/OpenProjectModal';
-import NewProjectModal from 'features/project/components/Project/NewProjectModal';
+import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
+import NewProjectModal from 'features/project/components/modals/NewProjectModal';
 import { useUserInfo } from 'stores/userStore';
 
 const { Title, Text } = Typography;
