@@ -97,10 +97,20 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  const transitionFromBottom = useTransition(!hideAll & showInputEditor, {
-    from: { transform: 'translateY(100%)', opacity: 0 }, // Start off-screen (left) and invisible
-    enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in to the screen and become visible
-    leave: { transform: 'translateY(100%)', opacity: 0 }, // Slide out to the left and fade out
+  const inputTableTransition = useTransition(!hideAll & showInputEditor, {
+    from: { transform: 'translateY(100%)', opacity: 0, maxHeight: '0vh' }, // Start off-screen (left) and invisible
+    enter: {
+      transform: 'translateY(0%)',
+      opacity: 1,
+      maxHeight: '40vh',
+      marginBlock: '0px',
+    }, // Slide in to the screen and become visible
+    leave: {
+      transform: 'translateY(100%)',
+      opacity: 0,
+      maxHeight: '0vh',
+      marginBlock: '-12px', // To account for container padding and flex gap before it is removed
+    }, // Slide out to the left and fade out
     config: { tension, friction }, // Control the speed of the animation
   });
 
@@ -189,7 +199,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       <div id="cea-project-overlay-content" className="overlay-flex-column">
         <MapLayerPropertiesCard />
 
-        {transitionFromBottom((styles, item) =>
+        {inputTableTransition((styles, item) =>
           item ? (
             <animated.div
               className="cea-overlay-card"
@@ -201,7 +211,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
 
                 background: '#fff',
-                maxHeight: '40vh',
+                // maxHeight: '40vh',
               }}
             >
               <InputTable onClose={closeInputEditor} />
