@@ -97,7 +97,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  const inputTableTransition = useTransition(!hideAll & showInputEditor, {
+  const inputTableTransition = useTransition(!hideAll && showInputEditor, {
     from: { transform: 'translateY(100%)', opacity: 0, maxHeight: '0vh' }, // Start off-screen (left) and invisible
     enter: {
       transform: 'translateY(0%)',
