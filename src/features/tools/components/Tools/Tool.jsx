@@ -5,7 +5,7 @@ import {
   useLayoutEffect,
   useCallback,
 } from 'react';
-import { Skeleton, Divider, Spin, Alert, Form } from 'antd';
+import { Divider, Spin, Alert, Form } from 'antd';
 import useToolsStore from 'features/tools/stores/toolsStore';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 import { AsyncError } from 'components/AsyncError';
@@ -19,6 +19,7 @@ import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import ToolForm, { ToolFormButtons } from './ToolForm';
 import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
+import { ToolSkeleton } from '../tool-skeleton';
 
 const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
@@ -224,18 +225,28 @@ const Tool = ({ script, onToolSelected, header }) => {
   const disableButtons = fetching || _error !== null;
 
   const [headerVisible, setHeaderVisible] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(true);
   const lastScrollPositionRef = useRef(0);
 
   const descriptionRef = useRef(null);
   const descriptionHeightRef = useRef('auto');
 
+  // Hide skeleton after grid transition completes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSkeleton(false);
+    }, 350); // 50ms buffer after 300ms transition
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // This effect will measure the actual height of the description
   useLayoutEffect(() => {
-    if (descriptionRef.current) {
+    if (descriptionRef.current && !showSkeleton) {
       const height = descriptionRef.current.scrollHeight;
       descriptionHeightRef.current = height;
     }
-  }, [description, descriptionRef.current]);
+  }, [description, showSkeleton]);
 
   const handleScroll = useCallback((e) => {
     // Ensure the scroll threshold greater than the description height to prevent layout shifts
@@ -283,20 +294,11 @@ const Tool = ({ script, onToolSelected, header }) => {
     return () => resetToolParams();
   }, [script, fetchToolParams, resetToolParams]);
 
-  if (status == 'fetching')
+  if (status == 'fetching' || showSkeleton)
     return (
       <div style={{ padding: 12 }}>
         {header}
-        <Skeleton active />
-        <div className="cea-tool-form-buttongroup">
-          <Skeleton.Button active />
-          <Skeleton.Button active />
-          <Skeleton.Button active />
-        </div>
-        <Divider />
-        <Skeleton active />
-        <Skeleton active />
-        <Skeleton active />
+        <ToolSkeleton loadingText="Loading parameters..." />
       </div>
     );
   if (status == 'failed')
