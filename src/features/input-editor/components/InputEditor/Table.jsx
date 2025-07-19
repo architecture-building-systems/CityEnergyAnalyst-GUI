@@ -3,7 +3,6 @@ import { message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import ScheduleEditor from './ScheduleEditor';
-import { getOperatingSystem } from 'utils';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
@@ -16,8 +15,6 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
-
-const title = `You can select multiple buildings in the table and the map by holding down the "${getOperatingSystem() == 'Mac' ? 'Command' : 'Control'}" key`;
 
 const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
