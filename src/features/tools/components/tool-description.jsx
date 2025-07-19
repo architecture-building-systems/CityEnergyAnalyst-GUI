@@ -34,9 +34,28 @@ export const ToolDescription = ({
               a: ({ href, children, ...props }) => {
                 if (isElectron())
                   return (
-                    <a {...props} onClick={() => openExternal(href)}>
+                    <button
+                      {...props}
+                      type="button"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        color: 'inherit',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        font: 'inherit',
+                      }}
+                      onClick={() => openExternal(href)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openExternal(href);
+                        }
+                      }}
+                    >
                       {children}
-                    </a>
+                    </button>
                   );
                 else
                   return (
