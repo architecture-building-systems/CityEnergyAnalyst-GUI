@@ -23,9 +23,7 @@ const Project = lazy(() => import('app/Project'));
 const CreateScenario = lazy(() => import('app/CreateScenario'));
 const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
-// const DatabaseEditor = lazy(
-//   () => import('components/DatabaseEditor/DatabaseEditor'),
-// );
+const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
 
 const useCheckServerStatus = () => {
   const [isServerUp, setIsServerUp] = useState(false);
@@ -97,46 +95,52 @@ const HomePageContent = () => {
             </Suspense>
           }
         />
-        {/* <Route path={routes.DASHBOARD} element={
-          <Suspense>
-            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
-              <div
-                style={{
-                  height: '100%',
-                  overflow: 'auto',
-                  background: '#fff',
-                  borderRadius: 8,
-                  border: '1px solid #eee',
+        {/* <Route
+          path={routes.DASHBOARD}
+          element={
+            <Suspense>
+              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    overflow: 'auto',
+                    background: '#fff',
+                    borderRadius: 8,
+                    border: '1px solid #eee',
 
-                  padding: 12,
-                  boxSizing: 'border-box',
-                }}
-              >
-                <Dashboard />
-              </div>
-            </Cardwrapper>
-          </Suspense>
-        } />
-        <Route path={routes.DATABASE_EDITOR} element={
-          <Suspense>
-            <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
-              <div
-                style={{
-                  height: '100%',
-                  overflow: 'auto',
-                  background: '#fff',
-                  borderRadius: 8,
-                  border: '1px solid #eee',
+                    padding: 12,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <Dashboard />
+                </div>
+              </Cardwrapper>
+            </Suspense>
+          }
+        /> */}
+        <Route
+          path={routes.DATABASE_EDITOR}
+          element={
+            <Suspense>
+              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    overflow: 'auto',
+                    background: '#fff',
+                    borderRadius: 8,
+                    border: '1px solid #eee',
 
-                  padding: 24,
-                  boxSizing: 'border-box',
-                }}
-              >
-                <DatabaseEditor />
-              </div>
-            </Cardwrapper>
-          </Suspense>
-        } /> */}
+                    padding: 24,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <DatabaseEditor />
+                </div>
+              </Cardwrapper>
+            </Suspense>
+          }
+        />
         <Route
           path={routes.PROJECT}
           element={

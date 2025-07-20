@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Button, Modal, Menu } from 'antd';
-import './DatabaseEditor.css';
-import { setActiveDatabase } from 'features/database-editor/actions/databaseEditor';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 const DatabaseTopMenu = () => {
-  const data = useSelector((state) => state.databaseEditor.data);
-  const validation = useSelector((state) => state.databaseEditor.validation);
-  const dispatch = useDispatch();
+  const data = useDatabaseEditorStore((state) => state.data);
+  const validation = useDatabaseEditorStore((state) => state.validation);
+  const setActiveDatabase = useDatabaseEditorStore(
+    (state) => state.setActiveDatabase,
+  );
+
   const [selectedKey, setSelected] = useState(
     `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`,
   );
@@ -17,7 +19,7 @@ const DatabaseTopMenu = () => {
   };
 
   useEffect(() => {
-    dispatch(setActiveDatabase(...selectedKey.split(':')));
+    setActiveDatabase(...selectedKey.split(':'));
   }, [selectedKey]);
 
   return (

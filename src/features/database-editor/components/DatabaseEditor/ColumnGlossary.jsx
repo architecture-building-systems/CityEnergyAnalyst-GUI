@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import './DatabaseEditor.css';
 import Handsontable from 'handsontable';
-import { withErrorBoundary } from 'utils/ErrorBoundary';
 import { createRoot } from 'react-dom/client';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
   const tooltipRef = useRef();
-  const dbGlossary = useSelector((state) => state.databaseEditor.glossary);
+  const dbGlossary = useDatabaseEditorStore((state) => state.glossary);
   const [tableGlossary, setTableGlossary] = useState([]);
   const tooltipPrompt = (
     <p className="cea-database-editor-column-tooltip">
@@ -54,7 +54,11 @@ const ColumnGlossary = ({ tableRef, colHeaders, filter }) => {
     }
   }, [tableGlossary]);
 
-  return <div ref={tooltipRef}></div>;
+  return (
+    <ErrorBoundary>
+      <div ref={tooltipRef}></div>
+    </ErrorBoundary>
+  );
 };
 
-export default withErrorBoundary(ColumnGlossary);
+export default ColumnGlossary;

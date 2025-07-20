@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
 import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { withErrorBoundary } from 'utils/ErrorBoundary';
 import CenterSpinner from 'components/CenterSpinner';
-import ExportDatabaseModal from './ExportDatabaseModal';
-import './DatabaseEditor.css';
+import ExportDatabaseModal from 'features/database-editor/components/DatabaseEditor/ExportDatabaseModal';
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
-import SavingDatabaseModal from './SavingDatabaseModal';
-import DatabaseTopMenu from './DatabaseTopMenu';
-import Database from './Database';
-import UseTypesDatabase from './UseTypesDatabase';
-import ValidationErrors from './ValidationErrors';
+import SavingDatabaseModal from 'features/database-editor/components/DatabaseEditor/SavingDatabaseModal';
+import DatabaseTopMenu from 'features/database-editor/components/DatabaseEditor/DatabaseTopMenu';
+import Database from 'features/database-editor/components/DatabaseEditor/Database';
+import UseTypesDatabase from 'features/database-editor/components/DatabaseEditor/UseTypesDatabase';
+import ValidationErrors from 'features/database-editor/components/DatabaseEditor/ValidationErrors';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+
+import './DatabaseEditor.css';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -218,27 +219,29 @@ const DatabaseContainer = () => {
     return <div>{`Schema for database ${category}-${name} was not found`}</div>;
 
   return (
-    <div className="cea-database-editor-database-container">
-      <div className="cea-database-editor-database">
-        <h2>{name.replace('_', '-')}</h2>
-        <ValidationErrors databaseName={name} />
-        {name === 'USE_TYPES' ? (
-          <UseTypesDatabase
-            name={name}
-            data={data[category][name]}
-            schema={schema[name]}
-          />
-        ) : (
-          <Database
-            name={name}
-            data={data[category][name]}
-            schema={schema[name]}
-          />
-        )}
+    <ErrorBoundary>
+      <div className="cea-database-editor-database-container">
+        <div className="cea-database-editor-database">
+          <h2>{name.replace('_', '-')}</h2>
+          <ValidationErrors databaseName={name} />
+          {name === 'USE_TYPES' ? (
+            <UseTypesDatabase
+              name={name}
+              data={data[category][name]}
+              schema={schema[name]}
+            />
+          ) : (
+            <Database
+              name={name}
+              data={data[category][name]}
+              schema={schema[name]}
+            />
+          )}
+        </div>
+        <SaveDatabaseButton />
       </div>
-      <SaveDatabaseButton />
-    </div>
+    </ErrorBoundary>
   );
 };
 
-export default withErrorBoundary(DatabaseEditor);
+export default DatabaseEditor;

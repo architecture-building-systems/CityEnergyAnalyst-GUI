@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Tabs } from 'antd';
-import { withErrorBoundary } from 'utils/ErrorBoundary';
-import './DatabaseEditor.css';
-import Table, { TableButtons, useTableUpdateRedux } from './Table';
+import Table, { TableButtons, useTableUpdate } from './Table';
 import ColumnGlossary from './ColumnGlossary';
+import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 const Database = ({ name, data, schema }) => {
   const sheetNames = Object.keys(data);
@@ -29,9 +29,9 @@ const Database = ({ name, data, schema }) => {
 };
 
 const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
-  const data = useSelector((state) => state.databaseEditor.data);
+  const data = useDatabaseEditorStore((state) => state.data);
   const tableRef = useRef(null);
-  useTableUpdateRedux(tableRef, databaseName, sheetName);
+  useTableUpdate(tableRef, databaseName, sheetName);
   const { columns, colHeaders } = getTableSchema(
     schema,
     sheetName,
@@ -45,28 +45,30 @@ const DatabaseTable = ({ databaseName, sheetName, sheetData, schema }) => {
   }, []);
 
   return (
-    <div className="cea-database-editor-sheet">
-      <TableButtons
-        tableRef={tableRef}
-        databaseName={databaseName}
-        sheetName={sheetName}
-      />
-      <ColumnGlossary
-        tableRef={tableRef}
-        colHeaders={colHeaders}
-        filter={(variable) => variable.WORKSHEET == sheetName}
-      />
-      <Table
-        ref={tableRef}
-        id={`${databaseName}-${sheetName}`}
-        data={sheetData}
-        colHeaders={colHeaders}
-        rowHeaders={true}
-        columns={columns}
-        stretchH="all"
-        height={400}
-      />
-    </div>
+    <ErrorBoundary>
+      <div className="cea-database-editor-sheet">
+        <TableButtons
+          tableRef={tableRef}
+          databaseName={databaseName}
+          sheetName={sheetName}
+        />
+        <ColumnGlossary
+          tableRef={tableRef}
+          colHeaders={colHeaders}
+          filter={(variable) => variable.WORKSHEET == sheetName}
+        />
+        <Table
+          ref={tableRef}
+          id={`${databaseName}-${sheetName}`}
+          data={sheetData}
+          colHeaders={colHeaders}
+          rowHeaders={true}
+          columns={columns}
+          stretchH="all"
+          height={400}
+        />
+      </div>
+    </ErrorBoundary>
   );
 };
 
@@ -149,4 +151,4 @@ export const getTableSchema = (
   return { columns, colHeaders: _colHeaders };
 };
 
-export default withErrorBoundary(Database);
+export default Database;

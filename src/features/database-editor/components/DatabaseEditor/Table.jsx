@@ -5,6 +5,7 @@ import 'handsontable/dist/handsontable.full.css';
 import { RedoOutlined, UndoOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useEventListener } from 'hooks';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 const Table = forwardRef((props, ref) => {
   // useResizeActiveTable(ref);
@@ -12,10 +13,16 @@ const Table = forwardRef((props, ref) => {
 });
 Table.displayName = 'Table';
 
-export const useTableUpdateRedux = (tableRef, database, sheet) => {
-  const dispatch = useDispatch();
+export const useTableUpdate = (tableRef, database, sheet) => {
+  const updateDatabaseState = useDatabaseEditorStore(
+    (state) => state.updateDatabaseState,
+  );
+  const updateDatabaseChanges = useDatabaseEditorStore(
+    (state) => state.updateDatabaseChanges,
+  );
+
   const updateRedux = () => {
-    dispatch(updateDatabaseState());
+    updateDatabaseState();
   };
 
   useEffect(() => {
@@ -49,8 +56,7 @@ export const useTableUpdateRedux = (tableRef, database, sheet) => {
     };
 
     const afterChange = (changes, source) => {
-      if (changes?.length)
-        dispatch(updateDatabaseChanges({ database, sheet, changes }));
+      if (changes?.length) updateDatabaseChanges({ database, sheet, changes });
     };
 
     const afterCreateRow = (index) => {
