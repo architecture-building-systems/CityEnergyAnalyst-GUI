@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useCallback } from 'react';
 import { apiClient } from 'lib/api/axios';
 
 const transformInitialPayload = (payload) => {
@@ -96,16 +97,12 @@ const useJobsStore = create((set, get) => ({
 
 export const useSelectedJob = () => [
   useJobsStore((state) => state.selectedJob),
-  (selectedJob) => {
-    useJobsStore.setState({ selectedJob });
-  },
+  useJobsStore((state) => state.setSeletedJob),
 ];
 
 export const useShowJobInfo = () => [
   useJobsStore((state) => state.showJobInfo),
-  (showJobInfo) => {
-    useJobsStore.setState({ showJobInfo });
-  },
+  useJobsStore((state) => state.setShowJobInfo),
 ];
 
 export default useJobsStore;
