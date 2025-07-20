@@ -70,7 +70,6 @@ export const useChangesExist = () =>
       Object.keys(state?.changes?.delete).length > 0 ||
       Object.keys(state?.changes?.update).length > 0,
   );
-
 export const useSetSelectedFromMap = () => {
   const setSelected = useTableStore((state) => state.setSelected);
   return (selected) => setSelected(selected, 'map');
@@ -78,6 +77,10 @@ export const useSetSelectedFromMap = () => {
 export const useSetSelectedFromTable = () => {
   const setSelected = useTableStore((state) => state.setSelected);
   return (selected) => setSelected(selected, 'table');
+};
+export const useResetSelected = () => {
+  const setSelected = useTableStore((state) => state.setSelected);
+  return () => setSelected([]);
 };
 export const useSetChanges = () => useTableStore((state) => state.setChanges);
 export const useUpdateChanges = () =>

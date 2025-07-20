@@ -15,7 +15,6 @@ import {
   toolTypes,
   useToolType,
   useSetToolType,
-  useCloseToolCard,
 } from 'features/project/stores/tool-card';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { isElectron } from 'utils/electron';
@@ -29,6 +28,7 @@ import {
 import {
   useSelected,
   useSelectionSource,
+  useResetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 
@@ -39,7 +39,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const toolType = useToolType();
   const setToolType = useSetToolType();
 
-  const closeToolCard = useCloseToolCard();
   const selectedTool = useSelectedToolStore((state) => state.selectedTool);
   const setSelectedTool = useSelectedToolStore(
     (state) => state.setSelectedTool,
@@ -52,6 +51,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   );
   const selectedBuildings = useSelected();
   const selectionSource = useSelectionSource();
+  const resetSelected = useResetSelected();
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
@@ -121,11 +121,18 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  // Close tool card when project or scenario name changes
+  // Reset state when project or scenario name changes
   useEffect(() => {
-    closeToolCard();
-    setInputEditor(false);
-  }, [name, scenarioName, closeToolCard]);
+    const resetState = () => {
+      setToolType(null);
+      setSelectedTool(null);
+
+      resetSelected();
+      setInputEditor(false);
+    };
+
+    resetState();
+  }, [name, scenarioName]);
 
   useEffect(() => {
     // Show building info tool card when buildings are selected on map and input editor is not open
