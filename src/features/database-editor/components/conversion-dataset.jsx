@@ -48,6 +48,8 @@ const EntityDetails = ({ data }) => {
               style={{
                 display: 'flex',
                 fontSize: 12,
+
+                gap: 12,
               }}
             >
               <b style={{ flex: 1 }}>{column}</b>
