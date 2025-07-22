@@ -36,6 +36,7 @@ const useDatabaseEditorStore = create((set) => ({
     set({ data: {}, status: { status: 'fetching' } });
     try {
       const { data } = await apiClient.get('/api/inputs/databases');
+      console.log(data);
       set({ data, status: { status: 'success' } });
 
       // if (Object.keys(data).length > 0) {

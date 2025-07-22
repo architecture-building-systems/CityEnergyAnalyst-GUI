@@ -17,6 +17,7 @@ import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import './DatabaseEditor.css';
 import { CodeDataset } from 'features/database-editor/components/code-dataset';
 import { ConversionDataset } from 'features/database-editor/components/conversion-dataset';
+import { LibraryDataset } from 'features/database-editor/components/library-dataset';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -207,6 +208,7 @@ const SaveDatabaseButton = () => {
 
 const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
 const CONVERSION_DATABASE = 'COMPONENTS-CONVERSION';
+const LIBRARY_DATABASE = '_LIBRARY';
 
 const arraysEqual = (a, b) =>
   a.length === b.length && a.every((val, i) => val === b[i]);
@@ -247,7 +249,7 @@ const DatabaseContainer = () => {
   );
   const dataset =
     data?.[selectedDomain.domain]?.[selectedDomain.category]?.[selectedDataset];
-  console.log(selectedDomain, selectedDataset, dataset);
+  console.log(selectedDomain, selectedDataset);
 
   return (
     <ErrorBoundary>
@@ -284,6 +286,9 @@ const DatabaseContainer = () => {
                 case CONVERSION_DATABASE:
                   return <ConversionDataset data={dataset} />;
                 default:
+                  if ((selectedDataset ?? '').toUpperCase() == LIBRARY_DATABASE)
+                    return <LibraryDataset data={dataset} />;
+
                   return <CodeDataset data={dataset} />;
               }
             })()}

@@ -1,0 +1,95 @@
+import { useEffect, useMemo, useRef } from 'react';
+import Tabulator from 'tabulator-tables';
+import 'tabulator-tables/dist/css/tabulator.min.css';
+
+export const TableDataset = ({ data, indexColumn, commonColumns }) => {
+  // Takes an object with keys as table names and values as arrays of objects
+  if (data == null) return null;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      {Object.keys(data).map((key) => (
+        <div
+          key={key}
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+        >
+          <small>
+            <b>{key}</b>
+          </small>
+
+          <EntityDetails
+            data={data[key]}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+          />
+          <EntityDataTable
+            data={data[key]}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const EntityDetails = ({ data, indexColumn, commonColumns }) => {
+  // Use first row to determine common columns
+  const firstRow = data?.[0];
+  if (firstRow == null) return <div>Unable to determine entity details</div>;
+
+  return (
+    <div>
+      {commonColumns.map(
+        (column) =>
+          column !== indexColumn && (
+            <div
+              key={column}
+              style={{
+                display: 'flex',
+                fontSize: 12,
+
+                gap: 12,
+              }}
+            >
+              <b style={{ flex: 1 }}>{column}</b>
+              <span style={{ flex: 12 }}>{firstRow?.[column] ?? '-'}</span>
+            </div>
+          ),
+      )}
+    </div>
+  );
+};
+
+const EntityDataTable = ({ data, indexColumn, commonColumns }) => {
+  const divRef = useRef();
+  const tabulatorRef = useRef();
+
+  const columns = useMemo(() => {
+    return Object.keys(data[0])
+      .filter(
+        (column) => column != indexColumn && !commonColumns.includes(column),
+      )
+      .map((column) => {
+        return {
+          title: column,
+          field: column,
+        };
+      });
+  }, []);
+
+  useEffect(() => {
+    tabulatorRef.current = new Tabulator(divRef.current, {
+      data: data,
+      columns: columns,
+    });
+  }, []);
+
+  return <div style={{ margin: 12 }} ref={divRef}></div>;
+};
