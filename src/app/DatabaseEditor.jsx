@@ -16,6 +16,7 @@ import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 import './DatabaseEditor.css';
 import { CodeDataset } from 'features/database-editor/components/code-dataset';
+import { ConversionDataset } from 'features/database-editor/components/conversion-dataset';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -205,7 +206,15 @@ const SaveDatabaseButton = () => {
 };
 
 // Domains that use code as lookup in the database
-const CODE_DATABASE_DOMAINS = ['ASSEMBLIES'];
+const ASSEMBLIES_DOMAIN = 'ASSEMBLIES';
+const DISTRIBUTION_CATEGORY = {
+  domain: 'COMPONENTS',
+  category: 'DISTRIBUTION',
+};
+const CONVERSION_DATABASE = {
+  domain: 'COMPONENTS',
+  category: 'CONVERSION',
+};
 
 const DatabaseContainer = () => {
   // Database structure:
@@ -283,15 +292,23 @@ const DatabaseContainer = () => {
 
         <div
           className="cea-database-editor-database-dataset"
-          style={{ flex: 1 }}
+          style={{ flex: 1, minWidth: 0 }}
         >
           <ErrorBoundary>
-            {CODE_DATABASE_DOMAINS.includes(
-              (selectedDomain.domain ?? '').toUpperCase(),
-            ) ? (
+            {/* TODO: Refactor to use switch statement */}
+            {ASSEMBLIES_DOMAIN == (selectedDomain.domain ?? '').toUpperCase() ||
+            (DISTRIBUTION_CATEGORY.domain ==
+              (selectedDomain.domain ?? '').toUpperCase() &&
+              DISTRIBUTION_CATEGORY.category ==
+                (selectedDomain.category ?? '').toUpperCase()) ? (
               <CodeDataset data={dataset} />
+            ) : CONVERSION_DATABASE.domain ==
+                (selectedDomain.domain ?? '').toUpperCase() &&
+              CONVERSION_DATABASE.category ==
+                (selectedDomain.category ?? '').toUpperCase() ? (
+              <ConversionDataset data={dataset} />
             ) : (
-              JSON.stringify(dataset)
+              <div>Unable to determine dataset type</div>
             )}
           </ErrorBoundary>
         </div>
