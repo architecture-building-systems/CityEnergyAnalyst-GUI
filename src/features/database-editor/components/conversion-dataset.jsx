@@ -1,0 +1,90 @@
+import { useEffect, useMemo, useRef } from 'react';
+import Tabulator from 'tabulator-tables';
+import 'tabulator-tables/dist/css/tabulator.min.css';
+
+const INDEX_COLUMN = 'code';
+const COMMON_COLUMNS = ['code', 'type', 'description', 'currency', 'unit'];
+
+export const ConversionDataset = ({ data }) => {
+  if (data == null) return null;
+
+  return (
+    <div
+      style={{
+        flex: 1,
+
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        margin: 12,
+      }}
+    >
+      {Object.keys(data).map((key) => (
+        <div
+          key={key}
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+        >
+          <small>
+            <b>{key}</b>
+          </small>
+
+          <EntityDetails data={data[key]} />
+          <EntityDataTable data={data[key]} />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const EntityDetails = ({ data }) => {
+  // Use first row to determine common columns
+  const firstRow = data?.[0];
+  if (firstRow == null) return <div>Unable to determine entity details</div>;
+
+  return (
+    <div>
+      {COMMON_COLUMNS.map(
+        (column) =>
+          column !== INDEX_COLUMN && (
+            <div
+              key={column}
+              style={{
+                display: 'flex',
+                fontSize: 12,
+              }}
+            >
+              <b style={{ flex: 1 }}>{column}</b>
+              <span style={{ flex: 12 }}>{firstRow?.[column] ?? '-'}</span>
+            </div>
+          ),
+      )}
+    </div>
+  );
+};
+
+const EntityDataTable = ({ data }) => {
+  const divRef = useRef();
+  const tabulatorRef = useRef();
+
+  const columns = useMemo(() => {
+    return Object.keys(data[0])
+      .filter(
+        (column) => column != INDEX_COLUMN && !COMMON_COLUMNS.includes(column),
+      )
+      .map((column) => {
+        return {
+          title: column,
+          field: column,
+        };
+      });
+  }, []);
+
+  useEffect(() => {
+    tabulatorRef.current = new Tabulator(divRef.current, {
+      data: data,
+      columns: columns,
+    });
+  }, []);
+
+  return <div style={{ margin: 12 }} ref={divRef}></div>;
+};
