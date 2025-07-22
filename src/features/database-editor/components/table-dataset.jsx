@@ -102,6 +102,7 @@ const EntityDataTable = ({ data, indexColumn, commonColumns }) => {
     tabulatorRef.current = new Tabulator(divRef.current, {
       data: data,
       columns: columns,
+      layout: 'fitDataFill',
     });
   }, []);
 
