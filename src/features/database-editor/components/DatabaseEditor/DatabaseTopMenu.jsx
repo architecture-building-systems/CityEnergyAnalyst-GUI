@@ -9,9 +9,12 @@ const DatabaseTopMenu = () => {
     (state) => state.setActiveDatabase,
   );
 
-  const [selectedKey, setSelected] = useState(
-    `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`,
-  );
+  const dataKeys = Object.keys(data ?? {});
+  const defaultKey = data.length
+    ? `${dataKeys[0]}:${Object.keys(data[dataKeys[0]])[0]}`
+    : null;
+
+  const [selectedKey, setSelected] = useState(defaultKey);
   const [visible, setVisible] = useState(false);
 
   const handleOk = () => {
@@ -19,9 +22,10 @@ const DatabaseTopMenu = () => {
   };
 
   useEffect(() => {
-    setActiveDatabase(...selectedKey.split(':'));
+    if (selectedKey) setActiveDatabase(...selectedKey.split(':'));
   }, [selectedKey]);
 
+  if (selectedKey === null) return null;
   return (
     <div className="cea-database-editor-database-menu">
       <Menu

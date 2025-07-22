@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
 
-// Utility functions (from the original utils)
+// TODO: Replace with immer
 const createNestedProp = (obj, ...keys) => {
   keys.reduce((curr, key, index) => {
     if (index === keys.length - 1) {
@@ -22,22 +22,32 @@ const deleteNestedProp = (obj, ...keys) => {
   }
 };
 
-const useDatabaseEditorStore = create((set, get) => ({
+const useDatabaseEditorStore = create((set) => ({
   // State
   status: { status: null },
   validation: {},
   data: {},
   schema: {},
   glossary: [],
-  menu: { category: null, name: null },
   changes: [],
 
   // Actions
   initDatabaseState: async () => {
-    set({ status: { status: 'fetching' } });
+    set({ data: {}, status: { status: 'fetching' } });
     try {
-      // This would typically fetch initial data
-      set({ status: { status: 'success' } });
+      const { data } = await apiClient.get('/api/inputs/databases');
+      set({ data, status: { status: 'success' } });
+
+      // if (Object.keys(data).length > 0) {
+      //   const tableNames = [];
+
+      //   for (const [category, tables] of Object.entries(data)) {
+      //     for (const name of Object.keys(tables)) {
+      //       tableNames.push({ category, name });
+      //     }
+      //   }
+      //   set({ tableNames });
+      // }
     } catch (error) {
       set({ status: { status: 'failed', error } });
     }
@@ -53,15 +63,6 @@ const useDatabaseEditorStore = create((set, get) => ({
       menu: { category: null, name: null },
       changes: [],
     });
-  },
-
-  fetchDatabaseData: async (params) => {
-    try {
-      const response = await apiClient.get('/api/database/data', { params });
-      set({ data: response.data });
-    } catch (error) {
-      set({ status: { status: 'failed', error } });
-    }
   },
 
   fetchDatabaseSchema: async (params) => {

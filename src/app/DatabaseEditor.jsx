@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
@@ -15,6 +15,7 @@ import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 import './DatabaseEditor.css';
+import { CodeDataset } from 'features/database-editor/components/code-dataset';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -58,9 +59,7 @@ const DatabaseEditor = () => {
     <div className="cea-database-editor">
       <div className="cea-database-editor-header">
         <h2>Database Editor</h2>
-        <div>
-          <ExportDatabaseButton />
-        </div>
+        <ExportDatabaseButton />
       </div>
       <div className="cea-database-editor-content">
         {valid ? (
@@ -205,42 +204,131 @@ const SaveDatabaseButton = () => {
   );
 };
 
-const DatabaseContainer = () => {
-  const data = useDatabaseEditorStore((state) => state.data);
-  const schema = useDatabaseEditorStore((state) => state.schema);
-  const { category, name } = useDatabaseEditorStore((state) => state.menu);
-  if (
-    !Object.keys(data).includes(category) ||
-    !Object.keys(data[category]).includes(name)
-  )
-    return <div>{`${category}-${name} database not found`}</div>;
+// Domains that use code as lookup in the database
+const CODE_DATABASE_DOMAINS = ['ASSEMBLIES'];
 
-  if (!schema?.[name])
-    return <div>{`Schema for database ${category}-${name} was not found`}</div>;
+const DatabaseContainer = () => {
+  // Database structure:
+  // Level 1: REGION (CH, DE, SG)
+  // Level 2: DOMAIN (ARCHETYPES, ASSEMBLIES, COMPONENTS)
+  // Level 3: CATEGORY (CONSTRUCTION, USE, ENVELOPE, HVAC, CONVERSION)
+  // Level 4: SUBCATEGORY (SCHEDULES, FEEDSTOCKS_LIBRARY, etc.)
+  // Level 5: DATASET (CONSTRUCTION_TYPES.csv, BOILERS.csv, etc.)
+
+  const data = useDatabaseEditorStore((state) => state.data);
+  const [selectedDomain, setSelectedDomain] = useState({
+    domain: null,
+    category: null,
+  });
+  const [selectedDataset, setSelectedDataset] = useState(null);
+
+  const onDomainSelect = useCallback((domain) => {
+    setSelectedDomain(domain);
+    setSelectedDataset(null);
+  }, []);
+
+  if (Object.keys(data ?? {}).length === 0) return <div>No data</div>;
+
+  // FIXME: Backend does not return schema for database
+  // if (!schema?.[name])
+  //   return <div>{`Schema for database ${category}-${name} was not found`}</div>;
+
+  const categoryDatasets = Object.keys(
+    data?.[selectedDomain.domain]?.[selectedDomain.category] ?? {},
+  );
+  const dataset =
+    data?.[selectedDomain.domain]?.[selectedDomain.category]?.[selectedDataset];
+  console.log(selectedDomain, selectedDataset);
 
   return (
     <ErrorBoundary>
-      <div className="cea-database-editor-database-container">
-        <div className="cea-database-editor-database">
-          <h2>{name.replace('_', '-')}</h2>
-          <ValidationErrors databaseName={name} />
-          {name === 'USE_TYPES' ? (
-            <UseTypesDatabase
+      <div
+        className="cea-database-editor-database-container"
+        style={{ display: 'flex', gap: 12, height: '100%' }}
+      >
+        <div
+          className="cea-database-editor-database-domain-categories"
+          style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+        >
+          {Object.keys(data).map((name) => (
+            <DatabaseDomainCategories
+              key={name}
               name={name}
-              data={data[category][name]}
-              schema={schema[name]}
+              categories={Object.keys(data[name])}
+              active={selectedDomain}
+              onSelect={onDomainSelect}
             />
-          ) : (
-            <Database
-              name={name}
-              data={data[category][name]}
-              schema={schema[name]}
-            />
-          )}
+          ))}
         </div>
-        <SaveDatabaseButton />
+        <div
+          className="cea-database-editor-database-datasets"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {categoryDatasets.map((dataset) => (
+            <Button
+              key={dataset}
+              onClick={() => setSelectedDataset(dataset)}
+              type={selectedDataset == dataset ? 'primary' : 'default'}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <b>{dataset.toUpperCase()}</b>
+              </div>
+            </Button>
+          ))}
+        </div>
+
+        <div
+          className="cea-database-editor-database-dataset"
+          style={{ width: '100%' }}
+        >
+          <ErrorBoundary>
+            {CODE_DATABASE_DOMAINS.includes(
+              (selectedDomain.domain ?? '').toUpperCase(),
+            ) ? (
+              <CodeDataset data={dataset} />
+            ) : (
+              JSON.stringify(dataset)
+            )}
+          </ErrorBoundary>
+        </div>
       </div>
     </ErrorBoundary>
+  );
+};
+
+const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
+  return (
+    <div
+      className="cea-database-editor-database-domain-category"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        width: 160,
+      }}
+    >
+      {categories.map((category) => (
+        <Button
+          key={`${name}-${category}`}
+          onClick={() => onSelect?.({ domain: name, category })}
+          type={
+            active?.domain == name && active?.category == category
+              ? 'primary'
+              : 'default'
+          }
+          style={{ height: 40 }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <b>{name.toUpperCase()}</b>
+            {category}
+          </div>
+        </Button>
+      ))}
+    </div>
   );
 };
 
