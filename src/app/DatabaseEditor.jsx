@@ -206,10 +206,7 @@ const SaveDatabaseButton = () => {
 };
 
 const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
-const CONVERSION_DATABASE = {
-  domain: 'COMPONENTS',
-  category: 'CONVERSION',
-};
+const CONVERSION_DATABASE = 'COMPONENTS-CONVERSION';
 
 const arraysEqual = (a, b) =>
   a.length === b.length && a.every((val, i) => val === b[i]);
@@ -244,6 +241,7 @@ const DatabaseContainer = () => {
   // Ensure first level keys of data are DOMAINS
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
 
+  const domainCategory = `${(selectedDomain.domain ?? '').toUpperCase()}-${(selectedDomain.category ?? '').toUpperCase()}`;
   const categoryDatasets = Object.keys(
     data?.[selectedDomain.domain]?.[selectedDomain.category] ?? {},
   );
@@ -281,15 +279,14 @@ const DatabaseContainer = () => {
 
         <div className="cea-database-editor-database-dataset">
           <ErrorBoundary>
-            {/* TODO: Refactor to use switch statement */}
-            {CONVERSION_DATABASE.domain ==
-              (selectedDomain.domain ?? '').toUpperCase() &&
-            CONVERSION_DATABASE.category ==
-              (selectedDomain.category ?? '').toUpperCase() ? (
-              <ConversionDataset data={dataset} />
-            ) : (
-              <CodeDataset data={dataset} />
-            )}
+            {(() => {
+              switch (domainCategory) {
+                case CONVERSION_DATABASE:
+                  return <ConversionDataset data={dataset} />;
+                default:
+                  return <CodeDataset data={dataset} />;
+              }
+            })()}
           </ErrorBoundary>
         </div>
       </div>
