@@ -283,7 +283,7 @@ const DatabaseContainer = () => {
 
         <div
           className="cea-database-editor-database-dataset"
-          style={{ width: '100%' }}
+          style={{ flex: 1 }}
         >
           <ErrorBoundary>
             {CODE_DATABASE_DOMAINS.includes(
