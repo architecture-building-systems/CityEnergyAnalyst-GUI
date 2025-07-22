@@ -11,12 +11,9 @@ export const ConversionDataset = ({ data }) => {
   return (
     <div
       style={{
-        flex: 1,
-
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
-        margin: 12,
       }}
     >
       {Object.keys(data).map((key) => (
