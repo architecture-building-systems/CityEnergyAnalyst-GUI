@@ -67,7 +67,7 @@ const DatabaseEditor = () => {
           <DatabaseContent />
         ) : (
           <div>
-            <div style={{ margin: 20 }}>
+            <div className="cea-database-editor-error-container">
               <h3>
                 Could not find or validate input databases. Try importing a new
                 database
@@ -251,14 +251,8 @@ const DatabaseContainer = () => {
 
   return (
     <ErrorBoundary>
-      <div
-        className="cea-database-editor-database-container"
-        style={{ display: 'flex', gap: 12, height: '100%' }}
-      >
-        <div
-          className="cea-database-editor-database-domain-categories"
-          style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
-        >
+      <div className="cea-database-editor-database-container">
+        <div className="cea-database-editor-database-domain-categories">
           {Object.keys(data).map((name) => (
             <DatabaseDomainCategories
               key={name}
@@ -269,31 +263,21 @@ const DatabaseContainer = () => {
             />
           ))}
         </div>
-        <div
-          className="cea-database-editor-database-datasets"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-          }}
-        >
+        <div className="cea-database-editor-database-dataset-buttons">
           {categoryDatasets.map((dataset) => (
             <Button
               key={dataset}
               onClick={() => setSelectedDataset(dataset)}
               type={selectedDataset == dataset ? 'primary' : 'default'}
             >
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div>
                 <b>{dataset.toUpperCase()}</b>
               </div>
             </Button>
           ))}
         </div>
 
-        <div
-          className="cea-database-editor-database-dataset"
-          style={{ flex: 1, minWidth: 0 }}
-        >
+        <div className="cea-database-editor-database-dataset">
           <ErrorBoundary>
             {/* TODO: Refactor to use switch statement */}
             {ASSEMBLIES_DOMAIN == (selectedDomain.domain ?? '').toUpperCase() ||
@@ -319,15 +303,7 @@ const DatabaseContainer = () => {
 
 const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
   return (
-    <div
-      className="cea-database-editor-database-domain-category"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        width: 160,
-      }}
-    >
+    <div className="cea-database-editor-database-domain-category">
       {categories.map((category) => (
         <Button
           key={`${name}-${category}`}
@@ -337,9 +313,8 @@ const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
               ? 'primary'
               : 'default'
           }
-          style={{ height: 40 }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div>
             <b>{name.toUpperCase()}</b>
             {category}
           </div>

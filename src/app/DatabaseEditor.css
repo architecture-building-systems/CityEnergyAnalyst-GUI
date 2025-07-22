@@ -53,3 +53,47 @@
 .handsontableEditor.autocompleteEditor .current.highlight * {
   font-weight: bold;
 }
+
+.cea-database-editor-database-container {
+  display: flex;
+  gap: 12px;
+  height: 100%;
+}
+
+.cea-database-editor-database-domain-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cea-database-editor-database-dataset-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cea-database-editor-database-dataset {
+  flex: 1;
+  min-width: 0;
+}
+
+.cea-database-editor-database-domain-category {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 160px;
+}
+
+.cea-database-editor-database-domain-category .ant-btn {
+  height: 40px;
+}
+
+.cea-database-editor-database-domain-category .ant-btn > div,
+.cea-database-editor-database-dataset-buttons .ant-btn > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.cea-database-editor-error-container {
+  margin: 20px;
+}
