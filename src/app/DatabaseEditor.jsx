@@ -118,7 +118,7 @@ const DatabaseContent = () => {
 
   return (
     <>
-      <DatabaseTopMenu />
+      {/* <DatabaseTopMenu /> */}
       <DatabaseContainer />
     </>
   );
@@ -205,16 +205,14 @@ const SaveDatabaseButton = () => {
   );
 };
 
-// Domains that use code as lookup in the database
-const ASSEMBLIES_DOMAIN = 'ASSEMBLIES';
-const DISTRIBUTION_CATEGORY = {
-  domain: 'COMPONENTS',
-  category: 'DISTRIBUTION',
-};
+const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
 const CONVERSION_DATABASE = {
   domain: 'COMPONENTS',
   category: 'CONVERSION',
 };
+
+const arraysEqual = (a, b) =>
+  a.length === b.length && a.every((val, i) => val === b[i]);
 
 const DatabaseContainer = () => {
   // Database structure:
@@ -236,18 +234,22 @@ const DatabaseContainer = () => {
     setSelectedDataset(null);
   }, []);
 
-  if (Object.keys(data ?? {}).length === 0) return <div>No data</div>;
-
   // FIXME: Backend does not return schema for database
   // if (!schema?.[name])
   //   return <div>{`Schema for database ${category}-${name} was not found`}</div>;
+
+  const domains = Object.keys(data ?? {}).map((name) => name.toUpperCase());
+  if (domains.length === 0) return <div>No data</div>;
+
+  // Ensure first level keys of data are DOMAINS
+  if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
 
   const categoryDatasets = Object.keys(
     data?.[selectedDomain.domain]?.[selectedDomain.category] ?? {},
   );
   const dataset =
     data?.[selectedDomain.domain]?.[selectedDomain.category]?.[selectedDataset];
-  console.log(selectedDomain, selectedDataset);
+  console.log(selectedDomain, selectedDataset, dataset);
 
   return (
     <ErrorBoundary>
@@ -280,19 +282,13 @@ const DatabaseContainer = () => {
         <div className="cea-database-editor-database-dataset">
           <ErrorBoundary>
             {/* TODO: Refactor to use switch statement */}
-            {ASSEMBLIES_DOMAIN == (selectedDomain.domain ?? '').toUpperCase() ||
-            (DISTRIBUTION_CATEGORY.domain ==
+            {CONVERSION_DATABASE.domain ==
               (selectedDomain.domain ?? '').toUpperCase() &&
-              DISTRIBUTION_CATEGORY.category ==
-                (selectedDomain.category ?? '').toUpperCase()) ? (
-              <CodeDataset data={dataset} />
-            ) : CONVERSION_DATABASE.domain ==
-                (selectedDomain.domain ?? '').toUpperCase() &&
-              CONVERSION_DATABASE.category ==
-                (selectedDomain.category ?? '').toUpperCase() ? (
+            CONVERSION_DATABASE.category ==
+              (selectedDomain.category ?? '').toUpperCase() ? (
               <ConversionDataset data={dataset} />
             ) : (
-              <div>Unable to determine dataset type</div>
+              <CodeDataset data={dataset} />
             )}
           </ErrorBoundary>
         </div>
