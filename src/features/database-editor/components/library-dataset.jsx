@@ -8,10 +8,6 @@ const COMMON_COLUMNS = ['reference'];
 export const LibraryDataset = ({ data }) => {
   // Object keys are the file names, values are data as arrays of objects
   const [selectedLibrary, setSelectedLibrary] = useState(null);
-  // Select the relevant data array from the object; TableDataset expects an object
-  const selectedData = selectedLibrary !== null && {
-    [selectedLibrary]: data?.[selectedLibrary],
-  };
 
   return (
     <div className="cea-database-editor-database-container">
@@ -32,7 +28,8 @@ export const LibraryDataset = ({ data }) => {
       {selectedLibrary != null && (
         <div className="cea-database-editor-database-dataset">
           <TableDataset
-            data={selectedData}
+            name={selectedLibrary}
+            data={data?.[selectedLibrary]}
             indexColumn={INDEX_COLUMN}
             commonColumns={COMMON_COLUMNS}
           />

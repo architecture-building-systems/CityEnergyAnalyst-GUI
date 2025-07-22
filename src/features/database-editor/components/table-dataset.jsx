@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 
-export const TableDataset = ({ data, indexColumn, commonColumns }) => {
+export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
   // Takes an object with keys as table names and values as arrays of objects
-  if (data == null) return null;
+  if (data == null) return <div>No data found for this dataset</div>;
 
   return (
     <div
@@ -15,26 +15,40 @@ export const TableDataset = ({ data, indexColumn, commonColumns }) => {
       }}
     >
       {Object.keys(data).map((key) => (
-        <div
+        <TableDataset
           key={key}
-          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
-        >
-          <small>
-            <b>{key}</b>
-          </small>
-
-          <EntityDetails
-            data={data[key]}
-            indexColumn={indexColumn}
-            commonColumns={commonColumns}
-          />
-          <EntityDataTable
-            data={data[key]}
-            indexColumn={indexColumn}
-            commonColumns={commonColumns}
-          />
-        </div>
+          name={key}
+          data={data?.[key]}
+          indexColumn={indexColumn}
+          commonColumns={commonColumns}
+        />
       ))}
+    </div>
+  );
+};
+
+export const TableDataset = ({
+  name = 'Unnamed Dataset',
+  data,
+  indexColumn,
+  commonColumns,
+}) => {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <small>
+        <b>{name}</b>
+      </small>
+
+      <EntityDetails
+        data={data}
+        indexColumn={indexColumn}
+        commonColumns={commonColumns}
+      />
+      <EntityDataTable
+        data={data}
+        indexColumn={indexColumn}
+        commonColumns={commonColumns}
+      />
     </div>
   );
 };
