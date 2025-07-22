@@ -38,22 +38,6 @@
   margin-left: 10px;
 }
 
-.handsontableEditor.autocompleteEditor table {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-
-.handsontableEditor.autocompleteEditor table strong {
-  font-weight: normal;
-}
-
-.handsontableEditor.autocompleteEditor .current.highlight {
-  background: rgba(24, 144, 255, 0.2);
-}
-
-.handsontableEditor.autocompleteEditor .current.highlight * {
-  font-weight: bold;
-}
-
 .cea-database-editor-database-container {
   display: flex;
   gap: 12px;
