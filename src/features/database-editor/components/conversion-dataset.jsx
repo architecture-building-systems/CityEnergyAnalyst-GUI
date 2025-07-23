@@ -1,7 +1,14 @@
 import { TableGroupDataset } from './table-dataset';
 
 const INDEX_COLUMN = 'code';
-const COMMON_COLUMNS = ['code', 'type', 'description', 'currency', 'unit'];
+const COMMON_COLUMNS = [
+  'code',
+  'type',
+  'description',
+  'currency',
+  'unit',
+  'reference',
+];
 
 export const ConversionDataset = ({ data }) => {
   return (
