@@ -1118,6 +1118,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fontsource/space-grotesk@npm:^5.2.8":
+  version: 5.2.8
+  resolution: "@fontsource/space-grotesk@npm:5.2.8"
+  checksum: 10c0/9c048a780045f548cc56be25be8dc78c5c840ad2cd97bfa29f83e3901e72df72bddc05c54167deb360ea1d263f4a64924d789ee6fd35a36987e07e4f7ef0f2cc
+  languageName: node
+  linkType: hard
+
 "@gar/promisify@npm:^1.1.3":
   version: 1.1.3
   resolution: "@gar/promisify@npm:1.1.3"
@@ -6033,6 +6040,7 @@ __metadata:
     "@ant-design/v5-patch-for-react-19": "npm:^1.0.3"
     "@babel/polyfill": "npm:^7.12.1"
     "@deck.gl-community/editable-layers": "npm:9.0.0-alpha.1"
+    "@fontsource/space-grotesk": "npm:^5.2.8"
     "@handsontable/react": "npm:^3.1.2"
     "@mapbox/mapbox-gl-draw": "npm:^1.5.0"
     "@mapbox/mapbox-gl-draw-static-mode": "npm:^1.0.1"
