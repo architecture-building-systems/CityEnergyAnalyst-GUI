@@ -272,9 +272,7 @@ const DatabaseContainer = () => {
               onClick={() => setSelectedDataset(dataset)}
               type={selectedDataset == dataset ? 'primary' : 'default'}
             >
-              <div>
-                <b>{dataset.toUpperCase()}</b>
-              </div>
+              {dataset.toUpperCase()}
             </Button>
           ))}
         </div>
