@@ -44,3 +44,7 @@ button:hover {
   margin: 8px;
   padding: 4px;
 }
+
+.tabulator-tableHolder {
+  overscroll-behavior: none;
+}
