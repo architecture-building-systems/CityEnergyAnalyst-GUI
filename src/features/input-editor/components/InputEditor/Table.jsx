@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
-import ScheduleEditor from './ScheduleEditor';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
@@ -45,21 +44,13 @@ const Table = ({ tab, tables, columns }) => {
       </div>
       <div style={{ minHeight: 0, flex: 1 }}>
         <ErrorBoundary>
-          {tab == 'schedules' ? (
-            <ScheduleEditor
-              tabulator={tabulator}
-              selected={selected}
-              tables={tables}
-            />
-          ) : (
-            <TableEditor
-              tabulator={tabulator}
-              tab={tab}
-              selected={selected}
-              tables={tables}
-              columns={columns}
-            />
-          )}
+          <TableEditor
+            tabulator={tabulator}
+            tab={tab}
+            selected={selected}
+            tables={tables}
+            columns={columns}
+          />
         </ErrorBoundary>
       </div>
     </div>
