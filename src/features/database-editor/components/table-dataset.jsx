@@ -27,12 +27,7 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
   );
 };
 
-export const TableDataset = ({
-  name = 'Unnamed Dataset',
-  data,
-  indexColumn,
-  commonColumns,
-}) => {
+export const TableDataset = ({ name, data, indexColumn, commonColumns }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <small>
@@ -97,6 +92,14 @@ const EntityDataTable = ({ data, indexColumn, commonColumns }) => {
         };
       });
   }, []);
+
+  useEffect(() => {
+    if (tabulatorRef.current && data !== null) {
+      tabulatorRef.current.setColumns(columns);
+      tabulatorRef.current.setData(data);
+      tabulatorRef.current.setHeight();
+    }
+  }, [data, columns]);
 
   useEffect(() => {
     tabulatorRef.current = new Tabulator(divRef.current, {
