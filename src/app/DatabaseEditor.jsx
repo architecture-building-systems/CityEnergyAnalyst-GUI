@@ -18,6 +18,7 @@ import './DatabaseEditor.css';
 import { CodeDataset } from 'features/database-editor/components/code-dataset';
 import { ConversionDataset } from 'features/database-editor/components/conversion-dataset';
 import { LibraryDataset } from 'features/database-editor/components/library-dataset';
+import { UseTypeDataset } from 'features/database-editor/components/use-type-dataset';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -120,6 +121,13 @@ const DatabaseContent = () => {
   return (
     <>
       {/* <DatabaseTopMenu /> */}
+      <Button
+        onClick={() => {
+          initDatabaseState();
+        }}
+      >
+        Reset Database
+      </Button>
       <DatabaseContainer />
     </>
   );
@@ -207,6 +215,7 @@ const SaveDatabaseButton = () => {
 };
 
 const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
+const USE_TYPES_DATABASE = 'ARCHETYPES-USE';
 const CONVERSION_DATABASE = 'COMPONENTS-CONVERSION';
 const LIBRARY_DATABASE = '_LIBRARY';
 
@@ -244,11 +253,9 @@ const DatabaseContainer = () => {
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
 
   const domainCategory = `${(selectedDomain.domain ?? '').toUpperCase()}-${(selectedDomain.category ?? '').toUpperCase()}`;
-  const categoryDatasets = Object.keys(
-    data?.[selectedDomain.domain]?.[selectedDomain.category] ?? {},
-  );
-  const dataset =
-    data?.[selectedDomain.domain]?.[selectedDomain.category]?.[selectedDataset];
+  const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
+  const categoryDatasets = Object.keys(categoryData ?? {});
+  const dataset = categoryData?.[selectedDataset];
   console.log(selectedDomain, selectedDataset);
 
   return (
@@ -265,33 +272,45 @@ const DatabaseContainer = () => {
             />
           ))}
         </div>
-        <div className="cea-database-editor-database-dataset-buttons">
-          {categoryDatasets.map((dataset) => (
-            <Button
-              key={dataset}
-              onClick={() => setSelectedDataset(dataset)}
-              type={selectedDataset == dataset ? 'primary' : 'default'}
-            >
-              {dataset.toUpperCase()}
-            </Button>
-          ))}
-        </div>
 
-        <div className="cea-database-editor-database-dataset">
+        {/* UseTypeDataset is a special case */}
+        {domainCategory == USE_TYPES_DATABASE && (
+          <UseTypeDataset dataset={categoryData} />
+        )}
+
+        {domainCategory != USE_TYPES_DATABASE && (
           <ErrorBoundary>
-            {(() => {
-              switch (domainCategory) {
-                case CONVERSION_DATABASE:
-                  return <ConversionDataset data={dataset} />;
-                default:
-                  if ((selectedDataset ?? '').toUpperCase() == LIBRARY_DATABASE)
-                    return <LibraryDataset data={dataset} />;
+            <div className="cea-database-editor-database-dataset-buttons">
+              {categoryDatasets.map((dataset) => (
+                <Button
+                  key={dataset}
+                  onClick={() => setSelectedDataset(dataset)}
+                  type={selectedDataset == dataset ? 'primary' : 'default'}
+                >
+                  {dataset.toUpperCase().split('_').join(' ')}
+                </Button>
+              ))}
+            </div>
+            <div className="cea-database-editor-database-dataset">
+              <ErrorBoundary>
+                {(() => {
+                  switch (domainCategory) {
+                    case CONVERSION_DATABASE:
+                      return <ConversionDataset data={dataset} />;
+                    default:
+                      if (
+                        (selectedDataset ?? '').toUpperCase() ==
+                        LIBRARY_DATABASE
+                      )
+                        return <LibraryDataset data={dataset} />;
 
-                  return <CodeDataset data={dataset} />;
-              }
-            })()}
+                      return <CodeDataset data={dataset} />;
+                  }
+                })()}
+              </ErrorBoundary>
+            </div>
           </ErrorBoundary>
-        </div>
+        )}
       </div>
     </ErrorBoundary>
   );
