@@ -79,10 +79,16 @@
   height: 40px;
 }
 
-.cea-database-editor-database-domain-category .ant-btn > div,
-.cea-database-editor-database-dataset-buttons .ant-btn > div {
+.cea-database-editor-database-domain-category .ant-btn > div {
   display: flex;
   flex-direction: column;
+}
+
+.cea-database-editor-database-dataset-buttons .ant-btn > span,
+.cea-database-editor-database-dataset-code-buttons .ant-btn > span {
+  width: 160px;
+  white-space: wrap;
+  font-size: 12px;
 }
 
 .cea-database-editor-error-container {

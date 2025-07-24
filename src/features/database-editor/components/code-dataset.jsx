@@ -48,7 +48,10 @@ export const CodeDataset = ({ data }) => {
         }}
       >
         <small>code</small>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div
+          className="cea-database-editor-database-dataset-code-buttons"
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+        >
           {Object.keys(data).map((index) => {
             return (
               <Button
