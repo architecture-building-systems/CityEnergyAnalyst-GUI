@@ -30,9 +30,11 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
 export const TableDataset = ({ name, data, indexColumn, commonColumns }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <small>
-        <b>{name}</b>
-      </small>
+      {name != null && (
+        <small>
+          <b>{name}</b>
+        </small>
+      )}
 
       <EntityDetails
         data={data}
@@ -52,6 +54,7 @@ const EntityDetails = ({ data, indexColumn, commonColumns }) => {
   // Use first row to determine common columns
   const firstRow = data?.[0];
   if (firstRow == null) return <div>Unable to determine entity details</div>;
+  if (!commonColumns?.length) return null;
 
   return (
     <div>
@@ -81,9 +84,11 @@ const EntityDataTable = ({ data, indexColumn, commonColumns }) => {
   const tabulatorRef = useRef();
 
   const columns = useMemo(() => {
-    return Object.keys(data[0])
+    // Use first row to determine columns
+    return Object.keys(data?.[0] ?? {})
       .filter(
-        (column) => column != indexColumn && !commonColumns.includes(column),
+        (column) =>
+          column != indexColumn && !(commonColumns || []).includes(column),
       )
       .map((column) => {
         return {
