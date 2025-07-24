@@ -18,9 +18,7 @@ export const LibraryDataset = ({ data }) => {
             onClick={() => setSelectedLibrary(library)}
             type={selectedLibrary == library ? 'primary' : 'default'}
           >
-            <div>
-              <b>{library.toUpperCase()}</b>
-            </div>
+            {library.toUpperCase()}
           </Button>
         ))}
       </div>
