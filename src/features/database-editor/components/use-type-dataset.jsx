@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import { TableDataset } from './table-dataset';
-import { useState } from 'react';
+import { ScheduleAreaChart } from './ScheduleAreaChart';
+import { useEffect, useState } from 'react';
 
 export const UseTypeDataset = ({ dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -95,46 +96,78 @@ const extractSchedule = (data, schedule) => {
   return { weekday, saturday, sunday };
 };
 
-const UseTypeSchedules = ({ data }) => {
-  // Data is array of schedule objects
-  // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
-  // hour can be "Weekday_1","Saturday_2", "Sunday_3"
-  if (data == null) return <div>No data found</div>;
-
-  const schedules = Object.keys(data?.[0] ?? {});
+const ScheduleButtons = ({ schedules, selected, onSelected }) => {
+  useEffect(() => {
+    // Select first schedule if none selected or selected schedule is not in schedules
+    if (
+      schedules?.length &&
+      (selected == null || !schedules.includes(selected))
+    )
+      onSelected?.(schedules[0]);
+  }, [schedules, selected, onSelected]);
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        minWidth: 0,
-      }}
+      className="cea-database-editor-database-dataset-buttons"
+      style={{ flexDirection: 'row', overflowX: 'auto', paddingBottom: 12 }}
     >
-      {schedules.map((schedule) => {
-        if (schedule == 'hour') return null;
-        const scheduleData = extractSchedule(data, schedule);
-        return (
-          <div key={schedule}>
-            <small style={{ flex: 12 }}>
-              <b>{schedule}</b>
-            </small>
-
-            <ScheduleGraph data={scheduleData} />
-          </div>
-        );
-      })}
+      {schedules.map((schedule) => (
+        <Button
+          key={schedule}
+          onClick={() => onSelected?.(schedule)}
+          type={schedule === selected ? 'primary' : 'default'}
+        >
+          {schedule.toUpperCase()}
+        </Button>
+      ))}
     </div>
   );
 };
 
-const ScheduleGraph = ({ data }) => {
-  console.log(data);
+const UseTypeSchedules = ({ data }) => {
+  // Data is array of schedule objects
+  // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
+  // hour can be "Weekday_1","Saturday_2", "Sunday_3"
+
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+
+  if (data == null) return <div>No data found</div>;
+
+  const schedules = Object.keys(data?.[0] ?? {}).filter((key) => key != 'hour');
+  const selectedScheduleData = extractSchedule(data, selectedSchedule);
+
   return (
-    <div>
-      <div>Schedule Graph</div>
-      <div>{JSON.stringify(data)}</div>
+    <div
+      className="cea-database-editor-database-use-type-schedules"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+
+        gap: 12,
+      }}
+    >
+      <ScheduleButtons
+        schedules={schedules}
+        selected={selectedSchedule}
+        onSelected={setSelectedSchedule}
+      />
+
+      {selectedScheduleData != null &&
+      ['heating', 'cooling'].includes(selectedSchedule) ? (
+        <div>TODO</div>
+      ) : (
+        <div>
+          {Object.keys(selectedScheduleData).map((schedule) => {
+            return (
+              <ScheduleAreaChart
+                key={schedule}
+                data={selectedScheduleData[schedule]}
+                title={schedule}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
