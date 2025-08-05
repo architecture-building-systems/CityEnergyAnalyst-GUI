@@ -21,13 +21,20 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
           data={data?.[key]}
           indexColumn={indexColumn}
           commonColumns={commonColumns}
+          showIndex={false}
         />
       ))}
     </div>
   );
 };
 
-export const TableDataset = ({ name, data, indexColumn, commonColumns }) => {
+export const TableDataset = ({
+  name,
+  data,
+  indexColumn,
+  commonColumns,
+  showIndex,
+}) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {name != null && (
@@ -45,6 +52,7 @@ export const TableDataset = ({ name, data, indexColumn, commonColumns }) => {
         data={data}
         indexColumn={indexColumn}
         commonColumns={commonColumns}
+        showIndex={showIndex}
       />
     </div>
   );
@@ -79,7 +87,12 @@ const EntityDetails = ({ data, indexColumn, commonColumns }) => {
   );
 };
 
-const EntityDataTable = ({ data, indexColumn, commonColumns }) => {
+const EntityDataTable = ({
+  data,
+  indexColumn,
+  commonColumns,
+  showIndex = true,
+}) => {
   const divRef = useRef();
   const tabulatorRef = useRef();
 
@@ -88,7 +101,8 @@ const EntityDataTable = ({ data, indexColumn, commonColumns }) => {
     return Object.keys(data?.[0] ?? {})
       .filter(
         (column) =>
-          column != indexColumn && !(commonColumns || []).includes(column),
+          (showIndex && column == indexColumn) ||
+          !(commonColumns || []).includes(column),
       )
       .map((column) => {
         return {
