@@ -9,12 +9,12 @@ import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 import './DatabaseEditor.css';
-import { CodeDataset } from 'features/database-editor/components/code-dataset';
 import { ConversionDataset } from 'features/database-editor/components/conversion-dataset';
 import { LibraryDataset } from 'features/database-editor/components/library-dataset';
 import { UseTypeDataset } from 'features/database-editor/components/use-type-dataset';
 import { ExportDatabaseButton } from 'features/database-editor/components/export-button';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
+import { CodeTableDataset } from 'features/database-editor/components/code-table-dataset';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -173,7 +173,6 @@ const DatabaseContainer = () => {
   const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
   const categoryDatasets = Object.keys(categoryData ?? {});
   const dataset = categoryData?.[selectedDataset];
-  console.log(selectedDomain, selectedDataset);
 
   return (
     <ErrorBoundary>
@@ -220,8 +219,12 @@ const DatabaseContainer = () => {
                         LIBRARY_DATABASE
                       )
                         return <LibraryDataset data={dataset} />;
-
-                      return <CodeDataset data={dataset} />;
+                      return (
+                        <CodeTableDataset
+                          key={`${domainCategory}-${selectedDataset}`}
+                          data={dataset}
+                        />
+                      );
                   }
                 })()}
               </ErrorBoundary>
