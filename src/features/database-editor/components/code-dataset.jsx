@@ -25,14 +25,14 @@ export const CodeDataset = ({ data }) => {
           className="cea-database-editor-database-dataset-code-buttons"
           style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
         >
-          {Object.keys(data).map((index) => {
+          {Object.keys(data).map((code) => {
             return (
               <Button
-                key={index}
-                onClick={() => setCode(index)}
-                type={code == index ? 'primary' : 'default'}
+                key={code}
+                onClick={() => setCode(code)}
+                type={code === code ? 'primary' : 'default'}
               >
-                {index}
+                {code}
               </Button>
             );
           })}
