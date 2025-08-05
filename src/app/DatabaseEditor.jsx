@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
-import ExportDatabaseModal from 'features/database-editor/components/DatabaseEditor/ExportDatabaseModal';
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
-import SavingDatabaseModal from 'features/database-editor/components/DatabaseEditor/SavingDatabaseModal';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
@@ -15,6 +13,8 @@ import { CodeDataset } from 'features/database-editor/components/code-dataset';
 import { ConversionDataset } from 'features/database-editor/components/conversion-dataset';
 import { LibraryDataset } from 'features/database-editor/components/library-dataset';
 import { UseTypeDataset } from 'features/database-editor/components/use-type-dataset';
+import { ExportDatabaseButton } from 'features/database-editor/components/export-button';
+import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);
@@ -94,25 +94,6 @@ const DatabaseEditor = () => {
   );
 };
 
-const RefreshDatabaseButton = () => {
-  const { status } = useDatabaseEditorStore((state) => state.status);
-  const initDatabaseState = useDatabaseEditorStore(
-    (state) => state.initDatabaseState,
-  );
-
-  if (status === 'fetching') return null;
-
-  return (
-    <Button
-      onClick={() => {
-        initDatabaseState();
-      }}
-    >
-      Refresh
-    </Button>
-  );
-};
-
 const DatabaseContent = () => {
   const { status, error } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
@@ -146,87 +127,6 @@ const DatabaseContent = () => {
     <>
       {/* <DatabaseTopMenu /> */}
       <DatabaseContainer />
-    </>
-  );
-};
-
-export const ExportDatabaseButton = () => {
-  const { status } = useDatabaseEditorStore((state) => state.status);
-  const databaseValidation = useDatabaseEditorStore(
-    (state) => state.validation,
-  );
-  const [modalVisible, setModalVisible] = useState(false);
-
-  if (status !== 'success') return null;
-
-  return (
-    <>
-      <Button
-        icon={<UploadOutlined />}
-        disabled={!!Object.keys(databaseValidation).length}
-        onClick={() => {
-          setModalVisible(true);
-        }}
-      >
-        Export
-      </Button>
-      <ExportDatabaseModal
-        visible={modalVisible}
-        setVisible={setModalVisible}
-      />
-    </>
-  );
-};
-
-const SaveDatabaseButton = () => {
-  const databasesData = useDatabaseEditorStore((state) => state.data);
-  const databaseValidation = useDatabaseEditorStore(
-    (state) => state.validation,
-  );
-  const databaseChanges = useDatabaseEditorStore((state) => state.changes);
-  const resetDatabaseChanges = useDatabaseEditorStore(
-    (state) => state.resetDatabaseChanges,
-  );
-  const [modalVisible, setModalVisible] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const disabled =
-    !!Object.keys(databaseValidation).length || !databaseChanges.length;
-
-  const hideModal = () => {
-    setModalVisible(false);
-    setSuccess(null);
-    setError(null);
-  };
-
-  const saveDB = async () => {
-    setModalVisible(true);
-    try {
-      console.log(databasesData);
-      await apiClient.put(`/api/inputs/databases`, databasesData);
-      setSuccess(true);
-      resetDatabaseChanges();
-    } catch (err) {
-      console.error(err.response);
-      setError(err.response);
-    }
-  };
-
-  return (
-    <>
-      <Button
-        // Disable button if there are validation errors or if there are no changes to data
-        disabled={disabled}
-        onClick={saveDB}
-      >
-        Save Changes
-      </Button>
-      <SavingDatabaseModal
-        visible={modalVisible}
-        hideModal={hideModal}
-        error={error}
-        success={success}
-      />
     </>
   );
 };
