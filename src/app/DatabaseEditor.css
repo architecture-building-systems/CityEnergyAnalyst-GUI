@@ -89,7 +89,7 @@
 .cea-database-editor-database-dataset-buttons .ant-btn > span,
 .cea-database-editor-database-dataset-code-buttons .ant-btn > span {
   max-width: 160px;
-  white-space: wrap;
+  white-space: normal;
   font-size: 12px;
 }
 
