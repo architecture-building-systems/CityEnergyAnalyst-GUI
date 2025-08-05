@@ -59,7 +59,7 @@ const DatabaseEditor = () => {
       <div className="cea-database-editor-header">
         <h2>Database Editor</h2>
         <div>
-          <ExportDatabaseButton />
+          {/* <ExportDatabaseButton /> */}
           <RefreshDatabaseButton />
         </div>
       </div>
@@ -148,6 +148,7 @@ const DatabaseContainer = () => {
   // Level 5: DATASET (CONSTRUCTION_TYPES.csv, BOILERS.csv, etc.)
 
   const data = useDatabaseEditorStore((state) => state.data);
+  // TODO: Move state to url query params
   const [selectedDomain, setSelectedDomain] = useState({
     domain: null,
     category: null,
