@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { use, useEffect, useMemo, useRef } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 
@@ -132,6 +132,13 @@ const EntityDataTable = ({
       tabulatorRef.current.setHeight();
     }
   }, [data, columns]);
+
+  useEffect(() => {
+    // Remove table on unmount
+    () => {
+      if (tabulatorRef.current) tabulatorRef.current.destroy();
+    };
+  }, []);
 
   return <div style={{ margin: 12 }} ref={divRef}></div>;
 };
