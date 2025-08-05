@@ -6,10 +6,6 @@ import ExportDatabaseModal from 'features/database-editor/components/DatabaseEdi
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import SavingDatabaseModal from 'features/database-editor/components/DatabaseEditor/SavingDatabaseModal';
-import DatabaseTopMenu from 'features/database-editor/components/DatabaseEditor/DatabaseTopMenu';
-import Database from 'features/database-editor/components/DatabaseEditor/Database';
-import UseTypesDatabase from 'features/database-editor/components/DatabaseEditor/UseTypesDatabase';
-import ValidationErrors from 'features/database-editor/components/DatabaseEditor/ValidationErrors';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
@@ -62,7 +58,10 @@ const DatabaseEditor = () => {
     <div className="cea-database-editor">
       <div className="cea-database-editor-header">
         <h2>Database Editor</h2>
-        <ExportDatabaseButton />
+        <div>
+          <ExportDatabaseButton />
+          <RefreshDatabaseButton />
+        </div>
       </div>
       <div className="cea-database-editor-content">
         {valid ? (
@@ -92,6 +91,25 @@ const DatabaseEditor = () => {
       </div>
       <div className="cea-database-editor-footer"></div>
     </div>
+  );
+};
+
+const RefreshDatabaseButton = () => {
+  const { status } = useDatabaseEditorStore((state) => state.status);
+  const initDatabaseState = useDatabaseEditorStore(
+    (state) => state.initDatabaseState,
+  );
+
+  if (status === 'fetching') return null;
+
+  return (
+    <Button
+      onClick={() => {
+        initDatabaseState();
+      }}
+    >
+      Refresh
+    </Button>
   );
 };
 
@@ -127,13 +145,6 @@ const DatabaseContent = () => {
   return (
     <>
       {/* <DatabaseTopMenu /> */}
-      <Button
-        onClick={() => {
-          initDatabaseState();
-        }}
-      >
-        Reset Database
-      </Button>
       <DatabaseContainer />
     </>
   );
@@ -157,7 +168,7 @@ export const ExportDatabaseButton = () => {
           setModalVisible(true);
         }}
       >
-        Export Database
+        Export
       </Button>
       <ExportDatabaseModal
         visible={modalVisible}
