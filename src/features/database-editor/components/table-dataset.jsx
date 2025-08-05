@@ -96,9 +96,11 @@ const EntityDataTable = ({
   const divRef = useRef();
   const tabulatorRef = useRef();
 
+  const firstRow = data?.[0];
   const columns = useMemo(() => {
+    if (firstRow == null) return [];
     // Use first row to determine columns
-    return Object.keys(data?.[0] ?? {})
+    return Object.keys(firstRow)
       .filter(
         (column) =>
           (showIndex && column == indexColumn) ||
@@ -110,23 +112,21 @@ const EntityDataTable = ({
           field: column,
         };
       });
-  }, []);
+  }, [firstRow, indexColumn, commonColumns, showIndex]);
 
   useEffect(() => {
-    if (tabulatorRef.current && data !== null) {
+    if (tabulatorRef.current == null) {
+      tabulatorRef.current = new Tabulator(divRef.current, {
+        data: data,
+        columns: columns,
+        layout: 'fitDataFill',
+      });
+    } else if (data !== null) {
       tabulatorRef.current.setColumns(columns);
       tabulatorRef.current.setData(data);
       tabulatorRef.current.setHeight();
     }
   }, [data, columns]);
-
-  useEffect(() => {
-    tabulatorRef.current = new Tabulator(divRef.current, {
-      data: data,
-      columns: columns,
-      layout: 'fitDataFill',
-    });
-  }, []);
 
   return <div style={{ margin: 12 }} ref={divRef}></div>;
 };
