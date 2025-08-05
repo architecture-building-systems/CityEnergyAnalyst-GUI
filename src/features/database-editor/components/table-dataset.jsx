@@ -34,6 +34,7 @@ export const TableDataset = ({
   indexColumn,
   commonColumns,
   showIndex,
+  freezeIndex,
 }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -53,6 +54,7 @@ export const TableDataset = ({
         indexColumn={indexColumn}
         commonColumns={commonColumns}
         showIndex={showIndex}
+        freezeIndex={freezeIndex}
       />
     </div>
   );
@@ -92,6 +94,7 @@ const EntityDataTable = ({
   indexColumn,
   commonColumns,
   showIndex = true,
+  freezeIndex = true,
 }) => {
   const divRef = useRef();
   const tabulatorRef = useRef();
@@ -110,9 +113,10 @@ const EntityDataTable = ({
         return {
           title: column,
           field: column,
+          frozen: showIndex && column == indexColumn && freezeIndex,
         };
       });
-  }, [firstRow, indexColumn, commonColumns, showIndex]);
+  }, [firstRow, indexColumn, commonColumns, showIndex, freezeIndex]);
 
   useEffect(() => {
     if (tabulatorRef.current == null) {
