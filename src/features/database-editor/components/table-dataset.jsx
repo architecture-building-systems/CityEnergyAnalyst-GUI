@@ -124,6 +124,7 @@ const EntityDataTable = ({
         data: data,
         columns: columns,
         layout: 'fitDataFill',
+        layoutColumnsOnNewData: true,
       });
     } else if (data !== null) {
       tabulatorRef.current.setColumns(columns);

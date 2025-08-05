@@ -71,6 +71,7 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
       index: INDEX_COLUMN,
       columns: [],
       layout: 'fitDataFill',
+      layoutColumnsOnNewData: true,
       height: '100%',
       validationFailed: (cell) => {
         const field = cell.getField();
@@ -272,14 +273,12 @@ const useTableData = (tab, columns, tables) => {
               const dataType = columns[tab][column].type;
               columnDef = {
                 ...columnDef,
-                minWidth: 100,
                 // Hack to allow editing when double clicking
                 cellDblClick: () => {},
               };
               if (columns[tab][column]?.choices != undefined)
                 return {
                   ...columnDef,
-                  minWidth: 170,
                   editor: 'select',
                   editorParams: {
                     values: columns[tab][column].choices,
