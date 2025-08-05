@@ -31,7 +31,7 @@ const useValidateDatabasePath = () => {
       await apiClient.get(`/api/inputs/databases/check`);
       setValid(true);
     } catch (err) {
-      if (err.response) setError(err.response.data.message);
+      if (err.response?.data) setError(err.response.data.detail);
       else setError('Could not read and verify databases.');
       setValid(false);
     }
@@ -75,9 +75,15 @@ const DatabaseEditor = () => {
                 database
               </h3>
               {error !== null && (
-                <details>
+                <div
+                  style={{
+                    background: '#efefef',
+                    padding: 16,
+                    borderRadius: 8,
+                  }}
+                >
                   <pre>{error}</pre>
-                </details>
+                </div>
               )}
             </div>
             <Button onClick={checkDBPathValidity}>Try Again</Button>
