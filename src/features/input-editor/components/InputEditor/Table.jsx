@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
-import ScheduleEditor from './ScheduleEditor';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
@@ -45,21 +44,13 @@ const Table = ({ tab, tables, columns }) => {
       </div>
       <div style={{ minHeight: 0, flex: 1 }}>
         <ErrorBoundary>
-          {tab == 'schedules' ? (
-            <ScheduleEditor
-              tabulator={tabulator}
-              selected={selected}
-              tables={tables}
-            />
-          ) : (
-            <TableEditor
-              tabulator={tabulator}
-              tab={tab}
-              selected={selected}
-              tables={tables}
-              columns={columns}
-            />
-          )}
+          <TableEditor
+            tabulator={tabulator}
+            tab={tab}
+            selected={selected}
+            tables={tables}
+            columns={columns}
+          />
         </ErrorBoundary>
       </div>
     </div>
@@ -80,6 +71,7 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
       index: INDEX_COLUMN,
       columns: [],
       layout: 'fitDataFill',
+      layoutColumnsOnNewData: true,
       height: '100%',
       validationFailed: (cell) => {
         const field = cell.getField();
@@ -210,16 +202,21 @@ const ScriptSuggestion = ({ tab }) => {
   return (
     <div style={{ margin: 8 }}>
       Input file could not be found. You can import/create the file using the{' '}
-      <span
+      <button
+        type="button"
         style={{
-          cursor: 'pointer',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          color: '#1890ff',
           textDecoration: 'underline',
-          color: 'blue',
+          cursor: 'pointer',
+          font: 'inherit',
         }}
         onClick={handleClick}
       >
         {script}
-      </span>{' '}
+      </button>{' '}
       tool.
     </div>
   );
@@ -276,14 +273,12 @@ const useTableData = (tab, columns, tables) => {
               const dataType = columns[tab][column].type;
               columnDef = {
                 ...columnDef,
-                minWidth: 100,
                 // Hack to allow editing when double clicking
                 cellDblClick: () => {},
               };
               if (columns[tab][column]?.choices != undefined)
                 return {
                   ...columnDef,
-                  minWidth: 170,
                   editor: 'select',
                   editorParams: {
                     values: columns[tab][column].choices,

@@ -12,7 +12,7 @@ const InputTable = ({ onClose }) => {
   const tabItems = useMemo(() => {
     if (typeof tables == 'undefined') return null;
 
-    return [...Object.keys(tables), 'schedules'].map((key) => ({
+    return Object.keys(tables).map((key) => ({
       key: key,
       label: key,
     }));

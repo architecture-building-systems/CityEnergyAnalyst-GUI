@@ -30,3 +30,21 @@ button:hover {
 .ant-card-extra > .anticon {
   margin: 0px 10px;
 }
+
+.cea-input-editor .ant-tabs-tab,
+.tabulator-edit-select-list,
+.tabulator {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.tabulator-edit-select-list {
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  border: #1890ff solid 1px;
+  border-radius: 8px;
+  margin: 8px;
+  padding: 4px;
+}
+
+.tabulator-tableHolder {
+  overscroll-behavior-x: none;
+}

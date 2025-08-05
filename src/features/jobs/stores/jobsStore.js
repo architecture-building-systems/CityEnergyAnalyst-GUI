@@ -20,7 +20,7 @@ const useJobsStore = create((set, get) => ({
 
   selectedJob: null,
   showJobInfo: false,
-  setSeletedJob: (selectedJob) => set({ selectedJob }),
+  setSelectedJob: (selectedJob) => set({ selectedJob }),
   setShowJobInfo: (showJobInfo) => set({ showJobInfo }),
 
   // Actions
@@ -96,16 +96,12 @@ const useJobsStore = create((set, get) => ({
 
 export const useSelectedJob = () => [
   useJobsStore((state) => state.selectedJob),
-  (selectedJob) => {
-    useJobsStore.setState({ selectedJob });
-  },
+  useJobsStore((state) => state.setSelectedJob),
 ];
 
 export const useShowJobInfo = () => [
   useJobsStore((state) => state.showJobInfo),
-  (showJobInfo) => {
-    useJobsStore.setState({ showJobInfo });
-  },
+  useJobsStore((state) => state.setShowJobInfo),
 ];
 
 export default useJobsStore;

@@ -1,7 +1,6 @@
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 import { Alert } from 'antd';
 import { withErrorBoundary } from 'utils/ErrorBoundary';
-import './DatabaseEditor.css';
 
 const ValidationErrors = ({ databaseName }) => {
   const validation = useDatabaseEditorStore((state) => state.validation);
