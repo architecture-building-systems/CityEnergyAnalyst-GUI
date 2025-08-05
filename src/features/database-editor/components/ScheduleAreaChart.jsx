@@ -122,7 +122,7 @@ export const ScheduleAreaChart = ({
   }
 
   return (
-    <div style={{ height: '300px', width: '100%' }}>
+    <div style={{ height: '200px', width: '100%' }}>
       <Line ref={chartRef} data={chartData} options={options} />
     </div>
   );
