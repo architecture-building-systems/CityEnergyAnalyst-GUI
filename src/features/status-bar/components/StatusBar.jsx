@@ -40,7 +40,7 @@ const VIEW_MAP_RESULTS = {
 export const VIEW_PLOT_RESULTS = {
   [DEMAND]: 'plot-demand',
   [SOLAR_IRRADIATION]: null,
-  [RENEWABLE_ENERGY_POTENTIALS]: null,
+  [RENEWABLE_ENERGY_POTENTIALS]: 'plot-solar',
   [THERMAL_NETWORK]: null,
   [LIFE_CYCLE_ANALYSIS]: null,
 };
