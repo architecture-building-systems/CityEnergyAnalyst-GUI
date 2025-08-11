@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createNestedProp, deleteNestedProp } from 'utils';
+import { useCallback } from 'react';
 
 export const useTableStore = create((set) => ({
   selected: [],
@@ -70,14 +71,20 @@ export const useChangesExist = () =>
       Object.keys(state?.changes?.delete).length > 0 ||
       Object.keys(state?.changes?.update).length > 0,
   );
-
 export const useSetSelectedFromMap = () => {
   const setSelected = useTableStore((state) => state.setSelected);
-  return (selected) => setSelected(selected, 'map');
+  return useCallback((selected) => setSelected(selected, 'map'), [setSelected]);
 };
 export const useSetSelectedFromTable = () => {
   const setSelected = useTableStore((state) => state.setSelected);
-  return (selected) => setSelected(selected, 'table');
+  return useCallback(
+    (selected) => setSelected(selected, 'table'),
+    [setSelected],
+  );
+};
+export const useResetSelected = () => {
+  const setSelected = useTableStore((state) => state.setSelected);
+  return useCallback(() => setSelected([]), [setSelected]);
 };
 export const useSetChanges = () => useTableStore((state) => state.setChanges);
 export const useUpdateChanges = () =>

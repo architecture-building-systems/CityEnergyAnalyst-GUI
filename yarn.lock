@@ -1118,19 +1118,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fontsource/space-grotesk@npm:^5.2.8":
+  version: 5.2.8
+  resolution: "@fontsource/space-grotesk@npm:5.2.8"
+  checksum: 10c0/9c048a780045f548cc56be25be8dc78c5c840ad2cd97bfa29f83e3901e72df72bddc05c54167deb360ea1d263f4a64924d789ee6fd35a36987e07e4f7ef0f2cc
+  languageName: node
+  linkType: hard
+
 "@gar/promisify@npm:^1.1.3":
   version: 1.1.3
   resolution: "@gar/promisify@npm:1.1.3"
   checksum: 10c0/0b3c9958d3cd17f4add3574975e3115ae05dc7f1298a60810414b16f6f558c137b5fb3cd3905df380bacfd955ec13f67c1e6710cbb5c246a7e8d65a8289b2bff
-  languageName: node
-  linkType: hard
-
-"@handsontable/react@npm:^3.1.2":
-  version: 3.1.3
-  resolution: "@handsontable/react@npm:3.1.3"
-  peerDependencies:
-    handsontable: ">=7.2.2"
-  checksum: 10c0/dd18b7c48b02e1ca7bc353e7c5399e865c0247acb7dca951143568ba49fe8ca2368133bcf9383dec0100cdb540338bebddeb911558eaef939fda5843e6521f78
   languageName: node
   linkType: hard
 
@@ -1245,6 +1243,13 @@ __metadata:
     "@jridgewell/resolve-uri": "npm:^3.1.0"
     "@jridgewell/sourcemap-codec": "npm:^1.4.14"
   checksum: 10c0/ca89e30e4f6ac7481d70ecd1d0aee670b566a9965330a1d9fc52af3e522eaa8beb9a322dc759921b4e1a8c5f5de4a998ea99c4251d6320460e96f7f1ce6a0270
+  languageName: node
+  linkType: hard
+
+"@kurkle/color@npm:^0.3.0":
+  version: 0.3.4
+  resolution: "@kurkle/color@npm:0.3.4"
+  checksum: 10c0/0e9fd55c614b005c5f0c4c755bca19ec0293bc7513b4ea3ec1725234f9c2fa81afbc78156baf555c8b9cb0d305619253c3f5bca016067daeebb3d00ebb4ea683
   languageName: node
   linkType: hard
 
@@ -5662,7 +5667,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bignumber.js@npm:^8 || ^9, bignumber.js@npm:^9.1.0":
+"bignumber.js@npm:^9.1.0":
   version: 9.3.0
   resolution: "bignumber.js@npm:9.3.0"
   checksum: 10c0/f54a79cd6fc98552ac0510c1cd9381650870ae443bdb20ba9b98e3548188d941506ac3c22a9f9c69b2cc60da9be5700e87d3f54d2825310a8b2ae999dfd6d99d
@@ -5996,6 +6001,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chart.js@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "chart.js@npm:4.5.0"
+  dependencies:
+    "@kurkle/color": "npm:^0.3.0"
+  checksum: 10c0/f12c7f9a238ee7ce6d3f7111628e9daba86bb8ff8e54cfe63525fde6ded9003c72c4c8d2c7d5702539dc0aff7e682dfec058660ade8d03a970da002656d4ac91
+  languageName: node
+  linkType: hard
+
+"chartjs-plugin-dragdata@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "chartjs-plugin-dragdata@npm:2.3.1"
+  dependencies:
+    d3-drag: "npm:^3.0.0"
+    d3-selection: "npm:^3.0.0"
+  peerDependencies:
+    chart.js: ^3.9.1 || ^4.0.1
+  checksum: 10c0/ef2ad83b956a5fd87ef3f41b277f982dee434bf5e7e64f30e1e7beb4dc4fc01c793aeec7f95a4b36a6690abe52af737350c892e03dea9c292201c2f54f53c1d0
+  languageName: node
+  linkType: hard
+
 "chownr@npm:^2.0.0":
   version: 2.0.0
   resolution: "chownr@npm:2.0.0"
@@ -6033,7 +6059,7 @@ __metadata:
     "@ant-design/v5-patch-for-react-19": "npm:^1.0.3"
     "@babel/polyfill": "npm:^7.12.1"
     "@deck.gl-community/editable-layers": "npm:9.0.0-alpha.1"
-    "@handsontable/react": "npm:^3.1.2"
+    "@fontsource/space-grotesk": "npm:^5.2.8"
     "@mapbox/mapbox-gl-draw": "npm:^1.5.0"
     "@mapbox/mapbox-gl-draw-static-mode": "npm:^1.0.1"
     "@react-spring/web": "npm:^9.7.3"
@@ -6044,6 +6070,8 @@ __metadata:
     "@vitejs/plugin-react-swc": "npm:^3.7.0"
     antd: "npm:^5.26.1"
     axios: "npm:^1.6.7"
+    chart.js: "npm:^4.5.0"
+    chartjs-plugin-dragdata: "npm:^2.3.1"
     color-interpolate: "npm:^1.0.5"
     concurrently: "npm:^9.0.1"
     date-fns: "npm:^4.1.0"
@@ -6062,7 +6090,6 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^5.0.0"
     eslint-plugin-react-refresh: "npm:^0.4.9"
     eslint-plugin-simple-import-sort: "npm:^12.1.1"
-    handsontable: "npm:^6"
     html-react-parser: "npm:^5.1.12"
     javascript-color-gradient: "npm:^2.5.0"
     jszip: "npm:^3.10.1"
@@ -6070,6 +6097,7 @@ __metadata:
     path-browserify: "npm:^1.0.1"
     prettier: "npm:^3.2.5"
     react: "npm:^19.1.0"
+    react-chartjs-2: "npm:^5.3.0"
     react-dom: "npm:^19.1.0"
     react-map-gl: "npm:^8.0.4"
     react-markdown: "npm:^10.1.0"
@@ -6441,6 +6469,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"d3-dispatch@npm:1 - 3":
+  version: 3.0.1
+  resolution: "d3-dispatch@npm:3.0.1"
+  checksum: 10c0/6eca77008ce2dc33380e45d4410c67d150941df7ab45b91d116dbe6d0a3092c0f6ac184dd4602c796dc9e790222bad3ff7142025f5fd22694efe088d1d941753
+  languageName: node
+  linkType: hard
+
+"d3-drag@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "d3-drag@npm:3.0.0"
+  dependencies:
+    d3-dispatch: "npm:1 - 3"
+    d3-selection: "npm:3"
+  checksum: 10c0/d2556e8dc720741a443b595a30af403dd60642dfd938d44d6e9bfc4c71a962142f9a028c56b61f8b4790b65a34acad177d1263d66f103c3c527767b0926ef5aa
+  languageName: node
+  linkType: hard
+
 "d3-format@npm:1 - 3, d3-format@npm:^3.1.0":
   version: 3.1.0
   resolution: "d3-format@npm:3.1.0"
@@ -6483,6 +6528,13 @@ __metadata:
     d3-time: "npm:2.1.1 - 3"
     d3-time-format: "npm:2 - 4"
   checksum: 10c0/65d9ad8c2641aec30ed5673a7410feb187a224d6ca8d1a520d68a7d6eac9d04caedbff4713d1e8545be33eb7fec5739983a7ab1d22d4e5ad35368c6729d362f1
+  languageName: node
+  linkType: hard
+
+"d3-selection@npm:3, d3-selection@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "d3-selection@npm:3.0.0"
+  checksum: 10c0/e59096bbe8f0cb0daa1001d9bdd6dbc93a688019abc97d1d8b37f85cd3c286a6875b22adea0931b0c88410d025563e1643019161a883c516acf50c190a11b56b
   languageName: node
   linkType: hard
 
@@ -8293,17 +8345,6 @@ __metadata:
   version: 4.2.1
   resolution: "h3-js@npm:4.2.1"
   checksum: 10c0/3c72c51149e4e6f9920cd47ff1b9a2ac4cdc1a1d8e41072e31b10db60ba9e264009dc833a30d06d421c083605495d14eca848bd25d85c7840a467c4db95bc50a
-  languageName: node
-  linkType: hard
-
-"handsontable@npm:^6":
-  version: 6.2.2
-  resolution: "handsontable@npm:6.2.2"
-  dependencies:
-    moment: "npm:2.20.1"
-    numbro: "npm:^2.0.6"
-    pikaday: "npm:1.5.1"
-  checksum: 10c0/a9ff7072ba9985b6c0f333548a7a07f3722f82dd8577ae0bcd277be53aeece5506b4cb9a29c7709194af4c55856797a99b5338cbb65e6d6d639b07997d556ae7
   languageName: node
   linkType: hard
 
@@ -10538,14 +10579,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.20.1":
-  version: 2.20.1
-  resolution: "moment@npm:2.20.1"
-  checksum: 10c0/af1350e5c359d0c1501693d2d496644661beb3931f4662d9777663fbe12eb83413c7d93cd7d4165f649e1f28d19eca8a1bd50441efc91e580a5f57d5d564b993
-  languageName: node
-  linkType: hard
-
-"moment@npm:2.x, moment@npm:^2.29.4":
+"moment@npm:^2.29.4":
   version: 2.30.1
   resolution: "moment@npm:2.30.1"
   checksum: 10c0/865e4279418c6de666fca7786607705fd0189d8a7b7624e2e56be99290ac846f90878a6f602e34b4e0455c549b85385b1baf9966845962b313699e7cb847543a
@@ -10704,15 +10738,6 @@ __metadata:
   version: 6.1.0
   resolution: "normalize-url@npm:6.1.0"
   checksum: 10c0/95d948f9bdd2cfde91aa786d1816ae40f8262946e13700bf6628105994fe0ff361662c20af3961161c38a119dc977adeb41fc0b41b1745eb77edaaf9cb22db23
-  languageName: node
-  linkType: hard
-
-"numbro@npm:^2.0.6":
-  version: 2.5.0
-  resolution: "numbro@npm:2.5.0"
-  dependencies:
-    bignumber.js: "npm:^8 || ^9"
-  checksum: 10c0/5fce44fb0e9dd9e3d48b74f0f29910af515284ac35eff0c14911ccaa7a666c2b95a55be02d2605f30fd3fac7d522ffecb5c1f24acb91c1a1880eb53b268a2ccc
   languageName: node
   linkType: hard
 
@@ -11054,18 +11079,6 @@ __metadata:
   version: 4.0.2
   resolution: "picomatch@npm:4.0.2"
   checksum: 10c0/7c51f3ad2bb42c776f49ebf964c644958158be30d0a510efd5a395e8d49cb5acfed5b82c0c5b365523ce18e6ab85013c9ebe574f60305892ec3fa8eee8304ccc
-  languageName: node
-  linkType: hard
-
-"pikaday@npm:1.5.1":
-  version: 1.5.1
-  resolution: "pikaday@npm:1.5.1"
-  dependencies:
-    moment: "npm:2.x"
-  dependenciesMeta:
-    moment:
-      optional: true
-  checksum: 10c0/6bca2c66917ccbe7ce46a275dbd7840219190a60787a9cbe083c06438b00f099a671d317d1ac5fc6b751454aeddb6507f0e3dd8785794c9c9f0dae189b34dd29
   languageName: node
   linkType: hard
 
@@ -11920,6 +11933,16 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 10c0/207d1682aff92d9f40efe6467638bbe22f9f5ad3d7570231b6a5a59cee416d28e134276c43aa71e517fe77f296720a4edcb4ee01a8623591368026942816d03f
+  languageName: node
+  linkType: hard
+
+"react-chartjs-2@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "react-chartjs-2@npm:5.3.0"
+  peerDependencies:
+    chart.js: ^4.1.1
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/4415d40217c084a49f9a936fbd30f67e0e705148e6f8359bec65601033d1076f31085c45793839fc29ec833e6c427b0bf9861a0c54c432c08d35bc9590ffa41a
   languageName: node
   linkType: hard
 

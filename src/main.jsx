@@ -5,6 +5,7 @@ import App from 'app';
 import 'index.css';
 
 import '@ant-design/v5-patch-for-react-19';
+import '@fontsource/space-grotesk';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

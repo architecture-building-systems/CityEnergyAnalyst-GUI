@@ -4,7 +4,7 @@ import { Divider, Input, Form, Select, Collapse } from 'antd';
 import { FormItemWrapper } from 'components/Parameter';
 import { useEffect } from 'react';
 
-const InputItem = ({ form, property, initialValue, description }) => {
+const InputItem = ({ form, property, initialValue, description, required }) => {
   return (
     <FormItemWrapper
       form={form}
@@ -12,12 +12,19 @@ const InputItem = ({ form, property, initialValue, description }) => {
       initialValue={initialValue}
       help={description}
       inputComponent={<Input />}
-      required
+      required={required}
     />
   );
 };
 
-const SelectItem = ({ form, property, initialValue, description, choices }) => {
+const SelectItem = ({
+  form,
+  property,
+  initialValue,
+  description,
+  choices,
+  required,
+}) => {
   const options = choices?.map(({ value }) => ({
     label: value,
     value,
@@ -30,7 +37,7 @@ const SelectItem = ({ form, property, initialValue, description, choices }) => {
       initialValue={initialValue}
       help={description}
       inputComponent={<Select options={options} />}
-      required
+      required={required}
     />
   );
 };
@@ -42,7 +49,7 @@ const CategoryForm = ({ data, columns, form, category }) => {
   if (properties == undefined) return null;
   const others = [];
 
-  const itemFromProperty = (property) => {
+  const itemFromProperty = (property, required = true) => {
     const initialValue = properties[property];
     const columnProperties = categoryColumns?.[property];
 
@@ -61,6 +68,7 @@ const CategoryForm = ({ data, columns, form, category }) => {
             initialValue={initialValue}
             description={description}
             choices={columnProperties.choices}
+            required={required}
           />
         ) : (
           <InputItem
@@ -68,6 +76,7 @@ const CategoryForm = ({ data, columns, form, category }) => {
             property={property}
             initialValue={initialValue}
             description={description}
+            required={required}
           />
         )}
       </div>
@@ -92,7 +101,9 @@ const CategoryForm = ({ data, columns, form, category }) => {
           items={[
             {
               label: 'Other Properties',
-              children: others.map((property) => itemFromProperty(property)),
+              children: others.map((property) =>
+                itemFromProperty(property, false),
+              ),
             },
           ]}
         />

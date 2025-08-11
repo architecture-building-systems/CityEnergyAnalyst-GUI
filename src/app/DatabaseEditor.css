@@ -1,0 +1,98 @@
+.cea-database-editor-tabs .ant-tabs-nav .ant-tabs-tab {
+  margin-right: 0;
+  user-select: none;
+}
+
+.cea-database-editor {
+  width: 100%;
+  height: 100%;
+  display: grid;
+
+  grid-template:
+    'header'
+    'content'
+    'footer';
+
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
+
+  overflow: hidden;
+}
+
+.cea-database-editor-header {
+  grid-area: header;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cea-database-editor-content {
+  grid-area: content;
+}
+
+.cea-database-editor-footer {
+  grid-area: footer;
+}
+
+.cea-database-editor-header button {
+  margin-left: 10px;
+}
+
+.cea-database-editor-database {
+  margin: 20px;
+}
+
+.cea-database-editor-saving-modal-footer button {
+  margin-left: 10px;
+}
+
+.cea-database-editor-database-container {
+  display: flex;
+  gap: 12px;
+  height: 100%;
+}
+
+.cea-database-editor-database-domain-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cea-database-editor-database-dataset-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cea-database-editor-database-dataset {
+  flex: 1;
+  min-width: 0;
+}
+
+.cea-database-editor-database-domain-category {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 160px;
+}
+
+.cea-database-editor-database-domain-category .ant-btn {
+  height: 40px;
+}
+
+.cea-database-editor-database-domain-category .ant-btn > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.cea-database-editor-database-dataset-buttons .ant-btn > span,
+.cea-database-editor-database-dataset-code-buttons .ant-btn > span {
+  max-width: 160px;
+  white-space: normal;
+  font-size: 12px;
+}
+
+.cea-database-editor-error-container {
+  margin: 20px;
+}

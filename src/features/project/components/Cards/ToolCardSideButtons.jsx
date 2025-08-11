@@ -69,7 +69,7 @@ export const ToolCardSideButtons = () => {
             type={toolType === toolTypes.MAP_LAYERS ? 'primary' : 'default'}
           >
             <GraphsIcon />
-            Visualization
+            Visualisation
           </Button>
         </ConfigProvider>
       )}

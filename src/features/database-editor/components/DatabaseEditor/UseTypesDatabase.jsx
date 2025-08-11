@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, Button, Select } from 'antd';
 import { withErrorBoundary } from 'utils/ErrorBoundary';
-import './DatabaseEditor.css';
 import Table from './Table';
 import routes from 'constants/routes.json';
 import { getTableSchema } from './Database';
 import { useChangeRoute } from 'hooks';
 
 const UseTypesDatabase = ({ name, data, schema }) => {
-  const useTypes = Object.keys(data['SCHEDULES']);
+  const useTypes = Object.keys(data?.['SCHEDULES'] ?? {});
   const [selectedType, setSelected] = useState(useTypes[0]);
   const goToScript = useChangeRoute(`${routes.TOOLS}/create-mixed-use-type`);
 

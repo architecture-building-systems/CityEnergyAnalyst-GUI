@@ -4,9 +4,10 @@ import { Modal, message, Alert } from 'antd';
 import { FormItemWrapper, OpenDialogInput } from 'components/Parameter';
 import { checkExist, joinPath } from 'utils/file';
 import { apiClient } from 'lib/api/axios';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 const ExportDatabaseModal = ({ visible, setVisible }) => {
-  const databaseChanges = useSelector((state) => state.databaseEditor.changes);
+  const databaseChanges = useDatabaseEditorStore((state) => state.changes);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const formRef = useRef();
 

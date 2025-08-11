@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Button, Modal, Menu } from 'antd';
-import './DatabaseEditor.css';
-import { setActiveDatabase } from 'features/database-editor/actions/databaseEditor';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 const DatabaseTopMenu = () => {
-  const data = useSelector((state) => state.databaseEditor.data);
-  const validation = useSelector((state) => state.databaseEditor.validation);
-  const dispatch = useDispatch();
-  const [selectedKey, setSelected] = useState(
-    `${Object.keys(data)[0]}:${Object.keys(data[Object.keys(data)[0]])[0]}`,
+  const data = useDatabaseEditorStore((state) => state.data);
+  const validation = useDatabaseEditorStore((state) => state.validation);
+  const setActiveDatabase = useDatabaseEditorStore(
+    (state) => state.setActiveDatabase,
   );
+
+  const dataKeys = Object.keys(data ?? {});
+  const defaultKey = data.length
+    ? `${dataKeys[0]}:${Object.keys(data[dataKeys[0]])[0]}`
+    : null;
+
+  const [selectedKey, setSelected] = useState(defaultKey);
   const [visible, setVisible] = useState(false);
 
   const handleOk = () => {
@@ -17,9 +22,10 @@ const DatabaseTopMenu = () => {
   };
 
   useEffect(() => {
-    dispatch(setActiveDatabase(...selectedKey.split(':')));
+    if (selectedKey) setActiveDatabase(...selectedKey.split(':'));
   }, [selectedKey]);
 
+  if (selectedKey === null) return null;
   return (
     <div className="cea-database-editor-database-menu">
       <Menu
