@@ -104,10 +104,7 @@
     "files": [
       "dist/**",
       "dist-electron/**",
-      "!node_modules/**/*",
-      "!src/**/*",
-      "!*.md",
-      "!.git/**/*"
+      "!node_modules/**/*"
     ],
     "mac": {
       "icon": "public/cea.png",
