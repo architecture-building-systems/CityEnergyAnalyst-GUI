@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "dev-electron": "vite --mode electron",
-    "build-electron": "vite build --mode electron",
+    "build-electron": "vite build --config vite.electron.config.js",
     "preview": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
@@ -98,9 +98,12 @@
       "output": "out",
       "buildResources": "build"
     },
+    "extraMetadata": {
+      "main": "dist-electron/main.js"
+    },
     "files": [
       "dist/**",
-      "electron/**",
+      "dist-electron/**",
       "!node_modules/**/*",
       "!src/**/*",
       "!*.md",
