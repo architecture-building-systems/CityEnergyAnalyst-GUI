@@ -13,3 +13,17 @@
         ${endIf}
     ${endIf}
 !macroend
+
+!macro customRemoveFiles
+   DetailPrint "Removing files..."
+   RMDir /r $INSTDIR
+!macroend
+
+!macro customUnInstallCheck
+   DetailPrint "Checking for uninstallation..."
+   ${If} ${FileExists} "$INSTDIR\uninstall.exe"
+       DetailPrint "Uninstall executable found."
+   ${Else}
+       DetailPrint "No uninstall executable found."
+   ${EndIf}
+!macroend
