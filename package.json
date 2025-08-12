@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "dev-electron": "vite --mode electron",
-    "build-electron": "vite build --config vite.electron.config.js",
+    "build-electron": "vite build --config vite.electron.config.js && vite build --mode electron",
     "preview": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
