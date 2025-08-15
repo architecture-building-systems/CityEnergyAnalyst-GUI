@@ -75,14 +75,18 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
 const PlotTool = ({ script, onToolSelected }) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
+
+  // FIXME: Hardcoded for now.
   const period = mapLayerParameters?.period;
+  const panelType = mapLayerParameters?.['panel-type'] ?? {};
 
   useEffect(() => {
     const hour_start = ((period?.[0] ?? 1) - 1) * 24;
     const hour_end = (period?.[1] ?? 365) * 24;
+    const solar_panel_types = panelType;
 
     form.setFieldsValue({
-      context: { hour_start, hour_end },
+      context: { hour_start, hour_end, solar_panel_types },
     });
   }, [period]);
 
