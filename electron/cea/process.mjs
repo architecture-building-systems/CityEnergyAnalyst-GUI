@@ -98,6 +98,12 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 export function killCEAProcess(killTimeout = 10000) {
   return new Promise((resolve, reject) => {
     if (cea) {
+      const _resolve = () => {
+        // Ensure cea variable is cleaned up
+        cea = null;
+        resolve();
+      };
+
       // Remove exit listeners that show startup error
       cea.removeAllListeners('exit');
       const ceaPid = cea.pid;
@@ -122,11 +128,11 @@ export function killCEAProcess(killTimeout = 10000) {
               console.debug('CEA process still running, force killing...');
               execSync(`taskkill /PID ${ceaPid} /T /F`);
               console.debug('CEA process force killed');
-              resolve();
+              _resolve();
             } catch (error) {
               // Process likely already terminated
               console.debug('CEA process already terminated');
-              resolve();
+              _resolve();
             }
           }, killTimeout);
 
@@ -134,7 +140,7 @@ export function killCEAProcess(killTimeout = 10000) {
           const exitHandler = () => {
             clearTimeout(forceKillTimeout);
             console.debug('CEA process terminated gracefully');
-            resolve();
+            _resolve();
           };
 
           cea.once('exit', exitHandler);
@@ -144,7 +150,7 @@ export function killCEAProcess(killTimeout = 10000) {
           try {
             execSync(`taskkill /PID ${ceaPid} /T /F`);
             console.debug('CEA process force killed as fallback');
-            resolve();
+            _resolve();
           } catch (forceError) {
             console.error(
               `Error force killing process: ${forceError?.message}`,
@@ -202,11 +208,11 @@ export function killCEAProcess(killTimeout = 10000) {
               );
               process.kill(targetPid, 'SIGKILL');
               console.debug('Sent SIGKILL successfully');
-              resolve();
+              _resolve();
             } catch (killError) {
               if (killError.code === 'ESRCH') {
                 console.debug('Process/group already terminated');
-                resolve();
+                _resolve();
               } else {
                 console.error(`Error sending SIGKILL: ${killError?.message}`);
                 reject(killError);
@@ -218,21 +224,21 @@ export function killCEAProcess(killTimeout = 10000) {
           const exitHandler = () => {
             clearTimeout(forceKillTimeout);
             console.debug('CEA process terminated gracefully');
-            resolve();
+            _resolve();
           };
 
           cea.once('exit', exitHandler);
         } catch (error) {
           if (error.code === 'ESRCH') {
             console.debug('CEA process not found (already terminated)');
-            resolve();
+            _resolve();
           } else {
             console.error(`Error killing CEA process: ${error?.message}`);
             // Fallback: try to kill just the main process with SIGKILL
             try {
               process.kill(ceaPid, 'SIGKILL');
               console.debug('Fallback: sent SIGKILL to main CEA process');
-              resolve();
+              _resolve();
             } catch (fallbackError) {
               console.error(`Fallback kill failed: ${fallbackError?.message}`);
               reject(fallbackError);
