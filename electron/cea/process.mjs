@@ -27,7 +27,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
       ['-r', getCEARootPath(), '-n', 'cea', 'run', 'cea', 'dashboard'],
       spawnOptions,
     );
-  } else if (process.platform === 'darwin') {
+  } else {
     cea = spawn(
       getMicromambaPath(),
       ['-r', getCEARootPath(), '-n', 'cea', 'run', 'cea', 'dashboard'],
