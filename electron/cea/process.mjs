@@ -44,7 +44,18 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     });
 
     cea.stderr.on('data', function (data) {
-      console.error(data.toString('utf8').trim());
+      const message = data.toString('utf8').trim();
+      // Check if the message contains actual error levels
+      if (
+        message.includes('ERROR') ||
+        message.includes('CRITICAL') ||
+        message.includes('FATAL')
+      ) {
+        console.error(message);
+      } else {
+        // Treat INFO, DEBUG, WARNING as regular log messages
+        console.log(message);
+      }
     });
 
     // Show Error message box when CEA encounters any error on startup
