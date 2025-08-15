@@ -5,33 +5,34 @@ import { app, dialog } from 'electron';
 import { getMicromambaPath, getCEARootPath } from './env.mjs';
 
 let cea;
+let ceaDetached = false;
 let timeout;
 let interval;
 let startupError = '';
 
 export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
+
+  const spawnOptions = {
+    // Create a new process group on Unix-like systems to facilitate killing child processes
+    detached: process.platform !== 'win32',
+  };
+
+  ceaDetached = spawnOptions.detached;
+
   // For windows
   if (process.platform === 'win32') {
-    cea = spawn(getMicromambaPath(), [
-      '-r',
-      getCEARootPath(),
-      '-n',
-      'cea',
-      'run',
-      'cea',
-      'dashboard',
-    ]);
+    cea = spawn(
+      getMicromambaPath(),
+      ['-r', getCEARootPath(), '-n', 'cea', 'run', 'cea', 'dashboard'],
+      spawnOptions,
+    );
   } else if (process.platform === 'darwin') {
-    cea = spawn(getMicromambaPath(), [
-      '-r',
-      getCEARootPath(),
-      '-n',
-      'cea',
-      'run',
-      'cea',
-      'dashboard',
-    ]);
+    cea = spawn(
+      getMicromambaPath(),
+      ['-r', getCEARootPath(), '-n', 'cea', 'run', 'cea', 'dashboard'],
+      spawnOptions,
+    );
   }
 
   if (cea) {
@@ -83,43 +84,161 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
 // Kill process and stop all timed events
 export function killCEAProcess(killTimeout = 10000) {
-  if (cea) {
-    cea.removeAllListeners('exit');
-    let result = false;
+  return new Promise((resolve, reject) => {
+    if (cea) {
+      // Remove exit listeners that show startup error
+      cea.removeAllListeners('exit');
+      const ceaPid = cea.pid;
 
-    if (process.platform === 'win32') {
-      // FIXME: Force kill on windows for now
-      console.debug('Forcing process kill using taskkill on Windows');
-      try {
-        execSync(`taskkill /PID ${cea.pid} /T /F`);
-        result = true;
-      } catch (error) {
-        console.error(`Error killing process: ${error?.message}`);
-      }
-    } else {
-      try {
-        setTimeout(() => process.kill(cea.pid, 'SIGKILL'), killTimeout);
+      if (process.platform === 'win32') {
+        // Graceful shutdown for Windows using taskkill
+        console.debug(
+          `Attempting graceful shutdown of CEA process tree (PID: ${ceaPid})`,
+        );
+        try {
+          // First try graceful termination
+          execSync(`taskkill /PID ${ceaPid} /T`);
+          console.debug('Sent termination signal to CEA process tree');
 
-        result = process.kill(cea.pid, 'SIGTERM');
-      } catch (error) {
-        if (error.code === 'ESRCH') {
-          console.error('Unable to kill CEA process. (Process not found)');
-        } else {
-          console.error(error);
+          // Set timeout for force kill
+          const forceKillTimeout = setTimeout(() => {
+            try {
+              // Check if process still exists before force killing
+              execSync(`tasklist /FI "PID eq ${ceaPid}" | findstr ${ceaPid}`, {
+                stdio: 'ignore',
+              });
+              console.debug('CEA process still running, force killing...');
+              execSync(`taskkill /PID ${ceaPid} /T /F`);
+              console.debug('CEA process force killed');
+              resolve();
+            } catch (error) {
+              // Process likely already terminated
+              console.debug('CEA process already terminated');
+              resolve();
+            }
+          }, killTimeout);
+
+          // Listen for process exit to clear timeout and resolve
+          const exitHandler = () => {
+            clearTimeout(forceKillTimeout);
+            console.debug('CEA process terminated gracefully');
+            resolve();
+          };
+
+          cea.once('exit', exitHandler);
+        } catch (error) {
+          console.error(`Error during graceful shutdown: ${error?.message}`);
+          // Fallback to force kill
+          try {
+            execSync(`taskkill /PID ${ceaPid} /T /F`);
+            console.debug('CEA process force killed as fallback');
+            resolve();
+          } catch (forceError) {
+            console.error(
+              `Error force killing process: ${forceError?.message}`,
+            );
+            reject(forceError);
+          }
+        }
+      } else {
+        // Unix-like systems (macOS, Linux)
+        try {
+          console.debug(
+            `Attempting graceful shutdown of CEA process tree (PID: ${ceaPid})`,
+          );
+
+          // For detached processes, kill the process group
+          // For non-detached processes, try to get the process group ID
+          let targetPid = ceaPid;
+          let isProcessGroup = false;
+
+          try {
+            if (ceaDetached) {
+              // Process is detached, kill the entire process group
+              targetPid = -ceaPid;
+              isProcessGroup = true;
+              console.debug(`Targeting process group: ${ceaPid}`);
+            } else {
+              // Try to get the process group ID
+              const pgid = process.getpgid(ceaPid);
+              if (pgid !== ceaPid) {
+                targetPid = -pgid;
+                isProcessGroup = true;
+                console.debug(`Targeting process group: ${pgid}`);
+              } else {
+                console.debug(`Targeting single process: ${ceaPid}`);
+              }
+            }
+          } catch (pgidError) {
+            console.debug(
+              'Could not get process group, targeting single process',
+            );
+            targetPid = ceaPid;
+          }
+
+          // Send SIGTERM first
+          process.kill(targetPid, 'SIGTERM');
+          console.debug(
+            `Sent SIGTERM to ${isProcessGroup ? 'process group' : 'process'}: ${Math.abs(targetPid)}`,
+          );
+
+          // Set timeout for SIGKILL
+          const forceKillTimeout = setTimeout(() => {
+            try {
+              console.debug(
+                `Timeout reached, sending SIGKILL to ${isProcessGroup ? 'process group' : 'process'}: ${Math.abs(targetPid)}`,
+              );
+              process.kill(targetPid, 'SIGKILL');
+              console.debug('Sent SIGKILL successfully');
+              resolve();
+            } catch (killError) {
+              if (killError.code === 'ESRCH') {
+                console.debug('Process/group already terminated');
+                resolve();
+              } else {
+                console.error(`Error sending SIGKILL: ${killError?.message}`);
+                reject(killError);
+              }
+            }
+          }, killTimeout);
+
+          // Listen for process exit to clear timeout and resolve
+          const exitHandler = () => {
+            clearTimeout(forceKillTimeout);
+            console.debug('CEA process terminated gracefully');
+            resolve();
+          };
+
+          cea.once('exit', exitHandler);
+        } catch (error) {
+          if (error.code === 'ESRCH') {
+            console.debug('CEA process not found (already terminated)');
+            resolve();
+          } else {
+            console.error(`Error killing CEA process: ${error?.message}`);
+            // Fallback: try to kill just the main process with SIGKILL
+            try {
+              process.kill(ceaPid, 'SIGKILL');
+              console.debug('Fallback: sent SIGKILL to main CEA process');
+              resolve();
+            } catch (fallbackError) {
+              console.error(`Fallback kill failed: ${fallbackError?.message}`);
+              reject(fallbackError);
+            }
+          }
         }
       }
-    }
 
-    if (result) {
-      console.debug('CEA process killed with PID:', cea.pid);
+      console.debug(
+        `Initiated shutdown sequence for CEA process (PID: ${ceaPid})`,
+      );
     } else {
-      console.error('Failed to kill CEA process with PID:', cea.pid);
+      console.debug('CEA process not found. Ignoring...');
+      resolve();
     }
-  } else {
-    console.debug('CEA process not found. Ignoring...');
-  }
-  interval && clearInterval(interval);
-  timeout && clearTimeout(timeout);
+    interval && clearInterval(interval);
+    timeout && clearTimeout(timeout);
+  });
 }
 
 export async function isCEAAlive(url) {
