@@ -110,8 +110,9 @@ const useToolForm = (
     onSave: null,
     onReset: null,
   },
+  externalForm = null,
 ) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm(externalForm);
   const { saveToolParams, setDefaultToolParams } = useToolsStore();
   const { createJob } = useJobsStore();
 
@@ -206,7 +207,7 @@ const useToolForm = (
   return { form, getForm, runScript, saveParams, setDefault };
 };
 
-const Tool = ({ script, onToolSelected, header }) => {
+const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const { fetchToolParams, resetToolParams } = useToolsStore();
@@ -277,6 +278,7 @@ const Tool = ({ script, onToolSelected, header }) => {
       onSave: checkMissingInputs, // Check inputs when saving to make sure they are valid if changed
       onReset: checkMissingInputs,
     },
+    externalForm,
   );
 
   const onMount = async () => {
