@@ -63,7 +63,13 @@ if (!gotTheLock) {
     mainWindow && mainWindow.close();
     splashWindow && splashWindow.close();
 
-    killCEAProcess();
+    try {
+      console.debug('Waiting for CEA process to terminate...');
+      await killCEAProcess();
+      console.debug('CEA process terminated successfully');
+    } catch (error) {
+      console.error('Error killing CEA process:', error);
+    }
 
     console.debug('Exiting app...');
     app.exit();
@@ -344,8 +350,14 @@ function createSplashWindow(url) {
     }
   });
 
-  splashWindow.on('closed', () => {
-    !mainWindow && killCEAProcess();
+  splashWindow.on('closed', async () => {
+    if (!mainWindow) {
+      try {
+        await killCEAProcess();
+      } catch (error) {
+        console.error('Error killing CEA process from splash window:', error);
+      }
+    }
     splashWindow = null;
   });
 }
