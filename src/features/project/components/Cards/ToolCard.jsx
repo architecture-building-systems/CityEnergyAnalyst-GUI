@@ -11,6 +11,7 @@ import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { BuildingEditor } from 'features/building-editor/components/building-editor';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { useEffect } from 'react';
+import { useMapStore } from 'features/map/stores/mapStore';
 
 const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
   const toolType = useToolType();
@@ -73,6 +74,17 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
 
 const PlotTool = ({ script, onToolSelected }) => {
   const [form] = Form.useForm();
+  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
+  const period = mapLayerParameters?.period;
+
+  useEffect(() => {
+    const hour_start = ((period?.[0] ?? 1) - 1) * 24;
+    const hour_end = (period?.[1] ?? 365) * 24;
+
+    form.setFieldsValue({
+      context: { hour_start, hour_end },
+    });
+  }, [period]);
 
   return (
     <ConfigProvider
