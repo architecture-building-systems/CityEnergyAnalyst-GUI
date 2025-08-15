@@ -37,10 +37,11 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
   if (cea) {
     console.debug('CEA process started with PID:', cea.pid);
+    const prefix = `[cea-process]`;
 
     // Attach cea output to console
     cea.stdout.on('data', function (data) {
-      console.log(`\x1b[36m[server]\x1b[0m ${data.toString('utf8').trim()}`);
+      console.log(`${prefix} ${data.toString('utf8').trim()}`);
     });
 
     cea.stderr.on('data', function (data) {
@@ -51,10 +52,10 @@ export function createCEAProcess(url, BrowserWindow, callback) {
         message.includes('CRITICAL') ||
         message.includes('FATAL')
       ) {
-        console.error(`\x1b[31m[server]\x1b[0m ${message}`);
+        console.error(`${prefix} ${message}`);
       } else {
         // Treat INFO, DEBUG, WARNING as regular log messages
-        console.log(`\x1b[36m[server]\x1b[0m ${message}`);
+        console.log(`${prefix} ${message}`);
       }
     });
 
