@@ -324,6 +324,31 @@ const Parameter = ({ parameter, form }) => {
           inputComponent={<Switch />}
         />
       );
+
+    // Plot Context is not editable for now
+    case 'PlotContextParameter': {
+      const config = {
+        getValueProps: (value) => ({
+          value: value
+            ? Object.keys(value)
+                .map((key) => `${key}: ${value[key]}`)
+                .join(', ')
+            : '',
+        }),
+      };
+
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          inputComponent={<Input disabled />}
+          config={config}
+        />
+      );
+    }
+
     default:
       return (
         <FormItemWrapper
