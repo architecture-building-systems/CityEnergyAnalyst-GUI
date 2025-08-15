@@ -40,7 +40,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
     // Attach cea output to console
     cea.stdout.on('data', function (data) {
-      console.log(data.toString('utf8').trim());
+      console.log(`\x1b[36m[server]\x1b[0m ${data.toString('utf8').trim()}`);
     });
 
     cea.stderr.on('data', function (data) {
@@ -51,10 +51,10 @@ export function createCEAProcess(url, BrowserWindow, callback) {
         message.includes('CRITICAL') ||
         message.includes('FATAL')
       ) {
-        console.error(message);
+        console.error(`\x1b[31m[server]\x1b[0m ${message}`);
       } else {
         // Treat INFO, DEBUG, WARNING as regular log messages
-        console.log(message);
+        console.log(`\x1b[36m[server]\x1b[0m ${message}`);
       }
     });
 
