@@ -1,5 +1,5 @@
 import { shell } from 'electron';
-import log from 'electron-log';
+import log from 'electron-log/main';
 
 export const initLog = () => {
   // Optional, initialize the logger for any renderer process

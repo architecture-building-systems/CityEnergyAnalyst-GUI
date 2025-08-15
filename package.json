@@ -1,7 +1,7 @@
 {
   "name": "city-energy-analyst-gui",
   "productName": "CityEnergyAnalyst-GUI",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-beta.2",
   "description": "Official GUI of the City Energy Analyst tool",
   "homepage": "http://www.cityenergyanalyst.com",
   "repository": "github:architecture-building-systems/CityEnergyAnalyst-GUI",
@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "dev-electron": "vite --mode electron",
-    "build-electron": "vite build --mode electron",
+    "build-electron": "vite build --config vite.electron.config.js && vite build --mode electron",
     "preview": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
@@ -34,8 +34,8 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "concurrently": "^9.0.1",
-    "electron": "^37.1.0",
-    "electron-builder": "26.0.16",
+    "electron": "^37.2.6",
+    "electron-builder": "26.0.12",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.29.1",
@@ -71,8 +71,8 @@
     "color-interpolate": "^1.0.5",
     "date-fns": "^4.1.0",
     "deck.gl": "^9.1.12",
-    "electron-log": "^5.4.0",
-    "electron-updater": "^6.6.5",
+    "electron-log": "^5.4.2",
+    "electron-updater": "^6.6.7",
     "html-react-parser": "^5.1.12",
     "javascript-color-gradient": "^2.5.0",
     "jszip": "^3.10.1",
@@ -98,13 +98,13 @@
       "output": "out",
       "buildResources": "build"
     },
+    "extraMetadata": {
+      "main": "dist-electron/main.js"
+    },
     "files": [
       "dist/**",
-      "electron/**",
-      "!node_modules/**/*",
-      "!src/**/*",
-      "!*.md",
-      "!.git/**/*"
+      "dist-electron/**",
+      "!node_modules/**/*"
     ],
     "mac": {
       "icon": "public/cea.png",
