@@ -78,17 +78,23 @@ const PlotTool = ({ script, onToolSelected }) => {
 
   // FIXME: Hardcoded for now.
   const period = mapLayerParameters?.period;
-  const panelType = mapLayerParameters?.['panel-type'] ?? {};
+  const panelTech = mapLayerParameters?.['technology'];
+  const panelType = mapLayerParameters?.['panel-type'];
 
   useEffect(() => {
     const hour_start = ((period?.[0] ?? 1) - 1) * 24;
     const hour_end = (period?.[1] ?? 365) * 24;
-    const solar_panel_types = panelType;
+    const solar_panel_types = {};
 
+    if (panelTech === 'SC') {
+      solar_panel_types.sc = panelType;
+    } else if (panelTech === 'PV') {
+      solar_panel_types.pv = panelType;
+    }
     form.setFieldsValue({
       context: { hour_start, hour_end, solar_panel_types },
     });
-  }, [period]);
+  }, [form, period, panelType, panelTech]);
 
   return (
     <ConfigProvider
