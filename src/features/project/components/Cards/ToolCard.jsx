@@ -86,15 +86,26 @@ const PlotTool = ({ script, onToolSelected }) => {
     const hour_end = (period?.[1] ?? 365) * 24;
     const solar_panel_types = {};
 
+    let feature;
+    if (script == 'plot-demand') {
+      feature = 'demand';
+    } else if (script == 'plot-solar') {
+      if (panelTech === 'PV') {
+        feature = 'pv';
+      } else if (panelTech === 'SC') {
+        feature = 'sc';
+      }
+    }
+
     if (panelTech === 'SC') {
       solar_panel_types.sc = panelType;
     } else if (panelTech === 'PV') {
       solar_panel_types.pv = panelType;
     }
     form.setFieldsValue({
-      context: { hour_start, hour_end, solar_panel_types },
+      context: { feature, hour_start, hour_end, solar_panel_types },
     });
-  }, [form, period, panelType, panelTech]);
+  }, [form, script, period, panelType, panelTech]);
 
   return (
     <ConfigProvider
