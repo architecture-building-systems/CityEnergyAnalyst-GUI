@@ -9,12 +9,13 @@ import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 import './DatabaseEditor.css';
-import { ConversionDataset } from 'features/database-editor/components/conversion-dataset';
-import { LibraryDataset } from 'features/database-editor/components/library-dataset';
-import { UseTypeDataset } from 'features/database-editor/components/use-type-dataset';
-import { ExportDatabaseButton } from 'features/database-editor/components/export-button';
+import {
+  ConversionDataset,
+  LibraryDataset,
+  UseTypeDataset,
+  CodeTableDataset,
+} from 'features/database-editor/components/dataset';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
-import { CodeTableDataset } from 'features/database-editor/components/code-table-dataset';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState(null);

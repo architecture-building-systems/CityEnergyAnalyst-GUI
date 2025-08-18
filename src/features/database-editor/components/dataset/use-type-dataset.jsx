@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 import { TableDataset } from './table-dataset';
-import { ScheduleAreaChart } from './ScheduleAreaChart';
+import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { useEffect, useState } from 'react';
 
 export const UseTypeDataset = ({ dataset }) => {
