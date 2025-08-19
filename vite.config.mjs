@@ -31,33 +31,18 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           output: {
-            manualChunks: (id) => {
-              // Vendor chunks for better caching
-              if (id.includes('node_modules')) {
-                if (id.includes('react') || id.includes('react-dom')) {
-                  return 'react-vendor';
-                }
-                if (id.includes('react-router')) {
-                  return 'router-vendor';
-                }
-                if (id.includes('antd') || id.includes('@ant-design')) {
-                  return 'ui-vendor';
-                }
-                if (id.includes('@tanstack/react-query')) {
-                  return 'query-vendor';
-                }
-                if (id.includes('maplibre-gl') || id.includes('deck.gl')) {
-                  return 'map-vendor';
-                }
-                if (
-                  id.includes('zustand') ||
-                  id.includes('axios') ||
-                  id.includes('date-fns')
-                ) {
-                  return 'util-vendor';
-                }
-                return 'vendor';
-              }
+            manualChunks: {
+              'react-vendor': ['react', 'react/jsx-runtime'],
+              'react-dom-vendor': ['react-dom', 'react-dom/client'],
+              'router-vendor': ['react-router'],
+              'ui-vendor': [
+                'antd',
+                '@ant-design/icons',
+                '@ant-design/compatible',
+              ],
+              'query-vendor': ['@tanstack/react-query'],
+              'map-vendor': ['maplibre-gl', 'deck.gl'],
+              'util-vendor': ['zustand', 'axios', 'date-fns'],
             },
           },
         },
