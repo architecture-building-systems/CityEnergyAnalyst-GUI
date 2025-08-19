@@ -9,5 +9,6 @@ npm-debug.log
 
 dependencies
 out
+dist-electron
 
 *.local
