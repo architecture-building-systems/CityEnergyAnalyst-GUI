@@ -17,7 +17,6 @@ import {
   useSetToolType,
 } from 'features/project/stores/tool-card';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { isElectron } from 'utils/electron';
 import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
@@ -179,7 +178,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   />
                 </div>
 
-                {!isElectron() && (
+                {`${import.meta.env.VITE_AUTH_URL}` && (
                   // FIXME: Login disabled for electron
                   <div className="cea-overlay-card">
                     <UserInfo />
