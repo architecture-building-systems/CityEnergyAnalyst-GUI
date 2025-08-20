@@ -32,6 +32,9 @@ LABEL org.opencontainers.image.source=https://github.com/architecture-building-s
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Copy custom nginx configuration for SPA routing
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
 # Expose port
 EXPOSE 80
 
