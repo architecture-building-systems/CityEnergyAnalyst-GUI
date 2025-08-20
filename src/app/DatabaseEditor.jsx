@@ -18,19 +18,24 @@ import {
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
 
 const useValidateDatabasePath = () => {
-  const [valid, setValid] = useState(null);
-  const [error, setError] = useState(null);
+  const [valid, setValid] = useState({ message: null, status: null });
 
   const checkDBPathValidity = async () => {
     try {
-      setValid(null);
-      setError(null);
+      setValid({ message: null, status: 'checking' });
       await apiClient.get(`/api/inputs/databases/check`);
-      setValid(true);
+      setValid({ message: null, status: 'valid' });
     } catch (err) {
-      if (err.response?.data) setError(err.response.data.detail);
-      else setError('Could not read and verify databases.');
-      setValid(false);
+      console.log(err);
+      if (err.response?.status == 400 && err.response?.data) {
+        const { status, message } = err.response.data.detail;
+        setValid({ message, status });
+      } else {
+        setValid({
+          message: 'Could not read and verify databases.',
+          status: 'invalid',
+        });
+      }
     }
   };
 
@@ -38,16 +43,34 @@ const useValidateDatabasePath = () => {
     checkDBPathValidity();
   }, []);
 
-  return [valid, error, checkDBPathValidity];
+  return [valid?.status, valid?.message, checkDBPathValidity];
+};
+
+const DatabaseEditorErrorMessage = ({ error }) => {
+  return (
+    <div className="cea-database-editor-error-container">
+      {error !== null && (
+        <div
+          style={{
+            background: '#efefef',
+            padding: 16,
+            borderRadius: 8,
+          }}
+        >
+          <pre>{error}</pre>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
+  const [status, message] = useValidateDatabasePath();
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
-  if (valid === null)
+  if (status === 'checking')
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
@@ -64,38 +87,13 @@ const DatabaseEditor = () => {
           <RefreshDatabaseButton />
         </div>
       </div>
-      <div className="cea-database-editor-content">
-        {valid ? (
-          <DatabaseContent />
-        ) : (
-          <div>
-            <div className="cea-database-editor-error-container">
-              <h3>
-                Could not find or validate input databases. Try importing a new
-                database
-              </h3>
-              {error !== null && (
-                <div
-                  style={{
-                    background: '#efefef',
-                    padding: 16,
-                    borderRadius: 8,
-                  }}
-                >
-                  <pre>{error}</pre>
-                </div>
-              )}
-            </div>
-            <Button onClick={checkDBPathValidity}>Try Again</Button>
-          </div>
-        )}
-      </div>
+      <DatabaseContent message={message} />
       <div className="cea-database-editor-footer"></div>
     </div>
   );
 };
 
-const DatabaseContent = () => {
+const DatabaseContent = ({ message }) => {
   const { status, error } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
@@ -125,10 +123,11 @@ const DatabaseContent = () => {
   if (status !== 'success') return null;
 
   return (
-    <>
+    <div className="cea-database-editor-content">
       {/* <DatabaseTopMenu /> */}
+      {message && <DatabaseEditorErrorMessage error={message} />}
       <DatabaseContainer />
-    </>
+    </div>
   );
 };
 
