@@ -13,14 +13,23 @@ export const UseTypeDataset = ({ dataset }) => {
   // Ensure data is valid
   const useTypeData = dataset?.use_types;
   const scheduleData = dataset?.schedules;
-  if (useTypeData == null || scheduleData == null)
-    return <div>No data found</div>;
 
-  const useTypes = Object.keys(useTypeData);
+  // Try to get all use types from use_types or schedules
+  const useTypes = Array.from(
+    new Set([
+      ...Object.keys(useTypeData || {}),
+      ...Object.keys(scheduleData?.monthly_multipliers || {}),
+      ...Object.keys(scheduleData?._library || {}),
+    ]),
+  );
 
   // Select first use type if none selected or selected use type is not in use types
   const activeUseType = selectedUseType ?? useTypes?.[0];
+
   const selectedUseTypeData = useTypeData?.[activeUseType];
+  const selectedMultiplierData =
+    scheduleData?.monthly_multipliers?.[activeUseType];
+  const selectedLibraryData = scheduleData?._library?.[activeUseType];
 
   return (
     <div
@@ -48,14 +57,16 @@ export const UseTypeDataset = ({ dataset }) => {
           }}
         >
           <div>Properties</div>
-          <TableDataset data={[selectedUseTypeData]} />
+          <TableDataset
+            data={selectedUseTypeData ? [selectedUseTypeData] : null}
+          />
 
           <div>Schedules</div>
           <TableDataset
             name={'Monthly Multipliers'}
-            data={[scheduleData?.monthly_multipliers?.[activeUseType]]}
+            data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
-          <UseTypeSchedules data={scheduleData?._library?.[activeUseType]} />
+          <UseTypeSchedules data={selectedLibraryData} />
         </div>
       )}
     </div>
