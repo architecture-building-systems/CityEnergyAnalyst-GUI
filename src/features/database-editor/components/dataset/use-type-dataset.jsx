@@ -17,7 +17,12 @@ export const UseTypeDataset = ({ dataset }) => {
     return <div>No data found</div>;
 
   const useTypes = Object.keys(useTypeData);
-  const selectedUseTypeData = useTypeData?.[selectedUseType];
+
+  // Select first use type if none selected or selected use type is not in use types
+  const firstUseType = useTypes?.[0] ?? null;
+  const activeUseType = selectedUseType ?? firstUseType;
+
+  const selectedUseTypeData = useTypeData?.[activeUseType];
 
   return (
     <div
@@ -32,10 +37,10 @@ export const UseTypeDataset = ({ dataset }) => {
     >
       <UseTypeButtons
         types={useTypes}
-        selected={selectedUseType}
+        selected={activeUseType}
         onSelected={setSelectedUseType}
       />
-      {selectedUseType !== null && (
+      {activeUseType !== null && (
         <div
           style={{
             display: 'flex',
@@ -50,9 +55,9 @@ export const UseTypeDataset = ({ dataset }) => {
           <div>Schedules</div>
           <TableDataset
             name={'Monthly Multipliers'}
-            data={[scheduleData?.monthly_multipliers?.[selectedUseType]]}
+            data={[scheduleData?.monthly_multipliers?.[activeUseType]]}
           />
-          <UseTypeSchedules data={scheduleData?._library?.[selectedUseType]} />
+          <UseTypeSchedules data={scheduleData?._library?.[activeUseType]} />
         </div>
       )}
     </div>
