@@ -46,18 +46,24 @@ export const TableDataset = ({
         </small>
       )}
 
-      <EntityDetails
-        data={data}
-        indexColumn={indexColumn}
-        commonColumns={commonColumns}
-      />
-      <EntityDataTable
-        data={data}
-        indexColumn={indexColumn}
-        commonColumns={commonColumns}
-        showIndex={showIndex}
-        freezeIndex={freezeIndex}
-      />
+      {data == null ? (
+        <MissingDataPrompt />
+      ) : (
+        <>
+          <EntityDetails
+            data={data}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+          />
+          <EntityDataTable
+            data={data}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+            showIndex={showIndex}
+            freezeIndex={freezeIndex}
+          />
+        </>
+      )}
     </div>
   );
 };
