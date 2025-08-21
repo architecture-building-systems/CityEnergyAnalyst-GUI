@@ -50,7 +50,8 @@ const useDatabaseEditorStore = create((set) => ({
       //   set({ tableNames });
       // }
     } catch (error) {
-      set({ status: { status: 'failed', error } });
+      const err = error.response || error;
+      set({ status: { status: 'failed', error: err } });
     }
   },
 
