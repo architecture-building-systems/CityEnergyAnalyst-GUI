@@ -129,6 +129,16 @@ const EntityDataTable = ({
   }, [firstRow, indexColumn, commonColumns, showIndex, freezeIndex]);
 
   useEffect(() => {
+    // Remove table on unmount
+    return () => {
+      if (tabulatorRef.current) {
+        tabulatorRef.current.destroy();
+        tabulatorRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (tabulatorRef.current == null) {
       tabulatorRef.current = new Tabulator(divRef.current, {
         data: data,
@@ -143,14 +153,5 @@ const EntityDataTable = ({
     }
   }, [data, columns]);
 
-  useEffect(() => {
-    // Remove table on unmount
-    () => {
-      if (tabulatorRef.current) tabulatorRef.current.destroy();
-    };
-  }, []);
-
-  if (data == null) return <MissingDataPrompt />;
-
-  return <div style={{ margin: 12 }} ref={divRef}></div>;
+  return <div style={{ margin: 12 }} ref={divRef} />;
 };
