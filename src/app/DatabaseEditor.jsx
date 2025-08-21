@@ -174,7 +174,7 @@ const DatabaseContainer = () => {
   const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
   const categoryDatasets = Object.keys(categoryData ?? {});
 
-  // Set first category if none is selected
+  // Set first dataset if none is selected
   const activeDataset = selectedDataset ?? categoryDatasets?.[0];
   const dataset = categoryData?.[activeDataset];
 
