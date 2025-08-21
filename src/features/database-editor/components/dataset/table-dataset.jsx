@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
+import { MissingDataPrompt } from './missing-data-prompt';
 
 export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
   // Takes an object with keys as table names and values as arrays of objects
@@ -64,8 +65,7 @@ export const TableDataset = ({
 const EntityDetails = ({ data, indexColumn, commonColumns }) => {
   // Use first row to determine common columns
   const firstRow = data?.[0];
-  if (firstRow == null) return <div>Unable to determine entity details</div>;
-  if (!commonColumns?.length) return null;
+  if (firstRow == null || !commonColumns?.length) return null;
 
   return (
     <div>
@@ -149,6 +149,8 @@ const EntityDataTable = ({
       if (tabulatorRef.current) tabulatorRef.current.destroy();
     };
   }, []);
+
+  if (data == null) return <MissingDataPrompt />;
 
   return <div style={{ margin: 12 }} ref={divRef}></div>;
 };
