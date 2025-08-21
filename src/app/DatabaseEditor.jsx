@@ -175,10 +175,7 @@ const DatabaseContainer = () => {
   const categoryDatasets = Object.keys(categoryData ?? {});
 
   // Set first category if none is selected
-  const activeDataset =
-    selectedDataset === null && categoryDatasets.length > 0
-      ? categoryDatasets[0]
-      : selectedDataset;
+  const activeDataset = selectedDataset ?? categoryDatasets?.[0];
   const dataset = categoryData?.[activeDataset];
 
   return (

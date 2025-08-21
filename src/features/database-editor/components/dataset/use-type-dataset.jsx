@@ -19,9 +19,7 @@ export const UseTypeDataset = ({ dataset }) => {
   const useTypes = Object.keys(useTypeData);
 
   // Select first use type if none selected or selected use type is not in use types
-  const firstUseType = useTypes?.[0] ?? null;
-  const activeUseType = selectedUseType ?? firstUseType;
-
+  const activeUseType = selectedUseType ?? useTypes?.[0];
   const selectedUseTypeData = useTypeData?.[activeUseType];
 
   return (
