@@ -10,8 +10,8 @@ export function AsyncError({ title = 'Something went wrong', error }) {
       subTitle={
         <div>
           <p>
-            You may submit the contents of the log file and the error details as
-            an issue on our GitHub{' '}
+            You may submit {isElectron() && 'the contents of the log file and '}
+            the error details as an issue on our GitHub{' '}
             <span
               aria-hidden
               style={{
