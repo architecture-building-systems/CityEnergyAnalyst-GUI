@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
+import './dataset.css';
 
 export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
   // Takes an object with keys as table names and values as arrays of objects
@@ -110,11 +111,20 @@ const EntityDataTable = ({
           !(commonColumns || []).includes(column),
       )
       .map((column) => {
-        return {
+        const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
+
+        const colDef = {
           title: column,
           field: column,
-          frozen: showIndex && column == indexColumn && freezeIndex,
+          frozen: _frozenIndex,
         };
+
+        if (_frozenIndex) {
+          colDef.cssClass = 'frozen-index';
+          colDef.hozAlign = 'left';
+        }
+
+        return colDef;
       });
   }, [firstRow, indexColumn, commonColumns, showIndex, freezeIndex]);
 
