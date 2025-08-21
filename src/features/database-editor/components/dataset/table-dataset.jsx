@@ -129,16 +129,6 @@ const EntityDataTable = ({
   }, [firstRow, indexColumn, commonColumns, showIndex, freezeIndex]);
 
   useEffect(() => {
-    // Remove table on unmount
-    return () => {
-      if (tabulatorRef.current) {
-        tabulatorRef.current.destroy();
-        tabulatorRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     if (tabulatorRef.current == null) {
       tabulatorRef.current = new Tabulator(divRef.current, {
         data: data,
