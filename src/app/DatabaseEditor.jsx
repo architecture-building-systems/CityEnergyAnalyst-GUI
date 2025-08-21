@@ -252,7 +252,7 @@ const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
         >
           <div>
             <b>{name.toUpperCase()}</b>
-            {category}
+            <span>{category}</span>
           </div>
         </Button>
       ))}
