@@ -173,7 +173,13 @@ const DatabaseContainer = () => {
   const domainCategory = `${(selectedDomain.domain ?? '').toUpperCase()}-${(selectedDomain.category ?? '').toUpperCase()}`;
   const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
   const categoryDatasets = Object.keys(categoryData ?? {});
-  const dataset = categoryData?.[selectedDataset];
+
+  // Set first category if none is selected
+  const activeDataset =
+    selectedDataset === null && categoryDatasets.length > 0
+      ? categoryDatasets[0]
+      : selectedDataset;
+  const dataset = categoryData?.[activeDataset];
 
   return (
     <ErrorBoundary>
@@ -202,7 +208,7 @@ const DatabaseContainer = () => {
                 <Button
                   key={dataset}
                   onClick={() => setSelectedDataset(dataset)}
-                  type={selectedDataset == dataset ? 'primary' : 'default'}
+                  type={activeDataset == dataset ? 'primary' : 'default'}
                 >
                   {dataset.toUpperCase().split('_').join(' ')}
                 </Button>
@@ -216,13 +222,12 @@ const DatabaseContainer = () => {
                       return <ConversionDataset data={dataset} />;
                     default:
                       if (
-                        (selectedDataset ?? '').toUpperCase() ==
-                        LIBRARY_DATABASE
+                        (activeDataset ?? '').toUpperCase() == LIBRARY_DATABASE
                       )
                         return <LibraryDataset data={dataset} />;
                       return (
                         <CodeTableDataset
-                          key={`${domainCategory}-${selectedDataset}`}
+                          key={`${domainCategory}-${activeDataset}`}
                           data={dataset}
                         />
                       );
