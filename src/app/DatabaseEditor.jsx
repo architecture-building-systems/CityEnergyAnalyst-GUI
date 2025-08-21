@@ -203,7 +203,7 @@ const DatabaseContainer = () => {
             <div className="cea-database-editor-database-dataset-buttons">
               {categoryDatasets.map((dataset) => (
                 <Button
-                  key={dataset}
+                  key={`${domainCategory}-${dataset}`}
                   onClick={() => setSelectedDataset(dataset)}
                   type={activeDataset == dataset ? 'primary' : 'default'}
                 >
