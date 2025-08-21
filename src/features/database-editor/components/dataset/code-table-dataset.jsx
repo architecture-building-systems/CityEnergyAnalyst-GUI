@@ -1,3 +1,4 @@
+import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 
 const INDEX_COLUMN = 'code';
@@ -19,7 +20,8 @@ const transformData = (data) => {
 };
 
 export const CodeTableDataset = ({ data }) => {
-  if (data == null) return <div>No data selected.</div>;
+  if (data === undefined) return <div>No data selected.</div>;
+  if (data === null) return <MissingDataPrompt />;
 
   const _data = transformData(data);
 
