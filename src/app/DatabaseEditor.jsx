@@ -183,7 +183,7 @@ const DatabaseContainer = () => {
       <div className="cea-database-editor-database-container">
         <div className="cea-database-editor-database-domain-categories">
           {Object.keys(data).map((name) => (
-            <DatabaseDomainCategories
+            <DatabaseDomainCategory
               key={name}
               name={name}
               categories={Object.keys(data[name])}
@@ -239,7 +239,7 @@ const DatabaseContainer = () => {
   );
 };
 
-const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
+const DatabaseDomainCategory = ({ name, categories, active, onSelect }) => {
   return (
     <div className="cea-database-editor-database-domain-category">
       {categories.map((category) => (
