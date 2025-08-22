@@ -15,6 +15,7 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
+  PLOTS_COMFORT_CHART,
 } from 'features/map/constants';
 import { useSetActiveMapLayer } from 'features/project/components/Cards/MapLayersCard/store';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
@@ -34,6 +35,7 @@ const VIEW_MAP_RESULTS = {
   'solar-collector': RENEWABLE_ENERGY_POTENTIALS,
   'thermal-network': THERMAL_NETWORK,
   emissions: LIFE_CYCLE_ANALYSIS,
+  'plot-comfort-chart': COMFORT_CHART,
 };
 
 // Maps script name to plot script name
@@ -43,6 +45,7 @@ export const VIEW_PLOT_RESULTS = {
   [RENEWABLE_ENERGY_POTENTIALS]: 'plot-solar',
   [THERMAL_NETWORK]: null,
   [LIFE_CYCLE_ANALYSIS]: null,
+  [COMFORT_CHART]: 'plot-comfort-chart',
 };
 
 const StatusBar = () => {
