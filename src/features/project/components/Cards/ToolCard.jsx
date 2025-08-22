@@ -1,17 +1,15 @@
 import { VerticalLeftOutlined } from '@ant-design/icons';
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button, ConfigProvider, Form } from 'antd';
+import { Button } from 'antd';
 
 import {
   useCloseToolCard,
   toolTypes,
   useToolType,
 } from 'features/project/stores/tool-card';
-import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { BuildingEditor } from 'features/building-editor/components/building-editor';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { useEffect } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
+import { PlotTool } from './plot-tool';
 
 const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
   const toolType = useToolType();
@@ -69,54 +67,6 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
         </div>
       </div>
     </ErrorBoundary>
-  );
-};
-
-const PlotTool = ({ script, onToolSelected }) => {
-  const [form] = Form.useForm();
-  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-
-  // FIXME: Hardcoded for now.
-  const period = mapLayerParameters?.period;
-  const panelTech = mapLayerParameters?.['technology'];
-  const panelType = mapLayerParameters?.['panel-type'];
-
-  useEffect(() => {
-    const hour_start = ((period?.[0] ?? 1) - 1) * 24;
-    const hour_end = (period?.[1] ?? 365) * 24;
-    const solar_panel_types = {};
-
-    let feature;
-    if (script == 'plot-demand') {
-      feature = 'demand';
-    } else if (script == 'plot-solar') {
-      if (panelTech === 'PV') {
-        feature = 'pv';
-      } else if (panelTech === 'SC') {
-        feature = 'sc';
-      }
-    }
-
-    if (panelTech === 'SC') {
-      solar_panel_types.sc = panelType;
-    } else if (panelTech === 'PV') {
-      solar_panel_types.pv = panelType;
-    }
-    form.setFieldsValue({
-      context: { feature, hour_start, hour_end, solar_panel_types },
-    });
-  }, [form, script, period, panelType, panelTech]);
-
-  return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: PLOTS_PRIMARY_COLOR,
-        },
-      }}
-    >
-      <Tool script={script} onToolSelected={onToolSelected} form={form} />
-    </ConfigProvider>
   );
 };
 
