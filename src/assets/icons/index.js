@@ -7,6 +7,7 @@ import OptimisationIcon from './optimisation.svg';
 import SolarRadiationIcon from './solar_radiation.svg';
 import UtilitiesIcon from './utilities.svg';
 import ImportExportIcon from './import_export.svg';
+import ComfortChartIcon from './comfort_chart.svg';
 
 import DatabaseEditorIcon from './database_editor.svg';
 import InputEditorIcon from './input_editor.svg';
@@ -77,4 +78,5 @@ export {
   CloudDownloadIcon,
   AiIcon,
   ProIcon,
+  ComfortChartIcon,
 };
