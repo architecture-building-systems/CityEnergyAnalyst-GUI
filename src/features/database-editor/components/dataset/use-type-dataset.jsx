@@ -2,6 +2,7 @@ import { Button } from 'antd';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { useEffect, useState } from 'react';
+import { MissingDataPrompt } from './missing-data-prompt';
 
 export const UseTypeDataset = ({ dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -145,7 +146,7 @@ const UseTypeSchedules = ({ data }) => {
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  if (data == null) return <div>No data found</div>;
+  if (data == null) return <MissingDataPrompt />;
 
   const schedules = Object.keys(data?.[0] ?? {}).filter((key) => key != 'hour');
   const selectedScheduleData = extractSchedule(data, selectedSchedule);
