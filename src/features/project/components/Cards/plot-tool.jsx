@@ -1,24 +1,31 @@
 import Tool from 'features/tools/components/Tools/Tool';
-import { ConfigProvider, Form } from 'antd';
+import { Button, ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
 
-const PlotChoices = () => {
+const PlotChoices = ({ onSelected }) => {
   const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
     (key) => VIEW_PLOT_RESULTS[key],
   );
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h2>Select a Plot Tool</h2>
       {choices.map((choice) => (
-        <div key={choice}>{choice}</div>
+        <Button
+          key={choice}
+          onClick={() => onSelected(VIEW_PLOT_RESULTS[choice])}
+        >
+          {choice}
+        </Button>
       ))}
     </div>
   );
 };
 
-export const PlotTool = ({ script, onToolSelected }) => {
+export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
 
@@ -53,7 +60,7 @@ export const PlotTool = ({ script, onToolSelected }) => {
     });
   }, [form, script, period, panelType, panelTech]);
 
-  if (script == null) return <PlotChoices />;
+  if (script == null) return <PlotChoices onSelected={onPlotToolSelected} />;
 
   return (
     <ConfigProvider
