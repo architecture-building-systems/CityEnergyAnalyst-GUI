@@ -15,6 +15,7 @@ const ToolCard = ({
   selectedTool,
   selectedPlotTool,
   onToolSelected,
+  onPlotToolSelected,
   onResetTool,
 }) => {
   const toolType = useToolType();
@@ -27,7 +28,11 @@ const ToolCard = ({
       break;
     case toolTypes.MAP_LAYERS:
       content = (
-        <PlotTool script={selectedPlotTool} onToolSelected={onToolSelected} />
+        <PlotTool
+          script={selectedPlotTool}
+          onToolSelected={onToolSelected}
+          onPlotToolSelected={onPlotToolSelected}
+        />
       );
       break;
     case toolTypes.BUILDING_INFO:

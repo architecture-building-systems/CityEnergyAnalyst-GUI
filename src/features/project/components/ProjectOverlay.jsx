@@ -57,6 +57,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     setToolType(toolTypes.TOOLS);
   };
 
+  const handlePlotToolSelected = (tool) => {
+    setSelectedPlotTool(tool);
+    setToolType(toolTypes.MAP_LAYERS);
+  };
+
   const handleResetTool = () => {
     if (toolType === toolTypes.TOOLS) {
       setSelectedTool(null);
@@ -244,6 +249,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 selectedPlotTool={selectedPlotTool}
                 selectedBuildings={selectedBuildings}
                 onToolSelected={handleToolSelected}
+                onPlotToolSelected={handlePlotToolSelected}
                 onResetTool={handleResetTool}
               />
             </animated.div>
