@@ -9,6 +9,7 @@ import {
   PlugInIcon,
   EnergyPotentialsIcon,
   LifeCycleAnalysisIcon,
+  ComfortChartIcon,
 } from 'assets/icons';
 import {
   DEMAND,
@@ -16,6 +17,7 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
+  COMFORT_CHART,
 } from 'features/map/constants';
 import { useGetMapLayerCategories } from 'features/map/hooks/map-layers';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -101,6 +103,7 @@ const iconMap = {
   [DEMAND]: PlugInIcon,
   [RENEWABLE_ENERGY_POTENTIALS]: EnergyPotentialsIcon,
   [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
+  [COMFORT_CHART]: ComfortChartIcon,
 };
 
 const CategoryIconButton = ({ category, label, onClick, active }) => {
