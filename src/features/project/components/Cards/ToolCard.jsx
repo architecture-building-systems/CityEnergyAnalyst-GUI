@@ -15,7 +15,28 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
   const toolType = useToolType();
   const closeToolCard = useCloseToolCard();
 
-  // TODO: Move to CSS
+  let content;
+  switch (toolType) {
+    case toolTypes.TOOLS:
+      content =
+        selectedTool != null ? (
+          <Tool script={selectedTool} onToolSelected={onToolSelected} />
+        ) : (
+          <div>No tool selected</div>
+        );
+      break;
+    case toolTypes.MAP_LAYERS:
+      content = (
+        <PlotTool script={selectedPlotTool} onToolSelected={onToolSelected} />
+      );
+      break;
+    case toolTypes.BUILDING_INFO:
+      content = <BuildingEditor />;
+      break;
+    default:
+      content = null;
+  }
+
   return (
     <ErrorBoundary>
       <div
@@ -49,22 +70,7 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
           />
         </div>
 
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          {toolType == toolTypes.TOOLS &&
-            (selectedTool != null ? (
-              <Tool script={selectedTool} onToolSelected={onToolSelected} />
-            ) : (
-              <div>No tool selected</div>
-            ))}
-
-          {toolType == toolTypes.MAP_LAYERS && (
-            <PlotTool
-              script={selectedPlotTool}
-              onToolSelected={onToolSelected}
-            />
-          )}
-          {toolType == toolTypes.BUILDING_INFO && <BuildingEditor />}
-        </div>
+        <div style={{ flex: 1, overflow: 'hidden' }}>{content}</div>
       </div>
     </ErrorBoundary>
   );
