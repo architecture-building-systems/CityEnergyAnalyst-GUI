@@ -11,7 +11,12 @@ import { BuildingEditor } from 'features/building-editor/components/building-edi
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { PlotTool } from './plot-tool';
 
-const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
+const ToolCard = ({
+  selectedTool,
+  selectedPlotTool,
+  onToolSelected,
+  onResetTool,
+}) => {
   const toolType = useToolType();
   const closeToolCard = useCloseToolCard();
 
@@ -58,6 +63,9 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
             flexShrink: 0,
           }}
         >
+          {toolType == toolTypes.MAP_LAYERS && selectedPlotTool != null && (
+            <Button onClick={onResetTool}>Back</Button>
+          )}
           <Button
             icon={<VerticalLeftOutlined />}
             onClick={closeToolCard}
