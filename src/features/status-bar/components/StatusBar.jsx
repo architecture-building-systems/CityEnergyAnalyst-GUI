@@ -15,7 +15,7 @@ import {
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
-  PLOTS_COMFORT_CHART,
+  COMFORT_CHART,
 } from 'features/map/constants';
 import { useSetActiveMapLayer } from 'features/project/components/Cards/MapLayersCard/store';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
