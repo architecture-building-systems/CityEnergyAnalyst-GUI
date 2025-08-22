@@ -15,7 +15,7 @@ import { apiClient } from 'lib/api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
-import { VIEW_MAP_RESULTS } from 'features/plots/constants';
+import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
 
 const StatusBar = () => {
   return (
@@ -145,8 +145,7 @@ const JobStatusBar = () => {
       updateJob(job);
       setMessage(`jobID: ${job.id} - completed ✅`);
 
-      // FIXME: check for exact plot script names instead
-      const isPlotJob = job.script.startsWith('plot-') && job?.output;
+      const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
 
       const key = job.id;
       let duration = isPlotJob ? 0 : 5;

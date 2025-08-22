@@ -47,3 +47,5 @@ export const VIEW_PLOT_RESULTS = {
   [LIFE_CYCLE_ANALYSIS]: null,
   [COMFORT_CHART]: 'plot-comfort-chart',
 };
+
+export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
