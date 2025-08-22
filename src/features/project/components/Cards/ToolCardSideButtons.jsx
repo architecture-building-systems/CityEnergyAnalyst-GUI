@@ -64,7 +64,11 @@ export const ToolCardSideButtons = () => {
         }}
       >
         <Button
-          onClick={closeToolCard}
+          onClick={() =>
+            toolType !== toolTypes.MAP_LAYERS
+              ? setToolType(toolTypes.MAP_LAYERS)
+              : closeToolCard()
+          }
           type={toolType === toolTypes.MAP_LAYERS ? 'primary' : 'default'}
         >
           <GraphsIcon />
