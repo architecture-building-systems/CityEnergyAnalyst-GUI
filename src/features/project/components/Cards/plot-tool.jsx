@@ -3,7 +3,7 @@ import { Button, ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
+import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 
 const PlotChoices = ({ onSelected }) => {
   const choices = Object.keys(VIEW_PLOT_RESULTS).filter(

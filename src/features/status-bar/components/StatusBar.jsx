@@ -9,44 +9,13 @@ import './StatusBarNotification.css';
 
 import socket from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
-import {
-  DEMAND,
-  SOLAR_IRRADIATION,
-  RENEWABLE_ENERGY_POTENTIALS,
-  THERMAL_NETWORK,
-  LIFE_CYCLE_ANALYSIS,
-  COMFORT_CHART,
-} from 'features/map/constants';
 import { useSetActiveMapLayer } from 'features/project/components/Cards/MapLayersCard/store';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { apiClient } from 'lib/api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
-
-// TODO: get mappings from backend
-// Maps script name to map layer button name
-const VIEW_MAP_RESULTS = {
-  demand: DEMAND,
-  radiation: SOLAR_IRRADIATION,
-  'radiation-crax': SOLAR_IRRADIATION,
-  photovoltaic: RENEWABLE_ENERGY_POTENTIALS,
-  'photovoltaic-thermal': RENEWABLE_ENERGY_POTENTIALS,
-  'solar-collector': RENEWABLE_ENERGY_POTENTIALS,
-  'thermal-network': THERMAL_NETWORK,
-  emissions: LIFE_CYCLE_ANALYSIS,
-  'plot-comfort-chart': COMFORT_CHART,
-};
-
-// Maps script name to plot script name
-export const VIEW_PLOT_RESULTS = {
-  [DEMAND]: 'plot-demand',
-  [SOLAR_IRRADIATION]: null,
-  [RENEWABLE_ENERGY_POTENTIALS]: 'plot-solar',
-  [THERMAL_NETWORK]: null,
-  [LIFE_CYCLE_ANALYSIS]: null,
-  [COMFORT_CHART]: 'plot-comfort-chart',
-};
+import { VIEW_MAP_RESULTS } from 'features/plots/constants';
 
 const StatusBar = () => {
   return (

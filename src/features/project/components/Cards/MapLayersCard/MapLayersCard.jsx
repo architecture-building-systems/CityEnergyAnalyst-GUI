@@ -2,26 +2,11 @@ import { Tooltip } from 'antd';
 
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
-import {
-  SolarRadiationIcon,
-  GraphsIcon,
-  NetworksIcon,
-  PlugInIcon,
-  EnergyPotentialsIcon,
-  LifeCycleAnalysisIcon,
-  ComfortChartIcon,
-} from 'assets/icons';
-import {
-  DEMAND,
-  SOLAR_IRRADIATION,
-  RENEWABLE_ENERGY_POTENTIALS,
-  THERMAL_NETWORK,
-  LIFE_CYCLE_ANALYSIS,
-  COMFORT_CHART,
-} from 'features/map/constants';
+import { GraphsIcon } from 'assets/icons';
 import { useGetMapLayerCategories } from 'features/map/hooks/map-layers';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useActiveMapLayer, useSetActiveMapLayer } from './store';
+import { iconMap } from 'features/plots/constants';
 
 const MapLayersCard = ({ onLayerSelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
@@ -95,15 +80,6 @@ const MapLayersCard = ({ onLayerSelected }) => {
       })}
     </div>
   );
-};
-
-const iconMap = {
-  [SOLAR_IRRADIATION]: SolarRadiationIcon,
-  [THERMAL_NETWORK]: NetworksIcon,
-  [DEMAND]: PlugInIcon,
-  [RENEWABLE_ENERGY_POTENTIALS]: EnergyPotentialsIcon,
-  [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
-  [COMFORT_CHART]: ComfortChartIcon,
 };
 
 const CategoryIconButton = ({ category, label, onClick, active }) => {

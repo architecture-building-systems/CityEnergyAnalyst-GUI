@@ -17,7 +17,7 @@ import {
   useSetToolType,
 } from 'features/project/stores/tool-card';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
+import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
 import {
