@@ -18,12 +18,7 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
   let content;
   switch (toolType) {
     case toolTypes.TOOLS:
-      content =
-        selectedTool != null ? (
-          <Tool script={selectedTool} onToolSelected={onToolSelected} />
-        ) : (
-          <div>No tool selected</div>
-        );
+      content = <Tool script={selectedTool} onToolSelected={onToolSelected} />;
       break;
     case toolTypes.MAP_LAYERS:
       content = (
@@ -34,7 +29,7 @@ const ToolCard = ({ selectedTool, selectedPlotTool, onToolSelected }) => {
       content = <BuildingEditor />;
       break;
     default:
-      content = null;
+      content = <div>No tool selected</div>;
   }
 
   return (
