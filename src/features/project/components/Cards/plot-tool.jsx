@@ -3,6 +3,20 @@ import { ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
+import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
+
+const PlotChoices = () => {
+  const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
+    (key) => VIEW_PLOT_RESULTS[key],
+  );
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {choices.map((choice) => (
+        <div key={choice}>{choice}</div>
+      ))}
+    </div>
+  );
+};
 
 export const PlotTool = ({ script, onToolSelected }) => {
   const [form] = Form.useForm();
@@ -39,7 +53,7 @@ export const PlotTool = ({ script, onToolSelected }) => {
     });
   }, [form, script, period, panelType, panelTech]);
 
-  if (script == null) return null;
+  if (script == null) return <PlotChoices />;
 
   return (
     <ConfigProvider
