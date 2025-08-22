@@ -35,7 +35,6 @@ export const VIEW_MAP_RESULTS = {
   'solar-collector': RENEWABLE_ENERGY_POTENTIALS,
   'thermal-network': THERMAL_NETWORK,
   emissions: LIFE_CYCLE_ANALYSIS,
-  'plot-comfort-chart': COMFORT_CHART,
 };
 
 // Maps script name to plot script name
