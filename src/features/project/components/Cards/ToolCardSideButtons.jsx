@@ -56,23 +56,25 @@ export const ToolCardSideButtons = () => {
         Building Info
       </Button>
 
-      {toolType == toolTypes.MAP_LAYERS && (
-        <ConfigProvider
-          theme={{
-            token: {
-              colorPrimary: PLOTS_PRIMARY_COLOR,
-            },
-          }}
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: PLOTS_PRIMARY_COLOR,
+          },
+        }}
+      >
+        <Button
+          onClick={() =>
+            toolType !== toolTypes.MAP_LAYERS
+              ? setToolType(toolTypes.MAP_LAYERS)
+              : closeToolCard()
+          }
+          type={toolType === toolTypes.MAP_LAYERS ? 'primary' : 'default'}
         >
-          <Button
-            onClick={closeToolCard}
-            type={toolType === toolTypes.MAP_LAYERS ? 'primary' : 'default'}
-          >
-            <GraphsIcon />
-            Visualisation
-          </Button>
-        </ConfigProvider>
-      )}
+          <GraphsIcon />
+          Plots
+        </Button>
+      </ConfigProvider>
     </div>
   );
 };

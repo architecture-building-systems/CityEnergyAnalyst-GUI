@@ -17,7 +17,7 @@ import {
   useSetToolType,
 } from 'features/project/stores/tool-card';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { VIEW_PLOT_RESULTS } from 'features/status-bar/components/StatusBar';
+import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
 import {
@@ -55,6 +55,19 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
     setToolType(toolTypes.TOOLS);
+  };
+
+  const handlePlotToolSelected = (tool) => {
+    setSelectedPlotTool(tool);
+    setToolType(toolTypes.MAP_LAYERS);
+  };
+
+  const handleResetTool = () => {
+    if (toolType === toolTypes.TOOLS) {
+      setSelectedTool(null);
+    } else if (toolType === toolTypes.MAP_LAYERS) {
+      setSelectedPlotTool(null);
+    }
   };
 
   const handleLayerSelected = (layer) => {
@@ -236,6 +249,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 selectedPlotTool={selectedPlotTool}
                 selectedBuildings={selectedBuildings}
                 onToolSelected={handleToolSelected}
+                onPlotToolSelected={handlePlotToolSelected}
+                onResetTool={handleResetTool}
               />
             </animated.div>
           ) : null,
