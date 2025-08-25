@@ -1,4 +1,6 @@
 export const MissingDataPrompt = ({ dataKey }) => {
+  const displayPath = Array.isArray(dataKey) ? dataKey.join(' → ') : dataKey;
+
   return (
     <div
       style={{
@@ -14,7 +16,7 @@ export const MissingDataPrompt = ({ dataKey }) => {
       }}
     >
       <div>No data available for this selection.</div>
-      <div>{dataKey}</div>
+      <div>{displayPath}</div>
       <small>Either it does not exist or there was a problem loading it.</small>
     </div>
   );
