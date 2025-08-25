@@ -39,23 +39,33 @@ export const ToolCardSideButtons = () => {
               ? setToolType(toolTypes.TOOLS)
               : closeToolCard()
           }
-          type={toolType === toolTypes.TOOLS ? 'primary' : 'default'}
+          color="primary"
+          variant={toolType === toolTypes.TOOLS ? 'solid' : 'outlined'}
         >
           <ToolsIcon />
           Tools
         </Button>
       )}
-      <Button
-        onClick={() =>
-          toolType !== toolTypes.BUILDING_INFO
-            ? setToolType(toolTypes.BUILDING_INFO)
-            : closeToolCard()
-        }
-        type={toolType === toolTypes.BUILDING_INFO ? 'primary' : 'default'}
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: '#7F8086',
+          },
+        }}
       >
-        <InformationIcon />
-        Building Info
-      </Button>
+        <Button
+          onClick={() =>
+            toolType !== toolTypes.BUILDING_INFO
+              ? setToolType(toolTypes.BUILDING_INFO)
+              : closeToolCard()
+          }
+          color="primary"
+          variant={toolType === toolTypes.BUILDING_INFO ? 'solid' : 'outlined'}
+        >
+          <InformationIcon />
+          Building Info
+        </Button>
+      </ConfigProvider>
 
       <ConfigProvider
         theme={{
@@ -70,7 +80,8 @@ export const ToolCardSideButtons = () => {
               ? setToolType(toolTypes.MAP_LAYERS)
               : closeToolCard()
           }
-          type={toolType === toolTypes.MAP_LAYERS ? 'primary' : 'default'}
+          color="primary"
+          variant={toolType === toolTypes.MAP_LAYERS ? 'solid' : 'outlined'}
         >
           <GraphsIcon />
           Plots
