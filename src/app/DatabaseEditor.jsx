@@ -28,8 +28,8 @@ const useValidateDatabasePath = () => {
     } catch (err) {
       console.log(err);
       if (err.response?.status == 400 && err.response?.data) {
-        const { status, message } = err.response.data.detail;
-        setValid({ message, status });
+        const { status, message } = err.response.data?.detail || {};
+        setValid({ message, status: status || 'error' });
       } else {
         setValid({
           message: 'Could not read and verify databases.',
