@@ -48,7 +48,7 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
         selected={activeUseType}
         onSelected={setSelectedUseType}
       />
-      {activeUseType !== null && (
+      {activeUseType && useTypes.length > 0 && (
         <div
           style={{
             display: 'flex',
