@@ -222,6 +222,10 @@ const DatabaseContainer = () => {
           <div className="cea-database-editor-database-dataset">
             <ErrorBoundary>
               {(() => {
+                if (domainCategory == null)
+                  // TODO: Add quick start guide / documentation link
+                  return <div>Select a domain and category to begin.</div>;
+
                 if (arraysEqual(domainCategory, USE_TYPES_DATABASE)) {
                   return (
                     <UseTypeDataset
