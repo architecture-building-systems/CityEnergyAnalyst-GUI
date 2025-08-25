@@ -46,26 +46,6 @@ export const ToolCardSideButtons = () => {
           Tools
         </Button>
       )}
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: '#7F8086',
-          },
-        }}
-      >
-        <Button
-          onClick={() =>
-            toolType !== toolTypes.BUILDING_INFO
-              ? setToolType(toolTypes.BUILDING_INFO)
-              : closeToolCard()
-          }
-          color="primary"
-          variant={toolType === toolTypes.BUILDING_INFO ? 'solid' : 'outlined'}
-        >
-          <InformationIcon />
-          Building Info
-        </Button>
-      </ConfigProvider>
 
       <ConfigProvider
         theme={{
@@ -85,6 +65,33 @@ export const ToolCardSideButtons = () => {
         >
           <GraphsIcon />
           Plots
+        </Button>
+      </ConfigProvider>
+
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: '#000000',
+          },
+          components: {
+            Button: {
+              // Make shadow less prominent
+              primaryShadow: '0 2px 0 rgba(0, 0, 0, 0.1)',
+            },
+          },
+        }}
+      >
+        <Button
+          onClick={() =>
+            toolType !== toolTypes.BUILDING_INFO
+              ? setToolType(toolTypes.BUILDING_INFO)
+              : closeToolCard()
+          }
+          color="primary"
+          variant={toolType === toolTypes.BUILDING_INFO ? 'solid' : 'outlined'}
+        >
+          <InformationIcon />
+          Building Info
         </Button>
       </ConfigProvider>
     </div>
