@@ -32,6 +32,8 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
     scheduleData?.monthly_multipliers?.[activeUseType];
   const selectedLibraryData = scheduleData?._library?.[activeUseType];
 
+  if (!useTypes.length) return <MissingDataPrompt dataKey={dataKey} />;
+
   return (
     <div
       className="cea-database-editor-database-use-type"
