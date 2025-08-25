@@ -1,10 +1,16 @@
-import { use, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
+import './dataset.css';
+import { MissingDataPrompt } from './missing-data-prompt';
 
-export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
-  // Takes an object with keys as table names and values as arrays of objects
-  if (data == null) return <div>No data found for this dataset</div>;
+export const TableGroupDataset = ({
+  dataKey,
+  data,
+  indexColumn,
+  commonColumns,
+}) => {
+  if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
   return (
     <div
@@ -16,7 +22,8 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
     >
       {Object.keys(data).map((key) => (
         <TableDataset
-          key={key}
+          key={[...dataKey, key].join('-')}
+          dataKey={[...dataKey, key]}
           name={key}
           data={data?.[key]}
           indexColumn={indexColumn}
@@ -29,6 +36,7 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
 };
 
 export const TableDataset = ({
+  dataKey,
   name,
   data,
   indexColumn,
@@ -44,18 +52,24 @@ export const TableDataset = ({
         </small>
       )}
 
-      <EntityDetails
-        data={data}
-        indexColumn={indexColumn}
-        commonColumns={commonColumns}
-      />
-      <EntityDataTable
-        data={data}
-        indexColumn={indexColumn}
-        commonColumns={commonColumns}
-        showIndex={showIndex}
-        freezeIndex={freezeIndex}
-      />
+      {data == null ? (
+        <MissingDataPrompt dataKey={dataKey} />
+      ) : (
+        <>
+          <EntityDetails
+            data={data}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+          />
+          <EntityDataTable
+            data={data}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+            showIndex={showIndex}
+            freezeIndex={freezeIndex}
+          />
+        </>
+      )}
     </div>
   );
 };
@@ -63,8 +77,7 @@ export const TableDataset = ({
 const EntityDetails = ({ data, indexColumn, commonColumns }) => {
   // Use first row to determine common columns
   const firstRow = data?.[0];
-  if (firstRow == null) return <div>Unable to determine entity details</div>;
-  if (!commonColumns?.length) return null;
+  if (firstRow == null || !commonColumns?.length) return null;
 
   return (
     <div>
@@ -110,11 +123,20 @@ const EntityDataTable = ({
           !(commonColumns || []).includes(column),
       )
       .map((column) => {
-        return {
+        const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
+
+        const colDef = {
           title: column,
           field: column,
-          frozen: showIndex && column == indexColumn && freezeIndex,
+          frozen: _frozenIndex,
         };
+
+        if (_frozenIndex) {
+          colDef.cssClass = 'frozen-index';
+          colDef.hozAlign = 'left';
+        }
+
+        return colDef;
       });
   }, [firstRow, indexColumn, commonColumns, showIndex, freezeIndex]);
 
@@ -133,12 +155,5 @@ const EntityDataTable = ({
     }
   }, [data, columns]);
 
-  useEffect(() => {
-    // Remove table on unmount
-    () => {
-      if (tabulatorRef.current) tabulatorRef.current.destroy();
-    };
-  }, []);
-
-  return <div style={{ margin: 12 }} ref={divRef}></div>;
+  return <div style={{ margin: 12 }} ref={divRef} />;
 };

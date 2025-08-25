@@ -10,9 +10,10 @@ const COMMON_COLUMNS = [
   'reference',
 ];
 
-export const ConversionDataset = ({ data }) => {
+export const ConversionDataset = ({ dataKey, data }) => {
   return (
     <TableGroupDataset
+      dataKey={dataKey}
       data={data}
       indexColumn={INDEX_COLUMN}
       commonColumns={COMMON_COLUMNS}

@@ -1,3 +1,4 @@
+import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 
 const INDEX_COLUMN = 'code';
@@ -18,14 +19,15 @@ const transformData = (data) => {
   return output;
 };
 
-export const CodeTableDataset = ({ data }) => {
-  if (data == null) return <div>No data selected.</div>;
+export const CodeTableDataset = ({ dataKey, data }) => {
+  if (data === undefined) return <div>No data selected.</div>;
+  if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
   const _data = transformData(data);
 
   return (
     <div className="cea-database-editor-database-dataset-code">
-      <TableDataset data={_data} indexColumn={INDEX_COLUMN} />
+      <TableDataset dataKey={dataKey} data={_data} indexColumn={INDEX_COLUMN} />
     </div>
   );
 };

@@ -18,19 +18,24 @@ import {
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
 
 const useValidateDatabasePath = () => {
-  const [valid, setValid] = useState(null);
-  const [error, setError] = useState(null);
+  const [valid, setValid] = useState({ message: null, status: null });
 
   const checkDBPathValidity = async () => {
     try {
-      setValid(null);
-      setError(null);
+      setValid({ message: null, status: 'checking' });
       await apiClient.get(`/api/inputs/databases/check`);
-      setValid(true);
+      setValid({ message: null, status: 'valid' });
     } catch (err) {
-      if (err.response?.data) setError(err.response.data.detail);
-      else setError('Could not read and verify databases.');
-      setValid(false);
+      console.log(err);
+      if (err.response?.status == 400 && err.response?.data) {
+        const { status, message } = err.response.data?.detail || {};
+        setValid({ message, status: status || 'error' });
+      } else {
+        setValid({
+          message: 'Could not read and verify databases.',
+          status: 'invalid',
+        });
+      }
     }
   };
 
@@ -38,16 +43,34 @@ const useValidateDatabasePath = () => {
     checkDBPathValidity();
   }, []);
 
-  return [valid, error, checkDBPathValidity];
+  return [valid?.status, valid?.message, checkDBPathValidity];
+};
+
+const DatabaseEditorErrorMessage = ({ error }) => {
+  return (
+    <div className="cea-database-editor-error-container">
+      {error !== null && (
+        <div
+          style={{
+            background: '#efefef',
+            padding: 16,
+            borderRadius: 8,
+          }}
+        >
+          <pre>{error}</pre>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  const [valid, error, checkDBPathValidity] = useValidateDatabasePath();
+  const [status, message] = useValidateDatabasePath();
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
-  if (valid === null)
+  if (status === 'checking')
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
@@ -64,38 +87,13 @@ const DatabaseEditor = () => {
           <RefreshDatabaseButton />
         </div>
       </div>
-      <div className="cea-database-editor-content">
-        {valid ? (
-          <DatabaseContent />
-        ) : (
-          <div>
-            <div className="cea-database-editor-error-container">
-              <h3>
-                Could not find or validate input databases. Try importing a new
-                database
-              </h3>
-              {error !== null && (
-                <div
-                  style={{
-                    background: '#efefef',
-                    padding: 16,
-                    borderRadius: 8,
-                  }}
-                >
-                  <pre>{error}</pre>
-                </div>
-              )}
-            </div>
-            <Button onClick={checkDBPathValidity}>Try Again</Button>
-          </div>
-        )}
-      </div>
+      <DatabaseContent message={message} />
       <div className="cea-database-editor-footer"></div>
     </div>
   );
 };
 
-const DatabaseContent = () => {
+const DatabaseContent = ({ message }) => {
   const { status, error } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
@@ -125,20 +123,24 @@ const DatabaseContent = () => {
   if (status !== 'success') return null;
 
   return (
-    <>
+    <div className="cea-database-editor-content">
       {/* <DatabaseTopMenu /> */}
+      {message && <DatabaseEditorErrorMessage error={message} />}
       <DatabaseContainer />
-    </>
+    </div>
   );
 };
 
 const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
-const USE_TYPES_DATABASE = 'ARCHETYPES-USE';
-const CONVERSION_DATABASE = 'COMPONENTS-CONVERSION';
+const USE_TYPES_DATABASE = ['ARCHETYPES', 'USE'];
+const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
 
 const arraysEqual = (a, b) =>
-  a.length === b.length && a.every((val, i) => val === b[i]);
+  Array.isArray(a) &&
+  Array.isArray(b) &&
+  a?.length === b?.length &&
+  a?.every((val, i) => val === b[i]);
 
 const DatabaseContainer = () => {
   // Database structure:
@@ -171,17 +173,26 @@ const DatabaseContainer = () => {
   // Ensure first level keys of data are DOMAINS
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
 
-  const domainCategory = `${(selectedDomain.domain ?? '').toUpperCase()}-${(selectedDomain.category ?? '').toUpperCase()}`;
+  const domainCategory =
+    selectedDomain.domain && selectedDomain.category
+      ? [
+          selectedDomain.domain.toUpperCase(),
+          selectedDomain.category.toUpperCase(),
+        ]
+      : null;
   const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
   const categoryDatasets = Object.keys(categoryData ?? {});
-  const dataset = categoryData?.[selectedDataset];
+
+  // Set first dataset if none is selected
+  const activeDataset = selectedDataset ?? categoryDatasets?.[0];
+  const dataset = categoryData?.[activeDataset];
 
   return (
     <ErrorBoundary>
       <div className="cea-database-editor-database-container">
         <div className="cea-database-editor-database-domain-categories">
           {Object.keys(data).map((name) => (
-            <DatabaseDomainCategories
+            <DatabaseDomainCategory
               key={name}
               name={name}
               categories={Object.keys(data[name])}
@@ -191,54 +202,60 @@ const DatabaseContainer = () => {
           ))}
         </div>
 
-        {/* UseTypeDataset is a special case */}
-        {domainCategory == USE_TYPES_DATABASE && (
-          <UseTypeDataset dataset={categoryData} />
-        )}
-
-        {domainCategory != USE_TYPES_DATABASE && (
-          <ErrorBoundary>
-            <div className="cea-database-editor-database-dataset-buttons">
-              {categoryDatasets.map((dataset) => (
+        {/* UseTypeDataset is a special case that does not have a dataset button */}
+        {!arraysEqual(domainCategory, USE_TYPES_DATABASE) && (
+          <div className="cea-database-editor-database-dataset-buttons">
+            {domainCategory &&
+              categoryDatasets.map((dataset) => (
                 <Button
-                  key={dataset}
+                  key={`${domainCategory}-${dataset}`}
                   onClick={() => setSelectedDataset(dataset)}
-                  type={selectedDataset == dataset ? 'primary' : 'default'}
+                  type={activeDataset == dataset ? 'primary' : 'default'}
                 >
                   {dataset.toUpperCase().split('_').join(' ')}
                 </Button>
               ))}
-            </div>
-            <div className="cea-database-editor-database-dataset">
-              <ErrorBoundary>
-                {(() => {
-                  switch (domainCategory) {
-                    case CONVERSION_DATABASE:
-                      return <ConversionDataset data={dataset} />;
-                    default:
-                      if (
-                        (selectedDataset ?? '').toUpperCase() ==
-                        LIBRARY_DATABASE
-                      )
-                        return <LibraryDataset data={dataset} />;
-                      return (
-                        <CodeTableDataset
-                          key={`${domainCategory}-${selectedDataset}`}
-                          data={dataset}
-                        />
-                      );
-                  }
-                })()}
-              </ErrorBoundary>
-            </div>
-          </ErrorBoundary>
+          </div>
         )}
+
+        <ErrorBoundary>
+          <div className="cea-database-editor-database-dataset">
+            <ErrorBoundary>
+              {(() => {
+                if (domainCategory == null)
+                  // TODO: Add quick start guide / documentation link
+                  return <div>Select a domain and category to begin.</div>;
+
+                if (arraysEqual(domainCategory, USE_TYPES_DATABASE)) {
+                  return (
+                    <UseTypeDataset
+                      dataKey={domainCategory}
+                      dataset={dataset}
+                    />
+                  );
+                }
+
+                const dataKey = [...domainCategory, activeDataset];
+
+                if (arraysEqual(domainCategory, CONVERSION_DATABASE)) {
+                  return <ConversionDataset dataKey={dataKey} data={dataset} />;
+                }
+
+                if ((activeDataset ?? '').toUpperCase() === LIBRARY_DATABASE) {
+                  return <LibraryDataset dataKey={dataKey} data={dataset} />;
+                }
+
+                return <CodeTableDataset dataKey={dataKey} data={dataset} />;
+              })()}
+            </ErrorBoundary>
+          </div>
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
 };
 
-const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
+const DatabaseDomainCategory = ({ name, categories, active, onSelect }) => {
   return (
     <div className="cea-database-editor-database-domain-category">
       {categories.map((category) => (
@@ -253,7 +270,7 @@ const DatabaseDomainCategories = ({ name, categories, active, onSelect }) => {
         >
           <div>
             <b>{name.toUpperCase()}</b>
-            {category}
+            <span>{category}</span>
           </div>
         </Button>
       ))}

@@ -3,19 +3,18 @@ import { useSpring } from '@react-spring/web';
 export const useHoverGrow = (
   initialScale = 1,
   hoverScale = 1.2,
-  duration = 100,
+  config = { duration: 100 },
 ) => {
   const [styles, api] = useSpring(() => ({
-    transform: `scale(${initialScale})`,
-    config: { duration },
+    scale: initialScale,
   }));
 
   const onMouseEnter = () => {
-    api.start({ transform: `scale(${hoverScale})` });
+    api.start({ scale: hoverScale, config });
   };
 
   const onMouseLeave = () => {
-    api.start({ transform: `scale(${initialScale})` });
+    api.start({ scale: initialScale, config });
   };
 
   return {

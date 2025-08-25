@@ -29,6 +29,10 @@
 
 .cea-database-editor-content {
   grid-area: content;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .cea-database-editor-footer {
@@ -91,8 +95,4 @@
   max-width: 160px;
   white-space: normal;
   font-size: 12px;
-}
-
-.cea-database-editor-error-container {
-  margin: 20px;
 }

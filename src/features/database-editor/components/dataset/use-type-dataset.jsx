@@ -2,8 +2,9 @@ import { Button } from 'antd';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { useEffect, useState } from 'react';
+import { MissingDataPrompt } from './missing-data-prompt';
 
-export const UseTypeDataset = ({ dataset }) => {
+export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
   // use_types is an object with keys as use_types and values as properties.
   // schedules is an object with keys as use_types and values as schedules.
@@ -13,11 +14,25 @@ export const UseTypeDataset = ({ dataset }) => {
   // Ensure data is valid
   const useTypeData = dataset?.use_types;
   const scheduleData = dataset?.schedules;
-  if (useTypeData == null || scheduleData == null)
-    return <div>No data found</div>;
 
-  const useTypes = Object.keys(useTypeData);
-  const selectedUseTypeData = useTypeData?.[selectedUseType];
+  // Try to get all use types from use_types or schedules
+  const useTypes = Array.from(
+    new Set([
+      ...Object.keys(useTypeData || {}),
+      ...Object.keys(scheduleData?.monthly_multipliers || {}),
+      ...Object.keys(scheduleData?._library || {}),
+    ]),
+  );
+
+  // Select first use type if none selected or selected use type is not in use types
+  const activeUseType = selectedUseType ?? useTypes?.[0];
+
+  const selectedUseTypeData = useTypeData?.[activeUseType];
+  const selectedMultiplierData =
+    scheduleData?.monthly_multipliers?.[activeUseType];
+  const selectedLibraryData = scheduleData?._library?.[activeUseType];
+
+  if (!useTypes.length) return <MissingDataPrompt dataKey={dataKey} />;
 
   return (
     <div
@@ -32,10 +47,10 @@ export const UseTypeDataset = ({ dataset }) => {
     >
       <UseTypeButtons
         types={useTypes}
-        selected={selectedUseType}
+        selected={activeUseType}
         onSelected={setSelectedUseType}
       />
-      {selectedUseType !== null && (
+      {activeUseType && useTypes.length > 0 && (
         <div
           style={{
             display: 'flex',
@@ -45,14 +60,21 @@ export const UseTypeDataset = ({ dataset }) => {
           }}
         >
           <div>Properties</div>
-          <TableDataset data={[selectedUseTypeData]} />
+          <TableDataset
+            dataKey={[...dataKey, 'properties']}
+            data={selectedUseTypeData ? [selectedUseTypeData] : null}
+          />
 
           <div>Schedules</div>
           <TableDataset
+            dataKey={[...dataKey, 'monthly-multipliers']}
             name={'Monthly Multipliers'}
-            data={[scheduleData?.monthly_multipliers?.[selectedUseType]]}
+            data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
-          <UseTypeSchedules data={scheduleData?._library?.[selectedUseType]} />
+          <UseTypeSchedules
+            dataKey={[...dataKey, 'schedules']}
+            data={selectedLibraryData}
+          />
         </div>
       )}
     </div>
@@ -124,14 +146,14 @@ const ScheduleButtons = ({ schedules, selected, onSelected }) => {
   );
 };
 
-const UseTypeSchedules = ({ data }) => {
+const UseTypeSchedules = ({ dataKey, data }) => {
   // Data is array of schedule objects
   // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
   // hour can be "Weekday_1","Saturday_2", "Sunday_3"
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  if (data == null) return <div>No data found</div>;
+  if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
   const schedules = Object.keys(data?.[0] ?? {}).filter((key) => key != 'hour');
   const selectedScheduleData = extractSchedule(data, selectedSchedule);

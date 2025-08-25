@@ -19,6 +19,9 @@ button.cea-card-toolbar-icon {
   border: none;
   color: inherit;
 }
+button.cea-card-toolbar-icon-container {
+  border: none;
+}
 
 .cea-card-toolbar-icon {
   padding: 8px;

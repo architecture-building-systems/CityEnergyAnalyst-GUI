@@ -67,11 +67,11 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
         title={`${title} [Under development]`}
         styles={{ body: { fontSize: 12 } }}
       >
-        <div className="cea-card-toolbar-icon-container">
+        <button className="cea-card-toolbar-icon-container">
           <div className="cea-card-toolbar-icon no-hover-color">
             <_icon />
           </div>
-        </div>
+        </button>
       </Tooltip>
     );
 
@@ -82,15 +82,11 @@ const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
         onMouseLeave={onMouseLeave}
         style={styles}
       >
-        <div className="cea-card-toolbar-icon-container">
-          <button
-            className="cea-card-toolbar-icon no-hover-color"
-            onClick={onClick}
-            type="button"
-          >
+        <button className="cea-card-toolbar-icon-container" onClick={onClick}>
+          <div className="cea-card-toolbar-icon no-hover-color">
             <_icon />
-          </button>
-        </div>
+          </div>
+        </button>
       </animated.div>
     </Tooltip>
   );

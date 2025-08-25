@@ -5,7 +5,7 @@ import { useState } from 'react';
 const INDEX_COLUMN = null;
 const COMMON_COLUMNS = ['reference'];
 
-export const LibraryDataset = ({ data }) => {
+export const LibraryDataset = ({ dataKey, data }) => {
   // Object keys are the file names, values are data as arrays of objects
   const [selectedLibrary, setSelectedLibrary] = useState(null);
 
@@ -26,6 +26,7 @@ export const LibraryDataset = ({ data }) => {
       {selectedLibrary != null && (
         <div className="cea-database-editor-database-dataset">
           <TableDataset
+            dataKey={[...dataKey, selectedLibrary]}
             name={selectedLibrary}
             data={data?.[selectedLibrary]}
             indexColumn={INDEX_COLUMN}
