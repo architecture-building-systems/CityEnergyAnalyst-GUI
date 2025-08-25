@@ -4,9 +4,13 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
 
-export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
-  // Takes an object with keys as table names and values as arrays of objects
-  if (data == null) return <div>No data found for this dataset</div>;
+export const TableGroupDataset = ({
+  dataKey,
+  data,
+  indexColumn,
+  commonColumns,
+}) => {
+  if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
   return (
     <div
@@ -16,9 +20,11 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
         gap: 12,
       }}
     >
+      w
       {Object.keys(data).map((key) => (
         <TableDataset
-          key={key}
+          key={`${dataKey}-${key}`}
+          dataKey={`${dataKey}-${key}`}
           name={key}
           data={data?.[key]}
           indexColumn={indexColumn}
@@ -31,6 +37,7 @@ export const TableGroupDataset = ({ data, indexColumn, commonColumns }) => {
 };
 
 export const TableDataset = ({
+  dataKey,
   name,
   data,
   indexColumn,
@@ -47,7 +54,7 @@ export const TableDataset = ({
       )}
 
       {data == null ? (
-        <MissingDataPrompt />
+        <MissingDataPrompt dataKey={dataKey} />
       ) : (
         <>
           <EntityDetails
