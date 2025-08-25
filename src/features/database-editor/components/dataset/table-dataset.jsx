@@ -20,7 +20,6 @@ export const TableGroupDataset = ({
         gap: 12,
       }}
     >
-      w
       {Object.keys(data).map((key) => (
         <TableDataset
           key={[...dataKey, key].join('-')}
