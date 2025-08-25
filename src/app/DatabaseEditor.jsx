@@ -132,12 +132,12 @@ const DatabaseContent = ({ message }) => {
 };
 
 const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
-const USE_TYPES_DATABASE = 'ARCHETYPES-USE';
-const CONVERSION_DATABASE = 'COMPONENTS-CONVERSION';
+const USE_TYPES_DATABASE = ['ARCHETYPES', 'USE'];
+const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
 
 const arraysEqual = (a, b) =>
-  a.length === b.length && a.every((val, i) => val === b[i]);
+  a?.length === b?.length && a?.every((val, i) => val === b[i]);
 
 const DatabaseContainer = () => {
   // Database structure:
@@ -170,7 +170,13 @@ const DatabaseContainer = () => {
   // Ensure first level keys of data are DOMAINS
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
 
-  const domainCategory = `${(selectedDomain.domain ?? '').toUpperCase()}-${(selectedDomain.category ?? '').toUpperCase()}`;
+  const domainCategory =
+    selectedDomain.domain && selectedDomain.category
+      ? [
+          selectedDomain.domain.toUpperCase(),
+          selectedDomain.category.toUpperCase(),
+        ]
+      : null;
   const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
   const categoryDatasets = Object.keys(categoryData ?? {});
 
@@ -194,11 +200,11 @@ const DatabaseContainer = () => {
         </div>
 
         {/* UseTypeDataset is a special case */}
-        {domainCategory == USE_TYPES_DATABASE && (
+        {arraysEqual(domainCategory, USE_TYPES_DATABASE) && (
           <UseTypeDataset dataKey={domainCategory} dataset={categoryData} />
         )}
 
-        {domainCategory != USE_TYPES_DATABASE && (
+        {!arraysEqual(domainCategory, USE_TYPES_DATABASE) && domainCategory && (
           <ErrorBoundary>
             <div className="cea-database-editor-database-dataset-buttons">
               {categoryDatasets.map((dataset) => (
@@ -214,25 +220,21 @@ const DatabaseContainer = () => {
             <div className="cea-database-editor-database-dataset">
               <ErrorBoundary>
                 {(() => {
-                  const dataKey = `${domainCategory}-${activeDataset}`;
+                  const dataKey = [...domainCategory, activeDataset];
 
-                  switch (domainCategory) {
-                    case CONVERSION_DATABASE:
-                      return (
-                        <ConversionDataset dataKey={dataKey} data={dataset} />
-                      );
-                    default:
-                      if (
-                        (activeDataset ?? '').toUpperCase() == LIBRARY_DATABASE
-                      )
-                        return (
-                          <LibraryDataset dataKey={dataKey} data={dataset} />
-                        );
-
-                      return (
-                        <CodeTableDataset dataKey={dataKey} data={dataset} />
-                      );
+                  if (arraysEqual(domainCategory, CONVERSION_DATABASE)) {
+                    return (
+                      <ConversionDataset dataKey={dataKey} data={dataset} />
+                    );
                   }
+
+                  if (
+                    (activeDataset ?? '').toUpperCase() === LIBRARY_DATABASE
+                  ) {
+                    return <LibraryDataset dataKey={dataKey} data={dataset} />;
+                  }
+
+                  return <CodeTableDataset dataKey={dataKey} data={dataset} />;
                 })()}
               </ErrorBoundary>
             </div>

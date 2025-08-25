@@ -59,18 +59,18 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
         >
           <div>Properties</div>
           <TableDataset
-            dataKey={`${dataKey}-properties`}
+            dataKey={[...dataKey, 'properties']}
             data={selectedUseTypeData ? [selectedUseTypeData] : null}
           />
 
           <div>Schedules</div>
           <TableDataset
-            dataKey={`${dataKey}-monthly-multipliers`}
+            dataKey={[...dataKey, 'monthly-multipliers']}
             name={'Monthly Multipliers'}
             data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
           <UseTypeSchedules
-            dataKey={`${dataKey}-schedules`}
+            dataKey={[...dataKey, 'schedules']}
             data={selectedLibraryData}
           />
         </div>

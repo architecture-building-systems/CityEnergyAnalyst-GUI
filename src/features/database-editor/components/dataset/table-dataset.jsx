@@ -23,8 +23,8 @@ export const TableGroupDataset = ({
       w
       {Object.keys(data).map((key) => (
         <TableDataset
-          key={`${dataKey}-${key}`}
-          dataKey={`${dataKey}-${key}`}
+          key={[...dataKey, key].join('-')}
+          dataKey={[...dataKey, key]}
           name={key}
           data={data?.[key]}
           indexColumn={indexColumn}
