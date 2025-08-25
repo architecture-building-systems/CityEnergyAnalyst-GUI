@@ -204,7 +204,9 @@ const DatabaseContainer = () => {
 
         {/* UseTypeDataset is a special case */}
         {arraysEqual(domainCategory, USE_TYPES_DATABASE) && (
-          <UseTypeDataset dataKey={domainCategory} dataset={categoryData} />
+          <div className="cea-database-editor-database-dataset">
+            <UseTypeDataset dataKey={domainCategory} dataset={categoryData} />
+          </div>
         )}
 
         {!arraysEqual(domainCategory, USE_TYPES_DATABASE) && domainCategory && (
