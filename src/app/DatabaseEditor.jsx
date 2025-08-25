@@ -137,7 +137,10 @@ const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
 
 const arraysEqual = (a, b) =>
-  a?.length === b?.length && a?.every((val, i) => val === b[i]);
+  Array.isArray(a) &&
+  Array.isArray(b) &&
+  a?.length === b?.length &&
+  a?.every((val, i) => val === b[i]);
 
 const DatabaseContainer = () => {
   // Database structure:
