@@ -202,17 +202,11 @@ const DatabaseContainer = () => {
           ))}
         </div>
 
-        {/* UseTypeDataset is a special case */}
-        {arraysEqual(domainCategory, USE_TYPES_DATABASE) && (
-          <div className="cea-database-editor-database-dataset">
-            <UseTypeDataset dataKey={domainCategory} dataset={categoryData} />
-          </div>
-        )}
-
-        {!arraysEqual(domainCategory, USE_TYPES_DATABASE) && domainCategory && (
-          <ErrorBoundary>
-            <div className="cea-database-editor-database-dataset-buttons">
-              {categoryDatasets.map((dataset) => (
+        {/* UseTypeDataset is a special case that does not have a dataset button */}
+        {!arraysEqual(domainCategory, USE_TYPES_DATABASE) && (
+          <div className="cea-database-editor-database-dataset-buttons">
+            {domainCategory &&
+              categoryDatasets.map((dataset) => (
                 <Button
                   key={`${domainCategory}-${dataset}`}
                   onClick={() => setSelectedDataset(dataset)}
@@ -221,30 +215,37 @@ const DatabaseContainer = () => {
                   {dataset.toUpperCase().split('_').join(' ')}
                 </Button>
               ))}
-            </div>
-            <div className="cea-database-editor-database-dataset">
-              <ErrorBoundary>
-                {(() => {
-                  const dataKey = [...domainCategory, activeDataset];
-
-                  if (arraysEqual(domainCategory, CONVERSION_DATABASE)) {
-                    return (
-                      <ConversionDataset dataKey={dataKey} data={dataset} />
-                    );
-                  }
-
-                  if (
-                    (activeDataset ?? '').toUpperCase() === LIBRARY_DATABASE
-                  ) {
-                    return <LibraryDataset dataKey={dataKey} data={dataset} />;
-                  }
-
-                  return <CodeTableDataset dataKey={dataKey} data={dataset} />;
-                })()}
-              </ErrorBoundary>
-            </div>
-          </ErrorBoundary>
+          </div>
         )}
+
+        <ErrorBoundary>
+          <div className="cea-database-editor-database-dataset">
+            <ErrorBoundary>
+              {(() => {
+                if (arraysEqual(domainCategory, USE_TYPES_DATABASE)) {
+                  return (
+                    <UseTypeDataset
+                      dataKey={domainCategory}
+                      dataset={dataset}
+                    />
+                  );
+                }
+
+                const dataKey = [...domainCategory, activeDataset];
+
+                if (arraysEqual(domainCategory, CONVERSION_DATABASE)) {
+                  return <ConversionDataset dataKey={dataKey} data={dataset} />;
+                }
+
+                if ((activeDataset ?? '').toUpperCase() === LIBRARY_DATABASE) {
+                  return <LibraryDataset dataKey={dataKey} data={dataset} />;
+                }
+
+                return <CodeTableDataset dataKey={dataKey} data={dataset} />;
+              })()}
+            </ErrorBoundary>
+          </div>
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
