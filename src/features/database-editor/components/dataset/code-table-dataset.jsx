@@ -27,7 +27,7 @@ export const CodeTableDataset = ({ dataKey, data }) => {
 
   return (
     <div className="cea-database-editor-database-dataset-code">
-      <TableDataset data={_data} indexColumn={INDEX_COLUMN} />
+      <TableDataset dataKey={dataKey} data={_data} indexColumn={INDEX_COLUMN} />
     </div>
   );
 };
