@@ -1,5 +1,5 @@
 import { Button, ConfigProvider } from 'antd';
-import { GraphsIcon, InformationIcon } from 'assets/icons';
+import { GraphsIcon, InformationIcon, ToolsIcon } from 'assets/icons';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import {
   toolTypes,
@@ -41,6 +41,7 @@ export const ToolCardSideButtons = () => {
           }
           type={toolType === toolTypes.TOOLS ? 'primary' : 'default'}
         >
+          <ToolsIcon />
           Tools
         </Button>
       )}
