@@ -19,9 +19,9 @@ const transformData = (data) => {
   return output;
 };
 
-export const CodeTableDataset = ({ data }) => {
+export const CodeTableDataset = ({ dataKey, data }) => {
   if (data === undefined) return <div>No data selected.</div>;
-  if (data === null) return <MissingDataPrompt />;
+  if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
   const _data = transformData(data);
 
