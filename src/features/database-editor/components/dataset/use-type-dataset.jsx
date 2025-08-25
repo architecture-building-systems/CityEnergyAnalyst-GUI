@@ -4,7 +4,7 @@ import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleA
 import { useEffect, useState } from 'react';
 import { MissingDataPrompt } from './missing-data-prompt';
 
-export const UseTypeDataset = ({ dataset }) => {
+export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
   // use_types is an object with keys as use_types and values as properties.
   // schedules is an object with keys as use_types and values as schedules.
@@ -59,15 +59,20 @@ export const UseTypeDataset = ({ dataset }) => {
         >
           <div>Properties</div>
           <TableDataset
+            dataKey={`${dataKey}-properties`}
             data={selectedUseTypeData ? [selectedUseTypeData] : null}
           />
 
           <div>Schedules</div>
           <TableDataset
+            dataKey={`${dataKey}-monthly-multipliers`}
             name={'Monthly Multipliers'}
             data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
-          <UseTypeSchedules data={selectedLibraryData} />
+          <UseTypeSchedules
+            dataKey={`${dataKey}-schedules`}
+            data={selectedLibraryData}
+          />
         </div>
       )}
     </div>
@@ -139,14 +144,14 @@ const ScheduleButtons = ({ schedules, selected, onSelected }) => {
   );
 };
 
-const UseTypeSchedules = ({ data }) => {
+const UseTypeSchedules = ({ dataKey, data }) => {
   // Data is array of schedule objects
   // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
   // hour can be "Weekday_1","Saturday_2", "Sunday_3"
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  if (data == null) return <MissingDataPrompt />;
+  if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
   const schedules = Object.keys(data?.[0] ?? {}).filter((key) => key != 'hour');
   const selectedScheduleData = extractSchedule(data, selectedSchedule);

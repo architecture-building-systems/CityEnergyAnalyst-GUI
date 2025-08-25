@@ -195,7 +195,7 @@ const DatabaseContainer = () => {
 
         {/* UseTypeDataset is a special case */}
         {domainCategory == USE_TYPES_DATABASE && (
-          <UseTypeDataset dataset={categoryData} />
+          <UseTypeDataset dataKey={domainCategory} dataset={categoryData} />
         )}
 
         {domainCategory != USE_TYPES_DATABASE && (
