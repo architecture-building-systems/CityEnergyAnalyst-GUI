@@ -230,7 +230,7 @@ const DatabaseContainer = () => {
                   return (
                     <UseTypeDataset
                       dataKey={domainCategory}
-                      dataset={dataset}
+                      dataset={categoryData}
                     />
                   );
                 }
