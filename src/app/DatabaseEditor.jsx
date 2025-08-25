@@ -214,19 +214,23 @@ const DatabaseContainer = () => {
             <div className="cea-database-editor-database-dataset">
               <ErrorBoundary>
                 {(() => {
+                  const dataKey = `${domainCategory}-${activeDataset}`;
+
                   switch (domainCategory) {
                     case CONVERSION_DATABASE:
-                      return <ConversionDataset data={dataset} />;
+                      return (
+                        <ConversionDataset dataKey={dataKey} data={dataset} />
+                      );
                     default:
                       if (
                         (activeDataset ?? '').toUpperCase() == LIBRARY_DATABASE
                       )
-                        return <LibraryDataset data={dataset} />;
+                        return (
+                          <LibraryDataset dataKey={dataKey} data={dataset} />
+                        );
+
                       return (
-                        <CodeTableDataset
-                          key={`${domainCategory}-${activeDataset}`}
-                          data={dataset}
-                        />
+                        <CodeTableDataset dataKey={dataKey} data={dataset} />
                       );
                   }
                 })()}
