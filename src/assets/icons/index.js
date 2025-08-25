@@ -12,6 +12,7 @@ import ComfortChartIcon from './comfort_chart.svg';
 import DatabaseEditorIcon from './database_editor.svg';
 import InputEditorIcon from './input_editor.svg';
 import GraphsIcon from './graphs.svg';
+import ToolsIcon from './tools.svg';
 
 import OpenProjectIcon from './open_project.svg';
 import ExternalLinkIcon from './external_link.svg';
@@ -79,4 +80,5 @@ export {
   AiIcon,
   ProIcon,
   ComfortChartIcon,
+  ToolsIcon,
 };
