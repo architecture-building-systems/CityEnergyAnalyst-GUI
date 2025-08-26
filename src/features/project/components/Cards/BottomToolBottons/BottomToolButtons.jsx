@@ -8,25 +8,28 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 import { animated } from '@react-spring/web';
 
 // TODO: Remove this
-const TEMP_DISABLED = ['Reports'];
+const TEMP_DISABLED = ['reports'];
 
 const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   const { push } = useNavigationStore();
 
   const items = [
     {
+      id: 'database-editor',
       icon: DatabaseEditorIcon,
       title: 'Database Editor',
       onClick: () => push(routes.DATABASE_EDITOR),
       hidden: !showTools,
     },
     {
+      id: 'input-editor',
       icon: InputEditorIcon,
       title: 'Input Editor',
       onClick: () => onOpenInputEditor?.(),
       hidden: !showTools,
     },
     {
+      id: 'reports',
       icon: ReportsIcon,
       title: 'Reports',
       onClick: () => push(routes?.REPORTS),
@@ -45,6 +48,7 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
       {items.map((item) => (
         <ToolHoverButton
           key={item.title}
+          id={item.id}
           icon={item.icon}
           title={item.title}
           onClick={item.onClick}
@@ -55,13 +59,13 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   );
 };
 
-const ToolHoverButton = ({ title, icon, onClick, hidden }) => {
+const ToolHoverButton = ({ id, title, icon, onClick, hidden }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const _icon = icon;
 
   if (hidden) return null;
 
-  if (TEMP_DISABLED.includes(title))
+  if (TEMP_DISABLED.includes(id))
     return (
       <Tooltip
         title={`${title} [Under development]`}
