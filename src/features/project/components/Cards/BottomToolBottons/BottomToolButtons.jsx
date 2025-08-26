@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import { DatabaseEditorIcon, GraphsIcon, InputEditorIcon } from 'assets/icons';
+import { DatabaseEditorIcon, ReportsIcon, InputEditorIcon } from 'assets/icons';
 import useNavigationStore from 'stores/navigationStore';
 
 import routes from 'constants/routes.json';
@@ -8,7 +8,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 import { animated } from '@react-spring/web';
 
 // TODO: Remove this
-const TEMP_DISABLED = ['Plots'];
+const TEMP_DISABLED = ['Reports'];
 
 const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   const { push } = useNavigationStore();
@@ -27,9 +27,9 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
       hidden: !showTools,
     },
     {
-      icon: GraphsIcon,
-      title: 'Plots',
-      onClick: () => push(routes.DASHBOARD),
+      icon: ReportsIcon,
+      title: 'Reports',
+      onClick: () => push(routes?.REPORTS),
       hidden: !showTools,
     },
   ];
