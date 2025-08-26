@@ -68,7 +68,18 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden }) => {
   if (TEMP_DISABLED.includes(id))
     return (
       <Tooltip
-        title={`${title} [Under development]`}
+        title={
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <div>{`${title}`}</div>
+            <div>[Under development]</div>
+          </div>
+        }
         styles={{ body: { fontSize: 12 } }}
       >
         <button className="cea-card-toolbar-icon-container">
