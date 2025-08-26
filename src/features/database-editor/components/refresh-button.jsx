@@ -1,5 +1,6 @@
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { RefreshIcon } from 'assets/icons';
 
 export const RefreshDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
@@ -10,12 +11,16 @@ export const RefreshDatabaseButton = () => {
   if (status === 'fetching') return null;
 
   return (
-    <Button
-      onClick={() => {
-        initDatabaseState();
-      }}
-    >
-      Refresh
-    </Button>
+    <Tooltip title="Refresh Database">
+      <div className="cea-card-icon-button-container">
+        <Button
+          type="text"
+          icon={<RefreshIcon />}
+          onClick={() => {
+            initDatabaseState();
+          }}
+        />
+      </div>
+    </Tooltip>
   );
 };
