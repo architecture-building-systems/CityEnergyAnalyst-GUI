@@ -43,6 +43,7 @@ import NumberCircleIcon from './NumberCircleIcon';
 
 import AiIcon from './ai.svg';
 import ProIcon from './pro.svg';
+import ReportsIcon from './reports.svg';
 
 export {
   DataManagementIcon,
@@ -81,4 +82,5 @@ export {
   ProIcon,
   ComfortChartIcon,
   ToolsIcon,
+  ReportsIcon,
 };
