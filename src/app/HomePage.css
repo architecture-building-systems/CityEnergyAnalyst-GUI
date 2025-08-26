@@ -24,3 +24,43 @@
 
   overflow: hidden;
 }
+
+.cea-card-icon-button-container {
+  border-radius: 12px;
+  outline: 1px solid #dddddd;
+  padding: 3px;
+
+  display: flex;
+  align-items: center;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 2px 1px #48abe0;
+  }
+  50% {
+    box-shadow: 0 0 8px 2px #48abe0;
+  }
+  100% {
+    box-shadow: 0 0 2px 1px #48abe0;
+  }
+}
+
+.cea-card-icon-button-container.active {
+  outline: 1px solid #48abe0;
+  animation: glow 2s infinite;
+}
+
+.cea-card-icon-button-container button {
+  border-radius: 8px;
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.cea-card-icon-button-container button:hover {
+  background: #eee !important;
+}
+
+.cea-card-icon-button-container svg {
+  font-size: 18px;
+}
