@@ -104,6 +104,39 @@ const EntityDetails = ({ data, indexColumn, commonColumns }) => {
   );
 };
 
+const TableColumnSchema = ({ columns, columnSchema }) => {
+  if (!columnSchema && !Array.isArray(columns)) return null;
+
+  return (
+    <div style={{ fontSize: 12, maxHeight: 140, overflowY: 'auto' }}>
+      {columns.map((col) => {
+        const schemaInfo = columnSchema?.[col];
+        if (!schemaInfo) return null;
+
+        return (
+          <div key={col} style={{ display: 'flex', gap: 6 }}>
+            <div
+              style={{
+                flex: 3,
+                maxWidth: 140,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontWeight: 'bold',
+              }}
+            >
+              {col}
+            </div>
+            <div style={{ flex: 2, fontFamily: 'monospace' }}>
+              {schemaInfo?.unit}
+            </div>
+            <div style={{ flex: 12 }}>{schemaInfo?.description}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const EntityDataTable = ({
   dataKey,
   data,
@@ -169,5 +202,12 @@ const EntityDataTable = ({
     }
   }, [data, tableColumns]);
 
-  return <div style={{ margin: 12 }} ref={divRef} />;
+  return (
+    <>
+      {columnSchema && (
+        <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+      )}
+      <div style={{ margin: 12 }} ref={divRef} />
+    </>
+  );
 };
