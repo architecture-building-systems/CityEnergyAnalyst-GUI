@@ -116,6 +116,7 @@ const EntityDataTable = ({
   const tabulatorRef = useRef();
 
   const schema = useDatabaseSchema(dataKey);
+  const columnSchema = schema?.columns;
 
   const firstRow = data?.[0];
   const columns = useMemo(() => {
@@ -130,9 +131,13 @@ const EntityDataTable = ({
       .map((column) => {
         const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
 
+        const _colSchema = columnSchema?.[column];
         const colDef = {
           title: column,
           field: column,
+          headerTooltip: _colSchema?.description
+            ? `${_colSchema.description}${_colSchema?.unit ? ` ${_colSchema.unit}` : ''}`
+            : false,
           frozen: _frozenIndex,
         };
 
@@ -143,7 +148,14 @@ const EntityDataTable = ({
 
         return colDef;
       });
-  }, [firstRow, indexColumn, commonColumns, showIndex, freezeIndex]);
+  }, [
+    firstRow,
+    indexColumn,
+    commonColumns,
+    showIndex,
+    freezeIndex,
+    columnSchema,
+  ]);
 
   useEffect(() => {
     if (tabulatorRef.current == null) {
