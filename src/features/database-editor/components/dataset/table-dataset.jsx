@@ -109,30 +109,51 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
 
   return (
     <div style={{ fontSize: 12, maxHeight: 140, overflowY: 'auto' }}>
-      {columns.map((col) => {
-        const schemaInfo = columnSchema?.[col];
-        if (!schemaInfo) return null;
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr
+            style={{
+              textAlign: 'left',
+              fontWeight: 'bold',
+              textDecoration: 'underline',
+            }}
+          >
+            <th>Column</th>
+            <th>Unit</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {columns.map((col) => {
+            const schemaInfo = columnSchema?.[col];
+            if (!schemaInfo)
+              return (
+                <tr key={col}>
+                  <td>{col}</td>
+                  <td colSpan={2}>Missing</td>
+                </tr>
+              );
 
-        return (
-          <div key={col} style={{ display: 'flex', gap: 6 }}>
-            <div
-              style={{
-                flex: 3,
-                maxWidth: 140,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                fontWeight: 'bold',
-              }}
-            >
-              {col}
-            </div>
-            <div style={{ flex: 2, fontFamily: 'monospace' }}>
-              {schemaInfo?.unit}
-            </div>
-            <div style={{ flex: 12 }}>{schemaInfo?.description}</div>
-          </div>
-        );
-      })}
+            return (
+              <tr key={col}>
+                <td
+                  style={{
+                    maxWidth: 140,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {col}
+                </td>
+                <td style={{ fontFamily: 'monospace' }}>{schemaInfo?.unit}</td>
+                <td>{schemaInfo?.description}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };
