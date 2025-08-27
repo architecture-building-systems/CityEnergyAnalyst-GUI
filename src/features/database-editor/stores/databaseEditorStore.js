@@ -149,4 +149,21 @@ const useDatabaseEditorStore = create((set) => ({
   },
 }));
 
+export const useDatabaseSchema = (dataKey) => {
+  // Get column schema for using specific data key which is a list of property names
+  const getNestedValue = (obj, datakey) => {
+    let current = obj;
+    for (const key of datakey) {
+      if (current == null) return undefined;
+      current = current[key.toLowerCase()];
+    }
+    return current;
+  };
+
+  const schema = useDatabaseEditorStore(
+    (state) => getNestedValue(state.schema, dataKey)?.schema,
+  );
+  return schema;
+};
+
 export default useDatabaseEditorStore;
