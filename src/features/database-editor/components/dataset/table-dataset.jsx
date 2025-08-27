@@ -143,11 +143,13 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
                     textOverflow: 'ellipsis',
                     fontWeight: 'bold',
                     whiteSpace: 'nowrap',
+
+                    fontFamily: 'monospace',
                   }}
                 >
                   {col}
                 </td>
-                <td style={{ fontFamily: 'monospace' }}>{schemaInfo?.unit}</td>
+                <td>{schemaInfo?.unit}</td>
                 <td>{schemaInfo?.description}</td>
               </tr>
             );
