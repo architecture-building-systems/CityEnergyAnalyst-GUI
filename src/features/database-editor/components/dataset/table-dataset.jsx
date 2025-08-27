@@ -229,7 +229,7 @@ const EntityDataTable = ({
     <>
       {columnSchema && (
         <details style={{ fontSize: 12 }}>
-          <summary>Column Descriptions</summary>
+          <summary>Column Glossary</summary>
           <TableColumnSchema columns={columns} columnSchema={columnSchema} />
         </details>
       )}
