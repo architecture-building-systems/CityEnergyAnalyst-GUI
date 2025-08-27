@@ -108,7 +108,7 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
   if (!columnSchema && !Array.isArray(columns)) return null;
 
   return (
-    <div style={{ fontSize: 12, maxHeight: 140, overflowY: 'auto' }}>
+    <div style={{ maxHeight: 200, overflowY: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr
@@ -228,7 +228,10 @@ const EntityDataTable = ({
   return (
     <>
       {columnSchema && (
-        <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+        <details style={{ fontSize: 12 }}>
+          <summary>Column Descriptions</summary>
+          <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+        </details>
       )}
       <div style={{ margin: 12 }} ref={divRef} />
     </>
