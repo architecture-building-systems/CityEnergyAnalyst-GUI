@@ -3,6 +3,7 @@ import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { useEffect, useState } from 'react';
 import { MissingDataPrompt } from './missing-data-prompt';
+import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
 
 export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -61,18 +62,18 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
         >
           <div>Properties</div>
           <TableDataset
-            dataKey={[...dataKey, 'properties']}
+            dataKey={[...dataKey, 'use_types']}
             data={selectedUseTypeData ? [selectedUseTypeData] : null}
           />
 
           <div>Schedules</div>
           <TableDataset
-            dataKey={[...dataKey, 'monthly-multipliers']}
+            dataKey={[...dataKey, 'schedules', 'monthly_multipliers']}
             name={'Monthly Multipliers'}
             data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
           <UseTypeSchedules
-            dataKey={[...dataKey, 'schedules']}
+            dataKey={[...dataKey, 'schedules', '_library']}
             data={selectedLibraryData}
           />
         </div>
@@ -150,6 +151,7 @@ const UseTypeSchedules = ({ dataKey, data }) => {
   // Data is array of schedule objects
   // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
   // hour can be "Weekday_1","Saturday_2", "Sunday_3"
+  const schema = useDatabaseSchema(dataKey);
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
