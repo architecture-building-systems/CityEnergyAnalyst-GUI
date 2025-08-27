@@ -3,6 +3,7 @@ import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
+import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -62,6 +63,7 @@ export const TableDataset = ({
             commonColumns={commonColumns}
           />
           <EntityDataTable
+            dataKey={dataKey}
             data={data}
             indexColumn={indexColumn}
             commonColumns={commonColumns}
@@ -103,6 +105,7 @@ const EntityDetails = ({ data, indexColumn, commonColumns }) => {
 };
 
 const EntityDataTable = ({
+  dataKey,
   data,
   indexColumn,
   commonColumns,
@@ -111,6 +114,8 @@ const EntityDataTable = ({
 }) => {
   const divRef = useRef();
   const tabulatorRef = useRef();
+
+  const schema = useDatabaseSchema(dataKey);
 
   const firstRow = data?.[0];
   const columns = useMemo(() => {
