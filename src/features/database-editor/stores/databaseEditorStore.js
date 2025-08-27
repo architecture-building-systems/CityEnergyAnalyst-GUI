@@ -68,7 +68,7 @@ const useDatabaseEditorStore = create((set) => ({
 
   fetchDatabaseSchema: async (params) => {
     try {
-      const response = await apiClient.get('/api/database/schema', { params });
+      const response = await apiClient.get('/api/databases/schema', { params });
       set({ schema: response.data });
     } catch (error) {
       set({ status: { status: 'failed', error } });
