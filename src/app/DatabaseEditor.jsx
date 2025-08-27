@@ -98,18 +98,25 @@ const DatabaseContent = ({ message }) => {
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
   );
+  const fetchDatabaseSchema = useDatabaseEditorStore(
+    (state) => state.fetchDatabaseSchema,
+  );
   const resetDatabaseState = useDatabaseEditorStore(
     (state) => state.resetDatabaseState,
   );
 
   useEffect(() => {
-    initDatabaseState();
+    const init = async () => {
+      await initDatabaseState();
+      await fetchDatabaseSchema();
+    };
 
+    init();
     // Reset Database state on unmount
     return () => {
       resetDatabaseState();
     };
-  }, [initDatabaseState, resetDatabaseState]);
+  }, [initDatabaseState, fetchDatabaseSchema, resetDatabaseState]);
 
   if (status === 'fetching')
     return (
