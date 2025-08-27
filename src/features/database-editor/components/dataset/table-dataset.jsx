@@ -119,58 +119,55 @@ const EntityDataTable = ({
   const columnSchema = schema?.columns;
 
   const firstRow = data?.[0];
+  // Determine columns based on first row
   const columns = useMemo(() => {
     if (firstRow == null) return [];
     // Use first row to determine columns
-    return Object.keys(firstRow)
-      .filter(
-        (column) =>
-          (showIndex && column == indexColumn) ||
-          !(commonColumns || []).includes(column),
-      )
-      .map((column) => {
-        const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
+    return Object.keys(firstRow).filter(
+      (column) =>
+        (showIndex && column == indexColumn) ||
+        !(commonColumns || []).includes(column),
+    );
+  }, [firstRow, indexColumn, commonColumns, showIndex]);
 
-        const _colSchema = columnSchema?.[column];
-        const colDef = {
-          title: column,
-          field: column,
-          headerTooltip: _colSchema?.description
-            ? `${_colSchema.description}${_colSchema?.unit ? ` ${_colSchema.unit}` : ''}`
-            : false,
-          frozen: _frozenIndex,
-        };
+  // Convert columns to tabulator format
+  const tableColumns = useMemo(() => {
+    return columns.map((column) => {
+      const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
 
-        if (_frozenIndex) {
-          colDef.cssClass = 'frozen-index';
-          colDef.hozAlign = 'left';
-        }
+      const _colSchema = columnSchema?.[column];
+      const colDef = {
+        title: column,
+        field: column,
+        headerTooltip: _colSchema?.description
+          ? `${_colSchema.description}${_colSchema?.unit ? ` ${_colSchema.unit}` : ''}`
+          : false,
+        frozen: _frozenIndex,
+      };
 
-        return colDef;
-      });
-  }, [
-    firstRow,
-    indexColumn,
-    commonColumns,
-    showIndex,
-    freezeIndex,
-    columnSchema,
-  ]);
+      if (_frozenIndex) {
+        colDef.cssClass = 'frozen-index';
+        colDef.hozAlign = 'left';
+      }
+
+      return colDef;
+    });
+  }, [columns, columnSchema, indexColumn, freezeIndex, showIndex]);
 
   useEffect(() => {
     if (tabulatorRef.current == null) {
       tabulatorRef.current = new Tabulator(divRef.current, {
         data: data,
-        columns: columns,
+        columns: tableColumns,
         layout: 'fitDataFill',
         layoutColumnsOnNewData: true,
       });
     } else if (data !== null) {
-      tabulatorRef.current.setColumns(columns);
+      tabulatorRef.current.setColumns(tableColumns);
       tabulatorRef.current.setData(data);
       tabulatorRef.current.setHeight();
     }
-  }, [data, columns]);
+  }, [data, tableColumns]);
 
   return <div style={{ margin: 12 }} ref={divRef} />;
 };
