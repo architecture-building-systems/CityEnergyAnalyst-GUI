@@ -118,7 +118,7 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
               textDecoration: 'underline',
             }}
           >
-            <th>Column</th>
+            <th>Name</th>
             <th>Unit</th>
             <th>Description</th>
           </tr>
