@@ -152,7 +152,16 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
                 >
                   <b>{col}</b>
                   {foreignKey && (
-                    <Tooltip title={foreignKey?.path} placement="right">
+                    <Tooltip
+                      title={
+                        Array.isArray(foreignKey?.path)
+                          ? foreignKey.path
+                              .map((p) => p.toUpperCase())
+                              .join(' > ')
+                          : foreignKey?.path
+                      }
+                      placement="right"
+                    >
                       <span
                         style={{
                           marginLeft: 4,
