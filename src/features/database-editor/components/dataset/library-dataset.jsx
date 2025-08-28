@@ -28,6 +28,7 @@ export const LibraryDataset = ({ dataKey, data }) => {
       {selectedLibrary != null && (
         <div className="cea-database-editor-database-dataset">
           <TableDataset
+            key={[...dataKey, selectedLibrary].join('-')}
             dataKey={[...dataKey, selectedLibrary]}
             name={selectedLibrary}
             data={data?.[selectedLibrary]}

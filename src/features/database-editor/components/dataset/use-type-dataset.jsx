@@ -62,6 +62,7 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
         >
           <div>Properties</div>
           <UseTypePropertiesDataset
+            key={[...dataKey, 'use_types'].join('-')}
             dataKey={[...dataKey, 'use_types']}
             data={selectedUseTypeData ? [selectedUseTypeData] : null}
           />
@@ -69,6 +70,7 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
           <div>Schedules</div>
           <UseTypePropertiesSchedulesDataset
             name={'Monthly Multipliers'}
+            key={[...dataKey, 'schedules', 'monthly_multipliers'].join('-')}
             dataKey={[...dataKey, 'schedules', 'monthly_multipliers']}
             data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
