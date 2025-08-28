@@ -191,6 +191,7 @@ const EntityDataTable = ({
   const columnSchema = schema?.columns;
 
   const firstRow = data?.[0];
+  // FIXME: We are assuming that the columns from data are correct but we should use from schema instead
   // Determine columns based on first row
   const columns = useMemo(() => {
     if (firstRow == null) return [];
