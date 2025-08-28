@@ -149,21 +149,44 @@ const useDatabaseEditorStore = create((set) => ({
   },
 }));
 
+const getNestedValue = (obj, datakey) => {
+  let current = obj;
+
+  if (!datakey || !Array.isArray(datakey)) return undefined;
+
+  for (const key of datakey) {
+    if (current == null) return undefined;
+    current = current[key.toLowerCase()];
+  }
+  return current;
+};
+
 export const useDatabaseSchema = (dataKey) => {
   // Get column schema for using specific data key which is a list of property names
-  const getNestedValue = (obj, datakey) => {
-    let current = obj;
-    for (const key of datakey) {
-      if (current == null) return undefined;
-      current = current[key.toLowerCase()];
-    }
-    return current;
-  };
 
   const schema = useDatabaseEditorStore(
     (state) => getNestedValue(state.schema, dataKey)?.schema,
   );
   return schema;
+};
+
+export const useGetDatabaseColumnChoices = () => {
+  const data = useDatabaseEditorStore((state) => state.data);
+  console.log(data);
+  return (dataKey, column) => {
+    const _data = getNestedValue(data, dataKey);
+
+    // FIXME: This is not reliable as not every index is "code"
+    // Get keys if column is 'code'
+    if (column == 'code') {
+      return Object.keys(_data || {}).map((key) => ({
+        value: key,
+        label: _data[key]?.description ?? '-',
+      }));
+    }
+
+    return _data?.[column];
+  };
 };
 
 export default useDatabaseEditorStore;
