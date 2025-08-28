@@ -241,20 +241,23 @@ const EntityDataTable = ({
 
       // Handle columns with choices
       if (_colSchema?.choice != undefined) {
+        const values = _colSchema?.choice?.values || [];
         const lookup = _colSchema.choice?.lookup;
         const columnChoices = lookup
           ? getColumnChoices(lookup?.path, lookup?.column)
-          : [];
+          : values;
 
         return {
           ...colDef,
           editor: 'select',
           editorParams: {
-            values: _colSchema?.choice?.values || columnChoices,
-            listItemFormatter: (value, label) => {
-              if (!label) return value;
-              return `${value} : ${label}`;
-            },
+            values: columnChoices,
+            listItemFormatter: Array.isArray(columnChoices)
+              ? undefined
+              : (value, label) => {
+                  if (!label) return value;
+                  return `${value} : ${label}`;
+                },
           },
         };
       }
