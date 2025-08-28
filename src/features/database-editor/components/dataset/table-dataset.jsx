@@ -126,6 +126,8 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
         <tbody>
           {columns.map((col) => {
             const schemaInfo = columnSchema?.[col];
+            const foreignKey = schemaInfo?.choice?.lookup;
+
             if (!schemaInfo)
               return (
                 <tr key={col}>
@@ -148,6 +150,7 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
                   }}
                 >
                   {col}
+                  {foreignKey && <span> *</span>}
                 </td>
                 <td>{schemaInfo?.unit}</td>
                 <td>{schemaInfo?.description}</td>
