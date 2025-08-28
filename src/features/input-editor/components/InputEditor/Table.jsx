@@ -289,9 +289,8 @@ const useTableData = (tab, columns, tables) => {
                     },
                   },
                 };
-              const dataType = columnSchema.type;
+
               const dataTypeProps = getColumnPropsFromDataType(
-                dataType,
                 columnSchema,
                 column,
               );

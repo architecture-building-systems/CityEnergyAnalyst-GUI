@@ -1,9 +1,15 @@
 export const getColumnPropsFromDataType = (
-  dataType,
   columnSchema,
   column = undefined,
 ) => {
-  switch (dataType) {
+  if (!columnSchema?.type) {
+    console.error(
+      `Could not find column validation for undefined type for column "${column}"`,
+    );
+    return {};
+  }
+
+  switch (columnSchema.type) {
     case 'int':
     case 'year':
       return {
