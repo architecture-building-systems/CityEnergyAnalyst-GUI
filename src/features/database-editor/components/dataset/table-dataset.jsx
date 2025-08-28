@@ -16,6 +16,8 @@ export const TableGroupDataset = ({
   indexColumn,
   commonColumns,
 }) => {
+  const schema = useDatabaseSchema(dataKey);
+
   if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
   return (
@@ -47,6 +49,7 @@ export const TableDataset = ({
   data,
   indexColumn,
   commonColumns,
+  schema,
   showIndex,
   freezeIndex,
 }) => {
@@ -74,6 +77,7 @@ export const TableDataset = ({
             commonColumns={commonColumns}
             showIndex={showIndex}
             freezeIndex={freezeIndex}
+            schema={schema}
           />
         </>
       )}
@@ -193,6 +197,7 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
 const EntityDataTable = ({
   dataKey,
   data,
+  schema,
   indexColumn,
   commonColumns,
   showIndex = true,
@@ -201,7 +206,6 @@ const EntityDataTable = ({
   const divRef = useRef();
   const tabulatorRef = useRef();
 
-  const schema = useDatabaseSchema(dataKey);
   const columnSchema = schema?.columns;
 
   const getColumnChoices = useGetDatabaseColumnChoices();

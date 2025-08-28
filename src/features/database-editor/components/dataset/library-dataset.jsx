@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import { TableDataset } from './table-dataset';
 import { useState } from 'react';
+import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
 
 const INDEX_COLUMN = null;
 const COMMON_COLUMNS = ['reference'];
@@ -8,6 +9,7 @@ const COMMON_COLUMNS = ['reference'];
 export const LibraryDataset = ({ dataKey, data }) => {
   // Object keys are the file names, values are data as arrays of objects
   const [selectedLibrary, setSelectedLibrary] = useState(null);
+  const schema = useDatabaseSchema(dataKey);
 
   return (
     <div className="cea-database-editor-database-container">
@@ -31,6 +33,7 @@ export const LibraryDataset = ({ dataKey, data }) => {
             data={data?.[selectedLibrary]}
             indexColumn={INDEX_COLUMN}
             commonColumns={COMMON_COLUMNS}
+            schema={schema}
           />
         </div>
       )}

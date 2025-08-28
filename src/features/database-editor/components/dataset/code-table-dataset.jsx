@@ -1,3 +1,4 @@
+import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
 import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 
@@ -20,6 +21,7 @@ const transformData = (data) => {
 };
 
 export const CodeTableDataset = ({ dataKey, data }) => {
+  const schema = useDatabaseSchema(dataKey);
   if (data === undefined) return <div>No data selected.</div>;
   if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
@@ -27,7 +29,12 @@ export const CodeTableDataset = ({ dataKey, data }) => {
 
   return (
     <div className="cea-database-editor-database-dataset-code">
-      <TableDataset dataKey={dataKey} data={_data} indexColumn={INDEX_COLUMN} />
+      <TableDataset
+        dataKey={dataKey}
+        data={_data}
+        indexColumn={INDEX_COLUMN}
+        schema={schema}
+      />
     </div>
   );
 };
