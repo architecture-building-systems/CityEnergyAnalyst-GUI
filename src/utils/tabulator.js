@@ -2,7 +2,7 @@ export const getColumnPropsFromDataType = (
   columnSchema,
   column = undefined,
 ) => {
-  if (!columnSchema?.type) {
+  if (columnSchema?.type === undefined) {
     console.error(
       `Could not find column validation for undefined type for column "${column}"`,
     );
@@ -59,8 +59,14 @@ export const getColumnPropsFromDataType = (
       return {};
     default:
       console.error(
-        `Could not find column validation for type "${dataType}" for column "${column}"`,
+        `Could not find column validation for type "${columnSchema.type}" for column "${column}"`,
       );
       return {};
   }
+};
+
+const simpleDateVal = (cell, value) => {
+  const [date, month] = value.split('|').map((number) => Number(number));
+  const daysInMonths = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return daysInMonths[month] >= date;
 };
