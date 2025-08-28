@@ -15,6 +15,7 @@ import {
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
 import { toolTypes, useToolCardStore } from 'features/project/stores/tool-card';
+import { getColumnPropsFromDataType } from 'utils/tabulator';
 
 const Table = ({ tab, tables, columns }) => {
   const tabulator = useRef(null);
@@ -270,85 +271,34 @@ const useTableData = (tab, columns, tables) => {
             case INDEX_COLUMN:
               return { ...columnDef, frozen: true, cellClick: selectRow };
             default: {
-              const dataType = columns[tab][column].type;
+              const columnSchema = columns[tab][column];
               columnDef = {
                 ...columnDef,
                 // Hack to allow editing when double clicking
                 cellDblClick: () => {},
               };
-              if (columns[tab][column]?.choices != undefined)
+              if (columnSchema?.choices != undefined)
                 return {
                   ...columnDef,
                   editor: 'select',
                   editorParams: {
-                    values: columns[tab][column].choices,
+                    values: columnSchema.choices,
                     listItemFormatter: (value, label) => {
                       if (!label) return value;
                       return `${value} : ${label}`;
                     },
                   },
                 };
-              switch (dataType) {
-                case 'int':
-                case 'year':
-                  return {
-                    ...columnDef,
-                    editor: 'input',
-                    validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
-                    mutatorEdit: (value) => Number(value),
-                  };
-                case 'float':
-                  return {
-                    ...columnDef,
-                    editor: 'input',
-                    validator: [
-                      'required',
-                      'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
-                      ...(columns[tab][column]?.constraints
-                        ? Object.keys(columns[tab][column].constraints).map(
-                            (constraint) =>
-                              `${constraint}:${columns[tab][column].constraints[constraint]}`,
-                          )
-                        : []),
-                    ],
-                    mutatorEdit: (value) => Number(value),
-                  };
-                case 'date':
-                  return {
-                    ...columnDef,
-                    editor: 'input',
-                    validator: [
-                      'required',
-                      'regex:^[0-3][0-9]\\|[0-1][0-9]$',
-                      { type: simpleDateVal },
-                    ],
-                  };
-                case 'string':
-                  return {
-                    ...columnDef,
-                    editor: 'input',
-                    validator: [
-                      ...(columns[tab][column]?.nullable ? [] : ['required']),
-                    ],
-                  };
-                case 'boolean':
-                  return {
-                    ...columnDef,
-                    editor: 'select',
-                    editorParams: {
-                      values: [true, false],
-                    },
-                    mutator: (value) => !!value,
-                  };
-                case 'Polygon':
-                  // Ignore polygons for now
-                  return columnDef;
-                default:
-                  console.error(
-                    `Could not find column validation for type "${dataType}" for column "${column}"`,
-                  );
-                  return columnDef;
-              }
+              const dataType = columnSchema.type;
+              const dataTypeProps = getColumnPropsFromDataType(
+                dataType,
+                columnSchema,
+                column,
+              );
+              return {
+                ...columnDef,
+                ...dataTypeProps,
+              };
             }
           }
         });
