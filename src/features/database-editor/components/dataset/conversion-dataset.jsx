@@ -17,6 +17,7 @@ export const ConversionDataset = ({ dataKey, data }) => {
       data={data}
       indexColumn={INDEX_COLUMN}
       commonColumns={COMMON_COLUMNS}
+      showColumnSchema={false}
     />
   );
 };

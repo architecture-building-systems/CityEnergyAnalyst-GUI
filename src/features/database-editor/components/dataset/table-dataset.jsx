@@ -15,8 +15,10 @@ export const TableGroupDataset = ({
   data,
   indexColumn,
   commonColumns,
+  showColumnSchema = false,
 }) => {
   const schema = useDatabaseSchema(dataKey);
+  const schemaColumns = Object.keys(schema?.columns ?? {});
 
   if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
@@ -28,6 +30,10 @@ export const TableGroupDataset = ({
         gap: 12,
       }}
     >
+      <TableColumnSchema
+        columns={schemaColumns}
+        columnSchema={schema?.columns}
+      />
       {Object.keys(data).map((key) => (
         <TableDataset
           key={[...dataKey, key].join('-')}
@@ -37,6 +43,8 @@ export const TableGroupDataset = ({
           indexColumn={indexColumn}
           commonColumns={commonColumns}
           showIndex={false}
+          schema={schema}
+          showColumnSchema={showColumnSchema}
         />
       ))}
     </div>
@@ -52,6 +60,7 @@ export const TableDataset = ({
   schema,
   showIndex,
   freezeIndex,
+  showColumnSchema,
 }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -78,6 +87,7 @@ export const TableDataset = ({
             showIndex={showIndex}
             freezeIndex={freezeIndex}
             schema={schema}
+            showColumnSchema={showColumnSchema}
           />
         </>
       )}
@@ -202,6 +212,7 @@ const EntityDataTable = ({
   commonColumns,
   showIndex = true,
   freezeIndex = true,
+  showColumnSchema = true,
 }) => {
   const divRef = useRef();
   const tabulatorRef = useRef();
@@ -296,7 +307,7 @@ const EntityDataTable = ({
 
   return (
     <>
-      {columnSchema && (
+      {columnSchema && showColumnSchema && (
         <details style={{ fontSize: 12 }}>
           <summary>Column Glossary</summary>
           <TableColumnSchema columns={columns} columnSchema={columnSchema} />
