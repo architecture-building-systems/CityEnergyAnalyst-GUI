@@ -240,7 +240,7 @@ const EntityDataTable = ({
           ...colDef,
           editor: 'select',
           editorParams: {
-            values: [],
+            values: _colSchema?.choice?.values || [],
             listItemFormatter: (value, label) => {
               if (!label) return value;
               return `${value} : ${label}`;
