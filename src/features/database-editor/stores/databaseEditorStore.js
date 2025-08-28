@@ -163,17 +163,8 @@ const getNestedValue = (obj, datakey) => {
 
 export const useDatabaseSchema = (dataKey) => {
   // Get column schema for using specific data key which is a list of property names
-
-  const startsWith = (array1, array2) =>
-    array2.every((element, index) => array1[index] === element);
-
-  let _array = dataKey;
-  if (startsWith(dataKey, ['COMPONENTS', 'CONVERSION'])) {
-    _array = dataKey.slice(0, -1);
-  }
-
   const schema = useDatabaseEditorStore(
-    (state) => getNestedValue(state.schema, _array)?.schema,
+    (state) => getNestedValue(state.schema, dataKey)?.schema,
   );
   return schema;
 };
