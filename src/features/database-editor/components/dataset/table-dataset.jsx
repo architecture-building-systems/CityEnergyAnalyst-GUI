@@ -3,7 +3,10 @@ import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
-import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
+import {
+  useGetDatabaseColumnChoices,
+  useDatabaseSchema,
+} from 'features/database-editor/stores/databaseEditorStore';
 import { Tooltip } from 'antd';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 
@@ -201,6 +204,8 @@ const EntityDataTable = ({
   const schema = useDatabaseSchema(dataKey);
   const columnSchema = schema?.columns;
 
+  const getColumnChoices = useGetDatabaseColumnChoices();
+
   const firstRow = data?.[0];
   // FIXME: We are assuming that the columns from data are correct but we should use from schema instead
   // Determine columns based on first row
@@ -236,11 +241,16 @@ const EntityDataTable = ({
 
       // Handle columns with choices
       if (_colSchema?.choice != undefined) {
+        const lookup = _colSchema.choice?.lookup;
+        const columnChoices = lookup
+          ? getColumnChoices(lookup?.path, lookup?.column)
+          : [];
+
         return {
           ...colDef,
           editor: 'select',
           editorParams: {
-            values: _colSchema?.choice?.values || [],
+            values: _colSchema?.choice?.values || columnChoices,
             listItemFormatter: (value, label) => {
               if (!label) return value;
               return `${value} : ${label}`;
