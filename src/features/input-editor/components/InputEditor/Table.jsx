@@ -264,42 +264,45 @@ const useTableData = (tab, columns, tables) => {
     } else {
       const getColumnDef = () => {
         let _columns = Object.keys(columns[tab]).map((column) => {
-          let columnDef = { title: column, field: column };
+          const columnDef = { title: column, field: column };
+
+          // Handle special cases
           switch (column) {
             case 'REFERENCE':
               return columnDef;
             case INDEX_COLUMN:
               return { ...columnDef, frozen: true, cellClick: selectRow };
-            default: {
-              const columnSchema = columns[tab][column];
-              columnDef = {
-                ...columnDef,
-                // Hack to allow editing when double clicking
-                cellDblClick: () => {},
-              };
-              if (columnSchema?.choices != undefined)
-                return {
-                  ...columnDef,
-                  editor: 'select',
-                  editorParams: {
-                    values: columnSchema.choices,
-                    listItemFormatter: (value, label) => {
-                      if (!label) return value;
-                      return `${value} : ${label}`;
-                    },
-                  },
-                };
-
-              const dataTypeProps = getColumnPropsFromDataType(
-                columnSchema,
-                column,
-              );
-              return {
-                ...columnDef,
-                ...dataTypeProps,
-              };
-            }
           }
+
+          // Hack to allow editing when double clicking
+          columnDef.cellDblClick = () => {};
+
+          const columnSchema = columns[tab][column];
+
+          // Handle columns with choices
+          if (columnSchema?.choices != undefined) {
+            return {
+              ...columnDef,
+              editor: 'select',
+              editorParams: {
+                values: columnSchema.choices,
+                listItemFormatter: (value, label) => {
+                  if (!label) return value;
+                  return `${value} : ${label}`;
+                },
+              },
+            };
+          }
+
+          // Handle regular columns
+          const dataTypeProps = getColumnPropsFromDataType(
+            columnSchema,
+            column,
+          );
+          return {
+            ...columnDef,
+            ...dataTypeProps,
+          };
         });
         return { columns: _columns, description: columns[tab] };
       };
