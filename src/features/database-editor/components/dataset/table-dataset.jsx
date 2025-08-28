@@ -143,13 +143,12 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
                     maxWidth: 140,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    fontWeight: 'bold',
                     whiteSpace: 'nowrap',
 
                     fontFamily: 'monospace',
                   }}
                 >
-                  {col}
+                  <b>{col}</b>
                   {foreignKey && <span> *</span>}
                 </td>
                 <td>{schemaInfo?.unit}</td>
