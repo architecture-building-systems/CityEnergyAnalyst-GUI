@@ -5,6 +5,7 @@ import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
 import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
 import { Tooltip } from 'antd';
+import { getColumnPropsFromDataType } from 'utils/tabulator';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -230,6 +231,27 @@ const EntityDataTable = ({
       if (_frozenIndex) {
         colDef.cssClass = 'frozen-index';
         colDef.hozAlign = 'left';
+      }
+
+      // Handle columns with choices
+      if (_colSchema?.choice != undefined) {
+        return {
+          ...colDef,
+          editor: 'select',
+          editorParams: {
+            values: [],
+            listItemFormatter: (value, label) => {
+              if (!label) return value;
+              return `${value} : ${label}`;
+            },
+          },
+        };
+      }
+
+      // Handle regular columns
+      if (_colSchema?.type != undefined) {
+        const dataTypeProps = getColumnPropsFromDataType(_colSchema, column);
+        return { ...colDef, ...dataTypeProps };
       }
 
       return colDef;
