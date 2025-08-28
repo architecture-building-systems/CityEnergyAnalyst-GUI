@@ -129,7 +129,6 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
           {columns.map((col) => {
             const schemaInfo = columnSchema?.[col];
             const foreignKey = schemaInfo?.choice?.lookup;
-            console.log({ col, schemaInfo, foreignKey });
 
             if (!schemaInfo)
               return (
@@ -156,9 +155,11 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
                     <Tooltip
                       title={
                         Array.isArray(foreignKey?.path)
-                          ? foreignKey.path
+                          ? `${foreignKey.path
                               .map((p) => p.toUpperCase())
-                              .join(' > ')
+                              .join(
+                                ' > ',
+                              )}${foreignKey?.column && ` [${foreignKey.column}]`}`
                           : foreignKey?.path
                       }
                       placement="right"
