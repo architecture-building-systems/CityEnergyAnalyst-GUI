@@ -4,6 +4,7 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
 import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
+import { Tooltip } from 'antd';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -127,6 +128,7 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
           {columns.map((col) => {
             const schemaInfo = columnSchema?.[col];
             const foreignKey = schemaInfo?.choice?.lookup;
+            console.log({ col, schemaInfo, foreignKey });
 
             if (!schemaInfo)
               return (
@@ -149,7 +151,19 @@ const TableColumnSchema = ({ columns, columnSchema }) => {
                   }}
                 >
                   <b>{col}</b>
-                  {foreignKey && <span> *</span>}
+                  {foreignKey && (
+                    <Tooltip title={foreignKey?.path} placement="right">
+                      <span
+                        style={{
+                          marginLeft: 4,
+                          paddingInline: 4,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ↗
+                      </span>
+                    </Tooltip>
+                  )}
                 </td>
                 <td>{schemaInfo?.unit}</td>
                 <td>{schemaInfo?.description}</td>
