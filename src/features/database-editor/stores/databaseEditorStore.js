@@ -172,17 +172,18 @@ export const useDatabaseSchema = (dataKey) => {
 
 export const useGetDatabaseColumnChoices = () => {
   const data = useDatabaseEditorStore((state) => state.data);
-  console.log(data);
+
   return (dataKey, column) => {
     const _data = getNestedValue(data, dataKey);
 
     // FIXME: This is not reliable as not every index is "code"
     // Get keys if column is 'code'
     if (column == 'code') {
-      return Object.keys(_data || {}).map((key) => ({
-        value: key,
-        label: _data[key]?.description ?? '-',
-      }));
+      const choices = {};
+      Object.keys(_data || {}).forEach((key) => {
+        choices[key] = _data[key]?.description ?? '-';
+      });
+      return choices;
     }
 
     return _data?.[column];
