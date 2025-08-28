@@ -1,10 +1,15 @@
 import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
 import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
+import { arraysEqual } from 'utils';
 
-const INDEX_COLUMN = 'code';
+const CONSTRUCTION_DATABASE = [
+  'ARCHETYPES',
+  'CONSTRUCTION',
+  'construction_types',
+];
 
-const transformData = (data) => {
+const transformData = (index, data) => {
   // Transfrom code dataset to table dataset
   // data is an object with keys as index and properties as objects
   // output is an array of objects with values as arrays of objects
@@ -12,7 +17,7 @@ const transformData = (data) => {
 
   const output = Object.keys(data).map((key) => {
     return {
-      [INDEX_COLUMN]: key,
+      [index]: key,
       ...(data?.[key] ?? {}),
     };
   });
@@ -25,7 +30,10 @@ export const CodeTableDataset = ({ dataKey, data }) => {
   if (data === undefined) return <div>No data selected.</div>;
   if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
-  const _data = transformData(data);
+  const INDEX_COLUMN = arraysEqual(dataKey, CONSTRUCTION_DATABASE)
+    ? 'const_type'
+    : 'code';
+  const _data = transformData(INDEX_COLUMN, data);
 
   return (
     <div className="cea-database-editor-database-dataset-code">

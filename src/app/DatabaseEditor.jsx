@@ -16,6 +16,7 @@ import {
   CodeTableDataset,
 } from 'features/database-editor/components/dataset';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
+import { arraysEqual } from 'utils';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState({ message: null, status: null });
@@ -142,12 +143,6 @@ const DOMAINS = ['ARCHETYPES', 'ASSEMBLIES', 'COMPONENTS'];
 const USE_TYPES_DATABASE = ['ARCHETYPES', 'USE'];
 const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
-
-const arraysEqual = (a, b) =>
-  Array.isArray(a) &&
-  Array.isArray(b) &&
-  a?.length === b?.length &&
-  a?.every((val, i) => val === b[i]);
 
 const DatabaseContainer = () => {
   // Database structure:
