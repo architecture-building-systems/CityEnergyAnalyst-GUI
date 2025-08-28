@@ -250,6 +250,9 @@ const EntityDataTable = ({
         return {
           ...colDef,
           editor: 'select',
+          formatter: (cell) => {
+            return `${cell.getValue()} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
+          },
           editorParams: {
             values: columnChoices,
             listItemFormatter: Array.isArray(columnChoices)
