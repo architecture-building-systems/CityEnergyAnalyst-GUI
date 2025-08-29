@@ -307,7 +307,8 @@ const EntityDataTable = ({
           const field = cell.getField();
           const value = cell.getValue();
           const index = cell.getRow().getIndex();
-          updateDatabaseData(dataKey, index, field, value);
+          const oldValue = cell.getOldValue();
+          updateDatabaseData(dataKey, index, field, oldValue, value);
         },
       });
     }

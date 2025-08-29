@@ -148,7 +148,7 @@ const useDatabaseEditorStore = create((set) => ({
     }));
   },
 
-  updateDatabaseData: (dataKey, index, field, value) => {
+  updateDatabaseData: (dataKey, index, field, oldValue, value) => {
     set((state) => {
       const newData = { ...state.data };
       const table = getNestedValue(newData, dataKey);
@@ -163,7 +163,10 @@ const useDatabaseEditorStore = create((set) => ({
         table[index][field] = value;
       }
 
-      return { data: newData };
+      return {
+        data: newData,
+        changes: [...state.changes, { dataKey, index, field, oldValue, value }],
+      };
     });
   },
 }));
