@@ -15,8 +15,13 @@ export const DatabaseChangesList = () => {
           return (
             <li key={index} style={{ display: 'flex', gap: 4 }}>
               <span>{dataKey.join(' > ')}</span>
-              <span>{change?.index}</span>
-              <span>{change?.field}</span>
+              {change?.index && (
+                <span>
+                  {' > '}
+                  {change.index}
+                </span>
+              )}
+              <span>[{change?.field}]</span>
               <span>: </span>
               <span style={{ fontFamily: 'monospace' }}>
                 {change?.oldValue}
