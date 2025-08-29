@@ -147,6 +147,25 @@ const useDatabaseEditorStore = create((set) => ({
       },
     }));
   },
+
+  updateDatabaseData: (dataKey, index, field, value) => {
+    set((state) => {
+      const newData = { ...state.data };
+      const table = getNestedValue(newData, dataKey);
+      if (table == null) {
+        console.error('Table not found for dataKey:', dataKey);
+        return state;
+      }
+
+      // Find the correct row by index
+      if (table?.[index]) {
+        // Update the field in the row
+        table[index][field] = value;
+      }
+
+      return { data: newData };
+    });
+  },
 }));
 
 const getNestedValue = (obj, datakey) => {
@@ -188,5 +207,8 @@ export const useGetDatabaseColumnChoices = () => {
     return _data?.[column];
   };
 };
+
+export const useUpdateDatabaseData = () =>
+  useDatabaseEditorStore((state) => state.updateDatabaseData);
 
 export default useDatabaseEditorStore;
