@@ -151,16 +151,29 @@ const useDatabaseEditorStore = create((set) => ({
   updateDatabaseData: (dataKey, index, field, oldValue, value) => {
     set((state) => {
       const newData = { ...state.data };
-      const table = getNestedValue(newData, dataKey);
-      if (table == null) {
+
+      let _dataKey = dataKey;
+      let _index;
+      // Handle case where index is actually last element (e.g. use types dataset)
+      if (index === undefined) {
+        _dataKey = dataKey.slice(0, -1);
+        _index = dataKey[dataKey.length - 1];
+      }
+
+      const table = getNestedValue(newData, _dataKey);
+      if (table === undefined) {
         console.error('Table not found for dataKey:', dataKey);
         return state;
       }
 
       // Find the correct row by index
-      if (table?.[index]) {
+      if (index !== undefined && table?.[index]) {
         // Update the field in the row
         table[index][field] = value;
+      } else if (_index !== undefined && table?.[_index]) {
+        table[_index][field] = value;
+      } else {
+        console.error('Row not found for index:', index, 'in table:', table);
       }
 
       return {
