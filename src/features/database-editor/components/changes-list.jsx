@@ -24,13 +24,21 @@ export const DatabaseChangesList = () => {
               <span>[{change?.field}]</span>
               <span>: </span>
               <span
-                style={{ fontFamily: 'monospace', background: '#ff000032' }}
+                style={{
+                  fontFamily: 'monospace',
+                  background: '#ff000032',
+                  paddingInline: 2,
+                }}
               >
                 {change?.oldValue}
               </span>
               <span> ➔ </span>
               <span
-                style={{ fontFamily: 'monospace', background: '#00ff0032' }}
+                style={{
+                  fontFamily: 'monospace',
+                  background: '#00ff0032',
+                  paddingInline: 2,
+                }}
               >
                 {change?.value}
               </span>
