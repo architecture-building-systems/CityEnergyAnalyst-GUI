@@ -6,7 +6,7 @@ export const TableColumnSchema = ({ columns, columnSchema }) => {
   return (
     <details style={{ fontSize: 12 }}>
       <summary>Column Glossary</summary>
-      <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+      <div style={{ maxHeight: 200, overflowY: 'auto', padding: 8 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr
