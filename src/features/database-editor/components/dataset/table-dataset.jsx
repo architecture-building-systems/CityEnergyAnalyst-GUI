@@ -310,10 +310,6 @@ const EntityDataTable = ({
           updateDatabaseData(dataKey, index, field, value);
         },
       });
-    } else if (data !== null) {
-      tabulatorRef.current.setColumns(tableColumns);
-      tabulatorRef.current.setData(data);
-      tabulatorRef.current.setHeight();
     }
   }, [data, dataKey, indexColumn, tableColumns, updateDatabaseData]);
 
