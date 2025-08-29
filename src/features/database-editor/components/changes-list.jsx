@@ -10,16 +10,23 @@ export const DatabaseChangesList = () => {
       <div>Changes</div>
       <ul style={{ maxHeight: '300px', overflowY: 'auto' }}>
         {changes.map((change, index) => {
-          const dataKey = change?.dataKey ?? [];
+          let dataKey = change?.dataKey ?? [];
+          let _index = change?.index;
+
+          // Handle case where index is actually last element (e.g. use types dataset)
+          if (_index === undefined) {
+            _index = dataKey[dataKey.length - 1];
+            dataKey = dataKey.slice(0, -1);
+          }
 
           return (
             <li key={index} style={{ display: 'flex', gap: 4 }}>
               <span>{dataKey.join(' > ')}</span>
-              {change?.index && (
-                <span>
+              {_index && (
+                <>
                   {' > '}
-                  {change.index}
-                </span>
+                  <b>{_index}</b>
+                </>
               )}
               <span>[{change?.field}]</span>
               <span>: </span>
