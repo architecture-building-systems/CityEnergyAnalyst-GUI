@@ -4,8 +4,9 @@ import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
 import {
-  useGetDatabaseColumnChoices,
   useDatabaseSchema,
+  useGetDatabaseColumnChoices,
+  useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { Tooltip } from 'antd';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
@@ -223,6 +224,7 @@ const EntityDataTable = ({
   const columnSchema = schema?.columns;
 
   const getColumnChoices = useGetDatabaseColumnChoices();
+  const updateDatabaseData = useUpdateDatabaseData();
 
   const firstRow = data?.[0];
   // FIXME: We are assuming that the columns from data are correct but we should use from schema instead
@@ -300,13 +302,20 @@ const EntityDataTable = ({
         columns: tableColumns,
         layout: 'fitDataFill',
         layoutColumnsOnNewData: true,
+        index: indexColumn,
+        cellEdited: (cell) => {
+          const field = cell.getField();
+          const value = cell.getValue();
+          const index = cell.getRow().getIndex();
+          updateDatabaseData(dataKey, index, field, value);
+        },
       });
     } else if (data !== null) {
       tabulatorRef.current.setColumns(tableColumns);
       tabulatorRef.current.setData(data);
       tabulatorRef.current.setHeight();
     }
-  }, [data, tableColumns]);
+  }, [data, dataKey, indexColumn, tableColumns, updateDatabaseData]);
 
   return (
     <>
