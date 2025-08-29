@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { arrayStartsWith } from 'utils';
 
 // TODO: Replace with immer
 const createNestedProp = (obj, ...keys) => {
@@ -155,7 +156,10 @@ const useDatabaseEditorStore = create((set) => ({
       let _dataKey = dataKey;
       let _index;
       // Handle case where index is actually last element (e.g. use types dataset)
-      if (index === undefined) {
+      if (
+        arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
         _dataKey = dataKey.slice(0, -1);
         _index = dataKey[dataKey.length - 1];
       }

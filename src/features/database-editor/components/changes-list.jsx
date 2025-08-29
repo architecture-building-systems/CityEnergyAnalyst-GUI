@@ -1,3 +1,4 @@
+import { arrayStartsWith } from 'utils';
 import useDatabaseEditorStore from '../stores/databaseEditorStore';
 
 export const DatabaseChangesList = () => {
@@ -14,7 +15,10 @@ export const DatabaseChangesList = () => {
           let _index = change?.index;
 
           // Handle case where index is actually last element (e.g. use types dataset)
-          if (_index === undefined) {
+          if (
+            arrayStartsWith(dataKey, ['ARCHETYPES', 'USE']) ||
+            arrayStartsWith(dataKey, ['COMPONENTS', 'CONVERSION'])
+          ) {
             _index = dataKey[dataKey.length - 1];
             dataKey = dataKey.slice(0, -1);
           }
