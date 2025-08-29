@@ -28,7 +28,7 @@ export const DatabaseChangesList = () => {
                   <b>{_index}</b>
                 </>
               )}
-              <span>[{change?.field}]</span>
+              <span>[ {change?.field} ]</span>
               <span>: </span>
               <span
                 style={{
