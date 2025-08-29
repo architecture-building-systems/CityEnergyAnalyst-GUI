@@ -17,6 +17,7 @@ import {
 } from 'features/database-editor/components/dataset';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
 import { arraysEqual } from 'utils';
+import { DatabaseChangesList } from 'features/database-editor/components/changes-list';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState({ message: null, status: null });
@@ -134,6 +135,7 @@ const DatabaseContent = ({ message }) => {
     <div className="cea-database-editor-content">
       {/* <DatabaseTopMenu /> */}
       {message && <DatabaseEditorErrorMessage error={message} />}
+      <DatabaseChangesList />
       <DatabaseContainer />
     </div>
   );
