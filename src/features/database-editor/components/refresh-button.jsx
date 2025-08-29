@@ -19,7 +19,7 @@ export const RefreshDatabaseButton = () => {
   };
 
   return (
-    <Tooltip title="Refresh Database">
+    <Tooltip title="Reload Database">
       <div className="cea-card-icon-button-container">
         <Button type="text" icon={<RefreshIcon />} onClick={refreshDatabase} />
       </div>
