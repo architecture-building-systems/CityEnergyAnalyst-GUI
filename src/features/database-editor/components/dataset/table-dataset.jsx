@@ -68,7 +68,7 @@ export const TableDataset = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {name != null && (
         <small>
-          <b>{name}</b>
+          <u>{name}</u>
         </small>
       )}
 
