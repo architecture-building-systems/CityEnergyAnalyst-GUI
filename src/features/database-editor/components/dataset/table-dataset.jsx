@@ -157,7 +157,7 @@ const EntityDataTable = ({
   }, [firstRow, indexColumn, commonColumns, showIndex]);
 
   // Convert columns to tabulator format
-  const tableColumns = useMemo(() => {
+  const tabulatorColumns = useMemo(() => {
     return columns.map((column) => {
       const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
 
@@ -216,7 +216,7 @@ const EntityDataTable = ({
     if (tabulatorRef.current == null) {
       tabulatorRef.current = new Tabulator(divRef.current, {
         data: data,
-        columns: tableColumns,
+        columns: tabulatorColumns,
         layout: 'fitDataFill',
         layoutColumnsOnNewData: true,
         index: indexColumn,
@@ -229,7 +229,7 @@ const EntityDataTable = ({
         },
       });
     }
-  }, [data, dataKey, indexColumn, tableColumns, updateDatabaseData]);
+  }, [data, dataKey, indexColumn, tabulatorColumns, updateDatabaseData]);
 
   return (
     <>
