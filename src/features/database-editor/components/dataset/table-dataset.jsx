@@ -176,6 +176,11 @@ const EntityDataTable = ({
         colDef.hozAlign = 'left';
       }
 
+      // FIXME: Prevent edits for index column until we can implement better validation of foreign key references
+      if (column == indexColumn) {
+        return colDef;
+      }
+
       // Handle columns with choices
       if (_colSchema?.choice != undefined) {
         const values = _colSchema?.choice?.values || [];
