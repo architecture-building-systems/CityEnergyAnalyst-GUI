@@ -4,8 +4,8 @@ import { Button } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
-  SUCCESS_STATUS,
   FAILED_STATUS,
+  SAVING_STATUS,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -111,6 +111,15 @@ const DatabaseContent = ({ message }) => {
     (state) => state.resetDatabaseState,
   );
 
+  const saveDatabaseState = useDatabaseEditorStore(
+    (state) => state.saveDatabaseState,
+  );
+
+  const changes = useDatabaseEditorStore((state) => state.changes);
+  const handleSave = async () => {
+    await saveDatabaseState();
+  };
+
   useEffect(() => {
     const init = async () => {
       await initDatabaseState();
@@ -133,13 +142,11 @@ const DatabaseContent = ({ message }) => {
     );
   if (status === FAILED_STATUS) return <AsyncError error={error} />;
 
-  if (status !== SUCCESS_STATUS) return null;
-
   return (
     <div className="cea-database-editor-content">
       {/* <DatabaseTopMenu /> */}
       {message && <DatabaseEditorErrorMessage error={message} />}
-      <DatabaseChangesList />
+      <DatabaseChangesList changes={changes} onSave={handleSave} />
       <DatabaseContainer />
     </div>
   );

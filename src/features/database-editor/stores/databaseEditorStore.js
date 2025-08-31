@@ -5,6 +5,7 @@ import { arrayStartsWith } from 'utils';
 export const FETCHING_STATUS = 'fetching';
 export const SUCCESS_STATUS = 'success';
 export const FAILED_STATUS = 'failed';
+export const SAVING_STATUS = 'saving';
 
 // TODO: Replace with immer
 const createNestedProp = (obj, ...keys) => {
@@ -52,6 +53,20 @@ const useDatabaseEditorStore = create((set) => ({
       //   }
       //   set({ tableNames });
       // }
+    } catch (error) {
+      const err = error.response || error;
+      set({ status: { status: FAILED_STATUS, error: err } });
+    }
+  },
+
+  saveDatabaseState: async () => {
+    try {
+      set({ status: { status: SAVING_STATUS } });
+      const { data } = await apiClient.put(
+        '/api/inputs/databases',
+        useDatabaseEditorStore.getState().data,
+      );
+      set({ data, status: { status: SUCCESS_STATUS }, changes: [] });
     } catch (error) {
       const err = error.response || error;
       set({ status: { status: FAILED_STATUS, error: err } });
