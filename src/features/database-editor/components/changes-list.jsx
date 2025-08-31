@@ -2,6 +2,7 @@ import { arrayStartsWith } from 'utils';
 import useDatabaseEditorStore from '../stores/databaseEditorStore';
 import { useEffect, useRef } from 'react';
 import useNavigationStore from 'stores/navigationStore';
+import { Button } from 'antd';
 
 const useUnsavedChangesWarning = (hasUnsavedChanges) => {
   const { addBlocker, removeBlocker } = useNavigationStore();
@@ -92,8 +93,7 @@ const useUnsavedChangesWarning = (hasUnsavedChanges) => {
   }, [hasUnsavedChanges]);
 };
 
-export const DatabaseChangesList = () => {
-  const changes = useDatabaseEditorStore((state) => state.changes);
+export const DatabaseChangesList = ({ changes, onSave }) => {
   const listRef = useRef(null);
   useUnsavedChangesWarning(changes.length > 0);
 
@@ -116,7 +116,19 @@ export const DatabaseChangesList = () => {
         borderRadius: 8,
       }}
     >
-      <div>Changes</div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div>Changes</div>
+        <Button type="primary" onClick={onSave}>
+          Save
+        </Button>
+      </div>
+
       <ul ref={listRef} style={{ maxHeight: 120, overflowY: 'auto' }}>
         {changes.map((change, index) => {
           let dataKey = change?.dataKey ?? [];
