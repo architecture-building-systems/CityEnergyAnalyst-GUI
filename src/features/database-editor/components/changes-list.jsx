@@ -99,7 +99,15 @@ export const DatabaseChangesList = () => {
   if (changes.length === 0) return null;
 
   return (
-    <div className="cea-database-editor-changes-list" style={{ fontSize: 12 }}>
+    <div
+      className="cea-database-editor-changes-list"
+      style={{
+        fontSize: 12,
+        border: '1px solid #ccc',
+        padding: 12,
+        borderRadius: 8,
+      }}
+    >
       <div>Changes</div>
       <ul style={{ maxHeight: '300px', overflowY: 'auto' }}>
         {changes.map((change, index) => {
