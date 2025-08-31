@@ -29,7 +29,6 @@ const useDatabaseEditorStore = create((set) => ({
   validation: {},
   data: {},
   schema: {},
-  glossary: [],
   changes: [],
 
   // Actions
@@ -76,23 +75,6 @@ const useDatabaseEditorStore = create((set) => ({
     }
   },
 
-  fetchDatabaseGlossary: async () => {
-    try {
-      const response = await apiClient.get('/api/database/glossary');
-      const glossary =
-        response.data.find((script) => script.script === 'data_initializer')
-          ?.variables || [];
-      set({ glossary });
-    } catch (error) {
-      console.error(error);
-      set({ glossary: [], status: { status: 'failed', error } });
-    }
-  },
-
-  setActiveDatabase: (category, name) => {
-    set({ menu: { category, name } });
-  },
-
   updateDatabaseValidation: ({
     isValid,
     database,
@@ -130,23 +112,6 @@ const useDatabaseEditorStore = create((set) => ({
 
   resetDatabaseChanges: () => {
     set({ changes: [] });
-  },
-
-  copyScheduleData: (name, copy) => {
-    set((state) => ({
-      data: {
-        ...state.data,
-        archetypes: {
-          ...state.data.archetypes,
-          schedules: {
-            ...state.data.archetypes.schedules,
-            [name]: {
-              ...state.data.archetypes.schedules[copy],
-            },
-          },
-        },
-      },
-    }));
   },
 
   updateDatabaseData: (dataKey, index, field, oldValue, value) => {
