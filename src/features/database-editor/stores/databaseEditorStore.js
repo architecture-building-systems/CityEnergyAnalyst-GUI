@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
 import { arrayStartsWith } from 'utils';
 
+export const FETCHING_STATUS = 'fetching';
+export const SUCCESS_STATUS = 'success';
+export const FAILED_STATUS = 'failed';
+
 // TODO: Replace with immer
 const createNestedProp = (obj, ...keys) => {
   keys.reduce((curr, key, index) => {
@@ -33,10 +37,10 @@ const useDatabaseEditorStore = create((set) => ({
 
   // Actions
   initDatabaseState: async () => {
-    set({ data: {}, status: { status: 'fetching' } });
+    set({ data: {}, status: { status: FETCHING_STATUS } });
     try {
       const { data } = await apiClient.get('/api/inputs/databases');
-      set({ data, status: { status: 'success' } });
+      set({ data, status: { status: SUCCESS_STATUS } });
 
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
@@ -50,7 +54,7 @@ const useDatabaseEditorStore = create((set) => ({
       // }
     } catch (error) {
       const err = error.response || error;
-      set({ status: { status: 'failed', error: err } });
+      set({ status: { status: FAILED_STATUS, error: err } });
     }
   },
 
@@ -71,7 +75,7 @@ const useDatabaseEditorStore = create((set) => ({
       const response = await apiClient.get('/api/databases/schema', { params });
       set({ schema: response.data });
     } catch (error) {
-      set({ status: { status: 'failed', error } });
+      set({ status: { status: FAILED_STATUS, error } });
     }
   },
 

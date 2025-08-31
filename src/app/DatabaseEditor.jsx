@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
-import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
+import useDatabaseEditorStore, {
+  FETCHING_STATUS,
+  SUCCESS_STATUS,
+  FAILED_STATUS,
+} from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -120,16 +124,16 @@ const DatabaseContent = ({ message }) => {
     };
   }, [initDatabaseState, fetchDatabaseSchema, resetDatabaseState]);
 
-  if (status === 'fetching')
+  if (status === FETCHING_STATUS)
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
         tip="Reading Databases..."
       />
     );
-  if (status === 'failed') return <AsyncError error={error} />;
+  if (status === FAILED_STATUS) return <AsyncError error={error} />;
 
-  if (status !== 'success') return null;
+  if (status !== SUCCESS_STATUS) return null;
 
   return (
     <div className="cea-database-editor-content">
