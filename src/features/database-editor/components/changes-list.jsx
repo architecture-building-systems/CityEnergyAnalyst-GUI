@@ -1,6 +1,6 @@
 import { arrayStartsWith } from 'utils';
 import useDatabaseEditorStore from '../stores/databaseEditorStore';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import useNavigationStore from 'stores/navigationStore';
 
 const useUnsavedChangesWarning = (hasUnsavedChanges) => {
@@ -94,7 +94,15 @@ const useUnsavedChangesWarning = (hasUnsavedChanges) => {
 
 export const DatabaseChangesList = () => {
   const changes = useDatabaseEditorStore((state) => state.changes);
+  const listRef = useRef(null);
   useUnsavedChangesWarning(changes.length > 0);
+
+  // Scroll to bottom when new changes are added
+  useEffect(() => {
+    if (listRef.current && changes.length > 0) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [changes.length]);
 
   if (changes.length === 0) return null;
 
@@ -109,7 +117,7 @@ export const DatabaseChangesList = () => {
       }}
     >
       <div>Changes</div>
-      <ul style={{ maxHeight: '300px', overflowY: 'auto' }}>
+      <ul ref={listRef} style={{ maxHeight: 120, overflowY: 'auto' }}>
         {changes.map((change, index) => {
           let dataKey = change?.dataKey ?? [];
           let _index = change?.index;
