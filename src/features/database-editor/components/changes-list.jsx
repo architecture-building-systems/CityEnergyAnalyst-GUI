@@ -1,5 +1,4 @@
 import { arrayStartsWith } from 'utils';
-import useDatabaseEditorStore from '../stores/databaseEditorStore';
 import { useEffect, useRef } from 'react';
 import useNavigationStore from 'stores/navigationStore';
 import { Button } from 'antd';

@@ -8,7 +8,6 @@ import {
   useGetDatabaseColumnChoices,
   useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
-import { Tooltip } from 'antd';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
 
