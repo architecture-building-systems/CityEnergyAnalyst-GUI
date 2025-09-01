@@ -11,6 +11,7 @@ import {
   useSaveProjectToLocalStorage,
   useProjectStore,
   useProjectLoading,
+  useFetchProjectChoices,
 } from 'features/project/stores/projectStore';
 import './RecentProjects.css';
 import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
@@ -90,6 +91,8 @@ const RecentProjects = () => {
   const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
   const removeProjectFromLocalStorage = useRemoveProjectFromLocalStorage();
 
+  const [choices] = useFetchProjectChoices();
+
   const handleProjectSelect = useCallback(
     async (projectPath) => {
       setError(null);
@@ -127,7 +130,9 @@ const RecentProjects = () => {
             width: '100%',
           }}
         >
-          <OpenProjectButton onSuccess={handleProjectSelect} />
+          {choices?.length > 0 && (
+            <OpenProjectButton onSuccess={handleProjectSelect} />
+          )}
           <div style={{ display: 'flex', gap: 12 }}>
             <LoadExampleButton onClick={handleProjectSelect} />
             <NewProjectButton onSuccess={handleProjectSelect} />
