@@ -39,34 +39,25 @@ const useUnsavedChangesWarning = (hasUnsavedChanges) => {
   // Handle back/forward button and other navigation
   useEffect(() => {
     if (!hasUnsavedChanges) return;
-
     // Push a dummy state to intercept back button
-    const currentState = window.history.state;
-
-    // Push a new state to capture back navigation
-    window.history.pushState({ ...currentState, preventBack: true }, '');
-
+    const originalState = window.history.state;
+    // Push a marker state to detect back navigation
+    window.history.pushState({ ...originalState, preventBack: true }, '');
     const handlePopState = () => {
-      if (hasUnsavedChanges) {
-        const shouldLeave = window.confirm(message);
-
-        if (!shouldLeave) {
-          // Stay on current page - push the state back
-          window.history.pushState({ ...currentState, preventBack: true }, '');
-        } else {
-          // Allow navigation - go back to the actual previous page
-          window.history.go(-1);
-        }
+      if (!hasUnsavedChanges) return;
+      const shouldLeave = window.confirm(message);
+      if (!shouldLeave) {
+        // Restore marker state to keep the user on the page
+        window.history.pushState({ ...originalState, preventBack: true }, '');
       }
+      // If user confirms, do nothing and let the browser navigate naturally.
     };
-
     window.addEventListener('popstate', handlePopState);
-
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      // Clean up the dummy state if component unmounts
+      // Remove marker without navigating
       if (window.history.state?.preventBack) {
-        window.history.back();
+        window.history.replaceState(originalState || {}, '');
       }
     };
   }, [hasUnsavedChanges]);
