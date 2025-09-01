@@ -81,8 +81,6 @@ const RecentProjects = () => {
   const { limit, count } = useProjectLimits();
   const exceeded = limit && count <= 0;
 
-  console.log(choices, limit, count, exceeded);
-
   const handleProjectSelect = useCallback(
     async (projectPath) => {
       setError(null);
