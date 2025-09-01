@@ -55,7 +55,7 @@ export const TableColumnSchema = ({ columns, columnSchema }) => {
                                 .map((p) => p.toUpperCase())
                                 .join(
                                   ' > ',
-                                )}${foreignKey?.column && ` [${foreignKey.column}]`}`
+                                )}${foreignKey?.column ? ` [${foreignKey.column}]` : ''}`
                             : foreignKey?.path
                         }
                         placement="right"
