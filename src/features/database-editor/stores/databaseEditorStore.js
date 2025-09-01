@@ -60,13 +60,12 @@ const useDatabaseEditorStore = create((set) => ({
   },
 
   saveDatabaseState: async () => {
+    const data = useDatabaseEditorStore.getState().data;
+
     try {
       set({ status: { status: SAVING_STATUS } });
-      const { data } = await apiClient.put(
-        '/api/inputs/databases',
-        useDatabaseEditorStore.getState().data,
-      );
-      set({ data, status: { status: SUCCESS_STATUS }, changes: [] });
+      const resp = await apiClient.put('/api/inputs/databases', data);
+      set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } catch (error) {
       const err = error.response || error;
       set({ status: { status: FAILED_STATUS, error: err } });
