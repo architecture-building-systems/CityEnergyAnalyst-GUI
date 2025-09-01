@@ -1,5 +1,5 @@
 import { useProjectStore } from 'features/project/stores/projectStore';
-import RecentProjects from 'features/project/components/modals/RecentProjects';
+import RecentProjects from 'features/project/components/RecentProjects';
 import ProjectOverlay from 'features/project/components/ProjectOverlay';
 import InputMap from 'features/project/components/InputMap';
 import ScenarioAlert from 'components/ScenarioAlert';
