@@ -101,7 +101,14 @@ const RecentProjects = () => {
           <Text type="secondary" className="empty-state-text">
             You haven't opened any projects yet.
           </Text>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 12,
+              flexDirection: 'column',
+              width: '100%',
+            }}
+          >
             <OpenProjectButton onSuccess={handleProjectSelect} />
             <NewProjectButton onSuccess={handleProjectSelect} />
           </div>
