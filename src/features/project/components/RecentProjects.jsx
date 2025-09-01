@@ -123,7 +123,7 @@ const RecentProjects = () => {
           {choices?.length > 0 && (
             <OpenProjectButton onSuccess={handleProjectSelect} />
           )}
-          {choices !== null && !exceeded && (
+          {!exceeded && (
             <div style={{ display: 'flex', gap: 12 }}>
               <LoadExampleButton />
               <NewProjectButton onSuccess={handleProjectSelect} />
