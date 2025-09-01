@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { arrayStartsWith } from 'utils';
+
+export const FETCHING_STATUS = 'fetching';
+export const SUCCESS_STATUS = 'success';
+export const FAILED_STATUS = 'failed';
+export const SAVING_STATUS = 'saving';
 
 // TODO: Replace with immer
 const createNestedProp = (obj, ...keys) => {
@@ -28,15 +34,14 @@ const useDatabaseEditorStore = create((set) => ({
   validation: {},
   data: {},
   schema: {},
-  glossary: [],
   changes: [],
 
   // Actions
   initDatabaseState: async () => {
-    set({ data: {}, status: { status: 'fetching' } });
+    set({ data: {}, status: { status: FETCHING_STATUS } });
     try {
       const { data } = await apiClient.get('/api/inputs/databases');
-      set({ data, status: { status: 'success' } });
+      set({ data, status: { status: SUCCESS_STATUS } });
 
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
@@ -50,7 +55,20 @@ const useDatabaseEditorStore = create((set) => ({
       // }
     } catch (error) {
       const err = error.response || error;
-      set({ status: { status: 'failed', error: err } });
+      set({ status: { status: FAILED_STATUS, error: err } });
+    }
+  },
+
+  saveDatabaseState: async () => {
+    const data = useDatabaseEditorStore.getState().data;
+
+    try {
+      set({ status: { status: SAVING_STATUS } });
+      const resp = await apiClient.put('/api/inputs/databases', data);
+      set({ status: { status: SUCCESS_STATUS }, changes: [] });
+    } catch (error) {
+      const err = error.response || error;
+      set({ status: { status: FAILED_STATUS, error: err } });
     }
   },
 
@@ -71,25 +89,8 @@ const useDatabaseEditorStore = create((set) => ({
       const response = await apiClient.get('/api/databases/schema', { params });
       set({ schema: response.data });
     } catch (error) {
-      set({ status: { status: 'failed', error } });
+      set({ status: { status: FAILED_STATUS, error } });
     }
-  },
-
-  fetchDatabaseGlossary: async () => {
-    try {
-      const response = await apiClient.get('/api/database/glossary');
-      const glossary =
-        response.data.find((script) => script.script === 'data_initializer')
-          ?.variables || [];
-      set({ glossary });
-    } catch (error) {
-      console.error(error);
-      set({ glossary: [], status: { status: 'failed', error } });
-    }
-  },
-
-  setActiveDatabase: (category, name) => {
-    set({ menu: { category, name } });
   },
 
   updateDatabaseValidation: ({
@@ -131,21 +132,42 @@ const useDatabaseEditorStore = create((set) => ({
     set({ changes: [] });
   },
 
-  copyScheduleData: (name, copy) => {
-    set((state) => ({
-      data: {
-        ...state.data,
-        archetypes: {
-          ...state.data.archetypes,
-          schedules: {
-            ...state.data.archetypes.schedules,
-            [name]: {
-              ...state.data.archetypes.schedules[copy],
-            },
-          },
-        },
-      },
-    }));
+  updateDatabaseData: (dataKey, index, field, oldValue, value) => {
+    set((state) => {
+      const newData = { ...state.data };
+
+      let _dataKey = dataKey;
+      let _index;
+      // Handle case where index is actually last element (e.g. use types dataset)
+      if (
+        arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
+        _dataKey = dataKey.slice(0, -1);
+        _index = dataKey[dataKey.length - 1];
+      }
+
+      const table = getNestedValue(newData, _dataKey);
+      if (table === undefined) {
+        console.error('Table not found for dataKey:', dataKey);
+        return state;
+      }
+
+      // Find the correct row by index
+      if (index !== undefined && table?.[index]) {
+        // Update the field in the row
+        table[index][field] = value;
+      } else if (_index !== undefined && table?.[_index]) {
+        table[_index][field] = value;
+      } else {
+        console.error('Row not found for index:', index, 'in table:', table);
+      }
+
+      return {
+        data: newData,
+        changes: [...state.changes, { dataKey, index, field, oldValue, value }],
+      };
+    });
   },
 }));
 
@@ -188,5 +210,8 @@ export const useGetDatabaseColumnChoices = () => {
     return _data?.[column];
   };
 };
+
+export const useUpdateDatabaseData = () =>
+  useDatabaseEditorStore((state) => state.updateDatabaseData);
 
 export default useDatabaseEditorStore;

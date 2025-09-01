@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Spin } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
-import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
+import useDatabaseEditorStore, {
+  FETCHING_STATUS,
+  FAILED_STATUS,
+  SAVING_STATUS,
+} from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -17,6 +21,7 @@ import {
 } from 'features/database-editor/components/dataset';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
 import { arraysEqual } from 'utils';
+import { DatabaseChangesList } from 'features/database-editor/components/changes-list';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState({ message: null, status: null });
@@ -106,6 +111,16 @@ const DatabaseContent = ({ message }) => {
     (state) => state.resetDatabaseState,
   );
 
+  const saveDatabaseState = useDatabaseEditorStore(
+    (state) => state.saveDatabaseState,
+  );
+
+  const changes = useDatabaseEditorStore((state) => state.changes);
+  const handleSave = async () => {
+    if (status === SAVING_STATUS) return;
+    await saveDatabaseState();
+  };
+
   useEffect(() => {
     const init = async () => {
       await initDatabaseState();
@@ -119,23 +134,28 @@ const DatabaseContent = ({ message }) => {
     };
   }, [initDatabaseState, fetchDatabaseSchema, resetDatabaseState]);
 
-  if (status === 'fetching')
+  if (status === FETCHING_STATUS)
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
         tip="Reading Databases..."
       />
     );
-  if (status === 'failed') return <AsyncError error={error} />;
-
-  if (status !== 'success') return null;
+  if (status === FAILED_STATUS) return <AsyncError error={error} />;
 
   return (
-    <div className="cea-database-editor-content">
-      {/* <DatabaseTopMenu /> */}
-      {message && <DatabaseEditorErrorMessage error={message} />}
-      <DatabaseContainer />
-    </div>
+    <Spin
+      tip="Saving Databases..."
+      spinning={status === SAVING_STATUS}
+      indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+    >
+      <div className="cea-database-editor-content">
+        {/* <DatabaseTopMenu /> */}
+        {message && <DatabaseEditorErrorMessage error={message} />}
+        <DatabaseChangesList changes={changes} onSave={handleSave} />
+        <DatabaseContainer />
+      </div>
+    </Spin>
   );
 };
 

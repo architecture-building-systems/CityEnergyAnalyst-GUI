@@ -62,16 +62,16 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
         >
           <div>Properties</div>
           <UseTypePropertiesDataset
-            key={[...dataKey, 'use_types'].join('-')}
             dataKey={[...dataKey, 'use_types']}
+            useType={activeUseType}
             data={selectedUseTypeData ? [selectedUseTypeData] : null}
           />
 
           <div>Schedules</div>
           <UseTypePropertiesSchedulesDataset
             name={'Monthly Multipliers'}
-            key={[...dataKey, 'schedules', 'monthly_multipliers'].join('-')}
             dataKey={[...dataKey, 'schedules', 'monthly_multipliers']}
+            useType={activeUseType}
             data={selectedMultiplierData ? [selectedMultiplierData] : null}
           />
           <UseTypeSchedules
@@ -84,15 +84,37 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
   );
 };
 
-const UseTypePropertiesDataset = ({ dataKey, data }) => {
+const UseTypePropertiesDataset = ({ dataKey, data, useType }) => {
+  // Have to fetch using dataKey without the useType in dataKey
   const schema = useDatabaseSchema(dataKey);
-  return <TableDataset dataKey={dataKey} data={data} schema={schema} />;
+  const _dataKey = [...dataKey, useType];
+  return (
+    <TableDataset
+      key={_dataKey.join('_')}
+      dataKey={_dataKey}
+      data={data}
+      schema={schema}
+    />
+  );
 };
 
-const UseTypePropertiesSchedulesDataset = ({ dataKey, data, name }) => {
+const UseTypePropertiesSchedulesDataset = ({
+  dataKey,
+  data,
+  name,
+  useType,
+}) => {
+  // Have to fetch using dataKey without the useType in dataKey
   const schema = useDatabaseSchema(dataKey);
+  const _dataKey = [...dataKey, useType];
   return (
-    <TableDataset dataKey={dataKey} name={name} data={data} schema={schema} />
+    <TableDataset
+      key={_dataKey.join('_')}
+      dataKey={_dataKey}
+      name={name}
+      data={data}
+      schema={schema}
+    />
   );
 };
 

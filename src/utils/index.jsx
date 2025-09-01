@@ -42,3 +42,9 @@ export const arraysEqual = (a, b) =>
   Array.isArray(b) &&
   a?.length === b?.length &&
   a?.every((val, i) => val === b[i]);
+
+export const arrayStartsWith = (array, prefix) =>
+  Array.isArray(array) &&
+  Array.isArray(prefix) &&
+  array.length >= prefix.length &&
+  array.slice(0, prefix.length).every((val, i) => val === prefix[i]);
