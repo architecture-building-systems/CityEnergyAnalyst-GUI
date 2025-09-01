@@ -17,6 +17,7 @@ import './RecentProjects.css';
 import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
 import NewProjectModal from 'features/project/components/modals/NewProjectModal';
 import { useUserInfo } from 'stores/userStore';
+import { useProjectLimits } from 'stores/serverStore';
 
 const { Title, Text } = Typography;
 
@@ -92,6 +93,10 @@ const RecentProjects = () => {
   const removeProjectFromLocalStorage = useRemoveProjectFromLocalStorage();
 
   const [choices] = useFetchProjectChoices();
+  const { limit, count } = useProjectLimits();
+  const exceeded = limit && count <= 0;
+
+  console.log(choices, limit, count, exceeded);
 
   const handleProjectSelect = useCallback(
     async (projectPath) => {
@@ -133,10 +138,12 @@ const RecentProjects = () => {
           {choices?.length > 0 && (
             <OpenProjectButton onSuccess={handleProjectSelect} />
           )}
-          <div style={{ display: 'flex', gap: 12 }}>
-            <LoadExampleButton onClick={handleProjectSelect} />
-            <NewProjectButton onSuccess={handleProjectSelect} />
-          </div>
+          {choices !== null && !exceeded && (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <LoadExampleButton onClick={handleProjectSelect} />
+              <NewProjectButton onSuccess={handleProjectSelect} />
+            </div>
+          )}
         </div>
       </div>
     );
