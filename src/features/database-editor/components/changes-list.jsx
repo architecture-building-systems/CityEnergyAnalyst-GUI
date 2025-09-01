@@ -136,7 +136,7 @@ export const DatabaseChangesList = ({ changes, onSave }) => {
           return (
             <li key={index} style={{ display: 'flex', gap: 4 }}>
               <span>{dataKey.join(' > ')}</span>
-              {_index && (
+              {_index !== undefined && _index !== null && (
                 <>
                   {' > '}
                   <b>{_index}</b>
