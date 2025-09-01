@@ -117,6 +117,7 @@ const DatabaseContent = ({ message }) => {
 
   const changes = useDatabaseEditorStore((state) => state.changes);
   const handleSave = async () => {
+    if (status === SAVING_STATUS) return;
     await saveDatabaseState();
   };
 
