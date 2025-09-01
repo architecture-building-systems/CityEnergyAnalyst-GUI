@@ -30,6 +30,7 @@ import {
   useResetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
+import { isElectron } from 'utils/electron';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -191,12 +192,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   />
                 </div>
 
-                {`${import.meta.env.VITE_AUTH_URL}` && (
+                {`${import.meta.env.VITE_AUTH_URL}` || !isElectron() ? (
                   // FIXME: Login disabled for electron
                   <div className="cea-overlay-card">
                     <UserInfo />
                   </div>
-                )}
+                ) : null}
 
                 <InputChangesCard />
               </div>
