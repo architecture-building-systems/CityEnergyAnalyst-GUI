@@ -57,7 +57,7 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
       await fetchProject(project);
       setConfirmLoading(false);
       setVisible(false);
-      onSuccess?.(project);
+      await onSuccess?.(project);
 
       form.resetFields();
     } catch (e) {
