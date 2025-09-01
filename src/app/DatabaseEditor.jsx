@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Spin } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
@@ -143,12 +143,18 @@ const DatabaseContent = ({ message }) => {
   if (status === FAILED_STATUS) return <AsyncError error={error} />;
 
   return (
-    <div className="cea-database-editor-content">
-      {/* <DatabaseTopMenu /> */}
-      {message && <DatabaseEditorErrorMessage error={message} />}
-      <DatabaseChangesList changes={changes} onSave={handleSave} />
-      <DatabaseContainer />
-    </div>
+    <Spin
+      tip="Saving Databases..."
+      spinning={status === SAVING_STATUS}
+      indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+    >
+      <div className="cea-database-editor-content">
+        {/* <DatabaseTopMenu /> */}
+        {message && <DatabaseEditorErrorMessage error={message} />}
+        <DatabaseChangesList changes={changes} onSave={handleSave} />
+        <DatabaseContainer />
+      </div>
+    </Spin>
   );
 };
 
