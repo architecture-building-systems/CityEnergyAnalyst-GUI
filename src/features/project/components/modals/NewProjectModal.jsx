@@ -38,6 +38,10 @@ const NewProjectModal = ({ visible, setVisible, onSuccess }) => {
     [info?.project],
   );
 
+  // Fetch project info once on mount
+  useEffect(() => {
+    fetchInfo();
+  }, []);
   useEffect(() => {
     if (visible) fetchInfo();
   }, [visible]);
