@@ -163,7 +163,9 @@ const RecentProjects = () => {
           )}
         />
       </div>
-      <OpenProjectButton onSuccess={handleProjectSelect} />
+      {choices?.length > 0 && (
+        <OpenProjectButton onSuccess={handleProjectSelect} />
+      )}
     </div>
   );
 };
