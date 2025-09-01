@@ -4,7 +4,6 @@ import {
   FolderOpenOutlined,
   HistoryOutlined,
   PlusCircleOutlined,
-  ProductOutlined,
 } from '@ant-design/icons';
 import {
   useRemoveProjectFromLocalStorage,
@@ -18,6 +17,7 @@ import OpenProjectModal from 'features/project/components/modals/OpenProjectModa
 import NewProjectModal from 'features/project/components/modals/NewProjectModal';
 import { useUserInfo } from 'stores/userStore';
 import { useProjectLimits } from 'stores/serverStore';
+import { LoadExampleButton } from './load-example';
 
 const { Title, Text } = Typography;
 
@@ -61,21 +61,6 @@ const NewProjectButton = ({ onSuccess }) => {
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
-    </>
-  );
-};
-
-const LoadExampleButton = ({ onClick }) => {
-  return (
-    <>
-      <Button
-        icon={<ProductOutlined />}
-        className="open-new-project-btn"
-        onClick={onClick}
-        style={{ flex: 1 }}
-      >
-        Load Example Project
-      </Button>
     </>
   );
 };
@@ -140,7 +125,7 @@ const RecentProjects = () => {
           )}
           {choices !== null && !exceeded && (
             <div style={{ display: 'flex', gap: 12 }}>
-              <LoadExampleButton onClick={handleProjectSelect} />
+              <LoadExampleButton />
               <NewProjectButton onSuccess={handleProjectSelect} />
             </div>
           )}
