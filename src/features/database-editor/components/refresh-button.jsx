@@ -13,11 +13,18 @@ export const RefreshDatabaseButton = () => {
   const resetDatabaseChanges = useDatabaseEditorStore(
     (state) => state.resetDatabaseChanges,
   );
+  const changes = useDatabaseEditorStore((state) => state.changes);
 
   if ([SAVING_STATUS, FETCHING_STATUS].includes(status)) return null;
 
   const refreshDatabase = async () => {
-    initDatabaseState();
+    if ((changes?.length ?? 0) > 0) {
+      const ok = window.confirm(
+        'You have unsaved changes that will be lost. Reload anyway?',
+      );
+      if (!ok) return;
+    }
+    await initDatabaseState();
     resetDatabaseChanges();
   };
 
