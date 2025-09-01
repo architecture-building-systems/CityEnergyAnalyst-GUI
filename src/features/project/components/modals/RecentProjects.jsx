@@ -4,6 +4,7 @@ import {
   FolderOpenOutlined,
   HistoryOutlined,
   PlusCircleOutlined,
+  ProductOutlined,
 } from '@ant-design/icons';
 import {
   useRemoveProjectFromLocalStorage,
@@ -49,6 +50,7 @@ const NewProjectButton = ({ onSuccess }) => {
         icon={<PlusCircleOutlined />}
         className="open-new-project-btn"
         onClick={() => setVisible(true)}
+        style={{ flex: 1 }}
       >
         New Project
       </Button>
@@ -57,6 +59,21 @@ const NewProjectButton = ({ onSuccess }) => {
         setVisible={setVisible}
         onSuccess={onSuccess}
       />
+    </>
+  );
+};
+
+const LoadExampleButton = ({ onClick }) => {
+  return (
+    <>
+      <Button
+        icon={<ProductOutlined />}
+        className="open-new-project-btn"
+        onClick={onClick}
+        style={{ flex: 1 }}
+      >
+        Load Example Project
+      </Button>
     </>
   );
 };
@@ -111,7 +128,10 @@ const RecentProjects = () => {
           }}
         >
           <OpenProjectButton onSuccess={handleProjectSelect} />
-          <NewProjectButton onSuccess={handleProjectSelect} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <LoadExampleButton onClick={handleProjectSelect} />
+            <NewProjectButton onSuccess={handleProjectSelect} />
+          </div>
         </div>
       </div>
     );
