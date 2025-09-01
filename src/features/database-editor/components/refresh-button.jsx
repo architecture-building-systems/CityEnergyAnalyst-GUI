@@ -1,4 +1,7 @@
-import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
+import useDatabaseEditorStore, {
+  FETCHING_STATUS,
+  SAVING_STATUS,
+} from 'features/database-editor/stores/databaseEditorStore';
 import { Button, Tooltip } from 'antd';
 import { RefreshIcon } from 'assets/icons';
 
@@ -11,7 +14,7 @@ export const RefreshDatabaseButton = () => {
     (state) => state.resetDatabaseChanges,
   );
 
-  if (status === 'fetching') return null;
+  if ([SAVING_STATUS, FETCHING_STATUS].includes(status)) return null;
 
   const refreshDatabase = async () => {
     initDatabaseState();
