@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 
 export const TableColumnSchema = ({ columns, columnSchema }) => {
-  if (!columnSchema && !Array.isArray(columns)) return null;
+  if (!Array.isArray(columns)) return null;
 
   return (
     <details style={{ fontSize: 12 }}>
