@@ -8,10 +8,10 @@ const { Option } = Select;
 
 const OnboardingPage = ({ onComplete }) => {
   const [formData, setFormData] = useState({
-    primaryReason: '',
-    role: '',
+    primaryReason: null,
+    role: null,
     currentTools: [],
-    hearAbout: '',
+    hearAbout: null,
   });
 
   const primaryReasons = [
