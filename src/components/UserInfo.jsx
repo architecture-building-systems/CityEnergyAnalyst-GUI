@@ -39,6 +39,7 @@ const UserInfoCard = () => {
   if (!userInfo) return null;
 
   const displayName = userInfo?.display_name || userInfo?.primary_email;
+  const proUser = userInfo?.pro_user;
 
   return (
     <div
@@ -73,7 +74,10 @@ const UserInfoCard = () => {
           >
             {displayName?.[0]}
           </Avatar>
-          <b>{displayName}</b>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <b>{displayName}</b>
+            {proUser ? 'Pro User' : 'Free User'}
+          </div>
         </div>
         <LogoutButton />
       </div>
