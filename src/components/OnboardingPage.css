@@ -1,6 +1,5 @@
 .onboarding-container {
   height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,11 +19,11 @@
 }
 
 .onboarding-form-card {
-  background: #1e1e1e;
-  border: 1px solid #333;
+  background: #ffffff;
+  border: 1px solid #eee;
   border-radius: 12px;
   padding: 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .onboarding-form-card .ant-card-body {
@@ -36,7 +35,7 @@
 }
 
 .onboarding-title {
-  color: #ffffff !important;
+  color: #1470af !important;
   font-size: 28px !important;
   font-weight: 600 !important;
   line-height: 1.3 !important;
@@ -56,21 +55,21 @@
 }
 
 .form-label {
-  color: #ffffff !important;
+  color: #333333 !important;
   font-size: 16px !important;
   font-weight: 500 !important;
   line-height: 1.4 !important;
 }
 
 .form-sublabel {
-  color: #a0a0a0 !important;
+  color: #666666 !important;
   font-size: 14px !important;
   margin-top: -4px;
 }
 
 .form-select {
-  background: #2a2a2a !important;
-  border: 1px solid #444 !important;
+  background: #ffffff !important;
+  border: 1px solid #d9d9d9 !important;
   border-radius: 6px;
   height: 44px;
 }
@@ -78,23 +77,23 @@
 .form-select .ant-select-selector {
   background: transparent !important;
   border: none !important;
-  color: #ffffff !important;
+  color: #333333 !important;
   padding: 0 12px !important;
   height: 42px !important;
 }
 
 .form-select .ant-select-selection-placeholder {
-  color: #888 !important;
+  color: #999999 !important;
   line-height: 42px !important;
 }
 
 .form-select .ant-select-arrow {
-  color: #888 !important;
+  color: #666666 !important;
 }
 
 .checkbox-grid {
-  background: #2a2a2a;
-  border: 1px solid #444;
+  background: #f9f9f9;
+  border: 1px solid #d9d9d9;
   border-radius: 6px;
   padding: 16px;
   max-height: 200px;
@@ -109,7 +108,7 @@
 }
 
 .tool-checkbox {
-  color: #ffffff !important;
+  color: #333333 !important;
   font-size: 14px;
   margin: 0 !important;
 
@@ -118,8 +117,8 @@
 }
 
 .tool-checkbox .ant-checkbox-inner {
-  background: #3a3a3a;
-  border-color: #555;
+  background: #ffffff;
+  border-color: #d9d9d9;
 }
 
 .tool-checkbox .ant-checkbox-checked .ant-checkbox-inner {
@@ -132,8 +131,8 @@
 }
 
 .onboarding-submit-btn {
-  background: #4f46e5 !important;
-  border-color: #4f46e5 !important;
+  background: #1470af !important;
+  border-color: #1470af !important;
   border-radius: 6px;
   height: 48px;
   font-size: 16px !important;
@@ -142,18 +141,18 @@
 }
 
 .onboarding-submit-btn:hover {
-  background: #4338ca !important;
-  border-color: #4338ca !important;
+  background: #0f5d8f !important;
+  border-color: #0f5d8f !important;
 }
 
 .onboarding-submit-btn:disabled {
-  background: #555 !important;
-  border-color: #555 !important;
-  color: #888 !important;
+  background: #cccccc !important;
+  border-color: #cccccc !important;
+  color: #888888 !important;
 }
 
 .privacy-text {
-  color: #a0a0a0 !important;
+  color: #666666 !important;
   font-size: 12px !important;
   line-height: 1.5 !important;
   text-align: left;
@@ -161,7 +160,7 @@
 }
 
 .privacy-text a {
-  color: #60a5fa;
+  color: #1470af;
   text-decoration: none;
 }
 
@@ -177,103 +176,151 @@
   min-height: 400px;
 }
 
-.cea-logo-graphic {
-  position: relative;
-  width: 300px;
-  height: 300px;
+.cea-logo-container {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
-.logo-shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
-  opacity: 0.8;
+.cea-logo-svg {
+  max-width: 300px;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
+}
+
+/* Animate different color groups of the CEA logo */
+.cea-logo-svg #purple {
+  animation: fadeInUp 2s ease-out 0.2s both;
+}
+
+.cea-logo-svg #red {
+  animation: fadeInUp 2s ease-out 0.4s both;
+}
+
+.cea-logo-svg #blue {
+  animation: fadeInUp 2s ease-out 0.6s both;
+}
+
+.cea-logo-svg #yellow {
+  animation: fadeInUp 2s ease-out 0.8s both;
+}
+
+.cea-logo-svg #green {
+  animation: fadeInUp 2s ease-out 1s both;
+}
+
+.cea-logo-svg #brown {
+  animation: fadeInUp 2s ease-out 1.2s both;
+}
+
+.cea-logo-svg #white {
+  animation: fadeInUp 2s ease-out 0.4s both;
+}
+
+/* Add a subtle floating animation to the entire logo */
+.cea-logo-svg {
   animation: float 6s ease-in-out infinite;
 }
 
-.logo-shape.shape-1 {
-  width: 120px;
-  height: 120px;
-  top: 20px;
-  left: 20px;
-  animation-delay: 0s;
+/* Hover effect for interactive feel */
+.cea-logo-svg:hover {
+  animation: float 2s ease-in-out infinite;
 }
 
-.logo-shape.shape-2 {
-  width: 80px;
-  height: 80px;
-  top: 40px;
-  right: 60px;
-  animation-delay: 1s;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+.cea-logo-svg:hover #purple {
+  animation: pulse 2s ease-in-out infinite 0.1s;
 }
 
-.logo-shape.shape-3 {
-  width: 60px;
-  height: 60px;
-  bottom: 80px;
-  left: 40px;
-  animation-delay: 2s;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+.cea-logo-svg:hover #red {
+  animation: pulse 2s ease-in-out infinite 0.2s;
 }
 
-.logo-shape.shape-4 {
-  width: 100px;
-  height: 100px;
-  bottom: 20px;
-  right: 20px;
-  animation-delay: 3s;
-  background: linear-gradient(135deg, #06d6a0, #048a81);
+.cea-logo-svg:hover #blue {
+  animation: pulse 2s ease-in-out infinite 0.3s;
 }
 
-.logo-shape.shape-5 {
-  width: 40px;
-  height: 40px;
-  top: 120px;
-  left: 140px;
-  animation-delay: 4s;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+.cea-logo-svg:hover #yellow {
+  animation: pulse 2s ease-in-out infinite 0.4s;
 }
 
-.logo-shape.shape-6 {
-  width: 90px;
-  height: 90px;
-  top: 160px;
-  right: 100px;
-  animation-delay: 5s;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+.cea-logo-svg:hover #green {
+  animation: pulse 2s ease-in-out infinite 0.5s;
+}
+
+.cea-logo-svg:hover #brown {
+  animation: pulse 2s ease-in-out infinite 0.6s;
+}
+
+.cea-logo-svg:hover #white {
+  animation: pulse 2s ease-in-out infinite 0.8s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes float {
   0%,
   100% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0px);
   }
   50% {
-    transform: translateY(-10px) scale(1.05);
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
   }
 }
 
 /* Dropdown styles */
 .ant-select-dropdown {
-  background: #2a2a2a !important;
-  border: 1px solid #444 !important;
+  background: #ffffff !important;
+  border: 1px solid #d9d9d9 !important;
   border-radius: 6px !important;
 }
 
 .ant-select-item {
-  color: #ffffff !important;
+  color: #333333 !important;
 }
 
 .ant-select-item-option-selected {
   background: #1470af !important;
+  color: #ffffff !important;
 }
 
 .ant-select-item:hover {
-  background: #3a3a3a !important;
+  background: #f5f5f5 !important;
 }
 
 /* Scrollbar styles */
@@ -282,17 +329,17 @@
 }
 
 .checkbox-grid::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #f0f0f0;
   border-radius: 4px;
 }
 
 .checkbox-grid::-webkit-scrollbar-thumb {
-  background: #555;
+  background: #cccccc;
   border-radius: 4px;
 }
 
 .checkbox-grid::-webkit-scrollbar-thumb:hover {
-  background: #666;
+  background: #999999;
 }
 
 /* Responsive design */
@@ -308,51 +355,9 @@
     min-height: 200px;
   }
 
-  .cea-logo-graphic {
-    width: 200px;
-    height: 200px;
-  }
-
-  .logo-shape.shape-1 {
-    width: 80px;
-    height: 80px;
-    top: 10px;
-    left: 10px;
-  }
-
-  .logo-shape.shape-2 {
-    width: 60px;
-    height: 60px;
-    top: 30px;
-    right: 40px;
-  }
-
-  .logo-shape.shape-3 {
-    width: 40px;
-    height: 40px;
-    bottom: 60px;
-    left: 30px;
-  }
-
-  .logo-shape.shape-4 {
-    width: 70px;
-    height: 70px;
-    bottom: 10px;
-    right: 10px;
-  }
-
-  .logo-shape.shape-5 {
-    width: 30px;
-    height: 30px;
-    top: 80px;
-    left: 90px;
-  }
-
-  .logo-shape.shape-6 {
-    width: 60px;
-    height: 60px;
-    top: 110px;
-    right: 70px;
+  .cea-logo-svg {
+    max-width: 200px;
+    max-height: 200px;
   }
 }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Select, Checkbox, Typography, Card } from 'antd';
+import CeaLogoSVG from 'assets/cea-logo.svg';
 import './OnboardingPage.css';
 
 const { Title, Text } = Typography;
@@ -189,13 +190,8 @@ const OnboardingPage = ({ onComplete }) => {
         </Card>
 
         <div className="onboarding-visual">
-          <div className="cea-logo-graphic">
-            <div className="logo-shape shape-1"></div>
-            <div className="logo-shape shape-2"></div>
-            <div className="logo-shape shape-3"></div>
-            <div className="logo-shape shape-4"></div>
-            <div className="logo-shape shape-5"></div>
-            <div className="logo-shape shape-6"></div>
+          <div className="cea-logo-container">
+            <CeaLogoSVG className="cea-logo-svg" />
           </div>
         </div>
       </div>
