@@ -61,7 +61,7 @@ const useCheckServerStatus = () => {
 const HomePageContent = () => {
   const userInfo = useUserInfo();
   const initUserInfo = useInitUserInfo();
-  const fetchServerLiimts = useFetchServerLimits();
+  const fetchServerLimits = useFetchServerLimits();
 
   const { push } = useNavigationStore();
 
@@ -79,7 +79,7 @@ const HomePageContent = () => {
 
   useEffect(() => {
     initUserInfo();
-    fetchServerLiimts();
+    fetchServerLimits();
   }, []);
 
   useInitProjectStore();
