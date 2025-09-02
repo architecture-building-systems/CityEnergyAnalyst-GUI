@@ -7,5 +7,6 @@
   "PROJECT_OVERVIEW": "/overview",
   "CREATE_SCENARIO": "/create-scenario",
   "SPLASH": "/splash",
-  "UPLOAD_DOWNLOAD": "/upload-download"
+  "UPLOAD_DOWNLOAD": "/upload-download",
+  "ONBOARDING": "/onboarding"
 }

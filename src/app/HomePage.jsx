@@ -24,6 +24,7 @@ const CreateScenario = lazy(() => import('app/CreateScenario'));
 const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
+const OnboardingPage = lazy(() => import('components/OnboardingPage'));
 
 const useCheckServerStatus = () => {
   const [isServerUp, setIsServerUp] = useState(false);
@@ -75,6 +76,14 @@ const HomePageContent = () => {
   return (
     <ErrorBoundary>
       <Routes>
+        <Route
+          path={routes.ONBOARDING}
+          element={
+            <Suspense fallback={<Loading />}>
+              <OnboardingPage />
+            </Suspense>
+          }
+        />
         <Route
           path={routes.CREATE_SCENARIO}
           element={
