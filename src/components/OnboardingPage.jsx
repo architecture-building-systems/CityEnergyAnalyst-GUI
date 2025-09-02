@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import { Button, Select, Checkbox, Typography, Card } from 'antd';
+import { Button, Select, Checkbox, Typography, Card, message } from 'antd';
 import CeaLogoSVG from 'assets/cea-logo.svg';
+import { apiClient } from 'lib/api/axios';
+import routes from 'constants/routes.json';
+import useNavigationStore from 'stores/navigationStore';
+import { useInitUserInfo } from 'stores/userStore';
 import './OnboardingPage.css';
 
 const { Title, Text } = Typography;
@@ -12,7 +16,11 @@ const OnboardingPage = ({ onComplete }) => {
     role: null,
     currentTools: [],
     hearAbout: null,
+    code: null,
   });
+  const [loading, setLoading] = useState(false);
+  const { push } = useNavigationStore();
+  const initUserInfo = useInitUserInfo();
 
   const primaryReasons = [
     'Energy system analysis',
@@ -69,9 +77,34 @@ const OnboardingPage = ({ onComplete }) => {
     setFormData((prev) => ({ ...prev, currentTools: checkedValues }));
   };
 
-  const handleSubmit = () => {
-    console.log('Onboarding data:', formData);
-    onComplete?.(formData);
+  const handleSubmit = async () => {
+    setLoading(true);
+
+    try {
+      await apiClient.post('/user/onboarding', {
+        primaryReason: formData.primaryReason,
+        role: formData.role,
+        currentTools: formData.currentTools,
+        hearAbout: formData.hearAbout,
+        code: formData.code,
+      });
+
+      message.success('Welcome to City Energy Analyst!');
+
+      // Refresh user info to get updated onboarded status
+      await initUserInfo();
+
+      // Navigate to main application
+      push(routes.PROJECT);
+
+      // Call optional completion callback
+      onComplete?.(formData);
+    } catch (error) {
+      console.error('Onboarding submission failed:', error);
+      message.error('Failed to complete onboarding. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isFormValid = formData.primaryReason && formData.role;
@@ -169,9 +202,10 @@ const OnboardingPage = ({ onComplete }) => {
               className="onboarding-submit-btn"
               onClick={handleSubmit}
               disabled={!isFormValid}
+              loading={loading}
               block
             >
-              Next: Get Started
+              {loading ? 'Setting up your account...' : 'Next: Get Started'}
             </Button>
 
             <Text className="privacy-text">
