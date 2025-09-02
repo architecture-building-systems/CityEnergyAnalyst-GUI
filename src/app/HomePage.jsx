@@ -66,9 +66,14 @@ const HomePageContent = () => {
   const { push } = useNavigationStore();
 
   useEffect(() => {
-    if (userInfo !== null && !userInfo?.onboarded) {
+    if (userInfo == null) return;
+
+    if (!userInfo?.onboarded) {
       // Redirect to onboarding page
       push(routes.ONBOARDING);
+    } else if (window.location.pathname === routes.ONBOARDING) {
+      // Redirect to project page
+      push(routes.PROJECT);
     }
   }, [userInfo]);
 
