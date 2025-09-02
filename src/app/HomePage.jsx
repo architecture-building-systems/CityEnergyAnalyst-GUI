@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, Navigate } from 'react-router';
 
 import routes from 'constants/routes.json';
 import useNavigationStore from 'stores/navigationStore';
@@ -153,6 +153,8 @@ const HomePageContent = () => {
             </Suspense>
           }
         />
+        {/* Catch-all route - redirect to root/project page */}
+        <Route path="*" element={<Navigate to={routes.PROJECT} replace />} />
       </Routes>
     </ErrorBoundary>
   );
