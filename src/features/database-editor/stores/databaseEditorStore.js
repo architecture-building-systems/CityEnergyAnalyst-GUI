@@ -67,6 +67,9 @@ const useDatabaseEditorStore = create((set) => ({
       const resp = await apiClient.put('/api/inputs/databases', data);
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw error;
+      }
       const err = error.response || error;
       set({ status: { status: FAILED_STATUS, error: err } });
     }

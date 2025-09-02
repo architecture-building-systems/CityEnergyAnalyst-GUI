@@ -22,6 +22,7 @@ import {
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
 import { arraysEqual } from 'utils';
 import { DatabaseChangesList } from 'features/database-editor/components/changes-list';
+import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState({ message: null, status: null });
@@ -114,11 +115,16 @@ const DatabaseContent = ({ message }) => {
   const saveDatabaseState = useDatabaseEditorStore(
     (state) => state.saveDatabaseState,
   );
+  const setShowLoginModal = useSetShowLoginModal();
 
   const changes = useDatabaseEditorStore((state) => state.changes);
   const handleSave = async () => {
     if (status === SAVING_STATUS) return;
-    await saveDatabaseState();
+    try {
+      await saveDatabaseState();
+    } catch (error) {
+      if (error.response.status === 401) setShowLoginModal(true);
+    }
   };
 
   useEffect(() => {
