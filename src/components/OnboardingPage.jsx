@@ -16,7 +16,6 @@ import { useInitUserInfo } from 'stores/userStore';
 import './OnboardingPage.css';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 const OnboardingPage = ({ onComplete }) => {
   const [formData, setFormData] = useState({
@@ -147,13 +146,11 @@ const OnboardingPage = ({ onComplete }) => {
                 className="form-select"
                 value={formData.primaryReason}
                 onChange={handleSelectChange('primaryReason')}
-              >
-                {primaryReasons.map((reason) => (
-                  <Option key={reason} value={reason}>
-                    {reason}
-                  </Option>
-                ))}
-              </Select>
+                options={primaryReasons.map((reason) => ({
+                  label: reason,
+                  value: reason,
+                }))}
+              />
             </div>
 
             <div className="form-field">
@@ -165,13 +162,11 @@ const OnboardingPage = ({ onComplete }) => {
                 className="form-select"
                 value={formData.role}
                 onChange={handleSelectChange('role')}
-              >
-                {roles.map((role) => (
-                  <Option key={role} value={role}>
-                    {role}
-                  </Option>
-                ))}
-              </Select>
+                options={roles.map((role) => ({
+                  label: role,
+                  value: role,
+                }))}
+              />
             </div>
 
             <div className="form-field">
@@ -203,13 +198,11 @@ const OnboardingPage = ({ onComplete }) => {
                 value={formData.hearAbout}
                 onChange={handleSelectChange('hearAbout')}
                 allowClear
-              >
-                {hearAboutOptions.map((option) => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))}
-              </Select>
+                options={hearAboutOptions.map((option) => ({
+                  label: option,
+                  value: option,
+                }))}
+              />
             </div>
 
             <div className="form-field">
