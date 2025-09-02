@@ -17,6 +17,7 @@ import Loading from 'components/Loading';
 import { apiClient } from 'lib/api/axios';
 import { useInitUserInfo, useUserInfo } from 'stores/userStore';
 import { useFetchServerLimits } from 'stores/serverStore';
+import { isElectron } from 'utils/electron';
 
 // Route-level code splitting for better performance
 const Project = lazy(() => import('app/Project'));
@@ -66,7 +67,9 @@ const HomePageContent = () => {
   const { push } = useNavigationStore();
 
   useEffect(() => {
-    if (userInfo == null) return;
+    // Wait for userInfo to be loaded
+    // Also not fetch server limits if Electron
+    if (userInfo == null || isElectron()) return;
 
     if (!userInfo?.onboarded) {
       // Redirect to onboarding page
