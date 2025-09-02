@@ -88,6 +88,10 @@ const OnboardingPage = ({ onComplete }) => {
   const handleSubmit = async () => {
     setLoading(true);
 
+    message.config({
+      top: 120,
+    });
+
     try {
       await authClient.post('/api/user/onboarding', {
         primaryReason: formData.primaryReason,
@@ -97,7 +101,11 @@ const OnboardingPage = ({ onComplete }) => {
         code: formData.code,
       });
 
-      message.success('Welcome to City Energy Analyst!');
+      message.success(
+        <div>
+          <div>Welcome to City Energy Analyst!</div>
+        </div>,
+      );
 
       // Refresh user info to get updated onboarded status
       await initUserInfo();
