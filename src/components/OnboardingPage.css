@@ -68,31 +68,11 @@
 }
 
 .form-select {
-  background: #ffffff !important;
-  border: 1px solid #d9d9d9 !important;
   border-radius: 6px;
   height: 44px;
 }
 
-.form-select .ant-select-selector {
-  background: transparent !important;
-  border: none !important;
-  color: #333333 !important;
-  padding: 0 12px !important;
-  height: 42px !important;
-}
-
-.form-select .ant-select-selection-placeholder {
-  color: #999999 !important;
-  line-height: 42px !important;
-}
-
-.form-select .ant-select-arrow {
-  color: #666666 !important;
-}
-
 .checkbox-grid {
-  background: #f9f9f9;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
   padding: 16px;
@@ -107,48 +87,12 @@
   width: 100%;
 }
 
-.tool-checkbox {
-  color: #333333 !important;
-  font-size: 14px;
-  margin: 0 !important;
-
-  display: flex;
-  align-items: center;
-}
-
-.tool-checkbox .ant-checkbox-inner {
-  background: #ffffff;
-  border-color: #d9d9d9;
-}
-
-.tool-checkbox .ant-checkbox-checked .ant-checkbox-inner {
-  background: #1470af;
-  border-color: #1470af;
-}
-
-.tool-checkbox:hover .ant-checkbox-inner {
-  border-color: #1470af;
-}
-
 .onboarding-submit-btn {
-  background: #1470af !important;
-  border-color: #1470af !important;
   border-radius: 6px;
   height: 48px;
   font-size: 16px !important;
   font-weight: 600 !important;
   margin-top: 8px;
-}
-
-.onboarding-submit-btn:hover {
-  background: #0f5d8f !important;
-  border-color: #0f5d8f !important;
-}
-
-.onboarding-submit-btn:disabled {
-  background: #cccccc !important;
-  border-color: #cccccc !important;
-  color: #888888 !important;
 }
 
 .privacy-text {
@@ -304,11 +248,6 @@
 }
 
 /* Dropdown styles */
-.ant-select-dropdown {
-  background: #ffffff !important;
-  border: 1px solid #d9d9d9 !important;
-  border-radius: 6px !important;
-}
 
 .ant-select-item {
   color: #333333 !important;
@@ -317,10 +256,6 @@
 .ant-select-item-option-selected {
   background: #1470af !important;
   color: #ffffff !important;
-}
-
-.ant-select-item:hover {
-  background: #f5f5f5 !important;
 }
 
 /* Scrollbar styles */
