@@ -66,7 +66,7 @@ const HomePageContent = () => {
   const { push } = useNavigationStore();
 
   useEffect(() => {
-    if (!userInfo?.onboarded) {
+    if (userInfo !== null && !userInfo?.onboarded) {
       // Redirect to onboarding page
       push(routes.ONBOARDING);
     }
