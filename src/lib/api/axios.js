@@ -89,7 +89,22 @@ const addAuthInterceptor = (client, refreshUrl) => {
     async (config) => {
       const accessTokenString = getAccessTokenStringFromCookies();
       if (accessTokenString) {
-        const decodedString = JSON.parse(decodeURIComponent(accessTokenString));
+        let decodedString;
+        try {
+          decodedString = JSON.parse(decodeURIComponent(accessTokenString));
+        } catch (err) {
+          console.warn(
+            'Invalid auth cookie. Clearing and continuing unauthenticated.',
+            err,
+          );
+          const domain = getCookieDomain();
+          const domainPart =
+            domain && domain.includes('.') ? `; domain=${domain}` : '';
+          const isSecure = window.location.protocol === 'https:';
+          const securePart = isSecure ? '; Secure' : '';
+          document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC${domainPart}; path=/; SameSite=Lax${securePart}`;
+          return config;
+        }
         const refreshToken = decodedString[0];
         const accessToken = decodedString[1];
 
