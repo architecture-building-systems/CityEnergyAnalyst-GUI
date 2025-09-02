@@ -23,6 +23,7 @@ import { RefreshDatabaseButton } from 'features/database-editor/components/refre
 import { arraysEqual } from 'utils';
 import { DatabaseChangesList } from 'features/database-editor/components/changes-list';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
+import LoginModal from 'features/auth/components/Login/LoginModal';
 
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState({ message: null, status: null });
@@ -161,6 +162,7 @@ const DatabaseContent = ({ message }) => {
         <DatabaseChangesList changes={changes} onSave={handleSave} />
         <DatabaseContainer />
       </div>
+      <LoginModal />
     </Spin>
   );
 };
