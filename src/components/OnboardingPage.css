@@ -35,7 +35,7 @@
 }
 
 .onboarding-title {
-  color: #1470af !important;
+  color: #0c5a8a !important;
   font-size: 28px !important;
   font-weight: 600 !important;
   line-height: 1.3 !important;
@@ -55,14 +55,14 @@
 }
 
 .form-label {
-  color: #333333 !important;
+  color: #212121 !important;
   font-size: 16px !important;
   font-weight: 500 !important;
   line-height: 1.4 !important;
 }
 
 .form-sublabel {
-  color: #666666 !important;
+  color: #4a4a4a !important;
   font-size: 14px !important;
   margin-top: -4px;
 }
@@ -102,7 +102,7 @@
 }
 
 .privacy-text {
-  color: #666666 !important;
+  color: #4a4a4a !important;
   font-size: 12px !important;
   line-height: 1.5 !important;
   text-align: left;
