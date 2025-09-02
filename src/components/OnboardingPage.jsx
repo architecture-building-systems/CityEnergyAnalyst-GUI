@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Select, Checkbox, Typography, Card, message } from 'antd';
 import CeaLogoSVG from 'assets/cea-logo.svg';
-import { apiClient } from 'lib/api/axios';
+import { authClient } from 'lib/api/axios';
 import routes from 'constants/routes.json';
 import useNavigationStore from 'stores/navigationStore';
 import { useInitUserInfo } from 'stores/userStore';
@@ -81,7 +81,7 @@ const OnboardingPage = ({ onComplete }) => {
     setLoading(true);
 
     try {
-      await apiClient.post('/user/onboarding', {
+      await authClient.post('/api/user/onboarding', {
         primaryReason: formData.primaryReason,
         role: formData.role,
         currentTools: formData.currentTools,
