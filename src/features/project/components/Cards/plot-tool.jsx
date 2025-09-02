@@ -4,6 +4,8 @@ import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { iconMap, VIEW_PLOT_RESULTS } from 'features/plots/constants';
+import { useSetActiveMapLayer } from './MapLayersCard/store';
+import { RENEWABLE_ENERGY_POTENTIALS } from 'features/map/constants';
 
 const PlotChoices = ({ onSelected }) => {
   const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
@@ -32,11 +34,16 @@ const PlotChoices = ({ onSelected }) => {
 export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
+  const setActiveMapLayer = useSetActiveMapLayer();
 
   // FIXME: Hardcoded for now.
   const period = mapLayerParameters?.period;
   const panelTech = mapLayerParameters?.['technology'];
   const panelType = mapLayerParameters?.['panel-type'];
+
+  // Show renewable energy potentials layer for solar plots
+  if (script === 'plot-solar' && !panelTech)
+    setActiveMapLayer(RENEWABLE_ENERGY_POTENTIALS);
 
   useEffect(() => {
     const hour_start = ((period?.[0] ?? 1) - 1) * 24;
