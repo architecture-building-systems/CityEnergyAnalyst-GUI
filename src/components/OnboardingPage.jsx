@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Button, Select, Checkbox, Typography, Card, message } from 'antd';
+import {
+  Button,
+  Select,
+  Checkbox,
+  Typography,
+  Card,
+  message,
+  Input,
+} from 'antd';
 import CeaLogoSVG from 'assets/cea-logo.svg';
 import { authClient } from 'lib/api/axios';
 import routes from 'constants/routes.json';
@@ -194,6 +202,18 @@ const OnboardingPage = ({ onComplete }) => {
                   </Option>
                 ))}
               </Select>
+            </div>
+
+            <div className="form-field">
+              <Text className="form-label">Code (optional)</Text>
+              <Input
+                placeholder="Enter code if you have one"
+                className="form-input"
+                value={formData.code}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, code: e.target.value }))
+                }
+              />
             </div>
 
             <Button
