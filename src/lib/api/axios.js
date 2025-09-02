@@ -83,6 +83,7 @@ export const authClient = axios.create({
 });
 
 // Helper function for request interceptor logic
+let refreshPromise = null; // single-flight
 const addAuthInterceptor = (client, refreshUrl) => {
   client.interceptors.request.use(
     async (config) => {
@@ -97,13 +98,17 @@ const addAuthInterceptor = (client, refreshUrl) => {
 
         // Try to refresh token if near expiry
         if (isTokenExpiredOrCloseToExpiry(accessToken)) {
-          // FIXME: Queue request to refresh token
           try {
-            const response = await axios.post(
-              refreshUrl,
-              {},
-              { withCredentials: true },
-            );
+            if (!refreshPromise) {
+              refreshPromise = axios.post(
+                refreshUrl,
+                {},
+                { withCredentials: true },
+              );
+            }
+            const response = await refreshPromise.finally(() => {
+              refreshPromise = null;
+            });
 
             const newAccessToken = response.data?.access_token;
             if (!newAccessToken) {
@@ -112,14 +117,24 @@ const addAuthInterceptor = (client, refreshUrl) => {
               );
             }
 
+            const domain = getCookieDomain();
+            const domainPart =
+              domain && domain.includes('.') ? `; domain=${domain}` : '';
+            const isSecure = window.location.protocol === 'https:';
+            const securePart = isSecure ? '; Secure' : '';
             document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
               JSON.stringify([refreshToken, newAccessToken]),
-            )}; domain=${getCookieDomain()}; path=/`;
+            )}${domainPart}; path=/; SameSite=Lax${securePart}`;
             config.withCredentials = true;
           } catch (e) {
             // Assume token used is invalid or expired if status is 401 and remove cookie
-            if (e.response?.status == 401) {
-              document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${getCookieDomain()}; path=/`;
+            if (e.response?.status === 401) {
+              const domain = getCookieDomain();
+              const domainPart =
+                domain && domain.includes('.') ? `; domain=${domain}` : '';
+              const isSecure = window.location.protocol === 'https:';
+              const securePart = isSecure ? '; Secure' : '';
+              document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC${domainPart}; path=/; SameSite=Lax${securePart}`;
             }
             console.error(e);
           }
