@@ -75,11 +75,11 @@ const HomePageContent = () => {
       // Redirect to project page
       push(routes.PROJECT);
     }
+    fetchServerLimits();
   }, [userInfo]);
 
   useEffect(() => {
     initUserInfo();
-    fetchServerLimits();
   }, []);
 
   useInitProjectStore();
