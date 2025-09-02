@@ -118,29 +118,6 @@ const HomePageContent = () => {
             </Suspense>
           }
         />
-        {/* <Route
-          path={routes.DASHBOARD}
-          element={
-            <Suspense>
-              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
-                <div
-                  style={{
-                    height: '100%',
-                    overflow: 'auto',
-                    background: '#fff',
-                    borderRadius: 8,
-                    border: '1px solid #eee',
-
-                    padding: 12,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <Dashboard />
-                </div>
-              </Cardwrapper>
-            </Suspense>
-          }
-        /> */}
         <Route
           path={routes.DATABASE_EDITOR}
           element={
