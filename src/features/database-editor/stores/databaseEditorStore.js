@@ -68,6 +68,7 @@ const useDatabaseEditorStore = create((set) => ({
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } catch (error) {
       if (error.response?.status === 401) {
+        set({ status: { status: null } });
         throw error;
       }
       const err = error.response || error;
