@@ -10,11 +10,14 @@ import {
   useSaveProjectToLocalStorage,
   useProjectStore,
   useProjectLoading,
+  useFetchProjectChoices,
 } from 'features/project/stores/projectStore';
 import './RecentProjects.css';
 import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
 import NewProjectModal from 'features/project/components/modals/NewProjectModal';
 import { useUserInfo } from 'stores/userStore';
+import { useProjectLimits } from 'stores/serverStore';
+import { LoadExampleButton } from './load-example';
 
 const { Title, Text } = Typography;
 
@@ -49,6 +52,7 @@ const NewProjectButton = ({ onSuccess }) => {
         icon={<PlusCircleOutlined />}
         className="open-new-project-btn"
         onClick={() => setVisible(true)}
+        style={{ flex: 1 }}
       >
         New Project
       </Button>
@@ -72,6 +76,10 @@ const RecentProjects = () => {
   const userInfo = useUserInfo();
   const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
   const removeProjectFromLocalStorage = useRemoveProjectFromLocalStorage();
+
+  const [choices] = useFetchProjectChoices();
+  const { limit, count } = useProjectLimits();
+  const exceeded = limit && count <= 0;
 
   const handleProjectSelect = useCallback(
     async (projectPath) => {
@@ -101,10 +109,24 @@ const RecentProjects = () => {
           <Text type="secondary" className="empty-state-text">
             You haven't opened any projects yet.
           </Text>
-          <div style={{ display: 'flex', gap: 12 }}>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 12,
+            flexDirection: 'column',
+            width: '100%',
+          }}
+        >
+          {choices?.length > 0 && (
             <OpenProjectButton onSuccess={handleProjectSelect} />
-            <NewProjectButton onSuccess={handleProjectSelect} />
-          </div>
+          )}
+          {!exceeded && (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <LoadExampleButton />
+              <NewProjectButton onSuccess={handleProjectSelect} />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -131,7 +153,9 @@ const RecentProjects = () => {
           )}
         />
       </div>
-      <OpenProjectButton onSuccess={handleProjectSelect} />
+      {choices?.length > 0 && (
+        <OpenProjectButton onSuccess={handleProjectSelect} />
+      )}
     </div>
   );
 };

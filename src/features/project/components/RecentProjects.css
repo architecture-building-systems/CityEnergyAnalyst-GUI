@@ -44,6 +44,9 @@
   justify-content: center;
   padding: 30px;
   border-radius: 4px;
+  height: 100%;
+  overflow: auto;
+  user-select: none;
 }
 
 .empty-state-icon {
@@ -53,8 +56,4 @@
 
 .empty-state-text {
   margin-bottom: 20px;
-}
-
-.open-new-project-btn {
-  margin-top: 16px;
 }
