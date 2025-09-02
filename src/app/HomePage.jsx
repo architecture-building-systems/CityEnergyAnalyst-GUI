@@ -63,6 +63,15 @@ const HomePageContent = () => {
   const initUserInfo = useInitUserInfo();
   const fetchServerLiimts = useFetchServerLimits();
 
+  const { push } = useNavigationStore();
+
+  useEffect(() => {
+    if (!userInfo?.onboarded) {
+      // Redirect to onboarding page
+      push(routes.ONBOARDING);
+    }
+  }, [userInfo]);
+
   useEffect(() => {
     initUserInfo();
     fetchServerLiimts();
