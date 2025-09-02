@@ -84,10 +84,16 @@ const NewProjectModal = ({
 
   return (
     <Modal
-      title="Create new Project"
+      title={exampleProject ? 'Load Example Project' : 'Create new Project'}
       open={visible}
       width={800}
-      okText="Create"
+      okText={
+        exampleProject
+          ? confirmLoading
+            ? 'Fetching Example Project...'
+            : 'Load'
+          : 'Create'
+      }
       onOk={form.submit}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
