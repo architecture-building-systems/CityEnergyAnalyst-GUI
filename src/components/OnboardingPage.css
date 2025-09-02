@@ -67,9 +67,15 @@
   margin-top: -4px;
 }
 
+.form-input,
 .form-select {
   border-radius: 6px;
   height: 44px;
+}
+
+.tool-checkbox {
+  display: flex;
+  align-items: center;
 }
 
 .checkbox-grid {
