@@ -78,53 +78,70 @@ export const apiClient = axios.create({
   baseURL: `${import.meta.env.VITE_CEA_URL}`,
 });
 
-apiClient.interceptors.request.use(
-  async (config) => {
-    const accessTokenString = getAccessTokenStringFromCookies();
-    if (accessTokenString) {
-      const decodedString = JSON.parse(decodeURIComponent(accessTokenString));
-      const refreshToken = decodedString[0];
-      const accessToken = decodedString[1];
+export const authClient = axios.create({
+  baseURL: `${import.meta.env.VITE_AUTH_URL}`,
+});
 
-      // Ignore request if no access token is present
-      if (!accessToken) return config;
+// Helper function for request interceptor logic
+const addAuthInterceptor = (client, refreshUrl) => {
+  client.interceptors.request.use(
+    async (config) => {
+      const accessTokenString = getAccessTokenStringFromCookies();
+      if (accessTokenString) {
+        const decodedString = JSON.parse(decodeURIComponent(accessTokenString));
+        const refreshToken = decodedString[0];
+        const accessToken = decodedString[1];
 
-      // Try to refresh token if near expiry
-      if (isTokenExpiredOrCloseToExpiry(accessToken)) {
-        // FIXME: Queue request to refresh token
-        try {
-          const response = await axios.post(
-            `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
-            {},
-            { withCredentials: true },
-          );
+        // Ignore request if no access token is present
+        if (!accessToken) return config;
 
-          const newAccessToken = response.data?.access_token;
-          if (!newAccessToken) {
-            throw new Error(
-              'Failed to refresh access token: No access token returned',
+        // Try to refresh token if near expiry
+        if (isTokenExpiredOrCloseToExpiry(accessToken)) {
+          // FIXME: Queue request to refresh token
+          try {
+            const response = await axios.post(
+              refreshUrl,
+              {},
+              { withCredentials: true },
             );
-          }
 
-          document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
-            JSON.stringify([refreshToken, newAccessToken]),
-          )}; domain=${getCookieDomain()}; path=/`;
-          config.withCredentials = true;
-        } catch (e) {
-          // Assume token used is invalid or expired if status is 401 and remove cookie
-          if (e.response?.status == 401) {
-            document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${getCookieDomain()}; path=/`;
+            const newAccessToken = response.data?.access_token;
+            if (!newAccessToken) {
+              throw new Error(
+                'Failed to refresh access token: No access token returned',
+              );
+            }
+
+            document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
+              JSON.stringify([refreshToken, newAccessToken]),
+            )}; domain=${getCookieDomain()}; path=/`;
+            config.withCredentials = true;
+          } catch (e) {
+            // Assume token used is invalid or expired if status is 401 and remove cookie
+            if (e.response?.status == 401) {
+              document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${getCookieDomain()}; path=/`;
+            }
+            console.error(e);
           }
-          console.error(e);
+        } else {
+          // Attach access token to request if access token is valid
+          config.withCredentials = true;
         }
-      } else {
-        // Attach access token to request if access token is valid
-        config.withCredentials = true;
       }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    },
+  );
+};
+
+// Apply interceptors to both clients
+addAuthInterceptor(
+  apiClient,
+  `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
+);
+addAuthInterceptor(
+  authClient,
+  `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
 );
