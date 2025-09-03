@@ -49,21 +49,21 @@ const OnboardingPage = ({ onComplete }) => {
     'Other',
   ];
 
-  const tools = [
-    'EnergyPLAN',
-    'HOMER',
-    'RETScreen',
-    'IDA ICE',
-    'DesignBuilder',
-    'EnergyPlus',
-    'OpenStudio',
-    'TRNSYS',
-    'Modelica/Dymola',
-    'Excel/Spreadsheets',
-    'Python/R',
-    "I don't use energy analysis tools",
-    'Other',
-  ];
+  // const tools = [
+  //   'EnergyPLAN',
+  //   'HOMER',
+  //   'RETScreen',
+  //   'IDA ICE',
+  //   'DesignBuilder',
+  //   'EnergyPlus',
+  //   'OpenStudio',
+  //   'TRNSYS',
+  //   'Modelica/Dymola',
+  //   'Excel/Spreadsheets',
+  //   'Python/R',
+  //   "I don't use energy analysis tools",
+  //   'Other',
+  // ];
 
   const hearAboutOptions = [
     'Academic publication',
@@ -169,7 +169,7 @@ const OnboardingPage = ({ onComplete }) => {
               />
             </div>
 
-            <div className="form-field">
+            {/* <div className="form-field">
               <Text className="form-label">
                 Which energy analysis tools are you currently using?
               </Text>
@@ -186,7 +186,7 @@ const OnboardingPage = ({ onComplete }) => {
                   ))}
                 </Checkbox.Group>
               </div>
-            </div>
+            </div> */}
 
             <div className="form-field">
               <Text className="form-label">
