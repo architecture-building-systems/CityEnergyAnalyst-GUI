@@ -32,7 +32,7 @@ const OnboardingPage = ({ onComplete }) => {
   const primaryReasons = [
     'Energy system analysis',
     'Urban planning research',
-    'Building performance optimization',
+    'Building performance optimisation',
     'Sustainability assessment',
     'Academic research',
     'Policy development',
@@ -132,14 +132,14 @@ const OnboardingPage = ({ onComplete }) => {
             <Title level={3} className="onboarding-title">
               Help us better understand your
               <br />
-              research needs and use-cases
+              research needs and use cases
             </Title>
           </div>
 
           <div className="onboarding-form">
             <div className="form-field">
               <Text className="form-label">
-                What is your primary reason for using City Energy Analyst?
+                What is your primary reason for using CEA?
               </Text>
               <Select
                 placeholder="Select your primary use case"
@@ -155,7 +155,7 @@ const OnboardingPage = ({ onComplete }) => {
 
             <div className="form-field">
               <Text className="form-label">
-                What is your role within your organization?
+                What is your role within your organisation?
               </Text>
               <Select
                 placeholder="Select your role"
