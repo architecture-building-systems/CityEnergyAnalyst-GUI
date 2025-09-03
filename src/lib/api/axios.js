@@ -59,6 +59,21 @@ const getCookieDomain = () => {
   return hostname;
 };
 
+// Helper function to generate secure cookie attributes
+const getCookieSecurityAttributes = () => {
+  const domain = getCookieDomain();
+  const domainPart = domain && domain.includes('.') ? `; domain=${domain}` : '';
+  const isSecure = window.location.protocol === 'https:';
+  const securePart = isSecure ? '; Secure' : '';
+  return `${domainPart}; path=/; SameSite=Lax${securePart}`;
+};
+
+// Helper function to clear auth cookie
+const clearAuthCookie = () => {
+  const securityAttributes = getCookieSecurityAttributes();
+  document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC${securityAttributes}`;
+};
+
 function isTokenExpiredOrCloseToExpiry(token) {
   if (!token) return true;
 
@@ -97,12 +112,7 @@ const addAuthInterceptor = (client, refreshUrl) => {
             'Invalid auth cookie. Clearing and continuing unauthenticated.',
             err,
           );
-          const domain = getCookieDomain();
-          const domainPart =
-            domain && domain.includes('.') ? `; domain=${domain}` : '';
-          const isSecure = window.location.protocol === 'https:';
-          const securePart = isSecure ? '; Secure' : '';
-          document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC${domainPart}; path=/; SameSite=Lax${securePart}`;
+          clearAuthCookie();
           return config;
         }
         const refreshToken = decodedString[0];
@@ -132,24 +142,15 @@ const addAuthInterceptor = (client, refreshUrl) => {
               );
             }
 
-            const domain = getCookieDomain();
-            const domainPart =
-              domain && domain.includes('.') ? `; domain=${domain}` : '';
-            const isSecure = window.location.protocol === 'https:';
-            const securePart = isSecure ? '; Secure' : '';
+            const securityAttributes = getCookieSecurityAttributes();
             document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
               JSON.stringify([refreshToken, newAccessToken]),
-            )}${domainPart}; path=/; SameSite=Lax${securePart}`;
+            )}${securityAttributes}`;
             config.withCredentials = true;
           } catch (e) {
             // Assume token used is invalid or expired if status is 401 and remove cookie
             if (e.response?.status === 401) {
-              const domain = getCookieDomain();
-              const domainPart =
-                domain && domain.includes('.') ? `; domain=${domain}` : '';
-              const isSecure = window.location.protocol === 'https:';
-              const securePart = isSecure ? '; Secure' : '';
-              document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC${domainPart}; path=/; SameSite=Lax${securePart}`;
+              clearAuthCookie();
             }
             console.error(e);
           }
