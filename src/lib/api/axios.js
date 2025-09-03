@@ -59,6 +59,21 @@ const getCookieDomain = () => {
   return hostname;
 };
 
+// Helper function to generate secure cookie attributes
+const getCookieSecurityAttributes = () => {
+  const domain = getCookieDomain();
+  const domainPart = domain && domain.includes('.') ? `; domain=${domain}` : '';
+  const isSecure = window.location.protocol === 'https:';
+  const securePart = isSecure ? '; Secure' : '';
+  return `${domainPart}; path=/; SameSite=Lax${securePart}`;
+};
+
+// Helper function to clear auth cookie
+const clearAuthCookie = () => {
+  const securityAttributes = getCookieSecurityAttributes();
+  document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC${securityAttributes}`;
+};
+
 function isTokenExpiredOrCloseToExpiry(token) {
   if (!token) return true;
 
@@ -78,53 +93,86 @@ export const apiClient = axios.create({
   baseURL: `${import.meta.env.VITE_CEA_URL}`,
 });
 
-apiClient.interceptors.request.use(
-  async (config) => {
-    const accessTokenString = getAccessTokenStringFromCookies();
-    if (accessTokenString) {
-      const decodedString = JSON.parse(decodeURIComponent(accessTokenString));
-      const refreshToken = decodedString[0];
-      const accessToken = decodedString[1];
+export const authClient = axios.create({
+  baseURL: `${import.meta.env.VITE_AUTH_URL}`,
+});
 
-      // Ignore request if no access token is present
-      if (!accessToken) return config;
-
-      // Try to refresh token if near expiry
-      if (isTokenExpiredOrCloseToExpiry(accessToken)) {
-        // FIXME: Queue request to refresh token
+// Helper function for request interceptor logic
+let refreshPromise = null; // single-flight
+const addAuthInterceptor = (client, refreshUrl) => {
+  client.interceptors.request.use(
+    async (config) => {
+      const accessTokenString = getAccessTokenStringFromCookies();
+      if (accessTokenString) {
+        let decodedString;
         try {
-          const response = await axios.post(
-            `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
-            {},
-            { withCredentials: true },
+          decodedString = JSON.parse(decodeURIComponent(accessTokenString));
+        } catch (err) {
+          console.warn(
+            'Invalid auth cookie. Clearing and continuing unauthenticated.',
+            err,
           );
-
-          const newAccessToken = response.data?.access_token;
-          if (!newAccessToken) {
-            throw new Error(
-              'Failed to refresh access token: No access token returned',
-            );
-          }
-
-          document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
-            JSON.stringify([refreshToken, newAccessToken]),
-          )}; domain=${getCookieDomain()}; path=/`;
-          config.withCredentials = true;
-        } catch (e) {
-          // Assume token used is invalid or expired if status is 401 and remove cookie
-          if (e.response?.status == 401) {
-            document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${getCookieDomain()}; path=/`;
-          }
-          console.error(e);
+          clearAuthCookie();
+          return config;
         }
-      } else {
-        // Attach access token to request if access token is valid
-        config.withCredentials = true;
+        const refreshToken = decodedString[0];
+        const accessToken = decodedString[1];
+
+        // Ignore request if no access token is present
+        if (!accessToken) return config;
+
+        // Try to refresh token if near expiry
+        if (isTokenExpiredOrCloseToExpiry(accessToken)) {
+          try {
+            if (!refreshPromise) {
+              refreshPromise = axios.post(
+                refreshUrl,
+                {},
+                { withCredentials: true },
+              );
+            }
+            const response = await refreshPromise.finally(() => {
+              refreshPromise = null;
+            });
+
+            const newAccessToken = response.data?.access_token;
+            if (!newAccessToken) {
+              throw new Error(
+                'Failed to refresh access token: No access token returned',
+              );
+            }
+
+            const securityAttributes = getCookieSecurityAttributes();
+            document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
+              JSON.stringify([refreshToken, newAccessToken]),
+            )}${securityAttributes}`;
+            config.withCredentials = true;
+          } catch (e) {
+            // Assume token used is invalid or expired if status is 401 and remove cookie
+            if (e.response?.status === 401) {
+              clearAuthCookie();
+            }
+            console.error(e);
+          }
+        } else {
+          // Attach access token to request if access token is valid
+          config.withCredentials = true;
+        }
       }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    },
+  );
+};
+
+// Apply interceptors to both clients
+addAuthInterceptor(
+  apiClient,
+  `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
+);
+addAuthInterceptor(
+  authClient,
+  `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
 );

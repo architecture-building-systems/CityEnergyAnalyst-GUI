@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, Navigate } from 'react-router';
 
 import routes from 'constants/routes.json';
 import useNavigationStore from 'stores/navigationStore';
@@ -17,6 +17,7 @@ import Loading from 'components/Loading';
 import { apiClient } from 'lib/api/axios';
 import { useInitUserInfo, useUserInfo } from 'stores/userStore';
 import { useFetchServerLimits } from 'stores/serverStore';
+import { isElectron } from 'utils/electron';
 
 // Route-level code splitting for better performance
 const Project = lazy(() => import('app/Project'));
@@ -24,6 +25,7 @@ const CreateScenario = lazy(() => import('app/CreateScenario'));
 const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
+const OnboardingPage = lazy(() => import('components/OnboardingPage'));
 
 const useCheckServerStatus = () => {
   const [isServerUp, setIsServerUp] = useState(false);
@@ -60,11 +62,28 @@ const useCheckServerStatus = () => {
 const HomePageContent = () => {
   const userInfo = useUserInfo();
   const initUserInfo = useInitUserInfo();
-  const fetchServerLiimts = useFetchServerLimits();
+  const fetchServerLimits = useFetchServerLimits();
+
+  const { push } = useNavigationStore();
+
+  useEffect(() => {
+    // Wait for userInfo to be loaded
+    // Also not fetch server limits if Electron or localuser
+    if (userInfo == null || userInfo?.id === 'localuser' || isElectron())
+      return;
+
+    if (!userInfo?.onboarded) {
+      // Redirect to onboarding page
+      push(routes.ONBOARDING);
+    } else if (window.location.pathname === routes.ONBOARDING) {
+      // Redirect to project page
+      push(routes.PROJECT);
+    }
+    fetchServerLimits();
+  }, [userInfo]);
 
   useEffect(() => {
     initUserInfo();
-    fetchServerLiimts();
   }, []);
 
   useInitProjectStore();
@@ -75,6 +94,14 @@ const HomePageContent = () => {
   return (
     <ErrorBoundary>
       <Routes>
+        <Route
+          path={routes.ONBOARDING}
+          element={
+            <Suspense fallback={<Loading />}>
+              <OnboardingPage />
+            </Suspense>
+          }
+        />
         <Route
           path={routes.CREATE_SCENARIO}
           element={
@@ -95,29 +122,6 @@ const HomePageContent = () => {
             </Suspense>
           }
         />
-        {/* <Route
-          path={routes.DASHBOARD}
-          element={
-            <Suspense>
-              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
-                <div
-                  style={{
-                    height: '100%',
-                    overflow: 'auto',
-                    background: '#fff',
-                    borderRadius: 8,
-                    border: '1px solid #eee',
-
-                    padding: 12,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <Dashboard />
-                </div>
-              </Cardwrapper>
-            </Suspense>
-          }
-        /> */}
         <Route
           path={routes.DATABASE_EDITOR}
           element={
@@ -149,6 +153,8 @@ const HomePageContent = () => {
             </Suspense>
           }
         />
+        {/* Catch-all route - redirect to root/project page */}
+        <Route path="*" element={<Navigate to={routes.PROJECT} replace />} />
       </Routes>
     </ErrorBoundary>
   );
