@@ -267,10 +267,10 @@ const useTableData = (tab, columns, tables) => {
           const columnDef = { title: column, field: column };
 
           // Handle special cases
-          switch (column) {
-            case 'REFERENCE':
+          switch (column.toLowerCase()) {
+            case 'reference':
               return columnDef;
-            case INDEX_COLUMN:
+            case INDEX_COLUMN.toLowerCase():
               return { ...columnDef, frozen: true, cellClick: selectRow };
           }
 
