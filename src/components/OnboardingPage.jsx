@@ -122,7 +122,8 @@ const OnboardingPage = ({ onComplete }) => {
     }
   };
 
-  const isFormValid = formData.primaryReason && formData.role;
+  const isFormValid =
+    formData.primaryReason && formData.role && formData.hearAbout;
 
   return (
     <div className="onboarding-container">
@@ -189,9 +190,7 @@ const OnboardingPage = ({ onComplete }) => {
             </div> */}
 
             <div className="form-field">
-              <Text className="form-label">
-                How did you hear about City Energy Analyst? (optional)
-              </Text>
+              <Text className="form-label">How did you hear about CEA?</Text>
               <Select
                 placeholder="Select one"
                 className="form-select"
