@@ -175,39 +175,6 @@
   animation: float 6s ease-in-out infinite;
 }
 
-/* Hover effect for interactive feel */
-.cea-logo-svg:hover {
-  animation: float 2s ease-in-out infinite;
-}
-
-.cea-logo-svg:hover #purple {
-  animation: pulse 2s ease-in-out infinite 0.1s;
-}
-
-.cea-logo-svg:hover #red {
-  animation: pulse 2s ease-in-out infinite 0.2s;
-}
-
-.cea-logo-svg:hover #blue {
-  animation: pulse 2s ease-in-out infinite 0.3s;
-}
-
-.cea-logo-svg:hover #yellow {
-  animation: pulse 2s ease-in-out infinite 0.4s;
-}
-
-.cea-logo-svg:hover #green {
-  animation: pulse 2s ease-in-out infinite 0.5s;
-}
-
-.cea-logo-svg:hover #brown {
-  animation: pulse 2s ease-in-out infinite 0.6s;
-}
-
-.cea-logo-svg:hover #white {
-  animation: pulse 2s ease-in-out infinite 0.8s;
-}
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
