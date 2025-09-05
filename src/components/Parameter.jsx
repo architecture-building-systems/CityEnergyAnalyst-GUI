@@ -17,6 +17,7 @@ import { basename, checkExist, dirname } from 'utils/file';
 import { forwardRef, useState } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
+import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 
 const Parameter = ({ parameter, form }) => {
   const { name, type, value, choices, nullable, help } = parameter;
@@ -267,46 +268,37 @@ const Parameter = ({ parameter, form }) => {
           initialValue={value}
           help={help}
           inputComponent={
-            <Select
-              popupRender={(menu) => (
-                <div>
-                  {menu}
-                  <Divider style={{ margin: '4px 0' }} />
-                  <OpenDialogButton
-                    form={form}
-                    type="file"
-                    filters={[{ name: 'Weather files', extensions: ['epw'] }]}
-                    id={name}
-                    onChange={(value) => setFieldsValue({ [name]: value })}
-                  >
-                    <PlusOutlined />
-                    Browse for weather file
-                  </OpenDialogButton>
-                </div>
-              )}
+            <SelectWithFileDialog
+              placeholder="Choose an option from the dropdown"
+              name="weather"
+              type="file"
+              filters={[{ name: 'Weather files', extensions: ['epw'] }]}
               options={[
                 {
-                  label: <span>Third-party sources</span>,
-                  title: 'Third-party sources',
+                  label: 'Third-party sources',
                   options: [
                     {
-                      label: <span> Fetch from climate.onebuilding.org</span>,
+                      label: 'Fetch from climate.onebuilding.org',
                       value: 'climate.onebuilding.org',
                     },
                   ],
                 },
                 {
-                  label: <span>CEA Built-in</span>,
-                  title: 'CEA Built-in',
+                  label: 'CEA Built-in',
                   options: Object.keys(choices).map((choice) => {
                     return {
-                      label: <span>{choice}</span>,
+                      label: choice,
                       value: choices[choice],
                     };
                   }),
                 },
               ]}
-            />
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+                <FileSearchOutlined />
+                Import .epw file
+              </div>
+            </SelectWithFileDialog>
           }
         />
       );
