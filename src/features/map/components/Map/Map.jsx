@@ -188,6 +188,8 @@ const useMapLayers = () => {
             updateTriggers: {
               getLineWidth: [scale],
             },
+            onHover: (f) => updateTooltip(f, null),
+            pickable: true,
           }),
         );
 
@@ -202,6 +204,8 @@ const useMapLayers = () => {
             updateTriggers: {
               getPointRadius: [scale],
             },
+            onHover: (f) => updateTooltip(f, null),
+            pickable: true,
           }),
         );
       }
@@ -587,9 +591,14 @@ function updateTooltip(feature, envelopeTable) {
               1000,
           ) / 1000
         }m<sup>2</sup></div>`;
-    } else if (layer.id === 'dc' || layer.id === 'dh') {
+    } else if (
+      layer.id === `${THERMAL_NETWORK}-nodes` ||
+      layer.id === `${THERMAL_NETWORK}-edges`
+    ) {
       Object.keys(properties).forEach((key) => {
         if (key !== 'Building' && properties[key] === 'NONE') return null;
+        // Remove type_mat for now since it does not do anything
+        if (key === 'type_mat') return;
         innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
       });
       if (properties['Buildings']) {
