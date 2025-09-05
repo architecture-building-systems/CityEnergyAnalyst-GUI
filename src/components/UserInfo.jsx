@@ -63,19 +63,38 @@ const UserInfoCard = () => {
             alignItems: 'center',
             gap: 12,
             fontSize: 12,
+            minWidth: 0,
           }}
         >
-          <Avatar
+          <div>
+            <Avatar
+              style={{
+                verticalAlign: 'middle',
+              }}
+              size="large"
+              src={userInfo?.profile_image_url}
+            >
+              {displayName?.[0]}
+            </Avatar>
+          </div>
+          <div
             style={{
-              verticalAlign: 'middle',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              minWidth: 0,
             }}
-            size="large"
-            src={userInfo?.profile_image_url}
           >
-            {displayName?.[0]}
-          </Avatar>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <b>{displayName}</b>
+            <div
+              style={{
+                fontWeight: 'bold',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+              }}
+            >
+              {displayName}
+            </div>
             {proUser ? (
               <Badge count="PRO" color="purple" style={{ fontSize: 10 }} />
             ) : null}
