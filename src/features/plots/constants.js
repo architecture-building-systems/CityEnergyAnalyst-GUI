@@ -1,3 +1,4 @@
+import { DotChartOutlined } from '@ant-design/icons';
 import {
   SolarRadiationIcon,
   NetworksIcon,
@@ -13,6 +14,7 @@ import {
   THERMAL_NETWORK,
   LIFE_CYCLE_ANALYSIS,
   COMFORT_CHART,
+  PARETO_FRONT,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -22,6 +24,7 @@ export const iconMap = {
   [RENEWABLE_ENERGY_POTENTIALS]: EnergyPotentialsIcon,
   [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
   [COMFORT_CHART]: ComfortChartIcon,
+  [PARETO_FRONT]: DotChartOutlined,
 };
 
 // TODO: get mappings from backend
@@ -45,6 +48,7 @@ export const VIEW_PLOT_RESULTS = {
   [THERMAL_NETWORK]: null,
   [LIFE_CYCLE_ANALYSIS]: null,
   [COMFORT_CHART]: 'plot-comfort-chart',
+  [PARETO_FRONT]: 'plot-pareto-front',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
