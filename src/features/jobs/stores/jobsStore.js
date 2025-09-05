@@ -35,7 +35,7 @@ const useJobsStore = create((set, get) => ({
 
   createJob: async (script, parameters) => {
     try {
-      const response = await apiClient.post('/server/jobs/new', {
+      const response = await apiClient.postForm('/server/jobs/new', {
         script,
         parameters,
       });
