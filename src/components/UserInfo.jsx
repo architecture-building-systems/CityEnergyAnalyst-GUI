@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { COOKIE_NAME } from 'lib/api/axios';
-import { Avatar } from 'antd';
+import { Avatar, Badge } from 'antd';
 import { useUserInfo } from 'stores/userStore';
 import LoginModal from 'features/auth/components/Login/LoginModal';
 import LoginButton from 'features/auth/components/Login/LoginButton';
@@ -74,9 +74,11 @@ const UserInfoCard = () => {
           >
             {displayName?.[0]}
           </Avatar>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <b>{displayName}</b>
-            {proUser ? 'Pro User' : 'Free User'}
+            {proUser ? (
+              <Badge count="PRO" color="purple" style={{ fontSize: 10 }} />
+            ) : null}
           </div>
         </div>
         <LogoutButton />
