@@ -34,10 +34,24 @@ const useJobsStore = create((set, get) => ({
   },
 
   createJob: async (script, parameters) => {
+    const formattedData = {};
+
+    Object.keys(parameters).forEach((key) => {
+      // Convert objects to strings
+      if (
+        typeof parameters[key] === 'object' &&
+        !(parameters[key] instanceof File)
+      ) {
+        formattedData[key] = JSON.stringify(parameters[key]);
+      } else {
+        formattedData[key] = parameters[key];
+      }
+    });
+
     try {
       const response = await apiClient.postForm('/server/jobs/new', {
         script,
-        parameters: JSON.stringify(parameters),
+        parameters: formattedData,
       });
 
       const jobData = response.data;
