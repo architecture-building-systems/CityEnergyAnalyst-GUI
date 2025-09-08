@@ -316,7 +316,7 @@ const useMapLayers = () => {
   return layers;
 };
 
-const DeckGLMap = ({ data, tables, colors }) => {
+const DeckGLMap = ({ data, colors }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
 
@@ -398,8 +398,6 @@ const DeckGLMap = ({ data, tables, colors }) => {
   }, [cameraOptionsCalulated, data?.zone, mapRef]);
 
   const dataLayers = useMemo(() => {
-    const envelopeTable = tables?.envelope;
-
     const onClick = ({ object, layer }, event) => {
       const name = object.properties[INDEX_COLUMN];
       if (layer.id !== selectedLayer) {
@@ -545,7 +543,6 @@ const DeckGLMap = ({ data, tables, colors }) => {
     selected,
     extruded,
     buildingColor,
-    tables?.envelope,
     setSelected,
   ]);
 
