@@ -170,11 +170,11 @@ const useMapLayers = () => {
 
         const nodeRadius = (type) => {
           if (type === 'NONE') {
-            return 1;
+            return 0;
           } else if (type === 'CONSUMER') {
             return 2;
           } else if (type === 'PLANT') {
-            return 5;
+            return 3;
           }
         };
 
