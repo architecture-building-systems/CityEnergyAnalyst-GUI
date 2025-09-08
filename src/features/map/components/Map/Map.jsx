@@ -613,16 +613,12 @@ function updateTooltip(feature) {
       let area = Math.round(turf.area(object) * 1000) / 1000;
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
       if (layer.id === 'zone') {
-        innerHTML += `<div><b>GFA</b>: ${
-          // Remove void_deck from GFA calculation
-          Math.round(
-            ((properties?.floors_ag ?? 0) +
-              (properties?.floors_bg ?? 0) -
-              properties?.void_deck ?? 0) *
-              area *
-              1000,
-          ) / 1000
-        }m<sup>2</sup></div>`;
+        const floorsAg = Number(properties?.floors_ag ?? 0);
+        const floorsBg = Number(properties?.floors_bg ?? 0);
+        const voidDeck = Number(properties?.void_deck ?? 0);
+        const gfa = Math.max(0, (floorsAg + floorsBg - voidDeck) * area);
+
+        innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000}m<sup>2</sup></div>`;
       }
     } else if (
       layer.id === `${THERMAL_NETWORK}-nodes` ||
