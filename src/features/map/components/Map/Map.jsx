@@ -616,17 +616,24 @@ function updateTooltip(feature, envelopeTable) {
         });
       let area = Math.round(turf.area(object) * 1000) / 1000;
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
-      if (layer.id === 'zone')
+      if (layer.id === 'zone') {
+        // Get void_deck from zone properties or envelopeTable
+        const void_deck =
+          properties?.void_deck ??
+          envelopeTable?.[properties?.[INDEX_COLUMN]]?.void_deck ??
+          0;
+
         innerHTML += `<div><b>GFA</b>: ${
           // Remove void_deck from GFA calculation
           Math.round(
             ((properties?.floors_ag ?? 0) +
               (properties?.floors_bg ?? 0) -
-              (envelopeTable?.[properties?.[INDEX_COLUMN]]?.void_deck ?? 0)) *
+              void_deck) *
               area *
               1000,
           ) / 1000
         }m<sup>2</sup></div>`;
+      }
     } else if (
       layer.id === `${THERMAL_NETWORK}-nodes` ||
       layer.id === `${THERMAL_NETWORK}-edges`
@@ -672,7 +679,9 @@ const calcPolygonWithZ = (feature, envelopeTable) => {
 
   if (name === null) return coords;
 
-  const voidDeckFloors = envelopeTable?.[name]?.void_deck ?? 0;
+  // Get voidDeckFloors from feature properties or envelopeTable
+  const voidDeckFloors =
+    feature?.properties?.void_deck ?? envelopeTable?.[name]?.void_deck ?? 0;
   return coords.map((coord) =>
     coord.map((c) => [c[0], c[1], voidDeckFloors * VOID_DECK_FLOOR_HEIGHT]),
   );
