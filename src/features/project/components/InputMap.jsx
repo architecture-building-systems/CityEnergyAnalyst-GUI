@@ -7,7 +7,7 @@ import { useMapStore } from 'features/map/stores/mapStore';
 
 const InputMap = ({ project, scenario }) => {
   const { data, refetch, isFetching, isError, error } = useInputs();
-  const { geojsons, colors } = data;
+  const { geojsons, colors } = data ?? {};
 
   const [messageApi, contextHolder] = message.useMessage();
   const onError = (error) => {
