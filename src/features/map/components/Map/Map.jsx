@@ -682,7 +682,9 @@ const calcPolygonElevation = (feature) => {
   if (name === null) return height_ag;
 
   const voidDeckFloors = feature?.properties?.void_deck ?? 0;
-  return height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT;
+
+  // Prevent negative elevation, which causes buildings to appear higher than height_ag
+  return Math.max(height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT, 0);
 };
 
 export default DeckGLMap;
