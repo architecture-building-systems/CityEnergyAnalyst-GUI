@@ -7,7 +7,7 @@ import { useMapStore } from 'features/map/stores/mapStore';
 
 const InputMap = ({ project, scenario }) => {
   const { data, refetch, isFetching, isError, error } = useInputs();
-  const { tables, geojsons, colors } = data;
+  const { geojsons, colors } = data ?? {};
 
   const [messageApi, contextHolder] = message.useMessage();
   const onError = (error) => {
@@ -60,7 +60,7 @@ const InputMap = ({ project, scenario }) => {
             fullscreen
           />
         )}
-        <DeckGLMap data={geojsons} tables={tables} colors={colors} />
+        <DeckGLMap data={geojsons} colors={colors} />
       </div>
     </>
   );
