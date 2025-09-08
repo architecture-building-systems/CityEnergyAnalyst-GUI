@@ -78,6 +78,28 @@ const getLayerColours = (layer) => {
   return rgbGradientArray;
 };
 
+// Utility function to get min/max range of a property from GeoJSON features
+const getPropertyRange = (features, propertyName) => {
+  if (!features || features.length === 0) return { min: 0, max: 1 };
+
+  const values = features
+    .map((f) => f.properties?.[propertyName])
+    .filter((val) => val != null && !isNaN(val));
+
+  if (values.length === 0) return { min: 0, max: 1 };
+
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+  };
+};
+
+// Normalize value to range with minimum width
+const normalizeLineWidth = (value, min, max, minWidth = 1, maxWidth = 10) => {
+  if (min === max) return minWidth;
+  return minWidth + ((value - min) / (max - min)) * (maxWidth - minWidth);
+};
+
 const useMapLayers = () => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
