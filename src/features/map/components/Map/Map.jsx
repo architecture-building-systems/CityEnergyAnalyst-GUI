@@ -172,6 +172,13 @@ const useMapLayers = () => {
 
         const edgeColour = hexToRgb(colours?.edges) ?? [255, 255, 255];
 
+        // Get min/max range for peak_mass_flow property
+        const edgesData = mapLayers[name]?.edges;
+        const { min, max } = getPropertyRange(
+          edgesData?.features || edgesData,
+          'peak_mass_flow',
+        );
+
         const nodeFillColor = (type) => {
           if (type === 'NONE') {
             return edgeColour;
@@ -204,11 +211,18 @@ const useMapLayers = () => {
           new GeoJsonLayer({
             id: `${name}-edges`,
             data: mapLayers[name]?.edges,
-            getLineWidth: (f) => (f.properties['peak_mass_flow'] / 100) * scale,
+            getLineWidth: (f) =>
+              normalizeLineWidth(
+                f.properties['peak_mass_flow'],
+                min,
+                max,
+                1,
+                7 * scale,
+              ),
             getLineColor: edgeColour,
             zIndex: 100,
             updateTriggers: {
-              getLineWidth: [scale],
+              getLineWidth: [scale, min, max],
             },
             onHover: (f) => updateTooltip(f, null),
             pickable: true,
@@ -483,7 +497,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
           id: 'streets',
           data: data.streets,
           getLineColor: [171, 95, 127],
-          getLineWidth: 0.75,
+          getLineWidth: 0.5,
           visible: visibility.streets,
 
           // pickable: true,
