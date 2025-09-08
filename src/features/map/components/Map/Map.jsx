@@ -78,6 +78,28 @@ const getLayerColours = (layer) => {
   return rgbGradientArray;
 };
 
+// Utility function to get min/max range of a property from GeoJSON features
+const getPropertyRange = (features, propertyName) => {
+  if (!features || features.length === 0) return { min: 0, max: 1 };
+
+  const values = features
+    .map((f) => f.properties?.[propertyName])
+    .filter((val) => val != null && !isNaN(val));
+
+  if (values.length === 0) return { min: 0, max: 1 };
+
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+  };
+};
+
+// Normalize value to range with minimum width
+const normalizeLineWidth = (value, min, max, minWidth = 1, maxWidth = 10) => {
+  if (min === max) return minWidth;
+  return minWidth + ((value - min) / (max - min)) * (maxWidth - minWidth);
+};
+
 const useMapLayers = () => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
@@ -150,6 +172,13 @@ const useMapLayers = () => {
 
         const edgeColour = hexToRgb(colours?.edges) ?? [255, 255, 255];
 
+        // Get min/max range for peak_mass_flow property
+        const edgesData = mapLayers[name]?.edges;
+        const { min, max } = getPropertyRange(
+          edgesData?.features || edgesData,
+          'peak_mass_flow',
+        );
+
         const nodeFillColor = (type) => {
           if (type === 'NONE') {
             return edgeColour;
@@ -170,11 +199,11 @@ const useMapLayers = () => {
 
         const nodeRadius = (type) => {
           if (type === 'NONE') {
-            return 1;
+            return 0;
           } else if (type === 'CONSUMER') {
             return 2;
           } else if (type === 'PLANT') {
-            return 5;
+            return 3;
           }
         };
 
@@ -182,11 +211,18 @@ const useMapLayers = () => {
           new GeoJsonLayer({
             id: `${name}-edges`,
             data: mapLayers[name]?.edges,
-            getLineWidth: (f) => (f.properties['peak_mass_flow'] / 100) * scale,
+            getLineWidth: (f) =>
+              normalizeLineWidth(
+                f.properties['peak_mass_flow'],
+                min,
+                max,
+                1,
+                7 * scale,
+              ),
             getLineColor: edgeColour,
             zIndex: 100,
             updateTriggers: {
-              getLineWidth: [scale],
+              getLineWidth: [scale, min, max],
             },
             onHover: (f) => updateTooltip(f, null),
             pickable: true,
@@ -461,7 +497,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
           id: 'streets',
           data: data.streets,
           getLineColor: [171, 95, 127],
-          getLineWidth: 0.75,
+          getLineWidth: 0.5,
           visible: visibility.streets,
 
           // pickable: true,
