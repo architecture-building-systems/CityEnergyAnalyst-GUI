@@ -224,7 +224,7 @@ const useMapLayers = () => {
             updateTriggers: {
               getLineWidth: [scale, min, max],
             },
-            onHover: (f) => updateTooltip(f, null),
+            onHover: updateTooltip,
             pickable: true,
           }),
         );
@@ -240,7 +240,7 @@ const useMapLayers = () => {
             updateTriggers: {
               getPointRadius: [scale],
             },
-            onHover: (f) => updateTooltip(f, null),
+            onHover: updateTooltip,
             pickable: true,
           }),
         );
@@ -442,9 +442,8 @@ const DeckGLMap = ({ data, tables, colors }) => {
             specularColor: [0, 0, 0],
           },
 
-          getPolygon: (f) => calcPolygonWithZ(f, envelopeTable),
-          getElevation: (f) =>
-            extruded ? calcPolygonElevation(f, envelopeTable) : 0,
+          getPolygon: calcPolygonWithZ,
+          getElevation: (f) => (extruded ? calcPolygonElevation(f) : 0),
           getFillColor: (f) =>
             buildingColor(f.properties[INDEX_COLUMN], 'zone'),
           updateTriggers: {
@@ -455,7 +454,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
           autoHighlight: true,
           highlightColor: [255, 255, 0, 128],
 
-          onHover: (f) => updateTooltip(f, envelopeTable),
+          onHover: updateTooltip,
           onClick: onClick,
         }),
       );
@@ -486,7 +485,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
           autoHighlight: true,
           highlightColor: [255, 255, 0, 128],
 
-          onHover: (f) => updateTooltip(f, envelopeTable),
+          onHover: updateTooltip,
           onClick: onClick,
         }),
       );
@@ -597,7 +596,7 @@ const DeckGLMap = ({ data, tables, colors }) => {
   );
 };
 
-function updateTooltip(feature, envelopeTable) {
+function updateTooltip(feature) {
   const { x, y, object, layer } = feature;
   const tooltip = document.getElementById('map-tooltip');
   if (object) {
@@ -617,18 +616,12 @@ function updateTooltip(feature, envelopeTable) {
       let area = Math.round(turf.area(object) * 1000) / 1000;
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
       if (layer.id === 'zone') {
-        // Get void_deck from zone properties or envelopeTable
-        const void_deck =
-          properties?.void_deck ??
-          envelopeTable?.[properties?.[INDEX_COLUMN]]?.void_deck ??
-          0;
-
         innerHTML += `<div><b>GFA</b>: ${
           // Remove void_deck from GFA calculation
           Math.round(
             ((properties?.floors_ag ?? 0) +
               (properties?.floors_bg ?? 0) -
-              void_deck) *
+              properties?.void_deck ?? 0) *
               area *
               1000,
           ) / 1000
@@ -673,27 +666,25 @@ const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
 
 const VOID_DECK_FLOOR_HEIGHT = 3;
 
-const calcPolygonWithZ = (feature, envelopeTable) => {
+const calcPolygonWithZ = (feature) => {
   const name = feature?.properties?.[INDEX_COLUMN];
   const coords = feature?.geometry?.coordinates ?? [];
 
   if (name === null) return coords;
 
-  // Get voidDeckFloors from feature properties or envelopeTable
-  const voidDeckFloors =
-    feature?.properties?.void_deck ?? envelopeTable?.[name]?.void_deck ?? 0;
+  const voidDeckFloors = feature?.properties?.void_deck ?? 0;
   return coords.map((coord) =>
     coord.map((c) => [c[0], c[1], voidDeckFloors * VOID_DECK_FLOOR_HEIGHT]),
   );
 };
 
-const calcPolygonElevation = (feature, envelopeTable) => {
+const calcPolygonElevation = (feature) => {
   const name = feature?.properties?.[INDEX_COLUMN];
   const height_ag = feature?.properties?.height_ag ?? 0;
 
   if (name === null) return height_ag;
 
-  const voidDeckFloors = envelopeTable?.[name]?.void_deck ?? 0;
+  const voidDeckFloors = feature?.properties?.void_deck ?? 0;
   return height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT;
 };
 
