@@ -340,7 +340,14 @@ const FileUploadBox = ({ onChange, onFinish, onRemove, fileList, status }) => {
   const beforeUpload = async (file) => {
     // Do basic checks first
     try {
-      if (file.type !== 'application/zip') {
+      const validZipTypes = [
+        'application/zip',
+        'application/x-zip-compressed',
+        'application/octet-stream',
+      ];
+      const isValidZip = validZipTypes.includes(file.type);
+
+      if (!isValidZip && !file.name.toLowerCase().endsWith('.zip')) {
         throw new Error('File type must be .zip');
       }
 
