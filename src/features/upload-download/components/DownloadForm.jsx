@@ -1,4 +1,4 @@
-import { Button, Checkbox, Form, message, Progress } from 'antd';
+import { Button, Checkbox, Form, message, Progress, Radio } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useState } from 'react';
 import { CloudDownloadIcon } from 'assets/icons';
@@ -187,6 +187,7 @@ const FormContent = () => {
         project: currentProject,
         scenarios: values.scenarios,
         input_files: values.inputFiles,
+        output_files: values.outputFiles,
       }),
     );
   };
@@ -216,19 +217,64 @@ const FormContent = () => {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', margin: 12 }}>
-        <Form.Item
-          name="inputFiles"
-          valuePropName="checked"
-          initialValue={false}
-        >
-          <Checkbox disabled={disableForm}>
-            Check to download the input files only
-            <br />
-            (i.e. Building geometries, properties, streets, terrain, Database &
-            weather)
-          </Checkbox>
-        </Form.Item>
-
+        <div>
+          <h2>Download Options</h2>
+          <div style={{ marginLeft: 12 }}>
+            <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
+              Input files{' '}
+              <small style={{ fontWeight: 'normal' }}>
+                (check if you want to include input files in the download)
+              </small>
+            </div>
+            <Form.Item
+              name="inputFiles"
+              valuePropName="checked"
+              initialValue={false}
+            >
+              <Checkbox disabled={disableForm}>
+                <div>
+                  Database, Building geometries, properties, streets, terrain &
+                  weather
+                </div>
+              </Checkbox>
+            </Form.Item>
+            <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
+              Output files
+            </div>
+            <Form.Item name="outputFiles" initialValue="summary">
+              <Radio.Group
+                disabled={disableForm}
+                style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+                options={[
+                  {
+                    label: (
+                      <div>
+                        Summary -{' '}
+                        <small>
+                          A summary of simulated results aggregated by buildings
+                          and various time resolutions.
+                        </small>
+                      </div>
+                    ),
+                    value: 'summary',
+                  },
+                  {
+                    label: (
+                      <div>
+                        All -{' '}
+                        <small>
+                          Includes all output data{' '}
+                          <i>(would take longer to download)</i>
+                        </small>
+                      </div>
+                    ),
+                    value: 'detailed',
+                  },
+                ]}
+              />
+            </Form.Item>
+          </div>
+        </div>
         <div>
           <h2>Available Scenarios</h2>
           <Form.Item
