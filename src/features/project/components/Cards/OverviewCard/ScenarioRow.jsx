@@ -189,7 +189,7 @@ const NewScenarioIcon = ({ disabled }) => {
 
   return (
     <Tooltip
-      title={disabled ? 'Log in to create a new scenario' : 'New Scenario'}
+      title={disabled ? 'Log in to create a scenario' : 'Create Scenario'}
       placement="bottom"
     >
       <Button
