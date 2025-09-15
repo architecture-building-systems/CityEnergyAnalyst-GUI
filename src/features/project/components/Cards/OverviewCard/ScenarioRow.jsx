@@ -83,12 +83,11 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         <div
           className={`cea-card-icon-button-container ${scenarioName !== null ? '' : 'active'}`}
         >
-          {scenarioName !== null && (
+          {isValidUser && scenarioName !== null && (
             <DuplicateScenarioIcon
               project={project}
               currentScenarioName={scenarioName}
               scenarioList={scenarioList}
-              disabled={!isValidUser}
             />
           )}
           <NewScenarioIcon disabled={!isValidUser} />
@@ -207,7 +206,6 @@ const DuplicateScenarioIcon = ({
   project,
   currentScenarioName,
   scenarioList,
-  disabled,
 }) => {
   const [visible, setVisible] = useState(false);
   const onClick = () => setVisible(true);
@@ -215,12 +213,7 @@ const DuplicateScenarioIcon = ({
   return (
     <>
       <Tooltip title="Duplicate Scenario" placement="bottom">
-        <Button
-          icon={<DuplicateIcon />}
-          type="text"
-          onClick={onClick}
-          disabled={disabled}
-        />
+        <Button icon={<DuplicateIcon />} type="text" onClick={onClick} />
       </Tooltip>
       <DuplicateScenarioModal
         visible={visible}
