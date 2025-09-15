@@ -88,9 +88,10 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
               project={project}
               currentScenarioName={scenarioName}
               scenarioList={scenarioList}
+              disabled={!isValidUser}
             />
           )}
-          <NewScenarioIcon />
+          <NewScenarioIcon disabled={!isValidUser} />
           {isValidUser && !isElectron() && <UploadDownloadScenarioIcon />}
         </div>
       </div>
@@ -167,7 +168,7 @@ const ScenarioItem = ({ project, scenario, onDelete }) => {
   );
 };
 
-const NewScenarioIcon = () => {
+const NewScenarioIcon = ({ disabled }) => {
   const { limit, count } = useScenarioLimits();
 
   const { push } = useNavigationStore();
@@ -189,7 +190,12 @@ const NewScenarioIcon = () => {
 
   return (
     <Tooltip title="New Scenario" placement="bottom">
-      <Button icon={<CreateNewIcon />} type="text" onClick={onClick} />
+      <Button
+        icon={<CreateNewIcon />}
+        type="text"
+        onClick={onClick}
+        disabled={disabled}
+      />
     </Tooltip>
   );
 };
@@ -198,6 +204,7 @@ const DuplicateScenarioIcon = ({
   project,
   currentScenarioName,
   scenarioList,
+  disabled,
 }) => {
   const [visible, setVisible] = useState(false);
   const onClick = () => setVisible(true);
@@ -205,7 +212,12 @@ const DuplicateScenarioIcon = ({
   return (
     <>
       <Tooltip title="Duplicate Scenario" placement="bottom">
-        <Button icon={<DuplicateIcon />} type="text" onClick={onClick} />
+        <Button
+          icon={<DuplicateIcon />}
+          type="text"
+          onClick={onClick}
+          disabled={disabled}
+        />
       </Tooltip>
       <DuplicateScenarioModal
         visible={visible}
