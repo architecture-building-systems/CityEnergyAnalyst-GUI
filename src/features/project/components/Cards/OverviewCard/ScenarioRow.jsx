@@ -16,10 +16,13 @@ import DuplicateScenarioModal from 'features/project/components/modals/Duplicate
 import DeleteScenarioModal from 'features/project/components/modals/DeleteScenarioModal';
 import { useScenarioLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
+import { useIsValidUser } from 'stores/userStore';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
+  const isValidUser = useIsValidUser();
+
   const sortedScenarios = useMemo(() => {
-    return scenarioList.sort((a, b) => {
+    return [...scenarioList].sort((a, b) => {
       return a.toLowerCase().localeCompare(b.toLowerCase());
     });
   }, [scenarioList]);
@@ -80,15 +83,15 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
         <div
           className={`cea-card-icon-button-container ${scenarioName !== null ? '' : 'active'}`}
         >
-          {scenarioName !== null && (
+          {isValidUser && scenarioName !== null && (
             <DuplicateScenarioIcon
               project={project}
               currentScenarioName={scenarioName}
               scenarioList={scenarioList}
             />
           )}
-          <NewScenarioIcon />
-          {!isElectron() && <UploadDownloadScenarioIcon />}
+          <NewScenarioIcon disabled={!isValidUser} />
+          {isValidUser && !isElectron() && <UploadDownloadScenarioIcon />}
         </div>
       </div>
       <div
@@ -164,7 +167,7 @@ const ScenarioItem = ({ project, scenario, onDelete }) => {
   );
 };
 
-const NewScenarioIcon = () => {
+const NewScenarioIcon = ({ disabled }) => {
   const { limit, count } = useScenarioLimits();
 
   const { push } = useNavigationStore();
@@ -185,8 +188,16 @@ const NewScenarioIcon = () => {
   };
 
   return (
-    <Tooltip title="New Scenario" placement="bottom">
-      <Button icon={<CreateNewIcon />} type="text" onClick={onClick} />
+    <Tooltip
+      title={disabled ? 'Log in to create a scenario' : 'Create Scenario'}
+      placement="bottom"
+    >
+      <Button
+        icon={<CreateNewIcon />}
+        type="text"
+        onClick={onClick}
+        disabled={disabled}
+      />
     </Tooltip>
   );
 };
