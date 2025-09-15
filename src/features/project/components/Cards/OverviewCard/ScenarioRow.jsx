@@ -22,7 +22,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const isValidUser = useIsValidUser();
 
   const sortedScenarios = useMemo(() => {
-    return scenarioList.sort((a, b) => {
+    return [...scenarioList].sort((a, b) => {
       return a.toLowerCase().localeCompare(b.toLowerCase());
     });
   }, [scenarioList]);
