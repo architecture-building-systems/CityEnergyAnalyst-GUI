@@ -15,7 +15,7 @@ import { useInitProjectStore } from 'features/project/stores/projectStore';
 
 import Loading from 'components/Loading';
 import { apiClient } from 'lib/api/axios';
-import { useInitUserInfo, useUserInfo } from 'stores/userStore';
+import { useInitUserInfo, useIsValidUser, useUserInfo } from 'stores/userStore';
 import { useFetchServerLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
 
@@ -62,6 +62,7 @@ const useCheckServerStatus = () => {
 const HomePageContent = () => {
   const userInfo = useUserInfo();
   const initUserInfo = useInitUserInfo();
+  const isValidUser = useIsValidUser();
   const fetchServerLimits = useFetchServerLimits();
 
   const { push } = useNavigationStore();
@@ -69,8 +70,7 @@ const HomePageContent = () => {
   useEffect(() => {
     // Wait for userInfo to be loaded
     // Also not fetch server limits if Electron or localuser
-    if (userInfo == null || userInfo?.id === 'localuser' || isElectron())
-      return;
+    if (!isValidUser || isElectron()) return;
 
     if (!userInfo?.onboarded) {
       // Redirect to onboarding page
