@@ -16,8 +16,11 @@ import DuplicateScenarioModal from 'features/project/components/modals/Duplicate
 import DeleteScenarioModal from 'features/project/components/modals/DeleteScenarioModal';
 import { useScenarioLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
+import { useIsValidUser } from 'stores/userStore';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
+  const isValidUser = useIsValidUser();
+
   const sortedScenarios = useMemo(() => {
     return scenarioList.sort((a, b) => {
       return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -88,7 +91,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
             />
           )}
           <NewScenarioIcon />
-          {!isElectron() && <UploadDownloadScenarioIcon />}
+          {isValidUser && !isElectron() && <UploadDownloadScenarioIcon />}
         </div>
       </div>
       <div
