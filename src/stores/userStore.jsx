@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { isElectron } from 'utils/electron';
 
 const useUserInfoStore = create((set) => ({
   userInfo: null,
@@ -29,5 +30,6 @@ export const useResetUserInfo = () =>
 
 export const useIsValidUser = () =>
   useUserInfoStore(
-    (state) => state.userInfo && state.userInfo?.id != 'localuser',
+    (state) =>
+      isElectron() || (state.userInfo && state.userInfo?.id != 'localuser'),
   );

@@ -70,7 +70,7 @@ const HomePageContent = () => {
   useEffect(() => {
     // Wait for userInfo to be loaded
     // Also not fetch server limits if Electron or localuser
-    if (!isValidUser || isElectron()) return;
+    if (isElectron() || !isValidUser) return;
 
     if (!userInfo?.onboarded) {
       // Redirect to onboarding page
