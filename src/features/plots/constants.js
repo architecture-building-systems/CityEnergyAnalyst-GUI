@@ -15,6 +15,8 @@ import {
   LIFE_CYCLE_ANALYSIS,
   COMFORT_CHART,
   PARETO_FRONT,
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -25,6 +27,8 @@ export const iconMap = {
   [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
   [COMFORT_CHART]: ComfortChartIcon,
   [PARETO_FRONT]: DotChartOutlined,
+  [EMISSIONS_EMBODIED]: LifeCycleAnalysisIcon,
+  [EMISSIONS_OPERATIONAL]: LifeCycleAnalysisIcon,
 };
 
 // TODO: get mappings from backend
@@ -49,6 +53,8 @@ export const VIEW_PLOT_RESULTS = {
   [LIFE_CYCLE_ANALYSIS]: null,
   [COMFORT_CHART]: 'plot-comfort-chart',
   [PARETO_FRONT]: 'plot-pareto-front',
+  [EMISSIONS_EMBODIED]: 'plot-embodied-emissions',
+  [EMISSIONS_OPERATIONAL]: 'plot-operational-emissions',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
