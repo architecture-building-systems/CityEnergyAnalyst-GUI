@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
+import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -58,6 +58,7 @@ export const useGetMapLayers = (
   const [fetching, setFetching] = useState(false);
 
   const setMapLayers = useMapStore((state) => state.setMapLayers);
+  const selectedMapLayer = useSelectedMapLayer();
 
   // Reset error when category changes
   useEffect(() => {
@@ -83,6 +84,10 @@ export const useGetMapLayers = (
         setFetching(true);
         setError(null);
         for (const layer of layers) {
+          // If a specific layer is selected, skip others
+          if (selectedMapLayer && layer.name !== selectedMapLayer) {
+            continue;
+          }
           const data = await fetchMapLayer(name, layer.name, {
             project,
             scenario_name: scenarioName,
