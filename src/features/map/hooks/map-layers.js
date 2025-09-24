@@ -5,6 +5,8 @@ import {
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   LIFE_CYCLE_ANALYSIS,
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
 } from 'features/map/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -129,6 +131,7 @@ export const useMapLegends = () => {
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const selectedMapLayer = useSelectedMapLayer();
 
   useEffect(() => {
     if (mapLayers?.[SOLAR_IRRADIATION]) {
@@ -170,13 +173,16 @@ export const useMapLegends = () => {
           label,
         },
       });
-    } else if (mapLayers?.[LIFE_CYCLE_ANALYSIS]) {
-      const props = mapLayers[LIFE_CYCLE_ANALYSIS].properties;
+    } else if (
+      mapLayers?.[EMISSIONS_EMBODIED] ||
+      mapLayers?.[EMISSIONS_OPERATIONAL]
+    ) {
+      const props = mapLayers[selectedMapLayer].properties;
       const label = props['label'];
       const _range = props['range'];
       const colours = props['colours'];
       setMapLayerLegends({
-        [LIFE_CYCLE_ANALYSIS]: {
+        [selectedMapLayer]: {
           colourArray: colours?.colour_array,
           points: colours?.points,
           range: _range,
