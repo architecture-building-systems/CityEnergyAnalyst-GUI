@@ -1,12 +1,19 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threshold';
 import { useMemo, useCallback, useEffect } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
+import {
+  useMapStore,
+  useSelectedMapLayer,
+  useSetSelectedMapLayer,
+} from 'features/map/stores/mapStore';
 import ChoiceSelector from './Choice';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, Select } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
 
 const ParameterSelectors = ({ layers, parameterValues }) => {
+  const selectedLayer = useSelectedMapLayer();
+  const setSelectedLayer = useSetSelectedMapLayer();
+
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
 
@@ -42,111 +49,115 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         }
       });
     });
+
+    setSelectedLayer(layers?.[0]?.name || null);
   }, [layers]);
 
-  const _parameters = useMemo(
-    () =>
-      layers.map((layer) => {
-        const { name, parameters } = layer;
+  const _parameters = useMemo(() => {
+    const filteredLayers = selectedLayer
+      ? layers.filter((layer) => layer.name === selectedLayer)
+      : layers;
 
-        return (
-          <div
-            key={name}
-            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-          >
-            {Object.entries(parameters).map(([key, parameter]) => {
-              const {
-                default: defaultValue,
-                selector,
-                label,
-                filter,
-              } = parameter;
+    return filteredLayers.map((layer) => {
+      const { name, parameters } = layer;
 
-              const value = filter ? filters?.[filter] : parameterValues?.[key];
-              const _handleChange = changeHandler(key, filter);
+      return (
+        <div
+          key={name}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
+          {Object.entries(parameters).map(([key, parameter]) => {
+            const {
+              default: defaultValue,
+              selector,
+              label,
+              filter,
+            } = parameter;
 
-              switch (selector) {
-                case 'time-series':
+            const value = filter ? filters?.[filter] : parameterValues?.[key];
+            const _handleChange = changeHandler(key, filter);
+
+            switch (selector) {
+              case 'time-series':
+                return (
+                  <TimeSeriesSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    value={value}
+                    defaultValue={defaultValue}
+                    onChange={_handleChange}
+                  />
+                );
+              case 'threshold':
+                return (
+                  <ThresholdSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    value={value}
+                    defaultValue={defaultValue}
+                    range={range}
+                    label={label}
+                    onChange={_handleChange}
+                  />
+                );
+              case 'choice': {
+                const { depends_on } = parameter;
+                return (
+                  <ChoiceSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    label={label}
+                    value={value}
+                    defaultValue={defaultValue}
+                    onChange={_handleChange}
+                    layerName={name}
+                    dependsOn={depends_on}
+                  />
+                );
+              }
+              case 'input': {
+                const { type } = parameter;
+
+                if (type === 'string') {
                   return (
-                    <TimeSeriesSelector
+                    <InputSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
                       onChange={_handleChange}
                     />
                   );
-                case 'threshold':
+                } else if (type === 'number') {
+                  const { range } = parameter;
                   return (
-                    <ThresholdSelector
+                    <InputNumberSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
                       range={range}
-                      label={label}
                       onChange={_handleChange}
                     />
                   );
-                case 'choice': {
-                  const { depends_on } = parameter;
-                  return (
-                    <ChoiceSelector
-                      key={`${name}-${key}`}
-                      parameterName={key}
-                      label={label}
-                      value={value}
-                      defaultValue={defaultValue}
-                      onChange={_handleChange}
-                      layerName={name}
-                      dependsOn={depends_on}
-                    />
-                  );
-                }
-                case 'input': {
-                  const { type } = parameter;
-
-                  if (type === 'string') {
-                    return (
-                      <InputSelector
-                        key={`${name}-${key}`}
-                        parameterName={key}
-                        label={label}
-                        value={value}
-                        defaultValue={defaultValue}
-                        onChange={_handleChange}
-                      />
-                    );
-                  } else if (type === 'number') {
-                    const { range } = parameter;
-                    return (
-                      <InputNumberSelector
-                        key={`${name}-${key}`}
-                        parameterName={key}
-                        label={label}
-                        value={value}
-                        defaultValue={defaultValue}
-                        range={range}
-                        onChange={_handleChange}
-                      />
-                    );
-                  } else return null;
-                }
-                default:
-                  if (selector) {
-                    return (
-                      <div key={`${name}-${key}`} style={{ paddding: 12 }}>
-                        Unknown parameter type: {selector}
-                      </div>
-                    );
-                  }
+                } else return null;
               }
-            })}
-          </div>
-        );
-      }),
-    [layers, parameterValues, range, filters, changeHandler],
-  );
+              default:
+                if (selector) {
+                  return (
+                    <div key={`${name}-${key}`} style={{ paddding: 12 }}>
+                      Unknown parameter type: {selector}
+                    </div>
+                  );
+                }
+            }
+          })}
+        </div>
+      );
+    });
+  }, [layers, selectedLayer, parameterValues, range, filters, changeHandler]);
 
   return (
     <ConfigProvider
@@ -180,6 +191,18 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
           gap: 2,
         }}
       >
+        {layers.length > 1 && (
+          <Select
+            style={{ width: '100%' }}
+            placeholder="Select a layer"
+            value={selectedLayer}
+            onChange={setSelectedLayer}
+            options={layers.map((layer) => ({
+              label: layer.label,
+              value: layer.name,
+            }))}
+          />
+        )}
         {_parameters?.length > 0 ? _parameters : <div>No parameters found</div>}
       </div>
     </ConfigProvider>
