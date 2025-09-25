@@ -51,16 +51,17 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       } else if (panelTech === 'SC') {
         feature = 'sc';
       }
+
+      if (panelTech === 'SC') {
+        solar_panel_types.sc = panelType;
+      } else if (panelTech === 'PV') {
+        solar_panel_types.pv = panelType;
+      }
     } else {
       // Get feature from script name after 'plot-'
       feature = script?.split('plot-')?.[1];
     }
 
-    if (panelTech === 'SC') {
-      solar_panel_types.sc = panelType;
-    } else if (panelTech === 'PV') {
-      solar_panel_types.pv = panelType;
-    }
     form.setFieldsValue({
       context: { feature, hour_start, hour_end, solar_panel_types },
     });
