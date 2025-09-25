@@ -7,7 +7,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useActiveMapCategory, useSetActiveMapCategory } from './store';
 import { iconMap } from 'features/plots/constants';
 
-const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
+const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const activeCategory = useActiveMapCategory();
   const setActive = useSetActiveMapCategory();
@@ -16,8 +16,9 @@ const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
     (state) => state.setSelectedMapCategory,
   );
 
-  const handleCategorySelected = (layer) => {
-    setSelectedMapCategory(layer);
+  const handleCategorySelected = (category) => {
+    setSelectedMapCategory(category);
+    onCategorySelected?.(category);
   };
 
   const toggleActive = (category) => {
@@ -33,10 +34,10 @@ const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
     if (activeCategory == null) {
       handleCategorySelected(null);
     } else {
-      const layers = mapLayerCategories?.categories?.find(
+      const category = mapLayerCategories?.categories?.find(
         (l) => l.name == activeCategory,
       );
-      handleCategorySelected(layers);
+      handleCategorySelected(category);
     }
   }, [activeCategory]);
 
