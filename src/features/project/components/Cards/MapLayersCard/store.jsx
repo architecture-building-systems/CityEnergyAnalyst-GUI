@@ -25,7 +25,8 @@ export const useMapLayersStore = create((set) => ({
 export const useGetMapLayerCategories = () =>
   useMapLayersStore((state) => state.getLayerCategories);
 
-export const useMapCategories = () => useMapLayersStore((state) => state.data);
+export const useMapLayerCategories = () =>
+  useMapLayersStore((state) => state.data);
 
 export const useSetMapLayers = () =>
   useMapLayersStore((state) => state.setLayers);

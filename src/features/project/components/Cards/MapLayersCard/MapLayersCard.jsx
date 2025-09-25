@@ -7,7 +7,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   useActiveMapLayer,
   useGetMapLayerCategories,
-  useMapCategories,
+  useMapLayerCategories,
   useSetActiveMapLayer,
 } from './store';
 import { iconMap } from 'features/plots/constants';
@@ -27,7 +27,7 @@ const MapLayersCard = ({ onLayerSelected }) => {
   };
 
   const getMapLayerCategories = useGetMapLayerCategories();
-  const mapLayerCategories = useMapCategories();
+  const mapLayerCategories = useMapLayerCategories();
 
   const toggleActive = (category) => {
     setActive(active == category ? null : category);
