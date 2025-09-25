@@ -11,25 +11,6 @@ import {
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
-export const useGetMapLayerCategories = () => {
-  const [mapLayers, setMapLayers] = useState({});
-
-  const fetchMapLayerCategories = async () => {
-    try {
-      const resp = await apiClient.get(`/api/map_layers/`);
-      setMapLayers(resp.data);
-    } catch (err) {
-      console.error(err.response.data);
-    }
-  };
-
-  useEffect(() => {
-    fetchMapLayerCategories();
-  }, []);
-
-  return mapLayers;
-};
-
 const hasAllParameters = (categoryInfo, parameters) => {
   // Verify all required parameters exist
   const hasAllParameters = categoryInfo.layers.every((layer) => {
