@@ -35,6 +35,7 @@ import {
   useMapLayerCategories,
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
+import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -59,6 +60,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
+  const setSelectedLayer = useSetSelectedMapLayer();
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
@@ -73,7 +75,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     const category = mapLayerCategories?.categories?.find((cat) =>
       cat.layers.find((l) => l.name === layer),
     );
-    if (category) setActiveMapCategory(category?.name);
+    if (category) {
+      setActiveMapCategory(category?.name);
+      setSelectedLayer(layer);
+    }
 
     // Set selected plot tool and switch to map layers tool type
     setSelectedPlotTool(tool);
