@@ -3,9 +3,13 @@ import { Tooltip } from 'antd';
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { GraphsIcon } from 'assets/icons';
-import { useGetMapLayerCategories } from 'features/map/hooks/map-layers';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useActiveMapLayer, useSetActiveMapLayer } from './store';
+import {
+  useActiveMapLayer,
+  useGetMapLayerCategories,
+  useMapCategories,
+  useSetActiveMapLayer,
+} from './store';
 import { iconMap } from 'features/plots/constants';
 
 const MapLayersCard = ({ onLayerSelected }) => {
@@ -22,11 +26,16 @@ const MapLayersCard = ({ onLayerSelected }) => {
     onLayerSelected?.(layer);
   };
 
-  const mapLayerCategories = useGetMapLayerCategories();
+  const getMapLayerCategories = useGetMapLayerCategories();
+  const mapLayerCategories = useMapCategories();
 
   const toggleActive = (category) => {
     setActive(active == category ? null : category);
   };
+
+  useEffect(() => {
+    getMapLayerCategories();
+  }, []);
 
   // Reset active layer when scenario changes
   useEffect(() => {
