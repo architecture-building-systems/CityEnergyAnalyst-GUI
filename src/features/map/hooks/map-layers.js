@@ -10,21 +10,24 @@ import {
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
-const hasAllParameters = (categoryInfo, parameters) => {
+const hasAllParameters = (layer, parameters) => {
+  if (!layer || !layer.parameters) return false;
+  if (!parameters || !Object.keys(parameters).length) return false;
+
   // Verify all required parameters exist
-  const hasAllParameters = categoryInfo.layers.every((layer) => {
-    return Object.entries(layer.parameters).every(([key, param]) => {
+  const hasAllParameters = Object.entries(layer.parameters).every(
+    ([key, param]) => {
       // Ignore scenario-name
       return (
         key == 'scenario-name' ||
         param?.filter ||
         parameters?.[key] !== undefined
       );
-    });
-  });
+    },
+  );
 
   if (!hasAllParameters) {
-    console.log('missing parameters', parameters, categoryInfo);
+    console.log('missing parameters', parameters);
   }
 
   return hasAllParameters;
@@ -42,21 +45,25 @@ export const useGetMapLayers = (
   const setMapLayers = useMapStore((state) => state.setMapLayers);
   const selectedMapLayer = useSelectedMapLayer();
 
+  const { name: categoryName, layers } = categoryInfo || {};
+
   // Reset error when category changes
   useEffect(() => {
     setError(null);
-  }, [categoryInfo, parameters]);
+  }, [categoryName, parameters]);
 
   useEffect(() => {
-    // Only fetch if we have both category and valid parameters
-    if (
-      !categoryInfo?.layers ||
-      !parameters ||
-      !hasAllParameters(categoryInfo, parameters)
-    )
+    if (!categoryName || !layers || !selectedMapLayer) {
+      setMapLayers(null);
       return;
+    }
 
-    const { name, layers } = categoryInfo;
+    // Only fetch if we have both category and valid parameters
+    const selectedLayerInfo = layers.find((l) => l.name === selectedMapLayer);
+    if (!hasAllParameters(selectedLayerInfo, parameters)) {
+      setMapLayers(null);
+      return;
+    }
 
     let ignore = false;
 
@@ -65,18 +72,13 @@ export const useGetMapLayers = (
       try {
         setFetching(true);
         setError(null);
-        for (const layer of layers) {
-          // If a specific layer is selected, skip others
-          if (selectedMapLayer && layer.name !== selectedMapLayer) {
-            continue;
-          }
-          const data = await fetchMapLayer(name, layer.name, {
-            project,
-            scenario_name: scenarioName,
-            parameters,
-          });
-          out[layer.name] = data;
-        }
+        const data = await fetchMapLayer(categoryName, selectedMapLayer, {
+          project,
+          scenario_name: scenarioName,
+          parameters,
+        });
+        out[selectedMapLayer] = data;
+
         if (!ignore) {
           setMapLayers(out);
         }
@@ -99,7 +101,7 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [parameters]);
+  }, [categoryName, layers, parameters, selectedMapLayer]);
 
   return { fetching, error };
 };
