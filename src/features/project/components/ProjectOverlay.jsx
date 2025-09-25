@@ -95,6 +95,14 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     }
   };
 
+  const handleCategorySelected = (category) => {
+    // Chose the first layer in the category by default
+    const firstLayer = category?.layers?.[0];
+    if (firstLayer) {
+      handleLayerSelected(firstLayer.name);
+    }
+  };
+
   const handleLayerSelected = (layer) => {
     const plotScriptName = VIEW_PLOT_RESULTS?.[layer];
     setSelectedPlotTool(plotScriptName);
@@ -327,7 +335,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             <MapControls />
           </div>
 
-          <MapLayerCategoriesCard mapLayerCategories={mapLayerCategories} />
+          <MapLayerCategoriesCard
+            mapLayerCategories={mapLayerCategories}
+            onCategorySelected={handleCategorySelected}
+          />
         </div>
       </div>
 
