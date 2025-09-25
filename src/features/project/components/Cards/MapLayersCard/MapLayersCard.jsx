@@ -9,20 +9,19 @@ import { iconMap } from 'features/plots/constants';
 
 const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
-  const active = useActiveMapCategory();
+  const activeCategory = useActiveMapCategory();
   const setActive = useSetActiveMapCategory();
 
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
   );
 
-  const handleLayerSelected = (layer) => {
+  const handleCategorySelected = (layer) => {
     setSelectedMapCategory(layer);
-    if (onLayerSelected) onLayerSelected?.(layer?.name);
   };
 
   const toggleActive = (category) => {
-    setActive(active == category ? null : category);
+    setActive(activeCategory == category ? null : category);
   };
 
   // Reset active layer when scenario changes
@@ -31,15 +30,15 @@ const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
   }, [scenarioName]);
 
   useEffect(() => {
-    if (active == null) {
-      handleLayerSelected(null);
+    if (activeCategory == null) {
+      handleCategorySelected(null);
     } else {
       const layers = mapLayerCategories?.categories?.find(
-        (l) => l.name == active,
+        (l) => l.name == activeCategory,
       );
-      handleLayerSelected(layers);
+      handleCategorySelected(layers);
     }
-  }, [active]);
+  }, [activeCategory]);
 
   if (!scenarioName) return null;
 
@@ -71,7 +70,7 @@ const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
             onClick={toggleActive}
             category={name}
             label={label}
-            active={active == name}
+            active={activeCategory == name}
           />
         );
       })}
