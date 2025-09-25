@@ -44,14 +44,16 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     const solar_panel_types = {};
 
     let feature;
-    if (script == 'plot-demand') {
-      feature = 'demand';
-    } else if (script == 'plot-solar') {
+    // Special case for solar plots
+    if (script == 'plot-solar') {
       if (panelTech === 'PV') {
         feature = 'pv';
       } else if (panelTech === 'SC') {
         feature = 'sc';
       }
+    } else {
+      // Get feature from script name after 'plot-'
+      feature = script?.split('plot-')?.[1];
     }
 
     if (panelTech === 'SC') {
