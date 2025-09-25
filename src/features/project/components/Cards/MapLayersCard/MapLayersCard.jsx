@@ -23,7 +23,7 @@ const MapLayersCard = ({ onLayerSelected }) => {
 
   const handleLayerSelected = (layer) => {
     setSelectedMapCategory(layer);
-    onLayerSelected?.(layer);
+    if (onLayerSelected) onLayerSelected?.(layer?.name);
   };
 
   const getMapLayerCategories = useGetMapLayerCategories();
