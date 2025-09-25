@@ -287,6 +287,7 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   };
 
   useEffect(() => {
+    form.resetFields();
     fetchToolParams(script);
     // Reset header visibility when the component mounts
     setHeaderVisible(true);
@@ -295,7 +296,6 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
 
     return async () => {
       await resetToolParams();
-      form.resetFields();
     };
   }, [script, fetchToolParams, resetToolParams, form]);
 
