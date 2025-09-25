@@ -10,7 +10,7 @@ import ChoiceSelector from './Choice';
 import { ConfigProvider, Select } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
 
-const ParameterSelectors = ({ layers, parameterValues }) => {
+const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
   const selectedLayer = useSelectedMapLayer();
   const setSelectedLayer = useSetSelectedMapLayer();
 
@@ -21,6 +21,11 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
     (state) => state.setMapLayerParameters,
   );
   const setFilters = useMapStore((state) => state.setFilters);
+
+  const handleLayerSelected = (layerName) => {
+    setSelectedLayer(layerName);
+    if (onLayerSelect) onLayerSelect(layerName);
+  };
 
   const changeHandler = useCallback(
     (parameterName, filter) => {
@@ -196,7 +201,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
             style={{ width: '100%' }}
             placeholder="Select a layer"
             value={selectedLayer}
-            onChange={setSelectedLayer}
+            onChange={handleLayerSelected}
             options={layers.map((layer) => ({
               label: layer.label,
               value: layer.name,

@@ -89,7 +89,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   };
 
   const handleLayerSelected = (layer) => {
-    const plotScriptName = VIEW_PLOT_RESULTS?.[layer?.name];
+    const plotScriptName = VIEW_PLOT_RESULTS?.[layer];
     setSelectedPlotTool(plotScriptName);
 
     if (plotScriptName !== null) setToolType(toolTypes.MAP_LAYERS);
@@ -233,7 +233,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       </div>
 
       <div id="cea-project-overlay-content" className="overlay-flex-column">
-        <MapLayerPropertiesCard />
+        <MapLayerPropertiesCard onLayerSelect={handleLayerSelected} />
 
         {inputTableTransition((styles, item) =>
           item ? (
