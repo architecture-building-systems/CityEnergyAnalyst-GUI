@@ -31,6 +31,10 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
+import {
+  useMapLayerCategories,
+  useSetActiveMapLayer,
+} from './Cards/MapLayersCard/store';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -53,12 +57,25 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const selectionSource = useSelectionSource();
   const resetSelected = useResetSelected();
 
+  const mapLayerCategories = useMapLayerCategories();
+  const setActiveMapLayer = useSetActiveMapLayer();
+
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
     setToolType(toolTypes.TOOLS);
   };
 
   const handlePlotToolSelected = (tool) => {
+    // Get map layer category from plot script name
+    const layer = Object.keys(VIEW_PLOT_RESULTS).find(
+      (key) => VIEW_PLOT_RESULTS[key] === tool,
+    );
+    const category = mapLayerCategories?.categories?.find((cat) =>
+      cat.layers.find((l) => l.name === layer),
+    );
+    if (category !== null) setActiveMapLayer(category?.name || null);
+
+    // Set selected plot tool and switch to map layers tool type
     setSelectedPlotTool(tool);
     setToolType(toolTypes.MAP_LAYERS);
   };
