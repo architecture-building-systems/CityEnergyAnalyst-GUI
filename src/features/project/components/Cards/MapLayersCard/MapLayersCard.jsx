@@ -7,7 +7,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useActiveMapCategory, useSetActiveMapCategory } from './store';
 import { iconMap } from 'features/plots/constants';
 
-const MapLayersCard = ({ mapLayerCategories, onLayerSelected }) => {
+const MapLayerCategoriesCard = ({ mapLayerCategories }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const active = useActiveMapCategory();
   const setActive = useSetActiveMapCategory();
@@ -108,4 +108,4 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
   );
 };
 
-export default MapLayersCard;
+export default MapLayerCategoriesCard;

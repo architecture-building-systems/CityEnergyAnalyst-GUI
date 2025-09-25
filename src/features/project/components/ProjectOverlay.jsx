@@ -5,7 +5,7 @@ import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
 import ToolCard from 'features/project/components/Cards/ToolCard';
 import BottomToolButtons from 'features/project/components/Cards/BottomToolBottons/BottomToolButtons';
 import MapControls from 'features/map/components/Map/MapControls';
-import MapLayersCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
+import MapLayerCategoriesCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 import UserInfo from 'components/UserInfo';
@@ -327,10 +327,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             <MapControls />
           </div>
 
-          <MapLayersCard
-            mapLayerCategories={mapLayerCategories}
-            onLayerSelected={handleLayerSelected}
-          />
+          <MapLayerCategoriesCard mapLayerCategories={mapLayerCategories} />
         </div>
       </div>
 
