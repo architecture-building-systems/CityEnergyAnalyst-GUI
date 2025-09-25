@@ -24,7 +24,7 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
 
   const handleLayerSelected = (layerName) => {
     setSelectedLayer(layerName);
-    if (onLayerSelect) onLayerSelect(layerName);
+    if (onLayerSelect) onLayerSelect?.(layerName);
   };
 
   const changeHandler = useCallback(
