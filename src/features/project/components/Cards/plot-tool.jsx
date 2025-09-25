@@ -39,10 +39,6 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const panelType = mapLayerParameters?.['panel-type'];
 
   useEffect(() => {
-    form.resetFields();
-  }, [form, script]);
-
-  useEffect(() => {
     const hour_start = ((period?.[0] ?? 1) - 1) * 24;
     const hour_end = (period?.[1] ?? 365) * 24;
     const solar_panel_types = {};

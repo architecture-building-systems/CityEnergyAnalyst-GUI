@@ -293,8 +293,11 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     lastScrollPositionRef.current = 0;
     descriptionHeightRef.current = 'auto';
 
-    return () => resetToolParams();
-  }, [script, fetchToolParams, resetToolParams]);
+    return async () => {
+      await resetToolParams();
+      form.resetFields();
+    };
+  }, [script, fetchToolParams, resetToolParams, form]);
 
   if (status == 'fetching' || showSkeleton)
     return (
