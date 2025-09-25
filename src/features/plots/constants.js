@@ -44,13 +44,12 @@ export const VIEW_MAP_RESULTS = {
   emissions: LIFE_CYCLE_ANALYSIS,
 };
 
-// Maps script name to plot script name
+// Maps layer name to plot script name
 export const VIEW_PLOT_RESULTS = {
   [DEMAND]: 'plot-demand',
   [SOLAR_IRRADIATION]: null,
   [RENEWABLE_ENERGY_POTENTIALS]: 'plot-solar',
   [THERMAL_NETWORK]: null,
-  [LIFE_CYCLE_ANALYSIS]: null,
   [COMFORT_CHART]: 'plot-comfort-chart',
   [PARETO_FRONT]: 'plot-pareto-front',
   [EMISSIONS_EMBODIED]: 'plot-embodied-emissions',
