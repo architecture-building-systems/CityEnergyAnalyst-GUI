@@ -4,15 +4,10 @@ import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { GraphsIcon } from 'assets/icons';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import {
-  useActiveMapCategory,
-  useGetMapLayerCategories,
-  useMapLayerCategories,
-  useSetActiveMapCategory,
-} from './store';
+import { useActiveMapCategory, useSetActiveMapCategory } from './store';
 import { iconMap } from 'features/plots/constants';
 
-const MapLayersCard = ({ onLayerSelected }) => {
+const MapLayersCard = ({ mapLayerCategories, onLayerSelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const active = useActiveMapCategory();
   const setActive = useSetActiveMapCategory();
@@ -26,16 +21,9 @@ const MapLayersCard = ({ onLayerSelected }) => {
     if (onLayerSelected) onLayerSelected?.(layer?.name);
   };
 
-  const getMapLayerCategories = useGetMapLayerCategories();
-  const mapLayerCategories = useMapLayerCategories();
-
   const toggleActive = (category) => {
     setActive(active == category ? null : category);
   };
-
-  useEffect(() => {
-    getMapLayerCategories();
-  }, []);
 
   // Reset active layer when scenario changes
   useEffect(() => {
