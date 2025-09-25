@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
   DEMAND,
@@ -46,6 +46,10 @@ export const useGetMapLayers = (
   const selectedMapLayer = useSelectedMapLayer();
 
   const { name: categoryName, layers } = categoryInfo || {};
+  const selectedLayerInfo = useMemo(
+    () => layers?.find((l) => l.name === selectedMapLayer),
+    [layers, selectedMapLayer],
+  );
 
   // Reset error when category changes
   useEffect(() => {
@@ -53,14 +57,11 @@ export const useGetMapLayers = (
   }, [categoryName, parameters]);
 
   useEffect(() => {
-    if (!categoryName || !layers || !selectedMapLayer) {
-      setMapLayers(null);
-      return;
-    }
-
     // Only fetch if we have both category and valid parameters
-    const selectedLayerInfo = layers.find((l) => l.name === selectedMapLayer);
-    if (!hasAllParameters(selectedLayerInfo, parameters)) {
+    if (
+      !selectedLayerInfo ||
+      !hasAllParameters(selectedLayerInfo, parameters)
+    ) {
       setMapLayers(null);
       return;
     }
@@ -72,12 +73,12 @@ export const useGetMapLayers = (
       try {
         setFetching(true);
         setError(null);
-        const data = await fetchMapLayer(categoryName, selectedMapLayer, {
+        const data = await fetchMapLayer(categoryName, selectedLayerInfo.name, {
           project,
           scenario_name: scenarioName,
           parameters,
         });
-        out[selectedMapLayer] = data;
+        out[selectedLayerInfo.name] = data;
 
         if (!ignore) {
           setMapLayers(out);
@@ -101,7 +102,7 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [categoryName, layers, parameters, selectedMapLayer]);
+  }, [categoryName, parameters, selectedLayerInfo]);
 
   return { fetching, error };
 };
