@@ -1,11 +1,11 @@
 import { apiClient } from 'lib/api/axios';
 import { create } from 'zustand';
 
-export const useMapLayersStore = create((set) => ({
+export const useMapCategoryStore = create((set) => ({
   data: null,
   active: null,
 
-  getLayerCategories: async () => {
+  getCategories: async () => {
     try {
       const resp = await apiClient.get(`/api/map_layers/`);
       set({ data: resp.data });
@@ -18,21 +18,21 @@ export const useMapLayersStore = create((set) => ({
       }
     }
   },
-  setLayers: (data) => set({ data }),
+  setCategories: (data) => set({ data }),
   setActive: (active) => set({ active }),
 }));
 
 export const useGetMapLayerCategories = () =>
-  useMapLayersStore((state) => state.getLayerCategories);
+  useMapCategoryStore((state) => state.getCategories);
 
 export const useMapLayerCategories = () =>
-  useMapLayersStore((state) => state.data);
+  useMapCategoryStore((state) => state.data);
 
-export const useSetMapLayers = () =>
-  useMapLayersStore((state) => state.setLayers);
+export const useSetMapCategories = () =>
+  useMapCategoryStore((state) => state.setCategories);
 
-export const useActiveMapLayer = () =>
-  useMapLayersStore((state) => state.active);
+export const useActiveMapCategory = () =>
+  useMapCategoryStore((state) => state.active);
 
-export const useSetActiveMapLayer = () =>
-  useMapLayersStore((state) => state.setActive);
+export const useSetActiveMapCategory = () =>
+  useMapCategoryStore((state) => state.setActive);

@@ -5,17 +5,17 @@ import { useMapStore } from 'features/map/stores/mapStore';
 import { GraphsIcon } from 'assets/icons';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
-  useActiveMapLayer,
+  useActiveMapCategory,
   useGetMapLayerCategories,
   useMapLayerCategories,
-  useSetActiveMapLayer,
+  useSetActiveMapCategory,
 } from './store';
 import { iconMap } from 'features/plots/constants';
 
 const MapLayersCard = ({ onLayerSelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
-  const active = useActiveMapLayer();
-  const setActive = useSetActiveMapLayer();
+  const active = useActiveMapCategory();
+  const setActive = useSetActiveMapCategory();
 
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,

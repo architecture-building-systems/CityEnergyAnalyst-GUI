@@ -9,7 +9,7 @@ import './StatusBarNotification.css';
 
 import socket from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
-import { useSetActiveMapLayer } from 'features/project/components/Cards/MapLayersCard/store';
+import { useSetActiveMapCategory } from 'features/project/components/Cards/MapLayersCard/store';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { apiClient } from 'lib/api/axios';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -104,7 +104,7 @@ const DismissCountdown = ({ duration, onComplete }) => {
 const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const { updateJob, dismissJob } = useJobsStore();
-  const setActiveMapLayer = useSetActiveMapLayer();
+  const setActiveMapCategory = useSetActiveMapCategory();
 
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();
@@ -176,7 +176,7 @@ const JobStatusBar = () => {
                 size="small"
                 onClick={() => {
                   notification.destroy(key);
-                  setActiveMapLayer(VIEW_MAP_RESULTS[job.script]);
+                  setActiveMapCategory(VIEW_MAP_RESULTS[job.script]);
                 }}
               >
                 View Results

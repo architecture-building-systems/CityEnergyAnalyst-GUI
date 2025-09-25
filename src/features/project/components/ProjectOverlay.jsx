@@ -33,7 +33,7 @@ import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
 import {
   useMapLayerCategories,
-  useSetActiveMapLayer,
+  useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
@@ -58,7 +58,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const resetSelected = useResetSelected();
 
   const mapLayerCategories = useMapLayerCategories();
-  const setActiveMapLayer = useSetActiveMapLayer();
+  const setActiveMapCategory = useSetActiveMapCategory();
 
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
@@ -73,7 +73,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     const category = mapLayerCategories?.categories?.find((cat) =>
       cat.layers.find((l) => l.name === layer),
     );
-    if (category) setActiveMapLayer(category?.name);
+    if (category) setActiveMapCategory(category?.name);
 
     // Set selected plot tool and switch to map layers tool type
     setSelectedPlotTool(tool);
