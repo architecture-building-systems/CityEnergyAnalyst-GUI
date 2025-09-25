@@ -73,7 +73,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     const category = mapLayerCategories?.categories?.find((cat) =>
       cat.layers.find((l) => l.name === layer),
     );
-    if (category !== null) setActiveMapLayer(category?.name || null);
+    if (category) setActiveMapLayer(category?.name);
 
     // Set selected plot tool and switch to map layers tool type
     setSelectedPlotTool(tool);
