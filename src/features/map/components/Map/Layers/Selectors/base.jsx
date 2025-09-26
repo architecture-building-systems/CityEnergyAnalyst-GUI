@@ -198,7 +198,7 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
       >
         {layers.length > 1 && (
           <Select
-            style={{ width: '100%' }}
+            style={{ marginBottom: 8 }}
             placeholder="Select a layer"
             value={selectedLayer}
             onChange={handleLayerSelected}
