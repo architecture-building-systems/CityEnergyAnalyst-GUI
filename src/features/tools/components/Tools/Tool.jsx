@@ -211,6 +211,7 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
+  const resetToolParams = useToolsStore((state) => state.resetToolParams);
 
   const changes = useChangesExist();
 
@@ -287,13 +288,21 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   };
 
   useEffect(() => {
-    form.resetFields();
-    fetchToolParams(script);
+    const fetchParams = async () => {
+      if (script) await fetchToolParams(script);
+      else resetToolParams();
+
+      // Reset form fields to ensure they are in sync with the fetched parameters
+      form.resetFields();
+    };
+
+    fetchParams();
+
     // Reset header visibility when the component mounts
     setHeaderVisible(true);
     lastScrollPositionRef.current = 0;
     descriptionHeightRef.current = 'auto';
-  }, [script, fetchToolParams, form]);
+  }, [script, fetchToolParams, resetToolParams, form]);
 
   if (status == 'fetching' || showSkeleton)
     return (
