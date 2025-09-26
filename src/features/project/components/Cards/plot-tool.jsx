@@ -1,7 +1,7 @@
 import Tool from 'features/tools/components/Tools/Tool';
 import { Button, ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
-import { use, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { iconMap, VIEW_PLOT_RESULTS } from 'features/plots/constants';
 
