@@ -104,10 +104,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   };
 
   const handleLayerSelected = (layer) => {
-    const plotScriptName = VIEW_PLOT_RESULTS?.[layer];
-    setSelectedPlotTool(plotScriptName);
+    const plotScriptName = VIEW_PLOT_RESULTS?.[layer] ?? null;
 
-    if (plotScriptName !== null) setToolType(toolTypes.MAP_LAYERS);
+    setSelectedPlotTool(plotScriptName);
+    if (plotScriptName) setToolType(toolTypes.MAP_LAYERS);
   };
 
   const [hideAll, setHideAll] = useState(false);
