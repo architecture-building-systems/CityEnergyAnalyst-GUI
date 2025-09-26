@@ -210,7 +210,7 @@ const useToolForm = (
 const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
-  const { fetchToolParams, resetToolParams } = useToolsStore();
+  const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
 
   const changes = useChangesExist();
 
@@ -293,11 +293,7 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     setHeaderVisible(true);
     lastScrollPositionRef.current = 0;
     descriptionHeightRef.current = 'auto';
-
-    return async () => {
-      await resetToolParams();
-    };
-  }, [script, fetchToolParams, resetToolParams, form]);
+  }, [script, fetchToolParams, form]);
 
   if (status == 'fetching' || showSkeleton)
     return (
