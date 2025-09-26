@@ -1,7 +1,7 @@
 import Tool from 'features/tools/components/Tools/Tool';
 import { Button, ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
-import { useEffect } from 'react';
+import { use, useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { iconMap, VIEW_PLOT_RESULTS } from 'features/plots/constants';
 
@@ -38,7 +38,8 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const panelTech = mapLayerParameters?.['technology'];
   const panelType = mapLayerParameters?.['panel-type'];
 
-  useEffect(() => {
+  const contextValue = Form.useWatch('context', form);
+  const setContext = useCallback(() => {
     const hour_start = ((period?.[0] ?? 1) - 1) * 24;
     const hour_end = (period?.[1] ?? 365) * 24;
     const solar_panel_types = {};
@@ -65,7 +66,16 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     form.setFieldsValue({
       context: { feature, hour_start, hour_end, solar_panel_types },
     });
-  }, [form, script, period, panelType, panelTech]);
+  }, [form, period, panelTech, panelType, script]);
+
+  // Ensure context is not empty
+  useEffect(() => {
+    if (Object.keys(contextValue ?? {}).length === 0) setContext();
+  }, [contextValue, setContext]);
+
+  useEffect(() => {
+    setContext();
+  }, [setContext]);
 
   if (script == null) return <PlotChoices onSelected={onPlotToolSelected} />;
 
