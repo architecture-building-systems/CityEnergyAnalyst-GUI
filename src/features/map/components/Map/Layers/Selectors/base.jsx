@@ -152,7 +152,7 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
               default:
                 if (selector) {
                   return (
-                    <div key={`${name}-${key}`} style={{ paddding: 12 }}>
+                    <div key={`${name}-${key}`} style={{ padding: 12 }}>
                       Unknown parameter type: {selector}
                     </div>
                   );
