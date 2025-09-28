@@ -1,5 +1,6 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threshold';
+import SliderSelector from './Slider';
 import { useMemo, useCallback, useEffect } from 'react';
 import {
   useMapStore,
@@ -105,6 +106,21 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
                     onChange={_handleChange}
                   />
                 );
+              case 'slider': {
+                const { range } = parameter;
+                return (
+                  <SliderSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    label={label}
+                    value={value}
+                    defaultValue={defaultValue}
+                    range={range}
+                    layerName={name}
+                    onChange={_handleChange}
+                  />
+                );
+              }
               case 'choice': {
                 const { depends_on } = parameter;
                 return (
