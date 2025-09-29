@@ -55,9 +55,20 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
         }
       });
     });
-
-    setSelectedLayer(layers?.[0]?.name || null);
   }, [layers]);
+
+  // When layers change, check if the selected layer is still valid
+  // If not, select the first layer
+  useEffect(() => {
+    if (!layers?.length) {
+      setSelectedLayer(null);
+      return;
+    }
+
+    if (!selectedLayer || !layers.find((l) => l.name === selectedLayer)) {
+      handleLayerSelected(layers[0].name);
+    }
+  }, [layers, selectedLayer]);
 
   const _parameters = useMemo(() => {
     const filteredLayers = selectedLayer
