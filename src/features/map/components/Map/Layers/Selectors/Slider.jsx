@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
+const DEFAULT_RANGE = [0, 0];
+
 const getRange = async (
   layerCategory,
   layerName,
@@ -47,7 +49,7 @@ const SliderSelector = ({
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
-  const [dynamicRange, setDynamicRange] = useState(staticRange);
+  const [dynamicRange, setDynamicRange] = useState(DEFAULT_RANGE);
 
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
@@ -89,29 +91,22 @@ const SliderSelector = ({
         // Validate range data before using it
         if (checkIsValidRange(rangeData)) {
           setDynamicRange(rangeData);
-
-          // Set default value to the full range if no value is set
-            const newDefaultValue = Array.isArray(defaultValue)
-              ? rangeData
-              : rangeData[0];
-            setSliderValue(newDefaultValue);
-            handleChange(newDefaultValue);
-          if (!checkIsValidRange(sliderValue)) {
-          }
+          // Set new value to be full range of new data
+          handleChange(rangeData);
         } else {
           console.warn('Invalid range data received:', rangeData);
-          setDynamicRange(staticRange || [0, 100]);
+          setDynamicRange(DEFAULT_RANGE);
         }
       } catch (error) {
         console.error('Failed to fetch range:', error.response?.data);
-        setDynamicRange(staticRange);
+        setDynamicRange(DEFAULT_RANGE);
       }
     };
 
     if (categoryInfo?.name && layerName && project && scenarioName) {
       fetchRange();
     }
-  }, [categoryInfo?.name, layerName, project, scenarioName]);
+  }, [categoryInfo?.name, layerName, project, scenarioName, staticRange]);
 
   return (
     <div>
@@ -130,8 +125,8 @@ const SliderSelector = ({
           value={sliderValue}
           defaultValue={defaultValue}
           range={Array.isArray(dynamicRange) ? { draggableTrack: true } : false}
-          min={dynamicRange?.[0] ?? 0}
-          max={dynamicRange?.[1] ?? 100}
+          min={dynamicRange?.[0] ?? DEFAULT_RANGE[0]}
+          max={dynamicRange?.[1] ?? DEFAULT_RANGE[1]}
           onChange={handleSliderChange}
           onChangeComplete={handleChange}
           tooltip={{
