@@ -66,8 +66,15 @@ const SliderSelector = ({
     setSliderValue(newValue);
   };
 
-  // Fetch dynamic range if this parameter has an options_generator
+  // Fetch dynamic range only if static range is not provided
   useEffect(() => {
+    // If static range is provided, use it and don't fetch from backend
+    if (staticRange && Array.isArray(staticRange) && staticRange.length === 2) {
+      setDynamicRange(staticRange);
+      return;
+    }
+
+    // Only fetch range if no static range is provided (dynamic range case)
     const fetchRange = async () => {
       try {
         const rangeData = await getRange(
