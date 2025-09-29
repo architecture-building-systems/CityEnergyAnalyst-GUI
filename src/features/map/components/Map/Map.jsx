@@ -1,7 +1,12 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 
 import { DeckGL } from '@deck.gl/react';
-import { GeoJsonLayer, PointCloudLayer, PolygonLayer } from '@deck.gl/layers';
+import {
+  GeoJsonLayer,
+  PointCloudLayer,
+  PolygonLayer,
+  TextLayer,
+} from '@deck.gl/layers';
 import { DataFilterExtension } from '@deck.gl/extensions';
 
 import positron from 'constants/mapStyles/positron.json';
@@ -425,10 +430,12 @@ const DeckGLMap = ({ data, colors }) => {
     };
 
     let _layers = [];
+    let _textLayers = [];
+
     if (data?.zone) {
       _layers.push(
         new PolygonLayer({
-          id: 'zone',
+          id: 'zone-polygon',
           data: data.zone?.features,
           opacity: 0.5,
           wireframe: true,
@@ -454,6 +461,24 @@ const DeckGLMap = ({ data, colors }) => {
 
           onHover: updateTooltip,
           onClick: onClick,
+        }),
+      );
+
+      _textLayers.push(
+        new TextLayer({
+          id: 'zone-labels',
+          data: data.zone?.features,
+          visible: visibility.zone,
+          pickable: false,
+          getPosition: (f) => {
+            const centroid = turf.centroid(f);
+            return [...centroid.geometry.coordinates, 5];
+          },
+          getText: (f) => f.properties[INDEX_COLUMN],
+          getSize: 14,
+          getAngle: 0,
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'center',
         }),
       );
     }
@@ -535,7 +560,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    return _layers;
+    return { _layers, _textLayers };
   }, [
     visibility,
     data,
@@ -548,7 +573,11 @@ const DeckGLMap = ({ data, colors }) => {
 
   const mapLayers = useMapLayers();
 
-  const layers = [...dataLayers, ...mapLayers];
+  const layers = [
+    ...dataLayers._layers,
+    ...mapLayers,
+    ...dataLayers._textLayers,
+  ];
 
   const onDragStart = useCallback(
     (_, event) => {
