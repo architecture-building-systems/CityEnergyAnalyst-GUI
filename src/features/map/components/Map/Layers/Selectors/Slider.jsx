@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
-const DEFAULT_RANGE = [0, 0];
-
 const getRange = async (
   layerCategory,
   layerName,
@@ -49,7 +47,9 @@ const SliderSelector = ({
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
-  const [dynamicRange, setDynamicRange] = useState(DEFAULT_RANGE);
+  const [dynamicRange, setDynamicRange] = useState();
+  const min = staticRange?.[0] ?? dynamicRange?.[0] ?? null;
+  const max = staticRange?.[1] ?? dynamicRange?.[1] ?? null;
 
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
@@ -95,11 +95,11 @@ const SliderSelector = ({
           handleChange(rangeData);
         } else {
           console.warn('Invalid range data received:', rangeData);
-          setDynamicRange(DEFAULT_RANGE);
+          setDynamicRange(null);
         }
       } catch (error) {
         console.error('Failed to fetch range:', error.response?.data);
-        setDynamicRange(DEFAULT_RANGE);
+        setDynamicRange(null);
       }
     };
 
@@ -124,9 +124,9 @@ const SliderSelector = ({
         <Slider
           value={sliderValue}
           defaultValue={defaultValue}
-          range={Array.isArray(dynamicRange) ? { draggableTrack: true } : false}
-          min={dynamicRange?.[0] ?? DEFAULT_RANGE[0]}
-          max={dynamicRange?.[1] ?? DEFAULT_RANGE[1]}
+          range={{ draggableTrack: true }}
+          min={min}
+          max={max}
           onChange={handleSliderChange}
           onChangeComplete={handleChange}
           tooltip={{
