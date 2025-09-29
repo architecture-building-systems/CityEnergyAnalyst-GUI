@@ -468,7 +468,7 @@ const DeckGLMap = ({ data, colors }) => {
         new TextLayer({
           id: 'zone-labels',
           data: data.zone?.features,
-          visible: visibility.zone,
+          visible: visibility.zone_labels ?? true,
           pickable: false,
           getPosition: (f) => {
             const centroid = turf.centroid(f);

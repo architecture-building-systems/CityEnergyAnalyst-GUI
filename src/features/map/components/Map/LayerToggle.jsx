@@ -83,6 +83,16 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
         />
       ),
     });
+    out.push({
+      label: (
+        <LayerToggleRadio
+          label="Zone Labels"
+          value="zone_labels"
+          onChange={handleChange}
+          checked
+        />
+      ),
+    });
   }
 
   if (data?.surroundings) {
