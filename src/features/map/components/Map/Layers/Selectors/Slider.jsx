@@ -30,7 +30,7 @@ const SliderSelector = ({
   defaultValue,
   onChange,
   layerName,
-  range: staticRange = [0, 100],
+  range: staticRange,
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
@@ -38,7 +38,7 @@ const SliderSelector = ({
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
-  const [dynamicRange, setDynamicRange] = useState(staticRange || [0, 100]);
+  const [dynamicRange, setDynamicRange] = useState(staticRange);
 
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
@@ -123,7 +123,7 @@ const SliderSelector = ({
         <Slider
           value={sliderValue}
           defaultValue={defaultValue}
-          range={Array.isArray(defaultValue) ? { draggableTrack: true } : false}
+          range={Array.isArray(dynamicRange) ? { draggableTrack: true } : false}
           min={dynamicRange?.[0] ?? 0}
           max={dynamicRange?.[1] ?? 100}
           onChange={handleSliderChange}
