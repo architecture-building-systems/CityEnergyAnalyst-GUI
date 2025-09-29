@@ -472,13 +472,17 @@ const DeckGLMap = ({ data, colors }) => {
           pickable: false,
           getPosition: (f) => {
             const centroid = turf.centroid(f);
-            return [...centroid.geometry.coordinates, 5];
+            const height = extruded ? (f.properties?.height_ag ?? 0) : 0;
+            return [...centroid.geometry.coordinates, height + 3];
           },
+          sizeUnits: 'meters',
+
           getText: (f) => f.properties[INDEX_COLUMN],
-          getSize: 14,
-          getAngle: 0,
-          getTextAnchor: 'middle',
-          getAlignmentBaseline: 'center',
+          getSize: 6,
+          sizeMinPixels: 3,
+          updateTriggers: {
+            getPosition: [extruded],
+          },
         }),
       );
     }
