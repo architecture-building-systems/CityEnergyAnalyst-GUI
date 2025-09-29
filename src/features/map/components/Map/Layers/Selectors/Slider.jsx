@@ -28,7 +28,8 @@ const checkIsValidRange = (range) => {
     Array.isArray(range) &&
     range.length === 2 &&
     typeof range[0] === 'number' &&
-    typeof range[1] === 'number'
+    typeof range[1] === 'number' &&
+    range[0] <= range[1]
   );
 };
 
@@ -114,9 +115,9 @@ const SliderSelector = ({
         <b>{label || 'Range'}</b>
         <div>
           [
-          {Array.isArray(sliderValue)
+          {checkIsValidRange(sliderValue)
             ? `${sliderValue[0]} - ${sliderValue[1]}`
-            : sliderValue}
+            : '--'}
           ]
         </div>
       </div>
@@ -132,6 +133,7 @@ const SliderSelector = ({
           tooltip={{
             placement: 'bottom',
           }}
+          disabled={checkIsValidRange([min, max]) === false}
         />
       </div>
     </div>
