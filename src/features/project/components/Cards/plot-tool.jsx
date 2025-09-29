@@ -45,22 +45,18 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     const solar_panel_types = {};
 
     let feature;
+    // Get feature from script name after 'plot-'
+    feature = script?.split('plot-')?.[1];
+
     // Special case for solar plots
     if (script == 'plot-solar') {
       if (panelTech === 'PV') {
         feature = 'pv';
+        solar_panel_types.pv = panelType;
       } else if (panelTech === 'SC') {
         feature = 'sc';
-      }
-
-      if (panelTech === 'SC') {
         solar_panel_types.sc = panelType;
-      } else if (panelTech === 'PV') {
-        solar_panel_types.pv = panelType;
       }
-    } else {
-      // Get feature from script name after 'plot-'
-      feature = script?.split('plot-')?.[1];
     }
 
     form.setFieldsValue({
