@@ -23,6 +23,15 @@ const getRange = async (
   return resp.data;
 };
 
+const checkIsValidRange = (range) => {
+  return (
+    Array.isArray(range) &&
+    range.length === 2 &&
+    typeof range[0] === 'number' &&
+    typeof range[1] === 'number'
+  );
+};
+
 const SliderSelector = ({
   parameterName,
   label,
@@ -71,26 +80,16 @@ const SliderSelector = ({
         );
 
         // Validate range data before using it
-        if (
-          Array.isArray(rangeData) &&
-          rangeData.length === 2 &&
-          typeof rangeData[0] === 'number' &&
-          typeof rangeData[1] === 'number'
-        ) {
+        if (checkIsValidRange(rangeData)) {
           setDynamicRange(rangeData);
 
           // Set default value to the full range if no value is set
-          if (
-            !sliderValue ||
-            (Array.isArray(sliderValue) &&
-              sliderValue[0] === 0 &&
-              sliderValue[1] === 0)
-          ) {
             const newDefaultValue = Array.isArray(defaultValue)
               ? rangeData
               : rangeData[0];
             setSliderValue(newDefaultValue);
             handleChange(newDefaultValue);
+          if (!checkIsValidRange(sliderValue)) {
           }
         } else {
           console.warn('Invalid range data received:', rangeData);
