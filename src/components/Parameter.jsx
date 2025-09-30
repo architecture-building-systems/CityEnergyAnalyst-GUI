@@ -260,7 +260,6 @@ const Parameter = ({ parameter, form }) => {
     }
 
     case 'WeatherPathParameter': {
-      const { choices } = parameter;
       return (
         <FormItemWrapper
           form={form}
@@ -275,22 +274,12 @@ const Parameter = ({ parameter, form }) => {
               filters={[{ name: 'Weather files', extensions: ['epw'] }]}
               options={[
                 {
-                  label: 'Third-party sources',
-                  options: [
-                    {
-                      label: 'Fetch from climate.onebuilding.org',
-                      value: 'climate.onebuilding.org',
-                    },
-                  ],
+                  label: 'Fetch from climate.onebuilding.org',
+                  value: 'climate.onebuilding.org',
                 },
                 {
-                  label: 'CEA Built-in',
-                  options: Object.keys(choices).map((choice) => {
-                    return {
-                      label: choice,
-                      value: choices[choice],
-                    };
-                  }),
+                  label: 'Generate a future weather file using pyepwmorph',
+                  value: 'pyepwmorph',
                 },
               ]}
             >
