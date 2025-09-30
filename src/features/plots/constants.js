@@ -52,7 +52,7 @@ export const VIEW_PLOT_RESULTS = {
   [THERMAL_NETWORK]: null,
   [COMFORT_CHART]: 'plot-comfort-chart',
   [PARETO_FRONT]: 'plot-pareto-front',
-  [EMISSIONS_EMBODIED]: 'plot-embodied-emissions',
+  [EMISSIONS_EMBODIED]: 'plot-lifecycle-emissions',
   [EMISSIONS_OPERATIONAL]: 'plot-operational-emissions',
 };
 
