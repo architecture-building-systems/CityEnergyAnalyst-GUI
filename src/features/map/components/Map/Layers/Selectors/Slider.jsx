@@ -1,6 +1,6 @@
 import { Slider } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
@@ -33,6 +33,17 @@ const checkIsValidRange = (range) => {
   );
 };
 
+const generateTenMarks = (min, max) => {
+  const marks = {};
+  const firstTen = Math.ceil(min / 10) * 10;
+
+  for (let i = firstTen; i <= max; i += 10) {
+    marks[i] = i.toString();
+  }
+
+  return marks;
+};
+
 const SliderSelector = ({
   parameterName,
   label,
@@ -51,6 +62,13 @@ const SliderSelector = ({
   const [dynamicRange, setDynamicRange] = useState();
   const min = staticRange?.[0] ?? dynamicRange?.[0] ?? null;
   const max = staticRange?.[1] ?? dynamicRange?.[1] ?? null;
+
+  const marks = useMemo(() => {
+    if (checkIsValidRange([min, max])) {
+      return generateTenMarks(min, max);
+    }
+    return {};
+  }, [min, max]);
 
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
@@ -133,6 +151,7 @@ const SliderSelector = ({
           tooltip={{
             placement: 'bottom',
           }}
+          marks={marks}
           disabled={checkIsValidRange([min, max]) === false}
         />
       </div>
