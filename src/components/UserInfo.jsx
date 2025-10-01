@@ -96,7 +96,7 @@ const UserInfoCard = () => {
               {displayName}
             </div>
             {proUser ? (
-              <Badge count="PRO" color="purple" style={{ fontSize: 10 }} />
+              <Badge count="PRO" color="#ac6080" style={{ fontSize: 10 }} />
             ) : null}
           </div>
         </div>
