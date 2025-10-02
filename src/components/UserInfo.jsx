@@ -5,6 +5,9 @@ import { useUserInfo } from 'stores/userStore';
 import LoginModal from 'features/auth/components/Login/LoginModal';
 import LoginButton from 'features/auth/components/Login/LoginButton';
 import LogoutButton from 'features/auth/components/Login/LogoutButton';
+import { isElectron, openExternal } from 'utils/electron';
+
+const AUTH_URL = `${import.meta.env.VITE_AUTH_URL}`;
 
 const useUserLoggedIn = () => {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -41,6 +44,14 @@ const UserInfoCard = () => {
   const displayName = userInfo?.display_name || userInfo?.primary_email;
   const proUser = userInfo?.pro_user;
 
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (AUTH_URL !== '') {
+      if (isElectron()) openExternal(AUTH_URL);
+      else window.location.href = AUTH_URL;
+    }
+  };
+
   return (
     <div
       style={{
@@ -70,9 +81,11 @@ const UserInfoCard = () => {
             <Avatar
               style={{
                 verticalAlign: 'middle',
+                cursor: 'pointer',
               }}
               size="large"
               src={userInfo?.profile_image_url}
+              onClick={handleClick}
             >
               {displayName?.[0]}
             </Avatar>
@@ -96,7 +109,7 @@ const UserInfoCard = () => {
               {displayName}
             </div>
             {proUser ? (
-              <Badge count="PRO" color="purple" style={{ fontSize: 10 }} />
+              <Badge count="PRO" color="#ac6080" style={{ fontSize: 10 }} />
             ) : null}
           </div>
         </div>
