@@ -629,6 +629,14 @@ const DeckGLMap = ({ data, colors }) => {
   );
 };
 
+const zoneLabels = [
+  'height_ag',
+  'height_bg',
+  'floors_ag',
+  'floors_bg',
+  'void_deck',
+  'year',
+];
 function updateTooltip(feature) {
   const { x, y, object, layer } = feature;
   const tooltip = document.getElementById('map-tooltip');
@@ -643,7 +651,8 @@ function updateTooltip(feature) {
       Object.keys(properties)
         .sort()
         .forEach((key) => {
-          if (key != INDEX_COLUMN)
+          if (key === INDEX_COLUMN) return;
+          if (zoneLabels.includes(key))
             innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
         });
       let area = Math.round(turf.area(object) * 1000) / 1000;
