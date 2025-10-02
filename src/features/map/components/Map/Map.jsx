@@ -642,8 +642,6 @@ function updateTooltip(feature) {
   const tooltip = document.getElementById('map-tooltip');
   if (object) {
     const { properties } = object;
-    tooltip.style.top = `${y}px`;
-    tooltip.style.left = `${x}px`;
     let innerHTML = '';
 
     if (layer.id === 'zone' || layer.id === 'surroundings') {
@@ -699,6 +697,38 @@ function updateTooltip(feature) {
     }
 
     tooltip.innerHTML = innerHTML;
+
+    // Position tooltip and keep it within screen bounds
+    const offset = 16;
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let left = x + offset;
+    let top = y + offset;
+
+    // Adjust horizontal position if tooltip goes off right edge
+    if (left + tooltipRect.width > viewportWidth) {
+      left = x - tooltipRect.width - offset;
+    }
+
+    // Adjust vertical position if tooltip goes off bottom edge
+    if (top + tooltipRect.height > viewportHeight) {
+      top = y - tooltipRect.height - offset;
+    }
+
+    // Ensure tooltip doesn't go off left edge
+    if (left < 0) {
+      left = offset;
+    }
+
+    // Ensure tooltip doesn't go off top edge
+    if (top < 0) {
+      top = offset;
+    }
+
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
   } else {
     tooltip.innerHTML = '';
   }
