@@ -644,20 +644,45 @@ function updateTooltip(feature) {
     const { properties } = object;
     let innerHTML = '';
 
-    if (layer.id === 'zone' || layer.id === 'surroundings') {
-      innerHTML += `<div><b>Name</b>: ${properties[INDEX_COLUMN]}</div><br />`;
-      Object.keys(properties).forEach((key) => {
-        if (key === INDEX_COLUMN) return;
-        if (zoneLabels.includes(key))
-          innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-      });
+    const isZone = layer.id === 'zone';
+
+    if (isZone || layer.id === 'surroundings') {
+      innerHTML += `<div><b>Name</b>: ${properties[INDEX_COLUMN]}</div>`;
+
+      if (properties?.year) {
+        innerHTML += `<div><b>Year</b>: ${properties.year}</div>`;
+      }
+
+      // Above/Below Ground Section with Icon
+      const heightAg = properties?.height_ag ?? 0;
+      const heightBg = properties?.height_bg ?? 0;
+      const floorsAg = properties?.floors_ag ?? 0;
+      const floorsBg = properties?.floors_bg ?? 0;
+      const voidDeck = properties?.void_deck ?? 0;
+
+      innerHTML += `
+        <div style="display: flex; align-items: flex-start; gap: 12px; margin-block: 8px;">
+          <div style="flex: 1;">
+            <div style="margin-bottom: 8px;">
+              <div style="font-weight: bold; margin-bottom: 2px;">Above Ground</div>
+              <div>• Height: ${heightAg}m</div>
+              <div>• Floors: ${floorsAg} ${voidDeck > 0 ? `(with ${voidDeck} void decks)` : ''}</div>
+            </div>
+            ${
+              isZone
+                ? `<div>
+              <div style="font-weight: bold; margin-bottom: 2px;">Below Ground</div>
+              <div>• Depth: ${heightBg}m</div>
+              <div>• Floors: ${floorsBg}</div>
+            </div>`
+                : ''
+            }
+          </div>
+        </div>`;
 
       let area = Math.round(turf.area(object) * 1000) / 1000;
-      innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
-      if (layer.id === 'zone') {
-        const floorsAg = Number(properties?.floors_ag ?? 0);
-        const floorsBg = Number(properties?.floors_bg ?? 0);
-        const voidDeck = Number(properties?.void_deck ?? 0);
+      innerHTML += `<div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
+      if (isZone) {
         const gfa = Math.max(0, (floorsAg + floorsBg - voidDeck) * area);
 
         innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000}m<sup>2</sup></div>`;
@@ -699,7 +724,7 @@ function updateTooltip(feature) {
     tooltip.innerHTML = innerHTML;
 
     // Position tooltip and keep it within screen bounds
-    const offset = 16;
+    const offset = 4;
     const tooltipRect = tooltip.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
