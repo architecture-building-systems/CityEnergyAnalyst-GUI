@@ -48,7 +48,7 @@ const UserInfoCard = () => {
     e.preventDefault();
     if (AUTH_URL !== '') {
       if (isElectron()) openExternal(AUTH_URL);
-      else window.open(AUTH_URL, '_blank', 'noreferrer');
+      else window.location.href = AUTH_URL;
     }
   };
 
