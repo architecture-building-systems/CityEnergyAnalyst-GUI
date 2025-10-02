@@ -472,7 +472,10 @@ const DeckGLMap = ({ data, colors }) => {
           pickable: false,
           getPosition: (f) => {
             const centroid = turf.centroid(f);
-            const height = extruded ? (f.properties?.height_ag ?? 0) : 0;
+            const height = extruded
+              ? (f.properties?.height_ag ?? 0)
+              : // Lift label above void deck if exists when not extruded
+                (f.properties?.void_deck ?? 0) * VOID_DECK_FLOOR_HEIGHT;
             return [...centroid.geometry.coordinates, height + 3];
           },
           sizeUnits: 'meters',
