@@ -9,7 +9,7 @@
   position: absolute;
   padding: 12px 14px;
   margin: 8px;
-  background: rgba(20, 20, 30, 0.8);
+  background: rgba(20, 20, 30, 0.6);
   backdrop-filter: blur(8px);
   color: #fff;
   max-width: 320px;
@@ -28,7 +28,7 @@
 }
 
 #map-tooltip b {
-  color: #94a3b8;
+  color: #d5d5d5;
   font-weight: 500;
   margin-right: 4px;
 }
