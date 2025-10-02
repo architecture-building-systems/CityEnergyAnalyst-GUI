@@ -435,7 +435,7 @@ const DeckGLMap = ({ data, colors }) => {
     if (data?.zone) {
       _layers.push(
         new PolygonLayer({
-          id: 'zone-polygon',
+          id: 'zone',
           data: data.zone?.features,
           opacity: 0.5,
           wireframe: true,
