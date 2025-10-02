@@ -7,10 +7,10 @@
     Arial, sans-serif;
   font-size: 12px;
   position: absolute;
-  padding: 12px 14px;
+  padding: 8px 12px;
   margin: 8px;
-  background: rgba(20, 20, 30, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(2px);
   color: #fff;
   max-width: 320px;
   z-index: 9;
@@ -25,12 +25,6 @@
 
 #map-tooltip div {
   margin: 2px 0;
-}
-
-#map-tooltip b {
-  color: #d5d5d5;
-  font-weight: 500;
-  margin-right: 4px;
 }
 
 .network-toggle {
