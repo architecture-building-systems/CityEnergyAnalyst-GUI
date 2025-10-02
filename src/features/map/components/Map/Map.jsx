@@ -648,13 +648,12 @@ function updateTooltip(feature) {
 
     if (layer.id === 'zone' || layer.id === 'surroundings') {
       innerHTML += `<div><b>Name</b>: ${properties[INDEX_COLUMN]}</div><br />`;
-      Object.keys(properties)
-        .sort()
-        .forEach((key) => {
-          if (key === INDEX_COLUMN) return;
-          if (zoneLabels.includes(key))
-            innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-        });
+      Object.keys(properties).forEach((key) => {
+        if (key === INDEX_COLUMN) return;
+        if (zoneLabels.includes(key))
+          innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
+      });
+
       let area = Math.round(turf.area(object) * 1000) / 1000;
       innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
       if (layer.id === 'zone') {
@@ -664,6 +663,18 @@ function updateTooltip(feature) {
         const gfa = Math.max(0, (floorsAg + floorsBg - voidDeck) * area);
 
         innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000}m<sup>2</sup></div>`;
+
+        innerHTML += '<br/><div><b>Use Types</b></div>';
+        for (let i = 1; i < 4; i++) {
+          const usetype = properties?.[`use_type${i}`];
+          const ratio = properties?.[`use_type${i}r`];
+
+          if (usetype && usetype !== 'NONE' && ratio && ratio > 0) {
+            innerHTML += `<div><b>${i}</b>: ${usetype} (${
+              Math.round(ratio * 1000) / 10
+            }%)</div>`;
+          }
+        }
       }
     } else if (
       layer.id === `${THERMAL_NETWORK}-nodes` ||
