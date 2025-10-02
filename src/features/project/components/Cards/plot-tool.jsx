@@ -83,7 +83,12 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
         },
       }}
     >
-      <Tool script={script} onToolSelected={onToolSelected} form={form} />
+      <Tool
+        key={script}
+        script={script}
+        onToolSelected={onToolSelected}
+        form={form}
+      />
     </ConfigProvider>
   );
 };
