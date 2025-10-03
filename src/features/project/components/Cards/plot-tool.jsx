@@ -35,13 +35,12 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
 
   // FIXME: Hardcoded for now.
   const period = mapLayerParameters?.period;
+  const timeline = mapLayerParameters?.timeline;
   const panelTech = mapLayerParameters?.['technology'];
   const panelType = mapLayerParameters?.['panel-type'];
 
   const contextValue = Form.useWatch('context', form);
   const setContext = useCallback(() => {
-    const hour_start = ((period?.[0] ?? 1) - 1) * 24;
-    const hour_end = (period?.[1] ?? 365) * 24;
     const solar_panel_types = {};
 
     let feature;
@@ -59,10 +58,17 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       }
     }
 
+    let period_start = ((period?.[0] ?? 1) - 1) * 24;
+    let period_end = (period?.[1] ?? 365) * 24;
+    if (script == 'plot-lifecycle-emissions') {
+      period_start = timeline?.[0] ?? 0;
+      period_end = timeline?.[1] ?? 0;
+    }
+
     form.setFieldsValue({
-      context: { feature, hour_start, hour_end, solar_panel_types },
+      context: { feature, period_start, period_end, solar_panel_types },
     });
-  }, [form, period, panelTech, panelType, script]);
+  }, [form, period, panelTech, panelType, timeline, script]);
 
   // Ensure context is not empty
   useEffect(() => {
