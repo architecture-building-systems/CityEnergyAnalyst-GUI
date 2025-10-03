@@ -24,7 +24,8 @@ import {
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
-  LIFE_CYCLE_ANALYSIS,
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
   DEFAULT_LEGEND_COLOUR_ARRAY,
   DEFAULT_LEGEND_POINTS,
 } from 'features/map/constants';
@@ -288,7 +289,10 @@ const useMapLayers = () => {
         );
       }
 
-      if (name == LIFE_CYCLE_ANALYSIS && mapLayers?.[name]) {
+      if (
+        [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL].includes(name) &&
+        mapLayers?.[name]
+      ) {
         _layers.push(
           new HexagonLayer({
             id: `${name}-hex`,

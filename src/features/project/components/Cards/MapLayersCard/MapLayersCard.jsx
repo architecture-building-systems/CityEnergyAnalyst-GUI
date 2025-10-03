@@ -3,29 +3,26 @@ import { Tooltip } from 'antd';
 import { useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { GraphsIcon } from 'assets/icons';
-import { useGetMapLayerCategories } from 'features/map/hooks/map-layers';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useActiveMapLayer, useSetActiveMapLayer } from './store';
+import { useActiveMapCategory, useSetActiveMapCategory } from './store';
 import { iconMap } from 'features/plots/constants';
 
-const MapLayersCard = ({ onLayerSelected }) => {
+const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
   const scenarioName = useProjectStore((state) => state.scenario);
-  const active = useActiveMapLayer();
-  const setActive = useSetActiveMapLayer();
+  const activeCategory = useActiveMapCategory();
+  const setActive = useSetActiveMapCategory();
 
   const setSelectedMapCategory = useMapStore(
     (state) => state.setSelectedMapCategory,
   );
 
-  const handleLayerSelected = (layer) => {
-    setSelectedMapCategory(layer);
-    onLayerSelected?.(layer);
+  const handleCategorySelected = (category) => {
+    setSelectedMapCategory(category);
+    onCategorySelected?.(category);
   };
 
-  const mapLayerCategories = useGetMapLayerCategories();
-
   const toggleActive = (category) => {
-    setActive(active == category ? null : category);
+    setActive(activeCategory == category ? null : category);
   };
 
   // Reset active layer when scenario changes
@@ -34,15 +31,15 @@ const MapLayersCard = ({ onLayerSelected }) => {
   }, [scenarioName]);
 
   useEffect(() => {
-    if (active == null) {
-      handleLayerSelected(null);
+    if (activeCategory == null) {
+      handleCategorySelected(null);
     } else {
-      const layers = mapLayerCategories?.categories?.find(
-        (l) => l.name == active,
+      const category = mapLayerCategories?.categories?.find(
+        (l) => l.name == activeCategory,
       );
-      handleLayerSelected(layers);
+      handleCategorySelected(category);
     }
-  }, [active]);
+  }, [activeCategory]);
 
   if (!scenarioName) return null;
 
@@ -74,7 +71,7 @@ const MapLayersCard = ({ onLayerSelected }) => {
             onClick={toggleActive}
             category={name}
             label={label}
-            active={active == name}
+            active={activeCategory == name}
           />
         );
       })}
@@ -111,4 +108,4 @@ const CategoryIconButton = ({ category, label, onClick, active }) => {
   );
 };
 
-export default MapLayersCard;
+export default MapLayerCategoriesCard;

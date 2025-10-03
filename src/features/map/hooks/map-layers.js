@@ -1,48 +1,33 @@
-import { useEffect, useState } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
+import { useEffect, useMemo, useState } from 'react';
+import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
-  LIFE_CYCLE_ANALYSIS,
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
 } from 'features/map/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 
-export const useGetMapLayerCategories = () => {
-  const [mapLayers, setMapLayers] = useState({});
+const hasAllParameters = (layer, parameters) => {
+  if (!layer || !layer.parameters) return false;
+  if (!parameters || !Object.keys(parameters).length) return false;
 
-  const fetchMapLayerCategories = async () => {
-    try {
-      const resp = await apiClient.get(`/api/map_layers/`);
-      setMapLayers(resp.data);
-    } catch (err) {
-      console.error(err.response.data);
-    }
-  };
-
-  useEffect(() => {
-    fetchMapLayerCategories();
-  }, []);
-
-  return mapLayers;
-};
-
-const hasAllParameters = (categoryInfo, parameters) => {
   // Verify all required parameters exist
-  const hasAllParameters = categoryInfo.layers.every((layer) => {
-    return Object.entries(layer.parameters).every(([key, param]) => {
+  const hasAllParameters = Object.entries(layer.parameters).every(
+    ([key, param]) => {
       // Ignore scenario-name
       return (
         key == 'scenario-name' ||
         param?.filter ||
         parameters?.[key] !== undefined
       );
-    });
-  });
+    },
+  );
 
   if (!hasAllParameters) {
-    console.log('missing parameters', parameters, categoryInfo);
+    console.log('missing parameters', parameters);
   }
 
   return hasAllParameters;
@@ -58,22 +43,28 @@ export const useGetMapLayers = (
   const [fetching, setFetching] = useState(false);
 
   const setMapLayers = useMapStore((state) => state.setMapLayers);
+  const selectedMapLayer = useSelectedMapLayer();
+
+  const { name: categoryName, layers } = categoryInfo || {};
+  const selectedLayerInfo = useMemo(
+    () => layers?.find((l) => l.name === selectedMapLayer),
+    [layers, selectedMapLayer],
+  );
 
   // Reset error when category changes
   useEffect(() => {
     setError(null);
-  }, [categoryInfo, parameters]);
+  }, [categoryName, parameters]);
 
   useEffect(() => {
     // Only fetch if we have both category and valid parameters
     if (
-      !categoryInfo?.layers ||
-      !parameters ||
-      !hasAllParameters(categoryInfo, parameters)
-    )
+      !selectedLayerInfo ||
+      !hasAllParameters(selectedLayerInfo, parameters)
+    ) {
+      setMapLayers(null);
       return;
-
-    const { name, layers } = categoryInfo;
+    }
 
     let ignore = false;
 
@@ -82,14 +73,13 @@ export const useGetMapLayers = (
       try {
         setFetching(true);
         setError(null);
-        for (const layer of layers) {
-          const data = await fetchMapLayer(name, layer.name, {
-            project,
-            scenario_name: scenarioName,
-            parameters,
-          });
-          out[layer.name] = data;
-        }
+        const data = await fetchMapLayer(categoryName, selectedLayerInfo.name, {
+          project,
+          scenario_name: scenarioName,
+          parameters,
+        });
+        out[selectedLayerInfo.name] = data;
+
         if (!ignore) {
           setMapLayers(out);
         }
@@ -112,7 +102,7 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [parameters]);
+  }, [categoryName, parameters, selectedLayerInfo]);
 
   return { fetching, error };
 };
@@ -124,6 +114,7 @@ export const useMapLegends = () => {
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const selectedMapLayer = useSelectedMapLayer();
 
   useEffect(() => {
     if (mapLayers?.[SOLAR_IRRADIATION]) {
@@ -165,13 +156,16 @@ export const useMapLegends = () => {
           label,
         },
       });
-    } else if (mapLayers?.[LIFE_CYCLE_ANALYSIS]) {
-      const props = mapLayers[LIFE_CYCLE_ANALYSIS].properties;
+    } else if (
+      mapLayers?.[EMISSIONS_EMBODIED] ||
+      mapLayers?.[EMISSIONS_OPERATIONAL]
+    ) {
+      const props = mapLayers[selectedMapLayer].properties;
       const label = props['label'];
       const _range = props['range'];
       const colours = props['colours'];
       setMapLayerLegends({
-        [LIFE_CYCLE_ANALYSIS]: {
+        [selectedMapLayer]: {
           colourArray: colours?.colour_array,
           points: colours?.points,
           range: _range,

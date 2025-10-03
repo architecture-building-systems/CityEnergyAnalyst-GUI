@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { Alert } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
-const MapLayerPropertiesCard = () => {
+const MapLayerPropertiesCard = ({ onLayerSelect }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
 
@@ -66,6 +66,7 @@ const MapLayerPropertiesCard = () => {
         <ParameterSelectors
           layers={categoryInfo.layers}
           parameterValues={mapLayerParameters}
+          onLayerSelect={onLayerSelect}
         />
       </div>
     </div>

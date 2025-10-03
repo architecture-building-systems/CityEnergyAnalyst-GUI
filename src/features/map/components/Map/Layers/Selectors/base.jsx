@@ -1,12 +1,20 @@
 import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threshold';
+import SliderSelector from './Slider';
 import { useMemo, useCallback, useEffect } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
+import {
+  useMapStore,
+  useSelectedMapLayer,
+  useSetSelectedMapLayer,
+} from 'features/map/stores/mapStore';
 import ChoiceSelector from './Choice';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, Select } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
 
-const ParameterSelectors = ({ layers, parameterValues }) => {
+const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
+  const selectedLayer = useSelectedMapLayer();
+  const setSelectedLayer = useSetSelectedMapLayer();
+
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
 
@@ -14,6 +22,11 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
     (state) => state.setMapLayerParameters,
   );
   const setFilters = useMapStore((state) => state.setFilters);
+
+  const handleLayerSelected = (layerName) => {
+    setSelectedLayer(layerName);
+    if (onLayerSelect) onLayerSelect?.(layerName);
+  };
 
   const changeHandler = useCallback(
     (parameterName, filter) => {
@@ -44,109 +57,139 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
     });
   }, [layers]);
 
-  const _parameters = useMemo(
-    () =>
-      layers.map((layer) => {
-        const { name, parameters } = layer;
+  // When layers change, check if the selected layer is still valid
+  // If not, select the first layer
+  useEffect(() => {
+    if (!layers?.length) {
+      setSelectedLayer(null);
+      return;
+    }
 
-        return (
-          <div
-            key={name}
-            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-          >
-            {Object.entries(parameters).map(([key, parameter]) => {
-              const {
-                default: defaultValue,
-                selector,
-                label,
-                filter,
-              } = parameter;
+    if (!selectedLayer || !layers.find((l) => l.name === selectedLayer)) {
+      handleLayerSelected(layers[0].name);
+    }
+  }, [layers, selectedLayer]);
 
-              const value = filter ? filters?.[filter] : parameterValues?.[key];
-              const _handleChange = changeHandler(key, filter);
+  const _parameters = useMemo(() => {
+    const filteredLayers = selectedLayer
+      ? layers.filter((layer) => layer.name === selectedLayer)
+      : layers;
 
-              switch (selector) {
-                case 'time-series':
+    return filteredLayers.map((layer) => {
+      const { name, parameters } = layer;
+
+      return (
+        <div
+          key={name}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
+          {Object.entries(parameters).map(([key, parameter]) => {
+            const {
+              default: defaultValue,
+              selector,
+              label,
+              filter,
+            } = parameter;
+
+            const value = filter ? filters?.[filter] : parameterValues?.[key];
+            const _handleChange = changeHandler(key, filter);
+
+            switch (selector) {
+              case 'time-series':
+                return (
+                  <TimeSeriesSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    value={value}
+                    defaultValue={defaultValue}
+                    onChange={_handleChange}
+                  />
+                );
+              case 'threshold':
+                return (
+                  <ThresholdSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    value={value}
+                    defaultValue={defaultValue}
+                    range={range}
+                    label={label}
+                    onChange={_handleChange}
+                  />
+                );
+              case 'slider': {
+                const { range } = parameter;
+                return (
+                  <SliderSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    label={label}
+                    value={value}
+                    defaultValue={defaultValue}
+                    range={range}
+                    layerName={name}
+                    onChange={_handleChange}
+                  />
+                );
+              }
+              case 'choice': {
+                const { depends_on } = parameter;
+                return (
+                  <ChoiceSelector
+                    key={`${name}-${key}`}
+                    parameterName={key}
+                    label={label}
+                    value={value}
+                    defaultValue={defaultValue}
+                    onChange={_handleChange}
+                    layerName={name}
+                    dependsOn={depends_on}
+                  />
+                );
+              }
+              case 'input': {
+                const { type } = parameter;
+
+                if (type === 'string') {
                   return (
-                    <TimeSeriesSelector
+                    <InputSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
                       onChange={_handleChange}
                     />
                   );
-                case 'threshold':
+                } else if (type === 'number') {
+                  const { range } = parameter;
                   return (
-                    <ThresholdSelector
+                    <InputNumberSelector
                       key={`${name}-${key}`}
                       parameterName={key}
+                      label={label}
                       value={value}
                       defaultValue={defaultValue}
                       range={range}
-                      label={label}
                       onChange={_handleChange}
                     />
                   );
-                case 'choice': {
-                  const { depends_on } = parameter;
-                  return (
-                    <ChoiceSelector
-                      key={`${name}-${key}`}
-                      parameterName={key}
-                      label={label}
-                      value={value}
-                      defaultValue={defaultValue}
-                      onChange={_handleChange}
-                      layerName={name}
-                      dependsOn={depends_on}
-                    />
-                  );
-                }
-                case 'input': {
-                  const { type } = parameter;
-
-                  if (type === 'string') {
-                    return (
-                      <InputSelector
-                        key={`${name}-${key}`}
-                        parameterName={key}
-                        label={label}
-                        value={value}
-                        defaultValue={defaultValue}
-                        onChange={_handleChange}
-                      />
-                    );
-                  } else if (type === 'number') {
-                    const { range } = parameter;
-                    return (
-                      <InputNumberSelector
-                        key={`${name}-${key}`}
-                        parameterName={key}
-                        label={label}
-                        value={value}
-                        defaultValue={defaultValue}
-                        range={range}
-                        onChange={_handleChange}
-                      />
-                    );
-                  } else return null;
-                }
-                default:
-                  if (selector) {
-                    return (
-                      <div key={`${name}-${key}`} style={{ paddding: 12 }}>
-                        Unknown parameter type: {selector}
-                      </div>
-                    );
-                  }
+                } else return null;
               }
-            })}
-          </div>
-        );
-      }),
-    [layers, parameterValues, range, filters, changeHandler],
-  );
+              default:
+                if (selector) {
+                  return (
+                    <div key={`${name}-${key}`} style={{ padding: 12 }}>
+                      Unknown parameter type: {selector}
+                    </div>
+                  );
+                }
+            }
+          })}
+        </div>
+      );
+    });
+  }, [layers, selectedLayer, parameterValues, range, filters, changeHandler]);
 
   return (
     <ConfigProvider
@@ -180,6 +223,18 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
           gap: 2,
         }}
       >
+        {layers.length > 1 && (
+          <Select
+            style={{ marginBottom: 8 }}
+            placeholder="Select a layer"
+            value={selectedLayer}
+            onChange={handleLayerSelected}
+            options={layers.map((layer) => ({
+              label: layer.label,
+              value: layer.name,
+            }))}
+          />
+        )}
         {_parameters?.length > 0 ? _parameters : <div>No parameters found</div>}
       </div>
     </ConfigProvider>
