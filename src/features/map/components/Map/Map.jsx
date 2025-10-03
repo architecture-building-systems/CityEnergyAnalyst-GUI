@@ -665,32 +665,40 @@ function updateTooltip(feature) {
           <div class="tooltip-section">
             <div class="tooltip-section-title">Above Ground</div>
             <div class="tooltip-grid">
-              <div>Height</div><div><span class="tooltip-value-above-ground">${heightAg} m</span></div>
-              <div>Floors</div><div><span class="tooltip-value-above-ground">${floorsAg}</span></div>
-              ${isZone ? `<div>Void deck</div><div><span class="tooltip-value-above-ground">${voidDeck}</span></div>` : ''}
+              <div>Height</div><b>${heightAg} m</b>
+              <div>Floors</div><b>${floorsAg}</b>
+              ${isZone ? `<div>Void deck</div><b>${voidDeck}</b>` : ''}
             </div>
           </div>
           ${
             isZone
-              ? `<div class="tooltip-section">
-            <div class="tooltip-section-title">Below Ground</div>
-            <div class="tooltip-grid">
-              <div>Depth</div><div><span class="tooltip-value-below-ground">${heightBg} m</span></div>
-              <div>Floors</div><div><span class="tooltip-value-below-ground">${floorsBg}</span></div>
-            </div>
-          </div>`
+              ? `
+            <div class="tooltip-section">
+              <div class="tooltip-section-title">Below Ground</div>
+              <div class="tooltip-grid">
+                <div>Depth</div><b>${heightBg} m</b>
+                <div>Floors</div><b>${floorsBg}</b>
+              </div>
+            </div>`
               : ''
           }
         </div>`;
 
       let area = Math.round(turf.area(object) * 1000) / 1000;
-      innerHTML += `<div><b>Floor Area</b>: ${area} m<sup>2</sup></div>`;
+      innerHTML += `
+        <div class="tooltip-section-title">Floor Area</div>
+        <div class="tooltip-grid">
+          <div>Footprint</div><b>${area} m<sup>2</sup></b>
+          ${
+            isZone
+              ? `
+          <div>GFA</div><b>${Math.round(Math.max(0, (floorsAg + floorsBg - voidDeck) * area) * 1000) / 1000} m<sup>2</sup></b>`
+              : ''
+          }
+        </div>`;
+
       if (isZone) {
-        const gfa = Math.max(0, (floorsAg + floorsBg - voidDeck) * area);
-
-        innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000} m<sup>2</sup></div>`;
-
-        innerHTML += '<br/><div><b>Use Types</b></div>';
+        innerHTML += '<br/><div class="tooltip-section-title">Use Types</div>';
         for (let i = 1; i < 4; i++) {
           const usetype = properties?.[`use_type${i}`];
           const ratio = properties?.[`use_type${i}r`];

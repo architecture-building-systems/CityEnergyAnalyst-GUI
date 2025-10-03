@@ -80,8 +80,3 @@
   grid-template-columns: auto 1fr;
   gap: 2px 12px;
 }
-
-.tooltip-value-above-ground,
-.tooltip-value-below-ground {
-  font-weight: bold;
-}
