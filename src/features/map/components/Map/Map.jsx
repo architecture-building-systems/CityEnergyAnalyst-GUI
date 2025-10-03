@@ -688,11 +688,11 @@ function updateTooltip(feature) {
       innerHTML += `
         <div class="tooltip-section-title">Floor Area</div>
         <div class="tooltip-grid">
-          <div>Footprint</div><b>${area} m<sup>2</sup></b>
+          <div>Footprint</div><b style="margin-left: auto;">${area.toLocaleString()} m<sup>2</sup></b>
           ${
             isZone
               ? `
-          <div>GFA</div><b>${Math.round(Math.max(0, (floorsAg + floorsBg - voidDeck) * area) * 1000) / 1000} m<sup>2</sup></b>`
+          <div>GFA</div><b style="margin-left: auto;">${(Math.round(Math.max(0, (floorsAg + floorsBg - voidDeck) * area) * 1000) / 1000).toLocaleString()} m<sup>2</sup></b>`
               : ''
           }
         </div>`;
