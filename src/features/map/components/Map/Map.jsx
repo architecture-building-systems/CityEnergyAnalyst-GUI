@@ -704,9 +704,11 @@ function updateTooltip(feature) {
           const ratio = properties?.[`use_type${i}r`];
 
           if (usetype && usetype !== 'NONE' && ratio && ratio > 0) {
-            innerHTML += `<div><b>${i}</b>: ${usetype} <b>(${
-              Math.round(ratio * 1000) / 10
-            }%)</b></div>`;
+            innerHTML += `
+            <div class="tooltip-grid">
+              <div>${i}: <span style="font-family: 'Space Grotesk', sans-serif">${usetype}</span></div>
+              <b style="margin-left: auto;">(${Math.round(ratio * 1000) / 10}%)</b>
+            </div>`;
           }
         }
       }
