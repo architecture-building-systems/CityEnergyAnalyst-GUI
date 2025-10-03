@@ -647,7 +647,7 @@ function updateTooltip(feature) {
     const isZone = layer.id === 'zone';
 
     if (isZone || layer.id === 'surroundings') {
-      innerHTML += `<div><b>Name</b>: ${properties[INDEX_COLUMN]}</div>`;
+      innerHTML += `<div style="font-weight: bold; margin-bottom: 4px;">${properties[INDEX_COLUMN]}</div>`;
 
       if (properties?.year) {
         innerHTML += `<div><b>Year</b>: ${properties.year}</div>`;
@@ -661,31 +661,34 @@ function updateTooltip(feature) {
       const voidDeck = properties?.void_deck ?? 0;
 
       innerHTML += `
-        <div style="display: flex; align-items: flex-start; gap: 12px; margin-block: 8px;">
-          <div style="flex: 1;">
-            <div style="margin-bottom: 8px;">
-              <div style="font-weight: bold; margin-bottom: 2px;">Above Ground</div>
-              <div>• Height: ${heightAg}m</div>
-              <div>• Floors: ${floorsAg} ${voidDeck > 0 ? `(with ${voidDeck} void decks)` : ''}</div>
+        <div class="tooltip-building-details">
+          <div class="tooltip-section">
+            <div class="tooltip-section-title">Above Ground</div>
+            <div class="tooltip-grid">
+              <div>Height</div><div><span class="tooltip-value-above-ground">${heightAg} m</span></div>
+              <div>Floors</div><div><span class="tooltip-value-above-ground">${floorsAg}</span></div>
+              ${isZone ? `<div>Void deck</div><div><span class="tooltip-value-above-ground">${voidDeck}</span></div>` : ''}
             </div>
-            ${
-              isZone
-                ? `<div>
-              <div style="font-weight: bold; margin-bottom: 2px;">Below Ground</div>
-              <div>• Depth: ${heightBg}m</div>
-              <div>• Floors: ${floorsBg}</div>
-            </div>`
-                : ''
-            }
           </div>
+          ${
+            isZone
+              ? `<div class="tooltip-section">
+            <div class="tooltip-section-title">Below Ground</div>
+            <div class="tooltip-grid">
+              <div>Depth</div><div><span class="tooltip-value-below-ground">${heightBg} m</span></div>
+              <div>Floors</div><div><span class="tooltip-value-below-ground">${floorsBg}</span></div>
+            </div>
+          </div>`
+              : ''
+          }
         </div>`;
 
       let area = Math.round(turf.area(object) * 1000) / 1000;
-      innerHTML += `<div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
+      innerHTML += `<div><b>Floor Area</b>: ${area} m<sup>2</sup></div>`;
       if (isZone) {
         const gfa = Math.max(0, (floorsAg + floorsBg - voidDeck) * area);
 
-        innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000}m<sup>2</sup></div>`;
+        innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000} m<sup>2</sup></div>`;
 
         innerHTML += '<br/><div><b>Use Types</b></div>';
         for (let i = 1; i < 4; i++) {
@@ -693,9 +696,9 @@ function updateTooltip(feature) {
           const ratio = properties?.[`use_type${i}r`];
 
           if (usetype && usetype !== 'NONE' && ratio && ratio > 0) {
-            innerHTML += `<div><b>${i}</b>: ${usetype} (${
+            innerHTML += `<div><b>${i}</b>: ${usetype} <b>(${
               Math.round(ratio * 1000) / 10
-            }%)</div>`;
+            }%)</b></div>`;
           }
         }
       }

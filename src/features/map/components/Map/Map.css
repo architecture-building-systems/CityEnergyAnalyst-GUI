@@ -23,10 +23,6 @@
   line-height: 1.5;
 }
 
-#map-tooltip div {
-  margin: 2px 0;
-}
-
 .network-toggle {
   position: absolute;
   z-index: 5;
@@ -66,4 +62,26 @@
   align-items: center;
 
   padding-inline: 8px;
+}
+
+.tooltip-building-details {
+  display: flex;
+  gap: 12px;
+  margin-block: 12px;
+}
+
+.tooltip-section-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.tooltip-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+}
+
+.tooltip-value-above-ground,
+.tooltip-value-below-ground {
+  font-weight: bold;
 }
