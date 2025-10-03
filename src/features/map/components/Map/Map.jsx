@@ -629,14 +629,6 @@ const DeckGLMap = ({ data, colors }) => {
   );
 };
 
-const zoneLabels = [
-  'height_ag',
-  'height_bg',
-  'floors_ag',
-  'floors_bg',
-  'void_deck',
-  'year',
-];
 function updateTooltip(feature) {
   const { x, y, object, layer } = feature;
   const tooltip = document.getElementById('map-tooltip');
