@@ -42,6 +42,7 @@ import {
   useSetSelectedFromMap,
 } from 'features/input-editor/stores/inputEditorStore';
 import { AttributionControl } from 'maplibre-gl';
+import MapTooltip from './MapTooltip';
 
 const useMapAttribution = (mapRef) => {
   // Effect to handle map attribution
@@ -105,7 +106,7 @@ const normalizeLineWidth = (value, min, max, minWidth = 1, maxWidth = 10) => {
   return minWidth + ((value - min) / (max - min)) * (maxWidth - minWidth);
 };
 
-const useMapLayers = () => {
+const useMapLayers = (onHover = () => {}) => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
     (state) => state.selectedMapCategory?.layers,
@@ -229,7 +230,7 @@ const useMapLayers = () => {
             updateTriggers: {
               getLineWidth: [scale, min, max],
             },
-            onHover: updateTooltip,
+            onHover: onHover,
             pickable: true,
           }),
         );
@@ -245,7 +246,7 @@ const useMapLayers = () => {
             updateTriggers: {
               getPointRadius: [scale],
             },
-            onHover: updateTooltip,
+            onHover: onHover,
             pickable: true,
           }),
         );
@@ -326,6 +327,7 @@ const DeckGLMap = ({ data, colors }) => {
   const firstPitch = useRef(false);
 
   const [selectedLayer, setSelectedLayer] = useState();
+  const [tooltipInfo, setTooltipInfo] = useState(null);
 
   const selected = useSelected();
   const setSelected = useSetSelectedFromMap();
@@ -349,6 +351,10 @@ const DeckGLMap = ({ data, colors }) => {
     () => buildingColorFunction(colors, selected),
     [colors, selected],
   );
+
+  const updateTooltip = useCallback((feature) => {
+    setTooltipInfo(feature.object ? feature : null);
+  }, []);
 
   const calculateCameraOptions = useCallback(() => {
     if (!mapRef.current) {
@@ -576,9 +582,10 @@ const DeckGLMap = ({ data, colors }) => {
     extruded,
     buildingColor,
     setSelected,
+    updateTooltip,
   ]);
 
-  const mapLayers = useMapLayers();
+  const mapLayers = useMapLayers(updateTooltip);
 
   const layers = [
     ...dataLayers._layers,
@@ -624,145 +631,10 @@ const DeckGLMap = ({ data, colors }) => {
           attributionControl={false} // Disable default attribution control
         />
       </DeckGL>
-      <div id="map-tooltip"></div>
+      <MapTooltip info={tooltipInfo} />
     </>
   );
 };
-
-function updateTooltip(feature) {
-  const { x, y, object, layer } = feature;
-  const tooltip = document.getElementById('map-tooltip');
-  if (object) {
-    const { properties } = object;
-    let innerHTML = '';
-
-    const isZone = layer.id === 'zone';
-
-    if (isZone || layer.id === 'surroundings') {
-      innerHTML += `<div style="font-weight: bold; margin-bottom: 4px;">${properties[INDEX_COLUMN]}</div>`;
-
-      if (properties?.year) {
-        innerHTML += `<div><b>Year</b>: ${properties.year}</div>`;
-      }
-
-      // Above/Below Ground Section with Icon
-      const heightAg = properties?.height_ag ?? 0;
-      const heightBg = properties?.height_bg ?? 0;
-      const floorsAg = properties?.floors_ag ?? 0;
-      const floorsBg = properties?.floors_bg ?? 0;
-      const voidDeck = properties?.void_deck ?? 0;
-
-      innerHTML += `
-        <div class="tooltip-building-details">
-          <div class="tooltip-section">
-            <div class="tooltip-section-title">Above Ground</div>
-            <div class="tooltip-grid">
-              <div>Height</div><b>${heightAg} m</b>
-              <div>Floors</div><b>${floorsAg}</b>
-              ${isZone ? `<div>Void deck</div><b>${voidDeck}</b>` : ''}
-            </div>
-          </div>
-          ${
-            isZone
-              ? `
-            <div class="tooltip-section">
-              <div class="tooltip-section-title">Below Ground</div>
-              <div class="tooltip-grid">
-                <div>Depth</div><b>${heightBg} m</b>
-                <div>Floors</div><b>${floorsBg}</b>
-              </div>
-            </div>`
-              : ''
-          }
-        </div>`;
-
-      let area = Math.round(turf.area(object) * 1000) / 1000;
-      innerHTML += `
-        <div class="tooltip-section-title">Floor Area</div>
-        <div class="tooltip-grid">
-          <div>Footprint</div><b style="margin-left: auto;">${area.toLocaleString()} m<sup>2</sup></b>
-          ${
-            isZone
-              ? `
-          <div>GFA</div><b style="margin-left: auto;">${(Math.round(Math.max(0, (floorsAg + floorsBg - voidDeck) * area) * 1000) / 1000).toLocaleString()} m<sup>2</sup></b>`
-              : ''
-          }
-        </div>`;
-
-      if (isZone) {
-        innerHTML += '<br/><div class="tooltip-section-title">Use Types</div>';
-        for (let i = 1; i < 4; i++) {
-          const usetype = properties?.[`use_type${i}`];
-          const ratio = properties?.[`use_type${i}r`];
-
-          if (usetype && usetype !== 'NONE' && ratio && ratio > 0) {
-            innerHTML += `
-            <div class="tooltip-grid">
-              <div>${i}: <span style="font-family: 'Space Grotesk', sans-serif">${usetype}</span></div>
-              <b style="margin-left: auto;">(${Math.round(ratio * 1000) / 10}%)</b>
-            </div>`;
-          }
-        }
-      }
-    } else if (
-      layer.id === `${THERMAL_NETWORK}-nodes` ||
-      layer.id === `${THERMAL_NETWORK}-edges`
-    ) {
-      Object.keys(properties).forEach((key) => {
-        if (key !== 'Building' && properties[key] === 'NONE') return null;
-        // Remove type_mat for now since it does not do anything
-        if (key === 'type_mat') return;
-        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-      });
-      if (properties['Buildings']) {
-        let length = turf.length(object) * 1000;
-        innerHTML += `<br><div><b>length</b>: ${
-          Math.round(length * 1000) / 1000
-        }m</div>`;
-      }
-    } else {
-      Object.keys(properties).forEach((key) => {
-        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-      });
-    }
-
-    tooltip.innerHTML = innerHTML;
-
-    // Position tooltip and keep it within screen bounds
-    const offset = 4;
-    const tooltipRect = tooltip.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    let left = x + offset;
-    let top = y + offset;
-
-    // Adjust horizontal position if tooltip goes off right edge
-    if (left + tooltipRect.width > viewportWidth) {
-      left = x - tooltipRect.width - offset;
-    }
-
-    // Adjust vertical position if tooltip goes off bottom edge
-    if (top + tooltipRect.height > viewportHeight) {
-      top = y - tooltipRect.height - offset;
-    }
-
-    // Ensure tooltip doesn't go off left edge
-    if (left < 0) {
-      left = offset;
-    }
-
-    // Ensure tooltip doesn't go off top edge
-    if (top < 0) {
-      top = offset;
-    }
-
-    tooltip.style.left = `${left}px`;
-    tooltip.style.top = `${top}px`;
-  } else {
-    tooltip.innerHTML = '';
-  }
-}
 
 const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
   if (selected.includes(buildingName)) {
