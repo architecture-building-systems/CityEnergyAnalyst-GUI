@@ -70,9 +70,9 @@ const MapTooltip = ({ info }) => {
 
       return (
         <div className="tooltip-content">
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>
             {properties[INDEX_COLUMN]}
-          </div>
+          </b>
 
           {properties?.year && (
             <div className="tooltip-grid">
@@ -81,7 +81,7 @@ const MapTooltip = ({ info }) => {
             </div>
           )}
 
-          <table>
+          <table className="tooltip-table">
             <thead>
               <tr>
                 <th></th>
