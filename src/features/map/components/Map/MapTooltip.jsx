@@ -3,6 +3,8 @@ import * as turf from '@turf/turf';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { THERMAL_NETWORK } from 'features/map/constants';
 
+import './MapTooltip.css';
+
 const calculatePosition = (x, y, tooltipRect) => {
   const offset = 4;
   let left = x + offset;
