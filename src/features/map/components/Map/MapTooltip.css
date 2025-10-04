@@ -36,3 +36,8 @@
   grid-template-columns: auto 1fr;
   gap: 2px 12px;
 }
+
+#map-tooltip th + th,
+#map-tooltip td + td {
+  padding-inline-start: 1.6em;
+}
