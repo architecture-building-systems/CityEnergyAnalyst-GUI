@@ -70,10 +70,9 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
 };
 
 const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
-  const out = [];
-
+  const geometryGroup = [];
   if (data?.zone) {
-    out.push({
+    geometryGroup.push({
       label: (
         <LayerToggleRadio
           label="Zone"
@@ -86,7 +85,7 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
   }
 
   if (data?.surroundings) {
-    out.push({
+    geometryGroup.push({
       label: (
         <LayerToggleRadio
           label="Surroundings"
@@ -98,7 +97,7 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
   }
 
   if (data?.trees) {
-    out.push({
+    geometryGroup.push({
       label: (
         <LayerToggleRadio label="Trees" value="trees" onChange={handleChange} />
       ),
@@ -106,7 +105,7 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
   }
 
   if (data?.streets) {
-    out.push({
+    geometryGroup.push({
       label: (
         <LayerToggleRadio
           label="Streets"
@@ -118,7 +117,7 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
   }
 
   if (data?.dh || data?.dc) {
-    out.push({
+    geometryGroup.push({
       label: (
         <LayerToggleRadio
           label="Network"
@@ -128,14 +127,31 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
       ),
     });
   }
-  if (out.length > 0) out.unshift({ type: 'group', label: 'Data' });
+  if (geometryGroup.length > 0)
+    geometryGroup.unshift({ type: 'group', label: 'Geometry' });
 
-  out.push({
+  const labelsGroup = [];
+  if (data?.zone) {
+    labelsGroup.push({ type: 'group', label: 'Labels' });
+    labelsGroup.push({
+      label: (
+        <LayerToggleRadio
+          label="Building Names"
+          value="zone_labels"
+          onChange={handleChange}
+          checked
+        />
+      ),
+    });
+  }
+
+  const mapStyleGroup = [];
+  mapStyleGroup.push({
     type: 'group',
     label: 'Map Style',
   });
 
-  out.push({
+  mapStyleGroup.push({
     key: 'map_labels',
     label: (
       <LayerToggleRadio
@@ -146,7 +162,7 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
     ),
   });
 
-  return out;
+  return [...geometryGroup, ...labelsGroup, ...mapStyleGroup];
 };
 
 const LayerToggle = () => {
