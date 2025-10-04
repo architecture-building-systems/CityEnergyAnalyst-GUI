@@ -37,7 +37,12 @@
   gap: 2px 12px;
 }
 
-#map-tooltip th + th,
-#map-tooltip td + td {
+.tooltip-table th + th,
+.tooltip-table td + td {
   padding-inline-start: 1.6em;
+}
+
+.tooltip-table th {
+  text-align: left;
+  font-weight: normal;
 }
