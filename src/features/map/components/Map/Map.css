@@ -64,11 +64,10 @@
   padding-inline: 8px;
 }
 
-.tooltip-building-details {
+.tooltip-content {
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-block: 12px;
-  min-width: max-content;
 }
 
 .tooltip-section-title {

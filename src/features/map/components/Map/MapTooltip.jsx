@@ -65,66 +65,74 @@ const MapTooltip = ({ info }) => {
         ) / 1000;
 
       return (
-        <>
+        <div className="tooltip-content">
           <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
             {properties[INDEX_COLUMN]}
           </div>
 
           {properties?.year && (
-            <div>
-              <b>Year</b>: {properties.year}
+            <div className="tooltip-grid">
+              <div>Year</div>
+              <b style={{ marginLeft: 'auto' }}>{properties.year}</b>
             </div>
           )}
 
-          <div className="tooltip-building-details">
-            <div className="tooltip-section">
-              <div className="tooltip-section-title">Above Ground</div>
-              <div className="tooltip-grid">
-                <div>Height</div>
-                <b>{properties?.height_ag ?? 0} m</b>
-                <div>Floors</div>
-                <b>{floorsAg}</b>
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Above</th>
+                  {isZone && <th>Below</th>}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Height</td>
+                  <td>
+                    <b>{properties?.height_ag ?? 0} m</b>
+                  </td>
+                  {isZone && (
+                    <td>
+                      <b>{properties?.height_bg ?? 0} m</b>
+                    </td>
+                  )}
+                </tr>
+                <tr>
+                  <td>Floors</td>
+                  <td>{<b>{floorsAg}</b>}</td>
+                  {isZone && <td>{<b>{floorsBg}</b>}</td>}
+                </tr>
                 {isZone && (
-                  <>
-                    <div>Void deck</div>
-                    <b>{voidDeck}</b>
-                  </>
+                  <tr>
+                    <td>Void deck</td>
+                    <td colSpan={2}>{<b>{voidDeck}</b>}</td>
+                  </tr>
                 )}
-              </div>
-            </div>
-
-            {isZone && (
-              <div className="tooltip-section">
-                <div className="tooltip-section-title">Below Ground</div>
-                <div className="tooltip-grid">
-                  <div>Depth</div>
-                  <b>{properties?.height_bg ?? 0} m</b>
-                  <div>Floors</div>
-                  <b>{floorsBg}</b>
-                </div>
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
 
-          <div className="tooltip-section-title">Floor Area</div>
-          <div className="tooltip-grid">
-            <div>Footprint</div>
-            <b style={{ marginLeft: 'auto' }}>
-              {footprintArea.toLocaleString()} m<sup>2</sup>
-            </b>
-            {isZone && (
-              <>
-                <div>GFA</div>
-                <b style={{ marginLeft: 'auto' }}>
-                  {gfaArea.toLocaleString()} m<sup>2</sup>
-                </b>
-              </>
-            )}
+          <div>
+            <div className="tooltip-section-title">Floor Area</div>
+            <div className="tooltip-grid">
+              <div>Footprint</div>
+              <b style={{ marginLeft: 'auto' }}>
+                {footprintArea.toLocaleString()} m<sup>2</sup>
+              </b>
+              {isZone && (
+                <>
+                  <div>GFA</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {gfaArea.toLocaleString()} m<sup>2</sup>
+                  </b>
+                </>
+              )}
+            </div>
           </div>
 
           {isZone && (
-            <>
-              <br />
+            <div>
               <div className="tooltip-section-title">Use Types</div>
               {[1, 2, 3].map((i) => {
                 const usetype = properties?.[`use_type${i}`];
@@ -150,9 +158,9 @@ const MapTooltip = ({ info }) => {
                   </div>
                 );
               })}
-            </>
+            </div>
           )}
-        </>
+        </div>
       );
     }
 
