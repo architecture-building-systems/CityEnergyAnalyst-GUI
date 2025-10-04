@@ -56,9 +56,11 @@ const MapTooltip = ({ info }) => {
     const footprintArea = Math.round(area * 1000) / 1000;
 
     if (isZone || layer.id === 'surroundings') {
-      const floorsAg = properties?.floors_ag ?? 0;
-      const floorsBg = properties?.floors_bg ?? 0;
-      const voidDeck = properties?.void_deck ?? 0;
+      const heightAg = Number(properties?.height_ag ?? 0);
+      const heightBg = Number(properties?.height_bg ?? 0);
+      const floorsAg = Number(properties?.floors_ag ?? 0);
+      const floorsBg = Number(properties?.floors_bg ?? 0);
+      const voidDeck = Number(properties?.void_deck ?? 0);
       const gfaArea =
         Math.round(
           Math.max(0, (floorsAg + floorsBg - voidDeck) * area) * 1000,
@@ -90,11 +92,11 @@ const MapTooltip = ({ info }) => {
                 <tr>
                   <td>Height</td>
                   <td>
-                    <b>{properties?.height_ag ?? 0} m</b>
+                    <b>{heightAg} m</b>
                   </td>
                   {isZone && (
                     <td>
-                      <b>{properties?.height_bg ?? 0} m</b>
+                      <b>{heightBg} m</b>
                     </td>
                   )}
                 </tr>
