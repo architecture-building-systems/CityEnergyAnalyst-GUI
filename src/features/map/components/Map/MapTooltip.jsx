@@ -81,41 +81,39 @@ const MapTooltip = ({ info }) => {
             </div>
           )}
 
-          <div>
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Above</th>
-                  {isZone && <th>Below</th>}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Height</td>
-                  <td>
-                    <b>{heightAg} m</b>
-                  </td>
-                  {isZone && (
-                    <td>
-                      <b>{heightBg} m</b>
-                    </td>
-                  )}
-                </tr>
-                <tr>
-                  <td>Floors</td>
-                  <td>{<b>{floorsAg}</b>}</td>
-                  {isZone && <td>{<b>{floorsBg}</b>}</td>}
-                </tr>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Above</th>
+                {isZone && <th>Below</th>}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Height</td>
+                <td>
+                  <b>{heightAg} m</b>
+                </td>
                 {isZone && (
-                  <tr>
-                    <td>Void deck</td>
-                    <td colSpan={2}>{<b>{voidDeck}</b>}</td>
-                  </tr>
+                  <td>
+                    <b>{heightBg} m</b>
+                  </td>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </tr>
+              <tr>
+                <td>Floors</td>
+                <td>{<b>{floorsAg}</b>}</td>
+                {isZone && <td>{<b>{floorsBg}</b>}</td>}
+              </tr>
+              {isZone && (
+                <tr>
+                  <td>Void deck</td>
+                  <td colSpan={2}>{<b>{voidDeck}</b>}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
           <div>
             <div className="tooltip-section-title">Floor Area</div>
