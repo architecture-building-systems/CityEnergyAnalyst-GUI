@@ -40,7 +40,7 @@ const MapTooltip = ({ info }) => {
   const { x, y, object, layer } = info || {};
 
   useEffect(() => {
-    if (!x || !y || !tooltipRef.current) return;
+    if (x == null || y == null || !tooltipRef.current) return;
 
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
     setPosition(calculatePosition(x, y, tooltipRect));
