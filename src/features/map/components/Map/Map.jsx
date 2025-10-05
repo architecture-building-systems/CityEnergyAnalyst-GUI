@@ -479,9 +479,9 @@ const DeckGLMap = ({ data, colors }) => {
           getPosition: (f) => {
             const centroid = turf.centroid(f);
             const height = extruded
-              ? (f.properties?.height_ag ?? 0)
+              ? Number(f.properties?.height_ag ?? 0)
               : // Lift label above void deck if exists when not extruded
-                (f.properties?.void_deck ?? 0) * VOID_DECK_FLOOR_HEIGHT;
+                Number(f.properties?.void_deck ?? 0) * VOID_DECK_FLOOR_HEIGHT;
             return [...centroid.geometry.coordinates, height + 3];
           },
           sizeUnits: 'meters',
@@ -653,7 +653,7 @@ const calcPolygonWithZ = (feature) => {
 
   if (name === null) return coords;
 
-  const voidDeckFloors = feature?.properties?.void_deck ?? 0;
+  const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
   return coords.map((coord) =>
     coord.map((c) => [c[0], c[1], voidDeckFloors * VOID_DECK_FLOOR_HEIGHT]),
   );
@@ -661,11 +661,11 @@ const calcPolygonWithZ = (feature) => {
 
 const calcPolygonElevation = (feature) => {
   const name = feature?.properties?.[INDEX_COLUMN];
-  const height_ag = feature?.properties?.height_ag ?? 0;
+  const height_ag = Number(feature?.properties?.height_ag ?? 0);
 
   if (name === null) return height_ag;
 
-  const voidDeckFloors = feature?.properties?.void_deck ?? 0;
+  const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
 
   // Prevent negative elevation, which causes buildings to appear higher than height_ag
   return Math.max(height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT, 0);
