@@ -2,6 +2,7 @@ import { useDatabaseSchema } from 'features/database-editor/stores/databaseEdito
 import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 import { arraysEqual } from 'utils';
+import { AddRowButton } from 'features/database-editor/components/add-row-button';
 
 const CONSTRUCTION_DATABASE = [
   'ARCHETYPES',
@@ -30,15 +31,31 @@ export const CodeTableDataset = ({ dataKey, data }) => {
   if (data === undefined) return <div>No data selected.</div>;
   if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
+  const key = dataKey.join('-');
   const INDEX_COLUMN = arraysEqual(dataKey, CONSTRUCTION_DATABASE)
     ? 'const_type'
     : 'code';
   const _data = transformData(INDEX_COLUMN, data);
 
+  const handleAddRow = (newRow) => {
+    // Add a new row to the data
+    if (data == null) return;
+    console.log('New Data:', newRow);
+  };
+
   return (
     <div className="cea-database-editor-database-dataset-code">
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div></div>
+        <AddRowButton
+          key={key}
+          index={INDEX_COLUMN}
+          schema={schema}
+          onAddRow={handleAddRow}
+        />
+      </div>
       <TableDataset
-        key={dataKey.join('-')}
+        key={key}
         dataKey={dataKey}
         data={_data}
         indexColumn={INDEX_COLUMN}
