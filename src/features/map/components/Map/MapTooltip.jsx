@@ -166,35 +166,69 @@ const MapTooltip = ({ info }) => {
       );
     }
 
-    if (
-      layer.id === `${THERMAL_NETWORK}-nodes` ||
-      layer.id === `${THERMAL_NETWORK}-edges`
-    ) {
-      const length = properties['Buildings']
-        ? Math.round(turf.length(object) * 1000 * 1000) / 1000
+    if (layer.id === `${THERMAL_NETWORK}-edges`) {
+      const length = properties?.length_m
+        ? Math.round(properties?.length_m * 1000) / 1000
+        : null;
+
+      const pipeDiameter = properties?.pipe_DN
+        ? Math.round(Number(properties.pipe_DN) * 100) / 100
+        : null;
+
+      const peakMassFlow = properties?.peak_mass_flow
+        ? Math.round(Number(properties.peak_mass_flow) * 1000) / 1000
         : null;
 
       return (
-        <>
-          {Object.keys(properties).map((key) => {
-            if (key !== 'Building' && properties[key] === 'NONE') return null;
-            if (key === 'type_mat') return null;
+        <div className="tooltip-content">
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>Network Pipe</b>
 
-            return (
-              <div key={key}>
-                <b>{key}</b>: {properties[key]}
-              </div>
-            );
-          })}
-          {length !== null && (
-            <>
-              <br />
-              <div>
-                <b>length</b>: {length}m
-              </div>
-            </>
-          )}
-        </>
+          <div className="tooltip-grid">
+            <div>ID</div>
+            <b style={{ marginLeft: 'auto' }}>{object?.id}</b>
+          </div>
+
+          <div className="tooltip-grid">
+            {length !== null && (
+              <>
+                <div>Length</div>
+                <b style={{ marginLeft: 'auto' }}>{length} m</b>
+              </>
+            )}
+            {pipeDiameter !== null && (
+              <>
+                <div>Nominal pipe diameter (DN)</div>
+                <b style={{ marginLeft: 'auto' }}>{pipeDiameter}</b>
+              </>
+            )}
+          </div>
+
+          <div className="tooltip-grid">
+            <div>Peak Mass Flow</div>
+            <b style={{ marginLeft: 'auto' }}>
+              {peakMassFlow !== null ? `${peakMassFlow} kg/s` : 'N/A'}
+            </b>
+          </div>
+        </div>
+      );
+    } else if (layer.id === `${THERMAL_NETWORK}-nodes`) {
+      if (properties?.type === 'NONE') return null;
+
+      return (
+        <div className="tooltip-content">
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>Network Node</b>
+          <div className="tooltip-grid">
+            <div>ID</div>
+            <b style={{ marginLeft: 'auto' }}>{object?.id}</b>
+          </div>
+
+          <div className="tooltip-grid">
+            <div>Building</div>
+            <b style={{ marginLeft: 'auto' }}>{properties?.building}</b>
+            <div>Type</div>
+            <b style={{ marginLeft: 'auto' }}>{properties?.type}</b>
+          </div>
+        </div>
       );
     }
 
