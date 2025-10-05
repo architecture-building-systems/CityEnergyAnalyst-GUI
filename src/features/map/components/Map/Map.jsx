@@ -1,7 +1,12 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 
 import { DeckGL } from '@deck.gl/react';
-import { GeoJsonLayer, PointCloudLayer, PolygonLayer } from '@deck.gl/layers';
+import {
+  GeoJsonLayer,
+  PointCloudLayer,
+  PolygonLayer,
+  TextLayer,
+} from '@deck.gl/layers';
 import { DataFilterExtension } from '@deck.gl/extensions';
 
 import positron from 'constants/mapStyles/positron.json';
@@ -37,6 +42,7 @@ import {
   useSetSelectedFromMap,
 } from 'features/input-editor/stores/inputEditorStore';
 import { AttributionControl } from 'maplibre-gl';
+import MapTooltip from './MapTooltip';
 
 const useMapAttribution = (mapRef) => {
   // Effect to handle map attribution
@@ -100,7 +106,7 @@ const normalizeLineWidth = (value, min, max, minWidth = 1, maxWidth = 10) => {
   return minWidth + ((value - min) / (max - min)) * (maxWidth - minWidth);
 };
 
-const useMapLayers = () => {
+const useMapLayers = (onHover = () => {}) => {
   const mapLayers = useMapStore((state) => state.mapLayers);
   const categoryLayers = useMapStore(
     (state) => state.selectedMapCategory?.layers,
@@ -224,7 +230,7 @@ const useMapLayers = () => {
             updateTriggers: {
               getLineWidth: [scale, min, max],
             },
-            onHover: updateTooltip,
+            onHover: onHover,
             pickable: true,
           }),
         );
@@ -240,7 +246,7 @@ const useMapLayers = () => {
             updateTriggers: {
               getPointRadius: [scale],
             },
-            onHover: updateTooltip,
+            onHover: onHover,
             pickable: true,
           }),
         );
@@ -321,6 +327,7 @@ const DeckGLMap = ({ data, colors }) => {
   const firstPitch = useRef(false);
 
   const [selectedLayer, setSelectedLayer] = useState();
+  const [tooltipInfo, setTooltipInfo] = useState(null);
 
   const selected = useSelected();
   const setSelected = useSetSelectedFromMap();
@@ -344,6 +351,10 @@ const DeckGLMap = ({ data, colors }) => {
     () => buildingColorFunction(colors, selected),
     [colors, selected],
   );
+
+  const updateTooltip = useCallback((feature) => {
+    setTooltipInfo(feature.object ? feature : null);
+  }, []);
 
   const calculateCameraOptions = useCallback(() => {
     if (!mapRef.current) {
@@ -425,6 +436,8 @@ const DeckGLMap = ({ data, colors }) => {
     };
 
     let _layers = [];
+    let _textLayers = [];
+
     if (data?.zone) {
       _layers.push(
         new PolygonLayer({
@@ -454,6 +467,31 @@ const DeckGLMap = ({ data, colors }) => {
 
           onHover: updateTooltip,
           onClick: onClick,
+        }),
+      );
+
+      _textLayers.push(
+        new TextLayer({
+          id: 'zone-labels',
+          data: data.zone?.features,
+          visible: visibility.zone_labels ?? true,
+          pickable: false,
+          getPosition: (f) => {
+            const centroid = turf.centroid(f);
+            const height = extruded
+              ? Number(f.properties?.height_ag ?? 0)
+              : // Lift label above void deck if exists when not extruded
+                Number(f.properties?.void_deck ?? 0) * VOID_DECK_FLOOR_HEIGHT;
+            return [...centroid.geometry.coordinates, height + 3];
+          },
+          sizeUnits: 'meters',
+
+          getText: (f) => f.properties[INDEX_COLUMN],
+          getSize: 6,
+          sizeMinPixels: 3,
+          updateTriggers: {
+            getPosition: [extruded],
+          },
         }),
       );
     }
@@ -535,7 +573,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    return _layers;
+    return { _layers, _textLayers };
   }, [
     visibility,
     data,
@@ -544,11 +582,16 @@ const DeckGLMap = ({ data, colors }) => {
     extruded,
     buildingColor,
     setSelected,
+    updateTooltip,
   ]);
 
-  const mapLayers = useMapLayers();
+  const mapLayers = useMapLayers(updateTooltip);
 
-  const layers = [...dataLayers, ...mapLayers];
+  const layers = [
+    ...dataLayers._layers,
+    ...mapLayers,
+    ...dataLayers._textLayers,
+  ];
 
   const onDragStart = useCallback(
     (_, event) => {
@@ -588,65 +631,10 @@ const DeckGLMap = ({ data, colors }) => {
           attributionControl={false} // Disable default attribution control
         />
       </DeckGL>
-      <div id="map-tooltip"></div>
+      <MapTooltip info={tooltipInfo} />
     </>
   );
 };
-
-function updateTooltip(feature) {
-  const { x, y, object, layer } = feature;
-  const tooltip = document.getElementById('map-tooltip');
-  if (object) {
-    const { properties } = object;
-    tooltip.style.top = `${y}px`;
-    tooltip.style.left = `${x}px`;
-    let innerHTML = '';
-
-    if (layer.id === 'zone' || layer.id === 'surroundings') {
-      innerHTML += `<div><b>Name</b>: ${properties[INDEX_COLUMN]}</div><br />`;
-      Object.keys(properties)
-        .sort()
-        .forEach((key) => {
-          if (key != INDEX_COLUMN)
-            innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-        });
-      let area = Math.round(turf.area(object) * 1000) / 1000;
-      innerHTML += `<br><div><b>Floor Area</b>: ${area}m<sup>2</sup></div>`;
-      if (layer.id === 'zone') {
-        const floorsAg = Number(properties?.floors_ag ?? 0);
-        const floorsBg = Number(properties?.floors_bg ?? 0);
-        const voidDeck = Number(properties?.void_deck ?? 0);
-        const gfa = Math.max(0, (floorsAg + floorsBg - voidDeck) * area);
-
-        innerHTML += `<div><b>GFA</b>: ${Math.round(gfa * 1000) / 1000}m<sup>2</sup></div>`;
-      }
-    } else if (
-      layer.id === `${THERMAL_NETWORK}-nodes` ||
-      layer.id === `${THERMAL_NETWORK}-edges`
-    ) {
-      Object.keys(properties).forEach((key) => {
-        if (key !== 'Building' && properties[key] === 'NONE') return null;
-        // Remove type_mat for now since it does not do anything
-        if (key === 'type_mat') return;
-        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-      });
-      if (properties['Buildings']) {
-        let length = turf.length(object) * 1000;
-        innerHTML += `<br><div><b>length</b>: ${
-          Math.round(length * 1000) / 1000
-        }m</div>`;
-      }
-    } else {
-      Object.keys(properties).forEach((key) => {
-        innerHTML += `<div><b>${key}</b>: ${properties[key]}</div>`;
-      });
-    }
-
-    tooltip.innerHTML = innerHTML;
-  } else {
-    tooltip.innerHTML = '';
-  }
-}
 
 const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
   if (selected.includes(buildingName)) {
@@ -665,7 +653,7 @@ const calcPolygonWithZ = (feature) => {
 
   if (name === null) return coords;
 
-  const voidDeckFloors = feature?.properties?.void_deck ?? 0;
+  const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
   return coords.map((coord) =>
     coord.map((c) => [c[0], c[1], voidDeckFloors * VOID_DECK_FLOOR_HEIGHT]),
   );
@@ -673,11 +661,11 @@ const calcPolygonWithZ = (feature) => {
 
 const calcPolygonElevation = (feature) => {
   const name = feature?.properties?.[INDEX_COLUMN];
-  const height_ag = feature?.properties?.height_ag ?? 0;
+  const height_ag = Number(feature?.properties?.height_ag ?? 0);
 
   if (name === null) return height_ag;
 
-  const voidDeckFloors = feature?.properties?.void_deck ?? 0;
+  const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
 
   // Prevent negative elevation, which causes buildings to appear higher than height_ag
   return Math.max(height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT, 0);

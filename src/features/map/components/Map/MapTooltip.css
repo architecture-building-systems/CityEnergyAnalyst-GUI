@@ -1,0 +1,48 @@
+#map-tooltip {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 8px 12px;
+  margin: 8px;
+  background: rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(2px);
+  color: #fff;
+  max-width: 320px;
+  z-index: 9;
+  pointer-events: none;
+  user-select: none;
+  border-radius: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  line-height: 1.5;
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tooltip-section-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.tooltip-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+}
+
+.tooltip-table th + th,
+.tooltip-table td + td {
+  padding-inline-start: 1.6em;
+}
+
+.tooltip-table th {
+  text-align: left;
+  font-weight: normal;
+}
