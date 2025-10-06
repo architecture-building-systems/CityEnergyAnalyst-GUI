@@ -1,6 +1,6 @@
 import { Button, Form, Input, Modal, Tooltip } from 'antd';
 import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 export const AddRowButton = ({ index, schema, onAddRow }) => {
   const [visible, setVisible] = useState(false);
@@ -27,9 +27,21 @@ export const AddRowButton = ({ index, schema, onAddRow }) => {
 
 const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
   const [form] = Form.useForm();
-  if (!schema?.columns) return null;
 
-  const columns = Object.keys(schema.columns);
+  const MAX_ROWS_PER_COLUMN = 8;
+
+  // Split fields into columns with max 8 rows each
+  const fieldColumns = useMemo(() => {
+    if (!schema?.columns) return [];
+    const columns = Object.keys(schema.columns);
+    const allFields = [index, ...columns.filter((col) => col !== index)];
+    const result = [];
+    for (let i = 0; i < allFields.length; i += MAX_ROWS_PER_COLUMN) {
+      result.push(allFields.slice(i, i + MAX_ROWS_PER_COLUMN));
+    }
+    return result;
+  }, [index, MAX_ROWS_PER_COLUMN, schema?.columns]);
+  const numColumns = fieldColumns.length;
 
   const onOk = () => {
     form.submit();
@@ -73,6 +85,8 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
     );
   };
 
+  if (!schema?.columns) return null;
+
   return (
     <Modal
       title="Add New Row"
@@ -94,16 +108,19 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
         layout="vertical"
         requiredMark="optional"
       >
-        {/* Index field first */}
-        {renderFormItem(index)}
-
-        {/* Other fields */}
-        {columns.map((col) => {
-          if (col !== index) {
-            return renderFormItem(col);
-          }
-          return null;
-        })}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
+            gap: '0 24px',
+          }}
+        >
+          {fieldColumns.map((columnFields, columnIndex) => (
+            <div key={columnIndex}>
+              {columnFields.map((field) => renderFormItem(field))}
+            </div>
+          ))}
+        </div>
       </Form>
     </Modal>
   );
