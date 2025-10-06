@@ -13,7 +13,7 @@ import {
   Upload,
   Form,
 } from 'antd';
-import { basename, checkExist, dirname } from 'utils/file';
+import { checkExist } from 'utils/file';
 import { forwardRef, useState } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
@@ -76,21 +76,13 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: async (rule, value, callback) => {
-                if (value == '' && nullable) return callback();
+              validator: async (rule, value) => {
+                if (value == '' && nullable) return;
 
-                const pathExists =
-                  contentType == 'directory'
-                    ? await checkExist('', contentType, value)
-                    : await checkExist(
-                        basename(value),
-                        contentType,
-                        dirname(value),
-                      );
-                if (!pathExists) {
-                  callback('Path entered is invalid');
-                } else {
-                  callback();
+                try {
+                  await checkExist(value, contentType, value);
+                } catch (error) {
+                  return Promise.reject(`${value} is not a valid path`);
                 }
               },
             },
