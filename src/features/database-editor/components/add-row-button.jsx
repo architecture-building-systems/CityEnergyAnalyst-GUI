@@ -83,6 +83,7 @@ const AddRowModalForm = ({
     const description = schema.columns[col]?.description;
     const type = schema.columns[col]?.type;
     const choice = schema.columns[col]?.choice;
+    const isIndex = col === index;
 
     const label = (
       <span>
@@ -149,7 +150,13 @@ const AddRowModalForm = ({
     }
 
     return (
-      <Form.Item key={col} label={label} name={col} rules={rules}>
+      <Form.Item
+        key={col}
+        label={label}
+        name={col}
+        rules={rules}
+        normalize={isIndex ? (value) => value?.toUpperCase() : undefined}
+      >
         <Input placeholder={`Enter ${col.toLowerCase()}`} />
       </Form.Item>
     );
