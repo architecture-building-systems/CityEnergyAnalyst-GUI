@@ -77,10 +77,11 @@ const Parameter = ({ parameter, form }) => {
           rules={[
             {
               validator: async (rule, value) => {
-                if (value == '' && nullable) return;
+                if (value == '' && nullable) return Promise.resolve();
 
                 try {
                   await checkExist(value, contentType, value);
+                  return Promise.resolve();
                 } catch (error) {
                   return Promise.reject(`${value} is not a valid path`);
                 }
@@ -113,17 +114,22 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: (rule, value, callback) => {
+              validator: (rule, value) => {
                 if (choices.length < 1) {
                   if (type === 'GenerationParameter')
-                    callback('No generations found. Run optimization first.');
-                  else callback('There are no valid choices for this input');
+                    return Promise.reject(
+                      'No generations found. Run optimization first.',
+                    );
+                  else
+                    return Promise.reject(
+                      'There are no valid choices for this input',
+                    );
                 } else if (value == null) {
-                  callback('Select a choice');
+                  return Promise.reject('Select a choice');
                 } else if (!choices.includes(value)) {
-                  callback(`${value} is not a valid choice`);
+                  return Promise.reject(`${value} is not a valid choice`);
                 } else {
-                  callback();
+                  return Promise.resolve();
                 }
               },
             },
@@ -168,12 +174,12 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: (rule, value, callback) => {
+              validator: (rule, value) => {
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
                 if (invalidChoices.length) {
-                  callback(
+                  return Promise.reject(
                     `${invalidChoices.join(', ')} ${
                       invalidChoices.length > 1
                         ? 'are not valid choices'
@@ -181,7 +187,7 @@ const Parameter = ({ parameter, form }) => {
                     }`,
                   );
                 } else {
-                  callback();
+                  return Promise.resolve();
                 }
               },
             },
