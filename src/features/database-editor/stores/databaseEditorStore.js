@@ -174,7 +174,7 @@ const useDatabaseEditorStore = create((set) => ({
     });
   },
 
-  addDatabaseRow: (dataKey, index, rowData) => {
+  addDatabaseRow: (dataKey, indexCol, rowData) => {
     set((state) => {
       const newData = { ...state.data };
 
@@ -193,18 +193,19 @@ const useDatabaseEditorStore = create((set) => ({
         return state;
       }
 
+      const index = rowData?.[indexCol];
       // Add the new row to the table
       if (Array.isArray(table)) {
         table.push(rowData);
-      } else if (typeof table === 'object' && index) {
-        if (rowData?.[index] === undefined) {
+      } else if (typeof table === 'object' && indexCol) {
+        if (rowData?.[indexCol] === undefined) {
           console.error(
-            `Row data must contain the index field "${index}"`,
+            `Row data must contain the index field "${indexCol}"`,
             rowData,
           );
           return state;
         }
-        const rowIndex = rowData[index];
+        const rowIndex = rowData[indexCol];
         if (table[rowIndex]) {
           console.error(
             `Row with index "${rowIndex}" already exists in the table.`,
@@ -213,11 +214,11 @@ const useDatabaseEditorStore = create((set) => ({
           return state;
         }
         // Pop index from rowData to avoid duplication
-        delete rowData[index];
+        delete rowData[indexCol];
         table[rowIndex] = rowData;
       } else {
         console.error('Unable to determine table structure:', table);
-        console.log(index, table);
+        console.log(indexCol, table);
         return state;
       }
 
@@ -228,7 +229,9 @@ const useDatabaseEditorStore = create((set) => ({
           {
             dataKey,
             index,
+            field: indexCol,
             action: 'add',
+            oldValue: '{}',
             value: JSON.stringify(rowData),
           },
         ],
