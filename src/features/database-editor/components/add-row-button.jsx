@@ -1,4 +1,4 @@
-import { Button, Form, Input, Modal, Tooltip } from 'antd';
+import { Button, Form, Input, Modal, Tooltip, Select } from 'antd';
 import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState, useMemo } from 'react';
 
@@ -61,6 +61,7 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
   const renderFormItem = (col) => {
     const description = schema.columns[col]?.description;
     const type = schema.columns[col]?.type;
+    const choice = schema.columns[col]?.choice;
 
     const label = (
       <span>
@@ -89,6 +90,21 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
           return Promise.resolve();
         },
       });
+    }
+
+    // Render Select if choice property exists
+    if (choice?.values && Array.isArray(choice.values)) {
+      return (
+        <Form.Item key={col} label={label} name={col} rules={rules}>
+          <Select
+            placeholder={`Select ${col.toLowerCase()}`}
+            options={choice.values.map((value) => ({
+              label: value,
+              value: value,
+            }))}
+          />
+        </Form.Item>
+      );
     }
 
     return (
