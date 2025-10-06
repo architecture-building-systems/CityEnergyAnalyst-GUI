@@ -5,7 +5,7 @@ import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
 import ToolCard from 'features/project/components/Cards/ToolCard';
 import BottomToolButtons from 'features/project/components/Cards/BottomToolBottons/BottomToolButtons';
 import MapControls from 'features/map/components/Map/MapControls';
-import MapLayersCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
+import MapLayerCategoriesCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 import UserInfo from 'components/UserInfo';
@@ -31,6 +31,12 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
+import {
+  useGetMapLayerCategories,
+  useMapLayerCategories,
+  useSetActiveMapCategory,
+} from './Cards/MapLayersCard/store';
+import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -53,12 +59,30 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const selectionSource = useSelectionSource();
   const resetSelected = useResetSelected();
 
+  const getMapLayerCategories = useGetMapLayerCategories();
+  const mapLayerCategories = useMapLayerCategories();
+  const setActiveMapCategory = useSetActiveMapCategory();
+  const setSelectedLayer = useSetSelectedMapLayer();
+
   const handleToolSelected = (tool) => {
     setSelectedTool(tool);
     setToolType(toolTypes.TOOLS);
   };
 
   const handlePlotToolSelected = (tool) => {
+    // Get map layer category from plot script name
+    const layer = Object.keys(VIEW_PLOT_RESULTS).find(
+      (key) => VIEW_PLOT_RESULTS[key] === tool,
+    );
+    const category = mapLayerCategories?.categories?.find((cat) =>
+      cat.layers.find((l) => l.name === layer),
+    );
+    if (category) {
+      setActiveMapCategory(category?.name);
+      setSelectedLayer(layer);
+    }
+
+    // Set selected plot tool and switch to map layers tool type
     setSelectedPlotTool(tool);
     setToolType(toolTypes.MAP_LAYERS);
   };
@@ -71,12 +95,19 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     }
   };
 
-  const handleLayerSelected = (layer) => {
-    const plotScriptName = VIEW_PLOT_RESULTS?.[layer?.name];
-    if (plotScriptName) {
-      setSelectedPlotTool(plotScriptName);
-      setToolType(toolTypes.MAP_LAYERS);
+  const handleCategorySelected = (category) => {
+    // Chose the first layer in the category by default
+    const firstLayer = category?.layers?.[0];
+    if (firstLayer) {
+      handleLayerSelected(firstLayer.name);
     }
+  };
+
+  const handleLayerSelected = (layer) => {
+    const plotScriptName = VIEW_PLOT_RESULTS?.[layer] ?? null;
+
+    setSelectedPlotTool(plotScriptName);
+    if (plotScriptName) setToolType(toolTypes.MAP_LAYERS);
   };
 
   const [hideAll, setHideAll] = useState(false);
@@ -133,6 +164,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     leave: { transform: 'translateY(-100%)', opacity: 0 }, // Slide out to top and fade out
     config: { tension, friction }, // Control the speed of the animation
   });
+
+  // Fetch map layer categories on mount
+  useEffect(() => {
+    getMapLayerCategories();
+  }, []);
 
   // Reset state when project or scenario name changes
   useEffect(() => {
@@ -217,7 +253,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       </div>
 
       <div id="cea-project-overlay-content" className="overlay-flex-column">
-        <MapLayerPropertiesCard />
+        <MapLayerPropertiesCard onLayerSelect={handleLayerSelected} />
 
         {inputTableTransition((styles, item) =>
           item ? (
@@ -299,7 +335,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             <MapControls />
           </div>
 
-          <MapLayersCard onLayerSelected={handleLayerSelected} />
+          <MapLayerCategoriesCard
+            mapLayerCategories={mapLayerCategories}
+            onCategorySelected={handleCategorySelected}
+          />
         </div>
       </div>
 
