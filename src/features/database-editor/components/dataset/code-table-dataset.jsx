@@ -49,6 +49,7 @@ export const CodeTableDataset = ({ dataKey, data }) => {
         <div></div>
         <AddRowButton
           key={key}
+          dataKey={dataKey}
           index={INDEX_COLUMN}
           schema={schema}
           onAddRow={handleAddRow}

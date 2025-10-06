@@ -173,6 +173,68 @@ const useDatabaseEditorStore = create((set) => ({
       };
     });
   },
+
+  addDatabaseRow: (dataKey, index, rowData) => {
+    set((state) => {
+      const newData = { ...state.data };
+
+      let _dataKey = dataKey;
+      // Handle case where index is actually last element (e.g. use types dataset)
+      if (
+        arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
+        _dataKey = dataKey.slice(0, -1);
+      }
+
+      const table = getNestedValue(newData, _dataKey);
+      if (table === undefined) {
+        console.error('Table not found for dataKey:', dataKey);
+        return state;
+      }
+
+      // Add the new row to the table
+      if (Array.isArray(table)) {
+        table.push(rowData);
+      } else if (typeof table === 'object' && index) {
+        if (rowData?.[index] === undefined) {
+          console.error(
+            `Row data must contain the index field "${index}"`,
+            rowData,
+          );
+          return state;
+        }
+        const rowIndex = rowData[index];
+        if (table[rowIndex]) {
+          console.error(
+            `Row with index "${rowIndex}" already exists in the table.`,
+            table,
+          );
+          return state;
+        }
+        // Pop index from rowData to avoid duplication
+        delete rowData[index];
+        table[rowIndex] = rowData;
+      } else {
+        console.error('Unable to determine table structure:', table);
+        console.log(index, table);
+        return state;
+      }
+
+      return {
+        data: newData,
+        changes: [
+          ...state.changes,
+          {
+            dataKey,
+            index,
+            action: 'add',
+            value: JSON.stringify(rowData),
+          },
+        ],
+      };
+    });
+  },
 }));
 
 const getNestedValue = (obj, datakey) => {
@@ -217,5 +279,8 @@ export const useGetDatabaseColumnChoices = () => {
 
 export const useUpdateDatabaseData = () =>
   useDatabaseEditorStore((state) => state.updateDatabaseData);
+
+export const useAddDatabaseRow = () =>
+  useDatabaseEditorStore((state) => state.addDatabaseRow);
 
 export default useDatabaseEditorStore;

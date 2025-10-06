@@ -1,9 +1,12 @@
 import { Button, Form, Input, Modal, Tooltip, Select } from 'antd';
 import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState, useMemo } from 'react';
-import { useGetDatabaseColumnChoices } from 'features/database-editor/stores/databaseEditorStore';
+import {
+  useGetDatabaseColumnChoices,
+  useAddDatabaseRow,
+} from 'features/database-editor/stores/databaseEditorStore';
 
-export const AddRowButton = ({ index, schema, onAddRow }) => {
+export const AddRowButton = ({ dataKey, index, schema, onAddRow }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -16,6 +19,7 @@ export const AddRowButton = ({ index, schema, onAddRow }) => {
         Add Row
       </Button>
       <AddRowModalForm
+        dataKey={dataKey}
         index={index}
         schema={schema}
         visible={visible}
@@ -26,9 +30,17 @@ export const AddRowButton = ({ index, schema, onAddRow }) => {
   );
 };
 
-const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
+const AddRowModalForm = ({
+  dataKey,
+  index,
+  schema,
+  visible,
+  setVisible,
+  onAddRow,
+}) => {
   const [form] = Form.useForm();
   const getColumnChoices = useGetDatabaseColumnChoices();
+  const addDatabaseRow = useAddDatabaseRow();
 
   const MAX_ROWS_PER_COLUMN = 20;
 
@@ -55,7 +67,14 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
   };
 
   const handleFinish = (values) => {
-    onAddRow(values);
+    // Add row to the store
+    addDatabaseRow(dataKey, index, values);
+
+    // Call the optional callback if provided
+    if (onAddRow) {
+      onAddRow(values);
+    }
+
     setVisible(false);
     form.resetFields();
   };
