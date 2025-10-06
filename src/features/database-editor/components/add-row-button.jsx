@@ -103,10 +103,11 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
         : values;
 
       // Handle both array and object choices
+      const isObjectChoices = !Array.isArray(columnChoices);
       const options = Array.isArray(columnChoices)
         ? columnChoices.map((value) => ({ label: value, value: value }))
         : Object.keys(columnChoices).map((key) => ({
-            label: `${key} : ${columnChoices[key]}`,
+            label: key,
             value: key,
           }));
 
@@ -117,6 +118,12 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
             options={options}
             showSearch
             optionFilterProp="label"
+            popupMatchSelectWidth={false}
+            optionRender={
+              isObjectChoices
+                ? (option) => `${option.value} : ${columnChoices[option.value]}`
+                : undefined
+            }
           />
         </Form.Item>
       );
