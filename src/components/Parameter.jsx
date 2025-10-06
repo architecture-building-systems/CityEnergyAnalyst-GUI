@@ -80,7 +80,7 @@ const Parameter = ({ parameter, form }) => {
                 if (value == '' && nullable) return Promise.resolve();
 
                 try {
-                  await checkExist(value, contentType, value);
+                  await checkExist(value, contentType);
                   return Promise.resolve();
                 } catch (error) {
                   return Promise.reject(`${value} is not a valid path`);
