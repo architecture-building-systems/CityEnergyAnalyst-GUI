@@ -60,6 +60,8 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
 
   const renderFormItem = (col) => {
     const description = schema.columns[col]?.description;
+    const type = schema.columns[col]?.type;
+
     const label = (
       <span>
         {col}
@@ -73,13 +75,24 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
       </span>
     );
 
+    const rules = [{ required: true, message: `Please input ${col}` }];
+
+    // Add type validation for float fields
+    if (type === 'float') {
+      rules.push({
+        validator: (_, value) => {
+          if (!value) return Promise.resolve();
+          const num = Number(value);
+          if (isNaN(num)) {
+            return Promise.reject(new Error('Must be a valid number'));
+          }
+          return Promise.resolve();
+        },
+      });
+    }
+
     return (
-      <Form.Item
-        key={col}
-        label={label}
-        name={col}
-        rules={[{ required: true, message: `Please input ${col}` }]}
-      >
+      <Form.Item key={col} label={label} name={col} rules={rules}>
         <Input placeholder={`Enter ${col.toLowerCase()}`} />
       </Form.Item>
     );
