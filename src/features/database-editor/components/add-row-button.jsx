@@ -30,7 +30,7 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
   const [form] = Form.useForm();
   const getColumnChoices = useGetDatabaseColumnChoices();
 
-  const MAX_ROWS_PER_COLUMN = 8;
+  const MAX_ROWS_PER_COLUMN = 20;
 
   // Split fields into columns with max 8 rows each
   const fieldColumns = useMemo(() => {
