@@ -1,6 +1,7 @@
 import { Button, Form, Input, Modal, Tooltip, Select } from 'antd';
 import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState, useMemo } from 'react';
+import { useGetDatabaseColumnChoices } from 'features/database-editor/stores/databaseEditorStore';
 
 export const AddRowButton = ({ index, schema, onAddRow }) => {
   const [visible, setVisible] = useState(false);
@@ -27,6 +28,7 @@ export const AddRowButton = ({ index, schema, onAddRow }) => {
 
 const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
   const [form] = Form.useForm();
+  const getColumnChoices = useGetDatabaseColumnChoices();
 
   const MAX_ROWS_PER_COLUMN = 8;
 
@@ -93,15 +95,28 @@ const AddRowModalForm = ({ index, schema, visible, setVisible, onAddRow }) => {
     }
 
     // Render Select if choice property exists
-    if (choice?.values && Array.isArray(choice.values)) {
+    if (choice != undefined) {
+      const values = choice?.values || [];
+      const lookup = choice?.lookup;
+      const columnChoices = lookup
+        ? getColumnChoices(lookup?.path, lookup?.column)
+        : values;
+
+      // Handle both array and object choices
+      const options = Array.isArray(columnChoices)
+        ? columnChoices.map((value) => ({ label: value, value: value }))
+        : Object.keys(columnChoices).map((key) => ({
+            label: `${key} : ${columnChoices[key]}`,
+            value: key,
+          }));
+
       return (
         <Form.Item key={col} label={label} name={col} rules={rules}>
           <Select
             placeholder={`Select ${col.toLowerCase()}`}
-            options={choice.values.map((value) => ({
-              label: value,
-              value: value,
-            }))}
+            options={options}
+            showSearch
+            optionFilterProp="label"
           />
         </Form.Item>
       );
