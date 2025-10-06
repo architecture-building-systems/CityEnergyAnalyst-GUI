@@ -235,6 +235,13 @@ const EntityDataTable = ({
     }
   }, [data, dataKey, indexColumn, tabulatorColumns, updateDatabaseData]);
 
+  // Update table data when data changes (e.g., when a new row is added)
+  useEffect(() => {
+    if (tabulatorRef.current && data) {
+      tabulatorRef.current.setData(data);
+    }
+  }, [data]);
+
   return (
     <>
       {columnSchema && showColumnSchema && (
