@@ -317,13 +317,24 @@ const Parameter = ({ parameter, form }) => {
         }),
       };
 
+      const ContextSummary = ({ originalValue }) => {
+        return (
+          <div>
+            {Object.keys(originalValue).map((key) => (
+              <div key={key}>
+                <b>{key}</b>: {JSON.stringify(originalValue[key], null, 2)}
+              </div>
+            ))}
+          </div>
+        );
+      };
+
       return (
         <FormItemWrapper
           form={form}
           name={name}
           initialValue={value}
-          help={help}
-          inputComponent={<Input disabled />}
+          inputComponent={<ContextSummary />}
           config={config}
         />
       );
