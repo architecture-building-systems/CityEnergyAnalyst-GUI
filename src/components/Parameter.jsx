@@ -13,7 +13,7 @@ import {
   Upload,
   Form,
 } from 'antd';
-import { basename, checkExist, dirname } from 'utils/file';
+import { checkExist } from 'utils/file';
 import { forwardRef, useState } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
@@ -76,21 +76,14 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: async (rule, value, callback) => {
-                if (value == '' && nullable) return callback();
+              validator: async (rule, value) => {
+                if (value == '' && nullable) return Promise.resolve();
 
-                const pathExists =
-                  contentType == 'directory'
-                    ? await checkExist('', contentType, value)
-                    : await checkExist(
-                        basename(value),
-                        contentType,
-                        dirname(value),
-                      );
-                if (!pathExists) {
-                  callback('Path entered is invalid');
-                } else {
-                  callback();
+                try {
+                  await checkExist(value, contentType);
+                  return Promise.resolve();
+                } catch (error) {
+                  return Promise.reject(`${value} is not a valid path`);
                 }
               },
             },
@@ -121,17 +114,22 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: (rule, value, callback) => {
+              validator: (rule, value) => {
                 if (choices.length < 1) {
                   if (type === 'GenerationParameter')
-                    callback('No generations found. Run optimization first.');
-                  else callback('There are no valid choices for this input');
+                    return Promise.reject(
+                      'No generations found. Run optimization first.',
+                    );
+                  else
+                    return Promise.reject(
+                      'There are no valid choices for this input',
+                    );
                 } else if (value == null) {
-                  callback('Select a choice');
+                  return Promise.reject('Select a choice');
                 } else if (!choices.includes(value)) {
-                  callback(`${value} is not a valid choice`);
+                  return Promise.reject(`${value} is not a valid choice`);
                 } else {
-                  callback();
+                  return Promise.resolve();
                 }
               },
             },
@@ -176,12 +174,12 @@ const Parameter = ({ parameter, form }) => {
           help={help}
           rules={[
             {
-              validator: (rule, value, callback) => {
+              validator: (rule, value) => {
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
                 if (invalidChoices.length) {
-                  callback(
+                  return Promise.reject(
                     `${invalidChoices.join(', ')} ${
                       invalidChoices.length > 1
                         ? 'are not valid choices'
@@ -189,7 +187,7 @@ const Parameter = ({ parameter, form }) => {
                     }`,
                   );
                 } else {
-                  callback();
+                  return Promise.resolve();
                 }
               },
             },

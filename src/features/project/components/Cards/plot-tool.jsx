@@ -1,11 +1,9 @@
 import Tool from 'features/tools/components/Tools/Tool';
 import { Button, ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { iconMap, VIEW_PLOT_RESULTS } from 'features/plots/constants';
-import { useSetActiveMapLayer } from './MapLayersCard/store';
-import { RENEWABLE_ENERGY_POTENTIALS } from 'features/map/constants';
 
 const PlotChoices = ({ onSelected }) => {
   const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
@@ -34,42 +32,54 @@ const PlotChoices = ({ onSelected }) => {
 export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const setActiveMapLayer = useSetActiveMapLayer();
 
   // FIXME: Hardcoded for now.
   const period = mapLayerParameters?.period;
+  const timeline = mapLayerParameters?.timeline;
   const panelTech = mapLayerParameters?.['technology'];
   const panelType = mapLayerParameters?.['panel-type'];
 
-  // Show renewable energy potentials layer for solar plots
-  if (script === 'plot-solar' && !panelTech)
-    setActiveMapLayer(RENEWABLE_ENERGY_POTENTIALS);
-
-  useEffect(() => {
-    const hour_start = ((period?.[0] ?? 1) - 1) * 24;
-    const hour_end = (period?.[1] ?? 365) * 24;
+  const contextValue = Form.useWatch('context', form);
+  const setContext = useCallback(() => {
     const solar_panel_types = {};
 
     let feature;
-    if (script == 'plot-demand') {
-      feature = 'demand';
-    } else if (script == 'plot-solar') {
+    // Get feature from script name after 'plot-'
+    feature = script?.split('plot-')?.[1];
+
+    // Special case for solar plots
+    if (script == 'plot-solar') {
       if (panelTech === 'PV') {
         feature = 'pv';
+        solar_panel_types.pv = panelType;
       } else if (panelTech === 'SC') {
         feature = 'sc';
+        solar_panel_types.sc = panelType;
       }
     }
 
-    if (panelTech === 'SC') {
-      solar_panel_types.sc = panelType;
-    } else if (panelTech === 'PV') {
-      solar_panel_types.pv = panelType;
+    let period_start = ((period?.[0] ?? 1) - 1) * 24;
+    let period_end = (period?.[1] ?? 365) * 24;
+    if (
+      ['plot-lifecycle-emissions', 'plot-emission-timeline'].includes(script)
+    ) {
+      period_start = timeline?.[0] ?? 0;
+      period_end = timeline?.[1] ?? 0;
     }
+
     form.setFieldsValue({
-      context: { feature, hour_start, hour_end, solar_panel_types },
+      context: { feature, period_start, period_end, solar_panel_types },
     });
-  }, [form, script, period, panelType, panelTech]);
+  }, [form, period, panelTech, panelType, timeline, script]);
+
+  // Ensure context is not empty
+  useEffect(() => {
+    if (Object.keys(contextValue ?? {}).length === 0) setContext();
+  }, [contextValue, setContext]);
+
+  useEffect(() => {
+    setContext();
+  }, [setContext]);
 
   if (script == null) return <PlotChoices onSelected={onPlotToolSelected} />;
 
@@ -81,7 +91,12 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
         },
       }}
     >
-      <Tool script={script} onToolSelected={onToolSelected} form={form} />
+      <Tool
+        key={script}
+        script={script}
+        onToolSelected={onToolSelected}
+        form={form}
+      />
     </ConfigProvider>
   );
 };

@@ -6,6 +6,7 @@ import {
   EnergyPotentialsIcon,
   LifeCycleAnalysisIcon,
   ComfortChartIcon,
+  TimelineIcon,
 } from 'assets/icons';
 import {
   DEMAND,
@@ -15,6 +16,9 @@ import {
   LIFE_CYCLE_ANALYSIS,
   COMFORT_CHART,
   PARETO_FRONT,
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
+  EMISSION_TIMELINE,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -25,6 +29,9 @@ export const iconMap = {
   [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
   [COMFORT_CHART]: ComfortChartIcon,
   [PARETO_FRONT]: DotChartOutlined,
+  [EMISSIONS_EMBODIED]: LifeCycleAnalysisIcon,
+  [EMISSIONS_OPERATIONAL]: LifeCycleAnalysisIcon,
+  [EMISSION_TIMELINE]: TimelineIcon,
 };
 
 // TODO: get mappings from backend
@@ -40,15 +47,17 @@ export const VIEW_MAP_RESULTS = {
   emissions: LIFE_CYCLE_ANALYSIS,
 };
 
-// Maps script name to plot script name
+// Maps layer name to plot script name
 export const VIEW_PLOT_RESULTS = {
   [DEMAND]: 'plot-demand',
   [SOLAR_IRRADIATION]: null,
   [RENEWABLE_ENERGY_POTENTIALS]: 'plot-solar',
   [THERMAL_NETWORK]: null,
-  [LIFE_CYCLE_ANALYSIS]: null,
   [COMFORT_CHART]: 'plot-comfort-chart',
   [PARETO_FRONT]: 'plot-pareto-front',
+  [EMISSIONS_EMBODIED]: 'plot-lifecycle-emissions',
+  [EMISSIONS_OPERATIONAL]: 'plot-operational-emissions',
+  [EMISSION_TIMELINE]: 'plot-emission-timeline',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
