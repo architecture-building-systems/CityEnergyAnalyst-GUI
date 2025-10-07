@@ -313,6 +313,7 @@ const Parameter = ({ parameter, form }) => {
                 .map((key) => `${key}: ${value[key]}`)
                 .join(', ')
             : '',
+          originalValue: value,
         }),
       };
 
