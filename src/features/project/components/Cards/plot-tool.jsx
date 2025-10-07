@@ -41,7 +41,7 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
 
   const contextValue = Form.useWatch('context', form);
   const setContext = useCallback(() => {
-    const solar_panel_types = {};
+    let solar_panel_types;
 
     let feature;
     // Get feature from script name after 'plot-'
@@ -51,10 +51,10 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     if (script == 'plot-solar') {
       if (panelTech === 'PV') {
         feature = 'pv';
-        solar_panel_types.pv = panelType;
+        solar_panel_types = { pv: panelType };
       } else if (panelTech === 'SC') {
         feature = 'sc';
-        solar_panel_types.sc = panelType;
+        solar_panel_types = { sc: panelType };
       }
     }
 
@@ -68,7 +68,12 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     }
 
     form.setFieldsValue({
-      context: { feature, period_start, period_end, solar_panel_types },
+      context: {
+        feature,
+        period_start,
+        period_end,
+        ...(solar_panel_types ? { solar_panel_types } : {}),
+      },
     });
   }, [form, period, panelTech, panelType, timeline, script]);
 
