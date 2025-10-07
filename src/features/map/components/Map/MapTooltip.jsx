@@ -84,7 +84,7 @@ const MapTooltip = ({ info }) => {
           <table className="tooltip-table">
             <thead>
               <tr>
-                <th></th>
+                <th>Ground</th>
                 <th>Above</th>
                 {isZone && <th>Below</th>}
               </tr>
@@ -109,7 +109,8 @@ const MapTooltip = ({ info }) => {
               {isZone && (
                 <tr>
                   <td>Void deck</td>
-                  <td colSpan={2}>{<b>{voidDeck}</b>}</td>
+                  <td>{<b>{voidDeck}</b>}</td>
+                  <td>-</td>
                 </tr>
               )}
             </tbody>
