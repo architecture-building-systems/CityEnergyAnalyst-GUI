@@ -37,9 +37,14 @@
   gap: 2px 12px;
 }
 
-.tooltip-table th + th,
-.tooltip-table td + td {
-  padding-inline-start: 1.6em;
+.tooltip-table {
+  border-collapse: collapse;
+}
+
+.tooltip-table th,
+.tooltip-table td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
 }
 
 .tooltip-table th {
