@@ -25,17 +25,20 @@ const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState();
 
-  const fetch = async (parameters) => {
-    setFetching(true);
-    try {
-      await apiClient.post(`/api/tools/${tool}/check`, parameters);
-      setError(null);
-    } catch (err) {
-      setError(err.response.data?.detail?.script_suggestions);
-    } finally {
-      setFetching(false);
-    }
-  };
+  const fetch = useCallback(
+    async (parameters) => {
+      setFetching(true);
+      try {
+        await apiClient.post(`/api/tools/${tool}/check`, parameters);
+        setError(null);
+      } catch (err) {
+        setError(err.response.data?.detail?.script_suggestions);
+      } finally {
+        setFetching(false);
+      }
+    },
+    [tool],
+  );
 
   // reset error when tool changes
   useEffect(() => {
