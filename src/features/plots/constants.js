@@ -6,6 +6,7 @@ import {
   EnergyPotentialsIcon,
   LifeCycleAnalysisIcon,
   ComfortChartIcon,
+  TimelineIcon,
 } from 'assets/icons';
 import {
   DEMAND,
@@ -17,6 +18,7 @@ import {
   PARETO_FRONT,
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
+  EMISSION_TIMELINE,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -29,6 +31,7 @@ export const iconMap = {
   [PARETO_FRONT]: DotChartOutlined,
   [EMISSIONS_EMBODIED]: LifeCycleAnalysisIcon,
   [EMISSIONS_OPERATIONAL]: LifeCycleAnalysisIcon,
+  [EMISSION_TIMELINE]: TimelineIcon,
 };
 
 // TODO: get mappings from backend
@@ -54,6 +57,7 @@ export const VIEW_PLOT_RESULTS = {
   [PARETO_FRONT]: 'plot-pareto-front',
   [EMISSIONS_EMBODIED]: 'plot-lifecycle-emissions',
   [EMISSIONS_OPERATIONAL]: 'plot-operational-emissions',
+  [EMISSION_TIMELINE]: 'plot-emission-timeline',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
