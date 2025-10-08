@@ -23,8 +23,8 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         try {
-          await apiClient.post(`/api/inputs/databases/import`, values);
-          // Reload the database after successful import
+          await apiClient.post(`/api/inputs/databases/upload`, values);
+          // Reload the database after successful upload
           await initDatabaseState();
           resetDatabaseChanges();
           setConfirmLoading(false);
@@ -32,7 +32,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
           message.config({
             top: 120,
           });
-          message.success('Database successfully imported');
+          message.success('Database successfully uploaded');
         } catch (err) {
           console.error(err.response);
           setConfirmLoading(false);
@@ -40,7 +40,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
             top: 120,
           });
           message.error(
-            err.response?.data?.detail || 'Failed to import database.',
+            err.response?.data?.detail || 'Failed to upload database.',
           );
         }
       }
@@ -53,10 +53,10 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
 
   return (
     <Modal
-      title="Import Database"
+      title="Upload Database"
       open={visible}
       width={800}
-      okText="Import"
+      okText="Upload"
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
@@ -68,7 +68,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
             message="ATTENTION"
             type="warning"
             showIcon
-            description="There are unsaved changes. These changes will be lost when importing a new database. It is advised to save these changes before proceeding."
+            description="There are unsaved changes. These changes will be lost when uploading a new database. It is advised to save these changes before proceeding."
           />
         </div>
       )}

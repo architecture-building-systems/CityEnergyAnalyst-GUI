@@ -2,7 +2,7 @@ import useDatabaseEditorStore from 'features/database-editor/stores/databaseEdit
 import { Button } from 'antd';
 import ImportDatabaseModal from 'features/database-editor/components/DatabaseEditor/ImportDatabaseModal';
 import { useState } from 'react';
-import { DownloadOutlined } from '@ant-design/icons';
+import { UploadOutlined } from '@ant-design/icons';
 
 export const ImportDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
@@ -13,12 +13,12 @@ export const ImportDatabaseButton = () => {
   return (
     <>
       <Button
-        icon={<DownloadOutlined />}
+        icon={<UploadOutlined />}
         onClick={() => {
           setModalVisible(true);
         }}
       >
-        Import
+        Upload
       </Button>
       <ImportDatabaseModal
         visible={modalVisible}
