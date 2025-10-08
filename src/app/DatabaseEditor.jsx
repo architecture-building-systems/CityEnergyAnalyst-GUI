@@ -20,6 +20,8 @@ import {
   CodeTableDataset,
 } from 'features/database-editor/components/dataset';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
+import { ExportDatabaseButton } from 'features/database-editor/components/export-button';
+import { ImportDatabaseButton } from 'features/database-editor/components/import-button';
 import { arraysEqual } from 'utils';
 import { DatabaseChangesList } from 'features/database-editor/components/changes-list';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
@@ -90,8 +92,9 @@ const DatabaseEditor = () => {
     <div className="cea-database-editor">
       <div className="cea-database-editor-header">
         <h2>Database Editor</h2>
-        <div>
-          {/* <ExportDatabaseButton /> */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <ImportDatabaseButton />
+          <ExportDatabaseButton />
           <RefreshDatabaseButton />
         </div>
       </div>
