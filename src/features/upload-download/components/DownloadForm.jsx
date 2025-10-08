@@ -1,4 +1,4 @@
-import { Button, Checkbox, Form, message, Progress, Radio } from 'antd';
+import { Button, Checkbox, Form, message, Progress } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useState } from 'react';
 import { CloudDownloadIcon } from 'assets/icons';
@@ -73,6 +73,21 @@ const ScenarioCheckboxes = ({ onChange, disabled }) => {
     </>
   );
 };
+
+const validateFileSelection = ({ getFieldValue }) => ({
+  validator() {
+    const inputFiles = getFieldValue('inputFiles');
+    const outputFiles = getFieldValue('outputFiles');
+    if (inputFiles || (outputFiles && outputFiles.length > 0)) {
+      return Promise.resolve();
+    }
+    return Promise.reject(
+      new Error(
+        'Please select at least one option in input files or output files',
+      ),
+    );
+  },
+});
 
 const FormContent = () => {
   const [form] = Form.useForm();
@@ -230,6 +245,8 @@ const FormContent = () => {
               name="inputFiles"
               valuePropName="checked"
               initialValue={false}
+              dependencies={['outputFiles']}
+              rules={[validateFileSelection]}
             >
               <Checkbox disabled={disableForm}>
                 <div>
@@ -241,37 +258,44 @@ const FormContent = () => {
             <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
               Output files
             </div>
-            <Form.Item name="outputFiles" initialValue="summary">
-              <Radio.Group
+            <Form.Item
+              name="outputFiles"
+              initialValue={[]}
+              dependencies={['inputFiles']}
+              rules={[validateFileSelection]}
+            >
+              <Checkbox.Group
                 disabled={disableForm}
                 style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-                options={[
-                  {
-                    label: (
-                      <div>
-                        Summary -{' '}
-                        <small>
-                          A summary of simulated results aggregated by buildings
-                          and various time resolutions.
-                        </small>
-                      </div>
-                    ),
-                    value: 'summary',
-                  },
-                  {
-                    label: (
-                      <div>
-                        All -{' '}
-                        <small>
-                          Includes all output data{' '}
-                          <i>(would take longer to download)</i>
-                        </small>
-                      </div>
-                    ),
-                    value: 'detailed',
-                  },
-                ]}
-              />
+              >
+                <Checkbox value="summary">
+                  <div>
+                    Summary -{' '}
+                    <small>
+                      A summary of simulated results aggregated by buildings and
+                      various time resolutions.
+                    </small>
+                  </div>
+                </Checkbox>
+                <Checkbox value="detailed">
+                  <div>
+                    Output Data -{' '}
+                    <small>
+                      Includes all output data in CSV format{' '}
+                      <i>(would take longer to download)</i>
+                    </small>
+                  </div>
+                </Checkbox>
+                <Checkbox value="export">
+                  <div>
+                    Export files -{' '}
+                    <small>
+                      Files to export for other software (e.g.,
+                      Rhino/Grasshopper)
+                    </small>
+                  </div>
+                </Checkbox>
+              </Checkbox.Group>
             </Form.Item>
           </div>
         </div>
