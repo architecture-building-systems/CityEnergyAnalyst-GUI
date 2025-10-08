@@ -1,33 +1,70 @@
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
-import { Button } from 'antd';
-import ExportDatabaseModal from 'features/database-editor/components/DatabaseEditor/ExportDatabaseModal';
+import { Button, message } from 'antd';
 import { useState } from 'react';
-import { UploadOutlined } from '@ant-design/icons';
+import { DownloadOutlined } from '@ant-design/icons';
+import { apiClient } from 'lib/api/axios';
 
 export const ExportDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
   const databaseValidation = useDatabaseEditorStore(
     (state) => state.validation,
   );
-  const [modalVisible, setModalVisible] = useState(false);
+  const databaseChanges = useDatabaseEditorStore((state) => state.changes);
+  const [loading, setLoading] = useState(false);
 
   if (status !== 'success') return null;
 
+  const hasValidationErrors = !!Object.keys(databaseValidation).length;
+  const hasUnsavedChanges = !!databaseChanges.length;
+
+  const handleDownload = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get('/api/inputs/databases/download', {
+        responseType: 'blob',
+      });
+
+      // Create download link
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Generate filename with current date
+      const date = new Date().toISOString().split('T')[0];
+      link.download = `database-export-${date}.xlsx`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      message.config({ top: 120 });
+      message.success('Database successfully downloaded');
+    } catch (err) {
+      console.error(err);
+      message.config({ top: 120 });
+      message.error('Failed to download database');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <>
-      <Button
-        icon={<UploadOutlined />}
-        disabled={!!Object.keys(databaseValidation).length}
-        onClick={() => {
-          setModalVisible(true);
-        }}
-      >
-        Export
-      </Button>
-      <ExportDatabaseModal
-        visible={modalVisible}
-        setVisible={setModalVisible}
-      />
-    </>
+    <Button
+      icon={<DownloadOutlined />}
+      disabled={hasValidationErrors || hasUnsavedChanges}
+      loading={loading}
+      onClick={handleDownload}
+      title={
+        hasUnsavedChanges
+          ? 'Please save changes before downloading'
+          : hasValidationErrors
+            ? 'Please fix validation errors before downloading'
+            : 'Download database'
+      }
+    >
+      Download
+    </Button>
   );
 };
