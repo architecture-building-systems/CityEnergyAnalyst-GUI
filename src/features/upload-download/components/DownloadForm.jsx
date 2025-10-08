@@ -74,6 +74,19 @@ const ScenarioCheckboxes = ({ onChange, disabled }) => {
   );
 };
 
+const validateFileSelection = ({ getFieldValue }) => ({
+  validator() {
+    const inputFiles = getFieldValue('inputFiles');
+    const outputFiles = getFieldValue('outputFiles');
+    if (inputFiles || (outputFiles && outputFiles.length > 0)) {
+      return Promise.resolve();
+    }
+    return Promise.reject(
+      new Error('Please select at least input files or output files'),
+    );
+  },
+});
+
 const FormContent = () => {
   const [form] = Form.useForm();
 
@@ -230,6 +243,8 @@ const FormContent = () => {
               name="inputFiles"
               valuePropName="checked"
               initialValue={false}
+              dependencies={['outputFiles']}
+              rules={[validateFileSelection]}
             >
               <Checkbox disabled={disableForm}>
                 <div>
@@ -241,7 +256,12 @@ const FormContent = () => {
             <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
               Output files
             </div>
-            <Form.Item name="outputFiles" initialValue={[]}>
+            <Form.Item
+              name="outputFiles"
+              initialValue={[]}
+              dependencies={['inputFiles']}
+              rules={[validateFileSelection]}
+            >
               <Checkbox.Group
                 disabled={disableForm}
                 style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
