@@ -82,7 +82,9 @@ const validateFileSelection = ({ getFieldValue }) => ({
       return Promise.resolve();
     }
     return Promise.reject(
-      new Error('Please select at least input files or output files'),
+      new Error(
+        'Please select at least one option in input files or output files',
+      ),
     );
   },
 });
