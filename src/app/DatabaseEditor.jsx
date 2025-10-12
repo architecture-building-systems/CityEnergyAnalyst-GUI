@@ -61,15 +61,11 @@ const DatabaseEditor = () => {
   const resetDatabaseState = useDatabaseEditorStore(
     (state) => state.resetDatabaseState,
   );
-  const validateDatabase = useDatabaseEditorStore(
-    (state) => state.validateDatabase,
-  );
 
   useEffect(() => {
     const init = async () => {
       await initDatabaseState();
       await fetchDatabaseSchema();
-      await validateDatabase();
     };
 
     init();
@@ -80,13 +76,8 @@ const DatabaseEditor = () => {
   }, []);
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
-  if (databaseValidation.status === 'checking')
-    return (
-      <CenterSpinner
-        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
-        tip="Verifying Databases..."
-      />
-    );
+
+  const isValidating = databaseValidation.status === 'checking';
 
   return (
     <div className="cea-database-editor">
@@ -100,10 +91,17 @@ const DatabaseEditor = () => {
               <ExportDatabaseButton />
             </>
           )}
-          <RefreshDatabaseButton />
+          <RefreshDatabaseButton isLoading={isValidating} />
         </div>
       </div>
-      <DatabaseContent message={databaseValidation.message} />
+      {isValidating ? (
+        <CenterSpinner
+          indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+          tip="Verifying Databases..."
+        />
+      ) : (
+        <DatabaseContent message={databaseValidation.message} />
+      )}
       <div className="cea-database-editor-footer"></div>
     </div>
   );
