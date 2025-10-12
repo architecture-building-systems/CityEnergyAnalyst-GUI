@@ -77,6 +77,7 @@ const DatabaseEditorErrorMessage = ({ error }) => {
 
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
+  const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
 
   const [status, message] = useValidateDatabasePath();
 
@@ -95,7 +96,7 @@ const DatabaseEditor = () => {
         <h2>Database Editor</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* Only show import/export buttons in browser */}
-          {!isElectron() && (
+          {!isElectron() && !isEmpty && (
             <>
               <ImportDatabaseButton />
               <ExportDatabaseButton />
