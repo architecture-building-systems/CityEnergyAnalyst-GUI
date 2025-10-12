@@ -39,20 +39,18 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
   const [hideBox, setHideBox] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const handleOk = async () => {
     if (fileList.length === 0) {
-      message.error('Please select a zip file to upload');
+      setErrorMessage('Please select a zip file to upload');
       return;
     }
 
     setConfirmLoading(true);
+    setErrorMessage(null);
     const formData = new FormData();
     formData.append('file', fileList[0].originFileObj);
-
-    message.config({
-      top: 120,
-    });
 
     try {
       await apiClient.post(`/api/inputs/databases/upload`, formData, {
@@ -64,11 +62,14 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       await initDatabaseState();
       setConfirmLoading(false);
       handleClose();
+      message.config({ top: 120 });
       message.success('Database successfully uploaded');
     } catch (err) {
       console.error(err.response);
       setConfirmLoading(false);
-      message.error(err.response?.data?.detail || 'Failed to upload database.');
+      setErrorMessage(
+        err.response?.data?.detail || 'Failed to upload database.',
+      );
     }
   };
 
@@ -76,6 +77,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
     setVisible(false);
     setFileList([]);
     setHideBox(false);
+    setErrorMessage(null);
   };
 
   const beforeUpload = async (file) => {
@@ -98,9 +100,10 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       }
 
       setHideBox(true);
+      setErrorMessage(null);
     } catch (e) {
       console.error(e);
-      message.error(e.message);
+      setErrorMessage(e.message);
       return Upload.LIST_IGNORE;
     }
 
@@ -150,6 +153,22 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
         </Button>,
       ]}
     >
+      {errorMessage && (
+        <div style={{ marginBottom: 20 }}>
+          <Alert
+            type="error"
+            showIcon
+            message="Upload Failed"
+            description={
+              <div style={{ overflow: 'auto' }}>
+                <pre>{errorMessage}</pre>
+              </div>
+            }
+            closable
+            onClose={() => setErrorMessage(null)}
+          />
+        </div>
+      )}
       {!isEmpty && (
         <div style={{ marginBottom: 20 }}>
           <Alert
