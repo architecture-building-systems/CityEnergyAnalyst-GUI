@@ -41,7 +41,7 @@ export const ExportDatabaseButton = () => {
 
           // Generate filename with current date
           const date = new Date().toISOString().split('T')[0];
-          link.download = `database-export-${date}.xlsx`;
+          link.download = `database-export-${date}.zip`;
 
           document.body.appendChild(link);
           link.click();
