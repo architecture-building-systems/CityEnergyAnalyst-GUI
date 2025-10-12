@@ -118,6 +118,18 @@ const AddRowModalForm = ({
         ? getColumnChoices(lookup?.path, lookup?.column)
         : values;
 
+      // Guard against null/undefined columnChoices from failed lookups
+      if (!columnChoices) {
+        return (
+          <Form.Item key={col} label={label} name={col} rules={rules}>
+            <Select
+              placeholder={`No options available for ${col.toLowerCase()}`}
+              disabled
+            />
+          </Form.Item>
+        );
+      }
+
       // Handle both array and object choices
       const isObjectChoices = !Array.isArray(columnChoices);
       const options = Array.isArray(columnChoices)
