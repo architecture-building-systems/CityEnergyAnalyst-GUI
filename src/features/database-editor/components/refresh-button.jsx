@@ -5,13 +5,10 @@ import useDatabaseEditorStore, {
 import { Button, Tooltip } from 'antd';
 import { RefreshIcon } from 'assets/icons';
 
-export const RefreshDatabaseButton = () => {
+export const RefreshDatabaseButton = ({ isLoading }) => {
   const { status } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
-  );
-  const validateDatabase = useDatabaseEditorStore(
-    (state) => state.validateDatabase,
   );
   const changes = useDatabaseEditorStore((state) => state.changes);
 
@@ -25,13 +22,17 @@ export const RefreshDatabaseButton = () => {
       if (!ok) return;
     }
     await initDatabaseState();
-    await validateDatabase();
   };
 
   return (
     <Tooltip title="Reload Database">
       <div className="cea-card-icon-button-container">
-        <Button type="text" icon={<RefreshIcon />} onClick={refreshDatabase} />
+        <Button
+          type="text"
+          icon={<RefreshIcon />}
+          onClick={refreshDatabase}
+          loading={isLoading}
+        />
       </div>
     </Tooltip>
   );
