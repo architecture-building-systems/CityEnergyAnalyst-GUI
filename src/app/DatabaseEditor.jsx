@@ -55,10 +55,6 @@ const DatabaseEditor = () => {
     (state) => state.validateDatabase,
   );
 
-  useEffect(() => {
-    validateDatabase();
-  }, [validateDatabase]);
-
   if (scenarioName === null) return <div>No scenario selected.</div>;
   if (databaseValidation.status === 'checking')
     return (
@@ -100,6 +96,9 @@ const DatabaseContent = ({ message }) => {
   const resetDatabaseState = useDatabaseEditorStore(
     (state) => state.resetDatabaseState,
   );
+  const validateDatabase = useDatabaseEditorStore(
+    (state) => state.validateDatabase,
+  );
 
   const saveDatabaseState = useDatabaseEditorStore(
     (state) => state.saveDatabaseState,
@@ -120,6 +119,7 @@ const DatabaseContent = ({ message }) => {
     const init = async () => {
       await initDatabaseState();
       await fetchDatabaseSchema();
+      await validateDatabase();
     };
 
     init();
@@ -127,7 +127,12 @@ const DatabaseContent = ({ message }) => {
     return () => {
       resetDatabaseState();
     };
-  }, [initDatabaseState, fetchDatabaseSchema, resetDatabaseState]);
+  }, [
+    initDatabaseState,
+    fetchDatabaseSchema,
+    validateDatabase,
+    resetDatabaseState,
+  ]);
 
   if (status === FETCHING_STATUS)
     return (
