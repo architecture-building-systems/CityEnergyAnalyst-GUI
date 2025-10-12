@@ -205,8 +205,6 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
           showRemoveIcon: true,
         }}
         style={{
-          background: '#8eb6dc',
-          color: '#fff',
           display: hideBox ? 'none' : 'block',
         }}
         fileList={_fileList}
