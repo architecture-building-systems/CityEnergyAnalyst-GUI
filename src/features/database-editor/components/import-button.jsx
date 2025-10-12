@@ -153,9 +153,9 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       {!isEmpty && (
         <div style={{ marginBottom: 20 }}>
           <Alert
-            type="info"
+            type="warning"
             showIcon
-            description="Uploading a database will replace your current database."
+            message="Uploading a database will replace your current database."
           />
         </div>
       )}
