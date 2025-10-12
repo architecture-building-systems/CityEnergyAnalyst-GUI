@@ -86,6 +86,9 @@ const useDatabaseEditorStore = create((set) => ({
         databaseValidation: { status: null, message: null },
       });
 
+      // Run validation after successful database load
+      await useDatabaseEditorStore.getState().validateDatabase();
+
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
 
@@ -106,6 +109,7 @@ const useDatabaseEditorStore = create((set) => ({
           validation: {},
           changes: [],
           isEmpty: true,
+          databaseValidation: { status: null, message: null },
         });
       } else {
         set({ status: { status: FAILED_STATUS, error: err }, isEmpty: false });
