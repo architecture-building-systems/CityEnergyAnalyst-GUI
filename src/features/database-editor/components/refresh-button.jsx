@@ -5,7 +5,7 @@ import useDatabaseEditorStore, {
 import { Button, Tooltip } from 'antd';
 import { RefreshIcon } from 'assets/icons';
 
-export const RefreshDatabaseButton = () => {
+export const RefreshDatabaseButton = ({ onRefresh }) => {
   const { status } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
@@ -26,6 +26,7 @@ export const RefreshDatabaseButton = () => {
     }
     await initDatabaseState();
     resetDatabaseChanges();
+    if (onRefresh) onRefresh();
   };
 
   return (

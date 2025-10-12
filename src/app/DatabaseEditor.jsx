@@ -31,7 +31,7 @@ import { isElectron } from 'utils/electron';
 const useValidateDatabasePath = () => {
   const [valid, setValid] = useState({ message: null, status: null });
 
-  const checkDBPathValidity = async () => {
+  const checkDBPathValidity = useCallback(async () => {
     try {
       setValid({ message: null, status: 'checking' });
       await apiClient.get(`/api/inputs/databases/check`);
@@ -48,11 +48,11 @@ const useValidateDatabasePath = () => {
         });
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkDBPathValidity();
-  }, []);
+  }, [checkDBPathValidity]);
 
   return [valid?.status, valid?.message, checkDBPathValidity];
 };
@@ -79,7 +79,7 @@ const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
 
-  const [status, message] = useValidateDatabasePath();
+  const [status, message, checkDBPathValidity] = useValidateDatabasePath();
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
   if (status === 'checking')
@@ -102,7 +102,7 @@ const DatabaseEditor = () => {
               <ExportDatabaseButton />
             </>
           )}
-          <RefreshDatabaseButton />
+          <RefreshDatabaseButton onRefresh={checkDBPathValidity} />
         </div>
       </div>
       <DatabaseContent message={message} />
