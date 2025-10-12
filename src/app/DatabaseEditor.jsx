@@ -86,7 +86,7 @@ const DatabaseEditor = () => {
         <h2>Database Editor</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* Only show import/export buttons in browser */}
-          {!isElectron() && !isEmpty && (
+          {!isElectron() && !isEmpty && !isValidating && (
             <>
               <ImportDatabaseButton />
               <ExportDatabaseButton />
