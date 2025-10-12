@@ -10,9 +10,6 @@ export const RefreshDatabaseButton = ({ onRefresh }) => {
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
   );
-  const resetDatabaseChanges = useDatabaseEditorStore(
-    (state) => state.resetDatabaseChanges,
-  );
   const changes = useDatabaseEditorStore((state) => state.changes);
 
   if ([SAVING_STATUS, FETCHING_STATUS].includes(status)) return null;
@@ -25,7 +22,6 @@ export const RefreshDatabaseButton = ({ onRefresh }) => {
       if (!ok) return;
     }
     await initDatabaseState();
-    resetDatabaseChanges();
     if (onRefresh) onRefresh();
   };
 
