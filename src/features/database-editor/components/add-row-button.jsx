@@ -1,6 +1,6 @@
 import { Button, Form, Input, Modal, Tooltip, Select } from 'antd';
 import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   useGetDatabaseColumnChoices,
   useAddDatabaseRow,
@@ -8,10 +8,6 @@ import {
 
 export const AddRowButton = ({ dataKey, index, schema, onAddRow }) => {
   const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    console.log(schema);
-  }, [schema]);
 
   return (
     <div>
