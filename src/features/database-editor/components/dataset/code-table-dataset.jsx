@@ -47,13 +47,13 @@ export const CodeTableDataset = ({ dataKey, data }) => {
     <div className="cea-database-editor-database-dataset-code">
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div></div>
-        <AddRowButton
+        {/* <AddRowButton
           key={key}
           dataKey={dataKey}
           index={INDEX_COLUMN}
           schema={schema}
           onAddRow={handleAddRow}
-        />
+        /> */}
       </div>
       <TableDataset
         key={key}
