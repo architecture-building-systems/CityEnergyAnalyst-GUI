@@ -273,14 +273,19 @@ const useDatabaseEditorStore = create((set) => ({
           );
           return state;
         }
-        // Pop index from rowData to avoid duplication
-        delete rowData[indexCol];
-        table[rowIndex] = rowData;
+        // Clone rowData to avoid mutating the input
+        const rowDataCopy = { ...rowData };
+        // Remove index from the copy to avoid duplication
+        delete rowDataCopy[indexCol];
+        table[rowIndex] = rowDataCopy;
       } else {
         console.error('Unable to determine table structure:', table);
         console.log(indexCol, table);
         return state;
       }
+
+      // Clone rowData for changes tracking to preserve the original
+      const rowDataForChanges = { ...rowData };
 
       return {
         data: newData,
@@ -292,7 +297,7 @@ const useDatabaseEditorStore = create((set) => ({
             field: indexCol,
             action: 'add',
             oldValue: '{}',
-            value: JSON.stringify(rowData),
+            value: JSON.stringify(rowDataForChanges),
           },
         ],
       };
