@@ -35,10 +35,11 @@ const useDatabaseEditorStore = create((set) => ({
   data: {},
   schema: {},
   changes: [],
+  isEmpty: false,
 
   // Actions
   initDatabaseState: async () => {
-    set({ data: {}, status: { status: FETCHING_STATUS } });
+    set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
       const { data } = await apiClient.get('/api/inputs/databases');
       set({
@@ -46,6 +47,7 @@ const useDatabaseEditorStore = create((set) => ({
         status: { status: SUCCESS_STATUS },
         validation: {},
         changes: [],
+        isEmpty: false,
       });
 
       // if (Object.keys(data).length > 0) {
@@ -60,7 +62,18 @@ const useDatabaseEditorStore = create((set) => ({
       // }
     } catch (error) {
       const err = error.response || error;
-      set({ status: { status: FAILED_STATUS, error: err } });
+      // Check if it's a 404 (empty database)
+      if (error.response?.status === 404) {
+        set({
+          data: {},
+          status: { status: SUCCESS_STATUS },
+          validation: {},
+          changes: [],
+          isEmpty: true,
+        });
+      } else {
+        set({ status: { status: FAILED_STATUS, error: err }, isEmpty: false });
+      }
     }
   },
 
@@ -90,6 +103,7 @@ const useDatabaseEditorStore = create((set) => ({
       glossary: [],
       menu: { category: null, name: null },
       changes: [],
+      isEmpty: false,
     });
   },
 
