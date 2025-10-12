@@ -40,6 +40,14 @@ const useDatabaseEditorStore = create((set) => ({
 
   // Actions
   validateDatabase: async () => {
+    const { isEmpty } = useDatabaseEditorStore.getState();
+
+    // Skip validation if database is empty
+    if (isEmpty) {
+      set({ databaseValidation: { status: 'valid', message: null } });
+      return;
+    }
+
     set({ databaseValidation: { status: 'checking', message: null } });
     try {
       await apiClient.get('/api/inputs/databases/check');
@@ -109,7 +117,7 @@ const useDatabaseEditorStore = create((set) => ({
 
     try {
       set({ status: { status: SAVING_STATUS } });
-      const resp = await apiClient.put('/api/inputs/databases', data);
+      await apiClient.put('/api/inputs/databases', data);
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } catch (error) {
       if (error.response?.status === 401) {
