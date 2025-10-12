@@ -34,6 +34,8 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
   );
+  const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
+
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
   const [hideBox, setHideBox] = useState(false);
@@ -148,13 +150,15 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
         </Button>,
       ]}
     >
-      <div style={{ marginBottom: 20 }}>
-        <Alert
-          type="info"
-          showIcon
-          description="Uploading a database will replace your current database."
-        />
-      </div>
+      {!isEmpty && (
+        <div style={{ marginBottom: 20 }}>
+          <Alert
+            type="info"
+            showIcon
+            description="Uploading a database will replace your current database."
+          />
+        </div>
+      )}
       {!!databaseChanges.length && (
         <div style={{ marginBottom: 20 }}>
           <Alert
