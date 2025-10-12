@@ -194,19 +194,9 @@ const EmptyDatabaseState = () => {
         textAlign: 'center',
       }}
     >
-      <div
-        style={{
-          fontSize: '48px',
-          marginBottom: '16px',
-          opacity: 0.3,
-        }}
-      >
-        📊
-      </div>
       <h2 style={{ marginBottom: '8px' }}>No Database Found</h2>
       <p style={{ color: '#666', marginBottom: '24px', maxWidth: '500px' }}>
-        Your database is empty. Upload a database file to get started with
-        editing archetypes, assemblies, and components.
+        Upload a database file to get started.
       </p>
       {!isElectron() && <ImportDatabaseButton />}
     </div>
