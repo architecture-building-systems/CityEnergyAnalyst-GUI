@@ -115,6 +115,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={confirmLoading}
+      maskClosable={false}
       footer={[
         <Button key="cancel" onClick={handleCancel} disabled={confirmLoading}>
           Cancel
