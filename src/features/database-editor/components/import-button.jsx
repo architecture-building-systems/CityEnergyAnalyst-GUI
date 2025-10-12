@@ -65,7 +65,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       message.config({ top: 120 });
       message.success('Database successfully uploaded');
     } catch (err) {
-      console.error(err.response);
+      console.error('Database upload failed:', err.response?.data || err.message);
       setConfirmLoading(false);
       setErrorMessage(
         err.response?.data?.detail || 'Failed to upload database.',
@@ -199,7 +199,11 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
           extra: ({ size = 0 }) => (
             <span style={{ color: '#cccccc' }}>
               {' '}
-              ({(size / 1024 / 1024).toFixed(2)}MB)
+              (
+              {size < 1024 * 1024
+                ? `${(size / 1024).toFixed(0)}KB`
+                : `${(size / 1024 / 1024).toFixed(2)}MB`}
+              )
             </span>
           ),
           showRemoveIcon: true,
