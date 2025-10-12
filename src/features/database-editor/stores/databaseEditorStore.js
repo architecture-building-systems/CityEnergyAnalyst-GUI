@@ -44,7 +44,7 @@ const useDatabaseEditorStore = create((set) => ({
 
     // Skip validation if database is empty
     if (isEmpty) {
-      set({ databaseValidation: { status: 'valid', message: null } });
+      set({ databaseValidation: { status: null, message: null } });
       return;
     }
 
@@ -83,6 +83,7 @@ const useDatabaseEditorStore = create((set) => ({
         validation: {},
         changes: [],
         isEmpty: false,
+        databaseValidation: { status: null, message: null },
       });
 
       // if (Object.keys(data).length > 0) {

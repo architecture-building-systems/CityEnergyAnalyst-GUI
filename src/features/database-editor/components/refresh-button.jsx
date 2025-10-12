@@ -5,10 +5,13 @@ import useDatabaseEditorStore, {
 import { Button, Tooltip } from 'antd';
 import { RefreshIcon } from 'assets/icons';
 
-export const RefreshDatabaseButton = ({ onRefresh }) => {
+export const RefreshDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
+  );
+  const validateDatabase = useDatabaseEditorStore(
+    (state) => state.validateDatabase,
   );
   const changes = useDatabaseEditorStore((state) => state.changes);
 
@@ -22,7 +25,7 @@ export const RefreshDatabaseButton = ({ onRefresh }) => {
       if (!ok) return;
     }
     await initDatabaseState();
-    if (onRefresh) onRefresh();
+    await validateDatabase();
   };
 
   return (

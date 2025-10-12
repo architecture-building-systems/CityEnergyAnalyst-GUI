@@ -51,9 +51,33 @@ const DatabaseEditor = () => {
   const databaseValidation = useDatabaseEditorStore(
     (state) => state.databaseValidation,
   );
+
+  const initDatabaseState = useDatabaseEditorStore(
+    (state) => state.initDatabaseState,
+  );
+  const fetchDatabaseSchema = useDatabaseEditorStore(
+    (state) => state.fetchDatabaseSchema,
+  );
+  const resetDatabaseState = useDatabaseEditorStore(
+    (state) => state.resetDatabaseState,
+  );
   const validateDatabase = useDatabaseEditorStore(
     (state) => state.validateDatabase,
   );
+
+  useEffect(() => {
+    const init = async () => {
+      await initDatabaseState();
+      await fetchDatabaseSchema();
+      await validateDatabase();
+    };
+
+    init();
+    // Reset Database state on unmount
+    return () => {
+      resetDatabaseState();
+    };
+  }, []);
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
   if (databaseValidation.status === 'checking')
@@ -76,7 +100,7 @@ const DatabaseEditor = () => {
               <ExportDatabaseButton />
             </>
           )}
-          <RefreshDatabaseButton onRefresh={validateDatabase} />
+          <RefreshDatabaseButton />
         </div>
       </div>
       <DatabaseContent message={databaseValidation.message} />
@@ -87,19 +111,6 @@ const DatabaseEditor = () => {
 
 const DatabaseContent = ({ message }) => {
   const { status, error } = useDatabaseEditorStore((state) => state.status);
-  const initDatabaseState = useDatabaseEditorStore(
-    (state) => state.initDatabaseState,
-  );
-  const fetchDatabaseSchema = useDatabaseEditorStore(
-    (state) => state.fetchDatabaseSchema,
-  );
-  const resetDatabaseState = useDatabaseEditorStore(
-    (state) => state.resetDatabaseState,
-  );
-  const validateDatabase = useDatabaseEditorStore(
-    (state) => state.validateDatabase,
-  );
-
   const saveDatabaseState = useDatabaseEditorStore(
     (state) => state.saveDatabaseState,
   );
@@ -114,25 +125,6 @@ const DatabaseContent = ({ message }) => {
       if (error.response.status === 401) setShowLoginModal(true);
     }
   };
-
-  useEffect(() => {
-    const init = async () => {
-      await initDatabaseState();
-      await fetchDatabaseSchema();
-      await validateDatabase();
-    };
-
-    init();
-    // Reset Database state on unmount
-    return () => {
-      resetDatabaseState();
-    };
-  }, [
-    initDatabaseState,
-    fetchDatabaseSchema,
-    validateDatabase,
-    resetDatabaseState,
-  ]);
 
   if (status === FETCHING_STATUS)
     return (
