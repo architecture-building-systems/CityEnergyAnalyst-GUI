@@ -128,7 +128,7 @@ const DatabaseContent = ({ message }) => {
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
-        tip="Reading Databases..."
+        tip="Loading Databases..."
       />
     );
   if (status === FAILED_STATUS) return <AsyncError error={error} />;
