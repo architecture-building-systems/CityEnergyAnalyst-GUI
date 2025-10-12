@@ -181,6 +181,38 @@ const USE_TYPES_DATABASE = ['ARCHETYPES', 'USE'];
 const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
 
+const EmptyDatabaseState = () => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '400px',
+        padding: '48px',
+        textAlign: 'center',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '48px',
+          marginBottom: '16px',
+          opacity: 0.3,
+        }}
+      >
+        📊
+      </div>
+      <h2 style={{ marginBottom: '8px' }}>No Database Found</h2>
+      <p style={{ color: '#666', marginBottom: '24px', maxWidth: '500px' }}>
+        Your database is empty. Upload a database file to get started with
+        editing archetypes, assemblies, and components.
+      </p>
+      {!isElectron() && <ImportDatabaseButton />}
+    </div>
+  );
+};
+
 const DatabaseContainer = () => {
   // Database structure:
   // Level 1: REGION (CH, DE, SG)
@@ -190,6 +222,7 @@ const DatabaseContainer = () => {
   // Level 5: DATASET (CONSTRUCTION_TYPES.csv, BOILERS.csv, etc.)
 
   const data = useDatabaseEditorStore((state) => state.data);
+  const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
   // TODO: Move state to url query params
   const [selectedDomain, setSelectedDomain] = useState({
     domain: null,
@@ -207,7 +240,9 @@ const DatabaseContainer = () => {
   //   return <div>{`Schema for database ${category}-${name} was not found`}</div>;
 
   const domains = Object.keys(data ?? {}).map((name) => name.toUpperCase());
-  if (domains.length === 0) return <div>No data</div>;
+
+  // Show empty state if database is empty
+  if (isEmpty || domains.length === 0) return <EmptyDatabaseState />;
 
   // Ensure first level keys of data are DOMAINS
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
