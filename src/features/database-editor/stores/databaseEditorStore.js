@@ -36,8 +36,35 @@ const useDatabaseEditorStore = create((set) => ({
   schema: {},
   changes: [],
   isEmpty: false,
+  databaseValidation: { status: null, message: null },
 
   // Actions
+  validateDatabase: async () => {
+    set({ databaseValidation: { status: 'checking', message: null } });
+    try {
+      await apiClient.get('/api/inputs/databases/check');
+      set({ databaseValidation: { status: 'valid', message: null } });
+    } catch (error) {
+      console.log(error);
+      if (error.response?.status === 400 && error.response?.data) {
+        const { status, message } = error.response.data?.detail || {};
+        set({
+          databaseValidation: {
+            status: status || 'error',
+            message,
+          },
+        });
+      } else {
+        set({
+          databaseValidation: {
+            status: 'invalid',
+            message: 'Could not read and verify databases.',
+          },
+        });
+      }
+    }
+  },
+
   initDatabaseState: async () => {
     set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
@@ -104,6 +131,7 @@ const useDatabaseEditorStore = create((set) => ({
       menu: { category: null, name: null },
       changes: [],
       isEmpty: false,
+      databaseValidation: { status: null, message: null },
     });
   },
 

@@ -9,7 +9,6 @@ import useDatabaseEditorStore, {
 } from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 import './DatabaseEditor.css';
@@ -27,35 +26,6 @@ import { DatabaseChangesList } from 'features/database-editor/components/changes
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import LoginModal from 'features/auth/components/Login/LoginModal';
 import { isElectron } from 'utils/electron';
-
-const useValidateDatabasePath = () => {
-  const [valid, setValid] = useState({ message: null, status: null });
-
-  const checkDBPathValidity = useCallback(async () => {
-    try {
-      setValid({ message: null, status: 'checking' });
-      await apiClient.get(`/api/inputs/databases/check`);
-      setValid({ message: null, status: 'valid' });
-    } catch (err) {
-      console.log(err);
-      if (err.response?.status == 400 && err.response?.data) {
-        const { status, message } = err.response.data?.detail || {};
-        setValid({ message, status: status || 'error' });
-      } else {
-        setValid({
-          message: 'Could not read and verify databases.',
-          status: 'invalid',
-        });
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    checkDBPathValidity();
-  }, [checkDBPathValidity]);
-
-  return [valid?.status, valid?.message, checkDBPathValidity];
-};
 
 const DatabaseEditorErrorMessage = ({ error }) => {
   return (
@@ -78,11 +48,19 @@ const DatabaseEditorErrorMessage = ({ error }) => {
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
+  const databaseValidation = useDatabaseEditorStore(
+    (state) => state.databaseValidation,
+  );
+  const validateDatabase = useDatabaseEditorStore(
+    (state) => state.validateDatabase,
+  );
 
-  const [status, message, checkDBPathValidity] = useValidateDatabasePath();
+  useEffect(() => {
+    validateDatabase();
+  }, [validateDatabase]);
 
   if (scenarioName === null) return <div>No scenario selected.</div>;
-  if (status === 'checking')
+  if (databaseValidation.status === 'checking')
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
@@ -102,10 +80,10 @@ const DatabaseEditor = () => {
               <ExportDatabaseButton />
             </>
           )}
-          <RefreshDatabaseButton onRefresh={checkDBPathValidity} />
+          <RefreshDatabaseButton onRefresh={validateDatabase} />
         </div>
       </div>
-      <DatabaseContent message={message} />
+      <DatabaseContent message={databaseValidation.message} />
       <div className="cea-database-editor-footer"></div>
     </div>
   );
