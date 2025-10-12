@@ -41,7 +41,12 @@ const useDatabaseEditorStore = create((set) => ({
     set({ data: {}, status: { status: FETCHING_STATUS } });
     try {
       const { data } = await apiClient.get('/api/inputs/databases');
-      set({ data, status: { status: SUCCESS_STATUS } });
+      set({
+        data,
+        status: { status: SUCCESS_STATUS },
+        validation: {},
+        changes: [],
+      });
 
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
