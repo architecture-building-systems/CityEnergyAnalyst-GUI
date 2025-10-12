@@ -36,6 +36,7 @@ const DatabaseEditorErrorMessage = ({ error }) => {
             background: '#efefef',
             padding: 16,
             borderRadius: 8,
+            overflowX: 'auto',
           }}
         >
           <pre>{error}</pre>
