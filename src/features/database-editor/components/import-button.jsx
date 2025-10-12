@@ -34,9 +34,6 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
   );
-  const resetDatabaseChanges = useDatabaseEditorStore(
-    (state) => state.resetDatabaseChanges,
-  );
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
   const [hideBox, setHideBox] = useState(false);
@@ -51,6 +48,10 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
     const formData = new FormData();
     formData.append('file', fileList[0].originFileObj);
 
+    message.config({
+      top: 120,
+    });
+
     try {
       await apiClient.post(`/api/inputs/databases/upload`, formData, {
         headers: {
@@ -59,26 +60,17 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       });
       // Reload the database after successful upload
       await initDatabaseState();
-      resetDatabaseChanges();
       setConfirmLoading(false);
-      setVisible(false);
-      setFileList([]);
-      setHideBox(false);
-      message.config({
-        top: 120,
-      });
+      handleClose();
       message.success('Database successfully uploaded');
     } catch (err) {
       console.error(err.response);
       setConfirmLoading(false);
-      message.config({
-        top: 120,
-      });
       message.error(err.response?.data?.detail || 'Failed to upload database.');
     }
   };
 
-  const handleCancel = () => {
+  const handleClose = () => {
     setVisible(false);
     setFileList([]);
     setHideBox(false);
@@ -138,11 +130,11 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       width={800}
       okText="Upload"
       onOk={handleOk}
-      onCancel={handleCancel}
+      onCancel={handleClose}
       confirmLoading={confirmLoading}
       maskClosable={false}
       footer={[
-        <Button key="cancel" onClick={handleCancel} disabled={confirmLoading}>
+        <Button key="cancel" onClick={handleClose} disabled={confirmLoading}>
           Cancel
         </Button>,
         <Button
