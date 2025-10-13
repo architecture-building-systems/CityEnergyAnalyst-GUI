@@ -495,8 +495,8 @@ const DeckGLMap = ({ data, colors }) => {
           sizeUnits: 'meters',
 
           getText: (f) => f.properties[INDEX_COLUMN],
-          getSize: 6,
-          sizeMinPixels: 3,
+          getSize: 4,
+          sizeMinPixels: 8,
           updateTriggers: {
             getPosition: [extruded],
           },
