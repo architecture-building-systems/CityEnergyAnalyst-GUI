@@ -439,11 +439,14 @@ const DeckGLMap = ({ data, colors }) => {
       }
     };
 
-    let _layers = [];
+    let _zoneLayers = [];
+    let _surroundingLayers = [];
+    let _streetLayers = [];
+    let _treeLayers = [];
     let _textLayers = [];
 
     if (data?.zone) {
-      _layers.push(
+      _zoneLayers.push(
         new PolygonLayer({
           id: 'zone',
           data: data.zone?.features,
@@ -471,6 +474,8 @@ const DeckGLMap = ({ data, colors }) => {
 
           onHover: updateTooltip,
           onClick: onClick,
+
+          parameters: { depthTest: !extruded },
         }),
       );
 
@@ -500,7 +505,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     if (data?.surroundings) {
-      _layers.push(
+      _surroundingLayers.push(
         new GeoJsonLayer({
           id: 'surroundings',
           data: data.surroundings,
@@ -531,7 +536,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     if (data?.streets) {
-      _layers.push(
+      _streetLayers.push(
         new GeoJsonLayer({
           id: 'streets',
           data: data.streets,
@@ -547,7 +552,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     if (data?.trees) {
-      _layers.push(
+      _treeLayers.push(
         new GeoJsonLayer({
           id: 'trees',
           data: data.trees,
@@ -577,7 +582,13 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    return { _layers, _textLayers };
+    return {
+      zoneLayers: _zoneLayers,
+      surroundingLayers: _surroundingLayers,
+      streetLayers: _streetLayers,
+      treeLayers: _treeLayers,
+      textLayers: _textLayers,
+    };
   }, [
     visibility,
     data,
@@ -591,10 +602,15 @@ const DeckGLMap = ({ data, colors }) => {
 
   const mapLayers = useMapLayers(updateTooltip);
 
+  // Layer ordering: streets -> surroundings -> zone -> trees -> data layers (network, etc.) -> text labels
+  // This ensures network and other data layers render on top of buildings when extruded
   const layers = [
-    ...dataLayers._layers,
+    ...dataLayers.streetLayers,
+    ...dataLayers.surroundingLayers,
+    ...dataLayers.treeLayers,
+    ...dataLayers.zoneLayers,
     ...mapLayers,
-    ...dataLayers._textLayers,
+    ...dataLayers.textLayers,
   ];
 
   const onDragStart = useCallback(
