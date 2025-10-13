@@ -605,9 +605,9 @@ const DeckGLMap = ({ data, colors }) => {
   // This ensures network and other data layers render on top of buildings when extruded
   const layers = [
     ...dataLayers.streetLayers,
+    ...dataLayers.zoneLayers,
     ...dataLayers.surroundingLayers,
     ...dataLayers.treeLayers,
-    ...dataLayers.zoneLayers,
     ...mapLayers,
     ...dataLayers.textLayers,
   ];
