@@ -453,7 +453,7 @@ const DeckGLMap = ({ data, colors }) => {
         new PolygonLayer({
           id: 'zone',
           data: data.zone?.features,
-          opacity: 0.5,
+          opacity: 0.8,
           wireframe: true,
           filled: true,
           extruded: extruded,
