@@ -227,7 +227,6 @@ const useMapLayers = (onHover = () => {}) => {
                 7 * scale,
               ),
             getLineColor: edgeColour,
-            zIndex: 100,
             updateTriggers: {
               getLineWidth: [scale, min, max],
             },
