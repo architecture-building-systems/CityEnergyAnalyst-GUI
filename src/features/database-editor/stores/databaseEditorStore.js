@@ -35,13 +35,59 @@ const useDatabaseEditorStore = create((set) => ({
   data: {},
   schema: {},
   changes: [],
+  isEmpty: false,
+  databaseValidation: { status: null, message: null },
 
   // Actions
+  validateDatabase: async () => {
+    const { isEmpty } = useDatabaseEditorStore.getState();
+
+    // Skip validation if database is empty
+    if (isEmpty) {
+      set({ databaseValidation: { status: null, message: null } });
+      return;
+    }
+
+    set({ databaseValidation: { status: 'checking', message: null } });
+    try {
+      await apiClient.get('/api/inputs/databases/check');
+      set({ databaseValidation: { status: 'valid', message: null } });
+    } catch (error) {
+      console.log(error);
+      if (error.response?.status === 400 && error.response?.data) {
+        const { status, message } = error.response.data?.detail || {};
+        set({
+          databaseValidation: {
+            status: status || 'error',
+            message,
+          },
+        });
+      } else {
+        set({
+          databaseValidation: {
+            status: 'invalid',
+            message: 'Could not read and verify databases.',
+          },
+        });
+      }
+    }
+  },
+
   initDatabaseState: async () => {
-    set({ data: {}, status: { status: FETCHING_STATUS } });
+    set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
       const { data } = await apiClient.get('/api/inputs/databases');
-      set({ data, status: { status: SUCCESS_STATUS } });
+      set({
+        data,
+        status: { status: SUCCESS_STATUS },
+        validation: {},
+        changes: [],
+        isEmpty: false,
+        databaseValidation: { status: null, message: null },
+      });
+
+      // Run validation after successful database load
+      await useDatabaseEditorStore.getState().validateDatabase();
 
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
@@ -55,7 +101,19 @@ const useDatabaseEditorStore = create((set) => ({
       // }
     } catch (error) {
       const err = error.response || error;
-      set({ status: { status: FAILED_STATUS, error: err } });
+      // Check if it's a 404 (empty database)
+      if (error.response?.status === 404) {
+        set({
+          data: {},
+          status: { status: SUCCESS_STATUS },
+          validation: {},
+          changes: [],
+          isEmpty: true,
+          databaseValidation: { status: null, message: null },
+        });
+      } else {
+        set({ status: { status: FAILED_STATUS, error: err }, isEmpty: false });
+      }
     }
   },
 
@@ -64,7 +122,7 @@ const useDatabaseEditorStore = create((set) => ({
 
     try {
       set({ status: { status: SAVING_STATUS } });
-      const resp = await apiClient.put('/api/inputs/databases', data);
+      await apiClient.put('/api/inputs/databases', data);
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } catch (error) {
       if (error.response?.status === 401) {
@@ -85,6 +143,8 @@ const useDatabaseEditorStore = create((set) => ({
       glossary: [],
       menu: { category: null, name: null },
       changes: [],
+      isEmpty: false,
+      databaseValidation: { status: null, message: null },
     });
   },
 
@@ -173,6 +233,76 @@ const useDatabaseEditorStore = create((set) => ({
       };
     });
   },
+
+  addDatabaseRow: (dataKey, indexCol, rowData) => {
+    set((state) => {
+      const newData = { ...state.data };
+
+      let _dataKey = dataKey;
+      // Handle case where index is actually last element (e.g. use types dataset)
+      if (
+        arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
+        _dataKey = dataKey.slice(0, -1);
+      }
+
+      const table = getNestedValue(newData, _dataKey);
+      if (table === undefined) {
+        console.error('Table not found for dataKey:', dataKey);
+        return state;
+      }
+
+      const index = rowData?.[indexCol];
+      // Add the new row to the table
+      if (Array.isArray(table)) {
+        table.push(rowData);
+      } else if (typeof table === 'object' && indexCol) {
+        if (rowData?.[indexCol] === undefined) {
+          console.error(
+            `Row data must contain the index field "${indexCol}"`,
+            rowData,
+          );
+          return state;
+        }
+        const rowIndex = rowData[indexCol];
+        if (table[rowIndex]) {
+          console.error(
+            `Row with index "${rowIndex}" already exists in the table.`,
+            table,
+          );
+          return state;
+        }
+        // Clone rowData to avoid mutating the input
+        const rowDataCopy = { ...rowData };
+        // Remove index from the copy to avoid duplication
+        delete rowDataCopy[indexCol];
+        table[rowIndex] = rowDataCopy;
+      } else {
+        console.error('Unable to determine table structure:', table);
+        console.log(indexCol, table);
+        return state;
+      }
+
+      // Clone rowData for changes tracking to preserve the original
+      const rowDataForChanges = { ...rowData };
+
+      return {
+        data: newData,
+        changes: [
+          ...state.changes,
+          {
+            dataKey,
+            index,
+            field: indexCol,
+            action: 'add',
+            oldValue: '{}',
+            value: JSON.stringify(rowDataForChanges),
+          },
+        ],
+      };
+    });
+  },
 }));
 
 const getNestedValue = (obj, datakey) => {
@@ -217,5 +347,8 @@ export const useGetDatabaseColumnChoices = () => {
 
 export const useUpdateDatabaseData = () =>
   useDatabaseEditorStore((state) => state.updateDatabaseData);
+
+export const useAddDatabaseRow = () =>
+  useDatabaseEditorStore((state) => state.addDatabaseRow);
 
 export default useDatabaseEditorStore;

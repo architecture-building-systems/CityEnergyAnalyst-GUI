@@ -9,7 +9,6 @@ import useDatabaseEditorStore, {
 } from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { apiClient } from 'lib/api/axios';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
 import './DatabaseEditor.css';
@@ -20,39 +19,13 @@ import {
   CodeTableDataset,
 } from 'features/database-editor/components/dataset';
 import { RefreshDatabaseButton } from 'features/database-editor/components/refresh-button';
+import { ExportDatabaseButton } from 'features/database-editor/components/export-button';
+import { ImportDatabaseButton } from 'features/database-editor/components/import-button';
 import { arraysEqual } from 'utils';
 import { DatabaseChangesList } from 'features/database-editor/components/changes-list';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import LoginModal from 'features/auth/components/Login/LoginModal';
-
-const useValidateDatabasePath = () => {
-  const [valid, setValid] = useState({ message: null, status: null });
-
-  const checkDBPathValidity = async () => {
-    try {
-      setValid({ message: null, status: 'checking' });
-      await apiClient.get(`/api/inputs/databases/check`);
-      setValid({ message: null, status: 'valid' });
-    } catch (err) {
-      console.log(err);
-      if (err.response?.status == 400 && err.response?.data) {
-        const { status, message } = err.response.data?.detail || {};
-        setValid({ message, status: status || 'error' });
-      } else {
-        setValid({
-          message: 'Could not read and verify databases.',
-          status: 'invalid',
-        });
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkDBPathValidity();
-  }, []);
-
-  return [valid?.status, valid?.message, checkDBPathValidity];
-};
+import { isElectron } from 'utils/electron';
 
 const DatabaseEditorErrorMessage = ({ error }) => {
   return (
@@ -63,6 +36,7 @@ const DatabaseEditorErrorMessage = ({ error }) => {
             background: '#efefef',
             padding: 16,
             borderRadius: 8,
+            overflowX: 'auto',
           }}
         >
           <pre>{error}</pre>
@@ -74,35 +48,11 @@ const DatabaseEditorErrorMessage = ({ error }) => {
 
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
-
-  const [status, message] = useValidateDatabasePath();
-
-  if (scenarioName === null) return <div>No scenario selected.</div>;
-  if (status === 'checking')
-    return (
-      <CenterSpinner
-        indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
-        tip="Verifying Databases..."
-      />
-    );
-
-  return (
-    <div className="cea-database-editor">
-      <div className="cea-database-editor-header">
-        <h2>Database Editor</h2>
-        <div>
-          {/* <ExportDatabaseButton /> */}
-          <RefreshDatabaseButton />
-        </div>
-      </div>
-      <DatabaseContent message={message} />
-      <div className="cea-database-editor-footer"></div>
-    </div>
+  const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
+  const databaseValidation = useDatabaseEditorStore(
+    (state) => state.databaseValidation,
   );
-};
 
-const DatabaseContent = ({ message }) => {
-  const { status, error } = useDatabaseEditorStore((state) => state.status);
   const initDatabaseState = useDatabaseEditorStore(
     (state) => state.initDatabaseState,
   );
@@ -113,6 +63,53 @@ const DatabaseContent = ({ message }) => {
     (state) => state.resetDatabaseState,
   );
 
+  useEffect(() => {
+    const init = async () => {
+      await initDatabaseState();
+      await fetchDatabaseSchema();
+    };
+
+    init();
+    // Reset Database state on unmount
+    return () => {
+      resetDatabaseState();
+    };
+  }, []);
+
+  if (scenarioName === null) return <div>No scenario selected.</div>;
+
+  const isValidating = databaseValidation.status === 'checking';
+
+  return (
+    <div className="cea-database-editor">
+      <div className="cea-database-editor-header">
+        <h2>Database Editor</h2>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Only show import/export buttons in browser */}
+          {!isElectron() && !isEmpty && !isValidating && (
+            <>
+              <ImportDatabaseButton />
+              <ExportDatabaseButton />
+            </>
+          )}
+          <RefreshDatabaseButton isLoading={isValidating} />
+        </div>
+      </div>
+      {isValidating ? (
+        <CenterSpinner
+          indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+          tip="Verifying Databases..."
+        />
+      ) : (
+        <DatabaseContent message={databaseValidation.message} />
+      )}
+      <div className="cea-database-editor-footer"></div>
+    </div>
+  );
+};
+
+const DatabaseContent = ({ message }) => {
+  const { status, error } = useDatabaseEditorStore((state) => state.status);
   const saveDatabaseState = useDatabaseEditorStore(
     (state) => state.saveDatabaseState,
   );
@@ -128,24 +125,11 @@ const DatabaseContent = ({ message }) => {
     }
   };
 
-  useEffect(() => {
-    const init = async () => {
-      await initDatabaseState();
-      await fetchDatabaseSchema();
-    };
-
-    init();
-    // Reset Database state on unmount
-    return () => {
-      resetDatabaseState();
-    };
-  }, [initDatabaseState, fetchDatabaseSchema, resetDatabaseState]);
-
   if (status === FETCHING_STATUS)
     return (
       <CenterSpinner
         indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
-        tip="Reading Databases..."
+        tip="Loading Databases..."
       />
     );
   if (status === FAILED_STATUS) return <AsyncError error={error} />;
@@ -172,6 +156,28 @@ const USE_TYPES_DATABASE = ['ARCHETYPES', 'USE'];
 const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
 
+const EmptyDatabaseState = () => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '400px',
+        padding: '48px',
+        textAlign: 'center',
+      }}
+    >
+      <h2 style={{ marginBottom: '8px' }}>No Database Found</h2>
+      <p style={{ color: '#666', marginBottom: '24px', maxWidth: '500px' }}>
+        Upload a database file to get started.
+      </p>
+      {!isElectron() && <ImportDatabaseButton />}
+    </div>
+  );
+};
+
 const DatabaseContainer = () => {
   // Database structure:
   // Level 1: REGION (CH, DE, SG)
@@ -181,6 +187,7 @@ const DatabaseContainer = () => {
   // Level 5: DATASET (CONSTRUCTION_TYPES.csv, BOILERS.csv, etc.)
 
   const data = useDatabaseEditorStore((state) => state.data);
+  const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
   // TODO: Move state to url query params
   const [selectedDomain, setSelectedDomain] = useState({
     domain: null,
@@ -198,7 +205,9 @@ const DatabaseContainer = () => {
   //   return <div>{`Schema for database ${category}-${name} was not found`}</div>;
 
   const domains = Object.keys(data ?? {}).map((name) => name.toUpperCase());
-  if (domains.length === 0) return <div>No data</div>;
+
+  // Show empty state if database is empty
+  if (isEmpty || domains.length === 0) return <EmptyDatabaseState />;
 
   // Ensure first level keys of data are DOMAINS
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
