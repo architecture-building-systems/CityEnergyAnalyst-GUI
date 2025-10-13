@@ -232,6 +232,8 @@ const useMapLayers = (onHover = () => {}) => {
             },
             onHover: onHover,
             pickable: true,
+
+            parameters: { depthTest: false },
           }),
         );
 
@@ -248,6 +250,8 @@ const useMapLayers = (onHover = () => {}) => {
             },
             onHover: onHover,
             pickable: true,
+
+            parameters: { depthTest: false },
           }),
         );
       }
@@ -473,8 +477,6 @@ const DeckGLMap = ({ data, colors }) => {
 
           onHover: updateTooltip,
           onClick: onClick,
-
-          parameters: { depthTest: !extruded },
         }),
       );
 
@@ -606,9 +608,9 @@ const DeckGLMap = ({ data, colors }) => {
   const layers = [
     ...dataLayers.streetLayers,
     ...dataLayers.zoneLayers,
+    ...mapLayers,
     ...dataLayers.surroundingLayers,
     ...dataLayers.treeLayers,
-    ...mapLayers,
     ...dataLayers.textLayers,
   ];
 
