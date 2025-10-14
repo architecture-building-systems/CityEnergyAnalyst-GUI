@@ -619,8 +619,9 @@ const DeckGLMap = ({ data, colors }) => {
 
   const mapLayers = useMapLayers(updateTooltip);
 
-  // Layer ordering: streets -> surroundings -> zone -> trees -> data layers (network, etc.) -> text labels
   // This ensures network and other data layers render on top of buildings when extruded
+  // Surroundings/trees have to be after Zone and data to ensure they overlap properly
+  // Order: streets, zone, surroundings, trees, other map layers, text labels
   const layers = [
     ...dataLayers.streetLayers,
     ...dataLayers.zoneLayers,
