@@ -492,9 +492,14 @@ export const OpenDialogInput = forwardRef((props, ref) => {
       onChange={onChange}
       type={type}
       accept={extensions}
+      style={{ width: '100%' }}
       {...rest}
     >
-      {children || <UploadOutlined />}
+      {children || (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <UploadOutlined /> Upload File
+        </div>
+      )}
     </UploadInput>
   ) : (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
