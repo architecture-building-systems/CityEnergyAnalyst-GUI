@@ -514,11 +514,7 @@ export const OpenDialogInput = forwardRef((props, ref) => {
       >
         {_value}
       </div>
-      <Button
-        icon={<CloseOutlined />}
-        onClick={() => onChange({ target: { value: '' } })}
-        danger
-      />
+      <Button icon={<CloseOutlined />} onClick={() => onChange?.('')} danger />
     </div>
   );
 });
