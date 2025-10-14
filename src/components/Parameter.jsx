@@ -482,7 +482,12 @@ const UploadInput = (props) => {
 
 const convertFiltersToExtensions = (filters) => {
   return filters
-    .map((filter) => (filter.extensions ? `.${filter.extensions}` : ''))
+    .map((filter) =>
+      filter.extensions && Array.isArray(filter.extensions)
+        ? filter.extensions.map((ext) => `.${ext}`).join(',')
+        : '',
+    )
+    .filter((str) => str !== '')
     .join(',');
 };
 
