@@ -495,7 +495,7 @@ export const OpenDialogInput = forwardRef(
   ({ form, name, type, onChange, filters = [], value, ...rest }, ref) => {
     const _value = value instanceof File ? value.name : value;
 
-    if (!isElectron()) return <div>Not supported</div>;
+    if (!isElectron()) return <i>Not supported in browser</i>;
 
     return (
       <Space.Compact block style={{ paddingBottom: 3 }}>
