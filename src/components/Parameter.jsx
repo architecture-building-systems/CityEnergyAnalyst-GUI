@@ -489,7 +489,6 @@ export const OpenDialogInput = forwardRef((props, ref) => {
       <Input
         ref={ref}
         style={{ width: '100%' }}
-        onChange={onChange}
         value={_value}
         readOnly
         {...rest}
