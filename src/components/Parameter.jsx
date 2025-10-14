@@ -1,4 +1,6 @@
 import {
+  CloseOutlined,
+  FileImageOutlined,
   FileSearchOutlined,
   PlusOutlined,
   UploadOutlined,
@@ -91,6 +93,65 @@ const Parameter = ({ parameter, form }) => {
           inputComponent={
             <OpenDialogInput form={form} type={contentType} filters={filters} />
           }
+        />
+      );
+    }
+    case 'InputFileParameter': {
+      const filters = [
+        {
+          name,
+          extensions: parameter?.extensions || [],
+        },
+      ];
+
+      const inputComponent = isElectron() ? (
+        <OpenDialogInput form={form} type="file" filters={filters} />
+      ) : (
+        <UploadDialogInput form={form} type="file" filters={filters} />
+      );
+
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          rules={[
+            {
+              required: !nullable,
+              message: 'Please select a file',
+            },
+            {
+              validator: async (rule, value) => {
+                if (!value && nullable) return Promise.resolve();
+
+                if (!value) {
+                  return Promise.reject('Please select a file');
+                }
+
+                // Check file extension if extensions are specified
+                if (parameter?.extensions?.length > 0) {
+                  const fileName = value instanceof File ? value.name : value;
+                  const fileExtension = fileName
+                    .split('.')
+                    .pop()
+                    ?.toLowerCase();
+                  const allowedExtensions = parameter.extensions.map((ext) =>
+                    ext.toLowerCase(),
+                  );
+
+                  if (!allowedExtensions.includes(fileExtension)) {
+                    return Promise.reject(
+                      `File must have one of these extensions: ${parameter.extensions.join(', ')}`,
+                    );
+                  }
+                }
+
+                return Promise.resolve();
+              },
+            },
+          ]}
+          inputComponent={inputComponent}
         />
       );
     }
@@ -419,66 +480,106 @@ const UploadInput = (props) => {
   );
 };
 
-const covertFiltersToExtensions = (filters) => {
+const convertFiltersToExtensions = (filters) => {
   return filters
-    .map((filter) => (filter.extensions ? `.${filter.extensions}` : ''))
+    .map((filter) =>
+      filter.extensions && Array.isArray(filter.extensions)
+        ? filter.extensions.map((ext) => `.${ext}`).join(',')
+        : '',
+    )
+    .filter((str) => str !== '')
     .join(',');
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const {
-    form,
-    name,
-    type,
-    onChange,
-    filters = [],
-    children,
-    value,
-    ...rest
-  } = props;
+export const OpenDialogInput = forwardRef(
+  ({ form, name, type, onChange, filters = [], value, ...rest }, ref) => {
+    const _value = value instanceof File ? value.name : value;
 
+    if (!isElectron()) return <i>Not supported in browser</i>;
+
+    return (
+      <Space.Compact block style={{ paddingBottom: 3 }}>
+        <Input
+          ref={ref}
+          style={{ width: '100%' }}
+          value={_value}
+          {...rest}
+          readOnly
+        />
+        <Button
+          type="primary"
+          style={{ width: 60 }}
+          icon={<FileSearchOutlined />}
+          onClick={async () => {
+            // TODO: Remove need for form
+            const path = await openDialog(form, type, filters, name);
+            onChange?.(path);
+            form?.validateFields([name]);
+          }}
+        />
+      </Space.Compact>
+    );
+  },
+);
+OpenDialogInput.displayName = 'OpenDialogInput';
+
+export const UploadDialogInput = ({
+  form,
+  name,
+  type,
+  onChange,
+  filters = [],
+  children,
+  value,
+  ...rest
+}) => {
   const _value = value instanceof File ? value.name : value;
-  const extensions = covertFiltersToExtensions(filters);
+  const extensions = convertFiltersToExtensions(filters);
 
-  const input = isElectron() ? (
-    <Button
-      type="primary"
-      style={{ width: 60 }}
-      icon={<FileSearchOutlined />}
-      onClick={async () => {
-        // TODO: Remove need for form
-        const path = await openDialog(form, type, filters, name);
-        onChange?.(path);
-        form?.validateFields([name]);
-      }}
-    />
-  ) : (
-    <UploadInput
-      form={form}
-      name={name}
-      onChange={onChange}
-      type={type}
-      accept={extensions}
-      {...rest}
-    >
-      {children || <UploadOutlined />}
-    </UploadInput>
-  );
+  if (isElectron()) return <div>Upload not supported</div>;
+
+  if (!value)
+    return (
+      <UploadInput
+        form={form}
+        name={name}
+        onChange={onChange}
+        type={type}
+        accept={extensions}
+        style={{ width: '100%' }}
+        {...rest}
+      >
+        {children || (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UploadOutlined /> Upload File
+          </div>
+        )}
+      </UploadInput>
+    );
 
   return (
-    <Space.Compact block style={{ paddingBottom: 3 }}>
-      <Input
-        ref={ref}
-        style={{ width: '100%' }}
-        onChange={onChange}
-        value={_value}
-        {...rest}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <FileImageOutlined />
+      <div
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {_value}
+      </div>
+      <Button
+        icon={<CloseOutlined />}
+        aria-label="Clear file selection"
+        onClick={() => onChange?.('')}
+        danger
       />
-      {input}
-    </Space.Compact>
+    </div>
   );
-});
-OpenDialogInput.displayName = 'OpenDialogInput';
+};
+UploadDialogInput.displayName = 'UploadDialogInput';
 
 export const OpenDialogButton = ({
   form,
@@ -491,7 +592,7 @@ export const OpenDialogButton = ({
   ...rest
 }) => {
   if (!isElectron()) {
-    const extensions = covertFiltersToExtensions(filters);
+    const extensions = convertFiltersToExtensions(filters);
 
     return (
       <UploadInput
