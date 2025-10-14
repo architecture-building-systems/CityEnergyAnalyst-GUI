@@ -514,7 +514,12 @@ export const OpenDialogInput = forwardRef((props, ref) => {
       >
         {_value}
       </div>
-      <Button icon={<CloseOutlined />} onClick={() => onChange?.('')} danger />
+      <Button
+        icon={<CloseOutlined />}
+        aria-label="Clear file selection"
+        onClick={() => onChange?.('')}
+        danger
+      />
     </div>
   );
 });
