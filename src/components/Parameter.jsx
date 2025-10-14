@@ -1,4 +1,5 @@
 import {
+  CloseOutlined,
   FileSearchOutlined,
   PlusOutlined,
   UploadOutlined,
@@ -484,6 +485,14 @@ export const OpenDialogInput = forwardRef((props, ref) => {
     </UploadInput>
   );
 
+  const clearButton = (
+    <Button
+      icon={<CloseOutlined />}
+      onClick={() => onChange({ target: { value: '' } })}
+      danger
+    />
+  );
+
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
       <Input
@@ -493,7 +502,7 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         {...rest}
         readOnly
       />
-      {input}
+      {value ? clearButton : input}
     </Space.Compact>
   );
 });
