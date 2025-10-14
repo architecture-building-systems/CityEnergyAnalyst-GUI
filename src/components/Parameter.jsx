@@ -116,6 +116,41 @@ const Parameter = ({ parameter, form }) => {
           name={name}
           initialValue={value}
           help={help}
+          rules={[
+            {
+              required: !nullable,
+              message: 'Please select a file',
+            },
+            {
+              validator: async (rule, value) => {
+                if (!value && nullable) return Promise.resolve();
+
+                if (!value) {
+                  return Promise.reject('Please select a file');
+                }
+
+                // Check file extension if extensions are specified
+                if (parameter?.extensions?.length > 0) {
+                  const fileName = value instanceof File ? value.name : value;
+                  const fileExtension = fileName
+                    .split('.')
+                    .pop()
+                    ?.toLowerCase();
+                  const allowedExtensions = parameter.extensions.map((ext) =>
+                    ext.toLowerCase(),
+                  );
+
+                  if (!allowedExtensions.includes(fileExtension)) {
+                    return Promise.reject(
+                      `File must have one of these extensions: ${parameter.extensions.join(', ')}`,
+                    );
+                  }
+                }
+
+                return Promise.resolve();
+              },
+            },
+          ]}
           inputComponent={inputComponent}
         />
       );
