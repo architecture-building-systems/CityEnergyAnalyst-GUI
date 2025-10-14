@@ -490,8 +490,8 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         ref={ref}
         style={{ width: '100%' }}
         value={_value}
-        readOnly
         {...rest}
+        readOnly
       />
       {input}
     </Space.Compact>
