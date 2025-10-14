@@ -461,19 +461,31 @@ export const OpenDialogInput = forwardRef((props, ref) => {
   const _value = value instanceof File ? value.name : value;
   const extensions = covertFiltersToExtensions(filters);
 
-  const input = isElectron() ? (
-    <Button
-      type="primary"
-      style={{ width: 60 }}
-      icon={<FileSearchOutlined />}
-      onClick={async () => {
-        // TODO: Remove need for form
-        const path = await openDialog(form, type, filters, name);
-        onChange?.(path);
-        form?.validateFields([name]);
-      }}
-    />
-  ) : (
+  if (isElectron())
+    return (
+      <Space.Compact block style={{ paddingBottom: 3 }}>
+        <Input
+          ref={ref}
+          style={{ width: '100%' }}
+          value={_value}
+          {...rest}
+          readOnly
+        />
+        <Button
+          type="primary"
+          style={{ width: 60 }}
+          icon={<FileSearchOutlined />}
+          onClick={async () => {
+            // TODO: Remove need for form
+            const path = await openDialog(form, type, filters, name);
+            onChange?.(path);
+            form?.validateFields([name]);
+          }}
+        />
+      </Space.Compact>
+    );
+
+  return !value ? (
     <UploadInput
       form={form}
       name={name}
@@ -484,41 +496,25 @@ export const OpenDialogInput = forwardRef((props, ref) => {
     >
       {children || <UploadOutlined />}
     </UploadInput>
-  );
-
-  if (!isElectron() && _value)
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <FileImageOutlined />
-        <div
-          style={{
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {_value}
-        </div>
-        <Button
-          icon={<CloseOutlined />}
-          onClick={() => onChange({ target: { value: '' } })}
-          danger
-        />
+  ) : (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <FileImageOutlined />
+      <div
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {_value}
       </div>
-    );
-
-  return (
-    <Space.Compact block style={{ paddingBottom: 3 }}>
-      <Input
-        ref={ref}
-        style={{ width: '100%' }}
-        value={_value}
-        {...rest}
-        readOnly
+      <Button
+        icon={<CloseOutlined />}
+        onClick={() => onChange({ target: { value: '' } })}
+        danger
       />
-      {input}
-    </Space.Compact>
+    </div>
   );
 });
 OpenDialogInput.displayName = 'OpenDialogInput';
