@@ -94,6 +94,25 @@ const Parameter = ({ parameter, form }) => {
         />
       );
     }
+    case 'InputFileParameter': {
+      const filters = [
+        {
+          name,
+          extensions: parameter?.extensions || [],
+        },
+      ];
+      return (
+        <FormItemWrapper
+          form={form}
+          name={name}
+          initialValue={value}
+          help={help}
+          inputComponent={
+            <OpenDialogInput form={form} type="file" filters={filters} />
+          }
+        />
+      );
+    }
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
