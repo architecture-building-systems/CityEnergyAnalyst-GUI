@@ -103,15 +103,20 @@ const Parameter = ({ parameter, form }) => {
           extensions: parameter?.extensions || [],
         },
       ];
+
+      const inputComponent = isElectron() ? (
+        <OpenDialogInput form={form} type="file" filters={filters} />
+      ) : (
+        <UploadDialogInput form={form} type="file" filters={filters} />
+      );
+
       return (
         <FormItemWrapper
           form={form}
           name={name}
           initialValue={value}
           help={help}
-          inputComponent={
-            <OpenDialogInput form={form} type="file" filters={filters} />
-          }
+          inputComponent={inputComponent}
         />
       );
     }
@@ -446,22 +451,12 @@ const convertFiltersToExtensions = (filters) => {
     .join(',');
 };
 
-export const OpenDialogInput = forwardRef((props, ref) => {
-  const {
-    form,
-    name,
-    type,
-    onChange,
-    filters = [],
-    children,
-    value,
-    ...rest
-  } = props;
+export const OpenDialogInput = forwardRef(
+  ({ form, name, type, onChange, filters = [], value, ...rest }, ref) => {
+    const _value = value instanceof File ? value.name : value;
 
-  const _value = value instanceof File ? value.name : value;
-  const extensions = covertFiltersToExtensions(filters);
+    if (!isElectron()) return <div>Not supported</div>;
 
-  if (isElectron())
     return (
       <Space.Compact block style={{ paddingBottom: 3 }}>
         <Input
@@ -484,24 +479,45 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         />
       </Space.Compact>
     );
+  },
+);
+OpenDialogInput.displayName = 'OpenDialogInput';
 
-  return !value ? (
-    <UploadInput
-      form={form}
-      name={name}
-      onChange={onChange}
-      type={type}
-      accept={extensions}
-      style={{ width: '100%' }}
-      {...rest}
-    >
-      {children || (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <UploadOutlined /> Upload File
-        </div>
-      )}
-    </UploadInput>
-  ) : (
+export const UploadDialogInput = ({
+  form,
+  name,
+  type,
+  onChange,
+  filters = [],
+  children,
+  value,
+  ...rest
+}) => {
+  const _value = value instanceof File ? value.name : value;
+  const extensions = convertFiltersToExtensions(filters);
+
+  if (isElectron()) return <div>Upload not supported</div>;
+
+  if (!value)
+    return (
+      <UploadInput
+        form={form}
+        name={name}
+        onChange={onChange}
+        type={type}
+        accept={extensions}
+        style={{ width: '100%' }}
+        {...rest}
+      >
+        {children || (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UploadOutlined /> Upload File
+          </div>
+        )}
+      </UploadInput>
+    );
+
+  return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <FileImageOutlined />
       <div
@@ -522,8 +538,8 @@ export const OpenDialogInput = forwardRef((props, ref) => {
       />
     </div>
   );
-});
-OpenDialogInput.displayName = 'OpenDialogInput';
+};
+UploadDialogInput.displayName = 'UploadDialogInput';
 
 export const OpenDialogButton = ({
   form,
