@@ -1,5 +1,6 @@
 import {
   CloseOutlined,
+  FileImageOutlined,
   FileSearchOutlined,
   PlusOutlined,
   UploadOutlined,
@@ -485,13 +486,27 @@ export const OpenDialogInput = forwardRef((props, ref) => {
     </UploadInput>
   );
 
-  const clearButton = (
-    <Button
-      icon={<CloseOutlined />}
-      onClick={() => onChange({ target: { value: '' } })}
-      danger
-    />
-  );
+  if (!isElectron() && _value)
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <FileImageOutlined />
+        <div
+          style={{
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {_value}
+        </div>
+        <Button
+          icon={<CloseOutlined />}
+          onClick={() => onChange({ target: { value: '' } })}
+          danger
+        />
+      </div>
+    );
 
   return (
     <Space.Compact block style={{ paddingBottom: 3 }}>
@@ -502,7 +517,7 @@ export const OpenDialogInput = forwardRef((props, ref) => {
         {...rest}
         readOnly
       />
-      {value ? clearButton : input}
+      {input}
     </Space.Compact>
   );
 });
