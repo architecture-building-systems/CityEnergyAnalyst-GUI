@@ -440,7 +440,7 @@ const UploadInput = (props) => {
   );
 };
 
-const covertFiltersToExtensions = (filters) => {
+const convertFiltersToExtensions = (filters) => {
   return filters
     .map((filter) => (filter.extensions ? `.${filter.extensions}` : ''))
     .join(',');
@@ -536,7 +536,7 @@ export const OpenDialogButton = ({
   ...rest
 }) => {
   if (!isElectron()) {
-    const extensions = covertFiltersToExtensions(filters);
+    const extensions = convertFiltersToExtensions(filters);
 
     return (
       <UploadInput
