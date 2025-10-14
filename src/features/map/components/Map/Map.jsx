@@ -227,12 +227,13 @@ const useMapLayers = (onHover = () => {}) => {
                 7 * scale,
               ),
             getLineColor: edgeColour,
-            zIndex: 100,
             updateTriggers: {
               getLineWidth: [scale, min, max],
             },
             onHover: onHover,
             pickable: true,
+
+            parameters: { depthTest: false },
           }),
         );
 
@@ -249,6 +250,8 @@ const useMapLayers = (onHover = () => {}) => {
             },
             onHover: onHover,
             pickable: true,
+
+            parameters: { depthTest: false },
           }),
         );
       }
@@ -439,15 +442,18 @@ const DeckGLMap = ({ data, colors }) => {
       }
     };
 
-    let _layers = [];
+    let _zoneLayers = [];
+    let _surroundingLayers = [];
+    let _streetLayers = [];
+    let _treeLayers = [];
     let _textLayers = [];
 
     if (data?.zone) {
-      _layers.push(
+      _zoneLayers.push(
         new PolygonLayer({
           id: 'zone',
           data: data.zone?.features,
-          opacity: 0.5,
+          opacity: 0.8,
           wireframe: true,
           filled: true,
           extruded: extruded,
@@ -474,6 +480,22 @@ const DeckGLMap = ({ data, colors }) => {
         }),
       );
 
+      // Add floor lines when extruded
+      if (extruded) {
+        const floorLinesData = generateFloorLines(data.zone.features);
+        _zoneLayers.push(
+          new GeoJsonLayer({
+            id: 'zone-floor-lines',
+            data: floorLinesData,
+            visible: visibility.zone,
+            pickable: false,
+            getLineColor: [80, 80, 80, 180], // Dark gray, semi-transparent
+            getLineWidth: 1,
+            lineWidthUnits: 'pixels',
+          }),
+        );
+      }
+
       _textLayers.push(
         new TextLayer({
           id: 'zone-labels',
@@ -491,8 +513,8 @@ const DeckGLMap = ({ data, colors }) => {
           sizeUnits: 'meters',
 
           getText: (f) => f.properties[INDEX_COLUMN],
-          getSize: 6,
-          sizeMinPixels: 3,
+          getSize: 4,
+          sizeMinPixels: 8,
           updateTriggers: {
             getPosition: [extruded],
           },
@@ -500,7 +522,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     if (data?.surroundings) {
-      _layers.push(
+      _surroundingLayers.push(
         new GeoJsonLayer({
           id: 'surroundings',
           data: data.surroundings,
@@ -531,7 +553,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     if (data?.streets) {
-      _layers.push(
+      _streetLayers.push(
         new GeoJsonLayer({
           id: 'streets',
           data: data.streets,
@@ -547,7 +569,7 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
     if (data?.trees) {
-      _layers.push(
+      _treeLayers.push(
         new GeoJsonLayer({
           id: 'trees',
           data: data.trees,
@@ -577,7 +599,13 @@ const DeckGLMap = ({ data, colors }) => {
       );
     }
 
-    return { _layers, _textLayers };
+    return {
+      zoneLayers: _zoneLayers,
+      surroundingLayers: _surroundingLayers,
+      streetLayers: _streetLayers,
+      treeLayers: _treeLayers,
+      textLayers: _textLayers,
+    };
   }, [
     visibility,
     data,
@@ -591,10 +619,16 @@ const DeckGLMap = ({ data, colors }) => {
 
   const mapLayers = useMapLayers(updateTooltip);
 
+  // This ensures network and other data layers render on top of buildings when extruded
+  // Surroundings/trees have to be after Zone and data to ensure they overlap properly
+  // Order: streets, zone, surroundings, trees, other map layers, text labels
   const layers = [
-    ...dataLayers._layers,
+    ...dataLayers.streetLayers,
+    ...dataLayers.zoneLayers,
     ...mapLayers,
-    ...dataLayers._textLayers,
+    ...dataLayers.surroundingLayers,
+    ...dataLayers.treeLayers,
+    ...dataLayers.textLayers,
   ];
 
   const onDragStart = useCallback(
@@ -650,6 +684,7 @@ const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
 };
 
 const VOID_DECK_FLOOR_HEIGHT = 3;
+const FLOOR_HEIGHT = 3; // Standard floor height in meters
 
 const calcPolygonWithZ = (feature) => {
   const name = feature?.properties?.[INDEX_COLUMN];
@@ -673,6 +708,61 @@ const calcPolygonElevation = (feature) => {
 
   // Prevent negative elevation, which causes buildings to appear higher than height_ag
   return Math.max(height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT, 0);
+};
+
+// Generate floor lines for a building polygon
+const generateFloorLines = (features) => {
+  const floorLines = [];
+
+  features.forEach((feature) => {
+    const coords = feature?.geometry?.coordinates?.[0]; // Get outer ring
+    if (!coords || coords.length < 3) return;
+
+    const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
+    const baseHeight = voidDeckFloors * VOID_DECK_FLOOR_HEIGHT;
+    const buildingHeight = calcPolygonElevation(feature);
+
+    // Use floors_ag from properties if available, otherwise calculate from height
+    // floors_ag includes void deck floors, so we need to subtract them
+    const floorsAg = feature?.properties?.floors_ag;
+    const numFloors = floorsAg
+      ? Math.max(Number(floorsAg) - voidDeckFloors, 0)
+      : Math.floor(buildingHeight / FLOOR_HEIGHT);
+
+    if (numFloors <= 0) return;
+
+    // Calculate actual floor height based on building height and number of floors
+    const actualFloorHeight = buildingHeight / numFloors;
+
+    // Create a line for each floor
+    for (let floor = 1; floor <= numFloors; floor++) {
+      const floorHeight = baseHeight + floor * actualFloorHeight;
+
+      // Create horizontal lines at each floor level
+      const lineCoords = coords.map((coord) => [
+        coord[0],
+        coord[1],
+        floorHeight,
+      ]);
+
+      floorLines.push({
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: lineCoords,
+        },
+        properties: {
+          floor: floor,
+          building: feature.properties[INDEX_COLUMN],
+        },
+      });
+    }
+  });
+
+  return {
+    type: 'FeatureCollection',
+    features: floorLines,
+  };
 };
 
 export default DeckGLMap;
