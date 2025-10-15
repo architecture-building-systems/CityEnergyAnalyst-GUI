@@ -171,7 +171,7 @@ const useToolForm = (
     const params = await getForm();
 
     return createJob(script, params).catch((err) => {
-      if (err.response.status === 401) handleLogin();
+      if (err?.response?.status === 401) handleLogin();
       else console.error(`Error creating job: ${err}`);
     });
   };
