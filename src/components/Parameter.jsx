@@ -31,8 +31,8 @@ const Parameter = ({ parameter, form }) => {
       const stringValue = value !== null ? value.toString() : '';
       const regex =
         type === 'IntegerParameter'
-          ? /^([1-9][0-9]*|0)$/
-          : /^([1-9][0-9]*|0)(\.\d+)?$/;
+          ? /^-?([1-9][0-9]*|0)$/
+          : /^-?([1-9][0-9]*|0)(\.\d+)?$/;
       return (
         <FormItemWrapper
           form={form}
