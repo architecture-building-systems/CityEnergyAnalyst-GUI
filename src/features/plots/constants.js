@@ -7,6 +7,7 @@ import {
   LifeCycleAnalysisIcon,
   ComfortChartIcon,
   TimelineIcon,
+  SupplySystemIcon,
 } from 'assets/icons';
 import {
   DEMAND,
@@ -19,6 +20,7 @@ import {
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   EMISSION_TIMELINE,
+  SUPPLY_SYSTEM,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -32,6 +34,7 @@ export const iconMap = {
   [EMISSIONS_EMBODIED]: LifeCycleAnalysisIcon,
   [EMISSIONS_OPERATIONAL]: LifeCycleAnalysisIcon,
   [EMISSION_TIMELINE]: TimelineIcon,
+  [SUPPLY_SYSTEM]: SupplySystemIcon,
 };
 
 // TODO: get mappings from backend
@@ -58,6 +61,7 @@ export const VIEW_PLOT_RESULTS = {
   [EMISSIONS_EMBODIED]: 'plot-lifecycle-emissions',
   [EMISSIONS_OPERATIONAL]: 'plot-operational-emissions',
   [EMISSION_TIMELINE]: 'plot-emission-timeline',
+  [SUPPLY_SYSTEM]: 'plot-supply-system',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);

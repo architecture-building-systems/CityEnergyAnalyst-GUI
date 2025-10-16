@@ -5,6 +5,8 @@ export const RENEWABLE_ENERGY_POTENTIALS = 'renewable-energy-potentials';
 export const LIFE_CYCLE_ANALYSIS = 'life-cycle-analysis';
 export const COMFORT_CHART = 'comfort-chart';
 export const PARETO_FRONT = 'pareto-front';
+export const SUPPLY_SYSTEM = 'supply-system';
+
 export const EMISSIONS_EMBODIED = 'lifecycle-emissions';
 export const EMISSIONS_OPERATIONAL = 'operational-emissions';
 export const EMISSION_TIMELINE = 'emission-timeline';

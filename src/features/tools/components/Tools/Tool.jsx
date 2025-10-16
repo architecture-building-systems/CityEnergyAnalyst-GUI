@@ -171,7 +171,7 @@ const useToolForm = (
     const params = await getForm();
 
     return createJob(script, params).catch((err) => {
-      if (err.response.status === 401) handleLogin();
+      if (err?.response?.status === 401) handleLogin();
       else console.error(`Error creating job: ${err}`);
     });
   };
@@ -184,7 +184,7 @@ const useToolForm = (
         return callbacks?.onSave?.(params);
       })
       .catch((err) => {
-        if (err.response.status === 401) return;
+        if (err?.response?.status === 401) return;
         else console.error(`Error saving tool parameters: ${err}`);
       });
   };
@@ -199,7 +199,7 @@ const useToolForm = (
         return callbacks?.onReset?.(params);
       })
       .catch((err) => {
-        if (err.response.status === 401) return;
+        if (err?.response?.status === 401) return;
         else console.error(`Error setting default tool parameters: ${err}`);
       });
   };
