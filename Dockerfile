@@ -1,4 +1,4 @@
-FROM node:current-alpine AS builder
+FROM node:current-slim AS builder
 
 ARG VITE_CEA_URL=""
 ARG VITE_AUTH_URL=""
