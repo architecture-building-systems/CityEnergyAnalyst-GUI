@@ -22,7 +22,7 @@ export const getColumnPropsFromDataType = (
         editor: 'input',
         validator: [
           'required',
-          'regex:^([1-9][0-9]*|0)?(\\.\\d+)?$',
+          'regex:^-?([1-9][0-9]*|0)?(\\.\\d+)?$',
           ...(columnSchema?.constraints
             ? Object.keys(columnSchema.constraints).map(
                 (constraint) =>
