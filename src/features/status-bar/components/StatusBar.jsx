@@ -110,13 +110,24 @@ const JobStatusBar = () => {
   const [, setSelectedJob] = useSelectedJob();
 
   const handlersRef = useRef(null);
+  const depsRef = useRef({});
+
+  // Keep latest function references in a ref
+  depsRef.current = {
+    updateJob,
+    dismissJob,
+    setActiveMapCategory,
+    setModalVisible,
+    setSelectedJob,
+    setMessage,
+  };
 
   useEffect(() => {
     notification.config({
       top: 80,
     });
 
-    // Create stable handlers (created once), reading latest closures via current values
+    // Create stable handlers that access latest functions via ref
     if (!handlersRef.current) {
       handlersRef.current = {
         onJobCreated: (job) => {
@@ -133,7 +144,7 @@ const JobStatusBar = () => {
           });
         },
         onWorkerStarted: (job) => {
-          updateJob(job);
+          depsRef.current.updateJob(job);
 
           const key = job.id;
           notification.info({
@@ -146,8 +157,8 @@ const JobStatusBar = () => {
           });
         },
         onWorkerSuccess: (job) => {
-          updateJob(job);
-          setMessage(`jobID: ${job.id} - completed ✅`);
+          depsRef.current.updateJob(job);
+          depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
 
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
 
@@ -167,8 +178,8 @@ const JobStatusBar = () => {
                   size="small"
                   onClick={() => {
                     notification.destroy(key);
-                    setSelectedJob(job);
-                    setModalVisible(true);
+                    depsRef.current.setSelectedJob(job);
+                    depsRef.current.setModalVisible(true);
                   }}
                 >
                   View Logs
@@ -180,7 +191,9 @@ const JobStatusBar = () => {
                     size="small"
                     onClick={() => {
                       notification.destroy(key);
-                      setActiveMapCategory(VIEW_MAP_RESULTS[job.script]);
+                      depsRef.current.setActiveMapCategory(
+                        VIEW_MAP_RESULTS[job.script],
+                      );
                     }}
                   >
                     View Results
@@ -227,12 +240,12 @@ const JobStatusBar = () => {
           });
         },
         onWorkerCanceled: (job) => {
-          dismissJob(job);
-          setMessage(`jobID: ${job.id} - canceled ✖️`);
+          depsRef.current.dismissJob(job);
+          depsRef.current.setMessage(`jobID: ${job.id} - canceled ✖️`);
         },
         onWorkerError: (job) => {
-          updateJob(job);
-          setMessage(`jobID: ${job.id} - error ❗`);
+          depsRef.current.updateJob(job);
+          depsRef.current.setMessage(`jobID: ${job.id} - error ❗`);
 
           const key = job.id;
           notification.error({
@@ -248,8 +261,8 @@ const JobStatusBar = () => {
                 size="small"
                 onClick={() => {
                   notification.destroy(key);
-                  setSelectedJob(job);
-                  setModalVisible(true);
+                  depsRef.current.setSelectedJob(job);
+                  depsRef.current.setModalVisible(true);
                 }}
               >
                 View Logs
@@ -264,7 +277,9 @@ const JobStatusBar = () => {
             .filter((x) => x.length > 0);
           let last_line = lines[lines.length - 1];
           last_line &&
-            setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
+            depsRef.current.setMessage(
+              `jobID: ${data.jobid} - ${last_line.slice(0, 80)}`,
+            );
         },
       };
     }
