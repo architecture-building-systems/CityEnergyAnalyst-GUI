@@ -271,15 +271,29 @@ const JobStatusBar = () => {
           });
         },
         onWorkerMessage: (data) => {
-          let lines = data.message
+          // Validate data and message before processing
+          if (!data || typeof data.message !== 'string' || !data.message) {
+            return;
+          }
+
+          const lines = data.message
             .split(/\r?\n/)
             .map((x) => x.trim())
             .filter((x) => x.length > 0);
-          let last_line = lines[lines.length - 1];
-          last_line &&
+
+          // Ensure lines array is not empty before accessing
+          if (lines.length === 0) {
+            return;
+          }
+
+          const last_line = lines[lines.length - 1];
+
+          // Only call setMessage if both jobid and last_line exist
+          if (data.jobid && last_line) {
             depsRef.current.setMessage(
               `jobID: ${data.jobid} - ${last_line.slice(0, 80)}`,
             );
+          }
         },
       };
     }
