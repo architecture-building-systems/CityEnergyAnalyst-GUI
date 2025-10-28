@@ -26,25 +26,25 @@ socket.on('disconnect', (reason) => {
   }
 });
 
-socket.on('reconnect', (attemptNumber) => {
+socket.io.on('reconnect', (attemptNumber) => {
   if (import.meta.env.DEV) {
     console.log('Socket.IO reconnected after', attemptNumber, 'attempts');
   }
 });
 
-socket.on('reconnect_attempt', (attemptNumber) => {
+socket.io.on('reconnect_attempt', (attemptNumber) => {
   if (import.meta.env.DEV) {
     console.log('Socket.IO reconnection attempt:', attemptNumber);
   }
 });
 
-socket.on('reconnect_error', (error) => {
+socket.io.on('reconnect_error', (error) => {
   if (import.meta.env.DEV) {
     console.error('Socket.IO reconnection error:', error.message);
   }
 });
 
-socket.on('reconnect_failed', () => {
+socket.io.on('reconnect_failed', () => {
   if (import.meta.env.DEV) {
     console.error('Socket.IO reconnection failed after all attempts');
   }
