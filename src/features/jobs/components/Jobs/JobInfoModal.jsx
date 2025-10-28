@@ -73,8 +73,12 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
           job.id,
         );
       }
-      socket.off('cea-worker-message', listenerFuncRef.current);
-      socket.on('cea-worker-message', message_appender);
+      // Remove previous (if any), then re-attach with the latest handler
+      if (listenerFuncRef.current) {
+        socket.off('cea-worker-message', listenerFuncRef.current);
+      }
+      listenerFuncRef.current = message_appender;
+      socket.on('cea-worker-message', listenerFuncRef.current);
     };
 
     socket.on('connect', handleReconnect);
@@ -84,6 +88,9 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
 
     return () => {
       socket.off('connect', handleReconnect);
+      if (listenerFuncRef.current) {
+        socket.off('cea-worker-message', listenerFuncRef.current);
+      }
     };
   }, [message, job.id, message_appender]);
 
