@@ -131,7 +131,9 @@ const JobStatusBar = () => {
     if (!handlersRef.current) {
       handlersRef.current = {
         onJobCreated: (job) => {
-          console.log('cea-job-created: job', job);
+          if (import.meta.env.DEV) {
+            console.log('cea-job-created: job', job);
+          }
 
           const key = job.id;
           notification.info({
