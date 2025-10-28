@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { shallow } from 'zustand/shallow';
 import { apiClient } from 'lib/api/axios';
 
 const transformInitialPayload = (payload) => {
