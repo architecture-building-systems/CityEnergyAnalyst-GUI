@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { shallow } from 'zustand/shallow';
 import { apiClient } from 'lib/api/axios';
 
 const transformInitialPayload = (payload) => {
@@ -108,14 +109,31 @@ const useJobsStore = create((set, get) => ({
   },
 }));
 
-export const useSelectedJob = () => [
-  useJobsStore((state) => state.selectedJob),
-  useJobsStore((state) => state.setSelectedJob),
-];
+export const useSelectedJob = () => {
+  const selectedJob = useJobsStore((state) => state.selectedJob);
+  const setSelectedJob = useJobsStore((state) => state.setSelectedJob);
+  return [selectedJob, setSelectedJob];
+};
 
-export const useShowJobInfo = () => [
-  useJobsStore((state) => state.showJobInfo),
-  useJobsStore((state) => state.setShowJobInfo),
-];
+export const useShowJobInfo = () => {
+  const showJobInfo = useJobsStore((state) => state.showJobInfo);
+  const setShowJobInfo = useJobsStore((state) => state.setShowJobInfo);
+  return [showJobInfo, setShowJobInfo];
+};
+
+// Selector hook that returns jobs as a sorted array (newest first)
+export const useSortedJobs = () => {
+  const jobs = useJobsStore((state) => state.jobs);
+
+  if (!jobs) return [];
+
+  return Object.entries(jobs)
+    .map(([id, job]) => ({ id, ...job }))
+    .sort((a, b) => {
+      const timeA = new Date(a.created_time);
+      const timeB = new Date(b.created_time);
+      return timeB - timeA; // Descending order (newest first)
+    });
+};
 
 export default useJobsStore;
