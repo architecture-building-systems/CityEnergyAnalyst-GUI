@@ -1,6 +1,4 @@
-import { useRef } from 'react';
-import { Form } from '@ant-design/compatible';
-import { Modal, Input, Select } from 'antd';
+import { Modal, Input, Select, Form } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
@@ -12,26 +10,27 @@ const EditSelectedModal = ({
   table,
   columns,
 }) => {
-  const formRef = useRef();
+  const [form] = Form.useForm();
 
   const updateInputData = useUpdateInputs();
 
-  const handleOk = () => {
-    formRef.current.validateFields((err, values) => {
-      if (!err) {
-        let updates = [];
-        console.log(values);
-        for (const prop in values) {
-          values[prop] && updates.push({ property: prop, value: values[prop] });
-        }
-        updateInputData(
-          table,
-          inputTable.getSelectedData().map((data) => data[INDEX_COLUMN]),
-          updates,
-        );
-        setVisible(false);
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+      let updates = [];
+      console.log(values);
+      for (const prop in values) {
+        values[prop] && updates.push({ property: prop, value: values[prop] });
       }
-    });
+      updateInputData(
+        table,
+        inputTable.getSelectedData().map((data) => data[INDEX_COLUMN]),
+        updates,
+      );
+      setVisible(false);
+    } catch (err) {
+      console.error('Validation failed:', err);
+    }
   };
 
   const handleCancel = () => {
@@ -49,7 +48,7 @@ const EditSelectedModal = ({
     >
       <div style={{ overflow: 'auto', maxHeight: 400 }}>
         <InputDataForm
-          ref={formRef}
+          form={form}
           inputTable={inputTable}
           table={table}
           columns={columns}
@@ -92,33 +91,35 @@ const Table = ({ inputTable }) => {
   );
 };
 
-const InputDataForm = Form.create()(({ form, inputTable, table, columns }) => {
+const InputDataForm = ({ form, inputTable, table, columns }) => {
   return (
-    <Form>
+    <Form form={form}>
       {inputTable.getColumnDefinitions().map((columnDef) => {
         const { title } = columnDef;
         if (title != INDEX_COLUMN && title != 'REFERENCE')
           return (
             <Form.Item
               key={title}
+              name={title}
               label={title}
               labelCol={{ span: 6 }}
               wrapperCol={{ span: 11, offset: 1 }}
+              extra={
+                <small style={{ display: 'block', lineHeight: 'normal' }}>
+                  {columns[table][title].description}
+                </small>
+              }
+              {...createFormItemConfig(title, columns[table][title])}
             >
-              {createFormItem(form, title, columns[table][title])}
-              <small style={{ display: 'block', lineHeight: 'normal' }}>
-                {columns[table][title].description}
-              </small>
+              {createFormItemInput(title, columns[table][title])}
             </Form.Item>
           );
       })}
     </Form>
   );
-});
+};
 
-const createFormItem = (form, title, columnInfo) => {
-  const { type } = columnInfo;
-
+const createFormItemInput = (title, columnInfo) => {
   // Choices Field
   const choices = columnInfo?.choices;
   if (choices) {
@@ -127,11 +128,23 @@ const createFormItem = (form, title, columnInfo) => {
         {`${value} : ${label}`}
       </Select.Option>
     ));
-    return form.getFieldDecorator(title)(
+    return (
       <Select placeholder="unchanged" allowClear={true}>
         {Options}
-      </Select>,
+      </Select>
     );
+  }
+
+  return <Input placeholder="unchanged" />;
+};
+
+const createFormItemConfig = (title, columnInfo) => {
+  const { type } = columnInfo;
+
+  // Choices Field - no validation needed
+  const choices = columnInfo?.choices;
+  if (choices) {
+    return { rules: [] };
   }
 
   const typeMap = {
@@ -150,7 +163,8 @@ const createFormItem = (form, title, columnInfo) => {
   };
 
   const fieldType = type == 'string' ? 'string' : 'number';
-  return form.getFieldDecorator(title, {
+
+  return {
     rules: [
       {
         type: fieldType,
@@ -158,38 +172,34 @@ const createFormItem = (form, title, columnInfo) => {
         transform: (value) => checkNumeric(value, type),
       },
       {
-        validator: (rule, value, callback) => {
-          try {
-            if (typeof value != 'undefined') {
-              // Check contraints
-              const constraints = columnInfo?.constraints;
-              if (columnInfo?.constraints) {
-                if (constraints?.max) {
-                  if (type != 'string' && value > constraints.max)
-                    return new Error(`Max value: ${constraints.max}`);
-                }
-              }
-
-              // Check regex
-              if (type == 'string' && columnInfo?.regex) {
-                const regex = new RegExp(columnInfo.regex);
-                if (!regex.test(value)) {
-                  return new Error(
-                    columnInfo?.example
-                      ? `${title} is not in the right format. e.g. ${columnInfo.example}`
-                      : `Does not fit expression: ${regex}`,
-                  );
+        validator: async (_, value) => {
+          if (typeof value != 'undefined') {
+            // Check constraints
+            const constraints = columnInfo?.constraints;
+            if (columnInfo?.constraints) {
+              if (constraints?.max) {
+                if (type != 'string' && value > constraints.max) {
+                  throw new Error(`Max value: ${constraints.max}`);
                 }
               }
             }
-            callback();
-          } catch (err) {
-            callback(err);
+
+            // Check regex
+            if (type == 'string' && columnInfo?.regex) {
+              const regex = new RegExp(columnInfo.regex);
+              if (!regex.test(value)) {
+                throw new Error(
+                  columnInfo?.example
+                    ? `${title} is not in the right format. e.g. ${columnInfo.example}`
+                    : `Does not fit expression: ${regex}`,
+                );
+              }
+            }
           }
         },
       },
     ],
-  })(<Input placeholder="unchanged" />);
+  };
 };
 
 export default EditSelectedModal;
