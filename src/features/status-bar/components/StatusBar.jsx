@@ -271,15 +271,20 @@ const JobStatusBar = () => {
 
     const H = handlersRef.current;
 
-    // Register all socket event listeners
-    const registerSocketListeners = () => {
-      // Remove only our own handlers, then re-attach
+    // Remove all socket event listeners
+    const removeSocketListeners = () => {
       socket.off('cea-job-created', H.onJobCreated);
       socket.off('cea-worker-started', H.onWorkerStarted);
       socket.off('cea-worker-success', H.onWorkerSuccess);
       socket.off('cea-worker-canceled', H.onWorkerCanceled);
       socket.off('cea-worker-error', H.onWorkerError);
       socket.off('cea-worker-message', H.onWorkerMessage);
+    };
+
+    // Register all socket event listeners
+    const registerSocketListeners = () => {
+      // Remove only our own handlers, then re-attach
+      removeSocketListeners();
 
       socket.on('cea-job-created', H.onJobCreated);
       socket.on('cea-worker-started', H.onWorkerStarted);
@@ -304,12 +309,7 @@ const JobStatusBar = () => {
 
     return () => {
       socket.off('connect', handleReconnect);
-      socket.off('cea-job-created', H.onJobCreated);
-      socket.off('cea-worker-started', H.onWorkerStarted);
-      socket.off('cea-worker-success', H.onWorkerSuccess);
-      socket.off('cea-worker-canceled', H.onWorkerCanceled);
-      socket.off('cea-worker-error', H.onWorkerError);
-      socket.off('cea-worker-message', H.onWorkerMessage);
+      removeSocketListeners();
     };
   }, [
     updateJob,
