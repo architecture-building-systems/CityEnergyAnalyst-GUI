@@ -16,10 +16,26 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
+
+// Helper component to standardize Form.Item props
+export const FormField = ({ name, help, children, ...props }) => {
+  return (
+    <Form.Item
+      label={<b>{name}</b>}
+      wrapperCol={{ offset: 1, span: 22 }}
+      key={name}
+      name={name}
+      extra={<div style={{ fontSize: 12 }}>{help}</div>}
+      {...props}
+    >
+      {children}
+    </Form.Item>
+  );
+};
 
 const Parameter = ({ parameter, form }) => {
   const { name, type, value, choices, nullable, help } = parameter;
@@ -34,10 +50,8 @@ const Parameter = ({ parameter, form }) => {
           ? /^-?([1-9][0-9]*|0)$/
           : /^-?([1-9][0-9]*|0)(\.\d+)?$/;
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={stringValue}
           help={help}
           rules={[
             {
@@ -51,10 +65,10 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={
-            <Input placeholder={nullable ? 'Leave blank for default' : null} />
-          }
-        />
+          initialValue={stringValue}
+        >
+          <Input placeholder={nullable ? 'Leave blank for default' : null} />
+        </FormField>
       );
     }
     case 'PathParameter':
@@ -71,14 +85,12 @@ const Parameter = ({ parameter, form }) => {
             ];
 
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={value}
           help={help}
           rules={[
             {
-              validator: async (rule, value) => {
+              validator: async (_, value) => {
                 if (value == '' && nullable) return Promise.resolve();
 
                 try {
@@ -90,10 +102,10 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={
-            <OpenDialogInput form={form} type={contentType} filters={filters} />
-          }
-        />
+          initialValue={value}
+        >
+          <OpenDialogInput form={form} type={contentType} filters={filters} />
+        </FormField>
       );
     }
     case 'InputFileParameter': {
@@ -111,10 +123,8 @@ const Parameter = ({ parameter, form }) => {
       );
 
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={value}
           help={help}
           rules={[
             {
@@ -122,7 +132,7 @@ const Parameter = ({ parameter, form }) => {
               message: 'Please select a file',
             },
             {
-              validator: async (rule, value) => {
+              validator: async (_, value) => {
                 if (!value && nullable) return Promise.resolve();
 
                 if (!value) {
@@ -151,8 +161,10 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={inputComponent}
-        />
+          initialValue={value}
+        >
+          {inputComponent}
+        </FormField>
       );
     }
     case 'ChoiceParameter':
@@ -168,14 +180,12 @@ const Parameter = ({ parameter, form }) => {
       }));
 
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={value}
           help={help}
           rules={[
             {
-              validator: (rule, value) => {
+              validator: (_, value) => {
                 if (choices.length < 1) {
                   if (type === 'GenerationParameter')
                     return Promise.reject(
@@ -195,10 +205,10 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={
-            <Select options={options} disabled={!choices.length} />
-          }
-        />
+          initialValue={value}
+        >
+          <Select options={options} disabled={!choices.length} />
+        </FormField>
       );
     }
     case 'MultiChoiceParameter':
@@ -228,14 +238,12 @@ const Parameter = ({ parameter, form }) => {
       };
 
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={value}
           help={help}
           rules={[
             {
-              validator: (rule, value) => {
+              validator: (_, value) => {
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
@@ -253,30 +261,31 @@ const Parameter = ({ parameter, form }) => {
               },
             },
           ]}
-          inputComponent={
-            <Select
-              options={options}
-              mode="multiple"
-              style={{ width: '100%' }}
-              placeholder={placeholder}
-              maxTagCount={10}
-              popupRender={(menu) => (
-                <div>
-                  <div style={{ padding: '8px', textAlign: 'center' }}>
-                    <Button onMouseDown={selectAll} style={{ width: '45%' }}>
-                      Select All
-                    </Button>
-                    <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
-                      Unselect All
-                    </Button>
-                  </div>
-                  <Divider style={{ margin: '4px 0' }} />
-                  {menu}
+          initialValue={value}
+        >
+          <Select
+            options={options}
+            mode="multiple"
+            tokenSeparators={[',']}
+            style={{ width: '100%' }}
+            placeholder={placeholder}
+            maxTagCount={10}
+            popupRender={(menu) => (
+              <div>
+                <div style={{ padding: '8px', textAlign: 'center' }}>
+                  <Button onMouseDown={selectAll} style={{ width: '45%' }}>
+                    Select All
+                  </Button>
+                  <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
+                    Unselect All
+                  </Button>
                 </div>
-              )}
-            />
-          }
-        />
+                <Divider style={{ margin: '4px 0' }} />
+                {menu}
+              </div>
+            )}
+          />
+        </FormField>
       );
     }
     case 'DatabasePathParameter': {
@@ -288,173 +297,96 @@ const Parameter = ({ parameter, form }) => {
         </Option>
       ));
       return (
-        <FormItemWrapper
-          form={form}
-          name={name}
-          initialValue={value}
-          help={help}
-          inputComponent={
-            <Select
-              popupRender={(menu) => (
-                <div>
-                  {menu}
-                  <Divider style={{ margin: '4px 0' }} />
-                  <OpenDialogButton
-                    form={form}
-                    type="directory"
-                    id={name}
-                    onChange={(value) => setFieldsValue({ [name]: value })}
-                  >
-                    <PlusOutlined />
-                    Browse for databases path
-                  </OpenDialogButton>
-                </div>
-              )}
-            >
-              {Options}
-            </Select>
-          }
-        />
+        <FormField name={name} help={help} initialValue={value}>
+          <Select
+            popupRender={(menu) => (
+              <div>
+                {menu}
+                <Divider style={{ margin: '4px 0' }} />
+                <OpenDialogButton
+                  form={form}
+                  type="directory"
+                  id={name}
+                  onChange={(value) => setFieldsValue({ [name]: value })}
+                >
+                  <PlusOutlined />
+                  Browse for databases path
+                </OpenDialogButton>
+              </div>
+            )}
+          >
+            {Options}
+          </Select>
+        </FormField>
       );
     }
 
     case 'WeatherPathParameter': {
       return (
-        <FormItemWrapper
-          form={form}
-          name={name}
-          initialValue={value}
-          help={help}
-          inputComponent={
-            <SelectWithFileDialog
-              placeholder="Choose an option from the dropdown"
-              name="weather"
-              type="file"
-              filters={[{ name: 'Weather files', extensions: ['epw'] }]}
-              options={[
-                {
-                  label: 'Fetch from climate.onebuilding.org',
-                  value: 'climate.onebuilding.org',
-                },
-                {
-                  label: 'Generate a future weather file using pyepwmorph',
-                  value: 'pyepwmorph',
-                },
-              ]}
-            >
-              <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
-                <FileSearchOutlined />
-                Import .epw file
-              </div>
-            </SelectWithFileDialog>
-          }
-        />
+        <FormField name={name} help={help} initialValue={value}>
+          <SelectWithFileDialog
+            placeholder="Choose an option from the dropdown"
+            name="weather"
+            type="file"
+            filters={[{ name: 'Weather files', extensions: ['epw'] }]}
+            options={[
+              {
+                label: 'Fetch from climate.onebuilding.org',
+                value: 'climate.onebuilding.org',
+              },
+              {
+                label: 'Generate a future weather file using pyepwmorph',
+                value: 'pyepwmorph',
+              },
+            ]}
+          >
+            <div style={{ display: 'flex', gap: 8, alignItems: 'left' }}>
+              <FileSearchOutlined />
+              Import .epw file
+            </div>
+          </SelectWithFileDialog>
+        </FormField>
       );
     }
     case 'BooleanParameter':
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={value}
           help={help}
-          config={{
-            valuePropName: 'checked',
-          }}
-          inputComponent={<Switch />}
-        />
+          initialValue={value}
+          valuePropName="checked"
+        >
+          <Switch />
+        </FormField>
       );
 
     // Plot Context is not editable for now
     case 'PlotContextParameter': {
-      const config = {
-        getValueProps: (value) => ({
-          value: value
-            ? Object.keys(value)
-                .map((key) => `${key}: ${value[key]}`)
-                .join(', ')
-            : '',
-        }),
-      };
-
       return (
-        <FormItemWrapper
-          form={form}
+        <FormField
           name={name}
-          initialValue={value}
           help={help}
-          inputComponent={<Input disabled />}
-          config={config}
-        />
+          initialValue={value}
+          getValueProps={(value) => ({
+            value: value
+              ? Object.keys(value)
+                  .map((key) => `${key}: ${value[key]}`)
+                  .join(', ')
+              : '',
+          })}
+        >
+          <Input disabled />
+        </FormField>
       );
     }
 
     default:
       return (
-        <FormItemWrapper
-          form={form}
-          name={name}
-          initialValue={value}
-          help={help}
-        />
+        <FormField name={name} help={help} initialValue={value}>
+          <Input />
+        </FormField>
       );
   }
-};
-
-export const FormItemWrapper = ({
-  name,
-  help,
-  initialValue = null,
-  required = false,
-  rules = [],
-  config = {},
-  inputComponent = <Input />,
-}) => {
-  return (
-    <Form.Item
-      label={<b>{name}</b>}
-      wrapperCol={{ offset: 1, span: 22 }}
-      key={name}
-      name={name}
-      extra={<div style={{ fontSize: 12 }}>{help}</div>}
-      rules={[{ required: required }, ...rules]}
-      initialValue={initialValue}
-      {...config}
-    >
-      {inputComponent}
-    </Form.Item>
-  );
-};
-
-const PathInput = ({ value, onChange, form, name, ...rest }) => {
-  const [inputValue, setValue] = useState(value);
-
-  const onClick = () => {
-    form?.setFieldsValue({ [name]: inputValue });
-  };
-
-  const onValueChange = (e) => {
-    const newValue = e.target.value;
-    setValue(newValue);
-
-    onChange?.(newValue);
-  };
-
-  return (
-    <Space direction="vertical" style={{ width: '100%' }}>
-      <Space.Compact style={{ width: '100%' }}>
-        <Input
-          {...rest}
-          value={value || inputValue}
-          onChange={onValueChange}
-          type="text"
-        />
-        <Button type="primary" onClick={onClick}>
-          Select
-        </Button>
-      </Space.Compact>
-    </Space>
-  );
 };
 
 const UploadInput = (props) => {

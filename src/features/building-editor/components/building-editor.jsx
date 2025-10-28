@@ -1,24 +1,23 @@
 import { useSelected } from 'features/input-editor/stores/inputEditorStore';
 import { useBuildingData } from '../hooks/building-data';
 import { Divider, Input, Form, Select, Collapse } from 'antd';
-import { FormItemWrapper } from 'components/Parameter';
+import { FormField } from 'components/Parameter';
 import { useEffect } from 'react';
 
-const InputItem = ({ form, property, initialValue, description, required }) => {
+const InputItem = ({ property, initialValue, description, required }) => {
   return (
-    <FormItemWrapper
-      form={form}
+    <FormField
       name={property}
-      initialValue={initialValue}
       help={description}
-      inputComponent={<Input />}
-      required={required}
-    />
+      initialValue={initialValue}
+      rules={[{ required }]}
+    >
+      <Input />
+    </FormField>
   );
 };
 
 const SelectItem = ({
-  form,
   property,
   initialValue,
   description,
@@ -31,18 +30,18 @@ const SelectItem = ({
   }));
 
   return (
-    <FormItemWrapper
-      form={form}
+    <FormField
       name={property}
-      initialValue={initialValue}
       help={description}
-      inputComponent={<Select options={options} />}
-      required={required}
-    />
+      initialValue={initialValue}
+      rules={[{ required }]}
+    >
+      <Select options={options} />
+    </FormField>
   );
 };
 
-const CategoryForm = ({ data, columns, form, category }) => {
+const CategoryForm = ({ data, columns, category }) => {
   const properties = data?.[category];
   const categoryColumns = columns?.[category];
 
@@ -63,7 +62,6 @@ const CategoryForm = ({ data, columns, form, category }) => {
       <div key={property}>
         {columnProperties?.choices ? (
           <SelectItem
-            form={form}
             property={property}
             initialValue={initialValue}
             description={description}
@@ -72,7 +70,6 @@ const CategoryForm = ({ data, columns, form, category }) => {
           />
         ) : (
           <InputItem
-            form={form}
             property={property}
             initialValue={initialValue}
             description={description}
@@ -177,12 +174,7 @@ export const BuildingEditor = () => {
             onValuesChange={onValuesChange}
             labelWrap
           >
-            <CategoryForm
-              category={category}
-              data={data}
-              columns={columns}
-              form={form}
-            />
+            <CategoryForm category={category} data={data} columns={columns} />
           </Form>
         </div>
       ) : (
