@@ -311,13 +311,7 @@ const JobStatusBar = () => {
       socket.off('connect', handleReconnect);
       removeSocketListeners();
     };
-  }, [
-    updateJob,
-    dismissJob,
-    setActiveMapCategory,
-    setModalVisible,
-    setSelectedJob,
-  ]);
+  }, []);
 
   if (output.length < 1) return null;
 
