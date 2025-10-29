@@ -4,6 +4,7 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 
 import { parseISO, formatDistanceToNow } from 'date-fns';
@@ -67,7 +68,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
       case 4:
         return <CloseCircleOutlined style={{ color: 'grey' }} />;
       default:
-        return null;
+        return <QuestionCircleOutlined style={{ color: 'grey' }} />;
     }
   };
 
