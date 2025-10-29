@@ -216,7 +216,7 @@ const JobStatusBar = () => {
                       // Create a URL for the blob
                       const url = URL.createObjectURL(blob);
                       const windowFeatures =
-                        'width=1000,height=800,resizable=yes,status=yes';
+                        'width=1000,height=800,resizable=yes,status=yes,noopener,noreferrer';
 
                       // Open the URL in a new window/tab
                       const newWindow = window.open(
@@ -225,12 +225,16 @@ const JobStatusBar = () => {
                         windowFeatures,
                       );
 
-                      // Clean up the URL object when the window has loaded
+                      // Clean up the URL object
                       if (newWindow) {
+                        // Window opened successfully - revoke URL after it loads
                         newWindow.onload = () => {
                           // Revoke the URL after a delay to ensure it's loaded
                           setTimeout(() => URL.revokeObjectURL(url), 1000);
                         };
+                      } else {
+                        // Popup blocked - revoke URL immediately to prevent leak
+                        URL.revokeObjectURL(url);
                       }
                     }}
                   >
