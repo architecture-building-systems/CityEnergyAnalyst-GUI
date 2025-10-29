@@ -13,14 +13,54 @@ const socket = io(`${import.meta.env.VITE_CEA_URL}`, {
   timeout: 20000,
 });
 
+// Track connection readiness
+let isConnected = socket.connected;
+const connectionCallbacks = [];
+
+// Helper to wait for connection
+// If callback is provided, it will be called after connection is established
+// Otherwise, returns a Promise that resolves when connected
+export const waitForConnection = (callback) => {
+  if (callback) {
+    // Callback mode
+    if (isConnected) {
+      callback();
+    } else {
+      connectionCallbacks.push(callback);
+    }
+  } else {
+    // Promise mode
+    return new Promise((resolve) => {
+      if (isConnected) {
+        resolve();
+      } else {
+        connectionCallbacks.push(resolve);
+      }
+    });
+  }
+};
+
+// Helper to check if socket is connected
+export const isSocketConnected = () => isConnected;
+
 // Connection event handlers
 socket.on('connect', () => {
+  isConnected = true;
+
   if (import.meta.env.DEV) {
     console.log('Socket.IO connected:', socket.id);
+  }
+
+  // Resolve all pending connection promises
+  while (connectionCallbacks.length > 0) {
+    const callback = connectionCallbacks.shift();
+    callback();
   }
 });
 
 socket.on('disconnect', (reason) => {
+  isConnected = false;
+
   if (import.meta.env.DEV) {
     console.log('Socket.IO disconnected:', reason);
   }

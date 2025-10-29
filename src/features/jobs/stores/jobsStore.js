@@ -72,22 +72,27 @@ const useJobsStore = create((set, get) => ({
   startJob: async (jobID) => {
     try {
       const response = await apiClient.post(`/server/jobs/start/${jobID}`);
-      console.debug('Job started:', response.data);
+      if (import.meta.env.DEV) {
+        console.debug('Job started:', response.data);
+      }
     } catch (error) {
       console.error('Failed to start job:', error);
     }
   },
 
   updateJob: (job) => {
-    console.debug('Updating job:', job);
+    if (import.meta.env.DEV) {
+      console.debug('Updating job:', job);
+    }
     set((state) => ({
       jobs: { ...state.jobs, ...transformJobPayload(job) },
     }));
   },
 
   dismissJob: (job) => {
-    console.log('in dismissJob');
-    console.log(`cancelling job ${job.id}`);
+    if (import.meta.env.DEV) {
+      console.debug(`Cancelling job ${job.id}`);
+    }
     set((state) => ({
       jobs: { ...state.jobs, ...transformJobPayload(job) },
     }));
@@ -101,7 +106,9 @@ const useJobsStore = create((set, get) => ({
         delete newJobs[jobID];
         return { jobs: newJobs };
       });
-      console.debug('Job deleted:', jobID);
+      if (import.meta.env.DEV) {
+        console.debug('Job deleted:', jobID);
+      }
     } catch (error) {
       console.error('Failed to delete job:', error);
     }
