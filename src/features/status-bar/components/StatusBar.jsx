@@ -187,7 +187,7 @@ const JobStatusBar = () => {
                   View Logs
                 </Button>
 
-                {Object.keys(VIEW_MAP_RESULTS).includes(job.script) && (
+                {job.script in VIEW_MAP_RESULTS && (
                   <Button
                     type="primary"
                     size="small"
