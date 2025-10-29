@@ -1,7 +1,7 @@
 import { Alert, Modal } from 'antd';
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-import socket from 'lib/socket';
+import socket, { waitForConnection } from 'lib/socket';
 import { apiClient } from 'lib/api/axios';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
@@ -60,9 +60,12 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
 
   useEffect(() => {
     if (isFirst.current) {
-      listenerFuncRef.current = message_appender;
-      socket.on('cea-worker-message', message_appender);
-      isFirst.current = false;
+      // Wait for socket connection before registering listener
+      waitForConnection(() => {
+        listenerFuncRef.current = message_appender;
+        socket.on('cea-worker-message', listenerFuncRef.current);
+        isFirst.current = false;
+      });
     }
 
     // Re-register listener on reconnection
@@ -78,7 +81,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         socket.off('cea-worker-message', listenerFuncRef.current);
       }
       listenerFuncRef.current = message_appender;
-      socket.on('cea-worker-message', listenerFuncRef.current);
+      socket.on('cea-worker-message', message_appender);
     };
 
     socket.on('connect', handleReconnect);
