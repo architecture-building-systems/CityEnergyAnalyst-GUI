@@ -165,7 +165,7 @@ const JobStatusBar = () => {
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
 
           const key = job.id;
-          let duration = isPlotJob ? 0 : 5;
+          const duration = isPlotJob ? 0 : 5;
 
           notification.success({
             key,
