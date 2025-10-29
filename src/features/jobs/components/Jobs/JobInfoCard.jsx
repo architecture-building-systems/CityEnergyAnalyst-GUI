@@ -205,8 +205,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
             <>
               {isLoading ? (
                 <LoadingOutlined
-                  className="cea-job-info-icon"
-                  style={{ color: 'grey' }}
+                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
                   spin
                 />
               ) : (
@@ -221,8 +220,7 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
             <>
               {isLoading ? (
                 <LoadingOutlined
-                  className="cea-job-info-icon"
-                  style={{ color: 'grey' }}
+                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
                   spin
                 />
               ) : (
