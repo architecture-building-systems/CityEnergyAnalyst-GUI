@@ -7,7 +7,7 @@ import useJobsStore, {
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
-import socket from 'lib/socket';
+import socket, { waitForConnection } from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
 import { useSetActiveMapCategory } from 'features/project/components/Cards/MapLayersCard/store';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
@@ -329,8 +329,13 @@ const JobStatusBar = () => {
       socket.on('cea-worker-message', H.onWorkerMessage);
     };
 
-    // Initial registration
-    registerSocketListeners();
+    // Wait for socket connection before registering listeners
+    waitForConnection(() => {
+      if (import.meta.env.DEV) {
+        console.log('Socket connected, registering job event listeners');
+      }
+      registerSocketListeners();
+    });
 
     // Re-register listeners on reconnection
     const handleReconnect = () => {
