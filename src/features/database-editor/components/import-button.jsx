@@ -65,7 +65,10 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       message.config({ top: 120 });
       message.success('Database successfully uploaded');
     } catch (err) {
-      console.error('Database upload failed:', err.response?.data || err.message);
+      console.error(
+        'Database upload failed:',
+        err.response?.data || err.message,
+      );
       setConfirmLoading(false);
       setErrorMessage(
         err.response?.data?.detail || 'Failed to upload database.',
