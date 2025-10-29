@@ -1,5 +1,5 @@
 import { Alert, Modal } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 import socket from 'lib/socket';
 import { apiClient } from 'lib/api/axios';
@@ -11,11 +11,14 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   const containerRef = useRef();
   const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
 
-  const message_appender = (data) => {
-    if (data.jobid == job.id) {
-      setMessage((message) => message.concat(data.message));
-    }
-  };
+  const message_appender = useCallback(
+    (data) => {
+      if (data.jobid == job.id) {
+        setMessage((message) => message.concat(data.message));
+      }
+    },
+    [job.id],
+  );
 
   // Scroll to bottom if shouldScroll is true
   const scrollToBottom = () => {
@@ -61,9 +64,35 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       socket.on('cea-worker-message', message_appender);
       isFirst.current = false;
     }
+
+    // Re-register listener on reconnection
+    const handleReconnect = () => {
+      if (import.meta.env.DEV) {
+        console.log(
+          'Socket reconnected, re-registering message listener for job',
+          job.id,
+        );
+      }
+      // Remove previous (if any), then re-attach with the latest handler
+      if (listenerFuncRef.current) {
+        socket.off('cea-worker-message', listenerFuncRef.current);
+      }
+      listenerFuncRef.current = message_appender;
+      socket.on('cea-worker-message', listenerFuncRef.current);
+    };
+
+    socket.on('connect', handleReconnect);
+
     // Scroll to bottom when message changes
     scrollToBottom();
-  }, [message]);
+
+    return () => {
+      socket.off('connect', handleReconnect);
+      if (listenerFuncRef.current) {
+        socket.off('cea-worker-message', listenerFuncRef.current);
+      }
+    };
+  }, [message, job.id, message_appender]);
 
   // Scroll to bottom when modal becomes visible
   useEffect(() => {

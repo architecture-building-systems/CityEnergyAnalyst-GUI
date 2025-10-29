@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
 import useJobsStore, {
   useSelectedJob,
@@ -109,166 +109,242 @@ const JobStatusBar = () => {
   const [, setModalVisible] = useShowJobInfo();
   const [, setSelectedJob] = useSelectedJob();
 
+  const handlersRef = useRef(null);
+  const depsRef = useRef({});
+
+  // Keep latest function references in a ref
+  depsRef.current = {
+    updateJob,
+    dismissJob,
+    setActiveMapCategory,
+    setModalVisible,
+    setSelectedJob,
+    setMessage,
+  };
+
   useEffect(() => {
     notification.config({
       top: 80,
     });
 
-    socket.on('cea-job-created', (job) => {
-      console.log('cea-job-created: job', job);
+    // Create stable handlers that access latest functions via ref
+    if (!handlersRef.current) {
+      handlersRef.current = {
+        onJobCreated: (job) => {
+          if (import.meta.env.DEV) {
+            console.log('cea-job-created: job', job);
+          }
 
-      const key = job.id;
-      notification.info({
-        key,
-        message: job.script_label,
-        description: 'Job created.',
-        placement: 'top',
-        className: 'cea-job-status-notification',
-        duration: 1,
-      });
-    });
+          const key = job.id;
+          notification.info({
+            key,
+            message: job.script_label,
+            description: 'Job created.',
+            placement: 'top',
+            className: 'cea-job-status-notification',
+            duration: 1,
+          });
+        },
+        onWorkerStarted: (job) => {
+          depsRef.current.updateJob(job);
 
-    socket.on('cea-worker-started', (job) => {
-      updateJob(job);
+          const key = job.id;
+          notification.info({
+            key,
+            message: job.script_label,
+            description: 'Job started.',
+            placement: 'top',
+            className: 'cea-job-status-notification',
+            duration: 1,
+          });
+        },
+        onWorkerSuccess: (job) => {
+          depsRef.current.updateJob(job);
+          depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
 
-      const key = job.id;
-      notification.info({
-        key,
-        message: job.script_label,
-        description: 'Job started.',
-        placement: 'top',
-        className: 'cea-job-status-notification',
-        duration: 1,
-      });
-    });
-    socket.on('cea-worker-success', (job) => {
-      updateJob(job);
-      setMessage(`jobID: ${job.id} - completed ✅`);
+          const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
 
-      const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
+          const key = job.id;
+          const duration = isPlotJob ? 0 : 5;
 
-      const key = job.id;
-      let duration = isPlotJob ? 0 : 5;
+          notification.success({
+            key,
+            message: job.script_label,
+            description: 'Job completed.',
+            placement: 'top',
+            className: 'cea-job-status-notification',
+            duration,
+            btn: (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    notification.destroy(key);
+                    depsRef.current.setSelectedJob(job);
+                    depsRef.current.setModalVisible(true);
+                  }}
+                >
+                  View Logs
+                </Button>
 
-      notification.success({
-        key,
-        message: job.script_label,
-        description: 'Job completed.',
-        placement: 'top',
-        className: 'cea-job-status-notification',
-        duration,
-        btn: (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button
-              size="small"
-              onClick={() => {
-                notification.destroy(key);
-                setSelectedJob(job);
-                setModalVisible(true);
-              }}
-            >
-              View Logs
-            </Button>
+                {job.script in VIEW_MAP_RESULTS && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => {
+                      notification.destroy(key);
+                      depsRef.current.setActiveMapCategory(
+                        VIEW_MAP_RESULTS[job.script],
+                      );
+                    }}
+                  >
+                    View Results
+                  </Button>
+                )}
 
-            {Object.keys(VIEW_MAP_RESULTS).includes(job.script) && (
+                {isPlotJob && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    style={{ background: PLOTS_PRIMARY_COLOR }}
+                    onClick={() => {
+                      notification.destroy(key);
+                      const plothtml = job.output;
+                      // Create a blob from the HTML content
+                      const blob = new Blob([plothtml], { type: 'text/html' });
+
+                      // Create a URL for the blob
+                      const url = URL.createObjectURL(blob);
+                      const windowFeatures =
+                        'width=1000,height=800,resizable=yes,status=yes,noopener,noreferrer';
+
+                      // Open the URL in a new window/tab
+                      const newWindow = window.open(
+                        url,
+                        '_blank',
+                        windowFeatures,
+                      );
+
+                      // Clean up the URL object
+                      if (newWindow) {
+                        // Window opened successfully - revoke URL after it loads
+                        newWindow.onload = () => {
+                          // Revoke the URL after a delay to ensure it's loaded
+                          setTimeout(() => URL.revokeObjectURL(url), 1000);
+                        };
+                      } else {
+                        // Popup blocked - revoke URL immediately to prevent leak
+                        URL.revokeObjectURL(url);
+                      }
+                    }}
+                  >
+                    View Plot
+                  </Button>
+                )}
+              </div>
+            ),
+          });
+        },
+        onWorkerCanceled: (job) => {
+          depsRef.current.dismissJob(job);
+          depsRef.current.setMessage(`jobID: ${job.id} - canceled ✖️`);
+        },
+        onWorkerError: (job) => {
+          depsRef.current.updateJob(job);
+          depsRef.current.setMessage(`jobID: ${job.id} - error ❗`);
+
+          const key = job.id;
+          notification.error({
+            key,
+            message: job.script_label,
+            description: job.error,
+            placement: 'top',
+            className: 'cea-job-status-notification',
+            duration: 0,
+            btn: (
               <Button
                 type="primary"
                 size="small"
                 onClick={() => {
                   notification.destroy(key);
-                  setActiveMapCategory(VIEW_MAP_RESULTS[job.script]);
+                  depsRef.current.setSelectedJob(job);
+                  depsRef.current.setModalVisible(true);
                 }}
               >
-                View Results
+                View Logs
               </Button>
-            )}
+            ),
+          });
+        },
+        onWorkerMessage: (data) => {
+          // Validate data and message before processing
+          if (!data || typeof data.message !== 'string' || !data.message) {
+            return;
+          }
 
-            {isPlotJob && (
-              <Button
-                type="primary"
-                size="small"
-                style={{ background: PLOTS_PRIMARY_COLOR }}
-                onClick={() => {
-                  notification.destroy(key);
-                  const plothtml = job.output;
-                  // Create a blob from the HTML content
-                  const blob = new Blob([plothtml], { type: 'text/html' });
+          const lines = data.message
+            .split(/\r?\n/)
+            .map((x) => x.trim())
+            .filter((x) => x.length > 0);
 
-                  // Create a URL for the blob
-                  const url = URL.createObjectURL(blob);
-                  const windowFeatures =
-                    'width=1000,height=800,resizable=yes,status=yes';
+          // Ensure lines array is not empty before accessing
+          if (lines.length === 0) {
+            return;
+          }
 
-                  // Open the URL in a new window/tab
-                  const newWindow = window.open(url, '_blank', windowFeatures);
+          const last_line = lines[lines.length - 1];
 
-                  // Clean up the URL object when the window has loaded
-                  if (newWindow) {
-                    newWindow.onload = () => {
-                      // Revoke the URL after a delay to ensure it's loaded
-                      setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    };
-                  }
-                }}
-              >
-                View Plot
-              </Button>
-            )}
-          </div>
-        ),
-      });
-    });
-    socket.on('cea-worker-canceled', (job) => {
-      dismissJob(job);
-      setMessage(`jobID: ${job.id} - canceled ✖️`);
-    });
-    socket.on('cea-worker-error', (job) => {
-      updateJob(job);
-      setMessage(`jobID: ${job.id} - error ❗`);
+          // Only call setMessage if both jobid and last_line exist
+          if (data.jobid && last_line) {
+            depsRef.current.setMessage(
+              `jobID: ${data.jobid} - ${last_line.slice(0, 80)}`,
+            );
+          }
+        },
+      };
+    }
 
-      const key = job.id;
-      notification.error({
-        key,
-        message: job.script_label,
-        description: job.error,
-        placement: 'top',
-        className: 'cea-job-status-notification',
-        duration: 0,
-        btn: (
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => {
-              notification.destroy(key);
-              setSelectedJob(job);
-              setModalVisible(true);
-            }}
-          >
-            View Logs
-          </Button>
-        ),
-      });
-    });
+    const H = handlersRef.current;
 
-    socket.on('cea-worker-message', (data) => {
-      let lines = data.message
-        .split(/\r?\n/)
-        .map((x) => x.trim())
-        .filter((x) => x.length > 0);
-      let last_line = lines[lines.length - 1];
-      last_line &&
-        setMessage(`jobID: ${data.jobid} - ${last_line.substr(0, 80)}`);
-    });
+    // Remove all socket event listeners
+    const removeSocketListeners = () => {
+      socket.off('cea-job-created', H.onJobCreated);
+      socket.off('cea-worker-started', H.onWorkerStarted);
+      socket.off('cea-worker-success', H.onWorkerSuccess);
+      socket.off('cea-worker-canceled', H.onWorkerCanceled);
+      socket.off('cea-worker-error', H.onWorkerError);
+      socket.off('cea-worker-message', H.onWorkerMessage);
+    };
+
+    // Register all socket event listeners
+    const registerSocketListeners = () => {
+      // Remove only our own handlers, then re-attach
+      removeSocketListeners();
+
+      socket.on('cea-job-created', H.onJobCreated);
+      socket.on('cea-worker-started', H.onWorkerStarted);
+      socket.on('cea-worker-success', H.onWorkerSuccess);
+      socket.on('cea-worker-canceled', H.onWorkerCanceled);
+      socket.on('cea-worker-error', H.onWorkerError);
+      socket.on('cea-worker-message', H.onWorkerMessage);
+    };
+
+    // Initial registration
+    registerSocketListeners();
+
+    // Re-register listeners on reconnection
+    const handleReconnect = () => {
+      if (import.meta.env.DEV) {
+        console.log('Socket reconnected, re-registering job event listeners');
+      }
+      registerSocketListeners();
+    };
+
+    socket.on('connect', handleReconnect);
 
     return () => {
-      socket.off('cea-job-created');
-
-      socket.off('cea-worker-started');
-      socket.off('cea-worker-success');
-      socket.off('cea-worker-canceled');
-      socket.off('cea-worker-error');
-
-      socket.off('cea-worker-message');
+      socket.off('connect', handleReconnect);
+      removeSocketListeners();
     };
   }, []);
 
