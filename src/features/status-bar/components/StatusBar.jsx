@@ -329,26 +329,22 @@ const JobStatusBar = () => {
       socket.on('cea-worker-message', H.onWorkerMessage);
     };
 
-    // Wait for socket connection before registering listeners
-    waitForConnection(() => {
+    // Register listeners on connection and reconnection
+    const handleConnect = () => {
       if (import.meta.env.DEV) {
         console.log('Socket connected, registering job event listeners');
       }
       registerSocketListeners();
-    });
-
-    // Re-register listeners on reconnection
-    const handleReconnect = () => {
-      if (import.meta.env.DEV) {
-        console.log('Socket reconnected, re-registering job event listeners');
-      }
-      registerSocketListeners();
     };
 
-    socket.on('connect', handleReconnect);
+    // Wait for initial connection, then register connect handler
+    waitForConnection(() => {
+      handleConnect();
+      socket.on('connect', handleConnect);
+    });
 
     return () => {
-      socket.off('connect', handleReconnect);
+      socket.off('connect', handleConnect);
       removeSocketListeners();
     };
   }, []);
