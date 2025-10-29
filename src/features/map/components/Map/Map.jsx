@@ -652,8 +652,16 @@ const DeckGLMap = ({ data, colors }) => {
     e.preventDefault();
   }, []);
 
+  const handlePointerLeave = useCallback(() => {
+    setTooltipInfo(null);
+  }, [setTooltipInfo]);
+
   return (
-    <>
+    <div
+      onPointerLeave={handlePointerLeave}
+      onMouseLeave={handlePointerLeave}
+      style={{ position: 'relative', height: '100%', width: '100%' }}
+    >
       <DeckGL
         viewState={viewState}
         controller={{ inertia: true }}
@@ -670,7 +678,7 @@ const DeckGLMap = ({ data, colors }) => {
         />
       </DeckGL>
       <MapTooltip info={tooltipInfo} />
-    </>
+    </div>
   );
 };
 
