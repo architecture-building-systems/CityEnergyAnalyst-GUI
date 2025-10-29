@@ -33,6 +33,7 @@ const useRefreshInterval = () => {
 
 const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { deleteJob } = useJobsStore();
   useRefreshInterval();
 
@@ -81,6 +82,26 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   const stopPropagation = (e) => {
     e.stopPropagation();
     e.preventDefault();
+  };
+
+  const handleDelete = async (e) => {
+    stopPropagation(e);
+    setIsLoading(true);
+    try {
+      await deleteJob(id);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = async (e) => {
+    stopPropagation(e);
+    setIsLoading(true);
+    try {
+      await cancelCeaJob({ id, ...job });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -181,22 +202,36 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
             />
           )}
           {job.state > 1 && isHovered && (
-            <BinAnimationIcon
-              className="cea-job-info-icon danger shake"
-              onClick={(e) => {
-                stopPropagation(e);
-                deleteJob(id);
-              }}
-            />
+            <>
+              {isLoading ? (
+                <LoadingOutlined
+                  className="cea-job-info-icon"
+                  style={{ color: 'grey' }}
+                  spin
+                />
+              ) : (
+                <BinAnimationIcon
+                  className="cea-job-info-icon danger shake"
+                  onClick={handleDelete}
+                />
+              )}
+            </>
           )}
           {job.state < 2 && (
-            <StopIcon
-              className="cea-job-info-icon danger"
-              onClick={(e) => {
-                stopPropagation(e);
-                cancelCeaJob({ id, ...job });
-              }}
-            />
+            <>
+              {isLoading ? (
+                <LoadingOutlined
+                  className="cea-job-info-icon"
+                  style={{ color: 'grey' }}
+                  spin
+                />
+              ) : (
+                <StopIcon
+                  className="cea-job-info-icon danger"
+                  onClick={handleCancel}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
@@ -204,8 +239,8 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   );
 };
 
-const cancelCeaJob = (job) => {
-  apiClient.post(`/server/jobs/cancel/${job.id}`);
+const cancelCeaJob = async (job) => {
+  return apiClient.post(`/server/jobs/cancel/${job.id}`);
 };
 
 export default JobInfoCard;
