@@ -73,6 +73,7 @@ The app connects to a CEA (City Energy Analyst) backend server:
 - Real-time updates via Socket.io with connection management (`src/lib/socket.js`)
 - REST API calls via axios
 - **Important**: When registering Socket.io event listeners, use `waitForConnection()` from `src/lib/socket.js` to ensure socket is connected before registering listeners
+- **Backend Code Location**: If the `CityEnergyAnalyst` folder exists in the same directory as this repo, the backend code can be examined at `../CityEnergyAnalyst/cea/interfaces/dashboard`
 
 ### Project Structure Patterns
 - `/src/app/` - Main app pages and routing
