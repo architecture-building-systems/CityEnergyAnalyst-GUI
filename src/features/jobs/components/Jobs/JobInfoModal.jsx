@@ -1,24 +1,13 @@
 import { Alert, Modal } from 'antd';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import socket, { waitForConnection } from 'lib/socket';
 import { apiClient } from 'lib/api/axios';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
-  const isFirst = useRef(true);
-  const listenerFuncRef = useRef(null);
   const containerRef = useRef();
   const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
-
-  const message_appender = useCallback(
-    (data) => {
-      if (data.jobid == job.id) {
-        setMessage((message) => message.concat(data.message));
-      }
-    },
-    [job.id],
-  );
 
   // Scroll to bottom if shouldScroll is true
   const scrollToBottom = () => {
@@ -37,65 +26,10 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
     }
   };
 
+  // Scroll to bottom when message changes
   useEffect(() => {
-    const getJobOutput = async () => {
-      try {
-        const resp = await apiClient.get(
-          `/server/streams/read/${job.id}`,
-          null,
-          { responseType: 'text' },
-        );
-        setMessage(resp?.data ?? '');
-        // Reset shouldScroll when loading a new job
-        shouldScrollRef.current = true;
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    listenerFuncRef.current &&
-      socket.off('cea-worker-message', listenerFuncRef.current);
-    isFirst.current = true;
-    getJobOutput();
-  }, [job]);
-
-  useEffect(() => {
-    if (isFirst.current) {
-      // Wait for socket connection before registering listener
-      waitForConnection(() => {
-        listenerFuncRef.current = message_appender;
-        socket.on('cea-worker-message', listenerFuncRef.current);
-        isFirst.current = false;
-      });
-    }
-
-    // Re-register listener on reconnection
-    const handleReconnect = () => {
-      if (import.meta.env.DEV) {
-        console.log(
-          'Socket reconnected, re-registering message listener for job',
-          job.id,
-        );
-      }
-      // Remove previous (if any), then re-attach with the latest handler
-      if (listenerFuncRef.current) {
-        socket.off('cea-worker-message', listenerFuncRef.current);
-      }
-      listenerFuncRef.current = message_appender;
-      socket.on('cea-worker-message', message_appender);
-    };
-
-    socket.on('connect', handleReconnect);
-
-    // Scroll to bottom when message changes
     scrollToBottom();
-
-    return () => {
-      socket.off('connect', handleReconnect);
-      if (listenerFuncRef.current) {
-        socket.off('cea-worker-message', listenerFuncRef.current);
-      }
-    };
-  }, [message, job.id, message_appender]);
+  }, [message]);
 
   // Scroll to bottom when modal becomes visible
   useEffect(() => {
@@ -104,6 +38,53 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
     }
   }, [visible]);
 
+  // Load job output and register socket listener when modal opens
+  useEffect(() => {
+    if (!visible) return;
+
+    // Load initial job output
+    const getJobOutput = async () => {
+      try {
+        const resp = await apiClient.get(
+          `/server/streams/read/${job.id}`,
+          null,
+          { responseType: 'text' },
+        );
+        setMessage(resp?.data ?? '');
+        shouldScrollRef.current = true;
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getJobOutput();
+
+    // Message handler for this specific job
+    const message_appender = (data) => {
+      if (data.jobid == job.id) {
+        setMessage((prevMessage) => prevMessage.concat(data.message));
+      }
+    };
+
+    // Register socket listener
+    waitForConnection(() => {
+      socket.on('cea-worker-message', message_appender);
+
+      if (import.meta.env.DEV) {
+        console.log('Registered socket listener for job', job.id);
+      }
+    });
+
+    // Cleanup: remove listener when modal closes or unmounts
+    return () => {
+      socket.off('cea-worker-message', message_appender);
+
+      if (import.meta.env.DEV) {
+        console.log('Removed socket listener for job', job.id);
+      }
+    };
+  }, [visible, job.id]);
+
   return (
     <Modal
       title={`Job Info - ${job.script_label} [${job.scenario_name}]`}
@@ -111,7 +92,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       width={800}
       footer={false}
       onCancel={() => setVisible(false)}
-      destroyOnHidden
+      destroyOnClose
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {job.state == 1 && <Alert message="Job running..." type="info" />}

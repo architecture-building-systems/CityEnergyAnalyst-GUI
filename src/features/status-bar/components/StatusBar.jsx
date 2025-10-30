@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 
-import useJobsStore, {
-  useSelectedJob,
-  useShowJobInfo,
-} from 'features/jobs/stores/jobsStore';
+import useJobsStore from 'features/jobs/stores/jobsStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
@@ -16,6 +13,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
 import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
+import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 
 const StatusBar = () => {
   return (
@@ -106,8 +104,9 @@ const JobStatusBar = () => {
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
 
-  const [, setModalVisible] = useShowJobInfo();
-  const [, setSelectedJob] = useSelectedJob();
+  // Local state for modal triggered from notifications
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   const handlersRef = useRef(null);
   const depsRef = useRef({});
@@ -349,12 +348,23 @@ const JobStatusBar = () => {
     };
   }, []);
 
-  if (output.length < 1) return null;
+  if (output.length < 1 && !selectedJob) return null;
 
   return (
-    <div className="cea-status-bar-button">
-      <span>{output}</span>
-    </div>
+    <>
+      {output.length > 0 && (
+        <div className="cea-status-bar-button">
+          <span>{output}</span>
+        </div>
+      )}
+      {selectedJob && (
+        <JobInfoModal
+          job={selectedJob}
+          visible={modalVisible}
+          setVisible={setModalVisible}
+        />
+      )}
+    </>
   );
 };
 

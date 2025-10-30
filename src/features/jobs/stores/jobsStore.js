@@ -18,11 +18,6 @@ const transformJobPayload = (payload) => {
 const useJobsStore = create((set, get) => ({
   jobs: null,
 
-  selectedJob: null,
-  showJobInfo: false,
-  setSelectedJob: (selectedJob) => set({ selectedJob }),
-  setShowJobInfo: (showJobInfo) => set({ showJobInfo }),
-
   // Actions
   fetchJobs: async () => {
     try {
@@ -114,18 +109,6 @@ const useJobsStore = create((set, get) => ({
     }
   },
 }));
-
-export const useSelectedJob = () => {
-  const selectedJob = useJobsStore((state) => state.selectedJob);
-  const setSelectedJob = useJobsStore((state) => state.setSelectedJob);
-  return [selectedJob, setSelectedJob];
-};
-
-export const useShowJobInfo = () => {
-  const showJobInfo = useJobsStore((state) => state.showJobInfo);
-  const setShowJobInfo = useJobsStore((state) => state.setShowJobInfo);
-  return [showJobInfo, setShowJobInfo];
-};
 
 // Selector hook that returns jobs as a sorted array (newest first)
 export const useSortedJobs = () => {

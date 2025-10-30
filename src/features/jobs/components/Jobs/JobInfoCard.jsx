@@ -14,6 +14,7 @@ import useJobsStore from 'features/jobs/stores/jobsStore';
 
 import './JobInfoCard.css';
 import { apiClient } from 'lib/api/axios';
+import JobInfoModal from './JobInfoModal';
 
 const useRefreshInterval = () => {
   const [refreshInterval, setRefreshInterval] = useState(30 * 1000); // Start with 30s
@@ -31,9 +32,10 @@ const useRefreshInterval = () => {
   }, [refreshInterval]); // Recreate the interval when refreshInterval changes
 };
 
-const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
+const JobInfoCard = ({ id, job, verbose }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const { deleteJob } = useJobsStore();
   useRefreshInterval();
 
@@ -74,7 +76,6 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   };
 
   const handleClick = () => {
-    setSelectedJob({ id, ...job });
     setModalVisible(true);
   };
 
@@ -105,135 +106,142 @@ const JobInfoCard = ({ id, job, setModalVisible, setSelectedJob, verbose }) => {
   };
 
   return (
-    <div
-      className="cea-job-info-card"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          handleClick();
-          e.preventDefault();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label={`Job: ${job?.script_label ?? job?.script}`}
-    >
+    <>
       <div
-        className="cea-status-bar-icon"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          fontSize: 16,
-          margin: 6,
+        className="cea-job-info-card"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleClick();
+            e.preventDefault();
+          }
         }}
+        role="button"
+        tabIndex={0}
+        aria-label={`Job: ${job?.script_label ?? job?.script}`}
       >
-        <StateIcon state={job.state} />
-      </div>
-
-      <div
-        className="cea-job-info-content"
-        style={{
-          flexGrow: 1,
-          padding: 4,
-
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-
-          fontSize: 12,
-        }}
-      >
-        <div className="cea-job-info-content-left">
-          <div>
-            <b>{job?.script_label ?? job?.script}</b>
-          </div>
-          <div>
-            scenario: <b>{job?.scenario_name} </b>
-            {!verbose && start_time && <span>[started {started_ago}]</span>}
-          </div>
-
-          {verbose && (
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <div>
-                  started:{' '}
-                  <i title={start_time ? start_time.toLocaleString() : ''}>
-                    {started_ago}
-                  </i>
-                </div>
-                <div>
-                  duration:{' '}
-                  <i>
-                    {typeof duration == 'number'
-                      ? duration >= 1
-                        ? duration + ' minutes'
-                        : '< 1 minute'
-                      : duration}
-                  </i>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
         <div
-          className="cea-job-info-content-actions"
+          className="cea-status-bar-icon"
           style={{
-            fontSize: 18,
             display: 'flex',
-            gap: 2,
-            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: 16,
+            margin: 6,
           }}
         >
-          {verbose && isHovered && (
-            <InformationIcon
-              className="cea-job-info-icon info"
-              onClick={(e) => {
-                stopPropagation(e);
-                handleClick();
-              }}
-            />
-          )}
-          {job.state > 1 && isHovered && (
-            <>
-              {isLoading ? (
-                <LoadingOutlined
-                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                  spin
-                />
-              ) : (
-                <BinAnimationIcon
-                  className="cea-job-info-icon danger shake"
-                  onClick={handleDelete}
-                />
-              )}
-            </>
-          )}
-          {job.state < 2 && (
-            <>
-              {isLoading ? (
-                <LoadingOutlined
-                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                  spin
-                />
-              ) : (
-                <StopIcon
-                  className="cea-job-info-icon danger"
-                  onClick={handleCancel}
-                />
-              )}
-            </>
-          )}
+          <StateIcon state={job.state} />
+        </div>
+
+        <div
+          className="cea-job-info-content"
+          style={{
+            flexGrow: 1,
+            padding: 4,
+
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+
+            fontSize: 12,
+          }}
+        >
+          <div className="cea-job-info-content-left">
+            <div>
+              <b>{job?.script_label ?? job?.script}</b>
+            </div>
+            <div>
+              scenario: <b>{job?.scenario_name} </b>
+              {!verbose && start_time && <span>[started {started_ago}]</span>}
+            </div>
+
+            {verbose && (
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <div>
+                    started:{' '}
+                    <i title={start_time ? start_time.toLocaleString() : ''}>
+                      {started_ago}
+                    </i>
+                  </div>
+                  <div>
+                    duration:{' '}
+                    <i>
+                      {typeof duration == 'number'
+                        ? duration >= 1
+                          ? duration + ' minutes'
+                          : '< 1 minute'
+                        : duration}
+                    </i>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div
+            className="cea-job-info-content-actions"
+            style={{
+              fontSize: 18,
+              display: 'flex',
+              gap: 2,
+              justifyContent: 'center',
+            }}
+          >
+            {verbose && isHovered && (
+              <InformationIcon
+                className="cea-job-info-icon info"
+                onClick={(e) => {
+                  stopPropagation(e);
+                  handleClick();
+                }}
+              />
+            )}
+            {job.state > 1 && isHovered && (
+              <>
+                {isLoading ? (
+                  <LoadingOutlined
+                    style={{ color: 'grey', fontSize: 18, padding: 8 }}
+                    spin
+                  />
+                ) : (
+                  <BinAnimationIcon
+                    className="cea-job-info-icon danger shake"
+                    onClick={handleDelete}
+                  />
+                )}
+              </>
+            )}
+            {job.state < 2 && (
+              <>
+                {isLoading ? (
+                  <LoadingOutlined
+                    style={{ color: 'grey', fontSize: 18, padding: 8 }}
+                    spin
+                  />
+                ) : (
+                  <StopIcon
+                    className="cea-job-info-icon danger"
+                    onClick={handleCancel}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+      <JobInfoModal
+        job={{ id, ...job }}
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
+    </>
   );
 };
 

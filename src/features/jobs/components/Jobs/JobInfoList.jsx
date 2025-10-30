@@ -2,12 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
-import JobInfoModal from './JobInfoModal';
-import useJobsStore, {
-  useSelectedJob,
-  useShowJobInfo,
-  useSortedJobs,
-} from 'features/jobs/stores/jobsStore';
+import useJobsStore, { useSortedJobs } from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useIsValidUser } from 'stores/userStore';
 
@@ -26,8 +21,6 @@ export const JobInfoList = ({ style }) => {
   useFetchJobs(project);
   const sortedJobs = useSortedJobs();
 
-  const [selectedJob, setSelectedJob] = useSelectedJob();
-  const [modalVisible, setModalVisible] = useShowJobInfo();
   const [expanded, setExpanded] = useState(false);
 
   const containerRef = useRef(null);
@@ -36,17 +29,10 @@ export const JobInfoList = ({ style }) => {
     () =>
       sortedJobs.map((job) => {
         return (
-          <JobInfoCard
-            key={job.id}
-            id={job.id}
-            job={job}
-            setModalVisible={setModalVisible}
-            setSelectedJob={setSelectedJob}
-            verbose={expanded}
-          />
+          <JobInfoCard key={job.id} id={job.id} job={job} verbose={expanded} />
         );
       }),
-    [sortedJobs, setModalVisible, setSelectedJob, expanded],
+    [sortedJobs, expanded],
   );
 
   const goToBottom = () => {
@@ -80,27 +66,18 @@ export const JobInfoList = ({ style }) => {
   if (!project || sortedJobs.length === 0) return null;
 
   return (
-    <>
-      <div
-        className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
-        onMouseEnter={() => setExpanded(true)}
-        onMouseLeave={() => setExpanded(false)}
-        ref={containerRef}
-        style={{
-          overflow: expanded ? 'auto' : 'hidden',
-          ...style,
-        }}
-      >
-        {jobInfos}
-      </div>
-      {selectedJob && (
-        <JobInfoModal
-          job={selectedJob}
-          visible={modalVisible}
-          setVisible={setModalVisible}
-        />
-      )}
-    </>
+    <div
+      className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+      ref={containerRef}
+      style={{
+        overflow: expanded ? 'auto' : 'hidden',
+        ...style,
+      }}
+    >
+      {jobInfos}
+    </div>
   );
 };
 
