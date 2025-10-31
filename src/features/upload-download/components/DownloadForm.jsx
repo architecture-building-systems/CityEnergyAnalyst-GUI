@@ -1,7 +1,8 @@
-import { Button, Checkbox, Form, message, Progress } from 'antd';
+import { Button, Checkbox, Form, message } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useState } from 'react';
 import { CloudDownloadIcon } from 'assets/icons';
+import useDownloadStore from '../stores/downloadStore';
 
 const DownloadForm = () => {
   return (
@@ -10,7 +11,10 @@ const DownloadForm = () => {
         <h1 style={{ display: 'flex', gap: 12 }}>
           <CloudDownloadIcon style={{ fontSize: 36 }} /> Download Scenario(s)
         </h1>
-        <p>Select one or more Scenarios to download.</p>
+        <p>
+          Select one or more Scenarios to download. Downloads will be prepared
+          in the background and you can track their progress in the status bar.
+        </p>
       </div>
 
       <FormContent />
@@ -91,145 +95,50 @@ const validateFileSelection = ({ getFieldValue }) => ({
 
 const FormContent = () => {
   const [form] = Form.useForm();
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const currentProject = useProjectStore((state) => state.project);
-
-  const [downloadStatus, setDownloadStatus] = useState({
-    status: null,
-    percent: null,
-  });
-  const [downloadSize, setDownloadSize] = useState({
-    loaded: null,
-    total: null,
-  });
-
-  const resetDownloadState = () => {
-    setDownloadStatus({ status: null, percent: null });
-    setDownloadSize({ loaded: null, total: null });
-  };
-
-  const disableForm = downloadStatus.status !== null;
+  const prepareDownload = useDownloadStore((state) => state.prepareDownload);
 
   const onFinish = async (values) => {
     if (!values.scenarios.length) return;
-    setDownloadStatus({ status: 'preparing', percent: null });
+    if (!currentProject) {
+      message.error('No project selected');
+      return;
+    }
 
-    // TODO: Cancel on unmount
-    const xhr = new XMLHttpRequest();
-    xhr.responseType = 'blob';
-    xhr.onprogress = (event) => {
-      if (event.lengthComputable) {
-        setDownloadSize({
-          loaded: (event.loaded / 1024 / 1024).toFixed(2),
-          total: (event.total / 1024 / 1024).toFixed(2),
-        });
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        // Update UI with download progress
-        setDownloadStatus({ status: 'downloading', percent: percentComplete });
-      }
-    };
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        // Extract filename from Content-Disposition header if available
-        const contentDisposition = xhr.getResponseHeader('Content-Disposition');
-        let filename = 'scenarios.zip';
-        if (contentDisposition) {
-          const match = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(
-            contentDisposition,
-          );
-          if (match && match[1]) {
-            filename = match[1].replace(/['"]/g, '');
-          }
-        }
+    setIsSubmitting(true);
+    try {
+      // Map form values to API format
+      const outputFiles = (values.outputFiles || []).map((val) =>
+        val.toUpperCase(),
+      );
 
-        // Create a download from the response without keeping the whole blob in memory
-        const url = window.URL.createObjectURL(xhr.response);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
+      await prepareDownload(
+        currentProject,
+        values.scenarios,
+        values.inputFiles,
+        outputFiles,
+      );
 
-        // Use click() directly instead of appending to document
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-
-        // Clean up to free memory
-        setTimeout(() => {
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-        }, 100);
-      } else {
-        // Handle download errors
-        console.error('Download failed with status:', xhr.status);
-        try {
-          // Try to parse error response
-          const errorBlob = xhr.response;
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              const errorJson = JSON.parse(reader.result);
-              message.error(
-                `Download failed: ${errorJson.detail || errorJson.message || 'Unknown error'}`,
-              );
-            } catch (e) {
-              message.error(`Download failed with status: ${xhr.status}`);
-            }
-          };
-          reader.readAsText(errorBlob);
-        } catch (e) {
-          message.error(`Download failed with status: ${xhr.status}`);
-        }
-      }
-      resetDownloadState();
-    };
-
-    // Add credentials for consistent auth
-    xhr.withCredentials = true;
-
-    // Add error handler
-    xhr.onerror = () => {
-      message.error('Network error occurred during download');
-      resetDownloadState();
-    };
-    xhr.open(
-      'POST',
-      `${import.meta.env.VITE_CEA_URL}/api/contents/scenario/download`,
-      true,
-    );
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(
-      JSON.stringify({
-        project: currentProject,
-        scenarios: values.scenarios,
-        input_files: values.inputFiles,
-        output_files: values.outputFiles,
-      }),
-    );
+      message.success(
+        'Download preparation started! Track progress in the status bar.',
+      );
+      form.resetFields();
+    } catch (error) {
+      console.error('Failed to start download:', error);
+      const errorMessage =
+        error.response?.data?.detail || 'Failed to start download';
+      message.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Form form={form} onFinish={onFinish}>
-      <Button type="primary" htmlType="submit" loading={disableForm}>
-        Download
+      <Button type="primary" htmlType="submit" loading={isSubmitting}>
+        Prepare Download
       </Button>
-
-      {downloadStatus.status === 'preparing' && (
-        <div style={{ marginTop: 16 }}>Preparing download...</div>
-      )}
-
-      {downloadStatus.status === 'downloading' && (
-        <div style={{ marginTop: 16 }}>
-          <Progress percent={downloadStatus.percent} status="active" />
-
-          <div style={{ marginTop: 8 }}>
-            <span>Downloaded: </span>
-            <span>{downloadSize.loaded}</span>
-            <span>/</span>
-            <span>{downloadSize.total}</span>
-            <span>MB</span>
-          </div>
-        </div>
-      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', margin: 12 }}>
         <div>
@@ -248,7 +157,7 @@ const FormContent = () => {
               dependencies={['outputFiles']}
               rules={[validateFileSelection]}
             >
-              <Checkbox disabled={disableForm}>
+              <Checkbox disabled={isSubmitting}>
                 <div>
                   Database, Building geometries, properties, streets, terrain &
                   weather
@@ -265,7 +174,7 @@ const FormContent = () => {
               rules={[validateFileSelection]}
             >
               <Checkbox.Group
-                disabled={disableForm}
+                disabled={isSubmitting}
                 style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
               >
                 <Checkbox value="summary">
@@ -316,7 +225,7 @@ const FormContent = () => {
               },
             ]}
           >
-            <ScenarioCheckboxes disabled={disableForm} />
+            <ScenarioCheckboxes disabled={isSubmitting} />
           </Form.Item>
         </div>
       </div>
