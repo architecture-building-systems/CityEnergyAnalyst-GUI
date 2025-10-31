@@ -189,10 +189,7 @@ const FormContent = () => {
                 <Checkbox value="detailed">
                   <div>
                     Output Data -{' '}
-                    <small>
-                      Includes all output data in CSV format{' '}
-                      <i>(would take longer to download)</i>
-                    </small>
+                    <small>Includes all output data in CSV format</small>
                   </div>
                 </Checkbox>
                 <Checkbox value="export">
