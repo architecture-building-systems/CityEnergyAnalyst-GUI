@@ -73,7 +73,21 @@ const useDownloadStore = create((set, get) => ({
   // Download a file
   downloadFile: async (downloadId) => {
     try {
-      // Create a temporary anchor element and trigger download
+      // First check download status to ensure it's ready and handle errors
+      const statusResponse = await apiClient.get(
+        `/api/downloads/${downloadId}/status`,
+      );
+      const downloadStatus = statusResponse.data;
+
+      // Validate download is ready
+      if (downloadStatus.state !== 'READY') {
+        throw new Error(
+          downloadStatus.error_message ||
+            `Download is not ready (state: ${downloadStatus.state})`,
+        );
+      }
+
+      // If ready, trigger direct download
       const downloadUrl = `${import.meta.env.VITE_CEA_URL}/api/downloads/${downloadId}`;
 
       const a = document.createElement('a');

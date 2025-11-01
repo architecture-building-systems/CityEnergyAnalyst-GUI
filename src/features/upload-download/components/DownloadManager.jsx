@@ -11,6 +11,7 @@ import useDownloadStore from '../stores/downloadStore';
 
 const DownloadManager = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [downloadingIds, setDownloadingIds] = useState(new Set());
   const downloadsMap = useDownloadStore((state) => state.downloads);
   const fetchDownloads = useDownloadStore((state) => state.fetchDownloads);
   const downloadFile = useDownloadStore((state) => state.downloadFile);
@@ -45,6 +46,9 @@ const DownloadManager = () => {
   const activeDownloads = downloads.filter((d) => d.state !== 'DOWNLOADED');
 
   const handleDownload = async (downloadId) => {
+    // Add to downloading set
+    setDownloadingIds((prev) => new Set([...prev, downloadId]));
+
     try {
       await downloadFile(downloadId);
       message.success('Download started');
@@ -52,6 +56,15 @@ const DownloadManager = () => {
       const errorMessage =
         error.response?.data?.detail || 'Failed to download file';
       message.error(errorMessage);
+    } finally {
+      // Remove from downloading set after a short delay
+      setTimeout(() => {
+        setDownloadingIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(downloadId);
+          return newSet;
+        });
+      }, 1000);
     }
   };
 
@@ -85,6 +98,7 @@ const DownloadManager = () => {
               download={download}
               onDownload={handleDownload}
               onDelete={handleDelete}
+              isDownloading={downloadingIds.has(download.id)}
             />
           ))}
         </Space>
@@ -112,7 +126,7 @@ const DownloadManager = () => {
   );
 };
 
-const DownloadItem = ({ download, onDownload, onDelete }) => {
+const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
   const {
     id,
     state,
@@ -132,8 +146,6 @@ const DownloadItem = ({ download, onDownload, onDelete }) => {
         return <LoadingOutlined style={{ color: '#1890ff' }} />;
       case 'READY':
         return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
-      case 'DOWNLOADING':
-        return <LoadingOutlined style={{ color: '#1890ff' }} />;
       case 'DOWNLOADED':
         return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
       case 'ERROR':
@@ -207,12 +219,13 @@ const DownloadItem = ({ download, onDownload, onDelete }) => {
               type="primary"
               size="small"
               icon={<DownloadOutlined />}
+              loading={isDownloading}
               onClick={() => onDownload(id)}
             >
               Download
             </Button>
           )}
-          {state !== 'DOWNLOADING' && (
+          {!isDownloading && (
             <Button
               type="text"
               size="small"
@@ -225,9 +238,6 @@ const DownloadItem = ({ download, onDownload, onDelete }) => {
       </div>
 
       {state === 'PREPARING' && (
-        <Progress percent={100} status="active" showInfo={false} />
-      )}
-      {state === 'DOWNLOADING' && (
         <Progress percent={100} status="active" showInfo={false} />
       )}
     </div>
