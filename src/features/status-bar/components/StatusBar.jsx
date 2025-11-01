@@ -14,6 +14,7 @@ import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
 import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
+import DownloadManager from 'features/upload-download/components/DownloadManager';
 
 const StatusBar = () => {
   return (
@@ -23,6 +24,7 @@ const StatusBar = () => {
       </div>
       <div id="cea-status-bar-right">
         <JobStatusBar />
+        <DownloadManager />
         <div className="cea-status-bar-button primary">
           <DropdownMenu />
         </div>
