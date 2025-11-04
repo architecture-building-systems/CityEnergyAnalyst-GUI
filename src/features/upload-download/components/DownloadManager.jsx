@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Badge, Button, Empty, Popover, Progress, Space, message } from 'antd';
 import {
   DownloadOutlined,
@@ -12,6 +12,7 @@ import useDownloadStore from '../stores/downloadStore';
 const DownloadManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
+  const timeoutRef = useRef(null);
   const downloadsMap = useDownloadStore((state) => state.downloads);
   const fetchDownloads = useDownloadStore((state) => state.fetchDownloads);
   const downloadFile = useDownloadStore((state) => state.downloadFile);
@@ -39,6 +40,11 @@ const DownloadManager = () => {
 
     return () => {
       cleanupSocketListeners();
+      // Clear timeout on unmount
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
   }, [initializeSocketListeners, cleanupSocketListeners, fetchDownloads]);
 
@@ -57,13 +63,20 @@ const DownloadManager = () => {
         error.response?.data?.detail || 'Failed to download file';
       message.error(errorMessage);
     } finally {
+      // Clear any existing timeout before setting a new one
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
       // Remove from downloading set after a short delay
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setDownloadingIds((prev) => {
           const newSet = new Set(prev);
           newSet.delete(downloadId);
           return newSet;
         });
+        timeoutRef.current = null;
       }, 1000);
     }
   };
