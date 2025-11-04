@@ -15,8 +15,12 @@ import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-ite
 import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
+import { isElectron } from 'utils/electron';
+import { useIsValidUser } from 'stores/userStore';
 
 const StatusBar = () => {
+  const isValidUser = useIsValidUser();
+
   return (
     <div id="cea-status-bar-container">
       <div id="cea-status-bar-left">
@@ -24,7 +28,7 @@ const StatusBar = () => {
       </div>
       <div id="cea-status-bar-right">
         <JobStatusBar />
-        <DownloadManager />
+        {isValidUser && !isElectron() && <DownloadManager />}
         <div className="cea-status-bar-button primary">
           <DropdownMenu />
         </div>
