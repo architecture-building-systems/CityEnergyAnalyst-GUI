@@ -55,7 +55,7 @@ const DownloadManager = () => {
         timeoutRef.current = null;
       }
     };
-  }, [initializeSocketListeners, cleanupSocketListeners, fetchDownloads]);
+  }, []);
 
   // Count active downloads (not downloaded)
   const activeDownloads = downloads.filter((d) => d.state !== 'DOWNLOADED');

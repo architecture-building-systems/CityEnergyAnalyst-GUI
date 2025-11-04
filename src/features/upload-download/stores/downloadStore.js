@@ -251,9 +251,6 @@ const useDownloadStore = create((set, get) => ({
 
       // Remove the callback from the pending queue to prevent it from being called later
       removeConnectionCallback(connectionHandler);
-
-      // Perform cleanup
-      get().cleanupSocketListeners();
     }, 10000); // 10 second timeout
 
     // Wait for connection with the defined handler
