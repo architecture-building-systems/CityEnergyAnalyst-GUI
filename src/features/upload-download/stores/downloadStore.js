@@ -131,9 +131,22 @@ const useDownloadStore = create((set, get) => ({
     }
   },
 
+  // Cleanup socket listeners (for unmount)
+  cleanupSocketListeners: () => {
+    socket.off('download-created');
+    socket.off('download-progress');
+    socket.off('download-ready');
+    socket.off('download-started');
+    socket.off('download-error');
+    socket.off('download-downloaded');
+  },
+
   // Initialize socket listeners
   initializeSocketListeners: () => {
     waitForConnection(() => {
+      // Remove any existing listeners first to prevent duplicates on reconnect
+      get().cleanupSocketListeners();
+
       // Download created
       socket.on('download-created', (download) => {
         if (import.meta.env.DEV) {
@@ -219,16 +232,6 @@ const useDownloadStore = create((set, get) => ({
         }
       });
     });
-  },
-
-  // Cleanup socket listeners (for unmount)
-  cleanupSocketListeners: () => {
-    socket.off('download-created');
-    socket.off('download-progress');
-    socket.off('download-ready');
-    socket.off('download-started');
-    socket.off('download-error');
-    socket.off('download-downloaded');
   },
 }));
 
