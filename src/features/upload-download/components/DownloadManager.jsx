@@ -22,6 +22,7 @@ const DownloadManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
   const timeoutRef = useRef(null);
+  const prevDownloadCountRef = useRef(0);
   const downloadsMap = useDownloadStore((state) => state.downloads);
   const fetchDownloads = useDownloadStore((state) => state.fetchDownloads);
   const downloadFile = useDownloadStore((state) => state.downloadFile);
@@ -55,7 +56,25 @@ const DownloadManager = () => {
         timeoutRef.current = null;
       }
     };
-  }, []);
+  }, [initializeSocketListeners, fetchDownloads, cleanupSocketListeners]);
+
+  // Show popover when a new download is added
+  useEffect(() => {
+    const currentDownloadCount = downloads.length;
+
+    // Only open popover if:
+    // 1. We have a previous count (not the initial load)
+    // 2. The count has increased (new download added)
+    if (
+      prevDownloadCountRef.current > 0 &&
+      currentDownloadCount > prevDownloadCountRef.current
+    ) {
+      setIsOpen(true);
+    }
+
+    // Update the previous count
+    prevDownloadCountRef.current = currentDownloadCount;
+  }, [downloads.length]);
 
   // Count active downloads (not downloaded)
   const activeDownloads = downloads.filter((d) => d.state !== 'DOWNLOADED');
