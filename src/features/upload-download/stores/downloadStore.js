@@ -58,7 +58,7 @@ const useDownloadStore = create((set, get) => ({
   // Fetch all downloads for current project/user
   fetchDownloads: async () => {
     try {
-      const response = await apiClient.get('/api/downloads');
+      const response = await apiClient.get('/api/downloads/');
       const downloads = response.data;
 
       // Convert array to map
