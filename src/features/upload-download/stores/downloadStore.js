@@ -131,6 +131,14 @@ const useDownloadStore = create((set, get) => ({
       get().removeDownload(downloadId);
       return true;
     } catch (error) {
+      // If the download doesn't exist (404), remove it from local state anyway
+      if (error.response?.status === 404) {
+        console.log(
+          `Download ${downloadId} not found on server, removing from local state`,
+        );
+        get().removeDownload(downloadId);
+        return true;
+      }
       console.error('Failed to delete download:', error);
       throw error;
     }
