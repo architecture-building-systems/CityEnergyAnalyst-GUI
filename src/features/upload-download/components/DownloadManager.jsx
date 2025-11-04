@@ -194,10 +194,6 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
     switch (state) {
       case 'ERROR':
         return '#fff1f0';
-      case 'READY':
-        return '#f6ffed';
-      case 'DOWNLOADED':
-        return '#e6f7ff';
       default:
         return '#ffffff';
     }
