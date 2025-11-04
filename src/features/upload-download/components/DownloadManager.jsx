@@ -16,6 +16,7 @@ import {
   LoadingOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import { parseISO, formatDistanceToNow } from 'date-fns';
 import useDownloadStore from '../stores/downloadStore';
 
 const DownloadManager = () => {
@@ -183,15 +184,19 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
   const scenarioLabel =
     scenarios.length === 1 ? scenarios[0] : `${scenarios.length} scenarios`;
 
-  const formatDate = (dateString) => {
-    if (!dateString) return null;
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString();
-    } catch (error) {
-      return null;
-    }
-  };
+  // Parse created_at date (assumes UTC)
+  const created_time = created_at
+    ? typeof created_at === 'string'
+      ? parseISO(created_at.includes('Z') ? created_at : created_at + 'Z')
+      : new Date(created_at)
+    : null;
+
+  const created_ago = created_time
+    ? formatDistanceToNow(created_time, {
+        addSuffix: true,
+        includeSeconds: true,
+      })
+    : null;
 
   const getStateIcon = () => {
     switch (state) {
@@ -254,14 +259,22 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
               {progress_message || 'Waiting...'}
             </div>
           )}
-          {created_at && (
+          {created_at && (state === 'PENDING' || state === 'PREPARING') && (
             <div style={{ fontSize: 12, color: '#666' }}>
-              Created: {formatDate(created_at)}
+              Created: {created_ago}
             </div>
           )}
+          {created_at &&
+            state !== 'PENDING' &&
+            state !== 'PREPARING' &&
+            state !== 'DOWNLOADED' && (
+              <div style={{ fontSize: 12, color: '#666' }}>
+                Created: {created_time?.toLocaleString()}
+              </div>
+            )}
           {state === 'DOWNLOADED' && downloaded_at && (
             <div style={{ fontSize: 12, color: '#666' }}>
-              Downloaded: {formatDate(downloaded_at)}
+              Downloaded: {new Date(downloaded_at).toLocaleString()}
             </div>
           )}
           {file_size_mb && (
