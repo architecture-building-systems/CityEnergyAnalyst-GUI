@@ -17,6 +17,14 @@ const socket = io(`${import.meta.env.VITE_CEA_URL}`, {
 let isConnected = socket.connected;
 const connectionCallbacks = [];
 
+// Helper to remove a specific callback from the queue
+export const removeConnectionCallback = (callback) => {
+  const index = connectionCallbacks.indexOf(callback);
+  if (index > -1) {
+    connectionCallbacks.splice(index, 1);
+  }
+};
+
 // Helper to wait for connection
 // If callback is provided, it will be called after connection is established
 // Otherwise, returns a Promise that resolves when connected
