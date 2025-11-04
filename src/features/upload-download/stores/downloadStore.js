@@ -94,7 +94,12 @@ const useDownloadStore = create((set, get) => ({
       const { url } = urlResponse.data;
 
       // Trigger download using pre-signed URL
-      const downloadUrl = `${import.meta.env.VITE_CEA_URL}${url}`;
+      // Check if URL is already absolute (e.g., S3 presigned URL)
+      const isAbsoluteUrl =
+        url.startsWith('http://') || url.startsWith('https://');
+      const downloadUrl = isAbsoluteUrl
+        ? url
+        : `${import.meta.env.VITE_CEA_URL}${url.startsWith('/') ? url : `/${url}`}`;
 
       const a = document.createElement('a');
       a.href = downloadUrl;
