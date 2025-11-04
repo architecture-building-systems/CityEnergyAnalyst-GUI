@@ -182,7 +182,7 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
       case 'READY':
         return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
       case 'DOWNLOADED':
-        return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+        return <CheckCircleOutlined />;
       case 'ERROR':
         return <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />;
       default:
