@@ -157,10 +157,22 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
     progress_message,
     progress_percent,
     error_message,
+    created_at,
+    downloaded_at,
   } = download;
 
   const scenarioLabel =
     scenarios.length === 1 ? scenarios[0] : `${scenarios.length} scenarios`;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString();
+    } catch (error) {
+      return null;
+    }
+  };
 
   const getStateIcon = () => {
     switch (state) {
@@ -222,9 +234,21 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
               {scenarioLabel}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: '#666' }}>
-            {progress_message || 'Waiting...'}
-          </div>
+          {state !== 'DOWNLOADED' && (
+            <div style={{ fontSize: 12, color: '#666' }}>
+              {progress_message || 'Waiting...'}
+            </div>
+          )}
+          {created_at && (
+            <div style={{ fontSize: 12, color: '#666' }}>
+              Created: {formatDate(created_at)}
+            </div>
+          )}
+          {state === 'DOWNLOADED' && downloaded_at && (
+            <div style={{ fontSize: 12, color: '#666' }}>
+              Downloaded: {formatDate(downloaded_at)}
+            </div>
+          )}
           {file_size_mb && (
             <div style={{ fontSize: 12, color: '#666' }}>
               Size: {file_size_mb.toFixed(2)} MB
