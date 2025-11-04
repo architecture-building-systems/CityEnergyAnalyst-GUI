@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import socket, { waitForConnection } from 'lib/socket';
+import socket, {
+  waitForConnection,
+  removeConnectionCallback,
+} from 'lib/socket';
 
 const useDownloadStore = create((set, get) => ({
   // Downloads map: downloadId -> download object
@@ -145,7 +148,11 @@ const useDownloadStore = create((set, get) => ({
 
   // Initialize socket listeners
   initializeSocketListeners: () => {
-    waitForConnection(() => {
+    // Define the connection handler
+    const connectionHandler = () => {
+      // Clear the timeout since connection was successful
+      clearTimeout(connectionTimeout);
+
       // Remove any existing listeners first to prevent duplicates on reconnect
       get().cleanupSocketListeners();
 
@@ -233,7 +240,24 @@ const useDownloadStore = create((set, get) => ({
           });
         }
       });
-    });
+    };
+
+    // Start a timeout to prevent orphaned connection callbacks
+    const connectionTimeout = setTimeout(() => {
+      console.error(
+        'Socket connection timeout: Real-time download updates are unavailable. ' +
+          'The application will continue to work, but download progress may not update automatically.',
+      );
+
+      // Remove the callback from the pending queue to prevent it from being called later
+      removeConnectionCallback(connectionHandler);
+
+      // Perform cleanup
+      get().cleanupSocketListeners();
+    }, 10000); // 10 second timeout
+
+    // Wait for connection with the defined handler
+    waitForConnection(connectionHandler);
   },
 }));
 
