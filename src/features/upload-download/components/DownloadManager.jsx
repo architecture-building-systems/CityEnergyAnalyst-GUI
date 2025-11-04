@@ -250,17 +250,7 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
           )}
           {state === 'DOWNLOADED' && (
             <Tooltip title="File already downloaded. Start a new download if needed.">
-              <Button
-                type="default"
-                size="small"
-                icon={<CheckCircleOutlined />}
-                disabled
-                style={{
-                  backgroundColor: '#f6ffed',
-                  borderColor: '#b7eb8f',
-                  color: '#52c41a',
-                }}
-              >
+              <Button type="default" size="small" disabled>
                 Downloaded
               </Button>
             </Tooltip>
