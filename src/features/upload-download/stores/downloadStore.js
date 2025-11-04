@@ -87,8 +87,14 @@ const useDownloadStore = create((set, get) => ({
         );
       }
 
-      // If ready, trigger direct download
-      const downloadUrl = `${import.meta.env.VITE_CEA_URL}/api/downloads/${downloadId}`;
+      // Get pre-signed download URL (expires in 5 minutes by default)
+      const urlResponse = await apiClient.get(
+        `/api/downloads/${downloadId}/url`,
+      );
+      const { url } = urlResponse.data;
+
+      // Trigger download using pre-signed URL
+      const downloadUrl = `${import.meta.env.VITE_CEA_URL}${url}`;
 
       const a = document.createElement('a');
       a.href = downloadUrl;
