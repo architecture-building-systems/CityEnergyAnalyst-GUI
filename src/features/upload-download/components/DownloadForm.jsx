@@ -121,8 +121,19 @@ const FormContent = () => {
       form.resetFields();
     } catch (error) {
       console.error('Failed to start download:', error);
-      const errorMessage =
-        error.response?.data?.detail || 'Failed to start download';
+      const detail = error.response?.data?.detail;
+
+      let errorMessage = 'Failed to start download';
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (detail?.message) {
+        errorMessage = detail.message;
+        // Add suggestion if available for better user guidance
+        if (detail.suggestion) {
+          errorMessage += `. ${detail.suggestion}`;
+        }
+      }
+
       message.error(errorMessage);
     } finally {
       setIsSubmitting(false);
