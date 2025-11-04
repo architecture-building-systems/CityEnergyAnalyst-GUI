@@ -24,6 +24,7 @@ const DownloadManager = () => {
   const [downloadingIds, setDownloadingIds] = useState(new Set());
   const timeoutRef = useRef(null);
   const prevDownloadCountRef = useRef(null);
+  const isInitializedRef = useRef(false);
   const downloadsMap = useDownloadStore((state) => state.downloads);
   const fetchDownloads = useDownloadStore((state) => state.fetchDownloads);
   const downloadFile = useDownloadStore((state) => state.downloadFile);
@@ -44,10 +45,19 @@ const DownloadManager = () => {
 
   // Initialize socket listeners and fetch downloads on mount
   useEffect(() => {
+    const initializeDownloads = async () => {
+      try {
+        await fetchDownloads();
+      } catch (error) {
+        console.error('Failed to fetch downloads:', error);
+      } finally {
+        // Mark as initialized after initial fetch
+        isInitializedRef.current = true;
+      }
+    };
+
     initializeSocketListeners();
-    fetchDownloads().catch((error) => {
-      console.error('Failed to fetch downloads:', error);
-    });
+    initializeDownloads();
 
     return () => {
       cleanupSocketListeners();
@@ -63,9 +73,13 @@ const DownloadManager = () => {
   useEffect(() => {
     const currentDownloadCount = downloads.length;
 
-    // Only open popover if:
-    // 1. We have a previous count (not the initial load from fetchDownloads)
-    // 2. The count has increased (new download added)
+    // If not initialized yet, just set the initial count and return
+    if (!isInitializedRef.current) {
+      prevDownloadCountRef.current = currentDownloadCount;
+      return;
+    }
+
+    // Only open popover if the count has increased (new download added)
     if (
       prevDownloadCountRef.current !== null &&
       currentDownloadCount > prevDownloadCountRef.current
