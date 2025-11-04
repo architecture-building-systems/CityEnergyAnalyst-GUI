@@ -26,9 +26,11 @@ const useDownloadStore = create((set, get) => ({
   // Get downloads as array, sorted by creation date (newest first)
   getDownloadsArray: () => {
     const { downloads } = get();
-    return Object.values(downloads).sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at),
-    );
+    return Object.values(downloads).sort((a, b) => {
+      const dateA = a?.created_at ? new Date(a.created_at) : new Date(0);
+      const dateB = b?.created_at ? new Date(b.created_at) : new Date(0);
+      return dateB - dateA;
+    });
   },
 
   // Prepare a download (start the process)

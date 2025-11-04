@@ -35,8 +35,8 @@ const DownloadManager = () => {
 
   // Convert downloads map to array, sorted by creation date
   const downloads = Object.values(downloadsMap).sort((a, b) => {
-    const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
-    const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+    const dateA = a?.created_at ? new Date(a.created_at) : new Date(0);
+    const dateB = b?.created_at ? new Date(b.created_at) : new Date(0);
     return dateB - dateA;
   });
 
