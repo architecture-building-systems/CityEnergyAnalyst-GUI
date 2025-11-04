@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Badge, Button, Empty, Popover, Progress, Space, message } from 'antd';
+import {
+  Badge,
+  Button,
+  Empty,
+  Popover,
+  Progress,
+  Space,
+  Tooltip,
+  message,
+} from 'antd';
 import {
   DownloadOutlined,
   DeleteOutlined,
@@ -238,6 +247,23 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
             >
               Download
             </Button>
+          )}
+          {state === 'DOWNLOADED' && (
+            <Tooltip title="File already downloaded. Start a new download if needed.">
+              <Button
+                type="default"
+                size="small"
+                icon={<CheckCircleOutlined />}
+                disabled
+                style={{
+                  backgroundColor: '#f6ffed',
+                  borderColor: '#b7eb8f',
+                  color: '#52c41a',
+                }}
+              >
+                Downloaded
+              </Button>
+            </Tooltip>
           )}
           {!isDownloading && (
             <Button
