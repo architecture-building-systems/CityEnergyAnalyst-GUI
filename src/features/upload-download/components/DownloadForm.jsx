@@ -108,16 +108,11 @@ const FormContent = () => {
 
     setIsSubmitting(true);
     try {
-      // Map form values to API format
-      const outputFiles = (values.outputFiles || []).map((val) =>
-        val.toUpperCase(),
-      );
-
       await prepareDownload(
         currentProject,
         values.scenarios,
         values.inputFiles,
-        outputFiles,
+        values.outputFiles,
       );
 
       message.success(
