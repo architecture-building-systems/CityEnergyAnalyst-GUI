@@ -142,6 +142,7 @@ const useDownloadStore = create((set, get) => ({
             ...existingDownload,
             state: data.state,
             progress_message: data.progress_message,
+            progress_percent: data.progress_percent,
           });
         }
       });

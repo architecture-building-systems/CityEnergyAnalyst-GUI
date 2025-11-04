@@ -133,6 +133,7 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
     scenarios = [],
     file_size_mb,
     progress_message,
+    progress_percent,
     error_message,
   } = download;
 
@@ -238,7 +239,11 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
       </div>
 
       {state === 'PREPARING' && (
-        <Progress percent={100} status="active" showInfo={false} />
+        <Progress
+          percent={progress_percent ?? 0}
+          status="active"
+          showInfo={true}
+        />
       )}
     </div>
   );
