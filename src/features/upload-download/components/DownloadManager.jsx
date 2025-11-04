@@ -23,7 +23,7 @@ const DownloadManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
   const timeoutRef = useRef(null);
-  const prevDownloadCountRef = useRef(0);
+  const prevDownloadCountRef = useRef(null);
   const downloadsMap = useDownloadStore((state) => state.downloads);
   const fetchDownloads = useDownloadStore((state) => state.fetchDownloads);
   const downloadFile = useDownloadStore((state) => state.downloadFile);
@@ -64,10 +64,10 @@ const DownloadManager = () => {
     const currentDownloadCount = downloads.length;
 
     // Only open popover if:
-    // 1. We have a previous count (not the initial load)
+    // 1. We have a previous count (not the initial load from fetchDownloads)
     // 2. The count has increased (new download added)
     if (
-      prevDownloadCountRef.current > 0 &&
+      prevDownloadCountRef.current !== null &&
       currentDownloadCount > prevDownloadCountRef.current
     ) {
       setIsOpen(true);
