@@ -261,7 +261,7 @@ const DownloadItem = ({ download, onDownload, onDelete, isDownloading }) => {
           )}
           {created_at && (state === 'PENDING' || state === 'PREPARING') && (
             <div style={{ fontSize: 12, color: '#666' }}>
-              Created: {created_ago}
+              Started: {created_ago}
             </div>
           )}
           {created_at &&
