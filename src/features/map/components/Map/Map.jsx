@@ -232,6 +232,8 @@ const useMapLayers = (onHover = () => {}) => {
             },
             onHover: onHover,
             pickable: true,
+            autoHighlight: true,
+            highlightColor: [...edgeColour.map((c) => c * 1.5)],
 
             parameters: { depthTest: false },
           }),
