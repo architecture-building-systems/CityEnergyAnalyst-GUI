@@ -206,11 +206,11 @@ const useMapLayers = (onHover = () => {}) => {
 
         const nodeRadius = (type) => {
           if (type === 'NONE') {
-            return 0;
+            return 1;
           } else if (type === 'CONSUMER') {
-            return 2;
-          } else if (type === 'PLANT') {
             return 3;
+          } else if (type === 'PLANT') {
+            return 5;
           }
         };
 
