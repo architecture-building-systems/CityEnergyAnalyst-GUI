@@ -55,16 +55,74 @@ const NetworkLayoutNameInput = ({
   allParameters,
 }) => {
   const validationTimeoutRef = useRef(null);
+  const justClearedRef = useRef(false); // Track if field was just cleared programmatically
   const [validationState, setValidationState] = useState({
     status: '', // '', 'validating', 'success', 'error'
     message: '',
   });
+  const [currentValue, setCurrentValue] = useState(value || '');
 
   // Get scenario from allParameters (it's not in the form)
   const scenarioParam = allParameters?.find(
     (p) => p.type === 'ScenarioParameter',
   );
   const scenarioValue = scenarioParam?.value;
+
+  // Watch for external form value changes using polling (simple approach)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const formValue = form.getFieldValue(name);
+      if ((formValue || '') !== currentValue) {
+        // Field was changed externally
+        if (!formValue || formValue.trim() === '') {
+          // Field was cleared - set flag to prevent validation
+          justClearedRef.current = true;
+        }
+        setCurrentValue(formValue || '');
+      }
+    }, 100); // Check every 100ms
+
+    return () => clearInterval(interval);
+  }, [form, name, currentValue]);
+
+  // Clear validation state when value becomes empty
+  useEffect(() => {
+    if (!currentValue || currentValue.trim() === '') {
+      setValidationState({ status: '', message: '' });
+      // Don't trigger validation if we just cleared
+      if (justClearedRef.current) {
+        justClearedRef.current = false;
+      }
+    }
+  }, [currentValue]);
+
+  // Trigger form validation when validation state changes (but not when clearing)
+  useEffect(() => {
+    // Don't trigger if field was just cleared
+    if (justClearedRef.current) {
+      return;
+    }
+
+    // Only trigger validation if we have a non-empty value
+    // This prevents re-triggering validation when field is cleared
+    if (currentValue && currentValue.trim() !== '') {
+      if (
+        validationState.status === 'success' ||
+        validationState.status === 'error'
+      ) {
+        // Trigger field validation to update the UI
+        form.validateFields([name]).catch(() => {
+          // Ignore validation errors - they'll be displayed by the form
+        });
+      }
+    }
+  }, [
+    validationState.status,
+    validationState.message,
+    form,
+    name,
+    currentValue,
+  ]);
 
   // Debounced backend validation
   const validateWithBackend = useCallback(
@@ -213,13 +271,20 @@ const NetworkLayoutNameInput = ({
     };
   }, []);
 
+  // Don't show feedback if field was just cleared
+  const shouldShowFeedback =
+    validationState.status !== '' &&
+    !justClearedRef.current &&
+    currentValue &&
+    currentValue.trim() !== '';
+
   return (
     <FormField
       name={name}
       help={help}
       initialValue={value}
-      hasFeedback={validationState.status !== ''}
-      validateStatus={validationState.status}
+      hasFeedback={shouldShowFeedback}
+      validateStatus={shouldShowFeedback ? validationState.status : ''}
       rules={[
         {
           validator: async (_, value) => {
@@ -250,8 +315,15 @@ const NetworkLayoutNameInput = ({
     >
       <Input
         placeholder={nullable ? 'Leave blank to auto-generate timestamp' : null}
+        value={currentValue}
         onChange={(e) => {
+          const newValue = e.target.value;
+          setCurrentValue(newValue);
           // Trigger debounced backend validation
+          validateWithBackend(newValue);
+        }}
+        onBlur={(e) => {
+          // Re-validate when field loses focus (catches newly created networks)
           validateWithBackend(e.target.value);
         }}
       />

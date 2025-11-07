@@ -170,10 +170,19 @@ const useToolForm = (
   const runScript = async () => {
     const params = await getForm();
 
-    return createJob(script, params).catch((err) => {
-      if (err?.response?.status === 401) handleLogin();
-      else console.error(`Error creating job: ${err}`);
-    });
+    return createJob(script, params)
+      .then((result) => {
+        // Clear network-name field after successful job creation to prevent duplicate runs
+        if (script === 'network-layout' && params?.['network-name']) {
+          form.setFieldsValue({ 'network-name': '' });
+          // Don't call validateFields - the component will detect the change and clear validation state
+        }
+        return result;
+      })
+      .catch((err) => {
+        if (err?.response?.status === 401) handleLogin();
+        else console.error(`Error creating job: ${err}`);
+      });
   };
 
   const saveParams = async () => {
