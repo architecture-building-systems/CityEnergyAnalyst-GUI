@@ -14,7 +14,14 @@ const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
   if (parameters) {
     toolParams = parameters.map((param) => {
       if (param.type === 'ScenarioParameter') return null;
-      return <Parameter key={param.name} form={form} parameter={param} />;
+      return (
+        <Parameter
+          key={param.name}
+          form={form}
+          parameter={param}
+          allParameters={parameters}
+        />
+      );
     });
   }
 
@@ -24,7 +31,12 @@ const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
       key: category,
       label: category,
       children: categoricalParameters[category].map((param) => (
-        <Parameter key={param.name} form={form} parameter={param} />
+        <Parameter
+          key={param.name}
+          form={form}
+          parameter={param}
+          allParameters={parameters}
+        />
       )),
     }));
     categoricalParams = (

@@ -16,10 +16,18 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef } from 'react';
+import React, {
+  forwardRef,
+  useRef,
+  useCallback,
+  useState,
+  useEffect,
+} from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
+import { validateNetworkNameChars } from 'utils/validation';
+import { apiClient } from 'lib/api/axios';
 
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
@@ -37,9 +45,234 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-const Parameter = ({ parameter, form }) => {
+// Component for NetworkLayoutNameParameter with real-time validation
+const NetworkLayoutNameInput = ({
+  name,
+  help,
+  value,
+  form,
+  nullable,
+  allParameters,
+}) => {
+  const validationTimeoutRef = useRef(null);
+  const [validationState, setValidationState] = useState({
+    status: '', // '', 'validating', 'success', 'error'
+    message: '',
+  });
+
+  // Get scenario from allParameters (it's not in the form)
+  const scenarioParam = allParameters?.find(
+    (p) => p.type === 'ScenarioParameter',
+  );
+  const scenarioValue = scenarioParam?.value;
+
+  // Debounced backend validation
+  const validateWithBackend = useCallback(
+    (value) => {
+      console.log('validateWithBackend called with value:', value);
+
+      // Clear any pending validation
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+        console.log('Cleared previous timeout');
+      }
+
+      // Blank/empty is valid (will auto-generate timestamp)
+      if (!value || !value.trim()) {
+        console.log('Value is blank, skipping validation');
+        setValidationState({ status: '', message: '' });
+        return;
+      }
+
+      console.log('Setting timeout for validation...');
+
+      // Don't show "validating" state immediately - wait for debounce
+      // This prevents the annoying flicker on every keystroke
+
+      // Debounce backend validation by 1000ms (longer delay)
+      validationTimeoutRef.current = setTimeout(async () => {
+        console.log('Timeout fired! Starting validation...');
+        // Now show validating state
+        setValidationState({ status: 'validating', message: '' });
+
+        try {
+          // Get scenario from allParameters (not in form)
+          const scenario = scenarioValue;
+
+          // Get network-type from form
+          const formValues = form.getFieldsValue();
+          const networkType = formValues['network-type'];
+
+          console.log('Form values:', formValues);
+          console.log('scenario:', scenario);
+          console.log('network-type:', networkType);
+
+          // Skip backend validation if dependencies aren't set
+          if (!scenario || !networkType) {
+            console.log(
+              'Skipping validation - missing scenario or network-type',
+            );
+            setValidationState({ status: '', message: '' });
+            return;
+          }
+
+          // Check if network folder exists
+          // Format: {scenario}/outputs/data/thermal-network/{DC|DH}/{network-name}/
+          const trimmedValue = value.trim();
+          const networkPath = `${scenario}/outputs/data/thermal-network/${networkType}/${trimmedValue}`;
+
+          console.log('Checking network path:', networkPath);
+
+          try {
+            // Check if the network folder exists using /api/contents
+            await apiClient.get('/api/contents', {
+              params: {
+                content_path: networkPath,
+                content_type: 'directory',
+              },
+            });
+
+            // If we got here (no error), the folder exists
+            console.log('Network folder exists!');
+
+            // Check if it contains network files (edges.shp or nodes.shp)
+            try {
+              const edgesPath = `${networkPath}/edges.shp`;
+              const nodesPath = `${networkPath}/nodes.shp`;
+
+              // Try to check for edges.shp
+              let hasEdges = false;
+              let hasNodes = false;
+
+              try {
+                await apiClient.get('/api/contents', {
+                  params: { content_path: edgesPath, content_type: 'file' },
+                });
+                hasEdges = true;
+              } catch (e) {
+                // edges.shp doesn't exist
+              }
+
+              try {
+                await apiClient.get('/api/contents', {
+                  params: { content_path: nodesPath, content_type: 'file' },
+                });
+                hasNodes = true;
+              } catch (e) {
+                // nodes.shp doesn't exist
+              }
+
+              if (hasEdges || hasNodes) {
+                // Network exists with actual network files
+                setValidationState({
+                  status: 'error',
+                  message: `Network '${trimmedValue}' already exists for ${networkType}. Choose a different name or delete the existing folder.`,
+                });
+                return;
+              }
+            } catch (fileCheckError) {
+              console.log('Error checking network files:', fileCheckError);
+            }
+          } catch (folderCheckError) {
+            // Folder doesn't exist - that's good!
+            console.log(
+              'Network folder does not exist (good):',
+              folderCheckError.response?.status,
+            );
+          }
+
+          // Validation passed - no collision detected
+          setValidationState({ status: 'success', message: '' });
+        } catch (error) {
+          console.error('Validation error:', error);
+
+          // Extract error message from backend
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            error?.response?.data ||
+            error?.message ||
+            'Validation failed';
+
+          setValidationState({
+            status: 'error',
+            message: String(errorMessage),
+          });
+        }
+      }, 1000); // Increased to 1 second
+    },
+    [form, scenarioValue],
+  );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <FormField
+      name={name}
+      help={help}
+      initialValue={value}
+      hasFeedback={validationState.status !== ''}
+      validateStatus={validationState.status}
+      rules={[
+        {
+          validator: async (_, value) => {
+            // Blank/empty is OK if nullable
+            if ((!value || !value.trim()) && nullable) {
+              return Promise.resolve();
+            }
+
+            // Immediate validation: check for invalid characters
+            const trimmedValue = value?.trim() || '';
+            if (trimmedValue) {
+              try {
+                await validateNetworkNameChars(trimmedValue);
+              } catch (error) {
+                return Promise.reject(error);
+              }
+            }
+
+            // If we have an error from backend validation, show it
+            if (validationState.status === 'error' && validationState.message) {
+              return Promise.reject(validationState.message);
+            }
+
+            return Promise.resolve();
+          },
+        },
+      ]}
+    >
+      <Input
+        placeholder={nullable ? 'Leave blank to auto-generate timestamp' : null}
+        onChange={(e) => {
+          // Trigger debounced backend validation
+          validateWithBackend(e.target.value);
+        }}
+      />
+    </FormField>
+  );
+};
+
+const Parameter = ({ parameter, form, allParameters }) => {
   const { name, type, value, choices, nullable, help } = parameter;
   const { setFieldsValue } = form;
+
+  // Debug logging to see parameter types
+  if (name === 'network-name') {
+    console.log('network-name parameter detected:', {
+      name,
+      type,
+      value,
+      nullable,
+      allParameters,
+    });
+  }
 
   switch (type) {
     case 'IntegerParameter':
@@ -377,6 +610,19 @@ const Parameter = ({ parameter, form }) => {
         >
           <Input disabled />
         </FormField>
+      );
+    }
+
+    case 'NetworkLayoutNameParameter': {
+      return (
+        <NetworkLayoutNameInput
+          name={name}
+          help={help}
+          value={value}
+          form={form}
+          nullable={nullable}
+          allParameters={allParameters}
+        />
       );
     }
 
