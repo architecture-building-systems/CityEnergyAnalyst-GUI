@@ -145,14 +145,12 @@ const NetworkLayoutChoiceSelect = ({
       <FormField
         name={name}
         help={help}
-        validateStatus={!loading && choices.length === 0 ? 'error' : ''}
         rules={[
           {
             validator: (_, value) => {
+              // Don't show error if no choices - warning is shown below
               if (choices.length < 1) {
-                return Promise.reject(
-                  `No network layouts found for ${networkType || 'this network type'}`,
-                );
+                return Promise.resolve();
               } else if (value == null || value === '') {
                 return Promise.reject('Select a network layout');
               } else if (!choices.includes(value)) {

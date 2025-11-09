@@ -51,6 +51,12 @@ export const fetchProjectChoices = async () => {
 
     return data;
   } catch (error) {
+    // Handle 400 error when project root is not configured
+    if (error?.response?.status === 400 && error?.response?.data?.detail === 'Project root not defined') {
+      console.warn('Project root not configured. Please set the project root path in settings.');
+      // Return empty projects list instead of throwing
+      return { projects: [] };
+    }
     console.error(error?.response?.data);
     throw error;
   }
