@@ -108,17 +108,27 @@ const NetworkLayoutChoiceSelect = ({
         },
       );
       const newChoices = response.data.choices || [];
+      const defaultValue = response.data.default; // Backend suggests the most recent network
       console.log('Received new choices:', newChoices);
+      console.log('Received default value:', defaultValue);
       setChoices(newChoices);
 
-      // If current value is not in new choices, reset to first choice or empty
       const currentValue = form.getFieldValue(name);
+
+      // If current value is not in new choices, use default (or first choice as fallback)
       if (currentValue && !newChoices.includes(currentValue)) {
-        console.log('Current value not in new choices, resetting to:', newChoices[0] || '');
-        form.setFieldsValue({ [name]: newChoices[0] || '' });
+        const valueToSet = defaultValue || newChoices[0] || '';
+        console.log('Current value not in new choices, resetting to:', valueToSet);
+        form.setFieldsValue({ [name]: valueToSet });
       } else if (!currentValue && newChoices.length > 0) {
-        console.log('No current value, setting to first choice:', newChoices[0]);
-        form.setFieldsValue({ [name]: newChoices[0] });
+        // No current value - use default from backend (most recent network)
+        const valueToSet = defaultValue || newChoices[0];
+        console.log('No current value, setting to default:', valueToSet);
+        form.setFieldsValue({ [name]: valueToSet });
+      } else if (defaultValue && currentValue !== defaultValue && !hasFetchedRef.current) {
+        // On initial load, if backend suggests a different default (more recent network), use it
+        console.log('Initial load: backend suggests more recent network, updating from', currentValue, 'to', defaultValue);
+        form.setFieldsValue({ [name]: defaultValue });
       }
     } catch (error) {
       console.error('Failed to fetch parameter choices:', error);

@@ -69,7 +69,12 @@ const ChoiceSelector = ({
           scenarioName,
           mapLayerParameters ?? {},
         );
-        setChoices(data);
+        // Backend can return either array (legacy) or {choices: [...], default: "..."} (new)
+        if (Array.isArray(data)) {
+          setChoices({ choices: data, default: data[0] });
+        } else {
+          setChoices(data);
+        }
       } catch (error) {
         console.error(error.response?.data);
         setChoices(null);
@@ -79,21 +84,23 @@ const ChoiceSelector = ({
     fetchChoices();
   }, [dependsOnValues]);
 
-  // Set the first choice as the default value
+  // Set the default value from backend (or first choice as fallback)
   useEffect(() => {
     if (choices) {
-      handleChange(choices[0]);
+      const defaultValue = choices.default || choices.choices?.[0];
+      console.log(`[Choice] ${parameterName}: Using default value:`, defaultValue);
+      handleChange(defaultValue);
     } else {
       handleChange(null);
     }
   }, [choices]);
 
-  const options = choices?.map((choice) => ({
+  const options = choices?.choices?.map((choice) => ({
     value: choice,
     label: choice,
   }));
 
-  if (!choices) return null;
+  if (!choices || !choices.choices) return null;
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
