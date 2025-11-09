@@ -7,7 +7,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 
-const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
+const ToolForm = ({ form, parameters, categoricalParameters, script, onMount }) => {
   const [activeKey, setActiveKey] = useState([]);
 
   let toolParams = null;
@@ -20,6 +20,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
           form={form}
           parameter={param}
           allParameters={parameters}
+          toolName={script}
         />
       );
     });
@@ -36,6 +37,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, onMount }) => {
           form={form}
           parameter={param}
           allParameters={parameters}
+          toolName={script}
         />
       )),
     }));

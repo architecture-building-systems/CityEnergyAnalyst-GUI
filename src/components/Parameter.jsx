@@ -45,6 +45,144 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
+// Component for NetworkLayoutChoiceParameter with dynamic choices
+const NetworkLayoutChoiceSelect = ({
+  name,
+  help,
+  value,
+  choices: initialChoices,
+  form,
+  toolName,
+}) => {
+  const [choices, setChoices] = useState(initialChoices || []);
+  const [loading, setLoading] = useState(false);
+  const [networkType, setNetworkType] = useState(null);
+  const hasFetchedRef = useRef(false);
+
+  // Fetch choices on initial mount to get fresh sorted list
+  useEffect(() => {
+    console.log('NetworkLayoutChoiceSelect mounted, fetching initial choices');
+    fetchChoices();
+  }, []); // Run once on mount
+
+  // Watch for network-type changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentNetworkType = form.getFieldValue('network-type');
+      if (currentNetworkType !== networkType) {
+        console.log('Network type changed from', networkType, 'to', currentNetworkType);
+        setNetworkType(currentNetworkType);
+      }
+    }, 100); // Check every 100ms
+
+    return () => clearInterval(interval);
+  }, [form, networkType]);
+
+  // Fetch new choices when network-type changes (but not on initial load since we already fetched)
+  useEffect(() => {
+    if (networkType && hasFetchedRef.current) {
+      console.log('Network type changed, fetching new choices');
+      fetchChoices();
+    }
+    if (networkType) {
+      hasFetchedRef.current = true;
+    }
+  }, [networkType]);
+
+  const fetchChoices = async () => {
+    if (!toolName) {
+      console.warn('toolName is not provided, cannot fetch choices');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formValues = form.getFieldsValue();
+      console.log('Fetching choices for', name, 'with formValues:', formValues);
+
+      const response = await apiClient.post(
+        `/api/tools/${toolName}/parameter-choices`,
+        {
+          parameter_name: name,
+          form_values: formValues,
+        },
+      );
+      const newChoices = response.data.choices || [];
+      console.log('Received new choices:', newChoices);
+      setChoices(newChoices);
+
+      // If current value is not in new choices, reset to first choice or empty
+      const currentValue = form.getFieldValue(name);
+      if (currentValue && !newChoices.includes(currentValue)) {
+        console.log('Current value not in new choices, resetting to:', newChoices[0] || '');
+        form.setFieldsValue({ [name]: newChoices[0] || '' });
+      } else if (!currentValue && newChoices.length > 0) {
+        console.log('No current value, setting to first choice:', newChoices[0]);
+        form.setFieldsValue({ [name]: newChoices[0] });
+      }
+    } catch (error) {
+      console.error('Failed to fetch parameter choices:', error);
+      // Don't clear choices on error - keep the old ones
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const options = choices.map((choice) => ({
+    label: choice,
+    value: choice,
+  }));
+
+  // Show warning when no choices available
+  const noChoicesWarning = !loading && choices.length === 0 ? (
+    <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
+      No network layouts found for {networkType || 'this network type'}. Run Thermal Network Part 1: layout.
+    </div>
+  ) : null;
+
+  return (
+    <>
+      <FormField
+        name={name}
+        help={help}
+        validateStatus={!loading && choices.length === 0 ? 'error' : ''}
+        rules={[
+          {
+            validator: (_, value) => {
+              if (choices.length < 1) {
+                return Promise.reject(
+                  `No network layouts found for ${networkType || 'this network type'}`,
+                );
+              } else if (value == null || value === '') {
+                return Promise.reject('Select a network layout');
+              } else if (!choices.includes(value)) {
+                return Promise.reject(`${value} is not a valid choice`);
+              } else {
+                return Promise.resolve();
+              }
+            },
+          },
+        ]}
+        initialValue={value}
+      >
+        <Select
+          options={options}
+          disabled={loading || choices.length === 0}
+          loading={loading}
+          placeholder={
+            loading
+              ? "Loading..."
+              : choices.length === 0
+              ? `No ${networkType || ''} networks available`
+              : "Select a network layout"
+          }
+        />
+      </FormField>
+      {noChoicesWarning}
+    </>
+  );
+};
+
 // Component for NetworkLayoutNameParameter with real-time validation
 const NetworkLayoutNameInput = ({
   name,
@@ -331,7 +469,7 @@ const NetworkLayoutNameInput = ({
   );
 };
 
-const Parameter = ({ parameter, form, allParameters }) => {
+const Parameter = ({ parameter, form, allParameters, toolName }) => {
   const { name, type, value, choices, nullable, help } = parameter;
   const { setFieldsValue } = form;
 
@@ -343,6 +481,7 @@ const Parameter = ({ parameter, form, allParameters }) => {
       value,
       nullable,
       allParameters,
+      toolName,
     });
   }
 
@@ -470,6 +609,18 @@ const Parameter = ({ parameter, form, allParameters }) => {
         >
           {inputComponent}
         </FormField>
+      );
+    }
+    case 'NetworkLayoutChoiceParameter': {
+      return (
+        <NetworkLayoutChoiceSelect
+          name={name}
+          help={help}
+          value={value}
+          choices={choices}
+          form={form}
+          toolName={toolName}
+        />
       );
     }
     case 'ChoiceParameter':
