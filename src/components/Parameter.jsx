@@ -51,6 +51,7 @@ const Parameter = ({
   const { setFieldsValue } = form;
   const [blurError, setBlurError] = useState(null);
   const [validating, setValidating] = useState(false);
+  const [validationSuccess, setValidationSuccess] = useState(false);
 
   // Validate field on blur (if backend says it needs validation)
   const validateOnBlur = useCallback(
@@ -59,6 +60,7 @@ const Parameter = ({
       if (!toolName) return; // Skip if no tool context
 
       setValidating(true);
+      setValidationSuccess(false);
       try {
         const formValues = form.getFieldsValue();
         const response = await apiClient.post(
@@ -72,24 +74,31 @@ const Parameter = ({
 
         if (response.data.valid) {
           setBlurError(null);
+          // Only show success if there's actually a value (for NetworkLayoutNameParameter)
+          if (fieldValue && fieldValue.trim() && type === 'NetworkLayoutNameParameter') {
+            setValidationSuccess(true);
+          }
         } else {
           setBlurError(response.data.error);
+          setValidationSuccess(false);
         }
       } catch (error) {
         console.error('Validation error:', error);
         const errorMessage =
           error?.response?.data?.error || error?.message || 'Validation failed';
         setBlurError(errorMessage);
+        setValidationSuccess(false);
       } finally {
         setValidating(false);
       }
     },
-    [needs_validation, toolName, name, form],
+    [needs_validation, toolName, name, form, type],
   );
 
   // Clear blur error when user types
   const handleChange = useCallback((newValue) => {
     setBlurError(null);
+    setValidationSuccess(false);
     return newValue;
   }, []);
 
@@ -469,6 +478,48 @@ const Parameter = ({
     }
 
     case 'NetworkLayoutNameParameter':
+      return (
+        <FormField
+          name={name}
+          help={error ? error : help}
+          validateStatus={
+            error
+              ? 'error'
+              : validating
+                ? 'validating'
+                : validationSuccess
+                  ? 'success'
+                  : ''
+          }
+          hasFeedback={validating || !!error || validationSuccess}
+          initialValue={value}
+          rules={[
+            {
+              validator: (_, value) => {
+                // Show error from blur or submit validation
+                if (error) {
+                  return Promise.reject(error);
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          <Input
+            placeholder={
+              nullable ? 'Leave blank to auto-generate timestamp' : null
+            }
+            onChange={(e) => {
+              handleChange(e.target.value);
+              form.setFieldsValue({ [name]: e.target.value });
+            }}
+            onBlur={(e) => {
+              validateOnBlur(e.target.value);
+            }}
+          />
+        </FormField>
+      );
+
     default:
       return (
         <FormField
