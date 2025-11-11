@@ -39,13 +39,7 @@ export const FormField = ({ name, help, children, ...props }) => {
 };
 
 // Custom hook for parameter validation
-const useParameterValidation = ({
-  needs_validation,
-  toolName,
-  name,
-  form,
-  fieldError,
-}) => {
+const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
   const [blurError, setBlurError] = useState(null);
   const [validating, setValidating] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState(false);
@@ -99,7 +93,7 @@ const useParameterValidation = ({
   }, []);
 
   // Combined error from blur validation or submit validation
-  const error = blurError || fieldError;
+  const error = blurError;
 
   return {
     error,
@@ -110,7 +104,7 @@ const useParameterValidation = ({
   };
 };
 
-const Parameter = ({ parameter, form, toolName, fieldError }) => {
+const Parameter = ({ parameter, form, toolName }) => {
   const { name, type, value, choices, nullable, help, needs_validation } =
     parameter;
   const { setFieldsValue } = form;
@@ -121,7 +115,6 @@ const Parameter = ({ parameter, form, toolName, fieldError }) => {
       toolName,
       name,
       form,
-      fieldError,
     });
 
   switch (type) {
