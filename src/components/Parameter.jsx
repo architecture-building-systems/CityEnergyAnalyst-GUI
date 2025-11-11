@@ -115,7 +115,6 @@ const Parameter = ({ parameter, form, toolName, fieldError }) => {
     parameter;
   const { setFieldsValue } = form;
 
-  // Call validation hook unconditionally (React rules)
   const { error, validating, validationSuccess, validateOnBlur, handleChange } =
     useParameterValidation({
       needs_validation,
@@ -513,13 +512,6 @@ const Parameter = ({ parameter, form, toolName, fieldError }) => {
           ]}
         >
           <Input
-            placeholder={
-              nullable ? 'Leave blank to auto-generate timestamp' : null
-            }
-            onChange={(e) => {
-              handleChange();
-              form.setFieldsValue({ [name]: e.target.value });
-            }}
             onBlur={(e) => {
               validateOnBlur(e.target.value);
             }}
@@ -537,7 +529,7 @@ const Parameter = ({ parameter, form, toolName, fieldError }) => {
           initialValue={value}
           rules={[
             {
-              validator: (_, value) => {
+              validator: () => {
                 // Show error from blur or submit validation
                 if (error) {
                   return Promise.reject(error);
