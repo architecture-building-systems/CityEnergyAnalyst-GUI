@@ -279,26 +279,23 @@ const Parameter = ({ parameter, form, toolName }) => {
                     return Promise.reject(
                       'There are no valid choices for this input',
                     );
-                } else if (value == null) {
-                  return Promise.reject('Select a choice');
-                } else if (!choices.includes(value)) {
-                  return Promise.reject(`${value} is not a valid choice`);
-                } else {
-                  return Promise.resolve();
+                } else if (!nullable) {
+                  if (!value) return Promise.reject('Select a choice');
+                  if (!choices.includes(value))
+                    return Promise.reject(`${value} is not a valid choice`);
                 }
+
+                return Promise.resolve();
               },
             },
           ]}
           initialValue={value}
         >
           <Select
+            placeholder={nullable ? 'Nothing Selected' : 'Select a choice'}
             options={options}
             disabled={!choices.length}
             loading={validating}
-            onChange={(val) => {
-              handleChange(val);
-              form.setFieldsValue({ [name]: val });
-            }}
             onBlur={() => {
               const currentValue = form.getFieldValue(name);
               validateOnBlur(currentValue);
