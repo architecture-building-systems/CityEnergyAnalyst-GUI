@@ -4,7 +4,6 @@ import {
   FileSearchOutlined,
   PlusOutlined,
   UploadOutlined,
-  LoadingOutlined,
 } from '@ant-design/icons';
 import {
   Input,
@@ -39,16 +38,14 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-const Parameter = ({
-  parameter,
-  form,
-  allParameters,
+// Custom hook for parameter validation
+const useParameterValidation = ({
+  needs_validation,
   toolName,
+  name,
+  form,
   fieldError,
 }) => {
-  const { name, type, value, choices, nullable, help, needs_validation } =
-    parameter;
-  const { setFieldsValue } = form;
   const [blurError, setBlurError] = useState(null);
   const [validating, setValidating] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState(false);
@@ -56,8 +53,8 @@ const Parameter = ({
   // Validate field on blur (if backend says it needs validation)
   const validateOnBlur = useCallback(
     async (fieldValue) => {
-      if (!needs_validation) return; // Skip if not needed
-      if (!toolName) return; // Skip if no tool context
+      if (!needs_validation) return;
+      if (!toolName) return;
 
       setValidating(true);
       setValidationSuccess(false);
@@ -74,8 +71,8 @@ const Parameter = ({
 
         if (response.data.valid) {
           setBlurError(null);
-          // Only show success if there's actually a value (for NetworkLayoutNameParameter)
-          if (fieldValue && fieldValue.trim() && type === 'NetworkLayoutNameParameter') {
+          // Track success if there's a value
+          if (fieldValue && fieldValue.trim()) {
             setValidationSuccess(true);
           }
         } else {
@@ -92,31 +89,41 @@ const Parameter = ({
         setValidating(false);
       }
     },
-    [needs_validation, toolName, name, form, type],
+    [needs_validation, toolName, name, form],
   );
 
   // Clear blur error when user types
-  const handleChange = useCallback((newValue) => {
+  const handleChange = useCallback(() => {
     setBlurError(null);
     setValidationSuccess(false);
-    return newValue;
   }, []);
 
   // Combined error from blur validation or submit validation
   const error = blurError || fieldError;
 
-  // Debug logging to see parameter types
-  if (name === 'network-name') {
-    console.log('network-name parameter detected:', {
-      name,
-      type,
-      value,
-      nullable,
-      allParameters,
-      toolName,
+  return {
+    error,
+    validating,
+    validationSuccess,
+    validateOnBlur,
+    handleChange,
+  };
+};
+
+const Parameter = ({ parameter, form, toolName, fieldError }) => {
+  const { name, type, value, choices, nullable, help, needs_validation } =
+    parameter;
+  const { setFieldsValue } = form;
+
+  // Call validation hook unconditionally (React rules)
+  const { error, validating, validationSuccess, validateOnBlur, handleChange } =
+    useParameterValidation({
       needs_validation,
+      toolName,
+      name,
+      form,
+      fieldError,
     });
-  }
 
   switch (type) {
     case 'IntegerParameter':
@@ -495,7 +502,7 @@ const Parameter = ({
           initialValue={value}
           rules={[
             {
-              validator: (_, value) => {
+              validator: () => {
                 // Show error from blur or submit validation
                 if (error) {
                   return Promise.reject(error);
@@ -510,7 +517,7 @@ const Parameter = ({
               nullable ? 'Leave blank to auto-generate timestamp' : null
             }
             onChange={(e) => {
-              handleChange(e.target.value);
+              handleChange();
               form.setFieldsValue({ [name]: e.target.value });
             }}
             onBlur={(e) => {
