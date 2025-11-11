@@ -4,6 +4,7 @@ import {
   FileSearchOutlined,
   PlusOutlined,
   UploadOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import {
   Input,
@@ -16,17 +17,10 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import React, {
-  forwardRef,
-  useRef,
-  useCallback,
-  useState,
-  useEffect,
-} from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
-import { validateNetworkNameChars } from 'utils/validation';
 import { apiClient } from 'lib/api/axios';
 
 // Helper component to standardize Form.Item props
@@ -45,441 +39,62 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-// Component for NetworkLayoutChoiceParameter with dynamic choices
-const NetworkLayoutChoiceSelect = ({
-  name,
-  help,
-  value,
-  choices: initialChoices,
+const Parameter = ({
+  parameter,
   form,
-  toolName,
-}) => {
-  const [choices, setChoices] = useState(initialChoices || []);
-  const [loading, setLoading] = useState(false);
-  const [networkType, setNetworkType] = useState(null);
-  const hasFetchedRef = useRef(false);
-
-  // Fetch choices on initial mount to get fresh sorted list
-  useEffect(() => {
-    console.log('NetworkLayoutChoiceSelect mounted, fetching initial choices');
-    fetchChoices();
-  }, []); // Run once on mount
-
-  // Watch for network-type changes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentNetworkType = form.getFieldValue('network-type');
-      if (currentNetworkType !== networkType) {
-        console.log('Network type changed from', networkType, 'to', currentNetworkType);
-        setNetworkType(currentNetworkType);
-      }
-    }, 100); // Check every 100ms
-
-    return () => clearInterval(interval);
-  }, [form, networkType]);
-
-  // Fetch new choices when network-type changes (but not on initial load since we already fetched)
-  useEffect(() => {
-    if (networkType && hasFetchedRef.current) {
-      console.log('Network type changed, fetching new choices');
-      fetchChoices();
-    }
-    if (networkType) {
-      hasFetchedRef.current = true;
-    }
-  }, [networkType]);
-
-  const fetchChoices = async () => {
-    if (!toolName) {
-      console.warn('toolName is not provided, cannot fetch choices');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const formValues = form.getFieldsValue();
-      console.log('Fetching choices for', name, 'with formValues:', formValues);
-
-      const response = await apiClient.post(
-        `/api/tools/${toolName}/parameter-choices`,
-        {
-          parameter_name: name,
-          form_values: formValues,
-        },
-      );
-      const newChoices = response.data.choices || [];
-      const defaultValue = response.data.default; // Backend suggests the most recent network
-      console.log('Received new choices:', newChoices);
-      console.log('Received default value:', defaultValue);
-      setChoices(newChoices);
-
-      const currentValue = form.getFieldValue(name);
-
-      // If current value is not in new choices, use default (or first choice as fallback)
-      if (currentValue && !newChoices.includes(currentValue)) {
-        const valueToSet = defaultValue || newChoices[0] || '';
-        console.log('Current value not in new choices, resetting to:', valueToSet);
-        form.setFieldsValue({ [name]: valueToSet });
-      } else if (!currentValue && newChoices.length > 0) {
-        // No current value - use default from backend (most recent network)
-        const valueToSet = defaultValue || newChoices[0];
-        console.log('No current value, setting to default:', valueToSet);
-        form.setFieldsValue({ [name]: valueToSet });
-      } else if (defaultValue && currentValue !== defaultValue && !hasFetchedRef.current) {
-        // On initial load, if backend suggests a different default (more recent network), use it
-        console.log('Initial load: backend suggests more recent network, updating from', currentValue, 'to', defaultValue);
-        form.setFieldsValue({ [name]: defaultValue });
-      }
-    } catch (error) {
-      console.error('Failed to fetch parameter choices:', error);
-      // Don't clear choices on error - keep the old ones
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const options = choices.map((choice) => ({
-    label: choice,
-    value: choice,
-  }));
-
-  // Show warning when no choices available
-  const noChoicesWarning = !loading && choices.length === 0 ? (
-    <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
-      No network layouts found for {networkType || 'this network type'}. Run Thermal Network Part 1: layout.
-    </div>
-  ) : null;
-
-  return (
-    <>
-      <FormField
-        name={name}
-        help={help}
-        rules={[
-          {
-            validator: (_, value) => {
-              // Don't show error if no choices - warning is shown below
-              if (choices.length < 1) {
-                return Promise.resolve();
-              } else if (value == null || value === '') {
-                return Promise.reject('Select a network layout');
-              } else if (!choices.includes(value)) {
-                return Promise.reject(`${value} is not a valid choice`);
-              } else {
-                return Promise.resolve();
-              }
-            },
-          },
-        ]}
-        initialValue={value}
-      >
-        <Select
-          options={options}
-          disabled={loading || choices.length === 0}
-          loading={loading}
-          placeholder={
-            loading
-              ? "Loading..."
-              : choices.length === 0
-              ? `No ${networkType || ''} networks available`
-              : "Select a network layout"
-          }
-        />
-      </FormField>
-      {noChoicesWarning}
-    </>
-  );
-};
-
-// Component for NetworkLayoutNameParameter with real-time validation
-const NetworkLayoutNameInput = ({
-  name,
-  help,
-  value,
-  form,
-  nullable,
   allParameters,
+  toolName,
+  fieldError,
 }) => {
-  const validationTimeoutRef = useRef(null);
-  const justClearedRef = useRef(false); // Track if field was just cleared programmatically
-  const [validationState, setValidationState] = useState({
-    status: '', // '', 'validating', 'success', 'error'
-    message: '',
-  });
-  const [currentValue, setCurrentValue] = useState(value || '');
+  const { name, type, value, choices, nullable, help, needs_validation } =
+    parameter;
+  const { setFieldsValue } = form;
+  const [blurError, setBlurError] = useState(null);
+  const [validating, setValidating] = useState(false);
 
-  // Get scenario from allParameters (it's not in the form)
-  const scenarioParam = allParameters?.find(
-    (p) => p.type === 'ScenarioParameter',
-  );
-  const scenarioValue = scenarioParam?.value;
+  // Validate field on blur (if backend says it needs validation)
+  const validateOnBlur = useCallback(
+    async (fieldValue) => {
+      if (!needs_validation) return; // Skip if not needed
+      if (!toolName) return; // Skip if no tool context
 
-  // Watch for external form value changes using polling (simple approach)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const formValue = form.getFieldValue(name);
-      if ((formValue || '') !== currentValue) {
-        // Field was changed externally
-        if (!formValue || formValue.trim() === '') {
-          // Field was cleared - set flag to prevent validation
-          justClearedRef.current = true;
+      setValidating(true);
+      try {
+        const formValues = form.getFieldsValue();
+        const response = await apiClient.post(
+          `/api/tools/${toolName}/validate-field`,
+          {
+            parameter_name: name,
+            value: fieldValue,
+            form_values: formValues,
+          },
+        );
+
+        if (response.data.valid) {
+          setBlurError(null);
+        } else {
+          setBlurError(response.data.error);
         }
-        setCurrentValue(formValue || '');
+      } catch (error) {
+        console.error('Validation error:', error);
+        const errorMessage =
+          error?.response?.data?.error || error?.message || 'Validation failed';
+        setBlurError(errorMessage);
+      } finally {
+        setValidating(false);
       }
-    }, 100); // Check every 100ms
-
-    return () => clearInterval(interval);
-  }, [form, name, currentValue]);
-
-  // Clear validation state when value becomes empty
-  useEffect(() => {
-    if (!currentValue || currentValue.trim() === '') {
-      setValidationState({ status: '', message: '' });
-      // Don't trigger validation if we just cleared
-      if (justClearedRef.current) {
-        justClearedRef.current = false;
-      }
-    }
-  }, [currentValue]);
-
-  // Trigger form validation when validation state changes (but not when clearing)
-  useEffect(() => {
-    // Don't trigger if field was just cleared
-    if (justClearedRef.current) {
-      return;
-    }
-
-    // Only trigger validation if we have a non-empty value
-    // This prevents re-triggering validation when field is cleared
-    if (currentValue && currentValue.trim() !== '') {
-      if (
-        validationState.status === 'success' ||
-        validationState.status === 'error'
-      ) {
-        // Trigger field validation to update the UI
-        form.validateFields([name]).catch(() => {
-          // Ignore validation errors - they'll be displayed by the form
-        });
-      }
-    }
-  }, [
-    validationState.status,
-    validationState.message,
-    form,
-    name,
-    currentValue,
-  ]);
-
-  // Debounced backend validation
-  const validateWithBackend = useCallback(
-    (value) => {
-      console.log('validateWithBackend called with value:', value);
-
-      // Clear any pending validation
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-        console.log('Cleared previous timeout');
-      }
-
-      // Blank/empty is valid (will auto-generate timestamp)
-      if (!value || !value.trim()) {
-        console.log('Value is blank, skipping validation');
-        setValidationState({ status: '', message: '' });
-        return;
-      }
-
-      console.log('Setting timeout for validation...');
-
-      // Don't show "validating" state immediately - wait for debounce
-      // This prevents the annoying flicker on every keystroke
-
-      // Debounce backend validation by 1000ms (longer delay)
-      validationTimeoutRef.current = setTimeout(async () => {
-        console.log('Timeout fired! Starting validation...');
-        // Now show validating state
-        setValidationState({ status: 'validating', message: '' });
-
-        try {
-          // Get scenario from allParameters (not in form)
-          const scenario = scenarioValue;
-
-          // Get network-type from form
-          const formValues = form.getFieldsValue();
-          const networkType = formValues['network-type'];
-
-          console.log('Form values:', formValues);
-          console.log('scenario:', scenario);
-          console.log('network-type:', networkType);
-
-          // Skip backend validation if dependencies aren't set
-          if (!scenario || !networkType) {
-            console.log(
-              'Skipping validation - missing scenario or network-type',
-            );
-            setValidationState({ status: '', message: '' });
-            return;
-          }
-
-          // Check if network folder exists
-          // Format: {scenario}/outputs/data/thermal-network/{DC|DH}/{network-name}/
-          const trimmedValue = value.trim();
-          const networkPath = `${scenario}/outputs/data/thermal-network/${networkType}/${trimmedValue}`;
-
-          console.log('Checking network path:', networkPath);
-
-          try {
-            // Check if the network folder exists using /api/contents
-            await apiClient.get('/api/contents', {
-              params: {
-                content_path: networkPath,
-                content_type: 'directory',
-              },
-            });
-
-            // If we got here (no error), the folder exists
-            console.log('Network folder exists!');
-
-            // Check if it contains network files (edges.shp or nodes.shp)
-            try {
-              const edgesPath = `${networkPath}/edges.shp`;
-              const nodesPath = `${networkPath}/nodes.shp`;
-
-              // Try to check for edges.shp
-              let hasEdges = false;
-              let hasNodes = false;
-
-              try {
-                await apiClient.get('/api/contents', {
-                  params: { content_path: edgesPath, content_type: 'file' },
-                });
-                hasEdges = true;
-              } catch (e) {
-                // edges.shp doesn't exist
-              }
-
-              try {
-                await apiClient.get('/api/contents', {
-                  params: { content_path: nodesPath, content_type: 'file' },
-                });
-                hasNodes = true;
-              } catch (e) {
-                // nodes.shp doesn't exist
-              }
-
-              if (hasEdges || hasNodes) {
-                // Network exists with actual network files
-                setValidationState({
-                  status: 'error',
-                  message: `Network '${trimmedValue}' already exists for ${networkType}. Choose a different name or delete the existing folder.`,
-                });
-                return;
-              }
-            } catch (fileCheckError) {
-              console.log('Error checking network files:', fileCheckError);
-            }
-          } catch (folderCheckError) {
-            // Folder doesn't exist - that's good!
-            console.log(
-              'Network folder does not exist (good):',
-              folderCheckError.response?.status,
-            );
-          }
-
-          // Validation passed - no collision detected
-          setValidationState({ status: 'success', message: '' });
-        } catch (error) {
-          console.error('Validation error:', error);
-
-          // Extract error message from backend
-          const errorMessage =
-            error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            error?.response?.data ||
-            error?.message ||
-            'Validation failed';
-
-          setValidationState({
-            status: 'error',
-            message: String(errorMessage),
-          });
-        }
-      }, 1000); // Increased to 1 second
     },
-    [form, scenarioValue],
+    [needs_validation, toolName, name, form],
   );
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-      }
-    };
+  // Clear blur error when user types
+  const handleChange = useCallback((newValue) => {
+    setBlurError(null);
+    return newValue;
   }, []);
 
-  // Don't show feedback if field was just cleared
-  const shouldShowFeedback =
-    validationState.status !== '' &&
-    !justClearedRef.current &&
-    currentValue &&
-    currentValue.trim() !== '';
-
-  return (
-    <FormField
-      name={name}
-      help={help}
-      initialValue={value}
-      hasFeedback={shouldShowFeedback}
-      validateStatus={shouldShowFeedback ? validationState.status : ''}
-      rules={[
-        {
-          validator: async (_, value) => {
-            // Blank/empty is OK if nullable
-            if ((!value || !value.trim()) && nullable) {
-              return Promise.resolve();
-            }
-
-            // Immediate validation: check for invalid characters
-            const trimmedValue = value?.trim() || '';
-            if (trimmedValue) {
-              try {
-                await validateNetworkNameChars(trimmedValue);
-              } catch (error) {
-                return Promise.reject(error);
-              }
-            }
-
-            // If we have an error from backend validation, show it
-            if (validationState.status === 'error' && validationState.message) {
-              return Promise.reject(validationState.message);
-            }
-
-            return Promise.resolve();
-          },
-        },
-      ]}
-    >
-      <Input
-        placeholder={nullable ? 'Leave blank to auto-generate timestamp' : null}
-        value={currentValue}
-        onChange={(e) => {
-          const newValue = e.target.value;
-          setCurrentValue(newValue);
-          // Trigger debounced backend validation
-          validateWithBackend(newValue);
-        }}
-        onBlur={(e) => {
-          // Re-validate when field loses focus (catches newly created networks)
-          validateWithBackend(e.target.value);
-        }}
-      />
-    </FormField>
-  );
-};
-
-const Parameter = ({ parameter, form, allParameters, toolName }) => {
-  const { name, type, value, choices, nullable, help } = parameter;
-  const { setFieldsValue } = form;
+  // Combined error from blur validation or submit validation
+  const error = blurError || fieldError;
 
   // Debug logging to see parameter types
   if (name === 'network-name') {
@@ -490,6 +105,7 @@ const Parameter = ({ parameter, form, allParameters, toolName }) => {
       nullable,
       allParameters,
       toolName,
+      needs_validation,
     });
   }
 
@@ -619,18 +235,7 @@ const Parameter = ({ parameter, form, allParameters, toolName }) => {
         </FormField>
       );
     }
-    case 'NetworkLayoutChoiceParameter': {
-      return (
-        <NetworkLayoutChoiceSelect
-          name={name}
-          help={help}
-          value={value}
-          choices={choices}
-          form={form}
-          toolName={toolName}
-        />
-      );
-    }
+    case 'NetworkLayoutChoiceParameter':
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
@@ -646,10 +251,17 @@ const Parameter = ({ parameter, form, allParameters, toolName }) => {
       return (
         <FormField
           name={name}
-          help={help}
+          help={error ? error : help}
+          validateStatus={error ? 'error' : validating ? 'validating' : ''}
+          hasFeedback={validating || !!error}
           rules={[
             {
               validator: (_, value) => {
+                // Show error from blur or submit validation
+                if (error) {
+                  return Promise.reject(error);
+                }
+
                 if (choices.length < 1) {
                   if (type === 'GenerationParameter')
                     return Promise.reject(
@@ -671,7 +283,19 @@ const Parameter = ({ parameter, form, allParameters, toolName }) => {
           ]}
           initialValue={value}
         >
-          <Select options={options} disabled={!choices.length} />
+          <Select
+            options={options}
+            disabled={!choices.length}
+            loading={validating}
+            onChange={(val) => {
+              handleChange(val);
+              form.setFieldsValue({ [name]: val });
+            }}
+            onBlur={() => {
+              const currentValue = form.getFieldValue(name);
+              validateOnBlur(currentValue);
+            }}
+          />
         </FormField>
       );
     }
@@ -844,23 +468,39 @@ const Parameter = ({ parameter, form, allParameters, toolName }) => {
       );
     }
 
-    case 'NetworkLayoutNameParameter': {
-      return (
-        <NetworkLayoutNameInput
-          name={name}
-          help={help}
-          value={value}
-          form={form}
-          nullable={nullable}
-          allParameters={allParameters}
-        />
-      );
-    }
-
+    case 'NetworkLayoutNameParameter':
     default:
       return (
-        <FormField name={name} help={help} initialValue={value}>
-          <Input />
+        <FormField
+          name={name}
+          help={error ? error : help}
+          validateStatus={error ? 'error' : validating ? 'validating' : ''}
+          hasFeedback={validating || !!error}
+          initialValue={value}
+          rules={[
+            {
+              validator: (_, value) => {
+                // Show error from blur or submit validation
+                if (error) {
+                  return Promise.reject(error);
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          <Input
+            placeholder={
+              nullable ? 'Leave blank to auto-generate timestamp' : null
+            }
+            onChange={(e) => {
+              handleChange(e.target.value);
+              form.setFieldsValue({ [name]: e.target.value });
+            }}
+            onBlur={(e) => {
+              validateOnBlur(e.target.value);
+            }}
+          />
         </FormField>
       );
   }
