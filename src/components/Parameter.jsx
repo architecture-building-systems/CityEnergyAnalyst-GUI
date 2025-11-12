@@ -438,6 +438,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           initialValue={value}
           rules={[{ validator }]}
           validateTrigger="onBlur"
+          dependencies={parameter.depends_on || []}
           hasFeedback
         >
           <Input placeholder="Enter a name for the network" />
