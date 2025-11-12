@@ -363,13 +363,21 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
             }
           }
         });
+
+        // Re-check for missing inputs after metadata update
+        // Parameters may now depend on different input files
+        const currentParams = await getForm();
+        if (currentParams) {
+          console.log('[handleRefetch] Re-checking for missing inputs');
+          checkMissingInputs(currentParams);
+        }
       } catch (err) {
         console.error('Error refetching parameter metadata:', err);
       } finally {
         setIsRefetching(false);
       }
     },
-    [script, form, updateParameterMetadata],
+    [script, form, updateParameterMetadata, getForm, checkMissingInputs],
   );
 
   if (status == 'fetching' || showSkeleton)
