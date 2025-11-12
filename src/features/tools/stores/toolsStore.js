@@ -93,8 +93,6 @@ const useToolsStore = create((set, get) => ({
         params,
       );
       return response.data;
-    } catch (error) {
-      throw error;
     } finally {
       set((state) => ({
         toolSaving: { ...state.toolSaving, isSaving: false },

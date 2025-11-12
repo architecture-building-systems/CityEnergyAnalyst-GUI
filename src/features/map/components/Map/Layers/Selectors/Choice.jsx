@@ -88,7 +88,10 @@ const ChoiceSelector = ({
   useEffect(() => {
     if (choices) {
       const defaultValue = choices.default || choices.choices?.[0];
-      console.log(`[Choice] ${parameterName}: Using default value:`, defaultValue);
+      console.log(
+        `[Choice] ${parameterName}: Using default value:`,
+        defaultValue,
+      );
       handleChange(defaultValue);
     } else {
       handleChange(null);
