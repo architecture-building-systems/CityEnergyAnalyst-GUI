@@ -16,7 +16,7 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback, useState } from 'react';
+import { forwardRef, useCallback } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
@@ -38,20 +38,13 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-// Custom hook for parameter validation
 const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
-  const [blurError, setBlurError] = useState(null);
-  const [validating, setValidating] = useState(false);
-  const [validationSuccess, setValidationSuccess] = useState(false);
+  // Create async validator for Ant Design Form.Item rules
+  const validator = useCallback(
+    async (_, fieldValue) => {
+      // Skip validation if not needed
+      if (!needs_validation || !toolName || !name) return Promise.resolve();
 
-  // Validate field on blur (if backend says it needs validation)
-  const validateOnBlur = useCallback(
-    async (fieldValue) => {
-      if (!needs_validation) return;
-      if (!toolName) return;
-
-      setValidating(true);
-      setValidationSuccess(false);
       try {
         const formValues = form.getFieldsValue();
         const response = await apiClient.post(
@@ -64,44 +57,21 @@ const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
         );
 
         if (response.data.valid) {
-          setBlurError(null);
-          // Track success if there's a value
-          if (fieldValue && fieldValue.trim()) {
-            setValidationSuccess(true);
-          }
+          return Promise.resolve();
         } else {
-          setBlurError(response.data.error);
-          setValidationSuccess(false);
+          return Promise.reject(new Error(response.data.error));
         }
       } catch (error) {
         console.error('Validation error:', error);
         const errorMessage =
           error?.response?.data?.error || error?.message || 'Validation failed';
-        setBlurError(errorMessage);
-        setValidationSuccess(false);
-      } finally {
-        setValidating(false);
+        return Promise.reject(new Error(errorMessage));
       }
     },
     [needs_validation, toolName, name, form],
   );
 
-  // Clear blur error when user types
-  const handleChange = useCallback(() => {
-    setBlurError(null);
-    setValidationSuccess(false);
-  }, []);
-
-  // Combined error from blur validation or submit validation
-  const error = blurError;
-
-  return {
-    error,
-    validating,
-    validationSuccess,
-    validateOnBlur,
-    handleChange,
-  };
+  return validator;
 };
 
 const Parameter = ({ parameter, form, toolName }) => {
@@ -109,13 +79,12 @@ const Parameter = ({ parameter, form, toolName }) => {
     parameter;
   const { setFieldsValue } = form;
 
-  const { error, validating, validationSuccess, validateOnBlur, handleChange } =
-    useParameterValidation({
-      needs_validation,
-      toolName,
-      name,
-      form,
-    });
+  const validator = useParameterValidation({
+    needs_validation,
+    toolName,
+    name,
+    form,
+  });
 
   switch (type) {
     case 'IntegerParameter':
@@ -256,37 +225,30 @@ const Parameter = ({ parameter, form, toolName }) => {
         value: choice,
       }));
 
+      const optionsValidator = (_, value) => {
+        if (choices.length < 1) {
+          if (type === 'GenerationParameter')
+            return Promise.reject(
+              'No generations found. Run optimization first.',
+            );
+          else
+            return Promise.reject('There are no valid choices for this input');
+        } else if (!nullable) {
+          if (!value) return Promise.reject('Select a choice');
+          if (!choices.includes(value))
+            return Promise.reject(`${value} is not a valid choice`);
+        }
+
+        return Promise.resolve();
+      };
+
       return (
         <FormField
           name={name}
-          help={error ? error : help}
-          validateStatus={error ? 'error' : validating ? 'validating' : ''}
-          hasFeedback={validating || !!error}
+          help={help}
           rules={[
             {
-              validator: (_, value) => {
-                // Show error from blur or submit validation
-                if (error) {
-                  return Promise.reject(error);
-                }
-
-                if (choices.length < 1) {
-                  if (type === 'GenerationParameter')
-                    return Promise.reject(
-                      'No generations found. Run optimization first.',
-                    );
-                  else
-                    return Promise.reject(
-                      'There are no valid choices for this input',
-                    );
-                } else if (!nullable) {
-                  if (!value) return Promise.reject('Select a choice');
-                  if (!choices.includes(value))
-                    return Promise.reject(`${value} is not a valid choice`);
-                }
-
-                return Promise.resolve();
-              },
+              validator: optionsValidator,
             },
           ]}
           initialValue={value}
@@ -295,11 +257,6 @@ const Parameter = ({ parameter, form, toolName }) => {
             placeholder={nullable ? 'Nothing Selected' : 'Select a choice'}
             options={options}
             disabled={!choices.length}
-            loading={validating}
-            onBlur={() => {
-              const currentValue = form.getFieldValue(name);
-              validateOnBlur(currentValue);
-            }}
           />
         </FormField>
       );
@@ -473,74 +430,24 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
 
-    case 'NetworkLayoutNameParameter':
+    case 'NetworkLayoutNameParameter': {
       return (
         <FormField
           name={name}
-          help={error ? error : help}
-          validateStatus={
-            error
-              ? 'error'
-              : validating
-                ? 'validating'
-                : validationSuccess
-                  ? 'success'
-                  : ''
-          }
-          hasFeedback={validating || !!error || validationSuccess}
+          help={help}
           initialValue={value}
-          rules={[
-            {
-              validator: () => {
-                // Show error from blur or submit validation
-                if (error) {
-                  return Promise.reject(error);
-                }
-                return Promise.resolve();
-              },
-            },
-          ]}
+          rules={[{ validator }]}
+          validateTrigger="onBlur"
         >
-          <Input
-            onBlur={(e) => {
-              validateOnBlur(e.target.value);
-            }}
-          />
+          <Input placeholder="Enter a name for the network" />
         </FormField>
       );
+    }
 
     default:
       return (
-        <FormField
-          name={name}
-          help={error ? error : help}
-          validateStatus={error ? 'error' : validating ? 'validating' : ''}
-          hasFeedback={validating || !!error}
-          initialValue={value}
-          rules={[
-            {
-              validator: () => {
-                // Show error from blur or submit validation
-                if (error) {
-                  return Promise.reject(error);
-                }
-                return Promise.resolve();
-              },
-            },
-          ]}
-        >
-          <Input
-            placeholder={
-              nullable ? 'Leave blank to auto-generate timestamp' : null
-            }
-            onChange={(e) => {
-              handleChange(e.target.value);
-              form.setFieldsValue({ [name]: e.target.value });
-            }}
-            onBlur={(e) => {
-              validateOnBlur(e.target.value);
-            }}
-          />
+        <FormField name={name} help={help} initialValue={value}>
+          <Input />
         </FormField>
       );
   }
