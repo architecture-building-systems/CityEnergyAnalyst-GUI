@@ -116,7 +116,10 @@ const useToolForm = (
   externalForm = null,
 ) => {
   const [form] = Form.useForm(externalForm);
-  const { saveToolParams, setDefaultToolParams } = useToolsStore();
+  const saveToolParams = useToolsStore((state) => state.saveToolParams);
+  const setDefaultToolParams = useToolsStore(
+    (state) => state.setDefaultToolParams,
+  );
   const { createJob } = useJobsStore();
 
   const setShowLoginModal = useSetShowLoginModal();
@@ -223,7 +226,11 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
+  const saveToolParams = useToolsStore((state) => state.saveToolParams);
   const resetToolParams = useToolsStore((state) => state.resetToolParams);
+  const updateParameterMetadata = useToolsStore(
+    (state) => state.updateParameterMetadata,
+  );
 
   const changes = useChangesExist();
 
@@ -301,21 +308,66 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     externalForm,
   );
 
+  const fetchParams = async () => {
+    if (script) await fetchToolParams(script);
+    else resetToolParams();
+
+    // Reset form fields to ensure they are in sync with the fetched parameters
+    form.resetFields();
+
+    // Check for missing inputs after fetching parameters
+    const params = await getForm();
+    if (params) checkMissingInputs(params);
+  };
+
+  // FIXME: Run check missing inputs when form validation passes
   useEffect(() => {
-    const fetchParams = async () => {
-      if (script) await fetchToolParams(script);
-      else resetToolParams();
-
-      // Reset form fields to ensure they are in sync with the fetched parameters
-      form.resetFields();
-
-      // Check for missing inputs after fetching parameters
-      const params = await getForm();
-      if (params) checkMissingInputs(params);
-    };
-
     fetchParams();
   }, [script, fetchToolParams, resetToolParams, form]);
+
+  const handleRefetch = useCallback(
+    async (formValues, changedParam, affectedParams) => {
+      try {
+        console.log(
+          `[handleRefetch] Refetching metadata - changed: ${changedParam}, affected: ${affectedParams?.join(', ')}`,
+        );
+
+        // Call API to get updated parameter metadata
+        const response = await apiClient.post(
+          `/api/tools/${script}/parameter-metadata`,
+          {
+            form_values: formValues,
+            affected_parameters: affectedParams,
+          },
+        );
+
+        const { parameters } = response.data;
+        console.log(
+          `[handleRefetch] Received metadata for ${Object.keys(parameters).length} parameters`,
+        );
+
+        // Update parameter definitions in store
+        updateParameterMetadata(parameters);
+
+        // Update form values for affected parameters if value changed
+        Object.keys(parameters).forEach((paramName) => {
+          const metadata = parameters[paramName];
+          if (metadata.value !== undefined) {
+            const currentValue = form.getFieldValue(paramName);
+            if (currentValue !== metadata.value) {
+              console.log(
+                `[handleRefetch] Updating ${paramName} value: ${currentValue} -> ${metadata.value}`,
+              );
+              form.setFieldValue(paramName, metadata.value);
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error refetching parameter metadata:', err);
+      }
+    },
+    [script, form, updateParameterMetadata],
+  );
 
   if (status == 'fetching' || showSkeleton)
     return (
@@ -425,6 +477,7 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
             categoricalParameters={categoricalParameters}
             script={script}
             disableButtons={disableButtons}
+            onRefetchNeeded={handleRefetch}
           />
         </div>
       </div>
