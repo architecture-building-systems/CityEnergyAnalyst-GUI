@@ -438,6 +438,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           initialValue={value}
           rules={[{ validator }]}
           validateTrigger="onBlur"
+          hasFeedback
         >
           <Input placeholder="Enter a name for the network" />
         </FormField>
