@@ -16,10 +16,11 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef } from 'react';
+import { forwardRef, useCallback } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
+import { apiClient } from 'lib/api/axios';
 
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
@@ -37,9 +38,53 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-const Parameter = ({ parameter, form }) => {
-  const { name, type, value, choices, nullable, help } = parameter;
+const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
+  // Create async validator for Ant Design Form.Item rules
+  const validator = useCallback(
+    async (_, fieldValue) => {
+      // Skip validation if not needed
+      if (!needs_validation || !toolName || !name) return Promise.resolve();
+
+      try {
+        const formValues = form.getFieldsValue();
+        const response = await apiClient.post(
+          `/api/tools/${toolName}/validate-field`,
+          {
+            parameter_name: name,
+            value: fieldValue,
+            form_values: formValues,
+          },
+        );
+
+        if (response.data.valid) {
+          return Promise.resolve();
+        } else {
+          return Promise.reject(new Error(response.data.error));
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        const errorMessage =
+          error?.response?.data?.error || error?.message || 'Validation failed';
+        return Promise.reject(new Error(errorMessage));
+      }
+    },
+    [needs_validation, toolName, name, form],
+  );
+
+  return validator;
+};
+
+const Parameter = ({ parameter, form, toolName }) => {
+  const { name, type, value, choices, nullable, help, needs_validation } =
+    parameter;
   const { setFieldsValue } = form;
+
+  const validator = useParameterValidation({
+    needs_validation,
+    toolName,
+    name,
+    form,
+  });
 
   switch (type) {
     case 'IntegerParameter':
@@ -167,6 +212,7 @@ const Parameter = ({ parameter, form }) => {
         </FormField>
       );
     }
+    case 'NetworkLayoutChoiceParameter':
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
@@ -179,35 +225,39 @@ const Parameter = ({ parameter, form }) => {
         value: choice,
       }));
 
+      const optionsValidator = (_, value) => {
+        if (choices.length < 1) {
+          if (type === 'GenerationParameter')
+            return Promise.reject(
+              'No generations found. Run optimization first.',
+            );
+          else
+            return Promise.reject('There are no valid choices for this input');
+        } else if (!nullable) {
+          if (!value) return Promise.reject('Select a choice');
+          if (!choices.includes(value))
+            return Promise.reject(`${value} is not a valid choice`);
+        }
+
+        return Promise.resolve();
+      };
+
       return (
         <FormField
           name={name}
           help={help}
           rules={[
             {
-              validator: (_, value) => {
-                if (choices.length < 1) {
-                  if (type === 'GenerationParameter')
-                    return Promise.reject(
-                      'No generations found. Run optimization first.',
-                    );
-                  else
-                    return Promise.reject(
-                      'There are no valid choices for this input',
-                    );
-                } else if (value == null) {
-                  return Promise.reject('Select a choice');
-                } else if (!choices.includes(value)) {
-                  return Promise.reject(`${value} is not a valid choice`);
-                } else {
-                  return Promise.resolve();
-                }
-              },
+              validator: optionsValidator,
             },
           ]}
           initialValue={value}
         >
-          <Select options={options} disabled={!choices.length} />
+          <Select
+            placeholder={nullable ? 'Nothing Selected' : 'Select a choice'}
+            options={options}
+            disabled={!choices.length}
+          />
         </FormField>
       );
     }
@@ -376,6 +426,22 @@ const Parameter = ({ parameter, form }) => {
           })}
         >
           <Input disabled />
+        </FormField>
+      );
+    }
+
+    case 'NetworkLayoutNameParameter': {
+      return (
+        <FormField
+          name={name}
+          help={help}
+          initialValue={value}
+          rules={[{ validator }]}
+          validateTrigger="onBlur"
+          dependencies={parameter.depends_on || []}
+          hasFeedback
+        >
+          <Input placeholder="Enter a name for the network" />
         </FormField>
       );
     }
