@@ -226,11 +226,11 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const { status, error, params } = useToolsStore((state) => state.toolParams);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
-  const saveToolParams = useToolsStore((state) => state.saveToolParams);
   const resetToolParams = useToolsStore((state) => state.resetToolParams);
   const updateParameterMetadata = useToolsStore(
     (state) => state.updateParameterMetadata,
   );
+  const [isRefetching, setIsRefetching] = useState(false);
 
   const changes = useChangesExist();
 
@@ -328,6 +328,7 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const handleRefetch = useCallback(
     async (formValues, changedParam, affectedParams) => {
       try {
+        setIsRefetching(true);
         console.log(
           `[handleRefetch] Refetching metadata - changed: ${changedParam}, affected: ${affectedParams?.join(', ')}`,
         );
@@ -364,6 +365,8 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
         });
       } catch (err) {
         console.error('Error refetching parameter metadata:', err);
+      } finally {
+        setIsRefetching(false);
       }
     },
     [script, form, updateParameterMetadata],
@@ -386,7 +389,10 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   if (!label) return null;
 
   return (
-    <Spin wrapperClassName="cea-tool-form-spinner" spinning={isSaving}>
+    <Spin
+      wrapperClassName="cea-tool-form-spinner"
+      spinning={isSaving || isRefetching}
+    >
       <div
         style={{
           // position: 'relative', // Add this to ensure proper spin overlay
