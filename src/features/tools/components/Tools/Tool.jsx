@@ -25,17 +25,20 @@ const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState();
 
-  const fetch = async (parameters) => {
-    setFetching(true);
-    try {
-      await apiClient.post(`/api/tools/${tool}/check`, parameters);
-      setError(null);
-    } catch (err) {
-      setError(err.response.data?.detail?.script_suggestions);
-    } finally {
-      setFetching(false);
-    }
-  };
+  const fetch = useCallback(
+    async (parameters) => {
+      setFetching(true);
+      try {
+        await apiClient.post(`/api/tools/${tool}/check`, parameters);
+        setError(null);
+      } catch (err) {
+        setError(err.response.data?.detail?.script_suggestions);
+      } finally {
+        setFetching(false);
+      }
+    },
+    [tool],
+  );
 
   // reset error when tool changes
   useEffect(() => {
@@ -122,7 +125,7 @@ const useToolForm = (
   };
 
   // TODO: Add error callback
-  const getForm = async () => {
+  const getForm = useCallback(async () => {
     let out = null;
     if (!parameters) return out;
 
@@ -165,7 +168,7 @@ const useToolForm = (
         //   setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
       }
     }
-  };
+  }, [form, parameters, categoricalParameters]);
 
   const runScript = async () => {
     const params = await getForm();
@@ -232,7 +235,11 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     categorical_parameters: categoricalParameters,
   } = params;
 
-  const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
+  const {
+    fetch: checkMissingInputs,
+    fetching,
+    error: _error,
+  } = useCheckMissingInputs(script);
   const disableButtons = fetching || _error !== null;
 
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -259,6 +266,13 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     }
   }, [description, showSkeleton]);
 
+  useEffect(() => {
+    // Reset header visibility when description changes
+    setHeaderVisible(true);
+    lastScrollPositionRef.current = 0;
+    descriptionHeightRef.current = 'auto';
+  }, [description]);
+
   const handleScroll = useCallback((e) => {
     // Ensure the scroll threshold greater than the description height to prevent layout shifts
     const scrollThreshold = descriptionHeightRef.current;
@@ -276,10 +290,6 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     lastScrollPositionRef.current = currentScrollPosition;
   }, []);
 
-  const checkMissingInputs = (params) => {
-    fetch?.(params);
-  };
-
   const { form, getForm, runScript, saveParams, setDefault } = useToolForm(
     script,
     parameters,
@@ -291,11 +301,6 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     externalForm,
   );
 
-  const onMount = async () => {
-    const params = await getForm();
-    if (params) checkMissingInputs(params);
-  };
-
   useEffect(() => {
     const fetchParams = async () => {
       if (script) await fetchToolParams(script);
@@ -303,14 +308,13 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
 
       // Reset form fields to ensure they are in sync with the fetched parameters
       form.resetFields();
+
+      // Check for missing inputs after fetching parameters
+      const params = await getForm();
+      if (params) checkMissingInputs(params);
     };
 
     fetchParams();
-
-    // Reset header visibility when the component mounts
-    setHeaderVisible(true);
-    lastScrollPositionRef.current = 0;
-    descriptionHeightRef.current = 'auto';
   }, [script, fetchToolParams, resetToolParams, form]);
 
   if (status == 'fetching' || showSkeleton)
@@ -421,7 +425,6 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
             categoricalParameters={categoricalParameters}
             script={script}
             disableButtons={disableButtons}
-            onMount={onMount}
           />
         </div>
       </div>

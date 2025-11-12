@@ -7,7 +7,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 
-const ToolForm = ({ form, parameters, categoricalParameters, script, onMount }) => {
+const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   const [activeKey, setActiveKey] = useState([]);
 
   let toolParams = null;
@@ -49,10 +49,6 @@ const ToolForm = ({ form, parameters, categoricalParameters, script, onMount }) 
       />
     );
   }
-
-  useEffect(() => {
-    onMount?.();
-  }, []);
 
   return (
     <Form form={form} layout="vertical" className="cea-tool-form">
