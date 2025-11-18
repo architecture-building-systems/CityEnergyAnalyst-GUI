@@ -7,7 +7,7 @@ import {
   PolygonLayer,
   TextLayer,
 } from '@deck.gl/layers';
-import { DataFilterExtension } from '@deck.gl/extensions';
+import { DataFilterExtension, PathStyleExtension } from '@deck.gl/extensions';
 
 import positron from 'constants/mapStyles/positron.json';
 import no_label from 'constants/mapStyles/positron_nolabel.json';
@@ -227,6 +227,11 @@ const useMapLayers = (onHover = () => {}) => {
                 7 * scale,
               ),
             getLineColor: edgeColour,
+            getDashArray: (f) =>
+              f.properties['peak_mass_flow'] ? [0, 0] : [8, 4],
+            dashJustified: true,
+            dashGapPickable: true,
+            extensions: [new PathStyleExtension({ dash: true })],
             updateTriggers: {
               getLineWidth: [scale, min, max],
             },
