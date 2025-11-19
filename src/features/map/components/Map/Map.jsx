@@ -3,6 +3,7 @@ import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { DeckGL } from '@deck.gl/react';
 import {
   GeoJsonLayer,
+  IconLayer,
   PointCloudLayer,
   PolygonLayer,
   TextLayer,
@@ -11,6 +12,8 @@ import { DataFilterExtension, PathStyleExtension } from '@deck.gl/extensions';
 
 import positron from 'constants/mapStyles/positron.json';
 import no_label from 'constants/mapStyles/positron_nolabel.json';
+// eslint-disable-next-line import/no-unresolved
+import starFillIcon from 'assets/icons/star-fill.svg?url';
 
 import * as turf from '@turf/turf';
 import './Map.css';
@@ -244,23 +247,114 @@ const useMapLayers = (onHover = () => {}) => {
           }),
         );
 
-        _layers.push(
-          new GeoJsonLayer({
-            id: `${name}-nodes`,
-            data: mapLayers[name]?.nodes,
-            getFillColor: (f) => nodeFillColor(f.properties['type']),
-            getPointRadius: (f) => nodeRadius(f.properties['type']),
-            getLineColor: (f) => nodeLineColor(f.properties['type']),
-            getLineWidth: 1,
-            updateTriggers: {
-              getPointRadius: [scale],
-            },
-            onHover: onHover,
-            pickable: true,
-
-            parameters: { depthTest: false },
-          }),
+        // Partition nodes by type
+        const nodesData = mapLayers[name]?.nodes;
+        const { plantNodes, consumerNodes, noneNodes } = (
+          nodesData?.features ?? []
+        ).reduce(
+          (acc, feature) => {
+            const type = feature.properties['type'];
+            if (type === 'PLANT') {
+              acc.plantNodes.push(feature);
+            } else if (type === 'CONSUMER') {
+              acc.consumerNodes.push(feature);
+            } else {
+              acc.noneNodes.push(feature);
+            }
+            return acc;
+          },
+          { plantNodes: [], consumerNodes: [], noneNodes: [] },
         );
+
+        // Add GeoJsonLayer for NONE nodes - rendered first (bottom layer)
+        if (noneNodes.length > 0) {
+          _layers.push(
+            new GeoJsonLayer({
+              id: `${name}-none-nodes`,
+              data: {
+                type: 'FeatureCollection',
+                features: noneNodes,
+              },
+              getFillColor: (f) => nodeFillColor(f.properties['type']),
+              getPointRadius: (f) => nodeRadius(f.properties['type']),
+              getLineColor: (f) => nodeLineColor(f.properties['type']),
+              getLineWidth: 1,
+              updateTriggers: {
+                getPointRadius: [scale],
+              },
+              onHover: onHover,
+              pickable: true,
+              parameters: { depthTest: false },
+            }),
+          );
+        }
+
+        // Add GeoJsonLayer for CONSUMER nodes - rendered second (above NONE nodes)
+        if (consumerNodes.length > 0) {
+          _layers.push(
+            new GeoJsonLayer({
+              id: `${name}-consumer-nodes`,
+              data: {
+                type: 'FeatureCollection',
+                features: consumerNodes,
+              },
+              getFillColor: (f) => nodeFillColor(f.properties['type']),
+              getPointRadius: (f) => nodeRadius(f.properties['type']),
+              getLineColor: (f) => nodeLineColor(f.properties['type']),
+              getLineWidth: 1,
+              updateTriggers: {
+                getPointRadius: [scale],
+              },
+              onHover: onHover,
+              pickable: true,
+              parameters: { depthTest: false },
+            }),
+          );
+        }
+
+        // Add IconLayer for plant nodes with star icon
+        // Rendered after other nodes to appear on top
+        if (plantNodes.length > 0) {
+          // Use bright yellow for high visibility and to complement blue/red edges
+          const plantColor = [255, 209, 29, 255]; // Bright yellow
+
+          _layers.push(
+            new IconLayer({
+              id: `${name}-plant-nodes`,
+              data: plantNodes,
+              getIcon: () => ({
+                url: starFillIcon,
+                width: 64,
+                height: 64,
+                anchorY: 32,
+                mask: true,
+              }),
+              getPosition: (f) => {
+                const coords = f.geometry.coordinates;
+                // Add z-elevation of 3 meters to lift icon above the map
+                return [coords[0], coords[1], 3];
+              },
+              getSize: 10 * scale,
+              getColor: plantColor,
+              sizeUnits: 'meters',
+              sizeMinPixels: 20,
+              billboard: true,
+              loadOptions: {
+                imagebitmap: {
+                  resizeWidth: 64,
+                  resizeHeight: 64,
+                  resizeQuality: 'high',
+                },
+              },
+              onHover: onHover,
+              pickable: true,
+              updateTriggers: {
+                getSize: [scale],
+              },
+              parameters: { depthTest: false },
+            }),
+          );
+        }
       }
 
       if (name == DEMAND && mapLayers?.[name]) {
