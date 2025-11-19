@@ -176,9 +176,10 @@ const MapTooltip = ({ info }) => {
         ? Math.round(Number(properties.pipe_DN) * 100) / 100
         : null;
 
-      const peakMassFlow = properties?.peak_mass_flow
-        ? Math.round(Number(properties.peak_mass_flow) * 1000) / 1000
-        : null;
+      const peakMassFlow =
+        properties?.peak_mass_flow != null
+          ? Math.round(Number(properties.peak_mass_flow) * 1000) / 1000
+          : null;
 
       return (
         <div className="tooltip-content">

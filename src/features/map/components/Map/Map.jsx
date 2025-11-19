@@ -220,7 +220,7 @@ const useMapLayers = (onHover = () => {}) => {
             data: mapLayers[name]?.edges,
             getLineWidth: (f) =>
               normalizeLineWidth(
-                f.properties['peak_mass_flow'],
+                f.properties?.['peak_mass_flow'] ?? 0,
                 min,
                 max,
                 1,
@@ -228,7 +228,7 @@ const useMapLayers = (onHover = () => {}) => {
               ),
             getLineColor: edgeColour,
             getDashArray: (f) =>
-              f.properties['peak_mass_flow'] ? [0, 0] : [8, 4],
+              f.properties?.['peak_mass_flow'] != null ? [0, 0] : [8, 4],
             dashJustified: true,
             dashGapPickable: true,
             extensions: [new PathStyleExtension({ dash: true })],
