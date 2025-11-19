@@ -13,7 +13,7 @@ import { DataFilterExtension, PathStyleExtension } from '@deck.gl/extensions';
 import positron from 'constants/mapStyles/positron.json';
 import no_label from 'constants/mapStyles/positron_nolabel.json';
 // eslint-disable-next-line import/no-unresolved
-import starFillIcon from 'assets/icons/star-fill.svg?url';
+import triangleFillIcon from 'assets/icons/triangle-fill.svg?url';
 
 import * as turf from '@turf/turf';
 import './Map.css';
@@ -312,7 +312,7 @@ const useMapLayers = (onHover = () => {}) => {
           );
         }
 
-        // Add IconLayer for plant nodes with star icon
+        // Add IconLayer for plant nodes with triangle icon
         // Rendered after other nodes to appear on top
         if (plantNodes.length > 0) {
           // Use bright yellow for high visibility and to complement blue/red edges
@@ -323,7 +323,7 @@ const useMapLayers = (onHover = () => {}) => {
               id: `${name}-plant-nodes`,
               data: plantNodes,
               getIcon: () => ({
-                url: starFillIcon,
+                url: triangleFillIcon,
                 width: 64,
                 height: 64,
                 anchorY: 32,
