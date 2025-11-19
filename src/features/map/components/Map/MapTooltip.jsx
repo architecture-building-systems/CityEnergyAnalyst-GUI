@@ -176,9 +176,10 @@ const MapTooltip = ({ info }) => {
         ? Math.round(Number(properties.pipe_DN) * 100) / 100
         : null;
 
-      const peakMassFlow = properties?.peak_mass_flow
-        ? Math.round(Number(properties.peak_mass_flow) * 1000) / 1000
-        : null;
+      const peakMassFlow =
+        properties?.peak_mass_flow != null
+          ? Math.round(Number(properties.peak_mass_flow) * 1000) / 1000
+          : null;
 
       return (
         <div className="tooltip-content">
@@ -212,12 +213,24 @@ const MapTooltip = ({ info }) => {
           </div>
         </div>
       );
-    } else if (layer.id === `${THERMAL_NETWORK}-nodes`) {
+    } else if (
+      layer.id === `${THERMAL_NETWORK}-none-nodes` ||
+      layer.id === `${THERMAL_NETWORK}-consumer-nodes` ||
+      layer.id === `${THERMAL_NETWORK}-plant-nodes`
+    ) {
       if (properties?.type === 'NONE') return null;
+
+      // Determine title based on node type
+      const nodeTitle =
+        properties?.type === 'PLANT'
+          ? 'Plant Node'
+          : properties?.type === 'CONSUMER'
+            ? 'Building Node'
+            : 'Network Node';
 
       return (
         <div className="tooltip-content">
-          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>Network Node</b>
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>{nodeTitle}</b>
           <div className="tooltip-grid">
             <div>ID</div>
             <b style={{ marginLeft: 'auto' }}>{object?.id}</b>
