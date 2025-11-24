@@ -93,13 +93,59 @@ const useToolsStore = create((set, get) => ({
         params,
       );
       return response.data;
-    } catch (error) {
-      throw error;
     } finally {
       set((state) => ({
         toolSaving: { ...state.toolSaving, isSaving: false },
       }));
     }
+  },
+
+  updateParameterMetadata: (updatedMetadata) => {
+    set((state) => {
+      const currentParams = state.toolParams.params;
+      const newParameters = [...(currentParams.parameters || [])];
+      const newCategoricalParameters = {
+        ...(currentParams.categoricalParameters || {}),
+      };
+
+      // Update parameters
+      Object.keys(updatedMetadata).forEach((paramName) => {
+        const metadata = updatedMetadata[paramName];
+
+        // Find in regular parameters
+        const paramIndex = newParameters.findIndex((p) => p.name === paramName);
+        if (paramIndex >= 0) {
+          newParameters[paramIndex] = {
+            ...newParameters[paramIndex],
+            ...metadata,
+          };
+        }
+
+        // Find in categorical parameters
+        Object.keys(newCategoricalParameters).forEach((category) => {
+          const catParamIndex = newCategoricalParameters[category].findIndex(
+            (p) => p.name === paramName,
+          );
+          if (catParamIndex >= 0) {
+            newCategoricalParameters[category][catParamIndex] = {
+              ...newCategoricalParameters[category][catParamIndex],
+              ...metadata,
+            };
+          }
+        });
+      });
+
+      return {
+        toolParams: {
+          ...state.toolParams,
+          params: {
+            ...currentParams,
+            parameters: newParameters,
+            categoricalParameters: newCategoricalParameters,
+          },
+        },
+      };
+    });
   },
 
   setDefaultToolParams: async (tool) => {

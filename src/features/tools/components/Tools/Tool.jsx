@@ -25,17 +25,20 @@ const useCheckMissingInputs = (tool) => {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState();
 
-  const fetch = async (parameters) => {
-    setFetching(true);
-    try {
-      await apiClient.post(`/api/tools/${tool}/check`, parameters);
-      setError(null);
-    } catch (err) {
-      setError(err.response.data?.detail?.script_suggestions);
-    } finally {
-      setFetching(false);
-    }
-  };
+  const fetch = useCallback(
+    async (parameters) => {
+      setFetching(true);
+      try {
+        await apiClient.post(`/api/tools/${tool}/check`, parameters);
+        setError(null);
+      } catch (err) {
+        setError(err.response.data?.detail?.script_suggestions);
+      } finally {
+        setFetching(false);
+      }
+    },
+    [tool],
+  );
 
   // reset error when tool changes
   useEffect(() => {
@@ -113,7 +116,10 @@ const useToolForm = (
   externalForm = null,
 ) => {
   const [form] = Form.useForm(externalForm);
-  const { saveToolParams, setDefaultToolParams } = useToolsStore();
+  const saveToolParams = useToolsStore((state) => state.saveToolParams);
+  const setDefaultToolParams = useToolsStore(
+    (state) => state.setDefaultToolParams,
+  );
   const { createJob } = useJobsStore();
 
   const setShowLoginModal = useSetShowLoginModal();
@@ -122,7 +128,7 @@ const useToolForm = (
   };
 
   // TODO: Add error callback
-  const getForm = async () => {
+  const getForm = useCallback(async () => {
     let out = null;
     if (!parameters) return out;
 
@@ -165,15 +171,24 @@ const useToolForm = (
         //   setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
       }
     }
-  };
+  }, [form, parameters, categoricalParameters]);
 
   const runScript = async () => {
     const params = await getForm();
 
-    return createJob(script, params).catch((err) => {
-      if (err?.response?.status === 401) handleLogin();
-      else console.error(`Error creating job: ${err}`);
-    });
+    return createJob(script, params)
+      .then((result) => {
+        // Clear network-name field after successful job creation to prevent duplicate runs
+        if (script === 'network-layout' && params?.['network-name']) {
+          form.setFieldsValue({ 'network-name': '' });
+          // Don't call validateFields - the component will detect the change and clear validation state
+        }
+        return result;
+      })
+      .catch((err) => {
+        if (err?.response?.status === 401) handleLogin();
+        else console.error(`Error creating job: ${err}`);
+      });
   };
 
   const saveParams = async () => {
@@ -212,6 +227,10 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   const { isSaving } = useToolsStore((state) => state.toolSaving);
   const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
   const resetToolParams = useToolsStore((state) => state.resetToolParams);
+  const updateParameterMetadata = useToolsStore(
+    (state) => state.updateParameterMetadata,
+  );
+  const [isRefetching, setIsRefetching] = useState(false);
 
   const changes = useChangesExist();
 
@@ -223,7 +242,11 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     categorical_parameters: categoricalParameters,
   } = params;
 
-  const { fetch, fetching, error: _error } = useCheckMissingInputs(script);
+  const {
+    fetch: checkMissingInputs,
+    fetching,
+    error: _error,
+  } = useCheckMissingInputs(script);
   const disableButtons = fetching || _error !== null;
 
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -250,6 +273,13 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     }
   }, [description, showSkeleton]);
 
+  useEffect(() => {
+    // Reset header visibility when description changes
+    setHeaderVisible(true);
+    lastScrollPositionRef.current = 0;
+    descriptionHeightRef.current = 'auto';
+  }, [description]);
+
   const handleScroll = useCallback((e) => {
     // Ensure the scroll threshold greater than the description height to prevent layout shifts
     const scrollThreshold = descriptionHeightRef.current;
@@ -267,10 +297,6 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     lastScrollPositionRef.current = currentScrollPosition;
   }, []);
 
-  const checkMissingInputs = (params) => {
-    fetch?.(params);
-  };
-
   const { form, getForm, runScript, saveParams, setDefault } = useToolForm(
     script,
     parameters,
@@ -282,27 +308,77 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     externalForm,
   );
 
-  const onMount = async () => {
+  const fetchParams = async () => {
+    if (script) await fetchToolParams(script);
+    else resetToolParams();
+
+    // Reset form fields to ensure they are in sync with the fetched parameters
+    form.resetFields();
+
+    // Check for missing inputs after fetching parameters
     const params = await getForm();
     if (params) checkMissingInputs(params);
   };
 
+  // FIXME: Run check missing inputs when form validation passes
   useEffect(() => {
-    const fetchParams = async () => {
-      if (script) await fetchToolParams(script);
-      else resetToolParams();
-
-      // Reset form fields to ensure they are in sync with the fetched parameters
-      form.resetFields();
-    };
-
     fetchParams();
-
-    // Reset header visibility when the component mounts
-    setHeaderVisible(true);
-    lastScrollPositionRef.current = 0;
-    descriptionHeightRef.current = 'auto';
   }, [script, fetchToolParams, resetToolParams, form]);
+
+  const handleRefetch = useCallback(
+    async (formValues, changedParam, affectedParams) => {
+      try {
+        setIsRefetching(true);
+        console.log(
+          `[handleRefetch] Refetching metadata - changed: ${changedParam}, affected: ${affectedParams?.join(', ')}`,
+        );
+
+        // Call API to get updated parameter metadata
+        const response = await apiClient.post(
+          `/api/tools/${script}/parameter-metadata`,
+          {
+            form_values: formValues,
+            affected_parameters: affectedParams,
+          },
+        );
+
+        const { parameters } = response.data;
+        console.log(
+          `[handleRefetch] Received metadata for ${Object.keys(parameters).length} parameters`,
+        );
+
+        // Update parameter definitions in store
+        updateParameterMetadata(parameters);
+
+        // Update form values for affected parameters if value changed
+        Object.keys(parameters).forEach((paramName) => {
+          const metadata = parameters[paramName];
+          if (metadata.value !== undefined) {
+            const currentValue = form.getFieldValue(paramName);
+            if (currentValue !== metadata.value) {
+              console.log(
+                `[handleRefetch] Updating ${paramName} value: ${currentValue} -> ${metadata.value}`,
+              );
+              form.setFieldValue(paramName, metadata.value);
+            }
+          }
+        });
+
+        // Re-check for missing inputs after metadata update
+        // Parameters may now depend on different input files
+        const currentParams = await getForm();
+        if (currentParams) {
+          console.log('[handleRefetch] Re-checking for missing inputs');
+          checkMissingInputs(currentParams);
+        }
+      } catch (err) {
+        console.error('Error refetching parameter metadata:', err);
+      } finally {
+        setIsRefetching(false);
+      }
+    },
+    [script, form, updateParameterMetadata, getForm, checkMissingInputs],
+  );
 
   if (status == 'fetching' || showSkeleton)
     return (
@@ -321,7 +397,10 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
   if (!label) return null;
 
   return (
-    <Spin wrapperClassName="cea-tool-form-spinner" spinning={isSaving}>
+    <Spin
+      wrapperClassName="cea-tool-form-spinner"
+      spinning={isSaving || isRefetching}
+    >
       <div
         style={{
           // position: 'relative', // Add this to ensure proper spin overlay
@@ -412,7 +491,7 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
             categoricalParameters={categoricalParameters}
             script={script}
             disableButtons={disableButtons}
-            onMount={onMount}
+            onRefetchNeeded={handleRefetch}
           />
         </div>
       </div>

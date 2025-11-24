@@ -92,7 +92,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       width={800}
       footer={false}
       onCancel={() => setVisible(false)}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {job.state == 1 && <Alert message="Job running..." type="info" />}
