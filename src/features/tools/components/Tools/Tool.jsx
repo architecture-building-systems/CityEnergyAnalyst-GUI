@@ -140,9 +140,18 @@ const useToolForm = (
       let scenario = {};
       if (index >= 0) scenario = { scenario: parameters[index].value };
 
+      // Convert undefined/null values to empty strings for nullable parameters
+      // This ensures backend receives "" instead of undefined/null
+      const cleanedValues = Object.fromEntries(
+        Object.entries(values).map(([key, value]) => [
+          key,
+          value === undefined || value === null ? '' : value
+        ])
+      );
+
       out = {
         ...scenario,
-        ...values,
+        ...cleanedValues,
       };
 
       return out;
@@ -176,6 +185,12 @@ const useToolForm = (
   const runScript = async () => {
     const params = await getForm();
 
+    // If getForm() returns null/undefined (validation failed), don't run
+    if (!params) {
+      console.error('Cannot run - form validation failed');
+      return;
+    }
+
     return createJob(script, params)
       .then((result) => {
         // Clear network-name field after successful job creation to prevent duplicate runs
@@ -193,6 +208,12 @@ const useToolForm = (
 
   const saveParams = async () => {
     const params = await getForm();
+
+    // If getForm() returns null/undefined (validation failed), don't save
+    if (!params) {
+      console.error('Cannot save - form validation failed');
+      return;
+    }
 
     return saveToolParams(script, params)
       .then(() => {

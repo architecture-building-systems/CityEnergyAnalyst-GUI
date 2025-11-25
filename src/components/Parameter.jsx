@@ -213,6 +213,7 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'NetworkLayoutChoiceParameter':
+    case 'DistrictSupplyTypeParameter':
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
@@ -227,6 +228,11 @@ const Parameter = ({ parameter, form, toolName }) => {
 
       const optionsValidator = (_, value) => {
         if (choices.length < 1) {
+          // Empty choices is valid for nullable parameters (e.g., DistrictSupplyTypeParameter with no district assemblies)
+          if (nullable) {
+            return Promise.resolve();
+          }
+
           if (type === 'GenerationParameter')
             return Promise.reject(
               'No generations found. Run optimization first.',

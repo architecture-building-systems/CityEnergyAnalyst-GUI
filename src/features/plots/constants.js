@@ -21,6 +21,7 @@ import {
   EMISSIONS_OPERATIONAL,
   EMISSION_TIMELINE,
   SUPPLY_SYSTEM,
+  COST_BREAKDOWN,
 } from 'features/map/constants';
 
 export const iconMap = {
