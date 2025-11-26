@@ -220,7 +220,8 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'SingleBuildingParameter':
     case 'GenerationParameter':
     case 'SystemParameter':
-    case 'ColumnChoiceParameter': {
+    case 'ColumnChoiceParameter':
+    case 'SolarPanelChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
