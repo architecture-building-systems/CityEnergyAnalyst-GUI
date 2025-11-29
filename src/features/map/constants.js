@@ -10,6 +10,7 @@ export const SUPPLY_SYSTEM = 'supply-system';
 export const EMISSIONS_EMBODIED = 'lifecycle-emissions';
 export const EMISSIONS_OPERATIONAL = 'operational-emissions';
 export const EMISSION_TIMELINE = 'emission-timeline';
+export const COST_BREAKDOWN = 'cost-breakdown';
 
 export const DEFAULT_LEGEND_COLOUR_ARRAY = ['#2A7BB2', '#eb5025', '#f9e246'];
 export const DEFAULT_LEGEND_POINTS = 12;

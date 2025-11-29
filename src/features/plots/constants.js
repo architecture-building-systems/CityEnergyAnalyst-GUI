@@ -21,6 +21,7 @@ import {
   EMISSIONS_OPERATIONAL,
   EMISSION_TIMELINE,
   SUPPLY_SYSTEM,
+  COST_BREAKDOWN,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -35,6 +36,7 @@ export const iconMap = {
   [EMISSIONS_OPERATIONAL]: LifeCycleAnalysisIcon,
   [EMISSION_TIMELINE]: TimelineIcon,
   [SUPPLY_SYSTEM]: SupplySystemIcon,
+  [COST_BREAKDOWN]: LifeCycleAnalysisIcon,
 };
 
 // TODO: get mappings from backend
@@ -62,6 +64,7 @@ export const VIEW_PLOT_RESULTS = {
   [EMISSIONS_OPERATIONAL]: 'plot-operational-emissions',
   [EMISSION_TIMELINE]: 'plot-emission-timeline',
   [SUPPLY_SYSTEM]: 'plot-supply-system',
+  [COST_BREAKDOWN]: 'plot-cost-breakdown',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
