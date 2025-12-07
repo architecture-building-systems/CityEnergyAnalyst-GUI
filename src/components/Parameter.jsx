@@ -344,6 +344,7 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'MultiChoiceParameter':
+    case 'MultiChoiceFeedstockParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
