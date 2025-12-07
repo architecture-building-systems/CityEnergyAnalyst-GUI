@@ -34,6 +34,7 @@ import {
   THERMAL_NETWORK,
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
+  ANTHROPOGENIC_HEAT,
   DEFAULT_LEGEND_COLOUR_ARRAY,
   DEFAULT_LEGEND_POINTS,
 } from 'features/map/constants';
@@ -400,7 +401,7 @@ const useMapLayers = (onHover = () => {}) => {
       }
 
       if (
-        [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL].includes(name) &&
+        [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, ANTHROPOGENIC_HEAT].includes(name) &&
         mapLayers?.[name]
       ) {
         _layers.push(
@@ -418,6 +419,7 @@ const useMapLayers = (onHover = () => {}) => {
             elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
             updateTriggers: {
               getColor: [range],
+              elevationScale: [scale],
             },
           }),
         );
