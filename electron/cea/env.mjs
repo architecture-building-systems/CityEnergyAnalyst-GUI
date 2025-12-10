@@ -1,5 +1,4 @@
 import { app } from 'electron';
-import { fileURLToPath } from 'url';
 import path from 'path';
 import os from 'os';
 import { exec, execSync, spawn } from 'child_process';
@@ -10,35 +9,41 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-const paths = {
-  darwin: {
-    micromamba: app.isPackaged
-      ? path.join(process.resourcesPath, os.arch(), 'micromamba')
-      : // FIXME: Temp fix for dev env
-        path.join(
-          fileURLToPath(import.meta.url),
-          '../../../dependencies',
-          os.arch(),
-          'micromamba',
-        ),
-    root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
-  },
-  win32: {
-    micromamba: path.join(
-      path.dirname(process.execPath),
-      '..',
-      'dependencies',
-      'micromamba.exe',
-    ),
-    root: path.join(
-      path.dirname(process.execPath),
-      '..',
-      'dependencies',
-      'micromamba',
-    ),
-  },
+// Get app path - handles both packaged and dev modes
+const getAppPath = () => {
+  return app.isPackaged ? app.getAppPath() : process.cwd();
 };
 
+// Build paths object once
+const buildPaths = () => {
+  const appPath = getAppPath();
+  const isPackaged = app.isPackaged;
+
+  return {
+    darwin: {
+      micromamba: isPackaged
+        ? path.join(process.resourcesPath, os.arch(), 'micromamba')
+        : path.join(appPath, 'dependencies', os.arch(), 'micromamba'),
+      root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
+    },
+    win32: {
+      micromamba: path.join(
+        path.dirname(process.execPath),
+        '..',
+        'dependencies',
+        'micromamba.exe',
+      ),
+      root: path.join(
+        path.dirname(process.execPath),
+        '..',
+        'dependencies',
+        'micromamba',
+      ),
+    },
+  };
+};
+
+const paths = buildPaths();
 export const getMicromambaPath = (check = false) => {
   const _path = paths?.[process.platform]?.['micromamba'];
 
