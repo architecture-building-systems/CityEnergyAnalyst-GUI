@@ -55,7 +55,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@babel/polyfill": "^7.12.1",
-    "@deck.gl-community/editable-layers": "9.0.0-alpha.1",
+    "@deck.gl-community/editable-layers": "9.1.1",
     "@fontsource/space-grotesk": "^5.2.10",
     "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@mapbox/mapbox-gl-draw-static-mode": "^1.0.1",

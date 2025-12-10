@@ -532,9 +532,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@deck.gl-community/editable-layers@npm:9.0.0-alpha.1":
-  version: 9.0.0-alpha.1
-  resolution: "@deck.gl-community/editable-layers@npm:9.0.0-alpha.1"
+"@deck.gl-community/editable-layers@npm:9.1.1":
+  version: 9.1.1
+  resolution: "@deck.gl-community/editable-layers@npm:9.1.1"
   dependencies:
     "@turf/along": "npm:^6.5.0"
     "@turf/area": "npm:^6.5.0"
@@ -565,23 +565,25 @@ __metadata:
     "@turf/transform-scale": "npm:^6.5.0"
     "@turf/transform-translate": "npm:^6.5.0"
     "@turf/union": "npm:^6.5.0"
+    "@types/geojson": "npm:^7946.0.14"
     cubic-hermite-spline: "npm:^1.0.1"
     eventemitter3: "npm:^5.0.0"
-    geojson-types: "npm:^2.0.1"
+    lodash.omit: "npm:^4.1.1"
     lodash.throttle: "npm:^4.1.1"
     uuid: "npm:9.0.0"
     viewport-mercator-project: "npm:>=6.2.3"
   peerDependencies:
-    "@deck.gl/core": ">=9.0.5"
-    "@deck.gl/extensions": ">=9.0.5"
-    "@deck.gl/geo-layers": ">=9.0.5"
-    "@deck.gl/layers": ">=9.0.5"
-    "@deck.gl/mesh-layers": ">=9.0.6"
-    "@luma.gl/constants": ">=9.0.9"
-    "@luma.gl/core": ">=9.0.9"
-    "@luma.gl/engine": ">=9.0.9"
+    "@deck.gl-community/layers": ^9.1.0-beta.2
+    "@deck.gl/core": ^9.1.12
+    "@deck.gl/extensions": ^9.1.0
+    "@deck.gl/geo-layers": ^9.1.0
+    "@deck.gl/layers": ^9.1.0
+    "@deck.gl/mesh-layers": ^9.1.0
+    "@luma.gl/constants": ^9.1.0
+    "@luma.gl/core": ^9.1.0
+    "@luma.gl/engine": ^9.1.0
     "@math.gl/core": ">=4.0.1"
-  checksum: 10c0/88a52f7ec02911368916dfcebb4c6ac67374adf34287625f05a15eabdee9aa25636b52f3f2ef14c98ca58d741ff80cbd8a935091e82ee0dc6922e8e421e287c6
+  checksum: 10c0/67abfe000185990fd7372e908026c66e024dc2fc6ab1bba396c76ada9abc801f2b96e916caa5d97af751fc7f1a6cb355fd6b50e1ed7a71a5d56ba78c178ae1d3
   languageName: node
   linkType: hard
 
@@ -6372,7 +6374,7 @@ __metadata:
   dependencies:
     "@ant-design/icons": "npm:^6.1.0"
     "@babel/polyfill": "npm:^7.12.1"
-    "@deck.gl-community/editable-layers": "npm:9.0.0-alpha.1"
+    "@deck.gl-community/editable-layers": "npm:9.1.1"
     "@fontsource/space-grotesk": "npm:^5.2.10"
     "@mapbox/mapbox-gl-draw": "npm:^1.5.1"
     "@mapbox/mapbox-gl-draw-static-mode": "npm:^1.0.1"
@@ -8326,13 +8328,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geojson-types@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "geojson-types@npm:2.0.1"
-  checksum: 10c0/e7828f1c8106778f11d2437e10380be512bca5212e87302a5d856f8d35ef7994908c6dfb700e1e9625c58203b7a489b087b2354b1c8379f7ecc6da6360e84af6
-  languageName: node
-  linkType: hard
-
 "geojson-vt@npm:^4.0.2":
   version: 4.0.2
   resolution: "geojson-vt@npm:4.0.2"
@@ -9826,6 +9821,13 @@ __metadata:
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
   checksum: 10c0/402fa16a1edd7538de5b5903a90228aa48eb5533986ba7fa26606a49db2572bf414ff73a2c9f5d5fd36b31c46a5d5c7e1527749c07cbcf965ccff5fbdf32c506
+  languageName: node
+  linkType: hard
+
+"lodash.omit@npm:^4.1.1":
+  version: 4.5.0
+  resolution: "lodash.omit@npm:4.5.0"
+  checksum: 10c0/3808b9b6faae35177174b6ab327f1177e29c91f1e98dcbccf13a72a6767bba337306449d537a4e0d8a33d2673f10d39bc732e30c4b803274ea0c1168ea60e549
   languageName: node
   linkType: hard
 
