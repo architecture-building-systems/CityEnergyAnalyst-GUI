@@ -60,7 +60,7 @@ export const CreateScenarioForm = memo(function CreateScenarioForm({
   };
 
   const onFinish = (values) => {
-    if (formIndex < forms.length - 1) {
+    if (formIndex < stepItems.length - 1) {
       setData((prev) => ({ ...prev, ...values }));
       onFormChange((prev) => prev + 1);
     } else {
@@ -85,7 +85,7 @@ export const CreateScenarioForm = memo(function CreateScenarioForm({
         }}
       >
         <Button type="primary" htmlType="submit" style={{ width: 100 }}>
-          {formIndex === forms.length - 1 ? 'Finish' : 'Next'}
+          {formIndex === stepItems.length - 1 ? 'Finish' : 'Next'}
         </Button>
         {formIndex > 0 && (
           <Button style={{ width: 100 }} onClick={onBack}>
@@ -96,44 +96,48 @@ export const CreateScenarioForm = memo(function CreateScenarioForm({
     );
   };
 
-  const forms = [
-    {
-      description: 'Name',
-      content: (
-        <NameForm
-          initialValues={data}
-          onFinish={onFinish}
-          formButtons={<FormButtons />}
-        />
-      ),
-    },
-    {
-      description: 'Buildings',
-      content: (
-        <GeometryForm
-          initialValues={data}
-          onChange={onChange}
-          onBack={onBack}
-          onFinish={onFinish}
-          formButtons={<FormButtons />}
-        />
-      ),
-    },
-    {
-      description: 'Context',
-      content: (
-        <ContextForm
-          databases={databases}
-          weather={weather}
-          initialValues={data}
-          onChange={onChange}
-          onBack={onBack}
-          onFinish={onFinish}
-          formButtons={<FormButtons />}
-        />
-      ),
-    },
+  const stepItems = [
+    { title: 'Name' },
+    { title: 'Buildings' },
+    { title: 'Context' },
   ];
+
+  const renderForm = () => {
+    switch (formIndex) {
+      case 0:
+        return (
+          <NameForm
+            initialValues={data}
+            onFinish={onFinish}
+            formButtons={<FormButtons />}
+          />
+        );
+      case 1:
+        return (
+          <GeometryForm
+            initialValues={data}
+            onChange={onChange}
+            onBack={onBack}
+            onFinish={onFinish}
+            formButtons={<FormButtons />}
+          />
+        );
+      case 2:
+        return (
+          <ContextForm
+            databases={databases}
+            weather={weather}
+            initialValues={data}
+            onChange={onChange}
+            onBack={onBack}
+            onFinish={onFinish}
+            formButtons={<FormButtons />}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
@@ -156,13 +160,13 @@ export const CreateScenarioForm = memo(function CreateScenarioForm({
         <div style={{ marginTop: 48 }}>
           <Steps
             current={formIndex}
-            labelPlacement="vertical"
-            items={forms}
+            titlePlacement="vertical"
+            items={stepItems}
             size="small"
           />
         </div>
       </div>
-      <div style={{ flexGrow: 1 }}>{forms[formIndex].content}</div>
+      <div style={{ flexGrow: 1 }}>{renderForm()}</div>
       <CreateScenarioProgressModal
         showModal={showModal}
         setShowModal={setShowModal}
