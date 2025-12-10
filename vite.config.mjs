@@ -1,18 +1,11 @@
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const svgrOptions = {
-    // svgr options: https://react-svgr.com/docs/options/
-    svgrOptions: {
-      exportType: 'default',
-      ref: true,
-      svgo: false,
-      titleProp: true,
-    },
     include: '**/*.svg',
   };
 
