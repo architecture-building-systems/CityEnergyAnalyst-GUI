@@ -28,7 +28,7 @@ const deleteNestedProp = (obj, ...keys) => {
   }
 };
 
-const useDatabaseEditorStore = create((set) => ({
+const useDatabaseEditorStore = create((set, get) => ({
   // State
   status: { status: null },
   validation: {},
@@ -37,6 +37,24 @@ const useDatabaseEditorStore = create((set) => ({
   changes: [],
   isEmpty: false,
   databaseValidation: { status: null, message: null },
+
+  // Getters
+  getColumnChoices: (dataKey, column) => {
+    const data = get().data;
+    const _data = getNestedValue(data, dataKey);
+
+    // FIXME: This is not reliable as not every index is "code"
+    // Get keys if column is 'code'
+    if (column == 'code') {
+      const choices = {};
+      Object.keys(_data || {}).forEach((key) => {
+        choices[key] = _data[key]?.description ?? '-';
+      });
+      return choices;
+    }
+
+    return _data?.[column];
+  },
 
   // Actions
   validateDatabase: async () => {
@@ -325,25 +343,8 @@ export const useDatabaseSchema = (dataKey) => {
   return schema;
 };
 
-export const useGetDatabaseColumnChoices = () => {
-  const data = useDatabaseEditorStore((state) => state.data);
-
-  return (dataKey, column) => {
-    const _data = getNestedValue(data, dataKey);
-
-    // FIXME: This is not reliable as not every index is "code"
-    // Get keys if column is 'code'
-    if (column == 'code') {
-      const choices = {};
-      Object.keys(_data || {}).forEach((key) => {
-        choices[key] = _data[key]?.description ?? '-';
-      });
-      return choices;
-    }
-
-    return _data?.[column];
-  };
-};
+export const useGetDatabaseColumnChoices = () =>
+  useDatabaseEditorStore((state) => state.getColumnChoices);
 
 export const useUpdateDatabaseData = () =>
   useDatabaseEditorStore((state) => state.updateDatabaseData);
