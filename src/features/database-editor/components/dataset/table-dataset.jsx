@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useImperativeHandle } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
@@ -62,6 +62,9 @@ export const TableDataset = ({
   showIndex,
   freezeIndex,
   showColumnSchema,
+  enableRowSelection,
+  onRowSelectionChanged,
+  ref,
 }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -81,6 +84,7 @@ export const TableDataset = ({
             commonColumns={commonColumns}
           />
           <EntityDataTable
+            ref={ref}
             dataKey={dataKey}
             data={data}
             indexColumn={indexColumn}
@@ -89,6 +93,8 @@ export const TableDataset = ({
             freezeIndex={freezeIndex}
             schema={schema}
             showColumnSchema={showColumnSchema}
+            enableRowSelection={enableRowSelection}
+            onRowSelectionChanged={onRowSelectionChanged}
           />
         </>
       )}
@@ -133,31 +139,55 @@ const EntityDataTable = ({
   showIndex = true,
   freezeIndex = true,
   showColumnSchema = true,
+  enableRowSelection = false,
+  onRowSelectionChanged,
+  ref,
 }) => {
   const divRef = useRef();
   const tabulatorRef = useRef();
+
+  // Expose specific Tabulator methods to parent components
+  useImperativeHandle(
+    ref,
+    () => ({
+      getSelectedRows: () => tabulatorRef.current?.getSelectedRows() || [],
+      getSelectedData: () => tabulatorRef.current?.getSelectedData() || [],
+      setData: (data) => tabulatorRef.current?.setData(data),
+      selectRow: (row) => tabulatorRef.current?.selectRow(row),
+      deselectRow: (row) => tabulatorRef.current?.deselectRow(row),
+      getRows: () => tabulatorRef.current?.getRows() || [],
+      getData: () => tabulatorRef.current?.getData() || [],
+    }),
+    [],
+  );
 
   const columnSchema = schema?.columns;
 
   const getColumnChoices = useGetDatabaseColumnChoices();
   const updateDatabaseData = useUpdateDatabaseData();
 
-  const firstRow = data?.[0];
-  // FIXME: We are assuming that the columns from data are correct but we should use from schema instead
-  // Determine columns based on first row
-  const columns = useMemo(() => {
-    if (firstRow == null) return [];
-    // Use first row to determine columns
-    return Object.keys(firstRow).filter(
-      (column) =>
-        (showIndex && column == indexColumn) ||
-        !(commonColumns || []).includes(column),
+  const schemaColumnKeys = useMemo(
+    () => Object.keys(columnSchema ?? {}),
+    [columnSchema],
+  );
+
+  const columnsFromSchema = useMemo(() => {
+    if (schemaColumnKeys.length === 0) return [];
+    const filtered = schemaColumnKeys.filter(
+      (c) =>
+        (showIndex && c === indexColumn) || !(commonColumns || []).includes(c),
     );
-  }, [firstRow, indexColumn, commonColumns, showIndex]);
+    if (showIndex && filtered.includes(indexColumn)) {
+      return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
+    }
+    return filtered;
+  }, [schemaColumnKeys, indexColumn, commonColumns, showIndex]);
+
+  const columns = columnsFromSchema;
 
   // Convert columns to tabulator format
   const tabulatorColumns = useMemo(() => {
-    return columns.map((column) => {
+    const cols = columns.map((column) => {
       const _frozenIndex = showIndex && column == indexColumn && freezeIndex;
 
       const _colSchema = columnSchema?.[column];
@@ -214,11 +244,36 @@ const EntityDataTable = ({
 
       return colDef;
     });
-  }, [columns, columnSchema, indexColumn, freezeIndex, showIndex]);
+
+    // Add row selection column at the beginning if enabled
+    if (enableRowSelection) {
+      return [
+        {
+          formatter: 'rowSelection',
+          titleFormatter: 'rowSelection',
+          hozAlign: 'center',
+          headerSort: false,
+          width: 40,
+          frozen: true,
+        },
+        ...cols,
+      ];
+    }
+
+    return cols;
+  }, [
+    columns,
+    columnSchema,
+    indexColumn,
+    freezeIndex,
+    showIndex,
+    enableRowSelection,
+    getColumnChoices,
+  ]);
 
   useEffect(() => {
     if (tabulatorRef.current == null) {
-      tabulatorRef.current = new Tabulator(divRef.current, {
+      const config = {
         data: data,
         columns: tabulatorColumns,
         layout: 'fitDataFill',
@@ -231,9 +286,23 @@ const EntityDataTable = ({
           const oldValue = cell.getOldValue();
           updateDatabaseData(dataKey, index, field, oldValue, value);
         },
-      });
+      };
+
+      // Add row selection config if enabled
+      if (enableRowSelection && onRowSelectionChanged)
+        config.rowSelectionChanged = onRowSelectionChanged;
+
+      tabulatorRef.current = new Tabulator(divRef.current, config);
     }
-  }, [data, dataKey, indexColumn, tabulatorColumns, updateDatabaseData]);
+  }, [
+    data,
+    dataKey,
+    indexColumn,
+    tabulatorColumns,
+    updateDatabaseData,
+    enableRowSelection,
+    onRowSelectionChanged,
+  ]);
 
   // Update table data when data changes (e.g., when a new row is added)
   useEffect(() => {
