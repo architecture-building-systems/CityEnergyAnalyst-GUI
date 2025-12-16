@@ -324,6 +324,77 @@ const useDatabaseEditorStore = create((set, get) => ({
       };
     });
   },
+
+  deleteDatabaseRows: (dataKey, indexCol, rowIndices) => {
+    set((state) => {
+      let _dataKey = dataKey;
+      // Handle case where index is actually last element (e.g. use types dataset)
+      if (
+        arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
+        _dataKey = dataKey.slice(0, -1);
+      }
+
+      const table = getNestedValue(state.data, _dataKey);
+      if (table === undefined) {
+        console.error('Table not found for dataKey:', dataKey);
+        return state;
+      }
+
+      // Use Immer to create an immutable update
+      const newData = produce(state.data, (draft) => {
+        const draftTable = getNestedValue(draft, _dataKey);
+
+        // Delete rows from the table
+        if (Array.isArray(draftTable)) {
+          // For arrays, filter out rows with matching indices
+          const indicesToDelete = new Set(rowIndices);
+          let deleteCount = 0;
+          for (let i = draftTable.length - 1; i >= 0; i--) {
+            if (indicesToDelete.has(draftTable[i][indexCol])) {
+              draftTable.splice(i, 1);
+              deleteCount++;
+            }
+          }
+          console.log(
+            `deleteDatabaseRows: Deleted ${deleteCount} rows from array`,
+          );
+        } else if (typeof draftTable === 'object' && indexCol) {
+          // For objects, delete properties with matching indices
+          let deleteCount = 0;
+          rowIndices.forEach((rowIndex) => {
+            if (draftTable[rowIndex]) {
+              delete draftTable[rowIndex];
+              deleteCount++;
+            }
+          });
+          console.log(
+            `deleteDatabaseRows: Deleted ${deleteCount} rows from object`,
+          );
+        } else {
+          console.error('Unable to determine table structure:', draftTable);
+        }
+      });
+
+      // Create change entries for each deleted row
+      const newChanges = rowIndices.map((index) => ({
+        dataKey,
+        index,
+        field: indexCol,
+        action: 'delete',
+        oldValue: JSON.stringify(table[index] || {}),
+        value: '{}',
+      }));
+
+      console.log('deleteDatabaseRows: New data created with Immer');
+
+      return {
+        data: newData,
+        changes: [...state.changes, ...newChanges],
+      };
+    });
+  },
 }));
 
 const getNestedValue = (obj, datakey) => {
@@ -354,5 +425,8 @@ export const useUpdateDatabaseData = () =>
 
 export const useAddDatabaseRow = () =>
   useDatabaseEditorStore((state) => state.addDatabaseRow);
+
+export const useDeleteDatabaseRows = () =>
+  useDatabaseEditorStore((state) => state.deleteDatabaseRows);
 
 export default useDatabaseEditorStore;

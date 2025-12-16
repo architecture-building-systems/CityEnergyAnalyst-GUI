@@ -3,6 +3,7 @@ import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 import { arraysEqual } from 'utils';
 import { DuplicateRowButton } from 'features/database-editor/components/duplicate-row-button';
+import { DeleteRowButton } from 'features/database-editor/components/delete-row-button';
 import { useCallback, useRef, useState, useMemo } from 'react';
 import { AddRowButton } from '../add-row-button';
 
@@ -56,11 +57,16 @@ export const CodeTableDataset = ({ dataKey, data }) => {
         <div></div>
         <div style={{ display: 'flex', gap: 12 }}>
           <DuplicateRowButton
-            key={key}
             data={data}
             dataKey={dataKey}
             index={INDEX_COLUMN}
             schema={schema}
+            tabulatorRef={tabulatorRef}
+            selectedCount={selectedCount}
+          />
+          <DeleteRowButton
+            dataKey={dataKey}
+            index={INDEX_COLUMN}
             tabulatorRef={tabulatorRef}
             selectedCount={selectedCount}
           />
