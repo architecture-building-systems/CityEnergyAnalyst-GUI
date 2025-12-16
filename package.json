@@ -71,6 +71,7 @@
     "electron-log": "^5.4.3",
     "electron-updater": "^6.7.3",
     "html-react-parser": "^5.2.10",
+    "immer": "^11.0.1",
     "javascript-color-gradient": "^2.5.0",
     "jszip": "^3.10.1",
     "maplibre-gl": "^5.14.0",

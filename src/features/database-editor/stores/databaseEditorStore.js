@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { produce } from 'immer';
 import { apiClient } from 'lib/api/axios';
 import { arrayStartsWith } from 'utils';
 
@@ -6,27 +7,6 @@ export const FETCHING_STATUS = 'fetching';
 export const SUCCESS_STATUS = 'success';
 export const FAILED_STATUS = 'failed';
 export const SAVING_STATUS = 'saving';
-
-// TODO: Replace with immer
-const createNestedProp = (obj, ...keys) => {
-  keys.reduce((curr, key, index) => {
-    if (index === keys.length - 1) {
-      return curr;
-    }
-    if (!curr[key]) {
-      curr[key] = {};
-    }
-    return curr[key];
-  }, obj);
-};
-
-const deleteNestedProp = (obj, ...keys) => {
-  const lastKey = keys.pop();
-  const parent = keys.reduce((curr, key) => curr && curr[key], obj);
-  if (parent && parent[lastKey]) {
-    delete parent[lastKey];
-  }
-};
 
 const useDatabaseEditorStore = create((set, get) => ({
   // State
@@ -184,21 +164,37 @@ const useDatabaseEditorStore = create((set, get) => ({
     value,
   }) => {
     set((state) => {
-      const newValidation = { ...state.validation };
+      const newValidation = produce(state.validation, (draft) => {
+        // Check if invalid value exists in store
+        const hasPath =
+          draft?.[database]?.[sheet]?.[row]?.[column] !== undefined;
 
-      // Check if invalid value exists in store
-      if (newValidation?.database?.sheet?.row?.column) {
-        // Remove value if it is corrected else add it to store
-        if (isValid) {
-          deleteNestedProp(newValidation, database, sheet, row, column);
-        } else {
-          newValidation[database][sheet][row][column] = value;
+        if (hasPath) {
+          // Remove value if it is corrected else add it to store
+          if (isValid) {
+            delete draft[database][sheet][row][column];
+            // Clean up empty parent objects
+            if (Object.keys(draft[database][sheet][row]).length === 0) {
+              delete draft[database][sheet][row];
+            }
+            if (Object.keys(draft[database][sheet]).length === 0) {
+              delete draft[database][sheet];
+            }
+            if (Object.keys(draft[database]).length === 0) {
+              delete draft[database];
+            }
+          } else {
+            draft[database][sheet][row][column] = value;
+          }
+        } else if (!isValid) {
+          // Add to store if value does not exist
+          // Immer handles creating nested objects automatically
+          if (!draft[database]) draft[database] = {};
+          if (!draft[database][sheet]) draft[database][sheet] = {};
+          if (!draft[database][sheet][row]) draft[database][sheet][row] = {};
+          draft[database][sheet][row][column] = value;
         }
-      } else if (!isValid) {
-        // Add to store if value does not exist
-        createNestedProp(newValidation, database, sheet, row, column);
-        newValidation[database][sheet][row][column] = value;
-      }
+      });
 
       return { validation: newValidation };
     });
@@ -216,8 +212,6 @@ const useDatabaseEditorStore = create((set, get) => ({
 
   updateDatabaseData: (dataKey, index, field, oldValue, value) => {
     set((state) => {
-      const newData = { ...state.data };
-
       let _dataKey = dataKey;
       let _index;
       // Handle case where index is actually last element (e.g. use types dataset)
@@ -229,21 +223,30 @@ const useDatabaseEditorStore = create((set, get) => ({
         _index = dataKey[dataKey.length - 1];
       }
 
-      const table = getNestedValue(newData, _dataKey);
+      const table = getNestedValue(state.data, _dataKey);
       if (table === undefined) {
         console.error('Table not found for dataKey:', dataKey);
         return state;
       }
 
-      // Find the correct row by index
-      if (index !== undefined && table?.[index]) {
-        // Update the field in the row
-        table[index][field] = value;
-      } else if (_index !== undefined && table?.[_index]) {
-        table[_index][field] = value;
-      } else {
-        console.error('Row not found for index:', index, 'in table:', table);
-      }
+      // Use Immer to update the data immutably
+      const newData = produce(state.data, (draft) => {
+        const draftTable = getNestedValue(draft, _dataKey);
+
+        // Find the correct row by index and update the field
+        if (index !== undefined && draftTable?.[index]) {
+          draftTable[index][field] = value;
+        } else if (_index !== undefined && draftTable?.[_index]) {
+          draftTable[_index][field] = value;
+        } else {
+          console.error(
+            'Row not found for index:',
+            index,
+            'in table:',
+            draftTable,
+          );
+        }
+      });
 
       return {
         data: newData,
@@ -254,8 +257,6 @@ const useDatabaseEditorStore = create((set, get) => ({
 
   addDatabaseRow: (dataKey, indexCol, rowData) => {
     set((state) => {
-      const newData = { ...state.data };
-
       let _dataKey = dataKey;
       // Handle case where index is actually last element (e.g. use types dataset)
       if (
@@ -265,45 +266,47 @@ const useDatabaseEditorStore = create((set, get) => ({
         _dataKey = dataKey.slice(0, -1);
       }
 
-      const table = getNestedValue(newData, _dataKey);
+      const table = getNestedValue(state.data, _dataKey);
       if (table === undefined) {
         console.error('Table not found for dataKey:', dataKey);
         return state;
       }
 
       const index = rowData?.[indexCol];
-      // Add the new row to the table
-      if (Array.isArray(table)) {
-        table.push(rowData);
-      } else if (typeof table === 'object' && indexCol) {
-        if (rowData?.[indexCol] === undefined) {
-          console.error(
-            `Row data must contain the index field "${indexCol}"`,
-            rowData,
-          );
-          return state;
-        }
-        const rowIndex = rowData[indexCol];
-        if (table[rowIndex]) {
-          console.error(
-            `Row with index "${rowIndex}" already exists in the table.`,
-            table,
-          );
-          return state;
-        }
-        // Clone rowData to avoid mutating the input
-        const rowDataCopy = { ...rowData };
-        // Remove index from the copy to avoid duplication
-        delete rowDataCopy[indexCol];
-        table[rowIndex] = rowDataCopy;
-      } else {
-        console.error('Unable to determine table structure:', table);
-        console.log(indexCol, table);
-        return state;
-      }
 
-      // Clone rowData for changes tracking to preserve the original
-      const rowDataForChanges = { ...rowData };
+      // Use Immer to create an immutable update - cleaner and more efficient
+      const newData = produce(state.data, (draft) => {
+        const draftTable = getNestedValue(draft, _dataKey);
+
+        // Add the new row to the table
+        if (Array.isArray(draftTable)) {
+          draftTable.push(rowData);
+        } else if (typeof draftTable === 'object' && indexCol) {
+          if (rowData?.[indexCol] === undefined) {
+            console.error(
+              `Row data must contain the index field "${indexCol}"`,
+              rowData,
+            );
+            return;
+          }
+          const rowIndex = rowData[indexCol];
+          if (draftTable[rowIndex]) {
+            console.error(
+              `Row with index "${rowIndex}" already exists in the table.`,
+              draftTable,
+            );
+            return;
+          }
+          // Clone rowData to avoid mutating the input
+          const rowDataCopy = { ...rowData };
+          // Remove index from the copy to avoid duplication
+          delete rowDataCopy[indexCol];
+          draftTable[rowIndex] = rowDataCopy;
+        } else {
+          console.error('Unable to determine table structure:', draftTable);
+          console.log(indexCol, draftTable);
+        }
+      });
 
       return {
         data: newData,
@@ -315,7 +318,7 @@ const useDatabaseEditorStore = create((set, get) => ({
             field: indexCol,
             action: 'add',
             oldValue: '{}',
-            value: JSON.stringify(rowDataForChanges),
+            value: JSON.stringify(rowData),
           },
         ],
       };
