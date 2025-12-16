@@ -4,6 +4,7 @@ import { TableDataset } from './table-dataset';
 import { arraysEqual } from 'utils';
 import { DuplicateRowButton } from 'features/database-editor/components/duplicate-row-button';
 import { useCallback, useRef, useState, useMemo } from 'react';
+import { AddRowButton } from '../add-row-button';
 
 const CONSTRUCTION_DATABASE = [
   'ARCHETYPES',
@@ -53,15 +54,23 @@ export const CodeTableDataset = ({ dataKey, data }) => {
     <div className="cea-database-editor-database-dataset-code">
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div></div>
-        <DuplicateRowButton
-          key={key}
-          data={data}
-          dataKey={dataKey}
-          index={INDEX_COLUMN}
-          schema={schema}
-          tabulatorRef={tabulatorRef}
-          selectedCount={selectedCount}
-        />
+        <div style={{ display: 'flex', gap: 12 }}>
+          <DuplicateRowButton
+            key={key}
+            data={data}
+            dataKey={dataKey}
+            index={INDEX_COLUMN}
+            schema={schema}
+            tabulatorRef={tabulatorRef}
+            selectedCount={selectedCount}
+          />
+          <AddRowButton
+            data={data}
+            dataKey={dataKey}
+            index={INDEX_COLUMN}
+            schema={schema}
+          />
+        </div>
       </div>
       <TableDataset
         ref={tabulatorRef}

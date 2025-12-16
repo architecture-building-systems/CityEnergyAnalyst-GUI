@@ -1,31 +1,83 @@
 import { Button, Form, Input, Modal, Tooltip, Select } from 'antd';
 import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { useState, useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import {
   useGetDatabaseColumnChoices,
   useAddDatabaseRow,
 } from 'features/database-editor/stores/databaseEditorStore';
 
-export const AddRowButton = ({ dataKey, index, schema, onAddRow }) => {
-  const [visible, setVisible] = useState(false);
+/**
+ * Hook to create an empty row with a unique index
+ */
+const useAddEmptyRow = (data, dataKey, index, schema) => {
+  const addDatabaseRow = useAddDatabaseRow();
+
+  return useCallback(() => {
+    if (!index || !schema?.columns) {
+      console.log('useAddEmptyRow: Missing index or schema');
+      return null;
+    }
+
+    // Get existing indices to ensure uniqueness
+    const existingIndices = Array.isArray(data)
+      ? data.map((row) => row?.[index])
+      : Object.keys(data || {});
+
+    // Generate a unique index name
+    let newIndex = 'NEW_ROW';
+    let counter = 1;
+    while (existingIndices.includes(newIndex)) {
+      newIndex = `NEW_ROW_${counter}`;
+      counter++;
+    }
+
+    // Create empty row with all required fields
+    const newRow = { [index]: newIndex };
+
+    // Initialize all other columns with default values based on type
+    Object.keys(schema.columns).forEach((col) => {
+      if (col !== index) {
+        const colSchema = schema.columns[col];
+        const type = colSchema?.type;
+
+        // Set default values based on type
+        if (type === 'float' || type === 'int') {
+          newRow[col] = 0;
+        } else if (colSchema?.choice) {
+          // Use first available choice or empty string
+          const values = colSchema.choice?.values || [];
+          newRow[col] = values.length > 0 ? values[0] : '';
+        } else {
+          newRow[col] = '';
+        }
+      }
+    });
+
+    console.log('useAddEmptyRow: Adding new row:', newIndex);
+    addDatabaseRow(dataKey, index, newRow);
+
+    return newRow;
+  }, [data, dataKey, index, schema, addDatabaseRow]);
+};
+
+export const AddRowButton = ({ data, dataKey, index, schema, onAddRow }) => {
+  const addEmptyRow = useAddEmptyRow(data, dataKey, index, schema);
+
+  const handleClick = () => {
+    const newRow = addEmptyRow();
+    if (newRow && onAddRow) {
+      onAddRow(newRow);
+    }
+  };
 
   return (
-    <div>
-      <Button icon={<PlusOutlined />} onClick={() => setVisible(true)}>
-        Add Row
-      </Button>
-      <AddRowModalForm
-        dataKey={dataKey}
-        index={index}
-        schema={schema}
-        visible={visible}
-        setVisible={setVisible}
-        onAddRow={onAddRow}
-      />
-    </div>
+    <Button icon={<PlusOutlined />} onClick={handleClick}>
+      Add Row
+    </Button>
   );
 };
 
+// eslint-disable-next-line no-unused-vars
 const AddRowModalForm = ({
   dataKey,
   index,
@@ -41,6 +93,7 @@ const AddRowModalForm = ({
   const MAX_ROWS_PER_COLUMN = 20;
 
   // Split fields into columns with max 8 rows each
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fieldColumns = useMemo(() => {
     if (!schema?.columns) return [];
     const columns = Object.keys(schema.columns);
@@ -50,7 +103,7 @@ const AddRowModalForm = ({
       result.push(allFields.slice(i, i + MAX_ROWS_PER_COLUMN));
     }
     return result;
-  }, [index, MAX_ROWS_PER_COLUMN, schema?.columns]);
+  }, [index, schema?.columns]);
   const numColumns = fieldColumns.length;
 
   const onOk = () => {
