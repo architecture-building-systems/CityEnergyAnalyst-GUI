@@ -8,7 +8,7 @@ import {
 
 /**
  * Hook to handle duplicating rows by copying selected or last row's values
- * and appending "_copy" to the index value
+ * and appending "_COPY" to the index value
  */
 const useDuplicateRows = (data, dataKey, index, tabulatorRef) => {
   const addDatabaseRow = useAddDatabaseRow();
@@ -60,14 +60,14 @@ const useDuplicateRows = (data, dataKey, index, tabulatorRef) => {
       const originalIndex = rowToDuplicate[index];
       const newRow = { ...rowToDuplicate };
 
-      // Generate a unique index with "_copy" suffix
-      let newIndex = `${originalIndex}_copy`;
+      // Generate a unique index with "_COPY" suffix
+      let newIndex = `${originalIndex}_COPY`;
       let counter = 1;
 
       // Ensure the new index is unique
       const allIndices = [...existingIndices, ...newRows.map((r) => r[index])];
       while (allIndices.includes(newIndex)) {
-        newIndex = `${originalIndex}_copy${counter}`;
+        newIndex = `${originalIndex}_COPY${counter}`;
         counter++;
       }
 
