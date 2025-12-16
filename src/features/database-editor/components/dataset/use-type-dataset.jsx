@@ -94,6 +94,8 @@ const UseTypePropertiesDataset = ({ dataKey, data, useType }) => {
       dataKey={_dataKey}
       data={data}
       schema={schema}
+      indexColumn={'use_type'}
+      showIndex={false}
     />
   );
 };
@@ -114,6 +116,8 @@ const UseTypePropertiesSchedulesDataset = ({
       name={name}
       data={data}
       schema={schema}
+      indexColumn={'use_type'}
+      showIndex={false}
     />
   );
 };
@@ -187,7 +191,7 @@ const UseTypeSchedules = ({ dataKey, data }) => {
   // Data is array of schedule objects
   // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
   // hour can be "Weekday_1","Saturday_2", "Sunday_3"
-  const schema = useDatabaseSchema(dataKey);
+  // const schema = useDatabaseSchema(dataKey);
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 

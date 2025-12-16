@@ -173,9 +173,8 @@ const EntityDataTable = ({
 
   const columnsFromSchema = useMemo(() => {
     if (schemaColumnKeys.length === 0) return [];
-    const filtered = schemaColumnKeys.filter(
-      (c) =>
-        (showIndex && c === indexColumn) || !(commonColumns || []).includes(c),
+    const filtered = schemaColumnKeys.filter((c) =>
+      c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
