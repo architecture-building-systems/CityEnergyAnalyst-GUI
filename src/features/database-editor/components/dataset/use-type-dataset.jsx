@@ -1,14 +1,17 @@
-import { Button, Modal, Form, Input, Select } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, Select, Divider } from 'antd';
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MissingDataPrompt } from './missing-data-prompt';
-import {
+import useDatabaseEditorStore, {
   useDatabaseSchema,
   useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
-import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -130,10 +133,73 @@ const UseTypePropertiesSchedulesDataset = ({
   );
 };
 
+const useDeleteUseType = (types, selected, onSelected) => {
+  const data = useDatabaseEditorStore((state) => state.data);
+
+  return useCallback(() => {
+    if (types.length <= 1) {
+      Modal.warning({
+        title: 'Cannot Delete',
+        content:
+          'Cannot delete the last use type. At least one use type must exist.',
+      });
+      return;
+    }
+
+    Modal.confirm({
+      title: `Delete Use Type "${selected}"?`,
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <b>Warning:</b> Deleting this use type will not automatically update
+            buildings or other data that may reference it. You may need to
+            manually check and update related data in other tables.
+          </div>
+          <b>This action cannot be undone.</b>
+        </div>
+      ),
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: () => {
+        const newData = structuredClone(data);
+
+        // Remove from use_types
+        if (newData?.archetypes?.use?.use_types?.[selected]) {
+          delete newData.archetypes.use.use_types[selected];
+        }
+
+        // Remove from monthly_multipliers
+        if (
+          newData?.archetypes?.use?.schedules?.monthly_multipliers?.[selected]
+        ) {
+          delete newData.archetypes.use.schedules.monthly_multipliers[selected];
+        }
+
+        // Remove from schedule library
+        if (newData?.archetypes?.use?.schedules?._library?.[selected]) {
+          delete newData.archetypes.use.schedules._library[selected];
+        }
+
+        // Update the store
+        useDatabaseEditorStore.setState({ data: newData });
+
+        // Select the first remaining use type
+        const remainingTypes = types.filter((t) => t !== selected);
+        if (remainingTypes.length > 0) {
+          onSelected(remainingTypes[0]);
+        }
+      },
+    });
+  }, [types, selected, onSelected, data]);
+};
+
 const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const data = useDatabaseEditorStore((state) => state.data);
+  const handleDeleteUseType = useDeleteUseType(types, selected, onSelected);
 
   const handleAddUseType = () => {
     form.submit();
@@ -229,6 +295,15 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
           onClick={() => setIsModalOpen(true)}
         >
           Add
+        </Button>
+        <Divider size="small" />
+        <Button
+          danger
+          icon={<DeleteOutlined />}
+          onClick={handleDeleteUseType}
+          disabled={types.length <= 1}
+        >
+          Delete
         </Button>
       </div>
 
