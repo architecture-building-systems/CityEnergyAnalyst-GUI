@@ -3,13 +3,15 @@ import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
 import { MissingDataPrompt } from './missing-data-prompt';
-import {
+import useDatabaseEditorStore, {
   useDatabaseSchema,
   useGetDatabaseColumnChoices,
   useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
+import { Button, Divider, Modal } from 'antd';
+import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -20,6 +22,61 @@ export const TableGroupDataset = ({
 }) => {
   const schema = useDatabaseSchema(dataKey);
   const schemaColumns = Object.keys(schema?.columns ?? {});
+  const storeData = useDatabaseEditorStore((state) => state.data);
+
+  const handleDelete = (key) => {
+    Modal.confirm({
+      title: `Delete "${key}"?`,
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <b>Warning:</b> Deleting this will not automatically update other
+            data that may reference it. You may need to manually check and
+            update related data in other tables.
+          </div>
+          <b>This action cannot be undone.</b>
+        </div>
+      ),
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: () => {
+        const newData = structuredClone(storeData);
+
+        // Navigate to the nested location and delete the key
+        let current = newData;
+        for (let i = 0; i < dataKey.length; i++) {
+          const k = dataKey[i].toLowerCase();
+          if (i === dataKey.length - 1) {
+            // Last key - this is where we delete
+            if (current[k]) {
+              delete current[k][key];
+            }
+          } else {
+            current = current[k];
+          }
+        }
+
+        // Update store with new data and add change entry
+        const currentState = useDatabaseEditorStore.getState();
+        useDatabaseEditorStore.setState({
+          data: newData,
+          changes: [
+            ...currentState.changes,
+            {
+              action: 'delete',
+              dataKey: [...dataKey, key],
+              index: key,
+              field: indexColumn,
+              oldValue: JSON.stringify(data[key] || {}),
+              value: '{}',
+            },
+          ],
+        });
+      },
+    });
+  };
 
   if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
@@ -36,17 +93,34 @@ export const TableGroupDataset = ({
         columnSchema={schema?.columns}
       />
       {Object.keys(data).map((key) => (
-        <TableDataset
-          key={[...dataKey, key].join('-')}
-          dataKey={[...dataKey, key]}
-          name={key}
-          data={data?.[key]}
-          indexColumn={indexColumn}
-          commonColumns={commonColumns}
-          showIndex={false}
-          schema={schema}
-          showColumnSchema={showColumnSchema}
-        />
+        <div key={key}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(key)}
+            >
+              Delete
+            </Button>
+          </div>
+          <TableDataset
+            key={[...dataKey, key].join('-')}
+            dataKey={[...dataKey, key]}
+            name={key}
+            data={data?.[key]}
+            indexColumn={indexColumn}
+            commonColumns={commonColumns}
+            showIndex={false}
+            schema={schema}
+            showColumnSchema={showColumnSchema}
+          />
+          <Divider size="small" />
+        </div>
       ))}
     </div>
   );
