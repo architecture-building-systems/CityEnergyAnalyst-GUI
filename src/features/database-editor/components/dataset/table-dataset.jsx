@@ -64,6 +64,7 @@ export const TableDataset = ({
   showColumnSchema,
   enableRowSelection,
   onRowSelectionChanged,
+  useDataColumnOrder,
   ref,
 }) => {
   return (
@@ -95,6 +96,7 @@ export const TableDataset = ({
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
             onRowSelectionChanged={onRowSelectionChanged}
+            useDataColumnOrder={useDataColumnOrder}
           />
         </>
       )}
@@ -141,6 +143,7 @@ const EntityDataTable = ({
   showColumnSchema = true,
   enableRowSelection = false,
   onRowSelectionChanged,
+  useDataColumnOrder = true,
   ref,
 }) => {
   const divRef = useRef();
@@ -171,16 +174,34 @@ const EntityDataTable = ({
     [columnSchema],
   );
 
+  // Get columns from data if useDataColumnOrder is true
+  const dataColumnKeys = useMemo(() => {
+    if (!useDataColumnOrder || !data || data.length === 0) return [];
+    return Object.keys(data[0] || {});
+  }, [useDataColumnOrder, data]);
+
   const columnsFromSchema = useMemo(() => {
-    if (schemaColumnKeys.length === 0) return [];
-    const filtered = schemaColumnKeys.filter((c) =>
+    // Use data column order if flag is set
+    const sourceColumns = useDataColumnOrder
+      ? dataColumnKeys
+      : schemaColumnKeys;
+
+    if (sourceColumns.length === 0) return [];
+    const filtered = sourceColumns.filter((c) =>
       c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
     }
     return filtered;
-  }, [schemaColumnKeys, indexColumn, commonColumns, showIndex]);
+  }, [
+    schemaColumnKeys,
+    dataColumnKeys,
+    useDataColumnOrder,
+    indexColumn,
+    commonColumns,
+    showIndex,
+  ]);
 
   const columns = columnsFromSchema;
 
@@ -273,7 +294,7 @@ const EntityDataTable = ({
   useEffect(() => {
     if (tabulatorRef.current == null) {
       const config = {
-        data: data,
+        data: structuredClone(data), // Deep clone to ensure mutability
         columns: tabulatorColumns,
         layout: 'fitDataFill',
         layoutColumnsOnNewData: true,
@@ -306,7 +327,8 @@ const EntityDataTable = ({
   // Update table data when data changes (e.g., when a new row is added)
   useEffect(() => {
     if (tabulatorRef.current && data) {
-      tabulatorRef.current.setData(data);
+      // Deep clone to ensure Tabulator receives mutable data
+      tabulatorRef.current.setData(structuredClone(data));
     }
   }, [data]);
 
