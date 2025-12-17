@@ -2,6 +2,35 @@ import { arrayStartsWith } from 'utils';
 import { useEffect, useRef } from 'react';
 import useNavigationStore from 'stores/navigationStore';
 import { Button } from 'antd';
+import {
+  EditOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  CopyOutlined,
+} from '@ant-design/icons';
+
+const ACTION_CONFIG = {
+  update: {
+    icon: EditOutlined,
+    color: '#1890ff',
+    label: 'Updated',
+  },
+  create: {
+    icon: PlusOutlined,
+    color: '#52c41a',
+    label: 'Created',
+  },
+  duplicate: {
+    icon: CopyOutlined,
+    color: '#722ed1',
+    label: 'Duplicated',
+  },
+  delete: {
+    icon: DeleteOutlined,
+    color: '#ff4d4f',
+    label: 'Deleted',
+  },
+};
 
 const useUnsavedChangesWarning = (hasUnsavedChanges) => {
   const { addBlocker, removeBlocker } = useNavigationStore();
@@ -133,44 +162,74 @@ export const DatabaseChangesList = ({ changes, onSave }) => {
             dataKey = dataKey.slice(0, -1);
           }
 
-          return (
-            <li key={index} style={{ display: 'flex', gap: 4 }}>
-              <span>{dataKey.join(' > ')}</span>
-              {_index !== undefined && _index !== null && (
-                <>
-                  {' > '}
-                  <b>{_index}</b>
-                </>
-              )}
-              {change?.displayInfo?.hour && (
-                <>
-                  {' > '}
-                  <b>{change.displayInfo.hour}</b>
-                </>
-              )}
-              <span>[ {change?.field} ]</span>
-              <span>: </span>
-              <span
-                style={{
-                  fontFamily: 'monospace',
-                  background: '#ff000032',
-                  paddingInline: 2,
-                }}
+          const action = change?.action || 'update';
+          const config = ACTION_CONFIG[action] || ACTION_CONFIG.update;
+          const Icon = config.icon;
+
+          // Render based on action type
+          if (action === 'update') {
+            // Detailed field change display
+            return (
+              <li
+                key={index}
+                style={{ display: 'flex', gap: 4, alignItems: 'center' }}
               >
-                {change?.oldValue}
-              </span>
-              <span> ➔ </span>
-              <span
-                style={{
-                  fontFamily: 'monospace',
-                  background: '#00ff0032',
-                  paddingInline: 2,
-                }}
+                <Icon style={{ color: config.color }} />
+                <span>{dataKey.join(' > ')}</span>
+                {_index !== undefined && _index !== null && (
+                  <>
+                    {' > '}
+                    <b>{_index}</b>
+                  </>
+                )}
+                {change?.displayInfo?.hour && (
+                  <>
+                    {' > '}
+                    <b>{change.displayInfo.hour}</b>
+                  </>
+                )}
+                <span>[ {change?.field} ]</span>
+                <span>: </span>
+                <span
+                  style={{
+                    fontFamily: 'monospace',
+                    background: '#ff000032',
+                    paddingInline: 2,
+                  }}
+                >
+                  {change?.oldValue}
+                </span>
+                <span> ➔ </span>
+                <span
+                  style={{
+                    fontFamily: 'monospace',
+                    background: '#00ff0032',
+                    paddingInline: 2,
+                  }}
+                >
+                  {change?.value}
+                </span>
+              </li>
+            );
+          } else {
+            // Simple action + identifier display for create/duplicate/delete
+            return (
+              <li
+                key={index}
+                style={{ display: 'flex', gap: 4, alignItems: 'center' }}
               >
-                {change?.value}
-              </span>
-            </li>
-          );
+                <Icon style={{ color: config.color }} />
+                <span style={{ color: config.color }}>{config.label} row:</span>
+                <span>{dataKey.join(' > ')}</span>
+                {_index !== undefined && _index !== null && (
+                  <>
+                    {' > '}
+                    <b style={{ color: config.color }}>{_index}</b>
+                  </>
+                )}
+              </li>
+            );
+          }
         })}
       </ul>
     </div>

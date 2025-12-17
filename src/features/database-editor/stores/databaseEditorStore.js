@@ -359,6 +359,7 @@ const useDatabaseEditorStore = create((set, get) => ({
       });
 
       const change = {
+        action: 'update',
         dataKey,
         index: rowIdentifier, // Use rowIdentifier for accurate tracking
         field,
@@ -374,7 +375,7 @@ const useDatabaseEditorStore = create((set, get) => ({
     });
   },
 
-  addDatabaseRow: (dataKey, indexCol, rowData) => {
+  addDatabaseRow: (dataKey, indexCol, rowData, action = 'create') => {
     set((state) => {
       let _dataKey = dataKey;
       // Handle case where index is actually last element (e.g. use types dataset)
@@ -432,10 +433,10 @@ const useDatabaseEditorStore = create((set, get) => ({
         changes: [
           ...state.changes,
           {
+            action,
             dataKey,
             index,
             field: indexCol,
-            action: 'add',
             oldValue: '{}',
             value: JSON.stringify(rowData),
           },

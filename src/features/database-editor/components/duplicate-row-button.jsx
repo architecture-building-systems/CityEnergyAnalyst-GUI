@@ -73,8 +73,8 @@ const useDuplicateRows = (data, dataKey, index, tabulatorRef) => {
 
       newRow[index] = newIndex;
 
-      // Add the new row to the database
-      addDatabaseRow(dataKey, index, newRow);
+      // Add the new row to the database with 'duplicate' action
+      addDatabaseRow(dataKey, index, newRow, 'duplicate');
       newRows.push(newRow);
     });
 
