@@ -12,6 +12,7 @@ import useDatabaseEditorStore, {
   useDatabaseSchema,
   useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
+import { DeleteModalContent } from '../delete-modal-content';
 
 export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -150,14 +151,9 @@ const useDeleteUseType = (types, selected, onSelected) => {
       title: `Delete Use Type "${selected}"?`,
       icon: <ExclamationCircleOutlined />,
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <b>Warning:</b> Deleting this use type will not automatically update
-            buildings or other data that may reference it. You may need to
-            manually check and update related data in other tables.
-          </div>
-          <b>This action cannot be undone.</b>
-        </div>
+        <DeleteModalContent
+          customMessage="Deleting this use type will not automatically update buildings or other data that may reference it. You may need to manually check and update related data in other tables."
+        />
       ),
       okText: 'Delete',
       okType: 'danger',

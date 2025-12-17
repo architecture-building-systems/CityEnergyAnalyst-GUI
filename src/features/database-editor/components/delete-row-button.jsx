@@ -2,6 +2,7 @@ import { Button, Modal } from 'antd';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useCallback } from 'react';
 import { useDeleteDatabaseRows } from 'features/database-editor/stores/databaseEditorStore';
+import { DeleteModalContent } from './delete-modal-content';
 
 /**
  * Hook to handle deleting selected rows
@@ -42,14 +43,9 @@ export const DeleteRowButton = ({
       title: `Delete Selected Rows (${rowCount})?`,
       icon: <ExclamationCircleOutlined />,
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <small>
-            Warning: Deleting these rows will not automatically update other
-            tables that may reference them. You may need to manually check and
-            update related data in other tables.
-          </small>
-          <b>This action cannot be undone.</b>
-        </div>
+        <DeleteModalContent
+          customMessage="Deleting these rows will not automatically update other tables that may reference them. You may need to manually check and update related data in other tables."
+        />
       ),
       okText: 'Delete',
       okType: 'danger',

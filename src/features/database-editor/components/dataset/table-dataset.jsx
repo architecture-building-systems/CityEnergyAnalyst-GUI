@@ -12,6 +12,7 @@ import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
 import { Button, Divider, Modal } from 'antd';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { DeleteModalContent } from '../delete-modal-content';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -28,16 +29,7 @@ export const TableGroupDataset = ({
     Modal.confirm({
       title: `Delete "${key}"?`,
       icon: <ExclamationCircleOutlined />,
-      content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <b>Warning:</b> Deleting this will not automatically update other
-            data that may reference it. You may need to manually check and
-            update related data in other tables.
-          </div>
-          <b>This action cannot be undone.</b>
-        </div>
-      ),
+      content: <DeleteModalContent />,
       okText: 'Delete',
       okType: 'danger',
       cancelText: 'Cancel',
