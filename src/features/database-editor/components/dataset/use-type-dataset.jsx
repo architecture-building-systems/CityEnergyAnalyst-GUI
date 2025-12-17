@@ -182,8 +182,26 @@ const useDeleteUseType = (types, selected, onSelected) => {
           delete newData.archetypes.use.schedules._library[selected];
         }
 
-        // Update the store
-        useDatabaseEditorStore.setState({ data: newData });
+        // Update the store with new data and add change entry
+        const currentState = useDatabaseEditorStore.getState();
+        useDatabaseEditorStore.setState({
+          data: newData,
+          changes: [
+            ...currentState.changes,
+            {
+              action: 'delete',
+              dataKey: ['ARCHETYPES', 'USE', selected],
+              index: selected,
+              field: 'use_type',
+              oldValue: JSON.stringify({
+                use_types: data?.archetypes?.use?.use_types?.[selected] || {},
+                monthly_multipliers: data?.archetypes?.use?.schedules?.monthly_multipliers?.[selected] || {},
+                schedule_library: data?.archetypes?.use?.schedules?._library?.[selected] || [],
+              }),
+              value: '{}',
+            },
+          ],
+        });
 
         // Select the first remaining use type
         const remainingTypes = types.filter((t) => t !== selected);
@@ -240,8 +258,8 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
       : [];
 
     // Update the store by directly modifying the nested structure
-    // This is a simplified approach - you might want to create a specific store action
-    const newData = { ...data };
+    // Use structuredClone to create a deep, mutable copy
+    const newData = structuredClone(data);
 
     // Add use type properties
     if (!newData.archetypes) newData.archetypes = {};
@@ -266,8 +284,26 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
     newData.archetypes.use.schedules._library[newUseTypeName] =
       newScheduleLibrary;
 
-    // Update the store
-    useDatabaseEditorStore.setState({ data: newData });
+    // Update the store with new data and add change entry
+    const currentState = useDatabaseEditorStore.getState();
+    useDatabaseEditorStore.setState({
+      data: newData,
+      changes: [
+        ...currentState.changes,
+        {
+          action: 'create',
+          dataKey: ['ARCHETYPES', 'USE', newUseTypeName],
+          index: newUseTypeName,
+          field: 'use_type',
+          oldValue: '{}',
+          value: JSON.stringify({
+            use_types: newUseTypeProperties,
+            monthly_multipliers: newMonthlyMultipliers,
+            schedule_library: newScheduleLibrary,
+          }),
+        },
+      ],
+    });
 
     // Select the new use type
     onSelected(newUseTypeName);
