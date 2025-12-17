@@ -303,8 +303,19 @@ const EntityDataTable = ({
           const field = cell.getField();
           const value = cell.getValue();
           const index = cell.getRow().getIndex();
+          const position = cell.getRow().getPosition();
           const oldValue = cell.getOldValue();
-          updateDatabaseData(dataKey, index, field, oldValue, value);
+
+          // Pass both index and position - let the store decide which to use
+          updateDatabaseData(
+            dataKey,
+            index,
+            field,
+            oldValue,
+            value,
+            undefined,
+            position,
+          );
         },
       };
 

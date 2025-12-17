@@ -210,15 +210,25 @@ const useDatabaseEditorStore = create((set, get) => ({
     set({ changes: [] });
   },
 
-  updateDatabaseData: (dataKey, index, field, oldValue, value, displayInfo) => {
+  // FIXME: Simplify parameters
+  updateDatabaseData: (
+    dataKey,
+    index,
+    field,
+    oldValue,
+    value,
+    displayInfo,
+    position,
+  ) => {
     set((state) => {
       let _dataKey = dataKey;
       let _index;
       // Handle case where index is actually last element (e.g. use types dataset)
-      if (
+      const isNestedStructure =
         arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
-        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
-      ) {
+        arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION']);
+
+      if (isNestedStructure) {
         _dataKey = dataKey.slice(0, -1);
         _index = dataKey[dataKey.length - 1];
       }
@@ -229,33 +239,71 @@ const useDatabaseEditorStore = create((set, get) => ({
         return state;
       }
 
+      // For nested structures with arrays, use position instead of index
+      // when both are provided (position is more reliable for rows with duplicate codes)
+      let rowIdentifier = index;
+      if (isNestedStructure && position !== undefined) {
+        const nestedTable = table?.[_index];
+        if (Array.isArray(nestedTable)) {
+          rowIdentifier = position;
+        }
+      }
+
       // Use Immer to update the data immutably
       const newData = produce(state.data, (draft) => {
         const draftTable = getNestedValue(draft, _dataKey);
 
         // Find the correct row by index and update the field
-        if (index !== undefined && index !== null && draftTable?.[index]) {
-          draftTable[index][field] = value;
-        } else if (_index !== undefined && draftTable?.[_index]) {
+        // When _index is set, use nested table handling
+        if (_index !== undefined && draftTable?.[_index]) {
           const nestedTable = draftTable[_index];
 
           // Check if it's an array or object
           if (Array.isArray(nestedTable)) {
-            // For arrays, use index to access the row
-            if (
-              index !== undefined &&
-              index < nestedTable.length &&
-              nestedTable[index]
-            ) {
-              nestedTable[index][field] = value;
+            // For arrays, handle both numeric and string indices
+            if (typeof rowIdentifier === 'number') {
+              // Direct numeric position - use it directly
+              if (
+                rowIdentifier >= 0 &&
+                rowIdentifier < nestedTable.length &&
+                nestedTable[rowIdentifier]
+              ) {
+                nestedTable[rowIdentifier][field] = value;
+              } else {
+                console.error(
+                  'Row not found for numeric position:',
+                  rowIdentifier,
+                  'in nested array (length:',
+                  nestedTable?.length,
+                  ')',
+                );
+              }
+            } else if (typeof rowIdentifier === 'string') {
+              // Find row by matching index column value
+              const rowIndex = nestedTable.findIndex((row) => {
+                return (
+                  row?.code === rowIdentifier ||
+                  row?.id === rowIdentifier ||
+                  row?.name === rowIdentifier ||
+                  Object.values(row || {}).includes(rowIdentifier)
+                );
+              });
+
+              if (rowIndex !== -1 && nestedTable[rowIndex]) {
+                nestedTable[rowIndex][field] = value;
+              } else {
+                console.error(
+                  'Row not found for string index:',
+                  rowIdentifier,
+                  'in nested array',
+                );
+              }
             } else {
               console.error(
-                'Row not found for index:',
-                index,
-                'in nested array (length:',
-                nestedTable?.length,
-                '):',
-                nestedTable,
+                'Invalid index type:',
+                typeof rowIdentifier,
+                'value:',
+                rowIdentifier,
               );
             }
           } else if (typeof nestedTable === 'object') {
@@ -271,19 +319,48 @@ const useDatabaseEditorStore = create((set, get) => ({
               );
             }
           }
+        } else if (index !== undefined && index !== null) {
+          // Handle non-nested structures
+          // Check if draftTable is an array with string indices (like 'code')
+          if (Array.isArray(draftTable) && typeof index === 'string') {
+            // Find the row by matching the index column value
+            const rowIndex = draftTable.findIndex((row) => {
+              // Try common index fields
+              return (
+                row?.code === index ||
+                row?.id === index ||
+                row?.name === index ||
+                Object.values(row || {}).includes(index)
+              );
+            });
+
+            if (rowIndex !== -1 && draftTable[rowIndex]) {
+              draftTable[rowIndex][field] = value;
+            } else {
+              console.error(
+                'Row not found for string index:',
+                index,
+                'in array table',
+              );
+            }
+          } else if (draftTable?.[index]) {
+            // Direct object key or numeric index access
+            draftTable[index][field] = value;
+          } else {
+            console.error('Row not found for index:', index, 'in table');
+          }
         } else {
-          console.error(
-            'Row not found for index:',
+          console.error('Row not found - invalid state:', {
             index,
-            'in table:',
-            draftTable,
-          );
+            _index,
+            field,
+          });
         }
       });
 
       const change = {
         dataKey,
-        index,
+        index: rowIdentifier, // Use rowIdentifier for accurate tracking
         field,
         oldValue,
         value,
