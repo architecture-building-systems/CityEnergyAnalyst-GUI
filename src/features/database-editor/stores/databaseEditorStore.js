@@ -210,7 +210,7 @@ const useDatabaseEditorStore = create((set, get) => ({
     set({ changes: [] });
   },
 
-  updateDatabaseData: (dataKey, index, field, oldValue, value) => {
+  updateDatabaseData: (dataKey, index, field, oldValue, value, displayInfo) => {
     set((state) => {
       let _dataKey = dataKey;
       let _index;
@@ -234,10 +234,43 @@ const useDatabaseEditorStore = create((set, get) => ({
         const draftTable = getNestedValue(draft, _dataKey);
 
         // Find the correct row by index and update the field
-        if (index !== undefined && draftTable?.[index]) {
+        if (index !== undefined && index !== null && draftTable?.[index]) {
           draftTable[index][field] = value;
         } else if (_index !== undefined && draftTable?.[_index]) {
-          draftTable[_index][field] = value;
+          const nestedTable = draftTable[_index];
+
+          // Check if it's an array or object
+          if (Array.isArray(nestedTable)) {
+            // For arrays, use index to access the row
+            if (
+              index !== undefined &&
+              index < nestedTable.length &&
+              nestedTable[index]
+            ) {
+              nestedTable[index][field] = value;
+            } else {
+              console.error(
+                'Row not found for index:',
+                index,
+                'in nested array (length:',
+                nestedTable?.length,
+                '):',
+                nestedTable,
+              );
+            }
+          } else if (typeof nestedTable === 'object') {
+            // For objects (like monthly_multipliers), update field directly
+            if (index === undefined || index === _index || index === 0) {
+              nestedTable[field] = value;
+            } else {
+              console.error(
+                'Unexpected index:',
+                index,
+                'for object field update in:',
+                nestedTable,
+              );
+            }
+          }
         } else {
           console.error(
             'Row not found for index:',
@@ -248,9 +281,18 @@ const useDatabaseEditorStore = create((set, get) => ({
         }
       });
 
+      const change = {
+        dataKey,
+        index,
+        field,
+        oldValue,
+        value,
+        ...(displayInfo && { displayInfo }),
+      };
+
       return {
         data: newData,
-        changes: [...state.changes, { dataKey, index, field, oldValue, value }],
+        changes: [...state.changes, change],
       };
     });
   },

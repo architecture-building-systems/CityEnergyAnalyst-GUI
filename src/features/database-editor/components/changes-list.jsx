@@ -142,6 +142,12 @@ export const DatabaseChangesList = ({ changes, onSave }) => {
                   <b>{_index}</b>
                 </>
               )}
+              {change?.displayInfo?.hour && (
+                <>
+                  {' > '}
+                  <b>{change.displayInfo.hour}</b>
+                </>
+              )}
               <span>[ {change?.field} ]</span>
               <span>: </span>
               <span

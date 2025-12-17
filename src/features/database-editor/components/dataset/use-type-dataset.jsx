@@ -3,7 +3,10 @@ import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { useEffect, useState } from 'react';
 import { MissingDataPrompt } from './missing-data-prompt';
-import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
+import {
+  useDatabaseSchema,
+  useUpdateDatabaseData,
+} from 'features/database-editor/stores/databaseEditorStore';
 
 export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -76,6 +79,7 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
           />
           <UseTypeSchedules
             dataKey={[...dataKey, 'schedules', '_library']}
+            useType={activeUseType}
             data={selectedLibraryData}
           />
         </div>
@@ -141,20 +145,29 @@ const UseTypeButtons = ({ types, selected, onSelected }) => {
 const extractSchedule = (data, schedule) => {
   if (data == null) return [];
 
+  // Sort rows by hour number to ensure correct order
+  const sortByHour = (rows) => {
+    return [...rows].sort((a, b) => {
+      const hourA = parseInt(a.hour.split('_')[1]);
+      const hourB = parseInt(b.hour.split('_')[1]);
+      return hourA - hourB;
+    });
+  };
+
   const weekdayRows = data.filter((schedule) =>
     schedule.hour.includes('Weekday_'),
   );
-  const weekday = weekdayRows.map((row) => row[schedule]);
+  const weekday = sortByHour(weekdayRows).map((row) => row[schedule]);
 
   const saturdayRows = data.filter((schedule) =>
     schedule.hour.includes('Saturday_'),
   );
-  const saturday = saturdayRows.map((row) => row[schedule]);
+  const saturday = sortByHour(saturdayRows).map((row) => row[schedule]);
 
   const sundayRows = data.filter((schedule) =>
     schedule.hour.includes('Sunday_'),
   );
-  const sunday = sundayRows.map((row) => row[schedule]);
+  const sunday = sortByHour(sundayRows).map((row) => row[schedule]);
 
   return { weekday, saturday, sunday };
 };
@@ -187,18 +200,63 @@ const ScheduleButtons = ({ schedules, selected, onSelected }) => {
   );
 };
 
-const UseTypeSchedules = ({ dataKey, data }) => {
+const UseTypeSchedules = ({ dataKey, useType, data }) => {
   // Data is array of schedule objects
   // schedules format {"hour":"Weekday_12","occupancy":0.5,"appliances":0.85, ... }
   // hour can be "Weekday_1","Saturday_2", "Sunday_3"
   // const schema = useDatabaseSchema(dataKey);
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const updateDatabaseData = useUpdateDatabaseData();
 
   if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
   const schedules = Object.keys(data?.[0] ?? {}).filter((key) => key != 'hour');
   const selectedScheduleData = extractSchedule(data, selectedSchedule);
+
+  // Create handler to update schedule data when chart points are dragged
+  const handleScheduleChange = (dayType, updatedData) => {
+    if (!selectedSchedule || !data) {
+      console.error('handleScheduleChange: missing selectedSchedule or data');
+      return;
+    }
+
+    // Determine the hour prefix based on day type
+    let hourPrefix;
+    if (dayType === 'weekday') hourPrefix = 'Weekday_';
+    else if (dayType === 'saturday') hourPrefix = 'Saturday_';
+    else if (dayType === 'sunday') hourPrefix = 'Sunday_';
+
+    // Include useType in the dataKey for proper nesting
+    const fullDataKey = [...dataKey, useType];
+
+    // Update each hour's value in the data array, but only if it changed
+    updatedData.forEach((value, hourIndex) => {
+      // Pad hour index with leading zero to match data format (e.g., "00", "01", "02")
+      const paddedHour = hourIndex.toString().padStart(2, '0');
+      const hourLabel = `${hourPrefix}${paddedHour}`;
+
+      // Find the row with this hour label in the original data
+      const rowIndex = data.findIndex((row) => row.hour === hourLabel);
+
+      if (rowIndex !== -1 && rowIndex !== undefined) {
+        const oldValue = data[rowIndex][selectedSchedule];
+        // Only update if the value actually changed
+        if (oldValue !== value) {
+          updateDatabaseData(
+            fullDataKey,
+            rowIndex,
+            selectedSchedule,
+            oldValue,
+            value,
+            { hour: hourLabel }, // Pass hour label for display
+          );
+        }
+      } else {
+        console.warn(`Could not find row for hour label: ${hourLabel} in data`);
+      }
+    });
+  };
 
   return (
     <div
@@ -221,12 +279,15 @@ const UseTypeSchedules = ({ dataKey, data }) => {
         <div>TODO</div>
       ) : (
         <div>
-          {Object.keys(selectedScheduleData).map((schedule) => {
+          {Object.keys(selectedScheduleData).map((dayType) => {
             return (
               <ScheduleAreaChart
-                key={schedule}
-                data={selectedScheduleData[schedule]}
-                title={schedule}
+                key={dayType}
+                data={selectedScheduleData[dayType]}
+                title={dayType}
+                onDataChange={(updatedData) =>
+                  handleScheduleChange(dayType, updatedData)
+                }
               />
             );
           })}
