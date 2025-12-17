@@ -1,4 +1,5 @@
-import { Button } from 'antd';
+import { Button, Modal, Form, Input, Select } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { useEffect, useState } from 'react';
@@ -7,6 +8,7 @@ import {
   useDatabaseSchema,
   useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
+import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 
 export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -53,6 +55,8 @@ export const UseTypeDataset = ({ dataKey, dataset }) => {
         types={useTypes}
         selected={activeUseType}
         onSelected={setSelectedUseType}
+        dataKey={dataKey}
+        existingTypes={useTypes}
       />
       {activeUseType && useTypes.length > 0 && (
         <div
@@ -126,19 +130,161 @@ const UseTypePropertiesSchedulesDataset = ({
   );
 };
 
-const UseTypeButtons = ({ types, selected, onSelected }) => {
+const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
+  const data = useDatabaseEditorStore((state) => state.data);
+
+  const handleAddUseType = () => {
+    form.submit();
+  };
+
+  const handleFormSubmit = (values) => {
+    const newUseTypeName = values.useTypeName.toUpperCase().trim();
+    const copyFromUseType = values.copyFrom;
+
+    // Validate that the use type doesn't already exist
+    if (existingTypes.includes(newUseTypeName)) {
+      form.setFields([
+        {
+          name: 'useTypeName',
+          errors: ['Use type already exists'],
+        },
+      ]);
+      return;
+    }
+
+    // Copy data from the selected use type
+    const sourceUseTypeData =
+      data?.archetypes?.use?.use_types?.[copyFromUseType];
+    const sourceMonthlyMultipliers =
+      data?.archetypes?.use?.schedules?.monthly_multipliers?.[copyFromUseType];
+    const sourceScheduleLibrary =
+      data?.archetypes?.use?.schedules?._library?.[copyFromUseType];
+
+    // Clone the data (deep copy)
+    const newUseTypeProperties = sourceUseTypeData
+      ? structuredClone(sourceUseTypeData)
+      : {};
+    const newMonthlyMultipliers = sourceMonthlyMultipliers
+      ? structuredClone(sourceMonthlyMultipliers)
+      : {};
+    const newScheduleLibrary = sourceScheduleLibrary
+      ? structuredClone(sourceScheduleLibrary)
+      : [];
+
+    // Update the store by directly modifying the nested structure
+    // This is a simplified approach - you might want to create a specific store action
+    const newData = { ...data };
+
+    // Add use type properties
+    if (!newData.archetypes) newData.archetypes = {};
+    if (!newData.archetypes.use) newData.archetypes.use = {};
+    if (!newData.archetypes.use.use_types)
+      newData.archetypes.use.use_types = {};
+    newData.archetypes.use.use_types[newUseTypeName] = newUseTypeProperties;
+
+    // Add monthly multipliers
+    if (!newData.archetypes.use.schedules)
+      newData.archetypes.use.schedules = {};
+    if (!newData.archetypes.use.schedules.monthly_multipliers) {
+      newData.archetypes.use.schedules.monthly_multipliers = {};
+    }
+    newData.archetypes.use.schedules.monthly_multipliers[newUseTypeName] =
+      newMonthlyMultipliers;
+
+    // Add schedule library
+    if (!newData.archetypes.use.schedules._library) {
+      newData.archetypes.use.schedules._library = {};
+    }
+    newData.archetypes.use.schedules._library[newUseTypeName] =
+      newScheduleLibrary;
+
+    // Update the store
+    useDatabaseEditorStore.setState({ data: newData });
+
+    // Select the new use type
+    onSelected(newUseTypeName);
+
+    // Close modal and reset form
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
   return (
-    <div className="cea-database-editor-database-dataset-buttons">
-      {types.map((useType) => (
+    <>
+      <div className="cea-database-editor-database-dataset-buttons">
+        {types.map((useType) => (
+          <Button
+            key={useType}
+            onClick={() => onSelected?.(useType)}
+            type={useType === selected ? 'primary' : 'default'}
+          >
+            {useType.toUpperCase()}
+          </Button>
+        ))}
         <Button
-          key={useType}
-          onClick={() => onSelected?.(useType)}
-          type={useType === selected ? 'primary' : 'default'}
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalOpen(true)}
         >
-          {useType.toUpperCase()}
+          Add
         </Button>
-      ))}
-    </div>
+      </div>
+
+      <Modal
+        title="Create New Use Type"
+        open={isModalOpen}
+        onOk={handleAddUseType}
+        onCancel={() => {
+          setIsModalOpen(false);
+          form.resetFields();
+        }}
+        okText="Create"
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleFormSubmit}
+          requiredMark="optional"
+          initialValues={{ copyFrom: types[0] }}
+        >
+          <Form.Item
+            label="Use Type Name"
+            name="useTypeName"
+            rules={[
+              { required: true, message: 'Please enter a use type name' },
+              {
+                pattern: /^[A-Z0-9_]+$/,
+                message: 'Use only uppercase letters, numbers, and underscores',
+              },
+            ]}
+            normalize={(value) => value?.toUpperCase()}
+          >
+            <Input placeholder="e.g., OFFICE, RETAIL, SHOP_1" />
+          </Form.Item>
+
+          <Form.Item
+            label="Copy From"
+            name="copyFrom"
+            rules={[
+              {
+                required: true,
+                message: 'Please select a use type to copy from',
+              },
+            ]}
+          >
+            <Select placeholder="Select a use type to copy from">
+              {types.map((useType) => (
+                <Select.Option key={useType} value={useType}>
+                  {useType}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
 
