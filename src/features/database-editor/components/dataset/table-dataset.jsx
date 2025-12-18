@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useImperativeHandle } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './dataset.css';
@@ -11,8 +17,13 @@ import useDatabaseEditorStore, {
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
 import { Button, Divider, Modal } from 'antd';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { DeleteModalContent } from '../delete-modal-content';
+import { CreateComponentModal } from '../create-component-modal';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -20,10 +31,12 @@ export const TableGroupDataset = ({
   indexColumn,
   commonColumns,
   showColumnSchema = false,
+  enableRowSelection = false,
 }) => {
   const schema = useDatabaseSchema(dataKey);
   const schemaColumns = Object.keys(schema?.columns ?? {});
   const storeData = useDatabaseEditorStore((state) => state.data);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDelete = (key) => {
     Modal.confirm({
@@ -110,10 +123,26 @@ export const TableGroupDataset = ({
             showIndex={false}
             schema={schema}
             showColumnSchema={showColumnSchema}
+            enableRowSelection={enableRowSelection}
           />
           <Divider size="small" />
         </div>
       ))}
+      <Button
+        type="dashed"
+        icon={<PlusOutlined />}
+        onClick={() => setIsModalOpen(true)}
+      >
+        Add New Component
+      </Button>
+
+      <CreateComponentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        data={data}
+        dataKey={dataKey}
+        indexColumn={indexColumn}
+      />
     </div>
   );
 };
