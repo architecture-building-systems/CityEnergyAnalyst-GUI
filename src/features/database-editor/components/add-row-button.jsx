@@ -14,12 +14,10 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
 
   return useCallback(() => {
     if (!index) {
-      console.log('useAddEmptyRow: Missing index');
       return null;
     }
 
     if (!data || (Array.isArray(data) && data.length === 0)) {
-      console.log('useAddEmptyRow: No existing data to infer structure from');
       return null;
     }
 
@@ -82,7 +80,6 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
       }
     });
 
-    console.log('useAddEmptyRow: Adding new row:', newIndex);
     addDatabaseRow(dataKey, index, newRow);
 
     return newRow;

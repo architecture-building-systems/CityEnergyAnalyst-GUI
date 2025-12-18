@@ -436,7 +436,6 @@ const useDatabaseEditorStore = create((set, get) => ({
           targetArray[rowIndex] = rowDataCopy;
         } else {
           console.error('Unable to determine table structure:', targetArray);
-          console.log(indexCol, targetArray);
         }
       });
 
@@ -498,46 +497,31 @@ const useDatabaseEditorStore = create((set, get) => ({
           if (usingPositions) {
             // Delete by position (for nested structures with duplicate index values)
             const positionsToDelete = new Set(rowIndices);
-            let deleteCount = 0;
 
             // Sort positions in descending order to delete from end to start
             const sortedPositions = Array.from(positionsToDelete).sort((a, b) => b - a);
             for (const position of sortedPositions) {
               if (position >= 0 && position < targetArray.length) {
                 targetArray.splice(position, 1);
-                deleteCount++;
               }
             }
-            console.log(
-              `deleteDatabaseRows: Deleted ${deleteCount} rows by position, ${targetArray.length} rows remaining`,
-            );
           } else {
             // Delete by index column value (for non-nested structures)
             const indicesToDelete = new Set(rowIndices);
-            let deleteCount = 0;
             for (let i = targetArray.length - 1; i >= 0; i--) {
               const rowIndexValue = targetArray[i][indexCol];
               if (indicesToDelete.has(rowIndexValue)) {
                 targetArray.splice(i, 1);
-                deleteCount++;
               }
             }
-            console.log(
-              `deleteDatabaseRows: Deleted ${deleteCount} rows from array, ${targetArray.length} rows remaining`,
-            );
           }
         } else if (typeof targetArray === 'object' && indexCol) {
           // For objects, delete properties with matching indices
-          let deleteCount = 0;
           rowIndices.forEach((rowIndex) => {
             if (targetArray[rowIndex]) {
               delete targetArray[rowIndex];
-              deleteCount++;
             }
           });
-          console.log(
-            `deleteDatabaseRows: Deleted ${deleteCount} rows from object`,
-          );
         } else {
           console.error('Unable to determine table structure:', targetArray);
         }
