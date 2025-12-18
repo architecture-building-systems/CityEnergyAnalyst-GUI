@@ -378,12 +378,18 @@ const useDatabaseEditorStore = create((set, get) => ({
   addDatabaseRow: (dataKey, indexCol, rowData, action = 'create') => {
     set((state) => {
       let _dataKey = dataKey;
-      // Handle case where index is actually last element (e.g. use types dataset)
+      let _index;
+
+      // Handle case where index is actually last element (e.g. use types dataset, conversion components)
+      // For ARCHETYPES > USE, the structure is: use.schedules._library[useTypeName] = array
+      // For COMPONENTS > CONVERSION, the structure is: conversion[componentName] = array
+      // Both need slicing because getNestedValue lowercases keys, but component names are case-sensitive
       if (
         arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
         arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
       ) {
         _dataKey = dataKey.slice(0, -1);
+        _index = dataKey[dataKey.length - 1];
       }
 
       const table = getNestedValue(state.data, _dataKey);
@@ -398,10 +404,16 @@ const useDatabaseEditorStore = create((set, get) => ({
       const newData = produce(state.data, (draft) => {
         const draftTable = getNestedValue(draft, _dataKey);
 
+        // For nested structures, access the component array
+        let targetArray = draftTable;
+        if (_index !== undefined && draftTable?.[_index]) {
+          targetArray = draftTable[_index];
+        }
+
         // Add the new row to the table
-        if (Array.isArray(draftTable)) {
-          draftTable.push(rowData);
-        } else if (typeof draftTable === 'object' && indexCol) {
+        if (Array.isArray(targetArray)) {
+          targetArray.push(rowData);
+        } else if (typeof targetArray === 'object' && indexCol) {
           if (rowData?.[indexCol] === undefined) {
             console.error(
               `Row data must contain the index field "${indexCol}"`,
@@ -410,10 +422,10 @@ const useDatabaseEditorStore = create((set, get) => ({
             return;
           }
           const rowIndex = rowData[indexCol];
-          if (draftTable[rowIndex]) {
+          if (targetArray[rowIndex]) {
             console.error(
               `Row with index "${rowIndex}" already exists in the table.`,
-              draftTable,
+              targetArray,
             );
             return;
           }
@@ -421,10 +433,10 @@ const useDatabaseEditorStore = create((set, get) => ({
           const rowDataCopy = { ...rowData };
           // Remove index from the copy to avoid duplication
           delete rowDataCopy[indexCol];
-          draftTable[rowIndex] = rowDataCopy;
+          targetArray[rowIndex] = rowDataCopy;
         } else {
-          console.error('Unable to determine table structure:', draftTable);
-          console.log(indexCol, draftTable);
+          console.error('Unable to determine table structure:', targetArray);
+          console.log(indexCol, targetArray);
         }
       });
 
@@ -448,12 +460,18 @@ const useDatabaseEditorStore = create((set, get) => ({
   deleteDatabaseRows: (dataKey, indexCol, rowIndices) => {
     set((state) => {
       let _dataKey = dataKey;
-      // Handle case where index is actually last element (e.g. use types dataset)
+      let _index;
+
+      // Handle case where index is actually last element (e.g. use types dataset, conversion components)
+      // For ARCHETYPES > USE, the structure is: use.schedules._library[useTypeName] = array
+      // For COMPONENTS > CONVERSION, the structure is: conversion[componentName] = array
+      // Both need slicing because getNestedValue lowercases keys, but component names are case-sensitive
       if (
         arrayStartsWith(_dataKey, ['ARCHETYPES', 'USE']) ||
         arrayStartsWith(_dataKey, ['COMPONENTS', 'CONVERSION'])
       ) {
         _dataKey = dataKey.slice(0, -1);
+        _index = dataKey[dataKey.length - 1];
       }
 
       const table = getNestedValue(state.data, _dataKey);
@@ -466,26 +484,54 @@ const useDatabaseEditorStore = create((set, get) => ({
       const newData = produce(state.data, (draft) => {
         const draftTable = getNestedValue(draft, _dataKey);
 
+        // For nested structures, access the component array
+        let targetArray = draftTable;
+        if (_index !== undefined && draftTable?.[_index]) {
+          targetArray = draftTable[_index];
+        }
+
         // Delete rows from the table
-        if (Array.isArray(draftTable)) {
-          // For arrays, filter out rows with matching indices
-          const indicesToDelete = new Set(rowIndices);
-          let deleteCount = 0;
-          for (let i = draftTable.length - 1; i >= 0; i--) {
-            if (indicesToDelete.has(draftTable[i][indexCol])) {
-              draftTable.splice(i, 1);
-              deleteCount++;
+        if (Array.isArray(targetArray)) {
+          // Check if we're using numeric positions or index column values
+          const usingPositions = rowIndices.every((idx) => typeof idx === 'number');
+
+          if (usingPositions) {
+            // Delete by position (for nested structures with duplicate index values)
+            const positionsToDelete = new Set(rowIndices);
+            let deleteCount = 0;
+
+            // Sort positions in descending order to delete from end to start
+            const sortedPositions = Array.from(positionsToDelete).sort((a, b) => b - a);
+            for (const position of sortedPositions) {
+              if (position >= 0 && position < targetArray.length) {
+                targetArray.splice(position, 1);
+                deleteCount++;
+              }
             }
+            console.log(
+              `deleteDatabaseRows: Deleted ${deleteCount} rows by position, ${targetArray.length} rows remaining`,
+            );
+          } else {
+            // Delete by index column value (for non-nested structures)
+            const indicesToDelete = new Set(rowIndices);
+            let deleteCount = 0;
+            for (let i = targetArray.length - 1; i >= 0; i--) {
+              const rowIndexValue = targetArray[i][indexCol];
+              if (indicesToDelete.has(rowIndexValue)) {
+                targetArray.splice(i, 1);
+                deleteCount++;
+              }
+            }
+            console.log(
+              `deleteDatabaseRows: Deleted ${deleteCount} rows from array, ${targetArray.length} rows remaining`,
+            );
           }
-          console.log(
-            `deleteDatabaseRows: Deleted ${deleteCount} rows from array`,
-          );
-        } else if (typeof draftTable === 'object' && indexCol) {
+        } else if (typeof targetArray === 'object' && indexCol) {
           // For objects, delete properties with matching indices
           let deleteCount = 0;
           rowIndices.forEach((rowIndex) => {
-            if (draftTable[rowIndex]) {
-              delete draftTable[rowIndex];
+            if (targetArray[rowIndex]) {
+              delete targetArray[rowIndex];
               deleteCount++;
             }
           });
@@ -493,21 +539,44 @@ const useDatabaseEditorStore = create((set, get) => ({
             `deleteDatabaseRows: Deleted ${deleteCount} rows from object`,
           );
         } else {
-          console.error('Unable to determine table structure:', draftTable);
+          console.error('Unable to determine table structure:', targetArray);
         }
       });
 
       // Create change entries for each deleted row
-      const newChanges = rowIndices.map((index) => ({
-        dataKey,
-        index,
-        field: indexCol,
-        action: 'delete',
-        oldValue: JSON.stringify(table[index] || {}),
-        value: '{}',
-      }));
+      const usingPositions = rowIndices.every((idx) => typeof idx === 'number');
 
-      console.log('deleteDatabaseRows: New data created with Immer');
+      const newChanges = rowIndices.map((index) => {
+        // Find the row data before deletion
+        let rowData = {};
+
+        // For nested structures, need to access the nested array
+        let sourceArray = table;
+        if (_index !== undefined && table?.[_index]) {
+          sourceArray = table[_index];
+        }
+
+        if (usingPositions && Array.isArray(sourceArray)) {
+          // Get row by position
+          rowData = sourceArray[index] || {};
+        } else if (Array.isArray(sourceArray)) {
+          // Get row by index column value
+          const row = sourceArray.find((r) => r[indexCol] === index);
+          rowData = row || {};
+        } else if (typeof sourceArray === 'object') {
+          // For object structures
+          rowData = sourceArray[index] || {};
+        }
+
+        return {
+          dataKey,
+          index: usingPositions ? `position_${index}` : index,
+          field: indexCol,
+          action: 'delete',
+          oldValue: JSON.stringify(rowData),
+          value: '{}',
+        };
+      });
 
       return {
         data: newData,

@@ -17,8 +17,16 @@ const useDeleteRows = (dataKey, index, tabulatorRef) => {
     const selectedRows = tabulatorRef.current.getSelectedRows();
     if (selectedRows.length === 0) return [];
 
-    // Extract indices from selected rows
-    const rowIndices = selectedRows.map((row) => row.getData()[index]);
+    // Check if this is a nested structure (USE types or CONVERSION components)
+    const isNestedStructure =
+      (dataKey.length >= 3 && dataKey[0] === 'ARCHETYPES' && dataKey[1] === 'USE') ||
+      (dataKey.length >= 4 && dataKey[0] === 'COMPONENTS' && dataKey[1] === 'CONVERSION');
+
+    // For nested structures, use row positions instead of index values
+    // because rows within a component may have duplicate index values
+    const rowIndices = isNestedStructure
+      ? selectedRows.map((row) => row.getPosition())
+      : selectedRows.map((row) => row.getData()[index]);
 
     // Delete rows from the database
     deleteDatabaseRows(dataKey, index, rowIndices);

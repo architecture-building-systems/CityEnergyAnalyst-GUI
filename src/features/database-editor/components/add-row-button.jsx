@@ -13,8 +13,13 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
   const addDatabaseRow = useAddDatabaseRow();
 
   return useCallback(() => {
-    if (!index || !schema?.columns) {
-      console.log('useAddEmptyRow: Missing index or schema');
+    if (!index) {
+      console.log('useAddEmptyRow: Missing index');
+      return null;
+    }
+
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      console.log('useAddEmptyRow: No existing data to infer structure from');
       return null;
     }
 
@@ -34,21 +39,45 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
     // Create empty row with all required fields
     const newRow = { [index]: newIndex };
 
-    // Initialize all other columns with default values based on type
-    Object.keys(schema.columns).forEach((col) => {
-      if (col !== index) {
-        const colSchema = schema.columns[col];
-        const type = colSchema?.type;
+    // Get columns from schema if available, otherwise infer from existing data
+    let columns = [];
+    if (schema?.columns) {
+      columns = Object.keys(schema.columns);
+    } else {
+      // Infer columns from first row of existing data
+      const firstRow = Array.isArray(data) ? data[0] : Object.values(data)[0];
+      if (firstRow && typeof firstRow === 'object') {
+        columns = Object.keys(firstRow);
+      }
+    }
 
-        // Set default values based on type
-        if (type === 'float' || type === 'int') {
-          newRow[col] = 0;
-        } else if (colSchema?.choice) {
-          // Use first available choice or empty string
-          const values = colSchema.choice?.values || [];
-          newRow[col] = values.length > 0 ? values[0] : '';
+    // Initialize all other columns with default values
+    columns.forEach((col) => {
+      if (col !== index) {
+        if (schema?.columns?.[col]) {
+          const colSchema = schema.columns[col];
+          const type = colSchema?.type;
+
+          // Set default values based on type
+          if (type === 'float' || type === 'int') {
+            newRow[col] = 0;
+          } else if (colSchema?.choice) {
+            // Use first available choice or empty string
+            const values = colSchema.choice?.values || [];
+            newRow[col] = values.length > 0 ? values[0] : '';
+          } else {
+            newRow[col] = '';
+          }
         } else {
-          newRow[col] = '';
+          // No schema - infer type from existing data
+          const firstRow = Array.isArray(data) ? data[0] : Object.values(data)[0];
+          const sampleValue = firstRow?.[col];
+
+          if (typeof sampleValue === 'number') {
+            newRow[col] = 0;
+          } else {
+            newRow[col] = '';
+          }
         }
       }
     });
