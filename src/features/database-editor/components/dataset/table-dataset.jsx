@@ -4,6 +4,7 @@ import {
   useRef,
   useImperativeHandle,
   useState,
+  useCallback,
 } from 'react';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -22,8 +23,11 @@ import {
   ExclamationCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { DeleteModalContent } from '../delete-modal-content';
-import { CreateComponentModal } from '../create-component-modal';
+import { DeleteModalContent } from 'features/database-editor/components/delete-modal-content';
+import { CreateComponentModal } from 'features/database-editor/components/create-component-modal';
+import { DuplicateRowButton } from 'features/database-editor/components/duplicate-row-button';
+import { DeleteRowButton } from 'features/database-editor/components/delete-row-button';
+import { AddRowButton } from 'features/database-editor/components/add-row-button';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -99,20 +103,22 @@ export const TableGroupDataset = ({
       />
       {Object.keys(data).map((key) => (
         <div key={key}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(key)}
+          {!enableRowSelection && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
             >
-              Delete
-            </Button>
-          </div>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(key)}
+              >
+                Delete Component
+              </Button>
+            </div>
+          )}
           <TableDataset
             key={[...dataKey, key].join('-')}
             dataKey={[...dataKey, key]}
@@ -125,6 +131,23 @@ export const TableGroupDataset = ({
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
           />
+          {enableRowSelection && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginTop: 8,
+              }}
+            >
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(key)}
+              >
+                Delete Component &quot;{key}&quot;
+              </Button>
+            </div>
+          )}
           <Divider size="small" />
         </div>
       ))}
@@ -162,6 +185,19 @@ export const TableDataset = ({
   useDataColumnOrder,
   ref,
 }) => {
+  const tabulatorRef = useRef();
+  const [selectedCount, setSelectedCount] = useState(0);
+
+  const handleRowSelectionChanged = useCallback(
+    (data, rows) => {
+      setSelectedCount(rows.length);
+      if (onRowSelectionChanged) {
+        onRowSelectionChanged(data, rows);
+      }
+    },
+    [onRowSelectionChanged],
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {name != null && (
@@ -174,13 +210,40 @@ export const TableDataset = ({
         <MissingDataPrompt dataKey={dataKey} />
       ) : (
         <>
+          {enableRowSelection && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div></div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <DuplicateRowButton
+                  data={data}
+                  dataKey={dataKey}
+                  index={indexColumn}
+                  schema={schema}
+                  tabulatorRef={tabulatorRef}
+                  selectedCount={selectedCount}
+                />
+                <DeleteRowButton
+                  dataKey={dataKey}
+                  index={indexColumn}
+                  tabulatorRef={tabulatorRef}
+                  selectedCount={selectedCount}
+                />
+                <AddRowButton
+                  data={data}
+                  dataKey={dataKey}
+                  index={indexColumn}
+                  schema={schema}
+                />
+              </div>
+            </div>
+          )}
           <EntityDetails
             data={data}
             indexColumn={indexColumn}
             commonColumns={commonColumns}
           />
           <EntityDataTable
-            ref={ref}
+            ref={enableRowSelection ? tabulatorRef : ref}
             dataKey={dataKey}
             data={data}
             indexColumn={indexColumn}
@@ -190,7 +253,7 @@ export const TableDataset = ({
             schema={schema}
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
-            onRowSelectionChanged={onRowSelectionChanged}
+            onRowSelectionChanged={handleRowSelectionChanged}
             useDataColumnOrder={useDataColumnOrder}
           />
         </>

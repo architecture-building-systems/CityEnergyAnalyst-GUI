@@ -2,10 +2,7 @@ import { useDatabaseSchema } from 'features/database-editor/stores/databaseEdito
 import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 import { arraysEqual } from 'utils';
-import { DuplicateRowButton } from 'features/database-editor/components/duplicate-row-button';
-import { DeleteRowButton } from 'features/database-editor/components/delete-row-button';
-import { useCallback, useRef, useState, useMemo } from 'react';
-import { AddRowButton } from '../add-row-button';
+import { useRef, useMemo } from 'react';
 
 const CONSTRUCTION_DATABASE = [
   'ARCHETYPES',
@@ -32,7 +29,6 @@ const transformData = (index, data) => {
 export const CodeTableDataset = ({ dataKey, data }) => {
   const schema = useDatabaseSchema(dataKey);
   const tabulatorRef = useRef();
-  const [selectedCount, setSelectedCount] = useState(0);
 
   const key = dataKey.join('-');
   const INDEX_COLUMN = arraysEqual(dataKey, CONSTRUCTION_DATABASE)
@@ -44,40 +40,11 @@ export const CodeTableDataset = ({ dataKey, data }) => {
     return transformed;
   }, [INDEX_COLUMN, data]);
 
-  const handleRowSelectionChanged = useCallback((data, rows) => {
-    setSelectedCount(rows.length);
-  }, []);
-
   if (data === undefined) return <div>No data selected.</div>;
   if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
   return (
     <div className="cea-database-editor-database-dataset-code">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div></div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <DuplicateRowButton
-            data={data}
-            dataKey={dataKey}
-            index={INDEX_COLUMN}
-            schema={schema}
-            tabulatorRef={tabulatorRef}
-            selectedCount={selectedCount}
-          />
-          <DeleteRowButton
-            dataKey={dataKey}
-            index={INDEX_COLUMN}
-            tabulatorRef={tabulatorRef}
-            selectedCount={selectedCount}
-          />
-          <AddRowButton
-            data={data}
-            dataKey={dataKey}
-            index={INDEX_COLUMN}
-            schema={schema}
-          />
-        </div>
-      </div>
       <TableDataset
         ref={tabulatorRef}
         key={key}
@@ -86,7 +53,6 @@ export const CodeTableDataset = ({ dataKey, data }) => {
         indexColumn={INDEX_COLUMN}
         schema={schema}
         enableRowSelection={true}
-        onRowSelectionChanged={handleRowSelectionChanged}
       />
     </div>
   );
