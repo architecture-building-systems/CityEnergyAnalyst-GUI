@@ -103,22 +103,6 @@ export const TableGroupDataset = ({
       />
       {Object.keys(data).map((key) => (
         <div key={key}>
-          {!enableRowSelection && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => handleDelete(key)}
-              >
-                Delete Component
-              </Button>
-            </div>
-          )}
           <TableDataset
             key={[...dataKey, key].join('-')}
             dataKey={[...dataKey, key]}
@@ -131,23 +115,21 @@ export const TableGroupDataset = ({
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
           />
-          {enableRowSelection && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginTop: 8,
-              }}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              marginTop: 8,
+            }}
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(key)}
             >
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => handleDelete(key)}
-              >
-                Delete Component &quot;{key}&quot;
-              </Button>
-            </div>
-          )}
+              Delete &quot;{key}&quot;
+            </Button>
+          </div>
           <Divider size="small" />
         </div>
       ))}
