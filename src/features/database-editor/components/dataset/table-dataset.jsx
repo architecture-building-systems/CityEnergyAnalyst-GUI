@@ -17,9 +17,10 @@ import useDatabaseEditorStore, {
 } from 'features/database-editor/stores/databaseEditorStore';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
-import { Button, Divider, Modal } from 'antd';
+import { Button, Divider, Modal, Form, Input, Select } from 'antd';
 import {
   DeleteOutlined,
+  EditOutlined,
   ExclamationCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
@@ -223,6 +224,8 @@ export const TableDataset = ({
             data={data}
             indexColumn={indexColumn}
             commonColumns={commonColumns}
+            dataKey={dataKey}
+            schema={schema}
           />
           <EntityDataTable
             ref={enableRowSelection ? tabulatorRef : ref}
@@ -244,31 +247,140 @@ export const TableDataset = ({
   );
 };
 
-const EntityDetails = ({ data, indexColumn, commonColumns }) => {
+const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
+  const updateDatabaseData = useUpdateDatabaseData();
+
   // Use first row to determine common columns
   const firstRow = data?.[0];
   if (firstRow == null || !commonColumns?.length) return null;
 
-  return (
-    <div>
-      {commonColumns.map(
-        (column) =>
-          column !== indexColumn && (
-            <div
-              key={column}
-              style={{
-                display: 'flex',
-                fontSize: 12,
+  const editableColumns = commonColumns.filter((col) => col !== indexColumn);
 
-                gap: 12,
-              }}
-            >
-              <b style={{ flex: 1 }}>{column}</b>
-              <span style={{ flex: 12 }}>{firstRow?.[column] ?? '-'}</span>
-            </div>
-          ),
-      )}
-    </div>
+  const handleEdit = () => {
+    // Initialize form with current values
+    const initialValues = {};
+    editableColumns.forEach((col) => {
+      initialValues[col] = firstRow[col];
+    });
+    form.setFieldsValue(initialValues);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    form.submit();
+  };
+
+  const handleFormSubmit = (values) => {
+    // Update all rows with the new common column values
+    data.forEach((row, rowIndex) => {
+      editableColumns.forEach((column) => {
+        const oldValue = row[column];
+        const newValue = values[column];
+        if (oldValue !== newValue) {
+          updateDatabaseData(
+            dataKey,
+            row[indexColumn], // Use the row's index value
+            column,
+            oldValue,
+            newValue,
+          );
+        }
+      });
+    });
+
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ flex: 1 }}>
+            {editableColumns.map((column) => (
+              <div
+                key={column}
+                style={{
+                  display: 'flex',
+                  fontSize: 12,
+                  gap: 12,
+                }}
+              >
+                <b style={{ flex: 1 }}>{column}</b>
+                <span style={{ flex: 12 }}>{firstRow?.[column] ?? '-'}</span>
+              </div>
+            ))}
+          </div>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={handleEdit}
+            style={{ marginLeft: 8 }}
+          >
+            Edit
+          </Button>
+        </div>
+      </div>
+
+      <Modal
+        title="Edit Common Properties"
+        open={isModalOpen}
+        onOk={handleSave}
+        onCancel={handleCancel}
+        okText="Save"
+        cancelText="Cancel"
+      >
+        <Form
+          form={form}
+          onFinish={handleFormSubmit}
+          layout="vertical"
+          requiredMark="optional"
+        >
+          {editableColumns.map((column) => {
+            const colSchema = schema?.columns?.[column];
+            const hasChoices = colSchema?.choice !== undefined;
+
+            if (hasChoices) {
+              const values = colSchema.choice?.values || [];
+              return (
+                <Form.Item
+                  key={column}
+                  label={column}
+                  name={column}
+                  tooltip={colSchema?.description}
+                >
+                  <Select placeholder={`Select ${column}`}>
+                    {values.map((value) => (
+                      <Select.Option key={value} value={value}>
+                        {value}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              );
+            }
+
+            return (
+              <Form.Item
+                key={column}
+                label={column}
+                name={column}
+                tooltip={colSchema?.description}
+              >
+                <Input placeholder={`Enter ${column}`} />
+              </Form.Item>
+            );
+          })}
+        </Form>
+      </Modal>
+    </>
   );
 };
 
