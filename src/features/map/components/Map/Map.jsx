@@ -195,13 +195,13 @@ const useMapLayers = (onHover = () => {}) => {
             return edgeColour;
           } else if (type === 'CONSUMER') {
             return hexToRgb(colours?.nodes?.consumer) ?? [255, 255, 255];
-          } else if (type === 'PLANT') {
+          } else if (type?.startsWith('PLANT')) {
             return hexToRgb(colours?.nodes?.plant) ?? [255, 255, 255];
           }
         };
 
         const nodeLineColor = (type) => {
-          if (type === 'PLANT') {
+          if (type?.startsWith('PLANT')) {
             return [255, 255, 255];
           } else {
             return edgeColour;
@@ -213,7 +213,7 @@ const useMapLayers = (onHover = () => {}) => {
             return 1;
           } else if (type === 'CONSUMER') {
             return 3;
-          } else if (type === 'PLANT') {
+          } else if (type?.startsWith('PLANT')) {
             return 5;
           }
         };
@@ -255,7 +255,7 @@ const useMapLayers = (onHover = () => {}) => {
         ).reduce(
           (acc, feature) => {
             const type = feature.properties['type'];
-            if (type === 'PLANT') {
+            if (type?.startsWith('PLANT')) {
               acc.plantNodes.push(feature);
             } else if (type === 'CONSUMER') {
               acc.consumerNodes.push(feature);
