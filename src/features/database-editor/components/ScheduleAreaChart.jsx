@@ -76,10 +76,9 @@ export const ScheduleAreaChart = ({
           // Optional: Add visual feedback when drag starts
         },
         onDrag: function (e, datasetIndex, index, value) {
-          // Clamp value between 0 and 1
-          const clampedValue = Math.max(0, Math.min(1, value));
-          e.target.chart.data.datasets[datasetIndex].data[index] = clampedValue;
-          return clampedValue;
+          // Clamp value between 0 and 1 and return it
+          // The plugin will handle updating the chart
+          return Math.max(0, Math.min(1, value));
         },
         onDragEnd: function (e, datasetIndex, index, value) {
           // Call the onChange callback when drag ends

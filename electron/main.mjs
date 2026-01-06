@@ -1,12 +1,11 @@
 import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
-import path, { dirname } from 'path';
+import path from 'path';
 
 import {
   isCEAAlive,
   createCEAProcess,
   killCEAProcess,
 } from './cea/process.mjs';
-import { fileURLToPath } from 'url';
 import { getAutoUpdater } from './updater.mjs';
 import {
   checkCEAenv,
@@ -18,9 +17,6 @@ import { CEAError } from './cea/errors.mjs';
 import { initLog, openLog } from './log.mjs';
 import { readConfig, writeConfig } from './config.mjs';
 import { checkInternet } from './utils.mjs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const appVersion = app.getVersion();
 const CEA_HOST = '127.0.0.1';
@@ -89,6 +85,8 @@ const createMainWindow = () => {
         : b,
     );
 
+  const appPath = app.getAppPath();
+
   mainWindow = new BrowserWindow({
     title: 'CEA-4 Desktop',
     show: false,
@@ -97,7 +95,7 @@ const createMainWindow = () => {
     backgroundColor: 'white',
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, './preload.js'),
+      preload: path.join(appPath, 'dist-electron/preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: !app.isPackaged,
@@ -105,7 +103,7 @@ const createMainWindow = () => {
   });
 
   if (app.isPackaged) {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(appPath, 'dist/index.html'));
   } else {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.openDevTools();
@@ -127,6 +125,8 @@ const createMainWindow = () => {
 };
 
 function createSplashWindow(url) {
+  const appPath = app.getAppPath();
+
   splashWindow = new BrowserWindow({
     height: 300,
     width: 500,
@@ -137,7 +137,7 @@ function createSplashWindow(url) {
     backgroundColor: '#2e2c29',
     titleBarStyle: 'hidden',
     webPreferences: {
-      preload: path.join(__dirname, './preload.js'),
+      preload: path.join(appPath, 'dist-electron/preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: !app.isPackaged,
@@ -150,7 +150,7 @@ function createSplashWindow(url) {
 
   if (app.isPackaged) {
     splashWindow.loadURL(
-      `file://${path.join(__dirname, '../dist/index.html#splash')}`,
+      `file://${path.join(appPath, 'dist/index.html#splash')}`,
     );
   } else {
     splashWindow.loadURL('http://localhost:5173/splash');

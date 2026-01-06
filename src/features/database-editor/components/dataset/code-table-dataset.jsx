@@ -2,7 +2,7 @@ import { useDatabaseSchema } from 'features/database-editor/stores/databaseEdito
 import { MissingDataPrompt } from './missing-data-prompt';
 import { TableDataset } from './table-dataset';
 import { arraysEqual } from 'utils';
-import { AddRowButton } from 'features/database-editor/components/add-row-button';
+import { useRef, useMemo } from 'react';
 
 const CONSTRUCTION_DATABASE = [
   'ARCHETYPES',
@@ -28,39 +28,31 @@ const transformData = (index, data) => {
 
 export const CodeTableDataset = ({ dataKey, data }) => {
   const schema = useDatabaseSchema(dataKey);
-  if (data === undefined) return <div>No data selected.</div>;
-  if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
+  const tabulatorRef = useRef();
 
   const key = dataKey.join('-');
   const INDEX_COLUMN = arraysEqual(dataKey, CONSTRUCTION_DATABASE)
     ? 'const_type'
     : 'code';
-  const _data = transformData(INDEX_COLUMN, data);
 
-  const handleAddRow = (newRow) => {
-    // Add a new row to the data
-    if (data == null) return;
-    console.log('New Data:', newRow);
-  };
+  const _data = useMemo(() => {
+    const transformed = data ? transformData(INDEX_COLUMN, data) : data;
+    return transformed;
+  }, [INDEX_COLUMN, data]);
+
+  if (data === undefined) return <div>No data selected.</div>;
+  if (data === null) return <MissingDataPrompt dataKey={dataKey} />;
 
   return (
     <div className="cea-database-editor-database-dataset-code">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div></div>
-        {/* <AddRowButton
-          key={key}
-          dataKey={dataKey}
-          index={INDEX_COLUMN}
-          schema={schema}
-          onAddRow={handleAddRow}
-        /> */}
-      </div>
       <TableDataset
+        ref={tabulatorRef}
         key={key}
         dataKey={dataKey}
         data={_data}
         indexColumn={INDEX_COLUMN}
         schema={schema}
+        enableRowSelection={true}
       />
     </div>
   );

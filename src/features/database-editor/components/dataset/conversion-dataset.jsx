@@ -18,6 +18,7 @@ export const ConversionDataset = ({ dataKey, data }) => {
       indexColumn={INDEX_COLUMN}
       commonColumns={COMMON_COLUMNS}
       showColumnSchema={false}
+      enableRowSelection={true}
     />
   );
 };

@@ -423,15 +423,14 @@ const Parameter = ({ parameter, form, toolName }) => {
     }
     case 'DatabasePathParameter': {
       const { choices } = parameter;
-      const { Option } = Select;
-      const Options = Object.keys(choices).map((choice) => (
-        <Option key={choice} value={choices[choice]}>
-          {choice}
-        </Option>
-      ));
+      const options = Object.keys(choices).map((choice) => ({
+        label: choice,
+        value: choices[choice],
+      }));
       return (
         <FormField name={name} help={help} initialValue={value}>
           <Select
+            options={options}
             popupRender={(menu) => (
               <div>
                 {menu}
@@ -447,9 +446,7 @@ const Parameter = ({ parameter, form, toolName }) => {
                 </OpenDialogButton>
               </div>
             )}
-          >
-            {Options}
-          </Select>
+          />
         </FormField>
       );
     }
