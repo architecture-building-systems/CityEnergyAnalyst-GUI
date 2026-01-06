@@ -1,5 +1,5 @@
 import { Button, Form, Input, Modal, Tooltip, Select } from 'antd';
-import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useMemo, useCallback } from 'react';
 import {
   useGetDatabaseColumnChoices,
@@ -7,101 +7,115 @@ import {
 } from 'features/database-editor/stores/databaseEditorStore';
 
 /**
- * Hook to create an empty row with a unique index
+ * Hook to handle duplicating rows by copying selected or last row's values
+ * and appending "_COPY" to the index value
  */
-const useAddEmptyRow = (data, dataKey, index, schema) => {
+const useDuplicateRows = (data, dataKey, index, tabulatorRef) => {
   const addDatabaseRow = useAddDatabaseRow();
 
   return useCallback(() => {
-    if (!index) {
-      return null;
+    if (!data || !index) return [];
+
+    let rowsToDuplicate = [];
+
+    // Get selected rows from the table if available
+    if (tabulatorRef?.current) {
+      const selectedRows = tabulatorRef.current.getSelectedRows();
+      if (selectedRows.length > 0) {
+        rowsToDuplicate = selectedRows.map((row) => row.getData());
+      }
     }
 
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      return null;
+    // Fall back to last row if no rows are selected
+    if (rowsToDuplicate.length === 0) {
+      let lastRow;
+      let lastIndex;
+
+      if (Array.isArray(data)) {
+        if (data.length === 0) return [];
+        lastRow = data[data.length - 1];
+        lastIndex = lastRow?.[index];
+      } else if (typeof data === 'object') {
+        const keys = Object.keys(data);
+        if (keys.length === 0) return [];
+        lastIndex = keys[keys.length - 1];
+        lastRow = { [index]: lastIndex, ...data[lastIndex] };
+      } else {
+        return [];
+      }
+
+      if (!lastRow) return [];
+      rowsToDuplicate = [lastRow];
     }
 
-    // Get existing indices to ensure uniqueness
+    // Get existing indices
     const existingIndices = Array.isArray(data)
       ? data.map((row) => row?.[index])
-      : Object.keys(data || {});
+      : Object.keys(data);
 
-    // Generate a unique index name
-    let newIndex = 'NEW_ROW';
-    let counter = 1;
-    while (existingIndices.includes(newIndex)) {
-      newIndex = `NEW_ROW_${counter}`;
-      counter++;
-    }
+    const newRows = [];
 
-    // Create empty row with all required fields
-    const newRow = { [index]: newIndex };
+    // Duplicate each row
+    rowsToDuplicate.forEach((rowToDuplicate) => {
+      const originalIndex = rowToDuplicate[index];
+      const newRow = { ...rowToDuplicate };
 
-    // Get columns from schema if available, otherwise infer from existing data
-    let columns = [];
-    if (schema?.columns) {
-      columns = Object.keys(schema.columns);
-    } else {
-      // Infer columns from first row of existing data
-      const firstRow = Array.isArray(data) ? data[0] : Object.values(data)[0];
-      if (firstRow && typeof firstRow === 'object') {
-        columns = Object.keys(firstRow);
+      // Generate a unique index with "_COPY" suffix
+      let newIndex = `${originalIndex}_COPY`;
+      let counter = 1;
+
+      // Ensure the new index is unique
+      const allIndices = [...existingIndices, ...newRows.map((r) => r[index])];
+      while (allIndices.includes(newIndex)) {
+        newIndex = `${originalIndex}_COPY${counter}`;
+        counter++;
       }
-    }
 
-    // Initialize all other columns with default values
-    columns.forEach((col) => {
-      if (col !== index) {
-        if (schema?.columns?.[col]) {
-          const colSchema = schema.columns[col];
-          const type = colSchema?.type;
+      newRow[index] = newIndex;
 
-          // Set default values based on type
-          if (type === 'float' || type === 'int') {
-            newRow[col] = 0;
-          } else if (colSchema?.choice) {
-            // Use first available choice or empty string
-            const values = colSchema.choice?.values || [];
-            newRow[col] = values.length > 0 ? values[0] : '';
-          } else {
-            newRow[col] = '';
-          }
-        } else {
-          // No schema - infer type from existing data
-          const firstRow = Array.isArray(data) ? data[0] : Object.values(data)[0];
-          const sampleValue = firstRow?.[col];
-
-          if (typeof sampleValue === 'number') {
-            newRow[col] = 0;
-          } else {
-            newRow[col] = '';
-          }
-        }
-      }
+      // Add the new row to the database with 'duplicate' action
+      addDatabaseRow(dataKey, index, newRow, 'duplicate');
+      newRows.push(newRow);
     });
 
-    addDatabaseRow(dataKey, index, newRow);
-
-    return newRow;
-  }, [data, dataKey, index, schema, addDatabaseRow]);
+    return newRows;
+  }, [data, dataKey, index, addDatabaseRow, tabulatorRef]);
 };
 
-export const AddRowButton = ({ data, dataKey, index, schema, onAddRow }) => {
-  const addEmptyRow = useAddEmptyRow(data, dataKey, index, schema);
+export const DuplicateRowButton = ({
+  data,
+  dataKey,
+  index,
+  tabulatorRef,
+  onDuplicateRow,
+  selectedCount = 0,
+}) => {
+  const duplicateRows = useDuplicateRows(data, dataKey, index, tabulatorRef);
 
   const handleClick = () => {
-    const newRow = addEmptyRow();
-    if (newRow && onAddRow) {
-      onAddRow(newRow);
+    const newRows = duplicateRows();
+    if (newRows.length > 0 && onDuplicateRow) {
+      onDuplicateRow(newRows);
     }
   };
 
+  // Don't show button if no rows are selected
+  if (!selectedCount || selectedCount === 0) {
+    return null;
+  }
+
+  // Show count in button text when multiple rows are selected
+  const buttonText =
+    selectedCount > 1 ? `Duplicate Row (${selectedCount})` : 'Duplicate Row';
+
   return (
-    <Button icon={<PlusOutlined />} onClick={handleClick}>
-      Add Row
+    <Button icon={<CopyOutlined />} onClick={handleClick}>
+      {buttonText}
     </Button>
   );
 };
+
+const MAX_ROWS_PER_COLUMN = 20;
 
 // eslint-disable-next-line no-unused-vars
 const AddRowModalForm = ({
@@ -116,10 +130,7 @@ const AddRowModalForm = ({
   const getColumnChoices = useGetDatabaseColumnChoices();
   const addDatabaseRow = useAddDatabaseRow();
 
-  const MAX_ROWS_PER_COLUMN = 20;
-
   // Split fields into columns with max 8 rows each
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fieldColumns = useMemo(() => {
     if (!schema?.columns) return [];
     const columns = Object.keys(schema.columns);
@@ -129,7 +140,7 @@ const AddRowModalForm = ({
       result.push(allFields.slice(i, i + MAX_ROWS_PER_COLUMN));
     }
     return result;
-  }, [index, schema?.columns]);
+  }, [index, schema.columns]);
   const numColumns = fieldColumns.length;
 
   const onOk = () => {
