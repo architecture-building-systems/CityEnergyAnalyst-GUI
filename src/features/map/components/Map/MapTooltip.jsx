@@ -220,28 +220,207 @@ const MapTooltip = ({ info }) => {
     ) {
       if (properties?.type === 'NONE') return null;
 
-      // Determine title based on node type
-      const nodeTitle =
-        properties?.type === 'PLANT'
-          ? 'Plant Node'
-          : properties?.type === 'CONSUMER'
-            ? 'Building Node'
-            : 'Network Node';
+      // Determine node type (handles PLANT, PLANT_hs_ww, PLANT_cs, etc.)
+      const isPlantNode = properties?.type?.startsWith?.('PLANT');
+      const isConsumerNode = properties?.type === 'CONSUMER';
+
+      const nodeTitle = isPlantNode
+        ? 'Plant Node'
+        : isConsumerNode
+          ? 'Building Node'
+          : 'Network Node';
+
+      // Format number with decimals
+      const fmt = (val, decimals = 1) => {
+        if (val == null || val === 'null') return null;
+        return typeof val === 'number'
+          ? val.toLocaleString(undefined, {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals,
+            })
+          : null;
+      };
 
       return (
         <div className="tooltip-content">
           <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>{nodeTitle}</b>
+
+          {/* Basic Info */}
           <div className="tooltip-grid">
             <div>ID</div>
             <b style={{ marginLeft: 'auto' }}>{object?.id}</b>
           </div>
 
-          <div className="tooltip-grid">
-            <div>Building</div>
-            <b style={{ marginLeft: 'auto' }}>{properties?.building}</b>
-            <div>Type</div>
-            <b style={{ marginLeft: 'auto' }}>{properties?.type}</b>
-          </div>
+          {isConsumerNode && properties?.building && (
+            <div className="tooltip-grid">
+              <div>Building</div>
+              <b style={{ marginLeft: 'auto' }}>{properties.building}</b>
+            </div>
+          )}
+
+          {/* Building Node Metrics */}
+          {isConsumerNode && (
+            <>
+              {(properties?.annual_energy_MWh != null ||
+                properties?.annual_booster_MWh != null) && (
+                <div>
+                  <div className="tooltip-section-title">Annual Energy</div>
+                  {properties?.annual_energy_MWh != null && (
+                    <div className="tooltip-grid">
+                      <div>Network Energy</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.annual_energy_MWh)} MWh
+                      </b>
+                    </div>
+                  )}
+                  {properties?.annual_booster_MWh != null && (
+                    <div className="tooltip-grid">
+                      <div>Booster Energy</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.annual_booster_MWh)} MWh
+                      </b>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {properties?.peak_load_kW != null && (
+                <div className="tooltip-grid">
+                  <div>Peak Load</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {fmt(properties.peak_load_kW)} kW
+                  </b>
+                </div>
+              )}
+
+              {(properties?.avg_supply_temp_C != null ||
+                properties?.avg_return_temp_C != null) && (
+                <div>
+                  <div className="tooltip-section-title">Temperatures</div>
+                  {properties?.avg_supply_temp_C != null && (
+                    <div className="tooltip-grid">
+                      <div>Avg Supply</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.avg_supply_temp_C)}°C
+                      </b>
+                    </div>
+                  )}
+                  {properties?.avg_return_temp_C != null && (
+                    <div className="tooltip-grid">
+                      <div>Avg Return</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.avg_return_temp_C)}°C
+                      </b>
+                    </div>
+                  )}
+                  {properties?.avg_delta_t_C != null && (
+                    <div className="tooltip-grid">
+                      <div>Avg ΔT</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.avg_delta_t_C)}°C
+                      </b>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {properties?.hex_area_m2 != null && (
+                <div className="tooltip-grid">
+                  <div>HEX Area</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {fmt(properties.hex_area_m2)} m<sup>2</sup>
+                  </b>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Plant Node Metrics */}
+          {isPlantNode && (
+            <>
+              <div className="tooltip-grid">
+                <div>Type</div>
+                <b style={{ marginLeft: 'auto' }}>{properties.type}</b>
+              </div>
+
+              {properties?.annual_output_MWh != null && (
+                <div className="tooltip-grid">
+                  <div>Annual Output</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {fmt(properties.annual_output_MWh)} MWh
+                  </b>
+                </div>
+              )}
+
+              {properties?.peak_load_kW != null && (
+                <div className="tooltip-grid">
+                  <div>Peak Load</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {fmt(properties.peak_load_kW)} kW
+                  </b>
+                </div>
+              )}
+
+              {properties?.capacity_factor_pct != null && (
+                <div className="tooltip-grid">
+                  <div>Capacity Factor</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {fmt(properties.capacity_factor_pct)}%
+                  </b>
+                </div>
+              )}
+
+              {(properties?.operating_hours != null ||
+                properties?.operating_hours_pct != null) && (
+                <div className="tooltip-grid">
+                  <div>Operating Hours</div>
+                  <b style={{ marginLeft: 'auto' }}>
+                    {properties?.operating_hours != null
+                      ? `${fmt(properties.operating_hours, 0)} hrs`
+                      : ''}
+                    {properties?.operating_hours_pct != null
+                      ? ` (${fmt(properties.operating_hours_pct)}%)`
+                      : ''}
+                  </b>
+                </div>
+              )}
+
+              {(properties?.avg_supply_temp_C != null ||
+                properties?.avg_return_temp_C != null) && (
+                <div>
+                  <div className="tooltip-section-title">Temperatures</div>
+                  {properties?.avg_supply_temp_C != null && (
+                    <div className="tooltip-grid">
+                      <div>Avg Supply</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.avg_supply_temp_C)}°C
+                      </b>
+                    </div>
+                  )}
+                  {properties?.avg_return_temp_C != null && (
+                    <div className="tooltip-grid">
+                      <div>Avg Return</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {fmt(properties.avg_return_temp_C)}°C
+                      </b>
+                    </div>
+                  )}
+                  {(properties?.min_supply_temp_C != null ||
+                    properties?.max_supply_temp_C != null) && (
+                    <div className="tooltip-grid">
+                      <div>Supply Range</div>
+                      <b style={{ marginLeft: 'auto' }}>
+                        {properties?.min_supply_temp_C != null &&
+                        properties?.max_supply_temp_C != null
+                          ? `${fmt(properties.min_supply_temp_C)} - ${fmt(properties.max_supply_temp_C)}°C`
+                          : ''}
+                      </b>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       );
     }

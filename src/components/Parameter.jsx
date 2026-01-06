@@ -75,7 +75,7 @@ const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
 };
 
 const Parameter = ({ parameter, form, toolName }) => {
-  const { name, type, value, choices, nullable, help, needs_validation } =
+  const { name, type, value, choices, nullable, help, needs_validation, multiselect } =
     parameter;
   const { setFieldsValue } = form;
 
@@ -213,13 +213,90 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'NetworkLayoutChoiceParameter':
+    case 'DistrictSupplyTypeParameter':
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
     case 'SingleBuildingParameter':
     case 'GenerationParameter':
     case 'SystemParameter':
-    case 'ColumnChoiceParameter': {
+    case 'ColumnChoiceParameter':
+    case 'SolarPanelChoiceParameter': {
+      // Check if this should be rendered as multi-select
+      if (multiselect) {
+        // Delegate to multi-select rendering (same as MultiChoiceParameter)
+        const options = choices.map((choice) => ({
+          label: choice,
+          value: choice,
+        }));
+
+        const selectAll = (e) => {
+          e.preventDefault();
+          setFieldsValue({
+            [name]: choices,
+          });
+        };
+
+        const unselectAll = (e) => {
+          e.preventDefault();
+          setFieldsValue({
+            [name]: [],
+          });
+        };
+
+        return (
+          <FormField
+            name={name}
+            help={help}
+            rules={[
+              {
+                validator: (_, value) => {
+                  const invalidChoices = value.filter(
+                    (choice) => !choices.includes(choice),
+                  );
+                  if (invalidChoices.length) {
+                    return Promise.reject(
+                      `${invalidChoices.join(', ')} ${
+                        invalidChoices.length > 1
+                          ? 'are not valid choices'
+                          : 'is not a valid choice'
+                      }`,
+                    );
+                  } else {
+                    return Promise.resolve();
+                  }
+                },
+              },
+            ]}
+            initialValue={value}
+          >
+            <Select
+              options={options}
+              mode="multiple"
+              tokenSeparators={[',']}
+              style={{ width: '100%' }}
+              placeholder="Nothing Selected"
+              maxTagCount={10}
+              popupRender={(menu) => (
+                <div>
+                  <div style={{ padding: '8px', textAlign: 'center' }}>
+                    <Button onMouseDown={selectAll} style={{ width: '45%' }}>
+                      Select All
+                    </Button>
+                    <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
+                      Unselect All
+                    </Button>
+                  </div>
+                  <Divider style={{ margin: '4px 0' }} />
+                  {menu}
+                </div>
+              )}
+            />
+          </FormField>
+        );
+      }
+
+      // Single-select rendering (original logic)
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
@@ -227,6 +304,11 @@ const Parameter = ({ parameter, form, toolName }) => {
 
       const optionsValidator = (_, value) => {
         if (choices.length < 1) {
+          // Empty choices is valid for nullable parameters (e.g., DistrictSupplyTypeParameter with no district assemblies)
+          if (nullable) {
+            return Promise.resolve();
+          }
+
           if (type === 'GenerationParameter')
             return Promise.reject(
               'No generations found. Run optimization first.',
@@ -262,6 +344,7 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'MultiChoiceParameter':
+    case 'MultiChoiceFeedstockParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
