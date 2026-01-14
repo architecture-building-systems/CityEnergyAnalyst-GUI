@@ -28,3 +28,7 @@
 .cea-scenario-select.ant-select .ant-select-placeholder {
   color: #fff !important;
 }
+
+.cea-scenario-select-empty.ant-select .ant-select-suffix {
+  display: none;
+}

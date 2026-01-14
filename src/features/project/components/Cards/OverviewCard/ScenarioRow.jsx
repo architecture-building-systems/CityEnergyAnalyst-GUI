@@ -159,7 +159,7 @@ const ScenarioSelect = ({ project, scenarioName, scenarioList }) => {
   return (
     <>
       <Select
-        className="cea-scenario-select"
+        className={`cea-scenario-select ${!hasScenarios ? 'cea-scenario-select-empty' : ''}`}
         style={{ width: '100%' }}
         styles={{ popup: { root: { width: 270 } } }}
         placeholder={hasScenarios ? 'Select Scenario' : 'Create Scenario'}
