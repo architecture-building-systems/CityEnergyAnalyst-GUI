@@ -157,6 +157,7 @@ const ScenarioSelect = ({ project, scenarioName, scenarioList }) => {
   return (
     <>
       <Select
+        className="cea-scenario-select"
         style={{ width: '100%' }}
         styles={{ popup: { root: { width: 270 } } }}
         placeholder="Select a scenario"
