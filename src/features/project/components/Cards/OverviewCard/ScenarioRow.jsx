@@ -154,19 +154,21 @@ const ScenarioSelect = ({ project, scenarioName, scenarioList }) => {
       : [];
   }, [sortedScenarios, scenarioName]);
 
+  const hasScenarios = scenarioList.length > 0;
+
   return (
     <>
       <Select
         className="cea-scenario-select"
         style={{ width: '100%' }}
         styles={{ popup: { root: { width: 270 } } }}
-        placeholder="Select a scenario"
-        options={options}
+        placeholder={hasScenarios ? 'Select Scenario' : 'Create Scenario'}
+        options={hasScenarios ? options : []}
         value={scenarioName}
         onChange={handleChange}
         loading={loading}
-        open={open}
-        onOpenChange={setOpen}
+        open={hasScenarios ? open : false}
+        onOpenChange={hasScenarios ? setOpen : undefined}
         notFoundContent={<small>No other scenarios</small>}
       />
       <DeleteScenarioModal
