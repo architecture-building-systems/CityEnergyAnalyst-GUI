@@ -46,6 +46,7 @@
   }
 }
 
+.cea-scenario-select-empty.ant-select,
 .cea-card-icon-button-container.active {
   outline: 1px solid #48abe0;
   animation: glow 2s infinite;
