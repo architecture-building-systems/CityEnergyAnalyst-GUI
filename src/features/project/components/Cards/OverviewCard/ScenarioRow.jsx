@@ -52,7 +52,7 @@ const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
             scenarioList={scenarioList}
           />
         )}
-        <NewScenarioIcon disabled={!isValidUser} />
+        {!!scenarioList?.length && <NewScenarioIcon disabled={!isValidUser} />}
         {isValidUser && !isElectron() && <UploadDownloadScenarioIcon />}
       </div>
     </div>
@@ -98,8 +98,24 @@ const ScenarioSelect = ({ project, scenarioName, scenarioList }) => {
   const [deleteScenarioVisible, setDeleteScenarioVisible] = useState(false);
 
   const changes = useChangesExist();
+  const { push } = useNavigationStore();
+  const { limit, count } = useScenarioLimits();
 
   const openScenario = useOpenScenario(routes.PROJECT);
+
+  const handleEmptyClick = () => {
+    if (limit && count <= 0) {
+      message.config({ top: 60 });
+      message.warning(
+        <div style={{ padding: 8 }}>
+          You have reached the maximum number of scenarios ({limit}). Please
+          delete a scenario before creating a new one.
+        </div>,
+      );
+      return;
+    }
+    push(routes.CREATE_SCENARIO);
+  };
 
   const sortedScenarios = useMemo(() => {
     return [...scenarioList].sort((a, b) => {
@@ -169,6 +185,7 @@ const ScenarioSelect = ({ project, scenarioName, scenarioList }) => {
         loading={loading}
         open={hasScenarios ? open : false}
         onOpenChange={hasScenarios ? setOpen : undefined}
+        onClick={!hasScenarios ? handleEmptyClick : undefined}
         notFoundContent={<small>No other scenarios</small>}
       />
       <DeleteScenarioModal
