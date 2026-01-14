@@ -133,27 +133,26 @@ const ScenarioSelect = ({ project, scenarioName, scenarioList }) => {
   };
 
   const options = useMemo(() => {
-    return sortedScenarios.length > 1
+    const filteredScenarios = sortedScenarios.filter(
+      (scenario) => scenario !== scenarioName,
+    );
+    return filteredScenarios.length > 0
       ? [
           {
             label: 'Scenarios',
-            options: sortedScenarios
-              .filter((scenario) => scenario !== scenarioName)
-              .map((scenario) => ({
-                label: (
-                  <ScenarioOption
-                    scenarioName={scenario}
-                    onDelete={handleDeleteScenario}
-                  />
-                ),
-                value: scenario,
-              })),
+            options: filteredScenarios.map((scenario) => ({
+              label: (
+                <ScenarioOption
+                  scenarioName={scenario}
+                  onDelete={handleDeleteScenario}
+                />
+              ),
+              value: scenario,
+            })),
           },
         ]
       : [];
   }, [sortedScenarios, scenarioName]);
-
-  if (scenarioName == null) return null;
 
   return (
     <>
