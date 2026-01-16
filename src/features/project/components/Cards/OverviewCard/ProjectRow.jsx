@@ -206,7 +206,16 @@ const ProjectOption = ({ projectName, onDelete }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <span>{projectName}</span>
+      <div
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {projectName}
+      </div>
       {isHovered && (
         <BinAnimationIcon
           style={{ padding: '2px 8px' }}
