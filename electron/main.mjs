@@ -72,6 +72,16 @@ if (!gotTheLock) {
   });
 }
 
+const getPreloadPath = () => {
+  const appPath = app.getAppPath();
+  if (app.isPackaged) {
+    return path.join(appPath, 'dist-electron/preload.js');
+  } else {
+    // In dev mode, use the source preload.js directly
+    return path.join(appPath, 'electron/preload.js');
+  }
+};
+
 const createMainWindow = () => {
   const displays = screen.getAllDisplays();
   // Find the primary display or the one with the highest resolution
@@ -85,8 +95,6 @@ const createMainWindow = () => {
         : b,
     );
 
-  const appPath = app.getAppPath();
-
   mainWindow = new BrowserWindow({
     title: 'CEA-4 Desktop',
     show: false,
@@ -95,7 +103,7 @@ const createMainWindow = () => {
     backgroundColor: 'white',
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(appPath, 'dist-electron/preload.js'),
+      preload: getPreloadPath(),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: !app.isPackaged,
@@ -103,7 +111,7 @@ const createMainWindow = () => {
   });
 
   if (app.isPackaged) {
-    mainWindow.loadFile(path.join(appPath, 'dist/index.html'));
+    mainWindow.loadFile(path.join(app.getAppPath(), 'dist/index.html'));
   } else {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.openDevTools();
@@ -125,8 +133,6 @@ const createMainWindow = () => {
 };
 
 function createSplashWindow(url) {
-  const appPath = app.getAppPath();
-
   splashWindow = new BrowserWindow({
     height: 300,
     width: 500,
@@ -137,7 +143,7 @@ function createSplashWindow(url) {
     backgroundColor: '#2e2c29',
     titleBarStyle: 'hidden',
     webPreferences: {
-      preload: path.join(appPath, 'dist-electron/preload.js'),
+      preload: getPreloadPath(),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: !app.isPackaged,
@@ -150,7 +156,7 @@ function createSplashWindow(url) {
 
   if (app.isPackaged) {
     splashWindow.loadURL(
-      `file://${path.join(appPath, 'dist/index.html#splash')}`,
+      `file://${path.join(app.getAppPath(), 'dist/index.html#splash')}`,
     );
   } else {
     splashWindow.loadURL('http://localhost:5173/splash');
