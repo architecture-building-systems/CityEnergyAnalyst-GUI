@@ -84,7 +84,9 @@ const ScenarioOption = ({ scenarioName, onDelete }) => {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          flexGrow: 1,
         }}
+        title={scenarioName}
       >
         {scenarioName}
       </div>

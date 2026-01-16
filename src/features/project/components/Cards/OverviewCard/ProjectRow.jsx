@@ -212,7 +212,9 @@ const ProjectOption = ({ projectName, onDelete }) => {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          flexGrow: 1,
         }}
+        title={projectName}
       >
         {projectName}
       </div>
