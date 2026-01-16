@@ -164,10 +164,14 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'InputFileParameter': {
+      const extensions = (parameter?.extensions || []).map((ext) =>
+        !isElectron() && ext === 'shp' ? 'zip' : ext,
+      );
+
       const filters = [
         {
           name,
-          extensions: parameter?.extensions || [],
+          extensions,
         },
       ];
 
