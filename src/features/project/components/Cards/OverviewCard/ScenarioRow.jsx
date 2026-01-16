@@ -78,7 +78,18 @@ const ScenarioOption = ({ scenarioName, onDelete }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <span>{scenarioName}</span>
+      <div
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flexGrow: 1,
+        }}
+        title={scenarioName}
+      >
+        {scenarioName}
+      </div>
       {!changes && isHovered && (
         <BinAnimationIcon
           style={{ padding: '2px 8px' }}

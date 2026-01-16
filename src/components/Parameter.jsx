@@ -22,6 +22,12 @@ import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
 
+const ELECTRON_ONLY = [
+  'multiprocessing',
+  'number-of-cpus-to-keep-free',
+  'debug',
+];
+
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
   return (
@@ -86,6 +92,8 @@ const Parameter = ({ parameter, form, toolName }) => {
     form,
   });
 
+  if (!isElectron() && ELECTRON_ONLY.includes(name)) return null;
+
   switch (type) {
     case 'IntegerParameter':
     case 'RealParameter': {
@@ -129,6 +137,8 @@ const Parameter = ({ parameter, form, toolName }) => {
               },
             ];
 
+      if (!isElectron()) return null;
+
       return (
         <FormField
           name={name}
@@ -154,10 +164,14 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'InputFileParameter': {
+      const extensions = (parameter?.extensions || []).map((ext) =>
+        !isElectron() && ext === 'shp' ? 'zip' : ext,
+      );
+
       const filters = [
         {
           name,
-          extensions: parameter?.extensions || [],
+          extensions,
         },
       ];
 
@@ -572,8 +586,6 @@ const convertFiltersToExtensions = (filters) => {
 export const OpenDialogInput = forwardRef(
   ({ form, name, type, onChange, filters = [], value, ...rest }, ref) => {
     const _value = value instanceof File ? value.name : value;
-
-    if (!isElectron()) return <i>Not supported in browser</i>;
 
     return (
       <Space.Compact block style={{ paddingBottom: 3 }}>
