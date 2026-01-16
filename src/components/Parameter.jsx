@@ -146,7 +146,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           rules={[
             {
               validator: async (_, value) => {
-                if (value == '' && nullable) return Promise.resolve();
+                if (!value && nullable) return Promise.resolve();
 
                 try {
                   await checkExist(value, contentType);
