@@ -233,7 +233,8 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'SingleBuildingParameter':
     case 'GenerationParameter':
     case 'SystemParameter':
-    case 'ColumnChoiceParameter': {
+    case 'ColumnChoiceParameter':
+    case 'SolarPanelChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
@@ -245,7 +246,10 @@ const Parameter = ({ parameter, form, toolName }) => {
             return Promise.reject(
               'No generations found. Run optimization first.',
             );
-          else
+
+          if (nullable) {
+            return Promise.resolve();
+          } else
             return Promise.reject('There are no valid choices for this input');
         } else if (!nullable) {
           if (!value) return Promise.reject('Select a choice');
@@ -276,9 +280,11 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'MultiChoiceParameter':
+    case 'MultiChoiceFeedstockParameter':
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
+    case 'DistrictSupplyTypeParameter':
     case 'ScenarioNameMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
