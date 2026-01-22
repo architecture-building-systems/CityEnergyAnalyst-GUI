@@ -285,7 +285,8 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
     case 'DistrictSupplyTypeParameter':
-    case 'ScenarioNameMultiChoiceParameter': {
+    case 'ScenarioNameMultiChoiceParameter':
+    case 'NetworkLayoutMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
