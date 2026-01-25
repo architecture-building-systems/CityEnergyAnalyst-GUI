@@ -234,6 +234,7 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'GenerationParameter':
     case 'SystemParameter':
     case 'ColumnChoiceParameter':
+    case 'SubfolderChoiceParameter':
     case 'SolarPanelChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
