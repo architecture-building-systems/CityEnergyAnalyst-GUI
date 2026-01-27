@@ -99,8 +99,8 @@ const ChoiceSelector = ({
   }, [choices]);
 
   const options = choices?.choices?.map((choice) => ({
-    value: choice,
-    label: choice,
+    value: choice?.value ?? choice,
+    label: choice?.label ?? choice,
   }));
 
   if (!choices || !choices.choices) return null;
