@@ -53,6 +53,7 @@ export const CodeTableDataset = ({ dataKey, data }) => {
         indexColumn={INDEX_COLUMN}
         schema={schema}
         enableRowSelection={true}
+        allowIndexEditing={true}
       />
     </div>
   );

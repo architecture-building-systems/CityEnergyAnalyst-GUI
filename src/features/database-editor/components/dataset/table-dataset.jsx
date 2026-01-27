@@ -166,6 +166,7 @@ export const TableDataset = ({
   enableRowSelection,
   onRowSelectionChanged,
   useDataColumnOrder,
+  allowIndexEditing = false,
   ref,
 }) => {
   const tabulatorRef = useRef();
@@ -226,6 +227,7 @@ export const TableDataset = ({
             commonColumns={commonColumns}
             dataKey={dataKey}
             schema={schema}
+            allowIndexEditing={allowIndexEditing}
           />
           <EntityDataTable
             ref={enableRowSelection ? tabulatorRef : ref}
@@ -240,6 +242,7 @@ export const TableDataset = ({
             enableRowSelection={enableRowSelection}
             onRowSelectionChanged={handleRowSelectionChanged}
             useDataColumnOrder={useDataColumnOrder}
+            allowIndexEditing={allowIndexEditing}
           />
         </>
       )}
@@ -247,7 +250,14 @@ export const TableDataset = ({
   );
 };
 
-const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) => {
+const EntityDetails = ({
+  data,
+  indexColumn,
+  commonColumns,
+  dataKey,
+  schema,
+  allowIndexEditing = false,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const updateDatabaseData = useUpdateDatabaseData();
@@ -256,7 +266,9 @@ const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) =>
   const firstRow = data?.[0];
   if (firstRow == null || !commonColumns?.length) return null;
 
-  const editableColumns = commonColumns.filter((col) => col !== indexColumn);
+  const editableColumns = allowIndexEditing
+    ? commonColumns
+    : commonColumns.filter((col) => col !== indexColumn);
 
   const handleEdit = () => {
     // Initialize form with current values
@@ -274,7 +286,7 @@ const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) =>
 
   const handleFormSubmit = (values) => {
     // Update all rows with the new common column values
-    data.forEach((row, rowIndex) => {
+    data.forEach((row) => {
       editableColumns.forEach((column) => {
         const oldValue = row[column];
         const newValue = values[column];
@@ -302,7 +314,13 @@ const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) =>
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <div style={{ flex: 1 }}>
             {editableColumns.map((column) => (
               <div
@@ -396,6 +414,7 @@ const EntityDataTable = ({
   enableRowSelection = false,
   onRowSelectionChanged,
   useDataColumnOrder = true,
+  allowIndexEditing = false,
   ref,
 }) => {
   const divRef = useRef();
@@ -477,9 +496,30 @@ const EntityDataTable = ({
         colDef.hozAlign = 'left';
       }
 
-      // FIXME: Prevent edits for index column until we can implement better validation of foreign key references
+      // Prevent edits for index column unless allowIndexEditing is true
+      // When editing is allowed, cascade updates to foreign key references are handled by the store
       if (column == indexColumn) {
-        return colDef;
+        if (!allowIndexEditing) {
+          return colDef;
+        }
+        // Add input editor for index column with uniqueness validation
+        return {
+          ...colDef,
+          editor: 'input',
+          validator: (cell, value) => {
+            if (!value || value.trim() === '') {
+              return false;
+            }
+            // Check uniqueness - the value must not exist in other rows
+            const currentData = cell.getTable().getData();
+            const currentRowIndex = cell.getRow().getPosition();
+            const isDuplicate = currentData.some(
+              (row, idx) =>
+                idx !== currentRowIndex && row[indexColumn] === value,
+            );
+            return !isDuplicate;
+          },
+        };
       }
 
       // Handle columns with choices
@@ -541,6 +581,7 @@ const EntityDataTable = ({
     showIndex,
     enableRowSelection,
     getColumnChoices,
+    allowIndexEditing,
   ]);
 
   useEffect(() => {
@@ -567,6 +608,7 @@ const EntityDataTable = ({
             value,
             undefined,
             position,
+            field === indexColumn, // isIndexColumnUpdate
           );
         },
       };
