@@ -19,8 +19,12 @@ const useDeleteRows = (dataKey, index, tabulatorRef) => {
 
     // Check if this is a nested structure (USE types or CONVERSION components)
     const isNestedStructure =
-      (dataKey.length >= 3 && dataKey[0] === 'ARCHETYPES' && dataKey[1] === 'USE') ||
-      (dataKey.length >= 4 && dataKey[0] === 'COMPONENTS' && dataKey[1] === 'CONVERSION');
+      (dataKey.length >= 3 &&
+        dataKey[0] === 'ARCHETYPES' &&
+        dataKey[1] === 'USE') ||
+      (dataKey.length >= 4 &&
+        dataKey[0] === 'COMPONENTS' &&
+        dataKey[1] === 'CONVERSION');
 
     // For nested structures, use row positions instead of index values
     // because rows within a component may have duplicate index values
@@ -51,9 +55,7 @@ export const DeleteRowButton = ({
       title: `Delete Selected Rows (${rowCount})?`,
       icon: <ExclamationCircleOutlined />,
       content: (
-        <DeleteModalContent
-          customMessage="Deleting these rows will not automatically update other tables that may reference them. You may need to manually check and update related data in other tables."
-        />
+        <DeleteModalContent customMessage="Deleting these rows will not automatically update other tables that may reference them. You may need to manually check and update related data in other tables." />
       ),
       okText: 'Delete',
       okType: 'danger',

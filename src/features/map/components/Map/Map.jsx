@@ -401,7 +401,11 @@ const useMapLayers = (onHover = () => {}) => {
       }
 
       if (
-        [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, ANTHROPOGENIC_HEAT].includes(name) &&
+        [
+          EMISSIONS_EMBODIED,
+          EMISSIONS_OPERATIONAL,
+          ANTHROPOGENIC_HEAT,
+        ].includes(name) &&
         mapLayers?.[name]
       ) {
         _layers.push(

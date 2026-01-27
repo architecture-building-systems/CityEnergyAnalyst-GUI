@@ -68,7 +68,9 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
           }
         } else {
           // No schema - infer type from existing data
-          const firstRow = Array.isArray(data) ? data[0] : Object.values(data)[0];
+          const firstRow = Array.isArray(data)
+            ? data[0]
+            : Object.values(data)[0];
           const sampleValue = firstRow?.[col];
 
           if (typeof sampleValue === 'number') {
