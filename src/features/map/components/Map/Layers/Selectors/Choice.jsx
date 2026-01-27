@@ -87,7 +87,7 @@ const ChoiceSelector = ({
   // Set the default value from backend (or first choice as fallback)
   useEffect(() => {
     if (choices) {
-      const defaultValue = choices.default || choices.choices?.[0];
+      const defaultValue = choices?.default ?? choices.choices?.[0];
       console.log(
         `[Choice] ${parameterName}: Using default value:`,
         defaultValue,
