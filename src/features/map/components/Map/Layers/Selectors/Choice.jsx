@@ -103,7 +103,7 @@ const ChoiceSelector = ({
     label: choice?.label ?? choice,
   }));
 
-  if (!choices || !choices.choices) return null;
+  if (!options?.length) return null;
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
