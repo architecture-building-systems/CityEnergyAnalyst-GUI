@@ -20,11 +20,12 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { COORDINATE_SYSTEM, FlyToInterpolator, HexagonLayer } from 'deck.gl';
+import { COORDINATE_SYSTEM, HexagonLayer } from 'deck.gl';
 import {
-  useCameraOptionsCalulated,
+  useCameraOptionsCalculated,
   useMapStore,
 } from 'features/map/stores/mapStore';
+import { useCameraFitBounds } from 'features/map/hooks';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
@@ -65,7 +66,7 @@ const useMapAttribution = (mapRef) => {
         map.addControl(new AttributionControl(), 'top-right');
       }
     }
-  }, [mapRef.current]);
+  }, [mapRef]);
 };
 
 const useMapStyle = () => {
@@ -122,7 +123,7 @@ const useMapLayers = (onHover = () => {}) => {
   const radius = filters?.radius ?? 10;
   const scale = filters?.scale ?? 1;
 
-  const layers = useMemo(() => {
+  const layers = () => {
     let _layers = [];
 
     // Return early if no layers are selected
@@ -419,9 +420,9 @@ const useMapLayers = (onHover = () => {}) => {
     });
 
     return _layers;
-  }, [filters, mapLayers, range, categoryLayers, scale]);
+  };
 
-  return layers;
+  return layers();
 };
 
 const DeckGLMap = ({ data, colors }) => {
@@ -442,7 +443,7 @@ const DeckGLMap = ({ data, colors }) => {
 
   const setCameraOptions = useMapStore((state) => state.setCameraOptions);
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
-  const cameraOptionsCalulated = useCameraOptionsCalulated();
+  const cameraOptionsCalulated = useCameraOptionsCalculated();
 
   const visibility = useMapStore((state) => state.visibility);
 
@@ -458,57 +459,15 @@ const DeckGLMap = ({ data, colors }) => {
     setTooltipInfo(feature.object ? feature : null);
   }, []);
 
-  const calculateCameraOptions = useCallback(() => {
-    if (!mapRef.current) {
-      console.error('Map ref not found');
-      return;
-    }
-    const mapbox = mapRef.current.getMap();
-
-    // Calculate total bounds with other geometries
-    let bboxPoly = turf.bboxPolygon(turf.bbox(data.zone));
-
-    if (data?.surroundings !== null && data.surroundings?.features?.length)
-      bboxPoly = turf.union(
-        turf.featureCollection([
-          bboxPoly,
-          turf.bboxPolygon(turf.bbox(data.surroundings)),
-        ]),
-      );
-
-    if (data?.trees !== null && data.trees?.features?.length)
-      bboxPoly = turf.union(
-        turf.featureCollection([
-          bboxPoly,
-          turf.bboxPolygon(turf.bbox(data.trees)),
-        ]),
-      );
-
-    const cameraOptions = mapbox.cameraForBounds(turf.bbox(bboxPoly), {
-      maxZoom: 16,
-      padding: 8,
-    });
-
-    console.log('Camera options calculated:', cameraOptions);
-    setCameraOptions(cameraOptions);
-    setViewState({
-      ...viewState,
-      zoom: cameraOptions.zoom,
-      bearing: cameraOptions.bearing,
-      latitude: cameraOptions.center.lat,
-      longitude: cameraOptions.center.lng,
-      transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-      transitionDuration: 1000,
-    });
-  }, [data]);
-
-  useEffect(() => {
-    if (!data?.zone) resetCameraOptions();
-    else if (mapRef.current && !cameraOptionsCalulated) {
-      console.log('Calculating camera options');
-      calculateCameraOptions();
-    }
-  }, [cameraOptionsCalulated, data?.zone, mapRef]);
+  // Use custom hook to handle camera bounds calculation
+  useCameraFitBounds(
+    mapRef,
+    data,
+    setCameraOptions,
+    resetCameraOptions,
+    cameraOptionsCalulated,
+    setViewState,
+  );
 
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {

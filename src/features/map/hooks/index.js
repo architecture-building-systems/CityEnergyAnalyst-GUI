@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { apiClient } from 'lib/api/axios';
 
+export { useCameraFitBounds } from './useCameraFitBounds';
+
 export const getGeocodeLocation = async (address) => {
   try {
     const _address = encodeURIComponent(address);

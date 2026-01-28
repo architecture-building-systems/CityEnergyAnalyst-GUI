@@ -492,14 +492,18 @@ const useDatabaseEditorStore = create((set, get) => ({
         // Delete rows from the table
         if (Array.isArray(targetArray)) {
           // Check if we're using numeric positions or index column values
-          const usingPositions = rowIndices.every((idx) => typeof idx === 'number');
+          const usingPositions = rowIndices.every(
+            (idx) => typeof idx === 'number',
+          );
 
           if (usingPositions) {
             // Delete by position (for nested structures with duplicate index values)
             const positionsToDelete = new Set(rowIndices);
 
             // Sort positions in descending order to delete from end to start
-            const sortedPositions = Array.from(positionsToDelete).sort((a, b) => b - a);
+            const sortedPositions = Array.from(positionsToDelete).sort(
+              (a, b) => b - a,
+            );
             for (const position of sortedPositions) {
               if (position >= 0 && position < targetArray.length) {
                 targetArray.splice(position, 1);
