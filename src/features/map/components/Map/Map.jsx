@@ -316,9 +316,6 @@ const useMapLayers = (onHover = () => {}) => {
         // Add IconLayer for plant nodes with triangle icon
         // Rendered after other nodes to appear on top
         if (plantNodes.length > 0) {
-          // Use bright yellow for high visibility and to complement blue/red edges
-          const plantColor = [255, 209, 29, 255]; // Bright yellow
-
           _layers.push(
             new IconLayer({
               id: `${name}-plant-nodes`,
@@ -328,7 +325,6 @@ const useMapLayers = (onHover = () => {}) => {
                 width: 64,
                 height: 64,
                 anchorY: 32,
-                mask: true,
               }),
               getPosition: (f) => {
                 const coords = f.geometry.coordinates;
@@ -336,17 +332,9 @@ const useMapLayers = (onHover = () => {}) => {
                 return [coords[0], coords[1], 3];
               },
               getSize: 10 * scale,
-              getColor: plantColor,
               sizeUnits: 'meters',
               sizeMinPixels: 20,
               billboard: true,
-              loadOptions: {
-                imagebitmap: {
-                  resizeWidth: 64,
-                  resizeHeight: 64,
-                  resizeQuality: 'high',
-                },
-              },
               onHover: onHover,
               pickable: true,
               updateTriggers: {
