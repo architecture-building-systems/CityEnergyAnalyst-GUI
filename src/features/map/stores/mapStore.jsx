@@ -18,7 +18,10 @@ export const useMapStore = create((set) => ({
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
   setMapLabels: (value) => set({ mapLabels: value }),
-  setViewState: (value) => set({ viewState: value }),
+  setViewState: (value) =>
+    set((state) => ({
+      viewState: typeof value === 'function' ? value(state.viewState) : value,
+    })),
   updateViewState: (value) =>
     set((state) => ({ viewState: { ...state.viewState, ...value } })),
   setExtruded: (value) => set({ extruded: value }),
@@ -55,7 +58,7 @@ export const useMapStore = create((set) => ({
   setRange: (value) => set({ range: value }),
 }));
 
-export const useCameraOptionsCalulated = () =>
+export const useCameraOptionsCalculated = () =>
   useMapStore((state) => state.cameraOptions !== null);
 
 export const useSelectedMapLayer = () =>

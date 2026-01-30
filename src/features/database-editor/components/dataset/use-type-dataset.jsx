@@ -151,9 +151,7 @@ const useDeleteUseType = (types, selected, onSelected) => {
       title: `Delete Use Type "${selected}"?`,
       icon: <ExclamationCircleOutlined />,
       content: (
-        <DeleteModalContent
-          customMessage="Deleting this use type will not automatically update buildings or other data that may reference it. You may need to manually check and update related data in other tables."
-        />
+        <DeleteModalContent customMessage="Deleting this use type will not automatically update buildings or other data that may reference it. You may need to manually check and update related data in other tables." />
       ),
       okText: 'Delete',
       okType: 'danger',
@@ -191,8 +189,12 @@ const useDeleteUseType = (types, selected, onSelected) => {
               field: 'use_type',
               oldValue: JSON.stringify({
                 use_types: data?.archetypes?.use?.use_types?.[selected] || {},
-                monthly_multipliers: data?.archetypes?.use?.schedules?.monthly_multipliers?.[selected] || {},
-                schedule_library: data?.archetypes?.use?.schedules?._library?.[selected] || [],
+                monthly_multipliers:
+                  data?.archetypes?.use?.schedules?.monthly_multipliers?.[
+                    selected
+                  ] || {},
+                schedule_library:
+                  data?.archetypes?.use?.schedules?._library?.[selected] || [],
               }),
               value: '{}',
             },

@@ -145,8 +145,8 @@ const useToolForm = (
       const cleanedValues = Object.fromEntries(
         Object.entries(values).map(([key, value]) => [
           key,
-          value === undefined || value === null ? '' : value
-        ])
+          value === undefined || value === null ? '' : value,
+        ]),
       );
 
       out = {

@@ -247,7 +247,13 @@ export const TableDataset = ({
   );
 };
 
-const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) => {
+const EntityDetails = ({
+  data,
+  indexColumn,
+  commonColumns,
+  dataKey,
+  schema,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const updateDatabaseData = useUpdateDatabaseData();
@@ -302,7 +308,13 @@ const EntityDetails = ({ data, indexColumn, commonColumns, dataKey, schema }) =>
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <div style={{ flex: 1 }}>
             {editableColumns.map((column) => (
               <div
