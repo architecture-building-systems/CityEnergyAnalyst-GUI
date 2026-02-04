@@ -466,6 +466,22 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
 
+    case 'WhatIfNameParameter': {
+      return (
+        <FormField
+          name={name}
+          help={help}
+          initialValue={value}
+          rules={[{ validator }]}
+          validateTrigger="onBlur"
+          dependencies={parameter.depends_on || []}
+          hasFeedback
+        >
+          <Input placeholder="Enter a name for the what-if scenario" />
+        </FormField>
+      );
+    }
+
     default:
       return (
         <FormField name={name} help={help} initialValue={value}>
