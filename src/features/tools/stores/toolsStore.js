@@ -45,7 +45,11 @@ const useToolsStore = create((set, get) => ({
       }));
     } catch (error) {
       set((state) => ({
-        toolList: { ...state.toolList, status: 'failed', error },
+        toolList: {
+          ...state.toolList,
+          status: 'failed',
+          error: error?.response,
+        },
       }));
     }
   },
@@ -71,7 +75,11 @@ const useToolsStore = create((set, get) => ({
       }));
     } catch (error) {
       set((state) => ({
-        toolParams: { ...state.toolParams, status: 'failed', error },
+        toolParams: {
+          ...state.toolParams,
+          status: 'failed',
+          error: error?.response,
+        },
       }));
     }
   },
@@ -158,8 +166,6 @@ const useToolsStore = create((set, get) => ({
       // Fetch new params after setting default
       await get().fetchToolParams(tool);
       return response.data;
-    } catch (error) {
-      throw error;
     } finally {
       set((state) => ({
         toolSaving: { ...state.toolSaving, isSaving: false },
