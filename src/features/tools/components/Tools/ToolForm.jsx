@@ -1,11 +1,6 @@
 import { useState, useCallback } from 'react';
 import Parameter from 'components/Parameter';
-import { Button, Collapse, Form } from 'antd';
-import { animated } from '@react-spring/web';
-
-import { useHoverGrow } from 'features/project/hooks/hover-grow';
-
-import { RunIcon } from 'assets/icons';
+import { Collapse, Form } from 'antd';
 
 const ToolForm = ({
   form,
@@ -131,56 +126,6 @@ const ToolForm = ({
       {toolParams}
       {categoricalParams}
     </Form>
-  );
-};
-
-export const ToolFormButtons = ({
-  runScript,
-  saveParams,
-  setDefault,
-  disabled = false,
-}) => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
-  const [loading, setLoading] = useState(false);
-
-  const handleRunScript = async () => {
-    setLoading(true);
-    try {
-      await runScript?.();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <animated.div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        style={disabled || loading ? null : styles}
-      >
-        <Button
-          type="primary"
-          onClick={handleRunScript}
-          disabled={disabled}
-          loading={loading}
-        >
-          {loading ? (
-            <div>Staring job...</div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              Run
-              <RunIcon style={{ fontSize: 18 }} />
-            </div>
-          )}
-        </Button>
-      </animated.div>
-
-      <Button onClick={saveParams}>Save Settings</Button>
-      <Button onClick={setDefault}>Reset</Button>
-    </>
   );
 };
 

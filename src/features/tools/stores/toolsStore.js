@@ -174,4 +174,13 @@ const useToolsStore = create((set, get) => ({
   },
 }));
 
+export const useUpdateParameterMetadata = () =>
+  useToolsStore((state) => state.updateParameterMetadata);
+
+export const useSetDefaultToolParams = () =>
+  useToolsStore((state) => state.setDefaultToolParams);
+
+export const useSaveToolParams = () =>
+  useToolsStore((state) => state.saveToolParams);
+
 export default useToolsStore;
