@@ -1,14 +1,13 @@
 import { useState, useCallback } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { getFormValues } from '../utils';
+import { useUpdateParameterMetadata } from '../stores/toolsStore';
+import useCheckMissingInputs from './useCheckMissingInputs';
 
-const useParameterMetadataRefetch = (
-  script,
-  form,
-  getForm,
-  checkMissingInputs,
-  updateParameterMetadata,
-) => {
+const useParameterMetadataRefetch = (script, form) => {
   const [isRefetching, setIsRefetching] = useState(false);
+  const updateParameterMetadata = useUpdateParameterMetadata();
+  const { check: checkMissingInputs } = useCheckMissingInputs();
 
   const handleRefetch = useCallback(
     async (formValues, changedParam, affectedParams) => {
@@ -51,7 +50,7 @@ const useParameterMetadataRefetch = (
 
         // Re-check for missing inputs after metadata update
         // Parameters may now depend on different input files
-        const currentParams = await getForm();
+        const currentParams = await getFormValues(form, parameters);
         if (currentParams) {
           console.log('[handleRefetch] Re-checking for missing inputs');
           checkMissingInputs(currentParams);
@@ -62,7 +61,7 @@ const useParameterMetadataRefetch = (
         setIsRefetching(false);
       }
     },
-    [script, form, updateParameterMetadata, getForm, checkMissingInputs],
+    [script, form, updateParameterMetadata, checkMissingInputs],
   );
 
   return { handleRefetch, isRefetching };

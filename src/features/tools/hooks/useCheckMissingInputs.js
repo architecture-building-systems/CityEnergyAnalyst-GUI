@@ -2,19 +2,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from 'lib/api/axios';
 
 const useCheckMissingInputs = (tool) => {
-  const [fetching, setFetching] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState();
 
-  const fetch = useCallback(
+  const check = useCallback(
     async (parameters) => {
-      setFetching(true);
+      if (!tool) {
+        console.warn('Tool not specified for checking missing inputs.');
+        return;
+      }
+
+      setChecking(true);
       try {
         await apiClient.post(`/api/tools/${tool}/check`, parameters);
         setError(null);
       } catch (err) {
-        setError(err.response.data?.detail?.script_suggestions);
+        if (err.response?.status == 400) {
+          setError(err.response?.data?.detail?.script_suggestions);
+        } else if (err.response?.status == 500) {
+          setError(err.response?.data?.detail || 'Internal server error');
+        }
       } finally {
-        setFetching(false);
+        setChecking(false);
       }
     },
     [tool],
@@ -25,7 +34,7 @@ const useCheckMissingInputs = (tool) => {
     setError();
   }, [tool]);
 
-  return { fetch, fetching, error };
+  return { check, checking, error };
 };
 
 export default useCheckMissingInputs;

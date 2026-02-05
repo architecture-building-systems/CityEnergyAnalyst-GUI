@@ -125,4 +125,6 @@ export const useSortedJobs = () => {
     });
 };
 
+export const useCreateJob = () => useJobsStore((state) => state.createJob);
+
 export default useJobsStore;

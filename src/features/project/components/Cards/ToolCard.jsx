@@ -1,6 +1,6 @@
 import { VerticalLeftOutlined } from '@ant-design/icons';
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button } from 'antd';
+import { Button, Form } from 'antd';
 
 import {
   useCloseToolCard,
@@ -20,11 +20,19 @@ const ToolCard = ({
 }) => {
   const toolType = useToolType();
   const closeToolCard = useCloseToolCard();
+  const [form] = Form.useForm();
 
   let content;
   switch (toolType) {
     case toolTypes.TOOLS:
-      content = <Tool script={selectedTool} onToolSelected={onToolSelected} />;
+      content = (
+        <Tool
+          key={selectedTool}
+          script={selectedTool}
+          onToolSelected={onToolSelected}
+          form={form}
+        />
+      );
       break;
     case toolTypes.MAP_LAYERS:
       content = (

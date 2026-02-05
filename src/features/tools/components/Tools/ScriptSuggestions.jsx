@@ -15,7 +15,7 @@ export const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   if (error?.length)
     return (
       <Alert
-        message="Missing inputs detected"
+        title="Missing inputs detected"
         description={
           <div>
             <p>Run the following scripts to create the missing inputs:</p>
@@ -48,7 +48,7 @@ export const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   if (error !== null) {
     return (
       <Alert
-        message="Error"
+        title="Error"
         description="Something went wrong while checking for missing inputs."
         type="error"
         showIcon
