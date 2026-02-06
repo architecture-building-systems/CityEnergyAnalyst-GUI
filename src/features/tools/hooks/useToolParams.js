@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { useCheckMissingInputs } from 'features/tools/stores/toolsStore';
+import {
+  useCheckMissingInputs,
+  useResetMissingInputs,
+} from 'features/tools/stores/toolsStore';
 import { getFormValues } from '../utils';
 
 export const useFetchToolParams = (script) => {
@@ -18,6 +21,7 @@ export const useFetchToolParams = (script) => {
 };
 
 const useToolParams = (script, form, parameters, categoricalParameters) => {
+  const resetMissingInputs = useResetMissingInputs();
   const checkMissingInputs = useCheckMissingInputs();
 
   useEffect(() => {
@@ -38,6 +42,12 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
 
     checkInputs();
   }, [script, form, parameters, categoricalParameters, checkMissingInputs]);
+
+  useEffect(() => {
+    // Whenever the script changes, reset the form and missing inputs state
+    form.resetFields();
+    resetMissingInputs();
+  }, [script, form, resetMissingInputs]);
 };
 
 export default useToolParams;

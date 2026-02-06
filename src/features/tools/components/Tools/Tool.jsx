@@ -1,6 +1,7 @@
 import { Divider, Spin, Alert } from 'antd';
 import useToolsStore, {
   useIsRefetching,
+  useMissingInputs,
 } from 'features/tools/stores/toolsStore';
 import { AsyncError } from 'components/AsyncError';
 
@@ -22,9 +23,7 @@ import {
 const Tool = ({ script, onToolSelected, header, form }) => {
   const { data: params, isLoading, error } = useFetchToolParams(script);
   const { isSaving } = useToolsStore((state) => state.toolSaving);
-  const { checking, error: _error } = useToolsStore(
-    (state) => state.missingInputs,
-  );
+  const { checking: checkingInputs, error: inputError } = useMissingInputs();
 
   const {
     category,
@@ -34,11 +33,10 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     categorical_parameters: categoricalParameters,
   } = params || {};
 
-  // FIXME: Run check missing inputs when form validation passes
   useToolParams(script, form, parameters, categoricalParameters);
 
   const isRefetching = useIsRefetching();
-  const disableButtons = checking || _error !== null;
+  const disableButtons = checkingInputs || inputError !== null;
   const showSkeleton = useSkeletonDelay(350);
 
   const { headerVisible, descriptionRef, descriptionHeight, handleScroll } =
@@ -136,8 +134,8 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
           <ScriptSuggestions
             onToolSelected={onToolSelected}
-            fetching={checking}
-            error={_error}
+            loading={checkingInputs}
+            error={inputError}
           />
         </div>
 

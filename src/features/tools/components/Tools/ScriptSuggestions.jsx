@@ -1,8 +1,8 @@
 import { Alert } from 'antd';
 import { ExternalLinkIcon } from 'assets/icons';
 
-export const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
-  if (fetching)
+export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
+  if (loading)
     return (
       <div style={{ fontFamily: 'monospace' }}>
         Checking for missing inputs...
@@ -12,7 +12,11 @@ export const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   // Checks have not been run, so ignore
   if (error == undefined) return null;
 
-  if (error?.length)
+  // Error should be null if there is no error
+  if (error === null) return null;
+
+  // If error is an array, show script suggestions
+  if (Array.isArray(error) && error.length > 0) {
     return (
       <Alert
         title="Missing inputs detected"
@@ -43,17 +47,19 @@ export const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
         showIcon
       />
     );
-
-  // Error should be null if there is no error
-  if (error !== null) {
-    return (
-      <Alert
-        title="Error"
-        description="Something went wrong while checking for missing inputs."
-        type="error"
-        showIcon
-      />
-    );
   }
-  return null;
+
+  // Any other error (e.g., string error message)
+  return (
+    <Alert
+      title="Error"
+      description={
+        typeof error === 'string'
+          ? error
+          : 'Something went wrong while checking for missing inputs.'
+      }
+      type="error"
+      showIcon
+    />
+  );
 };

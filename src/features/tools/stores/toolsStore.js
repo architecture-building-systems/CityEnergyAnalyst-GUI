@@ -60,6 +60,9 @@ const useToolsStore = create((set) => ({
     if (!tool) {
       console.warn('Tool not specified for checking missing inputs.');
       return;
+    } else if (parameters === undefined) {
+      console.warn('Parameters not provided for checking missing inputs.');
+      return;
     }
 
     set((state) => ({
