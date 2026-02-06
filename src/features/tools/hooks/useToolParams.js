@@ -1,18 +1,28 @@
 import { useEffect } from 'react';
-import useToolsStore, {
-  useCheckMissingInputs,
-} from 'features/tools/stores/toolsStore';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from 'lib/api/axios';
+import { useCheckMissingInputs } from 'features/tools/stores/toolsStore';
 import { getFormValues } from '../utils';
 
+export const useFetchToolParams = (script) => {
+  return useQuery({
+    queryKey: ['toolParams', script],
+    queryFn: async () => {
+      if (!script) return null;
+      const response = await apiClient.get(`/api/tools/${script}`);
+      return response.data;
+    },
+    enabled: !!script,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+};
+
 const useToolParams = (script, form, parameters, categoricalParameters) => {
-  const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
-  const resetToolParams = useToolsStore((state) => state.resetToolParams);
   const checkMissingInputs = useCheckMissingInputs();
 
   useEffect(() => {
-    const fetchParams = async () => {
-      if (script) await fetchToolParams(script);
-      else resetToolParams();
+    const checkInputs = async () => {
+      if (!script || !parameters) return;
 
       // Reset form fields to ensure they are in sync with the fetched parameters
       form.resetFields();
@@ -26,8 +36,8 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
       if (params) checkMissingInputs(script, params);
     };
 
-    fetchParams();
-  }, [script, form]);
+    checkInputs();
+  }, [script, form, parameters, categoricalParameters, checkMissingInputs]);
 };
 
 export default useToolParams;

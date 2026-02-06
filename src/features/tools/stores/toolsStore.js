@@ -1,14 +1,8 @@
 import { create } from 'zustand';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 
-const useToolsStore = create((set, get) => ({
-  // Tool Parameters State
-  toolParams: {
-    status: '',
-    error: null,
-    params: {},
-  },
-
+const useToolsStore = create((set) => ({
   // Tool Saving State
   toolSaving: {
     isSaving: false,
@@ -21,41 +15,6 @@ const useToolsStore = create((set, get) => ({
   },
 
   // Actions
-  fetchToolParams: async (tool) => {
-    set((state) => ({
-      toolParams: {
-        ...state.toolParams,
-        status: 'fetching',
-        error: null,
-        params: {},
-      },
-    }));
-
-    try {
-      const response = await apiClient.get(`/api/tools/${tool}`);
-      set((state) => ({
-        toolParams: {
-          ...state.toolParams,
-          params: response.data,
-          status: 'received',
-        },
-      }));
-    } catch (error) {
-      set((state) => ({
-        toolParams: {
-          ...state.toolParams,
-          status: 'failed',
-          error: error?.response,
-        },
-      }));
-    }
-  },
-
-  resetToolParams: () => {
-    set({
-      toolParams: { status: '', error: null, params: {} },
-    });
-  },
 
   saveToolParams: async (tool, params) => {
     set((state) => ({
@@ -75,63 +34,17 @@ const useToolsStore = create((set, get) => ({
     }
   },
 
-  updateParameterMetadata: (updatedMetadata) => {
-    set((state) => {
-      const currentParams = state.toolParams.params;
-      const newParameters = [...(currentParams.parameters || [])];
-      const newCategoricalParameters = {
-        ...(currentParams.categoricalParameters || {}),
-      };
-
-      // Update parameters
-      Object.keys(updatedMetadata).forEach((paramName) => {
-        const metadata = updatedMetadata[paramName];
-
-        // Find in regular parameters
-        const paramIndex = newParameters.findIndex((p) => p.name === paramName);
-        if (paramIndex >= 0) {
-          newParameters[paramIndex] = {
-            ...newParameters[paramIndex],
-            ...metadata,
-          };
-        }
-
-        // Find in categorical parameters
-        Object.keys(newCategoricalParameters).forEach((category) => {
-          const catParamIndex = newCategoricalParameters[category].findIndex(
-            (p) => p.name === paramName,
-          );
-          if (catParamIndex >= 0) {
-            newCategoricalParameters[category][catParamIndex] = {
-              ...newCategoricalParameters[category][catParamIndex],
-              ...metadata,
-            };
-          }
-        });
-      });
-
-      return {
-        toolParams: {
-          ...state.toolParams,
-          params: {
-            ...currentParams,
-            parameters: newParameters,
-            categoricalParameters: newCategoricalParameters,
-          },
-        },
-      };
-    });
-  },
-
-  setDefaultToolParams: async (tool) => {
+  setDefaultToolParams: async (tool, queryClient) => {
     set((state) => ({
       toolSaving: { ...state.toolSaving, isSaving: true },
     }));
 
     try {
       const response = await apiClient.post(`/api/tools/${tool}/default`);
-      // Fetch new params after setting default
-      await get().fetchToolParams(tool);
+      // Invalidate query to refetch params after setting default
+      if (queryClient) {
+        await queryClient.invalidateQueries({ queryKey: ['toolParams', tool] });
+      }
       return response.data;
     } finally {
       set((state) => ({
@@ -183,11 +96,15 @@ const useToolsStore = create((set, get) => ({
   },
 }));
 
-export const useUpdateParameterMetadata = () =>
-  useToolsStore((state) => state.updateParameterMetadata);
+export const useSetDefaultToolParams = () => {
+  const setDefaultToolParams = useToolsStore(
+    (state) => state.setDefaultToolParams,
+  );
+  const queryClient = useQueryClient();
 
-export const useSetDefaultToolParams = () =>
-  useToolsStore((state) => state.setDefaultToolParams);
+  // Return wrapper that automatically injects queryClient
+  return (tool) => setDefaultToolParams(tool, queryClient);
+};
 
 export const useSaveToolParams = () =>
   useToolsStore((state) => state.saveToolParams);

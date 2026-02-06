@@ -15,12 +15,12 @@ import {
   useHeaderVisibility,
   useParameterMetadataRefetch,
   useToolParams,
+  useFetchToolParams,
 } from 'features/tools/hooks';
 
 const Tool = ({ script, onToolSelected, header, form }) => {
-  const { status, error, params, isSaving } = useToolsStore(
-    (state) => state.toolParams,
-  );
+  const { data: params, isLoading, error } = useFetchToolParams(script);
+  const { isSaving } = useToolsStore((state) => state.toolSaving);
   const { checking, error: _error } = useToolsStore(
     (state) => state.missingInputs,
   );
@@ -31,7 +31,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     description,
     parameters,
     categorical_parameters: categoricalParameters,
-  } = params;
+  } = params || {};
 
   // FIXME: Run check missing inputs when form validation passes
   useToolParams(script, form, parameters, categoricalParameters);
@@ -48,18 +48,18 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
   const changes = useChangesExist();
 
-  if (status == 'fetching' || showSkeleton)
+  if (isLoading || showSkeleton)
     return (
       <div style={{ padding: 12 }}>
         {header}
         <ToolSkeleton loadingText="Loading parameters..." />
       </div>
     );
-  if (status == 'failed')
+  if (error)
     return (
       <div>
         {header}
-        <AsyncError error={error} />
+        <AsyncError error={error?.response || error} />
       </div>
     );
   if (!label) return null;

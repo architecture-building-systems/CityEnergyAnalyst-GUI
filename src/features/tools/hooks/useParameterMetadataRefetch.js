@@ -1,14 +1,12 @@
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { getFormValues } from '../utils';
-import {
-  useUpdateParameterMetadata,
-  useCheckMissingInputs,
-} from '../stores/toolsStore';
+import { useCheckMissingInputs } from '../stores/toolsStore';
 
 const useParameterMetadataRefetch = (script, form) => {
   const [isRefetching, setIsRefetching] = useState(false);
-  const updateParameterMetadata = useUpdateParameterMetadata();
+  const queryClient = useQueryClient();
   const checkMissingInputs = useCheckMissingInputs();
 
   const handleRefetch = useCallback(
@@ -28,17 +26,59 @@ const useParameterMetadataRefetch = (script, form) => {
           },
         );
 
-        const { parameters } = response.data;
+        const { parameters: updatedMetadata } = response.data;
         console.log(
-          `[handleRefetch] Received metadata for ${Object.keys(parameters).length} parameters`,
+          `[handleRefetch] Received metadata for ${Object.keys(updatedMetadata).length} parameters`,
         );
 
-        // Update parameter definitions in store
-        updateParameterMetadata(parameters);
+        // Update React Query cache with new parameter metadata
+        queryClient.setQueryData(['toolParams', script], (oldData) => {
+          if (!oldData) return oldData;
+
+          const newParameters = [...(oldData.parameters || [])];
+          const newCategoricalParameters = {
+            ...(oldData.categorical_parameters || {}),
+          };
+
+          // Update parameters
+          Object.keys(updatedMetadata).forEach((paramName) => {
+            const metadata = updatedMetadata[paramName];
+
+            // Find in regular parameters
+            const paramIndex = newParameters.findIndex(
+              (p) => p.name === paramName,
+            );
+            if (paramIndex >= 0) {
+              newParameters[paramIndex] = {
+                ...newParameters[paramIndex],
+                ...metadata,
+              };
+            }
+
+            // Find in categorical parameters
+            Object.keys(newCategoricalParameters).forEach((category) => {
+              const catParamIndex = newCategoricalParameters[
+                category
+              ].findIndex((p) => p.name === paramName);
+              if (catParamIndex >= 0) {
+                newCategoricalParameters[category][catParamIndex] = {
+                  ...newCategoricalParameters[category][catParamIndex],
+                  ...metadata,
+                };
+              }
+            });
+          });
+
+          return {
+            ...oldData,
+            parameters: newParameters,
+            categorical_parameters: newCategoricalParameters,
+          };
+        });
 
         // Update form values for affected parameters if value changed
-        Object.keys(parameters).forEach((paramName) => {
-          const metadata = parameters[paramName];
+        Object.keys(updatedMetadata).forEach((paramName) => {
+          const metadata = updatedMetadata[paramName];
           if (metadata.value !== undefined) {
             const currentValue = form.getFieldValue(paramName);
             if (currentValue !== metadata.value) {
@@ -52,7 +92,7 @@ const useParameterMetadataRefetch = (script, form) => {
 
         // Re-check for missing inputs after metadata update
         // Parameters may now depend on different input files
-        const currentParams = await getFormValues(form, parameters);
+        const currentParams = await getFormValues(form, updatedMetadata);
         if (currentParams) {
           console.log('[handleRefetch] Re-checking for missing inputs');
           checkMissingInputs(script, currentParams);
@@ -63,7 +103,7 @@ const useParameterMetadataRefetch = (script, form) => {
         setIsRefetching(false);
       }
     },
-    [script, form, updateParameterMetadata, checkMissingInputs],
+    [script, form, queryClient, checkMissingInputs],
   );
 
   return { handleRefetch, isRefetching };
