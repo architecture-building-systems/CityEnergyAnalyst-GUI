@@ -2,13 +2,6 @@ import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
 
 const useToolsStore = create((set, get) => ({
-  // Tool List State
-  toolList: {
-    status: '',
-    error: null,
-    tools: {},
-  },
-
   // Tool Parameters State
   toolParams: {
     status: '',
@@ -28,38 +21,6 @@ const useToolsStore = create((set, get) => ({
   },
 
   // Actions
-  fetchToolList: async () => {
-    const { toolList } = get();
-
-    // Don't fetch if already have tools
-    if (Object.keys(toolList.tools).length > 0) {
-      return;
-    }
-
-    set((state) => ({
-      toolList: { ...state.toolList, status: 'fetching', error: null },
-    }));
-
-    try {
-      const response = await apiClient.get('/api/tools/');
-      set((state) => ({
-        toolList: {
-          ...state.toolList,
-          tools: response.data,
-          status: 'received',
-        },
-      }));
-    } catch (error) {
-      set((state) => ({
-        toolList: {
-          ...state.toolList,
-          status: 'failed',
-          error: error?.response,
-        },
-      }));
-    }
-  },
-
   fetchToolParams: async (tool) => {
     set((state) => ({
       toolParams: {
