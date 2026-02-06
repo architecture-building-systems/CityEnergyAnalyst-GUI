@@ -7,6 +7,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 import { RunIcon } from 'assets/icons';
 import { getFormValues } from 'features/tools/utils';
 import {
+  useCheckMissingInputs,
   useSaveToolParams,
   useSetDefaultToolParams,
 } from 'features/tools/stores/toolsStore';
@@ -24,6 +25,7 @@ export const ToolFormButtons = ({
   const [loading, setLoading] = useState(false);
 
   const saveToolParams = useSaveToolParams();
+  const checkingInputs = useCheckMissingInputs();
   const setDefaultToolParams = useSetDefaultToolParams();
   const createJob = useCreateJob();
 
@@ -67,7 +69,7 @@ export const ToolFormButtons = ({
 
     return saveToolParams(script, params)
       .then(() => {
-        // return callbacks?.onSave?.(params);
+        return checkingInputs(script, params);
       })
       .catch((err) => {
         if (err?.response?.status === 401) return;
@@ -82,7 +84,7 @@ export const ToolFormButtons = ({
         return getFormValues(form, parameters, categoricalParameters);
       })
       .then((params) => {
-        // return callbacks?.onReset?.(params);
+        return checkingInputs(script, params);
       })
       .catch((err) => {
         if (err?.response?.status === 401) return;
