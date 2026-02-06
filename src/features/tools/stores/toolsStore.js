@@ -14,6 +14,9 @@ const useToolsStore = create((set) => ({
     error: undefined, // undefined means have not checked yet, null means no error
   },
 
+  // Parameter Metadata Refetch State
+  isRefetching: false,
+
   // Actions
 
   saveToolParams: async (tool, params) => {
@@ -94,6 +97,10 @@ const useToolsStore = create((set) => ({
       missingInputs: { checking: false, error: false },
     });
   },
+
+  setIsRefetching: (isRefetching) => {
+    set({ isRefetching });
+  },
 }));
 
 export const useSetDefaultToolParams = () => {
@@ -117,5 +124,11 @@ export const useCheckMissingInputs = () =>
 
 export const useResetMissingInputs = () =>
   useToolsStore((state) => state.resetMissingInputs);
+
+export const useIsRefetching = () =>
+  useToolsStore((state) => state.isRefetching);
+
+export const useSetIsRefetching = () =>
+  useToolsStore((state) => state.setIsRefetching);
 
 export default useToolsStore;

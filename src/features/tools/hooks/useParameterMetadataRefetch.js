@@ -1,13 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { getFormValues } from '../utils';
-import { useCheckMissingInputs } from '../stores/toolsStore';
+import {
+  useCheckMissingInputs,
+  useSetIsRefetching,
+} from '../stores/toolsStore';
 
 const useParameterMetadataRefetch = (script, form) => {
-  const [isRefetching, setIsRefetching] = useState(false);
   const queryClient = useQueryClient();
   const checkMissingInputs = useCheckMissingInputs();
+  const setIsRefetching = useSetIsRefetching();
 
   const handleRefetch = useCallback(
     async (formValues, changedParam, affectedParams) => {
@@ -103,10 +106,10 @@ const useParameterMetadataRefetch = (script, form) => {
         setIsRefetching(false);
       }
     },
-    [script, form, queryClient, checkMissingInputs],
+    [script, form, queryClient, checkMissingInputs, setIsRefetching],
   );
 
-  return { handleRefetch, isRefetching };
+  return { handleRefetch };
 };
 
 export default useParameterMetadataRefetch;

@@ -1,5 +1,7 @@
 import { Divider, Spin, Alert } from 'antd';
-import useToolsStore from 'features/tools/stores/toolsStore';
+import useToolsStore, {
+  useIsRefetching,
+} from 'features/tools/stores/toolsStore';
 import { AsyncError } from 'components/AsyncError';
 
 import './Tool.css';
@@ -13,7 +15,6 @@ import { ScriptSuggestions } from './ScriptSuggestions';
 import {
   useSkeletonDelay,
   useHeaderVisibility,
-  useParameterMetadataRefetch,
   useToolParams,
   useFetchToolParams,
 } from 'features/tools/hooks';
@@ -35,11 +36,8 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
   // FIXME: Run check missing inputs when form validation passes
   useToolParams(script, form, parameters, categoricalParameters);
-  const { handleRefetch, isRefetching } = useParameterMetadataRefetch(
-    script,
-    form,
-  );
 
+  const isRefetching = useIsRefetching();
   const disableButtons = checking || _error !== null;
   const showSkeleton = useSkeletonDelay(350);
 
@@ -159,7 +157,6 @@ const Tool = ({ script, onToolSelected, header, form }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            onRefetchNeeded={handleRefetch}
           />
         </div>
       </div>
