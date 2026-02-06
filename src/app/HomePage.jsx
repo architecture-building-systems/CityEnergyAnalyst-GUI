@@ -201,6 +201,10 @@ const queryClient = new QueryClient({
   // refetchOnReconnect: true, // Refetch when internet reconnects
   // retry: 3, // Retry failed requests 3 times
 });
+
+// For dev tools - attach queryClient to window object
+window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+
 const HomePage = () => {
   const isServerUp = useCheckServerStatus();
   if (!isServerUp) return <Loading />;
