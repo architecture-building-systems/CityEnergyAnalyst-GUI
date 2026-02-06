@@ -1,13 +1,15 @@
 import { useState, useCallback } from 'react';
 import { apiClient } from 'lib/api/axios';
 import { getFormValues } from '../utils';
-import { useUpdateParameterMetadata } from '../stores/toolsStore';
-import useCheckMissingInputs from './useCheckMissingInputs';
+import {
+  useUpdateParameterMetadata,
+  useCheckMissingInputs,
+} from '../stores/toolsStore';
 
 const useParameterMetadataRefetch = (script, form) => {
   const [isRefetching, setIsRefetching] = useState(false);
   const updateParameterMetadata = useUpdateParameterMetadata();
-  const { check: checkMissingInputs } = useCheckMissingInputs();
+  const checkMissingInputs = useCheckMissingInputs();
 
   const handleRefetch = useCallback(
     async (formValues, changedParam, affectedParams) => {
@@ -53,7 +55,7 @@ const useParameterMetadataRefetch = (script, form) => {
         const currentParams = await getFormValues(form, parameters);
         if (currentParams) {
           console.log('[handleRefetch] Re-checking for missing inputs');
-          checkMissingInputs(currentParams);
+          checkMissingInputs(script, currentParams);
         }
       } catch (err) {
         console.error('Error refetching parameter metadata:', err);

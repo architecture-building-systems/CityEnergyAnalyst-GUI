@@ -11,7 +11,6 @@ import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
 import {
-  useCheckMissingInputs,
   useSkeletonDelay,
   useHeaderVisibility,
   useParameterMetadataRefetch,
@@ -22,7 +21,9 @@ const Tool = ({ script, onToolSelected, header, form }) => {
   const { status, error, params, isSaving } = useToolsStore(
     (state) => state.toolParams,
   );
-  const { checking, error: _error } = useCheckMissingInputs(script);
+  const { checking, error: _error } = useToolsStore(
+    (state) => state.missingInputs,
+  );
 
   const {
     category,

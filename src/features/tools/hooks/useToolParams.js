@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import useToolsStore from 'features/tools/stores/toolsStore';
+import useToolsStore, {
+  useCheckMissingInputs,
+} from 'features/tools/stores/toolsStore';
 import { getFormValues } from '../utils';
-import useCheckMissingInputs from './useCheckMissingInputs';
 
 const useToolParams = (script, form, parameters, categoricalParameters) => {
   const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
   const resetToolParams = useToolsStore((state) => state.resetToolParams);
-  const { check: checkMissingInputs } = useCheckMissingInputs(script);
+  const checkMissingInputs = useCheckMissingInputs();
 
   useEffect(() => {
     const fetchParams = async () => {
@@ -22,7 +23,7 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
         parameters,
         categoricalParameters,
       );
-      if (params) checkMissingInputs(params);
+      if (params) checkMissingInputs(script, params);
     };
 
     fetchParams();

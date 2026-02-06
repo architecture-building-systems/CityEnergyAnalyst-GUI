@@ -1,4 +1,10 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from 'react';
 
 const useHeaderVisibility = (description, showSkeleton) => {
   const [headerVisible, setHeaderVisible] = useState(true);

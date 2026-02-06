@@ -21,6 +21,12 @@ const useToolsStore = create((set, get) => ({
     isSaving: false,
   },
 
+  // Missing Inputs State
+  missingInputs: {
+    checking: false,
+    error: undefined, // undefined means have not checked yet, null means no error
+  },
+
   // Actions
   fetchToolList: async () => {
     const { toolList } = get();
@@ -172,6 +178,48 @@ const useToolsStore = create((set, get) => ({
       }));
     }
   },
+
+  checkMissingInputs: async (tool, parameters) => {
+    if (!tool) {
+      console.warn('Tool not specified for checking missing inputs.');
+      return;
+    }
+
+    set((state) => ({
+      missingInputs: {
+        ...state.missingInputs,
+        checking: true,
+        error: undefined,
+      },
+    }));
+
+    try {
+      await apiClient.post(`/api/tools/${tool}/check`, parameters);
+      set((state) => ({
+        missingInputs: { ...state.missingInputs, checking: false, error: null },
+      }));
+    } catch (err) {
+      let error;
+      if (err.response?.status === 400) {
+        error = err.response?.data?.detail?.script_suggestions;
+      } else if (err.response?.status === 500) {
+        error = err.response?.data?.detail || 'Internal server error';
+      }
+      set((state) => ({
+        missingInputs: {
+          ...state.missingInputs,
+          checking: false,
+          error,
+        },
+      }));
+    }
+  },
+
+  resetMissingInputs: () => {
+    set({
+      missingInputs: { checking: false, error: false },
+    });
+  },
 }));
 
 export const useUpdateParameterMetadata = () =>
@@ -182,5 +230,14 @@ export const useSetDefaultToolParams = () =>
 
 export const useSaveToolParams = () =>
   useToolsStore((state) => state.saveToolParams);
+
+export const useMissingInputs = () =>
+  useToolsStore((state) => state.missingInputs);
+
+export const useCheckMissingInputs = () =>
+  useToolsStore((state) => state.checkMissingInputs);
+
+export const useResetMissingInputs = () =>
+  useToolsStore((state) => state.resetMissingInputs);
 
 export default useToolsStore;
