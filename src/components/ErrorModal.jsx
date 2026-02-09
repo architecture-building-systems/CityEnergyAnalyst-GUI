@@ -21,15 +21,17 @@ const ErrorModal = ({ open, title, message, error, onClose }) => {
       onCancel={onClose}
       cancelButtonProps={{ style: { display: 'none' } }}
     >
-      <div>{message}</div>
-      <div
-        style={{
-          background: '#efefef',
-          borderRadius: 8,
-          overflowX: 'auto',
-        }}
-      >
-        <pre style={{ padding: 16 }}>{errorMessage}</pre>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div>{message}</div>
+        <div
+          style={{
+            background: '#efefef',
+            borderRadius: 8,
+            overflowX: 'auto',
+          }}
+        >
+          <pre style={{ padding: 16 }}>{errorMessage}</pre>
+        </div>
       </div>
     </Modal>
   );
