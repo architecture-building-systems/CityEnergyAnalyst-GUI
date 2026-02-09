@@ -426,30 +426,28 @@ const EntityDataTable = ({
   );
 
   const columnSchema = schema?.columns;
-  const columnsFromSchema = useMemo(() => {
-    const schemaColumnKeys = Object.keys(columnSchema ?? {});
+
+  // Set to null if columnSchema is already available to avoid recalculating from data on every change
+  const firstRowKeys = useMemo(() => {
+    if (columnSchema) return null;
+    return data?.[0] ?? null;
+  }, [columnSchema, data]);
+
+  const columns = useMemo(() => {
+    const columnKeys = Object.keys(columnSchema ?? firstRowKeys ?? {});
 
     // Filter columns to either show only the index column or hide the common columns based on props
-    const filtered = schemaColumnKeys.filter((c) =>
+    const filtered = columnKeys.filter((c) =>
       c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
     }
     return filtered;
-  }, [columnSchema, indexColumn, commonColumns, showIndex]);
+  }, [columnSchema, indexColumn, commonColumns, showIndex, firstRowKeys]);
 
   const getColumnChoices = useGetDatabaseColumnChoices();
   const updateDatabaseData = useUpdateDatabaseData();
-
-  const columns = useMemo(
-    // If columns are defined in the schema, use those. Otherwise, fall back to using keys from the data (if available)
-    () =>
-      columnsFromSchema?.length
-        ? columnsFromSchema
-        : Object.keys(data[0] || {}),
-    [columnsFromSchema, data],
-  );
 
   // Convert columns to tabulator format
   const tabulatorColumns = useMemo(() => {
