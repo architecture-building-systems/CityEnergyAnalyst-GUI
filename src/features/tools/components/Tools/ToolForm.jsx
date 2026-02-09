@@ -94,6 +94,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
     const categories = Object.keys(categoricalParameters).map((category) => ({
       key: category,
       label: category,
+      forceRender: true, // Ensure content is rendered even when collapsed to preserve form state
       children: categoricalParameters[category].map((param) => (
         <Parameter
           key={param.name}
