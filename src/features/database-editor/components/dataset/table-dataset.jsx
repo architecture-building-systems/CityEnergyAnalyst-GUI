@@ -17,7 +17,7 @@ import useDatabaseEditorStore, {
 } from 'features/database-editor/stores/databaseEditorStore';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
-import { Button, Divider, Modal, Form, Input, Select } from 'antd';
+import { Button, Divider, Modal, Form, Input, Select, Alert } from 'antd';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -597,8 +597,16 @@ const EntityDataTable = ({
 
   return (
     <>
-      {columnSchema && showColumnSchema && (
-        <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+      {columnSchema ? (
+        showColumnSchema ? (
+          <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+        ) : null
+      ) : (
+        <Alert
+          title="Schema for this dataset is not available. Editing is disabled."
+          type="warning"
+          showIcon
+        />
       )}
       <div style={{ margin: 12 }} ref={divRef} />
     </>
