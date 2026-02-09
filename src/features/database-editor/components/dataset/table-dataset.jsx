@@ -17,7 +17,7 @@ import useDatabaseEditorStore, {
 } from 'features/database-editor/stores/databaseEditorStore';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
-import { Button, Divider, Modal, Form, Input, Select } from 'antd';
+import { Button, Divider, Modal, Form, Input, Select, Alert } from 'antd';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -165,7 +165,6 @@ export const TableDataset = ({
   showColumnSchema,
   enableRowSelection,
   onRowSelectionChanged,
-  useDataColumnOrder,
   ref,
 }) => {
   const tabulatorRef = useRef();
@@ -239,7 +238,6 @@ export const TableDataset = ({
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
             onRowSelectionChanged={handleRowSelectionChanged}
-            useDataColumnOrder={useDataColumnOrder}
           />
         </>
       )}
@@ -280,7 +278,7 @@ const EntityDetails = ({
 
   const handleFormSubmit = (values) => {
     // Update all rows with the new common column values
-    data.forEach((row, rowIndex) => {
+    data.forEach((row) => {
       editableColumns.forEach((column) => {
         const oldValue = row[column];
         const newValue = values[column];
@@ -407,7 +405,6 @@ const EntityDataTable = ({
   showColumnSchema = true,
   enableRowSelection = false,
   onRowSelectionChanged,
-  useDataColumnOrder = true,
   ref,
 }) => {
   const divRef = useRef();
@@ -430,44 +427,27 @@ const EntityDataTable = ({
 
   const columnSchema = schema?.columns;
 
-  const getColumnChoices = useGetDatabaseColumnChoices();
-  const updateDatabaseData = useUpdateDatabaseData();
+  // Set to null if columnSchema is already available to avoid recalculating from data on every change
+  const firstRowKeys = useMemo(() => {
+    if (columnSchema) return null;
+    return data?.[0] ?? null;
+  }, [columnSchema, data]);
 
-  const schemaColumnKeys = useMemo(
-    () => Object.keys(columnSchema ?? {}),
-    [columnSchema],
-  );
+  const columns = useMemo(() => {
+    const columnKeys = Object.keys(columnSchema ?? firstRowKeys ?? {});
 
-  // Get columns from data if useDataColumnOrder is true
-  const dataColumnKeys = useMemo(() => {
-    if (!useDataColumnOrder || !data || data.length === 0) return [];
-    return Object.keys(data[0] || {});
-  }, [useDataColumnOrder, data]);
-
-  const columnsFromSchema = useMemo(() => {
-    // Use data column order if flag is set
-    const sourceColumns = useDataColumnOrder
-      ? dataColumnKeys
-      : schemaColumnKeys;
-
-    if (sourceColumns.length === 0) return [];
-    const filtered = sourceColumns.filter((c) =>
+    // Filter columns to either show only the index column or hide the common columns based on props
+    const filtered = columnKeys.filter((c) =>
       c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
     }
     return filtered;
-  }, [
-    schemaColumnKeys,
-    dataColumnKeys,
-    useDataColumnOrder,
-    indexColumn,
-    commonColumns,
-    showIndex,
-  ]);
+  }, [columnSchema, indexColumn, commonColumns, showIndex, firstRowKeys]);
 
-  const columns = columnsFromSchema;
+  const getColumnChoices = useGetDatabaseColumnChoices();
+  const updateDatabaseData = useUpdateDatabaseData();
 
   // Convert columns to tabulator format
   const tabulatorColumns = useMemo(() => {
@@ -501,12 +481,20 @@ const EntityDataTable = ({
         const columnChoices = lookup
           ? getColumnChoices(lookup?.path, lookup?.column)
           : values;
+        const nullable = _colSchema?.nullable ?? false;
 
         return {
           ...colDef,
           editor: 'select',
           formatter: (cell) => {
-            return `${cell.getValue()} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
+            const value = cell.getValue() ?? '';
+            const element = cell.getElement();
+            if (!nullable && value === '') {
+              element.style.border = '1px red solid';
+            } else {
+              element.style.border = '';
+            }
+            return `${value} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
           },
           editorParams: {
             values: columnChoices,
@@ -609,8 +597,16 @@ const EntityDataTable = ({
 
   return (
     <>
-      {columnSchema && showColumnSchema && (
-        <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+      {columnSchema ? (
+        showColumnSchema ? (
+          <TableColumnSchema columns={columns} columnSchema={columnSchema} />
+        ) : null
+      ) : (
+        <Alert
+          title="Schema for this dataset is not available. Editing is disabled."
+          type="warning"
+          showIcon
+        />
       )}
       <div style={{ margin: 12 }} ref={divRef} />
     </>
