@@ -97,7 +97,7 @@ const useToolsStore = create((set) => ({
 
   resetMissingInputs: () => {
     set({
-      missingInputs: { checking: false, error: false },
+      missingInputs: { checking: false, error: undefined },
     });
   },
 
