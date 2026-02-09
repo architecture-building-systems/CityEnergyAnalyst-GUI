@@ -278,7 +278,7 @@ const EntityDetails = ({
 
   const handleFormSubmit = (values) => {
     // Update all rows with the new common column values
-    data.forEach((row, rowIndex) => {
+    data.forEach((row) => {
       editableColumns.forEach((column) => {
         const oldValue = row[column];
         const newValue = values[column];
