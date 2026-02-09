@@ -165,7 +165,6 @@ export const TableDataset = ({
   showColumnSchema,
   enableRowSelection,
   onRowSelectionChanged,
-  useDataColumnOrder,
   ref,
 }) => {
   const tabulatorRef = useRef();
@@ -239,7 +238,6 @@ export const TableDataset = ({
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
             onRowSelectionChanged={handleRowSelectionChanged}
-            useDataColumnOrder={useDataColumnOrder}
           />
         </>
       )}
@@ -407,7 +405,6 @@ const EntityDataTable = ({
   showColumnSchema = true,
   enableRowSelection = false,
   onRowSelectionChanged,
-  useDataColumnOrder = true,
   ref,
 }) => {
   const divRef = useRef();
@@ -429,45 +426,27 @@ const EntityDataTable = ({
   );
 
   const columnSchema = schema?.columns;
-
-  const getColumnChoices = useGetDatabaseColumnChoices();
-  const updateDatabaseData = useUpdateDatabaseData();
-
-  const schemaColumnKeys = useMemo(
-    () => Object.keys(columnSchema ?? {}),
-    [columnSchema],
-  );
-
-  // Get columns from data if useDataColumnOrder is true
-  const dataColumnKeys = useMemo(() => {
-    if (!useDataColumnOrder || !data || data.length === 0) return [];
-    return Object.keys(data[0] || {});
-  }, [useDataColumnOrder, data]);
-
   const columnsFromSchema = useMemo(() => {
-    // Use data column order if flag is set
-    const sourceColumns = useDataColumnOrder
-      ? dataColumnKeys
-      : schemaColumnKeys;
+    const schemaColumnKeys = Object.keys(columnSchema ?? {});
 
-    if (sourceColumns.length === 0) return [];
-    const filtered = sourceColumns.filter((c) =>
+    // Filter columns to either show only the index column or hide the common columns based on props
+    const filtered = schemaColumnKeys.filter((c) =>
       c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
     }
     return filtered;
-  }, [
-    schemaColumnKeys,
-    dataColumnKeys,
-    useDataColumnOrder,
-    indexColumn,
-    commonColumns,
-    showIndex,
-  ]);
+  }, [columnSchema, indexColumn, commonColumns, showIndex]);
 
-  const columns = columnsFromSchema;
+  const getColumnChoices = useGetDatabaseColumnChoices();
+  const updateDatabaseData = useUpdateDatabaseData();
+
+  const columns = useMemo(
+    // If columns are defined in the schema, use those. Otherwise, fall back to using keys from the data (if available)
+    () => columnsFromSchema || (data?.[0] ? Object.keys(data[0]) : []),
+    [columnsFromSchema, data],
+  );
 
   // Convert columns to tabulator format
   const tabulatorColumns = useMemo(() => {
