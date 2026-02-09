@@ -490,8 +490,11 @@ const EntityDataTable = ({
           editor: 'select',
           formatter: (cell) => {
             const value = cell.getValue() ?? '';
-            if (!nullable && (value === '' || value === null)) {
-              cell.getElement().style.border = '1px red solid';
+            const element = cell.getElement();
+            if (!nullable && value === '') {
+              element.style.border = '1px red solid';
+            } else {
+              element.style.border = '';
             }
             return `${value} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
           },
