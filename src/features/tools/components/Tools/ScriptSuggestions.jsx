@@ -9,11 +9,8 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
       </div>
     );
 
-  // Checks have not been run, so ignore
-  if (error == undefined) return null;
-
-  // Error should be null if there is no error
-  if (error === null) return null;
+  // Checks have not been run or there is no error, so ignore
+  if (error === undefined || error === null) return null;
 
   // If error is an array, show script suggestions
   if (Array.isArray(error) && error.length > 0) {
