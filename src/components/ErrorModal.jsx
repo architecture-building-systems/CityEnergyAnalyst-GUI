@@ -21,8 +21,8 @@ const ErrorModal = ({ open, title, message, error, onClose }) => {
       onCancel={onClose}
       cancelButtonProps={{ style: { display: 'none' } }}
     >
-      <p>{message}</p>
-      <p
+      <div>{message}</div>
+      <div
         style={{
           background: '#efefef',
           borderRadius: 8,
@@ -30,7 +30,7 @@ const ErrorModal = ({ open, title, message, error, onClose }) => {
         }}
       >
         <pre style={{ padding: 16 }}>{errorMessage}</pre>
-      </p>
+      </div>
     </Modal>
   );
 };
