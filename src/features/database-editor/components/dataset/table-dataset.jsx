@@ -444,7 +444,10 @@ const EntityDataTable = ({
 
   const columns = useMemo(
     // If columns are defined in the schema, use those. Otherwise, fall back to using keys from the data (if available)
-    () => columnsFromSchema || (data?.[0] ? Object.keys(data[0]) : []),
+    () =>
+      columnsFromSchema?.length
+        ? columnsFromSchema
+        : Object.keys(data[0] || {}),
     [columnsFromSchema, data],
   );
 
@@ -480,12 +483,17 @@ const EntityDataTable = ({
         const columnChoices = lookup
           ? getColumnChoices(lookup?.path, lookup?.column)
           : values;
+        const nullable = _colSchema?.nullable ?? false;
 
         return {
           ...colDef,
           editor: 'select',
           formatter: (cell) => {
-            return `${cell.getValue()} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
+            const value = cell.getValue() ?? '';
+            if (!nullable && (value === '' || value === null)) {
+              cell.getElement().style.border = '1px red solid';
+            }
+            return `${value} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
           },
           editorParams: {
             values: columnChoices,
