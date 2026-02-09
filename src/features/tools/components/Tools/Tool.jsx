@@ -95,7 +95,7 @@ const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
   if (error !== null) {
     return (
       <Alert
-        message="Error"
+        title="Error"
         description="Something went wrong while checking for missing inputs."
         type="error"
         showIcon
