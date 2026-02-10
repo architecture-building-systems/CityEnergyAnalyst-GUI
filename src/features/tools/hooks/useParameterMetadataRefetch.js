@@ -64,10 +64,12 @@ const useParameterMetadataRefetch = (script, form) => {
                 category
               ].findIndex((p) => p.name === paramName);
               if (catParamIndex >= 0) {
-                newCategoricalParameters[category][catParamIndex] = {
-                  ...newCategoricalParameters[category][catParamIndex],
+                const cloned = [...newCategoricalParameters[category]];
+                cloned[catParamIndex] = {
+                  ...cloned[catParamIndex],
                   ...metadata,
                 };
+                newCategoricalParameters[category] = cloned;
               }
             });
           });
