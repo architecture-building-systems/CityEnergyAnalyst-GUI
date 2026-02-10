@@ -43,19 +43,13 @@ export const ToolFormButtons = ({
       return;
     }
 
-    return createJob(script, params)
-      .then((result) => {
-        // Clear network-name field after successful job creation to prevent duplicate runs
-        if (script === 'network-layout' && params?.['network-name']) {
-          form.setFieldsValue({ 'network-name': '' });
-          // Don't call validateFields - the component will detect the change and clear validation state
-        }
-        return result;
-      })
-      .catch((err) => {
-        if (err?.response?.status === 401) handleLogin();
-        else console.error(`Error creating job: ${err}`);
-      });
+    try {
+      const result = await createJob(script, params);
+      return result;
+    } catch (err) {
+      if (err?.response?.status === 401) handleLogin();
+      else console.error(`Error creating job: ${err}`);
+    }
   };
 
   const saveParams = async () => {
@@ -67,29 +61,30 @@ export const ToolFormButtons = ({
       return;
     }
 
-    return saveToolParams(script, params)
-      .then(() => {
-        return checkingInputs(script, params);
-      })
-      .catch((err) => {
-        if (err?.response?.status === 401) handleLogin();
-        else console.error(`Error saving tool parameters: ${err}`);
-      });
+    try {
+      await saveToolParams(script, params);
+      await checkingInputs(script, params);
+    } catch (err) {
+      if (err?.response?.status === 401) handleLogin();
+      else console.error(`Error saving tool parameters: ${err}`);
+    }
   };
 
   const setDefault = async () => {
-    return setDefaultToolParams(script)
-      .then(() => {
-        form.resetFields();
-        return getFormValues(form, parameters, categoricalParameters);
-      })
-      .then((params) => {
-        return checkingInputs(script, params);
-      })
-      .catch((err) => {
-        if (err?.response?.status === 401) handleLogin();
-        else console.error(`Error setting default tool parameters: ${err}`);
-      });
+    try {
+      await setDefaultToolParams(script);
+      form.resetFields();
+
+      const params = await getFormValues(
+        form,
+        parameters,
+        categoricalParameters,
+      );
+      if (params) await checkingInputs(script, params);
+    } catch (err) {
+      if (err?.response?.status === 401) handleLogin();
+      else console.error(`Error setting default tool parameters: ${err}`);
+    }
   };
 
   const handleRunScript = async () => {
