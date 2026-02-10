@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { Dropdown, Tooltip } from 'antd';
@@ -249,8 +249,12 @@ const LayerToggle = () => {
     if (data?.zone?.features) {
       const colorMap = generateConstructionColorMap(data.zone.features);
       setConstructionColorMap(colorMap);
+    } else {
+      // Reset construction coloring state when zone data becomes unavailable
+      setColorMode(COLOR_MODES.DEFAULT);
+      setConstructionColorMap({});
     }
-  }, [data?.zone?.features, setConstructionColorMap]);
+  }, [data?.zone?.features, setConstructionColorMap, setColorMode]);
 
   const items = useMemo(() => {
     const handleChange = (e) => {

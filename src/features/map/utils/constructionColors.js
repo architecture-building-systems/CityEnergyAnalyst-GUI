@@ -30,23 +30,29 @@ const hashString = (str) => {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash |= 0; // Convert to 32-bit integer
   }
   return Math.abs(hash);
 };
 
 /**
- * Generate a random HSL color with good saturation and lightness
- * Uses seeded random based on the construction standard name for consistency
+ * Generate a color for a construction standard
+ * Uses hash-based palette assignment for stability (same standard = same color)
+ * regardless of what other standards are present in the zone
  */
-export const generateColorForStandard = (standardName, index = 0) => {
-  // First try to use predefined colors for better visual distinction
-  if (index < PREDEFINED_COLORS.length) {
-    return PREDEFINED_COLORS[index];
+export const generateColorForStandard = (standardName) => {
+  const hash = hashString(standardName);
+  
+  // Use hash to derive a stable palette index
+  const paletteIndex = hash % PREDEFINED_COLORS.length;
+  
+  // Check if this standard can use the predefined palette
+  // The palette provides the most visually distinct colors
+  if (paletteIndex < PREDEFINED_COLORS.length) {
+    return PREDEFINED_COLORS[paletteIndex];
   }
 
-  // Fall back to generated colors for additional standards
-  const hash = hashString(standardName);
+  // Fall back to generated colors (shouldn't reach here with modulo, but kept for safety)
   const hue = hash % 360;
   const saturation = 60 + (hash % 20); // 60-80%
   const lightness = 45 + (hash % 15); // 45-60%
@@ -131,10 +137,10 @@ export const generateConstructionColorMap = (features) => {
   // Sort standards for consistent ordering
   const sortedStandards = Array.from(uniqueStandards).sort();
 
-  // Generate colors for each standard
+  // Generate colors for each standard (no index needed - colors derived from name)
   const colorMap = {};
-  sortedStandards.forEach((standard, index) => {
-    colorMap[standard] = generateColorForStandard(standard, index);
+  sortedStandards.forEach((standard) => {
+    colorMap[standard] = generateColorForStandard(standard);
   });
 
   return colorMap;

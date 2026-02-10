@@ -530,12 +530,7 @@ const DeckGLMap = ({ data, colors }) => {
           getElevation: (f) => (extruded ? calcPolygonElevation(f) : 0),
           getFillColor: (f) => buildingColor(f, 'zone'),
           updateTriggers: {
-            getFillColor: [
-              selected,
-              visibility.dc,
-              colorMode,
-              constructionColorMap,
-            ],
+            getFillColor: [selected, colorMode, constructionColorMap],
           },
 
           pickable: true,
@@ -763,9 +758,8 @@ const buildingColorFunction =
     // Check if construction standard coloring is enabled for zone layer
     if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD && layer === 'zone') {
       const constType = feature?.properties?.const_type;
-      if (constType && constructionColorMap[constType]) {
-        return getBuildingColorByStandard(constType, constructionColorMap);
-      }
+      // Use getBuildingColorByStandard which returns gray for missing/unknown types
+      return getBuildingColorByStandard(constType, constructionColorMap);
     }
 
     return colors.disconnected;
