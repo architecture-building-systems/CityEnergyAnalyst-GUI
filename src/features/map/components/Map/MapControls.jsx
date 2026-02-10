@@ -1,11 +1,8 @@
-import { useEffect } from 'react';
-import { Tooltip, Switch, Popover } from 'antd';
-import { BgColorsOutlined } from '@ant-design/icons';
-import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
+import { Tooltip } from 'antd';
+import { useMapStore } from 'features/map/stores/mapStore';
 import { CameraView, Compass, ExtrudeIcon } from 'assets/icons';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import LayerToggle from './LayerToggle';
-import { generateConstructionColorMap } from 'features/map/utils/constructionColors';
 
 const ExtrudeButton = () => {
   const extruded = useMapStore((state) => state.extruded);
@@ -70,55 +67,6 @@ const ResetCompassButton = () => {
   );
 };
 
-/**
- * Toggle button for construction standard building coloring
- */
-const ConstructionStandardToggle = ({ data }) => {
-  const colorMode = useMapStore((state) => state.colorMode);
-  const setColorMode = useMapStore((state) => state.setColorMode);
-  const setConstructionColorMap = useMapStore(
-    (state) => state.setConstructionColorMap,
-  );
-
-  const isEnabled = colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
-
-  // Initialize color map when data changes
-  useEffect(() => {
-    if (data?.zone?.features) {
-      const colorMap = generateConstructionColorMap(data.zone.features);
-      setConstructionColorMap(colorMap);
-    }
-  }, [data?.zone?.features, setConstructionColorMap]);
-
-  const handleToggle = (checked) => {
-    setColorMode(
-      checked ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT,
-    );
-  };
-
-  const popoverContent = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span>Color by construction standard</span>
-      <Switch checked={isEnabled} onChange={handleToggle} size="small" />
-    </div>
-  );
-
-  return (
-    <Popover content={popoverContent} trigger="click" placement="left">
-      <Tooltip title="Building Colors" styles={{ body: { fontSize: 12 } }}>
-        <div
-          className="cea-card-toolbar-icon no-hover-color"
-          style={{
-            color: isEnabled ? '#1890ff' : undefined,
-          }}
-        >
-          <BgColorsOutlined style={{ fontSize: 18 }} />
-        </div>
-      </Tooltip>
-    </Popover>
-  );
-};
-
 const MapControls = () => {
   const { data: inputData } = useInputs();
   const { geojsons: data } = inputData;
@@ -128,7 +76,6 @@ const MapControls = () => {
       {data?.zone && (
         <>
           <LayerToggle />
-          <ConstructionStandardToggle data={data} />
           <ExtrudeButton />
           <ResetCameraButton />
         </>

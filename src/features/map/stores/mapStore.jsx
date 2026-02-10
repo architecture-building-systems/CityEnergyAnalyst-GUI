@@ -22,7 +22,7 @@ export const useMapStore = create((set) => ({
   range: [0, 0],
 
   // Construction standard coloring state
-  colorMode: COLOR_MODES.DEFAULT,
+  colorMode: COLOR_MODES.CONSTRUCTION_STANDARD,
   constructionColorMap: {},
 
   setVisibility: (layer, value) =>
