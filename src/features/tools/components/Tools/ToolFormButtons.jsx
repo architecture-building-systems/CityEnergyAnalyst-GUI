@@ -72,7 +72,7 @@ export const ToolFormButtons = ({
         return checkingInputs(script, params);
       })
       .catch((err) => {
-        if (err?.response?.status === 401) return;
+        if (err?.response?.status === 401) handleLogin();
         else console.error(`Error saving tool parameters: ${err}`);
       });
   };
@@ -87,7 +87,7 @@ export const ToolFormButtons = ({
         return checkingInputs(script, params);
       })
       .catch((err) => {
-        if (err?.response?.status === 401) return;
+        if (err?.response?.status === 401) handleLogin();
         else console.error(`Error setting default tool parameters: ${err}`);
       });
   };
