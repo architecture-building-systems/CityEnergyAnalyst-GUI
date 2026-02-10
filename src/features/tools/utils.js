@@ -35,14 +35,15 @@ export const getFormValues = async (
 
     console.error('Error', err);
     // Expand collapsed categories if errors are found inside
-    if (categoricalParameters) {
+    if (categoricalParameters && err?.errorFields) {
       let categoriesWithErrors = [];
-      for (const parameterName in err) {
+      for (const field of err.errorFields) {
+        const parameterName = field.name.join('.');
         for (const category in categoricalParameters) {
           if (
-            typeof categoricalParameters[category].find(
+            categoricalParameters[category].find(
               (x) => x.name === parameterName,
-            ) !== 'undefined'
+            ) !== undefined
           ) {
             categoriesWithErrors.push(category);
             break;
