@@ -79,12 +79,12 @@ const useToolsStore = create((set) => ({
         missingInputs: { ...state.missingInputs, checking: false, error: null },
       }));
     } catch (err) {
-      let error;
-      if (err.response?.status === 400) {
-        error = err.response?.data?.detail?.script_suggestions;
-      } else if (err.response?.status === 500) {
-        error = err.response?.data?.detail || 'Internal server error';
-      }
+      const error =
+        err.response?.data?.detail ||
+        err.response?.statusText ||
+        err.message ||
+        'Unexpected error';
+
       set((state) => ({
         missingInputs: {
           ...state.missingInputs,

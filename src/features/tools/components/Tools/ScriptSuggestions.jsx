@@ -12,8 +12,8 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   // Checks have not been run or there is no error, so ignore
   if (error === undefined || error === null) return null;
 
-  // If error is an array, show script suggestions
-  if (Array.isArray(error) && error.length > 0) {
+  // If error contains script suggestions, show them
+  if (error?.script_suggestions?.length) {
     return (
       <Alert
         title="Missing inputs detected"
@@ -21,7 +21,7 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
           <div>
             <p>Run the following scripts to create the missing inputs:</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {error.map(({ label, name }) => {
+              {error.script_suggestions.map(({ label, name }) => {
                 return (
                   <div key={name} style={{ display: 'flex', gap: 8 }}>
                     -
