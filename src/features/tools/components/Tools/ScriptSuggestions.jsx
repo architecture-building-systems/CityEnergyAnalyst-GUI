@@ -28,11 +28,18 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
                     <b
                       className="cea-tool-suggestions"
                       onClick={() => onToolSelected?.(name)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onToolSelected?.(name);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       style={{ marginRight: 'auto' }}
-                      aria-hidden
                     >
                       {label}
-                      <ExternalLinkIcon style={{ fontSize: 18 }} />
+                      <ExternalLinkIcon />
                     </b>
                   </div>
                 );
