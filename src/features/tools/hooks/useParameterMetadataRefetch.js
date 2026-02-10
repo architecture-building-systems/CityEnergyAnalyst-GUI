@@ -97,7 +97,12 @@ const useParameterMetadataRefetch = (script, form) => {
 
         // Re-check for missing inputs after metadata update
         // Parameters may now depend on different input files
-        const currentParams = await getFormValues(form, updatedMetadata);
+        const updatedCache = queryClient.getQueryData(['toolParams', script]);
+        const currentParams = await getFormValues(
+          form,
+          updatedCache?.parameters,
+          updatedCache?.categorical_parameters,
+        );
         if (currentParams) {
           console.log('[handleRefetch] Re-checking for missing inputs');
           checkMissingInputs(script, currentParams);
