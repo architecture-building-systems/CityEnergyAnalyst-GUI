@@ -112,7 +112,7 @@ export const ToolFormButtons = ({
           loading={loading}
         >
           {loading ? (
-            <div>Staring job...</div>
+            <div>Starting job...</div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               Run
