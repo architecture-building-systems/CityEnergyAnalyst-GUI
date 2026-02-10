@@ -37,17 +37,13 @@ const useToolsStore = create((set) => ({
     }
   },
 
-  setDefaultToolParams: async (tool, queryClient) => {
+  setDefaultToolParams: async (tool) => {
     set((state) => ({
       toolSaving: { ...state.toolSaving, isSaving: true },
     }));
 
     try {
       const response = await apiClient.post(`/api/tools/${tool}/default`);
-      // Invalidate query to refetch params after setting default
-      if (queryClient) {
-        await queryClient.invalidateQueries({ queryKey: ['toolParams', tool] });
-      }
       return response.data;
     } finally {
       set((state) => ({
@@ -112,8 +108,12 @@ export const useSetDefaultToolParams = () => {
   );
   const queryClient = useQueryClient();
 
-  // Return wrapper that automatically injects queryClient
-  return (tool) => setDefaultToolParams(tool, queryClient);
+  // Return wrapper that handles API call and query invalidation
+  return async (tool) => {
+    const result = await setDefaultToolParams(tool);
+    await queryClient.invalidateQueries({ queryKey: ['toolParams', tool] });
+    return result;
+  };
 };
 
 export const useSaveToolParams = () =>
