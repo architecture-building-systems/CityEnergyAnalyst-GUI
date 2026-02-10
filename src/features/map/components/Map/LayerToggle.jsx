@@ -245,10 +245,12 @@ const LayerToggle = () => {
   }, [data]);
 
   // Initialize construction color map when zone data changes
+  // Enable construction coloring by default when color map is ready
   useEffect(() => {
     if (data?.zone?.features) {
       const colorMap = generateConstructionColorMap(data.zone.features);
       setConstructionColorMap(colorMap);
+      setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
     } else {
       // Reset construction coloring state when zone data becomes unavailable
       setColorMode(COLOR_MODES.DEFAULT);
