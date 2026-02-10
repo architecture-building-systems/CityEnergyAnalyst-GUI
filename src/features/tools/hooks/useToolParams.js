@@ -25,29 +25,36 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
   const checkMissingInputs = useCheckMissingInputs();
 
   useEffect(() => {
+    let cancelled = false;
+
+    // Reset form and missing inputs state on any dependency change
+    form.resetFields();
+    resetMissingInputs();
+
     const checkInputs = async () => {
       if (!script || !parameters) return;
 
-      // Reset form fields to ensure they are in sync with the fetched parameters
-      form.resetFields();
-
-      // Check for missing inputs after fetching parameters
       const params = await getFormValues(
         form,
         parameters,
         categoricalParameters,
       );
-      if (params) checkMissingInputs(script, params);
+      if (!cancelled && params) checkMissingInputs(script, params);
     };
 
     checkInputs();
-  }, [script, form, parameters, categoricalParameters, checkMissingInputs]);
 
-  useEffect(() => {
-    // Whenever the script changes, reset the form and missing inputs state
-    form.resetFields();
-    resetMissingInputs();
-  }, [script, form, resetMissingInputs]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    script,
+    form,
+    parameters,
+    categoricalParameters,
+    checkMissingInputs,
+    resetMissingInputs,
+  ]);
 };
 
 export default useToolParams;
