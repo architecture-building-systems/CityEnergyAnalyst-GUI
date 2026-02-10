@@ -3,30 +3,18 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { isElectron, openExternal } from 'utils/electron';
 
-export const ToolDescription = ({
-  ref,
-  height,
-  description,
-  label,
-  visible,
-}) => {
+export const ToolDescription = ({ description, label }) => {
   return (
-    <div
-      id="cea-tool-header-description"
-      ref={ref}
-      style={{
-        height: visible ? `${height}px` : 0,
-        opacity: visible ? 1 : 0,
-        overflow: 'hidden',
-        transition:
-          'height 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
-        transform: visible ? 'translateY(0)' : 'translateY(-10px)',
-        transformOrigin: 'top',
-      }}
-    >
+    <div id="cea-tool-header-description">
       <div>
         <h2>{label}</h2>
-        <small>
+        <div
+          style={{
+            maxHeight: 240,
+            overflowY: 'auto',
+            fontSize: 14,
+          }}
+        >
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
@@ -73,7 +61,7 @@ export const ToolDescription = ({
           >
             {description}
           </ReactMarkdown>
-        </small>
+        </div>
       </div>
     </div>
   );

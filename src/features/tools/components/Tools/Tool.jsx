@@ -13,12 +13,7 @@ import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
-import {
-  useSkeletonDelay,
-  useHeaderVisibility,
-  useToolParams,
-  useFetchToolParams,
-} from 'features/tools/hooks';
+import { useToolParams, useFetchToolParams } from 'features/tools/hooks';
 
 const Tool = ({ script, onToolSelected, header, form }) => {
   const { data: params, isLoading, error } = useFetchToolParams(script);
@@ -37,14 +32,9 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
   const isRefetching = useIsRefetching();
   const disableButtons = checkingInputs || inputError !== null;
-  const showSkeleton = useSkeletonDelay(350);
-
-  const { headerVisible, descriptionRef, descriptionHeight, handleScroll } =
-    useHeaderVisibility(description, showSkeleton);
-
   const changes = useChangesExist();
 
-  if (isLoading || showSkeleton)
+  if (isLoading)
     return (
       <div style={{ padding: 12 }}>
         {header}
@@ -97,16 +87,9 @@ const Tool = ({ script, onToolSelected, header, form }) => {
                 }}
               >
                 <span>{category}</span>
-                {!headerVisible && <b>{label}</b>}
               </small>
             </div>
-            <ToolDescription
-              ref={descriptionRef}
-              description={description}
-              height={descriptionHeight}
-              label={label}
-              visible={headerVisible}
-            />
+            <ToolDescription description={description} label={label} />
           </div>
 
           <div className="cea-tool-form-buttongroup">
@@ -148,7 +131,6 @@ const Tool = ({ script, onToolSelected, header, form }) => {
             overflowY: 'auto',
             paddingInline: 12,
           }}
-          onScroll={handleScroll}
         >
           <ToolForm
             form={form}
