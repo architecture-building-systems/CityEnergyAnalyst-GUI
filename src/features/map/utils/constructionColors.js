@@ -36,23 +36,18 @@ const hashString = (str) => {
 };
 
 /**
- * Generate a color for a construction standard
- * Uses hash-based palette assignment for stability (same standard = same color)
- * regardless of what other standards are present in the zone
+ * Generate a color for a construction standard based on its index in the sorted list.
+ * The first N standards get visually distinct predefined palette colors.
+ * Standards beyond the palette size get deterministic hash-derived HSL colors.
  */
-export const generateColorForStandard = (standardName) => {
-  const hash = hashString(standardName);
-  
-  // Use hash to derive a stable palette index
-  const paletteIndex = hash % PREDEFINED_COLORS.length;
-  
-  // Check if this standard can use the predefined palette
-  // The palette provides the most visually distinct colors
-  if (paletteIndex < PREDEFINED_COLORS.length) {
-    return PREDEFINED_COLORS[paletteIndex];
+export const generateColorForStandard = (standardName, index) => {
+  // Use predefined palette for the first N standards (maximally distinct)
+  if (index < PREDEFINED_COLORS.length) {
+    return PREDEFINED_COLORS[index];
   }
 
-  // Fall back to generated colors (shouldn't reach here with modulo, but kept for safety)
+  // Fall back to hash-derived HSL for additional standards beyond the palette
+  const hash = hashString(standardName);
   const hue = hash % 360;
   const saturation = 60 + (hash % 20); // 60-80%
   const lightness = 45 + (hash % 15); // 45-60%
@@ -137,10 +132,10 @@ export const generateConstructionColorMap = (features) => {
   // Sort standards for consistent ordering
   const sortedStandards = Array.from(uniqueStandards).sort();
 
-  // Generate colors for each standard (no index needed - colors derived from name)
+  // Generate colors for each standard (index determines palette assignment)
   const colorMap = {};
-  sortedStandards.forEach((standard) => {
-    colorMap[standard] = generateColorForStandard(standard);
+  sortedStandards.forEach((standard, index) => {
+    colorMap[standard] = generateColorForStandard(standard, index);
   });
 
   return colorMap;

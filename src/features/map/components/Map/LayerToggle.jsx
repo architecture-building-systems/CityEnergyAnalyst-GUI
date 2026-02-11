@@ -54,9 +54,9 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div className="layer-toggle" onClick={handleClick}>
-      <label className="layer-toggle-label">
+    <div className="layer-toggle">
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      <label className="layer-toggle-label" onClick={handleClick}>
         <input
           type="checkbox"
           name="layer-toggle"
@@ -194,9 +194,9 @@ const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div className="layer-toggle" onClick={handleClick}>
-      <label className="layer-toggle-label">
+    <div className="layer-toggle">
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      <label className="layer-toggle-label" onClick={handleClick}>
         <input
           type="checkbox"
           name="layer-toggle"
@@ -245,12 +245,15 @@ const LayerToggle = () => {
   }, [data]);
 
   // Initialize construction color map when zone data changes
-  // Enable construction coloring by default when color map is ready
+  // Only default to CONSTRUCTION_STANDARD on first load; respect user's toggle after that
   useEffect(() => {
     if (data?.zone?.features) {
       const colorMap = generateConstructionColorMap(data.zone.features);
       setConstructionColorMap(colorMap);
-      setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+      // Only enable on first load — don't override user's toggle choice on refetch
+      if (colorMode === COLOR_MODES.DEFAULT) {
+        setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+      }
     } else {
       // Reset construction coloring state when zone data becomes unavailable
       setColorMode(COLOR_MODES.DEFAULT);
