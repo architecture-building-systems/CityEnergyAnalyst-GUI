@@ -55,8 +55,7 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
 
   return (
     <div className="layer-toggle">
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
-      <label className="layer-toggle-label" onClick={handleClick}>
+      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
         <input
           type="checkbox"
           name="layer-toggle"
@@ -195,8 +194,7 @@ const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
 
   return (
     <div className="layer-toggle">
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
-      <label className="layer-toggle-label" onClick={handleClick}>
+      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
         <input
           type="checkbox"
           name="layer-toggle"
@@ -215,6 +213,7 @@ const LayerToggle = () => {
   const { geojsons: data } = inputData;
 
   const dataLoaded = useRef(false);
+  const constructionColorInitialized = useRef(false);
   const setVisibility = useMapStore((state) => state.setVisibility);
   const setMapLabels = useMapStore((state) => state.setMapLabels);
 
@@ -245,19 +244,21 @@ const LayerToggle = () => {
   }, [data]);
 
   // Initialize construction color map when zone data changes
-  // Only default to CONSTRUCTION_STANDARD on first load; respect user's toggle after that
+  // Only auto-enable on true first load; respect user's toggle choice on refetch
   useEffect(() => {
     if (data?.zone?.features) {
       const colorMap = generateConstructionColorMap(data.zone.features);
       setConstructionColorMap(colorMap);
-      // Only enable on first load — don't override user's toggle choice on refetch
-      if (colorMode === COLOR_MODES.DEFAULT) {
+      // Only enable on first load — not on refetch after user toggled off
+      if (!constructionColorInitialized.current) {
         setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+        constructionColorInitialized.current = true;
       }
     } else {
       // Reset construction coloring state when zone data becomes unavailable
       setColorMode(COLOR_MODES.DEFAULT);
       setConstructionColorMap({});
+      constructionColorInitialized.current = false;
     }
   }, [data?.zone?.features, setConstructionColorMap, setColorMode]);
 
