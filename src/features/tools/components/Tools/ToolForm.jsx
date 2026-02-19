@@ -1,13 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Parameter from 'components/Parameter';
 import { Collapse, Form } from 'antd';
 import useParameterMetadataRefetch from '../../hooks/useParameterMetadataRefetch';
 
-const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
+const ToolForm = ({
+  form,
+  parameters,
+  categoricalParameters,
+  script,
+  onParameterRefetch,
+}) => {
   const [activeKey, setActiveKey] = useState([]);
   const [watchedValues, setWatchedValues] = useState({});
 
-  const { handleRefetch } = useParameterMetadataRefetch(script, form);
+  const { handleRefetch, isRefetching } = useParameterMetadataRefetch(
+    script,
+    form,
+  );
+
+  useEffect(() => {
+    onParameterRefetch?.(isRefetching);
+  }, [isRefetching, onParameterRefetch]);
 
   // Watch for changes in parameters that have dependents
   const handleFieldChange = useCallback(

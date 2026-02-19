@@ -6,11 +6,11 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 import { getFormValues } from 'features/tools/utils';
+import { useCheckInputs } from 'features/tools/stores/checkInputsStore';
 import {
-  useCheckMissingInputs,
-  useSaveToolParams,
-  useSetDefaultToolParams,
-} from 'features/tools/stores/toolsStore';
+  useSaveToolParamsMutation,
+  useSetDefaultToolParamsMutation,
+} from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
@@ -24,9 +24,10 @@ export const ToolFormButtons = ({
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
 
-  const saveToolParams = useSaveToolParams();
-  const checkingInputs = useCheckMissingInputs();
-  const setDefaultToolParams = useSetDefaultToolParams();
+  const { mutateAsync: saveToolParams } = useSaveToolParamsMutation();
+  const { checkInputs } = useCheckInputs();
+  const { mutateAsync: setDefaultToolParams } =
+    useSetDefaultToolParamsMutation();
   const createJob = useCreateJob();
 
   const setShowLoginModal = useSetShowLoginModal();
@@ -62,8 +63,8 @@ export const ToolFormButtons = ({
     }
 
     try {
-      await saveToolParams(script, params);
-      await checkingInputs(script, params);
+      await saveToolParams({ tool: script, params });
+      await checkInputs(script, params);
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
       else console.error(`Error saving tool parameters: ${err}`);
@@ -80,7 +81,7 @@ export const ToolFormButtons = ({
         parameters,
         categoricalParameters,
       );
-      if (params) await checkingInputs(script, params);
+      if (params) await checkInputs(script, params);
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
       else console.error(`Error setting default tool parameters: ${err}`);
@@ -90,7 +91,7 @@ export const ToolFormButtons = ({
   const handleRunScript = async () => {
     setLoading(true);
     try {
-      await runScript?.();
+      await runScript();
     } catch (error) {
       console.error(error);
     } finally {

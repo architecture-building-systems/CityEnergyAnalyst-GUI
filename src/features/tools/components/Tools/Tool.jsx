@@ -1,8 +1,7 @@
+import { useState } from 'react';
 import { Divider, Spin, Alert } from 'antd';
-import useToolsStore, {
-  useIsRefetching,
-  useMissingInputs,
-} from 'features/tools/stores/toolsStore';
+import { useCheckInputs } from 'features/tools/stores/checkInputsStore';
+import { useSaveToolParamsMutation } from 'features/tools/hooks/mutations';
 import { AsyncError } from 'components/AsyncError';
 
 import './Tool.css';
@@ -16,9 +15,14 @@ import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams, useFetchToolParams } from 'features/tools/hooks';
 
 const Tool = ({ script, onToolSelected, header, form }) => {
-  const { data: params, isLoading, error } = useFetchToolParams(script);
-  const { isSaving } = useToolsStore((state) => state.toolSaving);
-  const { checking: checkingInputs, error: inputError } = useMissingInputs();
+  const {
+    data: params,
+    isLoading,
+    isFetching,
+    error,
+  } = useFetchToolParams(script);
+  const { isPending: isSaving } = useSaveToolParamsMutation();
+  const { checking: checkingInputs, error: inputError } = useCheckInputs();
 
   const {
     category,
@@ -30,7 +34,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
   useToolParams(script, form, parameters, categoricalParameters);
 
-  const isRefetching = useIsRefetching();
+  const [isRefetching, setIsRefetching] = useState(false);
   const disableButtons = checkingInputs || inputError !== null;
   const changes = useChangesExist();
 
@@ -53,7 +57,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
   return (
     <Spin
       wrapperClassName="cea-tool-form-spinner"
-      spinning={isSaving || isRefetching}
+      spinning={isSaving || isFetching || isRefetching}
     >
       <div
         style={{
@@ -137,6 +141,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
+            onParameterRefetch={setIsRefetching}
           />
         </div>
       </div>

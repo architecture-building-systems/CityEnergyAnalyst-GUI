@@ -1,16 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { getFormValues } from '../utils';
-import {
-  useCheckMissingInputs,
-  useSetIsRefetching,
-} from '../stores/toolsStore';
+import { useCheckInputs } from '../stores/checkInputsStore';
 
 const useParameterMetadataRefetch = (script, form) => {
   const queryClient = useQueryClient();
-  const checkMissingInputs = useCheckMissingInputs();
-  const setIsRefetching = useSetIsRefetching();
+  const { checkInputs } = useCheckInputs();
+  const [isRefetching, setIsRefetching] = useState(false);
 
   const handleRefetch = useCallback(
     async (formValues, changedParam, affectedParams) => {
@@ -105,7 +102,7 @@ const useParameterMetadataRefetch = (script, form) => {
         );
         if (currentParams) {
           console.log('[handleRefetch] Re-checking for missing inputs');
-          checkMissingInputs(script, currentParams);
+          checkInputs(script, currentParams);
         }
       } catch (err) {
         console.error('Error refetching parameter metadata:', err);
@@ -113,10 +110,10 @@ const useParameterMetadataRefetch = (script, form) => {
         setIsRefetching(false);
       }
     },
-    [script, form, queryClient, checkMissingInputs, setIsRefetching],
+    [script, form, queryClient, checkInputs, setIsRefetching],
   );
 
-  return { handleRefetch };
+  return { handleRefetch, isRefetching };
 };
 
 export default useParameterMetadataRefetch;
