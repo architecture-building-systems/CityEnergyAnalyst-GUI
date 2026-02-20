@@ -10,7 +10,7 @@ const useCheckInputsStore = create((set) => ({
       console.warn('Tool not specified for checking missing inputs.');
       return;
     }
-    if (parameters === undefined) {
+    if (parameters == null) {
       console.warn('Parameters not provided for checking missing inputs.');
       return;
     }
