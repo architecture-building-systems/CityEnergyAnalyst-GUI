@@ -45,13 +45,18 @@ const Tool = ({ script, onToolSelected, header, form }) => {
         <ToolSkeleton loadingText="Loading parameters..." />
       </div>
     );
-  if (error)
+  if (error) {
+    // Normalize error for AsyncError component
+    const normalizedError = error?.response || {
+      data: { message: error?.message || 'Unknown error' },
+    };
     return (
       <div>
         {header}
-        <AsyncError error={error?.response || error} />
+        <AsyncError error={normalizedError} />
       </div>
     );
+  }
   if (!label) return null;
 
   return (
