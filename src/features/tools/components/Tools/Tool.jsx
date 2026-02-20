@@ -21,7 +21,8 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     isFetching,
     error,
   } = useFetchToolParams(script);
-  const { isPending: isSaving } = useSaveToolParamsMutation();
+  const { mutateAsync: onSaveParams, isPending: isSaving } =
+    useSaveToolParamsMutation();
   const { checking: checkingInputs, error: inputError } = useCheckInputs();
 
   const {
@@ -108,17 +109,15 @@ const Tool = ({ script, onToolSelected, header, form }) => {
               parameters={parameters}
               categoricalParameters={categoricalParameters}
               script={script}
+              onSaveParams={onSaveParams}
+              isSaving={isSaving}
             />
           </div>
 
           {changes && (
             <Alert
-              title={
-                <>
-                  Unsaved changes detected. <br />
-                  Save or discard before proceeding.
-                </>
-              }
+              title="Unsaved changes detected."
+              description="Save or discard before proceeding."
               type="warning"
               showIcon
             />

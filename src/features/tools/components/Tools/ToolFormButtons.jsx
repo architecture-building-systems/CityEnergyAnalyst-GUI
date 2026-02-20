@@ -7,10 +7,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 import { RunIcon } from 'assets/icons';
 import { getFormValues } from 'features/tools/utils';
 import { useCheckInputs } from 'features/tools/stores/checkInputsStore';
-import {
-  useSaveToolParamsMutation,
-  useSetDefaultToolParamsMutation,
-} from 'features/tools/hooks/mutations';
+import { useSetDefaultToolParamsMutation } from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
@@ -20,11 +17,12 @@ export const ToolFormButtons = ({
   categoricalParameters,
   script,
   disabled = false,
+  onSaveParams,
+  isSaving = false,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
 
-  const { mutateAsync: saveToolParams } = useSaveToolParamsMutation();
   const { checkInputs } = useCheckInputs();
   const { mutateAsync: setDefaultToolParams } =
     useSetDefaultToolParamsMutation();
@@ -63,7 +61,7 @@ export const ToolFormButtons = ({
     }
 
     try {
-      await saveToolParams({ tool: script, params });
+      await onSaveParams({ tool: script, params });
       await checkInputs(script, params);
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
@@ -123,7 +121,9 @@ export const ToolFormButtons = ({
         </Button>
       </animated.div>
 
-      <Button onClick={saveParams}>Save Settings</Button>
+      <Button onClick={saveParams} loading={isSaving}>
+        Save Settings
+      </Button>
       <Button onClick={setDefault}>Reset</Button>
     </>
   );
