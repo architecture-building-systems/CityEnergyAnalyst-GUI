@@ -6,8 +6,10 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 import { getFormValues } from 'features/tools/utils';
-import { useCheckInputs } from 'features/tools/stores/checkInputsStore';
-import { useSetDefaultToolParamsMutation } from 'features/tools/hooks/mutations';
+import {
+  useSetDefaultToolParamsMutation,
+  useCheckInputsMutation,
+} from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 
@@ -23,7 +25,7 @@ export const ToolFormButtons = ({
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
 
-  const { checkInputs } = useCheckInputs();
+  const { mutateAsync: checkInputs } = useCheckInputsMutation();
   const { mutateAsync: setDefaultToolParams } =
     useSetDefaultToolParamsMutation();
   const createJob = useCreateJob();
@@ -54,18 +56,15 @@ export const ToolFormButtons = ({
   const saveParams = async () => {
     const params = await getFormValues(form, parameters, categoricalParameters);
 
-    // If getForm() returns null/undefined (validation failed), don't save
     if (!params) {
-      console.error('Cannot save - form validation failed');
       return;
     }
 
     try {
       await onSaveParams({ tool: script, params });
-      await checkInputs(script, params);
+      await checkInputs({ tool: script, parameters: params });
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
-      else console.error(`Error saving tool parameters: ${err}`);
     }
   };
 
@@ -73,16 +72,8 @@ export const ToolFormButtons = ({
     try {
       await setDefaultToolParams(script);
       form.resetFields();
-
-      const params = await getFormValues(
-        form,
-        parameters,
-        categoricalParameters,
-      );
-      if (params) await checkInputs(script, params);
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
-      else console.error(`Error setting default tool parameters: ${err}`);
     }
   };
 

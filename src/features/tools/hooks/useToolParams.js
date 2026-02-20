@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { useCheckInputs } from 'features/tools/stores/checkInputsStore';
+import { useCheckInputsMutation } from './mutations';
 import { getFormValues } from '../utils';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 
@@ -14,20 +14,21 @@ export const useFetchToolParams = (script) => {
       return response.data;
     },
     enabled: !!script,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
 const useToolParams = (script, form, parameters, categoricalParameters) => {
-  const { checkInputs, resetInputs } = useCheckInputs();
+  const queryClient = useQueryClient();
+  const { mutate: checkInputs } = useCheckInputsMutation();
 
-  // Effect 1: Reset form only when script changes (switching tools)
   useEffect(() => {
     form.resetFields();
-    resetInputs();
-  }, [script, form, resetInputs]);
+    queryClient.setQueryData([TOOLS_QUERY_KEYS.TOOL_PARAMS, script], (old) =>
+      old ? { ...old, inputError: undefined } : old,
+    );
+  }, [script, form, queryClient]);
 
-  // Effect 2: Check inputs when parameters change (without resetting form)
   useEffect(() => {
     let cancelled = false;
 
@@ -39,7 +40,9 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
         parameters,
         categoricalParameters,
       );
-      if (!cancelled && params) checkInputs(script, params);
+      if (!cancelled && params) {
+        checkInputs({ tool: script, parameters: params });
+      }
     };
 
     run();

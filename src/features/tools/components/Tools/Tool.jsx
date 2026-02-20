@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Divider, Spin, Alert } from 'antd';
-import { useCheckInputs } from 'features/tools/stores/checkInputsStore';
 import { useSaveToolParamsMutation } from 'features/tools/hooks/mutations';
 import { AsyncError } from 'components/AsyncError';
 
@@ -12,7 +11,11 @@ import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
-import { useToolParams, useFetchToolParams } from 'features/tools/hooks';
+import {
+  useToolParams,
+  useFetchToolParams,
+  useCheckInputsState,
+} from 'features/tools/hooks';
 
 const Tool = ({ script, onToolSelected, header, form }) => {
   const {
@@ -23,7 +26,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
   } = useFetchToolParams(script);
   const { mutateAsync: onSaveParams, isPending: isSaving } =
     useSaveToolParamsMutation();
-  const { checking: checkingInputs, error: inputError } = useCheckInputs();
+  const { isChecking } = useCheckInputsState(script);
 
   const {
     category,
@@ -31,12 +34,15 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     description,
     parameters,
     categorical_parameters: categoricalParameters,
+    inputError,
   } = params || {};
 
   useToolParams(script, form, parameters, categoricalParameters);
 
   const [isRefetching, setIsRefetching] = useState(false);
-  const disableButtons = checkingInputs || inputError !== null;
+  const isInputChecked = inputError !== undefined;
+  const hasInputError = inputError != null;
+  const disableButtons = isChecking || !isInputChecked || hasInputError;
   const changes = useChangesExist();
 
   if (isLoading)
@@ -125,7 +131,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
           <ScriptSuggestions
             onToolSelected={onToolSelected}
-            loading={checkingInputs}
+            loading={isChecking}
             error={inputError}
           />
         </div>
