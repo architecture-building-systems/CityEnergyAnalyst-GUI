@@ -21,12 +21,15 @@ export const useFetchToolParams = (script) => {
 const useToolParams = (script, form, parameters, categoricalParameters) => {
   const { checkInputs, resetInputs } = useCheckInputs();
 
+  // Effect 1: Reset form only when script changes (switching tools)
   useEffect(() => {
-    let cancelled = false;
-
-    // Reset form and missing inputs state on any dependency change
     form.resetFields();
     resetInputs();
+  }, [script, form, resetInputs]);
+
+  // Effect 2: Check inputs when parameters change (without resetting form)
+  useEffect(() => {
+    let cancelled = false;
 
     const run = async () => {
       if (!script || !parameters) return;
@@ -44,14 +47,7 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
     return () => {
       cancelled = true;
     };
-  }, [
-    script,
-    form,
-    parameters,
-    categoricalParameters,
-    checkInputs,
-    resetInputs,
-  ]);
+  }, [script, form, parameters, categoricalParameters, checkInputs]);
 };
 
 export default useToolParams;
