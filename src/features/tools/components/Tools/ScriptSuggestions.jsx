@@ -25,22 +25,14 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
                 return (
                   <div key={name} style={{ display: 'flex', gap: 8 }}>
                     -
-                    <b
+                    <button
                       className="cea-tool-suggestions"
                       onClick={() => onToolSelected?.(name)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          onToolSelected?.(name);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
                       style={{ marginRight: 'auto' }}
                     >
-                      {label}
+                      <b>{label}</b>
                       <ExternalLinkIcon />
-                    </b>
+                    </button>
                   </div>
                 );
               })}
