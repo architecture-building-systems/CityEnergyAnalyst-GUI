@@ -206,8 +206,10 @@ const queryClient = new QueryClient({
   // },
 });
 
-// For dev tools - attach queryClient to window object
-window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+// For dev tools - attach queryClient to window object (dev only)
+if (import.meta.env.DEV) {
+  window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+}
 
 const HomePage = () => {
   const isServerUp = useCheckServerStatus();
