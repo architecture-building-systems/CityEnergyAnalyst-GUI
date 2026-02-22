@@ -47,7 +47,7 @@ const ToolCard = ({
       content = <BuildingEditor />;
       break;
     default:
-      content = <div>No tool selected</div>;
+      content = null;
   }
 
   return (
@@ -86,7 +86,9 @@ const ToolCard = ({
           />
         </div>
 
-        <div style={{ flex: 1, overflow: 'hidden' }}>{content}</div>
+        <ErrorBoundary>
+          <div style={{ flex: 1, overflow: 'hidden' }}>{content}</div>
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
