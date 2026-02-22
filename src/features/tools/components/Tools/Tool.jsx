@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Divider, Spin, Alert } from 'antd';
-import { useSaveToolParamsMutation } from 'features/tools/hooks/mutations';
+import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
+import { TOOLS_MUTATION_KEYS } from 'features/tools/constants/queryKeys';
 
 import './Tool.css';
 
@@ -11,22 +12,21 @@ import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
-import {
-  useToolParams,
-  useFetchToolParams,
-  useCheckInputsState,
-} from 'features/tools/hooks';
+import { useToolParams } from 'features/tools/hooks';
 
 const Tool = ({ script, onToolSelected, header, form }) => {
   const {
-    data: params,
+    params,
     isLoading,
     isFetching,
-    error,
-  } = useFetchToolParams(script);
-  const { mutateAsync: onSaveParams, isPending: isSaving } =
-    useSaveToolParamsMutation();
-  const { isChecking } = useCheckInputsState(script);
+    fetchError: error,
+    inputError,
+  } = useToolParams(script, form);
+
+  const isChecking =
+    useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
+  const isSaving =
+    useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS] }) > 0;
 
   const {
     category,
@@ -34,10 +34,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     description,
     parameters,
     categorical_parameters: categoricalParameters,
-    inputError,
   } = params || {};
-
-  useToolParams(script, form, parameters, categoricalParameters);
 
   const [isRefetching, setIsRefetching] = useState(false);
   const isInputChecked = inputError !== undefined;
@@ -115,8 +112,6 @@ const Tool = ({ script, onToolSelected, header, form }) => {
               parameters={parameters}
               categoricalParameters={categoricalParameters}
               script={script}
-              onSaveParams={onSaveParams}
-              isSaving={isSaving}
             />
           </div>
 

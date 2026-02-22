@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { useCheckInputsMutation } from './mutations';
 import { getFormValues } from '../utils';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 
-export const useFetchToolParams = (script) => {
+const useFetchToolParams = (script) => {
   return useQuery({
     queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script],
     queryFn: async () => {
@@ -18,30 +18,61 @@ export const useFetchToolParams = (script) => {
   });
 };
 
-const useToolParams = (script, form, parameters, categoricalParameters) => {
-  const queryClient = useQueryClient();
+const useToolParams = (script, form) => {
+  const [inputError, setInputError] = useState(undefined);
+
+  // Fetch tool parameters
+  const {
+    data: params,
+    isLoading,
+    isFetching,
+    error: fetchError,
+  } = useFetchToolParams(script);
+
   const { mutate: checkInputs } = useCheckInputsMutation();
 
+  const parameters = params?.parameters;
+  const categoricalParameters = params?.categorical_parameters;
+
+  // Reset form when script changes
   useEffect(() => {
     form.resetFields();
-    queryClient.setQueryData([TOOLS_QUERY_KEYS.TOOL_PARAMS, script], (old) =>
-      old ? { ...old, inputError: undefined } : old,
-    );
-  }, [script, form, queryClient]);
+  }, [script, form]);
 
+  // Check inputs whenever parameters change
   useEffect(() => {
     let cancelled = false;
 
     const run = async () => {
       if (!script || !parameters) return;
 
-      const params = await getFormValues(
+      // Reset error state when checking starts
+      setInputError(undefined);
+
+      const formParams = await getFormValues(
         form,
         parameters,
         categoricalParameters,
       );
-      if (!cancelled && params) {
-        checkInputs({ tool: script, parameters: params });
+      if (!cancelled && formParams) {
+        checkInputs(
+          { tool: script, parameters: formParams },
+          {
+            onSuccess: () => {
+              if (!cancelled) setInputError(null);
+            },
+            onError: (err) => {
+              if (!cancelled) {
+                const message =
+                  err.response?.data?.detail ||
+                  err.response?.statusText ||
+                  err.message ||
+                  'Unexpected error';
+                setInputError(message);
+              }
+            },
+          },
+        );
       }
     };
 
@@ -51,6 +82,14 @@ const useToolParams = (script, form, parameters, categoricalParameters) => {
       cancelled = true;
     };
   }, [script, form, parameters, categoricalParameters, checkInputs]);
+
+  return {
+    params,
+    isLoading,
+    isFetching,
+    fetchError,
+    inputError,
+  };
 };
 
 export default useToolParams;

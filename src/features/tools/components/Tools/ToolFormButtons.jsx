@@ -9,6 +9,7 @@ import { getFormValues } from 'features/tools/utils';
 import {
   useSetDefaultToolParamsMutation,
   useCheckInputsMutation,
+  useSaveToolParamsMutation,
 } from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
@@ -19,8 +20,6 @@ export const ToolFormButtons = ({
   categoricalParameters,
   script,
   disabled = false,
-  onSaveParams,
-  isSaving = false,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
@@ -28,6 +27,8 @@ export const ToolFormButtons = ({
   const { mutateAsync: checkInputs } = useCheckInputsMutation();
   const { mutateAsync: setDefaultToolParams } =
     useSetDefaultToolParamsMutation();
+  const { mutateAsync: saveToolParams, isPending: isSaving } =
+    useSaveToolParamsMutation();
   const createJob = useCreateJob();
 
   const setShowLoginModal = useSetShowLoginModal();
@@ -61,7 +62,7 @@ export const ToolFormButtons = ({
     }
 
     try {
-      await onSaveParams({ tool: script, params });
+      await saveToolParams({ tool: script, params });
       await checkInputs({ tool: script, parameters: params });
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
