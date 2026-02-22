@@ -1,7 +1,27 @@
+// Helper to find categories containing fields with errors
+export const getCategoriesWithErrors = (errorFields, categoricalParameters) => {
+  if (!errorFields || !categoricalParameters) return [];
+
+  const categories = [];
+  for (const field of errorFields) {
+    const parameterName = field.name.join('.');
+    for (const category in categoricalParameters) {
+      if (
+        categoricalParameters[category].find((x) => x.name === parameterName)
+      ) {
+        categories.push(category);
+        break;
+      }
+    }
+  }
+  return categories;
+};
+
 export const getFormValues = async (
   form,
   parameters,
-  categoricalParameters = {},
+  categoricalParameters,
+  onValidationError,
 ) => {
   let out = null;
   if (!parameters) return out;
@@ -34,25 +54,17 @@ export const getFormValues = async (
     if (err?.outOfDate) return;
 
     console.error('Error', err);
-    // Expand collapsed categories if errors are found inside
-    if (categoricalParameters && err?.errorFields) {
-      let categoriesWithErrors = [];
-      for (const field of err.errorFields) {
-        const parameterName = field.name.join('.');
-        for (const category in categoricalParameters) {
-          if (
-            categoricalParameters[category].find(
-              (x) => x.name === parameterName,
-            ) !== undefined
-          ) {
-            categoriesWithErrors.push(category);
-            break;
-          }
-        }
-      }
-      // FIXME: show errors in categories
-      // categoriesWithErrors.length &&
-      //   setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
+
+    // Call the error handler callback if provided
+    if (onValidationError && err?.errorFields) {
+      const categoriesToExpand = getCategoriesWithErrors(
+        err.errorFields,
+        categoricalParameters,
+      );
+      onValidationError(err, categoriesToExpand);
     }
+
+    // Return null to indicate validation failed
+    return null;
   }
 };

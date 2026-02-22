@@ -13,6 +13,7 @@ import {
 } from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
+import { useToolFormStore } from '../../stores/tool-form-store';
 
 export const ToolFormButtons = ({
   form,
@@ -23,6 +24,7 @@ export const ToolFormButtons = ({
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
+  const expandCategories = useToolFormStore((state) => state.expandCategories);
 
   const { mutateAsync: checkInputs } = useCheckInputsMutation();
   const { mutateAsync: setDefaultToolParams, isPending: isResetting } =
@@ -37,9 +39,17 @@ export const ToolFormButtons = ({
   };
 
   const runScript = async () => {
-    const params = await getFormValues(form, parameters, categoricalParameters);
+    const params = await getFormValues(
+      form,
+      parameters,
+      categoricalParameters,
+      (_err, categoriesToExpand) => {
+        if (categoriesToExpand.length > 0) {
+          expandCategories(categoriesToExpand);
+        }
+      },
+    );
 
-    // If getForm() returns null/undefined (validation failed), don't run
     if (!params) {
       console.error('Cannot run - form validation failed');
       return;
@@ -55,7 +65,16 @@ export const ToolFormButtons = ({
   };
 
   const saveParams = async () => {
-    const params = await getFormValues(form, parameters, categoricalParameters);
+    const params = await getFormValues(
+      form,
+      parameters,
+      categoricalParameters,
+      (_err, categoriesToExpand) => {
+        if (categoriesToExpand.length > 0) {
+          expandCategories(categoriesToExpand);
+        }
+      },
+    );
 
     if (!params) {
       return;
