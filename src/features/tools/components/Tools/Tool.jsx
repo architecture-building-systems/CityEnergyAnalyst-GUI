@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Divider, Spin, Alert } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
@@ -27,6 +26,10 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
   const isSaving =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS] }) > 0;
+  const isRefetching =
+    useIsMutating({
+      mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
+    }) > 0;
 
   const {
     category,
@@ -35,8 +38,6 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     parameters,
     categorical_parameters: categoricalParameters,
   } = params || {};
-
-  const [isRefetching, setIsRefetching] = useState(false);
   const isInputChecked = inputError !== undefined;
   const hasInputError = inputError != null;
   const disableButtons = isChecking || !isInputChecked || hasInputError;
@@ -146,7 +147,6 @@ const Tool = ({ script, onToolSelected, header, form }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            onParameterRefetch={setIsRefetching}
           />
         </div>
       </div>

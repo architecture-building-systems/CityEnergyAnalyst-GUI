@@ -9,4 +9,5 @@ export const TOOLS_MUTATION_KEYS = {
   SAVE_TOOL_PARAMS: 'saveToolParams',
   SET_DEFAULT_TOOL_PARAMS: 'setDefaultToolParams',
   CHECK_INPUTS: 'checkInputs',
+  REFETCH_PARAMETER_METADATA: 'refetchParameterMetadata',
 };
