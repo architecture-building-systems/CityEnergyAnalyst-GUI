@@ -1,3 +1,9 @@
+/* Fix proper overflow by allowing spin containre to follow card height */
+.cea-tool-wrapper .ant-spin-nested-loading,
+.cea-tool-wrapper .ant-spin-container {
+  height: 100%;
+}
+
 .cea-tool-form-buttongroup {
   display: flex;
   align-items: center;

@@ -69,110 +69,111 @@ const Tool = ({ script, onToolSelected, header, form }) => {
   if (!label) return null;
 
   return (
-    <Spin
-      spinning={isSaving || isResetting || isFetching || isRefetching}
-      tip={
-        isSaving
-          ? 'Saving parameters...'
-          : isResetting
-            ? 'Resetting parameters...'
-            : isFetching
-              ? 'Updating parameters...'
-              : isRefetching
-                ? 'Updating form...'
-                : ''
-      }
-      styles={{
-        root: {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-        },
-      }}
-    >
-      <div
-        style={{
-          // position: 'relative', // Add this to ensure proper spin overlay
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
+    <div className="cea-tool-wrapper" style={{ height: '100%' }}>
+      <Spin
+        spinning={isSaving || isResetting || isFetching || isRefetching}
+        tip={
+          isSaving
+            ? 'Saving parameters...'
+            : isResetting
+              ? 'Resetting parameters...'
+              : isFetching
+                ? 'Updating parameters...'
+                : isRefetching
+                  ? 'Updating form...'
+                  : ''
+        }
+        styles={{
+          root: {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          },
         }}
       >
         <div
-          id="cea-tool-header"
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 12,
-
-            paddingTop: 12,
-            paddingInline: 12,
+            height: '100%',
           }}
         >
-          <div id="cea-tool-header-content">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {header}
-              <small
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-end',
+          <div
+            id="cea-tool-header"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
 
-                  marginLeft: 'auto',
-                }}
-              >
-                <span>{category}</span>
-              </small>
+              paddingTop: 12,
+              paddingInline: 12,
+            }}
+          >
+            <div id="cea-tool-header-content">
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {header}
+                <small
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+
+                    marginLeft: 'auto',
+                  }}
+                >
+                  <span>{category}</span>
+                </small>
+              </div>
+              <ToolDescription description={description} label={label} />
             </div>
-            <ToolDescription description={description} label={label} />
+
+            <div className="cea-tool-form-buttongroup">
+              <ToolFormButtons
+                form={form}
+                disabled={disableButtons}
+                parameters={parameters}
+                categoricalParameters={categoricalParameters}
+                script={script}
+              />
+            </div>
+
+            {changes && (
+              <Alert
+                title="Unsaved changes detected."
+                description="Save or discard before proceeding."
+                type="warning"
+                showIcon
+              />
+            )}
+
+            <ScriptSuggestions
+              onToolSelected={onToolSelected}
+              loading={isChecking}
+              error={inputError}
+            />
           </div>
 
-          <div className="cea-tool-form-buttongroup">
-            <ToolFormButtons
+          <Divider />
+
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              paddingInline: 12,
+            }}
+          >
+            <ToolForm
               form={form}
-              disabled={disableButtons}
               parameters={parameters}
               categoricalParameters={categoricalParameters}
               script={script}
             />
           </div>
-
-          {changes && (
-            <Alert
-              title="Unsaved changes detected."
-              description="Save or discard before proceeding."
-              type="warning"
-              showIcon
-            />
-          )}
-
-          <ScriptSuggestions
-            onToolSelected={onToolSelected}
-            loading={isChecking}
-            error={inputError}
-          />
         </div>
-
-        <Divider />
-
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            paddingInline: 12,
-          }}
-        >
-          <ToolForm
-            form={form}
-            parameters={parameters}
-            categoricalParameters={categoricalParameters}
-            script={script}
-          />
-        </div>
-      </div>
-    </Spin>
+      </Spin>
+    </div>
   );
 };
 
