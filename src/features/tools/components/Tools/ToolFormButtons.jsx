@@ -25,7 +25,7 @@ export const ToolFormButtons = ({
   const [loading, setLoading] = useState(false);
 
   const { mutateAsync: checkInputs } = useCheckInputsMutation();
-  const { mutateAsync: setDefaultToolParams } =
+  const { mutateAsync: setDefaultToolParams, isPending: isResetting } =
     useSetDefaultToolParamsMutation();
   const { mutateAsync: saveToolParams, isPending: isSaving } =
     useSaveToolParamsMutation();
@@ -116,7 +116,9 @@ export const ToolFormButtons = ({
       <Button onClick={saveParams} loading={isSaving}>
         Save Settings
       </Button>
-      <Button onClick={setDefault}>Reset</Button>
+      <Button onClick={setDefault} loading={isResetting}>
+        Reset
+      </Button>
     </>
   );
 };

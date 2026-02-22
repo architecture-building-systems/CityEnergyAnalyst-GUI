@@ -26,6 +26,10 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
   const isSaving =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS] }) > 0;
+  const isResetting =
+    useIsMutating({
+      mutationKey: [TOOLS_MUTATION_KEYS.SET_DEFAULT_TOOL_PARAMS],
+    }) > 0;
   const isRefetching =
     useIsMutating({
       mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
@@ -67,7 +71,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
   return (
     <Spin
       wrapperClassName="cea-tool-form-spinner"
-      spinning={isSaving || isFetching || isRefetching}
+      spinning={isSaving || isResetting || isFetching || isRefetching}
     >
       <div
         style={{
