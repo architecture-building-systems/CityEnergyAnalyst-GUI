@@ -70,8 +70,26 @@ const Tool = ({ script, onToolSelected, header, form }) => {
 
   return (
     <Spin
-      wrapperClassName="cea-tool-form-spinner"
       spinning={isSaving || isResetting || isFetching || isRefetching}
+      tip={
+        isSaving
+          ? 'Saving parameters...'
+          : isResetting
+            ? 'Resetting parameters...'
+            : isFetching
+              ? 'Updating parameters...'
+              : isRefetching
+                ? 'Updating form...'
+                : ''
+      }
+      styles={{
+        root: {
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+        },
+      }}
     >
       <div
         style={{
