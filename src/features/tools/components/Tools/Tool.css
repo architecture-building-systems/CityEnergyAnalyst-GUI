@@ -4,6 +4,12 @@
   height: 100%;
 }
 
+.cea-tool-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .cea-tool-description-wrapper {
   overflow: hidden;
   max-height: 240px;

@@ -15,7 +15,7 @@ import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
 
-const Tool = ({ script, onToolSelected, header, form }) => {
+const Tool = ({ script, onToolSelected, form }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   const {
@@ -54,7 +54,6 @@ const Tool = ({ script, onToolSelected, header, form }) => {
   if (isLoading)
     return (
       <div style={{ padding: 12 }}>
-        {header}
         <ToolSkeleton loadingText="Loading parameters..." />
       </div>
     );
@@ -63,12 +62,7 @@ const Tool = ({ script, onToolSelected, header, form }) => {
     const normalizedError = error?.response || {
       data: { message: error?.message || 'Unknown error' },
     };
-    return (
-      <div>
-        {header}
-        <AsyncError error={normalizedError} />
-      </div>
-    );
+    return <AsyncError error={normalizedError} />;
   }
   if (!label) return null;
 
@@ -114,22 +108,20 @@ const Tool = ({ script, onToolSelected, header, form }) => {
               paddingInline: 12,
             }}
           >
-            <div id="cea-tool-header-content">
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {header}
-                <small
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
+            <div className="cea-tool-header-content">
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
 
-                    marginLeft: 'auto',
-                  }}
-                >
-                  <span>{category}</span>
-                </small>
+                  marginLeft: 'auto',
+                }}
+              >
+                <small>{category}</small>
               </div>
-              <h2>{label}</h2>
+
+              <b style={{ fontSize: 18 }}>{label}</b>
 
               <div
                 className={`cea-tool-description-wrapper ${headerCollapsed ? 'collapsed' : ''}`}
