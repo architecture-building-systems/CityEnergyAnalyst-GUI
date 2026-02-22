@@ -1,4 +1,5 @@
-import { Divider, Spin, Alert } from 'antd';
+import { useState } from 'react';
+import { Divider, Spin, Alert, Button } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
 import { TOOLS_MUTATION_KEYS } from 'features/tools/constants/queryKeys';
@@ -12,8 +13,11 @@ import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams } from 'features/tools/hooks';
+import { UpOutlined } from '@ant-design/icons';
 
 const Tool = ({ script, onToolSelected, header, form }) => {
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+
   const {
     params,
     isLoading,
@@ -125,16 +129,43 @@ const Tool = ({ script, onToolSelected, header, form }) => {
                   <span>{category}</span>
                 </small>
               </div>
-              <ToolDescription description={description} label={label} />
+              <h2>{label}</h2>
+
+              <div
+                className={`cea-tool-description-wrapper ${headerCollapsed ? 'collapsed' : ''}`}
+              >
+                <ToolDescription description={description} />
+              </div>
             </div>
 
-            <div className="cea-tool-form-buttongroup">
-              <ToolFormButtons
-                form={form}
-                disabled={disableButtons}
-                parameters={parameters}
-                categoricalParameters={categoricalParameters}
-                script={script}
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div className="cea-tool-form-buttongroup">
+                <ToolFormButtons
+                  form={form}
+                  disabled={disableButtons}
+                  parameters={parameters}
+                  categoricalParameters={categoricalParameters}
+                  script={script}
+                />
+              </div>
+              <Button
+                icon={
+                  <UpOutlined
+                    style={{
+                      transition: 'transform 0.3s',
+                      transform: headerCollapsed ? 'rotate(180deg)' : 'none',
+                    }}
+                  />
+                }
+                type="text"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
               />
             </div>
 

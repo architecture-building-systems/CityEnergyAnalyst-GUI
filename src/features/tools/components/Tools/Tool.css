@@ -4,6 +4,22 @@
   height: 100%;
 }
 
+.cea-tool-description-wrapper {
+  overflow: hidden;
+  max-height: 240px;
+  transition:
+    max-height 0.2s ease-out,
+    opacity 0.2s ease-out;
+  opacity: 1;
+  font-size: 14px;
+  overflow-y: auto;
+}
+
+.cea-tool-description-wrapper.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
 .cea-tool-form-buttongroup {
   display: flex;
   align-items: center;
