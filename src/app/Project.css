@@ -25,22 +25,25 @@
     'content content content right-sidebar'
     'bottom-bar bottom-bar status status';
 
-  grid-template-columns: var(--left-sidebar-width) 1fr var(--right-sidebar-width) 0px;
+  grid-template-columns:
+    var(--left-sidebar-width) 1fr var(--right-sidebar-width)
+    0px;
   grid-template-rows: auto 1fr auto auto;
 
   transition: grid-template-columns 0.3s ease-in-out;
 }
 
 #cea-project-overlay.show-right-sidebar {
-  grid-template-columns: var(--left-sidebar-width) 1fr 0px var(--right-sidebar-width);
+  grid-template-columns: var(--left-sidebar-width) 1fr 0px var(
+      --right-sidebar-width
+    );
 }
 
 .cea-overlay-card {
   pointer-events: auto;
 }
 
-.cea-overlay-card-full {
-  pointer-events: auto;
+.cea-tool-card-container {
   position: absolute;
   top: 0;
   right: 0;

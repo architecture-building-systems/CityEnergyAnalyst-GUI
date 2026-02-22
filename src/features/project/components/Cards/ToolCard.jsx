@@ -53,6 +53,7 @@ const ToolCard = ({
   return (
     <ErrorBoundary>
       <div
+        className="cea-tool-card"
         style={{
           background: '#fff',
 
@@ -68,12 +69,11 @@ const ToolCard = ({
         }}
       >
         <div
+          className="cea-tool-card-header"
           style={{
             display: 'flex',
             alignItems: 'center',
             fontSize: 14,
-
-            flexShrink: 0,
           }}
         >
           {toolType == toolTypes.MAP_LAYERS && selectedPlotTool != null && (
@@ -87,7 +87,12 @@ const ToolCard = ({
         </div>
 
         <ErrorBoundary>
-          <div style={{ flex: 1, overflow: 'hidden' }}>{content}</div>
+          <div
+            className="cea-tool-card-content"
+            style={{ minHeight: 0, flex: 1 }}
+          >
+            {content}
+          </div>
         </ErrorBoundary>
       </div>
     </ErrorBoundary>
