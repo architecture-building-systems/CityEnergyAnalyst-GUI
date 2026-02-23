@@ -12,7 +12,6 @@ import {
 } from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
-import { useToolFormStore } from '../../stores/tool-form-store';
 
 export const ToolFormButtons = ({
   form,
@@ -21,10 +20,10 @@ export const ToolFormButtons = ({
   script,
   disabled = false,
   setError,
+  onValidationError,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
-  const expandCategories = useToolFormStore((state) => state.expandCategories);
 
   const { mutateAsync: setDefaultToolParams, isPending: isResetting } =
     useSetDefaultToolParamsMutation();
@@ -43,12 +42,7 @@ export const ToolFormButtons = ({
       form,
       parameters,
       categoricalParameters,
-      (_err, categoriesToExpand) => {
-        if (categoriesToExpand.length > 0) {
-          expandCategories(categoriesToExpand);
-        }
-        setError?.('Please fix validation errors before running the tool.');
-      },
+      onValidationError,
     );
 
     if (!params) {
@@ -71,12 +65,7 @@ export const ToolFormButtons = ({
       form,
       parameters,
       categoricalParameters,
-      (_err, categoriesToExpand) => {
-        if (categoriesToExpand.length > 0) {
-          expandCategories(categoriesToExpand);
-        }
-        setError?.('Save Failed: Check errors in form.');
-      },
+      onValidationError,
     );
 
     if (!params) return;

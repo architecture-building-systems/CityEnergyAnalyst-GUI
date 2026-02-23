@@ -68,7 +68,6 @@ const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
           return Promise.reject(new Error(response.data.error));
         }
       } catch (error) {
-        console.error('Validation error:', error);
         const errorMessage =
           error?.response?.data?.error || error?.message || 'Validation failed';
         return Promise.reject(new Error(errorMessage));

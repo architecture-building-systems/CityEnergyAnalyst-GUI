@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Divider, Spin, Alert, Button } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
@@ -14,10 +14,23 @@ import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
+import { useToolFormStore } from '../../stores/tool-form-store';
 
 const Tool = ({ script, onToolSelected, form }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
+
+  const expandCategories = useToolFormStore((state) => state.expandCategories);
+
+  const onValidationError = useCallback(
+    (_err, categoriesToExpand) => {
+      if (categoriesToExpand.length > 0) {
+        expandCategories(categoriesToExpand);
+      }
+      setToolError('Please fix validation errors in the form.');
+    },
+    [expandCategories],
+  );
 
   const {
     params,
@@ -25,7 +38,7 @@ const Tool = ({ script, onToolSelected, form }) => {
     isFetching,
     fetchError: error,
     inputError,
-  } = useToolParams(script, form);
+  } = useToolParams(script, form, onValidationError);
 
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
@@ -146,6 +159,7 @@ const Tool = ({ script, onToolSelected, form }) => {
                   categoricalParameters={categoricalParameters}
                   script={script}
                   setError={setToolError}
+                  onValidationError={onValidationError}
                 />
               </div>
               <Button

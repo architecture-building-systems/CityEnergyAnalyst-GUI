@@ -18,7 +18,7 @@ const useFetchToolParams = (script) => {
   });
 };
 
-const useToolParams = (script, form) => {
+const useToolParams = (script, form, onError) => {
   const [inputError, setInputError] = useState(undefined);
 
   // Fetch tool parameters
@@ -49,12 +49,14 @@ const useToolParams = (script, form) => {
       // Reset error state when checking starts
       setInputError(undefined);
 
+      const formParams = await getFormValues(
+        form,
+        parameters,
+        categoricalParameters,
+        onError,
+      );
+
       try {
-        const formParams = await getFormValues(
-          form,
-          parameters,
-          categoricalParameters,
-        );
         if (!cancelled && formParams) {
           await checkInputs({ tool: script, parameters: formParams });
           if (!cancelled) setInputError(null);
@@ -76,7 +78,7 @@ const useToolParams = (script, form) => {
     return () => {
       cancelled = true;
     };
-  }, [script, form, parameters, categoricalParameters, checkInputs]);
+  }, [script, form, parameters, categoricalParameters, checkInputs, onError]);
 
   return {
     params,
