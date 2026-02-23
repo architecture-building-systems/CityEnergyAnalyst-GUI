@@ -12,11 +12,21 @@ export function useCheckInputsMutation() {
       if (parameters == null) {
         throw new Error('Parameters not provided for checking missing inputs.');
       }
-      const response = await apiClient.post(
-        `/api/tools/${tool}/check`,
-        parameters,
-      );
-      return response.data;
+      try {
+        const response = await apiClient.post(
+          `/api/tools/${tool}/check`,
+          parameters,
+        );
+        return response.data;
+      } catch (err) {
+        const error = new Error(err.message);
+        error.response = {
+          status: err.response?.status,
+          data: err.response?.data,
+          statusText: err.response?.statusText,
+        };
+        throw error;
+      }
     },
   });
 }

@@ -8,13 +8,24 @@ const useParameterMetadataRefetch = (script, form) => {
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
     mutationFn: async ({ formValues, affectedParams }) => {
-      const response = await apiClient.post(
-        `/api/tools/${script}/parameter-metadata`,
-        {
-          form_values: formValues,
-          affected_parameters: affectedParams,
-        },
-      );
+      let response;
+      try {
+        response = await apiClient.post(
+          `/api/tools/${script}/parameter-metadata`,
+          {
+            form_values: formValues,
+            affected_parameters: affectedParams,
+          },
+        );
+      } catch (err) {
+        const error = new Error(err.message);
+        error.response = {
+          status: err.response?.status,
+          data: err.response?.data,
+          statusText: err.response?.statusText,
+        };
+        throw error;
+      }
 
       const { parameters: updatedMetadata } = response.data;
 
