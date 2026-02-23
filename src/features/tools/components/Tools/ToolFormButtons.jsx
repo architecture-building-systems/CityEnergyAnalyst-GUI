@@ -20,6 +20,7 @@ export const ToolFormButtons = ({
   categoricalParameters,
   script,
   disabled = false,
+  setError,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
@@ -37,6 +38,7 @@ export const ToolFormButtons = ({
   };
 
   const runScript = async () => {
+    setError?.(null);
     const params = await getFormValues(
       form,
       parameters,
@@ -45,6 +47,7 @@ export const ToolFormButtons = ({
         if (categoriesToExpand.length > 0) {
           expandCategories(categoriesToExpand);
         }
+        setError?.('Please fix validation errors before running the tool.');
       },
     );
 
@@ -63,6 +66,7 @@ export const ToolFormButtons = ({
   };
 
   const saveParams = async () => {
+    setError?.(null);
     const params = await getFormValues(
       form,
       parameters,
@@ -71,27 +75,39 @@ export const ToolFormButtons = ({
         if (categoriesToExpand.length > 0) {
           expandCategories(categoriesToExpand);
         }
+        setError?.('Save Failed: Check errors in form.');
       },
     );
 
-    if (!params) {
-      return;
-    }
+    if (!params) return;
 
     try {
       await saveToolParams({ tool: script, params });
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
-      else console.error('Error saving params:', err);
+      else {
+        console.error('Error saving params:', err);
+        setError?.(
+          err.response?.data?.detail ||
+            'An error occurred while saving parameters.',
+        );
+      }
     }
   };
 
   const setDefault = async () => {
+    setError?.(null);
     try {
       await setDefaultToolParams(script);
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
-      else console.error('Error resetting defaults:', err);
+      else {
+        console.error('Error resetting defaults:', err);
+        setError?.(
+          err.response?.data?.detail ||
+            'An error occurred while resetting to default parameters.',
+        );
+      }
     }
   };
 

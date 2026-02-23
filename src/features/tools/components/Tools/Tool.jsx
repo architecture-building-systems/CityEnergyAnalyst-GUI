@@ -17,6 +17,7 @@ import { UpOutlined } from '@ant-design/icons';
 
 const Tool = ({ script, onToolSelected, form }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [toolError, setToolError] = useState(null);
 
   const {
     params,
@@ -144,6 +145,7 @@ const Tool = ({ script, onToolSelected, form }) => {
                   parameters={parameters}
                   categoricalParameters={categoricalParameters}
                   script={script}
+                  setError={setToolError}
                 />
               </div>
               <Button
@@ -159,6 +161,10 @@ const Tool = ({ script, onToolSelected, form }) => {
                 onClick={() => setHeaderCollapsed(!headerCollapsed)}
               />
             </div>
+
+            {toolError && (
+              <Alert title={toolError || 'An error occurred.'} type="error" />
+            )}
 
             {changes && (
               <Alert

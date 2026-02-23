@@ -53,7 +53,7 @@ export const getFormValues = async (
     // Ignore out of date error
     if (err?.outOfDate) return null;
 
-    console.error('Error', err);
+    console.error('Form validation error:', err);
 
     // Call the error handler callback if provided
     if (onValidationError && err?.errorFields) {
