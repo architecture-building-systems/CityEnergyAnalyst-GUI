@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import Parameter from 'components/Parameter';
 import { Collapse, Form } from 'antd';
 import useParameterMetadataRefetch from '../../hooks/useParameterMetadataRefetch';
@@ -8,7 +8,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
   const reset = useToolFormStore((state) => state.reset);
-  const [watchedValues, setWatchedValues] = useState({});
+  const watchedValuesRef = useRef({});
 
   const { mutateAsync: handleRefetch } = useParameterMetadataRefetch(
     script,
@@ -17,6 +17,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
 
   useEffect(() => {
     reset();
+    watchedValuesRef.current = {};
   }, [script, reset]);
 
   // Watch for changes in parameters that have dependents
@@ -50,14 +51,14 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
       for (const changedField of changedFields) {
         const fieldName = changedField.name[0];
         const newValue = changedField.value;
-        const oldValue = watchedValues[fieldName];
+        const oldValue = watchedValuesRef.current[fieldName];
 
         // Skip refetch on initial load (when oldValue is undefined)
         const isInitialLoad = oldValue === undefined;
 
         // Always update watched values when value changes
         if (newValue !== oldValue) {
-          setWatchedValues((prev) => ({ ...prev, [fieldName]: newValue }));
+          watchedValuesRef.current[fieldName] = newValue;
         }
 
         // Check if this field has dependents (via depends_on or triggers_refetch)
@@ -79,7 +80,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
         }
       }
     },
-    [parameters, categoricalParameters, watchedValues, form, handleRefetch],
+    [parameters, categoricalParameters, form, handleRefetch],
   );
 
   let toolParams = null;
