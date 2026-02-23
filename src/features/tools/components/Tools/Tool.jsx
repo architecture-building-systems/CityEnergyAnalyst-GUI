@@ -192,9 +192,7 @@ const Tool = ({ script, onToolSelected, form }) => {
               />
             </div>
 
-            {toolError && (
-              <Alert title={toolError || 'An error occurred.'} type="error" />
-            )}
+            {toolError && <Alert title={toolError} type="error" />}
 
             {changes && (
               <Alert
