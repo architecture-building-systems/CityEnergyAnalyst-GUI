@@ -44,6 +44,7 @@
   font: inherit;
   color: inherit;
   text-align: left;
+  cursor: pointer;
 
   /* Align child elements */
   display: flex;

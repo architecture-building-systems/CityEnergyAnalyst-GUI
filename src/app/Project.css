@@ -24,12 +24,10 @@
     'left-sidebar . . right-sidebar'
     'content content content right-sidebar'
     'bottom-bar bottom-bar status status';
-
   grid-template-columns:
     var(--left-sidebar-width) 1fr var(--right-sidebar-width)
     0px;
   grid-template-rows: auto 1fr auto auto;
-
   transition: grid-template-columns 0.3s ease-in-out;
 }
 
