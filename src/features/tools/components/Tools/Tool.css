@@ -36,7 +36,7 @@
   font-size: 12px;
 }
 
-.cea-tool-suggestions {
+.cea-tool-suggestions-button {
   /* Reset default button styles */
   background: none;
   border: none;
@@ -52,7 +52,7 @@
   align-items: center;
 }
 
-.cea-tool-suggestions:hover {
+.cea-tool-suggestions-button:hover {
   text-decoration: underline;
   color: #1677ff;
 }

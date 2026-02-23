@@ -22,21 +22,23 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   if (error?.script_suggestions?.length) {
     return (
       <Alert
-        title="Missing inputs detected"
         description={
-          <div>
-            <p>Run the following scripts to create the missing inputs:</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <b>Missing required inputs detected.</b>
+            <div>Run the following scripts to create the missing inputs:</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {error.script_suggestions.map(({ label, name }) => {
                 return (
-                  <div key={name} style={{ display: 'flex', gap: 8 }}>
-                    -
+                  <div
+                    key={name}
+                    style={{ marginLeft: 8, display: 'flex', gap: 8 }}
+                  >
+                    <span>-</span>
                     <button
-                      className="cea-tool-suggestions"
+                      className="cea-tool-suggestions-button"
                       onClick={() => onToolSelected?.(name)}
-                      style={{ marginRight: 'auto' }}
                     >
-                      <b>{label}</b>
+                      <b style={{ flex: 1 }}>{label}</b>
                       <ExternalLinkIcon />
                     </button>
                   </div>
