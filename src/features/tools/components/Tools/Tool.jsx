@@ -27,7 +27,15 @@ const Tool = ({ script, onToolSelected, form }) => {
       if (categoriesToExpand.length > 0) {
         expandCategories(categoriesToExpand);
       }
-      setToolError('Please fix validation errors in the form.');
+      const errorFieldNames =
+        _err?.errorFields?.map((field) => field.name.join('.')) || null;
+
+      if (errorFieldNames) {
+        const fieldList = errorFieldNames.join(', ');
+        setToolError(`Validation failed for fields: ${fieldList}`);
+      } else {
+        setToolError('Validation failed. Check errors in the form.');
+      }
     },
     [expandCategories],
   );
