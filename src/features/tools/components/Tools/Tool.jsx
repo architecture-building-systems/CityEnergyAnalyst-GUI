@@ -23,12 +23,9 @@ const Tool = ({ script, onToolSelected, form }) => {
   const expandCategories = useToolFormStore((state) => state.expandCategories);
 
   const onValidationError = useCallback(
-    (_err, categoriesToExpand) => {
-      if (categoriesToExpand.length > 0) {
-        expandCategories(categoriesToExpand);
-      }
+    (err, categoriesToExpand) => {
       const errorFieldNames =
-        _err?.errorFields?.map((field) => field.name.join('.')) || null;
+        err?.errorFields?.map((field) => field.name.join('.')) || null;
 
       if (errorFieldNames) {
         const fieldList = errorFieldNames.join(', ');
@@ -36,8 +33,19 @@ const Tool = ({ script, onToolSelected, form }) => {
       } else {
         setToolError('Validation failed. Check errors in the form.');
       }
+
+      if (categoriesToExpand.length > 0) {
+        expandCategories(categoriesToExpand);
+      }
+
+      const firstErrorField = err?.errorFields?.[0]?.name;
+      if (firstErrorField) {
+        setTimeout(() => {
+          form.scrollToField(firstErrorField, { focus: true });
+        }, 500);
+      }
     },
-    [expandCategories],
+    [expandCategories, form],
   );
 
   const {

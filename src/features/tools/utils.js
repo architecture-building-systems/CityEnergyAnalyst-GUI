@@ -62,14 +62,6 @@ export const getFormValues = async (
         categoricalParameters,
       );
       onValidationError(err, categoriesToExpand);
-
-      // Scroll to the first error field after category expansion
-      const firstErrorField = err.errorFields[0]?.name;
-      if (firstErrorField) {
-        setTimeout(() => {
-          form.scrollToField(firstErrorField, { focus: true });
-        }, 500);
-      }
     }
 
     // Return null to indicate validation failed
