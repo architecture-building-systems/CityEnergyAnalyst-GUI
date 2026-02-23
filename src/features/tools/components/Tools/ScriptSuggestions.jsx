@@ -10,7 +10,7 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
       >
         <LoadingOutlined spin />
         <div style={{ fontFamily: 'monospace' }}>
-          Checking for missing inputs...
+          Checking for required inputs...
         </div>
       </div>
     );
