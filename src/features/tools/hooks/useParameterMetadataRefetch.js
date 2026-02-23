@@ -1,12 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { getFormValues } from '../utils';
-import { useCheckInputsMutation } from './mutations';
 import { TOOLS_QUERY_KEYS, TOOLS_MUTATION_KEYS } from '../constants/queryKeys';
 
 const useParameterMetadataRefetch = (script, form) => {
   const queryClient = useQueryClient();
-  const { mutateAsync: checkInputs } = useCheckInputsMutation();
 
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
@@ -78,20 +75,6 @@ const useParameterMetadataRefetch = (script, form) => {
           }
         }
       });
-
-      // Run checkInputs
-      const updatedCache = queryClient.getQueryData([
-        TOOLS_QUERY_KEYS.TOOL_PARAMS,
-        script,
-      ]);
-      const currentParams = await getFormValues(
-        form,
-        updatedCache?.parameters,
-        updatedCache?.categorical_parameters,
-      );
-      if (currentParams) {
-        await checkInputs({ tool: script, parameters: currentParams });
-      }
     },
     onError: (err) => {
       console.error('Error refetching parameter metadata:', err);

@@ -34,10 +34,10 @@ const useToolParams = (script, form) => {
   const parameters = params?.parameters;
   const categoricalParameters = params?.categorical_parameters;
 
-  // Reset form when script changes
+  // Reset form when script or parameters change
   useEffect(() => {
     form.resetFields();
-  }, [script, form]);
+  }, [script, form, parameters]);
 
   // Check inputs whenever parameters change
   useEffect(() => {

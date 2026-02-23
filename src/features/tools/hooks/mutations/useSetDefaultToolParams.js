@@ -16,13 +16,10 @@ export function useSetDefaultToolParamsMutation() {
     mutationKey: [TOOLS_MUTATION_KEYS.SET_DEFAULT_TOOL_PARAMS],
     mutationFn: async (tool) => {
       const response = await apiClient.post(`/api/tools/${tool}/default`);
-      return response.data;
-    },
-    onSuccess: (_, tool) => {
-      // Invalidate tool params query to refetch fresh data
-      queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
       });
+      return response.data;
     },
   });
 }

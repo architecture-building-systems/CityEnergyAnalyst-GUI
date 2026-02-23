@@ -8,7 +8,6 @@ import { RunIcon } from 'assets/icons';
 import { getFormValues } from 'features/tools/utils';
 import {
   useSetDefaultToolParamsMutation,
-  useCheckInputsMutation,
   useSaveToolParamsMutation,
 } from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
@@ -26,7 +25,6 @@ export const ToolFormButtons = ({
   const [loading, setLoading] = useState(false);
   const expandCategories = useToolFormStore((state) => state.expandCategories);
 
-  const { mutateAsync: checkInputs } = useCheckInputsMutation();
   const { mutateAsync: setDefaultToolParams, isPending: isResetting } =
     useSetDefaultToolParamsMutation();
   const { mutateAsync: saveToolParams, isPending: isSaving } =
@@ -82,18 +80,18 @@ export const ToolFormButtons = ({
 
     try {
       await saveToolParams({ tool: script, params });
-      await checkInputs({ tool: script, parameters: params });
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
+      else console.error('Error saving params:', err);
     }
   };
 
   const setDefault = async () => {
     try {
       await setDefaultToolParams(script);
-      form.resetFields();
     } catch (err) {
       if (err?.response?.status === 401) handleLogin();
+      else console.error('Error resetting defaults:', err);
     }
   };
 

@@ -19,13 +19,10 @@ export function useSaveToolParamsMutation() {
         `/api/tools/${tool}/save-config`,
         params,
       );
-      return response.data;
-    },
-    onSuccess: (_, { tool }) => {
-      // Invalidate tool params query to refetch fresh data
-      queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
       });
+      return response.data;
     },
   });
 }
