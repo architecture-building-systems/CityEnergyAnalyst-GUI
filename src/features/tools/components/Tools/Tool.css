@@ -1,4 +1,4 @@
-/* Fix proper overflow by allowing spin containre to follow card height */
+/* Fix proper overflow by allowing spin container to follow card height */
 .cea-tool-wrapper .ant-spin-nested-loading,
 .cea-tool-wrapper .ant-spin-container {
   height: 100%;
