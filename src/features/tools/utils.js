@@ -16,7 +16,6 @@ export const getCategoriesWithErrors = (errorFields, categoricalParameters) => {
   }
   return [...categories];
 };
-};
 
 export const getFormValues = async (
   form,
