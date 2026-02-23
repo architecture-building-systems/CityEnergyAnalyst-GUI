@@ -74,9 +74,9 @@ const Tool = ({ script, onToolSelected, form }) => {
       <Spin
         spinning={isSaving || isResetting || isFetching || isRefetching}
         tip={
+          (isFetching && 'Refreshing parameters...') ||
           (isSaving && 'Saving parameters...') ||
           (isResetting && 'Resetting parameters...') ||
-          (isFetching && 'Updating parameters...') ||
           (isRefetching && 'Updating form...') ||
           ''
         }
