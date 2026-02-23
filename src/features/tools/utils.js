@@ -2,19 +2,20 @@
 export const getCategoriesWithErrors = (errorFields, categoricalParameters) => {
   if (!errorFields || !categoricalParameters) return [];
 
-  const categories = [];
+  const categories = new Set();
   for (const field of errorFields) {
     const parameterName = field.name.join('.');
     for (const category in categoricalParameters) {
       if (
         categoricalParameters[category].find((x) => x.name === parameterName)
       ) {
-        categories.push(category);
+        categories.add(category);
         break;
       }
     }
   }
-  return categories;
+  return [...categories];
+};
 };
 
 export const getFormValues = async (
