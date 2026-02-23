@@ -1,11 +1,17 @@
+import { LoadingOutlined } from '@ant-design/icons';
 import { Alert } from 'antd';
 import { ExternalLinkIcon } from 'assets/icons';
 
 export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   if (loading)
     return (
-      <div style={{ fontFamily: 'monospace' }}>
-        Checking for missing inputs...
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}
+      >
+        <LoadingOutlined spin />
+        <div style={{ fontFamily: 'monospace' }}>
+          Checking for missing inputs...
+        </div>
       </div>
     );
 
