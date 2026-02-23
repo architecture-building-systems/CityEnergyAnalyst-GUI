@@ -49,24 +49,24 @@ const useToolParams = (script, form) => {
       // Reset error state when checking starts
       setInputError(undefined);
 
-      const formParams = await getFormValues(
-        form,
-        parameters,
-        categoricalParameters,
-      );
-      if (!cancelled && formParams) {
-        try {
+      try {
+        const formParams = await getFormValues(
+          form,
+          parameters,
+          categoricalParameters,
+        );
+        if (!cancelled && formParams) {
           await checkInputs({ tool: script, parameters: formParams });
           if (!cancelled) setInputError(null);
-        } catch (err) {
-          if (!cancelled) {
-            const message =
-              err.response?.data?.detail ||
-              err.response?.statusText ||
-              err.message ||
-              'Unexpected error';
-            setInputError(message);
-          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err.response?.data?.detail ||
+            err.response?.statusText ||
+            err.message ||
+            'Unexpected error';
+          setInputError(message);
         }
       }
     };
