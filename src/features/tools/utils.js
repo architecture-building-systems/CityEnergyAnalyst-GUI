@@ -51,7 +51,7 @@ export const getFormValues = async (
     return out;
   } catch (err) {
     // Ignore out of date error
-    if (err?.outOfDate) return;
+    if (err?.outOfDate) return null;
 
     console.error('Error', err);
 
