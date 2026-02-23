@@ -212,21 +212,12 @@ const Tool = ({ script, onToolSelected, form }) => {
 
           <Divider />
 
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              paddingInline: 12,
-            }}
-          >
-            <ToolForm
-              form={form}
-              parameters={parameters}
-              categoricalParameters={categoricalParameters}
-              script={script}
-            />
-          </div>
+          <ToolForm
+            form={form}
+            parameters={parameters}
+            categoricalParameters={categoricalParameters}
+            script={script}
+          />
         </div>
       </Spin>
     </div>

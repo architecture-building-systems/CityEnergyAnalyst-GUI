@@ -18,7 +18,11 @@
     opacity 0.2s ease-out;
   opacity: 1;
   font-size: 13px;
+}
+
+#cea-tool-header-description {
   overflow-y: auto;
+  max-height: 240px;
 }
 
 .cea-tool-description-wrapper.collapsed {

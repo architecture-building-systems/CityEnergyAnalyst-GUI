@@ -3,8 +3,10 @@ import Parameter from 'components/Parameter';
 import { Collapse, Form } from 'antd';
 import useParameterMetadataRefetch from '../../hooks/useParameterMetadataRefetch';
 import { useToolFormStore } from '../../stores/tool-form-store';
+import { useScrollFade } from '../../hooks/useScrollFade';
 
 const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
+  const { ref: scrollRef, maskStyle } = useScrollFade([script]);
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
   const reset = useToolFormStore((state) => state.reset);
@@ -125,15 +127,26 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   }
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      className="cea-tool-form"
-      onFieldsChange={handleFieldChange}
+    <div
+      ref={scrollRef}
+      style={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: 'auto',
+        paddingInline: 12,
+        ...maskStyle,
+      }}
     >
-      {toolParams}
-      {categoricalParams}
-    </Form>
+      <Form
+        form={form}
+        layout="vertical"
+        className="cea-tool-form"
+        onFieldsChange={handleFieldChange}
+      >
+        {toolParams}
+        {categoricalParams}
+      </Form>
+    </div>
   );
 };
 

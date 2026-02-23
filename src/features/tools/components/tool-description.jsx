@@ -2,10 +2,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { isElectron, openExternal } from 'utils/electron';
+import { useScrollFade } from 'features/tools/hooks/useScrollFade';
 
 export const ToolDescription = ({ description }) => {
+  const { ref, maskStyle } = useScrollFade([description]);
+
   return (
-    <div id="cea-tool-header-description">
+    <div ref={ref} id="cea-tool-header-description" style={maskStyle}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
