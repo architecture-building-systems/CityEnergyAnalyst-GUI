@@ -10,7 +10,10 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   const reset = useToolFormStore((state) => state.reset);
   const [watchedValues, setWatchedValues] = useState({});
 
-  const { mutate: handleRefetch } = useParameterMetadataRefetch(script, form);
+  const { mutateAsync: handleRefetch } = useParameterMetadataRefetch(
+    script,
+    form,
+  );
 
   useEffect(() => {
     reset();
@@ -18,7 +21,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
 
   // Watch for changes in parameters that have dependents
   const handleFieldChange = useCallback(
-    (changedFields) => {
+    async (changedFields) => {
       // Build dependency map: parameter_name -> [dependent_parameter_names]
       const allParams = [
         ...(parameters || []),
@@ -68,11 +71,10 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
 
           // Trigger refetch with current form values, changed param, and affected params
           const formValues = form.getFieldsValue();
-          handleRefetch(
-            { ...formValues, [fieldName]: newValue },
-            fieldName,
-            dependencyMap[fieldName],
-          );
+          await handleRefetch({
+            formValues: { ...formValues, [fieldName]: newValue },
+            affectedParams: dependencyMap[fieldName],
+          });
           break; // Only need one refetch
         }
       }

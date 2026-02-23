@@ -29,7 +29,7 @@ const useToolParams = (script, form) => {
     error: fetchError,
   } = useFetchToolParams(script);
 
-  const { mutate: checkInputs } = useCheckInputsMutation();
+  const { mutateAsync: checkInputs } = useCheckInputsMutation();
 
   const parameters = params?.parameters;
   const categoricalParameters = params?.categorical_parameters;
@@ -55,24 +55,19 @@ const useToolParams = (script, form) => {
         categoricalParameters,
       );
       if (!cancelled && formParams) {
-        checkInputs(
-          { tool: script, parameters: formParams },
-          {
-            onSuccess: () => {
-              if (!cancelled) setInputError(null);
-            },
-            onError: (err) => {
-              if (!cancelled) {
-                const message =
-                  err.response?.data?.detail ||
-                  err.response?.statusText ||
-                  err.message ||
-                  'Unexpected error';
-                setInputError(message);
-              }
-            },
-          },
-        );
+        try {
+          await checkInputs({ tool: script, parameters: formParams });
+          if (!cancelled) setInputError(null);
+        } catch (err) {
+          if (!cancelled) {
+            const message =
+              err.response?.data?.detail ||
+              err.response?.statusText ||
+              err.message ||
+              'Unexpected error';
+            setInputError(message);
+          }
+        }
       }
     };
 

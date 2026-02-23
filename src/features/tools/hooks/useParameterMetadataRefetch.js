@@ -6,9 +6,9 @@ import { TOOLS_QUERY_KEYS, TOOLS_MUTATION_KEYS } from '../constants/queryKeys';
 
 const useParameterMetadataRefetch = (script, form) => {
   const queryClient = useQueryClient();
-  const { mutate: checkInputs } = useCheckInputsMutation();
+  const { mutateAsync: checkInputs } = useCheckInputsMutation();
 
-  const { mutate: handleRefetch } = useMutation({
+  return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
     mutationFn: async ({ formValues, affectedParams }) => {
       const response = await apiClient.post(
@@ -90,15 +90,13 @@ const useParameterMetadataRefetch = (script, form) => {
         updatedCache?.categorical_parameters,
       );
       if (currentParams) {
-        checkInputs({ tool: script, parameters: currentParams });
+        await checkInputs({ tool: script, parameters: currentParams });
       }
     },
     onError: (err) => {
       console.error('Error refetching parameter metadata:', err);
     },
   });
-
-  return { mutate: handleRefetch };
 };
 
 export default useParameterMetadataRefetch;
