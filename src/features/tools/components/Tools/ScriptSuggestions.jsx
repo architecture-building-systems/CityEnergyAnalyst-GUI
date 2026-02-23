@@ -6,6 +6,7 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   if (loading)
     return (
       <div
+        className="cea-script-suggestions"
         style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}
       >
         <LoadingOutlined spin />
@@ -21,49 +22,53 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   // If error contains script suggestions, show them
   if (error?.script_suggestions?.length) {
     return (
-      <Alert
-        description={
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <b>Missing required inputs detected.</b>
-            <div>Run the following scripts to create the missing inputs:</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {error.script_suggestions.map(({ label, name }) => {
-                return (
-                  <div
-                    key={name}
-                    style={{ marginLeft: 8, display: 'flex', gap: 8 }}
-                  >
-                    <span>-</span>
-                    <button
-                      className="cea-tool-suggestions-button"
-                      onClick={() => onToolSelected?.(name)}
+      <div className="cea-script-suggestions animate-fade-in">
+        <Alert
+          description={
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <b>Missing required inputs detected.</b>
+              <div>Run the following scripts to create the missing inputs:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {error.script_suggestions.map(({ label, name }) => {
+                  return (
+                    <div
+                      key={name}
+                      style={{ marginLeft: 8, display: 'flex', gap: 8 }}
                     >
-                      <b style={{ flex: 1 }}>{label}</b>
-                      <ExternalLinkIcon />
-                    </button>
-                  </div>
-                );
-              })}
+                      <span>-</span>
+                      <button
+                        className="cea-tool-suggestions-button"
+                        onClick={() => onToolSelected?.(name)}
+                      >
+                        <b style={{ flex: 1 }}>{label}</b>
+                        <ExternalLinkIcon />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        }
-        type="info"
-        showIcon
-      />
+          }
+          type="info"
+          showIcon
+        />
+      </div>
     );
   }
 
   // Any other error (e.g., string error message)
   return (
-    <Alert
-      title="Error"
-      description={
-        typeof error === 'string'
-          ? error
-          : 'Something went wrong while checking for missing inputs.'
-      }
-      type="error"
-      showIcon
-    />
+    <div className="cea-script-suggestions">
+      <Alert
+        title="Error"
+        description={
+          typeof error === 'string'
+            ? error
+            : 'Something went wrong while checking for missing inputs.'
+        }
+        type="error"
+        showIcon
+      />
+    </div>
   );
 };

@@ -192,7 +192,13 @@ const Tool = ({ script, onToolSelected, form }) => {
               />
             </div>
 
-            {toolError && <Alert title={toolError} type="error" />}
+            {toolError && (
+              <Alert
+                className="cea-tool-error animate-fade-in"
+                title={toolError}
+                type="error"
+              />
+            )}
 
             {changes && (
               <Alert
