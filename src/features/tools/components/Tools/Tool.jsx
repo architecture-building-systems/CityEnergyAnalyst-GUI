@@ -67,7 +67,10 @@ const Tool = ({ script, onToolSelected, form }) => {
   if (!label) return null;
 
   return (
-    <div className="cea-tool-wrapper" style={{ height: '100%' }}>
+    <div
+      className="cea-tool-wrapper"
+      style={{ height: '100%', position: 'relative' }}
+    >
       <Spin
         spinning={isSaving || isResetting || isFetching || isRefetching}
         tip={
@@ -79,7 +82,7 @@ const Tool = ({ script, onToolSelected, form }) => {
         }
         styles={{
           root: {
-            position: 'fixed',
+            position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
