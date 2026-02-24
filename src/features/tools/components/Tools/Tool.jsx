@@ -14,7 +14,7 @@ import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
-import { useToolFormStore } from '../../stores/tool-form-store';
+import { useToolFormStore } from 'features/tools/stores/tool-form-store';
 
 const Tool = ({ script, onToolSelected, form }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
@@ -42,9 +42,11 @@ const Tool = ({ script, onToolSelected, form }) => {
 
       const firstErrorField = err?.errorFields?.[0]?.name;
       if (firstErrorField) {
-        setTimeout(() => {
-          form.scrollToField(firstErrorField, { focus: true });
-        }, 500);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            form.scrollToField(firstErrorField, { focus: true });
+          });
+        });
       }
     },
     [expandCategories, form],
