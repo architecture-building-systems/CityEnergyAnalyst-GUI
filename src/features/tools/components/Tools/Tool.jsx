@@ -12,7 +12,7 @@ import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
 import { ScriptSuggestions } from './ScriptSuggestions';
-import { useToolParams } from 'features/tools/hooks';
+import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
 import { useToolFormStore } from '../../stores/tool-form-store';
 
@@ -21,6 +21,8 @@ const Tool = ({ script, onToolSelected, form }) => {
   const [toolError, setToolError] = useState(null);
 
   const expandCategories = useToolFormStore((state) => state.expandCategories);
+
+  useDescriptionAutoHide(setHeaderCollapsed);
 
   const onValidationError = useCallback(
     (err, categoriesToExpand) => {
