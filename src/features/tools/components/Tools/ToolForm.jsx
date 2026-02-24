@@ -1,10 +1,10 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 import Parameter from 'components/Parameter';
 import { Collapse, Form } from 'antd';
 import { isElectron } from 'utils/electron';
-import useParameterMetadataRefetch from '../../hooks/useParameterMetadataRefetch';
-import { useToolFormStore } from '../../stores/tool-form-store';
-import { useScrollFade } from '../../hooks/useScrollFade';
+import useParameterMetadataRefetch from 'features/tools/hooks/useParameterMetadataRefetch';
+import { useToolFormStore } from 'features/tools/stores/tool-form-store';
+import { useScrollFade } from 'features/tools/hooks/useScrollFade';
 
 const ELECTRON_ONLY = [
   'multiprocessing',
@@ -33,33 +33,36 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
     watchedValuesRef.current = {};
   }, [script, reset]);
 
+  const dependencyMap = useMemo(() => {
+    const allParams = [
+      ...(parameters || []),
+      ...Object.values(categoricalParameters || {}).flat(),
+    ];
+
+    const map = {};
+    allParams.forEach((param) => {
+      if (param.depends_on && Array.isArray(param.depends_on)) {
+        param.depends_on.forEach((depName) => {
+          if (!map[depName]) {
+            map[depName] = [];
+          }
+          map[depName].push(param.name);
+        });
+      }
+      // Backward compatibility: also check triggers_refetch
+      if (param.triggers_refetch) {
+        if (!map[param.name]) {
+          map[param.name] = [];
+        }
+      }
+    });
+
+    return map;
+  }, [parameters, categoricalParameters]);
+
   // Watch for changes in parameters that have dependents
   const handleFieldChange = useCallback(
     async (changedFields) => {
-      // Build dependency map: parameter_name -> [dependent_parameter_names]
-      const allParams = [
-        ...(parameters || []),
-        ...Object.values(categoricalParameters || {}).flat(),
-      ];
-
-      const dependencyMap = {};
-      allParams.forEach((param) => {
-        if (param.depends_on && Array.isArray(param.depends_on)) {
-          param.depends_on.forEach((depName) => {
-            if (!dependencyMap[depName]) {
-              dependencyMap[depName] = [];
-            }
-            dependencyMap[depName].push(param.name);
-          });
-        }
-        // Backward compatibility: also check triggers_refetch
-        if (param.triggers_refetch) {
-          if (!dependencyMap[param.name]) {
-            dependencyMap[param.name] = [];
-          }
-        }
-      });
-
       // Check if any changed field has dependents
       for (const changedField of changedFields) {
         const fieldName = changedField.name[0];
@@ -75,12 +78,12 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
         }
 
         // Check if this field has dependents (via depends_on or triggers_refetch)
-        const hasDependents = dependencyMap[fieldName]?.length > 0;
+        const hasDependents = fieldName in dependencyMap;
 
         // Only trigger refetch if not initial load AND value changed AND has dependents
         if (!isInitialLoad && newValue !== oldValue && hasDependents) {
           console.log(
-            `Parameter ${fieldName} changed, refetching form (dependents: ${dependencyMap[fieldName].join(', ')})`,
+            `Parameter ${fieldName} changed, refetching form (dependents: ${dependencyMap[fieldName].join(', ') || '(triggers_refetch)'})`,
           );
 
           // Trigger refetch with current form values, changed param, and affected params
@@ -93,7 +96,7 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
         }
       }
     },
-    [parameters, categoricalParameters, form, handleRefetch],
+    [dependencyMap, form, handleRefetch],
   );
 
   const shouldHideParam = (param) =>
