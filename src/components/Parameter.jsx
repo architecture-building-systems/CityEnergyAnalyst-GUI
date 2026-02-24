@@ -22,7 +22,6 @@ import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
 
-
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
   return (
@@ -458,10 +457,15 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
 
+    case 'StringParameter':
     default:
+      if (type !== 'StringParameter') {
+        console.warn(`Unsupported parameter type: ${type}`);
+      }
+
       return (
         <FormField name={name} help={help} initialValue={value}>
-          <Input />
+          <Input placeholder={nullable ? 'Leave blank for default' : null} />
         </FormField>
       );
   }
