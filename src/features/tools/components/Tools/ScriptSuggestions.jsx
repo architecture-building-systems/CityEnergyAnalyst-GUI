@@ -37,6 +37,7 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
                     >
                       <span>-</span>
                       <button
+                        type="button"
                         className="cea-tool-suggestions-button"
                         onClick={() => onToolSelected?.(name)}
                       >
