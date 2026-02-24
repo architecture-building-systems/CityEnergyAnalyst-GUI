@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 const FADE_HEIGHT = 32;
 const MASK_WITH_FADE = `linear-gradient(to bottom, black calc(100% - ${FADE_HEIGHT}px), transparent 100%)`;
@@ -7,21 +7,25 @@ const MASK_WITH_FADE = `linear-gradient(to bottom, black calc(100% - ${FADE_HEIG
  * Attaches a scroll listener to an element and returns a mask-image style
  * that fades out the bottom edge when there is more content to scroll.
  *
- * @param {any[]} deps - Values that cause content to change (e.g. [description], [script]).
- *   Changing these re-evaluates whether the fade is needed.
- * @returns {{ ref: React.RefObject, maskStyle: React.CSSProperties }}
+ * Call the returned `recheck` function from a `useEffect` whenever content
+ * that might change the scroll height changes (e.g. when `description` or
+ * `script` changes).
+ *
+ * @returns {{ ref: React.RefObject, maskStyle: React.CSSProperties, recheck: () => void }}
  */
-export const useScrollFade = (deps = []) => {
+export const useScrollFade = () => {
   const ref = useRef(null);
   const [hasMore, setHasMore] = useState(false);
+
+  const check = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setHasMore(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
-    const check = () => {
-      setHasMore(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
-    };
 
     check();
     el.addEventListener('scroll', check);
@@ -33,12 +37,11 @@ export const useScrollFade = (deps = []) => {
       el.removeEventListener('scroll', check);
       observer.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [check]);
 
   const maskStyle = hasMore
     ? { WebkitMaskImage: MASK_WITH_FADE, maskImage: MASK_WITH_FADE }
     : undefined;
 
-  return { ref, maskStyle };
+  return { ref, maskStyle, recheck: check };
 };

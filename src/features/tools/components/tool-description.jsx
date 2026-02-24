@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -5,7 +6,11 @@ import { isElectron, openExternal } from 'utils/electron';
 import { useScrollFade } from 'features/tools/hooks/useScrollFade';
 
 export const ToolDescription = ({ description }) => {
-  const { ref, maskStyle } = useScrollFade([description]);
+  const { ref, maskStyle, recheck } = useScrollFade();
+
+  useEffect(() => {
+    recheck();
+  }, [description, recheck]);
 
   return (
     <div ref={ref} id="cea-tool-header-description" style={maskStyle}>

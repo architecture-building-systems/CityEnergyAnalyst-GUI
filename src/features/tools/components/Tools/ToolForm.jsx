@@ -13,11 +13,15 @@ const ELECTRON_ONLY = [
 ];
 
 const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
-  const { ref: scrollRef, maskStyle } = useScrollFade([script]);
+  const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
   const reset = useToolFormStore((state) => state.reset);
   const watchedValuesRef = useRef({});
+
+  useEffect(() => {
+    recheck();
+  }, [script, recheck]);
 
   const { mutateAsync: handleRefetch } = useParameterMetadataRefetch(
     script,
