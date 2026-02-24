@@ -1,9 +1,16 @@
 import { useRef, useCallback, useEffect } from 'react';
 import Parameter from 'components/Parameter';
 import { Collapse, Form } from 'antd';
+import { isElectron } from 'utils/electron';
 import useParameterMetadataRefetch from '../../hooks/useParameterMetadataRefetch';
 import { useToolFormStore } from '../../stores/tool-form-store';
 import { useScrollFade } from '../../hooks/useScrollFade';
+
+const ELECTRON_ONLY = [
+  'multiprocessing',
+  'number-of-cpus-to-keep-free',
+  'debug',
+];
 
 const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   const { ref: scrollRef, maskStyle } = useScrollFade([script]);
@@ -85,11 +92,15 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
     [parameters, categoricalParameters, form, handleRefetch],
   );
 
+  const shouldHideParam = (param) =>
+    param.type === 'ScenarioParameter' ||
+    (!isElectron() && ELECTRON_ONLY.includes(param.name));
+
   let toolParams = null;
   if (parameters) {
-    toolParams = parameters.map((param) => {
-      if (param.type === 'ScenarioParameter') return null;
-      return (
+    toolParams = parameters
+      .filter((param) => !shouldHideParam(param))
+      .map((param) => (
         <Parameter
           key={param.name}
           form={form}
@@ -97,26 +108,29 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
           allParameters={parameters}
           toolName={script}
         />
-      );
-    });
+      ));
   }
 
   let categoricalParams = null;
   if (categoricalParameters && Object.keys(categoricalParameters).length) {
-    const categories = Object.keys(categoricalParameters).map((category) => ({
-      key: category,
-      label: category,
-      forceRender: true, // Ensure content is rendered even when collapsed to preserve form state
-      children: categoricalParameters[category].map((param) => (
-        <Parameter
-          key={param.name}
-          form={form}
-          parameter={param}
-          allParameters={parameters}
-          toolName={script}
-        />
-      )),
-    }));
+    const categories = Object.keys(categoricalParameters)
+      .map((category) => ({
+        key: category,
+        label: category,
+        forceRender: true, // Ensure content is rendered even when collapsed to preserve form state
+        children: categoricalParameters[category]
+          .filter((param) => !shouldHideParam(param))
+          .map((param) => (
+            <Parameter
+              key={param.name}
+              form={form}
+              parameter={param}
+              allParameters={parameters}
+              toolName={script}
+            />
+          )),
+      }))
+      .filter((category) => category.children.length > 0);
     categoricalParams = (
       <Collapse
         activeKey={activeKey}

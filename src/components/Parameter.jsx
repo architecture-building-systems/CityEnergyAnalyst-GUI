@@ -22,11 +22,6 @@ import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
 
-const ELECTRON_ONLY = [
-  'multiprocessing',
-  'number-of-cpus-to-keep-free',
-  'debug',
-];
 
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
@@ -90,8 +85,6 @@ const Parameter = ({ parameter, form, toolName }) => {
     name,
     form,
   });
-
-  if (!isElectron() && ELECTRON_ONLY.includes(name)) return null;
 
   switch (type) {
     case 'IntegerParameter':
