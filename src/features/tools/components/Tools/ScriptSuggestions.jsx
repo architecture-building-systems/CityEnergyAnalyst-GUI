@@ -61,7 +61,7 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   return (
     <div className="cea-script-suggestions">
       <Alert
-        title="Error"
+        title="Input check failed"
         description={
           typeof error === 'string'
             ? error
