@@ -149,6 +149,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             },
           ]}
           initialValue={value}
+          hasFeedback
         >
           <OpenDialogInput form={form} type={contentType} filters={filters} />
         </FormField>
