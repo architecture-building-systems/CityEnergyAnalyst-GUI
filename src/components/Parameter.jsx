@@ -464,7 +464,17 @@ const Parameter = ({ parameter, form, toolName }) => {
       }
 
       return (
-        <FormField name={name} help={help} initialValue={value}>
+        <FormField
+          name={name}
+          help={help}
+          initialValue={value}
+          {...(needs_validation && {
+            rules: [{ validator }],
+            validateTrigger: 'onBlur',
+            dependencies: parameter.depends_on || [],
+            hasFeedback: true,
+          })}
+        >
           <Input placeholder={nullable ? 'Leave blank for default' : null} />
         </FormField>
       );
