@@ -1,3 +1,35 @@
+/* Fix proper overflow by allowing spin container to follow card height */
+.cea-tool-wrapper .ant-spin-nested-loading,
+.cea-tool-wrapper .ant-spin-container {
+  height: 100%;
+}
+
+.cea-tool-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cea-tool-description-wrapper {
+  overflow: hidden;
+  max-height: 240px;
+  transition:
+    max-height 0.2s ease-out,
+    opacity 0.2s ease-out;
+  opacity: 1;
+  font-size: 13px;
+}
+
+#cea-tool-header-description {
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.cea-tool-description-wrapper.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
 .cea-tool-form-buttongroup {
   display: flex;
   align-items: center;
@@ -8,19 +40,39 @@
   font-size: 12px;
 }
 
-.cea-tool-suggestions {
+@keyframes cea-slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cea-script-suggestions.animate-fade-in,
+.cea-tool-error.animate-fade-in {
+  animation: cea-slide-in-top 0.2s ease-out;
+}
+
+.cea-tool-suggestions-button {
+  /* Reset default button styles */
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  /* Align child elements */
   display: flex;
   gap: 8px;
   align-items: center;
-  cursor: pointer;
 }
 
-.cea-tool-suggestions:hover {
+.cea-tool-suggestions-button:hover {
   text-decoration: underline;
   color: #1677ff;
-}
-
-.cea-tool-form-spinner,
-.cea-tool-form-spinner .ant-spin-container {
-  height: 100%;
 }

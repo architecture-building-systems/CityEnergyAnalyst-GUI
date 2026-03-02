@@ -193,7 +193,24 @@ const Cardwrapper = ({ children, style }) => {
   );
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  // Uncomment to enable custom QueryClient behavior:
+  // defaultOptions: {
+  //   queries: {
+  //     staleTime: 5 * 60 * 1000, // 5 minutes
+  //     gcTime: 10 * 60 * 1000, // 10 minutes (cache garbage collection time)
+  //     refetchOnWindowFocus: false, // Don't refetch on window focus (good for forms)
+  //     refetchOnReconnect: true, // Refetch when internet reconnects
+  //     retry: 3, // Retry failed requests 3 times
+  //   },
+  // },
+});
+
+// For dev tools - attach queryClient to window object (dev only)
+if (import.meta.env.DEV) {
+  window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+}
+
 const HomePage = () => {
   const isServerUp = useCheckServerStatus();
   if (!isServerUp) return <Loading />;

@@ -280,7 +280,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         {showToolCardSideButtons && <ToolCardSideButtons />}
         {transitionToolsFromRight((styles, item) =>
           item ? (
-            <animated.div className="cea-overlay-card-full" style={styles}>
+            <animated.div
+              className="cea-overlay-card cea-tool-card-container"
+              style={styles}
+            >
               <ToolCard
                 selectedTool={selectedTool}
                 selectedPlotTool={selectedPlotTool}
