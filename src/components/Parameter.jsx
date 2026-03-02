@@ -38,12 +38,25 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
+const useParameterValidation = ({
+  needs_validation,
+  toolName,
+  name,
+  form,
+  nullable,
+}) => {
   // Create async validator for Ant Design Form.Item rules
   const validator = useCallback(
     async (_, fieldValue) => {
       // Skip validation if not needed
       if (!needs_validation || !toolName || !name) return Promise.resolve();
+
+      // Skip validation if field is nullable and value is empty
+      if (
+        nullable &&
+        (fieldValue === null || fieldValue === undefined || fieldValue === '')
+      )
+        return Promise.resolve();
 
       try {
         const formValues = form.getFieldsValue();
@@ -67,7 +80,7 @@ const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
         return Promise.reject(new Error(errorMessage));
       }
     },
-    [needs_validation, toolName, name, form],
+    [needs_validation, toolName, name, form, nullable],
   );
 
   return validator;
@@ -83,6 +96,7 @@ const Parameter = ({ parameter, form, toolName }) => {
     toolName,
     name,
     form,
+    nullable,
   });
 
   switch (type) {
