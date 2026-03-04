@@ -27,6 +27,7 @@ const useToolParams = (script, form, onError) => {
     isLoading,
     isFetching,
     error: fetchError,
+    dataUpdatedAt,
   } = useFetchToolParams(script);
 
   const { mutateAsync: checkInputs } = useCheckInputsMutation();
@@ -37,9 +38,9 @@ const useToolParams = (script, form, onError) => {
   // Reset form when script or parameters change
   useEffect(() => {
     form.resetFields();
-  }, [script, form, parameters]);
+  }, [script, form, dataUpdatedAt]);
 
-  // Check inputs whenever parameters change
+  // Check inputs whenever parameters change, i.e. save, reset, or refetch
   useEffect(() => {
     let cancelled = false;
 
@@ -78,7 +79,15 @@ const useToolParams = (script, form, onError) => {
     return () => {
       cancelled = true;
     };
-  }, [script, form, parameters, categoricalParameters, checkInputs, onError]);
+  }, [
+    script,
+    form,
+    parameters,
+    categoricalParameters,
+    dataUpdatedAt,
+    checkInputs,
+    onError,
+  ]);
 
   return {
     params,
