@@ -38,7 +38,7 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-const useParameterValidation = ({
+const useParameterAsyncValidation = ({
   needs_validation,
   toolName,
   name,
@@ -91,7 +91,7 @@ const Parameter = ({ parameter, form, toolName }) => {
     parameter;
   const { setFieldsValue } = form;
 
-  const validator = useParameterValidation({
+  const validatorAsync = useParameterAsyncValidation({
     needs_validation,
     toolName,
     name,
@@ -466,7 +466,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator }]}
+          rules={[{ validator: validatorAsync }]}
           validateTrigger="onBlur"
           dependencies={parameter.depends_on || []}
           hasFeedback
@@ -488,7 +488,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           help={help}
           initialValue={value}
           {...(needs_validation && {
-            rules: [{ validator }],
+            rules: [{ validator: validatorAsync }],
             validateTrigger: 'onBlur',
             dependencies: parameter.depends_on || [],
             hasFeedback: true,
