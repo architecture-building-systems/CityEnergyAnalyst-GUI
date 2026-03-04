@@ -38,12 +38,25 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
-const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
+const useParameterAsyncValidation = ({
+  needs_validation,
+  toolName,
+  name,
+  form,
+  nullable,
+}) => {
   // Create async validator for Ant Design Form.Item rules
   const validator = useCallback(
     async (_, fieldValue) => {
       // Skip validation if not needed
       if (!needs_validation || !toolName || !name) return Promise.resolve();
+
+      // Skip validation if field is nullable and value is empty
+      if (
+        nullable &&
+        (fieldValue === null || fieldValue === undefined || fieldValue === '')
+      )
+        return Promise.resolve();
 
       try {
         const formValues = form.getFieldsValue();
@@ -67,7 +80,7 @@ const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
         return Promise.reject(new Error(errorMessage));
       }
     },
-    [needs_validation, toolName, name, form],
+    [needs_validation, toolName, name, form, nullable],
   );
 
   return validator;
@@ -78,11 +91,12 @@ const Parameter = ({ parameter, form, toolName }) => {
     parameter;
   const { setFieldsValue } = form;
 
-  const validator = useParameterValidation({
+  const validatorAsync = useParameterAsyncValidation({
     needs_validation,
     toolName,
     name,
     form,
+    nullable,
   });
 
   switch (type) {
@@ -104,7 +118,11 @@ const Parameter = ({ parameter, form, toolName }) => {
                 type === 'IntegerParameter' ? 'integer' : 'float'
               }`,
               transform: (num) => {
-                if (num === '') return 0;
+                if (
+                  num === '' ||
+                  (nullable && (num === null || num === undefined))
+                )
+                  return 0;
                 return regex.test(num) ? Number(num) : NaN;
               },
             },
@@ -234,6 +252,8 @@ const Parameter = ({ parameter, form, toolName }) => {
       }));
 
       const optionsValidator = (_, value) => {
+        if (value === null && nullable) return Promise.resolve();
+
         if (choices.length < 1) {
           if (type === 'GenerationParameter')
             return Promise.reject(
@@ -309,6 +329,8 @@ const Parameter = ({ parameter, form, toolName }) => {
           rules={[
             {
               validator: (_, value) => {
+                if (value === null && nullable) return Promise.resolve();
+
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
@@ -448,7 +470,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator }]}
+          rules={[{ validator: validatorAsync }]}
           validateTrigger="onBlur"
           dependencies={parameter.depends_on || []}
           hasFeedback
@@ -486,7 +508,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           help={help}
           initialValue={value}
           {...(needs_validation && {
-            rules: [{ validator }],
+            rules: [{ validator: validatorAsync }],
             validateTrigger: 'onBlur',
             dependencies: parameter.depends_on || [],
             hasFeedback: true,

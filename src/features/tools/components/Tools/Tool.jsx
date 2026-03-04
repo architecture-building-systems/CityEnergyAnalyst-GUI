@@ -7,6 +7,7 @@ import { TOOLS_MUTATION_KEYS } from 'features/tools/constants/queryKeys';
 import './Tool.css';
 
 import ToolForm from './ToolForm';
+import { ToolError } from './ToolError';
 import { ToolFormButtons } from './ToolFormButtons';
 import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
@@ -196,13 +197,7 @@ const Tool = ({ script, onToolSelected, form }) => {
               />
             </div>
 
-            {toolError && (
-              <Alert
-                className="cea-tool-error animate-fade-in"
-                title={toolError}
-                type="error"
-              />
-            )}
+            <ToolError error={toolError} />
 
             {changes && (
               <Alert

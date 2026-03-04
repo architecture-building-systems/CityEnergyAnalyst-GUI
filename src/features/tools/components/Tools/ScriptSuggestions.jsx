@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Alert } from 'antd';
 import { ExternalLinkIcon } from 'assets/icons';
+import { ToolError } from './ToolError';
 
 export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
   if (loading)
@@ -57,11 +58,14 @@ export const ScriptSuggestions = ({ onToolSelected, loading, error }) => {
     );
   }
 
+  if (error?.field_errors)
+    return <ToolError title="Unable to check inputs" error={error} />;
+
   // Any other error (e.g., string error message)
   return (
     <div className="cea-script-suggestions">
       <Alert
-        title="Error"
+        title="Input check failed"
         description={
           typeof error === 'string'
             ? error
