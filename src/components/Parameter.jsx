@@ -486,7 +486,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator }]}
+          rules={[{ validator: validatorAsync }]}
           validateTrigger="onBlur"
           dependencies={parameter.depends_on || []}
           hasFeedback
