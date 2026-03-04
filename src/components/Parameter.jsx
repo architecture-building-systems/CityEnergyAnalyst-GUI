@@ -22,12 +22,6 @@ import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
 
-const ELECTRON_ONLY = [
-  'multiprocessing',
-  'number-of-cpus-to-keep-free',
-  'debug',
-];
-
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
   return (
@@ -68,7 +62,6 @@ const useParameterValidation = ({ needs_validation, toolName, name, form }) => {
           return Promise.reject(new Error(response.data.error));
         }
       } catch (error) {
-        console.error('Validation error:', error);
         const errorMessage =
           error?.response?.data?.error || error?.message || 'Validation failed';
         return Promise.reject(new Error(errorMessage));
@@ -91,8 +84,6 @@ const Parameter = ({ parameter, form, toolName }) => {
     name,
     form,
   });
-
-  if (!isElectron() && ELECTRON_ONLY.includes(name)) return null;
 
   switch (type) {
     case 'IntegerParameter':
@@ -158,6 +149,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             },
           ]}
           initialValue={value}
+          hasFeedback
         >
           <OpenDialogInput form={form} type={contentType} filters={filters} />
         </FormField>
@@ -482,10 +474,25 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
 
+    case 'StringParameter':
     default:
+      if (type !== 'StringParameter') {
+        console.warn(`Unsupported parameter type: ${type}`);
+      }
+
       return (
-        <FormField name={name} help={help} initialValue={value}>
-          <Input />
+        <FormField
+          name={name}
+          help={help}
+          initialValue={value}
+          {...(needs_validation && {
+            rules: [{ validator }],
+            validateTrigger: 'onBlur',
+            dependencies: parameter.depends_on || [],
+            hasFeedback: true,
+          })}
+        >
+          <Input placeholder={nullable ? 'Leave blank for default' : null} />
         </FormField>
       );
   }

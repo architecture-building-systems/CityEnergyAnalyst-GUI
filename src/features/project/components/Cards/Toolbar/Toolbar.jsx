@@ -1,6 +1,6 @@
 import { Dropdown, Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import useToolsStore from 'features/tools/stores/toolsStore';
+import { useToolList } from 'features/tools/hooks';
 
 import { DownOutlined } from '@ant-design/icons';
 
@@ -22,17 +22,6 @@ import {
 } from 'assets/icons';
 
 const IGNORED_SECTIONS = ['Visualisation'];
-
-const useFetchTools = () => {
-  const { toolList, fetchToolList } = useToolsStore();
-  const { status, tools } = toolList;
-
-  useEffect(() => {
-    fetchToolList();
-  }, [fetchToolList]);
-
-  return { status, tools };
-};
 
 const FALLBACK_ICON = <NumberCircleIcon number={'?'} />;
 const toolIconMap = {
@@ -137,12 +126,12 @@ const CEAInsights = () => {
 };
 
 const Toolbar = ({ onToolSelected }) => {
-  const { status, tools } = useFetchTools();
+  const { data: tools, isLoading, isError } = useToolList();
 
   const [showTooltip, setShowTooltip] = useState(true);
 
   const toolMenus = useMemo(() => {
-    return Object.keys(tools).map((category) => {
+    return Object.keys(tools || {}).map((category) => {
       if (IGNORED_SECTIONS.includes(category)) return null;
 
       return (
@@ -158,7 +147,8 @@ const Toolbar = ({ onToolSelected }) => {
     });
   }, [tools, showTooltip, onToolSelected]);
 
-  if (status == 'fetching') return <div>Loading Tools...</div>;
+  if (isLoading) return <div>Loading Tools...</div>;
+  if (isError) return <div>Error loading tools...</div>;
 
   return (
     <div

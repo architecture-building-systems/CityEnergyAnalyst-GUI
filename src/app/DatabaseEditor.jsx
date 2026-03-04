@@ -26,6 +26,7 @@ import { DatabaseChangesList } from 'features/database-editor/components/changes
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import LoginModal from 'features/auth/components/Login/LoginModal';
 import { isElectron } from 'utils/electron';
+import ErrorModal from 'components/ErrorModal';
 
 const DatabaseEditorErrorMessage = ({ error }) => {
   return (
@@ -114,6 +115,7 @@ const DatabaseContent = ({ message }) => {
     (state) => state.saveDatabaseState,
   );
   const setShowLoginModal = useSetShowLoginModal();
+  const [saveError, setSaveError] = useState(null);
 
   const changes = useDatabaseEditorStore((state) => state.changes);
   const handleSave = async () => {
@@ -121,7 +123,8 @@ const DatabaseContent = ({ message }) => {
     try {
       await saveDatabaseState();
     } catch (error) {
-      if (error.response.status === 401) setShowLoginModal(true);
+      if (error?.response?.status === 401) setShowLoginModal(true);
+      else setSaveError(error);
     }
   };
 
@@ -147,6 +150,18 @@ const DatabaseContent = ({ message }) => {
         <DatabaseContainer />
       </div>
       <LoginModal />
+      <ErrorModal
+        open={saveError != null}
+        title="Error Saving Database"
+        message={
+          <div>
+            An error occurred while saving the database. <br /> Ensure that
+            there are no validation errors and try again.
+          </div>
+        }
+        error={saveError}
+        onClose={() => setSaveError(null)}
+      />
     </Spin>
   );
 };

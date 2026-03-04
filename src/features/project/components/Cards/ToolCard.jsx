@@ -1,6 +1,6 @@
 import { VerticalLeftOutlined } from '@ant-design/icons';
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button } from 'antd';
+import { Button, Form } from 'antd';
 
 import {
   useCloseToolCard,
@@ -20,11 +20,19 @@ const ToolCard = ({
 }) => {
   const toolType = useToolType();
   const closeToolCard = useCloseToolCard();
+  const [form] = Form.useForm();
 
   let content;
   switch (toolType) {
     case toolTypes.TOOLS:
-      content = <Tool script={selectedTool} onToolSelected={onToolSelected} />;
+      content = (
+        <Tool
+          key={selectedTool}
+          script={selectedTool}
+          onToolSelected={onToolSelected}
+          form={form}
+        />
+      );
       break;
     case toolTypes.MAP_LAYERS:
       content = (
@@ -39,12 +47,13 @@ const ToolCard = ({
       content = <BuildingEditor />;
       break;
     default:
-      content = <div>No tool selected</div>;
+      content = null;
   }
 
   return (
     <ErrorBoundary>
       <div
+        className="cea-tool-card"
         style={{
           background: '#fff',
 
@@ -60,12 +69,11 @@ const ToolCard = ({
         }}
       >
         <div
+          className="cea-tool-card-header"
           style={{
             display: 'flex',
             alignItems: 'center',
             fontSize: 14,
-
-            flexShrink: 0,
           }}
         >
           {toolType == toolTypes.MAP_LAYERS && selectedPlotTool != null && (
@@ -78,7 +86,14 @@ const ToolCard = ({
           />
         </div>
 
-        <div style={{ flex: 1, overflow: 'hidden' }}>{content}</div>
+        <ErrorBoundary>
+          <div
+            className="cea-tool-card-content"
+            style={{ minHeight: 0, flex: 1 }}
+          >
+            {content}
+          </div>
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );
