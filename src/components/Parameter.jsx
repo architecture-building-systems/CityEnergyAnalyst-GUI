@@ -118,7 +118,11 @@ const Parameter = ({ parameter, form, toolName }) => {
                 type === 'IntegerParameter' ? 'integer' : 'float'
               }`,
               transform: (num) => {
-                if (num === '') return 0;
+                if (
+                  num === '' ||
+                  (nullable && (num === null || num === undefined))
+                )
+                  return 0;
                 return regex.test(num) ? Number(num) : NaN;
               },
             },
