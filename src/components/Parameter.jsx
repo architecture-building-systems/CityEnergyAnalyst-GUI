@@ -335,6 +335,11 @@ const Parameter = ({ parameter, form, toolName }) => {
                   if (nullable) return Promise.resolve();
                   return Promise.reject('Select at least one choice');
                 }
+                if (
+                  !value.length &&
+                  type == 'NetworkLayoutMultiChoiceParameter'
+                )
+                  return Promise.reject('Select at least one network layout.');
 
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
