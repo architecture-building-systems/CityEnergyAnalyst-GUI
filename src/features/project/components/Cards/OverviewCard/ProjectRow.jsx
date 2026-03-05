@@ -26,7 +26,7 @@ const ProjectRow = ({ projectName }) => {
     <>
       {isElectron() && (
         <Divider
-          orientation="right"
+          titlePlacement="right"
           orientationMargin={2}
           plain
           style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
