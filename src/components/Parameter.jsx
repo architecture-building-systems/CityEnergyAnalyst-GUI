@@ -252,8 +252,10 @@ const Parameter = ({ parameter, form, toolName }) => {
       }));
 
       const optionsValidator = (_, value) => {
-        if (value === null && nullable) return Promise.resolve();
-
+        if (value === null) {
+          if (nullable) return Promise.resolve();
+          return Promise.reject('Select at least one choice');
+        }
         if (choices.length < 1) {
           if (type === 'GenerationParameter')
             return Promise.reject(
@@ -329,7 +331,10 @@ const Parameter = ({ parameter, form, toolName }) => {
           rules={[
             {
               validator: (_, value) => {
-                if (value === null && nullable) return Promise.resolve();
+                if (value === null) {
+                  if (nullable) return Promise.resolve();
+                  return Promise.reject('Select at least one choice');
+                }
 
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
