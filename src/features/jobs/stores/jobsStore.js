@@ -20,6 +20,7 @@ const transformJobPayload = (payload) => {
 const useJobsStore = create((set, get) => ({
   jobs: null,
   hasMore: true,
+  nextOffset: 0,
 
   // Actions
   fetchJobs: async () => {
@@ -30,6 +31,7 @@ const useJobsStore = create((set, get) => ({
       set({
         jobs: transformInitialPayload(response.data),
         hasMore: response.data.length >= JOBS_PAGE_SIZE,
+        nextOffset: response.data.length,
       });
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
@@ -37,16 +39,16 @@ const useJobsStore = create((set, get) => ({
   },
 
   fetchMoreJobs: async () => {
-    const currentJobs = get().jobs;
-    if (!currentJobs) return;
-    const offset = Object.keys(currentJobs).length;
+    const { jobs, nextOffset } = get();
+    if (!jobs) return;
     try {
       const response = await apiClient.get('/server/jobs/', {
-        params: { limit: JOBS_PAGE_SIZE, offset },
+        params: { limit: JOBS_PAGE_SIZE, offset: nextOffset },
       });
       set((state) => ({
         jobs: { ...state.jobs, ...transformInitialPayload(response.data) },
         hasMore: response.data.length >= JOBS_PAGE_SIZE,
+        nextOffset: state.nextOffset + response.data.length,
       }));
     } catch (error) {
       console.error('Failed to fetch more jobs:', error);
