@@ -64,8 +64,11 @@ export const JobInfoList = ({ style }) => {
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
-    await fetchMoreJobs();
-    setLoadingMore(false);
+    try {
+      await fetchMoreJobs();
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   return (
