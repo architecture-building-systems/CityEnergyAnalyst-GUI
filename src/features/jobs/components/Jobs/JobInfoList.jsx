@@ -5,6 +5,7 @@ import JobInfoCard from './JobInfoCard';
 import useJobsStore, { useSortedJobs } from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useIsValidUser } from 'stores/userStore';
+import { Button } from 'antd';
 
 const useFetchJobs = (project) => {
   const fetchJobs = useJobsStore((state) => state.fetchJobs);
@@ -20,8 +21,11 @@ export const JobInfoList = ({ style }) => {
   const project = useProjectStore((state) => state.project);
   useFetchJobs(project);
   const sortedJobs = useSortedJobs();
+  const hasMore = useJobsStore((state) => state.hasMore);
+  const fetchMoreJobs = useJobsStore((state) => state.fetchMoreJobs);
 
   const [expanded, setExpanded] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const containerRef = useRef(null);
 
@@ -65,6 +69,12 @@ export const JobInfoList = ({ style }) => {
   // Don't render if no project is selected
   if (!project || sortedJobs.length === 0) return null;
 
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    await fetchMoreJobs();
+    setLoadingMore(false);
+  };
+
   return (
     <div
       className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
@@ -77,6 +87,18 @@ export const JobInfoList = ({ style }) => {
       }}
     >
       {jobInfos}
+      {expanded && hasMore && (
+        <div className="cea-job-load-more">
+          <Button
+            type="link"
+            size="small"
+            loading={loadingMore}
+            onClick={handleLoadMore}
+          >
+            Load more
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

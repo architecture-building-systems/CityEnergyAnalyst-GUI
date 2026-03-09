@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
 
+const JOBS_PAGE_SIZE = 10;
+
 const transformInitialPayload = (payload) => {
   const out = {};
   payload.forEach((job) => {
@@ -17,14 +19,37 @@ const transformJobPayload = (payload) => {
 
 const useJobsStore = create((set, get) => ({
   jobs: null,
+  hasMore: true,
 
   // Actions
   fetchJobs: async () => {
     try {
-      const response = await apiClient.get('/server/jobs/');
-      set({ jobs: transformInitialPayload(response.data) });
+      const response = await apiClient.get('/server/jobs/', {
+        params: { limit: JOBS_PAGE_SIZE },
+      });
+      set({
+        jobs: transformInitialPayload(response.data),
+        hasMore: response.data.length >= JOBS_PAGE_SIZE,
+      });
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
+    }
+  },
+
+  fetchMoreJobs: async () => {
+    const currentJobs = get().jobs;
+    if (!currentJobs) return;
+    const offset = Object.keys(currentJobs).length;
+    try {
+      const response = await apiClient.get('/server/jobs/', {
+        params: { limit: JOBS_PAGE_SIZE, offset },
+      });
+      set((state) => ({
+        jobs: { ...state.jobs, ...transformInitialPayload(response.data) },
+        hasMore: response.data.length >= JOBS_PAGE_SIZE,
+      }));
+    } catch (error) {
+      console.error('Failed to fetch more jobs:', error);
     }
   },
 
