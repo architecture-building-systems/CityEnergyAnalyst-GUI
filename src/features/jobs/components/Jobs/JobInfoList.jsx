@@ -90,6 +90,7 @@ export const JobInfoList = ({ style }) => {
             type="link"
             size="small"
             loading={loadingMore}
+            disabled={loadingMore}
             onClick={handleLoadMore}
           >
             Load more
