@@ -54,6 +54,12 @@
   display: none;
 }
 
+.cea-job-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
 /* .cea-job-info-card-list .cea-job-info-card:first-child {
   z-index: 3;
 }
