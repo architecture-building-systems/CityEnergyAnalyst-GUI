@@ -48,19 +48,12 @@ export const JobInfoList = ({ style }) => {
     }
   };
 
-  useEffect(() => {
-    if (!sortedJobs.length) setExpanded(false);
-
-    // if (containerRef.current && jobLengthRef.current < sortedJobs.length) {
-    //   const container = containerRef.current;
-    //   // Scroll to bottom when new job is added
-    //   container.scrollTo({
-    //     top: container.scrollHeight,
-    //     behavior: 'smooth',
-    //   });
-    // }
-    // jobLengthRef.current = sortedJobs.length;
-  }, [sortedJobs.length]);
+  const handleBlur = (event) => {
+    // Collapse only when focus fully leaves the job list container.
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setExpanded(false);
+    }
+  };
 
   useEffect(() => {
     goToBottom();
@@ -80,7 +73,11 @@ export const JobInfoList = ({ style }) => {
       className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
+      onFocus={() => setExpanded(true)}
+      onBlur={handleBlur}
+      onTouchStart={() => setExpanded(true)}
       ref={containerRef}
+      aria-expanded={expanded}
       style={{
         overflow: expanded ? 'auto' : 'hidden',
         ...style,
