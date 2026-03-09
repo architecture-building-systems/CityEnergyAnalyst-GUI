@@ -199,6 +199,10 @@ const Tool = ({ script, onToolSelected, form }) => {
 
             <ToolError error={toolError} />
 
+            {inputError != null && !inputError?.script_suggestions && (
+              <ToolError title="Unable to check inputs" error={inputError} />
+            )}
+
             {changes && (
               <Alert
                 title="Unsaved changes detected."
@@ -211,7 +215,7 @@ const Tool = ({ script, onToolSelected, form }) => {
             <ScriptSuggestions
               onToolSelected={onToolSelected}
               loading={isChecking}
-              error={inputError}
+              scriptSuggestions={inputError?.script_suggestions}
             />
           </div>
 

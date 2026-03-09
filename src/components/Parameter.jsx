@@ -237,6 +237,7 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'NetworkLayoutChoiceParameter':
+    case 'DistrictSupplyTypeParameter':
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
@@ -299,7 +300,6 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
-    case 'DistrictSupplyTypeParameter':
     case 'AtomicChangeMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter': {
@@ -335,6 +335,11 @@ const Parameter = ({ parameter, form, toolName }) => {
                   if (nullable) return Promise.resolve();
                   return Promise.reject('Select at least one choice');
                 }
+
+                if (!Array.isArray(value)) {
+                  return Promise.reject('Value must be an array');
+                }
+
                 if (
                   !value.length &&
                   type == 'NetworkLayoutMultiChoiceParameter'
