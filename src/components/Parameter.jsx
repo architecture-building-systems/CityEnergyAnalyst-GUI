@@ -237,6 +237,7 @@ const Parameter = ({ parameter, form, toolName }) => {
       );
     }
     case 'NetworkLayoutChoiceParameter':
+    case 'DistrictSupplyTypeParameter':
     case 'ChoiceParameter':
     case 'PlantNodeParameter':
     case 'ScenarioNameParameter':
@@ -299,7 +300,6 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
-    case 'DistrictSupplyTypeParameter':
     case 'AtomicChangeMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter': {
