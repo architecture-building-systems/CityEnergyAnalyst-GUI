@@ -55,6 +55,12 @@ export const JobInfoList = ({ style }) => {
     }
   };
 
+  const handleMouseLeave = () => {
+    // Keep expanded while keyboard focus is inside the list.
+    if (containerRef.current?.contains(document.activeElement)) return;
+    setExpanded(false);
+  };
+
   useEffect(() => {
     goToBottom();
   }, [expanded]);
@@ -75,7 +81,7 @@ export const JobInfoList = ({ style }) => {
     <div
       className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
+      onMouseLeave={handleMouseLeave}
       onFocus={() => setExpanded(true)}
       onBlur={handleBlur}
       onTouchStart={() => setExpanded(true)}
