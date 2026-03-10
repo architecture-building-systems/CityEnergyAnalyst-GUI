@@ -4,9 +4,9 @@ import { OpenDialogInput } from 'components/Parameter';
 import { checkExist } from 'utils/file';
 import {
   useSaveProjectToLocalStorage,
-  useFetchProjectChoices,
   useProjectStore,
 } from 'features/project/stores/projectStore';
+import { useProjectChoicesQuery } from 'features/project/hooks/queries/useProjectChoices';
 import { isElectron } from 'utils/electron';
 
 const OpenProjectModal = ({ visible, setVisible, onSuccess }) => {
@@ -77,7 +77,8 @@ const PathDialog = ({ initialValue }) => {
 };
 
 const ProjectChoice = () => {
-  const [choices] = useFetchProjectChoices();
+  const { data } = useProjectChoicesQuery();
+  const choices = data?.projects;
 
   const options = choices
     ? choices.map((choice) => ({

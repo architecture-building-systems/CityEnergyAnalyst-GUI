@@ -2,7 +2,11 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Alert } from 'antd';
 import { ExternalLinkIcon } from 'assets/icons';
 
-export const ScriptSuggestions = ({ onToolSelected, loading, scriptSuggestions }) => {
+export const ScriptSuggestions = ({
+  onToolSelected,
+  loading,
+  scriptSuggestions,
+}) => {
   if (loading)
     return (
       <div

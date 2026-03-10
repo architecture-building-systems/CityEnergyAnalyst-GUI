@@ -16,9 +16,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useOpenScenario } from 'features/project/hooks';
 import {
   fetchProjectInfo,
-  useFetchProjectChoices,
   useProjectStore,
 } from 'features/project/stores/projectStore';
+import {
+  useProjectChoicesQuery,
+  useInvalidateProjectChoices,
+} from 'features/project/hooks/queries/useProjectChoices';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {
@@ -449,7 +452,9 @@ const FormContent = ({ onSuccess }) => {
   const [form] = Form.useForm();
   const [scenarios, setScenarios] = useState([]);
 
-  const [projectList, fetchProjectList] = useFetchProjectChoices();
+  const { data: projectChoicesData } = useProjectChoicesQuery();
+  const projectList = projectChoicesData?.projects ?? [];
+  const invalidateProjectChoices = useInvalidateProjectChoices();
   const currentProject = useProjectStore((state) => state.project);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
 
@@ -521,7 +526,7 @@ const FormContent = ({ onSuccess }) => {
           if (currentProject == values.project.project)
             await fetchInfo(currentProject);
           if (values?.project?.type === 'new') {
-            await fetchProjectList();
+            await invalidateProjectChoices();
           }
           await fetchScenarios();
         } catch (e) {
