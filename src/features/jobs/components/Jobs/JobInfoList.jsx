@@ -5,6 +5,7 @@ import JobInfoCard from './JobInfoCard';
 import useJobsStore, { useSortedJobs } from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useIsValidUser } from 'stores/userStore';
+import { Button } from 'antd';
 
 const useFetchJobs = (project) => {
   const fetchJobs = useJobsStore((state) => state.fetchJobs);
@@ -20,8 +21,11 @@ export const JobInfoList = ({ style }) => {
   const project = useProjectStore((state) => state.project);
   useFetchJobs(project);
   const sortedJobs = useSortedJobs();
+  const hasMore = useJobsStore((state) => state.hasMore);
+  const fetchMoreJobs = useJobsStore((state) => state.fetchMoreJobs);
 
   const [expanded, setExpanded] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const containerRef = useRef(null);
 
@@ -44,19 +48,18 @@ export const JobInfoList = ({ style }) => {
     }
   };
 
-  useEffect(() => {
-    if (!sortedJobs.length) setExpanded(false);
+  const handleBlur = (event) => {
+    // Collapse only when focus fully leaves the job list container.
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setExpanded(false);
+    }
+  };
 
-    // if (containerRef.current && jobLengthRef.current < sortedJobs.length) {
-    //   const container = containerRef.current;
-    //   // Scroll to bottom when new job is added
-    //   container.scrollTo({
-    //     top: container.scrollHeight,
-    //     behavior: 'smooth',
-    //   });
-    // }
-    // jobLengthRef.current = sortedJobs.length;
-  }, [sortedJobs.length]);
+  const handleMouseLeave = () => {
+    // Keep expanded while keyboard focus is inside the list.
+    if (containerRef.current?.contains(document.activeElement)) return;
+    setExpanded(false);
+  };
 
   useEffect(() => {
     goToBottom();
@@ -65,18 +68,44 @@ export const JobInfoList = ({ style }) => {
   // Don't render if no project is selected
   if (!project || sortedJobs.length === 0) return null;
 
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      await fetchMoreJobs();
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   return (
     <div
       className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
+      onMouseLeave={handleMouseLeave}
+      onFocus={() => setExpanded(true)}
+      onBlur={handleBlur}
+      onTouchStart={() => setExpanded(true)}
       ref={containerRef}
+      aria-expanded={expanded}
       style={{
         overflow: expanded ? 'auto' : 'hidden',
         ...style,
       }}
     >
       {jobInfos}
+      {expanded && hasMore && (
+        <div className="cea-job-load-more">
+          <Button
+            type="link"
+            size="small"
+            loading={loadingMore}
+            disabled={loadingMore}
+            onClick={handleLoadMore}
+          >
+            Load more
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
