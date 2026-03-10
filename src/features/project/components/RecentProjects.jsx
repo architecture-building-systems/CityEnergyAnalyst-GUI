@@ -15,7 +15,7 @@ import {
 import './RecentProjects.css';
 import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
 import NewProjectModal from 'features/project/components/modals/NewProjectModal';
-import { useUserInfo } from 'stores/userStore';
+import { useUserInfo } from 'stores/useUserQuery';
 import { useProjectLimits } from 'stores/serverStore';
 import { LoadExampleButton } from './load-example';
 

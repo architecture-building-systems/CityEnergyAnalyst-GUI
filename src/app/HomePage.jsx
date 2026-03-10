@@ -15,7 +15,8 @@ import { useInitProjectStore } from 'features/project/stores/projectStore';
 
 import Loading from 'components/Loading';
 import { apiClient } from 'lib/api/axios';
-import { useInitUserInfo, useIsValidUser, useUserInfo } from 'stores/userStore';
+import { useIsValidUser } from 'stores/useUserQuery';
+import { useUserQuery } from 'stores/useUserQuery';
 import { useFetchServerLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
 
@@ -60,8 +61,7 @@ const useCheckServerStatus = () => {
 };
 
 const HomePageContent = () => {
-  const userInfo = useUserInfo();
-  const initUserInfo = useInitUserInfo();
+  const { data: userInfo, isLoading } = useUserQuery();
   const isValidUser = useIsValidUser();
   const fetchServerLimits = useFetchServerLimits();
 
@@ -82,14 +82,10 @@ const HomePageContent = () => {
     fetchServerLimits();
   }, [userInfo]);
 
-  useEffect(() => {
-    initUserInfo();
-  }, []);
-
   useInitProjectStore();
 
   // Load user info before rendering
-  if (userInfo == null) return <Loading />;
+  if (isLoading) return <Loading />;
 
   return (
     <ErrorBoundary>

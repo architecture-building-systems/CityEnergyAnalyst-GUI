@@ -16,7 +16,7 @@ import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
 import { isElectron } from 'utils/electron';
-import { useIsValidUser } from 'stores/userStore';
+import { useIsValidUser } from 'stores/useUserQuery';
 
 const StatusBar = () => {
   const isValidUser = useIsValidUser();
