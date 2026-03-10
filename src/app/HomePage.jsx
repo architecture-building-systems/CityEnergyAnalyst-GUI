@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Route, Routes, Navigate } from 'react-router';
 
 import routes from 'constants/routes.json';
@@ -14,11 +14,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from 'features/project/stores/projectStore';
 
 import Loading from 'components/Loading';
-import { apiClient } from 'lib/api/axios';
 import { useIsValidUser } from 'stores/useUserQuery';
 import { useUserQuery } from 'stores/useUserQuery';
 import { useFetchServerLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
+import { useWaitForServer } from 'stores/useServerVersionQuery';
 
 // Route-level code splitting for better performance
 const Project = lazy(() => import('app/Project'));
@@ -27,38 +27,6 @@ const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
 const OnboardingPage = lazy(() => import('components/OnboardingPage'));
-
-const useCheckServerStatus = () => {
-  const [isServerUp, setIsServerUp] = useState(false);
-
-  useEffect(() => {
-    const checkServerStatus = () => {
-      apiClient
-        .get('/server/version')
-        .then(({ data }) => {
-          if (data?.version) {
-            console.log(`City Energy Analyst v${data.version}`);
-            setIsServerUp(true);
-            clearInterval(interval);
-          } else {
-            console.log('Waiting for connection to server...');
-          }
-        })
-        .catch((error) => {
-          console.log('Error connecting to server:', error.message);
-        });
-    };
-
-    // Run immediately on mount
-    checkServerStatus();
-    const interval = setInterval(checkServerStatus, 1500);
-
-    // Clean up interval on unmount
-    return () => clearInterval(interval);
-  }, []);
-
-  return isServerUp;
-};
 
 const HomePageContent = () => {
   const { data: userInfo, isLoading } = useUserQuery();
@@ -207,10 +175,23 @@ if (import.meta.env.DEV) {
   window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 }
 
-const HomePage = () => {
-  const isServerUp = useCheckServerStatus();
+const HomePageInner = () => {
+  const isServerUp = useWaitForServer();
   if (!isServerUp) return <Loading />;
 
+  return (
+    <div id="homepage-container">
+      <div id="homepage-content-container">
+        <HomePageContent />
+      </div>
+      <div id="homepage-status-bar-container">
+        <StatusBar />
+      </div>
+    </div>
+  );
+};
+
+const HomePage = () => {
   return (
     <ConfigProvider
       theme={{
@@ -226,14 +207,7 @@ const HomePage = () => {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <div id="homepage-container">
-          <div id="homepage-content-container">
-            <HomePageContent />
-          </div>
-          <div id="homepage-status-bar-container">
-            <StatusBar />
-          </div>
-        </div>
+        <HomePageInner />
       </QueryClientProvider>
     </ConfigProvider>
   );
