@@ -11,6 +11,7 @@ import {
 } from 'assets/icons';
 import {
   DEMAND,
+  FINAL_ENERGY,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
   THERMAL_NETWORK,
@@ -29,6 +30,7 @@ export const iconMap = {
   [SOLAR_IRRADIATION]: SolarRadiationIcon,
   [THERMAL_NETWORK]: NetworksIcon,
   [DEMAND]: PlugInIcon,
+  [FINAL_ENERGY]: LifeCycleAnalysisIcon,
   [RENEWABLE_ENERGY_POTENTIALS]: EnergyPotentialsIcon,
   [LIFE_CYCLE_ANALYSIS]: LifeCycleAnalysisIcon,
   [COMFORT_CHART]: ComfortChartIcon,
@@ -57,6 +59,7 @@ export const VIEW_MAP_RESULTS = {
 // Maps layer name to plot script name
 export const VIEW_PLOT_RESULTS = {
   [DEMAND]: 'plot-demand',
+  [FINAL_ENERGY]: 'plot-final-energy',
   [SOLAR_IRRADIATION]: null,
   [RENEWABLE_ENERGY_POTENTIALS]: 'plot-solar',
   [THERMAL_NETWORK]: null,
