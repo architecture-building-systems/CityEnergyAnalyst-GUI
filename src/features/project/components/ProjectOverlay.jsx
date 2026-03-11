@@ -32,7 +32,6 @@ import {
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
 import {
-  useGetMapLayerCategories,
   useMapLayerCategories,
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
@@ -59,7 +58,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const selectionSource = useSelectionSource();
   const resetSelected = useResetSelected();
 
-  const getMapLayerCategories = useGetMapLayerCategories();
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setSelectedLayer = useSetSelectedMapLayer();
@@ -164,11 +162,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     leave: { transform: 'translateY(-100%)', opacity: 0 }, // Slide out to top and fade out
     config: { tension, friction }, // Control the speed of the animation
   });
-
-  // Fetch map layer categories on mount
-  useEffect(() => {
-    getMapLayerCategories();
-  }, []);
 
   // Reset state when project or scenario name changes
   useEffect(() => {
