@@ -14,8 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from 'features/project/stores/projectStore';
 
 import Loading from 'components/Loading';
-import { useIsValidUser } from 'stores/useUserQuery';
-import { useUserQuery } from 'stores/useUserQuery';
+import { useIsValidUser, useUserQuery } from 'stores/useUserQuery';
 import { useFetchServerLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
 import { useWaitForServer } from 'stores/useServerVersionQuery';
@@ -176,8 +175,14 @@ if (import.meta.env.DEV) {
 }
 
 const HomePageInner = () => {
-  const isServerUp = useWaitForServer();
-  if (!isServerUp) return <Loading />;
+  const serverStatus = useWaitForServer();
+  const shouldWaitForServer =
+    // Backend readiness for Electron is handled in the main process, so we can skip this check in Electron
+    !isElectron() &&
+    navigator.onLine !== false &&
+    (serverStatus.isLoading || serverStatus.isPending);
+
+  if (shouldWaitForServer) return <Loading />;
 
   return (
     <div id="homepage-container">

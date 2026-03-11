@@ -23,12 +23,11 @@ export const useServerVersionQuery = () => {
 };
 
 export const useWaitForServer = () => {
-  const { data } = useQuery({
+  return useQuery({
     queryKey: SERVER_VERSION_QUERY_KEY,
     queryFn: fetchServerVersion,
     staleTime: Infinity,
     retry: true,
     retryDelay: 1500,
   });
-  return !!data;
 };
