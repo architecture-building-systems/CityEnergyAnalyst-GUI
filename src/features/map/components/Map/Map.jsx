@@ -47,6 +47,7 @@ import {
   useSelected,
   useSetSelectedFromMap,
 } from 'features/input-editor/stores/inputEditorStore';
+import useBuildingSelectionStore from 'stores/buildingSelectionStore';
 import { AttributionControl } from 'maplibre-gl';
 import MapTooltip from './MapTooltip';
 
@@ -435,6 +436,15 @@ const DeckGLMap = ({ data, colors }) => {
   const selected = useSelected();
   const setSelected = useSetSelectedFromMap();
 
+  const buildingSelectionActive = useBuildingSelectionStore(
+    (state) => state.active,
+  );
+  const buildingSelectionBuildings = useBuildingSelectionStore(
+    (state) => state.selectedBuildings,
+  );
+  const buildingSelectionActiveRef = useRef(buildingSelectionActive);
+  buildingSelectionActiveRef.current = buildingSelectionActive;
+
   const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);
 
@@ -451,8 +461,14 @@ const DeckGLMap = ({ data, colors }) => {
   useMapAttribution(mapRef);
 
   const buildingColor = useMemo(
-    () => buildingColorFunction(colors, selected),
-    [colors, selected],
+    () =>
+      buildingColorFunction(
+        colors,
+        selected,
+        buildingSelectionActive,
+        buildingSelectionBuildings,
+      ),
+    [colors, selected, buildingSelectionActive, buildingSelectionBuildings],
   );
 
   const updateTooltip = useCallback((feature) => {
@@ -472,6 +488,13 @@ const DeckGLMap = ({ data, colors }) => {
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
       const name = object.properties[INDEX_COLUMN];
+
+      // When building selection mode is active, route clicks to the store
+      if (buildingSelectionActiveRef.current) {
+        useBuildingSelectionStore.getState().toggleBuilding(name);
+        return;
+      }
+
       if (layer.id !== selectedLayer) {
         setSelected([name]);
         setSelectedLayer(layer.id);
@@ -522,7 +545,12 @@ const DeckGLMap = ({ data, colors }) => {
           getFillColor: (f) =>
             buildingColor(f.properties[INDEX_COLUMN], 'zone'),
           updateTriggers: {
-            getFillColor: [selected, visibility.dc],
+            getFillColor: [
+              selected,
+              visibility.dc,
+              buildingSelectionActive,
+              buildingSelectionBuildings,
+            ],
           },
 
           pickable: true,
@@ -736,14 +764,24 @@ const DeckGLMap = ({ data, colors }) => {
   );
 };
 
-const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
-  if (selected.includes(buildingName)) {
-    return [255, 255, 0, 255];
-  }
-  if (layer === 'surroundings') return colors.surroundings;
+const buildingColorFunction =
+  (colors, selected, buildingSelectionActive, buildingSelectionBuildings) =>
+  (buildingName, layer) => {
+    if (buildingSelectionActive) {
+      if (buildingSelectionBuildings.includes(buildingName)) {
+        return [46, 134, 193, 220];
+      }
+      if (layer === 'surroundings') return colors.surroundings;
+      return colors.disconnected;
+    }
 
-  return colors.disconnected;
-};
+    if (selected.includes(buildingName)) {
+      return [255, 255, 0, 255];
+    }
+    if (layer === 'surroundings') return colors.surroundings;
+
+    return colors.disconnected;
+  };
 
 const VOID_DECK_FLOOR_HEIGHT = 3;
 const FLOOR_HEIGHT = 3; // Standard floor height in meters

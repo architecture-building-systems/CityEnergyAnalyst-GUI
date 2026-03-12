@@ -29,6 +29,7 @@ import {
   useSelectionSource,
   useResetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
+import { useBuildingSelectionActive } from 'stores/buildingSelectionStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
 import {
@@ -57,6 +58,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const selectedBuildings = useSelected();
   const selectionSource = useSelectionSource();
   const resetSelected = useResetSelected();
+  const buildingSelectionActive = useBuildingSelectionActive();
 
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
@@ -178,13 +180,16 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   useEffect(() => {
     // Show building info tool card when buildings are selected on map and input editor is not open
+    // Don't switch cards when building selection mode is active (user is selecting for a parameter)
     if (
       selectedBuildings.length > 0 &&
       selectionSource === 'map' &&
-      !showInputEditor
+      !showInputEditor &&
+      !buildingSelectionActive
     ) {
       setToolType(toolTypes.BUILDING_INFO);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBuildings, selectionSource, setToolType]);
 
   return (
