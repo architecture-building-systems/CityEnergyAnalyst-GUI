@@ -4,7 +4,7 @@ import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import useJobsStore, { useSortedJobs } from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useIsValidUser } from 'stores/userStore';
+import { useIsValidUser } from 'stores/useUserQuery';
 import { Button } from 'antd';
 
 const useFetchJobs = (project) => {

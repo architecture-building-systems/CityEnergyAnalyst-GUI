@@ -1,14 +1,14 @@
 import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { apiClient } from 'lib/api/axios';
-import { useFetchProjectChoices } from 'features/project/stores/projectStore';
+import { useInvalidateProjectChoices } from 'features/project/hooks/queries/useProjectChoices';
 import { CopyTwoTone } from '@ant-design/icons';
 
 const DeleteProjectModal = ({ visible, setVisible, project }) => {
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState(null);
 
-  const [, fetchProjectChoices] = useFetchProjectChoices();
+  const invalidateProjectChoices = useInvalidateProjectChoices();
 
   const disabled = value !== project;
 
@@ -23,7 +23,7 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
       await apiClient.delete(`/api/project/`, { data: { project } });
       setVisible(false);
       message.success('Successfully deleted project ' + project);
-      await fetchProjectChoices();
+      await invalidateProjectChoices();
       onCancel();
     } catch (error) {
       console.error(error);

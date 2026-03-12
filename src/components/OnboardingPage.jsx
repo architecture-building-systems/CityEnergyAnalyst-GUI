@@ -12,7 +12,7 @@ import CeaLogoSVG from 'assets/cea-logo.svg';
 import { authClient } from 'lib/api/axios';
 import routes from 'constants/routes.json';
 import useNavigationStore from 'stores/navigationStore';
-import { useInitUserInfo } from 'stores/userStore';
+import { useInvalidateUser } from 'stores/useUserQuery';
 import './OnboardingPage.css';
 
 const { Title, Text } = Typography;
@@ -27,7 +27,7 @@ const OnboardingPage = ({ onComplete }) => {
   });
   const [loading, setLoading] = useState(false);
   const { push } = useNavigationStore();
-  const initUserInfo = useInitUserInfo();
+  const invalidateUser = useInvalidateUser();
 
   const primaryReasons = [
     'Energy system analysis',
@@ -107,7 +107,7 @@ const OnboardingPage = ({ onComplete }) => {
       );
 
       // Refresh user info to get updated onboarded status
-      await initUserInfo();
+      await invalidateUser();
 
       // Navigate to main application
       push(routes.PROJECT);

@@ -16,7 +16,7 @@ import DuplicateScenarioModal from 'features/project/components/modals/Duplicate
 import DeleteScenarioModal from 'features/project/components/modals/DeleteScenarioModal';
 import { useScenarioLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
-import { useIsValidUser } from 'stores/userStore';
+import { useIsValidUser } from 'stores/useUserQuery';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const isValidUser = useIsValidUser();

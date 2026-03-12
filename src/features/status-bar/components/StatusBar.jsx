@@ -8,7 +8,7 @@ import socket, { waitForConnection } from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
 import { useSetActiveMapCategory } from 'features/project/components/Cards/MapLayersCard/store';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
-import { apiClient } from 'lib/api/axios';
+import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
@@ -16,7 +16,7 @@ import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
 import { isElectron } from 'utils/electron';
-import { useIsValidUser } from 'stores/userStore';
+import { useIsValidUser } from 'stores/useUserQuery';
 
 const StatusBar = () => {
   const isValidUser = useIsValidUser();
@@ -38,32 +38,7 @@ const StatusBar = () => {
 };
 
 const CEAVersion = () => {
-  const [version, setVersion] = useState();
-  const getVersion = async () => {
-    try {
-      // First try to get version from browser API
-      const electronVersion = await window?.api?.getAppVersion();
-      if (electronVersion) {
-        setVersion(`v${electronVersion}`);
-        return;
-      }
-
-      // If that fails, try the server API
-      const { data } = await apiClient.get('/server/version');
-      if (data?.version) {
-        setVersion(`v${data.version}`);
-        return;
-      }
-
-      throw new Error('No version found');
-    } catch (error) {
-      console.error('Unable to determine CEA version:', error);
-    }
-  };
-
-  useEffect(() => {
-    getVersion();
-  }, []);
+  const { data: version } = useServerVersionQuery();
 
   return (
     <div

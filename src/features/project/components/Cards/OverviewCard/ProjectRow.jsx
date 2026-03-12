@@ -9,9 +9,12 @@ import {
 } from 'assets/icons';
 import {
   useProjectStore,
-  useFetchProjectChoices,
   useSaveProjectToLocalStorage,
 } from 'features/project/stores/projectStore';
+import {
+  useProjectChoicesQuery,
+  useInvalidateProjectChoices,
+} from 'features/project/hooks/queries/useProjectChoices';
 import { useOpenScenario } from 'features/project/hooks';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
@@ -134,7 +137,7 @@ const RefreshIconButton = () => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
-  const [, fetchProjectChoices] = useFetchProjectChoices();
+  const invalidateProjectChoices = useInvalidateProjectChoices();
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
   const changes = useChangesExist();
@@ -170,7 +173,7 @@ const RefreshIconButton = () => {
         // Otherwise, refresh project
         await fetchInfo(project);
       }
-      await fetchProjectChoices();
+      await invalidateProjectChoices();
     } finally {
       setLoading(false);
     }
@@ -238,7 +241,8 @@ const ProjectSelect = ({ projectName }) => {
 
   const changes = useChangesExist();
 
-  const [choices] = useFetchProjectChoices();
+  const { data: projectChoicesData } = useProjectChoicesQuery();
+  const choices = projectChoicesData?.projects;
   const updateScenario = useProjectStore((state) => state.updateScenario);
   const fetchInfo = useProjectStore((state) => state.fetchInfo);
   const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
