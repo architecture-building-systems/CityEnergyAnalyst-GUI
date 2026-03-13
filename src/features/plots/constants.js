@@ -23,6 +23,7 @@ import {
   EMISSION_TIMELINE,
   SUPPLY_SYSTEM,
   COST_BREAKDOWN,
+  COST_SANKEY,
   ANTHROPOGENIC_HEAT,
 } from 'features/map/constants';
 
@@ -40,6 +41,7 @@ export const iconMap = {
   [EMISSION_TIMELINE]: TimelineIcon,
   [SUPPLY_SYSTEM]: SupplySystemIcon,
   [COST_BREAKDOWN]: LifeCycleAnalysisIcon,
+  [COST_SANKEY]: LifeCycleAnalysisIcon,
   [ANTHROPOGENIC_HEAT]: LifeCycleAnalysisIcon,
 };
 
@@ -70,6 +72,7 @@ export const VIEW_PLOT_RESULTS = {
   [EMISSION_TIMELINE]: 'plot-emission-timeline',
   [SUPPLY_SYSTEM]: 'plot-supply-system',
   [COST_BREAKDOWN]: 'plot-cost-breakdown',
+  [COST_SANKEY]: 'plot-cost-sankey',
   [ANTHROPOGENIC_HEAT]: 'plot-heat-rejection',
 };
 
