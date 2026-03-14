@@ -1,259 +1,78 @@
-import {
-  useEffect,
-  useState,
-  useRef,
-  useLayoutEffect,
-  useCallback,
-} from 'react';
-import { Divider, Spin, Alert, Form } from 'antd';
-import useToolsStore from 'features/tools/stores/toolsStore';
-import useJobsStore from 'features/jobs/stores/jobsStore';
+import { useState, useCallback } from 'react';
+import { Divider, Spin, Alert, Button } from 'antd';
+import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
+import { TOOLS_MUTATION_KEYS } from 'features/tools/constants/queryKeys';
 
 import './Tool.css';
-import { ExternalLinkIcon } from 'assets/icons';
 
-import { apiClient } from 'lib/api/axios';
-import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
-
-import ToolForm, { ToolFormButtons } from './ToolForm';
+import ToolForm from './ToolForm';
+import { ToolError } from './ToolError';
+import { ToolFormButtons } from './ToolFormButtons';
 import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
+import { ScriptSuggestions } from './ScriptSuggestions';
+import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
+import { UpOutlined } from '@ant-design/icons';
+import { useToolFormStore } from 'features/tools/stores/tool-form-store';
 
-const useCheckMissingInputs = (tool) => {
-  const [fetching, setFetching] = useState(false);
-  const [error, setError] = useState();
+const Tool = ({ script, onToolSelected, form }) => {
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [toolError, setToolError] = useState(null);
 
-  const fetch = useCallback(
-    async (parameters) => {
-      setFetching(true);
-      try {
-        await apiClient.post(`/api/tools/${tool}/check`, parameters);
-        setError(null);
-      } catch (err) {
-        setError(err.response.data?.detail?.script_suggestions);
-      } finally {
-        setFetching(false);
+  const expandCategories = useToolFormStore((state) => state.expandCategories);
+
+  useDescriptionAutoHide(setHeaderCollapsed);
+
+  const onValidationError = useCallback(
+    (err, categoriesToExpand) => {
+      const errorFieldNames =
+        err?.errorFields?.map((field) => field.name.join('.')) || null;
+
+      if (errorFieldNames) {
+        const fieldList = errorFieldNames.join(', ');
+        setToolError(`Validation failed for fields: ${fieldList}`);
+      } else {
+        setToolError('Validation failed. Check errors in the form.');
+      }
+
+      if (categoriesToExpand.length > 0) {
+        expandCategories(categoriesToExpand);
+      }
+
+      const firstErrorField = err?.errorFields?.[0]?.name;
+      if (firstErrorField) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            form.scrollToField(firstErrorField, { focus: true });
+          });
+        });
       }
     },
-    [tool],
+    [expandCategories, form],
   );
 
-  // reset error when tool changes
-  useEffect(() => {
-    setError();
-  }, [tool]);
+  const {
+    params,
+    isLoading,
+    isFetching,
+    fetchError: error,
+    inputError,
+  } = useToolParams(script, form, onValidationError);
 
-  return { fetch, fetching, error };
-};
-
-const ScriptSuggestions = ({ onToolSelected, fetching, error }) => {
-  if (fetching)
-    return (
-      <div style={{ fontFamily: 'monospace' }}>
-        Checking for missing inputs...
-      </div>
-    );
-
-  // Checks have not been run, so ignore
-  if (error == undefined) return null;
-
-  if (error?.length)
-    return (
-      <Alert
-        message="Missing inputs detected"
-        description={
-          <div>
-            <p>Run the following scripts to create the missing inputs:</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {error.map(({ label, name }) => {
-                return (
-                  <div key={name} style={{ display: 'flex', gap: 8 }}>
-                    -
-                    <b
-                      className="cea-tool-suggestions"
-                      onClick={() => onToolSelected?.(name)}
-                      style={{ marginRight: 'auto' }}
-                      aria-hidden
-                    >
-                      {label}
-                      <ExternalLinkIcon style={{ fontSize: 18 }} />
-                    </b>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        }
-        type="info"
-        showIcon
-      />
-    );
-
-  // Error should be null if there is no error
-  if (error !== null) {
-    return (
-      <Alert
-        title="Error"
-        description="Something went wrong while checking for missing inputs."
-        type="error"
-        showIcon
-      />
-    );
-  }
-  return null;
-};
-
-const useToolForm = (
-  script,
-  parameters,
-  categoricalParameters,
-  callbacks = {
-    onSave: null,
-    onReset: null,
-  },
-  externalForm = null,
-) => {
-  const [form] = Form.useForm(externalForm);
-  const saveToolParams = useToolsStore((state) => state.saveToolParams);
-  const setDefaultToolParams = useToolsStore(
-    (state) => state.setDefaultToolParams,
-  );
-  const { createJob } = useJobsStore();
-
-  const setShowLoginModal = useSetShowLoginModal();
-  const handleLogin = () => {
-    setShowLoginModal(true);
-  };
-
-  // TODO: Add error callback
-  const getForm = useCallback(async () => {
-    let out = null;
-    if (!parameters) return out;
-
-    try {
-      const values = await form.validateFields();
-
-      // Add scenario information to the form
-      const index = parameters.findIndex((x) => x.type === 'ScenarioParameter');
-      let scenario = {};
-      if (index >= 0) scenario = { scenario: parameters[index].value };
-
-      // Convert undefined/null values to empty strings for nullable parameters
-      // This ensures backend receives "" instead of undefined/null
-      const cleanedValues = Object.fromEntries(
-        Object.entries(values).map(([key, value]) => [
-          key,
-          value === undefined || value === null ? '' : value,
-        ]),
-      );
-
-      out = {
-        ...scenario,
-        ...cleanedValues,
-      };
-
-      return out;
-    } catch (err) {
-      // Ignore out of date error
-      if (err?.outOfDate) return;
-
-      console.error('Error', err);
-      // Expand collapsed categories if errors are found inside
-      if (categoricalParameters) {
-        let categoriesWithErrors = [];
-        for (const parameterName in err) {
-          for (const category in categoricalParameters) {
-            if (
-              typeof categoricalParameters[category].find(
-                (x) => x.name === parameterName,
-              ) !== 'undefined'
-            ) {
-              categoriesWithErrors.push(category);
-              break;
-            }
-          }
-        }
-        // FIXME: show errors in categories
-        // categoriesWithErrors.length &&
-        //   setActiveKey((oldValue) => oldValue.concat(categoriesWithErrors));
-      }
-    }
-  }, [form, parameters, categoricalParameters]);
-
-  const runScript = async () => {
-    const params = await getForm();
-
-    // If getForm() returns null/undefined (validation failed), don't run
-    if (!params) {
-      console.error('Cannot run - form validation failed');
-      return;
-    }
-
-    return createJob(script, params)
-      .then((result) => {
-        // Clear network-name field after successful job creation to prevent duplicate runs
-        if (script === 'network-layout' && params?.['network-name']) {
-          form.setFieldsValue({ 'network-name': '' });
-          // Don't call validateFields - the component will detect the change and clear validation state
-        }
-        return result;
-      })
-      .catch((err) => {
-        if (err?.response?.status === 401) handleLogin();
-        else console.error(`Error creating job: ${err}`);
-      });
-  };
-
-  const saveParams = async () => {
-    const params = await getForm();
-
-    // If getForm() returns null/undefined (validation failed), don't save
-    if (!params) {
-      console.error('Cannot save - form validation failed');
-      return;
-    }
-
-    return saveToolParams(script, params)
-      .then(() => {
-        return callbacks?.onSave?.(params);
-      })
-      .catch((err) => {
-        if (err?.response?.status === 401) return;
-        else console.error(`Error saving tool parameters: ${err}`);
-      });
-  };
-
-  const setDefault = async () => {
-    return setDefaultToolParams(script)
-      .then(() => {
-        form.resetFields();
-        return getForm();
-      })
-      .then((params) => {
-        return callbacks?.onReset?.(params);
-      })
-      .catch((err) => {
-        if (err?.response?.status === 401) return;
-        else console.error(`Error setting default tool parameters: ${err}`);
-      });
-  };
-
-  return { form, getForm, runScript, saveParams, setDefault };
-};
-
-const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
-  const { status, error, params } = useToolsStore((state) => state.toolParams);
-  const { isSaving } = useToolsStore((state) => state.toolSaving);
-  const fetchToolParams = useToolsStore((state) => state.fetchToolParams);
-  const resetToolParams = useToolsStore((state) => state.resetToolParams);
-  const updateParameterMetadata = useToolsStore(
-    (state) => state.updateParameterMetadata,
-  );
-  const [isRefetching, setIsRefetching] = useState(false);
-
-  const changes = useChangesExist();
+  const isChecking =
+    useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
+  const isSaving =
+    useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS] }) > 0;
+  const isResetting =
+    useIsMutating({
+      mutationKey: [TOOLS_MUTATION_KEYS.SET_DEFAULT_TOOL_PARAMS],
+    }) > 0;
+  const isRefetching =
+    useIsMutating({
+      mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
+    }) > 0;
 
   const {
     category,
@@ -261,190 +80,70 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
     description,
     parameters,
     categorical_parameters: categoricalParameters,
-  } = params;
+  } = params || {};
+  const isInputChecked = inputError !== undefined;
+  const hasInputError = inputError != null;
+  const disableButtons = isChecking || !isInputChecked || hasInputError;
+  const changes = useChangesExist();
 
-  const {
-    fetch: checkMissingInputs,
-    fetching,
-    error: _error,
-  } = useCheckMissingInputs(script);
-  const disableButtons = fetching || _error !== null;
-
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const [showSkeleton, setShowSkeleton] = useState(true);
-  const lastScrollPositionRef = useRef(0);
-
-  const descriptionRef = useRef(null);
-  const descriptionHeightRef = useRef('auto');
-
-  // Hide skeleton after grid transition completes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSkeleton(false);
-    }, 350); // 50ms buffer after 300ms transition
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // This effect will measure the actual height of the description
-  useLayoutEffect(() => {
-    if (descriptionRef.current && !showSkeleton) {
-      const height = descriptionRef.current.scrollHeight;
-      descriptionHeightRef.current = height;
-    }
-  }, [description, showSkeleton]);
-
-  useEffect(() => {
-    // Reset header visibility when description changes
-    setHeaderVisible(true);
-    lastScrollPositionRef.current = 0;
-    descriptionHeightRef.current = 'auto';
-  }, [description]);
-
-  const handleScroll = useCallback((e) => {
-    // Ensure the scroll threshold greater than the description height to prevent layout shifts
-    const scrollThreshold = descriptionHeightRef.current;
-    const currentScrollPosition = e.target.scrollTop;
-
-    // Determine scroll direction and update header visibility
-    if (
-      currentScrollPosition > lastScrollPositionRef.current &&
-      currentScrollPosition > scrollThreshold
-    ) {
-      setHeaderVisible(false); // Hide header when scrolling down past threshold
-    } else if (currentScrollPosition == 0) {
-      setHeaderVisible(true); // Show header when scrolling up or near top
-    }
-    lastScrollPositionRef.current = currentScrollPosition;
-  }, []);
-
-  const { form, getForm, runScript, saveParams, setDefault } = useToolForm(
-    script,
-    parameters,
-    categoricalParameters,
-    {
-      onSave: checkMissingInputs, // Check inputs when saving to make sure they are valid if changed
-      onReset: checkMissingInputs,
-    },
-    externalForm,
-  );
-
-  const fetchParams = async () => {
-    if (script) await fetchToolParams(script);
-    else resetToolParams();
-
-    // Reset form fields to ensure they are in sync with the fetched parameters
-    form.resetFields();
-
-    // Check for missing inputs after fetching parameters
-    const params = await getForm();
-    if (params) checkMissingInputs(params);
-  };
-
-  // FIXME: Run check missing inputs when form validation passes
-  useEffect(() => {
-    fetchParams();
-  }, [script, fetchToolParams, resetToolParams, form]);
-
-  const handleRefetch = useCallback(
-    async (formValues, changedParam, affectedParams) => {
-      try {
-        setIsRefetching(true);
-        console.log(
-          `[handleRefetch] Refetching metadata - changed: ${changedParam}, affected: ${affectedParams?.join(', ')}`,
-        );
-
-        // Call API to get updated parameter metadata
-        const response = await apiClient.post(
-          `/api/tools/${script}/parameter-metadata`,
-          {
-            form_values: formValues,
-            affected_parameters: affectedParams,
-          },
-        );
-
-        const { parameters } = response.data;
-        console.log(
-          `[handleRefetch] Received metadata for ${Object.keys(parameters).length} parameters`,
-        );
-
-        // Update parameter definitions in store
-        updateParameterMetadata(parameters);
-
-        // Update form values for affected parameters if value changed
-        Object.keys(parameters).forEach((paramName) => {
-          const metadata = parameters[paramName];
-          if (metadata.value !== undefined) {
-            const currentValue = form.getFieldValue(paramName);
-            if (currentValue !== metadata.value) {
-              console.log(
-                `[handleRefetch] Updating ${paramName} value: ${currentValue} -> ${metadata.value}`,
-              );
-              form.setFieldValue(paramName, metadata.value);
-            }
-          }
-        });
-
-        // Re-check for missing inputs after metadata update
-        // Parameters may now depend on different input files
-        const currentParams = await getForm();
-        if (currentParams) {
-          console.log('[handleRefetch] Re-checking for missing inputs');
-          checkMissingInputs(currentParams);
-        }
-      } catch (err) {
-        console.error('Error refetching parameter metadata:', err);
-      } finally {
-        setIsRefetching(false);
-      }
-    },
-    [script, form, updateParameterMetadata, getForm, checkMissingInputs],
-  );
-
-  if (status == 'fetching' || showSkeleton)
+  if (isLoading)
     return (
       <div style={{ padding: 12 }}>
-        {header}
         <ToolSkeleton loadingText="Loading parameters..." />
       </div>
     );
-  if (status == 'failed')
-    return (
-      <div>
-        {header}
-        <AsyncError error={error} />
-      </div>
-    );
+  if (error) {
+    // Normalize error for AsyncError component
+    const normalizedError = error?.response || {
+      data: { message: error?.message || 'Unknown error' },
+    };
+    return <AsyncError error={normalizedError} />;
+  }
   if (!label) return null;
 
   return (
-    <Spin
-      wrapperClassName="cea-tool-form-spinner"
-      spinning={isSaving || isRefetching}
+    <div
+      className="cea-tool-wrapper"
+      style={{ height: '100%', position: 'relative' }}
     >
-      <div
-        style={{
-          // position: 'relative', // Add this to ensure proper spin overlay
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
+      <Spin
+        spinning={isSaving || isResetting || isFetching || isRefetching}
+        tip={
+          (isFetching && 'Refreshing parameters...') ||
+          (isSaving && 'Saving parameters...') ||
+          (isResetting && 'Resetting parameters...') ||
+          (isRefetching && 'Updating form...') ||
+          ''
+        }
+        styles={{
+          root: {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          },
         }}
       >
         <div
-          id="cea-tool-header"
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 12,
-
-            paddingTop: 12,
-            paddingInline: 12,
+            height: '100%',
           }}
         >
-          <div id="cea-tool-header-content">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {header}
-              <small
+          <div
+            id="cea-tool-header"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+
+              paddingTop: 12,
+              paddingInline: 12,
+            }}
+          >
+            <div className="cea-tool-header-content">
+              <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -453,70 +152,84 @@ const Tool = ({ script, onToolSelected, header, form: externalForm }) => {
                   marginLeft: 'auto',
                 }}
               >
-                <span>{category}</span>
-                {!headerVisible && <b>{label}</b>}
-              </small>
+                <small>{category}</small>
+              </div>
+
+              <b style={{ fontSize: 18 }}>{label}</b>
+
+              <div
+                className={`cea-tool-description-wrapper ${headerCollapsed ? 'collapsed' : ''}`}
+              >
+                <ToolDescription description={description} />
+              </div>
             </div>
-            <ToolDescription
-              ref={descriptionRef}
-              description={description}
-              height={descriptionHeightRef.current}
-              label={label}
-              visible={headerVisible}
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div className="cea-tool-form-buttongroup">
+                <ToolFormButtons
+                  form={form}
+                  disabled={disableButtons}
+                  parameters={parameters}
+                  categoricalParameters={categoricalParameters}
+                  script={script}
+                  setError={setToolError}
+                  onValidationError={onValidationError}
+                />
+              </div>
+              <Button
+                icon={
+                  <UpOutlined
+                    style={{
+                      transition: 'transform 0.3s',
+                      transform: headerCollapsed ? 'rotate(180deg)' : 'none',
+                    }}
+                  />
+                }
+                type="text"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+              />
+            </div>
+
+            <ToolError error={toolError} />
+
+            {inputError != null && !inputError?.script_suggestions && (
+              <ToolError title="Unable to check inputs" error={inputError} />
+            )}
+
+            {changes && (
+              <Alert
+                title="Unsaved changes detected."
+                description="Save or discard before proceeding."
+                type="warning"
+                showIcon
+              />
+            )}
+
+            <ScriptSuggestions
+              onToolSelected={onToolSelected}
+              loading={isChecking}
+              scriptSuggestions={inputError?.script_suggestions}
             />
           </div>
 
-          <div className="cea-tool-form-buttongroup">
-            <ToolFormButtons
-              runScript={runScript}
-              saveParams={saveParams}
-              setDefault={setDefault}
-              disabled={disableButtons}
-            />
-          </div>
+          <Divider />
 
-          {changes && (
-            <Alert
-              message={
-                <>
-                  Unsaved changes detected. <br />
-                  Save or discard before proceeding.
-                </>
-              }
-              type="warning"
-              showIcon
-            />
-          )}
-
-          <ScriptSuggestions
-            onToolSelected={onToolSelected}
-            fetching={fetching}
-            error={_error}
-          />
-        </div>
-
-        <Divider />
-
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            paddingInline: 12,
-          }}
-          onScroll={handleScroll}
-        >
           <ToolForm
             form={form}
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            disableButtons={disableButtons}
-            onRefetchNeeded={handleRefetch}
           />
         </div>
-      </div>
-    </Spin>
+      </Spin>
+    </div>
   );
 };
 

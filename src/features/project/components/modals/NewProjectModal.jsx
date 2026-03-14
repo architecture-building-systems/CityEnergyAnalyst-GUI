@@ -4,9 +4,9 @@ import { OpenDialogInput } from 'components/Parameter';
 import { checkExist, dirname, FileNotFoundError, joinPath } from 'utils/file';
 import {
   fetchConfig,
-  useFetchProjectChoices,
   useProjectStore,
 } from 'features/project/stores/projectStore';
+import { useProjectChoicesQuery } from 'features/project/hooks/queries/useProjectChoices';
 import { isElectron } from 'utils/electron';
 import { apiClient } from 'lib/api/axios';
 
@@ -169,7 +169,8 @@ const ElectronForm = ({ form, initialValue }) => {
 };
 
 const BrowserForm = () => {
-  const [choices] = useFetchProjectChoices();
+  const { data } = useProjectChoicesQuery();
+  const choices = data?.projects;
 
   return (
     <Form.Item

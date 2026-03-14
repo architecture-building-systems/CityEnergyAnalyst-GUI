@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import { useUserInfo } from 'stores/userStore';
+import { useUserInfo } from 'stores/useUserQuery';
 
 const DEFAULT_PROJECT_PROPS = {
   project: 'reference-case-open',
@@ -73,7 +73,6 @@ export const useProjectStore = create((set) => ({
   project: null,
   scenario: null,
   scenariosList: [],
-  projectChoices: null,
 
   isFetching: false,
   error: null,
@@ -98,18 +97,6 @@ export const useProjectStore = create((set) => ({
       return out;
     } catch (error) {
       set({ isFetching: false, error });
-      throw error;
-    }
-  },
-  fetchProjectChoices: async () => {
-    try {
-      const data = await fetchProjectChoices();
-      const { projects } = data;
-
-      set({ projectChoices: projects });
-      return projects;
-    } catch (error) {
-      console.error('Error fetching project choices:', error);
       throw error;
     }
   },
@@ -268,17 +255,4 @@ export const useInitProjectStore = () => {
 
     if (userID) initializeProjectFromLocalStorage();
   }, [userID]);
-};
-
-export const useFetchProjectChoices = () => {
-  const projectChoices = useProjectStore((state) => state.projectChoices);
-  const fetchProjectChoices = useProjectStore(
-    (state) => state.fetchProjectChoices,
-  );
-
-  useEffect(() => {
-    fetchProjectChoices();
-  }, []);
-
-  return [projectChoices, fetchProjectChoices];
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { COOKIE_NAME } from 'lib/api/axios';
 import { Avatar, Badge } from 'antd';
-import { useUserInfo } from 'stores/userStore';
+import { useUserInfo } from 'stores/useUserQuery';
 import LoginModal from 'features/auth/components/Login/LoginModal';
 import LoginButton from 'features/auth/components/Login/LoginButton';
 import LogoutButton from 'features/auth/components/Login/LogoutButton';

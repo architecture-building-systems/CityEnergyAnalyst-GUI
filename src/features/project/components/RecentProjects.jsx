@@ -10,12 +10,12 @@ import {
   useSaveProjectToLocalStorage,
   useProjectStore,
   useProjectLoading,
-  useFetchProjectChoices,
 } from 'features/project/stores/projectStore';
+import { useProjectChoicesQuery } from 'features/project/hooks/queries/useProjectChoices';
 import './RecentProjects.css';
 import OpenProjectModal from 'features/project/components/modals/OpenProjectModal';
 import NewProjectModal from 'features/project/components/modals/NewProjectModal';
-import { useUserInfo } from 'stores/userStore';
+import { useUserInfo } from 'stores/useUserQuery';
 import { useProjectLimits } from 'stores/serverStore';
 import { LoadExampleButton } from './load-example';
 
@@ -77,7 +77,8 @@ const RecentProjects = () => {
   const saveProjectToLocalStorage = useSaveProjectToLocalStorage();
   const removeProjectFromLocalStorage = useRemoveProjectFromLocalStorage();
 
-  const [choices] = useFetchProjectChoices();
+  const { data: projectChoicesData } = useProjectChoicesQuery();
+  const choices = projectChoicesData?.projects;
   const { limit, count } = useProjectLimits();
   const exceeded = limit && count <= 0;
 
