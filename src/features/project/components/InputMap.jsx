@@ -44,6 +44,10 @@ const InputMap = ({ project, scenario }) => {
         style={{
           height: '100%',
           position: 'relative',
+          // Create a local stacking context so map overlays (legend, tooltip, etc.)
+          // stay above the map but below ProjectOverlay cards/panels.
+          isolation: 'isolate',
+          zIndex: 0,
           background: 'rgba(0, 0, 0, 0.05)',
         }}
         onContextMenu={(e) => {
