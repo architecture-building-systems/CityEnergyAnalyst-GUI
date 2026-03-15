@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
+import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from 'assets/icons';
+import { generateConstructionColorMap } from 'features/map/utils/constructionColors';
 
 export const NetworkToggle = ({
   cooling,
@@ -53,9 +54,8 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div className="layer-toggle" onClick={handleClick}>
-      <label className="layer-toggle-label">
+    <div className="layer-toggle">
+      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
         <input
           type="checkbox"
           name="layer-toggle"
@@ -69,7 +69,13 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
   );
 };
 
-const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
+const generateLayerToggle = (
+  data,
+  handleChange,
+  handleMapLabelsChange,
+  handleConstructionColorChange,
+  isConstructionColorEnabled,
+) => {
   const geometryGroup = [];
   if (data?.zone) {
     geometryGroup.push({
@@ -162,7 +168,44 @@ const generateLayerToggle = (data, handleChange, handleMapLabelsChange) => {
     ),
   });
 
+  // Add construction standard coloring toggle if zone data exists
+  if (data?.zone) {
+    mapStyleGroup.push({
+      key: 'construction_colors',
+      label: (
+        <LayerToggleRadioControlled
+          label="Color by standard"
+          value="construction_colors"
+          checked={isConstructionColorEnabled}
+          onChange={handleConstructionColorChange}
+        />
+      ),
+    });
+  }
+
   return [...geometryGroup, ...labelsGroup, ...mapStyleGroup];
+};
+
+// Controlled checkbox for construction colors (needs to reflect state)
+const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
+  const handleClick = (e) => {
+    e.stopPropagation();
+  };
+
+  return (
+    <div className="layer-toggle">
+      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
+        <input
+          type="checkbox"
+          name="layer-toggle"
+          value={value}
+          onChange={onChange}
+          checked={checked}
+        />
+        {label}
+      </label>
+    </div>
+  );
 };
 
 const LayerToggle = () => {
@@ -170,8 +213,18 @@ const LayerToggle = () => {
   const { geojsons: data } = inputData;
 
   const dataLoaded = useRef(false);
+  const constructionColorInitialized = useRef(false);
   const setVisibility = useMapStore((state) => state.setVisibility);
   const setMapLabels = useMapStore((state) => state.setMapLabels);
+
+  // Construction standard coloring state
+  const colorMode = useMapStore((state) => state.colorMode);
+  const setColorMode = useMapStore((state) => state.setColorMode);
+  const setConstructionColorMap = useMapStore(
+    (state) => state.setConstructionColorMap,
+  );
+  const isConstructionColorEnabled =
+    colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
 
   useEffect(() => {
     // Set all layers to visible by default
@@ -190,6 +243,25 @@ const LayerToggle = () => {
     }
   }, [data]);
 
+  // Initialize construction color map when zone data changes
+  // Only auto-enable on true first load; respect user's toggle choice on refetch
+  useEffect(() => {
+    if (data?.zone?.features) {
+      const colorMap = generateConstructionColorMap(data.zone.features);
+      setConstructionColorMap(colorMap);
+      // Only enable on first load — not on refetch after user toggled off
+      if (!constructionColorInitialized.current) {
+        setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+        constructionColorInitialized.current = true;
+      }
+    } else {
+      // Reset construction coloring state when zone data becomes unavailable
+      setColorMode(COLOR_MODES.DEFAULT);
+      setConstructionColorMap({});
+      constructionColorInitialized.current = false;
+    }
+  }, [data?.zone?.features, setConstructionColorMap, setColorMode]);
+
   const items = useMemo(() => {
     const handleChange = (e) => {
       const { value, checked } = e.target;
@@ -201,8 +273,21 @@ const LayerToggle = () => {
       setMapLabels(checked);
     };
 
-    return generateLayerToggle(data, handleChange, handleMapLabelsChange);
-  }, [data]);
+    const handleConstructionColorChange = (e) => {
+      const { checked } = e.target;
+      setColorMode(
+        checked ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT,
+      );
+    };
+
+    return generateLayerToggle(
+      data,
+      handleChange,
+      handleMapLabelsChange,
+      handleConstructionColorChange,
+      isConstructionColorEnabled,
+    );
+  }, [data, isConstructionColorEnabled]);
 
   return (
     <Tooltip title="Toggle Layers" styles={{ body: { fontSize: 12 } }}>

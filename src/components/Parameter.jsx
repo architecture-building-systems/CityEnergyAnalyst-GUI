@@ -9,6 +9,7 @@ import {
   Input,
   Switch,
   Select,
+  Tag,
   Divider,
   Button,
   Space,
@@ -21,6 +22,7 @@ import { forwardRef, useCallback } from 'react';
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
+import { useMapStore } from 'features/map/stores/mapStore';
 
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
@@ -36,6 +38,24 @@ export const FormField = ({ name, help, children, ...props }) => {
       {children}
     </Form.Item>
   );
+};
+
+const getContrastTextColour = (hexColour) => {
+  if (typeof hexColour !== 'string') return '#000000';
+
+  const normalizedHex = hexColour.trim().replace('#', '');
+  if (normalizedHex.length !== 6) return '#000000';
+
+  const red = parseInt(normalizedHex.slice(0, 2), 16);
+  const green = parseInt(normalizedHex.slice(2, 4), 16);
+  const blue = parseInt(normalizedHex.slice(4, 6), 16);
+
+  if (Number.isNaN(red) || Number.isNaN(green) || Number.isNaN(blue)) {
+    return '#000000';
+  }
+
+  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+  return luminance > 0.6 ? '#000000' : '#ffffff';
 };
 
 const useParameterAsyncValidation = ({
@@ -90,6 +110,9 @@ const Parameter = ({ parameter, form, toolName }) => {
   const { name, type, value, choices, nullable, help, needs_validation } =
     parameter;
   const { setFieldsValue } = form;
+  const constructionColorMap = useMapStore(
+    (state) => state.constructionColorMap,
+  );
 
   const validatorAsync = useParameterAsyncValidation({
     needs_validation,
@@ -372,6 +395,151 @@ const Parameter = ({ parameter, form, toolName }) => {
             style={{ width: '100%' }}
             placeholder={placeholder}
             maxTagCount={10}
+            popupRender={(menu) => (
+              <div>
+                <div style={{ padding: '8px', textAlign: 'center' }}>
+                  <Button onMouseDown={selectAll} style={{ width: '45%' }}>
+                    Select All
+                  </Button>
+                  <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
+                    Unselect All
+                  </Button>
+                </div>
+                <Divider style={{ margin: '4px 0' }} />
+                {menu}
+              </div>
+            )}
+          />
+        </FormField>
+      );
+    }
+    case 'StandardMultiChoiceParameter': {
+      const hasMapColourData =
+        constructionColorMap && Object.keys(constructionColorMap).length > 0;
+
+      const options = choices.map((choice) => {
+        const colour = hasMapColourData ? constructionColorMap?.[choice] : null;
+
+        if (!colour) {
+          return {
+            label: choice,
+            value: choice,
+          };
+        }
+
+        return {
+          label: (
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  backgroundColor: colour,
+                  border: '1px solid rgba(0, 0, 0, 0.2)',
+                  borderRadius: 2,
+                  flexShrink: 0,
+                }}
+              />
+              <span>{choice}</span>
+            </span>
+          ),
+          value: choice,
+        };
+      });
+
+      const selectAll = (e) => {
+        e.preventDefault();
+        setFieldsValue({
+          [name]: choices,
+        });
+      };
+
+      const unselectAll = (e) => {
+        e.preventDefault();
+        setFieldsValue({
+          [name]: [],
+        });
+      };
+
+      return (
+        <FormField
+          name={name}
+          help={help}
+          rules={[
+            {
+              validator: (_, value) => {
+                if (value === null) {
+                  if (nullable) return Promise.resolve();
+                  return Promise.reject('Select at least one choice');
+                }
+
+                if (!Array.isArray(value)) {
+                  return Promise.reject('Value must be an array');
+                }
+
+                const invalidChoices = value.filter(
+                  (choice) => !choices.includes(choice),
+                );
+                if (invalidChoices.length) {
+                  return Promise.reject(
+                    `${invalidChoices.join(', ')} ${
+                      invalidChoices.length > 1
+                        ? 'are not valid choices'
+                        : 'is not a valid choice'
+                    }`,
+                  );
+                }
+
+                return Promise.resolve();
+              },
+            },
+          ]}
+          initialValue={value}
+        >
+          <Select
+            options={options}
+            mode="multiple"
+            tokenSeparators={[',']}
+            style={{ width: '100%' }}
+            optionFilterProp="value"
+            placeholder="Nothing Selected"
+            maxTagCount={10}
+            tagRender={
+              hasMapColourData
+                ? ({ value: selectedValue, closable, onClose }) => {
+                    const colour = constructionColorMap?.[selectedValue];
+
+                    if (!colour) {
+                      return (
+                        <Tag
+                          closable={closable}
+                          onClose={onClose}
+                          style={{ marginInlineEnd: 4 }}
+                        >
+                          {selectedValue}
+                        </Tag>
+                      );
+                    }
+
+                    return (
+                      <Tag
+                        closable={closable}
+                        onClose={onClose}
+                        style={{
+                          marginInlineEnd: 4,
+                          borderColor: colour,
+                          backgroundColor: colour,
+                          color: getContrastTextColour(colour),
+                        }}
+                      >
+                        {selectedValue}
+                      </Tag>
+                    );
+                  }
+                : undefined
+            }
             popupRender={(menu) => (
               <div>
                 <div style={{ padding: '8px', textAlign: 'center' }}>

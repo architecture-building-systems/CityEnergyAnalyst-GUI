@@ -4,6 +4,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import DeckGLMap from 'features/map/components/Map/Map';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore } from 'features/map/stores/mapStore';
+import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const InputMap = ({ project, scenario }) => {
   const { data, refetch, isFetching, isError, error } = useInputs();
@@ -43,6 +44,10 @@ const InputMap = ({ project, scenario }) => {
         style={{
           height: '100%',
           position: 'relative',
+          // Create a local stacking context so map overlays (legend, tooltip, etc.)
+          // stay above the map but below ProjectOverlay cards/panels.
+          isolation: 'isolate',
+          zIndex: 0,
           background: 'rgba(0, 0, 0, 0.05)',
         }}
         onContextMenu={(e) => {
@@ -61,6 +66,19 @@ const InputMap = ({ project, scenario }) => {
           />
         )}
         <DeckGLMap data={geojsons} colors={colors} />
+
+        {/* Construction Standard Legend - positioned in bottom-left corner */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 80, // Above the bottom toolbar
+            left: 12,
+            zIndex: 2,
+            pointerEvents: 'auto',
+          }}
+        >
+          <ConstructionStandardLegend />
+        </div>
       </div>
     </>
   );
