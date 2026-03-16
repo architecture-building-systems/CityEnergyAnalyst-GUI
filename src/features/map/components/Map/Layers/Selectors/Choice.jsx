@@ -1,8 +1,9 @@
 import { Select } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import useDependsOn from './useDependsOn';
 
 const getChoices = async (
   layerCategory,
@@ -40,20 +41,15 @@ const ChoiceSelector = ({
   const [selected, setSelected] = useState(value ?? defaultValue);
   const [choices, setChoices] = useState(null);
 
+  const { dependsOnValues, dependsValid } = useDependsOn(
+    dependsOn,
+    mapLayerParameters,
+  );
+
   const handleChange = (value) => {
     setSelected(value);
     onChange?.(value);
   };
-
-  const dependsOnValues = useMemo(() => {
-    if (!dependsOn) return null;
-    return JSON.stringify(dependsOn.map((key) => mapLayerParameters?.[key]));
-  }, [mapLayerParameters]);
-
-  const dependsValid = useMemo(() => {
-    if (!dependsOn) return true;
-    return dependsOn.every((prop) => mapLayerParameters?.[prop] !== undefined);
-  }, [mapLayerParameters]);
 
   useEffect(() => {
     // Only fetch if valid

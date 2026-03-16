@@ -3,6 +3,7 @@ import { useMapStore } from 'features/map/stores/mapStore';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import useDependsOn from './useDependsOn';
 
 const getRange = async (
   layerCategory,
@@ -52,11 +53,15 @@ const SliderSelector = ({
   onChange,
   layerName,
   range: staticRange,
+  dependsOn,
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const categoryInfo = useMapStore((state) => state.selectedMapCategory);
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
   const [dynamicRange, setDynamicRange] = useState();
@@ -70,8 +75,9 @@ const SliderSelector = ({
     return {};
   }, [min, max]);
 
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
+  const { dependsOnValues, dependsValid } = useDependsOn(
+    dependsOn,
+    mapLayerParameters,
   );
 
   const handleChange = (newValue) => {
@@ -89,13 +95,14 @@ const SliderSelector = ({
 
   // Fetch dynamic range only if static range is not provided
   useEffect(() => {
-    // If static range is provided, use it and don't fetch from backend
+    // If static range is provided, skip dynamic fetch
     if (staticRange && Array.isArray(staticRange) && staticRange.length === 2) {
-      setDynamicRange(staticRange);
       return;
     }
 
-    // Only fetch range if no static range is provided (dynamic range case)
+    // Wait until all dependent params have been set
+    if (!dependsValid) return;
+
     const fetchRange = async () => {
       try {
         const rangeData = await getRange(
@@ -107,10 +114,9 @@ const SliderSelector = ({
           mapLayerParameters ?? {},
         );
 
-        // Validate range data before using it
         if (checkIsValidRange(rangeData)) {
           setDynamicRange(rangeData);
-          // Set new value to be full range of new data
+          // Set new value to full range of new data
           handleChange(rangeData);
         } else {
           console.warn('Invalid range data received:', rangeData);
@@ -125,7 +131,15 @@ const SliderSelector = ({
     if (categoryInfo?.name && layerName && project && scenarioName) {
       fetchRange();
     }
-  }, [categoryInfo?.name, layerName, project, scenarioName, staticRange]);
+  }, [
+    categoryInfo?.name,
+    layerName,
+    project,
+    scenarioName,
+    staticRange,
+    dependsOnValues,
+    dependsValid,
+  ]);
 
   return (
     <div>

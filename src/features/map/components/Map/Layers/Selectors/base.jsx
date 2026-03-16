@@ -118,7 +118,7 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
                   />
                 );
               case 'slider': {
-                const { range } = parameter;
+                const { range, depends_on } = parameter;
                 return (
                   <SliderSelector
                     key={`${name}-${key}`}
@@ -128,6 +128,7 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
                     defaultValue={defaultValue}
                     range={range}
                     layerName={name}
+                    dependsOn={depends_on}
                     onChange={_handleChange}
                   />
                 );
