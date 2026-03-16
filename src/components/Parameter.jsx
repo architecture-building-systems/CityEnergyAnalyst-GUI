@@ -341,15 +341,16 @@ const Parameter = ({ parameter, form, toolName }) => {
                   return Promise.reject('Value must be an array');
                 }
 
-                if (!value.length)
+                if (!value.length) {
                   if (type == 'NetworkLayoutMultiChoiceParameter')
                     return Promise.reject(
                       'Select at least one network layout.',
                     );
-                if (type == 'WhatIfNameMultiChoiceParameter')
-                  return Promise.reject(
-                    'Select at least one what-if scenario.',
-                  );
+                  if (type == 'WhatIfNameMultiChoiceParameter')
+                    return Promise.reject(
+                      'Select at least one what-if scenario.',
+                    );
+                }
 
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
