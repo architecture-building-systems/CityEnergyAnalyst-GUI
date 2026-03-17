@@ -167,7 +167,7 @@ const Loading = () => {
 };
 
 const Error = ({ error }) => {
-  return <Alert message={error} type="error" showIcon />;
+  return <Alert title={error} type="error" showIcon />;
 };
 
 export default MapLayerPropertiesCard;
