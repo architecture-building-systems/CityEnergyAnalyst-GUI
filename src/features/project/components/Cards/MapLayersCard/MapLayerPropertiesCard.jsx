@@ -5,6 +5,7 @@ import { useGetMapLayers } from 'features/map/hooks/map-layers';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Alert, Select } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useSelectedMapCategoryInfo } from './store';
 
 const LayerSelector = ({ layers, onLayerSelect }) => {
   const selectedLayer = useMapStore((state) => state.selectedMapLayer);
@@ -61,7 +62,7 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  const categoryInfo = useMapStore((state) => state.selectedMapCategory);
+  const categoryInfo = useSelectedMapCategoryInfo();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,

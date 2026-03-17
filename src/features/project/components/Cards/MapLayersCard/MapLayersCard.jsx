@@ -1,7 +1,6 @@
 import { Tooltip } from 'antd';
 
 import { useEffect } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
 import { GraphsIcon } from 'assets/icons';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useActiveMapCategory, useSetActiveMapCategory } from './store';
@@ -12,34 +11,23 @@ const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
   const activeCategory = useActiveMapCategory();
   const setActive = useSetActiveMapCategory();
 
-  const setSelectedMapCategory = useMapStore(
-    (state) => state.setSelectedMapCategory,
-  );
-
   const handleCategorySelected = (category) => {
-    setSelectedMapCategory(category);
     onCategorySelected?.(category);
   };
 
   const toggleActive = (category) => {
-    setActive(activeCategory == category ? null : category);
+    const newActive = activeCategory == category ? null : category;
+    setActive(newActive);
+    const categoryObj = newActive
+      ? mapLayerCategories?.categories?.find((l) => l.name == newActive)
+      : null;
+    handleCategorySelected(categoryObj);
   };
 
   // Reset active layer when scenario changes
   useEffect(() => {
     setActive(null);
   }, [scenarioName]);
-
-  useEffect(() => {
-    if (activeCategory == null) {
-      handleCategorySelected(null);
-    } else {
-      const category = mapLayerCategories?.categories?.find(
-        (l) => l.name == activeCategory,
-      );
-      handleCategorySelected(category);
-    }
-  }, [activeCategory]);
 
   if (!scenarioName) return null;
 

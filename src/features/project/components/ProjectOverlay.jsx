@@ -76,7 +76,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       cat.layers.find((l) => l.name === layer),
     );
     if (category) {
-      setActiveMapCategory(category?.name);
+      setActiveMapCategory(category.name);
       setSelectedLayer(layer);
     }
 

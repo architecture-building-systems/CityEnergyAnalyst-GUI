@@ -1,5 +1,6 @@
 import { Slider } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
+import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -58,7 +59,7 @@ const SliderSelector = ({
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const categoryInfo = useMapStore((state) => state.selectedMapCategory);
+  const categoryInfo = useSelectedMapCategoryInfo();
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
   );
