@@ -2,19 +2,12 @@ import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threshold';
 import SliderSelector from './Slider';
 import { useMemo, useCallback, useEffect } from 'react';
-import {
-  useMapStore,
-  useSelectedMapLayer,
-  useSetSelectedMapLayer,
-} from 'features/map/stores/mapStore';
+import { useMapStore } from 'features/map/stores/mapStore';
 import ChoiceSelector from './Choice';
-import { ConfigProvider, Select } from 'antd';
+import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
 
-const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
-  const selectedLayer = useSelectedMapLayer();
-  const setSelectedLayer = useSetSelectedMapLayer();
-
+const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
 
@@ -22,11 +15,6 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
     (state) => state.setMapLayerParameters,
   );
   const setFilters = useMapStore((state) => state.setFilters);
-
-  const handleLayerSelected = (layerName) => {
-    setSelectedLayer(layerName);
-    if (onLayerSelect) onLayerSelect?.(layerName);
-  };
 
   const changeHandler = useCallback(
     (parameterName, filter) => {
@@ -46,6 +34,8 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
 
   // Set the filters to the default values
   useEffect(() => {
+    if (!layers) return;
+
     layers.map((layer) => {
       const { parameters } = layer;
       Object.entries(parameters).forEach(([, parameter]) => {
@@ -57,25 +47,10 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
     });
   }, [layers]);
 
-  // When layers change, check if the selected layer is still valid
-  // If not, select the first layer
-  useEffect(() => {
-    if (!layers?.length) {
-      setSelectedLayer(null);
-      return;
-    }
-
-    if (!selectedLayer || !layers.find((l) => l.name === selectedLayer)) {
-      handleLayerSelected(layers[0].name);
-    }
-  }, [layers, selectedLayer]);
-
   const _parameters = useMemo(() => {
-    const filteredLayers = selectedLayer
-      ? layers.filter((layer) => layer.name === selectedLayer)
-      : layers;
+    if (!layers) return [];
 
-    return filteredLayers.map((layer) => {
+    return layers.map((layer) => {
       const { name, parameters } = layer;
 
       return (
@@ -190,7 +165,7 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
         </div>
       );
     });
-  }, [layers, selectedLayer, parameterValues, range, filters, changeHandler]);
+  }, [layers, parameterValues, range, filters, changeHandler]);
 
   return (
     <ConfigProvider
@@ -207,35 +182,14 @@ const ParameterSelectors = ({ layers, parameterValues, onLayerSelect }) => {
       }}
     >
       <div
-        className="cea-overlay-card"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: 12,
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
           display: 'flex',
           flexDirection: 'column',
-
           padding: 12,
-          width: '100%',
-
           fontSize: 12,
-
           gap: 2,
         }}
       >
-        {layers.length > 1 && (
-          <Select
-            style={{ marginBottom: 8 }}
-            placeholder="Select a layer"
-            value={selectedLayer}
-            onChange={handleLayerSelected}
-            options={layers.map((layer) => ({
-              label: layer.label,
-              value: layer.name,
-            }))}
-          />
-        )}
         {_parameters?.length > 0 ? _parameters : <div>No parameters found</div>}
       </div>
     </ConfigProvider>

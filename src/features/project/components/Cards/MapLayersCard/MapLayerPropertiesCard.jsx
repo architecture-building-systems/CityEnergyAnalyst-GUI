@@ -2,9 +2,54 @@ import ParameterSelectors from 'features/map/components/Map/Layers/Selectors/bas
 import Legend from 'features/map/components/Map/Layers/Legend';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useGetMapLayers } from 'features/map/hooks/map-layers';
-import { useEffect } from 'react';
-import { Alert } from 'antd';
+import { useEffect, useMemo } from 'react';
+import { Alert, Select } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
+
+const LayerSelector = ({ layers, onLayerSelect }) => {
+  const selectedLayer = useMapStore((state) => state.selectedMapLayer);
+  const setSelectedLayer = useMapStore((state) => state.setSelectedMapLayer);
+
+  const handleLayerSelected = (layerName) => {
+    setSelectedLayer(layerName);
+    if (onLayerSelect) onLayerSelect?.(layerName);
+  };
+
+  // When layers change, check if the selected layer is still valid
+  // If not, select the first layer
+  useEffect(() => {
+    if (!layers?.length) {
+      setSelectedLayer(null);
+      return;
+    }
+
+    if (!selectedLayer || !layers.find((l) => l.name === selectedLayer)) {
+      handleLayerSelected(layers[0].name);
+    }
+  }, [layers, selectedLayer]);
+
+  return (
+    <Select
+      style={{ margin: 8 }}
+      placeholder="Select a layer"
+      value={selectedLayer}
+      onChange={handleLayerSelected}
+      options={layers.map((layer) => ({
+        label: layer.label,
+        value: layer.name,
+      }))}
+    />
+  );
+};
+
+const useFilteredLayers = (layers) => {
+  const selectedLayer = useMapStore((state) => state.selectedMapLayer);
+
+  return useMemo(() => {
+    if (!layers || !selectedLayer) return [];
+    return layers.filter((layer) => layer.name === selectedLayer);
+  }, [layers, selectedLayer]);
+};
 
 const MapLayerPropertiesCard = ({ onLayerSelect }) => {
   const project = useProjectStore((state) => state.project);
@@ -17,6 +62,9 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
   );
   const setMapLayers = useMapStore((state) => state.setMapLayers);
 
+  const layers = categoryInfo?.layers;
+  const filteredLayers = useFilteredLayers(layers);
+
   // Reset layers when project or scenario name changes
   // Reset layers when category changes
   useEffect(() => {
@@ -26,11 +74,11 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
 
   // Reset layers and parameters when category changes
   useEffect(() => {
-    if (!categoryInfo?.layers) return;
+    if (!layers) return;
 
     // Initialize parameters object with defaults from all layers
     const parameters = {};
-    for (const layer of categoryInfo.layers) {
+    for (const layer of layers) {
       const { parameters: layerParameters } = layer;
       for (const [key, value] of Object.entries(layerParameters)) {
         if (value?.default) {
@@ -40,7 +88,7 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
     }
 
     setMapLayerParameters(parameters);
-  }, [categoryInfo]);
+  }, [layers, setMapLayerParameters]);
 
   const { fetching, error } = useGetMapLayers(
     categoryInfo,
@@ -49,7 +97,7 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
     mapLayerParameters,
   );
 
-  if (!categoryInfo || !categoryInfo?.layers) return null;
+  if (!layers) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -63,11 +111,28 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
       >
         {fetching && <Loading />}
         <Legend />
-        <ParameterSelectors
-          layers={categoryInfo.layers}
-          parameterValues={mapLayerParameters}
-          onLayerSelect={onLayerSelect}
-        />
+
+        <div
+          className="cea-overlay-card"
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: 12,
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          {layers.length > 1 && (
+            <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
+          )}
+          <ParameterSelectors
+            layers={filteredLayers}
+            parameterValues={mapLayerParameters}
+          />
+        </div>
       </div>
     </div>
   );
