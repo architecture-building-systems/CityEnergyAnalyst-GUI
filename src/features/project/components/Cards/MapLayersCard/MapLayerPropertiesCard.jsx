@@ -2,7 +2,7 @@ import ParameterSelectors from 'features/map/components/Map/Layers/Selectors/bas
 import Legend from 'features/map/components/Map/Layers/Legend';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useGetMapLayers } from 'features/map/hooks/map-layers';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Alert, Select } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
@@ -10,10 +10,13 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
   const selectedLayer = useMapStore((state) => state.selectedMapLayer);
   const setSelectedLayer = useMapStore((state) => state.setSelectedMapLayer);
 
-  const handleLayerSelected = (layerName) => {
-    setSelectedLayer(layerName);
-    if (onLayerSelect) onLayerSelect?.(layerName);
-  };
+  const handleLayerSelected = useCallback(
+    (layerName) => {
+      setSelectedLayer(layerName);
+      if (onLayerSelect) onLayerSelect?.(layerName);
+    },
+    [setSelectedLayer, onLayerSelect],
+  );
 
   // When layers change, check if the selected layer is still valid
   // If not, select the first layer
@@ -26,7 +29,10 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
     if (!selectedLayer || !layers.find((l) => l.name === selectedLayer)) {
       handleLayerSelected(layers[0].name);
     }
-  }, [layers, selectedLayer]);
+  }, [layers, selectedLayer, setSelectedLayer, handleLayerSelected]);
+
+  // Do not show selector if there is only one layer
+  if (layers?.length <= 1) return null;
 
   return (
     <Select
@@ -125,9 +131,7 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
-          {layers.length > 1 && (
-            <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
-          )}
+          <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
           <ParameterSelectors
             layers={filteredLayers}
             parameterValues={mapLayerParameters}
