@@ -3,7 +3,7 @@ import { Button, ConfigProvider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { iconMap, VIEW_PLOT_RESULTS } from 'features/plots/constants';
+import { iconMap, VIEW_PLOT_RESULTS, PLOT_LABELS } from 'features/plots/constants';
 
 const PlotChoices = ({ onSelected }) => {
   const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
@@ -21,7 +21,7 @@ const PlotChoices = ({ onSelected }) => {
             icon={<Icon />}
             onClick={() => onSelected(VIEW_PLOT_RESULTS[choice])}
           >
-            {choice}
+            {PLOT_LABELS[choice] || choice}
           </Button>
         );
       })}

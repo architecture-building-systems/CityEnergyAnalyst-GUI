@@ -77,3 +77,19 @@ export const VIEW_PLOT_RESULTS = {
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
+
+// Labels matching scripts.yml (without the "Plot - " prefix)
+export const PLOT_LABELS = {
+  [DEMAND]: 'Building Energy Demand',
+  [FINAL_ENERGY]: 'Energy by Carrier',
+  [RENEWABLE_ENERGY_POTENTIALS]: 'Solar Technology',
+  [COMFORT_CHART]: 'Building Comfort Chart',
+  [PARETO_FRONT]: 'Pareto Front',
+  [EMISSIONS_EMBODIED]: 'Lifecycle Emissions',
+  [EMISSIONS_OPERATIONAL]: 'Operational Emissions',
+  [EMISSION_TIMELINE]: 'Emission Timeline',
+  [SUPPLY_SYSTEM]: 'Supply System',
+  [COST_BREAKDOWN]: 'Cost Breakdown',
+  [COST_SANKEY]: 'System Cost Sankey',
+  [ANTHROPOGENIC_HEAT]: 'Anthropogenic Heat Rejection',
+};
