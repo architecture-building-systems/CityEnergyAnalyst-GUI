@@ -1,0 +1,58 @@
+:root {
+  --button-gap: 8px;
+  --group-gap: 8px;
+  --subgroup-gap: 16px;
+  --section-gap: 12px;
+  --section-padding-inline: 8px;
+  --heading-margin-bottom: 8px;
+  --outer-margin: 12px;
+  --label-color: #000;
+  --sublabel-color: #888;
+}
+
+.cea-plot-choices h2 {
+  margin-bottom: var(--heading-margin-bottom);
+}
+
+.cea-plot-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--group-gap);
+  margin: var(--outer-margin);
+}
+
+.cea-plot-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--label-color);
+}
+
+.cea-plot-group-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--subgroup-gap);
+  padding-inline: var(--section-padding-inline);
+}
+
+.cea-plot-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.cea-plot-subgroup-label {
+  color: var(--sublabel-color);
+}
+
+.cea-plot-button-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--button-gap);
+}
+
+.cea-plot-button {
+  justify-content: flex-start;
+  width: 100%;
+}

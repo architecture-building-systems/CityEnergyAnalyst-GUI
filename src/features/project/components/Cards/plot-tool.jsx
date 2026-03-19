@@ -3,18 +3,22 @@ import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { iconMap, VIEW_PLOT_RESULTS, PLOT_LABELS, PLOT_GROUPS } from 'features/plots/constants';
+import {
+  VIEW_PLOT_RESULTS,
+  PLOT_LABELS,
+  PLOT_GROUPS,
+} from 'features/plots/constants';
+import './plot-tool.css';
 
 const PlotButton = ({ plotKey, onSelected }) => {
   const script = VIEW_PLOT_RESULTS[plotKey];
   if (!script) return null;
-  const Icon = iconMap?.[plotKey] || null;
+
   return (
     <Button
       key={plotKey}
-      icon={Icon ? <Icon /> : null}
       onClick={() => onSelected(script)}
-      style={{ justifyContent: 'flex-start', width: '100%' }}
+      className="cea-plot-button"
     >
       {PLOT_LABELS[plotKey] || plotKey}
     </Button>
@@ -23,31 +27,50 @@ const PlotButton = ({ plotKey, onSelected }) => {
 
 const PlotChoices = ({ onSelected }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <h2 style={{ marginBottom: 8 }}>Select a Plot Tool</h2>
-      {PLOT_GROUPS.map((group) => (
-        <div key={group.label}>
-          <Divider orientation="left" orientationMargin={0} style={{ marginBlock: 8 }}>
-            <small style={{ fontWeight: 600, color: '#555' }}>{group.label}</small>
-          </Divider>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 12 }}>
-            {group.subgroups ? (
-              group.subgroups.map((sub) => (
-                <div key={sub.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <small style={{ color: '#888', marginLeft: -12 }}>{sub.label}</small>
-                  {sub.keys.map((key) => (
-                    <PlotButton key={key} plotKey={key} onSelected={onSelected} />
+    <div className="cea-plot-choices">
+      <h2>Select a Plot Tool</h2>
+      <div className="cea-plot-group-list">
+        {PLOT_GROUPS.map((group) => (
+          <div key={group.label}>
+            <Divider orientation="left" orientationMargin={0}>
+              <span className="cea-plot-group-label">
+                {group.icon && <group.icon />}
+                <small>{group.label}</small>
+              </span>
+            </Divider>
+            <div className="cea-plot-group-content">
+              {group.subgroups ? (
+                group.subgroups.map((sub) => (
+                  <div key={sub.label} className="cea-plot-subgroup">
+                    <small className="cea-plot-subgroup-label">
+                      {sub.label}
+                    </small>
+                    <div className="cea-plot-button-list">
+                      {sub.keys.map((key) => (
+                        <PlotButton
+                          key={key}
+                          plotKey={key}
+                          onSelected={onSelected}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="cea-plot-button-list">
+                  {group.keys.map((key) => (
+                    <PlotButton
+                      key={key}
+                      plotKey={key}
+                      onSelected={onSelected}
+                    />
                   ))}
                 </div>
-              ))
-            ) : (
-              group.keys.map((key) => (
-                <PlotButton key={key} plotKey={key} onSelected={onSelected} />
-              ))
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };

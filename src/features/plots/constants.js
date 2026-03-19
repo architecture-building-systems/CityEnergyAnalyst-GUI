@@ -8,6 +8,7 @@ import {
   ComfortChartIcon,
   TimelineIcon,
   SupplySystemIcon,
+  OptimisationIcon,
 } from 'assets/icons';
 import {
   DEMAND,
@@ -103,14 +104,17 @@ export const PLOT_LABELS = {
 export const PLOT_GROUPS = [
   {
     label: 'Energy Demand Forecasting',
+    icon: iconMap[DEMAND],
     keys: [DEMAND, COMFORT_CHART],
   },
   {
     label: 'Renewable Energy Potential Assessment',
+    icon: iconMap[RENEWABLE_ENERGY_POTENTIALS],
     keys: [RENEWABLE_ENERGY_POTENTIALS],
   },
   {
     label: 'Life Cycle Analysis',
+    icon: iconMap[FINAL_ENERGY],
     subgroups: [
       { label: 'Energy by Carrier', keys: [FINAL_ENERGY, ENERGY_SANKEY] },
       { label: 'GHG Emissions', keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE] },
@@ -120,6 +124,7 @@ export const PLOT_GROUPS = [
   },
   {
     label: 'Energy Supply System Optimisation',
+    icon: OptimisationIcon,
     keys: [PARETO_FRONT, SUPPLY_SYSTEM],
   },
 ];
