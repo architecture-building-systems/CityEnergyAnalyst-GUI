@@ -1,30 +1,53 @@
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button, ConfigProvider, Form } from 'antd';
+import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { iconMap, VIEW_PLOT_RESULTS, PLOT_LABELS } from 'features/plots/constants';
+import { iconMap, VIEW_PLOT_RESULTS, PLOT_LABELS, PLOT_GROUPS } from 'features/plots/constants';
+
+const PlotButton = ({ plotKey, onSelected }) => {
+  const script = VIEW_PLOT_RESULTS[plotKey];
+  if (!script) return null;
+  const Icon = iconMap?.[plotKey] || null;
+  return (
+    <Button
+      key={plotKey}
+      icon={Icon ? <Icon /> : null}
+      onClick={() => onSelected(script)}
+      style={{ justifyContent: 'flex-start', width: '100%' }}
+    >
+      {PLOT_LABELS[plotKey] || plotKey}
+    </Button>
+  );
+};
 
 const PlotChoices = ({ onSelected }) => {
-  const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
-    (key) => VIEW_PLOT_RESULTS[key],
-  );
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <h2>Select a Plot Tool</h2>
-      {choices.map((choice) => {
-        const Icon = iconMap?.[choice] || null; // Fallback to null if no icon is found
-        return (
-          <Button
-            key={choice}
-            icon={<Icon />}
-            onClick={() => onSelected(VIEW_PLOT_RESULTS[choice])}
-          >
-            {PLOT_LABELS[choice] || choice}
-          </Button>
-        );
-      })}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <h2 style={{ marginBottom: 8 }}>Select a Plot Tool</h2>
+      {PLOT_GROUPS.map((group) => (
+        <div key={group.label}>
+          <Divider orientation="left" orientationMargin={0} style={{ marginBlock: 8 }}>
+            <small style={{ fontWeight: 600, color: '#555' }}>{group.label}</small>
+          </Divider>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {group.subgroups ? (
+              group.subgroups.map((sub) => (
+                <div key={sub.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <small style={{ color: '#888' }}>{sub.label}</small>
+                  {sub.keys.map((key) => (
+                    <PlotButton key={key} plotKey={key} onSelected={onSelected} />
+                  ))}
+                </div>
+              ))
+            ) : (
+              group.keys.map((key) => (
+                <PlotButton key={key} plotKey={key} onSelected={onSelected} />
+              ))
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

@@ -93,3 +93,29 @@ export const PLOT_LABELS = {
   [COST_SANKEY]: 'System Cost Sankey',
   [ANTHROPOGENIC_HEAT]: 'Anthropogenic Heat Rejection',
 };
+
+// Groups matching top-level feature categories in scripts.yml.
+// A group may have `keys` (flat list) or `subgroups` (nested sub-features).
+export const PLOT_GROUPS = [
+  {
+    label: 'Energy Demand Forecasting',
+    keys: [DEMAND, COMFORT_CHART],
+  },
+  {
+    label: 'Renewable Energy Potential Assessment',
+    keys: [RENEWABLE_ENERGY_POTENTIALS],
+  },
+  {
+    label: 'Life Cycle Analysis',
+    subgroups: [
+      { label: 'Energy by Carrier', keys: [FINAL_ENERGY] },
+      { label: 'GHG Emissions', keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE] },
+      { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
+      { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },
+    ],
+  },
+  {
+    label: 'Energy Supply System Optimisation',
+    keys: [PARETO_FRONT, SUPPLY_SYSTEM],
+  },
+];
