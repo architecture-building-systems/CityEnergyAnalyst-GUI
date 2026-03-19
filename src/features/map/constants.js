@@ -14,6 +14,7 @@ export const EMISSION_TIMELINE = 'emission-timeline';
 export const ANTHROPOGENIC_HEAT = 'heat-rejection';
 export const COST_BREAKDOWN = 'cost-breakdown';
 export const COST_SANKEY = 'cost-sankey';
+export const ENERGY_SANKEY = 'energy-sankey';
 
 export const DEFAULT_LEGEND_COLOUR_ARRAY = ['#2A7BB2', '#eb5025', '#f9e246'];
 export const DEFAULT_LEGEND_POINTS = 12;

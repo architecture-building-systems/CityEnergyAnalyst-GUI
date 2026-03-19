@@ -25,6 +25,7 @@ import {
   COST_BREAKDOWN,
   COST_SANKEY,
   ANTHROPOGENIC_HEAT,
+  ENERGY_SANKEY,
 } from 'features/map/constants';
 
 export const iconMap = {
@@ -43,6 +44,7 @@ export const iconMap = {
   [COST_BREAKDOWN]: LifeCycleAnalysisIcon,
   [COST_SANKEY]: LifeCycleAnalysisIcon,
   [ANTHROPOGENIC_HEAT]: LifeCycleAnalysisIcon,
+  [ENERGY_SANKEY]: LifeCycleAnalysisIcon,
 };
 
 // TODO: get mappings from backend
@@ -74,6 +76,7 @@ export const VIEW_PLOT_RESULTS = {
   [COST_BREAKDOWN]: 'plot-cost-breakdown',
   [COST_SANKEY]: 'plot-cost-sankey',
   [ANTHROPOGENIC_HEAT]: 'plot-heat-rejection',
+  [ENERGY_SANKEY]: 'plot-energy-sankey',
 };
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
@@ -92,6 +95,7 @@ export const PLOT_LABELS = {
   [COST_BREAKDOWN]: 'Cost Breakdown',
   [COST_SANKEY]: 'System Cost Sankey',
   [ANTHROPOGENIC_HEAT]: 'Anthropogenic Heat Rejection',
+  [ENERGY_SANKEY]: 'Energy Flow Sankey',
 };
 
 // Groups matching top-level feature categories in scripts.yml.
@@ -108,7 +112,7 @@ export const PLOT_GROUPS = [
   {
     label: 'Life Cycle Analysis',
     subgroups: [
-      { label: 'Energy by Carrier', keys: [FINAL_ENERGY] },
+      { label: 'Energy by Carrier', keys: [FINAL_ENERGY, ENERGY_SANKEY] },
       { label: 'GHG Emissions', keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE] },
       { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
       { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },

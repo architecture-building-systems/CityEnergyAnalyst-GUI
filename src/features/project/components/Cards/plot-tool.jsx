@@ -30,11 +30,11 @@ const PlotChoices = ({ onSelected }) => {
           <Divider orientation="left" orientationMargin={0} style={{ marginBlock: 8 }}>
             <small style={{ fontWeight: 600, color: '#555' }}>{group.label}</small>
           </Divider>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 12 }}>
             {group.subgroups ? (
               group.subgroups.map((sub) => (
                 <div key={sub.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <small style={{ color: '#888' }}>{sub.label}</small>
+                  <small style={{ color: '#888', marginLeft: -12 }}>{sub.label}</small>
                   {sub.keys.map((key) => (
                     <PlotButton key={key} plotKey={key} onSelected={onSelected} />
                   ))}
