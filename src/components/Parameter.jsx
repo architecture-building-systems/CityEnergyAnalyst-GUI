@@ -303,7 +303,8 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'AtomicChangeMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter':
-    case 'WhatIfNameMultiChoiceParameter': {
+    case 'WhatIfNameMultiChoiceParameter':
+    case 'ComponentMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
