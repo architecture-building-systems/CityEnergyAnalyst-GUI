@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Divider, Spin, Alert, Button } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
@@ -53,13 +53,18 @@ const Tool = ({ script, onToolSelected, form }) => {
     [expandCategories, form],
   );
 
+  const onParametersChange = useCallback(() => {
+    // Clear tool error when parameters change
+    setToolError(null);
+  }, []);
+
   const {
     params,
     isLoading,
     isFetching,
     fetchError: error,
     inputError,
-  } = useToolParams(script, form, onValidationError);
+  } = useToolParams(script, form, onValidationError, onParametersChange);
 
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;

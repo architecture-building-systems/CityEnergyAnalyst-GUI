@@ -24,7 +24,7 @@ const useFetchToolParams = (script) => {
   });
 };
 
-const useToolParams = (script, form, onError) => {
+const useToolParams = (script, form, onError, onParametersChange) => {
   const [inputError, setInputError] = useState(undefined);
 
   // Fetch tool parameters
@@ -45,6 +45,13 @@ const useToolParams = (script, form, onError) => {
   useEffect(() => {
     form.resetFields();
   }, [script, form, dataUpdatedAt]);
+
+  // Call onParametersChange whenever parameters or inputError change
+  useEffect(() => {
+    if (onParametersChange) {
+      onParametersChange?.({ parameters, categoricalParameters });
+    }
+  }, [dataUpdatedAt, onParametersChange]);
 
   // Check inputs whenever parameters change, i.e. save, reset, or refetch
   useEffect(() => {
