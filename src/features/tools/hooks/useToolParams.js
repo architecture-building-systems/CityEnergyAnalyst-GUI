@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { useCheckInputsMutation } from './mutations';
@@ -53,14 +53,10 @@ const useToolParams = (script, form, onError, onParametersChange) => {
     }
   }, [dataUpdatedAt, onParametersChange]);
 
-  // Check inputs whenever parameters change, i.e. save, reset, or refetch
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
+  const runCheck = useCallback(
+    async (cancelled = { value: false }) => {
       if (!script || !parameters) return;
 
-      // Reset error state when checking starts
       setInputError(undefined);
 
       const formParams = await getFormValues(
@@ -71,12 +67,12 @@ const useToolParams = (script, form, onError, onParametersChange) => {
       );
 
       try {
-        if (!cancelled && formParams) {
+        if (!cancelled.value && formParams) {
           await checkInputs({ tool: script, parameters: formParams });
-          if (!cancelled) setInputError(null);
+          if (!cancelled.value) setInputError(null);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled.value) {
           const message =
             err.response?.data?.detail ||
             err.response?.statusText ||
@@ -85,22 +81,22 @@ const useToolParams = (script, form, onError, onParametersChange) => {
           setInputError(message);
         }
       }
-    };
+    },
+    [script, form, parameters, categoricalParameters, checkInputs, onError],
+  );
 
-    run();
-
+  // Check inputs whenever parameters change, i.e. save, reset, or refetch
+  useEffect(() => {
+    const cancelled = { value: false };
+    runCheck(cancelled);
     return () => {
-      cancelled = true;
+      cancelled.value = true;
     };
-  }, [
-    script,
-    form,
-    parameters,
-    categoricalParameters,
-    dataUpdatedAt,
-    checkInputs,
-    onError,
-  ]);
+  }, [runCheck, dataUpdatedAt]);
+
+  const recheckInputs = useCallback(() => {
+    runCheck({ value: false });
+  }, [runCheck]);
 
   return {
     params,
@@ -108,6 +104,7 @@ const useToolParams = (script, form, onError, onParametersChange) => {
     isFetching,
     fetchError,
     inputError,
+    recheckInputs,
   };
 };
 

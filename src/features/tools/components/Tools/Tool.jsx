@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Divider, Spin, Alert, Button } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
@@ -64,6 +64,7 @@ const Tool = ({ script, onToolSelected, form }) => {
     isFetching,
     fetchError: error,
     inputError,
+    recheckInputs,
   } = useToolParams(script, form, onValidationError, onParametersChange);
 
   const isChecking =
@@ -90,6 +91,11 @@ const Tool = ({ script, onToolSelected, form }) => {
   const hasInputError = inputError != null;
   const disableButtons = isChecking || !isInputChecked || hasInputError;
   const changes = useChangesExist();
+
+  const handleReCheck = useCallback(() => {
+    setToolError(null);
+    recheckInputs();
+  }, [recheckInputs]);
 
   if (isLoading)
     return (
@@ -202,10 +208,14 @@ const Tool = ({ script, onToolSelected, form }) => {
               />
             </div>
 
-            <ToolError error={toolError} />
+            <ToolError error={toolError} onRecheck={handleReCheck} />
 
             {inputError != null && !inputError?.script_suggestions && (
-              <ToolError title="Unable to check inputs" error={inputError} />
+              <ToolError
+                title="Unable to check inputs"
+                error={inputError}
+                onRecheck={handleReCheck}
+              />
             )}
 
             {changes && (
