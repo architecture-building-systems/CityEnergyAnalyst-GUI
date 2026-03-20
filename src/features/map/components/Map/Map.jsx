@@ -443,7 +443,9 @@ const DeckGLMap = ({ data, colors }) => {
     (state) => state.selectedBuildings,
   );
   const buildingSelectionActiveRef = useRef(buildingSelectionActive);
-  buildingSelectionActiveRef.current = buildingSelectionActive;
+  useEffect(() => {
+    buildingSelectionActiveRef.current = buildingSelectionActive;
+  }, [buildingSelectionActive]);
 
   const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);
