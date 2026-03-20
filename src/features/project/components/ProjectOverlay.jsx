@@ -166,9 +166,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   // Reset state when project or scenario name changes
   useEffect(() => {
     const resetState = () => {
-      setToolType(null);
-      setSelectedTool(null);
-
       resetSelected();
       setInputEditor(false);
     };
