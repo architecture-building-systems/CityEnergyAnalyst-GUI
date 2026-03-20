@@ -4,13 +4,19 @@ import { apiClient } from 'lib/api/axios';
 import { useCheckInputsMutation } from './mutations';
 import { getFormValues } from '../utils';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 const useFetchToolParams = (script) => {
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
+
   return useQuery({
-    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script],
+    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script, project, scenarioName],
     queryFn: async () => {
       if (!script) return null;
-      const response = await apiClient.get(`/api/tools/${script}`);
+      const response = await apiClient.get(`/api/tools/${script}`, {
+        params: { project, scenario_name: scenarioName },
+      });
       return response.data;
     },
     enabled: !!script,
