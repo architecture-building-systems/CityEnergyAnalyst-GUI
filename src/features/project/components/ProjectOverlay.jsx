@@ -189,8 +189,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     ) {
       setToolType(toolTypes.BUILDING_INFO);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBuildings, selectionSource, setToolType]);
+  }, [
+    selectedBuildings,
+    selectionSource,
+    setToolType,
+    showInputEditor,
+    buildingSelectionActive,
+  ]);
 
   return (
     <div
