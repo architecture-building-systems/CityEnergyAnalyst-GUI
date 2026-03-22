@@ -26,6 +26,7 @@ const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
 const OnboardingPage = lazy(() => import('components/OnboardingPage'));
+const Reports = lazy(() => import('features/reports/components/ReportsPage'));
 
 const HomePageContent = () => {
   const { data: userInfo, isLoading } = useUserQuery();
@@ -104,6 +105,16 @@ const HomePageContent = () => {
                 >
                   <DatabaseEditor />
                 </div>
+              </Cardwrapper>
+            </Suspense>
+          }
+        />
+        <Route
+          path={routes.REPORTS}
+          element={
+            <Suspense fallback={<Loading />}>
+              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+                <Reports />
               </Cardwrapper>
             </Suspense>
           }

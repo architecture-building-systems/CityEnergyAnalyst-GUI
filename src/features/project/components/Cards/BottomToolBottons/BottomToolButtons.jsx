@@ -8,7 +8,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 import { animated } from '@react-spring/web';
 
 // TODO: Remove this
-const TEMP_DISABLED = ['reports'];
+const TEMP_DISABLED = [];
 
 const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
   const { push } = useNavigationStore();

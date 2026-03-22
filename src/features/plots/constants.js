@@ -120,8 +120,14 @@ export const PLOT_GROUPS = [
     label: 'Life Cycle Analysis',
     icon: iconMap[FINAL_ENERGY],
     subgroups: [
-      { label: 'Energy by Carrier', keys: [FINAL_ENERGY, ENERGY_SANKEY, LDC_COMPONENT] },
-      { label: 'GHG Emissions', keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE] },
+      {
+        label: 'Energy by Carrier',
+        keys: [FINAL_ENERGY, ENERGY_SANKEY, LDC_COMPONENT],
+      },
+      {
+        label: 'GHG Emissions',
+        keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE],
+      },
       { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
       { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },
     ],
