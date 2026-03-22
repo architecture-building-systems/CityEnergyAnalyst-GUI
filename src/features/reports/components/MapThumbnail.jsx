@@ -3,6 +3,7 @@ import { Skeleton } from 'antd';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import positron from 'constants/mapStyles/positron.json';
 import { useFetchZoneGeoJSON } from '../hooks/useReportsData';
 
 /**
@@ -28,18 +29,7 @@ const MapThumbnail = ({ project, scenario, height = 180 }) => {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            attribution: '&copy; OpenStreetMap contributors',
-          },
-        },
-        layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-      },
+      style: positron,
       interactive: false,
       attributionControl: false,
     });
@@ -52,8 +42,8 @@ const MapThumbnail = ({ project, scenario, height = 180 }) => {
         type: 'fill',
         source: 'zone',
         paint: {
-          'fill-color': '#888',
-          'fill-opacity': 0.3,
+          'fill-color': '#D4A76A',
+          'fill-opacity': 0.7,
         },
       });
       map.addLayer({
@@ -61,8 +51,8 @@ const MapThumbnail = ({ project, scenario, height = 180 }) => {
         type: 'line',
         source: 'zone',
         paint: {
-          'line-color': '#333',
-          'line-width': 1.5,
+          'line-color': '#8B6914',
+          'line-width': 1,
         },
       });
 

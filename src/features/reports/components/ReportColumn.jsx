@@ -5,7 +5,6 @@ import { useFetchSummary } from '../hooks/useReportsData';
 import MapThumbnail from './MapThumbnail';
 import KpiStrip from './KpiStrip';
 import PlotSlotCard from './PlotSlotCard';
-import AddPlotButton from './AddPlotButton';
 
 /**
  * Feature title and KPI description for each supported feature.
@@ -73,15 +72,11 @@ function buildKpiProps(summary, feature) {
  * Props:
  *   columnDef    — { type, scenario, whatif?, feature? }
  *   plotSlots    — [{ id, feature }]
- *   hasOwnAddPlot — whether this column shows its own "+ Add a plot"
- *   onAddPlot    — callback when "+ Add a plot" is clicked
  *   style        — optional style overrides
  */
 const ReportColumn = ({
   columnDef,
   plotSlots = [],
-  hasOwnAddPlot = false,
-  onAddPlot,
   style,
 }) => {
   const project = useProjectStore((s) => s.project);
@@ -149,19 +144,11 @@ const ReportColumn = ({
         />
       ))}
 
-      {/* Add a plot button */}
-      {hasOwnAddPlot && onAddPlot && (
-        <AddPlotButton label="Add a plot" onClick={onAddPlot} />
-      )}
     </div>
   );
 };
 
-const columnStyle = {
-  flex: '1 1 0',
-  minWidth: 350,
-  maxWidth: 600,
-};
+const columnStyle = {};
 
 const headerStyle = {
   fontSize: 22,

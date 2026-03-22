@@ -1,6 +1,7 @@
 import { useReportsStore } from '../stores/reportsStore';
 import TopToolbar from './TopToolbar';
 import LaunchView from './LaunchView';
+import ComparisonView from './ComparisonView';
 
 /**
  * Reports Mode — root page component.
@@ -13,7 +14,7 @@ const ReportsPage = () => {
     <div style={containerStyle}>
       <TopToolbar />
       {view === 'launch' && <LaunchView />}
-      {/* Comparison views will be added in later steps */}
+      {view !== 'launch' && <ComparisonView />}
     </div>
   );
 };

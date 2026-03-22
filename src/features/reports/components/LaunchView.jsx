@@ -12,9 +12,10 @@ import ScenarioPicker from './ScenarioPicker';
 /**
  * Launch view — entry point for Reports Mode.
  *
- * Layout (matching mockup 1):
- *   Left ~55%: Single column card showing active scenario with default demand plot
- *   Right ~45%: Three blue action buttons stacked vertically
+ * Layout (matching mockup):
+ *   White card on the left (~30vw) with scenario column
+ *   Blue action buttons float on the grey background to the right
+ *   "Add a plot" sits below the card on the grey background
  */
 const LaunchView = () => {
   const project = useProjectStore((s) => s.project);
@@ -27,7 +28,7 @@ const LaunchView = () => {
   const { data: whatifs = [] } = useFetchWhatifs(project, scenario);
   const { data: scenarios = [] } = useFetchScenarios(project);
 
-  const [pickerMode, setPickerMode] = useState(null); // 'scenario' | 'whatif' | null
+  const [pickerMode, setPickerMode] = useState(null);
 
   if (!project || !scenario) {
     return (
@@ -39,7 +40,6 @@ const LaunchView = () => {
 
   const handleCompareScenarios = () => {
     if (scenarios.length <= 1) {
-      // Only one scenario — go straight in with just it
       enterInterScenario([scenario]);
     } else {
       setPickerMode('scenario');
@@ -48,10 +48,8 @@ const LaunchView = () => {
 
   const handleCompareWhatifs = () => {
     if (whatifs.length === 0) {
-      // No what-ifs — go straight in, will show empty state
       enterInterWhatif(scenario, []);
     } else if (whatifs.length <= 3) {
-      // Few what-ifs — auto-select all
       enterInterWhatif(scenario, whatifs);
     } else {
       setPickerMode('whatif');
@@ -59,7 +57,6 @@ const LaunchView = () => {
   };
 
   const handleCompareFeatures = () => {
-    // For MVP, start with demand as the default feature column
     enterInterFeature([
       { scenario, feature: 'demand', label: 'Building Energy Demand' },
     ]);
@@ -74,24 +71,21 @@ const LaunchView = () => {
     setPickerMode(null);
   };
 
-  // Default plot slots for the launch column
   const defaultSlots = [{ id: 'launch-default', feature: 'demand' }];
 
   return (
     <>
       <div style={layoutStyle}>
-        {/* Left: scenario column */}
-        <div style={leftStyle}>
+        {/* White card with scenario column */}
+        <div style={cardStyle}>
           <ReportColumn
             columnDef={{ type: 'scenario', scenario }}
             plotSlots={defaultSlots}
-            hasOwnAddPlot
-            onAddPlot={() => {}}
           />
         </div>
 
-        {/* Right: action buttons */}
-        <div style={rightStyle}>
+        {/* Action buttons on grey background */}
+        <div style={actionsStyle}>
           <ActionButton
             label="Compare Scenarios"
             onClick={handleCompareScenarios}
@@ -105,6 +99,11 @@ const LaunchView = () => {
             onClick={handleCompareFeatures}
           />
         </div>
+      </div>
+
+      {/* "Add a plot" below card, on grey background */}
+      <div style={addPlotStyle}>
+        <AddPlotButton label="Add a plot" onClick={() => {}} />
       </div>
 
       {/* Picker modal */}
@@ -124,9 +123,6 @@ const LaunchView = () => {
   );
 };
 
-/**
- * Blue circle + label action button (matches mockup).
- */
 const ActionButton = ({ label, onClick }) => {
   return (
     <button type="button" onClick={onClick} style={actionButtonStyle}>
@@ -140,24 +136,31 @@ const ActionButton = ({ label, onClick }) => {
 
 const layoutStyle = {
   display: 'flex',
+  alignItems: 'flex-start',
   gap: 32,
-  minHeight: 400,
 };
 
-const leftStyle = {
-  flex: '1 1 55%',
-  minWidth: 350,
-  maxWidth: 600,
+const cardStyle = {
+  background: '#fff',
+  borderRadius: 12,
+  overflow: 'hidden',
+  width: '30vw',
+  minWidth: 320,
+  padding: '20px 24px',
+  flexShrink: 0,
 };
 
-const rightStyle = {
-  flex: '1 1 40%',
+const actionsStyle = {
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
-  alignItems: 'flex-start',
   gap: 24,
-  padding: '40px 20px',
+  paddingTop: 40,
+};
+
+const addPlotStyle = {
+  marginTop: 12,
+  paddingLeft: 4,
 };
 
 const centredStyle = {
@@ -165,6 +168,8 @@ const centredStyle = {
   alignItems: 'center',
   justifyContent: 'center',
   padding: 80,
+  background: '#fff',
+  borderRadius: 12,
 };
 
 const actionButtonStyle = {
