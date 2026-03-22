@@ -68,6 +68,23 @@ export const useFetchReportPlot = (project, scenario, feature, whatif) => {
 };
 
 /**
+ * Fetch zone GeoJSON for a scenario (for map thumbnail).
+ */
+export const useFetchZoneGeoJSON = (project, scenario) => {
+  return useQuery({
+    queryKey: ['reports', 'zone-geojson', project, scenario],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/reports/zone-geojson', {
+        params: { project, scenario },
+      });
+      return data;
+    },
+    enabled: !!project && !!scenario,
+    staleTime: 5 * 60_000,
+  });
+};
+
+/**
  * Fetch scenarios for a project (for inter-mode).
  */
 export const useFetchScenarios = (project) => {
