@@ -13,23 +13,20 @@ import ShowHideCardsButton from 'components/ShowHideCardsButton';
 import InputTable from './InputTable';
 import {
   toolTypes,
+  useToolCardStore,
   useToolType,
   useSetToolType,
+  useSelectPlotTool,
 } from 'features/project/stores/tool-card';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
 import {
-  useSelectedToolStore,
-  useSelectedPlotToolStore,
-} from 'features/tools/stores/selected-tool';
-import {
   useSelected,
   useSelectionSource,
   useResetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
-import { useBuildingSelectionActive } from 'stores/buildingSelectionStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
 import {
@@ -44,30 +41,14 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const toolType = useToolType();
   const setToolType = useSetToolType();
+  const selectPlotTool = useSelectPlotTool();
 
-  const selectedTool = useSelectedToolStore((state) => state.selectedTool);
-  const setSelectedTool = useSelectedToolStore(
-    (state) => state.setSelectedTool,
-  );
-  const selectedPlotTool = useSelectedPlotToolStore(
-    (state) => state.selectedPlotTool,
-  );
-  const setSelectedPlotTool = useSelectedPlotToolStore(
-    (state) => state.setSelectedPlotTool,
-  );
   const selectedBuildings = useSelected();
   const selectionSource = useSelectionSource();
   const resetSelected = useResetSelected();
-  const buildingSelectionActive = useBuildingSelectionActive();
-
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setSelectedLayer = useSetSelectedMapLayer();
-
-  const handleToolSelected = (tool) => {
-    setSelectedTool(tool);
-    setToolType(toolTypes.TOOLS);
-  };
 
   const handlePlotToolSelected = (tool) => {
     // Get map layer category from plot script name
@@ -82,17 +63,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       setSelectedLayer(layer);
     }
 
-    // Set selected plot tool and switch to map layers tool type
-    setSelectedPlotTool(tool);
-    setToolType(toolTypes.MAP_LAYERS);
-  };
-
-  const handleResetTool = () => {
-    if (toolType === toolTypes.TOOLS) {
-      setSelectedTool(null);
-    } else if (toolType === toolTypes.MAP_LAYERS) {
-      setSelectedPlotTool(null);
-    }
+    selectPlotTool(tool);
   };
 
   const handleCategorySelected = (category) => {
@@ -106,7 +77,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const handleLayerSelected = (layer) => {
     const plotScriptName = VIEW_PLOT_RESULTS?.[layer] ?? null;
 
-    setSelectedPlotTool(plotScriptName);
+    useToolCardStore.getState().setSelectedPlotTool(plotScriptName);
     if (plotScriptName) setToolType(toolTypes.MAP_LAYERS);
   };
 
@@ -168,8 +139,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   // Reset state when project or scenario name changes
   useEffect(() => {
     const resetState = () => {
-      setToolType(null);
-      setSelectedTool(null);
+      useToolCardStore.getState().setToolType(null);
+      useToolCardStore.getState().setSelectedTool(null);
 
       resetSelected();
       setInputEditor(false);
@@ -180,22 +151,14 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   useEffect(() => {
     // Show building info tool card when buildings are selected on map and input editor is not open
-    // Don't switch cards when building selection mode is active (user is selecting for a parameter)
     if (
       selectedBuildings.length > 0 &&
       selectionSource === 'map' &&
-      !showInputEditor &&
-      !buildingSelectionActive
+      !showInputEditor
     ) {
       setToolType(toolTypes.BUILDING_INFO);
     }
-  }, [
-    selectedBuildings,
-    selectionSource,
-    setToolType,
-    showInputEditor,
-    buildingSelectionActive,
-  ]);
+  }, [selectedBuildings, selectionSource, setToolType, showInputEditor]);
 
   return (
     <div
@@ -249,7 +212,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         {transitionFromTop((styles, item) =>
           item ? (
             <animated.div style={styles}>
-              <Toolbar onToolSelected={handleToolSelected} />
+              <Toolbar />
             </animated.div>
           ) : null,
         )}
@@ -287,14 +250,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               className="cea-overlay-card cea-tool-card-container"
               style={styles}
             >
-              <ToolCard
-                selectedTool={selectedTool}
-                selectedPlotTool={selectedPlotTool}
-                selectedBuildings={selectedBuildings}
-                onToolSelected={handleToolSelected}
-                onPlotToolSelected={handlePlotToolSelected}
-                onResetTool={handleResetTool}
-              />
+              <ToolCard onPlotToolSelected={handlePlotToolSelected} />
             </animated.div>
           ) : null,
         )}

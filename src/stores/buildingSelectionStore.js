@@ -41,11 +41,21 @@ const useBuildingSelectionStore = create((set, get) => ({
   confirmSelection: () => {
     const { selectedBuildings, onConfirm } = get();
     onConfirm?.(selectedBuildings);
-    set({ active: false, selectedBuildings: [], availableChoices: [], onConfirm: null });
+    set({
+      active: false,
+      selectedBuildings: [],
+      availableChoices: [],
+      onConfirm: null,
+    });
   },
 
   cancelSelection: () => {
-    set({ active: false, selectedBuildings: [], availableChoices: [], onConfirm: null });
+    set({
+      active: false,
+      selectedBuildings: [],
+      availableChoices: [],
+      onConfirm: null,
+    });
   },
 }));
 

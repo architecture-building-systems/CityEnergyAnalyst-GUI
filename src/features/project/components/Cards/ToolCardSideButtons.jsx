@@ -5,14 +5,14 @@ import {
   toolTypes,
   useToggleToolType,
   useToolType,
+  useSelectedTool,
 } from 'features/project/stores/tool-card';
-import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 
 export const ToolCardSideButtons = () => {
   const toolType = useToolType();
   const toggleToolType = useToggleToolType();
 
-  const selectedTool = useSelectedToolStore((state) => state.selectedTool);
+  const selectedTool = useSelectedTool();
 
   return (
     <div
