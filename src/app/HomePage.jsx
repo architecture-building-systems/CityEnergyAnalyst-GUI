@@ -113,9 +113,16 @@ const HomePageContent = () => {
           path={routes.REPORTS}
           element={
             <Suspense fallback={<Loading />}>
-              <Cardwrapper style={{ backgroundColor: '#D4DADC' }}>
+              <div
+                style={{
+                  height: '100%',
+                  overflow: 'auto',
+                  padding: 16,
+                  backgroundColor: '#D4DADC',
+                }}
+              >
                 <Reports />
-              </Cardwrapper>
+              </div>
             </Suspense>
           }
         />
