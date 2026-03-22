@@ -5,10 +5,12 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useReportsStore } from '../stores/reportsStore';
 import { useFetchScenarios, useFetchWhatifs } from '../hooks/useReportsData';
+import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import ReportColumn from './ReportColumn';
 import AddPlotButton from './AddPlotButton';
 import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
+import PlotEditModal from './PlotEditModal';
 
 /**
  * Comparison view — white card with columns separated by grey dividers.
@@ -26,8 +28,13 @@ const ComparisonView = () => {
   const addColumn = useReportsStore((s) => s.addColumn);
   const addSharedPlotSlot = useReportsStore((s) => s.addSharedPlotSlot);
   const addColumnPlotSlot = useReportsStore((s) => s.addColumnPlotSlot);
+  const updateSharedPlotSlot = useReportsStore((s) => s.updateSharedPlotSlot);
+  const updateColumnPlotSlot = useReportsStore((s) => s.updateColumnPlotSlot);
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
+
+  // Edit modal state: { slotId, columnIndex (null for shared) }
+  const [editingSlot, setEditingSlot] = useState(null);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
   const { data: whatifs = [] } = useFetchWhatifs(
@@ -36,6 +43,12 @@ const ComparisonView = () => {
   );
 
   const isFeatureMode = view === 'inter-feature';
+
+  // Y-axis alignment for shared modes (inter-scenario / inter-whatif)
+  const { handlePlotReady } = useYAxisAlignment(
+    !isFeatureMode && columns.length > 1,
+    columns.length,
+  );
 
   const getSlotsForColumn = (index) => {
     if (isFeatureMode) return columnPlotSlots[index] || [];
@@ -66,6 +79,48 @@ const ComparisonView = () => {
     addColumnPlotSlot(colIndex, { feature: col.feature, label: col.feature });
   };
 
+  // Find the current plotConfig for the slot being edited
+  const getEditingPlotConfig = () => {
+    if (!editingSlot) return null;
+    const { slotId, columnIndex } = editingSlot;
+    const slots =
+      columnIndex != null ? columnPlotSlots[columnIndex] || [] : sharedPlotSlots;
+    const slot = slots.find((s) => s.id === slotId);
+    return slot?.plotConfig || null;
+  };
+
+  // Get the scenario for the editing context
+  const getEditingScenario = () => {
+    if (!editingSlot) return scenario;
+    if (editingSlot.columnIndex != null) {
+      return columns[editingSlot.columnIndex]?.scenario || scenario;
+    }
+    return columns[0]?.scenario || scenario;
+  };
+
+  const handleEditSlot = (slotId, columnIndex) => {
+    setEditingSlot({ slotId, columnIndex });
+  };
+
+  const handleResetSlot = (slotId, columnIndex) => {
+    if (columnIndex != null) {
+      updateColumnPlotSlot(columnIndex, slotId, { plotConfig: undefined });
+    } else {
+      updateSharedPlotSlot(slotId, { plotConfig: undefined });
+    }
+  };
+
+  const handleEditSave = (plotConfig) => {
+    if (!editingSlot) return;
+    const { slotId, columnIndex } = editingSlot;
+    if (columnIndex != null) {
+      updateColumnPlotSlot(columnIndex, slotId, { plotConfig });
+    } else {
+      updateSharedPlotSlot(slotId, { plotConfig });
+    }
+    setEditingSlot(null);
+  };
+
   if (columns.length === 0) {
     return (
       <div style={emptyStyle}>
@@ -92,6 +147,13 @@ const ComparisonView = () => {
                 <ReportColumn
                   columnDef={col}
                   plotSlots={getSlotsForColumn(i)}
+                  onEditSlot={(slotId) =>
+                    handleEditSlot(slotId, isFeatureMode ? i : null)
+                  }
+                  onResetSlot={(slotId) =>
+                    handleResetSlot(slotId, isFeatureMode ? i : null)
+                  }
+                  onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
                 />
               </div>
             ))}
@@ -153,6 +215,17 @@ const ComparisonView = () => {
           scenario={scenario}
           onConfirm={handleAddColumnConfirm}
           onCancel={() => setAddColumnOpen(false)}
+        />
+      )}
+
+      {/* Plot edit modal */}
+      {editingSlot && (
+        <PlotEditModal
+          open
+          scenario={getEditingScenario()}
+          plotConfig={getEditingPlotConfig()}
+          onSave={handleEditSave}
+          onCancel={() => setEditingSlot(null)}
         />
       )}
     </div>

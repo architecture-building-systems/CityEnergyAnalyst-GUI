@@ -3,20 +3,35 @@ import { Spin, Empty } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
 
-import { useFetchReportPlot } from '../hooks/useReportsData';
+import { useFetchReportPlot, useFetchCustomPlot } from '../hooks/useReportsData';
 
 /**
  * Renders a single Plotly plot for a report column.
- * Similar to the dashboard Plot.jsx but fetches from the reports API.
+ *
+ * Two modes:
+ *   - Default: fetches via GET /api/reports/plot (feature-based)
+ *   - Custom:  fetches via POST /api/reports/plot-custom (plotConfig with script/parameters)
  */
-const ReportPlot = ({ project, scenario, feature, whatif }) => {
+const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotReady }) => {
   const uniqueId = useId();
+  const containerRef = useRef(null);
   const scriptRef = useRef(null);
-  const {
-    data: html,
-    isLoading,
-    error,
-  } = useFetchReportPlot(project, scenario, feature, whatif);
+
+  const isCustom = !!plotConfig?.script;
+
+  const defaultQuery = useFetchReportPlot(
+    project,
+    isCustom ? null : scenario,
+    isCustom ? null : feature,
+    isCustom ? null : whatif,
+  );
+
+  const customQuery = useFetchCustomPlot(
+    isCustom ? plotConfig : null,
+    isCustom ? scenario : null,
+  );
+
+  const { data: html, isLoading, error } = isCustom ? customQuery : defaultQuery;
 
   useEffect(() => {
     if (!html) return;
@@ -39,13 +54,29 @@ const ReportPlot = ({ project, scenario, feature, whatif }) => {
       scriptRef.current = scriptEl;
     }
 
+    // Notify parent that plot is rendered (for y-axis alignment)
+    if (onPlotReady && containerRef.current) {
+      // Plotly renders asynchronously after script execution; wait a tick
+      const timer = setTimeout(() => {
+        const plotDiv = containerRef.current?.querySelector('.plotly-graph-div, .js-plotly-plot');
+        if (plotDiv) onPlotReady(plotDiv);
+      }, 200);
+      return () => {
+        clearTimeout(timer);
+        if (scriptRef.current) {
+          scriptRef.current.remove();
+          scriptRef.current = null;
+        }
+      };
+    }
+
     return () => {
       if (scriptRef.current) {
         scriptRef.current.remove();
         scriptRef.current = null;
       }
     };
-  }, [html, uniqueId]);
+  }, [html, uniqueId, onPlotReady]);
 
   if (isLoading) {
     return (
@@ -87,7 +118,7 @@ const ReportPlot = ({ project, scenario, feature, whatif }) => {
     ? content.filter((node) => node?.type === 'div' || node?.type === 'style')
     : content;
 
-  return <div style={{ minHeight: 300 }}>{filtered}</div>;
+  return <div ref={containerRef} style={{ minHeight: 300 }}>{filtered}</div>;
 };
 
 const loadingStyle = {

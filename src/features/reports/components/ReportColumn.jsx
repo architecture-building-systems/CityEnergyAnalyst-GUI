@@ -78,6 +78,9 @@ const ReportColumn = ({
   columnDef,
   plotSlots = [],
   style,
+  onEditSlot,
+  onResetSlot,
+  onPlotReady,
 }) => {
   const project = useProjectStore((s) => s.project);
 
@@ -139,8 +142,14 @@ const ReportColumn = ({
           scenario={scenario}
           feature={slot.feature}
           whatif={whatif}
-          onEdit={() => {}}
-          onReset={() => {}}
+          plotConfig={slot.plotConfig}
+          onEdit={() => onEditSlot?.(slot.id)}
+          onReset={() => onResetSlot?.(slot.id)}
+          onPlotReady={
+            onPlotReady
+              ? (plotDiv) => onPlotReady(slot.id, plotDiv)
+              : undefined
+          }
         />
       ))}
 

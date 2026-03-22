@@ -11,8 +11,10 @@ const PlotSlotCard = ({
   scenario,
   feature,
   whatif,
+  plotConfig,
   onEdit,
   onReset,
+  onPlotReady,
 }) => {
   return (
     <div style={slotStyle}>
@@ -21,7 +23,7 @@ const PlotSlotCard = ({
           <Button size="small" onClick={onEdit}>
             Edit
           </Button>
-          <Button size="small" onClick={onReset}>
+          <Button size="small" onClick={onReset} disabled={!plotConfig}>
             Reset
           </Button>
         </Space>
@@ -31,6 +33,8 @@ const PlotSlotCard = ({
         scenario={scenario}
         feature={feature}
         whatif={whatif}
+        plotConfig={plotConfig}
+        onPlotReady={onPlotReady}
       />
     </div>
   );

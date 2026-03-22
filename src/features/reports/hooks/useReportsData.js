@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 
 /**
@@ -97,6 +97,47 @@ export const useFetchScenarios = (project) => {
       return data.scenarios;
     },
     enabled: !!project,
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Fetch parameters for a visualisation tool script.
+ */
+export const useFetchToolParams = (script, scenario) => {
+  return useQuery({
+    queryKey: ['tools', script, scenario],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/api/tools/${script}`, {
+        params: scenario ? { scenario_name: scenario } : {},
+      });
+      return data;
+    },
+    enabled: !!script,
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Render a custom plot via POST /api/reports/plot-custom.
+ * plotConfig shape: { script, parameters }
+ */
+export const useFetchCustomPlot = (plotConfig, scenario) => {
+  return useQuery({
+    queryKey: ['reports', 'custom-plot', plotConfig, scenario],
+    queryFn: async () => {
+      const { data } = await apiClient.post(
+        '/api/reports/plot-custom',
+        {
+          script: plotConfig.script,
+          parameters: plotConfig.parameters || {},
+          scenario,
+        },
+        { responseType: 'text' },
+      );
+      return data;
+    },
+    enabled: !!plotConfig?.script,
     staleTime: 30_000,
   });
 };

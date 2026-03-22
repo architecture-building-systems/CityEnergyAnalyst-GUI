@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Empty } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -8,6 +8,7 @@ import { useFetchWhatifs, useFetchScenarios } from '../hooks/useReportsData';
 import ReportColumn from './ReportColumn';
 import AddPlotButton from './AddPlotButton';
 import ScenarioPicker from './ScenarioPicker';
+import PlotEditModal from './PlotEditModal';
 
 /**
  * Launch view — entry point for Reports Mode.
@@ -29,6 +30,41 @@ const LaunchView = () => {
   const { data: scenarios = [] } = useFetchScenarios(project);
 
   const [pickerMode, setPickerMode] = useState(null);
+  const [launchSlots, setLaunchSlots] = useState([
+    { id: 'launch-default', feature: 'demand' },
+  ]);
+  const [editingSlotId, setEditingSlotId] = useState(null);
+
+  const handleAddPlot = useCallback(() => {
+    setLaunchSlots((prev) => [
+      ...prev,
+      { id: `launch-${Date.now()}`, feature: 'demand' },
+    ]);
+  }, []);
+
+  const handleEditSlot = useCallback((slotId) => {
+    setEditingSlotId(slotId);
+  }, []);
+
+  const handleResetSlot = useCallback((slotId) => {
+    setLaunchSlots((prev) =>
+      prev.map((s) =>
+        s.id === slotId ? { ...s, plotConfig: undefined } : s,
+      ),
+    );
+  }, []);
+
+  const handleEditSave = useCallback(
+    (plotConfig) => {
+      setLaunchSlots((prev) =>
+        prev.map((s) =>
+          s.id === editingSlotId ? { ...s, plotConfig } : s,
+        ),
+      );
+      setEditingSlotId(null);
+    },
+    [editingSlotId],
+  );
 
   if (!project || !scenario) {
     return (
@@ -71,8 +107,6 @@ const LaunchView = () => {
     setPickerMode(null);
   };
 
-  const defaultSlots = [{ id: 'launch-default', feature: 'demand' }];
-
   return (
     <>
       <div style={layoutStyle}>
@@ -80,7 +114,9 @@ const LaunchView = () => {
         <div style={cardStyle}>
           <ReportColumn
             columnDef={{ type: 'scenario', scenario }}
-            plotSlots={defaultSlots}
+            plotSlots={launchSlots}
+            onEditSlot={handleEditSlot}
+            onResetSlot={handleResetSlot}
           />
         </div>
 
@@ -103,7 +139,7 @@ const LaunchView = () => {
 
       {/* "Add a plot" below card, on grey background */}
       <div style={addPlotStyle}>
-        <AddPlotButton label="Add a plot" onClick={() => {}} />
+        <AddPlotButton label="Add a plot" onClick={handleAddPlot} />
       </div>
 
       {/* Picker modal */}
@@ -117,6 +153,19 @@ const LaunchView = () => {
           whatifs={whatifs}
           onConfirm={handlePickerConfirm}
           onCancel={() => setPickerMode(null)}
+        />
+      )}
+
+      {/* Plot edit modal */}
+      {editingSlotId && (
+        <PlotEditModal
+          open
+          scenario={scenario}
+          plotConfig={
+            launchSlots.find((s) => s.id === editingSlotId)?.plotConfig || null
+          }
+          onSave={handleEditSave}
+          onCancel={() => setEditingSlotId(null)}
         />
       )}
     </>
