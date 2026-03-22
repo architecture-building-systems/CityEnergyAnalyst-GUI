@@ -20,3 +20,12 @@ export const useCloseToolCard = () => {
 export const useToolType = () => useToolCardStore((state) => state.toolType);
 export const useSetToolType = () =>
   useToolCardStore((state) => state.setToolType);
+
+export const useToggleToolType = () => {
+  const toolType = useToolCardStore((state) => state.toolType);
+  const setToolType = useToolCardStore((state) => state.setToolType);
+  return useCallback(
+    (type) => (toolType !== type ? setToolType(type) : setToolType(null)),
+    [toolType, setToolType],
+  );
+};

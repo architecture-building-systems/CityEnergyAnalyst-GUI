@@ -3,19 +3,16 @@ import { GraphsIcon, InformationIcon, ToolsIcon } from 'assets/icons';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import {
   toolTypes,
-  useCloseToolCard,
-  useSetToolType,
+  useToggleToolType,
   useToolType,
 } from 'features/project/stores/tool-card';
 import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
 
 export const ToolCardSideButtons = () => {
   const toolType = useToolType();
-  const setToolType = useSetToolType();
+  const toggleToolType = useToggleToolType();
 
   const selectedTool = useSelectedToolStore((state) => state.selectedTool);
-
-  const closeToolCard = useCloseToolCard();
 
   return (
     <div
@@ -34,11 +31,7 @@ export const ToolCardSideButtons = () => {
     >
       {selectedTool != null && (
         <Button
-          onClick={() =>
-            toolType !== toolTypes.TOOLS
-              ? setToolType(toolTypes.TOOLS)
-              : closeToolCard()
-          }
+          onClick={() => toggleToolType(toolTypes.TOOLS)}
           color="primary"
           variant={toolType === toolTypes.TOOLS ? 'solid' : 'outlined'}
         >
@@ -55,11 +48,7 @@ export const ToolCardSideButtons = () => {
         }}
       >
         <Button
-          onClick={() =>
-            toolType !== toolTypes.MAP_LAYERS
-              ? setToolType(toolTypes.MAP_LAYERS)
-              : closeToolCard()
-          }
+          onClick={() => toggleToolType(toolTypes.MAP_LAYERS)}
           color="primary"
           variant={toolType === toolTypes.MAP_LAYERS ? 'solid' : 'outlined'}
         >
@@ -82,11 +71,7 @@ export const ToolCardSideButtons = () => {
         }}
       >
         <Button
-          onClick={() =>
-            toolType !== toolTypes.BUILDING_INFO
-              ? setToolType(toolTypes.BUILDING_INFO)
-              : closeToolCard()
-          }
+          onClick={() => toggleToolType(toolTypes.BUILDING_INFO)}
           color="primary"
           variant={toolType === toolTypes.BUILDING_INFO ? 'solid' : 'outlined'}
         >
