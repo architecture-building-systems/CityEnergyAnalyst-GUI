@@ -131,6 +131,11 @@ const ComparisonView = () => {
 
   return (
     <div>
+      {/* Scenario name header for inter-feature mode */}
+      {isFeatureMode && columns.length > 0 && (
+        <div style={featureModeHeaderStyle}>{columns[0].scenario}</div>
+      )}
+
       {/* White card with columns */}
       <div style={cardWrapperStyle}>
         <div style={cardStyle}>
@@ -279,7 +284,8 @@ const floatingAddStyle = {
 
 const sharedAddPlotStyle = {
   marginTop: 12,
-  paddingLeft: 4,
+  display: 'flex',
+  justifyContent: 'center',
 };
 
 const perColumnAddPlotRowStyle = {
@@ -291,6 +297,13 @@ const perColumnAddPlotCellStyle = {
   flex: '1 1 0',
   minWidth: '30vw',
   paddingLeft: 24,
+};
+
+const featureModeHeaderStyle = {
+  fontSize: 22,
+  fontWeight: 700,
+  color: '#222',
+  marginBottom: 8,
 };
 
 const emptyStyle = {

@@ -14,9 +14,12 @@ import PlotEditModal from './PlotEditModal';
  * Launch view — entry point for Reports Mode.
  *
  * Layout (matching mockup):
- *   White card on the left (~30vw) with scenario column
- *   Blue action buttons float on the grey background to the right
- *   "Add a plot" sits below the card on the grey background
+ *   White card on the left (~45%) with scenario column
+ *   Three blue ⊕ action buttons positioned to the right, spread vertically
+ *     - "Compare Scenarios" aligned with the map area
+ *     - "Compare What-ifs" aligned with the chart area
+ *     - "Compare Feature Results" below that
+ *   "Add a plot" at the bottom-left below the chart
  */
 const LaunchView = () => {
   const project = useProjectStore((s) => s.project);
@@ -110,7 +113,7 @@ const LaunchView = () => {
   return (
     <>
       <div style={layoutStyle}>
-        {/* White card with scenario column */}
+        {/* White card with scenario column + "Add a plot" inside */}
         <div style={cardStyle}>
           <ReportColumn
             columnDef={{ type: 'scenario', scenario }}
@@ -118,28 +121,27 @@ const LaunchView = () => {
             onEditSlot={handleEditSlot}
             onResetSlot={handleResetSlot}
           />
+          <div style={addPlotInsideStyle}>
+            <AddPlotButton label="Add a plot" onClick={handleAddPlot} />
+          </div>
         </div>
 
-        {/* Action buttons on grey background */}
+        {/* Action buttons — spread vertically alongside the card */}
         <div style={actionsStyle}>
           <ActionButton
             label="Compare Scenarios"
             onClick={handleCompareScenarios}
           />
+          <div style={actionSpacerStyle} />
           <ActionButton
             label="Compare What-ifs"
             onClick={handleCompareWhatifs}
           />
           <ActionButton
-            label="Compare Feature Results"
+            label="Show Feature Results"
             onClick={handleCompareFeatures}
           />
         </div>
-      </div>
-
-      {/* "Add a plot" below card, on grey background */}
-      <div style={addPlotStyle}>
-        <AddPlotButton label="Add a plot" onClick={handleAddPlot} />
       </div>
 
       {/* Picker modal */}
@@ -185,31 +187,40 @@ const ActionButton = ({ label, onClick }) => {
 
 const layoutStyle = {
   display: 'flex',
-  alignItems: 'flex-start',
-  gap: 32,
+  alignItems: 'stretch',
+  gap: 24,
 };
 
 const cardStyle = {
   background: '#fff',
   borderRadius: 12,
   overflow: 'hidden',
-  width: '30vw',
-  minWidth: 320,
+  width: '45%',
+  minWidth: 360,
   padding: '20px 24px',
   flexShrink: 0,
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 const actionsStyle = {
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'center',
-  gap: 24,
-  paddingTop: 40,
+  paddingTop: 16,
+  paddingBottom: 16,
+  gap: 20,
 };
 
-const addPlotStyle = {
+// Flexible spacer pushes the bottom two buttons down
+const actionSpacerStyle = {
+  flex: 1,
+  minHeight: 60,
+};
+
+const addPlotInsideStyle = {
   marginTop: 12,
-  paddingLeft: 4,
+  borderTop: '1px solid #eee',
+  paddingTop: 12,
 };
 
 const centredStyle = {
