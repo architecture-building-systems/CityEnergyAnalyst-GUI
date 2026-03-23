@@ -10,6 +10,7 @@ export const SUPPLY_SYSTEM = 'supply-system';
 export const EMISSIONS_EMBODIED = 'lifecycle-emissions';
 export const EMISSIONS_OPERATIONAL = 'operational-emissions';
 export const EMISSION_TIMELINE = 'emission-timeline';
+export const PATHWAY_EMISSION_TIMELINE = 'pathway-emission-timeline';
 export const ANTHROPOGENIC_HEAT = 'anthropogenic-heat-rejection';
 export const COST_BREAKDOWN = 'cost-breakdown';
 
