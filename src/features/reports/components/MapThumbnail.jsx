@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { Skeleton } from 'antd';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -9,10 +9,36 @@ import { useFetchZoneGeoJSON } from '../hooks/useReportsData';
 /**
  * Static map thumbnail showing zone building footprints.
  * Non-interactive, auto-fits to bounds.
+ * Bottom edge is draggable to resize height.
  */
-const MapThumbnail = ({ project, scenario, height = 180 }) => {
+const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
+  const [height, setHeight] = useState(initialHeight);
   const containerRef = useRef(null);
   const mapRef = useRef(null);
+  const dragRef = useRef(null);
+
+  const handleDragStart = useCallback((e) => {
+    e.preventDefault();
+    dragRef.current = { startY: e.clientY, startHeight: height };
+
+    const handleMove = (moveEvent) => {
+      const delta = moveEvent.clientY - dragRef.current.startY;
+      const newHeight = Math.max(80, dragRef.current.startHeight + delta);
+      setHeight(newHeight);
+      if (mapRef.current) mapRef.current.resize();
+    };
+
+    const handleUp = () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      // Trigger map resize after drag ends
+      if (mapRef.current) mapRef.current.resize();
+      dragRef.current = null;
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  }, [height]);
   const { data: geojson, isLoading, error } = useFetchZoneGeoJSON(
     project,
     scenario,
@@ -109,11 +135,32 @@ const MapThumbnail = ({ project, scenario, height = 180 }) => {
   }
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height, borderRadius: 8, overflow: 'hidden' }}
-    />
+    <div style={{ position: 'relative' }}>
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height, borderRadius: 8, overflow: 'hidden' }}
+      />
+      <div
+        onMouseDown={handleDragStart}
+        style={dragHandleStyle}
+        title="Drag to resize"
+      />
+    </div>
   );
+};
+
+const dragHandleStyle = {
+  position: 'absolute',
+  bottom: 0,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  width: 40,
+  height: 6,
+  borderRadius: 3,
+  background: 'rgba(0,0,0,0.15)',
+  cursor: 'ns-resize',
+  zIndex: 2,
+  marginBottom: 2,
 };
 
 const placeholderStyle = {

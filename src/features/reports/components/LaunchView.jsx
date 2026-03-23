@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Empty } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -37,6 +37,29 @@ const LaunchView = () => {
     { id: 'launch-default', feature: 'demand' },
   ]);
   const [editingSlotId, setEditingSlotId] = useState(null);
+  const [cardWidth, setCardWidth] = useState(null); // null = use default CSS %
+  const cardDragRef = useRef(null);
+
+  const handleCardDragStart = useCallback((e) => {
+    e.preventDefault();
+    const cardEl = e.target.parentElement;
+    const startWidth = cardEl.offsetWidth;
+    cardDragRef.current = { startX: e.clientX, startWidth };
+
+    const handleMove = (moveEvent) => {
+      const delta = moveEvent.clientX - cardDragRef.current.startX;
+      setCardWidth(Math.max(300, cardDragRef.current.startWidth + delta));
+    };
+
+    const handleUp = () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      cardDragRef.current = null;
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  }, []);
 
   const handleAddPlot = useCallback(() => {
     setLaunchSlots((prev) => [
@@ -114,7 +137,7 @@ const LaunchView = () => {
     <>
       <div style={layoutStyle}>
         {/* White card with scenario column + "Add a plot" inside */}
-        <div style={cardStyle}>
+        <div style={{ ...cardStyle, ...(cardWidth ? { width: cardWidth } : {}) }}>
           <ReportColumn
             columnDef={{ type: 'scenario', scenario }}
             plotSlots={launchSlots}
@@ -124,6 +147,12 @@ const LaunchView = () => {
           <div style={addPlotInsideStyle}>
             <AddPlotButton label="Add a plot" onClick={handleAddPlot} />
           </div>
+          {/* Right-edge drag handle */}
+          <div
+            onMouseDown={handleCardDragStart}
+            style={cardDragHandleStyle}
+            title="Drag to resize"
+          />
         </div>
 
         {/* Action buttons — spread vertically alongside the card */}
@@ -196,11 +225,12 @@ const cardStyle = {
   borderRadius: 12,
   overflow: 'hidden',
   width: '45%',
-  minWidth: 360,
+  minWidth: 300,
   padding: '20px 24px',
   flexShrink: 0,
   display: 'flex',
   flexDirection: 'column',
+  position: 'relative',
 };
 
 const actionsStyle = {
@@ -215,6 +245,20 @@ const actionsStyle = {
 const actionSpacerStyle = {
   flex: 1,
   minHeight: 60,
+};
+
+const cardDragHandleStyle = {
+  position: 'absolute',
+  top: '50%',
+  right: 0,
+  transform: 'translateY(-50%)',
+  width: 6,
+  height: 40,
+  borderRadius: 3,
+  background: 'rgba(0,0,0,0.15)',
+  cursor: 'ew-resize',
+  zIndex: 2,
+  marginRight: 2,
 };
 
 const addPlotInsideStyle = {
