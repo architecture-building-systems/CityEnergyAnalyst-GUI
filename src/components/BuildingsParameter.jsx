@@ -112,7 +112,10 @@ const BuildingsParameter = ({
 
   const previousValueRef = useRef(null);
 
-  const options = choices.map((choice) => ({ label: choice, value: choice }));
+  const options = (choices ?? []).map((choice) => ({
+    label: choice,
+    value: choice,
+  }));
 
   const selectAll = (e) => {
     e.preventDefault();
@@ -183,7 +186,10 @@ const BuildingsParameter = ({
       rules={[
         {
           validator: (_, value) => {
-            if (value === null) {
+            if (
+              value === null ||
+              (Array.isArray(value) && value.length === 0)
+            ) {
               if (nullable) return Promise.resolve();
               return Promise.reject('Select at least one choice');
             }
