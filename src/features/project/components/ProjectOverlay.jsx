@@ -7,6 +7,7 @@ import BottomToolButtons from 'features/project/components/Cards/BottomToolBotto
 import MapControls from 'features/map/components/Map/MapControls';
 import MapLayerCategoriesCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
+import PathwayPanel from 'features/pathway/components/PathwayPanel';
 
 import UserInfo from 'components/UserInfo';
 import ShowHideCardsButton from 'components/ShowHideCardsButton';
@@ -110,6 +111,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
+  const [showPathwayPanel, setShowPathwayPanel] = useState(false);
+  const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
 
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
@@ -119,8 +122,37 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     setInputEditor(false);
   };
 
+  const toggleInputEditor = () => {
+    setInputEditor((prev) => {
+      const next = !prev;
+      if (next) {
+        setShowPathwayPanel(false);
+        setPathwayPanelExpanded(false);
+      }
+      return next;
+    });
+  };
+
+  const togglePathwayPanel = () => {
+    setShowPathwayPanel((prev) => {
+      const next = !prev;
+      if (next) {
+        setInputEditor(false);
+      } else {
+        setPathwayPanelExpanded(false);
+      }
+      return next;
+    });
+  };
+
   const handleHideAll = () => {
-    setHideAll((prev) => !prev);
+    setHideAll((prev) => {
+      const next = !prev;
+      if (next) {
+        setPathwayPanelExpanded(false);
+      }
+      return next;
+    });
   };
 
   const tension = 150;
@@ -156,6 +188,23 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
+  const pathwayPanelTransition = useTransition(!hideAll && showPathwayPanel, {
+    from: { transform: 'translateY(100%)', opacity: 0, maxHeight: '0vh' },
+    enter: {
+      transform: 'translateY(0%)',
+      opacity: 1,
+      maxHeight: pathwayPanelExpanded ? 'calc(100vh - 120px)' : '58vh',
+      marginBlock: '0px',
+    },
+    leave: {
+      transform: 'translateY(100%)',
+      opacity: 0,
+      maxHeight: '0vh',
+      marginBlock: '-12px',
+    },
+    config: { tension, friction },
+  });
+
   const transitionFromTop = useTransition(showToolBar, {
     from: { transform: 'translateY(-100%)', opacity: 0 }, // Start off-screen (top) and invisible
     enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in from top and become visible
@@ -171,6 +220,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
       resetSelected();
       setInputEditor(false);
+      setShowPathwayPanel(false);
+      setPathwayPanelExpanded(false);
     };
 
     resetState();
@@ -267,6 +318,38 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             </animated.div>
           ) : null,
         )}
+
+        {pathwayPanelTransition((styles, item) =>
+          item ? (
+            <animated.div
+              className="cea-overlay-card"
+              style={{
+                ...styles,
+                overflow: 'hidden',
+                ...(pathwayPanelExpanded
+                  ? {
+                      position: 'fixed',
+                      top: 64,
+                      right: 12,
+                      bottom: 72,
+                      left: 12,
+                      maxHeight: 'none',
+                      zIndex: 1400,
+                      display: 'flex',
+                    }
+                  : null),
+              }}
+            >
+              <PathwayPanel
+                open={showPathwayPanel}
+                project={project}
+                scenarioName={scenarioName}
+                expanded={pathwayPanelExpanded}
+                onExpandedChange={setPathwayPanelExpanded}
+              />
+            </animated.div>
+          ) : null,
+        )}
       </div>
 
       <div id="cea-project-overlay-right-sidebar">
@@ -307,7 +390,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         >
           {!hideAll && (
             <BottomToolButtons
-              onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+              onOpenInputEditor={toggleInputEditor}
+              onTogglePathwayPanel={togglePathwayPanel}
+              pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}
             />
           )}
