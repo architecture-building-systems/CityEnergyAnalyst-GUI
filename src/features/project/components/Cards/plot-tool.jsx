@@ -8,7 +8,7 @@ import {
   PLOT_LABELS,
   PLOT_GROUPS,
 } from 'features/plots/constants';
-import './plot-tool.css';
+import './tool-choices.css';
 
 const PlotButton = ({ plotKey, onSelected }) => {
   const script = VIEW_PLOT_RESULTS[plotKey];
@@ -18,7 +18,7 @@ const PlotButton = ({ plotKey, onSelected }) => {
     <Button
       key={plotKey}
       onClick={() => onSelected(script)}
-      className="cea-plot-button"
+      className="cea-tool-choices-button"
     >
       {PLOT_LABELS[plotKey] || plotKey}
     </Button>
@@ -27,25 +27,25 @@ const PlotButton = ({ plotKey, onSelected }) => {
 
 const PlotChoices = ({ onSelected }) => {
   return (
-    <div className="cea-plot-choices">
+    <div className="cea-tool-choices">
       <h2>Select a Plot Tool</h2>
-      <div className="cea-plot-group-list">
+      <div className="cea-tool-choices-group-list">
         {PLOT_GROUPS.map((group) => (
           <div key={group.label}>
             <Divider orientation="left" orientationMargin={0}>
-              <span className="cea-plot-group-label">
+              <span className="cea-tool-choices-group-label">
                 {group.icon && <group.icon />}
                 <small>{group.label}</small>
               </span>
             </Divider>
-            <div className="cea-plot-group-content">
+            <div className="cea-tool-choices-group-content">
               {group.subgroups ? (
                 group.subgroups.map((sub) => (
-                  <div key={sub.label} className="cea-plot-subgroup">
-                    <small className="cea-plot-subgroup-label">
+                  <div key={sub.label} className="cea-tool-choices-subgroup">
+                    <small className="cea-tool-choices-subgroup-label">
                       {sub.label}
                     </small>
-                    <div className="cea-plot-button-list">
+                    <div className="cea-tool-choices-button-list">
                       {sub.keys.map((key) => (
                         <PlotButton
                           key={key}
@@ -57,7 +57,7 @@ const PlotChoices = ({ onSelected }) => {
                   </div>
                 ))
               ) : (
-                <div className="cea-plot-button-list">
+                <div className="cea-tool-choices-button-list">
                   {group.keys.map((key) => (
                     <PlotButton
                       key={key}

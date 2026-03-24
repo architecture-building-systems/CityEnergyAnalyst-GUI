@@ -16,6 +16,7 @@ import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
 import { useToolFormStore } from 'features/tools/stores/tool-form-store';
+import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 
 const Tool = ({ script, onToolSelected, form }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
@@ -97,6 +98,8 @@ const Tool = ({ script, onToolSelected, form }) => {
     recheckInputs();
   }, [recheckInputs]);
 
+  if (script == null) return <ToolChoices onSelected={onToolSelected} />;
+
   if (isLoading)
     return (
       <div style={{ padding: 12 }}>
@@ -110,6 +113,7 @@ const Tool = ({ script, onToolSelected, form }) => {
     };
     return <AsyncError error={normalizedError} />;
   }
+
   if (!label) return null;
 
   return (
