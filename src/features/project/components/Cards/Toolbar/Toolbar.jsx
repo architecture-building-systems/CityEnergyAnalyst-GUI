@@ -7,35 +7,12 @@ import { DownOutlined } from '@ant-design/icons';
 import './Toolbar.css';
 
 import { useSelectTool } from 'features/project/stores/tool-card';
+import { AiIcon, ProIcon } from 'assets/icons';
 import {
-  DataManagementIcon,
-  SolarRadiationIcon,
-  OptimisationIcon,
-  UtilitiesIcon,
-  EnergyPotentialsIcon,
-  LifeCycleAnalysisIcon,
-  NetworksIcon,
-  ImportExportIcon,
-  PlugInIcon,
-  NumberCircleIcon,
-  AiIcon,
-  ProIcon,
-} from 'assets/icons';
-
-const IGNORED_SECTIONS = ['Visualisation'];
-
-const FALLBACK_ICON = <NumberCircleIcon number={'?'} />;
-const toolIconMap = {
-  'Data Management': <DataManagementIcon />,
-  'Solar Radiation Analysis': <SolarRadiationIcon />,
-  'Energy Demand Forecasting': <PlugInIcon />,
-  'Renewable Energy Potential Assessment': <EnergyPotentialsIcon />,
-  'Life Cycle Analysis': <LifeCycleAnalysisIcon />,
-  'Thermal Network Design': <NetworksIcon />,
-  'Energy Supply System Optimisation': <OptimisationIcon />,
-  Utilities: <UtilitiesIcon />,
-  'Import & Export': <ImportExportIcon />,
-};
+  TOOL_FALLBACK_ICON,
+  TOOL_ICON_MAP,
+  IGNORED_TOOL_SECTIONS,
+} from 'features/tools/constants/toolIcons';
 
 const ToolMenu = ({
   category,
@@ -46,7 +23,7 @@ const ToolMenu = ({
   customIcon,
 }) => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
-  const icon = customIcon || toolIconMap?.[category] || FALLBACK_ICON;
+  const icon = customIcon || TOOL_ICON_MAP?.[category] || TOOL_FALLBACK_ICON;
 
   const items = useMemo(
     () =>
@@ -134,7 +111,7 @@ const Toolbar = () => {
 
   const toolMenus = useMemo(() => {
     return Object.keys(tools || {}).map((category) => {
-      if (IGNORED_SECTIONS.includes(category)) return null;
+      if (IGNORED_TOOL_SECTIONS.includes(category)) return null;
 
       return (
         <ToolMenu
