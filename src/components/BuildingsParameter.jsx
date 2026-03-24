@@ -186,10 +186,7 @@ const BuildingsParameter = ({
       rules={[
         {
           validator: (_, value) => {
-            if (
-              value === null ||
-              (Array.isArray(value) && value.length === 0)
-            ) {
+            if (value === null) {
               if (nullable) return Promise.resolve();
               return Promise.reject('Select at least one choice');
             }
