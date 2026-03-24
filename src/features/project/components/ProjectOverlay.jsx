@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
 import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
@@ -113,6 +113,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [showInputEditor, setInputEditor] = useState(false);
   const [showPathwayPanel, setShowPathwayPanel] = useState(false);
   const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
+  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(480);
+  const pathwayResizeStateRef = useRef(null);
 
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
@@ -155,6 +157,64 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     });
   };
 
+  useEffect(() => {
+    const clampHeight = (height) =>
+      Math.max(360, Math.min(height, window.innerHeight - 220));
+
+    const handleResize = () => {
+      setPathwayPanelHeight((current) => clampHeight(current));
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handlePointerMove = (event) => {
+      const resizeState = pathwayResizeStateRef.current;
+      if (!resizeState) {
+        return;
+      }
+
+      const nextHeight = Math.max(
+        360,
+        Math.min(
+          resizeState.startHeight - (event.clientY - resizeState.startY),
+          window.innerHeight - 220,
+        ),
+      );
+      setPathwayPanelHeight(nextHeight);
+    };
+
+    const handlePointerUp = () => {
+      pathwayResizeStateRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+    };
+  }, []);
+
+  const handlePathwayResizeStart = (event) => {
+    if (pathwayPanelExpanded || event.button !== 0) {
+      return;
+    }
+
+    pathwayResizeStateRef.current = {
+      startY: event.clientY,
+      startHeight: pathwayPanelHeight,
+    };
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    event.preventDefault();
+  };
+
   const tension = 150;
   const friction = 20;
   const transitionToolsFromRight = useTransition(showToolCard, {
@@ -193,7 +253,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     enter: {
       transform: 'translateY(0%)',
       opacity: 1,
-      maxHeight: pathwayPanelExpanded ? 'calc(100vh - 120px)' : '58vh',
+      maxHeight: pathwayPanelExpanded
+        ? 'calc(100vh - 152px)'
+        : `${pathwayPanelHeight}px`,
       marginBlock: '0px',
     },
     leave: {
@@ -326,20 +388,52 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               style={{
                 ...styles,
                 overflow: 'hidden',
+                borderRadius: 20,
+                boxShadow: '0 24px 54px rgba(15, 23, 42, 0.16)',
+                background: 'rgba(255, 255, 255, 0.94)',
+                display: 'flex',
+                flexDirection: 'column',
+                height: pathwayPanelExpanded ? 'auto' : pathwayPanelHeight,
                 ...(pathwayPanelExpanded
                   ? {
                       position: 'fixed',
                       top: 64,
                       right: 12,
-                      bottom: 72,
+                      bottom: 96,
                       left: 12,
                       maxHeight: 'none',
                       zIndex: 1400,
-                      display: 'flex',
                     }
                   : null),
               }}
             >
+              {!pathwayPanelExpanded ? (
+                <button
+                  type="button"
+                  aria-label="Resize pathway panel"
+                  onMouseDown={handlePathwayResizeStart}
+                  style={{
+                    height: 18,
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'ns-resize',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                    flex: '0 0 auto',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 56,
+                      height: 5,
+                      borderRadius: 999,
+                      background: 'rgba(148, 163, 184, 0.7)',
+                    }}
+                  />
+                </button>
+              ) : null}
               <PathwayPanel
                 open={showPathwayPanel}
                 project={project}

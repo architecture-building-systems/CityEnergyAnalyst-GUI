@@ -16,8 +16,7 @@
 
 ### DO: Let the pathway panel use a taller, overflow-hidden container
 ```jsx
-maxHeight: '58vh'
-style={{ ...styles, overflow: 'hidden' }}
+style={{ ...styles, overflow: 'hidden', borderRadius: 20 }}
 ```
 
 ### DO: Promote the pathway panel to a fixed overlay when full-screen editing is enabled
@@ -27,9 +26,14 @@ style={{
   position: 'fixed',
   top: 64,
   right: 12,
-  bottom: 72,
+  bottom: 84,
   left: 12,
 }}
+```
+
+### DO: Offer a resize handle in non-full-screen mode
+```jsx
+<button onMouseDown={handlePathwayResizeStart} aria-label="Resize pathway panel" />
 ```
 
 ### DO: Keep bottom tools mutually legible

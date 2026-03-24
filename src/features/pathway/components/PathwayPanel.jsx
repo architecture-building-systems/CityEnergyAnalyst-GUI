@@ -22,10 +22,8 @@ import {
   Select,
   Slider,
   Spin,
-  Switch,
   Tooltip,
   Typography,
-  message,
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -42,12 +40,13 @@ import {
 const { Link, Text, Title } = Typography;
 
 const LANE_PADDING = 30;
-const LABEL_COLUMN_WIDTH = 188;
-const RULER_HEIGHT = 28;
-const ACTIVE_LANE_HEIGHT = 60;
-const INACTIVE_LANE_HEIGHT = 32;
+const LABEL_COLUMN_WIDTH = 176;
+const RULER_HEIGHT = 24;
+const ACTIVE_LANE_HEIGHT = 52;
+const INACTIVE_LANE_HEIGHT = 28;
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 8;
+const MAX_VISIBLE_TIMELINE_LANES = 3;
 
 const STATUS_FILL = {
   none: '#CBD5E1',
@@ -211,6 +210,25 @@ const toOptionList = (values) =>
     value,
   }));
 
+const handleYamlTextareaKeyDown = (event, value, onChange) => {
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  event.preventDefault();
+  const target = event.target;
+  const start = target.selectionStart ?? 0;
+  const end = target.selectionEnd ?? start;
+  const indent = '  ';
+  const nextValue = `${value.slice(0, start)}${indent}${value.slice(end)}`;
+  onChange(nextValue);
+
+  requestAnimationFrame(() => {
+    target.selectionStart = start + indent.length;
+    target.selectionEnd = start + indent.length;
+  });
+};
+
 const renderYamlLine = (line, index) => {
   if (line.trim().length === 0) {
     return (
@@ -259,7 +277,12 @@ const renderYamlLine = (line, index) => {
   );
 };
 
-const YamlPreview = ({ value }) => (
+const YamlPreview = ({
+  value,
+  fill = false,
+  minHeight = 140,
+  scrollable = true,
+}) => (
   <div
     style={{
       background: 'linear-gradient(180deg, #F8FBFF 0%, #FDFEFE 100%)',
@@ -271,9 +294,12 @@ const YamlPreview = ({ value }) => (
       fontSize: 12,
       lineHeight: 1.5,
       color: '#0F172A',
-      overflow: 'auto',
-      minHeight: 140,
-      maxHeight: 240,
+      overflow: scrollable ? 'auto' : 'visible',
+      minHeight,
+      maxHeight: fill || !scrollable ? 'none' : 240,
+      height: fill && scrollable ? '100%' : 'auto',
+      flex: fill ? 1 : '0 1 auto',
+      width: '100%',
     }}
   >
     {(value ?? '# No explicit YAML entry for this year.\n')
@@ -416,6 +442,7 @@ const PathwayPanel = ({
 
   const scrollViewportRef = useRef(null);
   const viewportMeasureRef = useRef(null);
+  const laneStackScrollRef = useRef(null);
   const pendingPreferredYearRef = useRef(null);
   const handledJobIdsRef = useRef(new Set());
   const selectedPathwayRef = useRef(null);
@@ -445,6 +472,7 @@ const PathwayPanel = ({
   const [buildingEventsModalOpen, setBuildingEventsModalOpen] = useState(false);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [yamlDrawerOpen, setYamlDrawerOpen] = useState(false);
+  const [yamlDrawerLoading, setYamlDrawerLoading] = useState(false);
   const [yamlEditEnabled, setYamlEditEnabled] = useState(false);
   const [createYearModalOpen, setCreateYearModalOpen] = useState(false);
   const [editorTargetYear, setEditorTargetYear] = useState(null);
@@ -641,9 +669,7 @@ const PathwayPanel = ({
       script,
       parameters,
       busyKey,
-      startedMessage,
       failedToStartMessage,
-      completionMessage,
       failureMessage,
       preferredPathway = null,
       preferredYear = null,
@@ -652,22 +678,19 @@ const PathwayPanel = ({
       setBusyAction(busyKey);
       try {
         const job = await createJob(script, parameters);
+        setPanelError(null);
         setPendingPanelJob({
           id: job.id,
           busyKey,
           preferredPathway,
           preferredYear,
-          completionMessage,
           failureMessage,
           onSuccess,
         });
-        if (startedMessage) {
-          message.success(startedMessage);
-        }
         return job;
       } catch (error) {
         setBusyAction(null);
-        message.error(
+        setPanelError(
           getErrorMessage(error, failedToStartMessage ?? 'Failed to start job.'),
         );
         return null;
@@ -721,6 +744,7 @@ const PathwayPanel = ({
     setBuildingEventsModalOpen(false);
     setTemplateModalOpen(false);
     setYamlDrawerOpen(false);
+    setYamlDrawerLoading(false);
     setYamlEditEnabled(false);
     setCreateYearModalOpen(false);
     setEditorTargetYear(null);
@@ -826,6 +850,17 @@ const PathwayPanel = ({
         setCreatingPathway(false);
         setNewPathwayName('');
       }
+      if (pendingPanelJob.onSuccess === 'deleted-pathway') {
+        setCreatingPathway(false);
+        setNewPathwayName('');
+        setCreateYearModalOpen(false);
+        setBuildingEventsModalOpen(false);
+        setTemplateModalOpen(false);
+        setYamlDrawerOpen(false);
+        setYamlDrawerLoading(false);
+        setYamlEditEnabled(false);
+        setEditorTargetYear(null);
+      }
       if (pendingPanelJob.onSuccess === 'saved-building-events') {
         setBuildingEventsModalOpen(false);
         setEditorTargetYear(null);
@@ -841,10 +876,7 @@ const PathwayPanel = ({
         setEditorTargetYear(null);
       }
 
-      if (pendingPanelJob.completionMessage) {
-        message.success(pendingPanelJob.completionMessage);
-      }
-
+      setPanelError(null);
       void refreshPathwayData({
         preferredPathway:
           pendingPanelJob.preferredPathway ?? selectedPathwayRef.current,
@@ -856,7 +888,7 @@ const PathwayPanel = ({
     }
 
     if ([3, 4, 5].includes(job.state)) {
-      message.error(
+      setPanelError(
         pendingPanelJob.failureMessage ??
           'The pathway job failed. Open Job Info in the status bar for details.',
       );
@@ -870,7 +902,7 @@ const PathwayPanel = ({
 
   const handleRunPathwayJob = async (scriptName) => {
     if (!selectedPathway || !scenarioPath) {
-      message.error('Select a scenario and pathway first.');
+      setPanelError('Select a scenario and pathway first.');
       return;
     }
 
@@ -880,15 +912,9 @@ const PathwayPanel = ({
         scenario: scenarioPath,
         existing_pathway_name: selectedPathway,
       });
-      message.success(
-        scriptName === 'bake-pathway-states'
-          ? 'Bake job started. Watch the task hints below for state-by-state progress.'
-          : scriptName === 'pathway-simulations'
-            ? 'Simulation job started. Watch the task hints below for workflow progress.'
-            : 'Validation job started. Open Job Info in the status bar for state-by-state results.',
-      );
+      setPanelError(null);
     } catch (error) {
-      message.error(getErrorMessage(error, 'Failed to start pathway job.'));
+      setPanelError(getErrorMessage(error, 'Failed to start pathway job.'));
     } finally {
       setBusyAction(null);
     }
@@ -896,7 +922,7 @@ const PathwayPanel = ({
 
   const handleCreatePathway = async () => {
     if (!newPathwayName.trim()) {
-      message.error('Enter a pathway name first.');
+      setPanelError('Enter a pathway name first.');
       return;
     }
 
@@ -920,11 +946,11 @@ const PathwayPanel = ({
 
   const handleAddYear = async () => {
     if (!selectedPathway) {
-      message.error('Select a pathway first.');
+      setPanelError('Select a pathway first.');
       return;
     }
     if (newYearValue == null) {
-      message.error('Enter the year you want to add.');
+      setPanelError('Enter the year you want to add.');
       return;
     }
 
@@ -935,6 +961,41 @@ const PathwayPanel = ({
     setEditorTargetYear(targetYear);
     setCreateYearModalOpen(true);
     setNewYearValue(null);
+    setPanelError(null);
+  };
+
+  const handleDeleteSelectedPathway = () => {
+    if (!selectedPathway || !scenarioPath) {
+      setPanelError('Select a pathway first.');
+      return;
+    }
+
+    const targetPathway = selectedPathway;
+    Modal.confirm({
+      title: `Delete pathway '${targetPathway}'?`,
+      content:
+        'This removes the pathway log, intervention templates, baked states, simulation outputs, and saved state-status records for this pathway. This cannot be undone.',
+      okText: 'Delete pathway',
+      okButtonProps: {
+        danger: true,
+      },
+      onOk: async () => {
+        await startPanelJob({
+          script: 'pathway-delete-pathway',
+          parameters: {
+            scenario: scenarioPath,
+            existing_pathway_name: targetPathway,
+          },
+          busyKey: 'delete-pathway',
+          failedToStartMessage: 'Failed to start the delete-pathway job.',
+          failureMessage:
+            'Deleting the pathway failed. Open Job Info in the status bar for details.',
+          preferredPathway: null,
+          preferredYear: null,
+          onSuccess: 'deleted-pathway',
+        });
+      },
+    });
   };
 
   const handleDeleteSelectedYear = () => {
@@ -992,9 +1053,10 @@ const PathwayPanel = ({
       const currentEvents = data?.entry?.building_events ?? {};
       setNewBuildingsDraft(currentEvents?.new_buildings ?? []);
       setDemolishedBuildingsDraft(currentEvents?.demolished_buildings ?? []);
+      setPanelError(null);
     } catch (error) {
       setBuildingEventsModalOpen(false);
-      message.error(getErrorMessage(error, 'Failed to open building editor.'));
+      setPanelError(getErrorMessage(error, 'Failed to open building editor.'));
     }
   };
 
@@ -1036,9 +1098,10 @@ const PathwayPanel = ({
     try {
       await ensureEditorOptions(selectedPathway, targetYear);
       setSelectedTemplatesDraft([]);
+      setPanelError(null);
     } catch (error) {
       setTemplateModalOpen(false);
-      message.error(getErrorMessage(error, 'Failed to open template editor.'));
+      setPanelError(getErrorMessage(error, 'Failed to open template editor.'));
     }
   };
 
@@ -1068,15 +1131,37 @@ const PathwayPanel = ({
     });
   };
 
-  const handleOpenYamlDrawer = (targetYear = activeEditorYear) => {
-    if (targetYear == null) {
+  const handleOpenYamlDrawer = async (targetYear = activeEditorYear) => {
+    if (!selectedPathway || targetYear == null) {
       return;
     }
     setEditorTargetYear(targetYear);
     setCreateYearModalOpen(false);
-    setYamlDraft(getInitialYamlDraft(activeRowByYear.get(targetYear) ?? null));
     setYamlEditEnabled(false);
     setYamlDrawerOpen(true);
+    setYamlDrawerLoading(true);
+    setYamlDraft(getInitialYamlDraft(activeRowByYear.get(targetYear) ?? null));
+
+    try {
+      const data = await ensureEditorOptions(selectedPathway, targetYear);
+      const savedYaml = data?.yaml_preview;
+      if (
+        typeof savedYaml === 'string' &&
+        !savedYaml.startsWith('# No explicit YAML')
+      ) {
+        setYamlDraft(savedYaml);
+      } else {
+        setYamlDraft(
+          getInitialYamlDraft(activeRowByYear.get(targetYear) ?? null),
+        );
+      }
+      setPanelError(null);
+    } catch (error) {
+      setYamlDrawerOpen(false);
+      setPanelError(getErrorMessage(error, 'Failed to open the YAML editor.'));
+    } finally {
+      setYamlDrawerLoading(false);
+    }
   };
 
   const handleSaveYaml = async () => {
@@ -1134,31 +1219,6 @@ const PathwayPanel = ({
     setToolType(toolTypes.TOOLS);
   };
 
-  const handleLaneWheel = (event) => {
-    if (
-      !event.shiftKey ||
-      overviewPathways.length < 2 ||
-      Math.abs(event.deltaY) < Math.abs(event.deltaX)
-    ) {
-      return;
-    }
-    event.preventDefault();
-    const currentIndex = overviewPathways.findIndex(
-      (pathway) => pathway.pathway_name === selectedPathway,
-    );
-    const fallbackIndex = currentIndex >= 0 ? currentIndex : 0;
-    const direction = event.deltaY > 0 ? 1 : -1;
-    const nextIndex = Math.max(
-      0,
-      Math.min(fallbackIndex + direction, overviewPathways.length - 1),
-    );
-    const nextPathway = overviewPathways[nextIndex];
-    if (!nextPathway || nextPathway.pathway_name === selectedPathway) {
-      return;
-    }
-    void handleSelectPathway(nextPathway.pathway_name);
-  };
-
   const totalTimelineHeight =
     RULER_HEIGHT +
     overviewPathways.reduce(
@@ -1166,6 +1226,55 @@ const PathwayPanel = ({
         sum + getLaneHeight(pathway.pathway_name === selectedPathway),
       0,
     );
+  const timelineViewportHeight = Math.min(
+    Math.max(totalTimelineHeight, 160),
+    RULER_HEIGHT +
+      ACTIVE_LANE_HEIGHT +
+      INACTIVE_LANE_HEIGHT *
+        Math.max(
+          Math.min(overviewPathways.length, MAX_VISIBLE_TIMELINE_LANES) - 1,
+          0,
+        ) +
+      8,
+  );
+
+  useEffect(() => {
+    const viewport = laneStackScrollRef.current;
+    if (
+      !viewport ||
+      !selectedPathway ||
+      overviewPathways.length <= MAX_VISIBLE_TIMELINE_LANES
+    ) {
+      return;
+    }
+
+    const selectedIndex = overviewPathways.findIndex(
+      (pathway) => pathway.pathway_name === selectedPathway,
+    );
+    if (selectedIndex < 0) {
+      return;
+    }
+
+    const laneTop = RULER_HEIGHT + selectedIndex * INACTIVE_LANE_HEIGHT;
+    const laneBottom = laneTop + ACTIVE_LANE_HEIGHT;
+    const visibleTop = viewport.scrollTop;
+    const visibleBottom = visibleTop + viewport.clientHeight;
+
+    if (laneTop < visibleTop) {
+      viewport.scrollTo({
+        top: Math.max(laneTop - 8, 0),
+        behavior: 'smooth',
+      });
+      return;
+    }
+
+    if (laneBottom > visibleBottom) {
+      viewport.scrollTo({
+        top: Math.max(laneBottom - viewport.clientHeight + 8, 0),
+        behavior: 'smooth',
+      });
+    }
+  }, [overviewPathways, selectedPathway]);
 
   const renderNodeTooltip = (pathwayName, year, row, active) => {
     if (!active) {
@@ -1306,29 +1415,52 @@ const PathwayPanel = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
-        padding: 14,
+        padding: expanded ? '16px 16px 20px' : '12px 12px 16px',
         background: 'linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 100%)',
         overflow: 'hidden',
+        borderRadius: 'inherit',
       }}
     >
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
           gap: 16,
+          alignItems: 'start',
           paddingBottom: 8,
           borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
             <Title level={5} style={{ margin: 0 }}>
               Pathway timeline
             </Title>
             {!creatingPathway ? (
               <Link onClick={() => setCreatingPathway(true)}>
                 <PlusOutlined /> Create new pathway
+              </Link>
+            ) : null}
+            {selectedPathway ? (
+              <Link
+                onClick={handleDeleteSelectedPathway}
+                style={{ color: '#B91C1C' }}
+              >
+                <DeleteOutlined /> Delete current pathway
               </Link>
             ) : null}
           </div>
@@ -1363,8 +1495,7 @@ const PathwayPanel = ({
           ) : (
             <Text style={{ color: '#64748B', fontSize: 12 }}>
               Hover a node for a quick state summary, then click to pin the
-              inspector. Click a pathway lane to switch, or hold Shift while
-              scrolling over the timeline to cycle pathways.
+              inspector. Click a pathway lane to switch pathways.
             </Text>
           )}
         </div>
@@ -1372,89 +1503,122 @@ const PathwayPanel = ({
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            flexWrap: 'wrap',
-            justifyContent: 'flex-end',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 8,
+            flexShrink: 0,
+            maxWidth: '100%',
           }}
         >
-          {loadingTimeline ? (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                color: '#64748B',
-                fontSize: 12,
-              }}
-            >
-              <Spin size="small" />
-              Refreshing active pathway
-            </span>
-          ) : null}
-          <Button
-            size="small"
-            icon={<CheckCircleOutlined />}
-            disabled={!selectedPathway}
-            loading={busyAction === 'pathway-validate-all-states'}
-            onClick={() => handleRunPathwayJob('pathway-validate-all-states')}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
           >
-            Validate all states
-          </Button>
-          <Button
-            size="small"
-            icon={<BuildOutlined />}
-            disabled={!selectedPathway}
-            loading={busyAction === 'bake-pathway-states'}
-            onClick={() => handleRunPathwayJob('bake-pathway-states')}
-          >
-            Bake states
-          </Button>
-          <Button
-            size="small"
-            icon={<RocketOutlined />}
-            disabled={!selectedPathway}
-            loading={busyAction === 'pathway-simulations'}
-            onClick={() => handleRunPathwayJob('pathway-simulations')}
-          >
-            Simulate pathway
-          </Button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <InputNumber
-              size="small"
-              placeholder="Year"
-              precision={0}
-              value={newYearValue}
-              onChange={setNewYearValue}
-              style={{ width: 96 }}
-              disabled={!selectedPathway}
-            />
+            {loadingTimeline ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: '#64748B',
+                  fontSize: 12,
+                }}
+              >
+                <Spin size="small" />
+                Refreshing active pathway
+              </span>
+            ) : null}
+            <Link onClick={handleOpenTemplateTool}>
+              <ToolOutlined /> Template editor
+            </Link>
+            <Link onClick={() => refreshPathwayData()}>
+              <ReloadOutlined /> Refresh
+            </Link>
             <Button
               size="small"
-              type="primary"
-              icon={<PlusOutlined />}
-              disabled={!selectedPathway}
-              loading={busyAction === 'add-year'}
-              onClick={handleAddYear}
+              icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
+              onClick={() => onExpandedChange?.(!expanded)}
             >
-              Add state
+              {expanded ? 'Exit full screen' : 'Full screen'}
             </Button>
           </div>
-          <Link onClick={handleOpenTemplateTool}>
-            <ToolOutlined /> Template editor
-          </Link>
-          <Link onClick={() => refreshPathwayData()}>
-            <ReloadOutlined /> Refresh
-          </Link>
-          <Button
-            size="small"
-            icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
-            onClick={() => onExpandedChange?.(!expanded)}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
           >
-            {expanded ? 'Exit full screen' : 'Full screen'}
-          </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <InputNumber
+                size="small"
+                placeholder="Year"
+                precision={0}
+                value={newYearValue}
+                onChange={setNewYearValue}
+                style={{ width: 96 }}
+                disabled={!selectedPathway}
+              />
+              <Button
+                size="small"
+                type="primary"
+                icon={<PlusOutlined />}
+                disabled={!selectedPathway}
+                loading={busyAction === 'add-year'}
+                onClick={handleAddYear}
+              >
+                Add state
+              </Button>
+            </div>
+            <Button
+              size="small"
+              icon={<CheckCircleOutlined />}
+              disabled={!selectedPathway}
+              loading={busyAction === 'pathway-validate-all-states'}
+              onClick={() => handleRunPathwayJob('pathway-validate-all-states')}
+            >
+              Validate all states
+            </Button>
+            <Button
+              size="small"
+              icon={<BuildOutlined />}
+              disabled={!selectedPathway}
+              loading={busyAction === 'bake-pathway-states'}
+              onClick={() => handleRunPathwayJob('bake-pathway-states')}
+            >
+              Bake states
+            </Button>
+            <Button
+              size="small"
+              icon={<RocketOutlined />}
+              disabled={!selectedPathway}
+              loading={busyAction === 'pathway-simulations'}
+              onClick={() => handleRunPathwayJob('pathway-simulations')}
+            >
+              Simulate pathway
+            </Button>
+          </div>
         </div>
       </div>
+
+      <div
+        style={{
+          minHeight: 0,
+          flex: 1,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+          paddingRight: 2,
+        }}
+      >
 
       {panelError ? (
         <Alert
@@ -1543,12 +1707,20 @@ const PathwayPanel = ({
             </div>
           ) : (
             <div
+              ref={laneStackScrollRef}
               style={{
-                display: 'grid',
-                gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr)`,
-                minHeight: Math.max(totalTimelineHeight, 160),
+                maxHeight: timelineViewportHeight,
+                overflowY:
+                  totalTimelineHeight > timelineViewportHeight ? 'auto' : 'hidden',
               }}
             >
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr)`,
+                  minHeight: Math.max(totalTimelineHeight, 160),
+                }}
+              >
               <div
                 style={{
                   display: 'flex',
@@ -1602,15 +1774,17 @@ const PathwayPanel = ({
                         alignItems: 'center',
                         width: '100%',
                       }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 8,
-                        }}
                       >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                            width: '100%',
+                            minWidth: 0,
+                          }}
+                        >
                         <div
                           style={{
                             overflow: 'hidden',
@@ -1636,22 +1810,21 @@ const PathwayPanel = ({
                 })}
               </div>
 
-              <div
-                ref={viewportMeasureRef}
-                style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}
-              >
+                <div
+                  ref={viewportMeasureRef}
+                  style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}
+                >
                 <div
                   ref={scrollViewportRef}
-                  onWheel={handleLaneWheel}
                   style={{
                     minWidth: 0,
                     maxWidth: '100%',
-                    overflowX: 'auto',
-                    overflowY: 'hidden',
-                    cursor: 'default',
-                  }}
-                >
-                  <div style={{ width: contentWidth, minWidth: '100%' }}>
+                      overflowX: 'auto',
+                      overflowY: 'hidden',
+                      cursor: 'default',
+                    }}
+                  >
+                    <div style={{ width: contentWidth, minWidth: '100%' }}>
                     <div
                       style={{
                         position: 'relative',
@@ -1790,13 +1963,13 @@ const PathwayPanel = ({
                         </div>
                       );
                     })}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
 
       <div
         style={{
@@ -1805,6 +1978,7 @@ const PathwayPanel = ({
           display: 'grid',
           gridTemplateColumns: 'minmax(320px, 1.2fr) minmax(280px, 1fr)',
           gap: 14,
+          alignItems: 'stretch',
         }}
       >
         <div
@@ -1868,6 +2042,52 @@ const PathwayPanel = ({
                     {selectedRow.summary?.text ?? 'No summary available.'}
                   </Text>
                 </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                  paddingTop: 2,
+                }}
+              >
+                <Button
+                  size="small"
+                  icon={<BuildOutlined />}
+                  onClick={handleOpenBuildingEventsEditor}
+                >
+                  Building events
+                </Button>
+                <Button
+                  size="small"
+                  icon={<ToolOutlined />}
+                  onClick={handleOpenTemplateEditor}
+                >
+                  Apply templates
+                </Button>
+                <Button
+                  size="small"
+                  icon={<CheckCircleOutlined />}
+                  loading={busyAction === 'validate-state'}
+                  disabled={!selectedRow.has_state_folder}
+                  onClick={handleValidateState}
+                >
+                  Validate state
+                </Button>
+                {selectedRow.can_delete || selectedRow.can_clear_manual_changes ? (
+                  <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    loading={busyAction === 'delete-year'}
+                    onClick={handleDeleteSelectedYear}
+                  >
+                    {selectedRow.can_clear_manual_changes
+                      ? 'Clear manual changes'
+                      : 'Delete state'}
+                  </Button>
+                ) : null}
               </div>
 
               {selectedRow.state_kind === 'stock' && !selectedRow.exists_in_log ? (
@@ -1956,58 +2176,6 @@ const PathwayPanel = ({
                 />
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                  paddingTop: 4,
-                }}
-              >
-                <Button
-                  size="small"
-                  icon={<BuildOutlined />}
-                  onClick={handleOpenBuildingEventsEditor}
-                >
-                  Building events
-                </Button>
-                <Button
-                  size="small"
-                  icon={<ToolOutlined />}
-                  onClick={handleOpenTemplateEditor}
-                >
-                  Apply templates
-                </Button>
-                <Button
-                  size="small"
-                  icon={<FileTextOutlined />}
-                  onClick={handleOpenYamlDrawer}
-                >
-                  Edit YAML
-                </Button>
-                <Button
-                  size="small"
-                  icon={<CheckCircleOutlined />}
-                  loading={busyAction === 'validate-state'}
-                  disabled={!selectedRow.has_state_folder}
-                  onClick={handleValidateState}
-                >
-                  Validate state
-                </Button>
-                {selectedRow.can_delete || selectedRow.can_clear_manual_changes ? (
-                  <Button
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    loading={busyAction === 'delete-year'}
-                    onClick={handleDeleteSelectedYear}
-                  >
-                    {selectedRow.can_clear_manual_changes
-                      ? 'Clear manual changes'
-                      : 'Delete state'}
-                  </Button>
-                ) : null}
-              </div>
             </>
           )}
         </div>
@@ -2023,7 +2191,7 @@ const PathwayPanel = ({
             flexDirection: 'column',
             gap: 12,
             minHeight: 0,
-            overflow: 'auto',
+            overflow: 'visible',
           }}
         >
           <div
@@ -2054,15 +2222,25 @@ const PathwayPanel = ({
               <Button
                 size="small"
                 icon={<EditOutlined />}
-                onClick={handleOpenYamlDrawer}
+                onClick={() => void handleOpenYamlDrawer()}
               >
-                Expert edit
+                YAML edit
               </Button>
             ) : null}
           </div>
 
-          <YamlPreview value={selectedRow?.yaml_preview} />
+          <div style={{ display: 'flex', paddingBottom: 6 }}>
+            <YamlPreview
+              value={selectedRow?.yaml_preview}
+              minHeight={expanded ? 220 : 180}
+              scrollable={false}
+            />
+          </div>
         </div>
+      </div>
+
+      </div>
+
       </div>
 
       <Modal
@@ -2098,7 +2276,7 @@ const PathwayPanel = ({
             </Button>
             <Button
               icon={<FileTextOutlined />}
-              onClick={() => handleOpenYamlDrawer(activeEditorYear)}
+              onClick={() => void handleOpenYamlDrawer(activeEditorYear)}
             >
               Edit YAML
             </Button>
@@ -2226,14 +2404,21 @@ const PathwayPanel = ({
       <Drawer
         title={
           activeEditorYear != null
-            ? `Expert YAML edit | ${selectedPathway} | ${activeEditorYear}`
-            : 'Expert YAML edit'
+            ? `YAML edit | ${selectedPathway} | ${activeEditorYear}`
+            : 'YAML edit'
         }
         placement="right"
         width={460}
+        styles={{
+          body: {
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
         open={yamlDrawerOpen}
         onClose={() => {
           setYamlDrawerOpen(false);
+          setYamlDrawerLoading(false);
           setYamlEditEnabled(false);
           setEditorTargetYear(null);
         }}
@@ -2249,7 +2434,7 @@ const PathwayPanel = ({
           </Button>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: '100%' }}>
           <div
             style={{
               display: 'flex',
@@ -2260,36 +2445,63 @@ const PathwayPanel = ({
           >
             <div>
               <Text strong style={{ display: 'block' }}>
-                Preview
+                Live preview
               </Text>
               <Text style={{ color: '#64748B', fontSize: 12 }}>
-                Keep expert editing off if you only want to inspect the current
-                YAML.
+                The panel preview shows the last saved YAML. This preview updates
+                live while you edit the current draft.
               </Text>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Text style={{ color: '#475569' }}>Raw edit</Text>
-              <Switch
-                checked={yamlEditEnabled}
-                onChange={setYamlEditEnabled}
-              />
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => setYamlEditEnabled((current) => !current)}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                {yamlEditEnabled ? 'Preview only' : 'Enable editing'}
+              </Button>
             </div>
           </div>
 
-          <YamlPreview value={yamlDraft} />
-
-          {yamlEditEnabled ? (
-            <Input.TextArea
-              value={yamlDraft}
-              onChange={(event) => setYamlDraft(event.target.value)}
-              autoSize={{ minRows: 14, maxRows: 20 }}
-              spellCheck={false}
+          {yamlDrawerLoading ? (
+            <div
               style={{
-                fontFamily:
-                  '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+                minHeight: 220,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-            />
-          ) : null}
+            >
+              <Spin />
+            </div>
+          ) : (
+            <>
+              <div style={{ minHeight: 0, display: 'flex' }}>
+                <YamlPreview value={yamlDraft} fill minHeight={260} />
+              </div>
+
+              {yamlEditEnabled ? (
+                <Input.TextArea
+                  value={yamlDraft}
+                  onChange={(event) => setYamlDraft(event.target.value)}
+                  onKeyDown={(event) =>
+                    handleYamlTextareaKeyDown(
+                      event,
+                      yamlDraft,
+                      setYamlDraft,
+                    )
+                  }
+                  autoSize={{ minRows: 14, maxRows: 24 }}
+                  spellCheck={false}
+                  style={{
+                    fontFamily:
+                      '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+                  }}
+                />
+              ) : null}
+            </>
+          )}
         </div>
       </Drawer>
     </div>

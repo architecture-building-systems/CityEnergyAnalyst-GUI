@@ -40,7 +40,7 @@ setCreateYearModalOpen(true);
 ### DO: Remember the selected year per pathway and only switch lanes explicitly
 ```jsx
 selectedYearByPathwayRef.current[pathwayName] = year;
-// Click to switch lanes. Shift + wheel is the only scroll shortcut.
+// Click to switch lanes directly. Avoid hidden wheel shortcuts for pathway changes.
 ```
 
 ### DO: Launch panel mutations through the native job store
@@ -50,6 +50,13 @@ await createJob('pathway-delete-state', {
   existing_pathway_name: selectedPathway,
   year_of_state: selectedRow.year,
 });
+```
+
+### DO: Let native Job Info own success and failure feedback for pathway jobs
+```jsx
+await startPanelJob({ script: 'pathway-delete-pathway', ... });
+setPanelError(null);
+// Do not stack local toast popups on top of the status-bar job notifications.
 ```
 
 ### DO: Treat backend job names as domain actions, not UI labels
@@ -71,16 +78,68 @@ await createJob('bake-pathway-states', {
 Validate all states | Bake states | Simulate pathway
 ```
 
+### DO: Keep create/delete-pathway links in the header, but route deletion through a confirmation modal
+```jsx
+<Link onClick={handleDeleteSelectedPathway}>
+  <DeleteOutlined /> Delete current pathway
+</Link>
+```
+
 ### DO: Keep editors open until the started job finishes
 ```jsx
 setPendingPanelJob({ id: job.id, onSuccess: 'saved-yaml' });
 // Close the drawer on success, keep the draft open on job failure.
 ```
 
+### DO: Cap the visible lane stack and let it scroll independently when many pathways exist
+```jsx
+const timelineViewportHeight = Math.min(totalTimelineHeight, ...);
+<div ref={laneStackScrollRef} style={{ maxHeight: timelineViewportHeight, overflowY: 'auto' }} />
+```
+
+### DO: Give the whole panel body a fallback scroll path when the user drags the panel shorter
+```jsx
+<div style={{ minHeight: 0, flex: 1, overflowY: 'auto' }}>
+  ...
+</div>
+```
+
+### DO: Keep the selected-state action buttons directly below the year summary
+```jsx
+<Title level={4}>{selectedRow.year}</Title>
+<Text>{selectedRow.summary?.text}</Text>
+<div>Building events | Apply templates | Validate state | Delete state</div>
+```
+
+### DO: Let the main YAML preview grow with the panel and use outer-panel scrolling
+```jsx
+<YamlPreview scrollable={false} minHeight={180} />
+// Avoid tiny nested scrollbars in the main inspector layout.
+```
+
 ### DO: Use editor modals for user-facing changes and keep YAML edit as expert mode
 ```jsx
 setBuildingEventsModalOpen(true);
 setYamlDrawerOpen(true);
+```
+
+### DO: Seed the YAML drawer from editor options, not only the currently rendered row
+```jsx
+const data = await ensureEditorOptions(selectedPathway, year);
+setYamlDraft(data?.yaml_preview ?? DEFAULT_YAML_DRAFT);
+```
+
+### DO: Keep the drawer preview live and colourised while edit mode is on
+```jsx
+<YamlPreview value={yamlDraft} fill />
+<Button onClick={() => setYamlEditEnabled((current) => !current)}>
+  {yamlEditEnabled ? 'Preview only' : 'Enable editing'}
+</Button>
+```
+
+### DO: Support tab indentation in the lightweight YAML editor
+```jsx
+onKeyDown={(event) => handleYamlTextareaKeyDown(event, yamlDraft, setYamlDraft)}
 ```
 
 ### DON'T: Persist or expect a `manual_state` flag in API payloads
