@@ -45,6 +45,7 @@ const BuildingsSelectInput = ({
   onChange,
   options,
   selectionActive,
+  onSelectionChange,
   selectAll,
   unselectAll,
   onStart,
@@ -54,7 +55,10 @@ const BuildingsSelectInput = ({
   <div>
     <Select
       value={value}
-      onChange={onChange}
+      onChange={(val) => {
+        onChange(val);
+        if (selectionActive) onSelectionChange(val);
+      }}
       options={options}
       mode="multiple"
       tokenSeparators={[',']}
@@ -130,13 +134,7 @@ const BuildingsParameter = ({
   const handleStartSelection = () => {
     const currentValue = form.getFieldValue(name) ?? [];
     previousValueRef.current = currentValue;
-    startSelection(
-      choices,
-      (buildings) => {
-        setFieldsValue({ [name]: buildings });
-      },
-      idRef.current,
-    );
+    startSelection(choices, idRef.current);
     // Pre-populate with current selection
     useBuildingSelectionStore.getState().setBuildings(currentValue);
   };
@@ -211,6 +209,9 @@ const BuildingsParameter = ({
       <BuildingsSelectInput
         options={options}
         selectionActive={selectionActive}
+        onSelectionChange={(val) =>
+          useBuildingSelectionStore.getState().setBuildings(val)
+        }
         selectAll={selectAll}
         unselectAll={unselectAll}
         onStart={handleStartSelection}
