@@ -442,10 +442,6 @@ const DeckGLMap = ({ data, colors }) => {
   const buildingSelectionBuildings = useBuildingSelectionStore(
     (state) => state.selectedBuildings,
   );
-  const buildingSelectionActiveRef = useRef(buildingSelectionActive);
-  useEffect(() => {
-    buildingSelectionActiveRef.current = buildingSelectionActive;
-  }, [buildingSelectionActive]);
 
   const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);
@@ -493,7 +489,7 @@ const DeckGLMap = ({ data, colors }) => {
 
       // When building selection mode is active, route clicks to the store
       // Only zone buildings can be selected, not surroundings
-      if (buildingSelectionActiveRef.current) {
+      if (useBuildingSelectionStore.getState().active) {
         if (layer.id === 'zone') {
           useBuildingSelectionStore.getState().toggleBuilding(name);
         }
