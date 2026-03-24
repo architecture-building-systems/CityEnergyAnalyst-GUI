@@ -21,16 +21,21 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
     value: key,
   }));
 
-  const gradientArray = new Gradient()
-    .setColorGradient(...colours)
-    .setMidpoint(points)
-    .getColors();
+  const gradientArray =
+    colours?.length > 0
+      ? new Gradient()
+          .setColorGradient(...colours)
+          .setMidpoint(points)
+          .getColors()
+      : null;
 
   useEffect(() => {
     if (!range || !value) return;
     const { min, max } = range[value];
     setRange([min, max]);
   }, [value, min, max, range, setRange]);
+
+  if (!range || !value || !gradientArray) return null;
 
   return (
     <div
