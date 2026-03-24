@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { Skeleton } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -7,16 +7,24 @@ import positron from 'constants/mapStyles/positron.json';
 import { useFetchZoneGeoJSON } from '../hooks/useReportsData';
 
 /**
- * Static map thumbnail showing zone building footprints.
- * Non-interactive, auto-fits to bounds.
+ * Interactive map showing zone building footprints.
+ * Supports zoom, pan, and 3D/2D toggle.
  * Bottom edge is draggable to resize height.
  */
 const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
   const [height, setHeight] = useState(initialHeight);
+  const [is3D, setIs3D] = useState(false);
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const dragRef = useRef(null);
+  const boundsRef = useRef(null);
 
+  const { data: geojson, isLoading, error } = useFetchZoneGeoJSON(
+    project,
+    scenario,
+  );
+
+  // Height resize drag
   const handleDragStart = useCallback((e) => {
     e.preventDefault();
     dragRef.current = { startY: e.clientY, startHeight: height };
@@ -31,7 +39,6 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
     const handleUp = () => {
       document.removeEventListener('mousemove', handleMove);
       document.removeEventListener('mouseup', handleUp);
-      // Trigger map resize after drag ends
       if (mapRef.current) mapRef.current.resize();
       dragRef.current = null;
     };
@@ -39,15 +46,65 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleUp);
   }, [height]);
-  const { data: geojson, isLoading, error } = useFetchZoneGeoJSON(
-    project,
-    scenario,
-  );
 
+  // 3D/2D toggle
+  const toggle3D = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const next = !is3D;
+    setIs3D(next);
+
+    if (next) {
+      // Switch to 3D: add pitch and swap fill → fill-extrusion
+      map.easeTo({ pitch: 45, duration: 400 });
+      if (map.getLayer('zone-fill')) map.removeLayer('zone-fill');
+      if (!map.getLayer('zone-3d')) {
+        map.addLayer({
+          id: 'zone-3d',
+          type: 'fill-extrusion',
+          source: 'zone',
+          paint: {
+            'fill-extrusion-color': '#D4A76A',
+            'fill-extrusion-opacity': 0.85,
+            'fill-extrusion-height': [
+              'case',
+              ['has', 'height_ag'], ['get', 'height_ag'],
+              ['has', 'floors_ag'], ['*', ['get', 'floors_ag'], 3],
+              10,
+            ],
+            'fill-extrusion-base': 0,
+          },
+        });
+      }
+    } else {
+      // Switch to 2D: remove pitch and swap fill-extrusion → fill
+      map.easeTo({ pitch: 0, duration: 400 });
+      if (map.getLayer('zone-3d')) map.removeLayer('zone-3d');
+      if (!map.getLayer('zone-fill')) {
+        map.addLayer({
+          id: 'zone-fill',
+          type: 'fill',
+          source: 'zone',
+          paint: {
+            'fill-color': '#D4A76A',
+            'fill-opacity': 0.7,
+          },
+        }, 'zone-outline');
+      }
+    }
+  }, [is3D]);
+
+  // Reset camera to fit bounds
+  const resetCamera = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !boundsRef.current) return;
+    map.fitBounds(boundsRef.current, { padding: 20, duration: 300 });
+  }, []);
+
+  // Initialize map
   useEffect(() => {
     if (!containerRef.current || !geojson) return;
 
-    // Don't re-create if map already exists
     if (mapRef.current) {
       mapRef.current.remove();
       mapRef.current = null;
@@ -56,12 +113,18 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: positron,
-      interactive: false,
       attributionControl: false,
+      pitchWithRotate: true,
+      dragRotate: true,
     });
 
+    // Add zoom controls
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true, showZoom: true }),
+      'top-right',
+    );
+
     map.on('load', () => {
-      // Add zone geometry
       map.addSource('zone', { type: 'geojson', data: geojson });
       map.addLayer({
         id: 'zone-fill',
@@ -100,9 +163,10 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
           }
         }
         if (!bounds.isEmpty()) {
+          boundsRef.current = bounds;
           map.fitBounds(bounds, { padding: 20, duration: 0 });
         }
-      } catch (e) {
+      } catch {
         // Ignore bounds errors
       }
     });
@@ -140,6 +204,29 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
         ref={containerRef}
         style={{ width: '100%', height, borderRadius: 8, overflow: 'hidden' }}
       />
+
+      {/* 3D/2D toggle + reset camera buttons */}
+      <div style={controlsStyle}>
+        <Tooltip title={is3D ? '2D view' : '3D view'}>
+          <button
+            type="button"
+            onClick={toggle3D}
+            style={{
+              ...controlButtonStyle,
+              ...(is3D ? controlButtonActiveStyle : {}),
+            }}
+          >
+            {is3D ? '2D' : '3D'}
+          </button>
+        </Tooltip>
+        <Tooltip title="Reset view">
+          <button type="button" onClick={resetCamera} style={controlButtonStyle}>
+            <ResetIcon />
+          </button>
+        </Tooltip>
+      </div>
+
+      {/* Height resize drag handle */}
       <div
         onMouseDown={handleDragStart}
         style={dragHandleStyle}
@@ -147,6 +234,44 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
       />
     </div>
   );
+};
+
+const ResetIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z" />
+    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966a.25.25 0 0 1 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+  </svg>
+);
+
+const controlsStyle = {
+  position: 'absolute',
+  top: 8,
+  left: 8,
+  display: 'flex',
+  gap: 4,
+  zIndex: 2,
+};
+
+const controlButtonStyle = {
+  width: 28,
+  height: 28,
+  borderRadius: 4,
+  border: '1px solid rgba(0,0,0,0.15)',
+  background: 'rgba(255,255,255,0.9)',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#333',
+  padding: 0,
+};
+
+const controlButtonActiveStyle = {
+  background: '#1470AF',
+  color: '#fff',
+  borderColor: '#1470AF',
 };
 
 const dragHandleStyle = {
