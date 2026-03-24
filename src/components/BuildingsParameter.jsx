@@ -43,56 +43,74 @@ const MapSelectionButtons = ({
 const BuildingsSelectInput = ({
   value,
   onChange,
-  options,
+  choices,
   selectionActive,
-  onSelectionChange,
-  selectAll,
-  unselectAll,
   onStart,
   onConfirm,
   onCancel,
-}) => (
-  <div>
-    <Select
-      value={value}
-      onChange={(val) => {
-        onChange(val);
-        if (selectionActive) onSelectionChange(val);
-      }}
-      options={options}
-      mode="multiple"
-      tokenSeparators={[',']}
-      style={{
-        width: '100%',
-        ...(selectionActive && { boxShadow: '0 0 0 2px #1677ff' }),
-      }}
-      placeholder="All Buildings"
-      maxTagCount={10}
-      popupRender={(menu) => (
-        <div>
-          <div style={{ padding: '8px', textAlign: 'center' }}>
-            <Button onMouseDown={selectAll} style={{ width: '45%' }}>
-              Select All
-            </Button>
-            <Button onMouseDown={unselectAll} style={{ width: '45%' }}>
-              Unselect All
-            </Button>
+}) => {
+  const options = (choices ?? []).map((choice) => ({
+    label: choice,
+    value: choice,
+  }));
+
+  const handleChange = (val) => {
+    onChange(val);
+    if (selectionActive) useBuildingSelectionStore.getState().setBuildings(val);
+  };
+
+  return (
+    <div>
+      <Select
+        value={value}
+        onChange={handleChange}
+        options={options}
+        mode="multiple"
+        tokenSeparators={[',']}
+        style={{
+          width: '100%',
+          ...(selectionActive && { boxShadow: '0 0 0 2px #1677ff' }),
+        }}
+        placeholder="All Buildings"
+        maxTagCount={10}
+        popupRender={(menu) => (
+          <div>
+            <div style={{ padding: '8px', textAlign: 'center' }}>
+              <Button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleChange(choices ?? []);
+                }}
+                style={{ width: '45%' }}
+              >
+                Select All
+              </Button>
+              <Button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleChange([]);
+                }}
+                style={{ width: '45%' }}
+              >
+                Unselect All
+              </Button>
+            </div>
+            <Divider style={{ margin: '4px 0' }} />
+            {menu}
           </div>
-          <Divider style={{ margin: '4px 0' }} />
-          {menu}
-        </div>
-      )}
-    />
-    <div style={{ display: 'flex', gap: 4, marginBlock: 12 }}>
-      <MapSelectionButtons
-        selectionActive={selectionActive}
-        onStart={onStart}
-        onConfirm={onConfirm}
-        onCancel={onCancel}
+        )}
       />
+      <div style={{ display: 'flex', gap: 4, marginBlock: 12 }}>
+        <MapSelectionButtons
+          selectionActive={selectionActive}
+          onStart={onStart}
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const BuildingsParameter = ({
   name,
@@ -115,21 +133,6 @@ const BuildingsParameter = ({
     globalSelectionActive && sessionOwner === idRef.current;
 
   const previousValueRef = useRef(null);
-
-  const options = (choices ?? []).map((choice) => ({
-    label: choice,
-    value: choice,
-  }));
-
-  const selectAll = (e) => {
-    e.preventDefault();
-    setFieldsValue({ [name]: choices });
-  };
-
-  const unselectAll = (e) => {
-    e.preventDefault();
-    setFieldsValue({ [name]: [] });
-  };
 
   const handleStartSelection = () => {
     const currentValue = form.getFieldValue(name) ?? [];
@@ -207,13 +210,8 @@ const BuildingsParameter = ({
       initialValue={value}
     >
       <BuildingsSelectInput
-        options={options}
+        choices={choices}
         selectionActive={selectionActive}
-        onSelectionChange={(val) =>
-          useBuildingSelectionStore.getState().setBuildings(val)
-        }
-        selectAll={selectAll}
-        unselectAll={unselectAll}
         onStart={handleStartSelection}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
