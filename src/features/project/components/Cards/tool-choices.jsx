@@ -1,4 +1,4 @@
-import { Button, Divider } from 'antd';
+import { Button, Divider, Tooltip } from 'antd';
 import { useToolList } from 'features/tools/hooks';
 import {
   TOOL_FALLBACK_ICON,
@@ -32,13 +32,14 @@ export const ToolChoices = ({ onSelected }) => {
                 <div className="cea-tool-choices-group-content">
                   <div className="cea-tool-choices-button-list">
                     {tools[category].map((tool) => (
-                      <Button
-                        key={tool.name}
-                        onClick={() => onSelected(tool.name)}
-                        className="cea-tool-choices-button"
-                      >
-                        {tool.label}
-                      </Button>
+                      <Tooltip key={tool.name} title={tool.short_description}>
+                        <Button
+                          onClick={() => onSelected(tool.name)}
+                          className="cea-tool-choices-button"
+                        >
+                          {tool.label}
+                        </Button>
+                      </Tooltip>
                     ))}
                   </div>
                 </div>
