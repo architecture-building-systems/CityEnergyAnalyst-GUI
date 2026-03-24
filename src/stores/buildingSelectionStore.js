@@ -36,7 +36,9 @@ const useBuildingSelectionStore = create((set, get) => ({
   setBuildings: (names) => {
     const { availableChoices } = get();
     set({
-      selectedBuildings: names.filter((n) => availableChoices.includes(n)),
+      selectedBuildings: (names ?? []).filter((n) =>
+        availableChoices.includes(n),
+      ),
     });
   },
 
