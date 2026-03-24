@@ -6,17 +6,22 @@ import { useMapLegends } from 'features/map/hooks/map-layers';
 import { formatNumber } from 'features/map/utils';
 
 const ColourRampLegend = ({ label, colours, points, range }) => {
-  const keys = Object.keys(range ?? {});
-  const [value, setValue] = useState(keys.length > 0 ? keys[0] : null);
+  const [selectedValue, setSelectedValue] = useState(null);
   const _range = useMapStore((state) => state.range);
   const setRange = useMapStore((state) => state.setRange);
+
+  const keys = Object.keys(range ?? {});
+  const value =
+    selectedValue && keys.includes(selectedValue)
+      ? selectedValue
+      : (keys[0] ?? null);
 
   const { min, max } = (range && value ? range[value] : null) ?? {
     min: 0,
     max: 0,
   };
 
-  const options = Object.keys(range ?? {}).map((key) => ({
+  const options = keys.map((key) => ({
     label: range[key].label,
     value: key,
   }));
@@ -49,7 +54,7 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       <div>Range</div>
       <Select
         value={value}
-        onChange={setValue}
+        onChange={setSelectedValue}
         defaultValue={0}
         options={options}
       />
