@@ -5,8 +5,9 @@ const useBuildingSelectionStore = create((set, get) => ({
   selectedBuildings: [],
   availableChoices: [],
   onConfirm: null,
+  sessionOwner: null,
 
-  startSelection: (choices, onConfirm) => {
+  startSelection: (choices, onConfirm, ownerId) => {
     // Cancel any existing selection first
     const { active, cancelSelection } = get();
     if (active) cancelSelection();
@@ -16,6 +17,7 @@ const useBuildingSelectionStore = create((set, get) => ({
       selectedBuildings: [],
       availableChoices: choices ?? [],
       onConfirm,
+      sessionOwner: ownerId,
     });
   },
 
@@ -46,6 +48,7 @@ const useBuildingSelectionStore = create((set, get) => ({
       selectedBuildings: [],
       availableChoices: [],
       onConfirm: null,
+      sessionOwner: null,
     });
   },
 
@@ -55,6 +58,7 @@ const useBuildingSelectionStore = create((set, get) => ({
       selectedBuildings: [],
       availableChoices: [],
       onConfirm: null,
+      sessionOwner: null,
     });
   },
 }));
@@ -76,5 +80,8 @@ export const useConfirmBuildingSelection = () =>
 
 export const useCancelBuildingSelection = () =>
   useBuildingSelectionStore((state) => state.cancelSelection);
+
+export const useBuildingSelectionOwner = () =>
+  useBuildingSelectionStore((state) => state.sessionOwner);
 
 export default useBuildingSelectionStore;

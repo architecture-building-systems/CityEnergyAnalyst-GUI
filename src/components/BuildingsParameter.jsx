@@ -6,6 +6,7 @@ import { FormField } from 'components/Parameter';
 import useBuildingSelectionStore, {
   useBuildingSelectionActive,
   useBuildingSelectionBuildings,
+  useBuildingSelectionOwner,
   useStartBuildingSelection,
   useConfirmBuildingSelection,
   useCancelBuildingSelection,
@@ -98,11 +99,16 @@ const BuildingsParameter = ({
   setFieldsValue,
   form,
 }) => {
-  const selectionActive = useBuildingSelectionActive();
+  const idRef = useRef(Symbol());
+  const globalSelectionActive = useBuildingSelectionActive();
+  const sessionOwner = useBuildingSelectionOwner();
   const selectionBuildings = useBuildingSelectionBuildings();
   const startSelection = useStartBuildingSelection();
   const confirmSelection = useConfirmBuildingSelection();
   const cancelSelection = useCancelBuildingSelection();
+
+  const selectionActive =
+    globalSelectionActive && sessionOwner === idRef.current;
 
   const previousValueRef = useRef(null);
 
@@ -121,9 +127,13 @@ const BuildingsParameter = ({
   const handleStartSelection = () => {
     const currentValue = form.getFieldValue(name) ?? [];
     previousValueRef.current = currentValue;
-    startSelection(choices, (buildings) => {
-      setFieldsValue({ [name]: buildings });
-    });
+    startSelection(
+      choices,
+      (buildings) => {
+        setFieldsValue({ [name]: buildings });
+      },
+      idRef.current,
+    );
     // Pre-populate with current selection
     useBuildingSelectionStore.getState().setBuildings(currentValue);
   };
@@ -137,7 +147,7 @@ const BuildingsParameter = ({
     setFieldsValue({ [name]: previousValueRef.current });
   }, [cancelSelection, setFieldsValue, name]);
 
-  // Sync map selections to form field in real-time
+  // Sync map selections to form field in real-time (only for the owning instance)
   useEffect(() => {
     if (selectionActive) {
       setFieldsValue({ [name]: selectionBuildings });
@@ -146,14 +156,16 @@ const BuildingsParameter = ({
 
   // Cancel selection when component unmounts (e.g. user switches tools)
   useEffect(() => {
+    const id = idRef.current;
     return () => {
-      if (useBuildingSelectionStore.getState().active) {
-        useBuildingSelectionStore.getState().cancelSelection();
+      const state = useBuildingSelectionStore.getState();
+      if (state.active && state.sessionOwner === id) {
+        state.cancelSelection();
       }
     };
   }, []);
 
-  // Escape key to cancel
+  // Escape key to cancel (only for the owning instance)
   useEffect(() => {
     if (!selectionActive) return;
 
