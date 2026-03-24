@@ -43,8 +43,27 @@ const useToolParams = (script, form, onError, onParametersChange) => {
 
   // Reset form when script or parameters change
   useEffect(() => {
+    // Preserve BuildingsParameter values since backend returns them as empty
+    const buildingValues = {};
+    const collectBuildingValues = (paramList) => {
+      for (const p of paramList || []) {
+        if (p.type === 'BuildingsParameter') {
+          const val = form.getFieldValue(p.name);
+          if (val != null) buildingValues[p.name] = val;
+        }
+      }
+    };
+    collectBuildingValues(parameters);
+    for (const category of Object.values(categoricalParameters || {})) {
+      collectBuildingValues(category);
+    }
+
     form.resetFields();
-  }, [script, form, dataUpdatedAt]);
+
+    if (Object.keys(buildingValues).length > 0) {
+      form.setFieldsValue(buildingValues);
+    }
+  }, [script, form, dataUpdatedAt, parameters, categoricalParameters]);
 
   // Call onParametersChange whenever parameters or inputError change
   useEffect(() => {
