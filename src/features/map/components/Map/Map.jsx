@@ -492,8 +492,11 @@ const DeckGLMap = ({ data, colors }) => {
       const name = object.properties[INDEX_COLUMN];
 
       // When building selection mode is active, route clicks to the store
+      // Only zone buildings can be selected, not surroundings
       if (buildingSelectionActiveRef.current) {
-        useBuildingSelectionStore.getState().toggleBuilding(name);
+        if (layer.id === 'zone') {
+          useBuildingSelectionStore.getState().toggleBuilding(name);
+        }
         return;
       }
 
@@ -697,6 +700,8 @@ const DeckGLMap = ({ data, colors }) => {
     selected,
     extruded,
     buildingColor,
+    buildingSelectionActive,
+    buildingSelectionBuildings,
     setSelected,
     updateTooltip,
   ]);
