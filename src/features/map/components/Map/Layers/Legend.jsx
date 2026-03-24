@@ -6,13 +6,17 @@ import { useMapLegends } from 'features/map/hooks/map-layers';
 import { formatNumber } from 'features/map/utils';
 
 const ColourRampLegend = ({ label, colours, points, range }) => {
-  const [value, setValue] = useState(Object.keys(range)[0]);
+  const keys = Object.keys(range ?? {});
+  const [value, setValue] = useState(keys.length > 0 ? keys[0] : null);
   const _range = useMapStore((state) => state.range);
   const setRange = useMapStore((state) => state.setRange);
 
-  const { min, max } = range?.[value] ?? { min: 0, max: 0 };
+  const { min, max } = (range && value ? range[value] : null) ?? {
+    min: 0,
+    max: 0,
+  };
 
-  const options = Object.keys(range).map((key) => ({
+  const options = Object.keys(range ?? {}).map((key) => ({
     label: range[key].label,
     value: key,
   }));
@@ -23,9 +27,10 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
     .getColors();
 
   useEffect(() => {
+    if (!range || !value) return;
     const { min, max } = range[value];
     setRange([min, max]);
-  }, [value, min, max, range]);
+  }, [value, min, max, range, setRange]);
 
   return (
     <div
@@ -66,8 +71,12 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
           justifyContent: 'space-between',
         }}
       >
-        <div>{formatNumber(Number(_range[0].toPrecision(3)))}</div>
-        <div>{formatNumber(Number(_range[1].toPrecision(3)))}</div>
+        <div>
+          {_range ? formatNumber(Number(_range[0].toPrecision(3))) : ''}
+        </div>
+        <div>
+          {_range ? formatNumber(Number(_range[1].toPrecision(3))) : ''}
+        </div>
       </div>
     </div>
   );
