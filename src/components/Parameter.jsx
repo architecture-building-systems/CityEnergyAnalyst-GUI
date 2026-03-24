@@ -21,6 +21,7 @@ import { forwardRef, useCallback } from 'react';
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
+import BuildingsParameter from 'components/BuildingsParameter';
 
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
@@ -295,9 +296,21 @@ const Parameter = ({ parameter, form, toolName }) => {
         </FormField>
       );
     }
+    case 'BuildingsParameter': {
+      return (
+        <BuildingsParameter
+          name={name}
+          help={help}
+          choices={choices}
+          value={value}
+          nullable={nullable}
+          setFieldsValue={setFieldsValue}
+          form={form}
+        />
+      );
+    }
     case 'MultiChoiceParameter':
     case 'MultiChoiceFeedstockParameter':
-    case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
     case 'AtomicChangeMultiChoiceParameter':
@@ -308,8 +321,6 @@ const Parameter = ({ parameter, form, toolName }) => {
         value: choice,
       }));
 
-      const placeholder =
-        type == 'BuildingsParameter' ? 'All Buildings' : 'Nothing Selected';
       const selectAll = (e) => {
         e.preventDefault();
         setFieldsValue({
@@ -370,7 +381,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             mode="multiple"
             tokenSeparators={[',']}
             style={{ width: '100%' }}
-            placeholder={placeholder}
+            placeholder={'Nothing Selected'}
             maxTagCount={10}
             popupRender={(menu) => (
               <div>

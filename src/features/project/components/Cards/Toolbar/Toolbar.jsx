@@ -6,6 +6,7 @@ import { DownOutlined } from '@ant-design/icons';
 
 import './Toolbar.css';
 
+import { useSelectTool } from 'features/project/stores/tool-card';
 import {
   DataManagementIcon,
   SolarRadiationIcon,
@@ -125,8 +126,9 @@ const CEAInsights = () => {
   );
 };
 
-const Toolbar = ({ onToolSelected }) => {
+const Toolbar = () => {
   const { data: tools, isLoading, isError } = useToolList();
+  const selectTool = useSelectTool();
 
   const [showTooltip, setShowTooltip] = useState(true);
 
@@ -139,13 +141,13 @@ const Toolbar = ({ onToolSelected }) => {
           key={category}
           category={category}
           tools={tools?.[category]}
-          onToolSelected={onToolSelected}
+          onToolSelected={selectTool}
           showTooltip={showTooltip}
           onMenuOpenChange={(value) => setShowTooltip(!value)}
         />
       );
     });
-  }, [tools, showTooltip, onToolSelected]);
+  }, [tools, showTooltip, selectTool]);
 
   if (isLoading) return <div>Loading Tools...</div>;
   if (isError) return <div>Error loading tools...</div>;
