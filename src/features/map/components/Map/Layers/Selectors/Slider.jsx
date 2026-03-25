@@ -1,7 +1,7 @@
 import { Slider } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 import useDependsOn from './useDependsOn';
@@ -66,8 +66,13 @@ const SliderSelector = ({
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
   const [dynamicRange, setDynamicRange] = useState();
+  const mapLayerParametersRef = useRef(mapLayerParameters);
   const min = staticRange?.[0] ?? dynamicRange?.[0] ?? null;
   const max = staticRange?.[1] ?? dynamicRange?.[1] ?? null;
+
+  useEffect(() => {
+    mapLayerParametersRef.current = mapLayerParameters;
+  }, [mapLayerParameters]);
 
   const marks = useMemo(() => {
     if (checkIsValidRange([min, max])) {
@@ -81,14 +86,17 @@ const SliderSelector = ({
     mapLayerParameters,
   );
 
-  const handleChange = (newValue) => {
-    setSliderValue(newValue);
-    setMapLayerParameters((prev) => ({
-      ...prev,
-      [parameterName]: newValue,
-    }));
-    onChange?.(newValue);
-  };
+  const handleChange = useCallback(
+    (newValue) => {
+      setSliderValue(newValue);
+      setMapLayerParameters((prev) => ({
+        ...prev,
+        [parameterName]: newValue,
+      }));
+      onChange?.(newValue);
+    },
+    [onChange, parameterName, setMapLayerParameters],
+  );
 
   const handleSliderChange = (newValue) => {
     setSliderValue(newValue);
@@ -112,7 +120,7 @@ const SliderSelector = ({
           parameterName,
           project,
           scenarioName,
-          mapLayerParameters ?? {},
+          mapLayerParametersRef.current ?? {},
         );
 
         if (checkIsValidRange(rangeData)) {
@@ -135,11 +143,13 @@ const SliderSelector = ({
   }, [
     categoryInfo?.name,
     layerName,
+    parameterName,
     project,
     scenarioName,
     staticRange,
     dependsOnValues,
     dependsValid,
+    handleChange,
   ]);
 
   return (

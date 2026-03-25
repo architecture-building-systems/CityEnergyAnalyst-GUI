@@ -5,14 +5,11 @@ import {
   toolTypes,
   useToggleToolType,
   useToolType,
-  useSelectedTool,
 } from 'features/project/stores/tool-card';
 
 export const ToolCardSideButtons = () => {
   const toolType = useToolType();
   const toggleToolType = useToggleToolType();
-
-  const selectedTool = useSelectedTool();
 
   return (
     <div
@@ -29,16 +26,14 @@ export const ToolCardSideButtons = () => {
         gap: 8,
       }}
     >
-      {selectedTool != null && (
-        <Button
-          onClick={() => toggleToolType(toolTypes.TOOLS)}
-          color="primary"
-          variant={toolType === toolTypes.TOOLS ? 'solid' : 'outlined'}
-        >
-          <ToolsIcon />
-          Tools
-        </Button>
-      )}
+      <Button
+        onClick={() => toggleToolType(toolTypes.TOOLS)}
+        color="primary"
+        variant={toolType === toolTypes.TOOLS ? 'solid' : 'outlined'}
+      >
+        <ToolsIcon />
+        Tools
+      </Button>
 
       <ConfigProvider
         theme={{
