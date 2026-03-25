@@ -8,15 +8,13 @@
   --outer-margin: 12px;
   --label-color: #000;
   --sublabel-color: #888;
+
+  overflow-y: auto;
+  max-height: 100%;
 }
 
 .cea-tool-choices h2 {
   margin-bottom: var(--heading-margin-bottom);
-}
-
-.cea-tool-choices {
-  overflow-y: auto;
-  max-height: 100%;
 }
 
 .cea-tool-choices-group-list {
