@@ -119,6 +119,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
   const showToolCard = scenarioName != null && !hideAll && toolType != null;
+  const fullscreenPathwayPanelRightInset = showToolCard
+    ? 'calc(var(--right-sidebar-width) + 56px)'
+    : 12;
 
   const closeInputEditor = () => {
     setInputEditor(false);
@@ -398,7 +401,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   ? {
                       position: 'fixed',
                       top: 64,
-                      right: 12,
+                      right: fullscreenPathwayPanelRightInset,
                       bottom: 96,
                       left: 12,
                       maxHeight: 'none',
