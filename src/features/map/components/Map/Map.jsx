@@ -49,6 +49,7 @@ import {
   useSelected,
   useSetSelectedFromMap,
 } from 'features/input-editor/stores/inputEditorStore';
+import useBuildingSelectionStore from 'stores/buildingSelectionStore';
 import { AttributionControl } from 'maplibre-gl';
 import MapTooltip from './MapTooltip';
 
@@ -437,6 +438,13 @@ const DeckGLMap = ({ data, colors }) => {
   const selected = useSelected();
   const setSelected = useSetSelectedFromMap();
 
+  const buildingSelectionActive = useBuildingSelectionStore(
+    (state) => state.active,
+  );
+  const buildingSelectionBuildings = useBuildingSelectionStore(
+    (state) => state.selectedBuildings,
+  );
+
   const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);
 
@@ -460,8 +468,22 @@ const DeckGLMap = ({ data, colors }) => {
 
   const buildingColor = useMemo(
     () =>
-      buildingColorFunction(colors, selected, colorMode, constructionColorMap),
-    [colors, selected, colorMode, constructionColorMap],
+      buildingColorFunction(
+        colors,
+        selected,
+        colorMode,
+        constructionColorMap,
+        buildingSelectionActive,
+        buildingSelectionBuildings,
+      ),
+    [
+      colors,
+      selected,
+      colorMode,
+      constructionColorMap,
+      buildingSelectionActive,
+      buildingSelectionBuildings,
+    ],
   );
 
   const updateTooltip = useCallback((feature) => {
@@ -481,6 +503,16 @@ const DeckGLMap = ({ data, colors }) => {
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
       const name = object.properties[INDEX_COLUMN];
+
+      // When building selection mode is active, route clicks to the store
+      // Only zone buildings can be selected, not surroundings
+      if (useBuildingSelectionStore.getState().active) {
+        if (layer.id === 'zone') {
+          useBuildingSelectionStore.getState().toggleBuilding(name);
+        }
+        return;
+      }
+
       if (layer.id !== selectedLayer) {
         setSelected([name]);
         setSelectedLayer(layer.id);
@@ -530,7 +562,13 @@ const DeckGLMap = ({ data, colors }) => {
           getElevation: (f) => (extruded ? calcPolygonElevation(f) : 0),
           getFillColor: (f) => buildingColor(f, 'zone'),
           updateTriggers: {
-            getFillColor: [selected, colorMode, constructionColorMap],
+            getFillColor: [
+              selected,
+              colorMode,
+              constructionColorMap,
+              buildingSelectionActive,
+              buildingSelectionBuildings,
+            ],
           },
 
           pickable: true,
@@ -674,6 +712,8 @@ const DeckGLMap = ({ data, colors }) => {
     selected,
     extruded,
     buildingColor,
+    buildingSelectionActive,
+    buildingSelectionBuildings,
     setSelected,
     updateTooltip,
   ]);
@@ -744,8 +784,26 @@ const DeckGLMap = ({ data, colors }) => {
 };
 
 const buildingColorFunction =
-  (colors, selected, colorMode, constructionColorMap) => (feature, layer) => {
+  (
+    colors,
+    selected,
+    colorMode,
+    constructionColorMap,
+    buildingSelectionActive,
+    buildingSelectionBuildings,
+  ) =>
+  (feature, layer) => {
     const buildingName = feature?.properties?.[INDEX_COLUMN];
+
+    if (buildingSelectionActive) {
+      if (buildingSelectionBuildings.includes(buildingName)) {
+        return [46, 134, 193, 220];
+      }
+
+      if (layer === 'surroundings') return colors.surroundings;
+
+      return colors.disconnected;
+    }
 
     // Selected buildings are always highlighted yellow
     if (selected.includes(buildingName)) {
