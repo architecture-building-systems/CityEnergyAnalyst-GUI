@@ -44,10 +44,6 @@ const InputMap = ({ project, scenario }) => {
         style={{
           height: '100%',
           position: 'relative',
-          // Create a local stacking context so map overlays (legend, tooltip, etc.)
-          // stay above the map but below ProjectOverlay cards/panels.
-          isolation: 'isolate',
-          zIndex: 0,
           background: 'rgba(0, 0, 0, 0.05)',
         }}
         onContextMenu={(e) => {
@@ -67,13 +63,11 @@ const InputMap = ({ project, scenario }) => {
         )}
         <DeckGLMap data={geojsons} colors={colors} />
 
-        {/* Construction Standard Legend - positioned in bottom-left corner */}
         <div
           style={{
             position: 'absolute',
             bottom: 80, // Above the bottom toolbar
             left: 12,
-            zIndex: 2,
             pointerEvents: 'auto',
           }}
         >
