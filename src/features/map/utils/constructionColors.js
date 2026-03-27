@@ -2,6 +2,8 @@
  * Utility functions for generating and managing construction standard colors
  */
 
+import { hexToRgb } from './index';
+
 // Predefined palette of distinct, visually pleasing colors
 const PREDEFINED_COLORS = [
   '#4CAF50', // Green
@@ -103,17 +105,6 @@ const hslToHex = (h, s, l) => {
 };
 
 /**
- * Convert hex color to RGB array (for deck.gl)
- */
-export const hexToRgbArray = (hex) => {
-  const cleanHex = hex.replace('#', '');
-  const r = parseInt(cleanHex.slice(0, 2), 16);
-  const g = parseInt(cleanHex.slice(2, 4), 16);
-  const b = parseInt(cleanHex.slice(4, 6), 16);
-  return [r, g, b, 255];
-};
-
-/**
  * Generate a color map for all unique construction standards found in buildings
  * Returns an object mapping standard names to hex colors
  */
@@ -149,5 +140,5 @@ export const getBuildingColorByStandard = (constType, colorMap) => {
     // Return gray for unknown/missing construction types
     return [128, 128, 128, 255];
   }
-  return hexToRgbArray(colorMap[constType]);
+  return hexToRgb(colorMap[constType]);
 };
