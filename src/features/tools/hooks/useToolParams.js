@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { useCheckInputsMutation } from './mutations';
-import { getFormValues } from '../utils';
+import useFormReset from './useFormReset';
+import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 
 const useFetchToolParams = (script) => {
@@ -19,9 +19,6 @@ const useFetchToolParams = (script) => {
 };
 
 const useToolParams = (script, form, onError) => {
-  const [inputError, setInputError] = useState(undefined);
-
-  // Fetch tool parameters
   const {
     data: params,
     isLoading,
@@ -30,95 +27,23 @@ const useToolParams = (script, form, onError) => {
     dataUpdatedAt,
   } = useFetchToolParams(script);
 
-  const { mutateAsync: checkInputs } = useCheckInputsMutation();
+  // Memoize parameters to avoid creating new objects on every render
+  const parameters = useMemo(() => params?.parameters, [params]);
+  const categoricalParameters = useMemo(
+    () => params?.categorical_parameters,
+    [params]
+  );
 
-  const parameters = params?.parameters;
-  const categoricalParameters = params?.categorical_parameters;
+  const resetForm = useFormReset(form, params, script, dataUpdatedAt);
 
-  // Keep a ref so resetForm can always read the latest params without
-  // being recreated every time params changes reference.
-  const paramsRef = useRef(params);
-  paramsRef.current = params;
-
-  const resetForm = useCallback(() => {
-    const parameters = paramsRef.current?.parameters;
-    const categoricalParameters = paramsRef.current?.categorical_parameters;
-
-    // Preserve BuildingsParameter values since backend returns them as empty, then reset the form.
-    const buildingValues = {};
-    const collectBuildingValues = (paramList) => {
-      for (const p of paramList || []) {
-        if (p.type === 'BuildingsParameter') {
-          const val = form.getFieldValue(p.name);
-          if (val != null) buildingValues[p.name] = val;
-        }
-      }
-    };
-    collectBuildingValues(parameters);
-    for (const category of Object.values(categoricalParameters || {})) {
-      collectBuildingValues(category);
-    }
-
-    form.resetFields();
-
-    if (Object.keys(buildingValues).length > 0) {
-      form.setFieldsValue(buildingValues);
-    }
-  }, [form]);
-
-  // Auto-reset whenever the selected script or the fetched data changes.
-  useEffect(() => {
-    resetForm();
-  }, [script, dataUpdatedAt, resetForm]);
-
-  // Check inputs whenever parameters change, i.e. save, reset, or refetch
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      if (!script || !parameters) return;
-
-      // Reset error state when checking starts
-      setInputError(undefined);
-
-      const formParams = await getFormValues(
-        form,
-        parameters,
-        categoricalParameters,
-        onError,
-      );
-
-      try {
-        if (!cancelled && formParams) {
-          await checkInputs({ tool: script, parameters: formParams });
-          if (!cancelled) setInputError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err.response?.data?.detail ||
-            err.response?.statusText ||
-            err.message ||
-            'Unexpected error';
-          setInputError(message);
-        }
-      }
-    };
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
+  const inputError = useInputValidation(
     script,
-    form,
     parameters,
     categoricalParameters,
-    dataUpdatedAt,
-    checkInputs,
+    form,
     onError,
-  ]);
+    dataUpdatedAt
+  );
 
   return {
     params,
