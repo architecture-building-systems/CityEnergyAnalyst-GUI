@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { useCheckInputsMutation } from './mutations';
@@ -35,9 +35,16 @@ const useToolParams = (script, form, onError) => {
   const parameters = params?.parameters;
   const categoricalParameters = params?.categorical_parameters;
 
-  // Reset form when script or parameters change
-  useEffect(() => {
-    // Preserve BuildingsParameter values since backend returns them as empty
+  // Keep a ref so resetForm can always read the latest params without
+  // being recreated every time params changes reference.
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+
+  const resetForm = useCallback(() => {
+    const parameters = paramsRef.current?.parameters;
+    const categoricalParameters = paramsRef.current?.categorical_parameters;
+
+    // Preserve BuildingsParameter values since backend returns them as empty, then reset the form.
     const buildingValues = {};
     const collectBuildingValues = (paramList) => {
       for (const p of paramList || []) {
@@ -57,7 +64,12 @@ const useToolParams = (script, form, onError) => {
     if (Object.keys(buildingValues).length > 0) {
       form.setFieldsValue(buildingValues);
     }
-  }, [script, form, dataUpdatedAt, parameters, categoricalParameters]);
+  }, [form]);
+
+  // Auto-reset whenever the selected script or the fetched data changes.
+  useEffect(() => {
+    resetForm();
+  }, [script, dataUpdatedAt, resetForm]);
 
   // Check inputs whenever parameters change, i.e. save, reset, or refetch
   useEffect(() => {
@@ -114,6 +126,7 @@ const useToolParams = (script, form, onError) => {
     isFetching,
     fetchError,
     inputError,
+    resetForm,
   };
 };
 
