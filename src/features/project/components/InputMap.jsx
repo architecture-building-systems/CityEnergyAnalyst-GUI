@@ -4,7 +4,6 @@ import { LoadingOutlined } from '@ant-design/icons';
 import DeckGLMap from 'features/map/components/Map/Map';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore } from 'features/map/stores/mapStore';
-import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const InputMap = ({ project, scenario }) => {
   const { data, refetch, isFetching, isError, error } = useInputs();
@@ -62,17 +61,6 @@ const InputMap = ({ project, scenario }) => {
           />
         )}
         <DeckGLMap data={geojsons} colors={colors} />
-
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 80, // Above the bottom toolbar
-            left: 12,
-            pointerEvents: 'auto',
-          }}
-        >
-          <ConstructionStandardLegend />
-        </div>
       </div>
     </>
   );

@@ -30,6 +30,7 @@ import {
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
 import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
+import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -199,6 +200,17 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             </animated.div>
           ) : null,
         )}
+      </div>
+
+      <div
+        className="cea-overlay-card"
+        style={{
+          gridColumn: '1',
+          gridRow: '2',
+          alignSelf: 'end',
+        }}
+      >
+        <ConstructionStandardLegend />
       </div>
 
       <div id="cea-project-overlay-content" className="overlay-flex-column">
