@@ -22,11 +22,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
-import {
-  useSelected,
-  useSelectionSource,
-  useResetSelected,
-} from 'features/input-editor/stores/inputEditorStore';
+import { useResetSelected } from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
 import {
@@ -34,6 +30,7 @@ import {
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
 import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
+import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -43,8 +40,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const setToolType = useSetToolType();
   const selectPlotTool = useSelectPlotTool();
 
-  const selectedBuildings = useSelected();
-  const selectionSource = useSelectionSource();
   const resetSelected = useResetSelected();
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
@@ -149,17 +144,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     resetState();
   }, [name, scenarioName]);
 
-  useEffect(() => {
-    // Show building info tool card when buildings are selected on map and input editor is not open
-    if (
-      selectedBuildings.length > 0 &&
-      selectionSource === 'map' &&
-      !showInputEditor
-    ) {
-      setToolType(toolTypes.BUILDING_INFO);
-    }
-  }, [selectedBuildings, selectionSource, setToolType, showInputEditor]);
-
   return (
     <div
       id="cea-project-overlay"
@@ -216,6 +200,17 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             </animated.div>
           ) : null,
         )}
+      </div>
+
+      <div
+        className="cea-overlay-card"
+        style={{
+          gridColumn: '1',
+          gridRow: '2',
+          alignSelf: 'end',
+        }}
+      >
+        <ConstructionStandardLegend />
       </div>
 
       <div id="cea-project-overlay-content" className="overlay-flex-column">

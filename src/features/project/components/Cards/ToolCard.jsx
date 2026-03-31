@@ -89,7 +89,7 @@ const ToolCard = ({ onPlotToolSelected }) => {
             fontSize: 14,
           }}
         >
-          {toolType == toolTypes.MAP_LAYERS && selectedPlotTool != null && (
+          {toolType === toolTypes.MAP_LAYERS && selectedPlotTool != null && (
             <Button onClick={handleResetTool}>Back</Button>
           )}
           <Button

@@ -76,35 +76,41 @@ export const TableButtons = ({
 
   const items = [
     {
+      key: 'select-all',
       label: 'Select All',
       onClick: selectAll,
     },
     {
+      key: 'filter-on-selection',
       label: 'Filter on Selection',
       onClick: filterSelected,
     },
     selectedInTable && {
+      key: 'selection-divider',
       type: 'divider',
     },
     selectedInTable &&
       tab != 'schedules' && {
+        key: 'edit-selection',
         label: 'Edit Selection',
         onClick: editSelected,
       },
     selectedInTable && {
+      key: 'clear-selection',
       label: 'Clear Selection',
       onClick: clearSelected,
     },
     selectedInTable && {
+      key: 'delete-selection',
       label: 'Delete Selection',
       onClick: deleteSelected,
       danger: true,
     },
-  ];
+  ].filter(Boolean);
 
   return (
     <>
-      <Dropdown menu={{ items }} placement="bottomRight">
+      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
         <Button icon={<MenuOutlined />}></Button>
       </Dropdown>
       <EditSelectedModal

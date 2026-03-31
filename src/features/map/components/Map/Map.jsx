@@ -24,6 +24,7 @@ import { COORDINATE_SYSTEM, HexagonLayer } from 'deck.gl';
 import {
   useCameraOptionsCalculated,
   useMapStore,
+  COLOR_MODES,
 } from 'features/map/stores/mapStore';
 import { useCameraFitBounds } from 'features/map/hooks';
 import { useShallow } from 'zustand/react/shallow';
@@ -41,6 +42,7 @@ import {
 } from 'features/map/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from 'features/map/utils';
+import { getBuildingColorByStandard } from 'features/map/utils/constructionColors';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
@@ -455,6 +457,12 @@ const DeckGLMap = ({ data, colors }) => {
 
   const visibility = useMapStore((state) => state.visibility);
 
+  // Construction standard coloring
+  const colorMode = useMapStore((state) => state.colorMode);
+  const constructionColorMap = useMapStore(
+    (state) => state.constructionColorMap,
+  );
+
   const mapStyle = useMapStyle();
   useMapAttribution(mapRef);
 
@@ -463,10 +471,19 @@ const DeckGLMap = ({ data, colors }) => {
       buildingColorFunction(
         colors,
         selected,
+        colorMode,
+        constructionColorMap,
         buildingSelectionActive,
         buildingSelectionBuildings,
       ),
-    [colors, selected, buildingSelectionActive, buildingSelectionBuildings],
+    [
+      colors,
+      selected,
+      colorMode,
+      constructionColorMap,
+      buildingSelectionActive,
+      buildingSelectionBuildings,
+    ],
   );
 
   const updateTooltip = useCallback((feature) => {
@@ -543,12 +560,12 @@ const DeckGLMap = ({ data, colors }) => {
 
           getPolygon: calcPolygonWithZ,
           getElevation: (f) => (extruded ? calcPolygonElevation(f) : 0),
-          getFillColor: (f) =>
-            buildingColor(f.properties[INDEX_COLUMN], 'zone'),
+          getFillColor: (f) => buildingColor(f, 'zone'),
           updateTriggers: {
             getFillColor: [
               selected,
-              visibility.dc,
+              colorMode,
+              constructionColorMap,
               buildingSelectionActive,
               buildingSelectionBuildings,
             ],
@@ -620,10 +637,9 @@ const DeckGLMap = ({ data, colors }) => {
           },
 
           getElevation: (f) => f.properties['height_ag'],
-          getFillColor: (f) =>
-            buildingColor(f.properties[INDEX_COLUMN], 'surroundings'),
+          getFillColor: (f) => buildingColor(f, 'surroundings'),
           updateTriggers: {
-            getFillColor: selected,
+            getFillColor: [selected],
           },
 
           pickable: true,
@@ -768,20 +784,41 @@ const DeckGLMap = ({ data, colors }) => {
 };
 
 const buildingColorFunction =
-  (colors, selected, buildingSelectionActive, buildingSelectionBuildings) =>
-  (buildingName, layer) => {
+  (
+    colors,
+    selected,
+    colorMode,
+    constructionColorMap,
+    buildingSelectionActive,
+    buildingSelectionBuildings,
+  ) =>
+  (feature, layer) => {
+    const buildingName = feature?.properties?.[INDEX_COLUMN];
+
     if (buildingSelectionActive) {
       if (buildingSelectionBuildings.includes(buildingName)) {
         return [46, 134, 193, 220];
       }
+
       if (layer === 'surroundings') return colors.surroundings;
+
       return colors.disconnected;
     }
 
+    // Selected buildings are always highlighted yellow
     if (selected.includes(buildingName)) {
       return [255, 255, 0, 255];
     }
+
+    // Surroundings always use default surroundings color
     if (layer === 'surroundings') return colors.surroundings;
+
+    // Check if construction standard coloring is enabled for zone layer
+    if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD && layer === 'zone') {
+      const constType = feature?.properties?.const_type;
+      // Use getBuildingColorByStandard which returns gray for missing/unknown types
+      return getBuildingColorByStandard(constType, constructionColorMap);
+    }
 
     return colors.disconnected;
   };

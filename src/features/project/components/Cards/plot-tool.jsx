@@ -61,7 +61,11 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     let period_start = ((period?.[0] ?? 1) - 1) * 24;
     let period_end = (period?.[1] ?? 365) * 24;
     if (
-      ['plot-lifecycle-emissions', 'plot-emission-timeline'].includes(script)
+      [
+        'plot-lifecycle-emissions',
+        'plot-emission-timeline',
+        'plot-pathway-emission-timeline',
+      ].includes(script)
     ) {
       period_start = timeline?.[0] ?? 0;
       period_end = timeline?.[1] ?? 0;
