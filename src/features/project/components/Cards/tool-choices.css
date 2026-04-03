@@ -6,8 +6,8 @@
   --section-padding-inline: 18px;
   --heading-margin-bottom: 8px;
   --outer-margin: 12px;
-  --label-color: #000;
-  --sublabel-color: #888;
+  --label-color: var(--text-primary);
+  --sublabel-color: var(--text-secondary);
 
   overflow-y: auto;
   max-height: 100%;
