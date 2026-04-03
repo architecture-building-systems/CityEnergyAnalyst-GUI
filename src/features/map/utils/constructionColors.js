@@ -4,23 +4,23 @@
 
 import { hexToRgb } from './index';
 
-// Predefined palette of distinct, visually pleasing colors
+// CEA light colour palette for construction archetypes
 const PREDEFINED_COLORS = [
-  '#4CAF50', // Green
-  '#2196F3', // Blue
-  '#FF9800', // Orange
-  '#9C27B0', // Purple
-  '#F44336', // Red
-  '#00BCD4', // Cyan
-  '#E91E63', // Pink
-  '#8BC34A', // Light Green
-  '#3F51B5', // Indigo
-  '#FF5722', // Deep Orange
-  '#009688', // Teal
-  '#673AB7', // Deep Purple
-  '#FFEB3B', // Yellow
-  '#795548', // Brown
-  '#607D8B', // Blue Grey
+  '#f6958f', // Red light
+  '#97d6d7', // Blue light
+  '#ffe185', // Yellow light
+  '#c9b787', // Brown light
+  '#c695a7', // Purple light
+  '#b2dbb7', // Green light
+  '#fab185', // Orange light
+  '#66cdaa', // Teal light
+  '#84def4', // Cyan light
+  '#ff99ff', // Magenta light
+  '#ffb6c1', // Pink light
+  '#bdb76b', // Olive light
+  '#6495ed', // Navy light
+  '#8a2be2', // Indigo light
+  '#a2a1a6', // Grey light
 ];
 
 /**

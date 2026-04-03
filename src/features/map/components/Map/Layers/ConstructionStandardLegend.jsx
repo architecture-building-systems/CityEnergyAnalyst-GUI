@@ -26,7 +26,7 @@ const ConstructionStandardLegend = () => {
     <div
       className="cea-overlay-card construction-standard-legend"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: 12,
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
         boxSizing: 'border-box',
@@ -35,8 +35,7 @@ const ConstructionStandardLegend = () => {
         fontSize: 12,
         gap: 8,
         padding: 12,
-        minWidth: 160,
-        maxWidth: 220,
+        width: 280,
         maxHeight: 300,
         overflow: 'auto',
       }}
@@ -50,7 +49,7 @@ const ConstructionStandardLegend = () => {
           paddingBottom: 6,
         }}
       >
-        Construction Standards
+        Construction Archetypes
       </div>
 
       {standards.map((standard) => (

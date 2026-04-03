@@ -161,7 +161,7 @@ const generateLayerToggle = (
     key: 'map_labels',
     label: (
       <LayerToggleRadio
-        label="Map labels"
+        label="Map Labels"
         value="map_labels"
         onChange={handleMapLabelsChange}
       />
@@ -174,7 +174,7 @@ const generateLayerToggle = (
       key: 'construction_colors',
       label: (
         <LayerToggleRadioControlled
-          label="Color by standard"
+          label="Colour by Construction Archetypes"
           value="construction_colors"
           checked={isConstructionColorEnabled}
           onChange={handleConstructionColorChange}
