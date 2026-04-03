@@ -12,6 +12,7 @@ export const EMISSIONS_EMBODIED = 'lifecycle-emissions';
 export const EMISSIONS_OPERATIONAL = 'operational-emissions';
 export const EMISSION_TIMELINE = 'emission-timeline';
 export const ANTHROPOGENIC_HEAT = 'heat-rejection';
+export const PATHWAY_EMISSION_TIMELINE = 'pathway-emission-timeline';
 export const COST_BREAKDOWN = 'cost-breakdown';
 export const COST_SANKEY = 'cost-sankey';
 export const ENERGY_SANKEY = 'energy-sankey';

@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { defaultViewState } from 'features/map/utils';
 
+// Color modes for building visualization
+export const COLOR_MODES = {
+  DEFAULT: 'default',
+  CONSTRUCTION_STANDARD: 'construction-standard',
+};
+
 export const useMapStore = create((set) => ({
   visibility: {},
   mapLabels: true,
@@ -13,6 +19,10 @@ export const useMapStore = create((set) => ({
   mapLayers: null,
   filters: {},
   range: [0, 0],
+
+  // Construction standard coloring state
+  colorMode: COLOR_MODES.DEFAULT,
+  constructionColorMap: {},
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
@@ -54,6 +64,10 @@ export const useMapStore = create((set) => ({
       },
     })),
   setRange: (value) => set({ range: value }),
+
+  // Construction standard coloring setters
+  setColorMode: (value) => set({ colorMode: value }),
+  setConstructionColorMap: (value) => set({ constructionColorMap: value }),
 }));
 
 export const useCameraOptionsCalculated = () =>
