@@ -1,24 +1,28 @@
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 
 /**
- * Legend component that displays construction standard colors
- * Shows a color swatch and label for each unique construction standard
+ * Legend component that displays construction archetype or main use type colors.
+ * Shows a color swatch and label for each unique category.
  */
 const ConstructionStandardLegend = () => {
   const colorMode = useMapStore((state) => state.colorMode);
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );
+  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
 
-  // Only show legend when construction standard coloring is active
-  if (colorMode !== COLOR_MODES.CONSTRUCTION_STANDARD) {
+  const isConstruction = colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
+  const isUseType = colorMode === COLOR_MODES.USE_TYPE;
+
+  if (!isConstruction && !isUseType) {
     return null;
   }
 
-  // Get sorted list of construction standards
-  const standards = Object.keys(constructionColorMap).sort();
+  const colorMap = isConstruction ? constructionColorMap : useTypeColorMap;
+  const title = isConstruction ? 'Construction Archetypes' : 'Main Use Types';
+  const entries = Object.keys(colorMap).sort();
 
-  if (standards.length === 0) {
+  if (entries.length === 0) {
     return null;
   }
 
@@ -49,15 +53,11 @@ const ConstructionStandardLegend = () => {
           paddingBottom: 6,
         }}
       >
-        Construction Archetypes
+        {title}
       </div>
 
-      {standards.map((standard) => (
-        <LegendItem
-          key={standard}
-          color={constructionColorMap[standard]}
-          label={standard}
-        />
+      {entries.map((entry) => (
+        <LegendItem key={entry} color={colorMap[entry]} label={entry} />
       ))}
     </div>
   );

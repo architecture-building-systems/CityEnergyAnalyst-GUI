@@ -3,7 +3,7 @@ import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from 'assets/icons';
-import { generateConstructionColorMap } from 'features/map/utils/constructionColors';
+import { generateConstructionColorMap, generateUseTypeColorMap } from 'features/map/utils/constructionColors';
 
 export const NetworkToggle = ({
   cooling,
@@ -75,6 +75,8 @@ const generateLayerToggle = (
   handleMapLabelsChange,
   handleConstructionColorChange,
   isConstructionColorEnabled,
+  handleUseTypeColorChange,
+  isUseTypeColorEnabled,
 ) => {
   const geometryGroup = [];
   if (data?.zone) {
@@ -181,6 +183,17 @@ const generateLayerToggle = (
         />
       ),
     });
+    mapStyleGroup.push({
+      key: 'use_type_colors',
+      label: (
+        <LayerToggleRadioControlled
+          label="Colour by Main Use Types"
+          value="use_type_colors"
+          checked={isUseTypeColorEnabled}
+          onChange={handleUseTypeColorChange}
+        />
+      ),
+    });
   }
 
   return [...geometryGroup, ...labelsGroup, ...mapStyleGroup];
@@ -223,8 +236,13 @@ const LayerToggle = () => {
   const setConstructionColorMap = useMapStore(
     (state) => state.setConstructionColorMap,
   );
+  const setUseTypeColorMap = useMapStore(
+    (state) => state.setUseTypeColorMap,
+  );
   const isConstructionColorEnabled =
     colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
+  const isUseTypeColorEnabled =
+    colorMode === COLOR_MODES.USE_TYPE;
 
   useEffect(() => {
     // Set all layers to visible by default
@@ -249,6 +267,8 @@ const LayerToggle = () => {
     if (data?.zone?.features) {
       const colorMap = generateConstructionColorMap(data.zone.features);
       setConstructionColorMap(colorMap);
+      const useTypeMap = generateUseTypeColorMap(data.zone.features);
+      setUseTypeColorMap(useTypeMap);
       // Only enable on first load — not on refetch after user toggled off
       if (!constructionColorInitialized.current) {
         setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
@@ -280,12 +300,21 @@ const LayerToggle = () => {
       );
     };
 
+    const handleUseTypeColorChange = (e) => {
+      const { checked } = e.target;
+      setColorMode(
+        checked ? COLOR_MODES.USE_TYPE : COLOR_MODES.DEFAULT,
+      );
+    };
+
     return generateLayerToggle(
       data,
       handleChange,
       handleMapLabelsChange,
       handleConstructionColorChange,
       isConstructionColorEnabled,
+      handleUseTypeColorChange,
+      isUseTypeColorEnabled,
     );
   }, [data, isConstructionColorEnabled]);
 

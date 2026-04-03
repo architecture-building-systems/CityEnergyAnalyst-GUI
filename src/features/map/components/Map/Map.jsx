@@ -43,7 +43,7 @@ import {
 } from 'features/map/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from 'features/map/utils';
-import { getBuildingColorByStandard } from 'features/map/utils/constructionColors';
+import { getBuildingColorByStandard, getBuildingColorByUseType } from 'features/map/utils/constructionColors';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
@@ -462,6 +462,9 @@ const DeckGLMap = ({ data, colors }) => {
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );
+  const useTypeColorMap = useMapStore(
+    (state) => state.useTypeColorMap,
+  );
 
   const mapStyle = useMapStyle();
   useMapAttribution(mapRef);
@@ -473,6 +476,7 @@ const DeckGLMap = ({ data, colors }) => {
         selected,
         colorMode,
         constructionColorMap,
+        useTypeColorMap,
         buildingSelectionActive,
         buildingSelectionBuildings,
       ),
@@ -481,6 +485,7 @@ const DeckGLMap = ({ data, colors }) => {
       selected,
       colorMode,
       constructionColorMap,
+      useTypeColorMap,
       buildingSelectionActive,
       buildingSelectionBuildings,
     ],
@@ -566,6 +571,7 @@ const DeckGLMap = ({ data, colors }) => {
               selected,
               colorMode,
               constructionColorMap,
+              useTypeColorMap,
               buildingSelectionActive,
               buildingSelectionBuildings,
             ],
@@ -789,6 +795,7 @@ const buildingColorFunction =
     selected,
     colorMode,
     constructionColorMap,
+    useTypeColorMap,
     buildingSelectionActive,
     buildingSelectionBuildings,
   ) =>
@@ -816,8 +823,12 @@ const buildingColorFunction =
     // Check if construction standard coloring is enabled for zone layer
     if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD && layer === 'zone') {
       const constType = feature?.properties?.const_type;
-      // Use getBuildingColorByStandard which returns gray for missing/unknown types
       return getBuildingColorByStandard(constType, constructionColorMap);
+    }
+
+    // Check if use type coloring is enabled for zone layer
+    if (colorMode === COLOR_MODES.USE_TYPE && layer === 'zone') {
+      return getBuildingColorByUseType(feature?.properties, useTypeColorMap);
     }
 
     return colors.disconnected;
