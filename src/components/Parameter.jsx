@@ -277,25 +277,24 @@ const Parameter = ({ parameter, form, toolName }) => {
       }));
 
       const optionsValidator = (_, value) => {
-        if (value === null) {
-          if (nullable) return Promise.resolve();
-          return Promise.reject('Select at least one choice');
-        }
-        if (choices.length < 1) {
+        if (choices == null || choices.length === 0) {
           if (type === 'GenerationParameter')
             return Promise.reject(
               'No generations found. Run optimization first.',
             );
 
-          if (nullable) {
-            return Promise.resolve();
-          } else
+          if (!nullable)
             return Promise.reject('There are no valid choices for this input');
-        } else if (!nullable) {
-          if (!value) return Promise.reject('Select a choice');
-          if (!choices.includes(value))
-            return Promise.reject(`${value} is not a valid choice`);
+          return Promise.resolve();
         }
+
+        if (value == null || value === '') {
+          if (!nullable) return Promise.reject('Select at least one choice');
+          return Promise.resolve();
+        }
+
+        if (!choices.includes(value))
+          return Promise.reject(`${value} is not a valid choice`);
 
         return Promise.resolve();
       };
@@ -347,6 +346,12 @@ const Parameter = ({ parameter, form, toolName }) => {
         value: choice,
       }));
 
+      const emptyMessages = {
+        NetworkLayoutMultiChoiceParameter:
+          'Select at least one network layout.',
+        WhatIfNameMultiChoiceParameter: 'Select at least one what-if scenario.',
+      };
+
       const selectAll = (e) => {
         e.preventDefault();
         setFieldsValue({
@@ -368,41 +373,41 @@ const Parameter = ({ parameter, form, toolName }) => {
           rules={[
             {
               validator: (_, value) => {
-                if (value === null) {
-                  if (nullable) return Promise.resolve();
-                  return Promise.reject('Select at least one choice');
+                if (choices == null || choices.length === 0) {
+                  if (!nullable)
+                    return Promise.reject(
+                      'There are no valid choices for this input',
+                    );
+                  return Promise.resolve();
                 }
 
-                if (!Array.isArray(value)) {
-                  return Promise.reject('Value must be an array');
+                if (value === null) {
+                  if (!nullable)
+                    return Promise.reject('Select at least one choice');
+
+                  return Promise.resolve();
                 }
+
+                if (!Array.isArray(value))
+                  return Promise.reject('Value must be an array');
 
                 if (!value.length) {
-                  if (nullable) return Promise.resolve();
-                  if (type == 'NetworkLayoutMultiChoiceParameter')
+                  if (!nullable)
                     return Promise.reject(
-                      'Select at least one network layout.',
+                      emptyMessages[type] ?? 'Select at least one option.',
                     );
-                  if (type == 'WhatIfNameMultiChoiceParameter')
-                    return Promise.reject(
-                      'Select at least one what-if scenario.',
-                    );
+                  return Promise.resolve();
                 }
 
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
-                if (invalidChoices.length) {
+                if (invalidChoices.length)
                   return Promise.reject(
-                    `${invalidChoices.join(', ')} ${
-                      invalidChoices.length > 1
-                        ? 'are not valid choices'
-                        : 'is not a valid choice'
-                    }`,
+                    `${invalidChoices.join(', ')} ${invalidChoices.length > 1 ? 'are not valid choices' : 'is not a valid choice'}`,
                   );
-                } else {
-                  return Promise.resolve();
-                }
+
+                return Promise.resolve();
               },
             },
           ]}
