@@ -8,6 +8,21 @@ import {
   generateUseTypeColorMap,
 } from 'features/map/utils/constructionColors';
 
+const NetworkRadioInput = ({ value, label, selected, onSelect }) => {
+  return (
+    <label className="map-plot-label network-label">
+      <input
+        type="radio"
+        name="network-type"
+        value={value}
+        onChange={() => onSelect(value)}
+        checked={selected === value}
+      />
+      {label}
+    </label>
+  );
+};
+
 export const NetworkToggle = ({
   cooling,
   heating,
@@ -21,30 +36,27 @@ export const NetworkToggle = ({
     onChange(value);
   };
 
-  const RadioInput = ({ value, label }) => {
-    return (
-      <label className="map-plot-label network-label">
-        <input
-          type="radio"
-          name="network-type"
-          value={value}
-          onChange={() => {
-            handleChange(value);
-          }}
-          checked={selected === value}
-        />
-        {label}
-      </label>
-    );
-  };
-
   return (
     <div className="network-toggle">
       <b>
         <u>Networks</u>
       </b>
-      {cooling && <RadioInput value="dc" label="District Cooling" />}
-      {heating && <RadioInput value="dh" label="District Heating" />}
+      {cooling && (
+        <NetworkRadioInput
+          value="dc"
+          label="District Cooling"
+          selected={selected}
+          onSelect={handleChange}
+        />
+      )}
+      {heating && (
+        <NetworkRadioInput
+          value="dh"
+          label="District Heating"
+          selected={selected}
+          onSelect={handleChange}
+        />
+      )}
       {!cooling && !heating && <div>No thermal networks found</div>}
     </div>
   );
@@ -57,12 +69,13 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
   };
 
   return (
-    <div className="layer-toggle">
-      <label
-        className="layer-toggle-label"
-        onClick={handleClick}
-        onKeyDown={handleClick}
-      >
+    <div
+      className="layer-toggle"
+      onClick={handleClick}
+      onKeyDown={handleClick}
+      role="presentation"
+    >
+      <label className="layer-toggle-label">
         <input
           type="checkbox"
           name="layer-toggle"
@@ -214,12 +227,13 @@ const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
   };
 
   return (
-    <div className="layer-toggle">
-      <label
-        className="layer-toggle-label"
-        onClick={handleClick}
-        onKeyDown={handleClick}
-      >
+    <div
+      className="layer-toggle"
+      onClick={handleClick}
+      onKeyDown={handleClick}
+      role="presentation"
+    >
+      <label className="layer-toggle-label">
         <input
           type="radio"
           name="color-mode"
@@ -319,7 +333,14 @@ const LayerToggle = () => {
       handleUseTypeColorChange,
       isUseTypeColorEnabled,
     );
-  }, [data, isConstructionColorEnabled]);
+  }, [
+    data,
+    isConstructionColorEnabled,
+    isUseTypeColorEnabled,
+    setVisibility,
+    setMapLabels,
+    setColorMode,
+  ]);
 
   return (
     <Tooltip title="Toggle Layers" styles={{ body: { fontSize: 12 } }}>

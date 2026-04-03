@@ -43,7 +43,10 @@ import {
 } from 'features/map/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from 'features/map/utils';
-import { getBuildingColorByStandard, getBuildingColorByUseType } from 'features/map/utils/constructionColors';
+import {
+  getBuildingColorByStandard,
+  getBuildingColorByUseType,
+} from 'features/map/utils/constructionColors';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
@@ -462,9 +465,7 @@ const DeckGLMap = ({ data, colors }) => {
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );
-  const useTypeColorMap = useMapStore(
-    (state) => state.useTypeColorMap,
-  );
+  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
 
   const mapStyle = useMapStyle();
   useMapAttribution(mapRef);

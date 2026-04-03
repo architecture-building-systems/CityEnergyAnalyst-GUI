@@ -143,7 +143,6 @@ export const getBuildingColorByStandard = (constType, colorMap) => {
   return hexToRgb(colorMap[constType]);
 };
 
-
 /**
  * Get the main use type for a building feature.
  * The main use type is whichever of use_type1/2/3 has the highest ratio.
@@ -151,14 +150,22 @@ export const getBuildingColorByStandard = (constType, colorMap) => {
  */
 export const getMainUseType = (properties) => {
   const types = [
-    { type: properties?.use_type1, ratio: parseFloat(properties?.use_type1r) || 0 },
-    { type: properties?.use_type2, ratio: parseFloat(properties?.use_type2r) || 0 },
-    { type: properties?.use_type3, ratio: parseFloat(properties?.use_type3r) || 0 },
+    {
+      type: properties?.use_type1,
+      ratio: parseFloat(properties?.use_type1r) || 0,
+    },
+    {
+      type: properties?.use_type2,
+      ratio: parseFloat(properties?.use_type2r) || 0,
+    },
+    {
+      type: properties?.use_type3,
+      ratio: parseFloat(properties?.use_type3r) || 0,
+    },
   ];
   const best = types.reduce((a, b) => (b.ratio > a.ratio ? b : a), types[0]);
   return best?.type || null;
 };
-
 
 /**
  * Generate a color map for all unique main use types found in buildings
@@ -182,7 +189,6 @@ export const generateUseTypeColorMap = (features) => {
 
   return colorMap;
 };
-
 
 /**
  * Get the RGB color array for a building based on its main use type
