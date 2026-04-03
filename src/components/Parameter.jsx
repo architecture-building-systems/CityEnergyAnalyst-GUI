@@ -317,6 +317,7 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter':
     case 'WhatIfNameMultiChoiceParameter':
+    case 'SolarPanelMultiChoiceParameter':
     case 'ComponentMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
@@ -354,6 +355,7 @@ const Parameter = ({ parameter, form, toolName }) => {
                 }
 
                 if (!value.length) {
+                  if (nullable) return Promise.resolve();
                   if (type == 'NetworkLayoutMultiChoiceParameter')
                     return Promise.reject(
                       'Select at least one network layout.',
