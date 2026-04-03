@@ -3,7 +3,10 @@ import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from 'assets/icons';
-import { generateConstructionColorMap, generateUseTypeColorMap } from 'features/map/utils/constructionColors';
+import {
+  generateConstructionColorMap,
+  generateUseTypeColorMap,
+} from 'features/map/utils/constructionColors';
 
 export const NetworkToggle = ({
   cooling,
@@ -55,7 +58,11 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
 
   return (
     <div className="layer-toggle">
-      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
+      <label
+        className="layer-toggle-label"
+        onClick={handleClick}
+        onKeyDown={handleClick}
+      >
         <input
           type="checkbox"
           name="layer-toggle"
@@ -172,11 +179,12 @@ const generateLayerToggle = (
 
   // Add construction standard coloring toggle if zone data exists
   if (data?.zone) {
+    mapStyleGroup.push({ type: 'group', label: 'Building Colours' });
     mapStyleGroup.push({
       key: 'construction_colors',
       label: (
         <LayerToggleRadioControlled
-          label="Colour by Construction Archetypes"
+          label="By Construction Archetypes"
           value="construction_colors"
           checked={isConstructionColorEnabled}
           onChange={handleConstructionColorChange}
@@ -187,7 +195,7 @@ const generateLayerToggle = (
       key: 'use_type_colors',
       label: (
         <LayerToggleRadioControlled
-          label="Colour by Main Use Types"
+          label="By Main Use Types"
           value="use_type_colors"
           checked={isUseTypeColorEnabled}
           onChange={handleUseTypeColorChange}
@@ -199,7 +207,7 @@ const generateLayerToggle = (
   return [...geometryGroup, ...labelsGroup, ...mapStyleGroup];
 };
 
-// Controlled checkbox for construction colors (needs to reflect state)
+// Controlled radio for color mode selection (mutually exclusive options)
 const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
   const handleClick = (e) => {
     e.stopPropagation();
@@ -207,10 +215,14 @@ const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
 
   return (
     <div className="layer-toggle">
-      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
+      <label
+        className="layer-toggle-label"
+        onClick={handleClick}
+        onKeyDown={handleClick}
+      >
         <input
-          type="checkbox"
-          name="layer-toggle"
+          type="radio"
+          name="color-mode"
           value={value}
           onChange={onChange}
           checked={checked}
@@ -236,13 +248,10 @@ const LayerToggle = () => {
   const setConstructionColorMap = useMapStore(
     (state) => state.setConstructionColorMap,
   );
-  const setUseTypeColorMap = useMapStore(
-    (state) => state.setUseTypeColorMap,
-  );
+  const setUseTypeColorMap = useMapStore((state) => state.setUseTypeColorMap);
   const isConstructionColorEnabled =
     colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
-  const isUseTypeColorEnabled =
-    colorMode === COLOR_MODES.USE_TYPE;
+  const isUseTypeColorEnabled = colorMode === COLOR_MODES.USE_TYPE;
 
   useEffect(() => {
     // Set all layers to visible by default
@@ -293,18 +302,12 @@ const LayerToggle = () => {
       setMapLabels(checked);
     };
 
-    const handleConstructionColorChange = (e) => {
-      const { checked } = e.target;
-      setColorMode(
-        checked ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT,
-      );
+    const handleConstructionColorChange = () => {
+      setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
     };
 
-    const handleUseTypeColorChange = (e) => {
-      const { checked } = e.target;
-      setColorMode(
-        checked ? COLOR_MODES.USE_TYPE : COLOR_MODES.DEFAULT,
-      );
+    const handleUseTypeColorChange = () => {
+      setColorMode(COLOR_MODES.USE_TYPE);
     };
 
     return generateLayerToggle(
