@@ -37,28 +37,29 @@ const ConstructionStandardLegend = () => {
         display: 'flex',
         flexDirection: 'column',
         fontSize: 12,
-        gap: 8,
         padding: 12,
         width: 280,
-        maxHeight: 300,
-        overflow: 'auto',
+        maxHeight: 200,
       }}
     >
       <div
         style={{
           fontWeight: 'bold',
           fontSize: 13,
-          marginBottom: 4,
+          marginBottom: 8,
           borderBottom: '1px solid #e0e0e0',
           paddingBottom: 6,
+          flexShrink: 0,
         }}
       >
         {title}
       </div>
 
-      {entries.map((entry) => (
-        <LegendItem key={entry} color={colorMap[entry]} label={entry} />
-      ))}
+      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {entries.map((entry) => (
+          <LegendItem key={entry} color={colorMap[entry]} label={entry} />
+        ))}
+      </div>
     </div>
   );
 };
