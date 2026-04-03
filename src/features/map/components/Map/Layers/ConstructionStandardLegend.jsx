@@ -1,4 +1,11 @@
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
+
+const INFO_TEXT = {
+  construction: 'Construction Archetypes define the building envelope and systems standards. Assign in Input Editor > zone (const_type). Edit or add in Database Editor > CONSTRUCTION_ARCHETYPES.',
+  useType: 'Main use type is the use type with the highest occupancy ratio. Assign in Input Editor > zone (use_type1, use_type2, use_type3 and their ratios). Edit or add in Database Editor > USE_TYPES.',
+};
 
 /**
  * Legend component that displays construction archetype or main use type colors.
@@ -50,9 +57,18 @@ const ConstructionStandardLegend = () => {
           borderBottom: '1px solid #e0e0e0',
           paddingBottom: 6,
           flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
         {title}
+        <Tooltip
+          title={isConstruction ? INFO_TEXT.construction : INFO_TEXT.useType}
+          styles={{ body: { fontSize: 12 } }}
+        >
+          <InfoCircleOutlined style={{ color: '#999', cursor: 'pointer' }} />
+        </Tooltip>
       </div>
 
       <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
