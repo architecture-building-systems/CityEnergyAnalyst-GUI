@@ -23,7 +23,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
       } else {
         return (value) => {
           setMapLayerParameters((prev) => ({
-            ...prev,
+            ...(prev ?? {}),
             [parameterName]: value,
           }));
         };
@@ -31,6 +31,20 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
     },
     [setFilters, setMapLayerParameters],
   );
+
+  const parameterChangeHandlers = useMemo(() => {
+    if (!layers) return {};
+
+    const handlers = {};
+    layers.forEach((layer) => {
+      Object.entries(layer.parameters).forEach(([key, parameter]) => {
+        const handlerKey = `${layer.name}:${key}`;
+        handlers[handlerKey] = changeHandler(key, parameter?.filter);
+      });
+    });
+
+    return handlers;
+  }, [layers, changeHandler]);
 
   // Set the filters to the default values
   useEffect(() => {
@@ -67,7 +81,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
             } = parameter;
 
             const value = filter ? filters?.[filter] : parameterValues?.[key];
-            const _handleChange = changeHandler(key, filter);
+            const _handleChange = parameterChangeHandlers[`${name}:${key}`];
 
             switch (selector) {
               case 'time-series':
@@ -165,7 +179,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         </div>
       );
     });
-  }, [layers, parameterValues, range, filters, changeHandler]);
+  }, [layers, parameterValues, range, filters, parameterChangeHandlers]);
 
   return (
     <ConfigProvider

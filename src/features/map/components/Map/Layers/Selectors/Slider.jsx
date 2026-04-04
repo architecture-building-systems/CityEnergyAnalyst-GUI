@@ -35,6 +35,15 @@ const checkIsValidRange = (range) => {
   );
 };
 
+const isSameRange = (a, b) => {
+  return (
+    checkIsValidRange(a) &&
+    checkIsValidRange(b) &&
+    a[0] === b[0] &&
+    a[1] === b[1]
+  );
+};
+
 const generateTenMarks = (min, max) => {
   const marks = {};
   const firstTen = Math.ceil(min / 10) * 10;
@@ -67,12 +76,17 @@ const SliderSelector = ({
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
   const [dynamicRange, setDynamicRange] = useState();
   const mapLayerParametersRef = useRef(mapLayerParameters);
+  const onChangeRef = useRef(onChange);
   const min = staticRange?.[0] ?? dynamicRange?.[0] ?? null;
   const max = staticRange?.[1] ?? dynamicRange?.[1] ?? null;
 
   useEffect(() => {
     mapLayerParametersRef.current = mapLayerParameters;
   }, [mapLayerParameters]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const marks = useMemo(() => {
     if (checkIsValidRange([min, max])) {
@@ -90,7 +104,7 @@ const SliderSelector = ({
     (newValue) => {
       setSliderValue(newValue);
       setMapLayerParameters((prev) => ({
-        ...prev,
+        ...(prev ?? {}),
         [parameterName]: newValue,
       }));
       onChange?.(newValue);
@@ -124,9 +138,32 @@ const SliderSelector = ({
         );
 
         if (checkIsValidRange(rangeData)) {
-          setDynamicRange(rangeData);
-          // Set new value to full range of new data
-          handleChange(rangeData);
+          setDynamicRange((prev) =>
+            isSameRange(prev, rangeData) ? prev : rangeData,
+          );
+
+          const currentParameterValue =
+            mapLayerParametersRef.current?.[parameterName];
+          const shouldApplyFetchedRange = !isSameRange(
+            currentParameterValue,
+            rangeData,
+          );
+
+          if (shouldApplyFetchedRange) {
+            setSliderValue(rangeData);
+            setMapLayerParameters((prev) => {
+              const prevValue = prev?.[parameterName];
+              if (isSameRange(prevValue, rangeData)) {
+                return prev;
+              }
+
+              return {
+                ...(prev ?? {}),
+                [parameterName]: rangeData,
+              };
+            });
+            onChangeRef.current?.(rangeData);
+          }
         } else {
           console.warn('Invalid range data received:', rangeData);
           setDynamicRange(null);
@@ -149,7 +186,7 @@ const SliderSelector = ({
     staticRange,
     dependsOnValues,
     dependsValid,
-    handleChange,
+    setMapLayerParameters,
   ]);
 
   return (
