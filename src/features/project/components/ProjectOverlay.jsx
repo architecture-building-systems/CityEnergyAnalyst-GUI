@@ -133,13 +133,21 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   // Reset state when project or scenario name changes
   useEffect(() => {
-    const resetState = () => {
-      resetSelected();
-      setInputEditor(false);
-    };
-
-    resetState();
-  }, [name, scenarioName, resetSelected]);
+    resetSelected();
+    setInputEditor(false);
+    setToolType(null);
+    selectPlotTool(null);
+    setActiveMapCategory(null);
+    setSelectedLayer(null);
+  }, [
+    name,
+    scenarioName,
+    resetSelected,
+    setToolType,
+    selectPlotTool,
+    setActiveMapCategory,
+    setSelectedLayer,
+  ]);
 
   return (
     <div
