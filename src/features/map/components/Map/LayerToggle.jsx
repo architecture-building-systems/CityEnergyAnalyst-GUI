@@ -222,8 +222,8 @@ const generateLayerToggle = (
 // Controlled radio for color mode selection (mutually exclusive, click again to turn off)
 const LayerToggleRadioControlled = ({ label, checked, onChange }) => {
   const handleClick = (e) => {
+    // Prevent the click from closing the dropdown
     e.stopPropagation();
-    onChange?.(!checked);
   };
 
   return (
@@ -237,8 +237,7 @@ const LayerToggleRadioControlled = ({ label, checked, onChange }) => {
         <input
           type="checkbox"
           checked={checked}
-          onChange={() => {}}
-          style={{ appearance: 'radio', WebkitAppearance: 'radio' }}
+          onChange={(e) => onChange?.(e.target.checked)}
         />
         {label}
       </label>
@@ -316,7 +315,9 @@ const LayerToggle = () => {
     };
 
     const handleConstructionColorChange = (on) => {
-      setColorMode(on ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT);
+      setColorMode(
+        on ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT,
+      );
     };
 
     const handleUseTypeColorChange = (on) => {
