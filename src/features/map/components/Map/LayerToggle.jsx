@@ -97,6 +97,7 @@ const generateLayerToggle = (
   isConstructionColorEnabled,
   handleUseTypeColorChange,
   isUseTypeColorEnabled,
+  handleColorOff,
 ) => {
   const geometryGroup = [];
   if (data?.zone) {
@@ -200,6 +201,7 @@ const generateLayerToggle = (
           value="construction_colors"
           checked={isConstructionColorEnabled}
           onChange={handleConstructionColorChange}
+          onUncheck={handleColorOff}
         />
       ),
     });
@@ -211,6 +213,7 @@ const generateLayerToggle = (
           value="use_type_colors"
           checked={isUseTypeColorEnabled}
           onChange={handleUseTypeColorChange}
+          onUncheck={handleColorOff}
         />
       ),
     });
@@ -219,10 +222,20 @@ const generateLayerToggle = (
   return [...geometryGroup, ...mapStyleGroup];
 };
 
-// Controlled radio for color mode selection (mutually exclusive options)
-const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
+// Controlled radio for color mode selection (mutually exclusive, click again to turn off)
+const LayerToggleRadioControlled = ({
+  label,
+  checked,
+  onChange,
+  onUncheck,
+}) => {
   const handleClick = (e) => {
     e.stopPropagation();
+    if (checked) {
+      onUncheck?.();
+    } else {
+      onChange?.();
+    }
   };
 
   return (
@@ -234,11 +247,10 @@ const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
     >
       <label className="layer-toggle-label">
         <input
-          type="radio"
-          name="color-mode"
-          value={value}
-          onChange={onChange}
+          type="checkbox"
           checked={checked}
+          onChange={() => {}}
+          style={{ appearance: 'radio', WebkitAppearance: 'radio' }}
         />
         {label}
       </label>
@@ -323,6 +335,10 @@ const LayerToggle = () => {
       setColorMode(COLOR_MODES.USE_TYPE);
     };
 
+    const handleColorOff = () => {
+      setColorMode(COLOR_MODES.DEFAULT);
+    };
+
     return generateLayerToggle(
       data,
       handleChange,
@@ -331,6 +347,7 @@ const LayerToggle = () => {
       isConstructionColorEnabled,
       handleUseTypeColorChange,
       isUseTypeColorEnabled,
+      handleColorOff,
     );
   }, [
     data,
