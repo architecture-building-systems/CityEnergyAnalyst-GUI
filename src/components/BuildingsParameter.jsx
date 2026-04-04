@@ -1,8 +1,10 @@
 import { AimOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Divider, Select } from 'antd';
-import { useCallback, useEffect, useRef } from 'react';
+import { Button, Divider, Dropdown, Select } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { FormField } from 'components/Parameter';
+import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
+import { getMainUseType } from 'features/map/utils/constructionColors';
 import useBuildingSelectionStore, {
   useBuildingSelectionActive,
   useBuildingSelectionBuildings,
@@ -38,6 +40,37 @@ const MapSelectionButtons = ({
     </>
   );
 
+const TypeFilterDropdown = ({ label, typeMap, onChange }) => {
+  const [selectedKeys, setSelectedKeys] = useState([]);
+
+  const handleSelect = ({ selectedKeys: keys }) => {
+    setSelectedKeys(keys);
+    const buildings = [...new Set(keys.flatMap((k) => typeMap[k] ?? []))];
+    onChange(buildings);
+  };
+
+  const items = Object.entries(typeMap).map(([type, buildings]) => ({
+    key: type,
+    label: `${type} (${buildings.length})`,
+  }));
+
+  return (
+    <Dropdown
+      menu={{
+        items,
+        selectable: true,
+        multiple: true,
+        selectedKeys,
+        onSelect: handleSelect,
+        onDeselect: handleSelect,
+      }}
+      disabled={!items.length}
+    >
+      <Button size="small">{label}</Button>
+    </Dropdown>
+  );
+};
+
 // Wrapper that receives form props (value/onChange) from Form.Item and forwards
 // them only to the Select, while also rendering the map selection buttons below.
 const BuildingsSelectInput = ({
@@ -48,6 +81,8 @@ const BuildingsSelectInput = ({
   onStart,
   onConfirm,
   onCancel,
+  constTypeMap,
+  useTypeMap,
 }) => {
   const options = (choices ?? []).map((choice) => ({
     label: choice,
@@ -100,13 +135,27 @@ const BuildingsSelectInput = ({
           </div>
         )}
       />
-      <div style={{ display: 'flex', gap: 4, marginBlock: 12 }}>
+      <div style={{ display: 'flex', gap: 4, marginBlock: 12, flexWrap: 'wrap' }}>
         <MapSelectionButtons
           selectionActive={selectionActive}
           onStart={onStart}
           onConfirm={onConfirm}
           onCancel={onCancel}
         />
+        {!selectionActive && (
+          <>
+            <TypeFilterDropdown
+              label="By Const. Type"
+              typeMap={constTypeMap}
+              onChange={handleChange}
+            />
+            <TypeFilterDropdown
+              label="By Use Type"
+              typeMap={useTypeMap}
+              onChange={handleChange}
+            />
+          </>
+        )}
       </div>
     </div>
   );
@@ -131,6 +180,30 @@ const BuildingsParameter = ({
 
   const selectionActive =
     globalSelectionActive && sessionOwner === idRef.current;
+
+  const { data: inputData } = useInputs();
+  const choicesSet = useMemo(() => new Set(choices ?? []), [choices]);
+
+  const { constTypeMap, useTypeMap } = useMemo(() => {
+    const constMap = {};
+    const useMap = {};
+    const features = inputData?.geojsons?.zone?.features ?? [];
+    for (const feature of features) {
+      const name = feature?.properties?.name;
+      if (!name || !choicesSet.has(name)) continue;
+
+      const constType = feature.properties.const_type;
+      if (constType) {
+        (constMap[constType] ??= []).push(name);
+      }
+
+      const mainUse = getMainUseType(feature.properties);
+      if (mainUse) {
+        (useMap[mainUse] ??= []).push(name);
+      }
+    }
+    return { constTypeMap: constMap, useTypeMap: useMap };
+  }, [inputData, choicesSet]);
 
   const previousValueRef = useRef(null);
 
@@ -218,6 +291,8 @@ const BuildingsParameter = ({
         onStart={handleStartSelection}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
+        constTypeMap={constTypeMap}
+        useTypeMap={useTypeMap}
       />
     </FormField>
   );
