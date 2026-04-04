@@ -1,5 +1,6 @@
 import { AimOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Divider, Dropdown, Select } from 'antd';
+import Icon from '@ant-design/icons';
+import { Button, Divider, Dropdown, Select, Tooltip } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { FormField } from 'components/Parameter';
@@ -14,6 +15,25 @@ import useBuildingSelectionStore, {
   useCancelBuildingSelection,
 } from 'stores/buildingSelectionStore';
 
+// Two overlapping squares – filled region shows the boolean result
+const UnionSvg = () => (
+  <svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor">
+    <rect x="1" y="1" width="9" height="9" rx="1" opacity="0.85" />
+    <rect x="6" y="6" width="9" height="9" rx="1" opacity="0.85" />
+  </svg>
+);
+
+const IntersectSvg = () => (
+  <svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor">
+    <rect x="1" y="1" width="9" height="9" rx="1" opacity="0.3" />
+    <rect x="6" y="6" width="9" height="9" rx="1" opacity="0.3" />
+    <rect x="6" y="6" width="4" height="4" opacity="0.85" />
+  </svg>
+);
+
+const UnionIcon = (props) => <Icon component={UnionSvg} {...props} />;
+const IntersectIcon = (props) => <Icon component={IntersectSvg} {...props} />;
+
 const MapSelectionButtons = ({
   selectionActive,
   onStart,
@@ -21,7 +41,7 @@ const MapSelectionButtons = ({
   onCancel,
 }) =>
   !selectionActive ? (
-    <Button size="small" icon={<AimOutlined />} onClick={onStart}>
+    <Button size="small" icon={<AimOutlined />} onClick={onStart} style={{ paddingRight: 7, gap: 2 }}>
       Select on Map
     </Button>
   ) : (
@@ -40,19 +60,13 @@ const MapSelectionButtons = ({
     </>
   );
 
-const TypeFilterDropdown = ({ label, typeMap, onChange }) => {
-  const [selectedKeys, setSelectedKeys] = useState([]);
-
-  const handleSelect = ({ selectedKeys: keys }) => {
-    setSelectedKeys(keys);
-    const buildings = [...new Set(keys.flatMap((k) => typeMap[k] ?? []))];
-    onChange(buildings);
-  };
-
+const TypeFilterDropdown = ({ label, typeMap, selectedKeys, onChangeKeys }) => {
   const items = Object.entries(typeMap).map(([type, buildings]) => ({
     key: type,
     label: `${type} (${buildings.length})`,
   }));
+
+  const handleChange = ({ selectedKeys: keys }) => onChangeKeys(keys);
 
   return (
     <Dropdown
@@ -61,14 +75,29 @@ const TypeFilterDropdown = ({ label, typeMap, onChange }) => {
         selectable: true,
         multiple: true,
         selectedKeys,
-        onSelect: handleSelect,
-        onDeselect: handleSelect,
+        onSelect: handleChange,
+        onDeselect: handleChange,
       }}
       disabled={!items.length}
     >
       <Button size="small">{label}</Button>
     </Dropdown>
   );
+};
+
+const combineSelections = (constKeys, useKeys, constTypeMap, useTypeMap, mode) => {
+  const constSet = new Set(constKeys.flatMap((k) => constTypeMap[k] ?? []));
+  const useSet = new Set(useKeys.flatMap((k) => useTypeMap[k] ?? []));
+
+  // If only one dropdown has selections, return that set
+  if (!constKeys.length && !useKeys.length) return [];
+  if (!constKeys.length) return [...useSet];
+  if (!useKeys.length) return [...constSet];
+
+  if (mode === 'intersect') {
+    return [...constSet].filter((b) => useSet.has(b));
+  }
+  return [...new Set([...constSet, ...useSet])];
 };
 
 // Wrapper that receives form props (value/onChange) from Form.Item and forwards
@@ -84,6 +113,10 @@ const BuildingsSelectInput = ({
   constTypeMap,
   useTypeMap,
 }) => {
+  const [constKeys, setConstKeys] = useState([]);
+  const [useKeys, setUseKeys] = useState([]);
+  const [combineMode, setCombineMode] = useState('union');
+
   const options = (choices ?? []).map((choice) => ({
     label: choice,
     value: choice,
@@ -92,6 +125,37 @@ const BuildingsSelectInput = ({
   const handleChange = (val) => {
     onChange(val);
     if (selectionActive) useBuildingSelectionStore.getState().setBuildings(val);
+  };
+
+  const applyTypeFilters = (nextConstKeys, nextUseKeys, nextMode) => {
+    if (!nextConstKeys.length && !nextUseKeys.length) {
+      handleChange([]);
+      return;
+    }
+
+    const result = combineSelections(
+      nextConstKeys,
+      nextUseKeys,
+      constTypeMap,
+      useTypeMap,
+      nextMode,
+    );
+    handleChange(result);
+  };
+
+  const handleConstKeysChange = (keys) => {
+    setConstKeys(keys);
+    applyTypeFilters(keys, useKeys, combineMode);
+  };
+
+  const handleUseKeysChange = (keys) => {
+    setUseKeys(keys);
+    applyTypeFilters(constKeys, keys, combineMode);
+  };
+
+  const handleSetMode = (mode) => {
+    setCombineMode(mode);
+    applyTypeFilters(constKeys, useKeys, mode);
   };
 
   return (
@@ -135,7 +199,7 @@ const BuildingsSelectInput = ({
           </div>
         )}
       />
-      <div style={{ display: 'flex', gap: 4, marginBlock: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 4, marginBlock: 12 }}>
         <MapSelectionButtons
           selectionActive={selectionActive}
           onStart={onStart}
@@ -147,13 +211,33 @@ const BuildingsSelectInput = ({
             <TypeFilterDropdown
               label="By Const. Type"
               typeMap={constTypeMap}
-              onChange={handleChange}
+              selectedKeys={constKeys}
+              onChangeKeys={handleConstKeysChange}
             />
             <TypeFilterDropdown
               label="By Use Type"
               typeMap={useTypeMap}
-              onChange={handleChange}
+              selectedKeys={useKeys}
+              onChangeKeys={handleUseKeysChange}
             />
+            <Tooltip title="Union">
+              <Button
+                size="small"
+                icon={<UnionIcon />}
+                type={combineMode === 'union' ? 'primary' : 'default'}
+                onClick={() => handleSetMode('union')}
+                style={{ aspectRatio: 1, padding: 0 }}
+              />
+            </Tooltip>
+            <Tooltip title="Intersect">
+              <Button
+                size="small"
+                icon={<IntersectIcon />}
+                type={combineMode === 'intersect' ? 'primary' : 'default'}
+                onClick={() => handleSetMode('intersect')}
+                style={{ aspectRatio: 1, padding: 0 }}
+              />
+            </Tooltip>
           </>
         )}
       </div>
