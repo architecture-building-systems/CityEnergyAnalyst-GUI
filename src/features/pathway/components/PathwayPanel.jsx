@@ -28,8 +28,11 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
-import { toolTypes, useSetToolType } from 'features/project/stores/tool-card';
-import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
+import {
+  toolTypes,
+  useSetToolType,
+  useToolCardStore,
+} from 'features/project/stores/tool-card';
 
 import {
   fetchPathwayOverview,
@@ -438,7 +441,7 @@ const PathwayPanel = ({
   const createJob = useCreateJob();
   const jobs = useJobsStore((state) => state.jobs);
   const setToolType = useSetToolType();
-  const setSelectedTool = useSelectedToolStore((state) => state.setSelectedTool);
+  const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
 
   const scrollViewportRef = useRef(null);
   const viewportMeasureRef = useRef(null);
