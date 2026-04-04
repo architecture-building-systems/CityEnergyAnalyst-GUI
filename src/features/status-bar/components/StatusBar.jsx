@@ -196,7 +196,7 @@ const JobStatusBar = () => {
                       // Create a URL for the blob
                       const url = URL.createObjectURL(blob);
                       const windowFeatures =
-                        'width=1000,height=800,resizable=yes,status=yes,noopener,noreferrer';
+                        'width=1000,height=800,resizable=yes,scrollbars=yes,status=yes,noopener,noreferrer';
 
                       // Open the URL in a new window/tab
                       const newWindow = window.open(

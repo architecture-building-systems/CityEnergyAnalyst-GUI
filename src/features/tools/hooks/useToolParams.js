@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { useCheckInputsMutation } from './mutations';
-import { getFormValues } from '../utils';
+import useFormReset from './useFormReset';
+import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 const useFetchToolParams = (script) => {
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
+
   return useQuery({
-    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script],
+    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script, project, scenarioName],
     queryFn: async () => {
       if (!script) return null;
-      const response = await apiClient.get(`/api/tools/${script}`);
+      const response = await apiClient.get(`/api/tools/${script}`, {
+        params: { project, scenario_name: scenarioName },
+      });
       return response.data;
     },
     enabled: !!script,
@@ -18,10 +24,7 @@ const useFetchToolParams = (script) => {
   });
 };
 
-const useToolParams = (script, form, onError) => {
-  const [inputError, setInputError] = useState(undefined);
-
-  // Fetch tool parameters
+const useToolParams = (script, form, onError, onParametersChange) => {
   const {
     data: params,
     isLoading,
@@ -30,64 +33,30 @@ const useToolParams = (script, form, onError) => {
     dataUpdatedAt,
   } = useFetchToolParams(script);
 
-  const { mutateAsync: checkInputs } = useCheckInputsMutation();
+  // Memoize parameters to avoid creating new objects on every render
+  const parameters = useMemo(() => params?.parameters, [params]);
+  const categoricalParameters = useMemo(
+    () => params?.categorical_parameters,
+    [params],
+  );
 
-  const parameters = params?.parameters;
-  const categoricalParameters = params?.categorical_parameters;
-
-  // Reset form when script or parameters change
+  // Call onParametersChange whenever parameters or inputError change
   useEffect(() => {
-    form.resetFields();
-  }, [script, form, dataUpdatedAt]);
+    if (onParametersChange) {
+      onParametersChange?.({ parameters, categoricalParameters });
+    }
+  }, [dataUpdatedAt, onParametersChange]);
 
-  // Check inputs whenever parameters change, i.e. save, reset, or refetch
-  useEffect(() => {
-    let cancelled = false;
+  const resetForm = useFormReset(form, params, script, dataUpdatedAt);
 
-    const run = async () => {
-      if (!script || !parameters) return;
-
-      // Reset error state when checking starts
-      setInputError(undefined);
-
-      const formParams = await getFormValues(
-        form,
-        parameters,
-        categoricalParameters,
-        onError,
-      );
-
-      try {
-        if (!cancelled && formParams) {
-          await checkInputs({ tool: script, parameters: formParams });
-          if (!cancelled) setInputError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err.response?.data?.detail ||
-            err.response?.statusText ||
-            err.message ||
-            'Unexpected error';
-          setInputError(message);
-        }
-      }
-    };
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
+  const { inputError, recheckInputs } = useInputValidation(
     script,
-    form,
     parameters,
     categoricalParameters,
-    dataUpdatedAt,
-    checkInputs,
+    form,
     onError,
-  ]);
+    dataUpdatedAt,
+  );
 
   return {
     params,
@@ -95,6 +64,8 @@ const useToolParams = (script, form, onError) => {
     isFetching,
     fetchError,
     inputError,
+    resetForm,
+    recheckInputs,
   };
 };
 

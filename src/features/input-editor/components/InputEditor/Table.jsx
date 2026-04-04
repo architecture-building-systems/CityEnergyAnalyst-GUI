@@ -4,7 +4,7 @@ import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
-import { useSelectedToolStore } from 'features/tools/stores/selected-tool';
+import { useSelectTool } from 'features/project/stores/tool-card';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
@@ -14,7 +14,6 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
-import { toolTypes, useToolCardStore } from 'features/project/stores/tool-card';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 
 const Table = ({ tab, tables, columns }) => {
@@ -190,14 +189,10 @@ const ScriptSuggestion = ({ tab }) => {
   };
 
   const script = tabScriptMap?.[tab] ?? 'archetypes-mapper';
-  const setSelectedTool = useSelectedToolStore(
-    (state) => state.setSelectedTool,
-  );
-  const setToolType = useToolCardStore((state) => state.setToolType);
+  const selectTool = useSelectTool();
 
   const handleClick = () => {
-    setSelectedTool(script);
-    setToolType(toolTypes.TOOLS);
+    selectTool(script);
   };
 
   return (

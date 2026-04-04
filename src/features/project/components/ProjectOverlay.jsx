@@ -14,21 +14,19 @@ import ShowHideCardsButton from 'components/ShowHideCardsButton';
 import InputTable from './InputTable';
 import {
   toolTypes,
+  useToolCardStore,
   useToolType,
   useSetToolType,
+  useSelectPlotTool,
 } from 'features/project/stores/tool-card';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
 import {
-  useSelectedToolStore,
-  useSelectedPlotToolStore,
-} from 'features/tools/stores/selected-tool';
-import {
+  useResetSelected,
   useSelected,
   useSelectionSource,
-  useResetSelected,
 } from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
@@ -37,6 +35,7 @@ import {
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
 import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
+import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const name = useProjectStore((state) => state.name);
@@ -44,29 +43,15 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const toolType = useToolType();
   const setToolType = useSetToolType();
+  const selectPlotTool = useSelectPlotTool();
 
-  const selectedTool = useSelectedToolStore((state) => state.selectedTool);
-  const setSelectedTool = useSelectedToolStore(
-    (state) => state.setSelectedTool,
-  );
-  const selectedPlotTool = useSelectedPlotToolStore(
-    (state) => state.selectedPlotTool,
-  );
-  const setSelectedPlotTool = useSelectedPlotToolStore(
-    (state) => state.setSelectedPlotTool,
-  );
+  const resetSelected = useResetSelected();
   const selectedBuildings = useSelected();
   const selectionSource = useSelectionSource();
-  const resetSelected = useResetSelected();
-
+  const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setSelectedLayer = useSetSelectedMapLayer();
-
-  const handleToolSelected = (tool) => {
-    setSelectedTool(tool);
-    setToolType(toolTypes.TOOLS);
-  };
 
   const handlePlotToolSelected = (tool) => {
     // Get map layer category from plot script name
@@ -77,21 +62,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       cat.layers.find((l) => l.name === layer),
     );
     if (category) {
-      setActiveMapCategory(category?.name);
+      setActiveMapCategory(category.name);
       setSelectedLayer(layer);
     }
 
-    // Set selected plot tool and switch to map layers tool type
-    setSelectedPlotTool(tool);
-    setToolType(toolTypes.MAP_LAYERS);
-  };
-
-  const handleResetTool = () => {
-    if (toolType === toolTypes.TOOLS) {
-      setSelectedTool(null);
-    } else if (toolType === toolTypes.MAP_LAYERS) {
-      setSelectedPlotTool(null);
-    }
+    selectPlotTool(tool);
   };
 
   const handleCategorySelected = (category) => {
@@ -105,7 +80,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const handleLayerSelected = (layer) => {
     const plotScriptName = VIEW_PLOT_RESULTS?.[layer] ?? null;
 
-    setSelectedPlotTool(plotScriptName);
+    useToolCardStore.getState().setSelectedPlotTool(plotScriptName);
     if (plotScriptName) setToolType(toolTypes.MAP_LAYERS);
   };
 
@@ -355,10 +330,21 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         {transitionFromTop((styles, item) =>
           item ? (
             <animated.div style={styles}>
-              <Toolbar onToolSelected={handleToolSelected} />
+              <Toolbar />
             </animated.div>
           ) : null,
         )}
+      </div>
+
+      <div
+        className="cea-overlay-card"
+        style={{
+          gridColumn: '1',
+          gridRow: '2',
+          alignSelf: 'end',
+        }}
+      >
+        <ConstructionStandardLegend />
       </div>
 
       <div id="cea-project-overlay-content" className="overlay-flex-column">
@@ -457,14 +443,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               className="cea-overlay-card cea-tool-card-container"
               style={styles}
             >
-              <ToolCard
-                selectedTool={selectedTool}
-                selectedPlotTool={selectedPlotTool}
-                selectedBuildings={selectedBuildings}
-                onToolSelected={handleToolSelected}
-                onPlotToolSelected={handlePlotToolSelected}
-                onResetTool={handleResetTool}
-              />
+              <ToolCard onPlotToolSelected={handlePlotToolSelected} />
             </animated.div>
           ) : null,
         )}

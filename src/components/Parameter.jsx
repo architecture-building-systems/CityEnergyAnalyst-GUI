@@ -23,6 +23,7 @@ import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
 import { useMapStore } from 'features/map/stores/mapStore';
+import BuildingsParameter from 'components/BuildingsParameter';
 
 // Helper component to standardize Form.Item props
 export const FormField = ({ name, help, children, ...props }) => {
@@ -276,25 +277,24 @@ const Parameter = ({ parameter, form, toolName }) => {
       }));
 
       const optionsValidator = (_, value) => {
-        if (value === null) {
-          if (nullable) return Promise.resolve();
-          return Promise.reject('Select at least one choice');
-        }
-        if (choices.length < 1) {
+        if (choices == null || choices.length === 0) {
           if (type === 'GenerationParameter')
             return Promise.reject(
               'No generations found. Run optimization first.',
             );
 
-          if (nullable) {
-            return Promise.resolve();
-          } else
+          if (!nullable)
             return Promise.reject('There are no valid choices for this input');
-        } else if (!nullable) {
-          if (!value) return Promise.reject('Select a choice');
-          if (!choices.includes(value))
-            return Promise.reject(`${value} is not a valid choice`);
+          return Promise.resolve();
         }
+
+        if (value == null || value === '') {
+          if (!nullable) return Promise.reject('Select at least one choice');
+          return Promise.resolve();
+        }
+
+        if (!choices.includes(value))
+          return Promise.reject(`${value} is not a valid choice`);
 
         return Promise.resolve();
       };
@@ -314,25 +314,45 @@ const Parameter = ({ parameter, form, toolName }) => {
             placeholder={nullable ? 'Nothing Selected' : 'Select a choice'}
             options={options}
             disabled={!choices.length}
+            allowClear={nullable}
           />
         </FormField>
       );
     }
+    case 'BuildingsParameter': {
+      return (
+        <BuildingsParameter
+          name={name}
+          help={help}
+          choices={choices}
+          value={value}
+          nullable={nullable}
+          setFieldsValue={setFieldsValue}
+          form={form}
+        />
+      );
+    }
     case 'MultiChoiceParameter':
     case 'MultiChoiceFeedstockParameter':
-    case 'BuildingsParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
     case 'InterventionTemplateMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
-    case 'ScenarioNameMultiChoiceParameter': {
+    case 'ScenarioNameMultiChoiceParameter':
+    case 'WhatIfNameMultiChoiceParameter':
+    case 'SolarPanelMultiChoiceParameter':
+    case 'ComponentMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
       }));
 
-      const placeholder =
-        type == 'BuildingsParameter' ? 'All Buildings' : 'Nothing Selected';
+      const emptyMessages = {
+        NetworkLayoutMultiChoiceParameter:
+          'Select at least one network layout.',
+        WhatIfNameMultiChoiceParameter: 'Select at least one what-if scenario.',
+      };
+
       const selectAll = (e) => {
         e.preventDefault();
         setFieldsValue({
@@ -354,35 +374,41 @@ const Parameter = ({ parameter, form, toolName }) => {
           rules={[
             {
               validator: (_, value) => {
+                if (choices == null || choices.length === 0) {
+                  if (!nullable)
+                    return Promise.reject(
+                      'There are no valid choices for this input',
+                    );
+                  return Promise.resolve();
+                }
+
                 if (value === null) {
-                  if (nullable) return Promise.resolve();
-                  return Promise.reject('Select at least one choice');
+                  if (!nullable)
+                    return Promise.reject('Select at least one choice');
+
+                  return Promise.resolve();
                 }
 
-                if (!Array.isArray(value)) {
+                if (!Array.isArray(value))
                   return Promise.reject('Value must be an array');
-                }
 
-                if (
-                  !value.length &&
-                  type == 'NetworkLayoutMultiChoiceParameter'
-                )
-                  return Promise.reject('Select at least one network layout.');
+                if (!value.length) {
+                  if (!nullable)
+                    return Promise.reject(
+                      emptyMessages[type] ?? 'Select at least one option.',
+                    );
+                  return Promise.resolve();
+                }
 
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
-                if (invalidChoices.length) {
+                if (invalidChoices.length)
                   return Promise.reject(
-                    `${invalidChoices.join(', ')} ${
-                      invalidChoices.length > 1
-                        ? 'are not valid choices'
-                        : 'is not a valid choice'
-                    }`,
+                    `${invalidChoices.join(', ')} ${invalidChoices.length > 1 ? 'are not valid choices' : 'is not a valid choice'}`,
                   );
-                } else {
-                  return Promise.resolve();
-                }
+
+                return Promise.resolve();
               },
             },
           ]}
@@ -393,7 +419,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             mode="multiple"
             tokenSeparators={[',']}
             style={{ width: '100%' }}
-            placeholder={placeholder}
+            placeholder={'Nothing Selected'}
             maxTagCount={10}
             popupRender={(menu) => (
               <div>
@@ -659,6 +685,22 @@ const Parameter = ({ parameter, form, toolName }) => {
           hasFeedback
         >
           <Input placeholder="Enter a name for the network" />
+        </FormField>
+      );
+    }
+
+    case 'WhatIfNameParameter': {
+      return (
+        <FormField
+          name={name}
+          help={help}
+          initialValue={value}
+          rules={[{ validator: validatorAsync }]}
+          validateTrigger="onBlur"
+          dependencies={parameter.depends_on || []}
+          hasFeedback
+        >
+          <Input placeholder="Enter a name for the what-if scenario" />
         </FormField>
       );
     }

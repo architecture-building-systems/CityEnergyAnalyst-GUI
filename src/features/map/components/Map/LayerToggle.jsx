@@ -3,7 +3,25 @@ import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from 'assets/icons';
-import { generateConstructionColorMap } from 'features/map/utils/constructionColors';
+import {
+  generateConstructionColorMap,
+  generateUseTypeColorMap,
+} from 'features/map/utils/constructionColors';
+
+const NetworkRadioInput = ({ value, label, selected, onSelect }) => {
+  return (
+    <label className="map-plot-label network-label">
+      <input
+        type="radio"
+        name="network-type"
+        value={value}
+        onChange={() => onSelect(value)}
+        checked={selected === value}
+      />
+      {label}
+    </label>
+  );
+};
 
 export const NetworkToggle = ({
   cooling,
@@ -18,30 +36,27 @@ export const NetworkToggle = ({
     onChange(value);
   };
 
-  const RadioInput = ({ value, label }) => {
-    return (
-      <label className="map-plot-label network-label">
-        <input
-          type="radio"
-          name="network-type"
-          value={value}
-          onChange={() => {
-            handleChange(value);
-          }}
-          checked={selected === value}
-        />
-        {label}
-      </label>
-    );
-  };
-
   return (
     <div className="network-toggle">
       <b>
         <u>Networks</u>
       </b>
-      {cooling && <RadioInput value="dc" label="District Cooling" />}
-      {heating && <RadioInput value="dh" label="District Heating" />}
+      {cooling && (
+        <NetworkRadioInput
+          value="dc"
+          label="District Cooling"
+          selected={selected}
+          onSelect={handleChange}
+        />
+      )}
+      {heating && (
+        <NetworkRadioInput
+          value="dh"
+          label="District Heating"
+          selected={selected}
+          onSelect={handleChange}
+        />
+      )}
       {!cooling && !heating && <div>No thermal networks found</div>}
     </div>
   );
@@ -54,8 +69,13 @@ const LayerToggleRadio = ({ label, value, onChange }) => {
   };
 
   return (
-    <div className="layer-toggle">
-      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
+    <div
+      className="layer-toggle"
+      onClick={handleClick}
+      onKeyDown={handleClick}
+      role="presentation"
+    >
+      <label className="layer-toggle-label">
         <input
           type="checkbox"
           name="layer-toggle"
@@ -75,6 +95,8 @@ const generateLayerToggle = (
   handleMapLabelsChange,
   handleConstructionColorChange,
   isConstructionColorEnabled,
+  handleUseTypeColorChange,
+  isUseTypeColorEnabled,
 ) => {
   const geometryGroup = [];
   if (data?.zone) {
@@ -136,10 +158,26 @@ const generateLayerToggle = (
   if (geometryGroup.length > 0)
     geometryGroup.unshift({ type: 'group', label: 'Geometry' });
 
-  const labelsGroup = [];
+  const mapStyleGroup = [];
+  mapStyleGroup.push({
+    type: 'group',
+    label: 'Map Style',
+  });
+
+  mapStyleGroup.push({
+    key: 'map_labels',
+    label: (
+      <LayerToggleRadio
+        label="Map Labels"
+        value="map_labels"
+        onChange={handleMapLabelsChange}
+      />
+    ),
+  });
+
   if (data?.zone) {
-    labelsGroup.push({ type: 'group', label: 'Labels' });
-    labelsGroup.push({
+    mapStyleGroup.push({
+      key: 'zone_labels',
       label: (
         <LayerToggleRadio
           label="Building Names"
@@ -151,53 +189,53 @@ const generateLayerToggle = (
     });
   }
 
-  const mapStyleGroup = [];
-  mapStyleGroup.push({
-    type: 'group',
-    label: 'Map Style',
-  });
-
-  mapStyleGroup.push({
-    key: 'map_labels',
-    label: (
-      <LayerToggleRadio
-        label="Map labels"
-        value="map_labels"
-        onChange={handleMapLabelsChange}
-      />
-    ),
-  });
-
   // Add construction standard coloring toggle if zone data exists
   if (data?.zone) {
+    mapStyleGroup.push({ type: 'group', label: 'Building Colours' });
     mapStyleGroup.push({
       key: 'construction_colors',
       label: (
         <LayerToggleRadioControlled
-          label="Color by standard"
+          label="By Construction Archetypes"
           value="construction_colors"
           checked={isConstructionColorEnabled}
           onChange={handleConstructionColorChange}
         />
       ),
     });
+    mapStyleGroup.push({
+      key: 'use_type_colors',
+      label: (
+        <LayerToggleRadioControlled
+          label="By Main Use Types"
+          value="use_type_colors"
+          checked={isUseTypeColorEnabled}
+          onChange={handleUseTypeColorChange}
+        />
+      ),
+    });
   }
 
-  return [...geometryGroup, ...labelsGroup, ...mapStyleGroup];
+  return [...geometryGroup, ...mapStyleGroup];
 };
 
-// Controlled checkbox for construction colors (needs to reflect state)
+// Controlled radio for color mode selection (mutually exclusive options)
 const LayerToggleRadioControlled = ({ label, value, checked, onChange }) => {
   const handleClick = (e) => {
     e.stopPropagation();
   };
 
   return (
-    <div className="layer-toggle">
-      <label className="layer-toggle-label" onClick={handleClick} onKeyDown={handleClick}>
+    <div
+      className="layer-toggle"
+      onClick={handleClick}
+      onKeyDown={handleClick}
+      role="presentation"
+    >
+      <label className="layer-toggle-label">
         <input
-          type="checkbox"
-          name="layer-toggle"
+          type="radio"
+          name="color-mode"
           value={value}
           onChange={onChange}
           checked={checked}
@@ -223,8 +261,10 @@ const LayerToggle = () => {
   const setConstructionColorMap = useMapStore(
     (state) => state.setConstructionColorMap,
   );
+  const setUseTypeColorMap = useMapStore((state) => state.setUseTypeColorMap);
   const isConstructionColorEnabled =
     colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
+  const isUseTypeColorEnabled = colorMode === COLOR_MODES.USE_TYPE;
 
   useEffect(() => {
     // Set all layers to visible by default
@@ -249,6 +289,8 @@ const LayerToggle = () => {
     if (data?.zone?.features) {
       const colorMap = generateConstructionColorMap(data.zone.features);
       setConstructionColorMap(colorMap);
+      const useTypeMap = generateUseTypeColorMap(data.zone.features);
+      setUseTypeColorMap(useTypeMap);
       // Only enable on first load — not on refetch after user toggled off
       if (!constructionColorInitialized.current) {
         setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
@@ -273,11 +315,12 @@ const LayerToggle = () => {
       setMapLabels(checked);
     };
 
-    const handleConstructionColorChange = (e) => {
-      const { checked } = e.target;
-      setColorMode(
-        checked ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT,
-      );
+    const handleConstructionColorChange = () => {
+      setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+    };
+
+    const handleUseTypeColorChange = () => {
+      setColorMode(COLOR_MODES.USE_TYPE);
     };
 
     return generateLayerToggle(
@@ -286,8 +329,17 @@ const LayerToggle = () => {
       handleMapLabelsChange,
       handleConstructionColorChange,
       isConstructionColorEnabled,
+      handleUseTypeColorChange,
+      isUseTypeColorEnabled,
     );
-  }, [data, isConstructionColorEnabled]);
+  }, [
+    data,
+    isConstructionColorEnabled,
+    isUseTypeColorEnabled,
+    setVisibility,
+    setMapLabels,
+    setColorMode,
+  ]);
 
   return (
     <Tooltip title="Toggle Layers" styles={{ body: { fontSize: 12 } }}>

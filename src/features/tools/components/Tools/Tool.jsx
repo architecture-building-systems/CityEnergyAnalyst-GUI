@@ -16,6 +16,7 @@ import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
 import { useToolFormStore } from 'features/tools/stores/tool-form-store';
+import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 
 const Tool = ({ script, onToolSelected, form }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
@@ -53,13 +54,19 @@ const Tool = ({ script, onToolSelected, form }) => {
     [expandCategories, form],
   );
 
+  const onParametersChange = useCallback(() => {
+    // Clear tool error when parameters change
+    setToolError(null);
+  }, []);
+
   const {
     params,
     isLoading,
     isFetching,
     fetchError: error,
     inputError,
-  } = useToolParams(script, form, onValidationError);
+    recheckInputs,
+  } = useToolParams(script, form, onValidationError, onParametersChange);
 
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
@@ -86,6 +93,13 @@ const Tool = ({ script, onToolSelected, form }) => {
   const disableButtons = isChecking || !isInputChecked || hasInputError;
   const changes = useChangesExist();
 
+  const handleReCheck = useCallback(() => {
+    setToolError(null);
+    recheckInputs();
+  }, [recheckInputs]);
+
+  if (script == null) return <ToolChoices onSelected={onToolSelected} />;
+
   if (isLoading)
     return (
       <div style={{ padding: 12 }}>
@@ -99,6 +113,7 @@ const Tool = ({ script, onToolSelected, form }) => {
     };
     return <AsyncError error={normalizedError} />;
   }
+
   if (!label) return null;
 
   return (
@@ -197,10 +212,14 @@ const Tool = ({ script, onToolSelected, form }) => {
               />
             </div>
 
-            <ToolError error={toolError} />
+            <ToolError error={toolError} onRecheck={handleReCheck} />
 
             {inputError != null && !inputError?.script_suggestions && (
-              <ToolError title="Unable to check inputs" error={inputError} />
+              <ToolError
+                title="Unable to check inputs"
+                error={inputError}
+                onRecheck={handleReCheck}
+              />
             )}
 
             {changes && (

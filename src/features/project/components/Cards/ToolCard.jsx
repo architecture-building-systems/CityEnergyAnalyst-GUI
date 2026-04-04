@@ -6,21 +6,34 @@ import {
   useCloseToolCard,
   toolTypes,
   useToolType,
+  useSelectedTool,
+  useSelectedPlotTool,
+  useSelectTool,
+  useToolCardStore,
 } from 'features/project/stores/tool-card';
 import { BuildingEditor } from 'features/building-editor/components/building-editor';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { PlotTool } from './plot-tool';
 
-const ToolCard = ({
-  selectedTool,
-  selectedPlotTool,
-  onToolSelected,
-  onPlotToolSelected,
-  onResetTool,
-}) => {
+const ToolCard = ({ onPlotToolSelected }) => {
   const toolType = useToolType();
   const closeToolCard = useCloseToolCard();
+  const selectedTool = useSelectedTool();
+  const selectedPlotTool = useSelectedPlotTool();
+  const selectTool = useSelectTool();
+  const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
+  const setSelectedPlotTool = useToolCardStore(
+    (state) => state.setSelectedPlotTool,
+  );
   const [form] = Form.useForm();
+
+  const handleResetTool = () => {
+    if (toolType === toolTypes.TOOLS) {
+      setSelectedTool(null);
+    } else if (toolType === toolTypes.MAP_LAYERS) {
+      setSelectedPlotTool(null);
+    }
+  };
 
   let content;
   switch (toolType) {
@@ -29,7 +42,7 @@ const ToolCard = ({
         <Tool
           key={selectedTool}
           script={selectedTool}
-          onToolSelected={onToolSelected}
+          onToolSelected={selectTool}
           form={form}
         />
       );
@@ -38,7 +51,7 @@ const ToolCard = ({
       content = (
         <PlotTool
           script={selectedPlotTool}
-          onToolSelected={onToolSelected}
+          onToolSelected={selectTool}
           onPlotToolSelected={onPlotToolSelected}
         />
       );
@@ -76,8 +89,8 @@ const ToolCard = ({
             fontSize: 14,
           }}
         >
-          {toolType == toolTypes.MAP_LAYERS && selectedPlotTool != null && (
-            <Button onClick={onResetTool}>Back</Button>
+          {toolType === toolTypes.MAP_LAYERS && selectedPlotTool != null && (
+            <Button onClick={handleResetTool}>Back</Button>
           )}
           <Button
             icon={<VerticalLeftOutlined />}

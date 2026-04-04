@@ -184,8 +184,7 @@ const GenerateZoneFormItem = ({ form }) => {
         }}
       >
         <Alert
-          // message="Select an area on the map"
-          message="On the map, search for a location and draw the boundary of your site."
+          title="On the map, search for a location and draw the boundary of your site."
           type="info"
           showIcon
         />

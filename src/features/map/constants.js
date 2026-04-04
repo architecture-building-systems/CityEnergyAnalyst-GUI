@@ -1,5 +1,6 @@
 export const SOLAR_IRRADIATION = 'solar-irradiation';
 export const DEMAND = 'demand';
+export const FINAL_ENERGY = 'energy-by-carrier';
 export const THERMAL_NETWORK = 'thermal-network';
 export const RENEWABLE_ENERGY_POTENTIALS = 'renewable-energy-potentials';
 export const LIFE_CYCLE_ANALYSIS = 'life-cycle-analysis';
@@ -10,9 +11,12 @@ export const SUPPLY_SYSTEM = 'supply-system';
 export const EMISSIONS_EMBODIED = 'lifecycle-emissions';
 export const EMISSIONS_OPERATIONAL = 'operational-emissions';
 export const EMISSION_TIMELINE = 'emission-timeline';
+export const ANTHROPOGENIC_HEAT = 'heat-rejection';
 export const PATHWAY_EMISSION_TIMELINE = 'pathway-emission-timeline';
-export const ANTHROPOGENIC_HEAT = 'anthropogenic-heat-rejection';
 export const COST_BREAKDOWN = 'cost-breakdown';
+export const COST_SANKEY = 'cost-sankey';
+export const ENERGY_SANKEY = 'energy-sankey';
+export const LDC_COMPONENT = 'ldc-component';
 
 export const DEFAULT_LEGEND_COLOUR_ARRAY = ['#2A7BB2', '#eb5025', '#f9e246'];
 export const DEFAULT_LEGEND_POINTS = 12;

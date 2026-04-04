@@ -1,6 +1,7 @@
 import { apiClient } from 'lib/api/axios';
 import { useQuery } from '@tanstack/react-query';
 import { create } from 'zustand';
+import { useMemo } from 'react';
 
 export const useMapCategoryStore = create((set) => ({
   active: null,
@@ -44,3 +45,12 @@ export const useActiveMapCategory = () =>
 
 export const useSetActiveMapCategory = () =>
   useMapCategoryStore((state) => state.setActive);
+
+export const useSelectedMapCategoryInfo = () => {
+  const active = useActiveMapCategory();
+  const categories = useMapLayerCategories();
+  return useMemo(
+    () => categories?.categories?.find((c) => c.name === active) ?? null,
+    [active, categories],
+  );
+};

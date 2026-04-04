@@ -1,5 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Alert } from 'antd';
+import { useEffect, useState } from 'react';
 import { ExternalLinkIcon } from 'assets/icons';
 
 export const ScriptSuggestions = ({
@@ -7,7 +8,16 @@ export const ScriptSuggestions = ({
   loading,
   scriptSuggestions,
 }) => {
-  if (loading)
+  const [showLoading, setShowLoading] = useState(false);
+
+  useEffect(() => {
+    // Only show loading indicator if loading takes more than 200ms to avoid flicker
+    const delay = loading ? 200 : 0;
+    const timer = setTimeout(() => setShowLoading(loading), delay);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (showLoading)
     return (
       <div
         className="cea-script-suggestions"

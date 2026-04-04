@@ -5,6 +5,7 @@ import { defaultViewState } from 'features/map/utils';
 export const COLOR_MODES = {
   DEFAULT: 'default',
   CONSTRUCTION_STANDARD: 'construction-standard',
+  USE_TYPE: 'use-type',
 };
 
 export const useMapStore = create((set) => ({
@@ -13,7 +14,6 @@ export const useMapStore = create((set) => ({
   viewState: defaultViewState,
   extruded: false,
   cameraOptions: null,
-  selectedMapCategory: null,
   selectedMapLayer: null,
   mapLayerParameters: null,
   mapLayerLegends: null,
@@ -21,9 +21,10 @@ export const useMapStore = create((set) => ({
   filters: {},
   range: [0, 0],
 
-  // Construction standard coloring state
+  // Construction standard / use type coloring state
   colorMode: COLOR_MODES.DEFAULT,
   constructionColorMap: {},
+  useTypeColorMap: {},
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
@@ -37,7 +38,6 @@ export const useMapStore = create((set) => ({
   setExtruded: (value) => set({ extruded: value }),
   setCameraOptions: (value) => set({ cameraOptions: value }),
   resetCameraOptions: () => set({ cameraOptions: null }),
-  setSelectedMapCategory: (value) => set({ selectedMapCategory: value }),
   setSelectedMapLayer: (value) => set({ selectedMapLayer: value }),
   setMapLayerParameters: (value) =>
     set((state) => ({
@@ -70,6 +70,7 @@ export const useMapStore = create((set) => ({
   // Construction standard coloring setters
   setColorMode: (value) => set({ colorMode: value }),
   setConstructionColorMap: (value) => set({ constructionColorMap: value }),
+  setUseTypeColorMap: (value) => set({ useTypeColorMap: value }),
 }));
 
 export const useCameraOptionsCalculated = () =>

@@ -16,7 +16,6 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
-  const reset = useToolFormStore((state) => state.reset);
   const watchedValuesRef = useRef({});
 
   useEffect(() => {
@@ -29,9 +28,8 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   );
 
   useEffect(() => {
-    reset();
     watchedValuesRef.current = {};
-  }, [script, reset]);
+  }, [script]);
 
   const dependencyMap = useMemo(() => {
     const allParams = [
