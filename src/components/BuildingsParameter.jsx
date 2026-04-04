@@ -41,7 +41,12 @@ const MapSelectionButtons = ({
   onCancel,
 }) =>
   !selectionActive ? (
-    <Button size="small" icon={<AimOutlined />} onClick={onStart} style={{ paddingRight: 7, gap: 2 }}>
+    <Button
+      size="small"
+      icon={<AimOutlined />}
+      onClick={onStart}
+      style={{ paddingRight: 7, gap: 2 }}
+    >
       Select on Map
     </Button>
   ) : (
@@ -79,13 +84,20 @@ const TypeFilterDropdown = ({ label, typeMap, selectedKeys, onChangeKeys }) => {
         onDeselect: handleChange,
       }}
       disabled={!items.length}
+      trigger={['click']}
     >
       <Button size="small">{label}</Button>
     </Dropdown>
   );
 };
 
-const combineSelections = (constKeys, useKeys, constTypeMap, useTypeMap, mode) => {
+const combineSelections = (
+  constKeys,
+  useKeys,
+  constTypeMap,
+  useTypeMap,
+  mode,
+) => {
   const constSet = new Set(constKeys.flatMap((k) => constTypeMap[k] ?? []));
   const useSet = new Set(useKeys.flatMap((k) => useTypeMap[k] ?? []));
 
