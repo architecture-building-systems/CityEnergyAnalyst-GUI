@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCheckInputsMutation } from './mutations';
 import { getFormValues } from '../utils';
 
@@ -17,58 +17,52 @@ const useInputValidation = (
   const [inputError, setInputError] = useState(undefined);
   const { mutateAsync: checkInputs } = useCheckInputsMutation();
 
-  useEffect(() => {
-    if (!script || !parameters || !form) return;
+  const runCheck = useCallback(
+    async (cancelled = { value: false }) => {
+      if (!script || !parameters) return;
 
-    let isMounted = true;
-
-    const validateInputs = async () => {
       setInputError(undefined);
 
+      const formParams = await getFormValues(
+        form,
+        parameters,
+        categoricalParameters,
+        onError,
+      );
+
       try {
-        const formParams = await getFormValues(
-          form,
-          parameters,
-          categoricalParameters,
-          onError,
-        );
-
-        if (!isMounted) return;
-
-        if (formParams) {
+        if (!cancelled.value && formParams) {
           await checkInputs({ tool: script, parameters: formParams });
-          if (isMounted) {
-            setInputError(null);
-          }
+          if (!cancelled.value) setInputError(null);
         }
       } catch (err) {
-        if (isMounted) {
+        if (!cancelled.value) {
           const message =
             err.response?.data?.detail ||
             err.response?.statusText ||
             err.message ||
-            'Unexpected error validating inputs';
+            'Unexpected error';
           setInputError(message);
         }
       }
-    };
+    },
+    [script, form, parameters, categoricalParameters, checkInputs, onError],
+  );
 
-    validateInputs();
-
+  // Check inputs whenever parameters change, i.e. save, reset, or refetch
+  useEffect(() => {
+    const cancelled = { value: false };
+    runCheck(cancelled);
     return () => {
-      isMounted = false;
+      cancelled.value = true;
     };
-  }, [
-    script,
-    parameters,
-    categoricalParameters,
-    dataUpdatedAt,
-    checkInputs,
-    form,
-    onError,
-  ]);
+  }, [runCheck, dataUpdatedAt]);
 
-  return inputError;
+  const recheckInputs = useCallback(() => {
+    runCheck({ value: false });
+  }, [runCheck]);
+
+  return { inputError, recheckInputs };
 };
 
 export default useInputValidation;

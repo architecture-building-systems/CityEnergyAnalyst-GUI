@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import useFormReset from './useFormReset';
@@ -24,7 +24,7 @@ const useFetchToolParams = (script) => {
   });
 };
 
-const useToolParams = (script, form, onError) => {
+const useToolParams = (script, form, onError, onParametersChange) => {
   const {
     data: params,
     isLoading,
@@ -40,9 +40,16 @@ const useToolParams = (script, form, onError) => {
     [params],
   );
 
+  // Call onParametersChange whenever parameters or inputError change
+  useEffect(() => {
+    if (onParametersChange) {
+      onParametersChange?.({ parameters, categoricalParameters });
+    }
+  }, [dataUpdatedAt, onParametersChange]);
+
   const resetForm = useFormReset(form, params, script, dataUpdatedAt);
 
-  const inputError = useInputValidation(
+  const { inputError, recheckInputs } = useInputValidation(
     script,
     parameters,
     categoricalParameters,
@@ -58,6 +65,7 @@ const useToolParams = (script, form, onError) => {
     fetchError,
     inputError,
     resetForm,
+    recheckInputs,
   };
 };
 
