@@ -14,13 +14,13 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
   const handleLayerSelected = useCallback(
     (layerName) => {
       setSelectedLayer(layerName);
-      if (onLayerSelect) onLayerSelect?.(layerName);
+      onLayerSelect?.(layerName);
     },
     [setSelectedLayer, onLayerSelect],
   );
 
   // When layers change, check if the selected layer is still valid
-  // If not, select the first layer
+  // If not, auto-select the first layer (without notifying parent)
   useEffect(() => {
     if (!layers?.length) {
       setSelectedLayer(null);
@@ -28,9 +28,9 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
     }
 
     if (!selectedLayer || !layers.find((l) => l.name === selectedLayer)) {
-      handleLayerSelected(layers[0].name);
+      setSelectedLayer(layers[0].name);
     }
-  }, [layers, selectedLayer, setSelectedLayer, handleLayerSelected]);
+  }, [layers, selectedLayer, setSelectedLayer]);
 
   // Do not show selector if there is only one layer
   if (layers?.length <= 1) return null;
@@ -79,23 +79,20 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
     setMapLayerParameters(null);
   }, [project, scenarioName, categoryInfo]);
 
-  // Reset layers and parameters when category changes
+  // Initialize parameters from active layer when it changes
   useEffect(() => {
-    if (!layers) return;
+    const activeLayer = filteredLayers[0];
+    if (!activeLayer?.parameters) return;
 
-    // Initialize parameters object with defaults from all layers
     const parameters = {};
-    for (const layer of layers) {
-      const { parameters: layerParameters } = layer;
-      for (const [key, value] of Object.entries(layerParameters)) {
-        if (value?.default) {
-          parameters[key] = value.default;
-        }
+    for (const [key, value] of Object.entries(activeLayer.parameters)) {
+      if (value && Object.prototype.hasOwnProperty.call(value, 'default')) {
+        parameters[key] = value.default;
       }
     }
 
     setMapLayerParameters(parameters);
-  }, [layers, setMapLayerParameters]);
+  }, [filteredLayers, setMapLayerParameters]);
 
   const { fetching, error } = useGetMapLayers(
     categoryInfo,
