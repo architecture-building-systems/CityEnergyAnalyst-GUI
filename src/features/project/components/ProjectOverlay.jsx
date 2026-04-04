@@ -135,19 +135,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   useEffect(() => {
     resetSelected();
     setInputEditor(false);
-    setToolType(null);
-    selectPlotTool(null);
-    setActiveMapCategory(null);
-    setSelectedLayer(null);
-  }, [
-    name,
-    scenarioName,
-    resetSelected,
-    setToolType,
-    selectPlotTool,
-    setActiveMapCategory,
-    setSelectedLayer,
-  ]);
+  }, [name, scenarioName, resetSelected]);
 
   return (
     <div
