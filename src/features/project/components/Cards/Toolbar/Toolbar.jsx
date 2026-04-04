@@ -110,10 +110,9 @@ const Toolbar = () => {
   const [showTooltip, setShowTooltip] = useState(true);
 
   const toolMenus = useMemo(() => {
-    return Object.keys(tools || {}).map((category) => {
-      if (IGNORED_TOOL_SECTIONS.includes(category)) return null;
-
-      return (
+    return Object.keys(tools || {})
+      .filter((category) => !IGNORED_TOOL_SECTIONS.includes(category))
+      .map((category) => (
         <ToolMenu
           key={category}
           category={category}
@@ -122,8 +121,7 @@ const Toolbar = () => {
           showTooltip={showTooltip}
           onMenuOpenChange={(value) => setShowTooltip(!value)}
         />
-      );
-    });
+      ));
   }, [tools, showTooltip, selectTool]);
 
   if (isLoading) return <div>Loading Tools...</div>;
