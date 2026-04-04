@@ -314,6 +314,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             placeholder={nullable ? 'Nothing Selected' : 'Select a choice'}
             options={options}
             disabled={!choices.length}
+            allowClear={nullable}
           />
         </FormField>
       );

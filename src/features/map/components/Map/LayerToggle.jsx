@@ -158,21 +158,6 @@ const generateLayerToggle = (
   if (geometryGroup.length > 0)
     geometryGroup.unshift({ type: 'group', label: 'Geometry' });
 
-  const labelsGroup = [];
-  if (data?.zone) {
-    labelsGroup.push({ type: 'group', label: 'Labels' });
-    labelsGroup.push({
-      label: (
-        <LayerToggleRadio
-          label="Building Names"
-          value="zone_labels"
-          onChange={handleChange}
-          checked
-        />
-      ),
-    });
-  }
-
   const mapStyleGroup = [];
   mapStyleGroup.push({
     type: 'group',
@@ -189,6 +174,20 @@ const generateLayerToggle = (
       />
     ),
   });
+
+  if (data?.zone) {
+    mapStyleGroup.push({
+      key: 'zone_labels',
+      label: (
+        <LayerToggleRadio
+          label="Building Names"
+          value="zone_labels"
+          onChange={handleChange}
+          checked
+        />
+      ),
+    });
+  }
 
   // Add construction standard coloring toggle if zone data exists
   if (data?.zone) {
@@ -217,7 +216,7 @@ const generateLayerToggle = (
     });
   }
 
-  return [...geometryGroup, ...labelsGroup, ...mapStyleGroup];
+  return [...geometryGroup, ...mapStyleGroup];
 };
 
 // Controlled radio for color mode selection (mutually exclusive options)

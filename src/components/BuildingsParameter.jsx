@@ -1,8 +1,11 @@
 import { AimOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Divider, Select } from 'antd';
-import { useCallback, useEffect, useRef } from 'react';
+import Icon from '@ant-design/icons';
+import { Button, Divider, Dropdown, Select, Tooltip } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { FormField } from 'components/Parameter';
+import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
+import { getMainUseType } from 'features/map/utils/constructionColors';
 import useBuildingSelectionStore, {
   useBuildingSelectionActive,
   useBuildingSelectionBuildings,
@@ -12,6 +15,25 @@ import useBuildingSelectionStore, {
   useCancelBuildingSelection,
 } from 'stores/buildingSelectionStore';
 
+// Two overlapping squares – filled region shows the boolean result
+const UnionSvg = () => (
+  <svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor">
+    <rect x="1" y="1" width="9" height="9" rx="1" opacity="0.85" />
+    <rect x="6" y="6" width="9" height="9" rx="1" opacity="0.85" />
+  </svg>
+);
+
+const IntersectSvg = () => (
+  <svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor">
+    <rect x="1" y="1" width="9" height="9" rx="1" opacity="0.3" />
+    <rect x="6" y="6" width="9" height="9" rx="1" opacity="0.3" />
+    <rect x="6" y="6" width="4" height="4" opacity="0.85" />
+  </svg>
+);
+
+const UnionIcon = (props) => <Icon component={UnionSvg} {...props} />;
+const IntersectIcon = (props) => <Icon component={IntersectSvg} {...props} />;
+
 const MapSelectionButtons = ({
   selectionActive,
   onStart,
@@ -19,7 +41,7 @@ const MapSelectionButtons = ({
   onCancel,
 }) =>
   !selectionActive ? (
-    <Button size="small" icon={<AimOutlined />} onClick={onStart}>
+    <Button size="small" icon={<AimOutlined />} onClick={onStart} style={{ paddingRight: 7, gap: 2 }}>
       Select on Map
     </Button>
   ) : (
@@ -38,6 +60,46 @@ const MapSelectionButtons = ({
     </>
   );
 
+const TypeFilterDropdown = ({ label, typeMap, selectedKeys, onChangeKeys }) => {
+  const items = Object.entries(typeMap).map(([type, buildings]) => ({
+    key: type,
+    label: `${type} (${buildings.length})`,
+  }));
+
+  const handleChange = ({ selectedKeys: keys }) => onChangeKeys(keys);
+
+  return (
+    <Dropdown
+      menu={{
+        items,
+        selectable: true,
+        multiple: true,
+        selectedKeys,
+        onSelect: handleChange,
+        onDeselect: handleChange,
+      }}
+      disabled={!items.length}
+    >
+      <Button size="small">{label}</Button>
+    </Dropdown>
+  );
+};
+
+const combineSelections = (constKeys, useKeys, constTypeMap, useTypeMap, mode) => {
+  const constSet = new Set(constKeys.flatMap((k) => constTypeMap[k] ?? []));
+  const useSet = new Set(useKeys.flatMap((k) => useTypeMap[k] ?? []));
+
+  // If only one dropdown has selections, return that set
+  if (!constKeys.length && !useKeys.length) return [];
+  if (!constKeys.length) return [...useSet];
+  if (!useKeys.length) return [...constSet];
+
+  if (mode === 'intersect') {
+    return [...constSet].filter((b) => useSet.has(b));
+  }
+  return [...new Set([...constSet, ...useSet])];
+};
+
 // Wrapper that receives form props (value/onChange) from Form.Item and forwards
 // them only to the Select, while also rendering the map selection buttons below.
 const BuildingsSelectInput = ({
@@ -48,7 +110,13 @@ const BuildingsSelectInput = ({
   onStart,
   onConfirm,
   onCancel,
+  constTypeMap,
+  useTypeMap,
 }) => {
+  const [constKeys, setConstKeys] = useState([]);
+  const [useKeys, setUseKeys] = useState([]);
+  const [combineMode, setCombineMode] = useState('union');
+
   const options = (choices ?? []).map((choice) => ({
     label: choice,
     value: choice,
@@ -57,6 +125,37 @@ const BuildingsSelectInput = ({
   const handleChange = (val) => {
     onChange(val);
     if (selectionActive) useBuildingSelectionStore.getState().setBuildings(val);
+  };
+
+  const applyTypeFilters = (nextConstKeys, nextUseKeys, nextMode) => {
+    if (!nextConstKeys.length && !nextUseKeys.length) {
+      handleChange([]);
+      return;
+    }
+
+    const result = combineSelections(
+      nextConstKeys,
+      nextUseKeys,
+      constTypeMap,
+      useTypeMap,
+      nextMode,
+    );
+    handleChange(result);
+  };
+
+  const handleConstKeysChange = (keys) => {
+    setConstKeys(keys);
+    applyTypeFilters(keys, useKeys, combineMode);
+  };
+
+  const handleUseKeysChange = (keys) => {
+    setUseKeys(keys);
+    applyTypeFilters(constKeys, keys, combineMode);
+  };
+
+  const handleSetMode = (mode) => {
+    setCombineMode(mode);
+    applyTypeFilters(constKeys, useKeys, mode);
   };
 
   return (
@@ -107,6 +206,40 @@ const BuildingsSelectInput = ({
           onConfirm={onConfirm}
           onCancel={onCancel}
         />
+        {!selectionActive && (
+          <>
+            <TypeFilterDropdown
+              label="By Const. Type"
+              typeMap={constTypeMap}
+              selectedKeys={constKeys}
+              onChangeKeys={handleConstKeysChange}
+            />
+            <TypeFilterDropdown
+              label="By Use Type"
+              typeMap={useTypeMap}
+              selectedKeys={useKeys}
+              onChangeKeys={handleUseKeysChange}
+            />
+            <Tooltip title="Union">
+              <Button
+                size="small"
+                icon={<UnionIcon />}
+                type={combineMode === 'union' ? 'primary' : 'default'}
+                onClick={() => handleSetMode('union')}
+                style={{ aspectRatio: 1, padding: 0 }}
+              />
+            </Tooltip>
+            <Tooltip title="Intersect">
+              <Button
+                size="small"
+                icon={<IntersectIcon />}
+                type={combineMode === 'intersect' ? 'primary' : 'default'}
+                onClick={() => handleSetMode('intersect')}
+                style={{ aspectRatio: 1, padding: 0 }}
+              />
+            </Tooltip>
+          </>
+        )}
       </div>
     </div>
   );
@@ -131,6 +264,30 @@ const BuildingsParameter = ({
 
   const selectionActive =
     globalSelectionActive && sessionOwner === idRef.current;
+
+  const { data: inputData } = useInputs();
+  const choicesSet = useMemo(() => new Set(choices ?? []), [choices]);
+
+  const { constTypeMap, useTypeMap } = useMemo(() => {
+    const constMap = {};
+    const useMap = {};
+    const features = inputData?.geojsons?.zone?.features ?? [];
+    for (const feature of features) {
+      const name = feature?.properties?.name;
+      if (!name || !choicesSet.has(name)) continue;
+
+      const constType = feature.properties.const_type;
+      if (constType) {
+        (constMap[constType] ??= []).push(name);
+      }
+
+      const mainUse = getMainUseType(feature.properties);
+      if (mainUse) {
+        (useMap[mainUse] ??= []).push(name);
+      }
+    }
+    return { constTypeMap: constMap, useTypeMap: useMap };
+  }, [inputData, choicesSet]);
 
   const previousValueRef = useRef(null);
 
@@ -218,6 +375,8 @@ const BuildingsParameter = ({
         onStart={handleStartSelection}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
+        constTypeMap={constTypeMap}
+        useTypeMap={useTypeMap}
       />
     </FormField>
   );
