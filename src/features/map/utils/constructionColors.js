@@ -163,6 +163,7 @@ export const getMainUseType = (properties) => {
       ratio: parseFloat(properties?.use_type3r) || 0,
     },
   ];
+  if (types.every(({ ratio }) => ratio === 0)) return null;
   const best = types.reduce((a, b) => (b.ratio > a.ratio ? b : a), types[0]);
   return best?.type || null;
 };
