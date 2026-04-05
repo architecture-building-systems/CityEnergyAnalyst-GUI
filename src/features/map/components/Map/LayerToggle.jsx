@@ -97,7 +97,6 @@ const generateLayerToggle = (
   isConstructionColorEnabled,
   handleUseTypeColorChange,
   isUseTypeColorEnabled,
-  handleColorOff,
 ) => {
   const geometryGroup = [];
   if (data?.zone) {
@@ -201,7 +200,6 @@ const generateLayerToggle = (
           value="construction_colors"
           checked={isConstructionColorEnabled}
           onChange={handleConstructionColorChange}
-          onUncheck={handleColorOff}
         />
       ),
     });
@@ -213,7 +211,6 @@ const generateLayerToggle = (
           value="use_type_colors"
           checked={isUseTypeColorEnabled}
           onChange={handleUseTypeColorChange}
-          onUncheck={handleColorOff}
         />
       ),
     });
@@ -223,19 +220,10 @@ const generateLayerToggle = (
 };
 
 // Controlled radio for color mode selection (mutually exclusive, click again to turn off)
-const LayerToggleRadioControlled = ({
-  label,
-  checked,
-  onChange,
-  onUncheck,
-}) => {
+const LayerToggleRadioControlled = ({ label, checked, onChange }) => {
   const handleClick = (e) => {
+    // Prevent the click from closing the dropdown
     e.stopPropagation();
-    if (checked) {
-      onUncheck?.();
-    } else {
-      onChange?.();
-    }
   };
 
   return (
@@ -249,8 +237,7 @@ const LayerToggleRadioControlled = ({
         <input
           type="checkbox"
           checked={checked}
-          onChange={() => {}}
-          style={{ appearance: 'radio', WebkitAppearance: 'radio' }}
+          onChange={(e) => onChange?.(e.target.checked)}
         />
         {label}
       </label>
@@ -327,16 +314,14 @@ const LayerToggle = () => {
       setMapLabels(checked);
     };
 
-    const handleConstructionColorChange = () => {
-      setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+    const handleConstructionColorChange = (on) => {
+      setColorMode(
+        on ? COLOR_MODES.CONSTRUCTION_STANDARD : COLOR_MODES.DEFAULT,
+      );
     };
 
-    const handleUseTypeColorChange = () => {
-      setColorMode(COLOR_MODES.USE_TYPE);
-    };
-
-    const handleColorOff = () => {
-      setColorMode(COLOR_MODES.DEFAULT);
+    const handleUseTypeColorChange = (on) => {
+      setColorMode(on ? COLOR_MODES.USE_TYPE : COLOR_MODES.DEFAULT);
     };
 
     return generateLayerToggle(
@@ -347,7 +332,6 @@ const LayerToggle = () => {
       isConstructionColorEnabled,
       handleUseTypeColorChange,
       isUseTypeColorEnabled,
-      handleColorOff,
     );
   }, [
     data,
