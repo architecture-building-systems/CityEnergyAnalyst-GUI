@@ -1,30 +1,76 @@
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button, ConfigProvider, Form } from 'antd';
+import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { iconMap, VIEW_PLOT_RESULTS } from 'features/plots/constants';
+import {
+  VIEW_PLOT_RESULTS,
+  PLOT_LABELS,
+  PLOT_GROUPS,
+} from 'features/plots/constants';
+import './tool-choices.css';
 
-const PlotChoices = ({ onSelected }) => {
-  const choices = Object.keys(VIEW_PLOT_RESULTS).filter(
-    (key) => VIEW_PLOT_RESULTS[key],
-  );
+const PlotButton = ({ plotKey, onSelected }) => {
+  const script = VIEW_PLOT_RESULTS[plotKey];
+  if (!script) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <Button
+      key={plotKey}
+      onClick={() => onSelected(script)}
+      className="cea-tool-choices-button"
+    >
+      {PLOT_LABELS[plotKey] || plotKey}
+    </Button>
+  );
+};
+
+const PlotChoices = ({ onSelected }) => {
+  return (
+    <div className="cea-tool-choices">
       <h2>Select a Plot Tool</h2>
-      {choices.map((choice) => {
-        const Icon = iconMap?.[choice] || null; // Fallback to null if no icon is found
-        return (
-          <Button
-            key={choice}
-            icon={<Icon />}
-            onClick={() => onSelected(VIEW_PLOT_RESULTS[choice])}
-          >
-            {choice}
-          </Button>
-        );
-      })}
+      <div className="cea-tool-choices-group-list">
+        {PLOT_GROUPS.map((group) => (
+          <div key={group.label}>
+            <Divider orientation="left" orientationMargin={0}>
+              <span className="cea-tool-choices-group-label">
+                {group.icon && <group.icon />}
+                <small>{group.label}</small>
+              </span>
+            </Divider>
+            <div className="cea-tool-choices-group-content">
+              {group.subgroups ? (
+                group.subgroups.map((sub) => (
+                  <div key={sub.label} className="cea-tool-choices-subgroup">
+                    <small className="cea-tool-choices-subgroup-label">
+                      {sub.label}
+                    </small>
+                    <div className="cea-tool-choices-button-list">
+                      {sub.keys.map((key) => (
+                        <PlotButton
+                          key={key}
+                          plotKey={key}
+                          onSelected={onSelected}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="cea-tool-choices-button-list">
+                  {group.keys.map((key) => (
+                    <PlotButton
+                      key={key}
+                      plotKey={key}
+                      onSelected={onSelected}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

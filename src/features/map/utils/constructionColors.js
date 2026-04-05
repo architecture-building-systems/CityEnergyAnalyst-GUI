@@ -4,23 +4,23 @@
 
 import { hexToRgb } from './index';
 
-// Predefined palette of distinct, visually pleasing colors
+// CEA light colour palette for construction archetypes
 const PREDEFINED_COLORS = [
-  '#4CAF50', // Green
-  '#2196F3', // Blue
-  '#FF9800', // Orange
-  '#9C27B0', // Purple
-  '#F44336', // Red
-  '#00BCD4', // Cyan
-  '#E91E63', // Pink
-  '#8BC34A', // Light Green
-  '#3F51B5', // Indigo
-  '#FF5722', // Deep Orange
-  '#009688', // Teal
-  '#673AB7', // Deep Purple
-  '#FFEB3B', // Yellow
-  '#795548', // Brown
-  '#607D8B', // Blue Grey
+  '#f6958f', // Red light
+  '#97d6d7', // Blue light
+  '#ffe185', // Yellow light
+  '#c9b787', // Brown light
+  '#c695a7', // Purple light
+  '#b2dbb7', // Green light
+  '#fab185', // Orange light
+  '#66cdaa', // Teal light
+  '#84def4', // Cyan light
+  '#ff99ff', // Magenta light
+  '#ffb6c1', // Pink light
+  '#bdb76b', // Olive light
+  '#6495ed', // Navy light
+  '#8a2be2', // Indigo light
+  '#a2a1a6', // Grey light
 ];
 
 /**
@@ -141,4 +141,63 @@ export const getBuildingColorByStandard = (constType, colorMap) => {
     return [128, 128, 128, 255];
   }
   return hexToRgb(colorMap[constType]);
+};
+
+/**
+ * Get the main use type for a building feature.
+ * The main use type is whichever of use_type1/2/3 has the highest ratio.
+ * If tied, use the one that comes first (1 before 2 before 3).
+ */
+export const getMainUseType = (properties) => {
+  const types = [
+    {
+      type: properties?.use_type1,
+      ratio: parseFloat(properties?.use_type1r) || 0,
+    },
+    {
+      type: properties?.use_type2,
+      ratio: parseFloat(properties?.use_type2r) || 0,
+    },
+    {
+      type: properties?.use_type3,
+      ratio: parseFloat(properties?.use_type3r) || 0,
+    },
+  ];
+  if (types.every(({ ratio }) => ratio === 0)) return null;
+  const best = types.reduce((a, b) => (b.ratio > a.ratio ? b : a), types[0]);
+  return best?.type || null;
+};
+
+/**
+ * Generate a color map for all unique main use types found in buildings
+ */
+export const generateUseTypeColorMap = (features) => {
+  if (!features || !features.length) return {};
+
+  const uniqueTypes = new Set();
+  features.forEach((feature) => {
+    const mainUse = getMainUseType(feature?.properties);
+    if (mainUse) {
+      uniqueTypes.add(mainUse);
+    }
+  });
+
+  const sortedTypes = Array.from(uniqueTypes).sort();
+  const colorMap = {};
+  sortedTypes.forEach((type, index) => {
+    colorMap[type] = generateColorForStandard(type, index);
+  });
+
+  return colorMap;
+};
+
+/**
+ * Get the RGB color array for a building based on its main use type
+ */
+export const getBuildingColorByUseType = (properties, colorMap) => {
+  const mainUse = getMainUseType(properties);
+  if (!mainUse || !colorMap[mainUse]) {
+    return [128, 128, 128, 255];
+  }
+  return hexToRgb(colorMap[mainUse]);
 };

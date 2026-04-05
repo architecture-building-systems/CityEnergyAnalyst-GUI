@@ -1,8 +1,10 @@
 import { Slider } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { useEffect, useMemo, useState } from 'react';
+import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import useDependsOn from './useDependsOn';
 
 const getRange = async (
   layerCategory,
@@ -33,6 +35,15 @@ const checkIsValidRange = (range) => {
   );
 };
 
+const isSameRange = (a, b) => {
+  return (
+    checkIsValidRange(a) &&
+    checkIsValidRange(b) &&
+    a[0] === b[0] &&
+    a[1] === b[1]
+  );
+};
+
 const generateTenMarks = (min, max) => {
   const marks = {};
   const firstTen = Math.ceil(min / 10) * 10;
@@ -52,16 +63,30 @@ const SliderSelector = ({
   onChange,
   layerName,
   range: staticRange,
+  dependsOn,
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const categoryInfo = useMapStore((state) => state.selectedMapCategory);
+  const categoryInfo = useSelectedMapCategoryInfo();
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
   const [dynamicRange, setDynamicRange] = useState();
+  const mapLayerParametersRef = useRef(mapLayerParameters);
+  const onChangeRef = useRef(onChange);
   const min = staticRange?.[0] ?? dynamicRange?.[0] ?? null;
   const max = staticRange?.[1] ?? dynamicRange?.[1] ?? null;
+
+  useEffect(() => {
+    mapLayerParametersRef.current = mapLayerParameters;
+  }, [mapLayerParameters]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const marks = useMemo(() => {
     if (checkIsValidRange([min, max])) {
@@ -70,18 +95,22 @@ const SliderSelector = ({
     return {};
   }, [min, max]);
 
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
+  const { dependsOnValues, dependsValid } = useDependsOn(
+    dependsOn,
+    mapLayerParameters,
   );
 
-  const handleChange = (newValue) => {
-    setSliderValue(newValue);
-    setMapLayerParameters((prev) => ({
-      ...prev,
-      [parameterName]: newValue,
-    }));
-    onChange?.(newValue);
-  };
+  const handleChange = useCallback(
+    (newValue) => {
+      setSliderValue(newValue);
+      setMapLayerParameters((prev) => ({
+        ...(prev ?? {}),
+        [parameterName]: newValue,
+      }));
+      onChange?.(newValue);
+    },
+    [onChange, parameterName, setMapLayerParameters],
+  );
 
   const handleSliderChange = (newValue) => {
     setSliderValue(newValue);
@@ -89,13 +118,14 @@ const SliderSelector = ({
 
   // Fetch dynamic range only if static range is not provided
   useEffect(() => {
-    // If static range is provided, use it and don't fetch from backend
+    // If static range is provided, skip dynamic fetch
     if (staticRange && Array.isArray(staticRange) && staticRange.length === 2) {
-      setDynamicRange(staticRange);
       return;
     }
 
-    // Only fetch range if no static range is provided (dynamic range case)
+    // Wait until all dependent params have been set
+    if (!dependsValid) return;
+
     const fetchRange = async () => {
       try {
         const rangeData = await getRange(
@@ -104,14 +134,36 @@ const SliderSelector = ({
           parameterName,
           project,
           scenarioName,
-          mapLayerParameters ?? {},
+          mapLayerParametersRef.current ?? {},
         );
 
-        // Validate range data before using it
         if (checkIsValidRange(rangeData)) {
-          setDynamicRange(rangeData);
-          // Set new value to be full range of new data
-          handleChange(rangeData);
+          setDynamicRange((prev) =>
+            isSameRange(prev, rangeData) ? prev : rangeData,
+          );
+
+          const currentParameterValue =
+            mapLayerParametersRef.current?.[parameterName];
+          const shouldApplyFetchedRange = !isSameRange(
+            currentParameterValue,
+            rangeData,
+          );
+
+          if (shouldApplyFetchedRange) {
+            setSliderValue(rangeData);
+            setMapLayerParameters((prev) => {
+              const prevValue = prev?.[parameterName];
+              if (isSameRange(prevValue, rangeData)) {
+                return prev;
+              }
+
+              return {
+                ...(prev ?? {}),
+                [parameterName]: rangeData,
+              };
+            });
+            onChangeRef.current?.(rangeData);
+          }
         } else {
           console.warn('Invalid range data received:', rangeData);
           setDynamicRange(null);
@@ -125,7 +177,17 @@ const SliderSelector = ({
     if (categoryInfo?.name && layerName && project && scenarioName) {
       fetchRange();
     }
-  }, [categoryInfo?.name, layerName, project, scenarioName, staticRange]);
+  }, [
+    categoryInfo?.name,
+    layerName,
+    parameterName,
+    project,
+    scenarioName,
+    staticRange,
+    dependsOnValues,
+    dependsValid,
+    setMapLayerParameters,
+  ]);
 
   return (
     <div>

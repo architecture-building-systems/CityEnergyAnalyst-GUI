@@ -15,16 +15,13 @@
   padding: 0 !important;
 }
 
-.layer-toggle {
-  padding: 5px 12px;
-}
-
 .layer-toggle .layer-toggle-label {
   display: flex;
   align-items: center;
   gap: 8px;
-
+  padding: 5px 12px;
   user-select: none;
+  cursor: pointer;
 }
 
 .map-plot-label.network-label {

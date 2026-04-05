@@ -277,25 +277,24 @@ const Parameter = ({ parameter, form, toolName }) => {
       }));
 
       const optionsValidator = (_, value) => {
-        if (value === null) {
-          if (nullable) return Promise.resolve();
-          return Promise.reject('Select at least one choice');
-        }
-        if (choices.length < 1) {
+        if (choices == null || choices.length === 0) {
           if (type === 'GenerationParameter')
             return Promise.reject(
               'No generations found. Run optimization first.',
             );
 
-          if (nullable) {
-            return Promise.resolve();
-          } else
+          if (!nullable)
             return Promise.reject('There are no valid choices for this input');
-        } else if (!nullable) {
-          if (!value) return Promise.reject('Select a choice');
-          if (!choices.includes(value))
-            return Promise.reject(`${value} is not a valid choice`);
+          return Promise.resolve();
         }
+
+        if (value == null || value === '') {
+          if (!nullable) return Promise.reject('Select at least one choice');
+          return Promise.resolve();
+        }
+
+        if (!choices.includes(value))
+          return Promise.reject(`${value} is not a valid choice`);
 
         return Promise.resolve();
       };
@@ -315,6 +314,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             placeholder={nullable ? 'Nothing Selected' : 'Select a choice'}
             options={options}
             disabled={!choices.length}
+            allowClear={nullable}
           />
         </FormField>
       );
@@ -338,11 +338,20 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'ColumnMultiChoiceParameter':
     case 'InterventionTemplateMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
-    case 'ScenarioNameMultiChoiceParameter': {
+    case 'ScenarioNameMultiChoiceParameter':
+    case 'WhatIfNameMultiChoiceParameter':
+    case 'SolarPanelMultiChoiceParameter':
+    case 'ComponentMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
       }));
+
+      const emptyMessages = {
+        NetworkLayoutMultiChoiceParameter:
+          'Select at least one network layout.',
+        WhatIfNameMultiChoiceParameter: 'Select at least one what-if scenario.',
+      };
 
       const selectAll = (e) => {
         e.preventDefault();
@@ -365,35 +374,41 @@ const Parameter = ({ parameter, form, toolName }) => {
           rules={[
             {
               validator: (_, value) => {
+                if (choices == null || choices.length === 0) {
+                  if (!nullable)
+                    return Promise.reject(
+                      'There are no valid choices for this input',
+                    );
+                  return Promise.resolve();
+                }
+
                 if (value === null) {
-                  if (nullable) return Promise.resolve();
-                  return Promise.reject('Select at least one choice');
+                  if (!nullable)
+                    return Promise.reject('Select at least one choice');
+
+                  return Promise.resolve();
                 }
 
-                if (!Array.isArray(value)) {
+                if (!Array.isArray(value))
                   return Promise.reject('Value must be an array');
-                }
 
-                if (
-                  !value.length &&
-                  type == 'NetworkLayoutMultiChoiceParameter'
-                )
-                  return Promise.reject('Select at least one network layout.');
+                if (!value.length) {
+                  if (!nullable)
+                    return Promise.reject(
+                      emptyMessages[type] ?? 'Select at least one option.',
+                    );
+                  return Promise.resolve();
+                }
 
                 const invalidChoices = value.filter(
                   (choice) => !choices.includes(choice),
                 );
-                if (invalidChoices.length) {
+                if (invalidChoices.length)
                   return Promise.reject(
-                    `${invalidChoices.join(', ')} ${
-                      invalidChoices.length > 1
-                        ? 'are not valid choices'
-                        : 'is not a valid choice'
-                    }`,
+                    `${invalidChoices.join(', ')} ${invalidChoices.length > 1 ? 'are not valid choices' : 'is not a valid choice'}`,
                   );
-                } else {
-                  return Promise.resolve();
-                }
+
+                return Promise.resolve();
               },
             },
           ]}
@@ -670,6 +685,22 @@ const Parameter = ({ parameter, form, toolName }) => {
           hasFeedback
         >
           <Input placeholder="Enter a name for the network" />
+        </FormField>
+      );
+    }
+
+    case 'WhatIfNameParameter': {
+      return (
+        <FormField
+          name={name}
+          help={help}
+          initialValue={value}
+          rules={[{ validator: validatorAsync }]}
+          validateTrigger="onBlur"
+          dependencies={parameter.depends_on || []}
+          hasFeedback
+        >
+          <Input placeholder="Enter a name for the what-if scenario" />
         </FormField>
       );
     }

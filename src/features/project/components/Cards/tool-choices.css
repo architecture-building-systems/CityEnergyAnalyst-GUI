@@ -1,0 +1,61 @@
+.cea-tool-choices {
+  --button-gap: 8px;
+  --group-gap: 8px;
+  --subgroup-gap: 16px;
+  --section-gap: 12px;
+  --section-padding-inline: 18px;
+  --heading-margin-bottom: 8px;
+  --outer-margin: 12px;
+  --label-color: var(--text-primary);
+  --sublabel-color: var(--text-secondary);
+
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.cea-tool-choices h2 {
+  margin-bottom: var(--heading-margin-bottom);
+}
+
+.cea-tool-choices-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--group-gap);
+  margin: var(--outer-margin);
+}
+
+.cea-tool-choices-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--label-color);
+}
+
+.cea-tool-choices-group-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--subgroup-gap);
+  padding-inline: var(--section-padding-inline);
+}
+
+.cea-tool-choices-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.cea-tool-choices-subgroup-label {
+  color: var(--sublabel-color);
+}
+
+.cea-tool-choices-button-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--button-gap);
+}
+
+.cea-tool-choices-button {
+  justify-content: flex-start;
+  width: 100%;
+}

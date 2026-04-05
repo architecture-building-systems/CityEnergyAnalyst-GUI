@@ -1,8 +1,10 @@
 import { Select } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { useEffect, useMemo, useState } from 'react';
+import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
+import { useEffect, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import useDependsOn from './useDependsOn';
 
 const getChoices = async (
   layerCategory,
@@ -35,25 +37,20 @@ const ChoiceSelector = ({
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const categoryInfo = useMapStore((state) => state.selectedMapCategory);
+  const categoryInfo = useSelectedMapCategoryInfo();
 
   const [selected, setSelected] = useState(value ?? defaultValue);
   const [choices, setChoices] = useState(null);
+
+  const { dependsOnValues, dependsValid } = useDependsOn(
+    dependsOn,
+    mapLayerParameters,
+  );
 
   const handleChange = (value) => {
     setSelected(value);
     onChange?.(value);
   };
-
-  const dependsOnValues = useMemo(() => {
-    if (!dependsOn) return null;
-    return JSON.stringify(dependsOn.map((key) => mapLayerParameters?.[key]));
-  }, [mapLayerParameters]);
-
-  const dependsValid = useMemo(() => {
-    if (!dependsOn) return true;
-    return dependsOn.every((prop) => mapLayerParameters?.[prop] !== undefined);
-  }, [mapLayerParameters]);
 
   useEffect(() => {
     // Only fetch if valid
@@ -82,7 +79,7 @@ const ChoiceSelector = ({
     };
 
     fetchChoices();
-  }, [dependsOnValues]);
+  }, [dependsOnValues, dependsValid]);
 
   // Set the default value from backend (or first choice as fallback)
   useEffect(() => {

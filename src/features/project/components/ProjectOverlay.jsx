@@ -54,7 +54,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       cat.layers.find((l) => l.name === layer),
     );
     if (category) {
-      setActiveMapCategory(category?.name);
+      setActiveMapCategory(category.name);
       setSelectedLayer(layer);
     }
 
@@ -133,16 +133,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   // Reset state when project or scenario name changes
   useEffect(() => {
-    const resetState = () => {
-      useToolCardStore.getState().setToolType(null);
-      useToolCardStore.getState().setSelectedTool(null);
-
-      resetSelected();
-      setInputEditor(false);
-    };
-
-    resetState();
-  }, [name, scenarioName]);
+    resetSelected();
+    setInputEditor(false);
+  }, [name, scenarioName, resetSelected]);
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCheckInputsMutation } from './mutations';
 import { getFormValues } from '../utils';
 
@@ -7,68 +7,62 @@ import { getFormValues } from '../utils';
  * Triggers validation whenever parameters or form data changes.
  */
 const useInputValidation = (
-    script,
-    parameters,
-    categoricalParameters,
-    form,
-    onError,
-    dataUpdatedAt
+  script,
+  parameters,
+  categoricalParameters,
+  form,
+  onError,
+  dataUpdatedAt,
 ) => {
-    const [inputError, setInputError] = useState(undefined);
-    const { mutateAsync: checkInputs } = useCheckInputsMutation();
+  const [inputError, setInputError] = useState(undefined);
+  const { mutateAsync: checkInputs } = useCheckInputsMutation();
 
-    useEffect(() => {
-        if (!script || !parameters || !form) return;
+  const runCheck = useCallback(
+    async (cancelled = { value: false }) => {
+      if (!script || !parameters) return;
 
-        let isMounted = true;
+      setInputError(undefined);
 
-        const validateInputs = async () => {
-            setInputError(undefined);
-
-            try {
-                const formParams = await getFormValues(
-                    form,
-                    parameters,
-                    categoricalParameters,
-                    onError
-                );
-
-                if (!isMounted) return;
-
-                if (formParams) {
-                    await checkInputs({ tool: script, parameters: formParams });
-                    if (isMounted) {
-                        setInputError(null);
-                    }
-                }
-            } catch (err) {
-                if (isMounted) {
-                    const message =
-                        err.response?.data?.detail ||
-                        err.response?.statusText ||
-                        err.message ||
-                        'Unexpected error validating inputs';
-                    setInputError(message);
-                }
-            }
-        };
-
-        validateInputs();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [
-        script,
+      const formParams = await getFormValues(
+        form,
         parameters,
         categoricalParameters,
-        dataUpdatedAt,
-        checkInputs,
-        form,
         onError,
-    ]);
+      );
 
-    return inputError;
+      try {
+        if (!cancelled.value && formParams) {
+          await checkInputs({ tool: script, parameters: formParams });
+          if (!cancelled.value) setInputError(null);
+        }
+      } catch (err) {
+        if (!cancelled.value) {
+          const message =
+            err.response?.data?.detail ||
+            err.response?.statusText ||
+            err.message ||
+            'Unexpected error';
+          setInputError(message);
+        }
+      }
+    },
+    [script, form, parameters, categoricalParameters, checkInputs, onError],
+  );
+
+  // Check inputs whenever parameters change, i.e. save, reset, or refetch
+  useEffect(() => {
+    const cancelled = { value: false };
+    runCheck(cancelled);
+    return () => {
+      cancelled.value = true;
+    };
+  }, [runCheck, dataUpdatedAt]);
+
+  const recheckInputs = useCallback(() => {
+    runCheck({ value: false });
+  }, [runCheck]);
+
+  return { inputError, recheckInputs };
 };
 
 export default useInputValidation;

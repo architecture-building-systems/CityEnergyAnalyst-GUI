@@ -26,6 +26,7 @@ import {
   useMapStore,
   COLOR_MODES,
 } from 'features/map/stores/mapStore';
+import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
 import { useCameraFitBounds } from 'features/map/hooks';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -42,7 +43,10 @@ import {
 } from 'features/map/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from 'features/map/utils';
-import { getBuildingColorByStandard } from 'features/map/utils/constructionColors';
+import {
+  getBuildingColorByStandard,
+  getBuildingColorByUseType,
+} from 'features/map/utils/constructionColors';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
@@ -117,9 +121,8 @@ const normalizeLineWidth = (value, min, max, minWidth = 1, maxWidth = 10) => {
 
 const useMapLayers = (onHover = () => {}) => {
   const mapLayers = useMapStore((state) => state.mapLayers);
-  const categoryLayers = useMapStore(
-    (state) => state.selectedMapCategory?.layers,
-  );
+  const selectedMapCategory = useSelectedMapCategoryInfo();
+  const categoryLayers = selectedMapCategory?.layers;
 
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
@@ -462,6 +465,7 @@ const DeckGLMap = ({ data, colors }) => {
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );
+  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
 
   const mapStyle = useMapStyle();
   useMapAttribution(mapRef);
@@ -473,6 +477,7 @@ const DeckGLMap = ({ data, colors }) => {
         selected,
         colorMode,
         constructionColorMap,
+        useTypeColorMap,
         buildingSelectionActive,
         buildingSelectionBuildings,
       ),
@@ -481,6 +486,7 @@ const DeckGLMap = ({ data, colors }) => {
       selected,
       colorMode,
       constructionColorMap,
+      useTypeColorMap,
       buildingSelectionActive,
       buildingSelectionBuildings,
     ],
@@ -566,6 +572,7 @@ const DeckGLMap = ({ data, colors }) => {
               selected,
               colorMode,
               constructionColorMap,
+              useTypeColorMap,
               buildingSelectionActive,
               buildingSelectionBuildings,
             ],
@@ -789,6 +796,7 @@ const buildingColorFunction =
     selected,
     colorMode,
     constructionColorMap,
+    useTypeColorMap,
     buildingSelectionActive,
     buildingSelectionBuildings,
   ) =>
@@ -816,8 +824,12 @@ const buildingColorFunction =
     // Check if construction standard coloring is enabled for zone layer
     if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD && layer === 'zone') {
       const constType = feature?.properties?.const_type;
-      // Use getBuildingColorByStandard which returns gray for missing/unknown types
       return getBuildingColorByStandard(constType, constructionColorMap);
+    }
+
+    // Check if use type coloring is enabled for zone layer
+    if (colorMode === COLOR_MODES.USE_TYPE && layer === 'zone') {
+      return getBuildingColorByUseType(feature?.properties, useTypeColorMap);
     }
 
     return colors.disconnected;

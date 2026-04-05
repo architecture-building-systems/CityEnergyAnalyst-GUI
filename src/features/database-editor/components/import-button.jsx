@@ -161,7 +161,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
           <Alert
             type="error"
             showIcon
-            message="Upload Failed"
+            title="Upload Failed"
             description={
               <div style={{ overflow: 'auto' }}>
                 <pre>{errorMessage}</pre>
@@ -177,14 +177,14 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
           <Alert
             type="warning"
             showIcon
-            message="Uploading a database will replace your current database."
+            title="Uploading a database will replace your current database."
           />
         </div>
       )}
       {!!databaseChanges.length && (
         <div style={{ marginBottom: 20 }}>
           <Alert
-            message="ATTENTION"
+            title="ATTENTION"
             type="warning"
             showIcon
             description="There are unsaved changes. These changes will be lost when uploading a new database. It is advised to save these changes before proceeding."

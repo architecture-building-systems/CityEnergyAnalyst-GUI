@@ -1,4 +1,5 @@
-import { Alert } from 'antd';
+import { Alert, Button } from 'antd';
+import { RefreshIcon } from 'assets/icons';
 
 const parseError = (error) => {
   if (!error) return null;
@@ -13,7 +14,7 @@ const parseError = (error) => {
   return { message: 'An unexpected error occurred.', fieldErrors: null };
 };
 
-export const ToolError = ({ title, error }) => {
+export const ToolError = ({ title, error, onRecheck }) => {
   const parsed = parseError(error);
   if (!parsed) return null;
 
@@ -35,6 +36,13 @@ export const ToolError = ({ title, error }) => {
       title={title || message}
       description={description}
       type="error"
+      action={
+        onRecheck ? (
+          <Button icon={<RefreshIcon />} onClick={onRecheck}>
+            Retry
+          </Button>
+        ) : null
+      }
     />
   );
 };
