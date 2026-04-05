@@ -79,7 +79,7 @@ const ChoiceSelector = ({
     };
 
     fetchChoices();
-  }, [dependsOnValues]);
+  }, [dependsOnValues, dependsValid]);
 
   // Set the default value from backend (or first choice as fallback)
   useEffect(() => {
