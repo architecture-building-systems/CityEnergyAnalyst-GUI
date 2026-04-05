@@ -5,7 +5,7 @@ import { Tooltip } from 'antd';
 const INFO_TEXT = {
   construction:
     'Construction Archetypes define the building envelope and systems standards. Assign in Input Editor > zone (const_type). Edit or add in Database Editor > CONSTRUCTION_ARCHETYPES.',
-  useType:
+  mainUseType:
     'Main use type is the use type with the highest occupancy ratio. Assign in Input Editor > zone (use_type1, use_type2, use_type3 and their ratios). Edit or add in Database Editor > USE_TYPES.',
 };
 
@@ -66,7 +66,9 @@ const ConstructionStandardLegend = () => {
       >
         {title}
         <Tooltip
-          title={isConstruction ? INFO_TEXT.construction : INFO_TEXT.useType}
+          title={
+            isConstruction ? INFO_TEXT.construction : INFO_TEXT.mainUseType
+          }
           styles={{ body: { fontSize: 12 } }}
         >
           <InfoCircleOutlined style={{ color: '#999', cursor: 'pointer' }} />
