@@ -383,6 +383,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 height: pathwayPanelExpanded ? 'auto' : pathwayPanelHeight,
+                maxHeight: pathwayPanelExpanded
+                  ? 'calc(100vh - 152px)'
+                  : pathwayPanelHeight,
+                zIndex: 10,
                 ...(pathwayPanelExpanded
                   ? {
                       position: 'fixed',
