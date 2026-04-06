@@ -880,7 +880,6 @@ const PathwayPanel = ({
             'pathway-intervention-templates-define',
             'pathway-simulations',
             'pathway-update-building-events',
-            'pathway-validate-all-states',
           ].includes(job.script),
       );
 
@@ -1318,13 +1317,6 @@ const PathwayPanel = ({
                 />
               </Tooltip>
             </div>
-            <Button
-              disabled={!selectedPathway || visiblePathways.length > 1}
-              loading={busyAction === 'pathway-validate-all-states'}
-              onClick={() => handleRunPathwayJob('pathway-validate-all-states')}
-            >
-              Validate All States
-            </Button>
             <Button
               disabled={!selectedPathway || visiblePathways.length > 1}
               loading={busyAction === 'bake-pathway-states'}
