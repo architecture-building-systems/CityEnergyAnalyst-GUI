@@ -121,16 +121,13 @@ const formatCompactTimestamp = (value) => {
 };
 
 const getTickStep = (pxPerYear) => {
-  if (pxPerYear >= 56) {
-    return 1;
+  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+  for (const step of steps) {
+    if (pxPerYear * step >= 56) {
+      return step;
+    }
   }
-  if (pxPerYear * 2 >= 56) {
-    return 2;
-  }
-  if (pxPerYear * 5 >= 56) {
-    return 5;
-  }
-  return 10;
+  return 1000;
 };
 
 const pickClosestYear = (years, preferredYear) => {
