@@ -1,8 +1,4 @@
 import {
-  CheckCircleOutlined,
-  ToolOutlined,
-} from '@ant-design/icons';
-import {
   Alert,
   Button,
   Divider,
@@ -38,7 +34,6 @@ import {
   fetchInterventionTemplates,
   fetchPathwayOverview,
   fetchPathwayTimeline,
-  fetchYearEditorOptions,
   preSaveBuildingEventsConfig,
 } from '../api';
 
@@ -182,12 +177,6 @@ const getNodeFill = (row) => {
 };
 
 const getNodeSize = () => 12;
-
-const toOptionList = (values) =>
-  (values ?? []).map((value) => ({
-    label: value,
-    value,
-  }));
 
 const LegendChip = ({ colour, label, outline, halo }) => (
   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -573,13 +562,6 @@ const PathwayPanel = ({
   const [templateNames, setTemplateNames] = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
-  const [editorOptions, setEditorOptions] = useState(null);
-  const [editorOptionsLoading, setEditorOptionsLoading] = useState(false);
-
-  const [templateModalOpen, setTemplateModalOpen] = useState(false);
-  const [editorTargetYear, setEditorTargetYear] = useState(null);
-
-  const [selectedTemplatesDraft, setSelectedTemplatesDraft] = useState([]);
   const [selectedHeaderTemplate, setSelectedHeaderTemplate] = useState(null);
 
   const scenarioPath = useMemo(
@@ -604,13 +586,6 @@ const PathwayPanel = ({
     }
     return activeRows.find((row) => row.year === selectedYear) ?? null;
   }, [activeRows, selectedYear]);
-  const activeEditorYear = editorTargetYear ?? selectedRow?.year ?? null;
-  const activeEditorRow = useMemo(() => {
-    if (activeEditorYear == null) {
-      return null;
-    }
-    return activeRowByYear.get(activeEditorYear) ?? null;
-  }, [activeEditorYear, activeRowByYear]);
 
   const span = timeline?.span ?? overview?.span ?? {};
   const startYear = span?.start_year;
@@ -767,30 +742,6 @@ const PathwayPanel = ({
     [loadOverview, loadTimeline, loadTemplates],
   );
 
-  const ensureEditorOptions = useCallback(
-    async (pathwayName, year) => {
-      if (
-        editorOptions?.pathway_name === pathwayName &&
-        editorOptions?.year === year
-      ) {
-        return editorOptions;
-      }
-
-      setEditorOptionsLoading(true);
-      try {
-        const data = await fetchYearEditorOptions(pathwayName, year);
-        setEditorOptions(data);
-        return data;
-      } catch (error) {
-        throw new Error(
-          getErrorMessage(error, 'Failed to load editor options.'),
-        );
-      } finally {
-        setEditorOptionsLoading(false);
-      }
-    },
-    [editorOptions],
-  );
 
   const startPanelJob = useCallback(
     async ({
@@ -877,9 +828,6 @@ const PathwayPanel = ({
     setSelectedPathway(null);
     setVisiblePathways([]);
     setSelectedYear(null);
-    setEditorOptions(null);
-    setTemplateModalOpen(false);
-    setEditorTargetYear(null);
     setPendingPanelJob(null);
     pendingPreferredYearRef.current = null;
     handledJobIdsRef.current = new Set();
@@ -983,16 +931,6 @@ const PathwayPanel = ({
       if (pendingPanelJob.onSuccess === 'created-pathway') {
         // pathway created successfully
       }
-      if (pendingPanelJob.onSuccess === 'deleted-pathway') {
-        setTemplateModalOpen(false);
-        setEditorTargetYear(null);
-      }
-      if (pendingPanelJob.onSuccess === 'saved-templates') {
-        setTemplateModalOpen(false);
-        setSelectedTemplatesDraft([]);
-        setEditorTargetYear(null);
-      }
-
       setPanelError(null);
       void refreshPathwayData({
         preferredPathway:
@@ -1206,72 +1144,6 @@ const PathwayPanel = ({
     });
   };
 
-  const handleOpenTemplateEditor = async (targetYear = activeEditorYear) => {
-    if (!selectedPathway || targetYear == null) {
-      return;
-    }
-
-    setEditorTargetYear(targetYear);
-    setTemplateModalOpen(true);
-    try {
-      await ensureEditorOptions(selectedPathway, targetYear);
-      setSelectedTemplatesDraft([]);
-      setPanelError(null);
-    } catch (error) {
-      setTemplateModalOpen(false);
-      setPanelError(getErrorMessage(error, 'Failed to open template editor.'));
-    }
-  };
-
-  const handleSaveTemplates = async () => {
-    if (!selectedPathway || activeEditorYear == null) {
-      return;
-    }
-
-    await startPanelJob({
-      script: 'pathway-events-apply-templates',
-      parameters: {
-        scenario: scenarioPath,
-        existing_pathway_names: [selectedPathway],
-        year_of_state: activeEditorYear,
-        intervention_templates: selectedTemplatesDraft,
-      },
-      busyKey: 'save-templates',
-      startedMessage:
-        `Template job started for ${activeEditorYear}. Open Job Info in the status bar for details.`,
-      failedToStartMessage: 'Failed to start the template job.',
-      completionMessage: `Applied templates to ${activeEditorYear}.`,
-      failureMessage:
-        'Applying templates failed. Open Job Info in the status bar for details.',
-      preferredPathway: selectedPathway,
-      preferredYear: activeEditorYear,
-      onSuccess: 'saved-templates',
-    });
-  };
-
-  const handleValidateState = async () => {
-    if (!selectedPathway || !selectedRow) {
-      return;
-    }
-
-    await startPanelJob({
-      script: 'pathway-validate-state',
-      parameters: {
-        scenario: scenarioPath,
-        existing_pathway_names: [selectedPathway],
-        year_of_state: selectedRow.year,
-      },
-      busyKey: 'validate-state',
-      startedMessage:
-        `Validation job started for ${selectedRow.year}. Open Job Info in the status bar for details.`,
-      failedToStartMessage: 'Failed to start the validation job.',
-      completionMessage: `Validated state ${selectedRow.year}.`,
-      failureMessage:
-        'Validation reported issues. Open Job Info in the status bar for details.',
-      preferredPathway: selectedPathway,
-      preferredYear: selectedRow.year,
-    });
-  };
 
   const handleOpenTemplateTool = () => {
     setSelectedTool('pathway-intervention-templates-define');
@@ -2055,31 +1927,6 @@ const PathwayPanel = ({
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                  paddingTop: 2,
-                }}
-              >
-                <Button
-                  size="small"
-                  icon={<ToolOutlined />}
-                  onClick={handleOpenTemplateEditor}
-                >
-                  Apply templates
-                </Button>
-                <Button
-                  size="small"
-                  icon={<CheckCircleOutlined />}
-                  loading={busyAction === 'validate-state'}
-                  disabled={!selectedRow.has_state_folder}
-                  onClick={handleValidateState}
-                >
-                  Validate state
-                </Button>
-              </div>
 
               {selectedRow.state_kind === 'stock' && !selectedRow.exists_in_log ? (
                 <Alert
@@ -2123,32 +1970,6 @@ const PathwayPanel = ({
                 />
               ) : null}
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                }}
-              >
-                <Text style={{ color: '#64748B', fontSize: 12 }}>
-                  Validation:{' '}
-                  <Text strong style={{ color: '#0F172A', fontSize: 12 }}>
-                    {selectedRow.status?.validation?.label ?? 'Unknown'}
-                  </Text>
-                </Text>
-                <Text style={{ color: '#64748B', fontSize: 12 }}>
-                  Bake:{' '}
-                  <Text strong style={{ color: '#0F172A', fontSize: 12 }}>
-                    {selectedRow.status?.bake?.label ?? 'Unknown'}
-                  </Text>
-                </Text>
-                <Text style={{ color: '#64748B', fontSize: 12 }}>
-                  Simulation:{' '}
-                  <Text strong style={{ color: '#0F172A', fontSize: 12 }}>
-                    {selectedRow.status?.simulation?.label ?? 'Unknown'}
-                  </Text>
-                </Text>
-              </div>
 
               <div
                 style={{
@@ -2176,62 +1997,6 @@ const PathwayPanel = ({
       </div>
 
       </div>
-
-      <Modal
-        title={
-          activeEditorYear != null
-            ? `Apply templates | ${selectedPathway} | ${activeEditorYear}`
-            : 'Apply templates'
-        }
-        open={templateModalOpen}
-        onCancel={() => {
-          setTemplateModalOpen(false);
-          setEditorTargetYear(null);
-        }}
-        onOk={handleSaveTemplates}
-        okText="Apply templates"
-        okButtonProps={{ disabled: !selectedTemplatesDraft.length }}
-        confirmLoading={busyAction === 'save-templates'}
-      >
-        {editorOptionsLoading ? (
-          <div style={{ padding: '24px 0', textAlign: 'center' }}>
-            <Spin />
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Text style={{ color: '#475569' }}>
-              This is the Step 2 flow for the selected year. Choose one or more
-              reusable intervention templates to merge into the year entry.
-            </Text>
-            <Select
-              mode="multiple"
-              allowClear
-              style={{ width: '100%' }}
-              placeholder="Select intervention templates"
-              value={selectedTemplatesDraft}
-              options={toOptionList(editorOptions?.available_templates)}
-              onChange={setSelectedTemplatesDraft}
-              optionFilterProp="label"
-            />
-            <div
-              style={{
-                borderRadius: 12,
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-                background: '#F8FAFC',
-                padding: 12,
-              }}
-            >
-              <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                Current year summary
-              </Text>
-              <Text style={{ color: '#475569' }}>
-                {activeEditorRow?.summary?.text ??
-                  'This year will be created when the first real change is saved.'}
-              </Text>
-            </div>
-          </div>
-        )}
-      </Modal>
 
     </div>
   );
