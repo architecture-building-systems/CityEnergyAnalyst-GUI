@@ -1,18 +1,14 @@
 import {
   CheckCircleOutlined,
   DeleteOutlined,
-  EditOutlined,
   InfoCircleOutlined,
-  FileTextOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
   Button,
   Divider,
-  Drawer,
   Empty,
-  Input,
   InputNumber,
   Modal,
   Select,
@@ -67,11 +63,6 @@ const STATUS_ACCENT = {
   changed: '#D97706',
 };
 
-const DEFAULT_YAML_DRAFT = `modifications: {}
-building_events:
-  new_buildings: []
-  demolished_buildings: []
-`;
 
 const TIMELINE_TOOLTIP_PROPS = {
   color: '#FFFFFF',
@@ -193,116 +184,11 @@ const getNodeFill = (row) => {
 
 const getNodeSize = () => 12;
 
-const getInitialYamlDraft = (row) => {
-  if (!row?.exists_in_log || row?.yaml_preview?.startsWith('# No explicit YAML')) {
-    return DEFAULT_YAML_DRAFT;
-  }
-  return row.yaml_preview;
-};
-
 const toOptionList = (values) =>
   (values ?? []).map((value) => ({
     label: value,
     value,
   }));
-
-const handleYamlTextareaKeyDown = (event, value, onChange) => {
-  if (event.key !== 'Tab') {
-    return;
-  }
-
-  event.preventDefault();
-  const target = event.target;
-  const start = target.selectionStart ?? 0;
-  const end = target.selectionEnd ?? start;
-  const indent = '  ';
-  const nextValue = `${value.slice(0, start)}${indent}${value.slice(end)}`;
-  onChange(nextValue);
-
-  requestAnimationFrame(() => {
-    target.selectionStart = start + indent.length;
-    target.selectionEnd = start + indent.length;
-  });
-};
-
-const renderYamlLine = (line, index) => {
-  if (line.trim().length === 0) {
-    return (
-      <div key={`yaml-line-${index}`} style={{ minHeight: 18 }}>
-        {' '}
-      </div>
-    );
-  }
-
-  if (/^\s*#/.test(line)) {
-    return (
-      <div key={`yaml-line-${index}`} style={{ whiteSpace: 'pre' }}>
-        <span style={{ color: '#64748B', fontStyle: 'italic' }}>{line}</span>
-      </div>
-    );
-  }
-
-  const keyMatch = line.match(/^(\s*-\s*|\s*)([^:#]+):(.*)$/);
-  if (keyMatch) {
-    const [, prefix, rawKey, remainder] = keyMatch;
-    return (
-      <div key={`yaml-line-${index}`} style={{ whiteSpace: 'pre' }}>
-        <span>{prefix}</span>
-        <span style={{ color: '#2659A0', fontWeight: 600 }}>{rawKey}</span>
-        <span>:</span>
-        <span style={{ color: '#334155' }}>{remainder}</span>
-      </div>
-    );
-  }
-
-  const listMatch = line.match(/^(\s*-\s+)(.*)$/);
-  if (listMatch) {
-    const [, prefix, value] = listMatch;
-    return (
-      <div key={`yaml-line-${index}`} style={{ whiteSpace: 'pre' }}>
-        <span style={{ color: '#94A3B8' }}>{prefix}</span>
-        <span style={{ color: '#0F172A' }}>{value}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div key={`yaml-line-${index}`} style={{ whiteSpace: 'pre' }}>
-      <span style={{ color: '#0F172A' }}>{line}</span>
-    </div>
-  );
-};
-
-const YamlPreview = ({
-  value,
-  fill = false,
-  minHeight = 140,
-  scrollable = true,
-}) => (
-  <div
-    style={{
-      background: 'linear-gradient(180deg, #F8FBFF 0%, #FDFEFE 100%)',
-      border: '1px solid rgba(148, 163, 184, 0.28)',
-      borderRadius: 14,
-      padding: '12px 14px',
-      fontFamily:
-        '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
-      fontSize: 12,
-      lineHeight: 1.5,
-      color: '#0F172A',
-      overflow: scrollable ? 'auto' : 'visible',
-      minHeight,
-      maxHeight: fill || !scrollable ? 'none' : 240,
-      height: fill && scrollable ? '100%' : 'auto',
-      flex: fill ? 1 : '0 1 auto',
-      width: '100%',
-    }}
-  >
-    {(value ?? '# No explicit YAML entry for this year.\n')
-      .split('\n')
-      .map(renderYamlLine)}
-  </div>
-);
 
 const LegendChip = ({ colour, label, outline, halo }) => (
   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -692,14 +578,10 @@ const PathwayPanel = ({
   const [editorOptionsLoading, setEditorOptionsLoading] = useState(false);
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
-  const [yamlDrawerOpen, setYamlDrawerOpen] = useState(false);
-  const [yamlDrawerLoading, setYamlDrawerLoading] = useState(false);
-  const [yamlEditEnabled, setYamlEditEnabled] = useState(false);
   const [editorTargetYear, setEditorTargetYear] = useState(null);
 
   const [selectedTemplatesDraft, setSelectedTemplatesDraft] = useState([]);
   const [selectedHeaderTemplate, setSelectedHeaderTemplate] = useState(null);
-  const [yamlDraft, setYamlDraft] = useState(DEFAULT_YAML_DRAFT);
 
   const scenarioPath = useMemo(
     () => buildScenarioPath(project, scenarioName),
@@ -998,9 +880,6 @@ const PathwayPanel = ({
     setSelectedYear(null);
     setEditorOptions(null);
     setTemplateModalOpen(false);
-    setYamlDrawerOpen(false);
-    setYamlDrawerLoading(false);
-    setYamlEditEnabled(false);
     setEditorTargetYear(null);
     setPendingPanelJob(null);
     pendingPreferredYearRef.current = null;
@@ -1107,19 +986,11 @@ const PathwayPanel = ({
       }
       if (pendingPanelJob.onSuccess === 'deleted-pathway') {
         setTemplateModalOpen(false);
-        setYamlDrawerOpen(false);
-        setYamlDrawerLoading(false);
-        setYamlEditEnabled(false);
         setEditorTargetYear(null);
       }
       if (pendingPanelJob.onSuccess === 'saved-templates') {
         setTemplateModalOpen(false);
         setSelectedTemplatesDraft([]);
-        setEditorTargetYear(null);
-      }
-      if (pendingPanelJob.onSuccess === 'saved-yaml') {
-        setYamlDrawerOpen(false);
-        setYamlEditEnabled(false);
         setEditorTargetYear(null);
       }
 
@@ -1376,64 +1247,6 @@ const PathwayPanel = ({
       preferredPathway: selectedPathway,
       preferredYear: activeEditorYear,
       onSuccess: 'saved-templates',
-    });
-  };
-
-  const handleOpenYamlDrawer = async (targetYear = activeEditorYear) => {
-    if (!selectedPathway || targetYear == null) {
-      return;
-    }
-    setEditorTargetYear(targetYear);
-    setYamlEditEnabled(false);
-    setYamlDrawerOpen(true);
-    setYamlDrawerLoading(true);
-    setYamlDraft(getInitialYamlDraft(activeRowByYear.get(targetYear) ?? null));
-
-    try {
-      const data = await ensureEditorOptions(selectedPathway, targetYear);
-      const savedYaml = data?.yaml_preview;
-      if (
-        typeof savedYaml === 'string' &&
-        !savedYaml.startsWith('# No explicit YAML')
-      ) {
-        setYamlDraft(savedYaml);
-      } else {
-        setYamlDraft(
-          getInitialYamlDraft(activeRowByYear.get(targetYear) ?? null),
-        );
-      }
-      setPanelError(null);
-    } catch (error) {
-      setYamlDrawerOpen(false);
-      setPanelError(getErrorMessage(error, 'Failed to open the YAML editor.'));
-    } finally {
-      setYamlDrawerLoading(false);
-    }
-  };
-
-  const handleSaveYaml = async () => {
-    if (!selectedPathway || activeEditorYear == null) {
-      return;
-    }
-
-    await startPanelJob({
-      script: 'pathway-save-yaml',
-      parameters: {
-        scenario: scenarioPath,
-        existing_pathway_names: [selectedPathway],
-        year_of_state: activeEditorYear,
-        raw_yaml: yamlDraft,
-      },
-      busyKey: 'save-yaml',
-      startedMessage:
-        `Save-YAML job started for ${activeEditorYear}. Open Job Info in the status bar for details.`,
-      failedToStartMessage: 'Failed to start the save-YAML job.',
-      completionMessage: `Saved YAML for ${activeEditorYear}.`,
-      failureMessage:
-        'Saving YAML failed. Open Job Info in the status bar for details.',
-      preferredPathway: selectedPathway,
-      preferredYear: activeEditorYear,
-      onSuccess: 'saved-yaml',
     });
   };
 
@@ -2163,10 +1976,8 @@ const PathwayPanel = ({
         style={{
           minHeight: 0,
           flex: 1,
-          display: 'grid',
-          gridTemplateColumns: 'minmax(320px, 1.2fr) minmax(280px, 1fr)',
-          gap: 14,
-          alignItems: 'stretch',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <div
@@ -2361,63 +2172,6 @@ const PathwayPanel = ({
           )}
         </div>
 
-        <div
-          style={{
-            borderRadius: 18,
-            border: '1px solid rgba(148, 163, 184, 0.22)',
-            background:
-              'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            minHeight: 0,
-            overflow: 'visible',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <div>
-              <Text
-                style={{
-                  display: 'block',
-                  color: '#64748B',
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  fontSize: 11,
-                }}
-              >
-                YAML preview
-              </Text>
-              <Text style={{ color: '#475569' }}>
-                Colourised preview of the current explicit log entry.
-              </Text>
-            </div>
-            {selectedRow ? (
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => void handleOpenYamlDrawer()}
-              >
-                YAML edit
-              </Button>
-            ) : null}
-          </div>
-
-          <div style={{ display: 'flex', paddingBottom: 6 }}>
-            <YamlPreview
-              value={selectedRow?.yaml_preview}
-              minHeight={expanded ? 220 : 180}
-              scrollable={false}
-            />
-          </div>
-        </div>
       </div>
 
       </div>
@@ -2480,109 +2234,6 @@ const PathwayPanel = ({
         )}
       </Modal>
 
-      <Drawer
-        title={
-          activeEditorYear != null
-            ? `YAML edit | ${selectedPathway} | ${activeEditorYear}`
-            : 'YAML edit'
-        }
-        placement="right"
-        width={460}
-        styles={{
-          body: {
-            display: 'flex',
-            flexDirection: 'column',
-          },
-        }}
-        open={yamlDrawerOpen}
-        onClose={() => {
-          setYamlDrawerOpen(false);
-          setYamlDrawerLoading(false);
-          setYamlEditEnabled(false);
-          setEditorTargetYear(null);
-        }}
-        extra={
-          <Button
-            type="primary"
-            icon={<FileTextOutlined />}
-            disabled={!yamlEditEnabled}
-            loading={busyAction === 'save-yaml'}
-            onClick={handleSaveYaml}
-          >
-            Save YAML
-          </Button>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: '100%' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <div>
-              <Text strong style={{ display: 'block' }}>
-                Live preview
-              </Text>
-              <Text style={{ color: '#64748B', fontSize: 12 }}>
-                The panel preview shows the last saved YAML. This preview updates
-                live while you edit the current draft.
-              </Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => setYamlEditEnabled((current) => !current)}
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                {yamlEditEnabled ? 'Preview only' : 'Enable editing'}
-              </Button>
-            </div>
-          </div>
-
-          {yamlDrawerLoading ? (
-            <div
-              style={{
-                minHeight: 220,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Spin />
-            </div>
-          ) : (
-            <>
-              <div style={{ minHeight: 0, display: 'flex' }}>
-                <YamlPreview value={yamlDraft} fill minHeight={260} />
-              </div>
-
-              {yamlEditEnabled ? (
-                <Input.TextArea
-                  value={yamlDraft}
-                  onChange={(event) => setYamlDraft(event.target.value)}
-                  onKeyDown={(event) =>
-                    handleYamlTextareaKeyDown(
-                      event,
-                      yamlDraft,
-                      setYamlDraft,
-                    )
-                  }
-                  autoSize={{ minRows: 14, maxRows: 24 }}
-                  spellCheck={false}
-                  style={{
-                    fontFamily:
-                      '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
-                  }}
-                />
-              ) : null}
-            </>
-          )}
-        </div>
-      </Drawer>
     </div>
   );
 };
