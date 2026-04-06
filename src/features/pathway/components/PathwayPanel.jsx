@@ -1356,6 +1356,19 @@ const PathwayPanel = ({
                 </div>
               )}
             </Button>
+            <Tooltip
+              title={
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Simulate Pathway</div>
+                  <div>To enable, ensure:</div>
+                  <div>1. Only one Pathway is checked</div>
+                  <div>2. All states are baked (blue nodes)</div>
+                </div>
+              }
+              placement="bottom"
+            >
+              <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+            </Tooltip>
           </div>
         </div>
       </div>
