@@ -19,6 +19,7 @@ import {
   useSetToolType,
   useSelectPlotTool,
 } from 'features/project/stores/tool-card';
+import useJobsStore from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
@@ -87,6 +88,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
   const [showPathwayPanel, setShowPathwayPanel] = useState(false);
+  const pathwayPanelHiddenForToolRef = useRef(false);
   const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
   const [pathwayPanelHeight, setPathwayPanelHeight] = useState(480);
   const pathwayResizeStateRef = useRef(null);
@@ -94,6 +96,37 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
   const showToolCard = scenarioName != null && !hideAll && toolType != null;
+
+  useEffect(() => {
+    if (!showToolCard && pathwayPanelHiddenForToolRef.current) {
+      pathwayPanelHiddenForToolRef.current = false;
+      setShowPathwayPanel(true);
+    }
+  }, [showToolCard]);
+
+  // Watch for building events job completion to close tool card
+  const jobs = useJobsStore((state) => state.jobs);
+  const buildingEventsHandledRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!jobs || !pathwayPanelHiddenForToolRef.current) {
+      return;
+    }
+
+    const completedJobs = Object.entries(jobs)
+      .filter(
+        ([id, job]) =>
+          job.state === 2 &&
+          job.script === 'pathway-update-building-events' &&
+          !buildingEventsHandledRef.current.has(id),
+      );
+
+    if (completedJobs.length > 0) {
+      completedJobs.forEach(([id]) => buildingEventsHandledRef.current.add(id));
+      setToolType(null);
+    }
+  }, [jobs, setToolType]);
+
   const fullscreenPathwayPanelRightInset = showToolCard
     ? 'calc(var(--right-sidebar-width) + 56px)'
     : 12;
@@ -433,6 +466,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 scenarioName={scenarioName}
                 expanded={pathwayPanelExpanded}
                 onExpandedChange={setPathwayPanelExpanded}
+                onHidePanel={() => {
+                  setShowPathwayPanel(false);
+                  pathwayPanelHiddenForToolRef.current = true;
+                }}
               />
             </animated.div>
           ) : null,

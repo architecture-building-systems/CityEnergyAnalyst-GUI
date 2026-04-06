@@ -107,7 +107,7 @@ const useParameterAsyncValidation = ({
   return validator;
 };
 
-const Parameter = ({ parameter, form, toolName }) => {
+const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
   const { name, type, value, choices, nullable, help, needs_validation } =
     parameter;
   const { setFieldsValue } = form;
@@ -319,7 +319,8 @@ const Parameter = ({ parameter, form, toolName }) => {
         </FormField>
       );
     }
-    case 'BuildingsParameter': {
+    case 'BuildingsParameter':
+    case 'OptionalBuildingsParameter': {
       return (
         <BuildingsParameter
           name={name}

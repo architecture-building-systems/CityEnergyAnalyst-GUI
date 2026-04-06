@@ -12,6 +12,10 @@ const ELECTRON_ONLY = [
   'debug',
 ];
 
+const READONLY_PARAMS = {
+  'pathway-update-building-events': ['existing-pathway-names', 'year-of-state'],
+};
+
 const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
@@ -101,19 +105,43 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
     param.type === 'ScenarioParameter' ||
     (!isElectron() && ELECTRON_ONLY.includes(param.name));
 
+  const readonlySet = new Set(READONLY_PARAMS[script] ?? []);
+
   let toolParams = null;
   if (parameters) {
     toolParams = parameters
       .filter((param) => !shouldHideParam(param))
-      .map((param) => (
-        <Parameter
-          key={param.name}
-          form={form}
-          parameter={param}
-          allParameters={parameters}
-          toolName={script}
-        />
-      ));
+      .map((param) => {
+        const isReadOnly = readonlySet.has(param.name);
+        const el = (
+          <Parameter
+            key={param.name}
+            form={form}
+            parameter={param}
+            allParameters={parameters}
+            toolName={script}
+          />
+        );
+        if (isReadOnly) {
+          return (
+            <div
+              key={param.name}
+              style={{ position: 'relative', opacity: 0.65 }}
+            >
+              {el}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  cursor: 'not-allowed',
+                  zIndex: 1,
+                }}
+              />
+            </div>
+          );
+        }
+        return el;
+      });
   }
 
   let categoricalParams = null;

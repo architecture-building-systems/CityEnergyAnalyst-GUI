@@ -102,6 +102,18 @@ export const deleteInterventionTemplate = async (templateName) => {
   return data;
 };
 
+export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
+  await apiClient.post(
+    '/api/tools/pathway-update-building-events/save-config',
+    {
+      'existing-pathway-names': pathwayNames.join(', '),
+      'year-of-state': year,
+      'buildings-to-construct': '',
+      'buildings-to-demolish': '',
+    },
+  );
+};
+
 export const validateStateYear = async (pathwayName, year) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/validate-state`,

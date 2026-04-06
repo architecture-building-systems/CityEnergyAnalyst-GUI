@@ -1,5 +1,4 @@
 import {
-  BuildOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -29,6 +28,7 @@ import {
   RefreshIcon,
   RunIcon,
 } from 'assets/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import {
   toolTypes,
@@ -44,6 +44,7 @@ import {
   fetchPathwayOverview,
   fetchPathwayTimeline,
   fetchYearEditorOptions,
+  preSaveBuildingEventsConfig,
 } from '../api';
 
 const { Text, Title } = Typography;
@@ -485,7 +486,6 @@ const PathwaySelect = ({
   selectedPathway,
   visiblePathways,
   overviewPathways,
-  onSelectPathway,
   onToggleVisible,
   onDeletePathway,
   onCreatePathway,
@@ -656,7 +656,9 @@ const PathwayPanel = ({
   project,
   scenarioName,
   expanded = false,
+  onHidePanel,
 }) => {
+  const queryClient = useQueryClient();
   const createJob = useCreateJob();
   const jobs = useJobsStore((state) => state.jobs);
   const setToolType = useSetToolType();
@@ -692,16 +694,12 @@ const PathwayPanel = ({
   const [editorOptions, setEditorOptions] = useState(null);
   const [editorOptionsLoading, setEditorOptionsLoading] = useState(false);
 
-  const [buildingEventsModalOpen, setBuildingEventsModalOpen] = useState(false);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [yamlDrawerOpen, setYamlDrawerOpen] = useState(false);
   const [yamlDrawerLoading, setYamlDrawerLoading] = useState(false);
   const [yamlEditEnabled, setYamlEditEnabled] = useState(false);
-  const [createYearModalOpen, setCreateYearModalOpen] = useState(false);
   const [editorTargetYear, setEditorTargetYear] = useState(null);
 
-  const [newBuildingsDraft, setNewBuildingsDraft] = useState([]);
-  const [demolishedBuildingsDraft, setDemolishedBuildingsDraft] = useState([]);
   const [selectedTemplatesDraft, setSelectedTemplatesDraft] = useState([]);
   const [selectedHeaderTemplate, setSelectedHeaderTemplate] = useState(null);
   const [yamlDraft, setYamlDraft] = useState(DEFAULT_YAML_DRAFT);
@@ -983,15 +981,6 @@ const PathwayPanel = ({
     [handleSelectPathway],
   );
 
-  const handleSelectYear = useCallback(
-    (year) => {
-      if (selectedPathwayRef.current && year != null) {
-        selectedYearByPathwayRef.current[selectedPathwayRef.current] = year;
-      }
-      setSelectedYear(year);
-    },
-    [],
-  );
 
   useEffect(() => {
     selectedPathwayRef.current = selectedPathway;
@@ -1011,12 +1000,10 @@ const PathwayPanel = ({
     setVisiblePathways([]);
     setSelectedYear(null);
     setEditorOptions(null);
-    setBuildingEventsModalOpen(false);
     setTemplateModalOpen(false);
     setYamlDrawerOpen(false);
     setYamlDrawerLoading(false);
     setYamlEditEnabled(false);
-    setCreateYearModalOpen(false);
     setEditorTargetYear(null);
     setPendingPanelJob(null);
     pendingPreferredYearRef.current = null;
@@ -1088,6 +1075,7 @@ const PathwayPanel = ({
             'bake-pathway-states',
             'pathway-intervention-templates-define',
             'pathway-simulations',
+            'pathway-update-building-events',
             'pathway-validate-all-states',
           ].includes(job.script),
       );
@@ -1121,16 +1109,10 @@ const PathwayPanel = ({
         // pathway created successfully
       }
       if (pendingPanelJob.onSuccess === 'deleted-pathway') {
-        setCreateYearModalOpen(false);
-        setBuildingEventsModalOpen(false);
         setTemplateModalOpen(false);
         setYamlDrawerOpen(false);
         setYamlDrawerLoading(false);
         setYamlEditEnabled(false);
-        setEditorTargetYear(null);
-      }
-      if (pendingPanelJob.onSuccess === 'saved-building-events') {
-        setBuildingEventsModalOpen(false);
         setEditorTargetYear(null);
       }
       if (pendingPanelJob.onSuccess === 'saved-templates') {
@@ -1189,7 +1171,7 @@ const PathwayPanel = ({
   };
 
   const handleAddYear = async () => {
-    if (!selectedPathway) {
+    if (!visiblePathways.length) {
       setPanelError('Select a pathway first.');
       return;
     }
@@ -1198,14 +1180,20 @@ const PathwayPanel = ({
       return;
     }
 
-    const targetYear = Number(newYearValue);
-    if (activeRowByYear.has(targetYear)) {
-      handleSelectYear(targetYear);
+    try {
+      await preSaveBuildingEventsConfig(visiblePathways, Number(newYearValue));
+      await queryClient.invalidateQueries({
+        queryKey: ['toolParams', 'pathway-update-building-events'],
+      });
+      onHidePanel?.();
+      setSelectedTool('pathway-update-building-events');
+      setToolType(toolTypes.TOOLS);
+      setPanelError(null);
+    } catch (error) {
+      setPanelError(
+        getErrorMessage(error, 'Failed to open building events tool.'),
+      );
     }
-    setEditorTargetYear(targetYear);
-    setCreateYearModalOpen(true);
-    setNewYearValue(null);
-    setPanelError(null);
   };
 
   const handleApplyIntervention = async () => {
@@ -1332,7 +1320,7 @@ const PathwayPanel = ({
           script: 'pathway-delete-state',
           parameters: {
             scenario: scenarioPath,
-            existing_pathway_name: selectedPathway,
+            existing_pathway_names: [selectedPathway],
             year_of_state: selectedRow.year,
           },
           busyKey: 'delete-year',
@@ -1351,60 +1339,12 @@ const PathwayPanel = ({
     });
   };
 
-  const handleOpenBuildingEventsEditor = async (targetYear = activeEditorYear) => {
-    if (!selectedPathway || targetYear == null) {
-      return;
-    }
-
-    setEditorTargetYear(targetYear);
-    setCreateYearModalOpen(false);
-    setBuildingEventsModalOpen(true);
-    try {
-      const data = await ensureEditorOptions(selectedPathway, targetYear);
-      const currentEvents = data?.entry?.building_events ?? {};
-      setNewBuildingsDraft(currentEvents?.new_buildings ?? []);
-      setDemolishedBuildingsDraft(currentEvents?.demolished_buildings ?? []);
-      setPanelError(null);
-    } catch (error) {
-      setBuildingEventsModalOpen(false);
-      setPanelError(getErrorMessage(error, 'Failed to open building editor.'));
-    }
-  };
-
-  const handleSaveBuildingEvents = async () => {
-    if (!selectedPathway || activeEditorYear == null) {
-      return;
-    }
-
-    await startPanelJob({
-      script: 'pathway-update-building-events',
-      parameters: {
-        scenario: scenarioPath,
-        existing_pathway_name: selectedPathway,
-        year_of_state: activeEditorYear,
-        new_buildings: newBuildingsDraft,
-        demolished_buildings: demolishedBuildingsDraft,
-      },
-      busyKey: 'save-building-events',
-      startedMessage:
-        `Building-events job started for ${activeEditorYear}. Open Job Info in the status bar for details.`,
-      failedToStartMessage: 'Failed to start the building-events job.',
-      completionMessage: `Updated building changes for ${activeEditorYear}.`,
-      failureMessage:
-        'Saving building changes failed. Open Job Info in the status bar for details.',
-      preferredPathway: selectedPathway,
-      preferredYear: activeEditorYear,
-      onSuccess: 'saved-building-events',
-    });
-  };
-
   const handleOpenTemplateEditor = async (targetYear = activeEditorYear) => {
     if (!selectedPathway || targetYear == null) {
       return;
     }
 
     setEditorTargetYear(targetYear);
-    setCreateYearModalOpen(false);
     setTemplateModalOpen(true);
     try {
       await ensureEditorOptions(selectedPathway, targetYear);
@@ -1447,7 +1387,6 @@ const PathwayPanel = ({
       return;
     }
     setEditorTargetYear(targetYear);
-    setCreateYearModalOpen(false);
     setYamlEditEnabled(false);
     setYamlDrawerOpen(true);
     setYamlDrawerLoading(true);
@@ -1484,7 +1423,7 @@ const PathwayPanel = ({
       script: 'pathway-save-yaml',
       parameters: {
         scenario: scenarioPath,
-        existing_pathway_name: selectedPathway,
+        existing_pathway_names: [selectedPathway],
         year_of_state: activeEditorYear,
         raw_yaml: yamlDraft,
       },
@@ -1510,7 +1449,7 @@ const PathwayPanel = ({
       script: 'pathway-validate-state',
       parameters: {
         scenario: scenarioPath,
-        existing_pathway_name: selectedPathway,
+        existing_pathway_names: [selectedPathway],
         year_of_state: selectedRow.year,
       },
       busyKey: 'validate-state',
@@ -1770,9 +1709,6 @@ const PathwayPanel = ({
             selectedPathway={selectedPathway}
             visiblePathways={visiblePathways}
             overviewPathways={overviewPathways}
-            onSelectPathway={(pathwayName) =>
-              void handleSelectPathway(pathwayName)
-            }
             onToggleVisible={handleToggleVisible}
             onDeletePathway={handleDeletePathwayByName}
             onCreatePathway={handleStartCreatePathway}
@@ -2309,13 +2245,6 @@ const PathwayPanel = ({
               >
                 <Button
                   size="small"
-                  icon={<BuildOutlined />}
-                  onClick={handleOpenBuildingEventsEditor}
-                >
-                  Building events
-                </Button>
-                <Button
-                  size="small"
                   icon={<ToolOutlined />}
                   onClick={handleOpenTemplateEditor}
                 >
@@ -2497,108 +2426,6 @@ const PathwayPanel = ({
       </div>
 
       </div>
-
-      <Modal
-        title={
-          activeEditorYear != null
-            ? `Add State | ${activeEditorYear}`
-            : 'Add State'
-        }
-        open={createYearModalOpen}
-        footer={null}
-        onCancel={() => {
-          setCreateYearModalOpen(false);
-          setEditorTargetYear(null);
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            <Button
-              onClick={() => void handleOpenBuildingEventsEditor(activeEditorYear)}
-            >
-              Building Events
-            </Button>
-            <Button
-              onClick={() => void handleOpenTemplateEditor(activeEditorYear)}
-            >
-              Select Intervention
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        title={
-          activeEditorYear != null
-            ? `Building Events | ${activeEditorYear}`
-            : 'Building Events'
-        }
-        open={buildingEventsModalOpen}
-        onCancel={() => {
-          setBuildingEventsModalOpen(false);
-          setEditorTargetYear(null);
-        }}
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button
-              onClick={() => {
-                setBuildingEventsModalOpen(false);
-                setCreateYearModalOpen(true);
-              }}
-            >
-              Back
-            </Button>
-            <Button
-              type="primary"
-              loading={busyAction === 'save-building-events'}
-              onClick={handleSaveBuildingEvents}
-            >
-              Save Building Events
-            </Button>
-          </div>
-        }
-      >
-        {editorOptionsLoading ? (
-          <div style={{ padding: '24px 0', textAlign: 'center' }}>
-            <Spin />
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <Text strong style={{ display: 'block', marginBottom: 6 }}>
-                Add buildings
-              </Text>
-              <Select
-                mode="multiple"
-                allowClear
-                style={{ width: '100%' }}
-                placeholder="Select buildings to add in this year"
-                value={newBuildingsDraft}
-                options={toOptionList(editorOptions?.available_new_buildings)}
-                onChange={setNewBuildingsDraft}
-                optionFilterProp="label"
-              />
-            </div>
-            <div>
-              <Text strong style={{ display: 'block', marginBottom: 6 }}>
-                Demolish buildings
-              </Text>
-              <Select
-                mode="multiple"
-                allowClear
-                style={{ width: '100%' }}
-                placeholder="Select buildings to remove in this year"
-                value={demolishedBuildingsDraft}
-                options={toOptionList(
-                  editorOptions?.available_demolished_buildings,
-                )}
-                onChange={setDemolishedBuildingsDraft}
-                optionFilterProp="label"
-              />
-            </div>
-          </div>
-        )}
-      </Modal>
 
       <Modal
         title={
