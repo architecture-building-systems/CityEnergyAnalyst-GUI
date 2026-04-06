@@ -1154,6 +1154,22 @@ const PathwayPanel = ({
     });
   };
 
+  const handleBakePathway = async (pathwayName) => {
+    if (!pathwayName || !scenarioPath) return;
+    setBusyAction(`bake-${pathwayName}`);
+    try {
+      await createJob('bake-pathway-states', {
+        scenario: scenarioPath,
+        existing_pathway_name: pathwayName,
+      });
+      setPanelError(null);
+    } catch (error) {
+      setPanelError(getErrorMessage(error, 'Failed to start bake job.'));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   const totalTimelineHeight =
     RULER_HEIGHT +
     visibleOverviewPathways.length * ACTIVE_LANE_HEIGHT;
@@ -1318,13 +1334,6 @@ const PathwayPanel = ({
               </Tooltip>
             </div>
             <Button
-              disabled={!selectedPathway || visiblePathways.length > 1}
-              loading={busyAction === 'bake-pathway-states'}
-              onClick={() => handleRunPathwayJob('bake-pathway-states')}
-            >
-              Bake States
-            </Button>
-            <Button
               type="primary"
               disabled={!selectedPathway || visiblePathways.length > 1}
               loading={busyAction === 'pathway-simulations'}
@@ -1484,7 +1493,7 @@ const PathwayPanel = ({
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr)`,
+                  gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr) auto`,
                   minHeight: Math.max(totalTimelineHeight, 160),
                 }}
               >
@@ -1502,7 +1511,7 @@ const PathwayPanel = ({
                     height: RULER_HEIGHT,
                     padding: '0 16px',
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-end',
                   }}
                 >
                   <Text
@@ -1682,6 +1691,52 @@ const PathwayPanel = ({
                     })}
                     </div>
                   </div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderLeft: '1px solid rgba(148, 163, 184, 0.18)',
+                  }}
+                >
+                  <div style={{ height: RULER_HEIGHT, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <Tooltip
+                      title={
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: 4 }}>Bake States</div>
+                          <div>
+                            Bake materialises state folders from the pathway log.
+                            Run after creating building events or applying interventions.
+                            Required before simulation.
+                          </div>
+                        </div>
+                      }
+                      placement="bottom"
+                    >
+                      <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+                    </Tooltip>
+                  </div>
+                  {visibleOverviewPathways.map((pathway) => (
+                    <div
+                      key={`bake-${pathway.pathway_name}`}
+                      style={{
+                        height: ACTIVE_LANE_HEIGHT,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 8px',
+                      }}
+                    >
+                      <Button
+                        size="small"
+                        loading={busyAction === `bake-${pathway.pathway_name}`}
+                        onClick={() => handleBakePathway(pathway.pathway_name)}
+                      >
+                        Bake
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
