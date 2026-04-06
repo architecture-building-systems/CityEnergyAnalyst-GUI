@@ -4,8 +4,6 @@ import {
   DeleteOutlined,
   EditOutlined,
   FileTextOutlined,
-  PlusOutlined,
-  RocketOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
 import {
@@ -24,7 +22,12 @@ import {
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BinAnimationIcon, CreateNewIcon, RefreshIcon } from 'assets/icons';
+import {
+  BinAnimationIcon,
+  CreateNewIcon,
+  RefreshIcon,
+  RunIcon,
+} from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import {
   toolTypes,
@@ -1771,63 +1774,34 @@ const PathwayPanel = ({
                 />
               </Tooltip>
             </div>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <InputNumber
-                size="small"
-                placeholder="Year"
-                precision={0}
-                value={newYearValue}
-                onChange={setNewYearValue}
-                style={{ width: 96 }}
-                disabled={!selectedPathway}
-              />
-              <Button
-                size="small"
-                type="primary"
-                icon={<PlusOutlined />}
-                disabled={!selectedPathway}
-                loading={busyAction === 'add-year'}
-                onClick={handleAddYear}
-              >
-                Add state
-              </Button>
-            </div>
             <Button
-              size="small"
-              icon={<CheckCircleOutlined />}
               disabled={!selectedPathway}
               loading={busyAction === 'pathway-validate-all-states'}
               onClick={() => handleRunPathwayJob('pathway-validate-all-states')}
             >
-              Validate all states
+              Validate All States
             </Button>
             <Button
-              size="small"
-              icon={<BuildOutlined />}
               disabled={!selectedPathway}
               loading={busyAction === 'bake-pathway-states'}
               onClick={() => handleRunPathwayJob('bake-pathway-states')}
             >
-              Bake states
+              Bake States
             </Button>
             <Button
-              size="small"
-              icon={<RocketOutlined />}
+              type="primary"
               disabled={!selectedPathway}
               loading={busyAction === 'pathway-simulations'}
               onClick={() => handleRunPathwayJob('pathway-simulations')}
             >
-              Simulate pathway
+              {busyAction === 'pathway-simulations' ? (
+                'Starting job...'
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Simulate Pathway
+                  <RunIcon style={{ fontSize: 18 }} />
+                </div>
+              )}
             </Button>
           </div>
         </div>
@@ -1858,19 +1832,40 @@ const PathwayPanel = ({
         <div
           style={{
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             gap: 14,
             flexWrap: 'wrap',
             alignItems: 'center',
           }}
         >
-          <LegendChip colour={STATUS_FILL.none} label="Draft" />
-          <LegendChip colour={STATUS_FILL.baked} label="Baked" />
-          <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
-          <LegendChip
-            colour={STATUS_ACCENT.error}
-            label="Validation issue"
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: 256 }}>
+            <InputNumber
+              placeholder="Year"
+              precision={0}
+              value={newYearValue}
+              onChange={setNewYearValue}
+              style={{ flex: 1 }}
+              disabled={!selectedPathway}
+            />
+            <Button
+              type="primary"
+              icon={<CreateNewIcon />}
+              disabled={!selectedPathway}
+              loading={busyAction === 'add-year'}
+              onClick={handleAddYear}
+            >
+              Add State
+            </Button>
+          </div>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+            <LegendChip colour={STATUS_FILL.none} label="Draft" />
+            <LegendChip colour={STATUS_FILL.baked} label="Baked" />
+            <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
+            <LegendChip
+              colour={STATUS_ACCENT.error}
+              label="Validation issue"
+            />
+          </div>
         </div>
 
         <div
