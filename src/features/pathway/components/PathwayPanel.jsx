@@ -243,16 +243,15 @@ const BuildingList = ({ buildings, buildingColorMap }) => {
   );
 };
 
-const ModificationSummary = ({ row }) => {
+const ModificationSummary = ({ row, constructionColorMap: colorMap }) => {
   const modifications = row?.modifications ?? {};
   const archetypes = Object.keys(modifications);
-  if (!archetypes.length) {
-    return <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>;
-  }
+  if (!archetypes.length) return null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {archetypes.map((archetype) => {
         const components = modifications[archetype] ?? {};
+        const color = colorMap?.[archetype];
         const changes = Object.entries(components).flatMap(
           ([component, fields]) =>
             Object.entries(fields).map(([field, value]) => ({
@@ -263,7 +262,7 @@ const ModificationSummary = ({ row }) => {
         );
         return (
           <div key={archetype} style={{ fontSize: 12 }}>
-            <Text strong style={{ fontSize: 12 }}>{archetype}</Text>
+            <BuildingPill name={archetype} color={color} />
             {changes.map((c) => (
               <div key={`${c.component}-${c.field}`} style={{ color: '#475569', paddingLeft: 8 }}>
                 {c.field}: {String(c.value)}
@@ -2010,7 +2009,7 @@ const PathwayPanel = ({
                     {hasChange && (
                       <SectionCard
                         title="To Change"
-                        content={<ModificationSummary row={selectedRow} />}
+                        content={<ModificationSummary row={selectedRow} constructionColorMap={constructionColorMap} />}
                       />
                     )}
                   </div>
