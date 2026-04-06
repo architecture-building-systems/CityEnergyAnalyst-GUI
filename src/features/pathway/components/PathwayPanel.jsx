@@ -529,7 +529,11 @@ const PathwaySelect = ({
       placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
       options={hasPathways ? options : []}
       value={selectedPathway}
-      onChange={(pathwayName) => onSelectPathway(pathwayName)}
+      onChange={() => {}}
+      onSelect={(pathwayName) => {
+        onToggleVisible(pathwayName);
+        setOpen(true);
+      }}
       loading={loading}
       open={hasPathways ? open : false}
       onOpenChange={hasPathways ? setOpen : undefined}
