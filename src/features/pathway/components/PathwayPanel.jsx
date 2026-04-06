@@ -592,6 +592,8 @@ const TemplateOption = ({ templateName, onDelete }) => {
 
 const TemplateSelect = ({
   templates,
+  selectedTemplate,
+  onSelectTemplate,
   onDeleteTemplate,
   onCreateTemplate,
   loading,
@@ -605,22 +607,15 @@ const TemplateSelect = ({
   }, [templates]);
 
   const options = useMemo(() => {
-    return sortedTemplates.length > 0
-      ? [
-          {
-            label: 'Intervention Templates',
-            options: sortedTemplates.map((name) => ({
-              label: (
-                <TemplateOption
-                  templateName={name}
-                  onDelete={onDeleteTemplate}
-                />
-              ),
-              value: name,
-            })),
-          },
-        ]
-      : [];
+    return sortedTemplates.map((name) => ({
+      label: (
+        <TemplateOption
+          templateName={name}
+          onDelete={onDeleteTemplate}
+        />
+      ),
+      value: name,
+    }));
   }, [sortedTemplates, onDeleteTemplate]);
 
   const hasTemplates = sortedTemplates.length > 0;
@@ -634,8 +629,9 @@ const TemplateSelect = ({
         hasTemplates ? 'Intervention Templates' : 'Create Intervention Template'
       }
       options={hasTemplates ? options : []}
-      value={null}
-      onChange={() => {}}
+      value={selectedTemplate}
+      onChange={onSelectTemplate}
+      allowClear={hasTemplates}
       loading={loading}
       open={hasTemplates ? open : false}
       onOpenChange={hasTemplates ? setOpen : undefined}
@@ -697,6 +693,7 @@ const PathwayPanel = ({
   const [newBuildingsDraft, setNewBuildingsDraft] = useState([]);
   const [demolishedBuildingsDraft, setDemolishedBuildingsDraft] = useState([]);
   const [selectedTemplatesDraft, setSelectedTemplatesDraft] = useState([]);
+  const [selectedHeaderTemplate, setSelectedHeaderTemplate] = useState(null);
   const [yamlDraft, setYamlDraft] = useState(DEFAULT_YAML_DRAFT);
 
   const scenarioPath = useMemo(
@@ -1199,6 +1196,31 @@ const PathwayPanel = ({
     setCreateYearModalOpen(true);
     setNewYearValue(null);
     setPanelError(null);
+  };
+
+  const handleApplyIntervention = async () => {
+    if (!selectedPathway || !selectedHeaderTemplate || newYearValue == null) {
+      return;
+    }
+
+    const targetYear = Number(newYearValue);
+    await startPanelJob({
+      script: 'pathway-events-apply-templates',
+      parameters: {
+        scenario: scenarioPath,
+        existing_pathway_name: selectedPathway,
+        year_of_state: targetYear,
+        intervention_templates: [selectedHeaderTemplate],
+      },
+      busyKey: 'apply-intervention',
+      failedToStartMessage: 'Failed to start the apply-intervention job.',
+      failureMessage:
+        'Applying intervention failed. Open Job Info in the status bar for details.',
+      preferredPathway: selectedPathway,
+      preferredYear: targetYear,
+      onSuccess: 'saved-templates',
+    });
+    setNewYearValue(null);
   };
 
   const handleDeletePathwayByName = (pathwayName) => {
@@ -1758,6 +1780,8 @@ const PathwayPanel = ({
           <Divider type="vertical" style={{ height: 24, margin: 0 }} />
           <TemplateSelect
             templates={templateNames}
+            selectedTemplate={selectedHeaderTemplate}
+            onSelectTemplate={setSelectedHeaderTemplate}
             onDeleteTemplate={handleDeleteTemplate}
             onCreateTemplate={handleOpenTemplateTool}
             loading={loadingTemplates}
@@ -1880,23 +1904,33 @@ const PathwayPanel = ({
             alignItems: 'center',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: 256 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <InputNumber
-              placeholder="Year"
+              placeholder="2050"
               precision={0}
               value={newYearValue}
               onChange={setNewYearValue}
-              style={{ flex: 1 }}
+              style={{ width: 96 }}
               disabled={!selectedPathway}
             />
             <Button
               type="primary"
               icon={<CreateNewIcon />}
-              disabled={!selectedPathway}
+              disabled={!selectedPathway || newYearValue == null}
               loading={busyAction === 'add-year'}
               onClick={handleAddYear}
             >
-              Add State
+              Add Building Event
+            </Button>
+            <Text style={{ color: '#94A3B8', fontSize: 12 }}>or</Text>
+            <Button
+              type="primary"
+              icon={<CreateNewIcon />}
+              disabled={!selectedPathway || !selectedHeaderTemplate || newYearValue == null}
+              loading={busyAction === 'apply-intervention'}
+              onClick={handleApplyIntervention}
+            >
+              Apply Intervention
             </Button>
           </div>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -2437,8 +2471,8 @@ const PathwayPanel = ({
       <Modal
         title={
           activeEditorYear != null
-            ? `Add state | ${selectedPathway} | ${activeEditorYear}`
-            : 'Add state'
+            ? `Add State | ${activeEditorYear}`
+            : 'Add State'
         }
         open={createYearModalOpen}
         footer={null}
@@ -2448,51 +2482,51 @@ const PathwayPanel = ({
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Text style={{ color: '#475569' }}>
-            This year will only be saved after you make a real change. Choose
-            the first edit you want to apply.
-          </Text>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             <Button
-              icon={<BuildOutlined />}
               onClick={() => void handleOpenBuildingEventsEditor(activeEditorYear)}
             >
-              Building events
+              Building Events
             </Button>
             <Button
-              icon={<ToolOutlined />}
               onClick={() => void handleOpenTemplateEditor(activeEditorYear)}
             >
-              Apply templates
-            </Button>
-            <Button
-              icon={<FileTextOutlined />}
-              onClick={() => void handleOpenYamlDrawer(activeEditorYear)}
-            >
-              Edit YAML
+              Select Intervention
             </Button>
           </div>
-          <Text style={{ fontSize: 12, color: '#64748B' }}>
-            Empty placeholder years are no longer created. The year appears in
-            the timeline only after the first successful save.
-          </Text>
         </div>
       </Modal>
 
       <Modal
         title={
           activeEditorYear != null
-            ? `Building events | ${selectedPathway} | ${activeEditorYear}`
-            : 'Building events'
+            ? `Building Events | ${activeEditorYear}`
+            : 'Building Events'
         }
         open={buildingEventsModalOpen}
         onCancel={() => {
           setBuildingEventsModalOpen(false);
           setEditorTargetYear(null);
         }}
-        onOk={handleSaveBuildingEvents}
-        okText="Save building changes"
-        confirmLoading={busyAction === 'save-building-events'}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button
+              onClick={() => {
+                setBuildingEventsModalOpen(false);
+                setCreateYearModalOpen(true);
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              type="primary"
+              loading={busyAction === 'save-building-events'}
+              onClick={handleSaveBuildingEvents}
+            >
+              Save Building Events
+            </Button>
+          </div>
+        }
       >
         {editorOptionsLoading ? (
           <div style={{ padding: '24px 0', textAlign: 'center' }}>
