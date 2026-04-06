@@ -90,19 +90,14 @@ export const saveYearYaml = async (pathwayName, year, rawYaml) => {
   return data;
 };
 
-export const fetchInterventionTemplates = async (pathwayName) => {
-  const { data } = await apiClient.get(
-    `/api/pathways/${encodePathwayName(pathwayName)}/templates`,
-  );
+export const fetchInterventionTemplates = async () => {
+  const { data } = await apiClient.get('/api/pathways/templates');
   return data?.templates ?? [];
 };
 
-export const deleteInterventionTemplate = async (
-  pathwayName,
-  templateName,
-) => {
+export const deleteInterventionTemplate = async (templateName) => {
   const { data } = await apiClient.delete(
-    `/api/pathways/${encodePathwayName(pathwayName)}/templates/${encodeURIComponent(templateName)}`,
+    `/api/pathways/templates/${encodeURIComponent(templateName)}`,
   );
   return data;
 };

@@ -822,24 +822,17 @@ const PathwayPanel = ({
     [],
   );
 
-  const loadTemplates = useCallback(
-    async (pathwayName) => {
-      if (!pathwayName) {
-        setTemplateNames([]);
-        return;
-      }
-      setLoadingTemplates(true);
-      try {
-        const names = await fetchInterventionTemplates(pathwayName);
-        setTemplateNames(names);
-      } catch {
-        setTemplateNames([]);
-      } finally {
-        setLoadingTemplates(false);
-      }
-    },
-    [],
-  );
+  const loadTemplates = useCallback(async () => {
+    setLoadingTemplates(true);
+    try {
+      const names = await fetchInterventionTemplates();
+      setTemplateNames(names);
+    } catch {
+      setTemplateNames([]);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  }, []);
 
   const refreshPathwayData = useCallback(
     async ({
@@ -855,7 +848,7 @@ const PathwayPanel = ({
       }
       await Promise.all([
         loadTimeline(activePathway, preferredYear),
-        loadTemplates(activePathway),
+        loadTemplates(),
       ]);
     },
     [loadOverview, loadTimeline, loadTemplates],
@@ -931,12 +924,9 @@ const PathwayPanel = ({
         return;
       }
       pendingPreferredYearRef.current = preferredYear;
-      await Promise.all([
-        loadTimeline(pathwayName, preferredYear),
-        loadTemplates(pathwayName),
-      ]);
+      await loadTimeline(pathwayName, preferredYear);
     },
-    [loadTimeline, loadTemplates],
+    [loadTimeline],
   );
 
   const handleSelectYear = useCallback(
@@ -1461,7 +1451,7 @@ const PathwayPanel = ({
   };
 
   const handleDeleteTemplate = (templateName) => {
-    if (!selectedPathway || !templateName) {
+    if (!templateName) {
       return;
     }
 
@@ -1473,8 +1463,8 @@ const PathwayPanel = ({
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await deleteInterventionTemplate(selectedPathway, templateName);
-          await loadTemplates(selectedPathway);
+          await deleteInterventionTemplate(templateName);
+          await loadTemplates();
         } catch (error) {
           setPanelError(
             getErrorMessage(error, 'Failed to delete intervention template.'),
