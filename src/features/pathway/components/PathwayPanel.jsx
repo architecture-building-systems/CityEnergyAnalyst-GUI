@@ -1903,12 +1903,13 @@ const PathwayPanel = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
+                    width: '100%',
                   }}
                 >
                   <Title level={4} style={{ margin: 0, width: 80, flexShrink: 0 }}>
                     {selectedRow.year}
                   </Title>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
                     {[
                       { key: 'auto-stock', label: 'Auto-Stock', active: selectedRow.state_kind === 'stock' || selectedRow.state_kind === 'mixed' },
                       { key: 'construct', label: 'Construct-Event', active: (selectedRow.summary?.new_buildings_count ?? 0) > 0 },
@@ -1943,6 +1944,9 @@ const PathwayPanel = ({
                     >
                       <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
                     </Tooltip>
+                    <Text style={{ color: '#94A3B8', fontSize: 11, marginLeft: 'auto' }}>
+                      Last updated: {formatCompactTimestamp(selectedRow.latest_modified_at)}
+                    </Text>
                   </div>
                 </div>
               </div>
