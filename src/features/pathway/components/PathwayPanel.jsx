@@ -1588,6 +1588,8 @@ const PathwayPanel = ({
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
+                        boxSizing: 'border-box',
+                        borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
                       }}
                     >
                       <div
@@ -1779,6 +1781,8 @@ const PathwayPanel = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '0 8px',
+                        boxSizing: 'border-box',
+                        borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
                       }}
                     >
                       <Button
