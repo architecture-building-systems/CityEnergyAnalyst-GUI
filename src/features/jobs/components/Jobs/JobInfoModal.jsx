@@ -95,8 +95,8 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
       destroyOnHidden
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {job.state == 1 && <Alert title="Job running..." type="info" />}
-        {job.state == 2 && <Alert title="Job completed" type="success" />}
+        {job.state === 1 && <Alert title="Job running..." type="info" />}
+        {job.state === 2 && <Alert title="Job completed" type="success" />}
         {job?.error && <Alert title={job.error} type="error" />}
 
         <details>

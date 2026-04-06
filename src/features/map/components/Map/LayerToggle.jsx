@@ -299,9 +299,15 @@ const LayerToggle = () => {
       // Reset construction coloring state when zone data becomes unavailable
       setColorMode(COLOR_MODES.DEFAULT);
       setConstructionColorMap({});
+      setUseTypeColorMap({});
       constructionColorInitialized.current = false;
     }
-  }, [data?.zone?.features, setConstructionColorMap, setColorMode]);
+  }, [
+    data?.zone?.features,
+    setConstructionColorMap,
+    setUseTypeColorMap,
+    setColorMode,
+  ]);
 
   const items = useMemo(() => {
     const handleChange = (e) => {
