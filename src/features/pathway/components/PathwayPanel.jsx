@@ -1,7 +1,5 @@
 import {
   CheckCircleOutlined,
-  DeleteOutlined,
-  InfoCircleOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
 import {
@@ -21,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BinAnimationIcon,
   CreateNewIcon,
+  InformationIcon,
   RefreshIcon,
   RunIcon,
 } from 'assets/icons';
@@ -1691,6 +1690,19 @@ const PathwayPanel = ({
                 Create Building Event
               </Button>
             )}
+            {selectedRow && (selectedRow.can_delete || selectedRow.can_clear_manual_changes) ? (
+              <Button
+                danger
+                icon={<BinAnimationIcon />}
+                disabled={!selectedPathway}
+                loading={busyAction === 'delete-year'}
+                onClick={handleDeleteSelectedYear}
+              >
+                {selectedRow.can_clear_manual_changes
+                  ? 'Clear Manual Changes'
+                  : 'Delete State'}
+              </Button>
+            ) : null}
             <Tooltip
               title={
                 <div>
@@ -1706,7 +1718,7 @@ const PathwayPanel = ({
               }
               placement="bottom"
             >
-              <InfoCircleOutlined style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+              <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
             </Tooltip>
           </div>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -2067,19 +2079,6 @@ const PathwayPanel = ({
                 >
                   Validate state
                 </Button>
-                {selectedRow.can_delete || selectedRow.can_clear_manual_changes ? (
-                  <Button
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    loading={busyAction === 'delete-year'}
-                    onClick={handleDeleteSelectedYear}
-                  >
-                    {selectedRow.can_clear_manual_changes
-                      ? 'Clear manual changes'
-                      : 'Delete state'}
-                  </Button>
-                ) : null}
               </div>
 
               {selectedRow.state_kind === 'stock' && !selectedRow.exists_in_log ? (

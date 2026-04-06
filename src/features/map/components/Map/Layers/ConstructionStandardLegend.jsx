@@ -1,5 +1,5 @@
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { InformationIcon } from 'assets/icons';
 import { Tooltip } from 'antd';
 
 const INFO_TEXT = {
@@ -71,7 +71,7 @@ const ConstructionStandardLegend = () => {
           }
           styles={{ body: { fontSize: 12 } }}
         >
-          <InfoCircleOutlined style={{ color: '#999', cursor: 'pointer' }} />
+          <InformationIcon style={{ color: '#999', cursor: 'pointer' }} />
         </Tooltip>
       </div>
 
