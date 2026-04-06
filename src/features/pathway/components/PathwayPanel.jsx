@@ -3,6 +3,7 @@ import {
   CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
+  InfoCircleOutlined,
   FileTextOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
@@ -631,6 +632,11 @@ const TemplateSelect = ({
       options={hasTemplates ? options : []}
       value={selectedTemplate}
       onChange={onSelectTemplate}
+      onSelect={(value) => {
+        if (value === selectedTemplate) {
+          onSelectTemplate(null);
+        }
+      }}
       allowClear={hasTemplates}
       loading={loading}
       open={hasTemplates ? open : false}
@@ -1904,7 +1910,7 @@ const PathwayPanel = ({
             alignItems: 'center',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: 549 }}>
             <InputNumber
               placeholder="2050"
               precision={0}
@@ -1913,25 +1919,44 @@ const PathwayPanel = ({
               style={{ width: 96 }}
               disabled={!selectedPathway}
             />
-            <Button
-              type="primary"
-              icon={<CreateNewIcon />}
-              disabled={!selectedPathway || newYearValue == null}
-              loading={busyAction === 'add-year'}
-              onClick={handleAddYear}
+            {selectedHeaderTemplate ? (
+              <Button
+                type="primary"
+                icon={<CreateNewIcon />}
+                disabled={!selectedPathway || newYearValue == null}
+                loading={busyAction === 'apply-intervention'}
+                onClick={handleApplyIntervention}
+              >
+                Apply Selected Intervention
+              </Button>
+            ) : (
+              <Button
+                type="primary"
+                icon={<CreateNewIcon />}
+                disabled={!selectedPathway || newYearValue == null}
+                loading={busyAction === 'add-year'}
+                onClick={handleAddYear}
+              >
+                Create Building Event
+              </Button>
+            )}
+            <Tooltip
+              title={
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                    Add a Building Event or Apply an Intervention
+                  </div>
+                  <div>
+                    Enter a year, then choose an action. Select an intervention
+                    template to apply it directly. Clear the selection to add a
+                    building event instead.
+                  </div>
+                </div>
+              }
+              placement="bottom"
             >
-              Add Building Event
-            </Button>
-            <Text style={{ color: '#94A3B8', fontSize: 12 }}>or</Text>
-            <Button
-              type="primary"
-              icon={<CreateNewIcon />}
-              disabled={!selectedPathway || !selectedHeaderTemplate || newYearValue == null}
-              loading={busyAction === 'apply-intervention'}
-              onClick={handleApplyIntervention}
-            >
-              Apply Intervention
-            </Button>
+              <InfoCircleOutlined style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+            </Tooltip>
           </div>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <LegendChip colour={STATUS_FILL.none} label="Draft" />
