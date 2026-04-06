@@ -205,74 +205,38 @@ const SectionCard = ({ title, content }) => (
       minHeight: 110,
     }}
   >
-    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+    <Text strong style={{ display: 'block', paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid #e0e0e0' }}>
       {title}
     </Text>
     {content}
   </div>
 );
 
-const ValueTagList = ({ label, values, colour }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-    <Text style={{ fontSize: 12, color: '#64748B' }}>{label}</Text>
-    {values?.length ? (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {values.map((value) => (
-          <span
-            key={`${label}-${value}`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '4px 8px',
-              borderRadius: 999,
-              background: `${colour}14`,
-              color: colour,
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-          >
-            {value}
-          </span>
-        ))}
-      </div>
-    ) : (
-      <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>
-    )}
-  </div>
-);
 
-const BuildingChangesSummary = ({ row }) => {
-  const combinedEvents = row?.building_events ?? {};
-  const explicitEvents = row?.explicit_building_events ?? {};
-  const newBuildings = combinedEvents?.new_buildings ?? [];
-  const demolishedBuildings = combinedEvents?.demolished_buildings ?? [];
-  const explicitCount =
-    (explicitEvents?.new_buildings?.length ?? 0) +
-    (explicitEvents?.demolished_buildings?.length ?? 0);
-
+const ConstructList = ({ row }) => {
+  const buildings = row?.building_events?.new_buildings ?? [];
+  if (!buildings.length) {
+    return <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>;
+  }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <Text style={{ color: '#475569' }}>
-        {newBuildings.length || demolishedBuildings.length
-          ? `${newBuildings.length} added, ${demolishedBuildings.length} demolished`
-          : 'No building changes for this year.'}
-      </Text>
-      <ValueTagList
-        label="New"
-        values={newBuildings}
-        colour="#2F855A"
-      />
-      <ValueTagList
-        label="Demolished"
-        values={demolishedBuildings}
-        colour="#B45309"
-      />
-      <Text style={{ fontSize: 12, color: '#64748B' }}>
-        {explicitCount
-          ? `Manual building edits stored in YAML: ${explicitCount}`
-          : 'No explicit building edits stored in YAML.'}
-      </Text>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      {buildings.map((b) => (
+        <span key={b} style={{ fontSize: 12, color: '#475569' }}>{b}</span>
+      ))}
+    </div>
+  );
+};
+
+const DemolishList = ({ row }) => {
+  const buildings = row?.building_events?.demolished_buildings ?? [];
+  if (!buildings.length) {
+    return <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>;
+  }
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      {buildings.map((b) => (
+        <span key={b} style={{ fontSize: 12, color: '#475569' }}>{b}</span>
+      ))}
     </div>
   );
 };
@@ -280,20 +244,32 @@ const BuildingChangesSummary = ({ row }) => {
 const ModificationSummary = ({ row }) => {
   const modifications = row?.modifications ?? {};
   const archetypes = Object.keys(modifications);
-  const modificationCount = row?.summary?.modification_count ?? 0;
-
+  if (!archetypes.length) {
+    return <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>;
+  }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <Text style={{ color: '#475569' }}>
-        {modificationCount
-          ? `${modificationCount} field changes across ${archetypes.length} archetype${archetypes.length === 1 ? '' : 's'}.`
-          : 'No explicit modification fields saved for this year.'}
-      </Text>
-      <ValueTagList
-        label="Archetypes"
-        values={archetypes}
-        colour="#2659A0"
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {archetypes.map((archetype) => {
+        const components = modifications[archetype] ?? {};
+        const changes = Object.entries(components).flatMap(
+          ([component, fields]) =>
+            Object.entries(fields).map(([field, value]) => ({
+              component,
+              field,
+              value,
+            })),
+        );
+        return (
+          <div key={archetype} style={{ fontSize: 12 }}>
+            <Text strong style={{ fontSize: 12 }}>{archetype}</Text>
+            {changes.map((c) => (
+              <div key={`${c.component}-${c.field}`} style={{ color: '#475569', paddingLeft: 8 }}>
+                {c.field}: {String(c.value)}
+              </div>
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -1974,22 +1950,41 @@ const PathwayPanel = ({
               ) : null}
 
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: 12,
-                }}
-              >
-                <SectionCard
-                  title="Building changes"
-                  content={<BuildingChangesSummary row={selectedRow} />}
-                />
-                <SectionCard
-                  title="Modification summary"
-                  content={<ModificationSummary row={selectedRow} />}
-                />
-              </div>
+              {(() => {
+                const hasConstruct = (selectedRow.building_events?.new_buildings ?? []).length > 0;
+                const hasDemolish = (selectedRow.building_events?.demolished_buildings ?? []).length > 0;
+                const hasChange = Object.keys(selectedRow.modifications ?? {}).length > 0;
+                const visibleCards = [hasConstruct, hasDemolish, hasChange].filter(Boolean).length;
+                if (!visibleCards) return null;
+                return (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                      gap: 12,
+                    }}
+                  >
+                    {hasConstruct && (
+                      <SectionCard
+                        title="To Construct"
+                        content={<ConstructList row={selectedRow} />}
+                      />
+                    )}
+                    {hasDemolish && (
+                      <SectionCard
+                        title="To Demolish"
+                        content={<DemolishList row={selectedRow} />}
+                      />
+                    )}
+                    {hasChange && (
+                      <SectionCard
+                        title="To Change"
+                        content={<ModificationSummary row={selectedRow} />}
+                      />
+                    )}
+                  </div>
+                );
+              })()}
 
             </>
           )}
