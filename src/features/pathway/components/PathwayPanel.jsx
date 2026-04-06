@@ -1221,7 +1221,6 @@ const PathwayPanel = ({
   return (
     <div
       style={{
-        height: '100%',
         minHeight: 360,
         display: 'flex',
         flexDirection: 'column',

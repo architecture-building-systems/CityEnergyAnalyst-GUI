@@ -90,8 +90,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [showPathwayPanel, setShowPathwayPanel] = useState(false);
   const pathwayPanelHiddenForToolRef = useRef(false);
   const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
-  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(480);
+  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(360);
   const pathwayResizeStateRef = useRef(null);
+  const pathwayPanelContentRef = useRef(null);
 
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
@@ -188,11 +189,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         return;
       }
 
+      const contentHeight = pathwayPanelContentRef.current?.scrollHeight ?? Infinity;
       const nextHeight = Math.max(
         360,
         Math.min(
           resizeState.startHeight - (event.clientY - resizeState.startY),
           window.innerHeight - 220,
+          contentHeight + 18,
         ),
       );
       setPathwayPanelHeight(nextHeight);
@@ -460,17 +463,19 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   />
                 </button>
               ) : null}
-              <PathwayPanel
-                open={showPathwayPanel}
-                project={project}
-                scenarioName={scenarioName}
-                expanded={pathwayPanelExpanded}
-                onExpandedChange={setPathwayPanelExpanded}
-                onHidePanel={() => {
-                  setShowPathwayPanel(false);
-                  pathwayPanelHiddenForToolRef.current = true;
-                }}
-              />
+              <div ref={pathwayPanelContentRef}>
+                <PathwayPanel
+                  open={showPathwayPanel}
+                  project={project}
+                  scenarioName={scenarioName}
+                  expanded={pathwayPanelExpanded}
+                  onExpandedChange={setPathwayPanelExpanded}
+                  onHidePanel={() => {
+                    setShowPathwayPanel(false);
+                    pathwayPanelHiddenForToolRef.current = true;
+                  }}
+                />
+              </div>
             </animated.div>
           ) : null,
         )}
