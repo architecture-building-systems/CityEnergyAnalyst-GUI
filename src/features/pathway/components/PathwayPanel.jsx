@@ -1834,19 +1834,19 @@ const PathwayPanel = ({
                   >
                     {hasConstruct && (
                       <SectionCard
-                        title="To Construct"
+                        title="Construction"
                         content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} />}
                       />
                     )}
                     {hasDemolish && (
                       <SectionCard
-                        title="To Demolish"
+                        title="Demolition"
                         content={<BuildingList buildings={selectedRow.building_events?.demolished_buildings} buildingColorMap={buildingColorMap} />}
                       />
                     )}
                     {hasChange && (
                       <SectionCard
-                        title="To Change"
+                        title="Intervention"
                         content={<ModificationSummary row={selectedRow} constructionColorMap={constructionColorMap} />}
                       />
                     )}
