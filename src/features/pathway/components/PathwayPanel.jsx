@@ -1845,7 +1845,7 @@ const PathwayPanel = ({
                   }}
                 >
                   <Title level={4} style={{ margin: 0, marginLeft: 12, width: 80, flexShrink: 0 }}>
-                    {selectedRow.year}
+                    Y_{selectedRow.year}
                   </Title>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
                     {[
