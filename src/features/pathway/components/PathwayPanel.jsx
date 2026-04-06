@@ -1892,51 +1892,57 @@ const PathwayPanel = ({
                   alignItems: 'flex-start',
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Title level={4} style={{ margin: 0 }}>
-                      {selectedRow.year}
-                    </Title>
-                    <div
-                      style={{
-                        borderRadius: 999,
-                        padding: '4px 10px',
-                        background:
-                          selectedRow.state_kind === 'mixed'
-                            ? 'rgba(38, 89, 160, 0.12)'
-                            : selectedRow.state_kind === 'manual'
-                              ? 'rgba(15, 118, 110, 0.12)'
-                              : 'rgba(148, 163, 184, 0.16)',
-                        color:
-                          selectedRow.state_kind === 'mixed'
-                            ? '#2659A0'
-                            : selectedRow.state_kind === 'manual'
-                              ? '#0F766E'
-                              : '#475569',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textTransform: 'capitalize',
-                      }}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Title level={4} style={{ margin: 0, width: 80, flexShrink: 0 }}>
+                    {selectedRow.year}
+                  </Title>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {[
+                      { key: 'auto-stock', label: 'Auto-Stock', active: selectedRow.state_kind === 'stock' || selectedRow.state_kind === 'mixed' },
+                      { key: 'construct', label: 'Construct-Event', active: (selectedRow.summary?.new_buildings_count ?? 0) > 0 },
+                      { key: 'demolish', label: 'Demolish-Event', active: (selectedRow.summary?.demolished_buildings_count ?? 0) > 0 },
+                      { key: 'intervention', label: 'Intervention', active: (selectedRow.summary?.modification_count ?? 0) > 0 },
+                    ].map((tag) => (
+                      <span
+                        key={tag.key}
+                        style={{
+                          padding: '3px 10px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          background: tag.active ? '#8eb6dc' : '#e8e8e8',
+                          color: tag.active ? '#fff' : '#999',
+                        }}
+                      >
+                        {tag.label}
+                      </span>
+                    ))}
+                    <Tooltip
+                      title={
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: 4 }}>State Types</div>
+                          <div><b>Auto-Stock</b>: Buildings with a construction year matching this state year.</div>
+                          <div><b>Construct-Event</b>: Buildings explicitly added in this year.</div>
+                          <div><b>Demolish-Event</b>: Buildings explicitly removed in this year.</div>
+                          <div><b>Intervention</b>: Building property modifications applied via intervention templates.</div>
+                        </div>
+                      }
+                      placement="bottom"
                     >
-                      {selectedRow.state_kind}
-                    </div>
+                      <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+                    </Tooltip>
                   </div>
-                  <Text style={{ color: '#475569' }}>
-                    {selectedRow.summary?.text ?? 'No summary available.'}
-                  </Text>
                 </div>
+                <Text style={{ color: '#475569' }}>
+                  {selectedRow.summary?.text ?? 'No summary available.'}
+                </Text>
               </div>
-
-
-              {selectedRow.state_kind === 'stock' && !selectedRow.exists_in_log ? (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="This is a stock-only year."
-                  description="Use Building events, Apply templates, or Edit YAML to add real edits. Empty placeholders are intentionally blocked for stock years."
-                  style={{ borderRadius: 12 }}
-                />
-              ) : null}
 
               {globalValidationIssues.length ? (
                 <Alert
