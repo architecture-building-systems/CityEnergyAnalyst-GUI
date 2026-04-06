@@ -1,13 +1,10 @@
 import {
   BuildOutlined,
   CheckCircleOutlined,
-  CompressOutlined,
   DeleteOutlined,
   EditOutlined,
-  ExpandOutlined,
   FileTextOutlined,
   PlusOutlined,
-  ReloadOutlined,
   RocketOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
@@ -27,12 +24,15 @@ import {
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { BinAnimationIcon, CreateNewIcon, RefreshIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import {
   toolTypes,
   useSetToolType,
   useToolCardStore,
 } from 'features/project/stores/tool-card';
+
+import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import {
   fetchPathwayOverview,
@@ -431,12 +431,108 @@ const ModificationSummary = ({ row }) => {
   );
 };
 
+const PathwayOption = ({ pathwayName, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const onClick = (e) => {
+    e.stopPropagation();
+    onDelete?.(pathwayName);
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flexGrow: 1,
+        }}
+        title={pathwayName}
+      >
+        {pathwayName}
+      </div>
+      {isHovered && (
+        <BinAnimationIcon
+          style={{ padding: '2px 8px' }}
+          className="cea-job-info-icon danger shake"
+          onClick={onClick}
+        />
+      )}
+    </div>
+  );
+};
+
+const PathwaySelect = ({
+  selectedPathway,
+  overviewPathways,
+  onSelectPathway,
+  onDeletePathway,
+  onCreatePathway,
+  loading,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  const sortedPathways = useMemo(() => {
+    return [...overviewPathways]
+      .map((p) => p.pathway_name)
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  }, [overviewPathways]);
+
+  const options = useMemo(() => {
+    const otherPathways = sortedPathways.filter((p) => p !== selectedPathway);
+    return otherPathways.length > 0
+      ? [
+          {
+            label: 'Pathways',
+            options: otherPathways.map((pathwayName) => ({
+              label: (
+                <PathwayOption
+                  pathwayName={pathwayName}
+                  onDelete={onDeletePathway}
+                />
+              ),
+              value: pathwayName,
+            })),
+          },
+        ]
+      : [];
+  }, [sortedPathways, selectedPathway, onDeletePathway]);
+
+  const hasPathways = overviewPathways.length > 0;
+
+  return (
+    <Select
+      className={`cea-scenario-select ${!hasPathways || !selectedPathway ? 'cea-scenario-select-empty' : ''}`}
+      style={{ width: 208 }}
+      styles={{ popup: { root: { width: 270 } } }}
+      placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
+      options={hasPathways ? options : []}
+      value={selectedPathway}
+      onChange={onSelectPathway}
+      loading={loading}
+      open={hasPathways ? open : false}
+      onOpenChange={hasPathways ? setOpen : undefined}
+      onClick={!hasPathways ? onCreatePathway : undefined}
+      notFoundContent={<small>No other pathways</small>}
+    />
+  );
+};
+
 const PathwayPanel = ({
   open,
   project,
   scenarioName,
   expanded = false,
-  onExpandedChange,
 }) => {
   const createJob = useCreateJob();
   const jobs = useJobsStore((state) => state.jobs);
@@ -465,8 +561,6 @@ const PathwayPanel = ({
   const [busyAction, setBusyAction] = useState(null);
   const [pendingPanelJob, setPendingPanelJob] = useState(null);
 
-  const [creatingPathway, setCreatingPathway] = useState(false);
-  const [newPathwayName, setNewPathwayName] = useState('');
   const [newYearValue, setNewYearValue] = useState(null);
 
   const [editorOptions, setEditorOptions] = useState(null);
@@ -850,12 +944,9 @@ const PathwayPanel = ({
 
     if (job.state === 2) {
       if (pendingPanelJob.onSuccess === 'created-pathway') {
-        setCreatingPathway(false);
-        setNewPathwayName('');
+        // pathway created successfully
       }
       if (pendingPanelJob.onSuccess === 'deleted-pathway') {
-        setCreatingPathway(false);
-        setNewPathwayName('');
         setCreateYearModalOpen(false);
         setBuildingEventsModalOpen(false);
         setTemplateModalOpen(false);
@@ -923,30 +1014,6 @@ const PathwayPanel = ({
     }
   };
 
-  const handleCreatePathway = async () => {
-    if (!newPathwayName.trim()) {
-      setPanelError('Enter a pathway name first.');
-      return;
-    }
-
-    await startPanelJob({
-      script: 'create-new-pathway',
-      parameters: {
-        scenario: scenarioPath,
-        new_pathway_name: newPathwayName.trim(),
-      },
-      busyKey: 'create-pathway',
-      startedMessage:
-        'Create pathway job started. Open Job Info in the status bar for details.',
-      failedToStartMessage: 'Failed to start the create-pathway job.',
-      completionMessage: `Created pathway '${newPathwayName.trim()}'.`,
-      failureMessage:
-        'Create pathway failed. Open Job Info in the status bar for details.',
-      preferredPathway: newPathwayName.trim(),
-      onSuccess: 'created-pathway',
-    });
-  };
-
   const handleAddYear = async () => {
     if (!selectedPathway) {
       setPanelError('Select a pathway first.');
@@ -967,15 +1034,13 @@ const PathwayPanel = ({
     setPanelError(null);
   };
 
-  const handleDeleteSelectedPathway = () => {
-    if (!selectedPathway || !scenarioPath) {
-      setPanelError('Select a pathway first.');
+  const handleDeletePathwayByName = (pathwayName) => {
+    if (!pathwayName || !scenarioPath) {
       return;
     }
 
-    const targetPathway = selectedPathway;
     Modal.confirm({
-      title: `Delete pathway '${targetPathway}'?`,
+      title: `Delete pathway '${pathwayName}'?`,
       content:
         'This removes the pathway log, intervention templates, baked states, simulation outputs, and saved state-status records for this pathway. This cannot be undone.',
       okText: 'Delete pathway',
@@ -987,15 +1052,59 @@ const PathwayPanel = ({
           script: 'pathway-delete-pathway',
           parameters: {
             scenario: scenarioPath,
-            existing_pathway_name: targetPathway,
+            existing_pathway_name: pathwayName,
           },
           busyKey: 'delete-pathway',
           failedToStartMessage: 'Failed to start the delete-pathway job.',
           failureMessage:
             'Deleting the pathway failed. Open Job Info in the status bar for details.',
-          preferredPathway: null,
+          preferredPathway:
+            pathwayName === selectedPathway ? null : selectedPathway,
           preferredYear: null,
           onSuccess: 'deleted-pathway',
+        });
+      },
+    });
+  };
+
+  const handleStartCreatePathway = () => {
+    Modal.confirm({
+      title: 'Create new pathway',
+      content: (
+        <div style={{ paddingTop: 8 }}>
+          <input
+            id="cea-new-pathway-input"
+            placeholder="new_pathway_name"
+            style={{
+              width: '100%',
+              padding: '4px 11px',
+              borderRadius: 6,
+              border: '1px solid #d9d9d9',
+              fontSize: 14,
+            }}
+          />
+        </div>
+      ),
+      okText: 'Create',
+      onOk: async () => {
+        const input = document.getElementById('cea-new-pathway-input');
+        const name = input?.value?.trim();
+        if (!name) {
+          setPanelError('Enter a pathway name first.');
+          return Promise.reject();
+        }
+        await startPanelJob({
+          script: 'create-new-pathway',
+          parameters: {
+            scenario: scenarioPath,
+            new_pathway_name: name,
+          },
+          busyKey: 'create-pathway',
+          failedToStartMessage: 'Failed to start the create-pathway job.',
+          failureMessage:
+            'Create pathway failed. Open Job Info in the status bar for details.',
+          preferredPathway: name,
+          onSuccess: 'created-pathway',
         });
       },
     });
@@ -1418,8 +1527,8 @@ const PathwayPanel = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
-        padding: expanded ? '16px 16px 20px' : '12px 12px 16px',
-        background: 'linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 100%)',
+        padding: expanded ? '8px 16px 20px' : '4px 12px 16px',
+        background: '#FFFFFF',
         overflow: 'hidden',
         borderRadius: 'inherit',
       }}
@@ -1437,70 +1546,31 @@ const PathwayPanel = ({
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
+            alignItems: 'center',
+            gap: 12,
             minWidth: 0,
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Title level={5} style={{ margin: 0 }}>
-              Pathway timeline
-            </Title>
-            {!creatingPathway ? (
-              <Link onClick={() => setCreatingPathway(true)}>
-                <PlusOutlined /> Create new pathway
-              </Link>
-            ) : null}
-            {selectedPathway ? (
-              <Link
-                onClick={handleDeleteSelectedPathway}
-                style={{ color: '#B91C1C' }}
-              >
-                <DeleteOutlined /> Delete current pathway
-              </Link>
-            ) : null}
-          </div>
-          {creatingPathway ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Input
-                size="small"
-                placeholder="new_pathway_name"
-                style={{ width: 220 }}
-                value={newPathwayName}
-                onChange={(event) => setNewPathwayName(event.target.value)}
-                onPressEnter={handleCreatePathway}
-              />
+          <PathwaySelect
+            selectedPathway={selectedPathway}
+            overviewPathways={overviewPathways}
+            onSelectPathway={(pathwayName) =>
+              void handleSelectPathway(pathwayName)
+            }
+            onDeletePathway={handleDeletePathwayByName}
+            onCreatePathway={handleStartCreatePathway}
+            loading={loadingOverview}
+          />
+          <div className="cea-card-icon-button-container">
+            <Tooltip title="Create new pathway" placement="bottom">
               <Button
-                size="small"
-                type="primary"
+                icon={<CreateNewIcon />}
+                type="text"
                 loading={busyAction === 'create-pathway'}
-                onClick={handleCreatePathway}
-              >
-                Create
-              </Button>
-              <Button
-                size="small"
-                onClick={() => {
-                  setCreatingPathway(false);
-                  setNewPathwayName('');
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <Text style={{ color: '#64748B', fontSize: 12 }}>
-              Hover a node for a quick state summary, then click to pin the
-              inspector. Click a pathway lane to switch pathways.
-            </Text>
-          )}
+                onClick={handleStartCreatePathway}
+              />
+            </Tooltip>
+          </div>
         </div>
 
         <div
@@ -1539,16 +1609,16 @@ const PathwayPanel = ({
             <Link onClick={handleOpenTemplateTool}>
               <ToolOutlined /> Template editor
             </Link>
-            <Link onClick={() => refreshPathwayData()}>
-              <ReloadOutlined /> Refresh
-            </Link>
-            <Button
-              size="small"
-              icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
-              onClick={() => onExpandedChange?.(!expanded)}
-            >
-              {expanded ? 'Exit full screen' : 'Full screen'}
-            </Button>
+            <div className="cea-card-icon-button-container">
+              <Tooltip title="Refresh" placement="bottom">
+                <Button
+                  icon={<RefreshIcon />}
+                  type="text"
+                  loading={loadingOverview || loadingTimeline}
+                  onClick={() => refreshPathwayData()}
+                />
+              </Tooltip>
+            </div>
           </div>
           <div
             style={{
