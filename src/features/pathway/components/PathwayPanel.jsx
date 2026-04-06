@@ -1939,9 +1939,6 @@ const PathwayPanel = ({
                     </Tooltip>
                   </div>
                 </div>
-                <Text style={{ color: '#475569' }}>
-                  {selectedRow.summary?.text ?? 'No summary available.'}
-                </Text>
               </div>
 
               {globalValidationIssues.length ? (
