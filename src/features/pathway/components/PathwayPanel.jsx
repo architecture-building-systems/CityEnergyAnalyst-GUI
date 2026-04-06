@@ -47,10 +47,10 @@ import {
 
 const { Text, Title } = Typography;
 
-const LANE_PADDING = 30;
-const LABEL_COLUMN_WIDTH = 176;
+const LANE_PADDING = 60;
+const LABEL_COLUMN_WIDTH = 208;
 const RULER_HEIGHT = 24;
-const ACTIVE_LANE_HEIGHT = 52;
+const ACTIVE_LANE_HEIGHT = 48;
 const MAX_VISIBLE_TIMELINE_LANES = 3;
 
 const STATUS_FILL = {
@@ -192,12 +192,7 @@ const getNodeFill = (row) => {
   return STATUS_FILL[primaryPhase] ?? STATUS_FILL.none;
 };
 
-const getNodeSize = (row, active) => {
-  if (!active) {
-    return 8;
-  }
-  return row?.state_kind === 'stock' ? 10 : 16;
-};
+const getNodeSize = () => 12;
 
 const getInitialYamlDraft = (row) => {
   if (!row?.exists_in_log || row?.yaml_preview?.startsWith('# No explicit YAML')) {
@@ -1531,11 +1526,10 @@ const PathwayPanel = ({
     RULER_HEIGHT +
     visibleOverviewPathways.length * ACTIVE_LANE_HEIGHT;
   const timelineViewportHeight = Math.min(
-    Math.max(totalTimelineHeight, 160),
+    totalTimelineHeight,
     RULER_HEIGHT +
       ACTIVE_LANE_HEIGHT *
-        Math.min(visibleOverviewPathways.length, MAX_VISIBLE_TIMELINE_LANES) +
-      8,
+        Math.min(visibleOverviewPathways.length, MAX_VISIBLE_TIMELINE_LANES),
   );
 
   useEffect(() => {
@@ -1920,8 +1914,7 @@ const PathwayPanel = ({
           style={{
             border: '1px solid rgba(148, 163, 184, 0.22)',
             borderRadius: 18,
-            background:
-              'linear-gradient(180deg, rgba(248, 250, 252, 0.88) 0%, rgba(255, 255, 255, 0.98) 100%)',
+            background: '#f7f7f7',
             overflow: 'hidden',
           }}
         >
@@ -1965,13 +1958,13 @@ const PathwayPanel = ({
                   flexDirection: 'column',
                   borderRight: '1px solid rgba(148, 163, 184, 0.18)',
                   background:
-                    'linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(255, 255, 255, 0.9) 100%)',
+                    '#f7f7f7',
                 }}
               >
                 <div
                   style={{
                     height: RULER_HEIGHT,
-                    padding: '4px 16px 0',
+                    padding: '0 16px',
                     display: 'flex',
                     alignItems: 'center',
                   }}
@@ -1980,7 +1973,6 @@ const PathwayPanel = ({
                     style={{
                       fontSize: 11,
                       letterSpacing: 1,
-                      textTransform: 'uppercase',
                       color: '#64748B',
                     }}
                   >
@@ -1989,18 +1981,12 @@ const PathwayPanel = ({
                 </div>
 
                 {visibleOverviewPathways.map((pathway) => (
-                    <button
+                    <div
                       key={`label-${pathway.pathway_name}`}
-                      type="button"
-                      onClick={() => void handleSelectPathway(pathway.pathway_name)}
                       style={{
                         height: ACTIVE_LANE_HEIGHT,
                         padding: '0 16px',
                         background: 'transparent',
-                        border: 'none',
-                        borderLeft: '4px solid transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
@@ -2031,7 +2017,7 @@ const PathwayPanel = ({
                           {pathway.state_count}
                         </Text>
                       </div>
-                    </button>
+                    </div>
                 ))}
               </div>
 
@@ -2062,12 +2048,12 @@ const PathwayPanel = ({
                           style={{
                             position: 'absolute',
                             left: getYearOffset(year),
-                            top: 2,
+                            top: 0,
                             transform: 'translateX(-50%)',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: 2,
+                            gap: 0,
                           }}
                         >
                           <span
@@ -2096,6 +2082,7 @@ const PathwayPanel = ({
                           style={{
                             position: 'relative',
                             height: ACTIVE_LANE_HEIGHT,
+                            boxSizing: 'border-box',
                             background: 'transparent',
                             borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
                           }}
@@ -2107,8 +2094,8 @@ const PathwayPanel = ({
                               right: LANE_PADDING,
                               top: '50%',
                               transform: 'translateY(-50%)',
-                              height: 2,
-                              background: 'rgba(203, 213, 225, 0.8)',
+                              height: 1,
+                              background: '#8eb6dc',
                               borderRadius: 999,
                             }}
                           />
