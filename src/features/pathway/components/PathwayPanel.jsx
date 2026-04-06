@@ -1335,7 +1335,15 @@ const PathwayPanel = ({
             </div>
             <Button
               type="primary"
-              disabled={!selectedPathway || visiblePathways.length > 1}
+              disabled={
+                !selectedPathway ||
+                visiblePathways.length > 1 ||
+                !activeRows.length ||
+                activeRows.some((row) => {
+                  const phase = row?.status?.primary_phase ?? 'none';
+                  return phase !== 'baked' && phase !== 'simulated';
+                })
+              }
               loading={busyAction === 'pathway-simulations'}
               onClick={() => handleRunPathwayJob('pathway-simulations')}
             >
