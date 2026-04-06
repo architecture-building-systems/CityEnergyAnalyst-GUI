@@ -11,6 +11,7 @@ import {
 import {
   Alert,
   Button,
+  Divider,
   Drawer,
   Empty,
   Input,
@@ -35,12 +36,14 @@ import {
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import {
+  deleteInterventionTemplate,
+  fetchInterventionTemplates,
   fetchPathwayOverview,
   fetchPathwayTimeline,
   fetchYearEditorOptions,
 } from '../api';
 
-const { Link, Text, Title } = Typography;
+const { Text, Title } = Typography;
 
 const LANE_PADDING = 30;
 const LABEL_COLUMN_WIDTH = 176;
@@ -528,6 +531,102 @@ const PathwaySelect = ({
   );
 };
 
+const TemplateOption = ({ templateName, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const onClick = (e) => {
+    e.stopPropagation();
+    onDelete?.(templateName);
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flexGrow: 1,
+        }}
+        title={templateName}
+      >
+        {templateName}
+      </div>
+      {isHovered && (
+        <BinAnimationIcon
+          style={{ padding: '2px 8px' }}
+          className="cea-job-info-icon danger shake"
+          onClick={onClick}
+        />
+      )}
+    </div>
+  );
+};
+
+const TemplateSelect = ({
+  templates,
+  onDeleteTemplate,
+  onCreateTemplate,
+  loading,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  const sortedTemplates = useMemo(() => {
+    return [...(templates ?? [])].sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase()),
+    );
+  }, [templates]);
+
+  const options = useMemo(() => {
+    return sortedTemplates.length > 0
+      ? [
+          {
+            label: 'Intervention Templates',
+            options: sortedTemplates.map((name) => ({
+              label: (
+                <TemplateOption
+                  templateName={name}
+                  onDelete={onDeleteTemplate}
+                />
+              ),
+              value: name,
+            })),
+          },
+        ]
+      : [];
+  }, [sortedTemplates, onDeleteTemplate]);
+
+  const hasTemplates = sortedTemplates.length > 0;
+
+  return (
+    <Select
+      className={`cea-template-select ${!hasTemplates ? 'cea-template-select-empty' : ''}`}
+      style={{ width: 208 }}
+      styles={{ popup: { root: { width: 270 } } }}
+      placeholder={
+        hasTemplates ? 'Intervention Templates' : 'Create Intervention Template'
+      }
+      options={hasTemplates ? options : []}
+      value={null}
+      onChange={() => {}}
+      loading={loading}
+      open={hasTemplates ? open : false}
+      onOpenChange={hasTemplates ? setOpen : undefined}
+      onClick={!hasTemplates ? onCreateTemplate : undefined}
+      notFoundContent={<small>No intervention templates</small>}
+    />
+  );
+};
+
 const PathwayPanel = ({
   open,
   project,
@@ -562,6 +661,9 @@ const PathwayPanel = ({
   const [pendingPanelJob, setPendingPanelJob] = useState(null);
 
   const [newYearValue, setNewYearValue] = useState(null);
+
+  const [templateNames, setTemplateNames] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const [editorOptions, setEditorOptions] = useState(null);
   const [editorOptionsLoading, setEditorOptionsLoading] = useState(false);
@@ -720,6 +822,25 @@ const PathwayPanel = ({
     [],
   );
 
+  const loadTemplates = useCallback(
+    async (pathwayName) => {
+      if (!pathwayName) {
+        setTemplateNames([]);
+        return;
+      }
+      setLoadingTemplates(true);
+      try {
+        const names = await fetchInterventionTemplates(pathwayName);
+        setTemplateNames(names);
+      } catch {
+        setTemplateNames([]);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    },
+    [],
+  );
+
   const refreshPathwayData = useCallback(
     async ({
       preferredPathway = selectedPathwayRef.current,
@@ -729,11 +850,15 @@ const PathwayPanel = ({
       if (!activePathway) {
         setTimeline(null);
         setSelectedYear(null);
+        setTemplateNames([]);
         return;
       }
-      await loadTimeline(activePathway, preferredYear);
+      await Promise.all([
+        loadTimeline(activePathway, preferredYear),
+        loadTemplates(activePathway),
+      ]);
     },
-    [loadOverview, loadTimeline],
+    [loadOverview, loadTimeline, loadTemplates],
   );
 
   const ensureEditorOptions = useCallback(
@@ -806,9 +931,12 @@ const PathwayPanel = ({
         return;
       }
       pendingPreferredYearRef.current = preferredYear;
-      await loadTimeline(pathwayName, preferredYear);
+      await Promise.all([
+        loadTimeline(pathwayName, preferredYear),
+        loadTemplates(pathwayName),
+      ]);
     },
-    [loadTimeline],
+    [loadTimeline, loadTemplates],
   );
 
   const handleSelectYear = useCallback(
@@ -1331,6 +1459,30 @@ const PathwayPanel = ({
     setToolType(toolTypes.TOOLS);
   };
 
+  const handleDeleteTemplate = (templateName) => {
+    if (!selectedPathway || !templateName) {
+      return;
+    }
+
+    Modal.confirm({
+      title: `Delete template '${templateName}'?`,
+      content:
+        'This removes the intervention template definition. This cannot be undone.',
+      okText: 'Delete template',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await deleteInterventionTemplate(selectedPathway, templateName);
+          await loadTemplates(selectedPathway);
+        } catch (error) {
+          setPanelError(
+            getErrorMessage(error, 'Failed to delete intervention template.'),
+          );
+        }
+      },
+    });
+  };
+
   const totalTimelineHeight =
     RULER_HEIGHT +
     overviewPathways.reduce(
@@ -1571,6 +1723,22 @@ const PathwayPanel = ({
               />
             </Tooltip>
           </div>
+          <Divider type="vertical" style={{ height: 24, margin: 0 }} />
+          <TemplateSelect
+            templates={templateNames}
+            onDeleteTemplate={handleDeleteTemplate}
+            onCreateTemplate={handleOpenTemplateTool}
+            loading={loadingTemplates}
+          />
+          <div className="cea-card-icon-button-container">
+            <Tooltip title="Define intervention template" placement="bottom">
+              <Button
+                icon={<CreateNewIcon />}
+                type="text"
+                onClick={handleOpenTemplateTool}
+              />
+            </Tooltip>
+          </div>
         </div>
 
         <div
@@ -1606,9 +1774,6 @@ const PathwayPanel = ({
                 Refreshing active pathway
               </span>
             ) : null}
-            <Link onClick={handleOpenTemplateTool}>
-              <ToolOutlined /> Template editor
-            </Link>
             <div className="cea-card-icon-button-container">
               <Tooltip title="Refresh" placement="bottom">
                 <Button

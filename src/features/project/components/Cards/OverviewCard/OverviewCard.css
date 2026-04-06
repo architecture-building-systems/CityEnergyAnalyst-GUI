@@ -32,3 +32,22 @@
 .cea-scenario-select-empty.ant-select .ant-select-suffix {
   display: none;
 }
+
+.cea-template-select.ant-select {
+  background-color: transparent !important;
+  border-radius: 12px !important;
+  border: 2px solid #000 !important;
+  font-weight: bold;
+  height: 36px !important;
+}
+.cea-template-select.ant-select .ant-select-content-value,
+.cea-template-select.ant-select .ant-select-suffix {
+  color: #000 !important;
+}
+.cea-template-select.ant-select .ant-select-placeholder {
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.cea-template-select-empty.ant-select .ant-select-suffix {
+  display: none;
+}
