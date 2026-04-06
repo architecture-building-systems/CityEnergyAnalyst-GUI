@@ -1041,6 +1041,7 @@ const PathwayPanel = ({
           job.scenario_name === scenarioName &&
           [
             'bake-pathway-states',
+            'pathway-intervention-templates-define',
             'pathway-simulations',
             'pathway-validate-all-states',
           ].includes(job.script),
