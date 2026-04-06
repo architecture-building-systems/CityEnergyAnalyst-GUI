@@ -18,7 +18,6 @@ import {
   InputNumber,
   Modal,
   Select,
-  Slider,
   Spin,
   Tooltip,
   Typography,
@@ -50,19 +49,17 @@ const LABEL_COLUMN_WIDTH = 176;
 const RULER_HEIGHT = 24;
 const ACTIVE_LANE_HEIGHT = 52;
 const INACTIVE_LANE_HEIGHT = 28;
-const ZOOM_MIN = 1;
-const ZOOM_MAX = 8;
 const MAX_VISIBLE_TIMELINE_LANES = 3;
 
 const STATUS_FILL = {
   none: '#CBD5E1',
-  validated: '#0F766E',
-  baked: '#2659A0',
-  simulated: '#2F855A',
+  validated: '#CBD5E1',
+  baked: '#1470AF',
+  simulated: '#000000',
 };
 
 const STATUS_ACCENT = {
-  error: '#B91C1C',
+  error: '#f04d5b',
   changed: '#D97706',
 };
 
@@ -652,7 +649,6 @@ const PathwayPanel = ({
   const [selectedPathway, setSelectedPathway] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(0);
-  const [zoomLevel, setZoomLevel] = useState(1);
 
   const [loadingOverview, setLoadingOverview] = useState(false);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
@@ -717,7 +713,7 @@ const PathwayPanel = ({
   }, [endYear, startYear]);
 
   const fitWidth = Math.max((viewportWidth || 860) - LANE_PADDING * 2, 240);
-  const pxPerYear = (fitWidth / yearRange) * zoomLevel;
+  const pxPerYear = fitWidth / yearRange;
   const contentWidth = LANE_PADDING * 2 + yearRange * pxPerYear;
 
   const getYearOffset = useCallback(
@@ -1862,49 +1858,19 @@ const PathwayPanel = ({
         <div
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
-            gap: 12,
+            justifyContent: 'flex-end',
+            gap: 14,
             flexWrap: 'wrap',
             alignItems: 'center',
           }}
         >
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            <LegendChip colour={STATUS_FILL.none} label="Draft or not baked" />
-            <LegendChip colour={STATUS_FILL.baked} label="Baked" />
-            <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
-            <LegendChip
-              colour={STATUS_FILL.none}
-              label="Changed after confirmation"
-              halo="rgba(217, 119, 6, 0.18)"
-            />
-            <LegendChip
-              colour={STATUS_FILL.none}
-              label="Validation issue"
-              outline={STATUS_ACCENT.error}
-            />
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              minWidth: 260,
-              flex: '0 1 320px',
-            }}
-          >
-            <Text style={{ color: '#475569', fontSize: 12 }}>Zoom</Text>
-            <Slider
-              min={ZOOM_MIN}
-              max={ZOOM_MAX}
-              step={0.25}
-              value={zoomLevel}
-              tooltip={{ formatter: (value) => `${value}x` }}
-              onChange={(value) =>
-                setZoomLevel(Array.isArray(value) ? value[0] : value)
-              }
-              style={{ margin: 0, flex: 1 }}
-            />
-          </div>
+          <LegendChip colour={STATUS_FILL.none} label="Draft" />
+          <LegendChip colour={STATUS_FILL.baked} label="Baked" />
+          <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
+          <LegendChip
+            colour={STATUS_ACCENT.error}
+            label="Validation issue"
+          />
         </div>
 
         <div
@@ -2127,7 +2093,11 @@ const PathwayPanel = ({
                             const selected = active && selectedYear === year;
                             const validationError =
                               active && row?.validation?.status === 'error';
-                            const nodeFill = active ? getNodeFill(row) : '#D7DDE7';
+                            const nodeFill = active
+                              ? validationError
+                                ? STATUS_ACCENT.error
+                                : getNodeFill(row)
+                              : '#D7DDE7';
 
                             return (
                               <Tooltip
@@ -2161,11 +2131,7 @@ const PathwayPanel = ({
                                     height: nodeSize,
                                     borderRadius: 999,
                                     border: active
-                                      ? `2px solid ${
-                                          validationError
-                                            ? STATUS_ACCENT.error
-                                            : '#FFFFFF'
-                                        }`
+                                      ? '2px solid #FFFFFF'
                                       : '1px solid rgba(148, 163, 184, 0.55)',
                                     background: nodeFill,
                                     cursor: 'pointer',
