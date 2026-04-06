@@ -61,18 +61,6 @@ const STATUS_ACCENT = {
 };
 
 
-const TIMELINE_TOOLTIP_PROPS = {
-  color: '#FFFFFF',
-  styles: {
-    body: {
-      borderRadius: 16,
-      padding: '12px 14px',
-      border: '1px solid rgba(148, 163, 184, 0.24)',
-      boxShadow: '0 20px 48px rgba(15, 23, 42, 0.16)',
-    },
-  },
-};
-
 const getErrorMessage = (error, fallbackMessage) => {
   const detail = error?.response?.data?.detail;
   if (typeof detail === 'string' && detail.trim()) {
@@ -159,19 +147,6 @@ const resolveSelectedYear = ({
   }
 
   return years[0] ?? null;
-};
-
-const getYearLabel = (row) => {
-  if (!row) {
-    return 'State';
-  }
-  if (row.state_kind === 'mixed') {
-    return 'Mixed state';
-  }
-  if (row.state_kind === 'manual') {
-    return 'Manual state';
-  }
-  return 'Stock state';
 };
 
 const getNodeFill = (row) => {
@@ -1228,137 +1203,6 @@ const PathwayPanel = ({
     }
   }, [visibleOverviewPathways, selectedPathway]);
 
-  const renderNodeTooltip = (pathwayName, year, row, active) => {
-    if (!active) {
-      return (
-        <div style={{ maxWidth: 220 }}>
-          <Text strong style={{ display: 'block', color: '#0F172A' }}>
-            {pathwayName}
-          </Text>
-          <Text style={{ fontSize: 12, color: '#475569' }}>
-            {year} state year
-          </Text>
-        </div>
-      );
-    }
-
-    return (
-      <div style={{ maxWidth: 300, color: '#0F172A' }}>
-        <Text strong style={{ display: 'block', color: '#0F172A' }}>
-          {row.year} | {getYearLabel(row)}
-        </Text>
-        <Text
-          style={{
-            display: 'block',
-            fontSize: 12,
-            color: '#475569',
-            marginTop: 2,
-          }}
-        >
-          {row.summary?.text ?? 'No summary available.'}
-        </Text>
-
-        <div
-          style={{
-            display: 'grid',
-            gap: 6,
-            marginTop: 10,
-            fontSize: 12,
-            color: '#334155',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <span>Validation</span>
-            <strong>{row.status?.validation?.label ?? 'Unknown'}</strong>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <span>Bake</span>
-            <strong>{row.status?.bake?.label ?? 'Unknown'}</strong>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <span>Simulation</span>
-            <strong>{row.status?.simulation?.label ?? 'Unknown'}</strong>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 6,
-            marginTop: 10,
-          }}
-        >
-          <span
-            style={{
-              padding: '4px 8px',
-              borderRadius: 999,
-              background: 'rgba(38, 89, 160, 0.1)',
-              color: '#2659A0',
-              fontSize: 11,
-              fontWeight: 600,
-            }}
-          >
-            {row.summary?.modification_count ?? 0} changes
-          </span>
-          <span
-            style={{
-              padding: '4px 8px',
-              borderRadius: 999,
-              background: 'rgba(47, 133, 90, 0.12)',
-              color: '#2F855A',
-              fontSize: 11,
-              fontWeight: 600,
-            }}
-          >
-            {row.summary?.new_buildings_count ?? 0} added
-          </span>
-          <span
-            style={{
-              padding: '4px 8px',
-              borderRadius: 999,
-              background: 'rgba(180, 83, 9, 0.12)',
-              color: '#B45309',
-              fontSize: 11,
-              fontWeight: 600,
-            }}
-          >
-            {row.summary?.demolished_buildings_count ?? 0} demolished
-          </span>
-        </div>
-
-        <Text
-          style={{
-            display: 'block',
-            marginTop: 10,
-            fontSize: 11,
-            color: '#64748B',
-          }}
-        >
-          Last updated {formatCompactTimestamp(row.latest_modified_at)}
-        </Text>
-      </div>
-    );
-  };
-
   return (
     <div
       style={{
@@ -1812,17 +1656,8 @@ const PathwayPanel = ({
                               : '#CBD5E1';
 
                             return (
-                              <Tooltip
-                                {...TIMELINE_TOOLTIP_PROPS}
-                                key={`${pathway.pathway_name}-${year}`}
-                                title={renderNodeTooltip(
-                                  pathway.pathway_name,
-                                  year,
-                                  row,
-                                  isActive,
-                                )}
-                              >
                                 <button
+                                  key={`${pathway.pathway_name}-${year}`}
                                   type="button"
                                   onClick={() => {
                                     void handleSelectPathway(
@@ -1848,7 +1683,6 @@ const PathwayPanel = ({
                                   }}
                                   aria-label={`${pathway.pathway_name} ${year}`}
                                 />
-                              </Tooltip>
                             );
                           })}
                         </div>
