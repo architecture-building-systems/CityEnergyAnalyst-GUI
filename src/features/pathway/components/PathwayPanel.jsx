@@ -12,6 +12,9 @@ import {
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
+import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
+import { getMainUseType } from 'features/map/utils/constructionColors';
 import {
   BinAnimationIcon,
   CreateNewIcon,
@@ -213,29 +216,28 @@ const SectionCard = ({ title, content }) => (
 );
 
 
-const ConstructList = ({ row }) => {
-  const buildings = row?.building_events?.new_buildings ?? [];
-  if (!buildings.length) {
-    return <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>;
-  }
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-      {buildings.map((b) => (
-        <span key={b} style={{ fontSize: 12, color: '#475569' }}>{b}</span>
-      ))}
-    </div>
-  );
-};
+const BuildingPill = ({ name, color }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      padding: '2px 8px',
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 500,
+      background: color ?? '#e8e8e8',
+      color: color ? '#fff' : '#475569',
+    }}
+  >
+    {name}
+  </span>
+);
 
-const DemolishList = ({ row }) => {
-  const buildings = row?.building_events?.demolished_buildings ?? [];
-  if (!buildings.length) {
-    return <Text style={{ color: '#94A3B8', fontSize: 12 }}>None</Text>;
-  }
+const BuildingList = ({ buildings, buildingColorMap }) => {
+  if (!buildings?.length) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {buildings.map((b) => (
-        <span key={b} style={{ fontSize: 12, color: '#475569' }}>{b}</span>
+        <BuildingPill key={b} name={b} color={buildingColorMap?.[b]} />
       ))}
     </div>
   );
@@ -510,6 +512,35 @@ const PathwayPanel = ({
   const jobs = useJobsStore((state) => state.jobs);
   const setToolType = useSetToolType();
   const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
+
+  const { data: inputData } = useInputs();
+  const colorMode = useMapStore((state) => state.colorMode);
+  const constructionColorMap = useMapStore((state) => state.constructionColorMap);
+  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+
+  const buildingColorMap = useMemo(() => {
+    const features = inputData?.geojsons?.zone?.features ?? [];
+    const map = {};
+    const isConstruction = colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
+    const isUseType = colorMode === COLOR_MODES.USE_TYPE;
+    if (!isConstruction && !isUseType) return map;
+    features.forEach((f) => {
+      const name = f?.properties?.name;
+      if (!name) return;
+      if (isConstruction) {
+        const constType = f.properties.const_type;
+        if (constType && constructionColorMap[constType]) {
+          map[name] = constructionColorMap[constType];
+        }
+      } else {
+        const mainUse = getMainUseType(f.properties);
+        if (mainUse && useTypeColorMap[mainUse]) {
+          map[name] = useTypeColorMap[mainUse];
+        }
+      }
+    });
+    return map;
+  }, [inputData, colorMode, constructionColorMap, useTypeColorMap]);
 
   const scrollViewportRef = useRef(null);
   const viewportMeasureRef = useRef(null);
@@ -1967,13 +1998,13 @@ const PathwayPanel = ({
                     {hasConstruct && (
                       <SectionCard
                         title="To Construct"
-                        content={<ConstructList row={selectedRow} />}
+                        content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} />}
                       />
                     )}
                     {hasDemolish && (
                       <SectionCard
                         title="To Demolish"
-                        content={<DemolishList row={selectedRow} />}
+                        content={<BuildingList buildings={selectedRow.building_events?.demolished_buildings} buildingColorMap={buildingColorMap} />}
                       />
                     )}
                     {hasChange && (
