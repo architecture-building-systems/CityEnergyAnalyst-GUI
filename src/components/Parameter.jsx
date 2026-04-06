@@ -339,6 +339,7 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'InterventionTemplateMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter':
+    case 'SubfolderMultiChoiceParameter':
     case 'WhatIfNameMultiChoiceParameter':
     case 'SolarPanelMultiChoiceParameter':
     case 'ComponentMultiChoiceParameter': {

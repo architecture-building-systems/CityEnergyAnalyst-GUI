@@ -1205,7 +1205,7 @@ const PathwayPanel = ({
   };
 
   const handleApplyIntervention = async () => {
-    if (!selectedPathway || !selectedHeaderTemplate || newYearValue == null) {
+    if (!selectedHeaderTemplate || newYearValue == null || !visiblePathways.length) {
       return;
     }
 
@@ -1214,7 +1214,7 @@ const PathwayPanel = ({
       script: 'pathway-events-apply-templates',
       parameters: {
         scenario: scenarioPath,
-        existing_pathway_name: selectedPathway,
+        existing_pathway_names: visiblePathways,
         year_of_state: targetYear,
         intervention_templates: [selectedHeaderTemplate],
       },
@@ -1421,7 +1421,7 @@ const PathwayPanel = ({
       script: 'pathway-events-apply-templates',
       parameters: {
         scenario: scenarioPath,
-        existing_pathway_name: selectedPathway,
+        existing_pathway_names: [selectedPathway],
         year_of_state: activeEditorYear,
         intervention_templates: selectedTemplatesDraft,
       },
@@ -1923,7 +1923,7 @@ const PathwayPanel = ({
               <Button
                 type="primary"
                 icon={<CreateNewIcon />}
-                disabled={!selectedPathway || newYearValue == null}
+                disabled={!visiblePathways.length || newYearValue == null}
                 loading={busyAction === 'apply-intervention'}
                 onClick={handleApplyIntervention}
               >
