@@ -1288,6 +1288,21 @@ const PathwayPanel = ({
               />
             </Tooltip>
           </div>
+          <Tooltip
+            title={
+              <div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Intervention Templates</div>
+                <div>
+                  Reusable modification recipes (e.g. wall insulation upgrade, HVAC retrofit)
+                  that change building properties for selected Archetypes.
+                  Define once, apply to any year across any Pathway.
+                </div>
+              </div>
+            }
+            placement="bottom"
+          >
+            <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+          </Tooltip>
         </div>
 
         <div
