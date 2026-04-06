@@ -1232,7 +1232,25 @@ const PathwayPanel = ({
         borderRadius: 'inherit',
       }}
     >
-      <h2 style={{ margin: 0 }}>Pathway Builder</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2 style={{ margin: 0 }}>Pathway Builder</h2>
+        <Tooltip
+          title={
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Pathway Builder</div>
+              <div>
+                A CEA Pathway defines how a district evolves over time, which buildings
+                are constructed, demolished, or retrofitted at each year.
+                Create multiple Pathways to compare different development scenarios
+                and the impact of different decarbonisation strategies.
+              </div>
+            </div>
+          }
+          placement="right"
+        >
+          <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
+        </Tooltip>
+      </div>
       <div
         style={{
           display: 'grid',
