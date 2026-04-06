@@ -51,7 +51,6 @@ const LANE_PADDING = 30;
 const LABEL_COLUMN_WIDTH = 176;
 const RULER_HEIGHT = 24;
 const ACTIVE_LANE_HEIGHT = 52;
-const INACTIVE_LANE_HEIGHT = 28;
 const MAX_VISIBLE_TIMELINE_LANES = 3;
 
 const STATUS_FILL = {
@@ -174,9 +173,6 @@ const resolveSelectedYear = ({
 
   return years[0] ?? null;
 };
-
-const getLaneHeight = (active) =>
-  active ? ACTIVE_LANE_HEIGHT : INACTIVE_LANE_HEIGHT;
 
 const getYearLabel = (row) => {
   if (!row) {
@@ -434,13 +430,13 @@ const ModificationSummary = ({ row }) => {
   );
 };
 
-const PathwayOption = ({ pathwayName, onDelete }) => {
+const PathwayOptionWithCheckbox = ({
+  pathwayName,
+  checked,
+  onToggle,
+  onDelete,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
-
-  const onClick = (e) => {
-    e.stopPropagation();
-    onDelete?.(pathwayName);
-  };
 
   return (
     <div
@@ -452,23 +448,37 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        style={{
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          flexGrow: 1,
-        }}
-        title={pathwayName}
-      >
-        {pathwayName}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggle(pathwayName);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ cursor: 'pointer', flexShrink: 0 }}
+        />
+        <div
+          style={{
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+          title={pathwayName}
+        >
+          {pathwayName}
+        </div>
       </div>
       {isHovered && (
         <BinAnimationIcon
           style={{ padding: '2px 8px' }}
           className="cea-job-info-icon danger shake"
-          onClick={onClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(pathwayName);
+          }}
         />
       )}
     </div>
@@ -477,8 +487,10 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
 
 const PathwaySelect = ({
   selectedPathway,
+  visiblePathways,
   overviewPathways,
   onSelectPathway,
+  onToggleVisible,
   onDeletePathway,
   onCreatePathway,
   loading,
@@ -491,27 +503,27 @@ const PathwaySelect = ({
       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   }, [overviewPathways]);
 
+  const visibleSet = useMemo(() => new Set(visiblePathways), [visiblePathways]);
+
   const options = useMemo(() => {
-    const otherPathways = sortedPathways.filter((p) => p !== selectedPathway);
-    return otherPathways.length > 0
-      ? [
-          {
-            label: 'Pathways',
-            options: otherPathways.map((pathwayName) => ({
-              label: (
-                <PathwayOption
-                  pathwayName={pathwayName}
-                  onDelete={onDeletePathway}
-                />
-              ),
-              value: pathwayName,
-            })),
-          },
-        ]
-      : [];
-  }, [sortedPathways, selectedPathway, onDeletePathway]);
+    return sortedPathways.map((pathwayName) => ({
+      label: (
+        <PathwayOptionWithCheckbox
+          pathwayName={pathwayName}
+          checked={visibleSet.has(pathwayName)}
+          onToggle={onToggleVisible}
+          onDelete={onDeletePathway}
+        />
+      ),
+      value: pathwayName,
+    }));
+  }, [sortedPathways, visibleSet, onToggleVisible, onDeletePathway]);
 
   const hasPathways = overviewPathways.length > 0;
+
+  const displayLabel = visiblePathways.length > 0
+    ? visiblePathways.join('; ')
+    : selectedPathway ?? '';
 
   return (
     <Select
@@ -521,12 +533,23 @@ const PathwaySelect = ({
       placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
       options={hasPathways ? options : []}
       value={selectedPathway}
-      onChange={onSelectPathway}
+      onChange={(pathwayName) => onSelectPathway(pathwayName)}
       loading={loading}
       open={hasPathways ? open : false}
       onOpenChange={hasPathways ? setOpen : undefined}
       onClick={!hasPathways ? onCreatePathway : undefined}
-      notFoundContent={<small>No other pathways</small>}
+      notFoundContent={<small>No pathways</small>}
+      labelRender={() => (
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {displayLabel}
+        </span>
+      )}
     />
   );
 };
@@ -650,6 +673,7 @@ const PathwayPanel = ({
   const [overview, setOverview] = useState(null);
   const [timeline, setTimeline] = useState(null);
   const [selectedPathway, setSelectedPathway] = useState(null);
+  const [visiblePathways, setVisiblePathways] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(0);
 
@@ -686,6 +710,11 @@ const PathwayPanel = ({
   );
 
   const overviewPathways = overview?.pathways ?? [];
+  const visibleSet = useMemo(() => new Set(visiblePathways), [visiblePathways]);
+  const visibleOverviewPathways = useMemo(
+    () => overviewPathways.filter((p) => visibleSet.has(p.pathway_name)),
+    [overviewPathways, visibleSet],
+  );
   const activeRows = timeline?.years ?? [];
   const activeRowByYear = useMemo(
     () => new Map(activeRows.map((row) => [row.year, row])),
@@ -808,11 +837,18 @@ const PathwayPanel = ({
           pathwayNames[0] ??
           null;
         setSelectedPathway(activePathway);
+        setVisiblePathways((prev) => {
+          if (prev.length > 0) {
+            return prev.filter((p) => pathwayNames.includes(p));
+          }
+          return activePathway ? [activePathway] : [];
+        });
         return activePathway;
       } catch (error) {
         setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
         setOverview(null);
         setSelectedPathway(null);
+        setVisiblePathways([]);
         return null;
       } finally {
         setLoadingOverview(false);
@@ -928,6 +964,23 @@ const PathwayPanel = ({
     [loadTimeline],
   );
 
+  const handleToggleVisible = useCallback(
+    (pathwayName) => {
+      setVisiblePathways((prev) => {
+        const isVisible = prev.includes(pathwayName);
+        if (isVisible) {
+          const next = prev.filter((p) => p !== pathwayName);
+          if (selectedPathwayRef.current === pathwayName && next.length > 0) {
+            void handleSelectPathway(next[0]);
+          }
+          return next;
+        }
+        return [...prev, pathwayName];
+      });
+    },
+    [handleSelectPathway],
+  );
+
   const handleSelectYear = useCallback(
     (year) => {
       if (selectedPathwayRef.current && year != null) {
@@ -953,6 +1006,7 @@ const PathwayPanel = ({
     setOverview(null);
     setTimeline(null);
     setSelectedPathway(null);
+    setVisiblePathways([]);
     setSelectedYear(null);
     setEditorOptions(null);
     setBuildingEventsModalOpen(false);
@@ -1475,20 +1529,12 @@ const PathwayPanel = ({
 
   const totalTimelineHeight =
     RULER_HEIGHT +
-    overviewPathways.reduce(
-      (sum, pathway) =>
-        sum + getLaneHeight(pathway.pathway_name === selectedPathway),
-      0,
-    );
+    visibleOverviewPathways.length * ACTIVE_LANE_HEIGHT;
   const timelineViewportHeight = Math.min(
     Math.max(totalTimelineHeight, 160),
     RULER_HEIGHT +
-      ACTIVE_LANE_HEIGHT +
-      INACTIVE_LANE_HEIGHT *
-        Math.max(
-          Math.min(overviewPathways.length, MAX_VISIBLE_TIMELINE_LANES) - 1,
-          0,
-        ) +
+      ACTIVE_LANE_HEIGHT *
+        Math.min(visibleOverviewPathways.length, MAX_VISIBLE_TIMELINE_LANES) +
       8,
   );
 
@@ -1497,19 +1543,19 @@ const PathwayPanel = ({
     if (
       !viewport ||
       !selectedPathway ||
-      overviewPathways.length <= MAX_VISIBLE_TIMELINE_LANES
+      visibleOverviewPathways.length <= MAX_VISIBLE_TIMELINE_LANES
     ) {
       return;
     }
 
-    const selectedIndex = overviewPathways.findIndex(
+    const selectedIndex = visibleOverviewPathways.findIndex(
       (pathway) => pathway.pathway_name === selectedPathway,
     );
     if (selectedIndex < 0) {
       return;
     }
 
-    const laneTop = RULER_HEIGHT + selectedIndex * INACTIVE_LANE_HEIGHT;
+    const laneTop = RULER_HEIGHT + selectedIndex * ACTIVE_LANE_HEIGHT;
     const laneBottom = laneTop + ACTIVE_LANE_HEIGHT;
     const visibleTop = viewport.scrollTop;
     const visibleBottom = visibleTop + viewport.clientHeight;
@@ -1528,7 +1574,7 @@ const PathwayPanel = ({
         behavior: 'smooth',
       });
     }
-  }, [overviewPathways, selectedPathway]);
+  }, [visibleOverviewPathways, selectedPathway]);
 
   const renderNodeTooltip = (pathwayName, year, row, active) => {
     if (!active) {
@@ -1695,10 +1741,12 @@ const PathwayPanel = ({
         >
           <PathwaySelect
             selectedPathway={selectedPathway}
+            visiblePathways={visiblePathways}
             overviewPathways={overviewPathways}
             onSelectPathway={(pathwayName) =>
               void handleSelectPathway(pathwayName)
             }
+            onToggleVisible={handleToggleVisible}
             onDeletePathway={handleDeletePathwayByName}
             onCreatePathway={handleStartCreatePathway}
             loading={loadingOverview}
@@ -1888,7 +1936,7 @@ const PathwayPanel = ({
             >
               <Spin />
             </div>
-          ) : overviewPathways.length === 0 ? (
+          ) : visibleOverviewPathways.length === 0 ? (
             <div style={{ padding: 32 }}>
               <Empty
                 description="No pathways yet"
@@ -1940,7 +1988,7 @@ const PathwayPanel = ({
                   </Text>
                 </div>
 
-                {overviewPathways.map((pathway) => {
+                {visibleOverviewPathways.map((pathway) => {
                   const active = pathway.pathway_name === selectedPathway;
                   return (
                     <button
@@ -1948,14 +1996,14 @@ const PathwayPanel = ({
                       type="button"
                       onClick={() => void handleSelectPathway(pathway.pathway_name)}
                       style={{
-                        height: getLaneHeight(active),
-                        padding: active ? '0 16px' : '0 18px',
+                        height: ACTIVE_LANE_HEIGHT,
+                        padding: '0 16px',
                         background: active
                           ? 'rgba(38, 89, 160, 0.08)'
                           : 'transparent',
                         border: 'none',
                         borderLeft: active
-                          ? '4px solid #2659A0'
+                          ? '4px solid #1470AF'
                           : '4px solid transparent',
                         textAlign: 'left',
                         cursor: 'pointer',
@@ -1989,7 +2037,7 @@ const PathwayPanel = ({
                         <Text
                           style={{
                             fontSize: 11,
-                            color: active ? '#2659A0' : '#94A3B8',
+                            color: active ? '#1470AF' : '#94A3B8',
                           }}
                         >
                           {pathway.state_count}
@@ -2049,21 +2097,20 @@ const PathwayPanel = ({
                       ))}
                     </div>
 
-                    {overviewPathways.map((pathway) => {
-                      const active = pathway.pathway_name === selectedPathway;
-                      const laneYears = active
+                    {visibleOverviewPathways.map((pathway) => {
+                      const isSelected = pathway.pathway_name === selectedPathway;
+                      const laneYears = isSelected
                         ? activeRows.map((row) => row.year)
-                        : pathway.years;
-                      const laneHeight = getLaneHeight(active);
+                        : pathway.years ?? [];
 
                       return (
                         <div
                           key={`lane-${pathway.pathway_name}`}
                           style={{
                             position: 'relative',
-                            height: laneHeight,
-                            background: active
-                              ? 'linear-gradient(90deg, rgba(38, 89, 160, 0.04) 0%, rgba(255, 255, 255, 0) 55%)'
+                            height: ACTIVE_LANE_HEIGHT,
+                            background: isSelected
+                              ? 'linear-gradient(90deg, rgba(20, 112, 175, 0.04) 0%, rgba(255, 255, 255, 0) 55%)'
                               : 'transparent',
                             borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
                           }}
@@ -2075,24 +2122,24 @@ const PathwayPanel = ({
                               right: LANE_PADDING,
                               top: '50%',
                               transform: 'translateY(-50%)',
-                              height: active ? 3 : 2,
-                              background: active
-                                ? 'linear-gradient(90deg, rgba(38, 89, 160, 0.52) 0%, rgba(38, 89, 160, 0.18) 100%)'
+                              height: isSelected ? 3 : 2,
+                              background: isSelected
+                                ? 'linear-gradient(90deg, rgba(20, 112, 175, 0.52) 0%, rgba(20, 112, 175, 0.18) 100%)'
                                 : 'rgba(203, 213, 225, 0.8)',
                               borderRadius: 999,
                             }}
                           />
                           {laneYears.map((year) => {
-                            const row = active ? activeRowByYear.get(year) : null;
-                            const nodeSize = getNodeSize(row, active);
-                            const selected = active && selectedYear === year;
+                            const row = isSelected ? activeRowByYear.get(year) : null;
+                            const nodeSize = getNodeSize(row, true);
+                            const selected = isSelected && selectedYear === year;
                             const validationError =
-                              active && row?.validation?.status === 'error';
-                            const nodeFill = active
+                              isSelected && row?.validation?.status === 'error';
+                            const nodeFill = isSelected
                               ? validationError
                                 ? STATUS_ACCENT.error
                                 : getNodeFill(row)
-                              : '#D7DDE7';
+                              : '#94A3B8';
 
                             return (
                               <Tooltip
@@ -2102,20 +2149,20 @@ const PathwayPanel = ({
                                   pathway.pathway_name,
                                   year,
                                   row,
-                                  active,
+                                  isSelected,
                                 )}
                               >
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (active) {
+                                    if (isSelected) {
                                       handleSelectYear(year);
-                                      return;
+                                    } else {
+                                      void handleSelectPathway(
+                                        pathway.pathway_name,
+                                        year,
+                                      );
                                     }
-                                    void handleSelectPathway(
-                                      pathway.pathway_name,
-                                      year,
-                                    );
                                   }}
                                   style={{
                                     position: 'absolute',
@@ -2125,24 +2172,20 @@ const PathwayPanel = ({
                                     width: nodeSize,
                                     height: nodeSize,
                                     borderRadius: 999,
-                                    border: active
-                                      ? '2px solid #FFFFFF'
-                                      : '1px solid rgba(148, 163, 184, 0.55)',
+                                    border: '2px solid #FFFFFF',
                                     background: nodeFill,
                                     cursor: 'pointer',
-                                    boxShadow: active
-                                      ? [
-                                          row?.status?.has_stale_phase
-                                            ? '0 0 0 6px rgba(217, 119, 6, 0.18)'
-                                            : null,
-                                          selected
-                                            ? '0 0 0 8px rgba(38, 89, 160, 0.14)'
-                                            : null,
-                                          '0 4px 10px rgba(15, 23, 42, 0.12)',
-                                        ]
-                                          .filter(Boolean)
-                                          .join(', ')
-                                      : 'none',
+                                    boxShadow: [
+                                      isSelected && row?.status?.has_stale_phase
+                                        ? '0 0 0 6px rgba(217, 119, 6, 0.18)'
+                                        : null,
+                                      selected
+                                        ? '0 0 0 8px rgba(20, 112, 175, 0.14)'
+                                        : null,
+                                      '0 4px 10px rgba(15, 23, 42, 0.12)',
+                                    ]
+                                      .filter(Boolean)
+                                      .join(', '),
                                     padding: 0,
                                   }}
                                   aria-label={`${pathway.pathway_name} ${year}`}
