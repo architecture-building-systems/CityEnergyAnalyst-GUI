@@ -1747,6 +1747,7 @@ const PathwayPanel = ({
         borderRadius: 'inherit',
       }}
     >
+      <h2 style={{ margin: 0 }}>Pathway Builder</h2>
       <div
         style={{
           display: 'grid',

@@ -41,7 +41,7 @@ const BottomToolButtons = ({
     {
       id: 'pathway',
       icon: TimelineIcon,
-      title: 'Pathway',
+      title: 'Pathway Builder',
       onClick: () => onTogglePathwayPanel?.(),
       hidden: !showTools,
       active: pathwayPanelOpen,
