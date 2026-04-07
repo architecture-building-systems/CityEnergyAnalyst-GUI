@@ -7,18 +7,17 @@ import {
   Modal,
   Select,
   Spin,
-  Tooltip,
   Typography,
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import InfoTooltip, { TooltipFromBackend } from 'components/InfoTooltip';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { getMainUseType } from 'features/map/utils/constructionColors';
 import {
   BinAnimationIcon,
   CreateNewIcon,
-  InformationIcon,
   RefreshIcon,
   RunIcon,
 } from 'assets/icons';
@@ -877,6 +876,7 @@ const PathwayPanel = ({
           job.scenario_name === scenarioName &&
           [
             'bake-pathway-states',
+            'pathway-events-apply-templates',
             'pathway-intervention-templates-define',
             'pathway-simulations',
             'pathway-update-building-events',
@@ -1233,22 +1233,7 @@ const PathwayPanel = ({
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <h2 style={{ margin: 0 }}>Pathway Builder</h2>
-        <Tooltip
-          title={
-            <div>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Pathway Builder</div>
-              <div>
-                A CEA Pathway defines how a district evolves over time, which buildings
-                are constructed, demolished, or retrofitted at each year.
-                Create multiple Pathways to compare different development scenarios
-                and the impact of different decarbonisation strategies.
-              </div>
-            </div>
-          }
-          placement="right"
-        >
-          <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
-        </Tooltip>
+        <InfoTooltip tooltipKey="pathway-builder" placement="right" />
       </div>
       <div
         style={{
@@ -1278,14 +1263,14 @@ const PathwayPanel = ({
             loading={loadingOverview}
           />
           <div className="cea-card-icon-button-container">
-            <Tooltip title="Create new pathway" placement="bottom">
+            <TooltipFromBackend tooltipKey="create-new-pathway" placement="bottom">
               <Button
                 icon={<CreateNewIcon />}
                 type="text"
                 loading={busyAction === 'create-pathway'}
                 onClick={handleStartCreatePathway}
               />
-            </Tooltip>
+            </TooltipFromBackend>
           </div>
           <Divider type="vertical" style={{ height: 24, margin: 0 }} />
           <TemplateSelect
@@ -1297,29 +1282,15 @@ const PathwayPanel = ({
             loading={loadingTemplates}
           />
           <div className="cea-card-icon-button-container">
-            <Tooltip title="Define intervention template" placement="bottom">
+            <TooltipFromBackend tooltipKey="define-intervention-template" placement="bottom">
               <Button
                 icon={<CreateNewIcon />}
                 type="text"
                 onClick={handleOpenTemplateTool}
               />
-            </Tooltip>
+            </TooltipFromBackend>
           </div>
-          <Tooltip
-            title={
-              <div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>Intervention Templates</div>
-                <div>
-                  Reusable modification recipes (e.g. wall insulation upgrade, HVAC retrofit)
-                  that change building properties for selected Archetypes.
-                  Define once, apply to any year across any Pathway.
-                </div>
-              </div>
-            }
-            placement="bottom"
-          >
-            <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
-          </Tooltip>
+          <InfoTooltip tooltipKey="intervention-templates" />
         </div>
 
         <div
@@ -1356,14 +1327,14 @@ const PathwayPanel = ({
               </span>
             ) : null}
             <div className="cea-card-icon-button-container">
-              <Tooltip title="Refresh" placement="bottom">
+              <TooltipFromBackend tooltipKey="refresh-pathway" placement="bottom">
                 <Button
                   icon={<RefreshIcon />}
                   type="text"
                   loading={loadingOverview || loadingTimeline}
                   onClick={() => refreshPathwayData()}
                 />
-              </Tooltip>
+              </TooltipFromBackend>
             </div>
             <Button
               type="primary"
@@ -1388,19 +1359,7 @@ const PathwayPanel = ({
                 </div>
               )}
             </Button>
-            <Tooltip
-              title={
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Simulate Pathway</div>
-                  <div>To enable, ensure:</div>
-                  <div>1. Only one Pathway is checked</div>
-                  <div>2. All states are baked (blue nodes)</div>
-                </div>
-              }
-              placement="bottom"
-            >
-              <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
-            </Tooltip>
+            <InfoTooltip tooltipKey="simulate-pathway" />
           </div>
         </div>
       </div>
@@ -1479,23 +1438,7 @@ const PathwayPanel = ({
                   : 'Delete State'}
               </Button>
             ) : null}
-            <Tooltip
-              title={
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                    Add a Building Event or Apply an Intervention
-                  </div>
-                  <div>
-                    Enter a year, then choose an action. Select an intervention
-                    template to apply it directly. Clear the selection to add a
-                    building event instead.
-                  </div>
-                </div>
-              }
-              placement="bottom"
-            >
-              <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
-            </Tooltip>
+            <InfoTooltip tooltipKey="add-building-event-or-intervention" />
           </div>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <LegendChip colour={STATUS_FILL.none} label="Draft" />
@@ -1756,21 +1699,7 @@ const PathwayPanel = ({
                   }}
                 >
                   <div style={{ height: RULER_HEIGHT, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <Tooltip
-                      title={
-                        <div>
-                          <div style={{ fontWeight: 600, marginBottom: 4 }}>Bake States</div>
-                          <div>
-                            Bake materialises state folders from the pathway log.
-                            Run after creating building events or applying interventions.
-                            Required before simulation.
-                          </div>
-                        </div>
-                      }
-                      placement="bottom"
-                    >
-                      <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
-                    </Tooltip>
+                    <InfoTooltip tooltipKey="bake-states" />
                   </div>
                   {visibleOverviewPathways.map((pathway) => (
                     <div
@@ -1868,20 +1797,7 @@ const PathwayPanel = ({
                         {tag.label}
                       </span>
                     ))}
-                    <Tooltip
-                      title={
-                        <div>
-                          <div style={{ fontWeight: 600, marginBottom: 4 }}>State Types</div>
-                          <div><b>Auto-Stock</b>: Buildings with a construction year matching this state year.</div>
-                          <div><b>Construct-Event</b>: Buildings explicitly added in this year.</div>
-                          <div><b>Demolish-Event</b>: Buildings explicitly removed in this year.</div>
-                          <div><b>Intervention</b>: Building property modifications applied via intervention templates.</div>
-                        </div>
-                      }
-                      placement="bottom"
-                    >
-                      <InformationIcon style={{ color: '#94A3B8', fontSize: 14, cursor: 'help' }} />
-                    </Tooltip>
+                    <InfoTooltip tooltipKey="state-types" />
                     <Text style={{ color: '#94A3B8', fontSize: 11, marginLeft: 'auto' }}>
                       Last updated: {formatCompactTimestamp(selectedRow.latest_modified_at)}
                     </Text>
