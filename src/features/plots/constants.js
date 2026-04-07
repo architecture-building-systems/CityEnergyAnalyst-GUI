@@ -98,6 +98,7 @@ export const PLOT_LABELS = {
   [EMISSIONS_EMBODIED]: 'Lifecycle Emissions',
   [EMISSIONS_OPERATIONAL]: 'Operational Emissions',
   [EMISSION_TIMELINE]: 'Emission Timeline',
+  [PATHWAY_EMISSION_TIMELINE]: 'Pathway Emission Timeline',
   [SUPPLY_SYSTEM]: 'Supply System',
   [COST_BREAKDOWN]: 'Cost Breakdown',
   [COST_SANKEY]: 'System Cost Sankey',
@@ -129,7 +130,7 @@ export const PLOT_GROUPS = [
       },
       {
         label: 'GHG Emissions',
-        keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE],
+        keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE, PATHWAY_EMISSION_TIMELINE],
       },
       { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
       { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },

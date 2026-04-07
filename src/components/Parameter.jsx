@@ -340,6 +340,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
     case 'InterventionTemplateMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter':
+    case 'SimulatedPathwayMultiChoiceParameter':
     case 'SubfolderMultiChoiceParameter':
     case 'WhatIfNameMultiChoiceParameter':
     case 'SolarPanelMultiChoiceParameter':
