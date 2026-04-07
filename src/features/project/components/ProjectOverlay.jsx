@@ -93,6 +93,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [pathwayPanelHeight, setPathwayPanelHeight] = useState(425);
   const pathwayResizeStateRef = useRef(null);
   const pathwayPanelContentRef = useRef(null);
+  const [pathwayPanelHiddenForTool, setPathwayPanelHiddenForTool] = useState(false);
 
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
@@ -101,7 +102,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   useEffect(() => {
     if (!showToolCard && pathwayPanelHiddenForToolRef.current) {
       pathwayPanelHiddenForToolRef.current = false;
-      setShowPathwayPanel(true);
+      setPathwayPanelHiddenForTool(false);
     }
   }, [showToolCard]);
 
@@ -416,7 +417,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                 borderRadius: 20,
                 boxShadow: '0 24px 54px rgba(15, 23, 42, 0.16)',
                 background: 'rgba(255, 255, 255, 0.94)',
-                display: 'flex',
+                display: pathwayPanelHiddenForTool ? 'none' : 'flex',
                 flexDirection: 'column',
                 height: pathwayPanelExpanded ? 'auto' : pathwayPanelHeight,
                 maxHeight: pathwayPanelExpanded
@@ -471,7 +472,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   expanded={pathwayPanelExpanded}
                   onExpandedChange={setPathwayPanelExpanded}
                   onHidePanel={() => {
-                    setShowPathwayPanel(false);
+                    setPathwayPanelHiddenForTool(true);
                     pathwayPanelHiddenForToolRef.current = true;
                   }}
                 />

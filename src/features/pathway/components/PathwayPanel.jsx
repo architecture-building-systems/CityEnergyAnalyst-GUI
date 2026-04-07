@@ -894,7 +894,12 @@ const PathwayPanel = ({
     });
 
     if (needsRefresh) {
-      void refreshPathwayData();
+      const pendingYear = pendingPreferredYearRef.current;
+      void refreshPathwayData(
+        pendingYear != null
+          ? { preferredYear: pendingYear }
+          : undefined,
+      );
     }
   }, [jobs, open, refreshPathwayData, scenarioName, selectedPathway]);
 
@@ -971,6 +976,7 @@ const PathwayPanel = ({
       await queryClient.invalidateQueries({
         queryKey: ['toolParams', 'pathway-update-building-events'],
       });
+      pendingPreferredYearRef.current = Number(newYearValue);
       onHidePanel?.();
       setSelectedTool('pathway-update-building-events');
       setToolType(toolTypes.TOOLS);
@@ -988,6 +994,7 @@ const PathwayPanel = ({
     }
 
     const targetYear = Number(newYearValue);
+    pendingPreferredYearRef.current = targetYear;
     await startPanelJob({
       script: 'pathway-events-apply-templates',
       parameters: {
