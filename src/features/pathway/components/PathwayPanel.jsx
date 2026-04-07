@@ -768,6 +768,7 @@ const PathwayPanel = ({
       preferredPathway = selectedPathwayRef.current,
       preferredYear = selectedYearRef.current,
     } = {}) => {
+      setBuildingLifecycleData(null);
       const activePathway = await loadOverview(preferredPathway);
       if (!activePathway) {
         setTimeline(null);
