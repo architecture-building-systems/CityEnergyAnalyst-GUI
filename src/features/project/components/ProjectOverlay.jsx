@@ -90,7 +90,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [showPathwayPanel, setShowPathwayPanel] = useState(false);
   const pathwayPanelHiddenForToolRef = useRef(false);
   const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
-  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(360);
+  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(425);
   const pathwayResizeStateRef = useRef(null);
   const pathwayPanelContentRef = useRef(null);
 
@@ -171,7 +171,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   useEffect(() => {
     const clampHeight = (height) =>
-      Math.max(360, Math.min(height, window.innerHeight - 220));
+      Math.max(290, Math.min(height, window.innerHeight - 220));
 
     const handleResize = () => {
       setPathwayPanelHeight((current) => clampHeight(current));

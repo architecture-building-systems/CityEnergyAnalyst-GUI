@@ -2,7 +2,6 @@ import {
   Alert,
   Button,
   Divider,
-  Empty,
   InputNumber,
   Modal,
   Select,
@@ -179,7 +178,7 @@ const SectionCard = ({ title, content }) => (
       border: '1px solid rgba(148, 163, 184, 0.18)',
       background: '#FFFFFF',
       padding: 12,
-      minHeight: 110,
+      minHeight: 60,
     }}
   >
     <Text strong style={{ display: 'block', paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid #e0e0e0' }}>
@@ -345,12 +344,12 @@ const PathwaySelect = ({
 
   return (
     <Select
-      className={`cea-scenario-select ${!hasPathways || !selectedPathway ? 'cea-scenario-select-empty' : ''}`}
+      className={`cea-scenario-select ${!hasPathways || !selectedPathway || visiblePathways.length === 0 ? 'cea-scenario-select-empty' : ''}`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}
       placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
       options={hasPathways ? options : []}
-      value={selectedPathway}
+      value={visiblePathways.length > 0 ? selectedPathway : undefined}
       onChange={() => {}}
       onSelect={(pathwayName) => {
         onToggleVisible(pathwayName);
@@ -361,17 +360,19 @@ const PathwaySelect = ({
       onOpenChange={hasPathways ? setOpen : undefined}
       onClick={!hasPathways ? onCreatePathway : undefined}
       notFoundContent={<small>No pathways</small>}
-      labelRender={() => (
-        <span
-          style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {displayLabel}
-        </span>
-      )}
+      labelRender={() =>
+        visiblePathways.length > 0 ? (
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {displayLabel}
+          </span>
+        ) : null
+      }
     />
   );
 };
@@ -1221,7 +1222,7 @@ const PathwayPanel = ({
   return (
     <div
       style={{
-        minHeight: 360,
+        minHeight: 290,
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
@@ -1465,17 +1466,14 @@ const PathwayPanel = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                minHeight: 180,
+                minHeight: 72,
               }}
             >
               <Spin />
             </div>
           ) : visibleOverviewPathways.length === 0 ? (
-            <div style={{ padding: 32 }}>
-              <Empty
-                description="No pathways yet"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
+            <div style={{ height: RULER_HEIGHT + ACTIVE_LANE_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#94A3B8', fontSize: 12 }}>Create or select a Pathway</Text>
             </div>
           ) : (
             <div
@@ -1490,7 +1488,7 @@ const PathwayPanel = ({
                 style={{
                   display: 'grid',
                   gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr) auto`,
-                  minHeight: Math.max(totalTimelineHeight, 160),
+                  minHeight: totalTimelineHeight,
                 }}
               >
               <div
@@ -1737,6 +1735,7 @@ const PathwayPanel = ({
           flexDirection: 'column',
         }}
       >
+        {selectedRow && visiblePathways.length > 0 ? (
         <div
           style={{
             borderRadius: 18,
@@ -1751,13 +1750,6 @@ const PathwayPanel = ({
             overflow: 'auto',
           }}
         >
-          {!selectedRow ? (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Select a pathway year to inspect it"
-            />
-          ) : (
-            <>
               <div
                 style={{
                   display: 'flex',
@@ -1874,9 +1866,8 @@ const PathwayPanel = ({
                 );
               })()}
 
-            </>
-          )}
         </div>
+        ) : null}
 
       </div>
 
