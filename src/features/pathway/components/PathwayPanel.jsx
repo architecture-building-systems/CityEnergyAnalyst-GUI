@@ -32,6 +32,7 @@ import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import {
   deleteInterventionTemplate,
+  fetchBuildingLifecycle,
   fetchInterventionTemplates,
   fetchPathwayOverview,
   fetchPathwayTimeline,
@@ -192,8 +193,12 @@ const SectionCard = ({ title, content, tooltipKey }) => (
 );
 
 
-const BuildingPill = ({ name, color }) => (
+const BuildingPill = ({ name, color, onClick }) => (
   <span
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onClick={onClick}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
     style={{
       display: 'inline-block',
       padding: '2px 8px',
@@ -202,20 +207,28 @@ const BuildingPill = ({ name, color }) => (
       fontWeight: 500,
       background: color ?? '#e8e8e8',
       color: color ? '#fff' : '#475569',
+      cursor: onClick ? 'pointer' : 'default',
     }}
   >
     {name}
   </span>
 );
 
-const BuildingList = ({ buildings, buildingColorMap, rebuildCounts }) => {
+const BuildingList = ({ buildings, buildingColorMap, rebuildCounts, onBuildingClick }) => {
   if (!buildings?.length) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {buildings.map((b) => {
         const count = rebuildCounts?.[b] ?? 0;
         const label = count > 0 ? `${b}(${count})` : b;
-        return <BuildingPill key={b} name={label} color={buildingColorMap?.[b]} />;
+        return (
+          <BuildingPill
+            key={b}
+            name={label}
+            color={buildingColorMap?.[b]}
+            onClick={onBuildingClick ? () => onBuildingClick(b) : undefined}
+          />
+        );
       })}
     </div>
   );
@@ -1192,6 +1205,35 @@ const PathwayPanel = ({
     });
   };
 
+  const buildingLifecycleData = useToolCardStore(
+    (state) => state.buildingLifecycleData,
+  );
+  const setBuildingLifecycleData = useToolCardStore(
+    (state) => state.setBuildingLifecycleData,
+  );
+
+  // Refresh lifecycle card when visible pathways change
+  useEffect(() => {
+    const currentBuilding = buildingLifecycleData?.building_name;
+    if (!currentBuilding || !visiblePathways.length) return;
+    fetchBuildingLifecycle(currentBuilding, visiblePathways.slice(0, 3))
+      .then(setBuildingLifecycleData)
+      .catch(() => {});
+  }, [visiblePathways, setBuildingLifecycleData]);
+
+  const handleBuildingClick = async (buildingName) => {
+    if (!visiblePathways.length) return;
+    try {
+      const data = await fetchBuildingLifecycle(buildingName, visiblePathways.slice(0, 3));
+      setBuildingLifecycleData(data);
+      setToolType(toolTypes.BUILDING_INFO);
+    } catch (error) {
+      setPanelError(
+        getErrorMessage(error, 'Failed to load building lifecycle.'),
+      );
+    }
+  };
+
   const handleBakePathway = async (pathwayName) => {
     if (!pathwayName || !scenarioPath) return;
     setBusyAction(`bake-${pathwayName}`);
@@ -1885,14 +1927,14 @@ const PathwayPanel = ({
                       <SectionCard
                         title="Construction"
                         tooltipKey="construction-card"
-                        content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} rebuildCounts={rebuildCounts} />}
+                        content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} rebuildCounts={rebuildCounts} onBuildingClick={handleBuildingClick} />}
                       />
                     )}
                     {hasDemolish && (
                       <SectionCard
                         title="Demolition"
                         tooltipKey="demolition-card"
-                        content={<BuildingList buildings={selectedRow.building_events?.demolished_buildings} buildingColorMap={buildingColorMap} />}
+                        content={<BuildingList buildings={selectedRow.building_events?.demolished_buildings} buildingColorMap={buildingColorMap} onBuildingClick={handleBuildingClick} />}
                       />
                     )}
                     {hasChange && (

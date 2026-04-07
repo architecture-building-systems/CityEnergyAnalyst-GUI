@@ -155,6 +155,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         setInputEditor(false);
       } else {
         setPathwayPanelExpanded(false);
+        useToolCardStore.getState().clearBuildingLifecycleData();
       }
       return next;
     });
@@ -311,9 +312,25 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       selectionSource === 'map' &&
       !showInputEditor
     ) {
-      setToolType(toolTypes.BUILDING_INFO);
+      // If pathway builder is active, show lifecycle timeline
+      if (showPathwayPanel && selectedBuildings.length === 1) {
+        import('features/pathway/api').then(({ fetchBuildingLifecycle }) => {
+          fetchBuildingLifecycle(selectedBuildings[0])
+            .then((data) => {
+              useToolCardStore.getState().setBuildingLifecycleData(data);
+              setToolType(toolTypes.BUILDING_INFO);
+            })
+            .catch(() => {
+              setToolType(toolTypes.BUILDING_INFO);
+            });
+        });
+      } else {
+        // Clear lifecycle data so building info shows regular mode
+        useToolCardStore.getState().clearBuildingLifecycleData();
+        setToolType(toolTypes.BUILDING_INFO);
+      }
     }
-  }, [selectedBuildings, selectionSource, setToolType]);
+  }, [selectedBuildings, selectionSource, setToolType, showInputEditor, showPathwayPanel]);
 
   return (
     <div

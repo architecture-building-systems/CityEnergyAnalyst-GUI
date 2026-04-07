@@ -114,6 +114,16 @@ export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
   );
 };
 
+export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
+  const params = pathwayNames?.length
+    ? `?pathways=${pathwayNames.map(encodePathwayName).join(',')}`
+    : '';
+  const { data } = await apiClient.get(
+    `/api/pathways/building-lifecycle/${encodeURIComponent(buildingName)}${params}`,
+  );
+  return data;
+};
+
 export const validateStateYear = async (pathwayName, year) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/validate-state`,
