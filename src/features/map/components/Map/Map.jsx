@@ -466,6 +466,7 @@ const DeckGLMap = ({ data, colors }) => {
     (state) => state.constructionColorMap,
   );
   const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const stateZoneOverride = useMapStore((state) => state.stateZoneOverride);
 
   const mapStyle = useMapStyle();
   useMapAttribution(mapRef);
@@ -549,11 +550,13 @@ const DeckGLMap = ({ data, colors }) => {
     let _treeLayers = [];
     let _textLayers = [];
 
-    if (data?.zone) {
+    const zoneData = stateZoneOverride ?? data?.zone;
+    if (zoneData) {
       _zoneLayers.push(
         new PolygonLayer({
           id: 'zone',
-          data: data.zone?.features,
+          data: zoneData?.features,
+          dataComparator: () => false,
           opacity: 0.8,
           wireframe: true,
           filled: true,
@@ -568,6 +571,7 @@ const DeckGLMap = ({ data, colors }) => {
           getElevation: (f) => (extruded ? calcPolygonElevation(f) : 0),
           getFillColor: (f) => buildingColor(f, 'zone'),
           updateTriggers: {
+            getPolygon: [stateZoneOverride],
             getFillColor: [
               selected,
               colorMode,
@@ -575,6 +579,7 @@ const DeckGLMap = ({ data, colors }) => {
               useTypeColorMap,
               buildingSelectionActive,
               buildingSelectionBuildings,
+              stateZoneOverride,
             ],
           },
 
@@ -723,6 +728,7 @@ const DeckGLMap = ({ data, colors }) => {
     buildingSelectionBuildings,
     setSelected,
     updateTooltip,
+    stateZoneOverride,
   ]);
 
   const mapLayers = useMapLayers(updateTooltip);

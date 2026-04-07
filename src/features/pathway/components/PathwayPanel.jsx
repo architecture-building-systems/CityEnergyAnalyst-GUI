@@ -36,6 +36,7 @@ import {
   fetchInterventionTemplates,
   fetchPathwayOverview,
   fetchPathwayTimeline,
+  fetchStateGeojson,
   preSaveBuildingEventsConfig,
 } from '../api';
 
@@ -509,6 +510,7 @@ const PathwayPanel = ({
   const colorMode = useMapStore((state) => state.colorMode);
   const constructionColorMap = useMapStore((state) => state.constructionColorMap);
   const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const setStateZoneOverride = useMapStore((state) => state.setStateZoneOverride);
 
   const buildingColorMap = useMemo(() => {
     const features = inputData?.geojsons?.zone?.features ?? [];
@@ -609,6 +611,22 @@ const PathwayPanel = ({
     }
     return filtered;
   }, [activeRows, selectedRow]);
+
+  // Show state geometry on map when a baked/simulated node is selected
+  useEffect(() => {
+    const phase = selectedRow?.status?.primary_phase;
+    if (
+      selectedPathway &&
+      selectedRow?.year != null &&
+      (phase === 'baked' || phase === 'simulated')
+    ) {
+      fetchStateGeojson(selectedPathway, selectedRow.year)
+        .then((data) => setStateZoneOverride(data?.geojson ?? null))
+        .catch(() => setStateZoneOverride(null));
+    } else {
+      setStateZoneOverride(null);
+    }
+  }, [selectedPathway, selectedRow, setStateZoneOverride]);
 
   const span = timeline?.span ?? overview?.span ?? {};
   const startYear = span?.start_year;

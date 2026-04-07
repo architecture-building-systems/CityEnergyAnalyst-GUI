@@ -114,6 +114,13 @@ export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
   );
 };
 
+export const fetchStateGeojson = async (pathwayName, year) => {
+  const { data } = await apiClient.get(
+    `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/geojson`,
+  );
+  return data;
+};
+
 export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   const params = pathwayNames?.length
     ? `?pathways=${pathwayNames.map(encodePathwayName).join(',')}`

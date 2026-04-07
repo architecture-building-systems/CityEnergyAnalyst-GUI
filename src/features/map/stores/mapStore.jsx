@@ -26,6 +26,9 @@ export const useMapStore = create((set) => ({
   constructionColorMap: {},
   useTypeColorMap: {},
 
+  // Pathway state geometry override
+  stateZoneOverride: null,
+
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
   setMapLabels: (value) => set({ mapLabels: value }),
@@ -71,6 +74,7 @@ export const useMapStore = create((set) => ({
   setColorMode: (value) => set({ colorMode: value }),
   setConstructionColorMap: (value) => set({ constructionColorMap: value }),
   setUseTypeColorMap: (value) => set({ useTypeColorMap: value }),
+  setStateZoneOverride: (value) => set({ stateZoneOverride: value }),
 }));
 
 export const useCameraOptionsCalculated = () =>
