@@ -148,6 +148,8 @@ const resolveSelectedYear = ({
 };
 
 const getNodeFill = (row) => {
+  const hasStale = row?.status?.has_stale_phase;
+  if (hasStale) return STATUS_ACCENT.error;
   const primaryPhase = row?.status?.primary_phase ?? 'none';
   return STATUS_FILL[primaryPhase] ?? STATUS_FILL.none;
 };
@@ -960,6 +962,7 @@ const PathwayPanel = ({
         pendingPanelJob.failureMessage ??
           'The pathway job failed. Open Job Info in the status bar for details.',
       );
+      void refreshPathwayData();
       setPendingPanelJob(null);
       setBusyAction(null);
     }
@@ -1481,7 +1484,7 @@ const PathwayPanel = ({
             <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
             <LegendChip
               colour={STATUS_ACCENT.error}
-              label="Validation issue"
+              label="Stale (re-bake needed)"
             />
           </div>
         </div>
