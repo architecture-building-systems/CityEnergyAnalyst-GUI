@@ -315,7 +315,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       // If pathway builder is active, show lifecycle timeline
       if (showPathwayPanel && selectedBuildings.length === 1) {
         import('features/pathway/api').then(({ fetchBuildingLifecycle }) => {
-          fetchBuildingLifecycle(selectedBuildings[0])
+          const vp = useToolCardStore.getState().visiblePathways;
+          fetchBuildingLifecycle(selectedBuildings[0], vp.length ? vp : undefined)
             .then((data) => {
               useToolCardStore.getState().setBuildingLifecycleData(data);
               setToolType(toolTypes.BUILDING_INFO);

@@ -22,7 +22,9 @@ export const useToolCardStore = create((set, get) => ({
   setSelectedTool: (selectedTool) => set({ selectedTool }),
   setSelectedPlotTool: (selectedPlotTool) => set({ selectedPlotTool }),
   buildingLifecycleData: null,
+  visiblePathways: [],
   setBuildingLifecycleData: (data) => set({ buildingLifecycleData: data }),
+  setVisiblePathways: (pathways) => set({ visiblePathways: pathways }),
   clearBuildingLifecycleData: () => set({ buildingLifecycleData: null }),
   closeToolCard: () => set({ toolType: null, buildingLifecycleData: null }),
   toggleToolType: (type) => {

@@ -1211,6 +1211,14 @@ const PathwayPanel = ({
   const setBuildingLifecycleData = useToolCardStore(
     (state) => state.setBuildingLifecycleData,
   );
+  const setStoreVisiblePathways = useToolCardStore(
+    (state) => state.setVisiblePathways,
+  );
+
+  // Sync visible pathways to tool card store
+  useEffect(() => {
+    setStoreVisiblePathways(visiblePathways);
+  }, [visiblePathways, setStoreVisiblePathways]);
 
   // Refresh lifecycle card when visible pathways change
   useEffect(() => {
