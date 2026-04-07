@@ -773,7 +773,7 @@ const PathwayPanel = ({
       if (!activePathway) {
         setTimeline(null);
         setSelectedYear(null);
-        setTemplateNames([]);
+        await loadTemplates();
         return;
       }
       await Promise.all([
@@ -1111,7 +1111,7 @@ const PathwayPanel = ({
 
   const handleStartCreatePathway = () => {
     Modal.confirm({
-      title: 'Create new pathway',
+      title: 'Create Pathway',
       content: (
         <div style={{ paddingTop: 8 }}>
           <input
@@ -1123,6 +1123,7 @@ const PathwayPanel = ({
               borderRadius: 6,
               border: '1px solid #d9d9d9',
               fontSize: 14,
+              boxSizing: 'border-box',
             }}
           />
         </div>
