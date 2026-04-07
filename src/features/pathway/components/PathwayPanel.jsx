@@ -1216,7 +1216,7 @@ const PathwayPanel = ({
   useEffect(() => {
     const currentBuilding = buildingLifecycleData?.building_name;
     if (!currentBuilding || !visiblePathways.length) return;
-    fetchBuildingLifecycle(currentBuilding, visiblePathways.slice(0, 3))
+    fetchBuildingLifecycle(currentBuilding, visiblePathways)
       .then(setBuildingLifecycleData)
       .catch(() => {});
   }, [visiblePathways, setBuildingLifecycleData]);
@@ -1224,7 +1224,7 @@ const PathwayPanel = ({
   const handleBuildingClick = async (buildingName) => {
     if (!visiblePathways.length) return;
     try {
-      const data = await fetchBuildingLifecycle(buildingName, visiblePathways.slice(0, 3));
+      const data = await fetchBuildingLifecycle(buildingName, visiblePathways);
       setBuildingLifecycleData(data);
       setToolType(toolTypes.BUILDING_INFO);
     } catch (error) {

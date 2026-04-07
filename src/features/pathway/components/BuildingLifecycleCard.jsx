@@ -88,8 +88,9 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
     ticks.push(y);
   }
 
-  const colWidth = 130;
-  const svgWidth = pathwayData.length * colWidth + AXIS_WIDTH;
+  const colWidth = 100;
+  const scrollWidth = pathwayData.length * colWidth;
+  const svgHeight = totalHeight + 20;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '16px 24px' }}>
@@ -100,39 +101,26 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
         <InfoTooltip tooltipKey="building-lifecycle" />
       </div>
 
-      <svg
-        width={svgWidth}
-        height={totalHeight + 20}
-        style={{ display: 'block' }}
-      >
-        {/* Year axis on the right */}
-        {ticks.map((year) => {
-          const y = yearToY(year);
-          return (
-            <g key={`tick-${year}`}>
-              <line
-                x1={pathwayData.length * colWidth}
-                y1={y}
-                x2={pathwayData.length * colWidth + 6}
-                y2={y}
-                stroke="rgba(100, 116, 139, 0.32)"
-                strokeWidth={1}
-              />
-              <text
-                x={pathwayData.length * colWidth + 10}
-                y={y + 4}
-                fontSize={10}
-                fill="#64748B"
-              >
-                {year}
-              </text>
-            </g>
-          );
-        })}
+      <div style={{ display: 'flex' }}>
+        {/* Scrollable pathway columns */}
+        <div style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
+          <svg
+            width={Math.max(scrollWidth, 100)}
+            height={svgHeight}
+            style={{ display: 'block' }}
+          >
+            {/* Grey line between timelines and pathway names */}
+            <line
+              x1={0}
+              y1={totalHeight + 2}
+              x2={Math.max(scrollWidth, 100)}
+              y2={totalHeight + 2}
+              stroke="#e0e0e0"
+              strokeWidth={1}
+            />
 
-        {/* Pathway columns */}
-        {pathwayData.map((pd, colIdx) => {
-          const offsetX = colIdx * colWidth + cx;
+            {pathwayData.map((pd, colIdx) => {
+              const offsetX = colIdx * colWidth + cx;
 
           return (
             <g key={pd.pathwayName}>
@@ -158,10 +146,23 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
                     stroke="#000"
                     strokeWidth={1}
                   />
-                  <text x={offsetX + 8} y={10} fontSize={10} fill="#94A3B8">
+                  <text x={offsetX + 8} y={10} fontSize={11} fill="#94A3B8">
                     ongoing
                   </text>
                 </>
+              )}
+
+              {/* Dashed line from earliest event down to bottom */}
+              {pd.events.length > 0 && (
+                <line
+                  x1={offsetX}
+                  y1={yearToY(pd.events[0].year)}
+                  x2={offsetX}
+                  y2={totalHeight + 5}
+                  stroke="#999"
+                  strokeWidth={1}
+                  strokeDasharray="4 4"
+                />
               )}
 
               {/* Lines between consecutive events */}
@@ -219,7 +220,7 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
                     <text
                       x={offsetX + NODE_SIZE / 2 + 6}
                       y={y + 9}
-                      fontSize={9}
+                      fontSize={11}
                       fill="#475569"
                     >
                       {label}
@@ -239,7 +240,7 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
                     key={`gap-${colIdx}-${i}`}
                     x={offsetX + NODE_SIZE / 2 + 6}
                     y={midY + 4}
-                    fontSize={9}
+                    fontSize={11}
                     fill="#999"
                   >
                     gap
@@ -249,7 +250,40 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
             </g>
           );
         })}
-      </svg>
+          </svg>
+        </div>
+
+        {/* Fixed year axis */}
+        <svg
+          width={AXIS_WIDTH}
+          height={svgHeight}
+          style={{ display: 'block', flexShrink: 0 }}
+        >
+          {ticks.map((year) => {
+            const y = yearToY(year);
+            return (
+              <g key={`tick-${year}`}>
+                <line
+                  x1={0}
+                  y1={y}
+                  x2={6}
+                  y2={y}
+                  stroke="rgba(100, 116, 139, 0.32)"
+                  strokeWidth={1}
+                />
+                <text
+                  x={10}
+                  y={y + 4}
+                  fontSize={11}
+                  fill="#64748B"
+                >
+                  {year}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
     </div>
   );
 };
