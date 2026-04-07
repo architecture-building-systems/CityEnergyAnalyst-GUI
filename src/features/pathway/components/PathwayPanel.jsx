@@ -171,7 +171,7 @@ const LegendChip = ({ colour, label, outline, halo }) => (
   </div>
 );
 
-const SectionCard = ({ title, content }) => (
+const SectionCard = ({ title, content, tooltipKey }) => (
   <div
     style={{
       borderRadius: 14,
@@ -181,9 +181,10 @@ const SectionCard = ({ title, content }) => (
       minHeight: 60,
     }}
   >
-    <Text strong style={{ display: 'block', paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid #e0e0e0' }}>
-      {title}
-    </Text>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid #e0e0e0' }}>
+      <Text strong>{title}</Text>
+      {tooltipKey ? <InfoTooltip tooltipKey={tooltipKey} /> : null}
+    </div>
     {content}
   </div>
 );
@@ -205,13 +206,15 @@ const BuildingPill = ({ name, color }) => (
   </span>
 );
 
-const BuildingList = ({ buildings, buildingColorMap }) => {
+const BuildingList = ({ buildings, buildingColorMap, rebuildCounts }) => {
   if (!buildings?.length) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-      {buildings.map((b) => (
-        <BuildingPill key={b} name={b} color={buildingColorMap?.[b]} />
-      ))}
+      {buildings.map((b) => {
+        const count = rebuildCounts?.[b] ?? 0;
+        const label = count > 0 ? `${b}(${count})` : b;
+        return <BuildingPill key={b} name={label} color={buildingColorMap?.[b]} />;
+      })}
     </div>
   );
 };
@@ -567,6 +570,30 @@ const PathwayPanel = ({
     }
     return activeRows.find((row) => row.year === selectedYear) ?? null;
   }, [activeRows, selectedYear]);
+
+  // Count rebuild cycles per building for the selected year's display
+  const rebuildCounts = useMemo(() => {
+    if (!selectedRow) return {};
+    const result = {};
+    // Count how many times each building was demolished before or at the selected year
+    for (const row of activeRows) {
+      if (row.year > selectedRow.year) break;
+      const demolished = row?.building_events?.demolished_buildings ?? [];
+      for (const b of demolished) {
+        result[b] = (result[b] ?? 0) + 1;
+      }
+    }
+    // Only keep counts where the building is also in new_buildings at the selected year
+    // (meaning it was rebuilt after demolition)
+    const newAtYear = new Set(selectedRow?.building_events?.new_buildings ?? []);
+    const filtered = {};
+    for (const [b, count] of Object.entries(result)) {
+      if (newAtYear.has(b) && count > 0) {
+        filtered[b] = count;
+      }
+    }
+    return filtered;
+  }, [activeRows, selectedRow]);
 
   const span = timeline?.span ?? overview?.span ?? {};
   const startYear = span?.start_year;
@@ -1854,18 +1881,21 @@ const PathwayPanel = ({
                     {hasConstruct && (
                       <SectionCard
                         title="Construction"
-                        content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} />}
+                        tooltipKey="construction-card"
+                        content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} rebuildCounts={rebuildCounts} />}
                       />
                     )}
                     {hasDemolish && (
                       <SectionCard
                         title="Demolition"
+                        tooltipKey="demolition-card"
                         content={<BuildingList buildings={selectedRow.building_events?.demolished_buildings} buildingColorMap={buildingColorMap} />}
                       />
                     )}
                     {hasChange && (
                       <SectionCard
                         title="Intervention"
+                        tooltipKey="intervention-card"
                         content={<ModificationSummary row={selectedRow} constructionColorMap={constructionColorMap} />}
                       />
                     )}
