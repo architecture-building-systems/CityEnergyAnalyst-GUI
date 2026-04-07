@@ -65,6 +65,8 @@ const ToolCard = ({ onPlotToolSelected }) => {
         <BuildingLifecycleCard
           buildingName={buildingLifecycleData.building_name}
           pathways={buildingLifecycleData.pathways}
+          fixedStartYear={buildingLifecycleData.span?.start_year}
+          fixedEndYear={buildingLifecycleData.span?.end_year}
         />
       ) : (
         <BuildingEditor />
