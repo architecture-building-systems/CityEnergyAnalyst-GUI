@@ -594,7 +594,7 @@ const DeckGLMap = ({ data, colors }) => {
 
       // Add floor lines when extruded
       if (extruded) {
-        const floorLinesData = generateFloorLines(data.zone.features);
+        const floorLinesData = generateFloorLines(zoneData.features);
         _zoneLayers.push(
           new GeoJsonLayer({
             id: 'zone-floor-lines',
@@ -611,7 +611,7 @@ const DeckGLMap = ({ data, colors }) => {
       _textLayers.push(
         new TextLayer({
           id: 'zone-labels',
-          data: data.zone?.features,
+          data: zoneData?.features,
           visible: visibility.zone_labels ?? true,
           pickable: false,
           getPosition: (f) => {
