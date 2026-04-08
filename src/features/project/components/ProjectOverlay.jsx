@@ -360,37 +360,20 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       className={showToolCard ? 'show-right-sidebar' : ''}
     >
       {childScenario && (
-        <>
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              boxShadow: 'inset 0 0 0 3px #1470AF',
-              borderRadius: 0,
-              pointerEvents: 'none',
-              zIndex: 9999,
-            }}
-          />
-          <div
-            style={{
-              position: 'fixed',
-              top: 12,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: '#1470AF',
-              color: '#fff',
-              padding: '4px 16px',
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 600,
-              zIndex: 10000,
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Viewing: {childScenario.pathway_name} / Y_{childScenario.year}
-          </div>
-        </>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 24,
+            border: '3px solid rgba(20, 112, 175, 0.6)',
+            boxShadow:
+              'inset 0 0 200px 60px rgba(20, 112, 175, 0.35)',
+            pointerEvents: 'none',
+            zIndex: 9999,
+          }}
+        />
       )}
       <div id="cea-project-overlay-left-sidebar">
         {hideAll && (
