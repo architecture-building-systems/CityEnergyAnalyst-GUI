@@ -18,16 +18,6 @@ const STATUS_FILL = {
   simulated: '#000000',
 };
 
-const getTickStep = (pxPerYear) => {
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-  for (const step of steps) {
-    if (pxPerYear * step >= 56) {
-      return step;
-    }
-  }
-  return 1000;
-};
-
 const PathwayViewer = ({ hidden }) => {
   const queryClient = useQueryClient();
   const childScenario = useProjectStore((s) => s.childScenario);
@@ -37,6 +27,7 @@ const PathwayViewer = ({ hidden }) => {
   const [loading, setLoading] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [selectedPathway, setSelectedPathway] = useState(null);
+  const [hoveredYear, setHoveredYear] = useState(null);
   const viewportMeasureRef = useRef(null);
   const [viewportWidth, setViewportWidth] = useState(0);
 
@@ -112,17 +103,6 @@ const PathwayViewer = ({ hidden }) => {
     },
     [pxPerYear, startYear],
   );
-
-  const tickYears = useMemo(() => {
-    if (startYear == null || endYear == null) return [];
-    const step = getTickStep(pxPerYear);
-    const ticks = new Set([startYear, endYear]);
-    const firstTick = Math.ceil(startYear / step) * step;
-    for (let year = firstTick; year <= endYear; year += step) {
-      ticks.add(year);
-    }
-    return [...ticks].sort((left, right) => left - right);
-  }, [endYear, pxPerYear, startYear]);
 
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
@@ -233,24 +213,6 @@ const PathwayViewer = ({ hidden }) => {
                 position: 'relative',
               }}
             >
-              {/* Tick labels at top */}
-              {tickYears.map((year) => (
-                <Text
-                  key={`tick-${year}`}
-                  style={{
-                    position: 'absolute',
-                    left: getYearOffset(year),
-                    top: 4,
-                    transform: 'translateX(-50%)',
-                    fontSize: 10,
-                    color: '#94A3B8',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {year}
-                </Text>
-              ))}
-
               {/* Lane line */}
               <div
                 style={{
@@ -264,41 +226,61 @@ const PathwayViewer = ({ hidden }) => {
                 }}
               />
 
-              {/* Nodes */}
+              {/* Nodes with labels */}
               {years.map((year) => {
                 const phase = yearPhases[String(year)] ?? 'none';
                 const nodeFill = STATUS_FILL[phase] ?? STATUS_FILL.none;
                 const isActive =
                   childScenario?.pathway_name === selectedPathway &&
                   childScenario?.year === year;
+                const showLabel = isActive || hoveredYear === year;
 
                 return (
-                  <button
-                    key={`${selectedPathway}-${year}`}
-                    type="button"
-                    onClick={() => handleNodeClick(selectedPathway, year)}
-                    disabled={switching}
-                    style={{
-                      position: 'absolute',
-                      left: getYearOffset(year),
-                      top: '58%',
-                      transform: 'translate(-50%, -50%)',
-                      width: 12,
-                      height: 12,
-                      borderRadius: 999,
-                      border: '2px solid #FFFFFF',
-                      background: nodeFill,
-                      cursor:
-                        phase === 'baked' || phase === 'simulated'
-                          ? 'pointer'
-                          : 'default',
-                      padding: 0,
-                      boxShadow: isActive
-                        ? '0 0 0 6px rgba(20, 112, 175, 0.14), 0 2px 6px rgba(15, 23, 42, 0.12)'
-                        : '0 2px 6px rgba(15, 23, 42, 0.12)',
-                    }}
-                    aria-label={`${selectedPathway} ${year}`}
-                  />
+                  <div key={`${selectedPathway}-${year}`}>
+                    {showLabel && (
+                      <Text
+                        style={{
+                          position: 'absolute',
+                          left: getYearOffset(year),
+                          top: 6,
+                          transform: 'translateX(-50%)',
+                          fontSize: 10,
+                          color: '#94A3B8',
+                          whiteSpace: 'nowrap',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        {year}
+                      </Text>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleNodeClick(selectedPathway, year)}
+                      onMouseEnter={() => setHoveredYear(year)}
+                      onMouseLeave={() => setHoveredYear(null)}
+                      disabled={switching}
+                      style={{
+                        position: 'absolute',
+                        left: getYearOffset(year),
+                        top: '58%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 12,
+                        height: 12,
+                        borderRadius: 999,
+                        border: '2px solid #FFFFFF',
+                        background: nodeFill,
+                        cursor:
+                          phase === 'baked' || phase === 'simulated'
+                            ? 'pointer'
+                            : 'default',
+                        padding: 0,
+                        boxShadow: isActive
+                          ? '0 0 0 6px rgba(20, 112, 175, 0.14), 0 2px 6px rgba(15, 23, 42, 0.12)'
+                          : '0 2px 6px rgba(15, 23, 42, 0.12)',
+                      }}
+                      aria-label={`${selectedPathway} ${year}`}
+                    />
+                  </div>
                 );
               })}
             </div>
