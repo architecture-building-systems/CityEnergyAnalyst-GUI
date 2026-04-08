@@ -1,13 +1,9 @@
-import { Button, ConfigProvider, Select, Spin, Typography } from 'antd';
+import { ConfigProvider, Select, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import {
-  fetchPathwayOverview,
-  switchToChildScenario,
-  switchToParentScenario,
-} from '../api';
+import { fetchPathwayOverview, switchToChildScenario } from '../api';
 
 const { Text } = Typography;
 
@@ -36,7 +32,6 @@ const PathwayViewer = ({ hidden }) => {
   const queryClient = useQueryClient();
   const childScenario = useProjectStore((s) => s.childScenario);
   const setChildScenario = useProjectStore((s) => s.setChildScenario);
-  const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
 
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -141,19 +136,6 @@ const PathwayViewer = ({ hidden }) => {
         year,
         parent_scenario: result.parent_scenario,
       });
-      queryClient.invalidateQueries();
-    } catch {
-      // silently fail
-    } finally {
-      setSwitching(false);
-    }
-  };
-
-  const handleBack = async () => {
-    setSwitching(true);
-    try {
-      await switchToParentScenario();
-      clearChildScenario();
       queryClient.invalidateQueries();
     } catch {
       // silently fail
@@ -321,22 +303,6 @@ const PathwayViewer = ({ hidden }) => {
               })}
             </div>
           </div>
-
-          {/* Back button */}
-          {childScenario ? (
-            <div
-              style={{
-                flexShrink: 0,
-                padding: '0 8px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <Button size="small" loading={switching} onClick={handleBack}>
-                Back
-              </Button>
-            </div>
-          ) : null}
         </>
       )}
     </div>

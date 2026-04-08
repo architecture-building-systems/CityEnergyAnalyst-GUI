@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
 import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
@@ -40,6 +41,7 @@ import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
+  const queryClient = useQueryClient();
   const name = useProjectStore((state) => state.name);
   const scenarioList = useProjectStore((state) => state.scenariosList);
 
@@ -360,20 +362,61 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       className={showToolCard ? 'show-right-sidebar' : ''}
     >
       {childScenario && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 24,
-            border: '3px solid rgba(20, 112, 175, 0.6)',
-            boxShadow:
-              'inset 0 0 200px 60px rgba(20, 112, 175, 0.35)',
-            pointerEvents: 'none',
-            zIndex: 9999,
-          }}
-        />
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 24,
+              border: '3px solid rgba(20, 112, 175, 0.6)',
+              boxShadow: 'inset 0 0 200px 60px rgba(20, 112, 175, 0.35)',
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              import('features/pathway/api').then(
+                ({ switchToParentScenario }) => {
+                  switchToParentScenario()
+                    .then(() => {
+                      clearChildScenario();
+                      queryClient.invalidateQueries();
+                    })
+                    .catch(() => {});
+                },
+              );
+            }}
+            style={{
+              position: 'fixed',
+              top: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 10000,
+              pointerEvents: 'auto',
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              border: '1px solid rgba(0,0,0,0.12)',
+              background: 'rgba(148, 163, 184, 0.85)',
+              color: '#fff',
+              fontSize: 18,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              lineHeight: 1,
+            }}
+            aria-label="Exit child scenario"
+          >
+            &times;
+          </button>
+        </>
       )}
       <div id="cea-project-overlay-left-sidebar">
         {hideAll && (
