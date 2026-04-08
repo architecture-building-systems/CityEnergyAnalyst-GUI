@@ -33,6 +33,19 @@
   display: none;
 }
 
+.cea-scenario-select-blue.ant-select {
+  background-color: #1470AF !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: bold;
+  height: 36px !important;
+}
+.cea-scenario-select-blue.ant-select .ant-select-content-value,
+.cea-scenario-select-blue.ant-select .ant-select-suffix,
+.cea-scenario-select-blue.ant-select .ant-select-placeholder {
+  color: #fff !important;
+}
+
 .cea-template-select.ant-select {
   background-color: transparent !important;
   border-radius: 12px !important;

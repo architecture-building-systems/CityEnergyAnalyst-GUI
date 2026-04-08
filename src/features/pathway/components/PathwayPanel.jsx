@@ -330,6 +330,7 @@ const PathwaySelect = ({
   onDeletePathway,
   onCreatePathway,
   loading,
+  allBaked,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -363,7 +364,7 @@ const PathwaySelect = ({
 
   return (
     <Select
-      className={`cea-scenario-select ${!hasPathways || !selectedPathway || visiblePathways.length === 0 ? 'cea-scenario-select-empty' : ''}`}
+      className={`${visiblePathways.length === 1 && allBaked ? 'cea-scenario-select-blue' : 'cea-scenario-select'} ${!hasPathways || !selectedPathway || visiblePathways.length === 0 ? 'cea-scenario-select-empty' : ''}`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}
       placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
@@ -930,7 +931,7 @@ const PathwayPanel = ({
   }, [contentWidth, getYearOffset, selectedPathway, selectedYear, startYear]);
 
   useEffect(() => {
-    if (!open || !selectedPathway || !jobs) {
+    if (!open || !jobs) {
       return;
     }
 
@@ -942,6 +943,7 @@ const PathwayPanel = ({
           job.scenario_name === scenarioName &&
           [
             'bake-pathway-states',
+            'pathway-delete-pathway',
             'pathway-events-apply-templates',
             'pathway-intervention-templates-define',
             'pathway-simulations',
@@ -1373,6 +1375,13 @@ const PathwayPanel = ({
             onDeletePathway={handleDeletePathwayByName}
             onCreatePathway={handleStartCreatePathway}
             loading={loadingOverview}
+            allBaked={
+              activeRows.length > 0 &&
+              activeRows.every((row) => {
+                const phase = row?.status?.primary_phase ?? 'none';
+                return phase === 'baked' || phase === 'simulated';
+              })
+            }
           />
           <div className="cea-card-icon-button-container">
             <TooltipFromBackend tooltipKey="create-new-pathway" placement="bottom">

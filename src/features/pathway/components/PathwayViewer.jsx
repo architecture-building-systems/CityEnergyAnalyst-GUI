@@ -1,4 +1,4 @@
-import { ConfigProvider, Select, Spin, Typography } from 'antd';
+import { Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -8,7 +8,6 @@ import { fetchPathwayOverview, switchToChildScenario } from '../api';
 const { Text } = Typography;
 
 const LANE_PADDING = 40;
-const LABEL_WIDTH = 140;
 const BAR_HEIGHT = 55;
 
 const STATUS_FILL = {
@@ -26,10 +25,12 @@ const PathwayViewer = ({ hidden }) => {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [switching, setSwitching] = useState(false);
-  const [selectedPathway, setSelectedPathway] = useState(null);
   const [hoveredYear, setHoveredYear] = useState(null);
   const viewportMeasureRef = useRef(null);
   const [viewportWidth, setViewportWidth] = useState(0);
+
+  // Selected pathway comes from the OverviewCard dropdown via the store
+  const selectedPathway = childScenario?.pathway_name ?? null;
 
   const loadOverview = useCallback(async () => {
     setLoading(true);
@@ -61,25 +62,11 @@ const PathwayViewer = ({ hidden }) => {
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hidden]);
-
-  const bakedPathways = useMemo(() => {
-    if (!overview?.pathways) return [];
-    return overview.pathways.filter((p) => p.all_baked);
-  }, [overview]);
-
-  useEffect(() => {
-    if (
-      bakedPathways.length > 0 &&
-      !bakedPathways.find((p) => p.pathway_name === selectedPathway)
-    ) {
-      setSelectedPathway(bakedPathways[0].pathway_name);
-    }
-  }, [bakedPathways, selectedPathway]);
+  }, [hidden, selectedPathway]);
 
   const currentPathway = useMemo(
-    () => bakedPathways.find((p) => p.pathway_name === selectedPathway),
-    [bakedPathways, selectedPathway],
+    () => overview?.pathways?.find((p) => p.pathway_name === selectedPathway),
+    [overview, selectedPathway],
   );
 
   const years = currentPathway?.years ?? [];
@@ -124,12 +111,8 @@ const PathwayViewer = ({ hidden }) => {
     }
   };
 
-  if (hidden || (!loading && bakedPathways.length === 0)) return null;
-
-  const pathwayOptions = bakedPathways.map((p) => ({
-    label: p.pathway_name,
-    value: p.pathway_name,
-  }));
+  // Hide if no pathway selected from OverviewCard, or hidden prop
+  if (hidden || !selectedPathway || (!loading && !currentPathway)) return null;
 
   return (
     <div
@@ -140,7 +123,6 @@ const PathwayViewer = ({ hidden }) => {
         height: BAR_HEIGHT,
         borderRadius: 12,
         overflow: 'hidden',
-        gap: 0,
       }}
     >
       {loading ? (
@@ -156,136 +138,96 @@ const PathwayViewer = ({ hidden }) => {
           <Spin size="small" />
         </div>
       ) : (
-        <>
-          {/* Dropdown */}
+        <div
+          ref={viewportMeasureRef}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            height: '100%',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
           <div
             style={{
-              width: LABEL_WIDTH,
-              flexShrink: 0,
-              padding: '0 8px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <ConfigProvider
-              theme={{
-                components: {
-                  Select: {
-                    selectorBg: '#1470AF',
-                    colorText: '#fff',
-                    colorTextPlaceholder: 'rgba(255,255,255,0.65)',
-                    colorIcon: '#fff',
-                    colorIconHover: '#fff',
-                    optionActiveBg: 'rgba(20,112,175,0.12)',
-                    optionSelectedBg: 'rgba(20,112,175,0.18)',
-                  },
-                },
-              }}
-            >
-              <Select
-                style={{ width: '100%' }}
-                styles={{ popup: { root: { width: 200 } } }}
-                size="small"
-                value={selectedPathway}
-                onChange={setSelectedPathway}
-                options={pathwayOptions}
-                placeholder="Pathway"
-              />
-            </ConfigProvider>
-          </div>
-
-          {/* Timeline */}
-          <div
-            ref={viewportMeasureRef}
-            style={{
-              flex: 1,
-              minWidth: 0,
+              width: contentWidth,
+              minWidth: '100%',
               height: '100%',
-              overflow: 'hidden',
               position: 'relative',
             }}
           >
+            {/* Lane line */}
             <div
               style={{
-                width: contentWidth,
-                minWidth: '100%',
-                height: '100%',
-                position: 'relative',
+                position: 'absolute',
+                left: LANE_PADDING,
+                right: LANE_PADDING,
+                top: '58%',
+                height: 1,
+                background: '#8eb6dc',
+                borderRadius: 999,
               }}
-            >
-              {/* Lane line */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: LANE_PADDING,
-                  right: LANE_PADDING,
-                  top: '58%',
-                  height: 1,
-                  background: '#8eb6dc',
-                  borderRadius: 999,
-                }}
-              />
+            />
 
-              {/* Nodes with labels */}
-              {years.map((year) => {
-                const phase = yearPhases[String(year)] ?? 'none';
-                const nodeFill = STATUS_FILL[phase] ?? STATUS_FILL.none;
-                const isActive =
-                  childScenario?.pathway_name === selectedPathway &&
-                  childScenario?.year === year;
-                const showLabel = isActive || hoveredYear === year;
+            {/* Nodes with labels */}
+            {years.map((year) => {
+              const phase = yearPhases[String(year)] ?? 'none';
+              const nodeFill = STATUS_FILL[phase] ?? STATUS_FILL.none;
+              const isActive =
+                childScenario?.year === year &&
+                childScenario?.pathway_name === selectedPathway;
+              const showLabel = isActive || hoveredYear === year;
 
-                return (
-                  <div key={`${selectedPathway}-${year}`}>
-                    {showLabel && (
-                      <Text
-                        style={{
-                          position: 'absolute',
-                          left: getYearOffset(year),
-                          top: 6,
-                          transform: 'translateX(-50%)',
-                          fontSize: 10,
-                          color: '#94A3B8',
-                          whiteSpace: 'nowrap',
-                          pointerEvents: 'none',
-                        }}
-                      >
-                        {year}
-                      </Text>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleNodeClick(selectedPathway, year)}
-                      onMouseEnter={() => setHoveredYear(year)}
-                      onMouseLeave={() => setHoveredYear(null)}
-                      disabled={switching}
+              return (
+                <div key={`${selectedPathway}-${year}`}>
+                  {showLabel && (
+                    <Text
                       style={{
                         position: 'absolute',
                         left: getYearOffset(year),
-                        top: '58%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 12,
-                        height: 12,
-                        borderRadius: 999,
-                        border: '2px solid #FFFFFF',
-                        background: nodeFill,
-                        cursor:
-                          phase === 'baked' || phase === 'simulated'
-                            ? 'pointer'
-                            : 'default',
-                        padding: 0,
-                        boxShadow: isActive
-                          ? '0 0 0 6px rgba(20, 112, 175, 0.14), 0 2px 6px rgba(15, 23, 42, 0.12)'
-                          : '0 2px 6px rgba(15, 23, 42, 0.12)',
+                        top: 6,
+                        transform: 'translateX(-50%)',
+                        fontSize: 10,
+                        color: '#94A3B8',
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
                       }}
-                      aria-label={`${selectedPathway} ${year}`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+                    >
+                      {year}
+                    </Text>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleNodeClick(selectedPathway, year)}
+                    onMouseEnter={() => setHoveredYear(year)}
+                    onMouseLeave={() => setHoveredYear(null)}
+                    disabled={switching}
+                    style={{
+                      position: 'absolute',
+                      left: getYearOffset(year),
+                      top: '58%',
+                      transform: 'translate(-50%, -50%)',
+                      width: 12,
+                      height: 12,
+                      borderRadius: 999,
+                      border: '2px solid #FFFFFF',
+                      background: nodeFill,
+                      cursor:
+                        phase === 'baked' || phase === 'simulated'
+                          ? 'pointer'
+                          : 'default',
+                      padding: 0,
+                      boxShadow: isActive
+                        ? '0 0 0 6px rgba(20, 112, 175, 0.14), 0 2px 6px rgba(15, 23, 42, 0.12)'
+                        : '0 2px 6px rgba(15, 23, 42, 0.12)',
+                    }}
+                    aria-label={`${selectedPathway} ${year}`}
+                  />
+                </div>
+              );
+            })}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
