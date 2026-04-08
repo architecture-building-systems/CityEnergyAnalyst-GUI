@@ -1,4 +1,5 @@
 import { Divider, Modal, Select, Spin, Typography } from 'antd';
+import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ProjectRow from './ProjectRow';
@@ -343,30 +344,33 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
       >
         Pathway
       </Divider>
-      <Select
-        className={
-          selectedPathway ? 'cea-scenario-select-blue' : 'cea-scenario-select'
-        }
-        style={{ width: '100%' }}
-        styles={{ popup: { root: { width: 270 } } }}
-        placeholder="Select Pathway"
-        options={options}
-        value={selectedPathway}
-        onChange={(value) => {
-          setChildScenario(
-            value
-              ? { pathway_name: value, year: null, parent_scenario: null }
-              : null,
-          );
-        }}
-        onSelect={(value) => {
-          if (value === selectedPathway) {
-            setChildScenario(null);
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Select
+          className={
+            selectedPathway ? 'cea-scenario-select-blue' : 'cea-scenario-select'
           }
-        }}
-        allowClear
-        notFoundContent={<small>No baked pathways</small>}
-      />
+          style={{ flex: 1 }}
+          styles={{ popup: { root: { width: 270 } } }}
+          placeholder="Select Pathway"
+          options={options}
+          value={selectedPathway}
+          onChange={(value) => {
+            setChildScenario(
+              value
+                ? { pathway_name: value, year: null, parent_scenario: null }
+                : null,
+            );
+          }}
+          onSelect={(value) => {
+            if (value === selectedPathway) {
+              setChildScenario(null);
+            }
+          }}
+          allowClear
+          notFoundContent={<small>No baked pathways</small>}
+        />
+        <InfoTooltip tooltipKey="pathway-viewer" placement="right" />
+      </div>
       {selectedPathway && currentPathway && (
         <div
           ref={viewportRef}
