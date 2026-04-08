@@ -419,11 +419,25 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                 style={{
                   position: 'absolute',
                   left: LANE_PADDING,
-                  right: LANE_PADDING,
+                  right: LANE_PADDING + 14,
                   top: '55%',
                   height: 1.5,
                   background: '#8eb6dc',
                   borderRadius: 999,
+                }}
+              />
+              {/* Right triangle arrow at right end */}
+              <div
+                style={{
+                  position: 'absolute',
+                  right: LANE_PADDING + 7,
+                  top: '55%',
+                  transform: 'translateY(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderTop: '5px solid transparent',
+                  borderBottom: '5px solid transparent',
+                  borderLeft: '7px solid #8eb6dc',
                 }}
               />
 
