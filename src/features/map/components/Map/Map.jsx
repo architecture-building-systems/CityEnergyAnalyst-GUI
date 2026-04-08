@@ -539,7 +539,11 @@ const DeckGLMap = ({ data, colors }) => {
             setSelected(newSelected);
           }
         } else {
-          setSelected([name]);
+          if (selected.length === 1 && selected[0] === name) {
+            setSelected([]);
+          } else {
+            setSelected([name]);
+          }
         }
       }
     };

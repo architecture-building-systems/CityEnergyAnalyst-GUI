@@ -36,7 +36,7 @@ import {
   useMapLayerCategories,
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
-import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
+import { useMapStore, useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
@@ -156,9 +156,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       const next = !prev;
       if (next) {
         setInputEditor(false);
+        setToolType(null);
       } else {
         setPathwayPanelExpanded(false);
         useToolCardStore.getState().clearBuildingLifecycleData();
+        useMapStore.getState().setStateZoneOverride(null);
       }
       return next;
     });
@@ -333,8 +335,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       selectionSource === 'map' &&
       !showInputEditor
     ) {
-      // If pathway builder is active, show lifecycle timeline
-      if (showPathwayPanel && selectedBuildings.length === 1) {
+      // If pathway builder is active with visible pathways, show lifecycle timeline
+      if (showPathwayPanel && selectedBuildings.length === 1 && useToolCardStore.getState().visiblePathways.length > 0) {
         import('features/pathway/api').then(({ fetchBuildingLifecycle }) => {
           const vp = useToolCardStore.getState().visiblePathways;
           fetchBuildingLifecycle(
@@ -349,11 +351,14 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               setToolType(toolTypes.BUILDING_INFO);
             });
         });
-      } else {
+      } else if (!showPathwayPanel) {
         // Clear lifecycle data so building info shows regular mode
+        // (skip when pathway panel is open but has no pathways)
         useToolCardStore.getState().clearBuildingLifecycleData();
         setToolType(toolTypes.BUILDING_INFO);
       }
+    } else if (selectedBuildings.length === 0 && toolType === toolTypes.BUILDING_INFO) {
+      setToolType(null);
     }
   }, [
     selectedBuildings,
@@ -361,6 +366,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     setToolType,
     showInputEditor,
     showPathwayPanel,
+    toolType,
   ]);
 
   return (
