@@ -70,7 +70,11 @@ export const saveBuildingEvents = async (
   return data;
 };
 
-export const applyTemplatesToYear = async (pathwayName, year, templateNames) => {
+export const applyTemplatesToYear = async (
+  pathwayName,
+  year,
+  templateNames,
+) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/apply-templates`,
     {
@@ -128,6 +132,19 @@ export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   const { data } = await apiClient.get(
     `/api/pathways/building-lifecycle/${encodeURIComponent(buildingName)}${params}`,
   );
+  return data;
+};
+
+export const switchToChildScenario = async (pathwayName, year) => {
+  const { data } = await apiClient.put('/api/project/child-scenario', {
+    pathway_name: pathwayName,
+    year,
+  });
+  return data;
+};
+
+export const switchToParentScenario = async () => {
+  const { data } = await apiClient.delete('/api/project/child-scenario');
   return data;
 };
 

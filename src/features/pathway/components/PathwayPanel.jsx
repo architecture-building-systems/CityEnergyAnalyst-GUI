@@ -733,7 +733,11 @@ const PathwayPanel = ({
         setSelectedPathway(activePathway);
         setVisiblePathways((prev) => {
           if (prev.length > 0) {
-            return prev.filter((p) => pathwayNames.includes(p));
+            const kept = prev.filter((p) => pathwayNames.includes(p));
+            if (activePathway && !kept.includes(activePathway)) {
+              kept.push(activePathway);
+            }
+            return kept;
           }
           return activePathway ? [activePathway] : [];
         });
@@ -1753,11 +1757,12 @@ const PathwayPanel = ({
                             const selected = isActive && selectedYear === year;
                             const validationError =
                               isActive && row?.validation?.status === 'error';
+                            const overviewPhase = pathway.year_phases?.[String(year)];
                             const nodeFill = isActive
                               ? validationError
                                 ? STATUS_ACCENT.error
                                 : getNodeFill(row)
-                              : '#CBD5E1';
+                              : STATUS_FILL[overviewPhase] ?? '#CBD5E1';
 
                             return (
                                 <button

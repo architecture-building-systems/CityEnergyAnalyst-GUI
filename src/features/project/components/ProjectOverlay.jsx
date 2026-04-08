@@ -8,6 +8,7 @@ import MapControls from 'features/map/components/Map/MapControls';
 import MapLayerCategoriesCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 import PathwayPanel from 'features/pathway/components/PathwayPanel';
+import PathwayViewer from 'features/pathway/components/PathwayViewer';
 
 import UserInfo from 'components/UserInfo';
 import ShowHideCardsButton from 'components/ShowHideCardsButton';
@@ -53,6 +54,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setSelectedLayer = useSetSelectedMapLayer();
+  const childScenario = useProjectStore((s) => s.childScenario);
 
   const handlePlotToolSelected = (tool) => {
     // Get map layer category from plot script name
@@ -93,7 +95,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const [pathwayPanelHeight, setPathwayPanelHeight] = useState(425);
   const pathwayResizeStateRef = useRef(null);
   const pathwayPanelContentRef = useRef(null);
-  const [pathwayPanelHiddenForTool, setPathwayPanelHiddenForTool] = useState(false);
+  const [pathwayPanelHiddenForTool, setPathwayPanelHiddenForTool] =
+    useState(false);
 
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
@@ -115,13 +118,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       return;
     }
 
-    const completedJobs = Object.entries(jobs)
-      .filter(
-        ([id, job]) =>
-          job.state === 2 &&
-          job.script === 'pathway-update-building-events' &&
-          !buildingEventsHandledRef.current.has(id),
-      );
+    const completedJobs = Object.entries(jobs).filter(
+      ([id, job]) =>
+        job.state === 2 &&
+        job.script === 'pathway-update-building-events' &&
+        !buildingEventsHandledRef.current.has(id),
+    );
 
     if (completedJobs.length > 0) {
       completedJobs.forEach(([id]) => buildingEventsHandledRef.current.add(id));
@@ -191,7 +193,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         return;
       }
 
-      const contentHeight = pathwayPanelContentRef.current?.scrollHeight ?? Infinity;
+      const contentHeight =
+        pathwayPanelContentRef.current?.scrollHeight ?? Infinity;
       const nextHeight = Math.max(
         360,
         Math.min(
@@ -290,6 +293,15 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
+  // On mount / scenario change: clear any stuck child-scenario state
+  const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
+  useEffect(() => {
+    import('features/pathway/api').then(({ switchToParentScenario }) => {
+      switchToParentScenario().catch(() => {});
+    });
+    clearChildScenario();
+  }, [scenarioName, clearChildScenario]);
+
   // Reset state when project or scenario name changes
   useEffect(() => {
     const resetState = () => {
@@ -316,7 +328,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       if (showPathwayPanel && selectedBuildings.length === 1) {
         import('features/pathway/api').then(({ fetchBuildingLifecycle }) => {
           const vp = useToolCardStore.getState().visiblePathways;
-          fetchBuildingLifecycle(selectedBuildings[0], vp.length ? vp : undefined)
+          fetchBuildingLifecycle(
+            selectedBuildings[0],
+            vp.length ? vp : undefined,
+          )
             .then((data) => {
               useToolCardStore.getState().setBuildingLifecycleData(data);
               setToolType(toolTypes.BUILDING_INFO);
@@ -331,13 +346,52 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         setToolType(toolTypes.BUILDING_INFO);
       }
     }
-  }, [selectedBuildings, selectionSource, setToolType, showInputEditor, showPathwayPanel]);
+  }, [
+    selectedBuildings,
+    selectionSource,
+    setToolType,
+    showInputEditor,
+    showPathwayPanel,
+  ]);
 
   return (
     <div
       id="cea-project-overlay"
       className={showToolCard ? 'show-right-sidebar' : ''}
     >
+      {childScenario && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              boxShadow: 'inset 0 0 0 3px #1470AF',
+              borderRadius: 0,
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              top: 12,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#1470AF',
+              color: '#fff',
+              padding: '4px 16px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 600,
+              zIndex: 10000,
+              pointerEvents: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Viewing: {childScenario.pathway_name} / Y_{childScenario.year}
+          </div>
+        </>
+      )}
       <div id="cea-project-overlay-left-sidebar">
         {hideAll && (
           <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
@@ -535,6 +589,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               onTogglePathwayPanel={togglePathwayPanel}
               pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}
+            />
+          )}
+          {!hideAll && (
+            <PathwayViewer
+              hidden={hideAll || showPathwayPanel || !scenarioName}
             />
           )}
           <div

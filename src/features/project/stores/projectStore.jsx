@@ -114,6 +114,11 @@ export const useProjectStore = create((set) => ({
   },
   updateScenario: (scenario) => set({ scenario }),
   setRecentProjects: (projects) => set({ recentProjects: projects }),
+
+  // Pathway Viewer: child scenario state
+  childScenario: null, // { pathway_name, year, parent_scenario }
+  setChildScenario: (data) => set({ childScenario: data }),
+  clearChildScenario: () => set({ childScenario: null }),
 }));
 
 export const useProjectLoading = () =>
