@@ -8,10 +8,12 @@ import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   fetchPathwayOverview,
+  fetchStateGeojson,
   switchToChildScenario,
 } from 'features/pathway/api';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
+import { useMapStore } from 'features/map/stores/mapStore';
 
 const { Text } = Typography;
 
@@ -285,6 +287,10 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     [pxPerYear, startYear],
   );
 
+  const setStateZoneOverride = useMapStore(
+    (state) => state.setStateZoneOverride,
+  );
+
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
     if (phase !== 'baked' && phase !== 'simulated') return;
@@ -297,6 +303,10 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         year,
         parent_scenario: result.parent_scenario,
       });
+      // Show state geometry on the map
+      fetchStateGeojson(pathwayName, year)
+        .then((data) => setStateZoneOverride(data?.geojson ?? null))
+        .catch(() => setStateZoneOverride(null));
       queryClient.invalidateQueries();
     } catch {
       // silently fail
@@ -316,6 +326,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
       onOk: async () => {
         if (selectedPathway === pathwayName) {
           setChildScenario(null);
+          setStateZoneOverride(null);
         }
         await createJob('pathway-delete-pathway', {
           scenario: scenarioPath,
@@ -360,10 +371,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                 ? { pathway_name: value, year: null, parent_scenario: null }
                 : null,
             );
+            if (!value) setStateZoneOverride(null);
           }}
           onSelect={(value) => {
             if (value === selectedPathway) {
               setChildScenario(null);
+              setStateZoneOverride(null);
             }
           }}
           allowClear
