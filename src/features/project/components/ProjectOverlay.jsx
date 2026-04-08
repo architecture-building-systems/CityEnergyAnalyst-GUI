@@ -9,7 +9,6 @@ import MapControls from 'features/map/components/Map/MapControls';
 import MapLayerCategoriesCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 import PathwayPanel from 'features/pathway/components/PathwayPanel';
-import PathwayViewer from 'features/pathway/components/PathwayViewer';
 
 import UserInfo from 'components/UserInfo';
 import ShowHideCardsButton from 'components/ShowHideCardsButton';
@@ -615,11 +614,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               onTogglePathwayPanel={togglePathwayPanel}
               pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}
-            />
-          )}
-          {!hideAll && (
-            <PathwayViewer
-              hidden={hideAll || showPathwayPanel || !scenarioName}
             />
           )}
           <div

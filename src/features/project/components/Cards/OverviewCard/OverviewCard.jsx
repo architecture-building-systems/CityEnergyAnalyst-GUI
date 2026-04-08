@@ -1,12 +1,18 @@
-import { Divider, Modal, Select } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { Divider, Modal, Select, Spin, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { fetchPathwayOverview } from 'features/pathway/api';
+import {
+  fetchPathwayOverview,
+  switchToChildScenario,
+} from 'features/pathway/api';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
+
+const { Text } = Typography;
 
 import CeaLogoSVG from 'assets/cea-logo.svg';
 
@@ -137,17 +143,42 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
   );
 };
 
+const LANE_PADDING = 18;
+const TIMELINE_HEIGHT = 36;
+
+const getTickStep = (pxPerYear) => {
+  const steps = [5, 10, 25, 50, 100];
+  for (const step of steps) {
+    if (pxPerYear * step >= 30) {
+      return step;
+    }
+  }
+  return 100;
+};
+
+const STATUS_FILL = {
+  none: '#CBD5E1',
+  validated: '#CBD5E1',
+  baked: '#1470AF',
+  simulated: '#000000',
+};
+
 const PathwayViewerRow = ({ scenarioName, project }) => {
+  const queryClient = useQueryClient();
   const [overview, setOverview] = useState(null);
   const childScenario = useProjectStore((s) => s.childScenario);
   const setChildScenario = useProjectStore((s) => s.setChildScenario);
   const createJob = useCreateJob();
+  const [switching, setSwitching] = useState(false);
+  const [hoveredYear, setHoveredYear] = useState(null);
+  const viewportRef = useRef(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
 
-  const refreshOverview = () => {
+  const refreshOverview = useCallback(() => {
     fetchPathwayOverview()
       .then(setOverview)
       .catch(() => setOverview(null));
-  };
+  }, []);
 
   useEffect(() => {
     if (!scenarioName) return;
@@ -164,15 +195,36 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     };
   }, [scenarioName]);
 
-  // Listen for completed delete jobs to refresh
+  // Listen for completed delete/bake jobs to refresh
   const jobs = useJobsStore((s) => s.jobs);
   useEffect(() => {
     if (!jobs) return;
     const hasCompleted = Object.values(jobs).some(
-      (j) => j.state === 2 && j.script === 'pathway-delete-pathway',
+      (j) =>
+        j.state === 2 &&
+        [
+          'pathway-delete-pathway',
+          'bake-pathway-states',
+          'pathway-simulations',
+        ].includes(j.script),
     );
     if (hasCompleted) refreshOverview();
-  }, [jobs]);
+  }, [jobs, refreshOverview]);
+
+  // Measure viewport width
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return undefined;
+    const update = () => setViewportWidth(el.clientWidth);
+    update();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', update);
+      return () => window.removeEventListener('resize', update);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const bakedPathways = useMemo(() => {
     if (!overview?.pathways) return [];
@@ -180,6 +232,77 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   }, [overview]);
 
   const selectedPathway = childScenario?.pathway_name ?? null;
+
+  const currentPathway = useMemo(
+    () => bakedPathways.find((p) => p.pathway_name === selectedPathway),
+    [bakedPathways, selectedPathway],
+  );
+
+  const years = currentPathway?.years ?? [];
+  const yearPhases = currentPathway?.year_phases ?? {};
+  const span = overview?.span ?? {};
+  const startYear = span.start_year;
+  const endYear = span.end_year;
+  const yearRange = useMemo(() => {
+    if (startYear == null || endYear == null) return 1;
+    return Math.max(endYear - startYear, 1);
+  }, [startYear, endYear]);
+
+  const fitWidth = Math.max((viewportWidth || 200) - LANE_PADDING * 2, 60);
+  const pxPerYear = fitWidth / yearRange;
+  const contentWidth = LANE_PADDING * 2 + yearRange * pxPerYear;
+
+  // Ticks use full width (no padding); compute step from full-width pxPerYear
+  const tickPxPerYear = viewportWidth ? viewportWidth / yearRange : pxPerYear;
+  const tickYears = useMemo(() => {
+    if (startYear == null || endYear == null) return [];
+    const step = getTickStep(tickPxPerYear);
+    const ticks = [];
+    const firstTick = Math.ceil(startYear / step) * step;
+    for (let y = firstTick; y <= endYear; y += step) {
+      ticks.push(y);
+    }
+    return ticks;
+  }, [startYear, endYear, tickPxPerYear]);
+
+  const getTickOffset = useCallback(
+    (year) => {
+      if (startYear == null || endYear == null || startYear === endYear)
+        return '50%';
+      const ratio = (year - startYear) / (endYear - startYear);
+      return `${ratio * 100}%`;
+    },
+    [startYear, endYear],
+  );
+
+  // Nodes use LANE_PADDING so first/last nodes inset by the dropdown fillet
+  const getYearOffset = useCallback(
+    (year) => {
+      if (startYear == null) return LANE_PADDING;
+      return LANE_PADDING + (year - startYear) * pxPerYear;
+    },
+    [pxPerYear, startYear],
+  );
+
+  const handleNodeClick = async (pathwayName, year) => {
+    const phase = yearPhases[String(year)] ?? 'none';
+    if (phase !== 'baked' && phase !== 'simulated') return;
+
+    setSwitching(true);
+    try {
+      const result = await switchToChildScenario(pathwayName, year);
+      setChildScenario({
+        pathway_name: pathwayName,
+        year,
+        parent_scenario: result.parent_scenario,
+      });
+      queryClient.invalidateQueries();
+    } catch {
+      // silently fail
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   const handleDelete = (pathwayName) => {
     const scenarioPath = `${String(project).replace(/[\\/]+$/, '')}/${scenarioName}`;
@@ -244,6 +367,110 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         allowClear
         notFoundContent={<small>No baked pathways</small>}
       />
+      {selectedPathway && currentPathway && (
+        <div
+          ref={viewportRef}
+          style={{
+            width: '100%',
+            height: TIMELINE_HEIGHT,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {switching ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}
+            >
+              <Spin size="small" />
+            </div>
+          ) : (
+            <div
+              style={{
+                width: contentWidth,
+                minWidth: '100%',
+                height: '100%',
+                position: 'relative',
+              }}
+            >
+              {/* Lane line — inset by fillet on both ends */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: LANE_PADDING,
+                  right: LANE_PADDING,
+                  top: '55%',
+                  height: 1.5,
+                  background: '#8eb6dc',
+                  borderRadius: 999,
+                }}
+              />
+
+              {/* Nodes */}
+              {years.map((year) => {
+                const phase = yearPhases[String(year)] ?? 'none';
+                const nodeFill = STATUS_FILL[phase] ?? STATUS_FILL.none;
+                const isActive =
+                  childScenario?.year === year &&
+                  childScenario?.pathway_name === selectedPathway;
+                const showLabel = isActive || hoveredYear === year;
+
+                return (
+                  <div key={`${selectedPathway}-${year}`}>
+                    {showLabel && (
+                      <Text
+                        style={{
+                          position: 'absolute',
+                          left: getYearOffset(year),
+                          top: -4,
+                          transform: 'translateX(-50%)',
+                          fontSize: 11,
+                          color: '#94A3B8',
+                          whiteSpace: 'nowrap',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        {year}
+                      </Text>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleNodeClick(selectedPathway, year)}
+                      onMouseEnter={() => setHoveredYear(year)}
+                      onMouseLeave={() => setHoveredYear(null)}
+                      disabled={switching}
+                      style={{
+                        position: 'absolute',
+                        left: getYearOffset(year),
+                        top: '55%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 10,
+                        height: 10,
+                        borderRadius: 999,
+                        border: '2px solid #FFFFFF',
+                        background: nodeFill,
+                        cursor:
+                          phase === 'baked' || phase === 'simulated'
+                            ? 'pointer'
+                            : 'default',
+                        padding: 0,
+                        boxShadow: isActive
+                          ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
+                          : '0 2px 4px rgba(15, 23, 42, 0.12)',
+                      }}
+                      aria-label={`${selectedPathway} ${year}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 };
