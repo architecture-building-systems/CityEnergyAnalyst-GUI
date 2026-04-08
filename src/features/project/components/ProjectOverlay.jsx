@@ -303,6 +303,14 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     clearChildScenario();
   }, [scenarioName, clearChildScenario]);
 
+  // When a pathway is selected in the viewer, collapse the builder panel
+  useEffect(() => {
+    if (childScenario?.pathway_name) {
+      setShowPathwayPanel(false);
+      setPathwayPanelExpanded(false);
+    }
+  }, [childScenario?.pathway_name]);
+
   // Reset state when project or scenario name changes
   useEffect(() => {
     const resetState = () => {
@@ -614,6 +622,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               onTogglePathwayPanel={togglePathwayPanel}
               pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}
+              hidePathwayBuilder={!!childScenario?.pathway_name}
             />
           )}
           <div

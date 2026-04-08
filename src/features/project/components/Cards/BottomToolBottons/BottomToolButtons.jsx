@@ -20,6 +20,7 @@ const BottomToolButtons = ({
   onOpenInputEditor,
   onTogglePathwayPanel,
   pathwayPanelOpen,
+  hidePathwayBuilder,
 }) => {
   const { push } = useNavigationStore();
 
@@ -43,7 +44,7 @@ const BottomToolButtons = ({
       icon: TimelineIcon,
       title: 'Pathway Builder',
       onClick: () => onTogglePathwayPanel?.(),
-      hidden: !showTools,
+      hidden: !showTools || hidePathwayBuilder,
       active: pathwayPanelOpen,
     },
     {
