@@ -106,6 +106,15 @@ export const deleteInterventionTemplate = async (templateName) => {
   return data;
 };
 
+export const preSaveSimulatePathwayConfig = async (pathwayName) => {
+  await apiClient.post(
+    '/api/tools/pathway-simulations/save-config',
+    {
+      'existing-pathway-name': pathwayName,
+    },
+  );
+};
+
 export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
   await apiClient.post(
     '/api/tools/pathway-update-building-events/save-config',

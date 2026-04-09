@@ -38,6 +38,7 @@ import {
   fetchPathwayTimeline,
   fetchStateGeojson,
   preSaveBuildingEventsConfig,
+  preSaveSimulatePathwayConfig,
 } from '../api';
 
 const { Text, Title } = Typography;
@@ -1009,16 +1010,24 @@ const PathwayPanel = ({
   const activeValidationIssues = selectedRow?.validation?.issues ?? [];
   const globalValidationIssues = timeline?.validation?.issues ?? [];
 
-  const handleRunPathwayJob = (scriptName) => {
+  const handleRunPathwayJob = async (scriptName) => {
     if (!selectedPathway || !scenarioPath) {
       setPanelError('Select a scenario and pathway first.');
       return;
     }
 
-    onHidePanel?.();
-    setSelectedTool(scriptName);
-    setToolType(toolTypes.TOOLS);
-    setPanelError(null);
+    try {
+      await preSaveSimulatePathwayConfig(selectedPathway);
+      await queryClient.invalidateQueries({
+        queryKey: ['toolParams', scriptName],
+      });
+      onHidePanel?.();
+      setSelectedTool(scriptName);
+      setToolType(toolTypes.TOOLS);
+      setPanelError(null);
+    } catch (error) {
+      setPanelError(getErrorMessage(error, 'Failed to open simulation tool.'));
+    }
   };
 
   const handleAddYear = async () => {
