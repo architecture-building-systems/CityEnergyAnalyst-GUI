@@ -132,6 +132,27 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     }
   }, [jobs, setToolType]);
 
+  // Watch for pathway-simulations job start to close tool card and restore panel
+  const pathwaySimHandledRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!jobs || !pathwayPanelHiddenForToolRef.current) {
+      return;
+    }
+
+    const startedJobs = Object.entries(jobs).filter(
+      ([id, job]) =>
+        job.state >= 1 &&
+        job.script === 'pathway-simulations' &&
+        !pathwaySimHandledRef.current.has(id),
+    );
+
+    if (startedJobs.length > 0) {
+      startedJobs.forEach(([id]) => pathwaySimHandledRef.current.add(id));
+      setToolType(null);
+    }
+  }, [jobs, setToolType]);
+
   const fullscreenPathwayPanelRightInset = showToolCard
     ? 'calc(var(--right-sidebar-width) + 56px)'
     : 12;

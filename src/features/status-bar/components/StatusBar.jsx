@@ -12,7 +12,8 @@ import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
-import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
+import { PLOT_SCRIPTS, VIEW_MAP_RESULTS, VIEW_TOOL_RESULTS } from 'features/plots/constants';
+import { useToolCardStore } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
 import { isElectron } from 'utils/electron';
@@ -84,6 +85,7 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
+  const selectPlotTool = useToolCardStore((state) => state.selectPlotTool);
 
   // Local state for modal triggered from notifications
   const [modalVisible, setModalVisible] = useState(false);
@@ -100,6 +102,7 @@ const JobStatusBar = () => {
     setModalVisible,
     setSelectedJob,
     setMessage,
+    selectPlotTool,
   };
 
   useEffect(() => {
@@ -143,9 +146,10 @@ const JobStatusBar = () => {
           depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
 
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
+          const hasToolResult = !!VIEW_TOOL_RESULTS[job.script];
 
           const key = job.id;
-          const duration = isPlotJob ? 0 : 5;
+          const duration = isPlotJob || hasToolResult ? 0 : 5;
 
           notification.success({
             key,
@@ -166,6 +170,21 @@ const JobStatusBar = () => {
                 >
                   View Logs
                 </Button>
+
+                {VIEW_TOOL_RESULTS[job.script] && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => {
+                      notification.destroy(key);
+                      depsRef.current.selectPlotTool(
+                        VIEW_TOOL_RESULTS[job.script],
+                      );
+                    }}
+                  >
+                    View Results
+                  </Button>
+                )}
 
                 {job.script in VIEW_MAP_RESULTS && (
                   <Button

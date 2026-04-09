@@ -14,6 +14,7 @@ const ELECTRON_ONLY = [
 
 const READONLY_PARAMS = {
   'pathway-update-building-events': ['existing-pathway-names', 'year-of-state'],
+  'pathway-simulations': ['existing-pathway-name'],
 };
 
 const ToolForm = ({ form, parameters, categoricalParameters, script }) => {

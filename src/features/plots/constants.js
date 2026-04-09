@@ -88,6 +88,11 @@ export const VIEW_PLOT_RESULTS = {
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
 
+// Maps script name to a plot tool script to open on completion
+export const VIEW_TOOL_RESULTS = {
+  'pathway-simulations': 'plot-pathway-emission-timeline',
+};
+
 // Labels matching scripts.yml (without the "Plot - " prefix)
 export const PLOT_LABELS = {
   [DEMAND]: 'Building Energy Demand',

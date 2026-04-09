@@ -1009,24 +1009,16 @@ const PathwayPanel = ({
   const activeValidationIssues = selectedRow?.validation?.issues ?? [];
   const globalValidationIssues = timeline?.validation?.issues ?? [];
 
-  const handleRunPathwayJob = async (scriptName) => {
+  const handleRunPathwayJob = (scriptName) => {
     if (!selectedPathway || !scenarioPath) {
       setPanelError('Select a scenario and pathway first.');
       return;
     }
 
-    setBusyAction(scriptName);
-    try {
-      await createJob(scriptName, {
-        scenario: scenarioPath,
-        existing_pathway_name: selectedPathway,
-      });
-      setPanelError(null);
-    } catch (error) {
-      setPanelError(getErrorMessage(error, 'Failed to start pathway job.'));
-    } finally {
-      setBusyAction(null);
-    }
+    onHidePanel?.();
+    setSelectedTool(scriptName);
+    setToolType(toolTypes.TOOLS);
+    setPanelError(null);
   };
 
   const handleAddYear = async () => {
@@ -1464,6 +1456,7 @@ const PathwayPanel = ({
                 visiblePathways.length > 1 ||
                 !activeRows.length ||
                 activeRows.some((row) => {
+                  if (row?.status?.has_stale_phase) return true;
                   const phase = row?.status?.primary_phase ?? 'none';
                   return phase !== 'baked' && phase !== 'simulated';
                 })
