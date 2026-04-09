@@ -462,9 +462,13 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                             ? 'pointer'
                             : 'default',
                         padding: 0,
-                        boxShadow: isActive
-                          ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
-                          : '0 2px 4px rgba(15, 23, 42, 0.12)',
+                        ...(isSimActive
+                          ? {}
+                          : {
+                              boxShadow: isActive
+                                ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
+                                : '0 2px 4px rgba(15, 23, 42, 0.12)',
+                            }),
                       }}
                       className={isSimActive ? 'cea-node-breathing' : ''}
                       aria-label={`${selectedPathway} ${year}`}

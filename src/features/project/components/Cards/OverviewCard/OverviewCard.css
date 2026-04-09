@@ -68,16 +68,17 @@
 @keyframes cea-node-breathe {
   0%,
   100% {
-    outline: 4px solid rgba(20, 112, 175, 0.12);
-    outline-offset: 0px;
+    box-shadow:
+      0 0 0 4px rgba(20, 112, 175, 0.12),
+      0 4px 10px rgba(15, 23, 42, 0.12);
   }
   50% {
-    outline: 4px solid rgba(20, 112, 175, 0.3);
-    outline-offset: 6px;
+    box-shadow:
+      0 0 0 12px rgba(20, 112, 175, 0.3),
+      0 4px 10px rgba(15, 23, 42, 0.12);
   }
 }
 
 .cea-node-breathing {
   animation: cea-node-breathe 1.5s ease-in-out infinite;
-  border-radius: 999px;
 }

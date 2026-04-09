@@ -1891,9 +1891,13 @@ const PathwayPanel = ({
                                       border: '2px solid #FFFFFF',
                                       background: nodeFill,
                                       cursor: 'pointer',
-                                      boxShadow: selected
-                                        ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
-                                        : '0 4px 10px rgba(15, 23, 42, 0.12)',
+                                      ...(isSimActive
+                                        ? {}
+                                        : {
+                                            boxShadow: selected
+                                              ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
+                                              : '0 4px 10px rgba(15, 23, 42, 0.12)',
+                                          }),
                                       padding: 0,
                                     }}
                                     aria-label={`${pathway.pathway_name} ${year}`}
