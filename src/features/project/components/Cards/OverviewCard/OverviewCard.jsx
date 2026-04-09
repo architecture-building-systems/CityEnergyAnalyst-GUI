@@ -465,10 +465,8 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                         boxShadow: isActive
                           ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
                           : '0 2px 4px rgba(15, 23, 42, 0.12)',
-                        animation: isSimActive
-                          ? 'cea-node-breathe 1.5s ease-in-out infinite'
-                          : 'none',
                       }}
+                      className={isSimActive ? 'cea-node-breathing' : ''}
                       aria-label={`${selectedPathway} ${year}`}
                     />
                   </div>

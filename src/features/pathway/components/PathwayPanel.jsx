@@ -1006,6 +1006,15 @@ const PathwayPanel = ({
     }
   }, [jobs, open, refreshPathwayData, scenarioName, selectedPathway]);
 
+  // Auto-select the year currently being simulated so the user can view it
+  useEffect(() => {
+    if (!selectedPathway) return;
+    const progress = simulationProgress[selectedPathway];
+    if (progress?.active != null) {
+      setSelectedYear(progress.active);
+    }
+  }, [simulationProgress, selectedPathway]);
+
   useEffect(() => {
     if (!pendingPanelJob || !jobs) {
       return;
@@ -1862,6 +1871,9 @@ const PathwayPanel = ({
                                   <button
                                     key={`${pathway.pathway_name}-${year}`}
                                     type="button"
+                                    className={
+                                      isSimActive ? 'cea-node-breathing' : ''
+                                    }
                                     onClick={() => {
                                       void handleSelectPathway(
                                         pathway.pathway_name,
@@ -1883,9 +1895,6 @@ const PathwayPanel = ({
                                         ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
                                         : '0 4px 10px rgba(15, 23, 42, 0.12)',
                                       padding: 0,
-                                      animation: isSimActive
-                                        ? 'cea-node-breathe 1.5s ease-in-out infinite'
-                                        : 'none',
                                     }}
                                     aria-label={`${pathway.pathway_name} ${year}`}
                                   />
