@@ -7,7 +7,12 @@ import './StatusBarNotification.css';
 
 import socket, { waitForConnection } from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
-import { useSetActiveMapCategory } from 'features/project/components/Cards/MapLayersCard/store';
+import {
+  useSetActiveMapCategory,
+  MAP_LAYER_CATEGORIES_QUERY_KEY,
+} from 'features/project/components/Cards/MapLayersCard/store';
+import { useMapStore } from 'features/map/stores/mapStore';
+import { useQueryClient } from '@tanstack/react-query';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -91,6 +96,8 @@ const JobStatusBar = () => {
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
   const selectPlotTool = useToolCardStore((state) => state.selectPlotTool);
+  const setMapLayerParameters = useMapStore((state) => state.setMapLayerParameters);
+  const queryClient = useQueryClient();
 
   // Local state for modal triggered from notifications
   const [modalVisible, setModalVisible] = useState(false);
@@ -104,10 +111,12 @@ const JobStatusBar = () => {
     updateJob,
     dismissJob,
     setActiveMapCategory,
+    setMapLayerParameters,
     setModalVisible,
     setSelectedJob,
     setMessage,
     selectPlotTool,
+    queryClient,
   };
 
   useEffect(() => {
@@ -197,6 +206,14 @@ const JobStatusBar = () => {
                     size="small"
                     onClick={() => {
                       notification.destroy(key);
+                      // Invalidate the categories query so the layer fetches
+                      // fresh parameter defaults (e.g. the just-created network
+                      // becomes the most-recent default), then clear cached
+                      // params so the layer reinitialises with those defaults.
+                      depsRef.current.queryClient.invalidateQueries({
+                        queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+                      });
+                      depsRef.current.setMapLayerParameters(null);
                       depsRef.current.setActiveMapCategory(
                         VIEW_MAP_RESULTS[job.script],
                       );

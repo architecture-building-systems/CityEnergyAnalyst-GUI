@@ -190,12 +190,17 @@ const useMapLayers = (onHover = () => {}) => {
 
         const edgeColour = hexToRgb(colours?.edges) ?? [255, 255, 255];
 
-        // Get min/max range for peak_mass_flow property
+        // Get min/max range for peak_mass_flow property.
+        // For multi-phase plans, the backend pre-computes a global range across
+        // all phases so all phase views share the same scaling factor.
         const edgesData = mapLayers[name]?.edges;
-        const { min, max } = getPropertyRange(
-          edgesData?.features || edgesData,
-          'peak_mass_flow',
-        );
+        const globalRange = mapLayers[name]?.properties?.peak_mass_flow_range;
+        const { min, max } = globalRange
+          ? { min: globalRange.min, max: globalRange.max }
+          : getPropertyRange(
+              edgesData?.features || edgesData,
+              'peak_mass_flow',
+            );
 
         const nodeFillColor = (type) => {
           if (type === 'NONE') {

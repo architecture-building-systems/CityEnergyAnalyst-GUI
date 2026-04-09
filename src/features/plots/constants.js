@@ -62,6 +62,7 @@ export const VIEW_MAP_RESULTS = {
   'photovoltaic-thermal': RENEWABLE_ENERGY_POTENTIALS,
   'solar-collector': RENEWABLE_ENERGY_POTENTIALS,
   'thermal-network': THERMAL_NETWORK,
+  'thermal-network-multiple-phase': THERMAL_NETWORK,
   emissions: LIFE_CYCLE_ANALYSIS,
 };
 
