@@ -149,16 +149,6 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
 const LANE_PADDING = 18;
 const TIMELINE_HEIGHT = 36;
 
-const getTickStep = (pxPerYear) => {
-  const steps = [5, 10, 25, 50, 100];
-  for (const step of steps) {
-    if (pxPerYear * step >= 30) {
-      return step;
-    }
-  }
-  return 100;
-};
-
 const STATUS_FILL = {
   none: '#CBD5E1',
   validated: '#CBD5E1',
@@ -171,6 +161,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   const [overview, setOverview] = useState(null);
   const childScenario = useProjectStore((s) => s.childScenario);
   const setChildScenario = useProjectStore((s) => s.setChildScenario);
+  const simulationProgress = useProjectStore((s) => s.simulationProgress);
   const createJob = useCreateJob();
   const [switching, setSwitching] = useState(false);
   const [hoveredYear, setHoveredYear] = useState(null);
@@ -254,29 +245,6 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   const fitWidth = Math.max((viewportWidth || 200) - LANE_PADDING * 2, 60);
   const pxPerYear = fitWidth / yearRange;
   const contentWidth = LANE_PADDING * 2 + yearRange * pxPerYear;
-
-  // Ticks use full width (no padding); compute step from full-width pxPerYear
-  const tickPxPerYear = viewportWidth ? viewportWidth / yearRange : pxPerYear;
-  const tickYears = useMemo(() => {
-    if (startYear == null || endYear == null) return [];
-    const step = getTickStep(tickPxPerYear);
-    const ticks = [];
-    const firstTick = Math.ceil(startYear / step) * step;
-    for (let y = firstTick; y <= endYear; y += step) {
-      ticks.push(y);
-    }
-    return ticks;
-  }, [startYear, endYear, tickPxPerYear]);
-
-  const getTickOffset = useCallback(
-    (year) => {
-      if (startYear == null || endYear == null || startYear === endYear)
-        return '50%';
-      const ratio = (year - startYear) / (endYear - startYear);
-      return `${ratio * 100}%`;
-    },
-    [startYear, endYear],
-  );
 
   // Nodes use LANE_PADDING so first/last nodes inset by the dropdown fillet
   const getYearOffset = useCallback(
@@ -444,7 +412,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
               {/* Nodes */}
               {years.map((year) => {
                 const phase = yearPhases[String(year)] ?? 'none';
-                const nodeFill = STATUS_FILL[phase] ?? STATUS_FILL.none;
+                const progress = simulationProgress[selectedPathway];
+                const isSimCompleted = progress?.completed?.includes(year);
+                const isSimActive = progress?.active === year;
+                const nodeFill = isSimCompleted
+                  ? STATUS_FILL.simulated
+                  : (STATUS_FILL[phase] ?? STATUS_FILL.none);
                 const isActive =
                   childScenario?.year === year &&
                   childScenario?.pathway_name === selectedPathway;
@@ -492,6 +465,9 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                         boxShadow: isActive
                           ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
                           : '0 2px 4px rgba(15, 23, 42, 0.12)',
+                        animation: isSimActive
+                          ? 'cea-node-breathe 1.5s ease-in-out infinite'
+                          : 'none',
                       }}
                       aria-label={`${selectedPathway} ${year}`}
                     />

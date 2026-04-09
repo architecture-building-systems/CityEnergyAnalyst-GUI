@@ -64,3 +64,13 @@
 .cea-template-select-empty.ant-select .ant-select-suffix {
   display: none;
 }
+
+@keyframes cea-node-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(20, 112, 175, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(20, 112, 175, 0.3);
+  }
+}

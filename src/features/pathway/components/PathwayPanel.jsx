@@ -22,6 +22,7 @@ import {
 } from 'assets/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
+import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   toolTypes,
   useSetToolType,
@@ -60,7 +61,6 @@ const STATUS_ACCENT = {
   error: '#f04d5b',
   changed: '#D97706',
 };
-
 
 const getErrorMessage = (error, fallbackMessage) => {
   const detail = error?.response?.data?.detail;
@@ -128,12 +128,7 @@ const resolveSelectedYear = ({
   currentYear,
   rememberedYear,
 }) => {
-  const candidates = [
-    preferredYear,
-    pendingYear,
-    currentYear,
-    rememberedYear,
-  ];
+  const candidates = [preferredYear, pendingYear, currentYear, rememberedYear];
 
   for (const candidate of candidates) {
     if (candidate != null && years.includes(candidate)) {
@@ -168,7 +163,9 @@ const LegendChip = ({ colour, label, outline, halo }) => (
         borderRadius: 999,
         display: 'inline-block',
         background: colour,
-        border: outline ? `2px solid ${outline}` : '1px solid rgba(15, 23, 42, 0.08)',
+        border: outline
+          ? `2px solid ${outline}`
+          : '1px solid rgba(15, 23, 42, 0.08)',
         boxShadow: halo ? `0 0 0 4px ${halo}` : 'none',
       }}
     />
@@ -186,7 +183,16 @@ const SectionCard = ({ title, content, tooltipKey }) => (
       minHeight: 60,
     }}
   >
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid #e0e0e0' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        paddingBottom: 8,
+        marginBottom: 8,
+        borderBottom: '1px solid #e0e0e0',
+      }}
+    >
       <Text strong>{title}</Text>
       {tooltipKey ? <InfoTooltip tooltipKey={tooltipKey} /> : null}
     </div>
@@ -194,13 +200,18 @@ const SectionCard = ({ title, content, tooltipKey }) => (
   </div>
 );
 
-
 const BuildingPill = ({ name, color, onClick }) => (
   <span
     role={onClick ? 'button' : undefined}
     tabIndex={onClick ? 0 : undefined}
     onClick={onClick}
-    onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
+    onKeyDown={
+      onClick
+        ? (e) => {
+            if (e.key === 'Enter') onClick();
+          }
+        : undefined
+    }
     style={{
       display: 'inline-block',
       padding: '2px 8px',
@@ -216,7 +227,12 @@ const BuildingPill = ({ name, color, onClick }) => (
   </span>
 );
 
-const BuildingList = ({ buildings, buildingColorMap, rebuildCounts, onBuildingClick }) => {
+const BuildingList = ({
+  buildings,
+  buildingColorMap,
+  rebuildCounts,
+  onBuildingClick,
+}) => {
   if (!buildings?.length) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -257,7 +273,10 @@ const ModificationSummary = ({ row, constructionColorMap: colorMap }) => {
           <div key={archetype} style={{ fontSize: 12 }}>
             <BuildingPill name={archetype} color={color} />
             {changes.map((c) => (
-              <div key={`${c.component}-${c.field}`} style={{ color: '#475569', paddingLeft: 8 }}>
+              <div
+                key={`${c.component}-${c.field}`}
+                style={{ color: '#475569', paddingLeft: 8 }}
+              >
                 {c.field}: {String(c.value)}
               </div>
             ))}
@@ -286,7 +305,15 @@ const PathwayOptionWithCheckbox = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          minWidth: 0,
+          flex: 1,
+        }}
+      >
         <input
           type="checkbox"
           checked={checked}
@@ -359,9 +386,10 @@ const PathwaySelect = ({
 
   const hasPathways = overviewPathways.length > 0;
 
-  const displayLabel = visiblePathways.length > 0
-    ? visiblePathways.join('; ')
-    : selectedPathway ?? '';
+  const displayLabel =
+    visiblePathways.length > 0
+      ? visiblePathways.join('; ')
+      : (selectedPathway ?? '');
 
   return (
     <Select
@@ -457,12 +485,7 @@ const TemplateSelect = ({
 
   const options = useMemo(() => {
     return sortedTemplates.map((name) => ({
-      label: (
-        <TemplateOption
-          templateName={name}
-          onDelete={onDeleteTemplate}
-        />
-      ),
+      label: <TemplateOption templateName={name} onDelete={onDeleteTemplate} />,
       value: name,
     }));
   }, [sortedTemplates, onDeleteTemplate]);
@@ -507,12 +530,20 @@ const PathwayPanel = ({
   const jobs = useJobsStore((state) => state.jobs);
   const setToolType = useSetToolType();
   const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
+  const simulationProgress = useProjectStore((s) => s.simulationProgress);
+  const clearSimulationProgress = useProjectStore(
+    (s) => s.clearSimulationProgress,
+  );
 
   const { data: inputData } = useInputs();
   const colorMode = useMapStore((state) => state.colorMode);
-  const constructionColorMap = useMapStore((state) => state.constructionColorMap);
+  const constructionColorMap = useMapStore(
+    (state) => state.constructionColorMap,
+  );
   const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
-  const setStateZoneOverride = useMapStore((state) => state.setStateZoneOverride);
+  const setStateZoneOverride = useMapStore(
+    (state) => state.setStateZoneOverride,
+  );
 
   const buildingColorMap = useMemo(() => {
     const features = inputData?.geojsons?.zone?.features ?? [];
@@ -604,7 +635,9 @@ const PathwayPanel = ({
     }
     // Only keep counts where the building is also in new_buildings at the selected year
     // (meaning it was rebuilt after demolition)
-    const newAtYear = new Set(selectedRow?.building_events?.new_buildings ?? []);
+    const newAtYear = new Set(
+      selectedRow?.building_events?.new_buildings ?? [],
+    );
     const filtered = {};
     for (const [b, count] of Object.entries(result)) {
       if (newAtYear.has(b) && count > 0) {
@@ -689,8 +722,7 @@ const PathwayPanel = ({
           preferredYear,
           pendingYear: pendingPreferredYearRef.current,
           currentYear,
-          rememberedYear:
-            selectedYearByPathwayRef.current[pathwayName] ?? null,
+          rememberedYear: selectedYearByPathwayRef.current[pathwayName] ?? null,
         });
 
         pendingPreferredYearRef.current = null;
@@ -702,7 +734,9 @@ const PathwayPanel = ({
         }
         return data;
       } catch (error) {
-        setPanelError(getErrorMessage(error, 'Failed to load pathway timeline.'));
+        setPanelError(
+          getErrorMessage(error, 'Failed to load pathway timeline.'),
+        );
         setTimeline(null);
         return null;
       } finally {
@@ -712,50 +746,47 @@ const PathwayPanel = ({
     [],
   );
 
-  const loadOverview = useCallback(
-    async (preferredPathway = null) => {
-      setLoadingOverview(true);
-      setPanelError(null);
-      try {
-        const data = await fetchPathwayOverview();
-        setOverview(data);
-        const pathwayNames = (data?.pathways ?? []).map(
-          (item) => item.pathway_name,
-        );
-        const activePathway =
-          (preferredPathway && pathwayNames.includes(preferredPathway)
-            ? preferredPathway
-            : null) ??
-          (selectedPathwayRef.current &&
-          pathwayNames.includes(selectedPathwayRef.current)
-            ? selectedPathwayRef.current
-            : null) ??
-          pathwayNames[0] ??
-          null;
-        setSelectedPathway(activePathway);
-        setVisiblePathways((prev) => {
-          if (prev.length > 0) {
-            const kept = prev.filter((p) => pathwayNames.includes(p));
-            if (activePathway && !kept.includes(activePathway)) {
-              kept.push(activePathway);
-            }
-            return kept;
+  const loadOverview = useCallback(async (preferredPathway = null) => {
+    setLoadingOverview(true);
+    setPanelError(null);
+    try {
+      const data = await fetchPathwayOverview();
+      setOverview(data);
+      const pathwayNames = (data?.pathways ?? []).map(
+        (item) => item.pathway_name,
+      );
+      const activePathway =
+        (preferredPathway && pathwayNames.includes(preferredPathway)
+          ? preferredPathway
+          : null) ??
+        (selectedPathwayRef.current &&
+        pathwayNames.includes(selectedPathwayRef.current)
+          ? selectedPathwayRef.current
+          : null) ??
+        pathwayNames[0] ??
+        null;
+      setSelectedPathway(activePathway);
+      setVisiblePathways((prev) => {
+        if (prev.length > 0) {
+          const kept = prev.filter((p) => pathwayNames.includes(p));
+          if (activePathway && !kept.includes(activePathway)) {
+            kept.push(activePathway);
           }
-          return activePathway ? [activePathway] : [];
-        });
-        return activePathway;
-      } catch (error) {
-        setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
-        setOverview(null);
-        setSelectedPathway(null);
-        setVisiblePathways([]);
-        return null;
-      } finally {
-        setLoadingOverview(false);
-      }
-    },
-    [],
-  );
+          return kept;
+        }
+        return activePathway ? [activePathway] : [];
+      });
+      return activePathway;
+    } catch (error) {
+      setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
+      setOverview(null);
+      setSelectedPathway(null);
+      setVisiblePathways([]);
+      return null;
+    } finally {
+      setLoadingOverview(false);
+    }
+  }, []);
 
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -790,7 +821,6 @@ const PathwayPanel = ({
     [loadOverview, loadTimeline, loadTemplates],
   );
 
-
   const startPanelJob = useCallback(
     async ({
       script,
@@ -818,7 +848,10 @@ const PathwayPanel = ({
       } catch (error) {
         setBusyAction(null);
         setPanelError(
-          getErrorMessage(error, failedToStartMessage ?? 'Failed to start job.'),
+          getErrorMessage(
+            error,
+            failedToStartMessage ?? 'Failed to start job.',
+          ),
         );
         return null;
       }
@@ -857,7 +890,6 @@ const PathwayPanel = ({
     },
     [handleSelectPathway],
   );
-
 
   useEffect(() => {
     selectedPathwayRef.current = selectedPathway;
@@ -914,7 +946,11 @@ const PathwayPanel = ({
   }, [open]);
 
   useEffect(() => {
-    if (selectedYear == null || !scrollViewportRef.current || startYear == null) {
+    if (
+      selectedYear == null ||
+      !scrollViewportRef.current ||
+      startYear == null
+    ) {
       return;
     }
 
@@ -962,11 +998,10 @@ const PathwayPanel = ({
     });
 
     if (needsRefresh) {
+      clearSimulationProgress();
       const pendingYear = pendingPreferredYearRef.current;
       void refreshPathwayData(
-        pendingYear != null
-          ? { preferredYear: pendingYear }
-          : undefined,
+        pendingYear != null ? { preferredYear: pendingYear } : undefined,
       );
     }
   }, [jobs, open, refreshPathwayData, scenarioName, selectedPathway]);
@@ -1058,7 +1093,11 @@ const PathwayPanel = ({
   };
 
   const handleApplyIntervention = async () => {
-    if (!selectedHeaderTemplate || newYearValue == null || !visiblePathways.length) {
+    if (
+      !selectedHeaderTemplate ||
+      newYearValue == null ||
+      !visiblePathways.length
+    ) {
       return;
     }
 
@@ -1187,21 +1226,18 @@ const PathwayPanel = ({
             year_of_state: selectedRow.year,
           },
           busyKey: 'delete-year',
-          startedMessage:
-            `${destructiveLabel} job started. Open Job Info in the status bar for details.`,
+          startedMessage: `${destructiveLabel} job started. Open Job Info in the status bar for details.`,
           failedToStartMessage: `Failed to start the ${destructiveLabel.toLowerCase()} job.`,
           completionMessage: selectedRow.can_clear_manual_changes
             ? `Cleared manual changes for ${selectedRow.year}.`
             : `Deleted state ${selectedRow.year}.`,
-          failureMessage:
-            `${destructiveLabel} failed. Open Job Info in the status bar for details.`,
+          failureMessage: `${destructiveLabel} failed. Open Job Info in the status bar for details.`,
           preferredPathway: selectedPathway,
           preferredYear: selectedRow.year,
         });
       },
     });
   };
-
 
   const handleOpenTemplateTool = () => {
     setSelectedTool('pathway-intervention-templates-define');
@@ -1286,8 +1322,7 @@ const PathwayPanel = ({
   };
 
   const totalTimelineHeight =
-    RULER_HEIGHT +
-    visibleOverviewPathways.length * ACTIVE_LANE_HEIGHT;
+    RULER_HEIGHT + visibleOverviewPathways.length * ACTIVE_LANE_HEIGHT;
   const timelineViewportHeight = Math.min(
     totalTimelineHeight,
     RULER_HEIGHT +
@@ -1385,7 +1420,10 @@ const PathwayPanel = ({
             }
           />
           <div className="cea-card-icon-button-container">
-            <TooltipFromBackend tooltipKey="create-new-pathway" placement="bottom">
+            <TooltipFromBackend
+              tooltipKey="create-new-pathway"
+              placement="bottom"
+            >
               <Button
                 icon={<CreateNewIcon />}
                 type="text"
@@ -1404,7 +1442,10 @@ const PathwayPanel = ({
             loading={loadingTemplates}
           />
           <div className="cea-card-icon-button-container">
-            <TooltipFromBackend tooltipKey="define-intervention-template" placement="bottom">
+            <TooltipFromBackend
+              tooltipKey="define-intervention-template"
+              placement="bottom"
+            >
               <Button
                 icon={<CreateNewIcon />}
                 type="text"
@@ -1449,7 +1490,10 @@ const PathwayPanel = ({
               </span>
             ) : null}
             <div className="cea-card-icon-button-container">
-              <TooltipFromBackend tooltipKey="refresh-pathway" placement="bottom">
+              <TooltipFromBackend
+                tooltipKey="refresh-pathway"
+                placement="bottom"
+              >
                 <Button
                   icon={<RefreshIcon />}
                   type="text"
@@ -1498,509 +1542,632 @@ const PathwayPanel = ({
           paddingRight: 2,
         }}
       >
+        {panelError ? (
+          <Alert
+            type="error"
+            showIcon
+            message={panelError}
+            style={{ borderRadius: 12 }}
+          />
+        ) : null}
 
-      {panelError ? (
-        <Alert
-          type="error"
-          showIcon
-          message={panelError}
-          style={{ borderRadius: 12 }}
-        />
-      ) : null}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 14,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: 549 }}>
-            <InputNumber
-              placeholder="2050"
-              precision={0}
-              value={newYearValue}
-              onChange={setNewYearValue}
-              style={{ width: 96 }}
-              disabled={!selectedPathway}
-            />
-            {selectedHeaderTemplate ? (
-              <Button
-                type="primary"
-                icon={<CreateNewIcon />}
-                disabled={!visiblePathways.length || newYearValue == null}
-                loading={busyAction === 'apply-intervention'}
-                onClick={handleApplyIntervention}
-              >
-                Apply Selected Intervention
-              </Button>
-            ) : (
-              <Button
-                type="primary"
-                icon={<CreateNewIcon />}
-                disabled={!selectedPathway || newYearValue == null}
-                loading={busyAction === 'add-year'}
-                onClick={handleAddYear}
-              >
-                Create Building Event
-              </Button>
-            )}
-            {selectedRow && (selectedRow.can_delete || selectedRow.can_clear_manual_changes) ? (
-              <Button
-                danger
-                icon={<BinAnimationIcon />}
-                disabled={!selectedPathway}
-                loading={busyAction === 'delete-year'}
-                onClick={handleDeleteSelectedYear}
-              >
-                {selectedRow.can_clear_manual_changes
-                  ? 'Clear Manual Changes'
-                  : 'Delete State'}
-              </Button>
-            ) : null}
-            <InfoTooltip tooltipKey="add-building-event-or-intervention" />
-          </div>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LegendChip colour={STATUS_FILL.none} label="Draft" />
-            <LegendChip colour={STATUS_FILL.baked} label="Baked" />
-            <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
-            <LegendChip
-              colour={STATUS_ACCENT.error}
-              label="Stale (re-bake needed)"
-            />
-          </div>
-        </div>
-
-        <div
-          style={{
-            border: '1px solid rgba(148, 163, 184, 0.22)',
-            borderRadius: 18,
-            background: '#f7f7f7',
-            overflow: 'hidden',
-          }}
-        >
-          {loadingOverview && !overview ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 14,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: 72,
+                gap: 8,
+                width: 549,
               }}
             >
-              <Spin />
+              <InputNumber
+                placeholder="2050"
+                precision={0}
+                value={newYearValue}
+                onChange={setNewYearValue}
+                style={{ width: 96 }}
+                disabled={!selectedPathway}
+              />
+              {selectedHeaderTemplate ? (
+                <Button
+                  type="primary"
+                  icon={<CreateNewIcon />}
+                  disabled={!visiblePathways.length || newYearValue == null}
+                  loading={busyAction === 'apply-intervention'}
+                  onClick={handleApplyIntervention}
+                >
+                  Apply Selected Intervention
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  icon={<CreateNewIcon />}
+                  disabled={!selectedPathway || newYearValue == null}
+                  loading={busyAction === 'add-year'}
+                  onClick={handleAddYear}
+                >
+                  Create Building Event
+                </Button>
+              )}
+              {selectedRow &&
+              (selectedRow.can_delete ||
+                selectedRow.can_clear_manual_changes) ? (
+                <Button
+                  danger
+                  icon={<BinAnimationIcon />}
+                  disabled={!selectedPathway}
+                  loading={busyAction === 'delete-year'}
+                  onClick={handleDeleteSelectedYear}
+                >
+                  {selectedRow.can_clear_manual_changes
+                    ? 'Clear Manual Changes'
+                    : 'Delete State'}
+                </Button>
+              ) : null}
+              <InfoTooltip tooltipKey="add-building-event-or-intervention" />
             </div>
-          ) : visibleOverviewPathways.length === 0 ? (
-            <div style={{ height: RULER_HEIGHT + ACTIVE_LANE_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#94A3B8', fontSize: 12 }}>Create or select a Pathway</Text>
-            </div>
-          ) : (
             <div
-              ref={laneStackScrollRef}
               style={{
-                maxHeight: timelineViewportHeight,
-                overflowY:
-                  totalTimelineHeight > timelineViewportHeight ? 'auto' : 'hidden',
+                display: 'flex',
+                gap: 14,
+                flexWrap: 'wrap',
+                alignItems: 'center',
               }}
             >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr) auto`,
-                  minHeight: totalTimelineHeight,
-                }}
-              >
+              <LegendChip colour={STATUS_FILL.none} label="Draft" />
+              <LegendChip colour={STATUS_FILL.baked} label="Baked" />
+              <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
+              <LegendChip
+                colour={STATUS_ACCENT.error}
+                label="Stale (re-bake needed)"
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: '1px solid rgba(148, 163, 184, 0.22)',
+              borderRadius: 18,
+              background: '#f7f7f7',
+              overflow: 'hidden',
+            }}
+          >
+            {loadingOverview && !overview ? (
               <div
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  borderRight: '1px solid rgba(148, 163, 184, 0.18)',
-                  background:
-                    '#f7f7f7',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 72,
+                }}
+              >
+                <Spin />
+              </div>
+            ) : visibleOverviewPathways.length === 0 ? (
+              <div
+                style={{
+                  height: RULER_HEIGHT + ACTIVE_LANE_HEIGHT,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: '#94A3B8', fontSize: 12 }}>
+                  Create or select a Pathway
+                </Text>
+              </div>
+            ) : (
+              <div
+                ref={laneStackScrollRef}
+                style={{
+                  maxHeight: timelineViewportHeight,
+                  overflowY:
+                    totalTimelineHeight > timelineViewportHeight
+                      ? 'auto'
+                      : 'hidden',
                 }}
               >
                 <div
                   style={{
-                    height: RULER_HEIGHT,
-                    padding: '0 16px',
-                    display: 'flex',
-                    alignItems: 'flex-end',
+                    display: 'grid',
+                    gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr) auto`,
+                    minHeight: totalTimelineHeight,
                   }}
                 >
-                  <Text
+                  <div
                     style={{
-                      fontSize: 11,
-                      letterSpacing: 1,
-                      color: '#64748B',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      borderRight: '1px solid rgba(148, 163, 184, 0.18)',
+                      background: '#f7f7f7',
                     }}
                   >
-                    Pathways
-                  </Text>
-                </div>
-
-                {visibleOverviewPathways.map((pathway) => (
                     <div
-                      key={`label-${pathway.pathway_name}`}
                       style={{
-                        height: ACTIVE_LANE_HEIGHT,
+                        height: RULER_HEIGHT,
                         padding: '0 16px',
-                        background: 'transparent',
                         display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                        alignItems: 'flex-end',
                       }}
                     >
-                      <div
+                      <Text
                         style={{
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          color: '#64748B',
+                        }}
+                      >
+                        Pathways
+                      </Text>
+                    </div>
+
+                    {visibleOverviewPathways.map((pathway) => (
+                      <div
+                        key={`label-${pathway.pathway_name}`}
+                        style={{
+                          height: ACTIVE_LANE_HEIGHT,
+                          padding: '0 16px',
+                          background: 'transparent',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 8,
                           width: '100%',
-                          minWidth: 0,
+                          boxSizing: 'border-box',
+                          borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
                         }}
                       >
                         <div
                           style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            fontWeight: 600,
-                            color: '#0F172A',
-                          }}
-                        >
-                          {pathway.pathway_name}
-                        </div>
-                        <Text style={{ fontSize: 11, color: '#94A3B8' }}>
-                          {pathway.state_count}
-                        </Text>
-                      </div>
-                    </div>
-                ))}
-              </div>
-
-                <div
-                  ref={viewportMeasureRef}
-                  style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}
-                >
-                <div
-                  ref={scrollViewportRef}
-                  style={{
-                    minWidth: 0,
-                    maxWidth: '100%',
-                      overflowX: 'auto',
-                      overflowY: 'hidden',
-                      cursor: 'default',
-                    }}
-                  >
-                    <div style={{ width: contentWidth, minWidth: '100%' }}>
-                    <div
-                      style={{
-                        position: 'relative',
-                        height: RULER_HEIGHT,
-                      }}
-                    >
-                      {tickYears.map((year) => (
-                        <div
-                          key={`tick-${year}`}
-                          style={{
-                            position: 'absolute',
-                            left: getYearOffset(year),
-                            top: 0,
-                            transform: 'translateX(-50%)',
                             display: 'flex',
-                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: 0,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 1,
-                              height: 10,
-                              background: 'rgba(100, 116, 139, 0.32)',
-                            }}
-                          />
-                          <Text style={{ fontSize: 11, color: '#64748B' }}>
-                            {year}
-                          </Text>
-                        </div>
-                      ))}
-                    </div>
-
-                    {visibleOverviewPathways.map((pathway) => {
-                      const isActive = pathway.pathway_name === selectedPathway;
-                      const laneYears = isActive
-                        ? activeRows.map((row) => row.year)
-                        : pathway.years ?? [];
-
-                      return (
-                        <div
-                          key={`lane-${pathway.pathway_name}`}
-                          style={{
-                            position: 'relative',
-                            height: ACTIVE_LANE_HEIGHT,
-                            boxSizing: 'border-box',
-                            background: 'transparent',
-                            borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                            width: '100%',
+                            minWidth: 0,
                           }}
                         >
                           <div
                             style={{
-                              position: 'absolute',
-                              left: LANE_PADDING,
-                              right: LANE_PADDING,
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              height: 1,
-                              background: '#8eb6dc',
-                              borderRadius: 999,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              fontWeight: 600,
+                              color: '#0F172A',
                             }}
-                          />
-                          {laneYears.map((year) => {
-                            const row = isActive ? activeRowByYear.get(year) : null;
-                            const nodeSize = getNodeSize(row, true);
-                            const selected = isActive && selectedYear === year;
-                            const validationError =
-                              isActive && row?.validation?.status === 'error';
-                            const overviewPhase = pathway.year_phases?.[String(year)];
-                            const nodeFill = isActive
-                              ? validationError
-                                ? STATUS_ACCENT.error
-                                : getNodeFill(row)
-                              : STATUS_FILL[overviewPhase] ?? '#CBD5E1';
-
-                            return (
-                                <button
-                                  key={`${pathway.pathway_name}-${year}`}
-                                  type="button"
-                                  onClick={() => {
-                                    void handleSelectPathway(
-                                      pathway.pathway_name,
-                                      year,
-                                    );
-                                  }}
-                                  style={{
-                                    position: 'absolute',
-                                    left: getYearOffset(year),
-                                    top: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    width: nodeSize,
-                                    height: nodeSize,
-                                    borderRadius: 999,
-                                    border: '2px solid #FFFFFF',
-                                    background: nodeFill,
-                                    cursor: 'pointer',
-                                    boxShadow: selected
-                                      ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
-                                      : '0 4px 10px rgba(15, 23, 42, 0.12)',
-                                    padding: 0,
-                                  }}
-                                  aria-label={`${pathway.pathway_name} ${year}`}
-                                />
-                            );
-                          })}
+                          >
+                            {pathway.pathway_name}
+                          </div>
+                          <Text style={{ fontSize: 11, color: '#94A3B8' }}>
+                            {pathway.state_count}
+                          </Text>
                         </div>
-                      );
-                    })}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderLeft: '1px solid rgba(148, 163, 184, 0.18)',
-                  }}
-                >
-                  <div style={{ height: RULER_HEIGHT, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <InfoTooltip tooltipKey="bake-states" />
-                  </div>
-                  {visibleOverviewPathways.map((pathway) => (
+                  <div
+                    ref={viewportMeasureRef}
+                    style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}
+                  >
                     <div
-                      key={`bake-${pathway.pathway_name}`}
+                      ref={scrollViewportRef}
                       style={{
-                        height: ACTIVE_LANE_HEIGHT,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '0 8px',
-                        boxSizing: 'border-box',
-                        borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        cursor: 'default',
                       }}
                     >
-                      <Button
-                        size="small"
-                        loading={busyAction === `bake-${pathway.pathway_name}`}
-                        onClick={() => handleBakePathway(pathway.pathway_name)}
-                      >
-                        Bake
-                      </Button>
+                      <div style={{ width: contentWidth, minWidth: '100%' }}>
+                        <div
+                          style={{
+                            position: 'relative',
+                            height: RULER_HEIGHT,
+                          }}
+                        >
+                          {tickYears.map((year) => (
+                            <div
+                              key={`tick-${year}`}
+                              style={{
+                                position: 'absolute',
+                                left: getYearOffset(year),
+                                top: 0,
+                                transform: 'translateX(-50%)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: 0,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 1,
+                                  height: 10,
+                                  background: 'rgba(100, 116, 139, 0.32)',
+                                }}
+                              />
+                              <Text style={{ fontSize: 11, color: '#64748B' }}>
+                                {year}
+                              </Text>
+                            </div>
+                          ))}
+                        </div>
+
+                        {visibleOverviewPathways.map((pathway) => {
+                          const isActive =
+                            pathway.pathway_name === selectedPathway;
+                          const laneYears = isActive
+                            ? activeRows.map((row) => row.year)
+                            : (pathway.years ?? []);
+
+                          return (
+                            <div
+                              key={`lane-${pathway.pathway_name}`}
+                              style={{
+                                position: 'relative',
+                                height: ACTIVE_LANE_HEIGHT,
+                                boxSizing: 'border-box',
+                                background: 'transparent',
+                                borderBottom:
+                                  '1px solid rgba(148, 163, 184, 0.08)',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  left: LANE_PADDING,
+                                  right: LANE_PADDING,
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  height: 1,
+                                  background: '#8eb6dc',
+                                  borderRadius: 999,
+                                }}
+                              />
+                              {laneYears.map((year) => {
+                                const row = isActive
+                                  ? activeRowByYear.get(year)
+                                  : null;
+                                const nodeSize = getNodeSize(row, true);
+                                const selected =
+                                  isActive && selectedYear === year;
+                                const validationError =
+                                  isActive &&
+                                  row?.validation?.status === 'error';
+                                const overviewPhase =
+                                  pathway.year_phases?.[String(year)];
+                                const progress =
+                                  simulationProgress[pathway.pathway_name];
+                                const isSimCompleted =
+                                  progress?.completed?.includes(year);
+                                const isSimActive = progress?.active === year;
+                                const nodeFill = isSimCompleted
+                                  ? STATUS_FILL.simulated
+                                  : isActive
+                                    ? validationError
+                                      ? STATUS_ACCENT.error
+                                      : getNodeFill(row)
+                                    : (STATUS_FILL[overviewPhase] ?? '#CBD5E1');
+
+                                return (
+                                  <button
+                                    key={`${pathway.pathway_name}-${year}`}
+                                    type="button"
+                                    onClick={() => {
+                                      void handleSelectPathway(
+                                        pathway.pathway_name,
+                                        year,
+                                      );
+                                    }}
+                                    style={{
+                                      position: 'absolute',
+                                      left: getYearOffset(year),
+                                      top: '50%',
+                                      transform: 'translate(-50%, -50%)',
+                                      width: nodeSize,
+                                      height: nodeSize,
+                                      borderRadius: 999,
+                                      border: '2px solid #FFFFFF',
+                                      background: nodeFill,
+                                      cursor: 'pointer',
+                                      boxShadow: selected
+                                        ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
+                                        : '0 4px 10px rgba(15, 23, 42, 0.12)',
+                                      padding: 0,
+                                      animation: isSimActive
+                                        ? 'cea-node-breathe 1.5s ease-in-out infinite'
+                                        : 'none',
+                                    }}
+                                    aria-label={`${pathway.pathway_name} ${year}`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      borderLeft: '1px solid rgba(148, 163, 184, 0.18)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: RULER_HEIGHT,
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <InfoTooltip tooltipKey="bake-states" />
+                    </div>
+                    {visibleOverviewPathways.map((pathway) => (
+                      <div
+                        key={`bake-${pathway.pathway_name}`}
+                        style={{
+                          height: ACTIVE_LANE_HEIGHT,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 8px',
+                          boxSizing: 'border-box',
+                          borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          loading={
+                            busyAction === `bake-${pathway.pathway_name}`
+                          }
+                          onClick={() =>
+                            handleBakePathway(pathway.pathway_name)
+                          }
+                        >
+                          Bake
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-      <div
-        style={{
-          minHeight: 0,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {selectedRow && visiblePathways.length > 0 ? (
-        <div
-          style={{
-            borderRadius: 18,
-            border: '1px solid rgba(148, 163, 184, 0.22)',
-            background:
-              'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            minHeight: 0,
-            overflow: 'auto',
-          }}
-        >
+          <div
+            style={{
+              minHeight: 0,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {selectedRow && visiblePathways.length > 0 ? (
               <div
                 style={{
+                  borderRadius: 18,
+                  border: '1px solid rgba(148, 163, 184, 0.22)',
+                  background:
+                    'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
+                  padding: 16,
                   display: 'flex',
+                  flexDirection: 'column',
                   gap: 12,
-                  alignItems: 'flex-start',
+                  minHeight: 0,
+                  overflow: 'auto',
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    width: '100%',
+                    gap: 12,
+                    alignItems: 'flex-start',
                   }}
                 >
-                  <Title level={4} style={{ margin: 0, marginLeft: 12, width: 80, flexShrink: 0 }}>
-                    Y_{selectedRow.year}
-                  </Title>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                    {[
-                      { key: 'auto-stock', label: 'Auto-Stock', active: selectedRow.state_kind === 'stock' || selectedRow.state_kind === 'mixed' },
-                      { key: 'construct', label: 'Construct-Event', active: (selectedRow.summary?.new_buildings_count ?? 0) > 0 },
-                      { key: 'demolish', label: 'Demolish-Event', active: (selectedRow.summary?.demolished_buildings_count ?? 0) > 0 },
-                      { key: 'intervention', label: 'Intervention', active: (selectedRow.summary?.modification_count ?? 0) > 0 },
-                    ].map((tag) => (
-                      <span
-                        key={tag.key}
-                        style={{
-                          padding: '3px 10px',
-                          borderRadius: 999,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          background: tag.active ? '#8eb6dc' : '#e8e8e8',
-                          color: tag.active ? '#fff' : '#999',
-                        }}
-                      >
-                        {tag.label}
-                      </span>
-                    ))}
-                    <InfoTooltip tooltipKey="state-types" />
-                    <Text style={{ color: '#94A3B8', fontSize: 11, marginLeft: 'auto' }}>
-                      Last updated: {formatCompactTimestamp(selectedRow.latest_modified_at)}
-                    </Text>
-                  </div>
-                </div>
-              </div>
-
-              {globalValidationIssues.length ? (
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="Pathway log warnings"
-                  description={
-                    <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-                      {globalValidationIssues.map((issue) => (
-                        <li key={issue}>{issue}</li>
-                      ))}
-                    </ul>
-                  }
-                  style={{ borderRadius: 12 }}
-                />
-              ) : null}
-
-              {activeValidationIssues.length ? (
-                <Alert
-                  type="error"
-                  showIcon
-                  message="Year-specific validation issues"
-                  description={
-                    <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-                      {activeValidationIssues.map((issue) => (
-                        <li key={issue}>{issue}</li>
-                      ))}
-                    </ul>
-                  }
-                  style={{ borderRadius: 12 }}
-                />
-              ) : null}
-
-
-              {(() => {
-                const hasConstruct = (selectedRow.building_events?.new_buildings ?? []).length > 0;
-                const hasDemolish = (selectedRow.building_events?.demolished_buildings ?? []).length > 0;
-                const hasChange = Object.keys(selectedRow.modifications ?? {}).length > 0;
-                const visibleCards = [hasConstruct, hasDemolish, hasChange].filter(Boolean).length;
-                if (!visibleCards) return null;
-                return (
                   <div
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                      gap: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      width: '100%',
                     }}
                   >
-                    {hasConstruct && (
-                      <SectionCard
-                        title="Construction"
-                        tooltipKey="construction-card"
-                        content={<BuildingList buildings={selectedRow.building_events?.new_buildings} buildingColorMap={buildingColorMap} rebuildCounts={rebuildCounts} onBuildingClick={handleBuildingClick} />}
-                      />
-                    )}
-                    {hasDemolish && (
-                      <SectionCard
-                        title="Demolition"
-                        tooltipKey="demolition-card"
-                        content={<BuildingList buildings={selectedRow.building_events?.demolished_buildings} buildingColorMap={buildingColorMap} onBuildingClick={handleBuildingClick} />}
-                      />
-                    )}
-                    {hasChange && (
-                      <SectionCard
-                        title="Intervention"
-                        tooltipKey="intervention-card"
-                        content={<ModificationSummary row={selectedRow} constructionColorMap={constructionColorMap} />}
-                      />
-                    )}
+                    <Title
+                      level={4}
+                      style={{
+                        margin: 0,
+                        marginLeft: 12,
+                        width: 80,
+                        flexShrink: 0,
+                      }}
+                    >
+                      Y_{selectedRow.year}
+                    </Title>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        flex: 1,
+                      }}
+                    >
+                      {[
+                        {
+                          key: 'auto-stock',
+                          label: 'Auto-Stock',
+                          active:
+                            selectedRow.state_kind === 'stock' ||
+                            selectedRow.state_kind === 'mixed',
+                        },
+                        {
+                          key: 'construct',
+                          label: 'Construct-Event',
+                          active:
+                            (selectedRow.summary?.new_buildings_count ?? 0) > 0,
+                        },
+                        {
+                          key: 'demolish',
+                          label: 'Demolish-Event',
+                          active:
+                            (selectedRow.summary?.demolished_buildings_count ??
+                              0) > 0,
+                        },
+                        {
+                          key: 'intervention',
+                          label: 'Intervention',
+                          active:
+                            (selectedRow.summary?.modification_count ?? 0) > 0,
+                        },
+                      ].map((tag) => (
+                        <span
+                          key={tag.key}
+                          style={{
+                            padding: '3px 10px',
+                            borderRadius: 999,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: tag.active ? '#8eb6dc' : '#e8e8e8',
+                            color: tag.active ? '#fff' : '#999',
+                          }}
+                        >
+                          {tag.label}
+                        </span>
+                      ))}
+                      <InfoTooltip tooltipKey="state-types" />
+                      <Text
+                        style={{
+                          color: '#94A3B8',
+                          fontSize: 11,
+                          marginLeft: 'auto',
+                        }}
+                      >
+                        Last updated:{' '}
+                        {formatCompactTimestamp(selectedRow.latest_modified_at)}
+                      </Text>
+                    </div>
                   </div>
-                );
-              })()}
+                </div>
 
+                {globalValidationIssues.length ? (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message="Pathway log warnings"
+                    description={
+                      <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                        {globalValidationIssues.map((issue) => (
+                          <li key={issue}>{issue}</li>
+                        ))}
+                      </ul>
+                    }
+                    style={{ borderRadius: 12 }}
+                  />
+                ) : null}
+
+                {activeValidationIssues.length ? (
+                  <Alert
+                    type="error"
+                    showIcon
+                    message="Year-specific validation issues"
+                    description={
+                      <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                        {activeValidationIssues.map((issue) => (
+                          <li key={issue}>{issue}</li>
+                        ))}
+                      </ul>
+                    }
+                    style={{ borderRadius: 12 }}
+                  />
+                ) : null}
+
+                {(() => {
+                  const hasConstruct =
+                    (selectedRow.building_events?.new_buildings ?? []).length >
+                    0;
+                  const hasDemolish =
+                    (selectedRow.building_events?.demolished_buildings ?? [])
+                      .length > 0;
+                  const hasChange =
+                    Object.keys(selectedRow.modifications ?? {}).length > 0;
+                  const visibleCards = [
+                    hasConstruct,
+                    hasDemolish,
+                    hasChange,
+                  ].filter(Boolean).length;
+                  if (!visibleCards) return null;
+                  return (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                        gap: 12,
+                      }}
+                    >
+                      {hasConstruct && (
+                        <SectionCard
+                          title="Construction"
+                          tooltipKey="construction-card"
+                          content={
+                            <BuildingList
+                              buildings={
+                                selectedRow.building_events?.new_buildings
+                              }
+                              buildingColorMap={buildingColorMap}
+                              rebuildCounts={rebuildCounts}
+                              onBuildingClick={handleBuildingClick}
+                            />
+                          }
+                        />
+                      )}
+                      {hasDemolish && (
+                        <SectionCard
+                          title="Demolition"
+                          tooltipKey="demolition-card"
+                          content={
+                            <BuildingList
+                              buildings={
+                                selectedRow.building_events
+                                  ?.demolished_buildings
+                              }
+                              buildingColorMap={buildingColorMap}
+                              onBuildingClick={handleBuildingClick}
+                            />
+                          }
+                        />
+                      )}
+                      {hasChange && (
+                        <SectionCard
+                          title="Intervention"
+                          tooltipKey="intervention-card"
+                          content={
+                            <ModificationSummary
+                              row={selectedRow}
+                              constructionColorMap={constructionColorMap}
+                            />
+                          }
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : null}
+          </div>
         </div>
-        ) : null}
-
       </div>
-
-      </div>
-
-      </div>
-
     </div>
   );
 };

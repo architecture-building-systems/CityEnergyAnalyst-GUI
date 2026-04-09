@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 
 import useJobsStore from 'features/jobs/stores/jobsStore';
+import { useProjectStore } from 'features/project/stores/projectStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
@@ -12,7 +13,11 @@ import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
-import { PLOT_SCRIPTS, VIEW_MAP_RESULTS, VIEW_TOOL_RESULTS } from 'features/plots/constants';
+import {
+  PLOT_SCRIPTS,
+  VIEW_MAP_RESULTS,
+  VIEW_TOOL_RESULTS,
+} from 'features/plots/constants';
 import { useToolCardStore } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
@@ -278,6 +283,30 @@ const JobStatusBar = () => {
         onWorkerMessage: (data) => {
           // Validate data and message before processing
           if (!data || typeof data.message !== 'string' || !data.message) {
+            return;
+          }
+
+          // Check for structured simulation progress markers
+          if (data.message.startsWith('{"__cea_progress__"')) {
+            try {
+              const progress = JSON.parse(data.message);
+              const store = useProjectStore.getState();
+              if (progress.__cea_progress__ === 'pathway-state-started') {
+                store.setSimulationYearStarted(
+                  progress.pathway_name,
+                  progress.year,
+                );
+              } else if (
+                progress.__cea_progress__ === 'pathway-state-simulated'
+              ) {
+                store.setSimulationYearCompleted(
+                  progress.pathway_name,
+                  progress.year,
+                );
+              }
+            } catch {
+              /* not valid JSON, ignore */
+            }
             return;
           }
 
