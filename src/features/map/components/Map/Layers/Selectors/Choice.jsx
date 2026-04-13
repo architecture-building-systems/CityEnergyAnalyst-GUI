@@ -37,6 +37,7 @@ const ChoiceSelector = ({
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
+  const choicesRevision = useMapStore((state) => state.choicesRevision);
   const categoryInfo = useSelectedMapCategoryInfo();
 
   const [selected, setSelected] = useState(value ?? defaultValue);
@@ -79,7 +80,11 @@ const ChoiceSelector = ({
     };
 
     fetchChoices();
-  }, [dependsOnValues, dependsValid]);
+    // choicesRevision is intentionally in the deps: bumping it in mapStore
+    // forces all ChoiceSelectors to refetch their options after external
+    // filesystem changes (e.g. a successful network-layout run creating a
+    // new network in `outputs/thermal-network/`).
+  }, [dependsOnValues, dependsValid, choicesRevision]);
 
   // Set the default value from backend (or first choice as fallback)
   useEffect(() => {

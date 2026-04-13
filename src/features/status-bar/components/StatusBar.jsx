@@ -90,6 +90,7 @@ const JobStatusBar = () => {
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setMapLayerParameters = useMapStore((state) => state.setMapLayerParameters);
+  const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
   const queryClient = useQueryClient();
 
   // Local state for modal triggered from notifications
@@ -105,6 +106,7 @@ const JobStatusBar = () => {
     dismissJob,
     setActiveMapCategory,
     setMapLayerParameters,
+    bumpChoicesRevision,
     setModalVisible,
     setSelectedJob,
     setMessage,
@@ -150,6 +152,25 @@ const JobStatusBar = () => {
         onWorkerSuccess: (job) => {
           depsRef.current.updateJob(job);
           depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
+
+          // When network-layout creates or modifies a network, any cached
+          // metadata that lists existing networks goes stale: the tool forms'
+          // network-name / existing-network dropdowns, the thermal-network map
+          // layer's network selector (fetched directly in Choice.jsx, not via
+          // React Query — bumpChoicesRevision forces those to refetch), and
+          // the input-editor map data.
+          if (job.script === 'network-layout') {
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['toolParams'],
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['inputs'],
+            });
+            depsRef.current.bumpChoicesRevision();
+          }
 
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
 
