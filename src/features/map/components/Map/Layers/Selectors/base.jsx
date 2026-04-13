@@ -7,6 +7,9 @@ import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
 
+// Filters rendered inside the Legend card instead of the parameters panel.
+const LEGEND_FILTERS = new Set(['scale', 'radius']);
+
 const ParameterSelectors = ({ layers, parameterValues }) => {
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
@@ -79,6 +82,9 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
               label,
               filter,
             } = parameter;
+
+            // Scale/radius are rendered inside the Legend card.
+            if (filter && LEGEND_FILTERS.has(filter)) return null;
 
             const value = filter ? filters?.[filter] : parameterValues?.[key];
             const _handleChange = parameterChangeHandlers[`${name}:${key}`];

@@ -93,7 +93,7 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
   );
 };
 
-const Legend = () => {
+const Legend = ({ extras }) => {
   const mapLayerLegends = useMapLegends();
 
   return (
@@ -111,7 +111,7 @@ const Legend = () => {
 
         fontSize: 12,
 
-        gap: 2,
+        gap: 12,
 
         width: 280,
         flexShrink: 0,
@@ -135,6 +135,7 @@ const Legend = () => {
             />
           );
         })}
+      {extras}
     </div>
   );
 };
