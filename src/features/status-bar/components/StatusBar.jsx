@@ -89,7 +89,9 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
-  const setMapLayerParameters = useMapStore((state) => state.setMapLayerParameters);
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
   const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
   const queryClient = useQueryClient();
 
