@@ -61,19 +61,21 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       <div
         style={{
           display: 'flex',
-          justifyContent: 'center',
+          width: '100%',
         }}
       >
-        {gradientArray.map((color) => {
-          const width = 24;
-          return (
-            <div
-              style={{ backgroundColor: color, width: width, height: width }}
-              key={color}
-              title={color}
-            />
-          );
-        })}
+        {gradientArray.map((color) => (
+          <div
+            style={{
+              backgroundColor: color,
+              flex: 1,
+              minWidth: 0,
+              height: 24,
+            }}
+            key={color}
+            title={color}
+          />
+        ))}
       </div>
       <div
         style={{
@@ -112,7 +114,8 @@ const Legend = () => {
 
         gap: 2,
 
-        minWidth: 280,
+        width: 280,
+        flexShrink: 0,
 
         padding: 12,
         marginRight: 'auto',
