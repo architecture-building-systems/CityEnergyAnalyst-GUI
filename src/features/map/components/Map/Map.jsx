@@ -38,6 +38,7 @@ import {
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   ANTHROPOGENIC_HEAT,
+  FINAL_ENERGY,
   DEFAULT_LEGEND_COLOUR_ARRAY,
   DEFAULT_LEGEND_POINTS,
 } from 'features/map/constants';
@@ -405,6 +406,7 @@ const useMapLayers = (onHover = () => {}) => {
           EMISSIONS_EMBODIED,
           EMISSIONS_OPERATIONAL,
           ANTHROPOGENIC_HEAT,
+          FINAL_ENERGY,
         ].includes(name) &&
         mapLayers?.[name]
       ) {

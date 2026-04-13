@@ -7,6 +7,7 @@ import {
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   ANTHROPOGENIC_HEAT,
+  FINAL_ENERGY,
 } from 'features/map/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -160,7 +161,8 @@ export const useMapLegends = () => {
     } else if (
       mapLayers?.[EMISSIONS_EMBODIED] ||
       mapLayers?.[EMISSIONS_OPERATIONAL] ||
-      mapLayers?.[ANTHROPOGENIC_HEAT]
+      mapLayers?.[ANTHROPOGENIC_HEAT] ||
+      mapLayers?.[FINAL_ENERGY]
     ) {
       const props = mapLayers[selectedMapLayer].properties;
       const label = props['label'];
