@@ -70,118 +70,158 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
     return layers.map((layer) => {
       const { name, parameters } = layer;
 
+      const rendered = [];
+      Object.entries(parameters).forEach(([key, parameter]) => {
+        const { default: defaultValue, selector, label, filter } = parameter;
+
+        // Scale/radius are rendered inside the Legend card.
+        if (filter && LEGEND_FILTERS.has(filter)) return;
+
+        const value = filter ? filters?.[filter] : parameterValues?.[key];
+        const _handleChange = parameterChangeHandlers[`${name}:${key}`];
+
+        let element = null;
+        switch (selector) {
+          case 'time-series':
+            element = (
+              <TimeSeriesSelector
+                key={`${name}-${key}`}
+                parameterName={key}
+                value={value}
+                defaultValue={defaultValue}
+                onChange={_handleChange}
+              />
+            );
+            break;
+          case 'threshold':
+            element = (
+              <ThresholdSelector
+                key={`${name}-${key}`}
+                parameterName={key}
+                value={value}
+                defaultValue={defaultValue}
+                range={range}
+                label={label}
+                onChange={_handleChange}
+              />
+            );
+            break;
+          case 'slider': {
+            const { range: sliderRange, depends_on } = parameter;
+            element = (
+              <SliderSelector
+                key={`${name}-${key}`}
+                parameterName={key}
+                label={label}
+                value={value}
+                defaultValue={defaultValue}
+                range={sliderRange}
+                layerName={name}
+                dependsOn={depends_on}
+                onChange={_handleChange}
+              />
+            );
+            break;
+          }
+          case 'choice': {
+            const { depends_on } = parameter;
+            element = (
+              <ChoiceSelector
+                key={`${name}-${key}`}
+                parameterName={key}
+                label={label}
+                value={value}
+                defaultValue={defaultValue}
+                onChange={_handleChange}
+                layerName={name}
+                dependsOn={depends_on}
+              />
+            );
+            break;
+          }
+          case 'input': {
+            const { type } = parameter;
+            if (type === 'string') {
+              element = (
+                <InputSelector
+                  key={`${name}-${key}`}
+                  parameterName={key}
+                  label={label}
+                  value={value}
+                  defaultValue={defaultValue}
+                  onChange={_handleChange}
+                />
+              );
+            } else if (type === 'number') {
+              const { range: inputRange } = parameter;
+              element = (
+                <InputNumberSelector
+                  key={`${name}-${key}`}
+                  parameterName={key}
+                  label={label}
+                  value={value}
+                  defaultValue={defaultValue}
+                  range={inputRange}
+                  onChange={_handleChange}
+                />
+              );
+            }
+            break;
+          }
+          default:
+            if (selector) {
+              element = (
+                <div key={`${name}-${key}`} style={{ padding: 12 }}>
+                  Unknown parameter type: {selector}
+                </div>
+              );
+            }
+        }
+
+        if (element) rendered.push({ selector, element });
+      });
+
+      // Group consecutive 'choice' selectors into a single flex row so related
+      // dropdowns (e.g. what-if-name + carrier) sit side-by-side.
+      const groups = [];
+      let choiceRun = [];
+      const flushChoiceRun = () => {
+        if (choiceRun.length === 0) return;
+        if (choiceRun.length === 1) {
+          groups.push(choiceRun[0]);
+        } else {
+          groups.push(
+            <div
+              key={`${name}-choice-row-${groups.length}`}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                alignItems: 'center',
+              }}
+            >
+              {choiceRun}
+            </div>,
+          );
+        }
+        choiceRun = [];
+      };
+      rendered.forEach(({ selector: s, element }) => {
+        if (s === 'choice') {
+          choiceRun.push(element);
+        } else {
+          flushChoiceRun();
+          groups.push(element);
+        }
+      });
+      flushChoiceRun();
+
       return (
         <div
           key={name}
           style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
         >
-          {Object.entries(parameters).map(([key, parameter]) => {
-            const {
-              default: defaultValue,
-              selector,
-              label,
-              filter,
-            } = parameter;
-
-            // Scale/radius are rendered inside the Legend card.
-            if (filter && LEGEND_FILTERS.has(filter)) return null;
-
-            const value = filter ? filters?.[filter] : parameterValues?.[key];
-            const _handleChange = parameterChangeHandlers[`${name}:${key}`];
-
-            switch (selector) {
-              case 'time-series':
-                return (
-                  <TimeSeriesSelector
-                    key={`${name}-${key}`}
-                    parameterName={key}
-                    value={value}
-                    defaultValue={defaultValue}
-                    onChange={_handleChange}
-                  />
-                );
-              case 'threshold':
-                return (
-                  <ThresholdSelector
-                    key={`${name}-${key}`}
-                    parameterName={key}
-                    value={value}
-                    defaultValue={defaultValue}
-                    range={range}
-                    label={label}
-                    onChange={_handleChange}
-                  />
-                );
-              case 'slider': {
-                const { range, depends_on } = parameter;
-                return (
-                  <SliderSelector
-                    key={`${name}-${key}`}
-                    parameterName={key}
-                    label={label}
-                    value={value}
-                    defaultValue={defaultValue}
-                    range={range}
-                    layerName={name}
-                    dependsOn={depends_on}
-                    onChange={_handleChange}
-                  />
-                );
-              }
-              case 'choice': {
-                const { depends_on } = parameter;
-                return (
-                  <ChoiceSelector
-                    key={`${name}-${key}`}
-                    parameterName={key}
-                    label={label}
-                    value={value}
-                    defaultValue={defaultValue}
-                    onChange={_handleChange}
-                    layerName={name}
-                    dependsOn={depends_on}
-                  />
-                );
-              }
-              case 'input': {
-                const { type } = parameter;
-
-                if (type === 'string') {
-                  return (
-                    <InputSelector
-                      key={`${name}-${key}`}
-                      parameterName={key}
-                      label={label}
-                      value={value}
-                      defaultValue={defaultValue}
-                      onChange={_handleChange}
-                    />
-                  );
-                } else if (type === 'number') {
-                  const { range } = parameter;
-                  return (
-                    <InputNumberSelector
-                      key={`${name}-${key}`}
-                      parameterName={key}
-                      label={label}
-                      value={value}
-                      defaultValue={defaultValue}
-                      range={range}
-                      onChange={_handleChange}
-                    />
-                  );
-                } else return null;
-              }
-              default:
-                if (selector) {
-                  return (
-                    <div key={`${name}-${key}`} style={{ padding: 12 }}>
-                      Unknown parameter type: {selector}
-                    </div>
-                  );
-                }
-            }
-          })}
+          {groups}
         </div>
       );
     });
@@ -205,7 +245,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          padding: 12,
+          padding: '0 12px 12px 12px',
           fontSize: 12,
           gap: 2,
         }}
