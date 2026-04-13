@@ -51,7 +51,6 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       }}
     >
       <b>{label}</b>
-      <div>Range</div>
       <Select
         value={value}
         onChange={setSelectedValue}
