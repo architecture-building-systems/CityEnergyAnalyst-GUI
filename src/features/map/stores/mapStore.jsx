@@ -21,6 +21,11 @@ export const useMapStore = create((set) => ({
   filters: {},
   range: [0, 0],
 
+  // Revision counter bumped when external events (e.g. a successful
+  // network-layout job) should force map-layer choice dropdowns to refetch
+  // their options, even if their `dependsOn` values haven't changed.
+  choicesRevision: 0,
+
   // Construction standard / use type coloring state
   colorMode: COLOR_MODES.DEFAULT,
   constructionColorMap: {},
@@ -69,6 +74,8 @@ export const useMapStore = create((set) => ({
       },
     })),
   setRange: (value) => set({ range: value }),
+  bumpChoicesRevision: () =>
+    set((state) => ({ choicesRevision: state.choicesRevision + 1 })),
 
   // Construction standard coloring setters
   setColorMode: (value) => set({ colorMode: value }),

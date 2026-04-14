@@ -1,7 +1,40 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import * as turf from '@turf/turf';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
-import { THERMAL_NETWORK } from 'features/map/constants';
+import {
+  THERMAL_NETWORK,
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
+  FINAL_ENERGY,
+  DEMAND,
+} from 'features/map/constants';
+
+const formatNumberCompact = (value, { unit = '', decimals = 2 } = {}) => {
+  if (value == null || Number.isNaN(value)) return '—';
+  const abs = Math.abs(value);
+  let scaled = value;
+  let suffix = '';
+  if (abs >= 1e9) {
+    scaled = value / 1e9;
+    suffix = 'B';
+  } else if (abs >= 1e6) {
+    scaled = value / 1e6;
+    suffix = 'M';
+  } else if (abs >= 1e3) {
+    scaled = value / 1e3;
+    suffix = 'k';
+  }
+  return `${scaled.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}${suffix}${unit ? ` ${unit}` : ''}`;
+};
+
+const rgbToCss = (rgb) => {
+  if (!Array.isArray(rgb) || rgb.length < 3) return '#888';
+  const [r, g, b] = rgb;
+  return `rgb(${r}, ${g}, ${b})`;
+};
 
 import './MapTooltip.css';
 
@@ -50,7 +83,136 @@ const MapTooltip = ({ info }) => {
   const tooltipContent = useMemo(() => {
     if (!object) return null;
 
+    // Stacked ColumnLayer hover — Lifecycle Emissions, Operational
+    // Emissions, Energy by Carrier, and End-use Demand. Each data item
+    // carries `{name, category, rawValue, rawValues, categories, layerLabel, unitLabel}`.
+    if (
+      (layer?.id?.startsWith(`${EMISSIONS_EMBODIED}-`) ||
+        layer?.id?.startsWith(`${EMISSIONS_OPERATIONAL}-`) ||
+        layer?.id?.startsWith(`${FINAL_ENERGY}-`) ||
+        layer?.id?.startsWith(`${DEMAND}-`)) &&
+      object?.categories &&
+      object?.rawValues
+    ) {
+      const {
+        name: entityName,
+        category: hoveredCategory,
+        rawValues,
+        categories,
+        layerLabel,
+        unitLabel,
+      } = object;
+      const unit = unitLabel ?? 'kgCO₂e';
+      const total = categories.reduce(
+        (sum, c) => sum + Math.max(rawValues[c.name] || 0, 0),
+        0,
+      );
+
+      return (
+        <div className="tooltip-content">
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>{entityName}</b>
+          {layerLabel && (
+            <div style={{ opacity: 0.7, marginBottom: 4 }}>{layerLabel}</div>
+          )}
+
+          <table className="tooltip-table" style={{ width: '100%' }}>
+            <tbody>
+              {categories.map((c) => {
+                const v = rawValues[c.name] || 0;
+                const isHovered = c.name === hoveredCategory;
+                return (
+                  <tr
+                    key={c.name}
+                    style={
+                      isHovered ? { fontWeight: 'bold' } : { opacity: 0.85 }
+                    }
+                  >
+                    <td style={{ paddingRight: 8 }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: 10,
+                          height: 10,
+                          backgroundColor: rgbToCss(c.rgb),
+                          marginRight: 6,
+                          border: '1px solid rgba(0,0,0,0.2)',
+                        }}
+                      />
+                      {c.name}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {formatNumberCompact(v, { unit })}
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr
+                style={{
+                  borderTop: '1px solid rgba(0,0,0,0.2)',
+                  fontWeight: 'bold',
+                }}
+              >
+                <td style={{ paddingTop: 4 }}>Total</td>
+                <td style={{ textAlign: 'right', paddingTop: 4 }}>
+                  {formatNumberCompact(total, { unit })}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    // HexagonLayer hover for single-category mode (lifecycle-emissions,
+    // operational-emissions, energy-by-carrier). deck.gl 9 does NOT
+    // expose the raw source records on HexagonLayer hex bins — the
+    // hover object is { col, row, position, colorValue, elevationValue }
+    // so we can only show aggregated stats. `elevationValue` is the sum
+    // of `getElevationWeight` (= d.value) across all points in the bin.
+    const hexLayerId = layer?.id;
+    if (
+      hexLayerId === `${EMISSIONS_EMBODIED}-hex` ||
+      hexLayerId === `${EMISSIONS_OPERATIONAL}-hex` ||
+      hexLayerId === `${FINAL_ENERGY}-hex` ||
+      hexLayerId === `${DEMAND}-hex`
+    ) {
+      const aggregateValue =
+        typeof object?.elevationValue === 'number'
+          ? object.elevationValue
+          : typeof object?.colorValue === 'number'
+            ? object.colorValue
+            : null;
+      if (aggregateValue == null) return null;
+      let title;
+      let unit;
+      if (hexLayerId === `${FINAL_ENERGY}-hex`) {
+        title = 'Energy by Carrier';
+        unit = 'kWh';
+      } else if (hexLayerId === `${EMISSIONS_OPERATIONAL}-hex`) {
+        title = 'Operational Emissions';
+        unit = 'kgCO₂e';
+      } else if (hexLayerId === `${DEMAND}-hex`) {
+        title = 'End-use Demand';
+        unit = 'kWh';
+      } else {
+        title = 'Lifecycle Emissions';
+        unit = 'kgCO₂e';
+      }
+      return (
+        <div className="tooltip-content">
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>{title}</b>
+          <div className="tooltip-grid">
+            <div>Bin total</div>
+            <b style={{ marginLeft: 'auto' }}>
+              {formatNumberCompact(aggregateValue, { unit })}
+            </b>
+          </div>
+        </div>
+      );
+    }
+
     const { properties } = object;
+    if (!properties) return null;
     const isZone = layer.id === 'zone';
 
     // Cache area calculation
