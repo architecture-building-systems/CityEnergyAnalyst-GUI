@@ -129,7 +129,7 @@ const MapTooltip = ({ info }) => {
                       {c.name}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {formatNumberCompact(v, { unit: 'kgCO₂' })}
+                      {formatNumberCompact(v, { unit: 'kgCO₂e' })}
                     </td>
                   </tr>
                 );
@@ -142,11 +142,40 @@ const MapTooltip = ({ info }) => {
               >
                 <td style={{ paddingTop: 4 }}>Total</td>
                 <td style={{ textAlign: 'right', paddingTop: 4 }}>
-                  {formatNumberCompact(total, { unit: 'kgCO₂' })}
+                  {formatNumberCompact(total, { unit: 'kgCO₂e' })}
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      );
+    }
+
+    // HexagonLayer hover for lifecycle-emissions single-category mode.
+    // deck.gl 9 does NOT expose the raw source records on HexagonLayer
+    // hex bins — the hover object is
+    //   { col, row, position, colorValue, elevationValue }
+    // so we can only show aggregated stats. `elevationValue` is the sum
+    // of `getElevationWeight` (= d.value) across all points in the bin.
+    if (layer?.id === `${EMISSIONS_EMBODIED}-hex`) {
+      const aggregateValue =
+        typeof object?.elevationValue === 'number'
+          ? object.elevationValue
+          : typeof object?.colorValue === 'number'
+            ? object.colorValue
+            : null;
+      if (aggregateValue == null) return null;
+      return (
+        <div className="tooltip-content">
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>
+            Lifecycle Emissions
+          </b>
+          <div className="tooltip-grid">
+            <div>Bin total</div>
+            <b style={{ marginLeft: 'auto' }}>
+              {formatNumberCompact(aggregateValue, { unit: 'kgCO₂e' })}
+            </b>
+          </div>
         </div>
       );
     }
