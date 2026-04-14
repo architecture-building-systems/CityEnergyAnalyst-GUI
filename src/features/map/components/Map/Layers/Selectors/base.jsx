@@ -243,14 +243,39 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         }
         choiceRun = [];
       };
+      // Selectors that get a grey divider above them when they follow a
+      // choice row — gives the map layer card a clear visual split
+      // between "what to show" (dropdowns) and "when" (timeline/slider).
+      const DIVIDED_SELECTORS = new Set(['time-series', 'slider']);
+      const dividerFor = (key) => (
+        <div
+          key={key}
+          style={{
+            height: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            margin: '6px 0',
+          }}
+        />
+      );
+      let hasEmittedChoice = false;
       rendered.forEach(({ selector: s, element, paramKey }) => {
         if (s === 'choice') {
           choiceRun.push({ element, paramKey });
-        } else {
-          flushChoiceRun();
-          groups.push(element);
+          return;
         }
+        const hadChoiceBefore = hasEmittedChoice || choiceRun.length > 0;
+        if (choiceRun.length > 0) {
+          hasEmittedChoice = true;
+        }
+        flushChoiceRun();
+        if (hadChoiceBefore && DIVIDED_SELECTORS.has(s)) {
+          groups.push(dividerFor(`${name}-divider-${groups.length}`));
+        }
+        groups.push(element);
       });
+      if (choiceRun.length > 0) {
+        hasEmittedChoice = true;
+      }
       flushChoiceRun();
 
       return (
