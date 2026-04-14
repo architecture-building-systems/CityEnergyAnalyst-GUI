@@ -132,19 +132,6 @@ export const useMapLegends = () => {
           label,
         },
       });
-    } else if (mapLayers?.[DEMAND]) {
-      const props = mapLayers[DEMAND].properties;
-      const label = props['label'];
-      const _range = props['range'];
-      const colours = props['colours'];
-      setMapLayerLegends({
-        [DEMAND]: {
-          colourArray: colours?.colour_array,
-          points: colours?.points,
-          range: _range,
-          label,
-        },
-      });
     } else if (mapLayers?.[RENEWABLE_ENERGY_POTENTIALS]) {
       const props = mapLayers[RENEWABLE_ENERGY_POTENTIALS].properties;
       const label = props['label'];
@@ -162,7 +149,8 @@ export const useMapLegends = () => {
       mapLayers?.[EMISSIONS_EMBODIED] ||
       mapLayers?.[EMISSIONS_OPERATIONAL] ||
       mapLayers?.[ANTHROPOGENIC_HEAT] ||
-      mapLayers?.[FINAL_ENERGY]
+      mapLayers?.[FINAL_ENERGY] ||
+      mapLayers?.[DEMAND]
     ) {
       const props = mapLayers[selectedMapLayer].properties;
       const label = props['label'];

@@ -359,27 +359,6 @@ const useMapLayers = (onHover = () => {}) => {
         }
       }
 
-      if (name == DEMAND && mapLayers?.[name]) {
-        _layers.push(
-          new HexagonLayer({
-            id: `${name}-hex`,
-            data: mapLayers[name].data,
-
-            extruded: true,
-            getPosition: (d) => d.position,
-            getColorWeight: (d) => d.value,
-            getElevationWeight: (d) => d.value,
-            colorRange: rgbGradientArray,
-            elevationScale: scale,
-            radius: radius,
-            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
-            updateTriggers: {
-              getColor: [range],
-            },
-          }),
-        );
-      }
-
       if (name == RENEWABLE_ENERGY_POTENTIALS && mapLayers?.[name]) {
         _layers.push(
           new HexagonLayer({
@@ -407,6 +386,7 @@ const useMapLayers = (onHover = () => {}) => {
           EMISSIONS_OPERATIONAL,
           ANTHROPOGENIC_HEAT,
           FINAL_ENERGY,
+          DEMAND,
         ].includes(name) &&
         mapLayers?.[name]
       ) {
@@ -417,7 +397,8 @@ const useMapLayers = (onHover = () => {}) => {
           isStacked &&
           (name === EMISSIONS_EMBODIED ||
             name === EMISSIONS_OPERATIONAL ||
-            name === FINAL_ENERGY)
+            name === FINAL_ENERGY ||
+            name === DEMAND)
         ) {
           // Multi-category lifecycle emissions / energy-by-carrier:
           // one ColumnLayer per category with a pre-computed stack base
@@ -445,10 +426,13 @@ const useMapLayers = (onHover = () => {}) => {
             layerLabelBase = 'Energy by Carrier';
           } else if (name === EMISSIONS_OPERATIONAL) {
             layerLabelBase = 'Operational Emissions';
+          } else if (name === DEMAND) {
+            layerLabelBase = 'End-use Demand';
           } else {
             layerLabelBase = 'Lifecycle Emissions';
           }
-          const unitLabel = name === FINAL_ENERGY ? 'kWh' : 'kgCO₂e';
+          const unitLabel =
+            name === FINAL_ENERGY || name === DEMAND ? 'kWh' : 'kgCO₂e';
 
           categories.forEach((cat, catIdx) => {
             const catData = entities

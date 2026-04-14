@@ -4,6 +4,7 @@ import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
+  DEMAND,
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   FINAL_ENERGY,
@@ -26,6 +27,12 @@ const PLOT_FINAL_ENERGY_CARRIERS = new Set([
   'oil',
   'coal',
   'wood',
+]);
+const PLOT_DEMAND_SERVICES = new Set([
+  'electricity',
+  'space_heating',
+  'space_cooling',
+  'domestic_hot_water',
 ]);
 
 const PlotButton = ({ plotKey, onSelected }) => {
@@ -181,6 +188,23 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
         ? mapDataColumn
         : [mapDataColumn];
       const valid = asArray.filter((c) => PLOT_FINAL_ENERGY_CARRIERS.has(c));
+      if (valid.length > 0) {
+        nextValues['y-metric-to-plot'] = valid;
+      }
+    }
+
+    // Seed plot-demand's `y-metric-to-plot` from the Demand map layer.
+    // Both sides now use the same display names
+    // (electricity / space_heating / space_cooling / domestic_hot_water).
+    if (
+      script === 'plot-demand' &&
+      selectedMapLayer === DEMAND &&
+      mapDataColumn != null
+    ) {
+      const asArray = Array.isArray(mapDataColumn)
+        ? mapDataColumn
+        : [mapDataColumn];
+      const valid = asArray.filter((s) => PLOT_DEMAND_SERVICES.has(s));
       if (valid.length > 0) {
         nextValues['y-metric-to-plot'] = valid;
       }

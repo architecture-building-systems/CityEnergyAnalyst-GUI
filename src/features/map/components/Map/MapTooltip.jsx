@@ -6,6 +6,7 @@ import {
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   FINAL_ENERGY,
+  DEMAND,
 } from 'features/map/constants';
 
 const formatNumberCompact = (value, { unit = '', decimals = 2 } = {}) => {
@@ -83,12 +84,13 @@ const MapTooltip = ({ info }) => {
     if (!object) return null;
 
     // Stacked ColumnLayer hover — Lifecycle Emissions, Operational
-    // Emissions, and Energy by Carrier. Each data item carries
-    // `{name, category, rawValue, rawValues, categories, layerLabel, unitLabel}`.
+    // Emissions, Energy by Carrier, and End-use Demand. Each data item
+    // carries `{name, category, rawValue, rawValues, categories, layerLabel, unitLabel}`.
     if (
       (layer?.id?.startsWith(`${EMISSIONS_EMBODIED}-`) ||
         layer?.id?.startsWith(`${EMISSIONS_OPERATIONAL}-`) ||
-        layer?.id?.startsWith(`${FINAL_ENERGY}-`)) &&
+        layer?.id?.startsWith(`${FINAL_ENERGY}-`) ||
+        layer?.id?.startsWith(`${DEMAND}-`)) &&
       object?.categories &&
       object?.rawValues
     ) {
@@ -171,7 +173,8 @@ const MapTooltip = ({ info }) => {
     if (
       hexLayerId === `${EMISSIONS_EMBODIED}-hex` ||
       hexLayerId === `${EMISSIONS_OPERATIONAL}-hex` ||
-      hexLayerId === `${FINAL_ENERGY}-hex`
+      hexLayerId === `${FINAL_ENERGY}-hex` ||
+      hexLayerId === `${DEMAND}-hex`
     ) {
       const aggregateValue =
         typeof object?.elevationValue === 'number'
@@ -188,6 +191,9 @@ const MapTooltip = ({ info }) => {
       } else if (hexLayerId === `${EMISSIONS_OPERATIONAL}-hex`) {
         title = 'Operational Emissions';
         unit = 'kgCO₂e';
+      } else if (hexLayerId === `${DEMAND}-hex`) {
+        title = 'End-use Demand';
+        unit = 'kWh';
       } else {
         title = 'Lifecycle Emissions';
         unit = 'kgCO₂e';
