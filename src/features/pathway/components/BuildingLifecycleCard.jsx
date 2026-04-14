@@ -17,7 +17,12 @@ const getTickStep = (pxPerYear) => {
   return 1000;
 };
 
-const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEndYear }) => {
+const BuildingLifecycleCard = ({
+  buildingName,
+  pathways,
+  fixedStartYear,
+  fixedEndYear,
+}) => {
   if (!buildingName || !pathways?.length) return null;
 
   // Collect all years across all pathways for unified scale
@@ -63,7 +68,9 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
 
   // Add padding only when not using fixed scale
   const hasFixedScale = fixedStartYear != null && fixedEndYear != null;
-  const yearPadding = hasFixedScale ? 2 : Math.max(Math.ceil((maxYear - minYear) * 0.1), 5);
+  const yearPadding = hasFixedScale
+    ? 2
+    : Math.max(Math.ceil((maxYear - minYear) * 0.1), 5);
   const scaleMinYear = minYear - yearPadding;
   const scaleMaxYear = maxYear + yearPadding;
   const yearRange = scaleMaxYear - scaleMinYear;
@@ -75,7 +82,10 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
 
   // Year to Y position (top = latest, bottom = earliest)
   const yearToY = (year) => {
-    return (showOngoing ? ONGOING_HEIGHT : 0) + ((scaleMaxYear - year) / yearRange) * contentHeight;
+    return (
+      (showOngoing ? ONGOING_HEIGHT : 0) +
+      ((scaleMaxYear - year) / yearRange) * contentHeight
+    );
   };
 
   const cx = NODE_SIZE / 2;
@@ -93,8 +103,24 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
   const svgHeight = totalHeight + 20;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '16px 24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid #e0e0e0' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
+        padding: '16px 24px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          paddingBottom: 12,
+          marginBottom: 12,
+          borderBottom: '1px solid #e0e0e0',
+        }}
+      >
         <Title level={5} style={{ margin: 0 }}>
           {buildingName}
         </Title>
@@ -122,134 +148,136 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
             {pathwayData.map((pd, colIdx) => {
               const offsetX = colIdx * colWidth + cx;
 
-          return (
-            <g key={pd.pathwayName}>
-              {/* Pathway name */}
-              <text
-                x={offsetX}
-                y={totalHeight + 16}
-                fontSize={11}
-                fontWeight="bold"
-                fill="#0F172A"
-              >
-                {pd.pathwayName}
-              </text>
-
-              {/* Ongoing line */}
-              {pd.ongoing && pd.events.length > 0 && (
-                <>
-                  <line
-                    x1={offsetX}
-                    y1={0}
-                    x2={offsetX}
-                    y2={yearToY(pd.events[pd.events.length - 1].year)}
-                    stroke="#000"
-                    strokeWidth={1}
-                  />
-                  <text x={offsetX + 8} y={10} fontSize={11} fill="#94A3B8">
-                    ongoing
-                  </text>
-                </>
-              )}
-
-              {/* Dashed line from earliest event down to bottom */}
-              {pd.events.length > 0 && (
-                <line
-                  x1={offsetX}
-                  y1={yearToY(pd.events[0].year)}
-                  x2={offsetX}
-                  y2={totalHeight + 5}
-                  stroke="#999"
-                  strokeWidth={1}
-                  strokeDasharray="4 4"
-                />
-              )}
-
-              {/* Lines between consecutive events */}
-              {pd.events.map((e, i) => {
-                if (i >= pd.events.length - 1) return null;
-                const next = pd.events[i + 1];
-                const y1 = yearToY(e.year);
-                const y2 = yearToY(next.year);
-                // Solid when construct→demolish (active period)
-                // Dashed when demolish→construct (gap)
-                const isDashed = e.type === 'demolish' && next.type === 'construct';
-                return (
-                  <line
-                    key={`line-${colIdx}-${i}`}
-                    x1={offsetX}
-                    y1={y1}
-                    x2={offsetX}
-                    y2={y2}
-                    stroke={isDashed ? '#999' : '#000'}
-                    strokeWidth={1}
-                    strokeDasharray={isDashed ? '4 4' : 'none'}
-                  />
-                );
-              })}
-
-              {/* Nodes */}
-              {pd.events.map((e) => {
-                const isConstruct = e.type === 'construct';
-                const y = yearToY(e.year);
-                const label = isConstruct
-                  ? e.constructIndex > 1
-                    ? `Rebuilt(${e.constructIndex - 1})`
-                    : 'Constructed'
-                  : 'Demolished';
-
-                return (
-                  <g key={`node-${colIdx}-${e.year}-${e.type}`}>
-                    <circle
-                      cx={offsetX}
-                      cy={y}
-                      r={4}
-                      fill={isConstruct ? '#000' : '#fff'}
-                      stroke="#000"
-                      strokeWidth={1}
-                    />
-                    <text
-                      x={offsetX + NODE_SIZE / 2 + 6}
-                      y={y - 4}
-                      fontSize={11}
-                      fontWeight="bold"
-                      fill="#0F172A"
-                    >
-                      Y_{e.year}
-                    </text>
-                    <text
-                      x={offsetX + NODE_SIZE / 2 + 6}
-                      y={y + 9}
-                      fontSize={11}
-                      fill="#475569"
-                    >
-                      {label}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Gap labels */}
-              {pd.events.map((e, i) => {
-                if (i >= pd.events.length - 1) return null;
-                const next = pd.events[i + 1];
-                if (!(e.type === 'demolish' && next.type === 'construct')) return null;
-                const midY = (yearToY(e.year) + yearToY(next.year)) / 2;
-                return (
+              return (
+                <g key={pd.pathwayName}>
+                  {/* Pathway name */}
                   <text
-                    key={`gap-${colIdx}-${i}`}
-                    x={offsetX + NODE_SIZE / 2 + 6}
-                    y={midY + 4}
+                    x={offsetX}
+                    y={totalHeight + 16}
                     fontSize={11}
-                    fill="#999"
+                    fontWeight="bold"
+                    fill="#0F172A"
                   >
-                    gap
+                    {pd.pathwayName}
                   </text>
-                );
-              })}
-            </g>
-          );
-        })}
+
+                  {/* Ongoing line */}
+                  {pd.ongoing && pd.events.length > 0 && (
+                    <>
+                      <line
+                        x1={offsetX}
+                        y1={0}
+                        x2={offsetX}
+                        y2={yearToY(pd.events[pd.events.length - 1].year)}
+                        stroke="#000"
+                        strokeWidth={1}
+                      />
+                      <text x={offsetX + 8} y={10} fontSize={11} fill="#94A3B8">
+                        ongoing
+                      </text>
+                    </>
+                  )}
+
+                  {/* Dashed line from earliest event down to bottom */}
+                  {pd.events.length > 0 && (
+                    <line
+                      x1={offsetX}
+                      y1={yearToY(pd.events[0].year)}
+                      x2={offsetX}
+                      y2={totalHeight + 5}
+                      stroke="#999"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                  )}
+
+                  {/* Lines between consecutive events */}
+                  {pd.events.map((e, i) => {
+                    if (i >= pd.events.length - 1) return null;
+                    const next = pd.events[i + 1];
+                    const y1 = yearToY(e.year);
+                    const y2 = yearToY(next.year);
+                    // Solid when construct→demolish (active period)
+                    // Dashed when demolish→construct (gap)
+                    const isDashed =
+                      e.type === 'demolish' && next.type === 'construct';
+                    return (
+                      <line
+                        key={`line-${colIdx}-${i}`}
+                        x1={offsetX}
+                        y1={y1}
+                        x2={offsetX}
+                        y2={y2}
+                        stroke={isDashed ? '#999' : '#000'}
+                        strokeWidth={1}
+                        strokeDasharray={isDashed ? '4 4' : 'none'}
+                      />
+                    );
+                  })}
+
+                  {/* Nodes */}
+                  {pd.events.map((e) => {
+                    const isConstruct = e.type === 'construct';
+                    const y = yearToY(e.year);
+                    const label = isConstruct
+                      ? e.constructIndex > 1
+                        ? `Rebuilt(${e.constructIndex - 1})`
+                        : 'Constructed'
+                      : 'Demolished';
+
+                    return (
+                      <g key={`node-${colIdx}-${e.year}-${e.type}`}>
+                        <circle
+                          cx={offsetX}
+                          cy={y}
+                          r={4}
+                          fill={isConstruct ? '#000' : '#fff'}
+                          stroke="#000"
+                          strokeWidth={1}
+                        />
+                        <text
+                          x={offsetX + NODE_SIZE / 2 + 6}
+                          y={y - 4}
+                          fontSize={11}
+                          fontWeight="bold"
+                          fill="#0F172A"
+                        >
+                          Y_{e.year}
+                        </text>
+                        <text
+                          x={offsetX + NODE_SIZE / 2 + 6}
+                          y={y + 9}
+                          fontSize={11}
+                          fill="#475569"
+                        >
+                          {label}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Gap labels */}
+                  {pd.events.map((e, i) => {
+                    if (i >= pd.events.length - 1) return null;
+                    const next = pd.events[i + 1];
+                    if (!(e.type === 'demolish' && next.type === 'construct'))
+                      return null;
+                    const midY = (yearToY(e.year) + yearToY(next.year)) / 2;
+                    return (
+                      <text
+                        key={`gap-${colIdx}-${i}`}
+                        x={offsetX + NODE_SIZE / 2 + 6}
+                        y={midY + 4}
+                        fontSize={11}
+                        fill="#999"
+                      >
+                        gap
+                      </text>
+                    );
+                  })}
+                </g>
+              );
+            })}
           </svg>
         </div>
 
@@ -271,12 +299,7 @@ const BuildingLifecycleCard = ({ buildingName, pathways, fixedStartYear, fixedEn
                   stroke="rgba(100, 116, 139, 0.32)"
                   strokeWidth={1}
                 />
-                <text
-                  x={10}
-                  y={y + 4}
-                  fontSize={11}
-                  fill="#64748B"
-                >
+                <text x={10} y={y + 4} fontSize={11} fill="#64748B">
                   {year}
                 </text>
               </g>

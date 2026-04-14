@@ -36,7 +36,10 @@ import {
   useMapLayerCategories,
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
-import { useMapStore, useSetSelectedMapLayer } from 'features/map/stores/mapStore';
+import {
+  useMapStore,
+  useSetSelectedMapLayer,
+} from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
@@ -357,7 +360,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       !showInputEditor
     ) {
       // If pathway builder is active with visible pathways, show lifecycle timeline
-      if (showPathwayPanel && selectedBuildings.length === 1 && useToolCardStore.getState().visiblePathways.length > 0) {
+      if (
+        showPathwayPanel &&
+        selectedBuildings.length === 1 &&
+        useToolCardStore.getState().visiblePathways.length > 0
+      ) {
         import('features/pathway/api').then(({ fetchBuildingLifecycle }) => {
           const vp = useToolCardStore.getState().visiblePathways;
           fetchBuildingLifecycle(
@@ -378,7 +385,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         useToolCardStore.getState().clearBuildingLifecycleData();
         setToolType(toolTypes.BUILDING_INFO);
       }
-    } else if (selectedBuildings.length === 0 && toolType === toolTypes.BUILDING_INFO) {
+    } else if (
+      selectedBuildings.length === 0 &&
+      toolType === toolTypes.BUILDING_INFO
+    ) {
       setToolType(null);
     }
   }, [

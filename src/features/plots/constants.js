@@ -136,7 +136,12 @@ export const PLOT_GROUPS = [
       },
       {
         label: 'GHG Emissions',
-        keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE, PATHWAY_EMISSION_TIMELINE],
+        keys: [
+          EMISSIONS_EMBODIED,
+          EMISSIONS_OPERATIONAL,
+          EMISSION_TIMELINE,
+          PATHWAY_EMISSION_TIMELINE,
+        ],
       },
       { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
       { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },

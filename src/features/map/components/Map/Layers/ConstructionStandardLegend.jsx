@@ -58,7 +58,11 @@ const ConstructionStandardLegend = () => {
       >
         {title}
         <InfoTooltip
-          tooltipKey={isConstruction ? 'construction-archetypes-info' : 'main-use-type-info'}
+          tooltipKey={
+            isConstruction
+              ? 'construction-archetypes-info'
+              : 'main-use-type-info'
+          }
           style={{ color: '#999' }}
         />
       </div>
