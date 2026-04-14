@@ -262,7 +262,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
           display: 'flex',
           flexDirection: 'column',
           padding: '0 12px 12px 12px',
-          fontSize: 12,
+          fontSize: 13,
           gap: 2,
         }}
       >

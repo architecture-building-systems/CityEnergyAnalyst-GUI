@@ -157,7 +157,7 @@ const Legend = ({ extras }) => {
         display: 'flex',
         flexDirection: 'column',
 
-        fontSize: 12,
+        fontSize: 13,
 
         gap: 12,
 
