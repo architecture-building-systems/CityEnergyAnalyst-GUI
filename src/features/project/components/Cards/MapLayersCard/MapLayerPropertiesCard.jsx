@@ -105,7 +105,7 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
 
   return (
     <Select
-      style={{ margin: 8 }}
+      style={{ margin: '8px 12px' }}
       placeholder="Select a layer"
       value={selectedLayer}
       onChange={handleLayerSelected}
