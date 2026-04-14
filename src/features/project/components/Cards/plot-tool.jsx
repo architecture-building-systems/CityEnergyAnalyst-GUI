@@ -15,18 +15,18 @@ import {
 } from 'features/plots/constants';
 import './tool-choices.css';
 
-// plot-final-energy's `y-metric-to-plot` uses user-facing display names as
-// its values (see [plots-final-energy] in default.config). The Energy by
-// Carrier map layer stores the internal uppercase codes in
-// `mapLayerParameters['data-column']`, so we translate before seeding.
-// `SOLAR` is not in the plot's choices and is filtered out.
-const CARRIER_CODE_TO_PLOT_METRIC = {
-  GRID: 'grid_electricity',
-  NATURALGAS: 'natural_gas',
-  OIL: 'oil',
-  COAL: 'coal',
-  WOOD: 'wood',
-};
+// Both the plot forms and the map layers now use snake_case display
+// names as their values (see [plots-*] in default.config and the
+// EnergyByCarrier / OperationalEmissions map layers). The seed paths
+// below pass the map's `data-column` through unchanged, filtering only
+// for values that the destination plot form can actually accept.
+const PLOT_FINAL_ENERGY_CARRIERS = new Set([
+  'grid_electricity',
+  'natural_gas',
+  'oil',
+  'coal',
+  'wood',
+]);
 
 const PlotButton = ({ plotKey, onSelected }) => {
   const script = VIEW_PLOT_RESULTS[plotKey];
@@ -168,10 +168,10 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       }
     }
 
-    // Seed plot-final-energy's `y-metric-to-plot` from the map layer
-    // selection when Energy by Carrier is active. Translate internal
-    // codes to the plot's display-name values; SOLAR has no equivalent
-    // so it falls through the mapping and is filtered out below.
+    // Seed plot-final-energy's `y-metric-to-plot` from the Energy by
+    // Carrier map layer. Both sides use display names, so just pass
+    // through after filtering to plot-supported carriers (`solar` is
+    // not in the plot's choices).
     if (
       script === 'plot-final-energy' &&
       selectedMapLayer === FINAL_ENERGY &&
@@ -180,11 +180,9 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       const asArray = Array.isArray(mapDataColumn)
         ? mapDataColumn
         : [mapDataColumn];
-      const displayNames = asArray
-        .map((c) => CARRIER_CODE_TO_PLOT_METRIC[c])
-        .filter(Boolean);
-      if (displayNames.length > 0) {
-        nextValues['y-metric-to-plot'] = displayNames;
+      const valid = asArray.filter((c) => PLOT_FINAL_ENERGY_CARRIERS.has(c));
+      if (valid.length > 0) {
+        nextValues['y-metric-to-plot'] = valid;
       }
     }
 
