@@ -84,6 +84,14 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const timeline = mapLayerParameters?.timeline;
   const panelTech = mapLayerParameters?.['technology'];
   const panelType = mapLayerParameters?.['panel-type'];
+  // Map-layer `data-column` for lifecycle emissions is the same set of
+  // categories as the plot's `y-category-to-plot` — seed the plot form
+  // with whatever is currently selected on the map.
+  const lifecycleDataColumn = mapLayerParameters?.['data-column'];
+  // Map-layer `whatif_name` (single string) seeds the plot's
+  // `what-if-name` field (MultiChoiceParameter) so the plot opens with
+  // the same scenario already selected.
+  const mapWhatifName = mapLayerParameters?.whatif_name;
 
   const contextValue = Form.useWatch('context', form);
   const setContext = useCallback(() => {
@@ -117,10 +125,44 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       period_end = timeline?.[1] ?? 0;
     }
 
-    form.setFieldsValue({
+    const nextValues = {
       context: { feature, period_start, period_end, solar_panel_types },
-    });
-  }, [form, period, panelTech, panelType, timeline, script]);
+    };
+
+    // Seed plot-lifecycle-emissions' y-category-to-plot from the map layer
+    // selection. The map layer's `data-column` parameter may be a string
+    // (single-choice legacy) or an array (multi-select). Normalise to an
+    // array since the plot's y-category-to-plot is a MultiChoiceParameter.
+    if (script === 'plot-lifecycle-emissions' && lifecycleDataColumn != null) {
+      const asArray = Array.isArray(lifecycleDataColumn)
+        ? lifecycleDataColumn
+        : [lifecycleDataColumn];
+      if (asArray.length > 0) {
+        nextValues['y-category-to-plot'] = asArray;
+      }
+    }
+
+    // Seed `what-if-name` (MultiChoiceParameter on the plot side) from the
+    // map layer's current `whatif_name` (single string). Applied for any
+    // plot — antd form silently holds the value if the plot has no such
+    // field, and picks it up automatically for plots that do.
+    if (mapWhatifName != null && mapWhatifName !== '') {
+      nextValues['what-if-name'] = Array.isArray(mapWhatifName)
+        ? mapWhatifName
+        : [mapWhatifName];
+    }
+
+    form.setFieldsValue(nextValues);
+  }, [
+    form,
+    period,
+    panelTech,
+    panelType,
+    timeline,
+    script,
+    lifecycleDataColumn,
+    mapWhatifName,
+  ]);
 
   // Ensure context is not empty
   useEffect(() => {
