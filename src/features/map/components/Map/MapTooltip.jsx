@@ -1,7 +1,11 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import * as turf from '@turf/turf';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
-import { THERMAL_NETWORK, EMISSIONS_EMBODIED } from 'features/map/constants';
+import {
+  THERMAL_NETWORK,
+  EMISSIONS_EMBODIED,
+  FINAL_ENERGY,
+} from 'features/map/constants';
 
 const formatNumberCompact = (value, { unit = '', decimals = 2 } = {}) => {
   if (value == null || Number.isNaN(value)) return '—';
@@ -77,10 +81,12 @@ const MapTooltip = ({ info }) => {
   const tooltipContent = useMemo(() => {
     if (!object) return null;
 
-    // Stacked ColumnLayer hover for Lifecycle Emissions — each data item
-    // carries `{name, category, rawValue, rawValues, categories}`.
+    // Stacked ColumnLayer hover — both Lifecycle Emissions and Energy
+    // by Carrier. Each data item carries
+    // `{name, category, rawValue, rawValues, categories, layerLabel, unitLabel}`.
     if (
-      layer?.id?.startsWith(`${EMISSIONS_EMBODIED}-`) &&
+      (layer?.id?.startsWith(`${EMISSIONS_EMBODIED}-`) ||
+        layer?.id?.startsWith(`${FINAL_ENERGY}-`)) &&
       object?.categories &&
       object?.rawValues
     ) {
@@ -90,7 +96,9 @@ const MapTooltip = ({ info }) => {
         rawValues,
         categories,
         layerLabel,
+        unitLabel,
       } = object;
+      const unit = unitLabel ?? 'kgCO₂e';
       const total = categories.reduce(
         (sum, c) => sum + Math.max(rawValues[c.name] || 0, 0),
         0,
@@ -129,7 +137,7 @@ const MapTooltip = ({ info }) => {
                       {c.name}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {formatNumberCompact(v, { unit: 'kgCO₂e' })}
+                      {formatNumberCompact(v, { unit })}
                     </td>
                   </tr>
                 );
@@ -142,7 +150,7 @@ const MapTooltip = ({ info }) => {
               >
                 <td style={{ paddingTop: 4 }}>Total</td>
                 <td style={{ textAlign: 'right', paddingTop: 4 }}>
-                  {formatNumberCompact(total, { unit: 'kgCO₂e' })}
+                  {formatNumberCompact(total, { unit })}
                 </td>
               </tr>
             </tbody>
@@ -151,13 +159,17 @@ const MapTooltip = ({ info }) => {
       );
     }
 
-    // HexagonLayer hover for lifecycle-emissions single-category mode.
-    // deck.gl 9 does NOT expose the raw source records on HexagonLayer
-    // hex bins — the hover object is
+    // HexagonLayer hover for single-category mode (both lifecycle-emissions
+    // and energy-by-carrier). deck.gl 9 does NOT expose the raw source
+    // records on HexagonLayer hex bins — the hover object is
     //   { col, row, position, colorValue, elevationValue }
     // so we can only show aggregated stats. `elevationValue` is the sum
     // of `getElevationWeight` (= d.value) across all points in the bin.
-    if (layer?.id === `${EMISSIONS_EMBODIED}-hex`) {
+    const hexLayerId = layer?.id;
+    if (
+      hexLayerId === `${EMISSIONS_EMBODIED}-hex` ||
+      hexLayerId === `${FINAL_ENERGY}-hex`
+    ) {
       const aggregateValue =
         typeof object?.elevationValue === 'number'
           ? object.elevationValue
@@ -165,15 +177,16 @@ const MapTooltip = ({ info }) => {
             ? object.colorValue
             : null;
       if (aggregateValue == null) return null;
+      const isEnergy = hexLayerId === `${FINAL_ENERGY}-hex`;
+      const title = isEnergy ? 'Energy by Carrier' : 'Lifecycle Emissions';
+      const unit = isEnergy ? 'kWh' : 'kgCO₂e';
       return (
         <div className="tooltip-content">
-          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>
-            Lifecycle Emissions
-          </b>
+          <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>{title}</b>
           <div className="tooltip-grid">
             <div>Bin total</div>
             <b style={{ marginLeft: 'auto' }}>
-              {formatNumberCompact(aggregateValue, { unit: 'kgCO₂e' })}
+              {formatNumberCompact(aggregateValue, { unit })}
             </b>
           </div>
         </div>

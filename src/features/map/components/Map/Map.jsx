@@ -413,10 +413,14 @@ const useMapLayers = (onHover = () => {}) => {
         const layerData = mapLayers[name];
         const isStacked = layerData?.properties?.stacked === true;
 
-        if (isStacked && name === EMISSIONS_EMBODIED) {
-          // Multi-category lifecycle emissions: one ColumnLayer per category
-          // with a pre-computed stack base encoded into position.z so the
-          // segments visually sit on top of each other.
+        if (
+          isStacked &&
+          (name === EMISSIONS_EMBODIED || name === FINAL_ENERGY)
+        ) {
+          // Multi-category lifecycle emissions / energy-by-carrier:
+          // one ColumnLayer per category with a pre-computed stack base
+          // encoded into position.z so segments visually sit on top of
+          // each other.
           //
           // ColumnLayer does NOT normalise elevation the way HexagonLayer
           // does (HexagonLayer uses elevationDomain + elevationRange [0,1000]
@@ -431,10 +435,12 @@ const useMapLayers = (onHover = () => {}) => {
             layerData?.properties?.range?.period?.max ||
             layerData?.properties?.range?.total?.max ||
             0;
-          // Protect against division by zero and map to 0..1000 units.
           const ELEVATION_UNITS = 1000;
           const normalize = (v) =>
             stackMax > 0 ? (v / stackMax) * ELEVATION_UNITS : 0;
+          const layerLabelBase =
+            name === FINAL_ENERGY ? 'Energy by Carrier' : 'Lifecycle Emissions';
+          const unitLabel = name === FINAL_ENERGY ? 'kWh' : 'kgCO₂e';
 
           categories.forEach((cat, catIdx) => {
             const catData = entities
@@ -462,7 +468,8 @@ const useMapLayers = (onHover = () => {}) => {
                   rawValue: value,
                   rawValues: values,
                   categories,
-                  layerLabel: 'Lifecycle Emissions',
+                  layerLabel: layerLabelBase,
+                  unitLabel,
                 };
               })
               .filter((d) => d !== null);
