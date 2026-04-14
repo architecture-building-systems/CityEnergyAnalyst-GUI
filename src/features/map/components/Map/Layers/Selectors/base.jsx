@@ -124,7 +124,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
             break;
           }
           case 'choice': {
-            const { depends_on } = parameter;
+            const { depends_on, multi } = parameter;
             element = (
               <ChoiceSelector
                 key={`${name}-${key}`}
@@ -135,6 +135,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                 onChange={_handleChange}
                 layerName={name}
                 dependsOn={depends_on}
+                multi={!!multi}
               />
             );
             break;
@@ -182,7 +183,10 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
       });
 
       // Group consecutive 'choice' selectors into a single flex row so related
-      // dropdowns (e.g. what-if-name + carrier) sit side-by-side.
+      // dropdowns (e.g. what-if-name + emission/category) sit side-by-side.
+      // A pair of choice selectors gets a golden-ratio split (0.618 : 1)
+      // so the second (typically the richer "value" selector) is wider.
+      const GOLDEN = 0.618;
       const groups = [];
       let choiceRun = [];
       const flushChoiceRun = () => {
@@ -190,17 +194,29 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         if (choiceRun.length === 1) {
           groups.push(choiceRun[0]);
         } else {
+          const ratios =
+            choiceRun.length === 2 ? [GOLDEN, 1] : choiceRun.map(() => 1);
           groups.push(
             <div
               key={`${name}-choice-row-${groups.length}`}
               style={{
                 display: 'flex',
-                flexWrap: 'wrap',
                 gap: 12,
                 alignItems: 'center',
               }}
             >
-              {choiceRun}
+              {choiceRun.map((el, i) => (
+                <div
+                  key={el.key ?? i}
+                  style={{
+                    flex: ratios[i],
+                    minWidth: 0,
+                    display: 'flex',
+                  }}
+                >
+                  {el}
+                </div>
+              ))}
             </div>,
           );
         }

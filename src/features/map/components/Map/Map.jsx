@@ -20,7 +20,7 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { COORDINATE_SYSTEM, HexagonLayer } from 'deck.gl';
+import { COORDINATE_SYSTEM, HexagonLayer, ColumnLayer } from 'deck.gl';
 import {
   useCameraOptionsCalculated,
   useMapStore,
@@ -410,25 +410,109 @@ const useMapLayers = (onHover = () => {}) => {
         ].includes(name) &&
         mapLayers?.[name]
       ) {
-        _layers.push(
-          new HexagonLayer({
-            id: `${name}-hex`,
-            data: mapLayers[name].data,
+        const layerData = mapLayers[name];
+        const isStacked = layerData?.properties?.stacked === true;
 
-            extruded: true,
-            getPosition: (d) => d.position,
-            getColorWeight: (d) => d.value,
-            getElevationWeight: (d) => d.value,
-            colorRange: rgbGradientArray,
-            elevationScale: scale,
-            radius: radius,
-            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
-            updateTriggers: {
-              getColor: [range],
-              elevationScale: [scale],
-            },
-          }),
-        );
+        if (isStacked && name === EMISSIONS_EMBODIED) {
+          // Multi-category lifecycle emissions: one ColumnLayer per category
+          // with a pre-computed stack base encoded into position.z so the
+          // segments visually sit on top of each other.
+          //
+          // ColumnLayer does NOT normalise elevation the way HexagonLayer
+          // does (HexagonLayer uses elevationDomain + elevationRange [0,1000]
+          // by default). Raw values may be in the millions, so without
+          // normalisation the columns end up kilometres tall. We normalise
+          // each value to a 0..1000 unit range relative to the largest stack
+          // total in the layer, then apply `elevationScale` on top — this
+          // gives the stacked columns the same visual scale as HexagonLayer.
+          const categories = layerData?.properties?.categories ?? [];
+          const entities = layerData?.data ?? [];
+          const stackMax =
+            layerData?.properties?.range?.period?.max ||
+            layerData?.properties?.range?.total?.max ||
+            0;
+          // Protect against division by zero and map to 0..1000 units.
+          const ELEVATION_UNITS = 1000;
+          const normalize = (v) =>
+            stackMax > 0 ? (v / stackMax) * ELEVATION_UNITS : 0;
+
+          categories.forEach((cat, catIdx) => {
+            const catData = entities
+              .map((entity) => {
+                const values = entity?.values ?? {};
+                const value = values[cat.name] || 0;
+                if (value <= 0) return null;
+                let baseRaw = 0;
+                for (let i = 0; i < catIdx; i += 1) {
+                  baseRaw += Math.max(values[categories[i].name] || 0, 0);
+                }
+                // `position.z` is absolute metres (NOT multiplied by
+                // elevationScale by the layer), so we apply `scale` here to
+                // keep the stack seams aligned with the column tops below.
+                return {
+                  name: entity.name,
+                  position: [
+                    entity.position[0],
+                    entity.position[1],
+                    normalize(baseRaw) * scale,
+                  ],
+                  value: normalize(value),
+                  // Raw data used by the tooltip.
+                  category: cat.name,
+                  rawValue: value,
+                  rawValues: values,
+                  categories,
+                  layerLabel: 'Lifecycle Emissions',
+                };
+              })
+              .filter((d) => d !== null);
+
+            if (!catData.length) return;
+
+            _layers.push(
+              new ColumnLayer({
+                id: `${name}-${cat.name}-col`,
+                data: catData,
+                diskResolution: 12,
+                extruded: true,
+                pickable: true,
+                onHover: onHover,
+                getPosition: (d) => d.position,
+                getElevation: (d) => d.value,
+                getFillColor: cat.rgb ?? [128, 128, 128],
+                elevationScale: scale,
+                radius: radius,
+                updateTriggers: {
+                  getPosition: [scale, stackMax],
+                  getElevation: [stackMax],
+                  elevationScale: [scale],
+                },
+              }),
+            );
+          });
+        } else {
+          _layers.push(
+            new HexagonLayer({
+              id: `${name}-hex`,
+              data: layerData.data,
+
+              extruded: true,
+              pickable: true,
+              onHover: onHover,
+              getPosition: (d) => d.position,
+              getColorWeight: (d) => d.value,
+              getElevationWeight: (d) => d.value,
+              colorRange: rgbGradientArray,
+              elevationScale: scale,
+              radius: radius,
+              elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
+              updateTriggers: {
+                getColor: [range],
+                elevationScale: [scale],
+              },
+            }),
+          );
+        }
       }
     });
 

@@ -174,6 +174,8 @@ export const useMapLegends = () => {
           points: colours?.points,
           range: _range,
           label,
+          stacked: props['stacked'] === true,
+          categories: props['categories'],
         },
       });
     } else setMapLayerLegends(null);

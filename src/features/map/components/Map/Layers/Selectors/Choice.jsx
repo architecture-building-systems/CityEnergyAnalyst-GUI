@@ -95,6 +95,7 @@ const ChoiceSelector = ({
   onChange,
   layerName,
   dependsOn,
+  multi = false,
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
@@ -114,7 +115,11 @@ const ChoiceSelector = ({
     mapLayerParameters,
   );
 
-  const deletable = isDeletableParameter(layerName, parameterName);
+  // Multi-select parameters cannot use the hover-delete UX: the dropdown
+  // is always showing all options so there is no natural "currently
+  // selected" filter, and clicking a trash icon would conflict with
+  // checkbox toggling.
+  const deletable = !multi && isDeletableParameter(layerName, parameterName);
 
   const handleChange = (value) => {
     setSelected(value);
@@ -159,14 +164,22 @@ const ChoiceSelector = ({
 
   useEffect(() => {
     if (choices) {
-      const defaultValue = choices?.default ?? choices.choices?.[0];
+      const rawDefault = choices?.default ?? choices.choices?.[0];
+      // In multi mode the parent expects an array; seed with the single
+      // default so the backend receives [default] on first load and the
+      // single-category branch is used until the user picks more.
+      const initialValue = multi
+        ? rawDefault != null
+          ? [rawDefault?.value ?? rawDefault]
+          : []
+        : (rawDefault?.value ?? rawDefault);
       console.log(
         `[Choice] ${parameterName}: Using default value:`,
-        defaultValue,
+        initialValue,
       );
-      handleChange(defaultValue);
+      handleChange(initialValue);
     } else {
-      handleChange(null);
+      handleChange(multi ? [] : null);
     }
   }, [choices]);
 
@@ -194,21 +207,37 @@ const ChoiceSelector = ({
       }));
   }, [choices, deletable, selected]);
 
+  const selectProps = multi
+    ? { mode: 'multiple', allowClear: false, maxTagCount: 'responsive' }
+    : {};
+
   if (!options?.length) return null;
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+        flex: 1,
+        minWidth: 0,
+      }}
+    >
       <div>
         <b>{label}</b>
       </div>
       <Select
+        {...selectProps}
         value={selected}
         onChange={handleChange}
         options={options}
         placement="topLeft"
-        style={{ minWidth: 200 }}
+        style={{
+          flex: 1,
+          minWidth: 0,
+        }}
         popupMatchSelectWidth={false}
-        styles={{ popup: { root: { overflow: 'hidden', maxWidth: 300 } } }}
+        styles={{ popup: { root: { overflow: 'hidden', maxWidth: 360 } } }}
       />
       {deletable && (
         <DeleteChoiceModal
