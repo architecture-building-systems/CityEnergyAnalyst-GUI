@@ -4,6 +4,7 @@ import { Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { useMapLegends } from 'features/map/hooks/map-layers';
 import { formatNumber } from 'features/map/utils';
+import InfoTooltip from 'components/InfoTooltip';
 
 const ColourRampLegend = ({ label, colours, points, range }) => {
   const [selectedValue, setSelectedValue] = useState(null);
@@ -51,12 +52,16 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       }}
     >
       <b>{label}</b>
-      <Select
-        value={value}
-        onChange={setSelectedValue}
-        defaultValue={0}
-        options={options}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Select
+          style={{ flex: 1, minWidth: 0 }}
+          value={value}
+          onChange={setSelectedValue}
+          defaultValue={0}
+          options={options}
+        />
+        <InfoTooltip tooltipKey="map-layer-range-mode" placement="left" />
+      </div>
       <div
         style={{
           display: 'flex',
