@@ -179,23 +179,44 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
             }
         }
 
-        if (element) rendered.push({ selector, element });
+        if (element) rendered.push({ selector, element, paramKey: key });
       });
 
       // Group consecutive 'choice' selectors into a single flex row so related
       // dropdowns (e.g. what-if-name + emission/category) sit side-by-side.
-      // A pair of choice selectors gets a golden-ratio split (0.618 : 1)
-      // so the second (typically the richer "value" selector) is wider.
+      //
+      // Width rules per parameter key (smaller flex = narrower column).
+      // Keys not in this map default to 1. A pair of "default" selectors
+      // still gets a golden-ratio split (0.618 : 1) so the second (the
+      // richer "value" selector) is wider.
+      const CHOICE_FLEX_OVERRIDES = {
+        // `category` for Operational Emissions is short text
+        // (`operation` / `energy_carrier`) so give it a small fixed flex.
+        category: 0.5,
+      };
       const GOLDEN = 0.618;
       const groups = [];
       let choiceRun = [];
       const flushChoiceRun = () => {
         if (choiceRun.length === 0) return;
         if (choiceRun.length === 1) {
-          groups.push(choiceRun[0]);
+          groups.push(choiceRun[0].element);
         } else {
-          const ratios =
-            choiceRun.length === 2 ? [GOLDEN, 1] : choiceRun.map(() => 1);
+          const hasOverride = choiceRun.some(
+            (c) => CHOICE_FLEX_OVERRIDES[c.paramKey] != null,
+          );
+          let ratios;
+          if (hasOverride) {
+            ratios = choiceRun.map((c) =>
+              CHOICE_FLEX_OVERRIDES[c.paramKey] != null
+                ? CHOICE_FLEX_OVERRIDES[c.paramKey]
+                : 1,
+            );
+          } else if (choiceRun.length === 2) {
+            ratios = [GOLDEN, 1];
+          } else {
+            ratios = choiceRun.map(() => 1);
+          }
           groups.push(
             <div
               key={`${name}-choice-row-${groups.length}`}
@@ -205,16 +226,16 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
                 alignItems: 'center',
               }}
             >
-              {choiceRun.map((el, i) => (
+              {choiceRun.map((c, i) => (
                 <div
-                  key={el.key ?? i}
+                  key={c.element.key ?? i}
                   style={{
                     flex: ratios[i],
                     minWidth: 0,
                     display: 'flex',
                   }}
                 >
-                  {el}
+                  {c.element}
                 </div>
               ))}
             </div>,
@@ -222,9 +243,9 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         }
         choiceRun = [];
       };
-      rendered.forEach(({ selector: s, element }) => {
+      rendered.forEach(({ selector: s, element, paramKey }) => {
         if (s === 'choice') {
-          choiceRun.push(element);
+          choiceRun.push({ element, paramKey });
         } else {
           flushChoiceRun();
           groups.push(element);

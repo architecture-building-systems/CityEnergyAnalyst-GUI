@@ -3,7 +3,11 @@ import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
-import { EMISSIONS_EMBODIED, FINAL_ENERGY } from 'features/map/constants';
+import {
+  EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
+  FINAL_ENERGY,
+} from 'features/map/constants';
 import {
   VIEW_PLOT_RESULTS,
   PLOT_LABELS,
@@ -101,9 +105,12 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const panelType = mapLayerParameters?.['panel-type'];
   // Map-layer `data-column` — meaning depends on which map layer is
   // active. For lifecycle-emissions it's the emission categories; for
-  // energy-by-carrier it's the carriers. We seed the plot form's
-  // corresponding field based on the active map layer.
+  // energy-by-carrier it's the carriers; for operational-emissions it's
+  // either operation services or carriers (see `mapOpCategory` below).
   const mapDataColumn = mapLayerParameters?.['data-column'];
+  // Operational-emissions map layer has a dedicated `category` param
+  // (operation vs energy_carrier) that we mirror to the plot form.
+  const mapOpCategory = mapLayerParameters?.category;
   // Map-layer `whatif_name` (single string) seeds the plot's
   // `what-if-name` field (MultiChoiceParameter) so the plot opens with
   // the same scenario already selected.
@@ -181,6 +188,28 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       }
     }
 
+    // Seed plot-operational-emissions from the Operational Emissions map
+    // layer. `category` drives which underlying multi-choice field the
+    // values flow into (`operation-services` vs `energy-carriers`).
+    if (
+      script === 'plot-operational-emissions' &&
+      selectedMapLayer === EMISSIONS_OPERATIONAL &&
+      mapDataColumn != null
+    ) {
+      const asArray = Array.isArray(mapDataColumn)
+        ? mapDataColumn
+        : [mapDataColumn];
+      if (asArray.length > 0) {
+        if (mapOpCategory === 'energy_carrier') {
+          nextValues['y-category-to-plot'] = 'energy_carrier';
+          nextValues['energy-carriers'] = asArray;
+        } else {
+          nextValues['y-category-to-plot'] = 'operation';
+          nextValues['operation-services'] = asArray;
+        }
+      }
+    }
+
     // Seed `what-if-name` (MultiChoiceParameter on the plot side) from the
     // map layer's current `whatif_name` (single string). Applied for any
     // plot — antd form silently holds the value if the plot has no such
@@ -201,6 +230,7 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     script,
     selectedMapLayer,
     mapDataColumn,
+    mapOpCategory,
     mapWhatifName,
   ]);
 

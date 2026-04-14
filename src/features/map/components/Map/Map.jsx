@@ -415,7 +415,9 @@ const useMapLayers = (onHover = () => {}) => {
 
         if (
           isStacked &&
-          (name === EMISSIONS_EMBODIED || name === FINAL_ENERGY)
+          (name === EMISSIONS_EMBODIED ||
+            name === EMISSIONS_OPERATIONAL ||
+            name === FINAL_ENERGY)
         ) {
           // Multi-category lifecycle emissions / energy-by-carrier:
           // one ColumnLayer per category with a pre-computed stack base
@@ -438,8 +440,14 @@ const useMapLayers = (onHover = () => {}) => {
           const ELEVATION_UNITS = 1000;
           const normalize = (v) =>
             stackMax > 0 ? (v / stackMax) * ELEVATION_UNITS : 0;
-          const layerLabelBase =
-            name === FINAL_ENERGY ? 'Energy by Carrier' : 'Lifecycle Emissions';
+          let layerLabelBase;
+          if (name === FINAL_ENERGY) {
+            layerLabelBase = 'Energy by Carrier';
+          } else if (name === EMISSIONS_OPERATIONAL) {
+            layerLabelBase = 'Operational Emissions';
+          } else {
+            layerLabelBase = 'Lifecycle Emissions';
+          }
           const unitLabel = name === FINAL_ENERGY ? 'kWh' : 'kgCO₂e';
 
           categories.forEach((cat, catIdx) => {

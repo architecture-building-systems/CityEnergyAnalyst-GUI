@@ -4,6 +4,7 @@ import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
   THERMAL_NETWORK,
   EMISSIONS_EMBODIED,
+  EMISSIONS_OPERATIONAL,
   FINAL_ENERGY,
 } from 'features/map/constants';
 
@@ -81,11 +82,12 @@ const MapTooltip = ({ info }) => {
   const tooltipContent = useMemo(() => {
     if (!object) return null;
 
-    // Stacked ColumnLayer hover — both Lifecycle Emissions and Energy
-    // by Carrier. Each data item carries
+    // Stacked ColumnLayer hover — Lifecycle Emissions, Operational
+    // Emissions, and Energy by Carrier. Each data item carries
     // `{name, category, rawValue, rawValues, categories, layerLabel, unitLabel}`.
     if (
       (layer?.id?.startsWith(`${EMISSIONS_EMBODIED}-`) ||
+        layer?.id?.startsWith(`${EMISSIONS_OPERATIONAL}-`) ||
         layer?.id?.startsWith(`${FINAL_ENERGY}-`)) &&
       object?.categories &&
       object?.rawValues
@@ -159,15 +161,16 @@ const MapTooltip = ({ info }) => {
       );
     }
 
-    // HexagonLayer hover for single-category mode (both lifecycle-emissions
-    // and energy-by-carrier). deck.gl 9 does NOT expose the raw source
-    // records on HexagonLayer hex bins — the hover object is
-    //   { col, row, position, colorValue, elevationValue }
+    // HexagonLayer hover for single-category mode (lifecycle-emissions,
+    // operational-emissions, energy-by-carrier). deck.gl 9 does NOT
+    // expose the raw source records on HexagonLayer hex bins — the
+    // hover object is { col, row, position, colorValue, elevationValue }
     // so we can only show aggregated stats. `elevationValue` is the sum
     // of `getElevationWeight` (= d.value) across all points in the bin.
     const hexLayerId = layer?.id;
     if (
       hexLayerId === `${EMISSIONS_EMBODIED}-hex` ||
+      hexLayerId === `${EMISSIONS_OPERATIONAL}-hex` ||
       hexLayerId === `${FINAL_ENERGY}-hex`
     ) {
       const aggregateValue =
@@ -177,9 +180,18 @@ const MapTooltip = ({ info }) => {
             ? object.colorValue
             : null;
       if (aggregateValue == null) return null;
-      const isEnergy = hexLayerId === `${FINAL_ENERGY}-hex`;
-      const title = isEnergy ? 'Energy by Carrier' : 'Lifecycle Emissions';
-      const unit = isEnergy ? 'kWh' : 'kgCO₂e';
+      let title;
+      let unit;
+      if (hexLayerId === `${FINAL_ENERGY}-hex`) {
+        title = 'Energy by Carrier';
+        unit = 'kWh';
+      } else if (hexLayerId === `${EMISSIONS_OPERATIONAL}-hex`) {
+        title = 'Operational Emissions';
+        unit = 'kgCO₂e';
+      } else {
+        title = 'Lifecycle Emissions';
+        unit = 'kgCO₂e';
+      }
       return (
         <div className="tooltip-content">
           <b style={{ fontSize: '1.2em', marginBottom: '4px' }}>{title}</b>
