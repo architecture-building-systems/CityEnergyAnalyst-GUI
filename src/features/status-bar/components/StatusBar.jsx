@@ -337,41 +337,46 @@ const JobStatusBar = () => {
             return;
           }
 
-          // Check for structured simulation progress markers
-          if (data.message.startsWith('{"__cea_progress__"')) {
-            try {
-              const progress = JSON.parse(data.message);
-              const store = useProjectStore.getState();
-              if (progress.__cea_progress__ === 'pathway-state-started') {
-                store.setSimulationYearStarted(
-                  progress.pathway_name,
-                  progress.year,
-                );
-              } else if (
-                progress.__cea_progress__ === 'pathway-state-simulated'
-              ) {
-                store.setSimulationYearCompleted(
-                  progress.pathway_name,
-                  progress.year,
-                );
+          // The backend worker coalesces multiple print() calls into a single
+          // socket message, so progress markers can arrive mixed with regular
+          // log lines. Scan every line for the marker instead of checking the
+          // message prefix.
+          const rawLines = data.message.split(/\r?\n/);
+          const nonProgressLines = [];
+          for (const rawLine of rawLines) {
+            const trimmed = rawLine.trim();
+            if (!trimmed) continue;
+            if (trimmed.startsWith('{"__cea_progress__"')) {
+              try {
+                const progress = JSON.parse(trimmed);
+                const store = useProjectStore.getState();
+                if (progress.__cea_progress__ === 'pathway-state-started') {
+                  store.setSimulationYearStarted(
+                    progress.pathway_name,
+                    progress.year,
+                  );
+                } else if (
+                  progress.__cea_progress__ === 'pathway-state-simulated'
+                ) {
+                  store.setSimulationYearCompleted(
+                    progress.pathway_name,
+                    progress.year,
+                  );
+                }
+              } catch {
+                /* not valid JSON, fall through as regular log line */
+                nonProgressLines.push(trimmed);
               }
-            } catch {
-              /* not valid JSON, ignore */
+              continue;
             }
+            nonProgressLines.push(trimmed);
+          }
+
+          if (nonProgressLines.length === 0) {
             return;
           }
 
-          const lines = data.message
-            .split(/\r?\n/)
-            .map((x) => x.trim())
-            .filter((x) => x.length > 0);
-
-          // Ensure lines array is not empty before accessing
-          if (lines.length === 0) {
-            return;
-          }
-
-          const last_line = lines[lines.length - 1];
+          const last_line = nonProgressLines[nonProgressLines.length - 1];
 
           // Only call setMessage if both jobid and last_line exist
           if (data.jobid && last_line) {
