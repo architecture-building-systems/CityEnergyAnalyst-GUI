@@ -8,6 +8,7 @@ import {
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   FINAL_ENERGY,
+  RENEWABLE_ENERGY_POTENTIALS,
 } from 'features/map/constants';
 import {
   VIEW_PLOT_RESULTS,
@@ -34,6 +35,17 @@ const PLOT_DEMAND_SERVICES = new Set([
   'space_cooling',
   'domestic_hot_water',
 ]);
+const PLOT_SOLAR_SURFACES = new Set([
+  'roofs_top',
+  'walls_north',
+  'walls_east',
+  'walls_south',
+  'walls_west',
+]);
+// PVT on the Renewable Energy Potentials map layer encodes the PV + SC pair
+// as a single compound dropdown value. Kept in sync with
+// `_PVT_PANEL_TYPE_SEP` in the backend layer class.
+const PVT_PANEL_TYPE_SEP = ' + ';
 
 const PlotButton = ({ plotKey, onSelected }) => {
   const script = VIEW_PLOT_RESULTS[plotKey];
@@ -122,6 +134,9 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   // `what-if-name` field (MultiChoiceParameter) so the plot opens with
   // the same scenario already selected.
   const mapWhatifName = mapLayerParameters?.whatif_name;
+  // Map-layer `surface` (multi-choice) on the Renewable Energy Potentials
+  // layer seeds plot-solar's `y-metric-to-plot` field.
+  const mapSurface = mapLayerParameters?.surface;
 
   const contextValue = Form.useWatch('context', form);
   const setContext = useCallback(() => {
@@ -139,6 +154,18 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       } else if (panelTech === 'SC') {
         feature = 'sc';
         solar_panel_types.sc = panelType;
+      } else if (panelTech === 'PVT') {
+        // PVT encodes the PV + SC pair as a compound "<PV> + <SC>"
+        // dropdown value (see SolarPotentialsLayer._PVT_PANEL_TYPE_SEP).
+        // Split it so the plot form receives the two halves separately.
+        feature = 'pvt';
+        if (typeof panelType === 'string' && panelType.includes(PVT_PANEL_TYPE_SEP)) {
+          const [pvCode, scCode] = panelType
+            .split(PVT_PANEL_TYPE_SEP)
+            .map((s) => s.trim());
+          if (pvCode) solar_panel_types.pv = pvCode;
+          if (scCode) solar_panel_types.sc = scCode;
+        }
       }
     }
 
@@ -210,6 +237,22 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
       }
     }
 
+    // Seed plot-solar's `y-metric-to-plot` from the Renewable Energy
+    // Potentials map layer's `surface` multi-choice. Both sides use the
+    // same surface names so we pass through, filtering only for values
+    // the plot form recognises.
+    if (
+      script === 'plot-solar' &&
+      selectedMapLayer === RENEWABLE_ENERGY_POTENTIALS &&
+      mapSurface != null
+    ) {
+      const asArray = Array.isArray(mapSurface) ? mapSurface : [mapSurface];
+      const valid = asArray.filter((s) => PLOT_SOLAR_SURFACES.has(s));
+      if (valid.length > 0) {
+        nextValues['y-metric-to-plot'] = valid;
+      }
+    }
+
     // Seed plot-operational-emissions from the Operational Emissions map
     // layer. `category` drives which underlying multi-choice field the
     // values flow into (`operation-services` vs `energy-carriers`).
@@ -254,6 +297,7 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     mapDataColumn,
     mapOpCategory,
     mapWhatifName,
+    mapSurface,
   ]);
 
   // Ensure context is not empty
