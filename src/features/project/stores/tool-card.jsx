@@ -11,6 +11,7 @@ export const useToolCardStore = create((set, get) => ({
   toolType: null,
   selectedTool: null,
   selectedPlotTool: null,
+  plotToolPrefill: null,
   setToolType: (toolType) => {
     // Prevent opening of building info tool if building selection is active
     if (toolType === toolTypes.BUILDING_INFO) {
@@ -26,7 +27,8 @@ export const useToolCardStore = create((set, get) => ({
   setBuildingLifecycleData: (data) => set({ buildingLifecycleData: data }),
   setVisiblePathways: (pathways) => set({ visiblePathways: pathways }),
   clearBuildingLifecycleData: () => set({ buildingLifecycleData: null }),
-  closeToolCard: () => set({ toolType: null, buildingLifecycleData: null }),
+  closeToolCard: () =>
+    set({ toolType: null, buildingLifecycleData: null, plotToolPrefill: null }),
   toggleToolType: (type) => {
     const { toolType, setToolType } = get();
     toolType !== type ? setToolType(type) : setToolType(null);
@@ -35,10 +37,11 @@ export const useToolCardStore = create((set, get) => ({
     set({ selectedTool: tool });
     get().setToolType(toolTypes.TOOLS);
   },
-  selectPlotTool: (tool) => {
-    set({ selectedPlotTool: tool });
+  selectPlotTool: (tool, prefill = null) => {
+    set({ selectedPlotTool: tool, plotToolPrefill: prefill });
     get().setToolType(toolTypes.MAP_LAYERS);
   },
+  clearPlotToolPrefill: () => set({ plotToolPrefill: null }),
 }));
 
 export const useToolType = () => useToolCardStore((state) => state.toolType);

@@ -22,6 +22,7 @@ import {
   PLOT_SCRIPTS,
   VIEW_MAP_RESULTS,
   VIEW_TOOL_RESULTS,
+  buildPlotToolPrefillFromJob,
 } from 'features/plots/constants';
 import { useToolCardStore } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
@@ -222,6 +223,7 @@ const JobStatusBar = () => {
                       notification.destroy(key);
                       depsRef.current.selectPlotTool(
                         VIEW_TOOL_RESULTS[job.script],
+                        buildPlotToolPrefillFromJob(job),
                       );
                     }}
                   >

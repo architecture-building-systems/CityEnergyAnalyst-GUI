@@ -1,7 +1,7 @@
 import Tool from 'features/tools/components/Tools/Tool';
 import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
   DEMAND,
@@ -14,6 +14,7 @@ import {
   PLOT_LABELS,
   PLOT_GROUPS,
 } from 'features/plots/constants';
+import { useToolCardStore } from 'features/project/stores/tool-card';
 import './tool-choices.css';
 
 // Both the plot forms and the map layers now use snake_case display
@@ -104,6 +105,10 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const selectedMapLayer = useSelectedMapLayer();
+  const plotToolPrefill = useToolCardStore((state) => state.plotToolPrefill);
+  const clearPlotToolPrefill = useToolCardStore(
+    (state) => state.clearPlotToolPrefill,
+  );
 
   // FIXME: Hardcoded for now.
   const period = mapLayerParameters?.period;
@@ -256,6 +261,35 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     mapWhatifName,
   ]);
 
+  // One-shot prefill from the caller that opened this plot tool (e.g.
+  // "View Results" on a just-completed pathway-simulations job seeds the
+  // pathway name). Must be applied AFTER `useFormReset` has reset the
+  // form to backend defaults, which is why we piggyback on the same
+  // `onParametersLoaded` callback that re-runs `setContext`. A ref guards
+  // against repeat application when unrelated deps change setContext.
+  const appliedPrefillRef = useRef(null);
+  useEffect(() => {
+    // Reset the applied marker whenever the plot script changes so a new
+    // tool session can consume a new prefill.
+    appliedPrefillRef.current = null;
+  }, [script]);
+
+  const handleParametersLoaded = useCallback(
+    (_params, { recheck } = {}) => {
+      setContext();
+      if (plotToolPrefill && appliedPrefillRef.current !== plotToolPrefill) {
+        form.setFieldsValue(plotToolPrefill);
+        appliedPrefillRef.current = plotToolPrefill;
+        clearPlotToolPrefill();
+        // Re-run the tool validation cycle so the stale error from the
+        // pre-seeding pass is cleared and the prefilled values are
+        // re-validated against the now-loaded choices.
+        recheck?.();
+      }
+    },
+    [setContext, plotToolPrefill, clearPlotToolPrefill, form],
+  );
+
   // Ensure context is not empty
   useEffect(() => {
     if (Object.keys(contextValue ?? {}).length === 0) setContext();
@@ -280,10 +314,11 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
         script={script}
         onToolSelected={onToolSelected}
         form={form}
-        // Re-seed map-layer-backed form fields AFTER the Tool has loaded
-        // its parameters and reset the form to the backend defaults,
-        // otherwise `setContext`'s values get wiped by `useFormReset`.
-        onParametersLoaded={setContext}
+        // Re-seed map-layer-backed form fields AND apply any one-shot
+        // prefill AFTER the Tool has loaded its parameters and reset the
+        // form to the backend defaults, otherwise these values get wiped
+        // by `useFormReset`.
+        onParametersLoaded={handleParametersLoaded}
       />
     </ConfigProvider>
   );

@@ -68,18 +68,6 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
     recheckInputs,
   } = useToolParams(script, form, onValidationError, onParametersChange);
 
-  // Fire `onParametersLoaded` after `useToolParams` has finished (so after
-  // its internal `useFormReset` has reset the form fields to their backend
-  // defaults). Declaration order matters: this effect is intentionally
-  // placed AFTER `useToolParams` so React's commit-phase ordering runs it
-  // last. Parents can use this hook to re-seed form values on top of the
-  // reset (e.g. `PlotTool` seeds `y-category-to-plot` from the map).
-  useEffect(() => {
-    if (params && onParametersLoaded) {
-      onParametersLoaded(params);
-    }
-  }, [params, onParametersLoaded]);
-
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
   const isSaving =
@@ -109,6 +97,21 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
     setToolError(null);
     recheckInputs();
   }, [recheckInputs]);
+
+  // Fire `onParametersLoaded` after `useToolParams` has finished (so after
+  // its internal `useFormReset` has reset the form fields to their backend
+  // defaults). Declaration order matters: this effect is intentionally
+  // placed AFTER `useToolParams` so React's commit-phase ordering runs it
+  // last. Parents can use this hook to re-seed form values on top of the
+  // reset (e.g. `PlotTool` seeds `y-category-to-plot` from the map, and
+  // applies one-shot prefills). The second argument exposes `recheck` so
+  // the parent can re-run validation after seeding, clearing any stale
+  // error set by the pre-seeding validation pass.
+  useEffect(() => {
+    if (params && onParametersLoaded) {
+      onParametersLoaded(params, { recheck: handleReCheck });
+    }
+  }, [params, onParametersLoaded, handleReCheck]);
 
   if (script == null) return <ToolChoices onSelected={onToolSelected} />;
 

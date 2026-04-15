@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import socket, { waitForConnection } from 'lib/socket';
 import { apiClient } from 'lib/api/axios';
-import { VIEW_TOOL_RESULTS } from 'features/plots/constants';
+import {
+  VIEW_TOOL_RESULTS,
+  buildPlotToolPrefillFromJob,
+} from 'features/plots/constants';
 import { useToolCardStore } from 'features/project/stores/tool-card';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
@@ -107,7 +110,10 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
             type="primary"
             onClick={() => {
               setVisible(false);
-              selectPlotTool(VIEW_TOOL_RESULTS[job.script]);
+              selectPlotTool(
+                VIEW_TOOL_RESULTS[job.script],
+                buildPlotToolPrefillFromJob(job),
+              );
             }}
           >
             View Results

@@ -94,6 +94,18 @@ export const VIEW_TOOL_RESULTS = {
   'pathway-simulations': 'plot-pathway-emission-timeline',
 };
 
+// Build a prefill patch for the target plot form from a completed job's
+// parameters. Returns null when nothing worth seeding is available.
+export const buildPlotToolPrefillFromJob = (job) => {
+  if (!job?.parameters) return null;
+  if (job.script === 'pathway-simulations') {
+    const name = job.parameters['existing-pathway-name'];
+    if (!name) return null;
+    return { 'existing-pathway-names': [name] };
+  }
+  return null;
+};
+
 // Labels matching scripts.yml (without the "Plot - " prefix)
 export const PLOT_LABELS = {
   [DEMAND]: 'Building Energy Demand',
