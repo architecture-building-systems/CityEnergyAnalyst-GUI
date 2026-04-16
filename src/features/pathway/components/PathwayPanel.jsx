@@ -17,6 +17,7 @@ import { getMainUseType } from 'features/map/utils/constructionColors';
 import {
   BinAnimationIcon,
   CreateNewIcon,
+  DuplicateIcon,
   RefreshIcon,
   RunIcon,
 } from 'assets/icons';
@@ -30,6 +31,7 @@ import {
 } from 'features/project/stores/tool-card';
 
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
+import DuplicatePathwayModal from 'features/project/components/modals/DuplicatePathwayModal';
 
 import {
   deleteInterventionTemplate,
@@ -292,6 +294,7 @@ const PathwayOptionWithCheckbox = ({
   checked,
   onToggle,
   onDelete,
+  onDuplicate,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -337,14 +340,23 @@ const PathwayOptionWithCheckbox = ({
         </div>
       </div>
       {isHovered && (
-        <BinAnimationIcon
-          style={{ padding: '2px 8px' }}
-          className="cea-job-info-icon danger shake"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete?.(pathwayName);
-          }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <DuplicateIcon
+            style={{ padding: '2px 4px', cursor: 'pointer', opacity: 0.55 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate?.(pathwayName);
+            }}
+          />
+          <BinAnimationIcon
+            style={{ padding: '2px 4px' }}
+            className="cea-job-info-icon danger shake"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(pathwayName);
+            }}
+          />
+        </div>
       )}
     </div>
   );
@@ -356,6 +368,7 @@ const PathwaySelect = ({
   overviewPathways,
   onToggleVisible,
   onDeletePathway,
+  onDuplicatePathway,
   onCreatePathway,
   loading,
   allBaked,
@@ -378,11 +391,12 @@ const PathwaySelect = ({
           checked={visibleSet.has(pathwayName)}
           onToggle={onToggleVisible}
           onDelete={onDeletePathway}
+          onDuplicate={onDuplicatePathway}
         />
       ),
       value: pathwayName,
     }));
-  }, [sortedPathways, visibleSet, onToggleVisible, onDeletePathway]);
+  }, [sortedPathways, visibleSet, onToggleVisible, onDeletePathway, onDuplicatePathway]);
 
   const hasPathways = overviewPathways.length > 0;
 
@@ -1164,6 +1178,23 @@ const PathwayPanel = ({
     });
   };
 
+  const [duplicateTarget, setDuplicateTarget] = useState(null);
+
+  const handleDuplicatePathwayByName = (pathwayName) => {
+    setDuplicateTarget(pathwayName);
+  };
+
+  const handleDuplicated = useCallback(
+    (newName) => {
+      setDuplicateTarget(null);
+      setVisiblePathways((prev) =>
+        prev.includes(newName) ? prev : [...prev, newName],
+      );
+      void refreshPathwayData({ preferredPathway: newName });
+    },
+    [refreshPathwayData],
+  );
+
   const handleStartCreatePathway = () => {
     Modal.confirm({
       title: 'Create Pathway',
@@ -1377,7 +1408,22 @@ const PathwayPanel = ({
     }
   }, [visibleOverviewPathways, selectedPathway]);
 
+  const allPathwayNames = useMemo(
+    () => overviewPathways.map((p) => p.pathway_name),
+    [overviewPathways],
+  );
+
   return (
+    <>
+    <DuplicatePathwayModal
+      visible={duplicateTarget != null}
+      setVisible={(v) => {
+        if (!v) setDuplicateTarget(null);
+      }}
+      currentPathwayName={duplicateTarget ?? ''}
+      existingPathwayNames={allPathwayNames}
+      onDuplicated={handleDuplicated}
+    />
     <div
       style={{
         minHeight: 290,
@@ -1418,6 +1464,7 @@ const PathwayPanel = ({
             overviewPathways={overviewPathways}
             onToggleVisible={handleToggleVisible}
             onDeletePathway={handleDeletePathwayByName}
+            onDuplicatePathway={handleDuplicatePathwayByName}
             onCreatePathway={handleStartCreatePathway}
             loading={loadingOverview}
             allBaked={
@@ -2182,6 +2229,7 @@ const PathwayPanel = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 
