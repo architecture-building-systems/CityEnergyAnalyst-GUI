@@ -147,13 +147,16 @@ const CategoryLegend = ({ label, categories, range, info }) => {
       <div
         className="cea-legend-swatch-list"
         style={{
+          // Show at most 5 rows; anything more becomes scrollable. Row
+          // height = 16px swatch + 4px marginBottom = 20px per row, so 5
+          // rows cap at 100px.
           display: 'block',
-          maxHeight: 160,
-          overflowY: 'auto',
-          paddingRight: 4,
-          border: '1px solid rgba(0,0,0,0.06)',
-          borderRadius: 6,
-          padding: 6,
+          height: categories.length > 5 ? 100 : 'auto',
+          maxHeight: 100,
+          overflowY: categories.length > 5 ? 'scroll' : 'visible',
+          padding: 0,
+          boxSizing: 'border-box',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {categories.map((cat) => (
