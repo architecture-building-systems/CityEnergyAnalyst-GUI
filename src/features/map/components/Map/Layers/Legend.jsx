@@ -143,7 +143,7 @@ const CategoryLegend = ({ label, categories, range, info }) => {
     >
       <b>{label}</b>
       <InfoRows info={info} />
-      <b style={{ fontWeight: 500, opacity: 0.75 }}>Surface</b>
+      <b style={{ fontWeight: 500, opacity: 0.75 }}>surface</b>
       <div
         className="cea-legend-swatch-list"
         style={{
