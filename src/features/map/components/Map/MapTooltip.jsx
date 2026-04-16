@@ -123,6 +123,7 @@ const MapTooltip = ({ info }) => {
               {categories.map((c) => {
                 const v = rawValues[c.name] || 0;
                 const isHovered = c.name === hoveredCategory;
+                const displayName = c.label ?? c.name;
                 return (
                   <tr
                     key={c.name}
@@ -141,7 +142,7 @@ const MapTooltip = ({ info }) => {
                           border: '1px solid rgba(0,0,0,0.2)',
                         }}
                       />
-                      {c.name}
+                      {displayName}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {formatNumberCompact(v, { unit })}
