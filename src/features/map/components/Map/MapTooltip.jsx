@@ -7,6 +7,7 @@ import {
   EMISSIONS_OPERATIONAL,
   FINAL_ENERGY,
   DEMAND,
+  RENEWABLE_ENERGY_POTENTIALS,
 } from 'features/map/constants';
 
 const formatNumberCompact = (value, { unit = '', decimals = 2 } = {}) => {
@@ -84,13 +85,15 @@ const MapTooltip = ({ info }) => {
     if (!object) return null;
 
     // Stacked ColumnLayer hover — Lifecycle Emissions, Operational
-    // Emissions, Energy by Carrier, and End-use Demand. Each data item
-    // carries `{name, category, rawValue, rawValues, categories, layerLabel, unitLabel}`.
+    // Emissions, Energy by Carrier, End-use Demand, and Renewable Energy
+    // Potentials. Each data item carries `{name, category, rawValue,
+    // rawValues, categories, layerLabel, unitLabel}`.
     if (
       (layer?.id?.startsWith(`${EMISSIONS_EMBODIED}-`) ||
         layer?.id?.startsWith(`${EMISSIONS_OPERATIONAL}-`) ||
         layer?.id?.startsWith(`${FINAL_ENERGY}-`) ||
-        layer?.id?.startsWith(`${DEMAND}-`)) &&
+        layer?.id?.startsWith(`${DEMAND}-`) ||
+        layer?.id?.startsWith(`${RENEWABLE_ENERGY_POTENTIALS}-`)) &&
       object?.categories &&
       object?.rawValues
     ) {
@@ -120,6 +123,7 @@ const MapTooltip = ({ info }) => {
               {categories.map((c) => {
                 const v = rawValues[c.name] || 0;
                 const isHovered = c.name === hoveredCategory;
+                const displayName = c.label ?? c.name;
                 return (
                   <tr
                     key={c.name}
@@ -138,7 +142,7 @@ const MapTooltip = ({ info }) => {
                           border: '1px solid rgba(0,0,0,0.2)',
                         }}
                       />
-                      {c.name}
+                      {displayName}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {formatNumberCompact(v, { unit })}
@@ -174,7 +178,8 @@ const MapTooltip = ({ info }) => {
       hexLayerId === `${EMISSIONS_EMBODIED}-hex` ||
       hexLayerId === `${EMISSIONS_OPERATIONAL}-hex` ||
       hexLayerId === `${FINAL_ENERGY}-hex` ||
-      hexLayerId === `${DEMAND}-hex`
+      hexLayerId === `${DEMAND}-hex` ||
+      hexLayerId === `${RENEWABLE_ENERGY_POTENTIALS}-hex`
     ) {
       const aggregateValue =
         typeof object?.elevationValue === 'number'
@@ -193,6 +198,9 @@ const MapTooltip = ({ info }) => {
         unit = 'kgCO₂e';
       } else if (hexLayerId === `${DEMAND}-hex`) {
         title = 'End-use Demand';
+        unit = 'kWh';
+      } else if (hexLayerId === `${RENEWABLE_ENERGY_POTENTIALS}-hex`) {
+        title = 'Renewable Energy Potentials';
         unit = 'kWh';
       } else {
         title = 'Lifecycle Emissions';
