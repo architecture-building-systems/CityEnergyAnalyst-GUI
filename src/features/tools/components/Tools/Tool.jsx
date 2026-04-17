@@ -65,7 +65,6 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
     isFetching,
     fetchError: error,
     inputError,
-    inputWarnings,
     recheckInputs,
   } = useToolParams(script, form, onValidationError, onParametersChange);
 
@@ -212,7 +211,6 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
                   script={script}
                   setError={setToolError}
                   onValidationError={onValidationError}
-                  inputWarnings={inputWarnings}
                 />
               </div>
               <Button

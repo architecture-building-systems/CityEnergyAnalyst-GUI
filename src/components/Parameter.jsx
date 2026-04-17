@@ -67,6 +67,7 @@ const useParameterAsyncValidation = ({
   nullable,
 }) => {
   const timerRef = useRef(null);
+  const cancelRef = useRef(null);
 
   const validator = useCallback(
     (_, fieldValue) => {
@@ -78,12 +79,15 @@ const useParameterAsyncValidation = ({
       )
         return Promise.resolve();
 
-      // Debounce: cancel any pending validation, wait 400ms before
-      // hitting the backend so per-keystroke typing doesn't flood.
+      // Cancel previous debounced validation so antd's
+      // form.validateFields() never hangs on an orphaned promise.
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (cancelRef.current) cancelRef.current();
 
       return new Promise((resolve, reject) => {
+        cancelRef.current = resolve;
         timerRef.current = setTimeout(async () => {
+          cancelRef.current = null;
           try {
             const formValues = form.getFieldsValue();
             const response = await apiClient.post(
@@ -715,7 +719,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           help={help}
           initialValue={value}
           rules={[{ validator: validatorAsync }]}
-          validateTrigger="onBlur"
+          validateTrigger={['onChange', 'onBlur']}
           dependencies={parameter.depends_on || []}
           hasFeedback
         >

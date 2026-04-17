@@ -5,6 +5,7 @@ import { animated } from '@react-spring/web';
 import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
+import { apiClient } from 'lib/api/axios';
 import { getFormValues } from 'features/tools/utils';
 import {
   useSetDefaultToolParamsMutation,
@@ -12,6 +13,11 @@ import {
 } from 'features/tools/hooks/mutations';
 import { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
+
+const COLLISION_FIELDS = {
+  'network-layout': 'network-name',
+  'final-energy': 'what-if-name',
+};
 
 export const ToolFormButtons = ({
   form,
@@ -21,7 +27,6 @@ export const ToolFormButtons = ({
   disabled = false,
   setError,
   onValidationError,
-  inputWarnings = [],
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
@@ -112,17 +117,37 @@ export const ToolFormButtons = ({
     }
   };
 
-  const handleRunScript = () => {
-    if (inputWarnings.length > 0) {
-      const messages = inputWarnings.map((w) => w.message ?? w);
-      Modal.confirm({
-        title: 'Overwrite existing results?',
-        content: messages.join('\n'),
-        okText: 'Continue',
-        cancelText: 'Cancel',
-        onOk: doRun,
-      });
-      return;
+  const handleRunScript = async () => {
+    const fieldName = COLLISION_FIELDS[script];
+    if (fieldName) {
+      const formValues = form.getFieldsValue();
+      const value = formValues[fieldName];
+      if (value) {
+        try {
+          const resp = await apiClient.post(
+            `/api/tools/${script}/validate-field`,
+            {
+              parameter_name: fieldName,
+              value,
+              form_values: formValues,
+            },
+          );
+          const warnings = resp.data?.warnings ?? [];
+          if (warnings.length > 0) {
+            const messages = warnings.map((w) => w.message ?? w);
+            Modal.confirm({
+              title: 'Overwrite existing results?',
+              content: messages.join('\n'),
+              okText: 'Continue',
+              cancelText: 'Cancel',
+              onOk: doRun,
+            });
+            return;
+          }
+        } catch {
+          // Validation error — doRun will catch it via form validation
+        }
+      }
     }
     doRun();
   };

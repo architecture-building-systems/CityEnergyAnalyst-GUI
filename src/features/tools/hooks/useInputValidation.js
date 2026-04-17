@@ -15,7 +15,6 @@ const useInputValidation = (
   dataUpdatedAt,
 ) => {
   const [inputError, setInputError] = useState(undefined);
-  const [inputWarnings, setInputWarnings] = useState([]);
   const { mutateAsync: checkInputs } = useCheckInputsMutation();
 
   const runCheck = useCallback(
@@ -33,11 +32,8 @@ const useInputValidation = (
 
       try {
         if (!cancelled.value && formParams) {
-          const result = await checkInputs({ tool: script, parameters: formParams });
-          if (!cancelled.value) {
-            setInputError(null);
-            setInputWarnings(result?.warnings ?? []);
-          }
+          await checkInputs({ tool: script, parameters: formParams });
+          if (!cancelled.value) setInputError(null);
         }
       } catch (err) {
         if (!cancelled.value) {
@@ -47,7 +43,6 @@ const useInputValidation = (
             err.message ||
             'Unexpected error';
           setInputError(message);
-          setInputWarnings([]);
         }
       }
     },
@@ -67,7 +62,7 @@ const useInputValidation = (
     runCheck({ value: false });
   }, [runCheck]);
 
-  return { inputError, inputWarnings, recheckInputs };
+  return { inputError, recheckInputs };
 };
 
 export default useInputValidation;

@@ -49,7 +49,7 @@ const useToolParams = (script, form, onError, onParametersChange) => {
 
   const resetForm = useFormReset(form, params, script, dataUpdatedAt);
 
-  const { inputError, inputWarnings, recheckInputs } = useInputValidation(
+  const { inputError, recheckInputs } = useInputValidation(
     script,
     parameters,
     categoricalParameters,
@@ -64,7 +64,6 @@ const useToolParams = (script, form, onError, onParametersChange) => {
     isFetching,
     fetchError,
     inputError,
-    inputWarnings,
     resetForm,
     recheckInputs,
   };
