@@ -702,12 +702,12 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator: validatorAsync }]}
+          rules={paramDisabled ? [] : [{ validator: validatorAsync }]}
           validateTrigger={['onChange', 'onBlur']}
           dependencies={parameter.depends_on || []}
-          hasFeedback
+          hasFeedback={!paramDisabled}
         >
-          <Input placeholder="Enter a name for the network" />
+          <Input placeholder="Enter a name for the network" disabled={paramDisabled} />
         </FormField>
       );
     }
@@ -718,12 +718,12 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator: validatorAsync }]}
+          rules={paramDisabled ? [] : [{ validator: validatorAsync }]}
           validateTrigger={['onChange', 'onBlur']}
           dependencies={parameter.depends_on || []}
-          hasFeedback
+          hasFeedback={!paramDisabled}
         >
-          <Input placeholder="Enter a name for the what-if scenario" />
+          <Input placeholder="Enter a name for the what-if scenario" disabled={paramDisabled} />
         </FormField>
       );
     }

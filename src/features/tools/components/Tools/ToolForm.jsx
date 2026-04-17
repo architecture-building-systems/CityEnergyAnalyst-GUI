@@ -17,7 +17,7 @@ const READONLY_PARAMS = {
   'pathway-simulations': ['existing-pathway-name'],
 };
 
-const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
+const ToolForm = ({ form, parameters, categoricalParameters, script, extraReadonlyFields = [] }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
@@ -106,7 +106,10 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
     param.type === 'ScenarioParameter' ||
     (!isElectron() && ELECTRON_ONLY.includes(param.name));
 
-  const readonlySet = new Set(READONLY_PARAMS[script] ?? []);
+  const readonlySet = new Set([
+    ...(READONLY_PARAMS[script] ?? []),
+    ...extraReadonlyFields,
+  ]);
 
   let toolParams = null;
   if (parameters) {
@@ -114,34 +117,16 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
       .filter((param) => !shouldHideParam(param))
       .map((param) => {
         const isReadOnly = readonlySet.has(param.name);
-        const el = (
+        return (
           <Parameter
             key={param.name}
             form={form}
             parameter={param}
             allParameters={parameters}
             toolName={script}
+            disabled={isReadOnly}
           />
         );
-        if (isReadOnly) {
-          return (
-            <div
-              key={param.name}
-              style={{ position: 'relative', opacity: 0.65 }}
-            >
-              {el}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  cursor: 'not-allowed',
-                  zIndex: 1,
-                }}
-              />
-            </div>
-          );
-        }
-        return el;
       });
   }
 

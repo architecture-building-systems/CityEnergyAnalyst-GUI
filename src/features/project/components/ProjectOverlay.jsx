@@ -337,19 +337,14 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     }
   }, [childScenario?.pathway_name]);
 
-  // Reset state when project or scenario name changes
+  // Reset state when project or scenario name changes.
+  // Keep the tool card open so the user can compare settings
+  // across scenarios without re-launching the form.
   useEffect(() => {
-    const resetState = () => {
-      setToolType(null);
-      setSelectedTool(null);
-
-      resetSelected();
-      setInputEditor(false);
-      setShowPathwayPanel(false);
-      setPathwayPanelExpanded(false);
-    };
-
-    resetState();
+    resetSelected();
+    setInputEditor(false);
+    setShowPathwayPanel(false);
+    setPathwayPanelExpanded(false);
   }, [name, scenarioName]);
 
   useEffect(() => {
