@@ -10,6 +10,7 @@ import {
   fetchPathwayOverview,
   fetchStateGeojson,
   switchToChildScenario,
+  switchToParentScenario,
 } from 'features/pathway/api';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
@@ -259,28 +260,40 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     (state) => state.setStateZoneOverride,
   );
 
+  const activateState = useCallback(
+    async (pathwayName, year) => {
+      setSwitching(true);
+      try {
+        const result = await switchToChildScenario(pathwayName, year);
+        setChildScenario({
+          pathway_name: pathwayName,
+          year,
+          parent_scenario: result.parent_scenario,
+        });
+        fetchStateGeojson(pathwayName, year)
+          .then((data) => setStateZoneOverride(data?.geojson ?? null))
+          .catch(() => setStateZoneOverride(null));
+        queryClient.invalidateQueries({ queryKey: ['toolParams'] });
+        queryClient.invalidateQueries({ queryKey: ['inputs'] });
+      } finally {
+        setSwitching(false);
+      }
+    },
+    [setChildScenario, setStateZoneOverride, queryClient],
+  );
+
+  const deactivatePathway = useCallback(async () => {
+    setChildScenario(null);
+    setStateZoneOverride(null);
+    await switchToParentScenario().catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ['toolParams'] });
+    queryClient.invalidateQueries({ queryKey: ['inputs'] });
+  }, [setChildScenario, setStateZoneOverride, queryClient]);
+
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
     if (phase !== 'baked' && phase !== 'simulated') return;
-
-    setSwitching(true);
-    try {
-      const result = await switchToChildScenario(pathwayName, year);
-      setChildScenario({
-        pathway_name: pathwayName,
-        year,
-        parent_scenario: result.parent_scenario,
-      });
-      // Show state geometry on the map
-      fetchStateGeojson(pathwayName, year)
-        .then((data) => setStateZoneOverride(data?.geojson ?? null))
-        .catch(() => setStateZoneOverride(null));
-      queryClient.invalidateQueries();
-    } catch {
-      // silently fail
-    } finally {
-      setSwitching(false);
-    }
+    await activateState(pathwayName, year);
   };
 
   const handleDelete = (pathwayName) => {
@@ -333,19 +346,36 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
           placeholder="Select Pathway"
           options={options}
           value={selectedPathway}
-          onChange={(value) => {
-            setChildScenario(
-              value
-                ? { pathway_name: value, year: null, parent_scenario: null }
-                : null,
+          onChange={async (value) => {
+            if (!value) {
+              await deactivatePathway();
+              return;
+            }
+            const pathway = bakedPathways.find(
+              (p) => p.pathway_name === value,
             );
-            if (!value) setStateZoneOverride(null);
+            const firstYear = [...(pathway?.years ?? [])]
+              .sort((a, b) => a - b)[0];
+            if (firstYear != null) {
+              try {
+                await activateState(value, firstYear);
+              } catch {
+                setChildScenario({
+                  pathway_name: value,
+                  year: null,
+                  parent_scenario: null,
+                });
+              }
+            } else {
+              setChildScenario({
+                pathway_name: value,
+                year: null,
+                parent_scenario: null,
+              });
+            }
           }}
           onSelect={(value) => {
-            if (value === selectedPathway) {
-              setChildScenario(null);
-              setStateZoneOverride(null);
-            }
+            if (value === selectedPathway) deactivatePathway();
           }}
           allowClear
           notFoundContent={<small>No baked pathways</small>}
