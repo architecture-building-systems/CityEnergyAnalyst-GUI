@@ -17,7 +17,7 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
@@ -66,40 +66,56 @@ const useParameterAsyncValidation = ({
   form,
   nullable,
 }) => {
-  // Create async validator for Ant Design Form.Item rules
+  const timerRef = useRef(null);
+
   const validator = useCallback(
-    async (_, fieldValue) => {
-      // Skip validation if not needed
+    (_, fieldValue) => {
       if (!needs_validation || !toolName || !name) return Promise.resolve();
 
-      // Skip validation if field is nullable and value is empty
       if (
         nullable &&
         (fieldValue === null || fieldValue === undefined || fieldValue === '')
       )
         return Promise.resolve();
 
-      try {
-        const formValues = form.getFieldsValue();
-        const response = await apiClient.post(
-          `/api/tools/${toolName}/validate-field`,
-          {
-            parameter_name: name,
-            value: fieldValue,
-            form_values: formValues,
-          },
-        );
+      // Debounce: cancel any pending validation, wait 400ms before
+      // hitting the backend so per-keystroke typing doesn't flood.
+      if (timerRef.current) clearTimeout(timerRef.current);
 
-        if (response.data.valid) {
-          return Promise.resolve();
-        } else {
-          return Promise.reject(new Error(response.data.error));
-        }
-      } catch (error) {
-        const errorMessage =
-          error?.response?.data?.error || error?.message || 'Validation failed';
-        return Promise.reject(new Error(errorMessage));
-      }
+      return new Promise((resolve, reject) => {
+        timerRef.current = setTimeout(async () => {
+          try {
+            const formValues = form.getFieldsValue();
+            const response = await apiClient.post(
+              `/api/tools/${toolName}/validate-field`,
+              {
+                parameter_name: name,
+                value: fieldValue,
+                form_values: formValues,
+              },
+            );
+
+            if (response.data.valid) {
+              const rawWarnings = response.data.warnings ?? [];
+              const messages = rawWarnings
+                .filter((w) => w.field === name)
+                .map((w) => w.message);
+              requestAnimationFrame(() => {
+                form.setFields([{ name, warnings: messages }]);
+              });
+              resolve();
+            } else {
+              reject(new Error(response.data.error));
+            }
+          } catch (error) {
+            const errorMessage =
+              error?.response?.data?.error ||
+              error?.message ||
+              'Validation failed';
+            reject(new Error(errorMessage));
+          }
+        }, 400);
+      });
     },
     [needs_validation, toolName, name, form, nullable],
   );
@@ -683,7 +699,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           help={help}
           initialValue={value}
           rules={[{ validator: validatorAsync }]}
-          validateTrigger="onBlur"
+          validateTrigger={['onChange', 'onBlur']}
           dependencies={parameter.depends_on || []}
           hasFeedback
         >

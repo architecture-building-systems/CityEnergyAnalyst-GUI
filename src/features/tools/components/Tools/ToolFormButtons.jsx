@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'antd';
+import { Button, Modal } from 'antd';
 import { animated } from '@react-spring/web';
 
 import { useHoverGrow } from 'features/project/hooks/hover-grow';
@@ -21,6 +21,7 @@ export const ToolFormButtons = ({
   disabled = false,
   setError,
   onValidationError,
+  inputWarnings = [],
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
@@ -100,7 +101,7 @@ export const ToolFormButtons = ({
     }
   };
 
-  const handleRunScript = async () => {
+  const doRun = async () => {
     setLoading(true);
     try {
       await runScript();
@@ -109,6 +110,21 @@ export const ToolFormButtons = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRunScript = () => {
+    if (inputWarnings.length > 0) {
+      const messages = inputWarnings.map((w) => w.message ?? w);
+      Modal.confirm({
+        title: 'Overwrite existing results?',
+        content: messages.join('\n'),
+        okText: 'Continue',
+        cancelText: 'Cancel',
+        onOk: doRun,
+      });
+      return;
+    }
+    doRun();
   };
 
   return (
