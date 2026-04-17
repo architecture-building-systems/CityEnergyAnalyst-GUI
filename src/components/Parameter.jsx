@@ -672,7 +672,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           initialValue={value}
           valuePropName="checked"
         >
-          <Switch />
+          <Switch disabled={paramDisabled} />
         </FormField>
       );
 
