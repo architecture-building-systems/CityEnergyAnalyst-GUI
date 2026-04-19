@@ -154,6 +154,7 @@ const STATUS_FILL = {
   none: '#CBD5E1',
   validated: '#CBD5E1',
   baked: '#1470AF',
+  custom: '#AC6080',
   simulated: '#000000',
 };
 
@@ -205,6 +206,14 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     );
     if (hasCompleted) refreshOverview();
   }, [jobs, refreshOverview]);
+
+  // In sub-scenario mode, poll for status changes (e.g. input edits
+  // turning a state purple) so the mini timeline stays in sync.
+  useEffect(() => {
+    if (!childScenario?.year) return;
+    const id = setInterval(refreshOverview, 5000);
+    return () => clearInterval(id);
+  }, [childScenario?.year, refreshOverview]);
 
   // Measure viewport width
   useEffect(() => {
@@ -292,7 +301,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
 
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
-    if (phase !== 'baked' && phase !== 'simulated') return;
+    if (phase !== 'baked' && phase !== 'simulated' && phase !== 'custom') return;
     await activateState(pathwayName, year);
   };
 

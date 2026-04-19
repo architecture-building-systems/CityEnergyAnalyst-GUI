@@ -56,6 +56,7 @@ const STATUS_FILL = {
   none: '#CBD5E1',
   validated: '#CBD5E1',
   baked: '#1470AF',
+  custom: '#AC6080',
   simulated: '#000000',
 };
 
@@ -1681,6 +1682,7 @@ const PathwayPanel = ({
             >
               <LegendChip colour={STATUS_FILL.none} label="Draft" />
               <LegendChip colour={STATUS_FILL.baked} label="Baked" />
+              <LegendChip colour={STATUS_FILL.custom} label="Custom" />
               <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
               <LegendChip
                 colour={STATUS_ACCENT.error}
