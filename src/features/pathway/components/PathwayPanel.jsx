@@ -1568,7 +1568,7 @@ const PathwayPanel = ({
                 activeRows.some((row) => {
                   if (row?.status?.has_stale_phase) return true;
                   const phase = row?.status?.primary_phase ?? 'none';
-                  return phase !== 'baked' && phase !== 'simulated';
+                  return phase !== 'baked' && phase !== 'simulated' && phase !== 'custom';
                 })
               }
               loading={busyAction === 'pathway-simulations'}
@@ -2093,6 +2093,13 @@ const PathwayPanel = ({
                           active:
                             (selectedRow.summary?.modification_count ?? 0) > 0,
                         },
+                        {
+                          key: 'custom-input',
+                          label: 'Custom-Input',
+                          active:
+                            selectedRow.status?.primary_phase === 'custom',
+                          colour: '#C695A7',
+                        },
                       ].map((tag) => (
                         <span
                           key={tag.key}
@@ -2101,7 +2108,9 @@ const PathwayPanel = ({
                             borderRadius: 999,
                             fontSize: 11,
                             fontWeight: 600,
-                            background: tag.active ? '#8eb6dc' : '#e8e8e8',
+                            background: tag.active
+                              ? (tag.colour ?? '#8eb6dc')
+                              : '#e8e8e8',
                             color: tag.active ? '#fff' : '#999',
                           }}
                         >
