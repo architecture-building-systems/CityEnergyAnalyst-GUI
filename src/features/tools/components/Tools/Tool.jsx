@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Divider, Spin, Alert, Button } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
@@ -18,7 +18,7 @@ import { UpOutlined } from '@ant-design/icons';
 import { useToolFormStore } from 'features/tools/stores/tool-form-store';
 import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 
-const Tool = ({ script, onToolSelected, form }) => {
+const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
 
@@ -67,6 +67,18 @@ const Tool = ({ script, onToolSelected, form }) => {
     inputError,
     recheckInputs,
   } = useToolParams(script, form, onValidationError, onParametersChange);
+
+  // Fire `onParametersLoaded` after `useToolParams` has finished (so after
+  // its internal `useFormReset` has reset the form fields to their backend
+  // defaults). Declaration order matters: this effect is intentionally
+  // placed AFTER `useToolParams` so React's commit-phase ordering runs it
+  // last. Parents can use this hook to re-seed form values on top of the
+  // reset (e.g. `PlotTool` seeds `y-category-to-plot` from the map).
+  useEffect(() => {
+    if (params && onParametersLoaded) {
+      onParametersLoaded(params);
+    }
+  }, [params, onParametersLoaded]);
 
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;

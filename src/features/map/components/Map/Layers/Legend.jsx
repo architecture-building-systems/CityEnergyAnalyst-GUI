@@ -5,7 +5,29 @@ import { useEffect, useState } from 'react';
 import { useMapLegends } from 'features/map/hooks/map-layers';
 import { formatNumber } from 'features/map/utils';
 
-const ColourRampLegend = ({ label, colours, points, range }) => {
+const InfoRows = ({ info }) => {
+  if (!info?.length) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {info.map((row) => (
+        <div
+          key={row.label}
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 8,
+            justifyContent: 'space-between',
+          }}
+        >
+          <b>{row.label}</b>
+          <span style={{ opacity: 0.8, textAlign: 'right' }}>{row.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ColourRampLegend = ({ label, colours, points, range, info }) => {
   const [selectedValue, setSelectedValue] = useState(null);
   const _range = useMapStore((state) => state.range);
   const setRange = useMapStore((state) => state.setRange);
@@ -51,7 +73,7 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       }}
     >
       <b>{label}</b>
-      <div>Range</div>
+      <InfoRows info={info} />
       <Select
         value={value}
         onChange={setSelectedValue}
@@ -61,19 +83,21 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
       <div
         style={{
           display: 'flex',
-          justifyContent: 'center',
+          width: '100%',
         }}
       >
-        {gradientArray.map((color) => {
-          const width = 24;
-          return (
-            <div
-              style={{ backgroundColor: color, width: width, height: width }}
-              key={color}
-              title={color}
-            />
-          );
-        })}
+        {gradientArray.map((color) => (
+          <div
+            style={{
+              backgroundColor: color,
+              flex: 1,
+              minWidth: 0,
+              height: 24,
+            }}
+            key={color}
+            title={color}
+          />
+        ))}
       </div>
       <div
         style={{
@@ -92,7 +116,77 @@ const ColourRampLegend = ({ label, colours, points, range }) => {
   );
 };
 
-const Legend = () => {
+const CategoryLegend = ({ label, categories, range, info }) => {
+  const setRange = useMapStore((state) => state.setRange);
+
+  // Keep the HexagonLayer-style range state in sync (used by scale filter)
+  // using the period/total max so the stacked columns render at an
+  // appropriate elevation.
+  useEffect(() => {
+    if (!range) return;
+    const keys = Object.keys(range);
+    const first = keys[0];
+    if (!first) return;
+    const { min, max } = range[first] ?? {};
+    setRange([min ?? 0, max ?? 0]);
+  }, [range, setRange]);
+
+  if (!categories?.length) return null;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      <b>{label}</b>
+      <InfoRows info={info} />
+      <b style={{ fontWeight: 500, opacity: 0.75 }}>surface</b>
+      <div
+        className="cea-legend-swatch-list"
+        style={{
+          // Show at most 5 rows; anything more becomes scrollable. Row
+          // height = 16px swatch + 4px marginBottom = 20px per row, so 5
+          // rows cap at 100px.
+          display: 'block',
+          height: categories.length > 5 ? 100 : 'auto',
+          maxHeight: 100,
+          overflowY: categories.length > 5 ? 'scroll' : 'visible',
+          padding: 0,
+          boxSizing: 'border-box',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {categories.map((cat) => (
+          <div
+            key={cat.name}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 4,
+            }}
+          >
+            <div
+              style={{
+                width: 16,
+                height: 16,
+                backgroundColor: cat.colour,
+                border: '1px solid rgba(0,0,0,0.15)',
+                flexShrink: 0,
+              }}
+            />
+            <div style={{ fontSize: 12 }}>{cat.label ?? cat.name}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Legend = ({ extras }) => {
   const mapLayerLegends = useMapLegends();
 
   return (
@@ -108,11 +202,12 @@ const Legend = () => {
         display: 'flex',
         flexDirection: 'column',
 
-        fontSize: 12,
+        fontSize: 13,
 
-        gap: 2,
+        gap: 12,
 
-        minWidth: 280,
+        width: 280,
+        flexShrink: 0,
 
         padding: 12,
         marginRight: 'auto',
@@ -123,6 +218,17 @@ const Legend = () => {
       {mapLayerLegends &&
         Object.keys(mapLayerLegends).map((key) => {
           const value = mapLayerLegends[key];
+          if (value?.stacked) {
+            return (
+              <CategoryLegend
+                key={key}
+                label={value.label}
+                categories={value.categories}
+                range={value.range}
+                info={value.info}
+              />
+            );
+          }
           return (
             <ColourRampLegend
               key={key}
@@ -130,9 +236,11 @@ const Legend = () => {
               colours={value.colourArray}
               points={value.points}
               range={value.range}
+              info={value.info}
             />
           );
         })}
+      {extras}
     </div>
   );
 };

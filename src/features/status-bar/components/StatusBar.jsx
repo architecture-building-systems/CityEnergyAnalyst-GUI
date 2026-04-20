@@ -6,7 +6,12 @@ import './StatusBarNotification.css';
 
 import socket, { waitForConnection } from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
-import { useSetActiveMapCategory } from 'features/project/components/Cards/MapLayersCard/store';
+import {
+  useSetActiveMapCategory,
+  MAP_LAYER_CATEGORIES_QUERY_KEY,
+} from 'features/project/components/Cards/MapLayersCard/store';
+import { useMapStore } from 'features/map/stores/mapStore';
+import { useQueryClient } from '@tanstack/react-query';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -84,6 +89,11 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
+  const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
+  const queryClient = useQueryClient();
 
   // Local state for modal triggered from notifications
   const [modalVisible, setModalVisible] = useState(false);
@@ -97,9 +107,12 @@ const JobStatusBar = () => {
     updateJob,
     dismissJob,
     setActiveMapCategory,
+    setMapLayerParameters,
+    bumpChoicesRevision,
     setModalVisible,
     setSelectedJob,
     setMessage,
+    queryClient,
   };
 
   useEffect(() => {
@@ -142,6 +155,31 @@ const JobStatusBar = () => {
           depsRef.current.updateJob(job);
           depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
 
+          // When network-layout creates or modifies a network, any cached
+          // metadata that lists existing networks goes stale: the tool forms'
+          // network-name / existing-network dropdowns, the thermal-network map
+          // layer's network selector (fetched directly in Choice.jsx, not via
+          // React Query — bumpChoicesRevision forces those to refetch), and
+          // the input-editor map data.
+          //
+          // Note: for thermal-network / thermal-network-multiple-phase we do
+          // NOT auto-update the map viewer here. Refreshing the viewer to the
+          // newly-run network is explicitly gated on the user clicking the
+          // "View Results" notification button, so a running simulation can't
+          // swap the map out from under them while they're looking at it.
+          if (job.script === 'network-layout') {
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['toolParams'],
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['inputs'],
+            });
+            depsRef.current.bumpChoicesRevision();
+          }
+
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
 
           const key = job.id;
@@ -173,6 +211,19 @@ const JobStatusBar = () => {
                     size="small"
                     onClick={() => {
                       notification.destroy(key);
+                      // Invalidate the categories query so the layer fetches
+                      // fresh parameter metadata (e.g. the just-created network
+                      // becomes the most-recent default), clear cached params
+                      // so the layer reinitialises with those defaults, bump
+                      // the choices revision so any still-mounted Choice
+                      // selector re-fetches its options immediately instead of
+                      // relying on unmount/remount, then switch to the target
+                      // category.
+                      depsRef.current.queryClient.invalidateQueries({
+                        queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+                      });
+                      depsRef.current.setMapLayerParameters(null);
+                      depsRef.current.bumpChoicesRevision();
                       depsRef.current.setActiveMapCategory(
                         VIEW_MAP_RESULTS[job.script],
                       );
