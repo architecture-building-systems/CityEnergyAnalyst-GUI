@@ -18,6 +18,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
 import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
+import { useSelectPlotTool } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
 import { isElectron } from 'utils/electron';
@@ -61,6 +62,32 @@ const CEAVersion = () => {
   );
 };
 
+// Normalise a job-parameters value into a string array. Backend submission
+// may serialise multi-choice values as a JSON-stringified array, an actual
+// array, or a CSV string depending on the form-data round-trip. Returns
+// `null` when there's nothing usable.
+const parseStringArray = (raw) => {
+  if (Array.isArray(raw)) {
+    const out = raw.filter(Boolean);
+    return out.length ? out : null;
+  }
+  if (typeof raw !== 'string' || !raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const out = parsed.filter(Boolean);
+      return out.length ? out : null;
+    }
+    return parsed ? [parsed] : null;
+  } catch {
+    const out = raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return out.length ? out : null;
+  }
+};
+
 const DismissCountdown = ({ duration, onComplete }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
 
@@ -92,7 +119,9 @@ const JobStatusBar = () => {
   const setMapLayerParameters = useMapStore(
     (state) => state.setMapLayerParameters,
   );
+  const setSelectedMapLayer = useMapStore((state) => state.setSelectedMapLayer);
   const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
+  const selectPlotTool = useSelectPlotTool();
   const queryClient = useQueryClient();
 
   // Local state for modal triggered from notifications
@@ -108,7 +137,9 @@ const JobStatusBar = () => {
     dismissJob,
     setActiveMapCategory,
     setMapLayerParameters,
+    setSelectedMapLayer,
     bumpChoicesRevision,
+    selectPlotTool,
     setModalVisible,
     setSelectedJob,
     setMessage,
@@ -216,17 +247,48 @@ const JobStatusBar = () => {
                       // becomes the most-recent default), clear cached params
                       // so the layer reinitialises with those defaults, bump
                       // the choices revision so any still-mounted Choice
-                      // selector re-fetches its options immediately instead of
-                      // relying on unmount/remount, then switch to the target
-                      // category.
+                      // selector re-fetches its options immediately instead
+                      // of relying on unmount/remount.
                       depsRef.current.queryClient.invalidateQueries({
                         queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
                       });
                       depsRef.current.setMapLayerParameters(null);
                       depsRef.current.bumpChoicesRevision();
-                      depsRef.current.setActiveMapCategory(
-                        VIEW_MAP_RESULTS[job.script],
-                      );
+                      // Accept the new {category?, layer?, plot?} object
+                      // form OR the legacy bare-category-string form.
+                      // A single click can fire both a map switch AND a
+                      // plot-form open — the two live in different panels
+                      // (map view vs tool card) so they don't conflict.
+                      const target = VIEW_MAP_RESULTS[job.script];
+                      const category =
+                        typeof target === 'string' ? target : target.category;
+                      const layer =
+                        typeof target === 'string' ? null : target.layer;
+                      const plot =
+                        typeof target === 'string' ? null : target.plot;
+                      // Set the layer first so MapLayerPropertiesCard's
+                      // "default to layers[0] if none selected" effect
+                      // doesn't override us when the category mounts.
+                      // When the entry has no category/layer (e.g.
+                      // system-costs has no map layer), pass `null` to
+                      // CLOSE any currently-open map layer card so the
+                      // user isn't left looking at an unrelated layer.
+                      depsRef.current.setSelectedMapLayer(layer ?? null);
+                      depsRef.current.setActiveMapCategory(category ?? null);
+                      // Open the plot's parameter form alongside the map.
+                      // Does NOT auto-run the plot — the user clicks Run
+                      // when ready. Forward the upstream job's submitted
+                      // `what-if-name` so the plot opens with exactly the
+                      // run's scope pre-selected (e.g. running
+                      // `system-costs` over [production, testing-solar]
+                      // → `plot-cost-breakdown` opens with both ticked).
+                      if (plot) {
+                        const names = parseStringArray(
+                          job?.parameters?.['what-if-name'],
+                        );
+                        const seed = names ? { 'what-if-name': names } : null;
+                        depsRef.current.selectPlotTool(plot, seed);
+                      }
                     }}
                   >
                     View Results

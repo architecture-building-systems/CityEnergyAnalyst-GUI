@@ -11,6 +11,12 @@ export const useToolCardStore = create((set, get) => ({
   toolType: null,
   selectedTool: null,
   selectedPlotTool: null,
+  // Optional seed values for the plot form when opened via
+  // `selectPlotTool(tool, seed)`. Overwritten on each call (a fresh
+  // seed, or `null` when the user opens a plot manually from the
+  // picker). Not eagerly cleared by PlotTool — that would race with
+  // its `setContext` effect and wipe the seed before the form sees it.
+  plotToolSeed: null,
   setToolType: (toolType) => {
     // Prevent opening of building info tool if building selection is active
     if (toolType === toolTypes.BUILDING_INFO) {
@@ -30,8 +36,8 @@ export const useToolCardStore = create((set, get) => ({
     set({ selectedTool: tool });
     get().setToolType(toolTypes.TOOLS);
   },
-  selectPlotTool: (tool) => {
-    set({ selectedPlotTool: tool });
+  selectPlotTool: (tool, seed = null) => {
+    set({ selectedPlotTool: tool, plotToolSeed: seed });
     get().setToolType(toolTypes.MAP_LAYERS);
   },
 }));
@@ -51,3 +57,5 @@ export const useSelectTool = () =>
   useToolCardStore((state) => state.selectTool);
 export const useSelectPlotTool = () =>
   useToolCardStore((state) => state.selectPlotTool);
+export const useSelectedPlotToolSeed = () =>
+  useToolCardStore((state) => state.plotToolSeed);
