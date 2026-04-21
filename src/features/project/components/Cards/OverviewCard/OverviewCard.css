@@ -82,3 +82,17 @@
 .cea-node-breathing {
   animation: cea-node-breathe 1.5s ease-in-out infinite;
 }
+
+/* Timeline year tooltip: drop the default drop-shadow on the tooltip
+   body and arrow so the coloured arrow+body read as one solid shape.
+   NOTE: do not override the arrow's `transform` — antd uses it for
+   the actual positioning (translateX(-50%) plus rotation), so
+   overriding it hides the arrow. The remaining seam is a ~1 px
+   anti-aliasing artefact on some displays; acceptable trade-off. */
+.cea-timeline-tooltip .ant-tooltip-arrow::before,
+.cea-timeline-tooltip .ant-tooltip-arrow::after {
+  box-shadow: none !important;
+}
+.cea-timeline-tooltip .ant-tooltip-inner {
+  box-shadow: none !important;
+}

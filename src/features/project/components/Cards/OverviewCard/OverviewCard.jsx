@@ -1,4 +1,4 @@
-import { Divider, Modal, Select, Spin, Typography } from 'antd';
+import { Divider, Modal, Select, Spin, Tooltip } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,8 +15,6 @@ import {
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useMapStore } from 'features/map/stores/mapStore';
-
-const { Text } = Typography;
 
 import CeaLogoSVG from 'assets/cea-logo.svg';
 
@@ -399,6 +397,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
             height: TIMELINE_HEIGHT,
             position: 'relative',
             overflow: 'hidden',
+            // Space below the viewport so the portal-rendered tooltip
+            // (placement="bottom") sits within the overview card's
+            // visual footprint. ~13 px — the top half overlaps the
+            // viewport itself, so only the body/lower portion spills
+            // below.
+            marginBottom: 10,
           }}
         >
           {switching ? (
@@ -427,7 +431,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                   position: 'absolute',
                   left: LANE_PADDING,
                   right: LANE_PADDING + 14,
-                  top: '55%',
+                  top: '35%',
                   height: 1.5,
                   background: '#8eb6dc',
                   borderRadius: 999,
@@ -438,7 +442,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                 style={{
                   position: 'absolute',
                   right: LANE_PADDING + 7,
-                  top: '55%',
+                  top: '35%',
                   transform: 'translateY(-50%)',
                   width: 0,
                   height: 0,
@@ -463,55 +467,73 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                 const showLabel = isActive || hoveredYear === year;
 
                 return (
-                  <div key={`${selectedPathway}-${year}`}>
-                    {showLabel && (
-                      <Text
-                        style={{
-                          position: 'absolute',
-                          left: getYearOffset(year),
-                          top: -4,
-                          transform: 'translateX(-50%)',
-                          fontSize: 11,
-                          color: '#94A3B8',
-                          whiteSpace: 'nowrap',
-                          pointerEvents: 'none',
-                        }}
-                      >
-                        {year}
-                      </Text>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleNodeClick(selectedPathway, year)}
-                      onMouseEnter={() => setHoveredYear(year)}
-                      onMouseLeave={() => setHoveredYear(null)}
-                      disabled={switching}
-                      style={{
-                        position: 'absolute',
-                        left: getYearOffset(year),
-                        top: '55%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 10,
-                        height: 10,
-                        borderRadius: 999,
-                        border: '2px solid #FFFFFF',
-                        background: nodeFill,
-                        cursor:
-                          phase === 'baked' || phase === 'simulated'
-                            ? 'pointer'
-                            : 'default',
-                        padding: 0,
-                        ...(isSimActive
-                          ? {}
-                          : {
-                              boxShadow: isActive
-                                ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
-                                : '0 2px 4px rgba(15, 23, 42, 0.12)',
-                            }),
+                  <div
+                    key={`${selectedPathway}-${year}`}
+                    style={{
+                      position: 'absolute',
+                      left: getYearOffset(year),
+                      top: '35%',
+                      transform: 'translate(-50%, -50%)',
+                      // Keep the outer box zero-sized so it doesn't
+                      // intercept pointer events around the 10×10 node.
+                      width: 0,
+                      height: 0,
+                    }}
+                  >
+                    <Tooltip
+                      title={year}
+                      placement="bottom"
+                      open={showLabel}
+                      // Colour the tooltip body + arrow the same fill
+                      // as the node. `color` propagates to the arrow
+                      // via CSS variables; the seam override lives in
+                      // `.cea-timeline-tooltip` in OverviewCard.css.
+                      color={nodeFill}
+                      arrow
+                      overlayClassName="cea-timeline-tooltip"
+                      overlayInnerStyle={{
+                        fontSize: 11,
+                        minHeight: 0,
+                        padding: '2px 6px',
+                        lineHeight: 1.2,
+                        color: '#FFFFFF',
+                        boxShadow: 'none',
                       }}
-                      className={isSimActive ? 'cea-node-breathing' : ''}
-                      aria-label={`${selectedPathway} ${year}`}
-                    />
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleNodeClick(selectedPathway, year)}
+                        onMouseEnter={() => setHoveredYear(year)}
+                        onMouseLeave={() => setHoveredYear(null)}
+                        disabled={switching}
+                        style={{
+                          // Centred at the outer div's 0×0 origin.
+                          display: 'block',
+                          position: 'absolute',
+                          left: -5,
+                          top: -5,
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          border: '2px solid #FFFFFF',
+                          background: nodeFill,
+                          cursor:
+                            phase === 'baked' || phase === 'simulated'
+                              ? 'pointer'
+                              : 'default',
+                          padding: 0,
+                          ...(isSimActive
+                            ? {}
+                            : {
+                                boxShadow: isActive
+                                  ? '0 0 0 5px rgba(20, 112, 175, 0.14), 0 2px 4px rgba(15, 23, 42, 0.12)'
+                                  : '0 2px 4px rgba(15, 23, 42, 0.12)',
+                              }),
+                        }}
+                        className={isSimActive ? 'cea-node-breathing' : ''}
+                        aria-label={`${selectedPathway} ${year}`}
+                      />
+                    </Tooltip>
                   </div>
                 );
               })}
