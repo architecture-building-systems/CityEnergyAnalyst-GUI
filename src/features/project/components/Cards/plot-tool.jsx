@@ -3,6 +3,7 @@ import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useCallback, useEffect, useRef } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
+import { useSelectedPlotToolSeed } from 'features/project/stores/tool-card';
 import {
   DEMAND,
   EMISSIONS_EMBODIED,
@@ -142,168 +143,214 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   // Map-layer `surface` (multi-choice) on the Renewable Energy Potentials
   // layer seeds plot-solar's `y-metric-to-plot` field.
   const mapSurface = mapLayerParameters?.surface;
+  // Optional seed values handed in via `selectPlotTool(tool, seed)`.
+  // Used by the success-notification "View Results" flow to forward the
+  // upstream job's submitted parameters (e.g. the list of what-if names
+  // the user just costed) into the plot form. Takes priority over the
+  // map-derived seeds and the "select all" fallback. The seed is
+  // overwritten by the next `selectPlotTool` call (no eager clearing
+  // here — that would race with `setContext`).
+  const plotToolSeed = useSelectedPlotToolSeed();
 
   const contextValue = Form.useWatch('context', form);
-  const setContext = useCallback(() => {
-    const solar_panel_types = {};
+  const setContext = useCallback(
+    (params) => {
+      // `params` is supplied when invoked via `onParametersLoaded` (the
+      // Tool component passes its loaded parameter metadata so we can walk
+      // the parameter list — e.g. to read a field's available choices for
+      // a "select all" default). The two `useEffect`s below also call
+      // `setContext()` with no argument; in those branches we just skip
+      // the parameter-aware seeding paths.
+      const solar_panel_types = {};
 
-    let feature;
-    // Get feature from script name after 'plot-'
-    feature = script?.split('plot-')?.[1];
+      let feature;
+      // Get feature from script name after 'plot-'
+      feature = script?.split('plot-')?.[1];
 
-    // Special case for solar plots
-    if (script == 'plot-solar') {
-      if (panelTech === 'PV') {
-        feature = 'pv';
-        solar_panel_types.pv = panelType;
-      } else if (panelTech === 'SC') {
-        feature = 'sc';
-        solar_panel_types.sc = panelType;
-      } else if (panelTech === 'PVT') {
-        // PVT encodes the PV + SC pair as a compound "<PV> + <SC>"
-        // dropdown value (see SolarPotentialsLayer._PVT_PANEL_TYPE_SEP).
-        // Split it so the plot form receives the two halves separately.
-        feature = 'pvt';
-        if (typeof panelType === 'string' && panelType.includes(PVT_PANEL_TYPE_SEP)) {
-          const [pvCode, scCode] = panelType
-            .split(PVT_PANEL_TYPE_SEP)
-            .map((s) => s.trim());
-          if (pvCode) solar_panel_types.pv = pvCode;
-          if (scCode) solar_panel_types.sc = scCode;
+      // Special case for solar plots
+      if (script == 'plot-solar') {
+        if (panelTech === 'PV') {
+          feature = 'pv';
+          solar_panel_types.pv = panelType;
+        } else if (panelTech === 'SC') {
+          feature = 'sc';
+          solar_panel_types.sc = panelType;
+        } else if (panelTech === 'PVT') {
+          // PVT encodes the PV + SC pair as a compound "<PV> + <SC>"
+          // dropdown value (see SolarPotentialsLayer._PVT_PANEL_TYPE_SEP).
+          // Split it so the plot form receives the two halves separately.
+          feature = 'pvt';
+          if (
+            typeof panelType === 'string' &&
+            panelType.includes(PVT_PANEL_TYPE_SEP)
+          ) {
+            const [pvCode, scCode] = panelType
+              .split(PVT_PANEL_TYPE_SEP)
+              .map((s) => s.trim());
+            if (pvCode) solar_panel_types.pv = pvCode;
+            if (scCode) solar_panel_types.sc = scCode;
+          }
         }
       }
-    }
 
-    let period_start = ((period?.[0] ?? 1) - 1) * 24;
-    let period_end = (period?.[1] ?? 365) * 24;
-    if (
-      [
-        'plot-lifecycle-emissions',
-        'plot-emission-timeline',
-        'plot-pathway-emission-timeline',
-      ].includes(script)
-    ) {
-      period_start = timeline?.[0] ?? 0;
-      period_end = timeline?.[1] ?? 0;
-    }
-
-    const nextValues = {
-      context: { feature, period_start, period_end, solar_panel_types },
-    };
-
-    // Seed plot-lifecycle-emissions' y-category-to-plot from the map layer
-    // selection. Only meaningful when the active map layer is lifecycle
-    // emissions (because that's what `data-column` holds categories for).
-    if (
-      script === 'plot-lifecycle-emissions' &&
-      selectedMapLayer === EMISSIONS_EMBODIED &&
-      mapDataColumn != null
-    ) {
-      const asArray = Array.isArray(mapDataColumn)
-        ? mapDataColumn
-        : [mapDataColumn];
-      if (asArray.length > 0) {
-        nextValues['y-category-to-plot'] = asArray;
+      let period_start = ((period?.[0] ?? 1) - 1) * 24;
+      let period_end = (period?.[1] ?? 365) * 24;
+      if (
+        [
+          'plot-lifecycle-emissions',
+          'plot-emission-timeline',
+          'plot-pathway-emission-timeline',
+        ].includes(script)
+      ) {
+        period_start = timeline?.[0] ?? 0;
+        period_end = timeline?.[1] ?? 0;
       }
-    }
 
-    // Seed plot-final-energy's `y-metric-to-plot` from the Energy by
-    // Carrier map layer. Both sides use display names, so just pass
-    // through after filtering to plot-supported carriers (`solar` is
-    // not in the plot's choices).
-    if (
-      script === 'plot-final-energy' &&
-      selectedMapLayer === FINAL_ENERGY &&
-      mapDataColumn != null
-    ) {
-      const asArray = Array.isArray(mapDataColumn)
-        ? mapDataColumn
-        : [mapDataColumn];
-      const valid = asArray.filter((c) => PLOT_FINAL_ENERGY_CARRIERS.has(c));
-      if (valid.length > 0) {
-        nextValues['y-metric-to-plot'] = valid;
-      }
-    }
+      const nextValues = {
+        context: { feature, period_start, period_end, solar_panel_types },
+      };
 
-    // Seed plot-demand's `y-metric-to-plot` from the Demand map layer.
-    // Both sides now use the same display names
-    // (electricity / space_heating / space_cooling / domestic_hot_water).
-    if (
-      script === 'plot-demand' &&
-      selectedMapLayer === DEMAND &&
-      mapDataColumn != null
-    ) {
-      const asArray = Array.isArray(mapDataColumn)
-        ? mapDataColumn
-        : [mapDataColumn];
-      const valid = asArray.filter((s) => PLOT_DEMAND_SERVICES.has(s));
-      if (valid.length > 0) {
-        nextValues['y-metric-to-plot'] = valid;
-      }
-    }
-
-    // Seed plot-solar's `y-metric-to-plot` from the Renewable Energy
-    // Potentials map layer's `surface` multi-choice. Both sides use the
-    // same surface names so we pass through, filtering only for values
-    // the plot form recognises.
-    if (
-      script === 'plot-solar' &&
-      selectedMapLayer === RENEWABLE_ENERGY_POTENTIALS &&
-      mapSurface != null
-    ) {
-      const asArray = Array.isArray(mapSurface) ? mapSurface : [mapSurface];
-      const valid = asArray.filter((s) => PLOT_SOLAR_SURFACES.has(s));
-      if (valid.length > 0) {
-        nextValues['y-metric-to-plot'] = valid;
-      }
-    }
-
-    // Seed plot-operational-emissions from the Operational Emissions map
-    // layer. `category` drives which underlying multi-choice field the
-    // values flow into (`operation-services` vs `energy-carriers`).
-    if (
-      script === 'plot-operational-emissions' &&
-      selectedMapLayer === EMISSIONS_OPERATIONAL &&
-      mapDataColumn != null
-    ) {
-      const asArray = Array.isArray(mapDataColumn)
-        ? mapDataColumn
-        : [mapDataColumn];
-      if (asArray.length > 0) {
-        if (mapOpCategory === 'energy_carrier') {
-          nextValues['y-category-to-plot'] = 'energy_carrier';
-          nextValues['energy-carriers'] = asArray;
-        } else {
-          nextValues['y-category-to-plot'] = 'operation';
-          nextValues['operation-services'] = asArray;
+      // Seed plot-lifecycle-emissions' y-category-to-plot from the map layer
+      // selection. Only meaningful when the active map layer is lifecycle
+      // emissions (because that's what `data-column` holds categories for).
+      if (
+        script === 'plot-lifecycle-emissions' &&
+        selectedMapLayer === EMISSIONS_EMBODIED &&
+        mapDataColumn != null
+      ) {
+        const asArray = Array.isArray(mapDataColumn)
+          ? mapDataColumn
+          : [mapDataColumn];
+        if (asArray.length > 0) {
+          nextValues['y-category-to-plot'] = asArray;
         }
       }
-    }
 
-    // Seed `what-if-name` (MultiChoiceParameter on the plot side) from the
-    // map layer's current `whatif_name` (single string). Applied for any
-    // plot — antd form silently holds the value if the plot has no such
-    // field, and picks it up automatically for plots that do.
-    if (mapWhatifName != null && mapWhatifName !== '') {
-      nextValues['what-if-name'] = Array.isArray(mapWhatifName)
-        ? mapWhatifName
-        : [mapWhatifName];
-    }
+      // Seed plot-final-energy's `y-metric-to-plot` from the Energy by
+      // Carrier map layer. Both sides use display names, so just pass
+      // through after filtering to plot-supported carriers (`solar` is
+      // not in the plot's choices).
+      if (
+        script === 'plot-final-energy' &&
+        selectedMapLayer === FINAL_ENERGY &&
+        mapDataColumn != null
+      ) {
+        const asArray = Array.isArray(mapDataColumn)
+          ? mapDataColumn
+          : [mapDataColumn];
+        const valid = asArray.filter((c) => PLOT_FINAL_ENERGY_CARRIERS.has(c));
+        if (valid.length > 0) {
+          nextValues['y-metric-to-plot'] = valid;
+        }
+      }
 
-    form.setFieldsValue(nextValues);
-  }, [
-    form,
-    period,
-    panelTech,
-    panelType,
-    timeline,
-    script,
-    selectedMapLayer,
-    mapDataColumn,
-    mapOpCategory,
-    mapWhatifName,
-    mapSurface,
-  ]);
+      // Seed plot-demand's `y-metric-to-plot` from the Demand map layer.
+      // Both sides now use the same display names
+      // (electricity / space_heating / space_cooling / domestic_hot_water).
+      if (
+        script === 'plot-demand' &&
+        selectedMapLayer === DEMAND &&
+        mapDataColumn != null
+      ) {
+        const asArray = Array.isArray(mapDataColumn)
+          ? mapDataColumn
+          : [mapDataColumn];
+        const valid = asArray.filter((s) => PLOT_DEMAND_SERVICES.has(s));
+        if (valid.length > 0) {
+          nextValues['y-metric-to-plot'] = valid;
+        }
+      }
+
+      // Seed plot-solar's `y-metric-to-plot` from the Renewable Energy
+      // Potentials map layer's `surface` multi-choice. Both sides use the
+      // same surface names so we pass through, filtering only for values
+      // the plot form recognises.
+      if (
+        script === 'plot-solar' &&
+        selectedMapLayer === RENEWABLE_ENERGY_POTENTIALS &&
+        mapSurface != null
+      ) {
+        const asArray = Array.isArray(mapSurface) ? mapSurface : [mapSurface];
+        const valid = asArray.filter((s) => PLOT_SOLAR_SURFACES.has(s));
+        if (valid.length > 0) {
+          nextValues['y-metric-to-plot'] = valid;
+        }
+      }
+
+      // Seed plot-operational-emissions from the Operational Emissions map
+      // layer. `category` drives which underlying multi-choice field the
+      // values flow into (`operation-services` vs `energy-carriers`).
+      if (
+        script === 'plot-operational-emissions' &&
+        selectedMapLayer === EMISSIONS_OPERATIONAL &&
+        mapDataColumn != null
+      ) {
+        const asArray = Array.isArray(mapDataColumn)
+          ? mapDataColumn
+          : [mapDataColumn];
+        if (asArray.length > 0) {
+          if (mapOpCategory === 'energy_carrier') {
+            nextValues['y-category-to-plot'] = 'energy_carrier';
+            nextValues['energy-carriers'] = asArray;
+          } else {
+            nextValues['y-category-to-plot'] = 'operation';
+            nextValues['operation-services'] = asArray;
+          }
+        }
+      }
+
+      // Seed `what-if-name` (MultiChoiceParameter on the plot side).
+      //
+      // Priority order:
+      //  1. Explicit `plotToolSeed['what-if-name']` — caller of
+      //     `selectPlotTool(tool, seed)` (e.g. the "View Results" success
+      //     notification) hands in the upstream job's submitted what-if
+      //     names so the plot opens with exactly the run's scope selected.
+      //  2. Map-layer `whatif_name` (single string) — keeps the plot
+      //     focused on whichever scenario the user was viewing on the map.
+      //  3. Fallback "select all" — when no upstream context exists, walk
+      //     the loaded parameter metadata and pre-select every available
+      //     what-if so the user sees their full history immediately.
+      //
+      // antd silently ignores the field for plots that don't define it.
+      const seedWhatifNames = plotToolSeed?.['what-if-name'];
+      if (Array.isArray(seedWhatifNames) && seedWhatifNames.length > 0) {
+        nextValues['what-if-name'] = [...seedWhatifNames];
+      } else if (mapWhatifName != null && mapWhatifName !== '') {
+        nextValues['what-if-name'] = Array.isArray(mapWhatifName)
+          ? mapWhatifName
+          : [mapWhatifName];
+      } else if (params) {
+        // Walk the parameter metadata for a `what-if-name` field; grab its
+        // available choices and pre-select all of them. The field name is
+        // the same across plots that surface it.
+        const allParams = [
+          ...(params.parameters || []),
+          ...Object.values(params.categorical_parameters || {}).flat(),
+        ];
+        const whatIfParam = allParams.find((p) => p?.name === 'what-if-name');
+        if (whatIfParam && Array.isArray(whatIfParam.choices)) {
+          nextValues['what-if-name'] = [...whatIfParam.choices];
+        }
+      }
+
+      form.setFieldsValue(nextValues);
+    },
+    [
+      form,
+      period,
+      panelTech,
+      panelType,
+      timeline,
+      script,
+      selectedMapLayer,
+      mapDataColumn,
+      mapOpCategory,
+      mapWhatifName,
+      mapSurface,
+      plotToolSeed,
+    ],
+  );
 
   // One-shot prefill from the caller that opened this plot tool (e.g.
   // "View Results" on a just-completed pathway-simulations job seeds the
@@ -342,6 +389,14 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
   useEffect(() => {
     setContext();
   }, [setContext]);
+
+  // Note: no eager "clear seed" effect here. The seed lives in the
+  // tool-card store and is overwritten on the next `selectPlotTool` call
+  // (with a fresh seed, or `null` when the user opens a plot manually
+  // from the picker). Clearing here on first mount would race with
+  // `setContext` and wipe the seed before the form sees it — which used
+  // to make the plot fall back to a stale alphabetical default and is
+  // exactly the bug we're avoiding.
 
   if (script == null) return <PlotChoices onSelected={onPlotToolSelected} />;
 
