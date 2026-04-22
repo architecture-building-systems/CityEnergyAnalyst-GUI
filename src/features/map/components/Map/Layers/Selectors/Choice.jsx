@@ -1,10 +1,31 @@
 import { Select } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import { BinAnimationIcon } from 'assets/icons';
+import DeleteChoiceModal from './DeleteChoiceModal';
 import useDependsOn from './useDependsOn';
+
+const DELETABLE_PARAMETERS = {
+  'thermal-network': new Set(['network-name']),
+};
+
+const MULTI_PHASE_SUFFIX = ' (Multi-Phase)';
+
+const isDeletableParameter = (layerName, parameterName) => {
+  if (parameterName === 'whatif_name') return true;
+  return DELETABLE_PARAMETERS[layerName]?.has(parameterName) ?? false;
+};
+
+const getDisplayName = (value) => {
+  if (typeof value !== 'string') return value;
+  if (value.endsWith(MULTI_PHASE_SUFFIX)) {
+    return value.slice(0, -MULTI_PHASE_SUFFIX.length);
+  }
+  return value;
+};
 
 const getChoices = async (
   layerCategory,
@@ -25,6 +46,47 @@ const getChoices = async (
   return resp.data;
 };
 
+const DeletableOption = ({ label, value, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const onClick = (e) => {
+    e.stopPropagation();
+    onDelete?.(value);
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flexGrow: 1,
+        }}
+        title={label}
+      >
+        {label}
+      </div>
+      {isHovered && (
+        <BinAnimationIcon
+          style={{ padding: '2px 8px' }}
+          className="cea-job-info-icon danger shake"
+          onClick={onClick}
+        />
+      )}
+    </div>
+  );
+};
+
 const ChoiceSelector = ({
   parameterName,
   label,
@@ -33,27 +95,43 @@ const ChoiceSelector = ({
   onChange,
   layerName,
   dependsOn,
+  multi = false,
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
+  const choicesRevision = useMapStore((state) => state.choicesRevision);
+  const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
   const categoryInfo = useSelectedMapCategoryInfo();
 
   const [selected, setSelected] = useState(value ?? defaultValue);
   const [choices, setChoices] = useState(null);
+
+  const [choiceToDelete, setChoiceToDelete] = useState(null);
+  const [deleteVisible, setDeleteVisible] = useState(false);
 
   const { dependsOnValues, dependsValid } = useDependsOn(
     dependsOn,
     mapLayerParameters,
   );
 
+  // Multi-select parameters cannot use the hover-delete UX: the dropdown
+  // is always showing all options so there is no natural "currently
+  // selected" filter, and clicking a trash icon would conflict with
+  // checkbox toggling.
+  const deletable = !multi && isDeletableParameter(layerName, parameterName);
+
   const handleChange = (value) => {
     setSelected(value);
     onChange?.(value);
   };
 
+  const handleDelete = (choiceValue) => {
+    setChoiceToDelete(choiceValue);
+    setDeleteVisible(true);
+  };
+
   useEffect(() => {
-    // Only fetch if valid
     if (!dependsValid) return;
 
     const fetchChoices = async () => {
@@ -66,7 +144,6 @@ const ChoiceSelector = ({
           scenarioName,
           mapLayerParameters ?? {},
         );
-        // Backend can return either array (legacy) or {choices: [...], default: "..."} (new)
         if (Array.isArray(data)) {
           setChoices({ choices: data, default: data[0] });
         } else {
@@ -79,43 +156,107 @@ const ChoiceSelector = ({
     };
 
     fetchChoices();
-  }, [dependsOnValues]);
+    // choicesRevision is intentionally in the deps: bumping it in mapStore
+    // forces all ChoiceSelectors to refetch their options after external
+    // filesystem changes (e.g. a successful network-layout run creating a
+    // new network in `outputs/thermal-network/`).
+  }, [dependsOnValues, dependsValid, choicesRevision]);
 
-  // Set the default value from backend (or first choice as fallback)
   useEffect(() => {
     if (choices) {
-      const defaultValue = choices?.default ?? choices.choices?.[0];
+      const rawDefault = choices?.default ?? choices.choices?.[0];
+      // In multi mode the parent expects an array; seed with the single
+      // default so the backend receives [default] on first load and the
+      // single-category branch is used until the user picks more.
+      const initialValue = multi
+        ? rawDefault != null
+          ? [rawDefault?.value ?? rawDefault]
+          : []
+        : (rawDefault?.value ?? rawDefault);
       console.log(
         `[Choice] ${parameterName}: Using default value:`,
-        defaultValue,
+        initialValue,
       );
-      handleChange(defaultValue);
+      handleChange(initialValue);
     } else {
-      handleChange(null);
+      handleChange(multi ? [] : null);
     }
   }, [choices]);
 
-  const options = choices?.choices?.map((choice) => ({
-    value: choice?.value ?? choice,
-    label: choice?.label ?? choice,
-  }));
+  const options = useMemo(() => {
+    const raw = choices?.choices?.map((choice) => ({
+      value: choice?.value ?? choice,
+      label: choice?.label ?? choice,
+    }));
+    if (!raw?.length) return raw;
+    if (!deletable) return raw;
+
+    // Exclude the currently-selected value from the dropdown so the trigger
+    // stays a plain string; mirrors the scenario dropdown delete pattern.
+    return raw
+      .filter((opt) => opt.value !== selected)
+      .map((opt) => ({
+        value: opt.value,
+        label: (
+          <DeletableOption
+            label={opt.label}
+            value={opt.value}
+            onDelete={handleDelete}
+          />
+        ),
+      }));
+  }, [choices, deletable, selected]);
+
+  const selectProps = multi
+    ? { mode: 'multiple', allowClear: false, maxTagCount: 'responsive' }
+    : {};
 
   if (!options?.length) return null;
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+        flex: 1,
+        minWidth: 0,
+      }}
+    >
       <div>
         <b>{label}</b>
       </div>
       <Select
+        {...selectProps}
         value={selected}
         onChange={handleChange}
         options={options}
         placement="topLeft"
-        style={{ minWidth: 200 }}
+        style={{
+          flex: 1,
+          minWidth: 0,
+        }}
         popupMatchSelectWidth={false}
-        styles={{ popup: { root: { overflow: 'hidden', maxWidth: 300 } } }}
+        styles={{ popup: { root: { overflow: 'hidden', maxWidth: 360 } } }}
       />
+      {deletable && (
+        <DeleteChoiceModal
+          visible={deleteVisible}
+          setVisible={setDeleteVisible}
+          layerCategory={categoryInfo?.name}
+          layerName={layerName}
+          parameterName={parameterName}
+          parameterLabel={label}
+          value={choiceToDelete}
+          displayName={getDisplayName(choiceToDelete)}
+          project={project}
+          scenarioName={scenarioName}
+          onDeleted={() => {
+            setChoiceToDelete(null);
+            bumpChoicesRevision();
+          }}
+        />
+      )}
     </div>
   );
 };

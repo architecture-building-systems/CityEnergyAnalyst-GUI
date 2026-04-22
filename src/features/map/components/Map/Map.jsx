@@ -20,10 +20,11 @@ import './Map.css';
 
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { COORDINATE_SYSTEM, HexagonLayer } from 'deck.gl';
+import { COORDINATE_SYSTEM, HexagonLayer, ColumnLayer } from 'deck.gl';
 import {
   useCameraOptionsCalculated,
   useMapStore,
+  COLOR_MODES,
 } from 'features/map/stores/mapStore';
 import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
 import { useCameraFitBounds } from 'features/map/hooks';
@@ -37,17 +38,23 @@ import {
   EMISSIONS_EMBODIED,
   EMISSIONS_OPERATIONAL,
   ANTHROPOGENIC_HEAT,
+  FINAL_ENERGY,
   DEFAULT_LEGEND_COLOUR_ARRAY,
   DEFAULT_LEGEND_POINTS,
 } from 'features/map/constants';
 import Gradient from 'javascript-color-gradient';
 import { hexToRgb } from 'features/map/utils';
+import {
+  getBuildingColorByStandard,
+  getBuildingColorByUseType,
+} from 'features/map/utils/constructionColors';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
   useSelected,
   useSetSelectedFromMap,
 } from 'features/input-editor/stores/inputEditorStore';
+import useBuildingSelectionStore from 'stores/buildingSelectionStore';
 import { AttributionControl } from 'maplibre-gl';
 import MapTooltip from './MapTooltip';
 
@@ -184,12 +191,17 @@ const useMapLayers = (onHover = () => {}) => {
 
         const edgeColour = hexToRgb(colours?.edges) ?? [255, 255, 255];
 
-        // Get min/max range for peak_mass_flow property
+        // Get min/max range for peak_mass_flow property.
+        // For multi-phase plans, the backend pre-computes a global range across
+        // all phases so all phase views share the same scaling factor.
         const edgesData = mapLayers[name]?.edges;
-        const { min, max } = getPropertyRange(
-          edgesData?.features || edgesData,
-          'peak_mass_flow',
-        );
+        const globalRange = mapLayers[name]?.properties?.peak_mass_flow_range;
+        const { min, max } = globalRange
+          ? { min: globalRange.min, max: globalRange.max }
+          : getPropertyRange(
+              edgesData?.features || edgesData,
+              'peak_mass_flow',
+            );
 
         const nodeFillColor = (type) => {
           if (type === 'NONE') {
@@ -347,75 +359,146 @@ const useMapLayers = (onHover = () => {}) => {
         }
       }
 
-      if (name == DEMAND && mapLayers?.[name]) {
-        _layers.push(
-          new HexagonLayer({
-            id: `${name}-hex`,
-            data: mapLayers[name].data,
-
-            extruded: true,
-            getPosition: (d) => d.position,
-            getColorWeight: (d) => d.value,
-            getElevationWeight: (d) => d.value,
-            colorRange: rgbGradientArray,
-            elevationScale: scale,
-            radius: radius,
-            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
-            updateTriggers: {
-              getColor: [range],
-            },
-          }),
-        );
-      }
-
-      if (name == RENEWABLE_ENERGY_POTENTIALS && mapLayers?.[name]) {
-        _layers.push(
-          new HexagonLayer({
-            id: `${name}-hex`,
-            data: mapLayers[name].data,
-
-            extruded: true,
-            getPosition: (d) => d.position,
-            getColorWeight: (d) => d.value,
-            getElevationWeight: (d) => d.value,
-            colorRange: rgbGradientArray,
-            elevationScale: scale,
-            radius: radius,
-            elevationDomain: range,
-            updateTriggers: {
-              getColor: [range],
-            },
-          }),
-        );
-      }
-
       if (
         [
           EMISSIONS_EMBODIED,
           EMISSIONS_OPERATIONAL,
           ANTHROPOGENIC_HEAT,
+          FINAL_ENERGY,
+          DEMAND,
+          RENEWABLE_ENERGY_POTENTIALS,
         ].includes(name) &&
         mapLayers?.[name]
       ) {
-        _layers.push(
-          new HexagonLayer({
-            id: `${name}-hex`,
-            data: mapLayers[name].data,
+        const layerData = mapLayers[name];
+        const isStacked = layerData?.properties?.stacked === true;
 
-            extruded: true,
-            getPosition: (d) => d.position,
-            getColorWeight: (d) => d.value,
-            getElevationWeight: (d) => d.value,
-            colorRange: rgbGradientArray,
-            elevationScale: scale,
-            radius: radius,
-            elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
-            updateTriggers: {
-              getColor: [range],
-              elevationScale: [scale],
-            },
-          }),
-        );
+        if (
+          isStacked &&
+          (name === EMISSIONS_EMBODIED ||
+            name === EMISSIONS_OPERATIONAL ||
+            name === FINAL_ENERGY ||
+            name === DEMAND ||
+            name === RENEWABLE_ENERGY_POTENTIALS)
+        ) {
+          // Multi-category lifecycle emissions / energy-by-carrier:
+          // one ColumnLayer per category with a pre-computed stack base
+          // encoded into position.z so segments visually sit on top of
+          // each other.
+          //
+          // ColumnLayer does NOT normalise elevation the way HexagonLayer
+          // does (HexagonLayer uses elevationDomain + elevationRange [0,1000]
+          // by default). Raw values may be in the millions, so without
+          // normalisation the columns end up kilometres tall. We normalise
+          // each value to a 0..1000 unit range relative to the largest stack
+          // total in the layer, then apply `elevationScale` on top — this
+          // gives the stacked columns the same visual scale as HexagonLayer.
+          const categories = layerData?.properties?.categories ?? [];
+          const entities = layerData?.data ?? [];
+          const stackMax =
+            layerData?.properties?.range?.period?.max ||
+            layerData?.properties?.range?.total?.max ||
+            0;
+          const ELEVATION_UNITS = 1000;
+          const normalize = (v) =>
+            stackMax > 0 ? (v / stackMax) * ELEVATION_UNITS : 0;
+          let layerLabelBase;
+          if (name === FINAL_ENERGY) {
+            layerLabelBase = 'Energy by Carrier';
+          } else if (name === EMISSIONS_OPERATIONAL) {
+            layerLabelBase = 'Operational Emissions';
+          } else if (name === DEMAND) {
+            layerLabelBase = 'End-use Demand';
+          } else if (name === RENEWABLE_ENERGY_POTENTIALS) {
+            layerLabelBase = 'Renewable Energy Potentials';
+          } else {
+            layerLabelBase = 'Lifecycle Emissions';
+          }
+          const unitLabel =
+            name === FINAL_ENERGY ||
+            name === DEMAND ||
+            name === RENEWABLE_ENERGY_POTENTIALS
+              ? 'kWh'
+              : 'kgCO₂e';
+
+          categories.forEach((cat, catIdx) => {
+            const catData = entities
+              .map((entity) => {
+                const values = entity?.values ?? {};
+                const value = values[cat.name] || 0;
+                if (value <= 0) return null;
+                let baseRaw = 0;
+                for (let i = 0; i < catIdx; i += 1) {
+                  baseRaw += Math.max(values[categories[i].name] || 0, 0);
+                }
+                // `position.z` is absolute metres (NOT multiplied by
+                // elevationScale by the layer), so we apply `scale` here to
+                // keep the stack seams aligned with the column tops below.
+                return {
+                  name: entity.name,
+                  position: [
+                    entity.position[0],
+                    entity.position[1],
+                    normalize(baseRaw) * scale,
+                  ],
+                  value: normalize(value),
+                  // Raw data used by the tooltip.
+                  category: cat.name,
+                  rawValue: value,
+                  rawValues: values,
+                  categories,
+                  layerLabel: layerLabelBase,
+                  unitLabel,
+                };
+              })
+              .filter((d) => d !== null);
+
+            if (!catData.length) return;
+
+            _layers.push(
+              new ColumnLayer({
+                id: `${name}-${cat.name}-col`,
+                data: catData,
+                diskResolution: 12,
+                extruded: true,
+                pickable: true,
+                onHover: onHover,
+                getPosition: (d) => d.position,
+                getElevation: (d) => d.value,
+                getFillColor: cat.rgb ?? [128, 128, 128],
+                elevationScale: scale,
+                radius: radius,
+                updateTriggers: {
+                  getPosition: [scale, stackMax],
+                  getElevation: [stackMax],
+                  elevationScale: [scale],
+                },
+              }),
+            );
+          });
+        } else {
+          _layers.push(
+            new HexagonLayer({
+              id: `${name}-hex`,
+              data: layerData.data,
+
+              extruded: true,
+              pickable: true,
+              onHover: onHover,
+              getPosition: (d) => d.position,
+              getColorWeight: (d) => d.value,
+              getElevationWeight: (d) => d.value,
+              colorRange: rgbGradientArray,
+              elevationScale: scale,
+              radius: radius,
+              elevationDomain: [range?.[0] ?? 0, range?.[1] ?? 0],
+              updateTriggers: {
+                getColor: [range],
+                elevationScale: [scale],
+              },
+            }),
+          );
+        }
       }
     });
 
@@ -435,6 +518,13 @@ const DeckGLMap = ({ data, colors }) => {
   const selected = useSelected();
   const setSelected = useSetSelectedFromMap();
 
+  const buildingSelectionActive = useBuildingSelectionStore(
+    (state) => state.active,
+  );
+  const buildingSelectionBuildings = useBuildingSelectionStore(
+    (state) => state.selectedBuildings,
+  );
+
   const viewState = useMapStore(useShallow((state) => state.viewState));
   const setViewState = useMapStore((state) => state.setViewState);
 
@@ -447,12 +537,37 @@ const DeckGLMap = ({ data, colors }) => {
 
   const visibility = useMapStore((state) => state.visibility);
 
+  // Construction standard coloring
+  const colorMode = useMapStore((state) => state.colorMode);
+  const constructionColorMap = useMapStore(
+    (state) => state.constructionColorMap,
+  );
+  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const stateZoneOverride = useMapStore((state) => state.stateZoneOverride);
+
   const mapStyle = useMapStyle();
   useMapAttribution(mapRef);
 
   const buildingColor = useMemo(
-    () => buildingColorFunction(colors, selected),
-    [colors, selected],
+    () =>
+      buildingColorFunction(
+        colors,
+        selected,
+        colorMode,
+        constructionColorMap,
+        useTypeColorMap,
+        buildingSelectionActive,
+        buildingSelectionBuildings,
+      ),
+    [
+      colors,
+      selected,
+      colorMode,
+      constructionColorMap,
+      useTypeColorMap,
+      buildingSelectionActive,
+      buildingSelectionBuildings,
+    ],
   );
 
   const updateTooltip = useCallback((feature) => {
@@ -472,6 +587,16 @@ const DeckGLMap = ({ data, colors }) => {
   const dataLayers = useMemo(() => {
     const onClick = ({ object, layer }, event) => {
       const name = object.properties[INDEX_COLUMN];
+
+      // When building selection mode is active, route clicks to the store
+      // Only zone buildings can be selected, not surroundings
+      if (useBuildingSelectionStore.getState().active) {
+        if (layer.id === 'zone') {
+          useBuildingSelectionStore.getState().toggleBuilding(name);
+        }
+        return;
+      }
+
       if (layer.id !== selectedLayer) {
         setSelected([name]);
         setSelectedLayer(layer.id);
@@ -491,7 +616,11 @@ const DeckGLMap = ({ data, colors }) => {
             setSelected(newSelected);
           }
         } else {
-          setSelected([name]);
+          if (selected.length === 1 && selected[0] === name) {
+            setSelected([]);
+          } else {
+            setSelected([name]);
+          }
         }
       }
     };
@@ -502,11 +631,13 @@ const DeckGLMap = ({ data, colors }) => {
     let _treeLayers = [];
     let _textLayers = [];
 
-    if (data?.zone) {
+    const zoneData = stateZoneOverride ?? data?.zone;
+    if (zoneData) {
       _zoneLayers.push(
         new PolygonLayer({
           id: 'zone',
-          data: data.zone?.features,
+          data: zoneData?.features,
+          dataComparator: () => false,
           opacity: 0.8,
           wireframe: true,
           filled: true,
@@ -519,10 +650,18 @@ const DeckGLMap = ({ data, colors }) => {
 
           getPolygon: calcPolygonWithZ,
           getElevation: (f) => (extruded ? calcPolygonElevation(f) : 0),
-          getFillColor: (f) =>
-            buildingColor(f.properties[INDEX_COLUMN], 'zone'),
+          getFillColor: (f) => buildingColor(f, 'zone'),
           updateTriggers: {
-            getFillColor: [selected, visibility.dc],
+            getPolygon: [stateZoneOverride],
+            getFillColor: [
+              selected,
+              colorMode,
+              constructionColorMap,
+              useTypeColorMap,
+              buildingSelectionActive,
+              buildingSelectionBuildings,
+              stateZoneOverride,
+            ],
           },
 
           pickable: true,
@@ -536,7 +675,7 @@ const DeckGLMap = ({ data, colors }) => {
 
       // Add floor lines when extruded
       if (extruded) {
-        const floorLinesData = generateFloorLines(data.zone.features);
+        const floorLinesData = generateFloorLines(zoneData.features);
         _zoneLayers.push(
           new GeoJsonLayer({
             id: 'zone-floor-lines',
@@ -553,7 +692,7 @@ const DeckGLMap = ({ data, colors }) => {
       _textLayers.push(
         new TextLayer({
           id: 'zone-labels',
-          data: data.zone?.features,
+          data: zoneData?.features,
           visible: visibility.zone_labels ?? true,
           pickable: false,
           getPosition: (f) => {
@@ -591,10 +730,9 @@ const DeckGLMap = ({ data, colors }) => {
           },
 
           getElevation: (f) => f.properties['height_ag'],
-          getFillColor: (f) =>
-            buildingColor(f.properties[INDEX_COLUMN], 'surroundings'),
+          getFillColor: (f) => buildingColor(f, 'surroundings'),
           updateTriggers: {
-            getFillColor: selected,
+            getFillColor: [selected],
           },
 
           pickable: true,
@@ -667,8 +805,11 @@ const DeckGLMap = ({ data, colors }) => {
     selected,
     extruded,
     buildingColor,
+    buildingSelectionActive,
+    buildingSelectionBuildings,
     setSelected,
     updateTooltip,
+    stateZoneOverride,
   ]);
 
   const mapLayers = useMapLayers(updateTooltip);
@@ -736,14 +877,50 @@ const DeckGLMap = ({ data, colors }) => {
   );
 };
 
-const buildingColorFunction = (colors, selected) => (buildingName, layer) => {
-  if (selected.includes(buildingName)) {
-    return [255, 255, 0, 255];
-  }
-  if (layer === 'surroundings') return colors.surroundings;
+const buildingColorFunction =
+  (
+    colors,
+    selected,
+    colorMode,
+    constructionColorMap,
+    useTypeColorMap,
+    buildingSelectionActive,
+    buildingSelectionBuildings,
+  ) =>
+  (feature, layer) => {
+    const buildingName = feature?.properties?.[INDEX_COLUMN];
 
-  return colors.disconnected;
-};
+    if (buildingSelectionActive) {
+      if (buildingSelectionBuildings.includes(buildingName)) {
+        return [46, 134, 193, 220];
+      }
+
+      if (layer === 'surroundings') return colors.surroundings;
+
+      return colors.disconnected;
+    }
+
+    // Selected buildings are always highlighted yellow
+    if (selected.includes(buildingName)) {
+      return [255, 255, 0, 255];
+    }
+
+    // Surroundings always use default surroundings color
+    if (layer === 'surroundings') return colors.surroundings;
+
+    // Check if construction standard coloring is enabled for zone layer
+    if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD && layer === 'zone') {
+      const constType = feature?.properties?.const_type;
+      return getBuildingColorByStandard(constType, constructionColorMap);
+    }
+
+    // Check if use type coloring is enabled for zone layer
+    if (colorMode === COLOR_MODES.USE_TYPE && layer === 'zone') {
+      return getBuildingColorByUseType(feature?.properties, useTypeColorMap);
+    }
+
+    return colors.disconnected;
+  };
 
 const VOID_DECK_FLOOR_HEIGHT = 3;
 const FLOOR_HEIGHT = 3; // Standard floor height in meters

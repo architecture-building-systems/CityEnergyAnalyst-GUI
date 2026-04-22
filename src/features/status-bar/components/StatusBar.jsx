@@ -1,18 +1,30 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 
 import useJobsStore from 'features/jobs/stores/jobsStore';
+import { useProjectStore } from 'features/project/stores/projectStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
 import socket, { waitForConnection } from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
-import { useSetActiveMapCategory } from 'features/project/components/Cards/MapLayersCard/store';
+import {
+  useSetActiveMapCategory,
+  MAP_LAYER_CATEGORIES_QUERY_KEY,
+} from 'features/project/components/Cards/MapLayersCard/store';
+import { useMapStore } from 'features/map/stores/mapStore';
+import { useQueryClient } from '@tanstack/react-query';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
-import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
+import {
+  PLOT_SCRIPTS,
+  VIEW_MAP_RESULTS,
+  VIEW_TOOL_RESULTS,
+  buildPlotToolPrefillFromJob,
+} from 'features/plots/constants';
+import { useSelectPlotTool } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
 import { isElectron } from 'utils/electron';
@@ -56,6 +68,32 @@ const CEAVersion = () => {
   );
 };
 
+// Normalise a job-parameters value into a string array. Backend submission
+// may serialise multi-choice values as a JSON-stringified array, an actual
+// array, or a CSV string depending on the form-data round-trip. Returns
+// `null` when there's nothing usable.
+const parseStringArray = (raw) => {
+  if (Array.isArray(raw)) {
+    const out = raw.filter(Boolean);
+    return out.length ? out : null;
+  }
+  if (typeof raw !== 'string' || !raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const out = parsed.filter(Boolean);
+      return out.length ? out : null;
+    }
+    return parsed ? [parsed] : null;
+  } catch {
+    const out = raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return out.length ? out : null;
+  }
+};
+
 const DismissCountdown = ({ duration, onComplete }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
 
@@ -84,6 +122,13 @@ const JobStatusBar = () => {
   const [output, setMessage] = useState('');
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
+  const setSelectedMapLayer = useMapStore((state) => state.setSelectedMapLayer);
+  const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
+  const selectPlotTool = useSelectPlotTool();
+  const queryClient = useQueryClient();
 
   // Local state for modal triggered from notifications
   const [modalVisible, setModalVisible] = useState(false);
@@ -97,9 +142,14 @@ const JobStatusBar = () => {
     updateJob,
     dismissJob,
     setActiveMapCategory,
+    setMapLayerParameters,
+    setSelectedMapLayer,
+    bumpChoicesRevision,
+    selectPlotTool,
     setModalVisible,
     setSelectedJob,
     setMessage,
+    queryClient,
   };
 
   useEffect(() => {
@@ -142,10 +192,36 @@ const JobStatusBar = () => {
           depsRef.current.updateJob(job);
           depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
 
+          // When network-layout creates or modifies a network, any cached
+          // metadata that lists existing networks goes stale: the tool forms'
+          // network-name / existing-network dropdowns, the thermal-network map
+          // layer's network selector (fetched directly in Choice.jsx, not via
+          // React Query — bumpChoicesRevision forces those to refetch), and
+          // the input-editor map data.
+          //
+          // Note: for thermal-network / thermal-network-multiple-phase we do
+          // NOT auto-update the map viewer here. Refreshing the viewer to the
+          // newly-run network is explicitly gated on the user clicking the
+          // "View Results" notification button, so a running simulation can't
+          // swap the map out from under them while they're looking at it.
+          if (job.script === 'network-layout') {
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['toolParams'],
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['inputs'],
+            });
+            depsRef.current.bumpChoicesRevision();
+          }
+
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
+          const hasToolResult = !!VIEW_TOOL_RESULTS[job.script];
 
           const key = job.id;
-          const duration = isPlotJob ? 0 : 5;
+          const duration = isPlotJob || hasToolResult ? 0 : 5;
 
           notification.success({
             key,
@@ -167,15 +243,75 @@ const JobStatusBar = () => {
                   View Logs
                 </Button>
 
+                {VIEW_TOOL_RESULTS[job.script] && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => {
+                      notification.destroy(key);
+                      depsRef.current.selectPlotTool(
+                        VIEW_TOOL_RESULTS[job.script],
+                        { prefill: buildPlotToolPrefillFromJob(job) },
+                      );
+                    }}
+                  >
+                    View Results
+                  </Button>
+                )}
+
                 {job.script in VIEW_MAP_RESULTS && (
                   <Button
                     type="primary"
                     size="small"
                     onClick={() => {
                       notification.destroy(key);
-                      depsRef.current.setActiveMapCategory(
-                        VIEW_MAP_RESULTS[job.script],
-                      );
+                      // Invalidate the categories query so the layer fetches
+                      // fresh parameter metadata (e.g. the just-created network
+                      // becomes the most-recent default), clear cached params
+                      // so the layer reinitialises with those defaults, bump
+                      // the choices revision so any still-mounted Choice
+                      // selector re-fetches its options immediately instead
+                      // of relying on unmount/remount.
+                      depsRef.current.queryClient.invalidateQueries({
+                        queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+                      });
+                      depsRef.current.setMapLayerParameters(null);
+                      depsRef.current.bumpChoicesRevision();
+                      // Accept the new {category?, layer?, plot?} object
+                      // form OR the legacy bare-category-string form.
+                      // A single click can fire both a map switch AND a
+                      // plot-form open — the two live in different panels
+                      // (map view vs tool card) so they don't conflict.
+                      const target = VIEW_MAP_RESULTS[job.script];
+                      const category =
+                        typeof target === 'string' ? target : target.category;
+                      const layer =
+                        typeof target === 'string' ? null : target.layer;
+                      const plot =
+                        typeof target === 'string' ? null : target.plot;
+                      // Set the layer first so MapLayerPropertiesCard's
+                      // "default to layers[0] if none selected" effect
+                      // doesn't override us when the category mounts.
+                      // When the entry has no category/layer (e.g.
+                      // system-costs has no map layer), pass `null` to
+                      // CLOSE any currently-open map layer card so the
+                      // user isn't left looking at an unrelated layer.
+                      depsRef.current.setSelectedMapLayer(layer ?? null);
+                      depsRef.current.setActiveMapCategory(category ?? null);
+                      // Open the plot's parameter form alongside the map.
+                      // Does NOT auto-run the plot — the user clicks Run
+                      // when ready. Forward the upstream job's submitted
+                      // `what-if-name` so the plot opens with exactly the
+                      // run's scope pre-selected (e.g. running
+                      // `system-costs` over [production, testing-solar]
+                      // → `plot-cost-breakdown` opens with both ticked).
+                      if (plot) {
+                        const names = parseStringArray(
+                          job?.parameters?.['what-if-name'],
+                        );
+                        const seed = names ? { 'what-if-name': names } : null;
+                        depsRef.current.selectPlotTool(plot, { seed });
+                      }
                     }}
                   >
                     View Results
@@ -196,7 +332,7 @@ const JobStatusBar = () => {
                       // Create a URL for the blob
                       const url = URL.createObjectURL(blob);
                       const windowFeatures =
-                        'width=1000,height=800,resizable=yes,status=yes,noopener,noreferrer';
+                        'width=1000,height=800,resizable=yes,scrollbars=yes,status=yes,noopener,noreferrer';
 
                       // Open the URL in a new window/tab
                       const newWindow = window.open(
@@ -262,17 +398,46 @@ const JobStatusBar = () => {
             return;
           }
 
-          const lines = data.message
-            .split(/\r?\n/)
-            .map((x) => x.trim())
-            .filter((x) => x.length > 0);
+          // The backend worker coalesces multiple print() calls into a single
+          // socket message, so progress markers can arrive mixed with regular
+          // log lines. Scan every line for the marker instead of checking the
+          // message prefix.
+          const rawLines = data.message.split(/\r?\n/);
+          const nonProgressLines = [];
+          for (const rawLine of rawLines) {
+            const trimmed = rawLine.trim();
+            if (!trimmed) continue;
+            if (trimmed.startsWith('{"__cea_progress__"')) {
+              try {
+                const progress = JSON.parse(trimmed);
+                const store = useProjectStore.getState();
+                if (progress.__cea_progress__ === 'pathway-state-started') {
+                  store.setSimulationYearStarted(
+                    progress.pathway_name,
+                    progress.year,
+                  );
+                } else if (
+                  progress.__cea_progress__ === 'pathway-state-simulated'
+                ) {
+                  store.setSimulationYearCompleted(
+                    progress.pathway_name,
+                    progress.year,
+                  );
+                }
+              } catch {
+                /* not valid JSON, fall through as regular log line */
+                nonProgressLines.push(trimmed);
+              }
+              continue;
+            }
+            nonProgressLines.push(trimmed);
+          }
 
-          // Ensure lines array is not empty before accessing
-          if (lines.length === 0) {
+          if (nonProgressLines.length === 0) {
             return;
           }
 
-          const last_line = lines[lines.length - 1];
+          const last_line = nonProgressLines[nonProgressLines.length - 1];
 
           // Only call setMessage if both jobid and last_line exist
           if (data.jobid && last_line) {

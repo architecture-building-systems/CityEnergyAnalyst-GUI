@@ -16,10 +16,10 @@ const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
   };
 
   const toggleActive = (category) => {
-    const newActive = activeCategory == category ? null : category;
+    const newActive = activeCategory === category ? null : category;
     setActive(newActive);
     const categoryObj = newActive
-      ? mapLayerCategories?.categories?.find((l) => l.name == newActive)
+      ? mapLayerCategories?.categories?.find((l) => l.name === newActive)
       : null;
     handleCategorySelected(categoryObj);
   };
@@ -27,6 +27,7 @@ const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
   // Reset active layer when scenario changes
   useEffect(() => {
     setActive(null);
+    handleCategorySelected(null);
   }, [scenarioName]);
 
   if (!scenarioName) return null;
@@ -59,7 +60,7 @@ const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
             onClick={toggleActive}
             category={name}
             label={label}
-            active={activeCategory == name}
+            active={activeCategory === name}
           />
         );
       })}

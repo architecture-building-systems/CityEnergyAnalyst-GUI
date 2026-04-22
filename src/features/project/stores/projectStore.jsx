@@ -114,6 +114,44 @@ export const useProjectStore = create((set) => ({
   },
   updateScenario: (scenario) => set({ scenario }),
   setRecentProjects: (projects) => set({ recentProjects: projects }),
+
+  // Pathway Viewer: child scenario state
+  childScenario: null, // { pathway_name, year, parent_scenario }
+  setChildScenario: (data) => set({ childScenario: data }),
+  clearChildScenario: () => set({ childScenario: null }),
+
+  // Simulation progress: per-state-year live updates
+  simulationProgress: {}, // { [pathway_name]: { completed: [year,...], active: year|null } }
+  setSimulationYearStarted: (pathwayName, year) =>
+    set((state) => {
+      const prev = state.simulationProgress[pathwayName] || {
+        completed: [],
+        active: null,
+      };
+      return {
+        simulationProgress: {
+          ...state.simulationProgress,
+          [pathwayName]: { ...prev, active: year },
+        },
+      };
+    }),
+  setSimulationYearCompleted: (pathwayName, year) =>
+    set((state) => {
+      const prev = state.simulationProgress[pathwayName] || {
+        completed: [],
+        active: null,
+      };
+      return {
+        simulationProgress: {
+          ...state.simulationProgress,
+          [pathwayName]: {
+            completed: [...prev.completed, year],
+            active: prev.active === year ? null : prev.active,
+          },
+        },
+      };
+    }),
+  clearSimulationProgress: () => set({ simulationProgress: {} }),
 }));
 
 export const useProjectLoading = () =>

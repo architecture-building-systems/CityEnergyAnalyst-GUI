@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Divider, Spin, Alert, Button } from 'antd';
 import { useIsMutating } from '@tanstack/react-query';
 import { AsyncError } from 'components/AsyncError';
@@ -16,8 +16,21 @@ import { ScriptSuggestions } from './ScriptSuggestions';
 import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
 import { UpOutlined } from '@ant-design/icons';
 import { useToolFormStore } from 'features/tools/stores/tool-form-store';
+import { ToolChoices } from 'features/project/components/Cards/tool-choices';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
-const Tool = ({ script, onToolSelected, form }) => {
+const PATHWAY_VIEWER_OVERRIDES = {
+  'network-layout': (year) => ({
+    'network-name': `thermal_network_${year}`,
+    'overwrite-supply-settings': false,
+  }),
+  'final-energy': () => ({
+    'what-if-name': 'default',
+    'overwrite-supply-settings': false,
+  }),
+};
+
+const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
 
@@ -58,6 +71,19 @@ const Tool = ({ script, onToolSelected, form }) => {
     setToolError(null);
   }, []);
 
+  const childScenario = useProjectStore((state) => state.childScenario);
+
+  const pathwayOverrides = useMemo(() => {
+    if (!childScenario || childScenario.year == null) return {};
+    const builder = PATHWAY_VIEWER_OVERRIDES[script];
+    return builder ? builder(childScenario.year) : {};
+  }, [childScenario, script]);
+
+  const pathwayReadonlyFields = useMemo(
+    () => Object.keys(pathwayOverrides),
+    [pathwayOverrides],
+  );
+
   const {
     params,
     isLoading,
@@ -84,9 +110,18 @@ const Tool = ({ script, onToolSelected, form }) => {
     category,
     label,
     description,
-    parameters,
+    parameters: rawParameters,
     categorical_parameters: categoricalParameters,
   } = params || {};
+
+  const parameters = useMemo(() => {
+    if (!rawParameters || Object.keys(pathwayOverrides).length === 0)
+      return rawParameters;
+    return rawParameters.map((p) =>
+      p.name in pathwayOverrides ? { ...p, value: pathwayOverrides[p.name] } : p,
+    );
+  }, [rawParameters, pathwayOverrides]);
+
   const isInputChecked = inputError !== undefined;
   const hasInputError = inputError != null;
   const disableButtons = isChecking || !isInputChecked || hasInputError;
@@ -96,6 +131,22 @@ const Tool = ({ script, onToolSelected, form }) => {
     setToolError(null);
     recheckInputs();
   }, [recheckInputs]);
+
+  // Fires after useFormReset — lets parents re-seed form values.
+  useEffect(() => {
+    if (params && onParametersLoaded) {
+      onParametersLoaded(params, { recheck: handleReCheck });
+    }
+  }, [params, onParametersLoaded, handleReCheck]);
+
+  // Apply pathway viewer overrides after every form reset.
+  useEffect(() => {
+    if (form && params && Object.keys(pathwayOverrides).length > 0) {
+      form.setFieldsValue(pathwayOverrides);
+    }
+  }, [form, params, pathwayOverrides]);
+
+  if (script == null) return <ToolChoices onSelected={onToolSelected} />;
 
   if (isLoading)
     return (
@@ -110,6 +161,7 @@ const Tool = ({ script, onToolSelected, form }) => {
     };
     return <AsyncError error={normalizedError} />;
   }
+
   if (!label) return null;
 
   return (
@@ -241,6 +293,7 @@ const Tool = ({ script, onToolSelected, form }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
+            extraReadonlyFields={pathwayReadonlyFields}
           />
         </div>
       </Spin>

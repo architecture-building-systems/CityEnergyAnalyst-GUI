@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { defaultViewState } from 'features/map/utils';
 
+// Color modes for building visualization
+export const COLOR_MODES = {
+  DEFAULT: 'default',
+  CONSTRUCTION_STANDARD: 'construction-standard',
+  USE_TYPE: 'use-type',
+};
+
 export const useMapStore = create((set) => ({
   visibility: {},
   mapLabels: true,
@@ -13,6 +20,19 @@ export const useMapStore = create((set) => ({
   mapLayers: null,
   filters: {},
   range: [0, 0],
+
+  // Revision counter bumped when external events (e.g. a successful
+  // network-layout job) should force map-layer choice dropdowns to refetch
+  // their options, even if their `dependsOn` values haven't changed.
+  choicesRevision: 0,
+
+  // Construction standard / use type coloring state
+  colorMode: COLOR_MODES.DEFAULT,
+  constructionColorMap: {},
+  useTypeColorMap: {},
+
+  // Pathway state geometry override
+  stateZoneOverride: null,
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
@@ -54,6 +74,14 @@ export const useMapStore = create((set) => ({
       },
     })),
   setRange: (value) => set({ range: value }),
+  bumpChoicesRevision: () =>
+    set((state) => ({ choicesRevision: state.choicesRevision + 1 })),
+
+  // Construction standard coloring setters
+  setColorMode: (value) => set({ colorMode: value }),
+  setConstructionColorMap: (value) => set({ constructionColorMap: value }),
+  setUseTypeColorMap: (value) => set({ useTypeColorMap: value }),
+  setStateZoneOverride: (value) => set({ stateZoneOverride: value }),
 }));
 
 export const useCameraOptionsCalculated = () =>
