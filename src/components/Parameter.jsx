@@ -341,7 +341,8 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'ScenarioNameMultiChoiceParameter':
     case 'WhatIfNameMultiChoiceParameter':
     case 'SolarPanelMultiChoiceParameter':
-    case 'ComponentMultiChoiceParameter': {
+    case 'ComponentMultiChoiceParameter':
+    case 'EnergyCarrierMultiChoiceParameter': {
       const options = choices.map((choice) => ({
         label: choice,
         value: choice,
