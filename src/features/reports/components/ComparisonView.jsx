@@ -9,9 +9,8 @@ import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import ReportColumn from './ReportColumn';
 import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
-import PlotEditModal from './PlotEditModal';
 
-const ComparisonView = () => {
+const ComparisonView = ({ onOpenDrawer }) => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
@@ -29,12 +28,6 @@ const ComparisonView = () => {
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
-  // Drawer target — null when closed. Shapes:
-  //   { mode: 'add-card', columnIndex, targetCardId, direction, feature, script }
-  //   { mode: 'add-plot', columnIndex, cardId, script }
-  //   { mode: 'edit',     columnIndex, cardId, plotId }
-  const [drawerTarget, setDrawerTarget] = useState(null);
-
   const { data: scenarios = [] } = useFetchScenarios(project);
   const { data: whatifs = [] } = useFetchWhatifs(
     project,
@@ -44,14 +37,12 @@ const ComparisonView = () => {
   const isFeatureMode = view === 'inter-feature';
   const columnKeyForMode = isFeatureMode ? 'per-column' : 'shared';
 
-  // Y-axis alignment for shared modes (inter-scenario / inter-whatif)
   const { handlePlotReady } = useYAxisAlignment(
     !isFeatureMode && columns.length > 1,
     columns.length,
   );
 
   const getColumnIndexFor = (colIndex) => (isFeatureMode ? colIndex : null);
-
   const getCardsForColumn = (colIndex) =>
     isFeatureMode ? columnCards[colIndex] || [] : sharedCards;
 
@@ -61,35 +52,54 @@ const ComparisonView = () => {
     return target?.feature || 'demand';
   };
 
-  // ── Drawer open handlers ───────────────────────────────────
+  const scenarioForColumn = (columnIndex) => {
+    if (columnIndex != null) {
+      return columns[columnIndex]?.scenario || scenario;
+    }
+    return columns[0]?.scenario || scenario;
+  };
+
+  // ── Drawer open handlers ──────────────────────────────────────
 
   const handleAddCard = (colIndex) => ({ targetCardId, direction, feature, script }) => {
     const columnIndex = getColumnIndexFor(colIndex);
-    setDrawerTarget({
-      mode: 'add-card',
-      columnIndex,
-      targetCardId,
-      direction,
-      feature: feature || inferFeature(columnIndex, targetCardId),
-      script: script || null,
+    const resolvedFeature = feature || inferFeature(columnIndex, targetCardId);
+    onOpenDrawer({
+      mode: 'add',
+      scenario: scenarioForColumn(columnIndex),
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) =>
+        addCard(columnIndex, {
+          targetCardId,
+          direction,
+          feature: resolvedFeature,
+          plotConfig,
+        }),
     });
   };
 
   const handleAddPlotToCard = (colIndex) => (cardId, script = null) => {
-    setDrawerTarget({
-      mode: 'add-plot',
-      columnIndex: getColumnIndexFor(colIndex),
-      cardId,
-      script,
+    const columnIndex = getColumnIndexFor(colIndex);
+    onOpenDrawer({
+      mode: 'add',
+      scenario: scenarioForColumn(columnIndex),
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
     });
   };
 
   const handleEditPlot = (colIndex) => (cardId, plotId) => {
-    setDrawerTarget({
+    const columnIndex = getColumnIndexFor(colIndex);
+    const cards = getCardsForColumn(colIndex);
+    const existing =
+      cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
+        ?.plotConfig || null;
+    onOpenDrawer({
       mode: 'edit',
-      columnIndex: getColumnIndexFor(colIndex),
-      cardId,
-      plotId,
+      scenario: scenarioForColumn(columnIndex),
+      plotConfig: existing,
+      onSave: (plotConfig) =>
+        updatePlot(columnIndex, cardId, plotId, plotConfig),
     });
   };
 
@@ -105,7 +115,7 @@ const ComparisonView = () => {
     removeCard(getColumnIndexFor(colIndex), cardId);
   };
 
-  // ── Add-column picker (unchanged) ──────────────────────────
+  // ── Add-column picker (unchanged) ─────────────────────────────
 
   const handleAddColumnConfirm = (selected) => {
     if (view === 'inter-scenario') {
@@ -120,50 +130,6 @@ const ComparisonView = () => {
       );
     }
     setAddColumnOpen(false);
-  };
-
-  // ── Drawer Run handler ─────────────────────────────────────
-
-  const handleDrawerSave = (plotConfig) => {
-    if (!drawerTarget) return;
-    const { columnIndex } = drawerTarget;
-
-    if (drawerTarget.mode === 'add-card') {
-      addCard(columnIndex, {
-        targetCardId: drawerTarget.targetCardId,
-        direction: drawerTarget.direction,
-        feature: drawerTarget.feature,
-        plotConfig,
-      });
-    } else if (drawerTarget.mode === 'add-plot') {
-      addPlot(columnIndex, drawerTarget.cardId, plotConfig);
-    } else if (drawerTarget.mode === 'edit') {
-      updatePlot(
-        columnIndex,
-        drawerTarget.cardId,
-        drawerTarget.plotId,
-        plotConfig,
-      );
-    }
-    setDrawerTarget(null);
-  };
-
-  const getDrawerPlotConfig = () => {
-    if (!drawerTarget) return null;
-    if (drawerTarget.mode === 'edit') {
-      const cards = getCardsForColumn(drawerTarget.columnIndex ?? 0);
-      const card = cards.find((c) => c.id === drawerTarget.cardId);
-      return card?.plots.find((p) => p.id === drawerTarget.plotId)?.plotConfig || null;
-    }
-    return drawerTarget.script ? { script: drawerTarget.script } : null;
-  };
-
-  const getDrawerScenario = () => {
-    if (!drawerTarget) return scenario;
-    if (drawerTarget.columnIndex != null) {
-      return columns[drawerTarget.columnIndex]?.scenario || scenario;
-    }
-    return columns[0]?.scenario || scenario;
   };
 
   if (columns.length === 0) {
@@ -245,15 +211,6 @@ const ComparisonView = () => {
           onCancel={() => setAddColumnOpen(false)}
         />
       )}
-
-      <PlotEditModal
-        open={!!drawerTarget}
-        mode={drawerTarget?.mode === 'edit' ? 'edit' : 'add'}
-        scenario={getDrawerScenario()}
-        plotConfig={getDrawerPlotConfig()}
-        onSave={handleDrawerSave}
-        onCancel={() => setDrawerTarget(null)}
-      />
     </div>
   );
 };

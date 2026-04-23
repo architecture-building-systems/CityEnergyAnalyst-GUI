@@ -6,7 +6,6 @@ import { useReportsStore } from '../stores/reportsStore';
 import { useFetchScenarios } from '../hooks/useReportsData';
 import ReportColumn from './ReportColumn';
 import ScenarioPicker from './ScenarioPicker';
-import PlotEditModal from './PlotEditModal';
 
 /**
  * Launch view — entry point for Reports Mode.
@@ -14,13 +13,11 @@ import PlotEditModal from './PlotEditModal';
  * State is local (not store-backed). Card grid uses the same shape as
  * the store: `cards: [{ id, row, col, feature, plots: [{ id, plotConfig }] }]`.
  *
- * Layout:
- *   Canvas (white rounded panel) fits its content:
- *     Title card + "+" (add scenario to compare)
- *     Map card
- *     Grid of feature cards — expands SE as the user clicks + edges.
+ * Drawer state is owned by `ReportsPage` and opened via the
+ * `onOpenDrawer` callback — so the plot tool renders in its own
+ * grid cell at page level, not nested inside this view.
  */
-const LaunchView = () => {
+const LaunchView = ({ onOpenDrawer }) => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
@@ -31,15 +28,8 @@ const LaunchView = () => {
   const [pickerMode, setPickerMode] = useState(null);
   const [cards, setCards] = useState([]);
 
-  // Drawer target — null when closed. Shape:
-  //   { mode: 'add-card', targetCardId, direction, feature, script }
-  //   { mode: 'add-plot', cardId, script }
-  //   { mode: 'edit', cardId, plotId }
-  const [drawerTarget, setDrawerTarget] = useState(null);
-
-  const makeId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-
-  // ── Grid operations (mirror the store's card API, local state) ──
+  const makeId = (prefix) =>
+    `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
   const shiftForInsert = (arr, { row, col, direction }) => {
     if (direction === 'right') {
@@ -92,29 +82,73 @@ const LaunchView = () => {
 
   // ── Drawer open handlers ───────────────────────────────────
 
-  // + right / + bottom on an existing card, or the fallback card's
-  // Add-a-plot when the column is empty.
   const handleAddCard = useCallback(
     ({ targetCardId, direction, feature, script }) => {
-      setDrawerTarget({
-        mode: 'add-card',
-        targetCardId,
-        direction,
-        feature: feature || inferFeatureForTarget(cards, targetCardId),
-        script: script || null,
+      const resolvedFeature =
+        feature || inferFeatureForTarget(cards, targetCardId);
+      onOpenDrawer({
+        mode: 'add',
+        scenario,
+        plotConfig: script ? { script } : null,
+        onSave: (plotConfig) =>
+          insertCard({
+            targetCardId,
+            direction,
+            feature: resolvedFeature,
+            plotConfig,
+          }),
       });
     },
-    [cards],
+    [cards, insertCard, onOpenDrawer, scenario],
   );
 
-  // "Add a plot" inside an existing card.
-  const handleAddPlotToCard = useCallback((cardId, script = null) => {
-    setDrawerTarget({ mode: 'add-plot', cardId, script });
-  }, []);
+  const handleAddPlotToCard = useCallback(
+    (cardId, script = null) => {
+      onOpenDrawer({
+        mode: 'add',
+        scenario,
+        plotConfig: script ? { script } : null,
+        onSave: (plotConfig) =>
+          setCards((prev) =>
+            prev.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    plots: [...c.plots, { id: makeId('plot'), plotConfig }],
+                  }
+                : c,
+            ),
+          ),
+      });
+    },
+    [onOpenDrawer, scenario],
+  );
 
-  const handleEditPlot = useCallback((cardId, plotId) => {
-    setDrawerTarget({ mode: 'edit', cardId, plotId });
-  }, []);
+  const handleEditPlot = useCallback(
+    (cardId, plotId) => {
+      const card = cards.find((c) => c.id === cardId);
+      const existing = card?.plots.find((p) => p.id === plotId)?.plotConfig;
+      onOpenDrawer({
+        mode: 'edit',
+        scenario,
+        plotConfig: existing || null,
+        onSave: (plotConfig) =>
+          setCards((prev) =>
+            prev.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    plots: c.plots.map((p) =>
+                      p.id === plotId ? { ...p, plotConfig } : p,
+                    ),
+                  }
+                : c,
+            ),
+          ),
+      });
+    },
+    [cards, onOpenDrawer, scenario],
+  );
 
   const handleResetPlot = useCallback((cardId, plotId) => {
     setCards((prev) =>
@@ -146,57 +180,6 @@ const LaunchView = () => {
   const handleDeleteCard = useCallback((cardId) => {
     setCards((prev) => prev.filter((c) => c.id !== cardId));
   }, []);
-
-  // Run from the drawer. Routes to the right operation.
-  const handleDrawerSave = useCallback(
-    (plotConfig) => {
-      if (!drawerTarget) return;
-      if (drawerTarget.mode === 'add-card') {
-        insertCard({
-          targetCardId: drawerTarget.targetCardId,
-          direction: drawerTarget.direction,
-          feature: drawerTarget.feature,
-          plotConfig,
-        });
-      } else if (drawerTarget.mode === 'add-plot') {
-        setCards((prev) =>
-          prev.map((c) =>
-            c.id === drawerTarget.cardId
-              ? {
-                  ...c,
-                  plots: [...c.plots, { id: makeId('plot'), plotConfig }],
-                }
-              : c,
-          ),
-        );
-      } else if (drawerTarget.mode === 'edit') {
-        setCards((prev) =>
-          prev.map((c) =>
-            c.id === drawerTarget.cardId
-              ? {
-                  ...c,
-                  plots: c.plots.map((p) =>
-                    p.id === drawerTarget.plotId ? { ...p, plotConfig } : p,
-                  ),
-                }
-              : c,
-          ),
-        );
-      }
-      setDrawerTarget(null);
-    },
-    [drawerTarget, insertCard],
-  );
-
-  // Seed the drawer's plotConfig from the target.
-  const drawerPlotConfig =
-    drawerTarget?.mode === 'edit'
-      ? cards
-          .find((c) => c.id === drawerTarget.cardId)
-          ?.plots.find((p) => p.id === drawerTarget.plotId)?.plotConfig || null
-      : drawerTarget?.script
-        ? { script: drawerTarget.script }
-        : null;
 
   if (!project || !scenario) {
     return (
@@ -249,35 +232,16 @@ const LaunchView = () => {
           onCancel={() => setPickerMode(null)}
         />
       )}
-
-      <PlotEditModal
-        open={!!drawerTarget}
-        mode={drawerTarget?.mode === 'edit' ? 'edit' : 'add'}
-        scenario={scenario}
-        plotConfig={drawerPlotConfig}
-        onSave={handleDrawerSave}
-        onCancel={() => setDrawerTarget(null)}
-      />
     </>
   );
 };
 
-// Find the neighbour card's feature so + right / + bottom start with a
-// sensible default. Caller overrides this when it knows better.
 function inferFeatureForTarget(cards, targetCardId) {
   if (!targetCardId) return 'demand';
   const target = cards.find((c) => c.id === targetCardId);
   return target?.feature || 'demand';
 }
 
-// Extra right padding reserves space for the + right affordance that
-// FeatureCard positions absolutely outside the card's right edge. The
-// card content stays within the inner content box (left padding) and
-// the + button lives in the right padding — both covered by the
-// canvas's white background.
-// Width:   cea-card-icon-button-container button = 30 + container padding 3x2 = 36
-// Gap:     8px between card and button
-// Total:   44px; round up to 56 for breathing room.
 const canvasStyle = {
   background: '#fff',
   borderRadius: 12,

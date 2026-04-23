@@ -77,9 +77,8 @@ const PlotEditModal = ({
       className="cea-tool-card"
       style={{
         ...cardStyle,
-        transform: open
-          ? 'translateX(0)'
-          : 'translateX(calc(100% + 32px))',
+        // Fade + ignore pointer events when closed; the grid column
+        // itself collapses to 0 in ReportsPage.
         opacity: open ? 1 : 0,
         pointerEvents: open ? 'auto' : 'none',
       }}
@@ -112,17 +111,13 @@ const PlotEditModal = ({
   );
 };
 
-// Match the main viewport's right-sidebar dimensions:
-//   Project.css: `--right-sidebar-width: 480px`
-// Reports doesn't use the overlay grid, so we use `position: fixed`
-// with breathing room around the edges. Chrome (radius, shadow,
-// padding) copied from ToolCard.jsx:81-95.
+// The plot tool now lives in its own grid cell (see ReportsPage.jsx),
+// so it fills the cell rather than being `position: fixed`. The grid
+// column animates open/close in ReportsPage; we only handle the card
+// chrome (shadow, radius, padding) here, copied from ToolCard.jsx.
 const cardStyle = {
-  position: 'fixed',
-  top: 16,
-  right: 16,
-  bottom: 40,
-  width: 480,
+  width: '100%',
+  height: '100%',
   background: '#fff',
   borderRadius: 12,
   boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
@@ -130,9 +125,7 @@ const cardStyle = {
   padding: 12,
   display: 'flex',
   flexDirection: 'column',
-  zIndex: 900,
-  transition:
-    'transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.25s ease-in-out',
+  transition: 'opacity 0.25s ease-in-out',
 };
 
 const headerStyle = {

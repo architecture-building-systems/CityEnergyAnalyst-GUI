@@ -113,11 +113,15 @@ const HomePageContent = () => {
           path={routes.REPORTS}
           element={
             <Suspense fallback={<Loading />}>
+              {/* No outer padding here — ReportsPage owns its own
+                  12px padding, matching the main viewport overlay
+                  (`Project.css:15`). Adding a second layer of padding
+                  via this wrapper made cards sit way inside the
+                  window edge. */}
               <div
                 style={{
                   height: '100%',
                   overflow: 'auto',
-                  padding: 16,
                   backgroundColor: '#D4DADC',
                 }}
               >
