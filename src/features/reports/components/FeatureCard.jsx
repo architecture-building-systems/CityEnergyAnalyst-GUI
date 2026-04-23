@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Button, Dropdown, Popconfirm, Select, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
@@ -180,25 +180,27 @@ const FeatureCard = ({
         <>
           <div style={sectionDividerStyle} />
           <div style={plotsSectionStyle}>
-            {plots.map((plot) => (
-              <PlotSlotCard
-                key={plot.id}
-                project={project}
-                scenario={scenario}
-                feature={feature}
-                whatif={whatif}
-                plotConfig={plot.plotConfig}
-                onEdit={() => onEditPlot?.(plot.id)}
-                onReset={() => onResetPlot?.(plot.id)}
-                onDelete={
-                  onDeletePlot ? () => onDeletePlot(plot.id) : undefined
-                }
-                onPlotReady={
-                  onPlotReady
-                    ? (plotDiv) => onPlotReady(plot.id, plotDiv)
-                    : undefined
-                }
-              />
+            {plots.map((plot, idx) => (
+              <Fragment key={plot.id}>
+                {idx > 0 && <div style={plotDividerStyle} />}
+                <PlotSlotCard
+                  project={project}
+                  scenario={scenario}
+                  feature={feature}
+                  whatif={whatif}
+                  plotConfig={plot.plotConfig}
+                  onEdit={() => onEditPlot?.(plot.id)}
+                  onReset={() => onResetPlot?.(plot.id)}
+                  onDelete={
+                    onDeletePlot ? () => onDeletePlot(plot.id) : undefined
+                  }
+                  onPlotReady={
+                    onPlotReady
+                      ? (plotDiv) => onPlotReady(plot.id, plotDiv)
+                      : undefined
+                  }
+                />
+              </Fragment>
             ))}
             {onAddPlot && (
               <div style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}>
@@ -468,6 +470,13 @@ const addPlotRowWithDividerStyle = {
   borderTop: '1px solid #f0f0f0',
   paddingTop: 8,
   marginTop: 4,
+};
+
+// Thin grey line between stacked plots — matches the section dividers
+// (`sectionDividerStyle`) and the "Add a plot" divider so the whole
+// card reads with a single visual rhythm.
+const plotDividerStyle = {
+  borderTop: '1px solid #f0f0f0',
 };
 
 export default FeatureCard;

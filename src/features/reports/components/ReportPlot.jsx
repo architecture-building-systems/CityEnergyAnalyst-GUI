@@ -1,4 +1,10 @@
-import { useEffect, useRef, useId, cloneElement, isValidElement } from 'react';
+import {
+  useEffect,
+  useRef,
+  useId,
+  cloneElement,
+  isValidElement,
+} from 'react';
 import { Spin, Empty } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
@@ -12,7 +18,18 @@ import { useFetchReportPlot, useFetchCustomPlot } from '../hooks/useReportsData'
  *   - Default: fetches via GET /api/reports/plot (feature-based)
  *   - Custom:  fetches via POST /api/reports/plot-custom (plotConfig with script/parameters)
  */
-const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotReady }) => {
+const ReportPlot = ({
+  project,
+  scenario,
+  feature,
+  whatif,
+  plotConfig,
+  onPlotReady,
+  // Receives the plain-text main title lifted out of the Plotly
+  // figure once rendering completes. The caller (PlotSlotCard)
+  // decides how to display it — typically on the controls row.
+  onCaption,
+}) => {
   const uniqueId = useId();
   const containerRef = useRef(null);
   const scriptRef = useRef(null);
@@ -92,15 +109,37 @@ const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotRead
         if (cancelled) return;
       }
       runInline();
-      if (onPlotReady && containerRef.current) {
-        setTimeout(() => {
-          if (cancelled) return;
-          const plotDiv = containerRef.current?.querySelector(
-            '.plotly-graph-div, .js-plotly-plot',
-          );
-          if (plotDiv) onPlotReady(plotDiv);
-        }, 200);
-      }
+      // After Plotly.newPlot runs, lift the main title out of the
+      // figure (the backend embeds `<b>Title</b><br><sub>Subtitle</sub>`)
+      // and blank the in-chart title so the canvas area only has
+      // axes + data. Reports shows its own caption above the plot.
+      setTimeout(() => {
+        if (cancelled || !containerRef.current) return;
+        const plotDivs = containerRef.current.querySelectorAll(
+          '.js-plotly-plot, .plotly-graph-div',
+        );
+        if (plotDivs.length === 0) return;
+
+        const firstRaw = plotDivs[0].layout?.title?.text || '';
+        // Split on the `<br>` that separates title from subtitle,
+        // then strip any HTML (`<b>`, `<sub>`, …) to get plain text.
+        const mainPart = firstRaw.split(/<br\s*\/?>/i)[0];
+        const plainText = mainPart.replace(/<[^>]+>/g, '').trim();
+        if (plainText && onCaption) onCaption(plainText);
+
+        if (window.Plotly?.relayout) {
+          plotDivs.forEach((div) => {
+            try {
+              window.Plotly.relayout(div, { 'title.text': '' });
+            } catch {
+              // Some figures (e.g. error-card HTML snippets) aren't
+              // Plotly-initialised — skip.
+            }
+          });
+        }
+
+        if (onPlotReady) onPlotReady(plotDivs[0]);
+      }, 200);
     };
 
     run();
@@ -236,15 +275,18 @@ const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotRead
     );
 
   // Flex-fill the parent slot (which itself flex-fills the card's
-  // plot section), and fall back to `minHeight` for cases where the
-  // parent hasn't constrained height yet (e.g. a loading race on
-  // first mount).
+  // plot section). `minHeight: 0` is deliberate — with multiple plots
+  // stacked in the same card, each must be able to shrink to any
+  // fraction of the card's height so `flex: 1` can divide space
+  // proportionally. A non-zero floor here prevents the card's drag-
+  // resize from redistributing height across sibling plots. Card-
+  // level `minHeight: 280` still enforces an overall lower bound.
   return (
     <div
       ref={containerRef}
       style={{
         flex: 1,
-        minHeight: 300,
+        minHeight: 0,
         width: '100%',
         position: 'relative',
       }}

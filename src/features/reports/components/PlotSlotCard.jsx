@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
 import { InputEditorIcon, RefreshIcon, BinAnimationIcon } from 'assets/icons';
 
@@ -21,9 +22,38 @@ const PlotSlotCard = ({
   onDelete,
   onPlotReady,
 }) => {
+  // Main title lifted out of the Plotly figure by `ReportPlot`. When
+  // set, it's shown on the controls row instead of the figure canvas.
+  const [caption, setCaption] = useState('');
+
+  // Append `| {whatif}` only when the user picked exactly one what-if
+  // name. Multi-selection means multiple figures stacked below with
+  // their own labels, so a single suffix would be misleading.
+  const whatifSuffix = useMemo(() => {
+    const list = plotConfig?.parameters?.['what-if-name'];
+    if (Array.isArray(list) && list.length === 1) return list[0];
+    if (typeof list === 'string' && list.trim()) return list.trim();
+    return null;
+  }, [plotConfig]);
+
+  const hoverTitle = caption
+    ? whatifSuffix
+      ? `${caption} | ${whatifSuffix}`
+      : caption
+    : '';
+
   return (
     <div style={slotStyle}>
       <div style={controlsStyle}>
+        <div style={titleStyle} title={hoverTitle}>
+          {caption && <span style={titleTextStyle}>{caption}</span>}
+          {caption && whatifSuffix && (
+            <>
+              <span style={titleSeparatorStyle}>|</span>
+              <span style={titleTextStyle}>{whatifSuffix}</span>
+            </>
+          )}
+        </div>
         <div className="cea-card-icon-button-container">
           <Tooltip title="Edit">
             <Button
@@ -68,6 +98,7 @@ const PlotSlotCard = ({
         whatif={whatif}
         plotConfig={plotConfig}
         onPlotReady={onPlotReady}
+        onCaption={setCaption}
       />
     </div>
   );
@@ -91,10 +122,46 @@ const slotStyle = {
   minHeight: 0,
 };
 
+// Controls row now carries the title on the left and the Edit/Reset/
+// Delete trio on the right. `space-between` with `align-items: center`
+// keeps the two ends visually on the same baseline; `min-width: 0` on
+// the title is the standard trick that makes `text-overflow: ellipsis`
+// work inside a flex child.
 const controlsStyle = {
   display: 'flex',
-  justifyContent: 'flex-end',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
   marginBottom: 4,
+};
+
+// Title is now a flex row so the pipe separator has generous, CSS-
+// controlled breathing room on either side rather than the single
+// space that `"A | B"` collapses to in HTML.
+const titleStyle = {
+  flex: 1,
+  minWidth: 0,
+  display: 'flex',
+  alignItems: 'baseline',
+  gap: 16,
+  fontWeight: 600,
+  fontSize: 14,
+  color: '#222',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
+};
+
+const titleTextStyle = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  minWidth: 0,
+};
+
+// Lighter than the title text so the separator reads as punctuation,
+// not a third word.
+const titleSeparatorStyle = {
+  color: '#999',
+  fontWeight: 400,
 };
 
 export default PlotSlotCard;
