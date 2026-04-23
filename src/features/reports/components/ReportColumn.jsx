@@ -1,10 +1,85 @@
 import { useMemo } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Button, Dropdown, Tooltip } from 'antd';
 import { CreateNewIcon } from 'assets/icons';
 
+import {
+  PLOT_GROUPS,
+  PLOT_LABELS,
+  VIEW_PLOT_RESULTS,
+} from 'features/plots/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import MapThumbnail from './MapThumbnail';
 import FeatureCard from './FeatureCard';
+
+/**
+ * Build the antd Dropdown `menu.items` tree for "Add a feature card".
+ * Mirrors the "Select a Plot Tool" picker (PlotChoices) exactly —
+ * same nesting, same labels, same leaf-level specific plots. Derived
+ * entirely from PLOT_GROUPS / PLOT_LABELS / VIEW_PLOT_RESULTS so new
+ * groups or plots show up here automatically.
+ *
+ * `onPick(feature, script)` fires on a specific-plot click:
+ *   - `feature`: the family's first map constant → drives the new
+ *                card's title + quick-pick context.
+ *   - `script`:  the specific plot's run script → seeds the drawer
+ *                so the parameter form opens straight away.
+ *
+ * Visual conventions (match PlotChoices as closely as the antd Menu
+ * allows):
+ *   - Top-level group items are prefixed with the group's `icon`
+ *     (the feature family icon from PLOT_GROUPS).
+ *   - Nested items (subgroups + specific plots) are prefixed with a
+ *     dash so the indentation reads even when menus wrap across
+ *     column widths.
+ */
+const topLabel = (group) => {
+  const Icon = group.icon;
+  return (
+    <span
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+    >
+      {Icon && <Icon style={{ fontSize: 16 }} />}
+      {group.label}
+    </span>
+  );
+};
+
+const nestedLabel = (text) => `- ${text}`;
+
+function buildPlotMenuItems(onPick) {
+  const plotLeaf = (key, familyFirstKey) => {
+    const script = VIEW_PLOT_RESULTS[key];
+    if (!script) return null;
+    return {
+      key: `${familyFirstKey}::${key}`,
+      label: nestedLabel(PLOT_LABELS[key] || key),
+      onClick: () => onPick(familyFirstKey, script),
+    };
+  };
+
+  const subgroupLevel = (sub) => ({
+    key: sub.label,
+    label: nestedLabel(sub.label),
+    children: sub.keys.map((k) => plotLeaf(k, sub.keys[0])).filter(Boolean),
+  });
+
+  return PLOT_GROUPS.map((group) => {
+    if (group.subgroups) {
+      return {
+        key: group.label,
+        label: topLabel(group),
+        children: group.subgroups.map(subgroupLevel),
+      };
+    }
+    return {
+      key: group.label,
+      label: topLabel(group),
+      children: group.keys
+        .map((k) => plotLeaf(k, group.keys[0]))
+        .filter(Boolean),
+    };
+  });
+}
 
 /**
  * A single report column.
@@ -111,22 +186,30 @@ const ReportColumn = ({
       {!hasCards ? (
         onAddCard && (
           <div style={addFirstCardRowStyle}>
-            <div className="cea-card-icon-button-container">
-              <Tooltip title="Add a Feature card" placement="bottom">
-                <Button
-                  type="text"
-                  icon={<CreateNewIcon />}
-                  onClick={() =>
-                    onAddCard({
-                      targetCardId: null,
-                      direction: null,
-                      feature: fallbackFeature,
-                    })
-                  }
-                  aria-label="Add a feature card"
-                />
-              </Tooltip>
-            </div>
+            <Dropdown
+              menu={{
+                items: buildPlotMenuItems((feature, script) =>
+                  onAddCard({
+                    targetCardId: null,
+                    direction: null,
+                    feature,
+                    script,
+                  }),
+                ),
+              }}
+              trigger={['click']}
+              placement="bottomLeft"
+            >
+              <div className="cea-card-icon-button-container">
+                <Tooltip title="Add a Feature card" placement="bottom">
+                  <Button
+                    type="text"
+                    icon={<CreateNewIcon />}
+                    aria-label="Add a feature card"
+                  />
+                </Tooltip>
+              </div>
+            </Dropdown>
           </div>
         )
       ) : (

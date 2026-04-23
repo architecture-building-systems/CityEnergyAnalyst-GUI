@@ -12,13 +12,6 @@ import {
   PLOT_LABELS,
   VIEW_PLOT_RESULTS,
 } from 'features/plots/constants';
-import {
-  DEMAND,
-  FINAL_ENERGY,
-  COST_BREAKDOWN,
-  EMISSIONS_OPERATIONAL,
-  ANTHROPOGENIC_HEAT,
-} from 'features/map/constants';
 // `cea-template-select` — same pill used by the pathway builder.
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
@@ -27,47 +20,22 @@ import KpiStrip from './KpiStrip';
 import PlotSlotCard from './PlotSlotCard';
 import { useQueryClient } from '@tanstack/react-query';
 
-const FEATURE_META = {
-  demand: {
-    title: 'Building energy demand',
-    description: 'EUI (kWh/m2/yr) in this district:',
-  },
-  'final-energy': {
-    title: 'Energy by carrier',
-    description: 'Final energy in this district:',
-  },
-  costs: {
-    title: 'System costs',
-    description: 'Annualised costs in this district:',
-  },
-  emissions: {
-    title: 'Operational emissions',
-    description: 'GHG emissions in this district:',
-  },
-  'heat-rejection': {
-    title: 'Anthropogenic heat rejection',
-    description: 'Heat rejected in this district:',
-  },
-};
-
-// One anchor map constant per feature; the quick-pick options are
-// derived dynamically from the PLOT_GROUPS group/subgroup that
-// contains this anchor.
-const FEATURE_ANCHOR = {
-  demand: DEMAND,
-  'final-energy': FINAL_ENERGY,
-  costs: COST_BREAKDOWN,
-  emissions: EMISSIONS_OPERATIONAL,
-  'heat-rejection': ANTHROPOGENIC_HEAT,
-};
-
-function findKeysContaining(anchor) {
-  if (!anchor) return null;
+// `feature` on a card is the first key of the plot family it
+// belongs to (see ReportColumn's `buildFamilyMenuItems`). So to
+// find a card's family label and available plots, walk PLOT_GROUPS
+// looking for the group/subgroup that contains that key. No
+// hardcoded feature→label dictionary to keep in sync.
+function findFamilyForFeature(feature) {
+  if (!feature) return null;
   for (const group of PLOT_GROUPS) {
-    if (group.keys?.includes(anchor)) return group.keys;
+    if (group.keys?.includes(feature)) {
+      return { label: group.label, keys: group.keys };
+    }
     if (group.subgroups) {
       for (const sub of group.subgroups) {
-        if (sub.keys?.includes(anchor)) return sub.keys;
+        if (sub.keys?.includes(feature)) {
+          return { label: sub.label, keys: sub.keys };
+        }
       }
     }
   }
@@ -75,7 +43,8 @@ function findKeysContaining(anchor) {
 }
 
 function getQuickPickOptions(feature) {
-  const keys = findKeysContaining(FEATURE_ANCHOR[feature]) || [];
+  const family = findFamilyForFeature(feature);
+  const keys = family?.keys || [];
   return keys
     .map((key) => {
       const script = VIEW_PLOT_RESULTS[key];
@@ -156,7 +125,11 @@ const FeatureCard = ({
       queryKey: ['reports', 'summary', project, scenario, feature, whatif],
     });
   };
-  const meta = FEATURE_META[feature] || { title: feature, description: '' };
+  // Card title is the family label (group or subgroup) from
+  // PLOT_GROUPS — same categorisation the "Select a Plot Tool"
+  // picker uses. No hardcoded title dictionary.
+  const family = useMemo(() => findFamilyForFeature(feature), [feature]);
+  const title = family?.label || feature;
   const kpiProps = useMemo(() => buildKpiProps(summary), [summary]);
   const quickPickOptions = useMemo(
     () => getQuickPickOptions(feature),
@@ -167,7 +140,7 @@ const FeatureCard = ({
     <div style={cardStyle}>
       {/* ── Title section ───────────────────────────────────── */}
       <div style={titleSectionStyle}>
-        <div style={featureTitleStyle}>{meta.title}</div>
+        <div style={featureTitleStyle}>{title}</div>
         {onDeleteCard && <TitleDeleteButton onClick={onDeleteCard} />}
       </div>
 
@@ -176,7 +149,6 @@ const FeatureCard = ({
       {/* ── KPI section ─────────────────────────────────────── */}
       <div style={kpiSectionStyle}>
         <KpiStrip
-          description={meta.description}
           primaryValue={kpiProps.primaryValue}
           primaryLabel={kpiProps.primaryLabel}
           pills={kpiProps.pills}
