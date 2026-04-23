@@ -25,6 +25,9 @@ const KpiStrip = ({
   primaryLabel,
   pills = [],
   loading = false,
+  // Optional action element rendered on the right of the title row
+  // (e.g. a delete button). Rendered only when `featureTitle` exists.
+  titleAction,
 }) => {
   if (loading) {
     return (
@@ -36,7 +39,12 @@ const KpiStrip = ({
 
   return (
     <div style={outerStyle}>
-      {featureTitle && <div style={titleStyle}>{featureTitle}</div>}
+      {featureTitle && (
+        <div style={titleRowStyle}>
+          <div style={titleStyle}>{featureTitle}</div>
+          {titleAction && <div style={titleActionStyle}>{titleAction}</div>}
+        </div>
+      )}
 
       {/* Divider between the feature title and the KPI section
           (description + values) — mirrors the inner divider inside
@@ -75,11 +83,22 @@ const outerStyle = {
   padding: '4px 0',
 };
 
+const titleRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 8,
+  marginBottom: 2,
+};
+
 const titleStyle = {
   fontWeight: 700,
   fontSize: 15,
-  marginBottom: 2,
   color: '#222',
+};
+
+const titleActionStyle = {
+  flexShrink: 0,
 };
 
 const descriptionStyle = {

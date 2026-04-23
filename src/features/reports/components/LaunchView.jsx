@@ -143,6 +143,10 @@ const LaunchView = () => {
     );
   }, []);
 
+  const handleDeleteCard = useCallback((cardId) => {
+    setCards((prev) => prev.filter((c) => c.id !== cardId));
+  }, []);
+
   // Run from the drawer. Routes to the right operation.
   const handleDrawerSave = useCallback(
     (plotConfig) => {
@@ -226,10 +230,11 @@ const LaunchView = () => {
           onEditPlot={handleEditPlot}
           onResetPlot={handleResetPlot}
           onDeletePlot={handleDeletePlot}
+          onDeleteCard={handleDeleteCard}
           onAddPlotToCard={handleAddPlotToCard}
           onAddCard={handleAddCard}
           onAddColumn={handleCompareScenarios}
-          addColumnTooltip="Add scenario to compare"
+          addColumnTooltip="Add Scenario to compare"
         />
       </div>
 

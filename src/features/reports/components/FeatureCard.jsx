@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button, Select, Tooltip } from 'antd';
-import { CreateNewIcon } from 'assets/icons';
+import { Button, Popconfirm, Select, Tooltip } from 'antd';
+import { BinAnimationIcon, CreateNewIcon } from 'assets/icons';
 
 import {
   PLOT_GROUPS,
@@ -131,6 +131,7 @@ const FeatureCard = ({
   onAddPlot,
   onAddCardRight,
   onAddCardBottom,
+  onDeleteCard,
   onPlotReady,
 }) => {
   const { feature, plots } = card;
@@ -157,6 +158,9 @@ const FeatureCard = ({
           primaryLabel={kpiProps.primaryLabel}
           pills={kpiProps.pills}
           loading={isLoading}
+          titleAction={
+            onDeleteCard ? <DeleteCardButton onClick={onDeleteCard} /> : null
+          }
         />
       </div>
 
@@ -246,6 +250,31 @@ const PlusIconButton = ({ tooltip, onClick }) => (
   </div>
 );
 
+/**
+ * Delete button in the FeatureCard title row. Same icon-button frame
+ * as the plot-level delete in PlotSlotCard, guarded by a Popconfirm.
+ */
+const DeleteCardButton = ({ onClick }) => (
+  <Popconfirm
+    title="Delete this card?"
+    description="All plots inside this card will be removed."
+    okText="Delete"
+    cancelText="Cancel"
+    okButtonProps={{ danger: true }}
+    onConfirm={onClick}
+  >
+    <div className="cea-card-icon-button-container">
+      <Tooltip title="Delete card" placement="bottom">
+        <Button
+          type="text"
+          icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
+          aria-label="Delete card"
+        />
+      </Tooltip>
+    </div>
+  </Popconfirm>
+);
+
 const AddPlotSelect = ({ options, onPick, onFallback }) => {
   const [open, setOpen] = useState(false);
   const [resetKey, setResetKey] = useState(0);
@@ -306,18 +335,24 @@ const plusBottomWrapperStyle = {
   justifyContent: 'center',
 };
 
+// Shared minimum floor with the map card — see ReportColumn's
+// `CARD_MIN_WIDTH` / `CARD_MIN_HEIGHT`. `box-sizing: border-box` is
+// what makes minWidth/minHeight refer to the outer dimensions so a
+// padded feature card and an unpadded map card land at the same
+// visible size.
 const cardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
   padding: '14px 16px',
+  boxSizing: 'border-box',
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
   resize: 'both',
   overflow: 'hidden',
-  minWidth: 280,
-  minHeight: 120,
+  minWidth: 500,
+  minHeight: 280,
 };
 
 const kpiSectionStyle = {};

@@ -25,6 +25,7 @@ const ComparisonView = () => {
   const addPlot = useReportsStore((s) => s.addPlot);
   const updatePlot = useReportsStore((s) => s.updatePlot);
   const removePlot = useReportsStore((s) => s.removePlot);
+  const removeCard = useReportsStore((s) => s.removeCard);
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
@@ -98,6 +99,10 @@ const ComparisonView = () => {
 
   const handleDeletePlot = (colIndex) => (cardId, plotId) => {
     removePlot(getColumnIndexFor(colIndex), cardId, plotId);
+  };
+
+  const handleDeleteCard = (colIndex) => (cardId) => {
+    removeCard(getColumnIndexFor(colIndex), cardId);
   };
 
   // ── Add-column picker (unchanged) ──────────────────────────
@@ -193,6 +198,7 @@ const ComparisonView = () => {
                   onEditPlot={handleEditPlot(i)}
                   onResetPlot={handleResetPlot(i)}
                   onDeletePlot={handleDeletePlot(i)}
+                  onDeleteCard={handleDeleteCard(i)}
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
                   onAddPlotToCard={handleAddPlotToCard(i)}
                   onAddCard={handleAddCard(i)}
