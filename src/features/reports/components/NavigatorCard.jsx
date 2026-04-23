@@ -90,7 +90,8 @@ const NavigatorCard = () => {
 const cardStyle = {
   height: 52,
   boxSizing: 'border-box',
-  background: '#fff',
+  // 50% opaque white — the grey page shows through at half strength.
+  background: 'rgba(255, 255, 255, 0.5)',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
   padding: '0 12px',
