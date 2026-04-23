@@ -25,36 +25,62 @@ across shared-slot columns.
 
 ## Views & columns
 
-| View              | Columns                              | Slot strategy    |
-|-------------------|--------------------------------------|------------------|
-| `launch`          | Single local-state column            | Local `useState` |
-| `inter-scenario`  | One per sibling scenario             | `sharedPlotSlots`|
-| `inter-whatif`    | One per what-if under parent         | `sharedPlotSlots`|
-| `inter-feature`   | One per (scenario, feature) pair     | `columnPlotSlots`|
+Cards are first-class in the store: each column owns a 2D grid of
+feature cards, where each card owns its list of plots.
+
+```
+Card { id, row, col, feature, plots: [{ id, plotConfig }] }
+```
+
+| View              | Columns                              | Card storage   |
+|-------------------|--------------------------------------|----------------|
+| `launch`          | Single local-state column            | local `useState` |
+| `inter-scenario`  | One per sibling scenario             | `sharedCards`  |
+| `inter-whatif`    | One per what-if under parent         | `sharedCards`  |
+| `inter-feature`   | One per (scenario, feature) pair     | `columnCards`  |
 
 ## Key Patterns
-### DO: Pick the slot source by view mode, not by ad-hoc props
+### DO: Route card/plot actions through `columnIndex` (null for shared)
 ```jsx
-const isFeatureMode = view === 'inter-feature';
-const slots = isFeatureMode ? columnPlotSlots[index] : sharedPlotSlots;
+const columnIndex = isFeatureMode ? i : null;
+addCard(columnIndex, { targetCardId, direction, feature, plotConfig });
+addPlot(columnIndex, cardId, plotConfig);
+updatePlot(columnIndex, cardId, plotId, plotConfig);
+removePlot(columnIndex, cardId, plotId); // drops card if last plot
 ```
+The store's `getCards(columnIndex)` / `setCards(columnIndex, next)`
+helpers abstract the shared-vs-per-column dispatch, so each action
+doesn't branch on view mode.
 
-### DO: Group column plots by feature; render each group as one `FeatureCard`
+### DO: Render cards on a CSS Grid — `row`/`col` from card state
 ```jsx
-// ReportColumn.jsx — preserve insertion order via Map.
-const featureGroups = useMemo(() => {
-  const map = new Map();
-  for (const slot of plotSlots) {
-    const feature = slot.feature || 'demand';
-    if (!map.has(feature)) map.set(feature, []);
-    map.get(feature).push(slot);
-  }
-  return map;
-}, [plotSlots]);
+<div
+  style={{
+    display: 'grid',
+    gridTemplateRows: `repeat(${rows}, auto)`,
+    gridTemplateColumns: `repeat(${cols}, minmax(280px, 1fr))`,
+  }}
+>
+  {cards.map((card) => (
+    <div key={card.id} style={{ gridRow: card.row + 1, gridColumn: card.col + 1 }}>
+      <FeatureCard card={card} ... />
+    </div>
+  ))}
+</div>
 ```
-Each feature gets its own KPI section at the top of its card, followed
-by the feature's plots stacked vertically. Empty columns still show
-one preview card so the user sees KPIs immediately.
+Empty columns render a single "fallback" `FeatureCard` at (0,0) with
+no plots so the user sees the grid's intent and can add the first
+plot — on Run, a real card is committed at (0,0).
+
+### DO: Let + edges grow the grid southeast
+```jsx
+// FeatureCard renders a + on its right edge and its bottom edge.
+onAddCardRight={() => onAddCard({ targetCardId: card.id, direction: 'right' })}
+onAddCardBottom={() => onAddCard({ targetCardId: card.id, direction: 'bottom' })}
+```
+`addCard` shifts any existing card in the target row (for `'right'`)
+or target column (for `'bottom'`) to open space. This keeps the
+mental model "insert here" instead of "append somewhere".
 
 ### DO: Let the canvas fit its content — don't offer a resize handle
 ```jsx

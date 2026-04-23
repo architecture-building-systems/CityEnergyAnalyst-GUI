@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Select } from 'antd';
+import { Button, Select, Tooltip } from 'antd';
+import { CreateNewIcon } from 'assets/icons';
 
 import {
   PLOT_GROUPS,
@@ -13,21 +14,39 @@ import {
   EMISSIONS_OPERATIONAL,
   ANTHROPOGENIC_HEAT,
 } from 'features/map/constants';
-// `cea-template-select` — same black-outlined pill as the pathway
-// builder's Intervention Template dropdown. Lives in OverviewCard.css.
+// `cea-template-select` — same pill used by the pathway builder.
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import { useFetchSummary } from '../hooks/useReportsData';
 import KpiStrip from './KpiStrip';
 import PlotSlotCard from './PlotSlotCard';
 
-// One "anchor" map constant per feature. The dropdown list is then
-// derived at render time from the group/subgroup in `PLOT_GROUPS`
-// that contains the anchor — so adding a new plot to an existing
-// group (e.g. a new GHG emissions plot under Life Cycle Analysis →
-// GHG Emissions) shows up in the dropdown automatically with no
-// change needed here. Only adding a brand-new feature card requires
-// a new anchor entry.
+const FEATURE_META = {
+  demand: {
+    title: 'Building energy demand',
+    description: 'EUI (kWh/m2/yr) in this district:',
+  },
+  'final-energy': {
+    title: 'Energy by carrier',
+    description: 'Final energy in this district:',
+  },
+  costs: {
+    title: 'System costs',
+    description: 'Annualised costs in this district:',
+  },
+  emissions: {
+    title: 'Operational emissions',
+    description: 'GHG emissions in this district:',
+  },
+  'heat-rejection': {
+    title: 'Anthropogenic heat rejection',
+    description: 'Heat rejected in this district:',
+  },
+};
+
+// One anchor map constant per feature; the quick-pick options are
+// derived dynamically from the PLOT_GROUPS group/subgroup that
+// contains this anchor.
 const FEATURE_ANCHOR = {
   demand: DEMAND,
   'final-energy': FINAL_ENERGY,
@@ -36,8 +55,6 @@ const FEATURE_ANCHOR = {
   'heat-rejection': ANTHROPOGENIC_HEAT,
 };
 
-// Walk PLOT_GROUPS to find the keys array (group or subgroup) that
-// contains the anchor. Returns `null` if not found.
 function findKeysContaining(anchor) {
   if (!anchor) return null;
   for (const group of PLOT_GROUPS) {
@@ -62,39 +79,11 @@ function getQuickPickOptions(feature) {
     .filter(Boolean);
 }
 
-/**
- * Feature title and KPI description for each supported feature.
- * Lives with FeatureCard because FeatureCard is the only consumer.
- */
-const FEATURE_META = {
-  demand: {
-    title: 'Building energy demand',
-    description: 'EUI (kWh/m2/yr) in this district:',
-  },
-  'final-energy': {
-    title: 'Energy by carrier',
-    description: 'Final energy in this district:',
-  },
-  costs: {
-    title: 'System costs',
-    description: 'Annualised costs in this district:',
-  },
-  emissions: {
-    title: 'Operational emissions',
-    description: 'GHG emissions in this district:',
-  },
-  'heat-rejection': {
-    title: 'Anthropogenic heat rejection',
-    description: 'Heat rejected in this district:',
-  },
-};
-
 function buildKpiProps(summary) {
   if (!summary || !summary.kpis || summary.kpis.length === 0) {
     return { primaryValue: null, primaryLabel: null, pills: [] };
   }
   const [primary, ...rest] = summary.kpis;
-
   let primaryDisplay = primary.value;
   if (typeof primary.value === 'number') {
     if (Math.abs(primary.value) >= 1000) {
@@ -103,7 +92,6 @@ function buildKpiProps(summary) {
       primaryDisplay = String(Math.round(primary.value));
     }
   }
-
   return {
     primaryValue: primaryDisplay,
     primaryLabel: primary.label,
@@ -115,22 +103,37 @@ function buildKpiProps(summary) {
 }
 
 /**
- * One feature's slice of a report column: KPI section on top, plots
- * stacked vertically below. Renders whether or not plots exist — an
- * empty feature still shows its KPIs as a preview.
+ * Feature-bound card in the report grid: KPI section, vertically-
+ * stacked plots, an "Add a plot" dropdown, and hover-revealed +
+ * affordances on the right and bottom edges for growing the grid
+ * southeast.
+ *
+ * Props:
+ *   card             — { id, feature, plots }
+ *   project/scenario — passed through for data fetching
+ *   whatif           — passed through (inter-whatif mode)
+ *   onEditPlot(plotId)
+ *   onResetPlot(plotId)
+ *   onDeletePlot(plotId)
+ *   onAddPlot(script?)             — add a plot to this card
+ *   onAddCardRight()               — insert a new card to the right
+ *   onAddCardBottom()              — insert a new card below
+ *   onPlotReady(plotId, plotDiv)   — y-axis alignment hook
  */
 const FeatureCard = ({
+  card,
   project,
   scenario,
   whatif,
-  feature,
-  plots = [],
-  onEditSlot,
-  onResetSlot,
-  onDeleteSlot,
-  onPlotReady,
+  onEditPlot,
+  onResetPlot,
+  onDeletePlot,
   onAddPlot,
+  onAddCardRight,
+  onAddCardBottom,
+  onPlotReady,
 }) => {
+  const { feature, plots } = card;
   const { data: summary, isLoading } = useFetchSummary(
     project,
     scenario,
@@ -144,9 +147,8 @@ const FeatureCard = ({
     [feature],
   );
 
-  return (
+  const cardInner = (
     <div style={cardStyle}>
-      {/* KPI section */}
       <div style={kpiSectionStyle}>
         <KpiStrip
           featureTitle={meta.title}
@@ -158,33 +160,30 @@ const FeatureCard = ({
         />
       </div>
 
-      {/* Plot section — stacked vertically, with "Add a plot" at bottom */}
       {(plots.length > 0 || onAddPlot) && (
         <div style={plotsSectionStyle}>
-          {plots.map((slot) => (
+          {plots.map((plot) => (
             <PlotSlotCard
-              key={slot.id}
+              key={plot.id}
               project={project}
               scenario={scenario}
-              feature={slot.feature}
+              feature={feature}
               whatif={whatif}
-              plotConfig={slot.plotConfig}
-              onEdit={() => onEditSlot?.(slot.id)}
-              onReset={() => onResetSlot?.(slot.id)}
+              plotConfig={plot.plotConfig}
+              onEdit={() => onEditPlot?.(plot.id)}
+              onReset={() => onResetPlot?.(plot.id)}
               onDelete={
-                onDeleteSlot ? () => onDeleteSlot(slot.id) : undefined
+                onDeletePlot ? () => onDeletePlot(plot.id) : undefined
               }
               onPlotReady={
                 onPlotReady
-                  ? (plotDiv) => onPlotReady(slot.id, plotDiv)
+                  ? (plotDiv) => onPlotReady(plot.id, plotDiv)
                   : undefined
               }
             />
           ))}
           {onAddPlot && (
-            <div
-              style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}
-            >
+            <div style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}>
               <AddPlotSelect
                 options={quickPickOptions}
                 onPick={(script) => onAddPlot(script)}
@@ -196,10 +195,117 @@ const FeatureCard = ({
       )}
     </div>
   );
+
+  return (
+    <div style={outerStyle}>
+      {/* Card fills its parent width (so it matches the map card at
+          launch). The + right button overlays to the right via absolute
+          positioning so the card's width stays intact. */}
+      {cardInner}
+
+      {/* + right — absolutely positioned just outside the card's right
+          edge. Card width is not reduced by this button. */}
+      {onAddCardRight && (
+        <div style={plusRightWrapperStyle}>
+          <PlusIconButton
+            tooltip="Add a card to the right"
+            onClick={onAddCardRight}
+          />
+        </div>
+      )}
+
+      {/* + bottom — regular flow child below the card, horizontally
+          centered within the card's own width. */}
+      {onAddCardBottom && (
+        <div style={plusBottomWrapperStyle}>
+          <PlusIconButton
+            tooltip="Add a card below"
+            onClick={onAddCardBottom}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
-// Resizable via CSS. Browser draws a drag handle in the bottom-right
-// corner; `overflow: hidden` is required for `resize` to apply.
+/**
+ * "+" button styled identically to the title card's "Add column"
+ * affordance in ReportColumn.jsx — the `.cea-card-icon-button-container`
+ * frame around a `type="text"` antd Button with CreateNewIcon.
+ */
+const PlusIconButton = ({ tooltip, onClick }) => (
+  <div className="cea-card-icon-button-container">
+    <Tooltip title={tooltip} placement="bottom">
+      <Button
+        type="text"
+        icon={<CreateNewIcon />}
+        onClick={onClick}
+        aria-label={tooltip}
+      />
+    </Tooltip>
+  </div>
+);
+
+const AddPlotSelect = ({ options, onPick, onFallback }) => {
+  const [open, setOpen] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+  const hasOptions = options.length > 0;
+
+  return (
+    <Select
+      key={resetKey}
+      className={`cea-template-select ${
+        hasOptions ? '' : 'cea-template-select-empty'
+      }`}
+      style={{ width: 208 }}
+      styles={{ popup: { root: { width: 270 } } }}
+      placeholder="Add a plot"
+      options={options.map((opt) => ({ label: opt.label, value: opt.script }))}
+      value={null}
+      onSelect={(script) => {
+        onPick(script);
+        setOpen(false);
+        setResetKey((k) => k + 1);
+      }}
+      open={hasOptions ? open : false}
+      onOpenChange={hasOptions ? setOpen : undefined}
+      onClick={hasOptions ? undefined : onFallback}
+      allowClear={false}
+      notFoundContent={<small>No plots available</small>}
+    />
+  );
+};
+
+// Outer: flex column holding the card on top, optional + bottom
+// underneath, and a relatively-positioned context for the + right
+// button which is absolutely positioned just outside the card's
+// right edge. Keeps the card stretched to its parent's width (so it
+// matches the map card) while the + right button adds to the side
+// without reducing card width.
+const outerStyle = {
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+};
+
+// + right: 8px outside the card's right edge, vertically centered on
+// the card. `left: 100%` puts it flush to the right edge; margin-left
+// adds the spacer. Wrapper has no width so it hugs the button.
+const plusRightWrapperStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '100%',
+  marginLeft: 8,
+  transform: 'translateY(-50%)',
+};
+
+// + bottom: regular flow, horizontally centered within card width.
+const plusBottomWrapperStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+};
+
 const cardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
@@ -228,48 +334,6 @@ const addPlotRowWithDividerStyle = {
   borderTop: '1px solid #f0f0f0',
   paddingTop: 8,
   marginTop: 4,
-};
-
-/**
- * Single "Add a plot" dropdown — mirrors pathway's TemplateSelect
- * (`features/pathway/components/PathwayPanel.jsx:485`).
- *
- * Picking an option triggers `onPick(script)`. When the quick-pick
- * list is empty (or the user clicks the control while it has no
- * options), `onFallback` runs instead — same "create a new template"
- * hijack pattern pathway uses.
- */
-const AddPlotSelect = ({ options, onPick, onFallback }) => {
-  const [open, setOpen] = useState(false);
-  // Bumped after every pick to force a fresh mount — guarantees the
-  // Select reverts to the "Add a plot" placeholder instead of showing
-  // the just-picked option's label.
-  const [resetKey, setResetKey] = useState(0);
-  const hasOptions = options.length > 0;
-
-  return (
-    <Select
-      key={resetKey}
-      className={`cea-template-select ${
-        hasOptions ? '' : 'cea-template-select-empty'
-      }`}
-      style={{ width: 208 }}
-      styles={{ popup: { root: { width: 270 } } }}
-      placeholder="Add a plot"
-      options={options.map((opt) => ({ label: opt.label, value: opt.script }))}
-      value={null}
-      onSelect={(script) => {
-        onPick(script);
-        setOpen(false);
-        setResetKey((k) => k + 1);
-      }}
-      open={hasOptions ? open : false}
-      onOpenChange={hasOptions ? setOpen : undefined}
-      onClick={hasOptions ? undefined : onFallback}
-      allowClear={false}
-      notFoundContent={<small>No plots available</small>}
-    />
-  );
 };
 
 export default FeatureCard;

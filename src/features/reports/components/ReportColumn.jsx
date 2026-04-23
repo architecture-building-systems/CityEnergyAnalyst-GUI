@@ -10,26 +10,37 @@ import FeatureCard from './FeatureCard';
  * A single report column.
  *
  * Composition:
- *   Header → Map card → FeatureCard × N
+ *   Title card (header)
+ *   Map card
+ *   Grid of FeatureCards, positioned by { row, col }.
  *
- * Plots are grouped by feature. Each feature rendered as its own
- * FeatureCard containing the feature's KPI section and a vertically-
- * stacked list of that feature's plots.
+ * The grid expands southeast as the user clicks + right / + bottom
+ * affordances on existing cards. A fallback preview card shows when
+ * the column has no cards at all so the user sees KPI data out of
+ * the box.
  *
  * Props:
- *   columnDef    — { type, scenario, whatif?, feature? }
- *   plotSlots    — [{ id, feature, plotConfig? }]
- *   style        — optional style overrides
+ *   columnDef                  — { type, scenario, whatif?, feature? }
+ *   cards                      — [{ id, row, col, feature, plots[] }]
+ *   onEditPlot(cardId, plotId)
+ *   onResetPlot(cardId, plotId)
+ *   onDeletePlot(cardId, plotId)
+ *   onPlotReady(plotId, div)   — y-axis alignment hook
+ *   onAddPlotToCard(cardId, script?)
+ *   onAddCard({ targetCardId, direction, feature? })
+ *   onAddColumn()              — title-card "+" handler
+ *   addColumnTooltip
  */
 const ReportColumn = ({
   columnDef,
-  plotSlots = [],
+  cards = [],
   style,
-  onEditSlot,
-  onResetSlot,
-  onDeleteSlot,
+  onEditPlot,
+  onResetPlot,
+  onDeletePlot,
   onPlotReady,
-  onAddPlot,
+  onAddPlotToCard,
+  onAddCard,
   onAddColumn,
   addColumnTooltip = 'Add column',
 }) => {
@@ -38,27 +49,32 @@ const ReportColumn = ({
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
 
-  // Group plots by feature, preserving insertion order so the first-
-  // added feature shows up first.
-  const featureGroups = useMemo(() => {
-    const map = new Map();
-    for (const slot of plotSlots) {
-      const feature = slot.feature || 'demand';
-      if (!map.has(feature)) map.set(feature, []);
-      map.get(feature).push(slot);
-    }
-    return map;
-  }, [plotSlots]);
+  // Sort cards by row then col for deterministic render order.
+  const sortedCards = useMemo(
+    () => [...cards].sort((a, b) => a.row - b.row || a.col - b.col),
+    [cards],
+  );
 
-  // When the column has no plots yet, still show one preview feature
-  // card so the user sees KPIs immediately. Inter-feature columns
-  // preview their own feature; all other columns fall back to demand.
+  // Fallback preview when the column has no cards yet. A "ghost" card
+  // that shows KPIs for the default feature so the user sees the grid
+  // intent immediately. It's not in state — picking a plot here
+  // commits a real card at (0, 0).
   const fallbackFeature =
     columnDef.type === 'feature' ? columnDef.feature : 'demand';
-  const featuresToRender =
-    featureGroups.size > 0
-      ? Array.from(featureGroups.keys())
-      : [fallbackFeature];
+
+  const showFallback = sortedCards.length === 0;
+
+  // Derive the grid dimensions from card positions.
+  const { rows, cols } = useMemo(() => {
+    if (sortedCards.length === 0) return { rows: 1, cols: 1 };
+    let maxRow = 0;
+    let maxCol = 0;
+    for (const c of sortedCards) {
+      if (c.row > maxRow) maxRow = c.row;
+      if (c.col > maxCol) maxCol = c.col;
+    }
+    return { rows: maxRow + 1, cols: maxCol + 1 };
+  }, [sortedCards]);
 
   let headerText = scenario;
   if (columnDef.type === 'whatif' && columnDef.whatif) {
@@ -67,9 +83,7 @@ const ReportColumn = ({
 
   return (
     <div style={{ ...columnStyle, ...style }}>
-      {/* Title card + optional "+" button, side by side. Button mirrors
-          the pathway builder's "create new pathway" control next to its
-          pathway dropdown (see PathwayPanel.jsx). */}
+      {/* Title card + optional "+" */}
       <div style={titleRowStyle}>
         <div style={titleCardStyle}>
           <div style={headerStyle}>{headerText}</div>
@@ -88,29 +102,117 @@ const ReportColumn = ({
         )}
       </div>
 
-      {/* Map card — fills its card edge-to-edge. */}
       <div style={mapCardStyle}>
         <MapThumbnail project={project} scenario={scenario} />
       </div>
 
-      {/* One card per feature present in this column. */}
-      {featuresToRender.map((feature) => (
+      {/* Cards grid. Rows × cols pulled from card positions. */}
+      {showFallback ? (
         <FeatureCard
-          key={feature}
+          card={{
+            id: 'fallback',
+            row: 0,
+            col: 0,
+            feature: fallbackFeature,
+            plots: [],
+          }}
           project={project}
           scenario={scenario}
           whatif={whatif}
-          feature={feature}
-          plots={featureGroups.get(feature) || []}
-          onEditSlot={onEditSlot}
-          onResetSlot={onResetSlot}
-          onDeleteSlot={onDeleteSlot}
-          onPlotReady={onPlotReady}
           onAddPlot={
-            onAddPlot ? (script) => onAddPlot(feature, script) : undefined
+            onAddCard
+              ? (script) =>
+                  onAddCard({
+                    targetCardId: null,
+                    direction: null,
+                    feature: fallbackFeature,
+                    script,
+                  })
+              : undefined
           }
+          // Fallback card also gets + edges so the affordance is visible
+          // from the empty state. Both directions go to the same place
+          // (create the first card at 0,0) since there's nothing to sit
+          // next to yet.
+          onAddCardRight={
+            onAddCard
+              ? () =>
+                  onAddCard({
+                    targetCardId: null,
+                    direction: null,
+                    feature: fallbackFeature,
+                  })
+              : undefined
+          }
+          onAddCardBottom={
+            onAddCard
+              ? () =>
+                  onAddCard({
+                    targetCardId: null,
+                    direction: null,
+                    feature: fallbackFeature,
+                  })
+              : undefined
+          }
+          onPlotReady={onPlotReady}
         />
-      ))}
+      ) : (
+        <div
+          style={{
+            ...gridStyle,
+            gridTemplateRows: `repeat(${rows}, auto)`,
+            gridTemplateColumns: `repeat(${cols}, minmax(280px, 1fr))`,
+          }}
+        >
+          {sortedCards.map((card) => (
+            <div
+              key={card.id}
+              style={{
+                gridRow: card.row + 1,
+                gridColumn: card.col + 1,
+              }}
+            >
+              <FeatureCard
+                card={card}
+                project={project}
+                scenario={scenario}
+                whatif={whatif}
+                onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
+                onResetPlot={(plotId) => onResetPlot?.(card.id, plotId)}
+                onDeletePlot={
+                  onDeletePlot
+                    ? (plotId) => onDeletePlot(card.id, plotId)
+                    : undefined
+                }
+                onAddPlot={
+                  onAddPlotToCard
+                    ? (script) => onAddPlotToCard(card.id, script)
+                    : undefined
+                }
+                onAddCardRight={
+                  onAddCard
+                    ? () =>
+                        onAddCard({
+                          targetCardId: card.id,
+                          direction: 'right',
+                        })
+                    : undefined
+                }
+                onAddCardBottom={
+                  onAddCard
+                    ? () =>
+                        onAddCard({
+                          targetCardId: card.id,
+                          direction: 'bottom',
+                        })
+                    : undefined
+                }
+                onPlotReady={onPlotReady}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -127,10 +229,6 @@ const titleRowStyle = {
   gap: 8,
 };
 
-// Every card inside the canvas uses CSS-native `resize: both`. The
-// browser draws a small handle in the bottom-right corner the user can
-// drag to resize in either axis. `overflow: hidden` is required for
-// `resize` to apply; children clip rather than scroll.
 const titleCardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
@@ -139,7 +237,6 @@ const titleCardStyle = {
   resize: 'both',
   overflow: 'hidden',
   minWidth: 240,
-  // Sized to the text — no vertical minimum so the card hugs its title.
   display: 'flex',
   alignItems: 'center',
 };
@@ -159,9 +256,12 @@ const mapCardStyle = {
   resize: 'both',
   minWidth: 240,
   minHeight: 120,
-  // Initial size so the map has room to render before any user drag.
-  // `resize: both` lets the user override both axes from here.
   height: 200,
+};
+
+const gridStyle = {
+  display: 'grid',
+  gap: 16,
 };
 
 export default ReportColumn;

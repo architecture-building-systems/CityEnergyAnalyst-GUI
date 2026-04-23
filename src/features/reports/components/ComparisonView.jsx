@@ -11,10 +11,6 @@ import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
 import PlotEditModal from './PlotEditModal';
 
-/**
- * Comparison view — white card with columns separated by grey dividers.
- * Blue action buttons sit OUTSIDE the card on the grey background.
- */
 const ComparisonView = () => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
@@ -22,21 +18,20 @@ const ComparisonView = () => {
   const view = useReportsStore((s) => s.view);
   const columns = useReportsStore((s) => s.columns);
   const parentScenario = useReportsStore((s) => s.parentScenario);
-  const sharedPlotSlots = useReportsStore((s) => s.sharedPlotSlots);
-  const columnPlotSlots = useReportsStore((s) => s.columnPlotSlots);
+  const sharedCards = useReportsStore((s) => s.sharedCards);
+  const columnCards = useReportsStore((s) => s.columnCards);
   const addColumn = useReportsStore((s) => s.addColumn);
-  const addSharedPlotSlot = useReportsStore((s) => s.addSharedPlotSlot);
-  const addColumnPlotSlot = useReportsStore((s) => s.addColumnPlotSlot);
-  const updateSharedPlotSlot = useReportsStore((s) => s.updateSharedPlotSlot);
-  const updateColumnPlotSlot = useReportsStore((s) => s.updateColumnPlotSlot);
-  const removeSharedPlotSlot = useReportsStore((s) => s.removeSharedPlotSlot);
-  const removeColumnPlotSlot = useReportsStore((s) => s.removeColumnPlotSlot);
+  const addCard = useReportsStore((s) => s.addCard);
+  const addPlot = useReportsStore((s) => s.addPlot);
+  const updatePlot = useReportsStore((s) => s.updatePlot);
+  const removePlot = useReportsStore((s) => s.removePlot);
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
-  // Drawer target — null when closed. Shape:
-  //   { mode: 'add', feature, columnIndex (null for shared) }
-  //   { mode: 'edit', slotId, columnIndex (null for shared) }
+  // Drawer target — null when closed. Shapes:
+  //   { mode: 'add-card', columnIndex, targetCardId, direction, feature, script }
+  //   { mode: 'add-plot', columnIndex, cardId, script }
+  //   { mode: 'edit',     columnIndex, cardId, plotId }
   const [drawerTarget, setDrawerTarget] = useState(null);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
@@ -46,6 +41,7 @@ const ComparisonView = () => {
   );
 
   const isFeatureMode = view === 'inter-feature';
+  const columnKeyForMode = isFeatureMode ? 'per-column' : 'shared';
 
   // Y-axis alignment for shared modes (inter-scenario / inter-whatif)
   const { handlePlotReady } = useYAxisAlignment(
@@ -53,10 +49,58 @@ const ComparisonView = () => {
     columns.length,
   );
 
-  const getSlotsForColumn = (index) => {
-    if (isFeatureMode) return columnPlotSlots[index] || [];
-    return sharedPlotSlots;
+  const getColumnIndexFor = (colIndex) => (isFeatureMode ? colIndex : null);
+
+  const getCardsForColumn = (colIndex) =>
+    isFeatureMode ? columnCards[colIndex] || [] : sharedCards;
+
+  const inferFeature = (columnIndex, targetCardId) => {
+    const cards = getCardsForColumn(columnIndex ?? 0);
+    const target = targetCardId ? cards.find((c) => c.id === targetCardId) : null;
+    return target?.feature || 'demand';
   };
+
+  // ── Drawer open handlers ───────────────────────────────────
+
+  const handleAddCard = (colIndex) => ({ targetCardId, direction, feature, script }) => {
+    const columnIndex = getColumnIndexFor(colIndex);
+    setDrawerTarget({
+      mode: 'add-card',
+      columnIndex,
+      targetCardId,
+      direction,
+      feature: feature || inferFeature(columnIndex, targetCardId),
+      script: script || null,
+    });
+  };
+
+  const handleAddPlotToCard = (colIndex) => (cardId, script = null) => {
+    setDrawerTarget({
+      mode: 'add-plot',
+      columnIndex: getColumnIndexFor(colIndex),
+      cardId,
+      script,
+    });
+  };
+
+  const handleEditPlot = (colIndex) => (cardId, plotId) => {
+    setDrawerTarget({
+      mode: 'edit',
+      columnIndex: getColumnIndexFor(colIndex),
+      cardId,
+      plotId,
+    });
+  };
+
+  const handleResetPlot = (colIndex) => (cardId, plotId) => {
+    updatePlot(getColumnIndexFor(colIndex), cardId, plotId, undefined);
+  };
+
+  const handleDeletePlot = (colIndex) => (cardId, plotId) => {
+    removePlot(getColumnIndexFor(colIndex), cardId, plotId);
+  };
+
+  // ── Add-column picker (unchanged) ──────────────────────────
 
   const handleAddColumnConfirm = (selected) => {
     if (view === 'inter-scenario') {
@@ -73,67 +117,38 @@ const ComparisonView = () => {
     setAddColumnOpen(false);
   };
 
-  // "Add a plot" — stage a draft; drawer commits it on Run. Optional
-  // `script` pre-selects a specific plot (quick-pick dropdown) so the
-  // drawer opens straight on the parameter form.
-  const handleAddPlot = (feature, columnIndex, script = null) => {
-    setDrawerTarget({ mode: 'add', feature, columnIndex, script });
-  };
+  // ── Drawer Run handler ─────────────────────────────────────
 
-  const handleEditSlot = (slotId, columnIndex) => {
-    setDrawerTarget({ mode: 'edit', slotId, columnIndex });
-  };
-
-  const handleResetSlot = (slotId, columnIndex) => {
-    if (columnIndex != null) {
-      updateColumnPlotSlot(columnIndex, slotId, { plotConfig: undefined });
-    } else {
-      updateSharedPlotSlot(slotId, { plotConfig: undefined });
-    }
-  };
-
-  const handleDeleteSlot = (slotId, columnIndex) => {
-    if (columnIndex != null) {
-      removeColumnPlotSlot(columnIndex, slotId);
-    } else {
-      removeSharedPlotSlot(slotId);
-    }
-  };
-
-  // Run/Save from the drawer. Creates a new slot or updates an existing one.
   const handleDrawerSave = (plotConfig) => {
     if (!drawerTarget) return;
     const { columnIndex } = drawerTarget;
-    if (drawerTarget.mode === 'add') {
-      const slotDraft = { feature: drawerTarget.feature, plotConfig };
-      if (columnIndex != null) {
-        addColumnPlotSlot(columnIndex, slotDraft);
-      } else {
-        addSharedPlotSlot(slotDraft);
-      }
-    } else {
-      const { slotId } = drawerTarget;
-      if (columnIndex != null) {
-        updateColumnPlotSlot(columnIndex, slotId, { plotConfig });
-      } else {
-        updateSharedPlotSlot(slotId, { plotConfig });
-      }
+
+    if (drawerTarget.mode === 'add-card') {
+      addCard(columnIndex, {
+        targetCardId: drawerTarget.targetCardId,
+        direction: drawerTarget.direction,
+        feature: drawerTarget.feature,
+        plotConfig,
+      });
+    } else if (drawerTarget.mode === 'add-plot') {
+      addPlot(columnIndex, drawerTarget.cardId, plotConfig);
+    } else if (drawerTarget.mode === 'edit') {
+      updatePlot(
+        columnIndex,
+        drawerTarget.cardId,
+        drawerTarget.plotId,
+        plotConfig,
+      );
     }
     setDrawerTarget(null);
   };
 
-  // Resolve the `plotConfig` seed + scenario for the drawer. In add
-  // mode, a pre-selected script seeds the drawer so the Tool form
-  // renders directly without the picker phase.
   const getDrawerPlotConfig = () => {
     if (!drawerTarget) return null;
     if (drawerTarget.mode === 'edit') {
-      const { slotId, columnIndex } = drawerTarget;
-      const slots =
-        columnIndex != null
-          ? columnPlotSlots[columnIndex] || []
-          : sharedPlotSlots;
-      return slots.find((s) => s.id === slotId)?.plotConfig || null;
+      const cards = getCardsForColumn(drawerTarget.columnIndex ?? 0);
+      const card = cards.find((c) => c.id === drawerTarget.cardId);
+      return card?.plots.find((p) => p.id === drawerTarget.plotId)?.plotConfig || null;
     }
     return drawerTarget.script ? { script: drawerTarget.script } : null;
   };
@@ -156,18 +171,16 @@ const ComparisonView = () => {
 
   return (
     <div>
-      {/* Scenario name header for inter-feature mode */}
       {isFeatureMode && columns.length > 0 && (
         <div style={featureModeHeaderStyle}>{columns[0].scenario}</div>
       )}
 
-      {/* Canvas — white background fits its columns and grows as more are added. */}
       <div style={canvasWrapperStyle}>
         <div style={canvasStyle}>
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
-                key={columnKey(col)}
+                key={`${columnKeyForMode}-${columnKey(col)}`}
                 style={{
                   ...columnCellStyle,
                   borderRight:
@@ -176,27 +189,19 @@ const ComparisonView = () => {
               >
                 <ReportColumn
                   columnDef={col}
-                  plotSlots={getSlotsForColumn(i)}
-                  onEditSlot={(slotId) =>
-                    handleEditSlot(slotId, isFeatureMode ? i : null)
-                  }
-                  onResetSlot={(slotId) =>
-                    handleResetSlot(slotId, isFeatureMode ? i : null)
-                  }
-                  onDeleteSlot={(slotId) =>
-                    handleDeleteSlot(slotId, isFeatureMode ? i : null)
-                  }
+                  cards={getCardsForColumn(i)}
+                  onEditPlot={handleEditPlot(i)}
+                  onResetPlot={handleResetPlot(i)}
+                  onDeletePlot={handleDeletePlot(i)}
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
-                  onAddPlot={(feature, script) =>
-                    handleAddPlot(feature, isFeatureMode ? i : null, script)
-                  }
+                  onAddPlotToCard={handleAddPlotToCard(i)}
+                  onAddCard={handleAddCard(i)}
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Floating add-column button — top-right, outside card */}
         <button
           type="button"
           onClick={() => setAddColumnOpen(true)}
@@ -213,9 +218,6 @@ const ComparisonView = () => {
         </button>
       </div>
 
-      {/* "Add a plot" now lives inside each FeatureCard within each column. */}
-
-      {/* Add-column picker modals */}
       {addColumnOpen && view === 'inter-feature' && (
         <FeaturePicker
           open
@@ -238,10 +240,9 @@ const ComparisonView = () => {
         />
       )}
 
-      {/* Plot config drawer — shared for add and edit. */}
       <PlotEditModal
         open={!!drawerTarget}
-        mode={drawerTarget?.mode || 'add'}
+        mode={drawerTarget?.mode === 'edit' ? 'edit' : 'add'}
         scenario={getDrawerScenario()}
         plotConfig={getDrawerPlotConfig()}
         onSave={handleDrawerSave}
@@ -263,9 +264,6 @@ const canvasWrapperStyle = {
   width: 'fit-content',
 };
 
-// Canvas: white background fits its content. Columns inside carry their
-// own minWidth, so the canvas grows as more columns are added and shrinks
-// back when columns are removed.
 const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
