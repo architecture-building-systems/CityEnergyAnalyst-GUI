@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Form, Button } from 'antd';
+import { ConfigProvider, Form, Button } from 'antd';
 import { VerticalLeftOutlined } from '@ant-design/icons';
 
 import Tool from 'features/tools/components/Tools/Tool';
 // Reuse the exact picker the main viewport's PlotTool uses.
 import { PlotChoices } from 'features/project/components/Cards/plot-tool';
+import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 
 /**
  * Plot configuration card — shares the main viewport's tool card chrome
@@ -96,13 +97,20 @@ const PlotEditModal = ({
 
       <div className="cea-tool-card-content" style={contentStyle}>
         {selectedScript ? (
-          <Tool
-            key={selectedScript}
-            script={selectedScript}
-            form={form}
-            onParametersLoaded={handleParametersLoaded}
-            onRunOverride={handleRunOverride}
-          />
+          // Re-colour antd's `primary` to the plots purple so the
+          // Run button (and any other type="primary" control inside
+          // Tool) matches the main viewport's plot-tool styling.
+          <ConfigProvider
+            theme={{ token: { colorPrimary: PLOTS_PRIMARY_COLOR } }}
+          >
+            <Tool
+              key={selectedScript}
+              script={selectedScript}
+              form={form}
+              onParametersLoaded={handleParametersLoaded}
+              onRunOverride={handleRunOverride}
+            />
+          </ConfigProvider>
         ) : (
           <PlotChoices onSelected={setSelectedScript} />
         )}

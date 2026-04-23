@@ -191,16 +191,12 @@ export const ToolFormButtons = ({
         </Button>
       </animated.div>
 
-      {!onRunOverride && (
-        <>
-          <Button onClick={saveParams} loading={isSaving}>
-            Save Settings
-          </Button>
-          <Button onClick={setDefault} loading={isResetting}>
-            Reset
-          </Button>
-        </>
-      )}
+      <Button onClick={saveParams} loading={isSaving}>
+        Save Settings
+      </Button>
+      <Button onClick={setDefault} loading={isResetting}>
+        Reset
+      </Button>
     </>
   );
 };
