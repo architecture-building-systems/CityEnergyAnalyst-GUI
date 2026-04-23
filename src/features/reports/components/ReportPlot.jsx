@@ -1,4 +1,4 @@
-import { useEffect, useRef, useId } from 'react';
+import { useEffect, useRef, useId, cloneElement, isValidElement } from 'react';
 import { Spin, Empty } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
@@ -36,47 +36,104 @@ const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotRead
   useEffect(() => {
     if (!html) return;
 
-    // Extract and execute scripts from the HTML
-    let scriptContent = null;
+    // The backend HTML contains both external CDN scripts
+    // (`<script src="https://cdn.plot.ly/...">`) AND an inline
+    // `Plotly.newPlot(...)` script. `html-react-parser` doesn't
+    // execute either when it renders divs, so we replay them here.
+    // The inline script needs `window.Plotly`, so external scripts
+    // must load first.
+    const externalSrcs = [];
+    let inlineScript = null;
     parser(html, {
       replace: function (domNode) {
-        if (domNode.type === 'script' && domNode.children?.[0]) {
-          scriptContent = domNode.children[0].data;
+        if (domNode.type !== 'script') return;
+        const src = domNode.attribs?.src;
+        if (src) {
+          externalSrcs.push(src);
+        } else if (domNode.children?.[0]?.data) {
+          inlineScript = domNode.children[0].data;
         }
       },
     });
 
-    if (scriptContent) {
-      const scriptEl = document.createElement('script');
-      scriptEl.dataset.id = `script-report-${uniqueId}`;
-      document.body.appendChild(scriptEl);
-      scriptEl.append(scriptContent);
-      scriptRef.current = scriptEl;
-    }
+    const appendedScripts = [];
+    let cancelled = false;
 
-    // Notify parent that plot is rendered (for y-axis alignment)
-    if (onPlotReady && containerRef.current) {
-      // Plotly renders asynchronously after script execution; wait a tick
-      const timer = setTimeout(() => {
-        const plotDiv = containerRef.current?.querySelector('.plotly-graph-div, .js-plotly-plot');
-        if (plotDiv) onPlotReady(plotDiv);
-      }, 200);
-      return () => {
-        clearTimeout(timer);
-        if (scriptRef.current) {
-          scriptRef.current.remove();
-          scriptRef.current = null;
+    const loadExternal = (src) =>
+      new Promise((resolve) => {
+        // Reuse an already-loaded CDN tag so we don't double-load
+        // (e.g. when multiple plots render from the same library).
+        if (document.querySelector(`script[src="${src}"]`)) {
+          resolve();
+          return;
         }
-      };
-    }
+        const el = document.createElement('script');
+        el.src = src;
+        el.async = false;
+        el.onload = resolve;
+        el.onerror = resolve;
+        document.head.appendChild(el);
+        appendedScripts.push(el);
+      });
+
+    const runInline = () => {
+      if (cancelled || !inlineScript) return;
+      const el = document.createElement('script');
+      el.dataset.id = `script-report-${uniqueId}`;
+      el.append(inlineScript);
+      document.body.appendChild(el);
+      appendedScripts.push(el);
+      scriptRef.current = el;
+    };
+
+    const run = async () => {
+      for (const src of externalSrcs) {
+        await loadExternal(src);
+        if (cancelled) return;
+      }
+      runInline();
+      if (onPlotReady && containerRef.current) {
+        setTimeout(() => {
+          if (cancelled) return;
+          const plotDiv = containerRef.current?.querySelector(
+            '.plotly-graph-div, .js-plotly-plot',
+          );
+          if (plotDiv) onPlotReady(plotDiv);
+        }, 200);
+      }
+    };
+
+    run();
 
     return () => {
+      cancelled = true;
+      // Only remove the inline exec tag — leave the CDN tag cached
+      // for subsequent plots.
       if (scriptRef.current) {
         scriptRef.current.remove();
         scriptRef.current = null;
       }
     };
   }, [html, uniqueId, onPlotReady]);
+
+  // Follow container size changes (card drag-resize) — Plotly uses
+  // the div's pixel size at `newPlot` time, so we have to tell it
+  // to re-measure explicitly. `Plots.resize` is a no-op if Plotly
+  // hasn't initialised the div yet, so it's safe to call eagerly.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      const plotDiv = container.querySelector(
+        '.js-plotly-plot, .plotly-graph-div',
+      );
+      if (plotDiv && window.Plotly?.Plots?.resize) {
+        window.Plotly.Plots.resize(plotDiv);
+      }
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [html]);
 
   if (isLoading) {
     return (
@@ -157,12 +214,44 @@ const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotRead
     },
   });
 
-  // Filter to only div and style elements
-  const filtered = Array.isArray(content)
-    ? content.filter((node) => node?.type === 'div' || node?.type === 'style')
-    : content;
+  // Filter to only div and style elements, and force the wrapper
+  // div(s) to 100% height. The backend returns `<div><div class=
+  // "plotly-graph-div" style="height:100%; width:100%"/></div>` —
+  // the outer div has no style, so the inner `height:100%` resolves
+  // against `auto` and collapses. Width works without this because
+  // block elements fill their parent by default; height does not.
+  const filtered = (Array.isArray(content) ? content : [content])
+    .filter((node) => node?.type === 'div' || node?.type === 'style')
+    .map((node, i) =>
+      isValidElement(node) && node.type === 'div'
+        ? cloneElement(node, {
+            key: node.key ?? i,
+            style: {
+              ...(node.props.style || {}),
+              height: '100%',
+              width: '100%',
+            },
+          })
+        : node,
+    );
 
-  return <div ref={containerRef} style={{ minHeight: 300 }}>{filtered}</div>;
+  // Flex-fill the parent slot (which itself flex-fills the card's
+  // plot section), and fall back to `minHeight` for cases where the
+  // parent hasn't constrained height yet (e.g. a loading race on
+  // first mount).
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        flex: 1,
+        minHeight: 300,
+        width: '100%',
+        position: 'relative',
+      }}
+    >
+      {filtered}
+    </div>
+  );
 };
 
 const loadingStyle = {

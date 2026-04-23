@@ -79,7 +79,17 @@ const PlotSlotCard = ({
 // here made the first plot's trio sit further from the divider
 // than the KPI trio sits from its divider. Plot-to-plot spacing
 // is handled by `plotsSectionStyle.gap` in FeatureCard.
-const slotStyle = {};
+//
+// `flex: 1` + column layout lets `ReportPlot` fill whatever space
+// the plot section hands down. `minHeight: 0` keeps the child
+// shrinkable when the user drags the card smaller — otherwise the
+// plot's default height would floor the slot.
+const slotStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+};
 
 const controlsStyle = {
   display: 'flex',

@@ -136,6 +136,12 @@ const FeatureCard = ({
     [feature],
   );
 
+  // KPI (the strip + its action trio) can be dismissed independently
+  // of the card itself. Card-level deletion is still available via
+  // the bin in the title section. Local state only — hiding a KPI
+  // strip isn't interesting enough to persist across reloads.
+  const [kpiHidden, setKpiHidden] = useState(false);
+
   const cardInner = (
     <div style={cardStyle}>
       {/* ── Title section ───────────────────────────────────── */}
@@ -144,24 +150,28 @@ const FeatureCard = ({
         {onDeleteCard && <TitleDeleteButton onClick={onDeleteCard} />}
       </div>
 
-      <div style={sectionDividerStyle} />
+      {!kpiHidden && (
+        <>
+          <div style={sectionDividerStyle} />
 
-      {/* ── KPI section ─────────────────────────────────────── */}
-      <div style={kpiSectionStyle}>
-        <KpiStrip
-          primaryValue={kpiProps.primaryValue}
-          primaryLabel={kpiProps.primaryLabel}
-          pills={kpiProps.pills}
-          loading={isLoading}
-        />
-        <div style={sectionActionsStyle}>
-          <KpiActionButtons
-            onEdit={null}
-            onRefresh={handleRefreshKpi}
-            onDelete={onDeleteCard}
-          />
-        </div>
-      </div>
+          {/* ── KPI section ─────────────────────────────────────── */}
+          <div style={kpiSectionStyle}>
+            <KpiStrip
+              primaryValue={kpiProps.primaryValue}
+              primaryLabel={kpiProps.primaryLabel}
+              pills={kpiProps.pills}
+              loading={isLoading}
+            />
+            <div style={sectionActionsStyle}>
+              <KpiActionButtons
+                onEdit={null}
+                onRefresh={handleRefreshKpi}
+                onDelete={() => setKpiHidden(true)}
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Plot section ────────────────────────────────────── */}
       {(plots.length > 0 || onAddPlot) && (
@@ -284,18 +294,18 @@ const TitleDeleteButton = ({ onClick }) => (
  * Edit / Refresh / Delete trio in the KPI section — same shared-
  * container pattern as the map card's toolbar and the plot section's
  * controls. `onEdit` is a placeholder (disabled when not wired);
- * `onRefresh` invalidates the KPI summary query; `onDelete` removes
- * the entire card (guarded by a Popconfirm).
+ * `onRefresh` invalidates the KPI summary query; `onDelete` hides
+ * just this KPI section (card-level deletion lives in the title).
  */
 const KpiActionButtons = ({ onEdit, onRefresh, onDelete }) => (
   <div className="cea-card-icon-button-container">
-    <Tooltip title="Edit card" placement="bottom">
+    <Tooltip title="Edit KPI" placement="bottom">
       <Button
         type="text"
         icon={<InputEditorIcon />}
         onClick={onEdit}
         disabled={!onEdit}
-        aria-label="Edit card"
+        aria-label="Edit KPI"
       />
     </Tooltip>
     <Tooltip title="Refresh" placement="bottom">
@@ -307,22 +317,14 @@ const KpiActionButtons = ({ onEdit, onRefresh, onDelete }) => (
       />
     </Tooltip>
     {onDelete && (
-      <Popconfirm
-        title="Delete this card?"
-        description="All plots inside this card will be removed."
-        okText="Delete"
-        cancelText="Cancel"
-        okButtonProps={{ danger: true }}
-        onConfirm={onDelete}
-      >
-        <Tooltip title="Delete card" placement="bottom">
-          <Button
-            type="text"
-            icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
-            aria-label="Delete card"
-          />
-        </Tooltip>
-      </Popconfirm>
+      <Tooltip title="Hide KPI" placement="bottom">
+        <Button
+          type="text"
+          icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
+          onClick={onDelete}
+          aria-label="Hide KPI"
+        />
+      </Tooltip>
     )}
   </div>
 );
@@ -440,10 +442,17 @@ const kpiSectionStyle = {
   gap: 4,
 };
 
+// `flex: 1` + `minHeight: 0` lets the plot section absorb the
+// card's remaining vertical space. Without `minHeight: 0` a flex
+// child refuses to shrink below its content, and the plots would
+// keep their 300px minimum even when the user drags the card
+// shorter.
 const plotsSectionStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
+  flex: 1,
+  minHeight: 0,
 };
 
 const addPlotRowWithDividerStyle = {

@@ -121,7 +121,26 @@ export const useFetchToolParams = (script, scenario) => {
 /**
  * Render a custom plot via POST /api/reports/plot-custom.
  * plotConfig shape: { script, parameters }
+ *
+ * Backend quirk: the endpoint calls `parameter.decode(str(value))`
+ * on each parameter, so any dict-typed parameter (e.g. the `context`
+ * field on plot forms) must arrive as a JSON string — not a nested
+ * object — otherwise `str(pythonDict)` produces single-quoted
+ * Python repr and `json.loads` fails. Stringify objects here.
  */
+const serializeParameters = (params) => {
+  if (!params) return {};
+  const out = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      out[key] = JSON.stringify(value);
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+};
+
 export const useFetchCustomPlot = (plotConfig, scenario) => {
   return useQuery({
     queryKey: ['reports', 'custom-plot', plotConfig, scenario],
@@ -130,7 +149,7 @@ export const useFetchCustomPlot = (plotConfig, scenario) => {
         '/api/reports/plot-custom',
         {
           script: plotConfig.script,
-          parameters: plotConfig.parameters || {},
+          parameters: serializeParameters(plotConfig.parameters),
           scenario,
         },
         { responseType: 'text' },
