@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Popconfirm, Select, Tooltip } from 'antd';
+import { Button, Dropdown, Popconfirm, Select, Tooltip } from 'antd';
 import {
   BinAnimationIcon,
   CreateNewIcon,
@@ -91,8 +91,10 @@ function buildKpiProps(summary) {
  *   onResetPlot(plotId)
  *   onDeletePlot(plotId)
  *   onAddPlot(script?)             — add a plot to this card
- *   onAddCardRight()               — insert a new card to the right
- *   onAddCardBottom()              — insert a new card below
+ *   plusRightMenu                  — antd Dropdown `menu` config
+ *                                    rendered when the + right button
+ *                                    is clicked (nested plot picker)
+ *   plusBottomMenu                 — same for the + bottom button
  *   onPlotReady(plotId, plotDiv)   — y-axis alignment hook
  */
 const FeatureCard = ({
@@ -104,8 +106,8 @@ const FeatureCard = ({
   onResetPlot,
   onDeletePlot,
   onAddPlot,
-  onAddCardRight,
-  onAddCardBottom,
+  plusRightMenu,
+  plusBottomMenu,
   onDeleteCard,
   onPlotReady,
 }) => {
@@ -221,47 +223,54 @@ const FeatureCard = ({
       {cardInner}
 
       {/* + right — absolutely positioned just outside the card's right
-          edge. Card width is not reduced by this button. */}
-      {onAddCardRight && (
+          edge. Clicking opens a nested plot picker (same items as the
+          empty-state "Add a feature card" dropdown) so the user goes
+          straight to the parameter form for a specific plot. */}
+      {plusRightMenu && (
         <div style={plusRightWrapperStyle}>
-          <PlusIconButton
-            tooltip="Add a card to the right"
-            onClick={onAddCardRight}
-          />
+          <Dropdown
+            menu={plusRightMenu}
+            trigger={['click']}
+            placement="bottomLeft"
+          >
+            <div className="cea-card-icon-button-container">
+              <Tooltip title="Add a card to the right" placement="bottom">
+                <Button
+                  type="text"
+                  icon={<CreateNewIcon />}
+                  aria-label="Add a card to the right"
+                />
+              </Tooltip>
+            </div>
+          </Dropdown>
         </div>
       )}
 
       {/* + bottom — regular flow child below the card, horizontally
-          centered within the card's own width. */}
-      {onAddCardBottom && (
+          centered within the card's own width. Same nested picker as
+          the + right button. */}
+      {plusBottomMenu && (
         <div style={plusBottomWrapperStyle}>
-          <PlusIconButton
-            tooltip="Add a card below"
-            onClick={onAddCardBottom}
-          />
+          <Dropdown
+            menu={plusBottomMenu}
+            trigger={['click']}
+            placement="bottomLeft"
+          >
+            <div className="cea-card-icon-button-container">
+              <Tooltip title="Add a card below" placement="bottom">
+                <Button
+                  type="text"
+                  icon={<CreateNewIcon />}
+                  aria-label="Add a card below"
+                />
+              </Tooltip>
+            </div>
+          </Dropdown>
         </div>
       )}
     </div>
   );
 };
-
-/**
- * "+" button styled identically to the title card's "Add column"
- * affordance in ReportColumn.jsx — the `.cea-card-icon-button-container`
- * frame around a `type="text"` antd Button with CreateNewIcon.
- */
-const PlusIconButton = ({ tooltip, onClick }) => (
-  <div className="cea-card-icon-button-container">
-    <Tooltip title={tooltip} placement="bottom">
-      <Button
-        type="text"
-        icon={<CreateNewIcon />}
-        onClick={onClick}
-        aria-label={tooltip}
-      />
-    </Tooltip>
-  </div>
-);
 
 /**
  * Single delete button in the FeatureCard title section — same

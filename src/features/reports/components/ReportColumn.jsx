@@ -224,56 +224,67 @@ const ReportColumn = ({
             gridTemplateColumns: `repeat(${cols}, auto)`,
           }}
         >
-          {sortedCards.map((card) => (
-            <div
-              key={card.id}
-              style={{
-                gridRow: card.row + 1,
-                gridColumn: card.col + 1,
-              }}
-            >
-              <FeatureCard
-                card={card}
-                project={project}
-                scenario={scenario}
-                whatif={whatif}
-                onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
-                onResetPlot={(plotId) => onResetPlot?.(card.id, plotId)}
-                onDeletePlot={
-                  onDeletePlot
-                    ? (plotId) => onDeletePlot(card.id, plotId)
-                    : undefined
-                }
-                onAddPlot={
-                  onAddPlotToCard
-                    ? (script) => onAddPlotToCard(card.id, script)
-                    : undefined
-                }
-                onAddCardRight={
-                  onAddCard
-                    ? () =>
-                        onAddCard({
-                          targetCardId: card.id,
-                          direction: 'right',
-                        })
-                    : undefined
-                }
-                onAddCardBottom={
-                  onAddCard
-                    ? () =>
-                        onAddCard({
-                          targetCardId: card.id,
-                          direction: 'bottom',
-                        })
-                    : undefined
-                }
-                onDeleteCard={
-                  onDeleteCard ? () => onDeleteCard(card.id) : undefined
-                }
-                onPlotReady={onPlotReady}
-              />
-            </div>
-          ))}
+          {sortedCards.map((card) => {
+            // Build the nested plot picker for each "+" direction so
+            // clicking the button opens the same menu as the empty-
+            // state "Add a feature card" dropdown. Picking a specific
+            // plot seeds the drawer's plotConfig so the parameter
+            // form opens immediately — no "Select a Plot Tool" step.
+            const plusRightMenu = onAddCard && {
+              items: buildPlotMenuItems((feature, script) =>
+                onAddCard({
+                  targetCardId: card.id,
+                  direction: 'right',
+                  feature,
+                  script,
+                }),
+              ),
+            };
+            const plusBottomMenu = onAddCard && {
+              items: buildPlotMenuItems((feature, script) =>
+                onAddCard({
+                  targetCardId: card.id,
+                  direction: 'bottom',
+                  feature,
+                  script,
+                }),
+              ),
+            };
+            return (
+              <div
+                key={card.id}
+                style={{
+                  gridRow: card.row + 1,
+                  gridColumn: card.col + 1,
+                }}
+              >
+                <FeatureCard
+                  card={card}
+                  project={project}
+                  scenario={scenario}
+                  whatif={whatif}
+                  onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
+                  onResetPlot={(plotId) => onResetPlot?.(card.id, plotId)}
+                  onDeletePlot={
+                    onDeletePlot
+                      ? (plotId) => onDeletePlot(card.id, plotId)
+                      : undefined
+                  }
+                  onAddPlot={
+                    onAddPlotToCard
+                      ? (script) => onAddPlotToCard(card.id, script)
+                      : undefined
+                  }
+                  plusRightMenu={plusRightMenu}
+                  plusBottomMenu={plusBottomMenu}
+                  onDeleteCard={
+                    onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                  }
+                  onPlotReady={onPlotReady}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
