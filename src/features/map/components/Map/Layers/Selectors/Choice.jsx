@@ -191,8 +191,16 @@ const ChoiceSelector = ({
     if (!raw?.length) return raw;
     if (!deletable) return raw;
 
-    // Exclude the currently-selected value from the dropdown so the trigger
-    // stays a plain string; mirrors the scenario dropdown delete pattern.
+    // Exclude the currently-selected value from the dropdown so the
+    // trigger stays a plain string; mirrors the scenario dropdown
+    // delete pattern. BUT when there's only one option total, skip the
+    // filter — otherwise the filtered list is empty and the whole
+    // selector gets hidden by the `!options?.length` guard below. A
+    // sole option is shown plain (no trash icon, since there's nothing
+    // to switch to anyway) so users can still see which value is
+    // active.
+    if (raw.length <= 1) return raw;
+
     return raw
       .filter((opt) => opt.value !== selected)
       .map((opt) => ({
