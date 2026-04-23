@@ -36,6 +36,12 @@ const Tool = ({
   form,
   onParametersLoaded,
   onRunOverride,
+  // Optional list of parameter names to render as read-only in
+  // addition to the pathway-viewer overrides Tool already computes
+  // internally. Main viewport passes nothing; Reports passes
+  // `['what-if-name']` so users edit what-if from the bottom map
+  // layer card, not from the plot form.
+  extraReadonlyFields: externalReadonlyFields,
 }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
@@ -88,6 +94,14 @@ const Tool = ({
   const pathwayReadonlyFields = useMemo(
     () => Object.keys(pathwayOverrides),
     [pathwayOverrides],
+  );
+
+  // Merge internal (pathway) and external (caller-provided) readonly
+  // lists. `externalReadonlyFields` is optional; when absent this is
+  // identical to `pathwayReadonlyFields` — main viewport unchanged.
+  const allReadonlyFields = useMemo(
+    () => [...pathwayReadonlyFields, ...(externalReadonlyFields || [])],
+    [pathwayReadonlyFields, externalReadonlyFields],
   );
 
   const {
@@ -300,7 +314,7 @@ const Tool = ({
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            extraReadonlyFields={pathwayReadonlyFields}
+            extraReadonlyFields={allReadonlyFields}
           />
         </div>
       </Spin>

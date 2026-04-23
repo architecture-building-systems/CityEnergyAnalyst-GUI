@@ -114,7 +114,17 @@ export const PlotChoices = ({ onSelected }) => {
   );
 };
 
-export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
+export const PlotTool = ({
+  script,
+  onToolSelected,
+  onPlotToolSelected,
+  onRunOverride,
+  // Passed straight through to Tool so callers can grey out specific
+  // form fields without PlotTool needing to know their names. Reports
+  // uses this to lock `what-if-name` since that field is driven from
+  // the Reports bottom card, not the plot form.
+  extraReadonlyFields,
+}) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const selectedMapLayer = useSelectedMapLayer();
@@ -418,6 +428,10 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
         // form to the backend defaults, otherwise these values get wiped
         // by `useFormReset`.
         onParametersLoaded={handleParametersLoaded}
+        // Forwarded to ToolFormButtons so Reports can intercept Run
+        // (commit plot config to a card) without creating a job.
+        onRunOverride={onRunOverride}
+        extraReadonlyFields={extraReadonlyFields}
       />
     </ConfigProvider>
   );

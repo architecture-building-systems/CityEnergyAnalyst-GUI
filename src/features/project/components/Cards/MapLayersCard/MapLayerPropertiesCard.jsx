@@ -130,7 +130,19 @@ const useFilteredLayers = (layers) => {
   }, [layers, selectedLayer]);
 };
 
-const MapLayerPropertiesCard = ({ onLayerSelect }) => {
+const MapLayerPropertiesCard = ({
+  onLayerSelect,
+  hideLegend = false,
+  // When `true`, skip the intra-category `LayerSelector` dropdown —
+  // the caller is expected to set `selectedMapLayer` some other way
+  // (e.g. Reports drives it from the plot script being edited).
+  hideLayerSelector = false,
+  // Optional allowlist of parameter keys to render. Passed through to
+  // ParameterSelectors; `null`/`undefined` = render everything (main
+  // viewport default). Reports uses this to hide anything the plot
+  // form already owns (period, data-column, etc.).
+  allowParamKeys,
+}) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
 
@@ -186,7 +198,9 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
         }}
       >
         {fetching && <Loading />}
-        <Legend extras={<LegendFilterRow layers={filteredLayers} />} />
+        {!hideLegend && (
+          <Legend extras={<LegendFilterRow layers={filteredLayers} />} />
+        )}
 
         <div
           className="cea-overlay-card"
@@ -207,10 +221,13 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
-          <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
+          {!hideLayerSelector && (
+            <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
+          )}
           <ParameterSelectors
             layers={filteredLayers}
             parameterValues={mapLayerParameters}
+            allowParamKeys={allowParamKeys}
           />
         </div>
       </div>

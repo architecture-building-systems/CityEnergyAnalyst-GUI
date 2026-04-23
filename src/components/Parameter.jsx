@@ -357,6 +357,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
     case 'MultiChoiceFeedstockParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
+    case 'EnergyCarrierMultiChoiceParameter':
     case 'InterventionTemplateMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter':
@@ -444,6 +445,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
             style={{ width: '100%' }}
             placeholder={'Nothing Selected'}
             maxTagCount={10}
+            disabled={paramDisabled}
             popupRender={(menu) => (
               <div>
                 <div style={{ padding: '8px', textAlign: 'center' }}>

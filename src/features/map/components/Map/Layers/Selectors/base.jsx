@@ -10,7 +10,20 @@ import { InputSelector, InputNumberSelector } from './Input';
 // Filters rendered inside the Legend card instead of the parameters panel.
 const LEGEND_FILTERS = new Set(['scale', 'radius']);
 
-const ParameterSelectors = ({ layers, parameterValues }) => {
+/**
+ * @param allowParamKeys Optional filter for `choice` (dropdown)
+ *   selectors. Can be an array of exact keys, OR a predicate
+ *   `(key) => boolean`. Non-choice selectors always render. `null` /
+ *   `undefined` = render everything (main viewport default).
+ */
+const ParameterSelectors = ({ layers, parameterValues, allowParamKeys }) => {
+  const isAllowedChoiceKey = useMemo(() => {
+    if (!allowParamKeys) return () => true;
+    if (typeof allowParamKeys === 'function') return allowParamKeys;
+    if (Array.isArray(allowParamKeys))
+      return (key) => allowParamKeys.includes(key);
+    return () => true;
+  }, [allowParamKeys]);
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
 
@@ -76,6 +89,11 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
 
         // Scale/radius are rendered inside the Legend card.
         if (filter && LEGEND_FILTERS.has(filter)) return;
+
+        // Caller-side allowlist only applies to `choice` (dropdown)
+        // selectors — timescale / sliders / inputs always render.
+        // Main viewport passes no allowlist, so this is a no-op there.
+        if (selector === 'choice' && !isAllowedChoiceKey(key)) return;
 
         const value = filter ? filters?.[filter] : parameterValues?.[key];
         const _handleChange = parameterChangeHandlers[`${name}:${key}`];
@@ -287,7 +305,7 @@ const ParameterSelectors = ({ layers, parameterValues }) => {
         </div>
       );
     });
-  }, [layers, parameterValues, range, filters, parameterChangeHandlers]);
+  }, [layers, parameterValues, range, filters, parameterChangeHandlers, isAllowedChoiceKey]);
 
   return (
     <ConfigProvider
