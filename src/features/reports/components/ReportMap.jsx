@@ -7,6 +7,8 @@ import MapControls from 'features/map/components/Map/MapControls';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore } from 'features/map/stores/mapStore';
 
+import './ReportMap.css';
+
 /**
  * Map card used by the Reports comparison grid.
  *
@@ -57,7 +59,7 @@ const ReportMap = ({ project, scenario }) => {
         </Spin>
       )}
       <DeckGLMap data={geojsons} colors={colors} interactive={false} />
-      <div style={controlsFrameStyle}>
+      <div className="cea-report-map-controls" style={controlsFrameStyle}>
         <MapControls scenario={scenario} />
       </div>
     </div>
@@ -79,10 +81,10 @@ const overlayStyle = {
 };
 
 // Overlay the shared `<MapControls>` toolbar on top of the map.
-// Chrome (white bg, rounded corners, shadow) mirrors the wrapper
-// `<div className="cea-overlay-card">` in ProjectOverlay.jsx so the
-// Reports toolbar reads the same as the main viewport's toolbar —
-// `#map-controls` itself (Map.css) only carries layout, not frame.
+// Chrome mirrors the plot-section trio frame (HomePage.css
+// `.cea-card-icon-button-container` — 12px radius, 1px #ddd
+// outline, 3px padding) so the map toolbar and plot-section
+// toolbars read as one family inside the Reports card.
 const controlsFrameStyle = {
   position: 'absolute',
   top: 8,
@@ -90,7 +92,8 @@ const controlsFrameStyle = {
   zIndex: 2,
   backgroundColor: 'rgba(255, 255, 255, 0.8)',
   borderRadius: 12,
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  outline: '1px solid #dddddd',
+  padding: 3,
   boxSizing: 'border-box',
   display: 'flex',
   alignItems: 'center',

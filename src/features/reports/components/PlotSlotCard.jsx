@@ -36,22 +36,58 @@ const PlotSlotCard = ({
     return null;
   }, [plotConfig]);
 
+  // Some plot titles come back as a single string with a comma in the
+  // middle (e.g. "Building Energy Demand, what-if-A"). When that
+  // happens, split on the first comma and stack the halves — the
+  // part before the comma is the primary title, the part after is a
+  // qualifier that reads better on a second line. The `| whatif`
+  // suffix joins whichever row is the last one so it stays adjacent
+  // to the qualifier rather than the primary.
+  const { primaryTitle, secondaryTitle } = useMemo(() => {
+    if (!caption) return { primaryTitle: '', secondaryTitle: '' };
+    const idx = caption.indexOf(',');
+    if (idx === -1) return { primaryTitle: caption, secondaryTitle: '' };
+    return {
+      primaryTitle: caption.slice(0, idx).trim(),
+      secondaryTitle: caption.slice(idx + 1).trim(),
+    };
+  }, [caption]);
+
   const hoverTitle = caption
     ? whatifSuffix
       ? `${caption} | ${whatifSuffix}`
       : caption
     : '';
 
+  const secondaryLine = secondaryTitle
+    ? whatifSuffix
+      ? { text: secondaryTitle, suffix: whatifSuffix }
+      : { text: secondaryTitle, suffix: null }
+    : whatifSuffix
+      ? { text: null, suffix: whatifSuffix }
+      : null;
+
   return (
     <div style={slotStyle}>
       <div style={controlsStyle}>
         <div style={titleStyle} title={hoverTitle}>
-          {caption && <span style={titleTextStyle}>{caption}</span>}
-          {caption && whatifSuffix && (
-            <>
-              <span style={titleSeparatorStyle}>|</span>
-              <span style={titleTextStyle}>{whatifSuffix}</span>
-            </>
+          {primaryTitle && (
+            <div style={titleRowStyle}>
+              <span style={titleTextStyle}>{primaryTitle}</span>
+            </div>
+          )}
+          {secondaryLine && (
+            <div style={titleRowSecondaryStyle}>
+              {secondaryLine.text && (
+                <span style={titleTextStyle}>{secondaryLine.text}</span>
+              )}
+              {secondaryLine.text && secondaryLine.suffix && (
+                <span style={titleSeparatorStyle}>|</span>
+              )}
+              {secondaryLine.suffix && (
+                <span style={titleTextStyle}>{secondaryLine.suffix}</span>
+              )}
+            </div>
           )}
         </div>
         <div className="cea-card-icon-button-container">
@@ -135,18 +171,40 @@ const controlsStyle = {
   marginBottom: 4,
 };
 
-// Title is now a flex row so the pipe separator has generous, CSS-
-// controlled breathing room on either side rather than the single
-// space that `"A | B"` collapses to in HTML.
+// Title now stacks vertically so a comma-split caption can render
+// as two rows — primary on top, qualifier (+ any `| whatif` suffix)
+// beneath. Single-row captions collapse back to a single child.
 const titleStyle = {
   flex: 1,
   minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  color: '#222',
+  overflow: 'hidden',
+};
+
+// Primary title row — unchanged styling from the single-row case.
+const titleRowStyle = {
   display: 'flex',
   alignItems: 'baseline',
   gap: 16,
   fontWeight: 600,
   fontSize: 14,
-  color: '#222',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
+};
+
+// Secondary row — slightly smaller and lighter so the hierarchy
+// reads, and the pipe separator still has CSS-controlled breathing
+// room on either side.
+const titleRowSecondaryStyle = {
+  display: 'flex',
+  alignItems: 'baseline',
+  gap: 12,
+  fontWeight: 400,
+  fontSize: 12,
+  color: '#666',
   overflow: 'hidden',
   whiteSpace: 'nowrap',
 };

@@ -1,0 +1,21 @@
+/* Scoped overrides for the Reports map toolbar.
+ *
+ * Sizes match the FeatureCard plot-section trio (see HomePage.css
+ * `.cea-card-icon-button-container button` — 30×30 with an 18px
+ * glyph and 8px radius) so Reports reads with one consistent
+ * button scale across map + plot sections. Main viewport toolbar
+ * is untouched. */
+.cea-report-map-controls .cea-card-toolbar-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 18px;
+}
+
+.cea-report-map-controls #map-controls {
+  /* Frame owns the padding (see `controlsFrameStyle` in ReportMap.jsx),
+   * so zero out the inner padding from Map.css to avoid doubling. */
+  gap: 2px;
+  padding-inline: 0;
+}
