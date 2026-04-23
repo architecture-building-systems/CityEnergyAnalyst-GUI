@@ -30,7 +30,13 @@ const PATHWAY_VIEWER_OVERRIDES = {
   }),
 };
 
-const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
+const Tool = ({
+  script,
+  onToolSelected,
+  form,
+  onParametersLoaded,
+  onRunOverride,
+}) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
 
@@ -244,6 +250,7 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
                   script={script}
                   setError={setToolError}
                   onValidationError={onValidationError}
+                  onRunOverride={onRunOverride}
                 />
               </div>
               <Button

@@ -73,9 +73,11 @@ const ComparisonView = () => {
     setAddColumnOpen(false);
   };
 
-  // "Add a plot" — stage a draft; drawer commits it on Run.
-  const handleAddPlot = (feature, columnIndex) => {
-    setDrawerTarget({ mode: 'add', feature, columnIndex });
+  // "Add a plot" — stage a draft; drawer commits it on Run. Optional
+  // `script` pre-selects a specific plot (quick-pick dropdown) so the
+  // drawer opens straight on the parameter form.
+  const handleAddPlot = (feature, columnIndex, script = null) => {
+    setDrawerTarget({ mode: 'add', feature, columnIndex, script });
   };
 
   const handleEditSlot = (slotId, columnIndex) => {
@@ -120,13 +122,20 @@ const ComparisonView = () => {
     setDrawerTarget(null);
   };
 
-  // Resolve the `plotConfig` seed + scenario for the drawer.
+  // Resolve the `plotConfig` seed + scenario for the drawer. In add
+  // mode, a pre-selected script seeds the drawer so the Tool form
+  // renders directly without the picker phase.
   const getDrawerPlotConfig = () => {
-    if (drawerTarget?.mode !== 'edit') return null;
-    const { slotId, columnIndex } = drawerTarget;
-    const slots =
-      columnIndex != null ? columnPlotSlots[columnIndex] || [] : sharedPlotSlots;
-    return slots.find((s) => s.id === slotId)?.plotConfig || null;
+    if (!drawerTarget) return null;
+    if (drawerTarget.mode === 'edit') {
+      const { slotId, columnIndex } = drawerTarget;
+      const slots =
+        columnIndex != null
+          ? columnPlotSlots[columnIndex] || []
+          : sharedPlotSlots;
+      return slots.find((s) => s.id === slotId)?.plotConfig || null;
+    }
+    return drawerTarget.script ? { script: drawerTarget.script } : null;
   };
 
   const getDrawerScenario = () => {
@@ -178,8 +187,8 @@ const ComparisonView = () => {
                     handleDeleteSlot(slotId, isFeatureMode ? i : null)
                   }
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
-                  onAddPlot={(feature) =>
-                    handleAddPlot(feature, isFeatureMode ? i : null)
+                  onAddPlot={(feature, script) =>
+                    handleAddPlot(feature, isFeatureMode ? i : null, script)
                   }
                 />
               </div>

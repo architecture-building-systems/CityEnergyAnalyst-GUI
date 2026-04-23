@@ -64,7 +64,7 @@ const PlotButton = ({ plotKey, onSelected }) => {
   );
 };
 
-const PlotChoices = ({ onSelected }) => {
+export const PlotChoices = ({ onSelected }) => {
   return (
     <div className="cea-tool-choices">
       <h2>Select a Plot Tool</h2>

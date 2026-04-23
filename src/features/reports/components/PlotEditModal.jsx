@@ -1,105 +1,34 @@
-import { useState, useEffect } from 'react';
-import { Form, Spin, Collapse, Empty, Button, Divider, Space } from 'antd';
-import { LoadingOutlined, VerticalLeftOutlined } from '@ant-design/icons';
-import { isElectron } from 'utils/electron';
+import { useState, useEffect, useCallback } from 'react';
+import { Form, Button } from 'antd';
+import { VerticalLeftOutlined } from '@ant-design/icons';
 
-import Parameter from 'components/Parameter';
-import {
-  PLOT_GROUPS,
-  PLOT_LABELS,
-  VIEW_PLOT_RESULTS,
-} from 'features/plots/constants';
-import { useFetchToolParams } from '../hooks/useReportsData';
-
-// Reuse the exact same CSS the main viewport's PlotTool uses for its
-// grouped button list, so the picker is pixel-identical.
-import 'features/project/components/Cards/tool-choices.css';
+import Tool from 'features/tools/components/Tools/Tool';
+// Reuse the exact picker the main viewport's PlotTool uses.
+import { PlotChoices } from 'features/project/components/Cards/plot-tool';
 
 /**
- * Plot configuration card — styled and laid out like the CEA main
- * viewport's tool card (see `ToolCard.jsx` + `plot-tool.jsx`). Floats
- * on the right side of the Reports page; the canvas under it stays
- * visible.
+ * Plot configuration card — shares the main viewport's tool card chrome
+ * AND its form layout. Uses `<Tool>` directly (from features/tools) so
+ * the picker, header, description, parameter fields, and Run button
+ * are pixel-identical to the main viewport. Only difference: `onRunOverride`
+ * intercepts the Run click and commits the plot config to the report
+ * slot instead of creating a job.
  *
  * Two phases inside the same card:
- *   1. Plot picker — grouped button list (mirrors `PlotChoices`).
- *   2. Parameter form — once a plot is picked, shows its parameters
- *      with a Back button to return to the picker.
+ *   1. Plot picker — `PlotChoices` imported from the main viewport.
+ *   2. Parameter form — rendered by `<Tool>` with a Back button in the
+ *      card header to return to the picker.
  */
-const ELECTRON_ONLY = [
-  'multiprocessing',
-  'number-of-cpus-to-keep-free',
-  'debug',
-];
-
-const PlotChoices = ({ onSelected }) => (
-  <div className="cea-tool-choices">
-    <h2>Select a Plot Tool</h2>
-    <div className="cea-tool-choices-group-list">
-      {PLOT_GROUPS.map((group) => (
-        <div key={group.label}>
-          <Divider orientation="left" orientationMargin={0}>
-            <span className="cea-tool-choices-group-label">
-              {group.icon && <group.icon />}
-              <small>{group.label}</small>
-            </span>
-          </Divider>
-          <div className="cea-tool-choices-group-content">
-            {group.subgroups ? (
-              group.subgroups.map((sub) => (
-                <div key={sub.label} className="cea-tool-choices-subgroup">
-                  <small className="cea-tool-choices-subgroup-label">
-                    {sub.label}
-                  </small>
-                  <div className="cea-tool-choices-button-list">
-                    {sub.keys.map((key) => {
-                      const script = VIEW_PLOT_RESULTS[key];
-                      if (!script) return null;
-                      return (
-                        <Button
-                          key={key}
-                          className="cea-tool-choices-button"
-                          onClick={() => onSelected(script)}
-                        >
-                          {PLOT_LABELS[key] || key}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="cea-tool-choices-button-list">
-                {group.keys.map((key) => {
-                  const script = VIEW_PLOT_RESULTS[key];
-                  if (!script) return null;
-                  return (
-                    <Button
-                      key={key}
-                      className="cea-tool-choices-button"
-                      onClick={() => onSelected(script)}
-                    >
-                      {PLOT_LABELS[key] || key}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 const PlotEditModal = ({
   open,
-  scenario,
+  scenario: _scenario,
   plotConfig,
   mode = 'edit',
   onSave,
   onCancel,
 }) => {
+  // Note: `scenario` prop is accepted for API compatibility but the
+  // embedded Tool pulls project/scenario from the project store itself.
   const [form] = Form.useForm();
 
   const [selectedScript, setSelectedScript] = useState(
@@ -112,112 +41,36 @@ const PlotEditModal = ({
       return undefined;
     }
     // Hold the current script for the duration of the slide-out
-    // animation so the content doesn't re-lay out mid-transition,
-    // then clear it so `useFetchToolParams` stops polling.
+    // animation, then clear it so Tool's internal queries stop.
     const t = setTimeout(() => setSelectedScript(null), 350);
     return () => clearTimeout(t);
   }, [open, plotConfig]);
 
-  const { data: toolData, isLoading: paramsLoading } = useFetchToolParams(
-    selectedScript,
-    scenario,
+  // Seed the form with the existing plotConfig's parameters once the
+  // Tool has finished loading its parameter metadata. `Tool` calls this
+  // via `onParametersLoaded` after its own `useFormReset` runs.
+  const handleParametersLoaded = useCallback(
+    (_params) => {
+      if (plotConfig?.parameters) {
+        form.setFieldsValue(plotConfig.parameters);
+      }
+    },
+    [form, plotConfig],
   );
 
-  const parameters = toolData?.parameters;
-  const categoricalParameters = toolData?.categorical_parameters;
-
-  useEffect(() => {
-    if (!parameters) return;
-    const initialValues = {};
-    const allParams = [
-      ...parameters,
-      ...Object.values(categoricalParameters || {}).flat(),
-    ];
-    allParams.forEach((p) => {
-      if (plotConfig?.parameters?.[p.name] !== undefined) {
-        initialValues[p.name] = plotConfig.parameters[p.name];
-      } else {
-        initialValues[p.name] = p.value;
-      }
-    });
-    form.setFieldsValue(initialValues);
-  }, [parameters, categoricalParameters, plotConfig, form]);
-
-  const handleScriptChange = (value) => {
-    setSelectedScript(value);
-    form.resetFields();
-  };
-
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     setSelectedScript(null);
     form.resetFields();
-  };
+  }, [form]);
 
-  const handleRun = () => {
-    const formValues = form.getFieldsValue();
-    onSave({ script: selectedScript, parameters: formValues });
-  };
-
-  const shouldHideParam = (param) =>
-    param.type === 'ScenarioParameter' ||
-    (!isElectron() && ELECTRON_ONLY.includes(param.name));
-
-  const renderParams = () => {
-    if (paramsLoading) {
-      return (
-        <div style={{ textAlign: 'center', padding: 24 }}>
-          <Spin indicator={<LoadingOutlined spin />} />
-        </div>
-      );
-    }
-    if (!parameters) return null;
-
-    const topParams = parameters
-      .filter((p) => !shouldHideParam(p))
-      .map((p) => (
-        <Parameter
-          key={p.name}
-          parameter={p}
-          form={form}
-          toolName={selectedScript}
-        />
-      ));
-
-    let catParams = null;
-    if (categoricalParameters && Object.keys(categoricalParameters).length) {
-      const items = Object.entries(categoricalParameters)
-        .map(([cat, params]) => ({
-          key: cat,
-          label: cat,
-          forceRender: true,
-          children: params
-            .filter((p) => !shouldHideParam(p))
-            .map((p) => (
-              <Parameter
-                key={p.name}
-                parameter={p}
-                form={form}
-                toolName={selectedScript}
-              />
-            )),
-        }))
-        .filter((item) => item.children.length > 0);
-      if (items.length > 0) {
-        catParams = <Collapse items={items} />;
-      }
-    }
-
-    if (topParams.length === 0 && !catParams) {
-      return <Empty description="No configurable parameters for this plot." />;
-    }
-
-    return (
-      <>
-        {topParams}
-        {catParams}
-      </>
-    );
-  };
+  // Tool.onRunOverride — called with validated form values. Commit the
+  // plot config to the slot. Returning a Promise is fine; Tool awaits it.
+  const handleRunOverride = useCallback(
+    async (params) => {
+      onSave({ script: selectedScript, parameters: params });
+    },
+    [onSave, selectedScript],
+  );
 
   return (
     <div
@@ -244,41 +97,30 @@ const PlotEditModal = ({
 
       <div className="cea-tool-card-content" style={contentStyle}>
         {selectedScript ? (
-          <Form form={form} layout="vertical" size="small">
-            {renderParams()}
-          </Form>
+          <Tool
+            key={selectedScript}
+            script={selectedScript}
+            form={form}
+            onParametersLoaded={handleParametersLoaded}
+            onRunOverride={handleRunOverride}
+          />
         ) : (
-          <PlotChoices onSelected={handleScriptChange} />
+          <PlotChoices onSelected={setSelectedScript} />
         )}
       </div>
-
-      {selectedScript && (
-        <div style={footerStyle}>
-          <Space>
-            <Button onClick={onCancel}>Cancel</Button>
-            <Button type="primary" onClick={handleRun}>
-              Run
-            </Button>
-          </Space>
-        </div>
-      )}
     </div>
   );
 };
 
 // Match the main viewport's right-sidebar dimensions:
 //   Project.css: `--right-sidebar-width: 480px`
-//   `.cea-tool-card-container { position: absolute; top: 0; right: 0;
-//      height: 100%; width: var(--right-sidebar-width); }`
 // Reports doesn't use the overlay grid, so we use `position: fixed`
-// and flush the card against the right edge. Inner chrome (radius,
-// shadow, padding) copied from ToolCard.jsx:81-95 verbatim.
+// with breathing room around the edges. Chrome (radius, shadow,
+// padding) copied from ToolCard.jsx:81-95.
 const cardStyle = {
   position: 'fixed',
   top: 16,
   right: 16,
-  // Extra clearance at the bottom for the CEA status bar (`.cea-status-bar`
-  // is 24px tall in `HomePage.css`) plus the same 16px breathing room.
   bottom: 40,
   width: 480,
   background: '#fff',
@@ -289,8 +131,6 @@ const cardStyle = {
   display: 'flex',
   flexDirection: 'column',
   zIndex: 900,
-  // Slide-in-from-right animation. Transform gets overridden on render
-  // based on the `open` prop; the transition runs either way.
   transition:
     'transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.25s ease-in-out',
 };
@@ -298,6 +138,7 @@ const cardStyle = {
 const headerStyle = {
   display: 'flex',
   alignItems: 'center',
+  gap: 8,
   fontSize: 14,
 };
 
@@ -305,14 +146,6 @@ const contentStyle = {
   minHeight: 0,
   flex: 1,
   overflowY: 'auto',
-};
-
-const footerStyle = {
-  display: 'flex',
-  justifyContent: 'flex-end',
-  paddingTop: 8,
-  marginTop: 8,
-  borderTop: '1px solid #f0f0f0',
 };
 
 export default PlotEditModal;

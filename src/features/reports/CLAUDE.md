@@ -101,6 +101,63 @@ column, the user changes an existing plot's feature via
 `PlotEditModal` — it will migrate into a new card on next render.
 Column-level "Add a plot" rows have been removed.
 
+### DO: Reuse the main viewport's `Tool` component for the plot form
+```jsx
+import Tool from 'features/tools/components/Tools/Tool';
+import { PlotChoices } from 'features/project/components/Cards/plot-tool';
+
+<Tool
+  script={selectedScript}
+  form={form}
+  onParametersLoaded={handleParametersLoaded}
+  onRunOverride={handleRunOverride}
+/>
+```
+`Tool` renders the exact same header, description, parameter list,
+and Run button that appears in the main viewport's tool card. The
+only Reports-specific wiring is `onRunOverride` — when present,
+`ToolFormButtons.runScript` calls it with validated form values
+instead of creating a job, and the Save Settings / Reset buttons are
+hidden (they only make sense for the persistent-tool-params flow).
+Picker phase uses `PlotChoices` imported from the main viewport for
+the same reason: one source of truth, visual parity for free.
+
+### DO: Offer a quick-pick dropdown next to "Add a plot"
+```jsx
+// FeatureCard.jsx — a small DownOutlined dropdown appears beside
+// AddPlotButton when the feature's PLOT_GROUPS subgroup has entries.
+<AddPlotButton onClick={() => onAddPlot()} />
+<Dropdown menu={{ items: quickPickOptions.map((opt) => ({
+  key: opt.script, label: opt.label,
+  onClick: () => onAddPlot(opt.script),
+})) }} ... />
+```
+Picking from the dropdown calls `onAddPlot(script)`. Views seed the
+drawer with `{ script }` so the drawer skips the picker and opens
+directly on the parameter form — one click from "Add a plot" to a
+configured plot. Clicking the main button without using the dropdown
+keeps the existing flow (full `PlotChoices` picker).
+
+### DO: Derive the quick-pick list from `PLOT_GROUPS`, not a local list
+```jsx
+// FeatureCard.jsx
+const FEATURE_ANCHOR = {
+  demand: DEMAND,
+  'final-energy': FINAL_ENERGY,
+  costs: COST_BREAKDOWN,
+  emissions: EMISSIONS_OPERATIONAL,
+  'heat-rejection': ANTHROPOGENIC_HEAT,
+};
+// At render: find the PLOT_GROUPS group/subgroup that contains the
+// anchor and list every key in it.
+```
+The dropdown options come from `PLOT_GROUPS` (the same structure the
+main viewport's `PlotChoices` uses). Adding a new plot to an existing
+group — say a new GHG Emissions plot under Life Cycle Analysis →
+GHG Emissions — surfaces it in the Emissions card's dropdown with no
+change here. Only a brand-new feature card (new family in Reports)
+needs a new `FEATURE_ANCHOR` entry.
+
 ### DO: Stage plot slots — commit only when the user clicks Run
 ```jsx
 // "Add a plot" opens PlotEditModal (right-side drawer) with an in-memory

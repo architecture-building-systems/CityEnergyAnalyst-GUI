@@ -38,9 +38,11 @@ const LaunchView = () => {
   //   { mode: 'edit', slotId } — on Run, update the existing slot.
   const [drawerTarget, setDrawerTarget] = useState(null);
 
-  // Open drawer in add mode, bound to the card's feature.
-  const handleAddPlot = useCallback((feature = 'demand') => {
-    setDrawerTarget({ mode: 'add', feature });
+  // Open drawer in add mode, bound to the card's feature. Optional
+  // `script` pre-selects a specific plot (used by the quick-pick
+  // dropdown) so the drawer skips the PlotChoices picker.
+  const handleAddPlot = useCallback((feature = 'demand', script = null) => {
+    setDrawerTarget({ mode: 'add', feature, script });
   }, []);
 
   // Open drawer in edit mode for an existing slot.
@@ -86,11 +88,15 @@ const LaunchView = () => {
     [drawerTarget],
   );
 
-  // Resolve the `plotConfig` seed for the drawer from the current target.
+  // Resolve the `plotConfig` seed for the drawer. In add mode, a pre-
+  // selected script (via the quick-pick dropdown) seeds the drawer so
+  // Tool skips the picker and jumps straight to the parameter form.
   const drawerPlotConfig =
     drawerTarget?.mode === 'edit'
       ? launchSlots.find((s) => s.id === drawerTarget.slotId)?.plotConfig || null
-      : null;
+      : drawerTarget?.script
+        ? { script: drawerTarget.script }
+        : null;
 
   if (!project || !scenario) {
     return (

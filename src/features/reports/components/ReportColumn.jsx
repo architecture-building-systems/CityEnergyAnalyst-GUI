@@ -106,7 +106,9 @@ const ReportColumn = ({
           onResetSlot={onResetSlot}
           onDeleteSlot={onDeleteSlot}
           onPlotReady={onPlotReady}
-          onAddPlot={onAddPlot ? () => onAddPlot(feature) : undefined}
+          onAddPlot={
+            onAddPlot ? (script) => onAddPlot(feature, script) : undefined
+          }
         />
       ))}
     </div>
