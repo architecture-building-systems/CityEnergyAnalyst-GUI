@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { Skeleton, Tooltip } from 'antd';
+import { Button, Skeleton, Tooltip } from 'antd';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import positron from 'constants/mapStyles/positron.json';
+import { CameraView, Compass, ExtrudeIcon } from 'assets/icons';
 import { useFetchZoneGeoJSON } from '../hooks/useReportsData';
 
 /**
@@ -14,9 +15,17 @@ import { useFetchZoneGeoJSON } from '../hooks/useReportsData';
  */
 const MapThumbnail = ({ project, scenario }) => {
   const [is3D, setIs3D] = useState(false);
+  const [bearing, setBearing] = useState(0);
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const boundsRef = useRef(null);
+
+  // Reset bearing to north. Matches the main viewport's Reset Compass.
+  const resetCompass = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.easeTo({ bearing: 0, duration: 300 });
+    }
+  }, []);
 
   const { data: geojson, isLoading, error } = useFetchZoneGeoJSON(
     project,
@@ -94,12 +103,6 @@ const MapThumbnail = ({ project, scenario }) => {
       dragRotate: true,
     });
 
-    // Add zoom controls
-    map.addControl(
-      new maplibregl.NavigationControl({ showCompass: true, showZoom: true }),
-      'top-right',
-    );
-
     map.on('load', () => {
       map.addSource('zone', { type: 'geojson', data: geojson });
       map.addLayer({
@@ -149,6 +152,12 @@ const MapThumbnail = ({ project, scenario }) => {
 
     mapRef.current = map;
 
+    // Track bearing so the Compass icon can rotate with the current
+    // orientation, same as the main map viewport.
+    const handleRotate = () => setBearing(map.getBearing());
+    map.on('rotate', handleRotate);
+    map.on('rotateend', handleRotate);
+
     // Keep the map in sync with container size changes. The parent card
     // uses CSS `resize: both`, so the container can shrink/grow without
     // a window resize event — maplibre needs an explicit `map.resize()`
@@ -164,6 +173,8 @@ const MapThumbnail = ({ project, scenario }) => {
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
       if (mapRef.current) {
+        mapRef.current.off('rotate', handleRotate);
+        mapRef.current.off('rotateend', handleRotate);
         mapRef.current.remove();
         mapRef.current = null;
       }
@@ -191,24 +202,40 @@ const MapThumbnail = ({ project, scenario }) => {
     <div style={wrapperStyle}>
       <div ref={containerRef} style={mapFillStyle} />
 
-      {/* 3D/2D toggle + reset camera buttons */}
-      <div style={controlsStyle}>
-        <Tooltip title={is3D ? '2D view' : '3D view'}>
-          <button
-            type="button"
+      {/* Toggle 3D · Reset Camera · Reset Compass — the shared outline
+          frame comes from `.cea-card-icon-button-container` (same class
+          the OverviewCard uses for its side-by-side icon groups). */}
+      <div
+        className="cea-card-icon-button-container"
+        style={controlsContainerStyle}
+      >
+        <Tooltip title="Toggle 3D">
+          <Button
+            type="text"
             onClick={toggle3D}
-            style={{
-              ...controlButtonStyle,
-              ...(is3D ? controlButtonActiveStyle : {}),
-            }}
-          >
-            {is3D ? '2D' : '3D'}
-          </button>
+            icon={<ExtrudeIcon />}
+            aria-label="Toggle 3D"
+            className={is3D ? 'active' : ''}
+            style={is3D ? activeButtonStyle : undefined}
+          />
         </Tooltip>
-        <Tooltip title="Reset view">
-          <button type="button" onClick={resetCamera} style={controlButtonStyle}>
-            <ResetIcon />
-          </button>
+        <Tooltip title="Reset Camera">
+          <Button
+            type="text"
+            onClick={resetCamera}
+            icon={<CameraView />}
+            aria-label="Reset Camera"
+          />
+        </Tooltip>
+        <Tooltip title="Reset Compass">
+          <Button
+            type="text"
+            onClick={resetCompass}
+            icon={
+              <Compass style={{ transform: `rotate(${-bearing}deg)` }} />
+            }
+            aria-label="Reset Compass"
+          />
         </Tooltip>
       </div>
     </div>
@@ -228,42 +255,21 @@ const mapFillStyle = {
   overflow: 'hidden',
 };
 
-const ResetIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z" />
-    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966a.25.25 0 0 1 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
-  </svg>
-);
-
-const controlsStyle = {
+// Position-only overrides for the shared container. Outline, radius,
+// button sizing, svg size, and hover background all come from the
+// global `.cea-card-icon-button-container` CSS (HomePage.css).
+const controlsContainerStyle = {
   position: 'absolute',
   top: 8,
   left: 8,
-  display: 'flex',
-  gap: 4,
   zIndex: 2,
+  background: '#fff',
+  gap: 2,
 };
 
-const controlButtonStyle = {
-  width: 28,
-  height: 28,
-  borderRadius: 4,
-  border: '1px solid rgba(0,0,0,0.15)',
-  background: 'rgba(255,255,255,0.9)',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: 11,
-  fontWeight: 700,
-  color: '#333',
-  padding: 0,
-};
-
-const controlButtonActiveStyle = {
+const activeButtonStyle = {
   background: '#1470AF',
   color: '#fff',
-  borderColor: '#1470AF',
 };
 
 const placeholderStyle = {
