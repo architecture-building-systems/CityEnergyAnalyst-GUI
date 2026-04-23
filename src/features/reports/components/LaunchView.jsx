@@ -1,12 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 import { Empty } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useReportsStore } from '../stores/reportsStore';
 import { useFetchWhatifs, useFetchScenarios } from '../hooks/useReportsData';
 import ReportColumn from './ReportColumn';
 import AddPlotButton from './AddPlotButton';
+import CircleActionButton from './CircleActionButton';
 import ScenarioPicker from './ScenarioPicker';
 import PlotEditModal from './PlotEditModal';
 
@@ -157,17 +157,23 @@ const LaunchView = () => {
 
         {/* Action buttons — spread vertically alongside the card */}
         <div style={actionsStyle}>
-          <ActionButton
+          <CircleActionButton
+            size="md"
             label="Compare Scenarios"
+            tooltip="Compare the same plot across sibling scenarios in this project."
             onClick={handleCompareScenarios}
           />
           <div style={actionSpacerStyle} />
-          <ActionButton
+          <CircleActionButton
+            size="md"
             label="Compare What-ifs"
+            tooltip="Compare the same plot across what-if variants of the current scenario."
             onClick={handleCompareWhatifs}
           />
-          <ActionButton
+          <CircleActionButton
+            size="md"
             label="Show Feature Results"
+            tooltip="Lay out different feature results side by side for this scenario."
             onClick={handleCompareFeatures}
           />
         </div>
@@ -200,17 +206,6 @@ const LaunchView = () => {
         />
       )}
     </>
-  );
-};
-
-const ActionButton = ({ label, onClick }) => {
-  return (
-    <button type="button" onClick={onClick} style={actionButtonStyle}>
-      <span style={actionCircleStyle}>
-        <PlusOutlined style={{ color: '#fff', fontSize: 18 }} />
-      </span>
-      <span style={actionLabelStyle}>{label}</span>
-    </button>
   );
 };
 
@@ -274,35 +269,6 @@ const centredStyle = {
   padding: 80,
   background: '#fff',
   borderRadius: 12,
-};
-
-const actionButtonStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 14,
-  padding: '10px 8px',
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-  borderRadius: 8,
-  transition: 'background 0.15s',
-};
-
-const actionCircleStyle = {
-  width: 40,
-  height: 40,
-  borderRadius: '50%',
-  background: '#1470AF',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-};
-
-const actionLabelStyle = {
-  fontSize: 16,
-  fontWeight: 600,
-  color: '#333',
 };
 
 export default LaunchView;

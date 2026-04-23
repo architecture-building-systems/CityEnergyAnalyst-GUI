@@ -1,9 +1,6 @@
 import { Button, Space, Modal } from 'antd';
-import {
-  LeftOutlined,
-  ReloadOutlined,
-  ExportOutlined,
-} from '@ant-design/icons';
+import { LeftOutlined } from '@ant-design/icons';
+import { RefreshIcon } from 'assets/icons';
 
 import useNavigationStore from 'stores/navigationStore';
 import routes from 'constants/routes.json';
@@ -20,7 +17,6 @@ const TopToolbar = () => {
   };
 
   const handleStartOver = () => {
-    // If user has columns, confirm before clearing
     if (view !== 'launch' && columns.length > 0) {
       Modal.confirm({
         title: 'Start over?',
@@ -41,16 +37,8 @@ const TopToolbar = () => {
         <Button icon={<LeftOutlined />} onClick={handleReturn}>
           Return
         </Button>
-        <Button icon={<ReloadOutlined />} onClick={handleStartOver}>
+        <Button icon={<RefreshIcon />} onClick={handleStartOver}>
           Start Over
-        </Button>
-        <Button
-          type="primary"
-          icon={<ExportOutlined />}
-          style={exportButtonStyle}
-          disabled
-        >
-          Export
         </Button>
       </Space>
     </div>
@@ -62,11 +50,6 @@ const toolbarStyle = {
   top: 0,
   zIndex: 10,
   padding: '8px 0',
-};
-
-const exportButtonStyle = {
-  background: '#333',
-  borderColor: '#333',
 };
 
 export default TopToolbar;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Empty } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { CreateNewIcon } from 'assets/icons';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useReportsStore } from '../stores/reportsStore';
@@ -178,7 +178,7 @@ const ComparisonView = () => {
                 : 'Add a feature'
           }
         >
-          <PlusOutlined style={{ color: '#fff', fontSize: 18 }} />
+          <CreateNewIcon style={{ color: '#fff', fontSize: 18 }} />
         </button>
       </div>
 
