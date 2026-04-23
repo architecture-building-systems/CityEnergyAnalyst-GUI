@@ -508,7 +508,17 @@ const useMapLayers = (onHover = () => {}) => {
   return layers();
 };
 
-const DeckGLMap = ({ data, colors }) => {
+/**
+ * DeckGL map.
+ *
+ * `interactive` (default: true) — set to false to mount the map in a
+ * read-only context (e.g. the Reports comparison view). When false,
+ * building clicks no longer mutate `inputEditorStore`/
+ * `buildingSelectionStore`, and tooltip info-panels still work
+ * (hover is non-destructive). Everything else — camera controls,
+ * map style, colour modes — still responds normally.
+ */
+const DeckGLMap = ({ data, colors, interactive = true }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
 
@@ -585,45 +595,51 @@ const DeckGLMap = ({ data, colors }) => {
   );
 
   const dataLayers = useMemo(() => {
-    const onClick = ({ object, layer }, event) => {
-      const name = object.properties[INDEX_COLUMN];
+    // When `interactive` is false, building clicks are a no-op —
+    // they shouldn't mutate the input-editor selection or building-
+    // selection stores (both global singletons that would bleed from
+    // a Reports column into the main viewport).
+    const onClick = !interactive
+      ? undefined
+      : ({ object, layer }, event) => {
+          const name = object.properties[INDEX_COLUMN];
 
-      // When building selection mode is active, route clicks to the store
-      // Only zone buildings can be selected, not surroundings
-      if (useBuildingSelectionStore.getState().active) {
-        if (layer.id === 'zone') {
-          useBuildingSelectionStore.getState().toggleBuilding(name);
-        }
-        return;
-      }
-
-      if (layer.id !== selectedLayer) {
-        setSelected([name]);
-        setSelectedLayer(layer.id);
-      } else {
-        let index = -1;
-        let newSelected = [...selected];
-        if (
-          (event.srcEvent.ctrlKey && event.leftButton) ||
-          (event.srcEvent.metaKey && event.leftButton)
-        ) {
-          index = newSelected.findIndex((x) => x === name);
-          if (index !== -1) {
-            newSelected.splice(index, 1);
-            setSelected(newSelected);
-          } else {
-            newSelected.push(name);
-            setSelected(newSelected);
+          // When building selection mode is active, route clicks to the store
+          // Only zone buildings can be selected, not surroundings
+          if (useBuildingSelectionStore.getState().active) {
+            if (layer.id === 'zone') {
+              useBuildingSelectionStore.getState().toggleBuilding(name);
+            }
+            return;
           }
-        } else {
-          if (selected.length === 1 && selected[0] === name) {
-            setSelected([]);
-          } else {
+
+          if (layer.id !== selectedLayer) {
             setSelected([name]);
+            setSelectedLayer(layer.id);
+          } else {
+            let index = -1;
+            let newSelected = [...selected];
+            if (
+              (event.srcEvent.ctrlKey && event.leftButton) ||
+              (event.srcEvent.metaKey && event.leftButton)
+            ) {
+              index = newSelected.findIndex((x) => x === name);
+              if (index !== -1) {
+                newSelected.splice(index, 1);
+                setSelected(newSelected);
+              } else {
+                newSelected.push(name);
+                setSelected(newSelected);
+              }
+            } else {
+              if (selected.length === 1 && selected[0] === name) {
+                setSelected([]);
+              } else {
+                setSelected([name]);
+              }
+            }
           }
-        }
-      }
-    };
+        };
 
     let _zoneLayers = [];
     let _surroundingLayers = [];
@@ -799,6 +815,7 @@ const DeckGLMap = ({ data, colors }) => {
       textLayers: _textLayers,
     };
   }, [
+    interactive,
     visibility,
     data,
     selectedLayer,

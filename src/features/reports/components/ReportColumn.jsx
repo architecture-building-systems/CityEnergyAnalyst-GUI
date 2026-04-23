@@ -8,7 +8,7 @@ import {
   VIEW_PLOT_RESULTS,
 } from 'features/plots/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import MapThumbnail from './MapThumbnail';
+import ReportMap from './ReportMap';
 import FeatureCard from './FeatureCard';
 
 /**
@@ -179,7 +179,7 @@ const ReportColumn = ({
       </div>
 
       <div style={mapCardStyle}>
-        <MapThumbnail project={project} scenario={scenario} />
+        <ReportMap project={project} scenario={scenario} />
       </div>
 
       {/* Cards grid. Rows × cols pulled from card positions. */}
