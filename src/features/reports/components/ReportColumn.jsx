@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { Button, Tooltip } from 'antd';
+import { CreateNewIcon } from 'assets/icons';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import MapThumbnail from './MapThumbnail';
@@ -28,6 +30,8 @@ const ReportColumn = ({
   onDeleteSlot,
   onPlotReady,
   onAddPlot,
+  onAddColumn,
+  addColumnTooltip = 'Add column',
 }) => {
   const project = useProjectStore((s) => s.project);
 
@@ -63,9 +67,25 @@ const ReportColumn = ({
 
   return (
     <div style={{ ...columnStyle, ...style }}>
-      {/* Title card — matches the map / feature card outline for consistency. */}
-      <div style={titleCardStyle}>
-        <div style={headerStyle}>{headerText}</div>
+      {/* Title card + optional "+" button, side by side. Button mirrors
+          the pathway builder's "create new pathway" control next to its
+          pathway dropdown (see PathwayPanel.jsx). */}
+      <div style={titleRowStyle}>
+        <div style={titleCardStyle}>
+          <div style={headerStyle}>{headerText}</div>
+        </div>
+        {onAddColumn && (
+          <div className="cea-card-icon-button-container">
+            <Tooltip title={addColumnTooltip} placement="bottom">
+              <Button
+                type="text"
+                icon={<CreateNewIcon />}
+                onClick={onAddColumn}
+                aria-label={addColumnTooltip}
+              />
+            </Tooltip>
+          </div>
+        )}
       </div>
 
       {/* Map card — fills its card edge-to-edge. */}
@@ -99,6 +119,12 @@ const columnStyle = {
   gap: 12,
 };
 
+const titleRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
 // Every card inside the canvas uses CSS-native `resize: both`. The
 // browser draws a small handle in the bottom-right corner the user can
 // drag to resize in either axis. `overflow: hidden` is required for
@@ -107,17 +133,20 @@ const titleCardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
-  padding: '12px 16px',
+  padding: '10px 16px',
   resize: 'both',
   overflow: 'hidden',
   minWidth: 240,
-  minHeight: 48,
+  // Sized to the text — no vertical minimum so the card hugs its title.
+  display: 'flex',
+  alignItems: 'center',
 };
 
 const headerStyle = {
   fontSize: 22,
   fontWeight: 700,
   color: '#222',
+  lineHeight: 1.2,
 };
 
 const mapCardStyle = {

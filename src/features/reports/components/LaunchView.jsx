@@ -125,24 +125,21 @@ const LaunchView = () => {
             onResetSlot={handleResetSlot}
             onDeleteSlot={handleDeleteSlot}
             onAddPlot={handleAddPlot}
+            onAddColumn={handleCompareScenarios}
+            addColumnTooltip="Add scenario to compare"
           />
         </div>
 
-        {/* Action buttons — spread vertically alongside the card */}
+        {/* Action buttons — spread vertically alongside the card.
+            "Compare Scenarios" lives on the title card's "+" button. */}
         <div style={actionsStyle}>
-          <CircleActionButton
-            size="md"
-            label="Compare Scenarios"
-            tooltip="Compare the same plot across sibling scenarios in this project."
-            onClick={handleCompareScenarios}
-          />
-          <div style={actionSpacerStyle} />
           <CircleActionButton
             size="md"
             label="Compare What-ifs"
             tooltip="Compare the same plot across what-if variants of the current scenario."
             onClick={handleCompareWhatifs}
           />
+          <div style={actionSpacerStyle} />
           <CircleActionButton
             size="md"
             label="Show Feature Results"
