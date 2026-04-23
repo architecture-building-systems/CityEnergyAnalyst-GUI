@@ -63,7 +63,10 @@ const ReportColumn = ({
 
   return (
     <div style={{ ...columnStyle, ...style }}>
-      <div style={headerStyle}>{headerText}</div>
+      {/* Title card — matches the map / feature card outline for consistency. */}
+      <div style={titleCardStyle}>
+        <div style={headerStyle}>{headerText}</div>
+      </div>
 
       {/* Map card — fills its card edge-to-edge. */}
       <div style={mapCardStyle}>
@@ -94,6 +97,13 @@ const columnStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
+};
+
+const titleCardStyle = {
+  background: '#fff',
+  border: '1px solid #e8e8e8',
+  borderRadius: 12,
+  padding: '12px 16px',
 };
 
 const headerStyle = {
