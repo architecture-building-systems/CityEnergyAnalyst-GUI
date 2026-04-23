@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
-import { Dropdown, Button } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { useMemo, useState } from 'react';
+import { Select } from 'antd';
 
 import {
   PLOT_GROUPS,
@@ -14,11 +13,13 @@ import {
   EMISSIONS_OPERATIONAL,
   ANTHROPOGENIC_HEAT,
 } from 'features/map/constants';
+// `cea-template-select` — same black-outlined pill as the pathway
+// builder's Intervention Template dropdown. Lives in OverviewCard.css.
+import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import { useFetchSummary } from '../hooks/useReportsData';
 import KpiStrip from './KpiStrip';
 import PlotSlotCard from './PlotSlotCard';
-import AddPlotButton from './AddPlotButton';
 
 // One "anchor" map constant per feature. The dropdown list is then
 // derived at render time from the group/subgroup in `PLOT_GROUPS`
@@ -182,33 +183,13 @@ const FeatureCard = ({
           ))}
           {onAddPlot && (
             <div
-              style={{
-                ...(plots.length > 0 ? addPlotRowWithDividerStyle : null),
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
+              style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}
             >
-              <AddPlotButton label="Add a plot" onClick={() => onAddPlot()} />
-              {quickPickOptions.length > 0 && (
-                <Dropdown
-                  menu={{
-                    items: quickPickOptions.map((opt) => ({
-                      key: opt.script,
-                      label: opt.label,
-                      onClick: () => onAddPlot(opt.script),
-                    })),
-                  }}
-                  placement="topRight"
-                  trigger={['click']}
-                >
-                  <Button
-                    type="text"
-                    icon={<DownOutlined />}
-                    aria-label="Quick-pick plot for this feature"
-                  />
-                </Dropdown>
-              )}
+              <AddPlotSelect
+                options={quickPickOptions}
+                onPick={(script) => onAddPlot(script)}
+                onFallback={() => onAddPlot()}
+              />
             </div>
           )}
         </div>
@@ -247,6 +228,48 @@ const addPlotRowWithDividerStyle = {
   borderTop: '1px solid #f0f0f0',
   paddingTop: 8,
   marginTop: 4,
+};
+
+/**
+ * Single "Add a plot" dropdown — mirrors pathway's TemplateSelect
+ * (`features/pathway/components/PathwayPanel.jsx:485`).
+ *
+ * Picking an option triggers `onPick(script)`. When the quick-pick
+ * list is empty (or the user clicks the control while it has no
+ * options), `onFallback` runs instead — same "create a new template"
+ * hijack pattern pathway uses.
+ */
+const AddPlotSelect = ({ options, onPick, onFallback }) => {
+  const [open, setOpen] = useState(false);
+  // Bumped after every pick to force a fresh mount — guarantees the
+  // Select reverts to the "Add a plot" placeholder instead of showing
+  // the just-picked option's label.
+  const [resetKey, setResetKey] = useState(0);
+  const hasOptions = options.length > 0;
+
+  return (
+    <Select
+      key={resetKey}
+      className={`cea-template-select ${
+        hasOptions ? '' : 'cea-template-select-empty'
+      }`}
+      style={{ width: 208 }}
+      styles={{ popup: { root: { width: 270 } } }}
+      placeholder="Add a plot"
+      options={options.map((opt) => ({ label: opt.label, value: opt.script }))}
+      value={null}
+      onSelect={(script) => {
+        onPick(script);
+        setOpen(false);
+        setResetKey((k) => k + 1);
+      }}
+      open={hasOptions ? open : false}
+      onOpenChange={hasOptions ? setOpen : undefined}
+      onClick={hasOptions ? undefined : onFallback}
+      allowClear={false}
+      notFoundContent={<small>No plots available</small>}
+    />
+  );
 };
 
 export default FeatureCard;

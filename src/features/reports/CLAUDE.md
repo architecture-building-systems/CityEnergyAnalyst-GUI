@@ -90,16 +90,20 @@ the inner canvas stays in sync with the outer card.
 
 ### DO: Put "Add a plot" inside the `FeatureCard` it belongs to
 ```jsx
-// FeatureCard.jsx
-{onAddPlot && <AddPlotButton label="Add a plot" onClick={onAddPlot} />}
+// FeatureCard.jsx — single cea-template-select dropdown per feature.
+<AddPlotSelect
+  options={quickPickOptions}
+  onPick={(script) => onAddPlot(script)}
+  onFallback={() => onAddPlot()}
+/>
 
 // ReportColumn.jsx — bind the feature so the caller receives it.
-onAddPlot={onAddPlot ? () => onAddPlot(feature) : undefined}
+onAddPlot={onAddPlot ? (script) => onAddPlot(feature, script) : undefined}
 ```
 The new plot inherits the card's feature. To start a new feature in a
-column, the user changes an existing plot's feature via
-`PlotEditModal` — it will migrate into a new card on next render.
-Column-level "Add a plot" rows have been removed.
+column, the user changes an existing plot's feature via the drawer —
+it will migrate into a new card on next render. Column-level "Add a
+plot" rows have been removed.
 
 ### DO: Reuse the main viewport's `Tool` component for the plot form
 ```jsx
@@ -122,21 +126,22 @@ hidden (they only make sense for the persistent-tool-params flow).
 Picker phase uses `PlotChoices` imported from the main viewport for
 the same reason: one source of truth, visual parity for free.
 
-### DO: Offer a quick-pick dropdown next to "Add a plot"
+### DO: Use `cea-template-select` for the "Add a plot" dropdown
 ```jsx
-// FeatureCard.jsx — a small DownOutlined dropdown appears beside
-// AddPlotButton when the feature's PLOT_GROUPS subgroup has entries.
-<AddPlotButton onClick={() => onAddPlot()} />
-<Dropdown menu={{ items: quickPickOptions.map((opt) => ({
-  key: opt.script, label: opt.label,
-  onClick: () => onAddPlot(opt.script),
-})) }} ... />
+// FeatureCard.jsx — mirrors pathway's TemplateSelect visually.
+<Select
+  className={`cea-template-select ${hasOptions ? '' : 'cea-template-select-empty'}`}
+  placeholder="Add a plot"
+  options={quickPickOptions.map((o) => ({ label: o.label, value: o.script }))}
+  onSelect={(script) => onPick(script)}
+  onClick={hasOptions ? undefined : onFallback}
+/>
 ```
-Picking from the dropdown calls `onAddPlot(script)`. Views seed the
-drawer with `{ script }` so the drawer skips the picker and opens
-directly on the parameter form — one click from "Add a plot" to a
-configured plot. Clicking the main button without using the dropdown
-keeps the existing flow (full `PlotChoices` picker).
+Same black-outlined pill the pathway builder uses for Intervention
+Templates. Picking a plot seeds the drawer with `{ script }` so the
+parameter form opens directly. When the feature has no quick-pick
+options, clicking the control falls back to `onAddPlot()` with no
+script — which opens the full `PlotChoices` picker.
 
 ### DO: Derive the quick-pick list from `PLOT_GROUPS`, not a local list
 ```jsx
@@ -290,5 +295,4 @@ lists), and the comparison views never read from launch state anyway.
   `LeftOutlined` (no pathway equivalent for a back arrow) and
   `LoadingOutlined` (pairs with antd `Spin`).
 - Use `CircleActionButton` for any blue-circle + label control so new
-  call sites stay visually consistent with `LaunchView` and
-  `AddPlotButton`.
+  call sites stay visually consistent with `LaunchView`.
