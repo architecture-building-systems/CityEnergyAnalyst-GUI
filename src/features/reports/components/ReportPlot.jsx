@@ -92,10 +92,54 @@ const ReportPlot = ({ project, scenario, feature, whatif, plotConfig, onPlotRead
   }
 
   if (error) {
+    const detail = error?.response?.data?.detail;
+    const serverMessage =
+      (typeof detail === 'string' && detail.trim()) ||
+      detail?.message ||
+      null;
+    const status = error?.response?.status;
+
+    // 404 = the scenario is missing the input/result files this plot
+    // needs. That's a user-recoverable "please run the feature first"
+    // situation, not a backend failure, so present it separately.
+    if (status === 404) {
+      return (
+        <div style={errorStyle}>
+          <Empty
+            description={
+              serverMessage ||
+              'This plot has no data yet. Run the feature for this scenario first.'
+            }
+          />
+        </div>
+      );
+    }
+
     return (
       <div style={errorStyle}>
         <Empty
-          description={`Failed to load plot: ${error.message || 'Unknown error'}`}
+          description={
+            <>
+              <div>Failed to load plot.</div>
+              {serverMessage && (
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontSize: 12,
+                    color: '#666',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {serverMessage}
+                </div>
+              )}
+              {!serverMessage && error?.message && (
+                <div style={{ marginTop: 6, fontSize: 12, color: '#666' }}>
+                  {error.message}
+                </div>
+              )}
+            </>
+          }
         />
       </div>
     );

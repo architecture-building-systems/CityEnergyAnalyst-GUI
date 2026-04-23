@@ -5,7 +5,6 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useReportsStore } from '../stores/reportsStore';
 import { useFetchWhatifs, useFetchScenarios } from '../hooks/useReportsData';
 import ReportColumn from './ReportColumn';
-import AddPlotButton from './AddPlotButton';
 import CircleActionButton from './CircleActionButton';
 import ScenarioPicker from './ScenarioPicker';
 import PlotEditModal from './PlotEditModal';
@@ -61,10 +60,10 @@ const LaunchView = () => {
     document.addEventListener('mouseup', handleUp);
   }, []);
 
-  const handleAddPlot = useCallback(() => {
+  const handleAddPlot = useCallback((feature = 'demand') => {
     setLaunchSlots((prev) => [
       ...prev,
-      { id: `launch-${Date.now()}`, feature: 'demand' },
+      { id: `launch-${Date.now()}`, feature },
     ]);
   }, []);
 
@@ -78,6 +77,10 @@ const LaunchView = () => {
         s.id === slotId ? { ...s, plotConfig: undefined } : s,
       ),
     );
+  }, []);
+
+  const handleDeleteSlot = useCallback((slotId) => {
+    setLaunchSlots((prev) => prev.filter((s) => s.id !== slotId));
   }, []);
 
   const handleEditSave = useCallback(
@@ -136,17 +139,16 @@ const LaunchView = () => {
   return (
     <>
       <div style={layoutStyle}>
-        {/* White card with scenario column + "Add a plot" inside */}
+        {/* White card with scenario column (Add-a-plot is inside each FeatureCard) */}
         <div style={{ ...cardStyle, ...(cardWidth ? { width: cardWidth } : {}) }}>
           <ReportColumn
             columnDef={{ type: 'scenario', scenario }}
             plotSlots={launchSlots}
             onEditSlot={handleEditSlot}
             onResetSlot={handleResetSlot}
+            onDeleteSlot={handleDeleteSlot}
+            onAddPlot={handleAddPlot}
           />
-          <div style={addPlotInsideStyle}>
-            <AddPlotButton label="Add a plot" onClick={handleAddPlot} />
-          </div>
           {/* Right-edge drag handle */}
           <div
             onMouseDown={handleCardDragStart}
@@ -254,12 +256,6 @@ const cardDragHandleStyle = {
   cursor: 'ew-resize',
   zIndex: 2,
   marginRight: 2,
-};
-
-const addPlotInsideStyle = {
-  marginTop: 12,
-  borderTop: '1px solid #eee',
-  paddingTop: 12,
 };
 
 const centredStyle = {

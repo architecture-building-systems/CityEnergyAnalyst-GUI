@@ -1,77 +1,22 @@
 import { useMemo } from 'react';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useFetchSummary } from '../hooks/useReportsData';
 import MapThumbnail from './MapThumbnail';
-import KpiStrip from './KpiStrip';
-import PlotSlotCard from './PlotSlotCard';
-
-/**
- * Feature title and KPI description for each supported feature.
- */
-const FEATURE_META = {
-  demand: {
-    title: 'Building energy demand',
-    description: 'EUI (kWh/m2/yr) in this district:',
-  },
-  'final-energy': {
-    title: 'Energy by carrier',
-    description: 'Final energy in this district:',
-  },
-  costs: {
-    title: 'System costs',
-    description: 'Annualised costs in this district:',
-  },
-  emissions: {
-    title: 'Operational emissions',
-    description: 'GHG emissions in this district:',
-  },
-  'heat-rejection': {
-    title: 'Anthropogenic heat rejection',
-    description: 'Heat rejected in this district:',
-  },
-};
-
-/**
- * Build KpiStrip props from summary API response.
- */
-function buildKpiProps(summary, feature) {
-  if (!summary || !summary.kpis || summary.kpis.length === 0) {
-    return { primaryValue: null, primaryLabel: null, pills: [] };
-  }
-
-  const kpis = summary.kpis;
-
-  // First KPI becomes the large primary value, rest become pills
-  const primary = kpis[0];
-  const rest = kpis.slice(1);
-
-  // Format large number
-  let primaryDisplay = primary.value;
-  if (typeof primary.value === 'number') {
-    if (Math.abs(primary.value) >= 1000) {
-      primaryDisplay = `${Math.round(primary.value / 1000)}K`;
-    } else {
-      primaryDisplay = String(Math.round(primary.value));
-    }
-  }
-
-  return {
-    primaryValue: primaryDisplay,
-    primaryLabel: primary.label,
-    pills: rest.slice(0, 4).map((k) => ({
-      value: typeof k.value === 'number' ? Math.round(k.value) : k.value,
-      label: k.label,
-    })),
-  };
-}
+import FeatureCard from './FeatureCard';
 
 /**
  * A single report column.
  *
+ * Composition:
+ *   Header → Map card → FeatureCard × N
+ *
+ * Plots are grouped by feature. Each feature rendered as its own
+ * FeatureCard containing the feature's KPI section and a vertically-
+ * stacked list of that feature's plots.
+ *
  * Props:
  *   columnDef    — { type, scenario, whatif?, feature? }
- *   plotSlots    — [{ id, feature }]
+ *   plotSlots    — [{ id, feature, plotConfig? }]
  *   style        — optional style overrides
  */
 const ReportColumn = ({
@@ -80,37 +25,37 @@ const ReportColumn = ({
   style,
   onEditSlot,
   onResetSlot,
+  onDeleteSlot,
   onPlotReady,
+  onAddPlot,
 }) => {
   const project = useProjectStore((s) => s.project);
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
 
-  // Determine which feature to show KPIs for
-  const kpiFeature =
-    columnDef.type === 'feature'
-      ? columnDef.feature
-      : plotSlots[0]?.feature || 'demand';
+  // Group plots by feature, preserving insertion order so the first-
+  // added feature shows up first.
+  const featureGroups = useMemo(() => {
+    const map = new Map();
+    for (const slot of plotSlots) {
+      const feature = slot.feature || 'demand';
+      if (!map.has(feature)) map.set(feature, []);
+      map.get(feature).push(slot);
+    }
+    return map;
+  }, [plotSlots]);
 
-  const { data: summary, isLoading: summaryLoading } = useFetchSummary(
-    project,
-    scenario,
-    kpiFeature,
-    whatif,
-  );
+  // When the column has no plots yet, still show one preview feature
+  // card so the user sees KPIs immediately. Inter-feature columns
+  // preview their own feature; all other columns fall back to demand.
+  const fallbackFeature =
+    columnDef.type === 'feature' ? columnDef.feature : 'demand';
+  const featuresToRender =
+    featureGroups.size > 0
+      ? Array.from(featureGroups.keys())
+      : [fallbackFeature];
 
-  const meta = FEATURE_META[kpiFeature] || {
-    title: kpiFeature,
-    description: '',
-  };
-
-  const kpiProps = useMemo(
-    () => buildKpiProps(summary, kpiFeature),
-    [summary, kpiFeature],
-  );
-
-  // Build header text
   let headerText = scenario;
   if (columnDef.type === 'whatif' && columnDef.whatif) {
     headerText = `${scenario}: ${columnDef.whatif}`;
@@ -118,53 +63,50 @@ const ReportColumn = ({
 
   return (
     <div style={{ ...columnStyle, ...style }}>
-      {/* Map thumbnail */}
-      <MapThumbnail project={project} scenario={scenario} />
-
-      {/* Header */}
       <div style={headerStyle}>{headerText}</div>
 
-      {/* KPI strip */}
-      <KpiStrip
-        featureTitle={meta.title}
-        description={meta.description}
-        primaryValue={kpiProps.primaryValue}
-        primaryLabel={kpiProps.primaryLabel}
-        pills={kpiProps.pills}
-        loading={summaryLoading}
-      />
+      {/* Map card — fills its card edge-to-edge. */}
+      <div style={mapCardStyle}>
+        <MapThumbnail project={project} scenario={scenario} />
+      </div>
 
-      {/* Plot slots */}
-      {plotSlots.map((slot) => (
-        <PlotSlotCard
-          key={slot.id}
+      {/* One card per feature present in this column. */}
+      {featuresToRender.map((feature) => (
+        <FeatureCard
+          key={feature}
           project={project}
           scenario={scenario}
-          feature={slot.feature}
           whatif={whatif}
-          plotConfig={slot.plotConfig}
-          onEdit={() => onEditSlot?.(slot.id)}
-          onReset={() => onResetSlot?.(slot.id)}
-          onPlotReady={
-            onPlotReady
-              ? (plotDiv) => onPlotReady(slot.id, plotDiv)
-              : undefined
-          }
+          feature={feature}
+          plots={featureGroups.get(feature) || []}
+          onEditSlot={onEditSlot}
+          onResetSlot={onResetSlot}
+          onDeleteSlot={onDeleteSlot}
+          onPlotReady={onPlotReady}
+          onAddPlot={onAddPlot ? () => onAddPlot(feature) : undefined}
         />
       ))}
-
     </div>
   );
 };
 
-const columnStyle = {};
+const columnStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
 
 const headerStyle = {
   fontSize: 22,
   fontWeight: 700,
-  marginTop: 8,
-  marginBottom: 4,
   color: '#222',
+};
+
+const mapCardStyle = {
+  background: '#fff',
+  border: '1px solid #e8e8e8',
+  borderRadius: 12,
+  overflow: 'hidden',
 };
 
 export default ReportColumn;

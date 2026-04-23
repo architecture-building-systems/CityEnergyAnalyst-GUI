@@ -39,6 +39,36 @@ const isFeatureMode = view === 'inter-feature';
 const slots = isFeatureMode ? columnPlotSlots[index] : sharedPlotSlots;
 ```
 
+### DO: Group column plots by feature; render each group as one `FeatureCard`
+```jsx
+// ReportColumn.jsx — preserve insertion order via Map.
+const featureGroups = useMemo(() => {
+  const map = new Map();
+  for (const slot of plotSlots) {
+    const feature = slot.feature || 'demand';
+    if (!map.has(feature)) map.set(feature, []);
+    map.get(feature).push(slot);
+  }
+  return map;
+}, [plotSlots]);
+```
+Each feature gets its own KPI section at the top of its card, followed
+by the feature's plots stacked vertically. Empty columns still show
+one preview card so the user sees KPIs immediately.
+
+### DO: Put "Add a plot" inside the `FeatureCard` it belongs to
+```jsx
+// FeatureCard.jsx
+{onAddPlot && <AddPlotButton label="Add a plot" onClick={onAddPlot} />}
+
+// ReportColumn.jsx — bind the feature so the caller receives it.
+onAddPlot={onAddPlot ? () => onAddPlot(feature) : undefined}
+```
+The new plot inherits the card's feature. To start a new feature in a
+column, the user changes an existing plot's feature via
+`PlotEditModal` — it will migrate into a new card on next render.
+Column-level "Add a plot" rows have been removed.
+
 ### DO: Align y-axes only when columns share a slot id
 ```jsx
 // Disable alignment in feature mode — each column has its own slot list.
@@ -145,7 +175,8 @@ lists), and the comparison views never read from launch state anyway.
 - `components/TopToolbar.jsx` - Return / Start Over / Export.
 - `components/LaunchView.jsx` - Single-column entry + 3 mode buttons.
 - `components/ComparisonView.jsx` - Multi-column layout with dividers.
-- `components/ReportColumn.jsx` - Leaf column: map, header, KPIs, slots.
+- `components/ReportColumn.jsx` - Column shell: header, map card, then one `FeatureCard` per feature present in `plotSlots`.
+- `components/FeatureCard.jsx` - KPI section + vertically-stacked plots for a single feature.
 - `components/PlotEditModal.jsx` - Slot configuration modal.
 - `components/CircleActionButton.jsx` - Shared blue-circle + label button (`sm` / `md`). Uses `CreateNewIcon` and the pathway palette.
 

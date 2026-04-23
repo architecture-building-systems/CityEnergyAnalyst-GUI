@@ -7,7 +7,6 @@ import { useReportsStore } from '../stores/reportsStore';
 import { useFetchScenarios, useFetchWhatifs } from '../hooks/useReportsData';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import ReportColumn from './ReportColumn';
-import AddPlotButton from './AddPlotButton';
 import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
 import PlotEditModal from './PlotEditModal';
@@ -30,6 +29,8 @@ const ComparisonView = () => {
   const addColumnPlotSlot = useReportsStore((s) => s.addColumnPlotSlot);
   const updateSharedPlotSlot = useReportsStore((s) => s.updateSharedPlotSlot);
   const updateColumnPlotSlot = useReportsStore((s) => s.updateColumnPlotSlot);
+  const removeSharedPlotSlot = useReportsStore((s) => s.removeSharedPlotSlot);
+  const removeColumnPlotSlot = useReportsStore((s) => s.removeColumnPlotSlot);
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
@@ -70,13 +71,12 @@ const ComparisonView = () => {
     setAddColumnOpen(false);
   };
 
-  const handleAddSharedPlot = () => {
-    addSharedPlotSlot({ feature: 'demand', label: 'Building Energy Demand' });
+  const handleAddSharedPlot = (feature = 'demand') => {
+    addSharedPlotSlot({ feature });
   };
 
-  const handleAddColumnPlot = (colIndex) => {
-    const col = columns[colIndex];
-    addColumnPlotSlot(colIndex, { feature: col.feature, label: col.feature });
+  const handleAddColumnPlot = (colIndex, feature) => {
+    addColumnPlotSlot(colIndex, { feature });
   };
 
   // Find the current plotConfig for the slot being edited
@@ -107,6 +107,14 @@ const ComparisonView = () => {
       updateColumnPlotSlot(columnIndex, slotId, { plotConfig: undefined });
     } else {
       updateSharedPlotSlot(slotId, { plotConfig: undefined });
+    }
+  };
+
+  const handleDeleteSlot = (slotId, columnIndex) => {
+    if (columnIndex != null) {
+      removeColumnPlotSlot(columnIndex, slotId);
+    } else {
+      removeSharedPlotSlot(slotId);
     }
   };
 
@@ -158,7 +166,15 @@ const ComparisonView = () => {
                   onResetSlot={(slotId) =>
                     handleResetSlot(slotId, isFeatureMode ? i : null)
                   }
+                  onDeleteSlot={(slotId) =>
+                    handleDeleteSlot(slotId, isFeatureMode ? i : null)
+                  }
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
+                  onAddPlot={(feature) =>
+                    isFeatureMode
+                      ? handleAddColumnPlot(i, feature)
+                      : handleAddSharedPlot(feature)
+                  }
                 />
               </div>
             ))}
@@ -182,23 +198,7 @@ const ComparisonView = () => {
         </button>
       </div>
 
-      {/* Blue buttons OUTSIDE the card, on grey background */}
-      {isFeatureMode ? (
-        <div style={perColumnAddPlotRowStyle}>
-          {columns.map((col, i) => (
-            <div key={columnKey(col)} style={perColumnAddPlotCellStyle}>
-              <AddPlotButton
-                label="Add a plot"
-                onClick={() => handleAddColumnPlot(i)}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div style={sharedAddPlotStyle}>
-          <AddPlotButton label="Add a plot" onClick={handleAddSharedPlot} />
-        </div>
-      )}
+      {/* "Add a plot" now lives inside each FeatureCard within each column. */}
 
       {/* Add-column picker modals */}
       {addColumnOpen && view === 'inter-feature' && (
@@ -280,23 +280,6 @@ const floatingAddStyle = {
   justifyContent: 'center',
   zIndex: 5,
   boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-};
-
-const sharedAddPlotStyle = {
-  marginTop: 12,
-  display: 'flex',
-  justifyContent: 'center',
-};
-
-const perColumnAddPlotRowStyle = {
-  display: 'flex',
-  marginTop: 12,
-};
-
-const perColumnAddPlotCellStyle = {
-  flex: '1 1 0',
-  minWidth: '30vw',
-  paddingLeft: 24,
 };
 
 const featureModeHeaderStyle = {
