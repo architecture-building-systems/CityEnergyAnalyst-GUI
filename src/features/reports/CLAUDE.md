@@ -157,7 +157,7 @@ the same reason: one source of truth, visual parity for free.
 // FeatureCard.jsx — mirrors pathway's TemplateSelect visually.
 <Select
   className={`cea-template-select ${hasOptions ? '' : 'cea-template-select-empty'}`}
-  placeholder="Add a plot"
+  placeholder="Add a Plot"
   options={quickPickOptions.map((o) => ({ label: o.label, value: o.script }))}
   onSelect={(script) => onPick(script)}
   onClick={hasOptions ? undefined : onFallback}

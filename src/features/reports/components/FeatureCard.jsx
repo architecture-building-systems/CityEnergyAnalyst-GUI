@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Button, Popconfirm, Select, Tooltip } from 'antd';
-import { BinAnimationIcon, CreateNewIcon } from 'assets/icons';
+import {
+  BinAnimationIcon,
+  CreateNewIcon,
+  InputEditorIcon,
+  RefreshIcon,
+} from 'assets/icons';
 
 import {
   PLOT_GROUPS,
@@ -20,6 +25,7 @@ import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import { useFetchSummary } from '../hooks/useReportsData';
 import KpiStrip from './KpiStrip';
 import PlotSlotCard from './PlotSlotCard';
+import { useQueryClient } from '@tanstack/react-query';
 
 const FEATURE_META = {
   demand: {
@@ -135,12 +141,21 @@ const FeatureCard = ({
   onPlotReady,
 }) => {
   const { feature, plots } = card;
+  const queryClient = useQueryClient();
   const { data: summary, isLoading } = useFetchSummary(
     project,
     scenario,
     feature,
     whatif,
   );
+
+  // Invalidate the KPI summary query so it refetches. Keyed the same
+  // way `useFetchSummary` keys it in useReportsData.js.
+  const handleRefreshKpi = () => {
+    queryClient.invalidateQueries({
+      queryKey: ['reports', 'summary', project, scenario, feature, whatif],
+    });
+  };
   const meta = FEATURE_META[feature] || { title: feature, description: '' };
   const kpiProps = useMemo(() => buildKpiProps(summary), [summary]);
   const quickPickOptions = useMemo(
@@ -150,52 +165,68 @@ const FeatureCard = ({
 
   const cardInner = (
     <div style={cardStyle}>
+      {/* ── Title section ───────────────────────────────────── */}
+      <div style={titleSectionStyle}>
+        <div style={featureTitleStyle}>{meta.title}</div>
+        {onDeleteCard && <TitleDeleteButton onClick={onDeleteCard} />}
+      </div>
+
+      <div style={sectionDividerStyle} />
+
+      {/* ── KPI section ─────────────────────────────────────── */}
       <div style={kpiSectionStyle}>
         <KpiStrip
-          featureTitle={meta.title}
           description={meta.description}
           primaryValue={kpiProps.primaryValue}
           primaryLabel={kpiProps.primaryLabel}
           pills={kpiProps.pills}
           loading={isLoading}
-          titleAction={
-            onDeleteCard ? <DeleteCardButton onClick={onDeleteCard} /> : null
-          }
         />
+        <div style={sectionActionsStyle}>
+          <KpiActionButtons
+            onEdit={null}
+            onRefresh={handleRefreshKpi}
+            onDelete={onDeleteCard}
+          />
+        </div>
       </div>
 
+      {/* ── Plot section ────────────────────────────────────── */}
       {(plots.length > 0 || onAddPlot) && (
-        <div style={plotsSectionStyle}>
-          {plots.map((plot) => (
-            <PlotSlotCard
-              key={plot.id}
-              project={project}
-              scenario={scenario}
-              feature={feature}
-              whatif={whatif}
-              plotConfig={plot.plotConfig}
-              onEdit={() => onEditPlot?.(plot.id)}
-              onReset={() => onResetPlot?.(plot.id)}
-              onDelete={
-                onDeletePlot ? () => onDeletePlot(plot.id) : undefined
-              }
-              onPlotReady={
-                onPlotReady
-                  ? (plotDiv) => onPlotReady(plot.id, plotDiv)
-                  : undefined
-              }
-            />
-          ))}
-          {onAddPlot && (
-            <div style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}>
-              <AddPlotSelect
-                options={quickPickOptions}
-                onPick={(script) => onAddPlot(script)}
-                onFallback={() => onAddPlot()}
+        <>
+          <div style={sectionDividerStyle} />
+          <div style={plotsSectionStyle}>
+            {plots.map((plot) => (
+              <PlotSlotCard
+                key={plot.id}
+                project={project}
+                scenario={scenario}
+                feature={feature}
+                whatif={whatif}
+                plotConfig={plot.plotConfig}
+                onEdit={() => onEditPlot?.(plot.id)}
+                onReset={() => onResetPlot?.(plot.id)}
+                onDelete={
+                  onDeletePlot ? () => onDeletePlot(plot.id) : undefined
+                }
+                onPlotReady={
+                  onPlotReady
+                    ? (plotDiv) => onPlotReady(plot.id, plotDiv)
+                    : undefined
+                }
               />
-            </div>
-          )}
-        </div>
+            ))}
+            {onAddPlot && (
+              <div style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}>
+                <AddPlotSelect
+                  options={quickPickOptions}
+                  onPick={(script) => onAddPlot(script)}
+                  onFallback={() => onAddPlot()}
+                />
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -251,10 +282,12 @@ const PlusIconButton = ({ tooltip, onClick }) => (
 );
 
 /**
- * Delete button in the FeatureCard title row. Same icon-button frame
- * as the plot-level delete in PlotSlotCard, guarded by a Popconfirm.
+ * Single delete button in the FeatureCard title section — same
+ * `cea-card-icon-button-container` outline as the KPI / plot trios
+ * (one container, one button inside). Button is size 30×30 — exact
+ * same as any individual icon in the grouped trios.
  */
-const DeleteCardButton = ({ onClick }) => (
+const TitleDeleteButton = ({ onClick }) => (
   <Popconfirm
     title="Delete this card?"
     description="All plots inside this card will be removed."
@@ -273,6 +306,53 @@ const DeleteCardButton = ({ onClick }) => (
       </Tooltip>
     </div>
   </Popconfirm>
+);
+
+/**
+ * Edit / Refresh / Delete trio in the KPI section — same shared-
+ * container pattern as the map card's toolbar and the plot section's
+ * controls. `onEdit` is a placeholder (disabled when not wired);
+ * `onRefresh` invalidates the KPI summary query; `onDelete` removes
+ * the entire card (guarded by a Popconfirm).
+ */
+const KpiActionButtons = ({ onEdit, onRefresh, onDelete }) => (
+  <div className="cea-card-icon-button-container">
+    <Tooltip title="Edit card" placement="bottom">
+      <Button
+        type="text"
+        icon={<InputEditorIcon />}
+        onClick={onEdit}
+        disabled={!onEdit}
+        aria-label="Edit card"
+      />
+    </Tooltip>
+    <Tooltip title="Refresh" placement="bottom">
+      <Button
+        type="text"
+        icon={<RefreshIcon />}
+        onClick={onRefresh}
+        aria-label="Refresh KPI data"
+      />
+    </Tooltip>
+    {onDelete && (
+      <Popconfirm
+        title="Delete this card?"
+        description="All plots inside this card will be removed."
+        okText="Delete"
+        cancelText="Cancel"
+        okButtonProps={{ danger: true }}
+        onConfirm={onDelete}
+      >
+        <Tooltip title="Delete card" placement="bottom">
+          <Button
+            type="text"
+            icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
+            aria-label="Delete card"
+          />
+        </Tooltip>
+      </Popconfirm>
+    )}
+  </div>
 );
 
 const AddPlotSelect = ({ options, onPick, onFallback }) => {
@@ -340,11 +420,16 @@ const plusBottomWrapperStyle = {
 // what makes minWidth/minHeight refer to the outer dimensions so a
 // padded feature card and an unpadded map card land at the same
 // visible size.
+//
+// Vertical padding matches the section `gap` (8px) so each button
+// box sits the same distance below its immediate line above —
+// whether that's the card's top border (title section) or a section
+// divider (KPI / plot sections).
 const cardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
-  padding: '14px 16px',
+  padding: '8px 16px',
   boxSizing: 'border-box',
   display: 'flex',
   flexDirection: 'column',
@@ -355,14 +440,38 @@ const cardStyle = {
   minHeight: 280,
 };
 
-const kpiSectionStyle = {};
+const titleSectionStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 8,
+};
+
+const featureTitleStyle = {
+  fontWeight: 700,
+  fontSize: 15,
+  color: '#222',
+};
+
+const sectionDividerStyle = {
+  borderTop: '1px solid #f0f0f0',
+};
+
+const sectionActionsStyle = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+};
+
+const kpiSectionStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+};
 
 const plotsSectionStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
-  paddingTop: 12,
-  borderTop: '1px solid #f0f0f0',
 };
 
 const addPlotRowWithDividerStyle = {
