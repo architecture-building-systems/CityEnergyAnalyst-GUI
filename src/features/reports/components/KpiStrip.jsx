@@ -37,6 +37,12 @@ const KpiStrip = ({
   return (
     <div style={outerStyle}>
       {featureTitle && <div style={titleStyle}>{featureTitle}</div>}
+
+      {/* Divider between the feature title and the KPI section
+          (description + values) — mirrors the inner divider inside
+          FeatureCard between KPIs and plots. */}
+      {featureTitle && <div style={dividerStyle} />}
+
       {description && <div style={descriptionStyle}>{description}</div>}
 
       <div style={stripStyle}>
@@ -57,6 +63,12 @@ const KpiStrip = ({
       </div>
     </div>
   );
+};
+
+const dividerStyle = {
+  borderTop: '1px solid #f0f0f0',
+  marginTop: 4,
+  marginBottom: 10,
 };
 
 const outerStyle = {
