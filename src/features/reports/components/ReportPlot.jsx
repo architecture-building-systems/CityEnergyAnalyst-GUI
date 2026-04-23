@@ -130,7 +130,20 @@ const ReportPlot = ({
         if (window.Plotly?.relayout) {
           plotDivs.forEach((div) => {
             try {
-              window.Plotly.relayout(div, { 'title.text': '' });
+              // Blank the in-chart title (we already surface it as
+              // the slot caption) AND tighten the surrounding
+              // margins. The backend defaults to a lot of breathing
+              // room for the title/subtitle block; in Reports we've
+              // removed that block, so the wasted top/left/right
+              // whitespace can be reclaimed by the data area.
+              // Bottom is left to Plotly's default so x-axis tick
+              // labels (often angled, often long) don't clip.
+              window.Plotly.relayout(div, {
+                'title.text': '',
+                'margin.t': 16,
+                'margin.l': 20,
+                'margin.r': 16,
+              });
             } catch {
               // Some figures (e.g. error-card HTML snippets) aren't
               // Plotly-initialised — skip.
