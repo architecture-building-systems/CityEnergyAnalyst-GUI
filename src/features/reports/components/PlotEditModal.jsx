@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Modal, Select, Form, Spin, Collapse, Empty } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Form, Spin, Collapse, Empty, Button, Divider, Space } from 'antd';
+import { LoadingOutlined, VerticalLeftOutlined } from '@ant-design/icons';
 import { isElectron } from 'utils/electron';
 
 import Parameter from 'components/Parameter';
@@ -11,52 +11,112 @@ import {
 } from 'features/plots/constants';
 import { useFetchToolParams } from '../hooks/useReportsData';
 
+// Reuse the exact same CSS the main viewport's PlotTool uses for its
+// grouped button list, so the picker is pixel-identical.
+import 'features/project/components/Cards/tool-choices.css';
+
 /**
- * Build a flat list of { value: scriptName, label } options from PLOT_GROUPS.
+ * Plot configuration card — styled and laid out like the CEA main
+ * viewport's tool card (see `ToolCard.jsx` + `plot-tool.jsx`). Floats
+ * on the right side of the Reports page; the canvas under it stays
+ * visible.
+ *
+ * Two phases inside the same card:
+ *   1. Plot picker — grouped button list (mirrors `PlotChoices`).
+ *   2. Parameter form — once a plot is picked, shows its parameters
+ *      with a Back button to return to the picker.
  */
-function buildPlotOptions() {
-  const options = [];
-  for (const group of PLOT_GROUPS) {
-    if (group.keys) {
-      for (const key of group.keys) {
-        const script = VIEW_PLOT_RESULTS[key];
-        if (script) {
-          options.push({ value: script, label: PLOT_LABELS[key] || script });
-        }
-      }
-    }
-    if (group.subgroups) {
-      for (const sub of group.subgroups) {
-        for (const key of sub.keys) {
-          const script = VIEW_PLOT_RESULTS[key];
-          if (script) {
-            options.push({ value: script, label: PLOT_LABELS[key] || script });
-          }
-        }
-      }
-    }
-  }
-  return options;
-}
-
-const PLOT_OPTIONS = buildPlotOptions();
-
 const ELECTRON_ONLY = [
   'multiprocessing',
   'number-of-cpus-to-keep-free',
   'debug',
 ];
 
-/**
- * Modal for editing a plot slot's configuration.
- * Shows a plot type selector and the tool's parameter form.
- */
-const PlotEditModal = ({ open, scenario, plotConfig, onSave, onCancel }) => {
+const PlotChoices = ({ onSelected }) => (
+  <div className="cea-tool-choices">
+    <h2>Select a Plot Tool</h2>
+    <div className="cea-tool-choices-group-list">
+      {PLOT_GROUPS.map((group) => (
+        <div key={group.label}>
+          <Divider orientation="left" orientationMargin={0}>
+            <span className="cea-tool-choices-group-label">
+              {group.icon && <group.icon />}
+              <small>{group.label}</small>
+            </span>
+          </Divider>
+          <div className="cea-tool-choices-group-content">
+            {group.subgroups ? (
+              group.subgroups.map((sub) => (
+                <div key={sub.label} className="cea-tool-choices-subgroup">
+                  <small className="cea-tool-choices-subgroup-label">
+                    {sub.label}
+                  </small>
+                  <div className="cea-tool-choices-button-list">
+                    {sub.keys.map((key) => {
+                      const script = VIEW_PLOT_RESULTS[key];
+                      if (!script) return null;
+                      return (
+                        <Button
+                          key={key}
+                          className="cea-tool-choices-button"
+                          onClick={() => onSelected(script)}
+                        >
+                          {PLOT_LABELS[key] || key}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="cea-tool-choices-button-list">
+                {group.keys.map((key) => {
+                  const script = VIEW_PLOT_RESULTS[key];
+                  if (!script) return null;
+                  return (
+                    <Button
+                      key={key}
+                      className="cea-tool-choices-button"
+                      onClick={() => onSelected(script)}
+                    >
+                      {PLOT_LABELS[key] || key}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const PlotEditModal = ({
+  open,
+  scenario,
+  plotConfig,
+  mode = 'edit',
+  onSave,
+  onCancel,
+}) => {
   const [form] = Form.useForm();
 
   const [selectedScript, setSelectedScript] = useState(
     plotConfig?.script || null,
   );
+
+  useEffect(() => {
+    if (open) {
+      setSelectedScript(plotConfig?.script || null);
+      return undefined;
+    }
+    // Hold the current script for the duration of the slide-out
+    // animation so the content doesn't re-lay out mid-transition,
+    // then clear it so `useFetchToolParams` stops polling.
+    const t = setTimeout(() => setSelectedScript(null), 350);
+    return () => clearTimeout(t);
+  }, [open, plotConfig]);
 
   const { data: toolData, isLoading: paramsLoading } = useFetchToolParams(
     selectedScript,
@@ -66,7 +126,6 @@ const PlotEditModal = ({ open, scenario, plotConfig, onSave, onCancel }) => {
   const parameters = toolData?.parameters;
   const categoricalParameters = toolData?.categorical_parameters;
 
-  // Set initial form values when parameters load
   useEffect(() => {
     if (!parameters) return;
     const initialValues = {};
@@ -89,12 +148,14 @@ const PlotEditModal = ({ open, scenario, plotConfig, onSave, onCancel }) => {
     form.resetFields();
   };
 
-  const handleOk = () => {
+  const handleBack = () => {
+    setSelectedScript(null);
+    form.resetFields();
+  };
+
+  const handleRun = () => {
     const formValues = form.getFieldsValue();
-    onSave({
-      script: selectedScript,
-      parameters: formValues,
-    });
+    onSave({ script: selectedScript, parameters: formValues });
   };
 
   const shouldHideParam = (param) =>
@@ -159,45 +220,99 @@ const PlotEditModal = ({ open, scenario, plotConfig, onSave, onCancel }) => {
   };
 
   return (
-    <Modal
-      title="Edit Plot"
-      open={open}
-      onCancel={onCancel}
-      onOk={handleOk}
-      okText="Apply"
-      okButtonProps={{ disabled: !selectedScript }}
-      width={520}
-      destroyOnClose
+    <div
+      className="cea-tool-card"
+      style={{
+        ...cardStyle,
+        transform: open
+          ? 'translateX(0)'
+          : 'translateX(calc(100% + 32px))',
+        opacity: open ? 1 : 0,
+        pointerEvents: open ? 'auto' : 'none',
+      }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Plot type</label>
-        <Select
-          style={{ width: '100%' }}
-          placeholder="Select a plot type"
-          showSearch
-          optionFilterProp="label"
-          value={selectedScript}
-          onChange={handleScriptChange}
-          options={PLOT_OPTIONS}
+      {/* Header — matches ToolCard.jsx: optional Back, close icon right. */}
+      <div className="cea-tool-card-header" style={headerStyle}>
+        {selectedScript && <Button onClick={handleBack}>Back</Button>}
+        <Button
+          icon={<VerticalLeftOutlined />}
+          onClick={onCancel}
+          style={{ marginLeft: 'auto', padding: 12 }}
+          aria-label="Close"
         />
       </div>
 
-      {selectedScript && (
-        <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+      <div className="cea-tool-card-content" style={contentStyle}>
+        {selectedScript ? (
           <Form form={form} layout="vertical" size="small">
             {renderParams()}
           </Form>
+        ) : (
+          <PlotChoices onSelected={handleScriptChange} />
+        )}
+      </div>
+
+      {selectedScript && (
+        <div style={footerStyle}>
+          <Space>
+            <Button onClick={onCancel}>Cancel</Button>
+            <Button type="primary" onClick={handleRun}>
+              Run
+            </Button>
+          </Space>
         </div>
       )}
-    </Modal>
+    </div>
   );
 };
 
-const labelStyle = {
-  display: 'block',
-  fontWeight: 600,
-  marginBottom: 4,
-  fontSize: 13,
+// Match the main viewport's right-sidebar dimensions:
+//   Project.css: `--right-sidebar-width: 480px`
+//   `.cea-tool-card-container { position: absolute; top: 0; right: 0;
+//      height: 100%; width: var(--right-sidebar-width); }`
+// Reports doesn't use the overlay grid, so we use `position: fixed`
+// and flush the card against the right edge. Inner chrome (radius,
+// shadow, padding) copied from ToolCard.jsx:81-95 verbatim.
+const cardStyle = {
+  position: 'fixed',
+  top: 16,
+  right: 16,
+  // Extra clearance at the bottom for the CEA status bar (`.cea-status-bar`
+  // is 24px tall in `HomePage.css`) plus the same 16px breathing room.
+  bottom: 40,
+  width: 480,
+  background: '#fff',
+  borderRadius: 12,
+  boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+  boxSizing: 'border-box',
+  padding: 12,
+  display: 'flex',
+  flexDirection: 'column',
+  zIndex: 900,
+  // Slide-in-from-right animation. Transform gets overridden on render
+  // based on the `open` prop; the transition runs either way.
+  transition:
+    'transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.25s ease-in-out',
+};
+
+const headerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  fontSize: 14,
+};
+
+const contentStyle = {
+  minHeight: 0,
+  flex: 1,
+  overflowY: 'auto',
+};
+
+const footerStyle = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  paddingTop: 8,
+  marginTop: 8,
+  borderTop: '1px solid #f0f0f0',
 };
 
 export default PlotEditModal;

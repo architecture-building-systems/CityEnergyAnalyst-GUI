@@ -101,6 +101,21 @@ column, the user changes an existing plot's feature via
 `PlotEditModal` — it will migrate into a new card on next render.
 Column-level "Add a plot" rows have been removed.
 
+### DO: Stage plot slots — commit only when the user clicks Run
+```jsx
+// "Add a plot" opens PlotEditModal (right-side drawer) with an in-memory
+// draft. The slot is inserted into the store ONLY when the user clicks
+// Run, at which point it carries a full `plotConfig`.
+const [drawerTarget, setDrawerTarget] = useState(null);
+const handleAddPlot = (feature, columnIndex) =>
+  setDrawerTarget({ mode: 'add', feature, columnIndex });
+```
+No slot ever exists without a `plotConfig`. This means `ReportPlot`
+always uses the custom-plot path (`POST /api/reports/plot-custom`) and
+the bare GET `/api/reports/plot` endpoint is never reached from the
+Reports UI. Entering a comparison view creates empty columns; all
+plots are added explicitly by the user.
+
 ### DO: Align y-axes only when columns share a slot id
 ```jsx
 // Disable alignment in feature mode — each column has its own slot list.

@@ -32,20 +32,20 @@ const LaunchView = () => {
   const { data: scenarios = [] } = useFetchScenarios(project);
 
   const [pickerMode, setPickerMode] = useState(null);
-  const [launchSlots, setLaunchSlots] = useState([
-    { id: 'launch-default', feature: 'demand' },
-  ]);
-  const [editingSlotId, setEditingSlotId] = useState(null);
+  const [launchSlots, setLaunchSlots] = useState([]);
+  // Drawer target — null when closed. Shape:
+  //   { mode: 'add', feature } — on Run, create a new slot.
+  //   { mode: 'edit', slotId } — on Run, update the existing slot.
+  const [drawerTarget, setDrawerTarget] = useState(null);
 
+  // Open drawer in add mode, bound to the card's feature.
   const handleAddPlot = useCallback((feature = 'demand') => {
-    setLaunchSlots((prev) => [
-      ...prev,
-      { id: `launch-${Date.now()}`, feature },
-    ]);
+    setDrawerTarget({ mode: 'add', feature });
   }, []);
 
+  // Open drawer in edit mode for an existing slot.
   const handleEditSlot = useCallback((slotId) => {
-    setEditingSlotId(slotId);
+    setDrawerTarget({ mode: 'edit', slotId });
   }, []);
 
   const handleResetSlot = useCallback((slotId) => {
@@ -60,17 +60,37 @@ const LaunchView = () => {
     setLaunchSlots((prev) => prev.filter((s) => s.id !== slotId));
   }, []);
 
-  const handleEditSave = useCallback(
+  // Run/Save from the drawer. Commits config to the right slot, or
+  // creates a new slot if we're in add mode.
+  const handleDrawerSave = useCallback(
     (plotConfig) => {
-      setLaunchSlots((prev) =>
-        prev.map((s) =>
-          s.id === editingSlotId ? { ...s, plotConfig } : s,
-        ),
-      );
-      setEditingSlotId(null);
+      if (!drawerTarget) return;
+      if (drawerTarget.mode === 'add') {
+        setLaunchSlots((prev) => [
+          ...prev,
+          {
+            id: `launch-${Date.now()}`,
+            feature: drawerTarget.feature,
+            plotConfig,
+          },
+        ]);
+      } else {
+        setLaunchSlots((prev) =>
+          prev.map((s) =>
+            s.id === drawerTarget.slotId ? { ...s, plotConfig } : s,
+          ),
+        );
+      }
+      setDrawerTarget(null);
     },
-    [editingSlotId],
+    [drawerTarget],
   );
+
+  // Resolve the `plotConfig` seed for the drawer from the current target.
+  const drawerPlotConfig =
+    drawerTarget?.mode === 'edit'
+      ? launchSlots.find((s) => s.id === drawerTarget.slotId)?.plotConfig || null
+      : null;
 
   if (!project || !scenario) {
     return (
@@ -163,18 +183,15 @@ const LaunchView = () => {
         />
       )}
 
-      {/* Plot edit modal */}
-      {editingSlotId && (
-        <PlotEditModal
-          open
-          scenario={scenario}
-          plotConfig={
-            launchSlots.find((s) => s.id === editingSlotId)?.plotConfig || null
-          }
-          onSave={handleEditSave}
-          onCancel={() => setEditingSlotId(null)}
-        />
-      )}
+      {/* Plot config drawer — same drawer used for both add and edit. */}
+      <PlotEditModal
+        open={!!drawerTarget}
+        mode={drawerTarget?.mode || 'add'}
+        scenario={scenario}
+        plotConfig={drawerPlotConfig}
+        onSave={handleDrawerSave}
+        onCancel={() => setDrawerTarget(null)}
+      />
     </>
   );
 };

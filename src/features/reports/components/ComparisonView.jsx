@@ -34,8 +34,10 @@ const ComparisonView = () => {
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
-  // Edit modal state: { slotId, columnIndex (null for shared) }
-  const [editingSlot, setEditingSlot] = useState(null);
+  // Drawer target — null when closed. Shape:
+  //   { mode: 'add', feature, columnIndex (null for shared) }
+  //   { mode: 'edit', slotId, columnIndex (null for shared) }
+  const [drawerTarget, setDrawerTarget] = useState(null);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
   const { data: whatifs = [] } = useFetchWhatifs(
@@ -71,35 +73,13 @@ const ComparisonView = () => {
     setAddColumnOpen(false);
   };
 
-  const handleAddSharedPlot = (feature = 'demand') => {
-    addSharedPlotSlot({ feature });
-  };
-
-  const handleAddColumnPlot = (colIndex, feature) => {
-    addColumnPlotSlot(colIndex, { feature });
-  };
-
-  // Find the current plotConfig for the slot being edited
-  const getEditingPlotConfig = () => {
-    if (!editingSlot) return null;
-    const { slotId, columnIndex } = editingSlot;
-    const slots =
-      columnIndex != null ? columnPlotSlots[columnIndex] || [] : sharedPlotSlots;
-    const slot = slots.find((s) => s.id === slotId);
-    return slot?.plotConfig || null;
-  };
-
-  // Get the scenario for the editing context
-  const getEditingScenario = () => {
-    if (!editingSlot) return scenario;
-    if (editingSlot.columnIndex != null) {
-      return columns[editingSlot.columnIndex]?.scenario || scenario;
-    }
-    return columns[0]?.scenario || scenario;
+  // "Add a plot" — stage a draft; drawer commits it on Run.
+  const handleAddPlot = (feature, columnIndex) => {
+    setDrawerTarget({ mode: 'add', feature, columnIndex });
   };
 
   const handleEditSlot = (slotId, columnIndex) => {
-    setEditingSlot({ slotId, columnIndex });
+    setDrawerTarget({ mode: 'edit', slotId, columnIndex });
   };
 
   const handleResetSlot = (slotId, columnIndex) => {
@@ -118,15 +98,43 @@ const ComparisonView = () => {
     }
   };
 
-  const handleEditSave = (plotConfig) => {
-    if (!editingSlot) return;
-    const { slotId, columnIndex } = editingSlot;
-    if (columnIndex != null) {
-      updateColumnPlotSlot(columnIndex, slotId, { plotConfig });
+  // Run/Save from the drawer. Creates a new slot or updates an existing one.
+  const handleDrawerSave = (plotConfig) => {
+    if (!drawerTarget) return;
+    const { columnIndex } = drawerTarget;
+    if (drawerTarget.mode === 'add') {
+      const slotDraft = { feature: drawerTarget.feature, plotConfig };
+      if (columnIndex != null) {
+        addColumnPlotSlot(columnIndex, slotDraft);
+      } else {
+        addSharedPlotSlot(slotDraft);
+      }
     } else {
-      updateSharedPlotSlot(slotId, { plotConfig });
+      const { slotId } = drawerTarget;
+      if (columnIndex != null) {
+        updateColumnPlotSlot(columnIndex, slotId, { plotConfig });
+      } else {
+        updateSharedPlotSlot(slotId, { plotConfig });
+      }
     }
-    setEditingSlot(null);
+    setDrawerTarget(null);
+  };
+
+  // Resolve the `plotConfig` seed + scenario for the drawer.
+  const getDrawerPlotConfig = () => {
+    if (drawerTarget?.mode !== 'edit') return null;
+    const { slotId, columnIndex } = drawerTarget;
+    const slots =
+      columnIndex != null ? columnPlotSlots[columnIndex] || [] : sharedPlotSlots;
+    return slots.find((s) => s.id === slotId)?.plotConfig || null;
+  };
+
+  const getDrawerScenario = () => {
+    if (!drawerTarget) return scenario;
+    if (drawerTarget.columnIndex != null) {
+      return columns[drawerTarget.columnIndex]?.scenario || scenario;
+    }
+    return columns[0]?.scenario || scenario;
   };
 
   if (columns.length === 0) {
@@ -171,9 +179,7 @@ const ComparisonView = () => {
                   }
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
                   onAddPlot={(feature) =>
-                    isFeatureMode
-                      ? handleAddColumnPlot(i, feature)
-                      : handleAddSharedPlot(feature)
+                    handleAddPlot(feature, isFeatureMode ? i : null)
                   }
                 />
               </div>
@@ -223,16 +229,15 @@ const ComparisonView = () => {
         />
       )}
 
-      {/* Plot edit modal */}
-      {editingSlot && (
-        <PlotEditModal
-          open
-          scenario={getEditingScenario()}
-          plotConfig={getEditingPlotConfig()}
-          onSave={handleEditSave}
-          onCancel={() => setEditingSlot(null)}
-        />
-      )}
+      {/* Plot config drawer — shared for add and edit. */}
+      <PlotEditModal
+        open={!!drawerTarget}
+        mode={drawerTarget?.mode || 'add'}
+        scenario={getDrawerScenario()}
+        plotConfig={getDrawerPlotConfig()}
+        onSave={handleDrawerSave}
+        onCancel={() => setDrawerTarget(null)}
+      />
     </div>
   );
 };

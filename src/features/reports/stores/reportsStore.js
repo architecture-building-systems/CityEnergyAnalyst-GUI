@@ -22,12 +22,6 @@ import { create } from 'zustand';
 let nextSlotId = 1;
 const makeSlotId = () => `slot-${nextSlotId++}`;
 
-const DEFAULT_SHARED_SLOT = () => ({
-  id: makeSlotId(),
-  feature: 'demand',
-  label: 'Building Energy Demand',
-});
-
 export const useReportsStore = create((set, get) => ({
   // ── View state ──────────────────────────────────────────────
   view: 'launch', // 'launch' | 'inter-scenario' | 'inter-whatif' | 'inter-feature'
@@ -60,7 +54,10 @@ export const useReportsStore = create((set, get) => ({
       view: 'inter-scenario',
       columns,
       parentScenario: null,
-      sharedPlotSlots: [DEFAULT_SHARED_SLOT()],
+      // Start empty — user adds plots via the drawer ("Add a plot" →
+      // configure → Run). No default slot so ReportPlot never fetches
+      // without an explicit plotConfig.
+      sharedPlotSlots: [],
       columnPlotSlots: {},
     });
   },
@@ -80,7 +77,10 @@ export const useReportsStore = create((set, get) => ({
       view: 'inter-whatif',
       columns,
       parentScenario,
-      sharedPlotSlots: [DEFAULT_SHARED_SLOT()],
+      // Start empty — user adds plots via the drawer ("Add a plot" →
+      // configure → Run). No default slot so ReportPlot never fetches
+      // without an explicit plotConfig.
+      sharedPlotSlots: [],
       columnPlotSlots: {},
     });
   },
@@ -97,11 +97,10 @@ export const useReportsStore = create((set, get) => ({
     }));
 
     // Each column gets its own default slot matching its feature
+    // Each column starts empty — user adds plots via the drawer.
     const columnPlotSlots = {};
-    featureColumns.forEach((fc, i) => {
-      columnPlotSlots[i] = [
-        { id: makeSlotId(), feature: fc.feature, label: fc.label },
-      ];
+    featureColumns.forEach((_, i) => {
+      columnPlotSlots[i] = [];
     });
 
     set({
@@ -143,18 +142,13 @@ export const useReportsStore = create((set, get) => ({
     const newColumns = [...columns, column];
     const updates = { columns: newColumns };
 
-    // For inter-feature, initialise a default slot for the new column
+    // For inter-feature, initialise the new column with an empty slot
+    // list. The user adds plots via the drawer.
     if (view === 'inter-feature' && column.type === 'feature') {
       const newIndex = newColumns.length - 1;
       updates.columnPlotSlots = {
         ...columnPlotSlots,
-        [newIndex]: [
-          {
-            id: makeSlotId(),
-            feature: column.feature,
-            label: column.feature,
-          },
-        ],
+        [newIndex]: [],
       };
     }
 
