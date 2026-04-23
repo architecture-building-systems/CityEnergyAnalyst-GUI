@@ -56,6 +56,38 @@ Each feature gets its own KPI section at the top of its card, followed
 by the feature's plots stacked vertically. Empty columns still show
 one preview card so the user sees KPIs immediately.
 
+### DO: Let the canvas fit its content — don't offer a resize handle
+```jsx
+// Canvas style in both LaunchView and ComparisonView.
+const canvasStyle = {
+  background: '#fff',
+  borderRadius: 12,
+  width: 'fit-content',
+  // no fixed width, no drag handle, no ad-hoc useState for size.
+};
+```
+The outer white "canvas" sizes to its content (title card, map,
+feature cards). It grows as more feature cards or columns are added
+and shrinks back when they're removed. No user-adjustable width — the
+content is the source of truth.
+
+### DO: Use CSS-native `resize: both` for cards inside the canvas
+```jsx
+const cardStyle = {
+  ...,
+  resize: 'both',
+  overflow: 'hidden', // required — otherwise `resize` has no effect
+  minWidth: 240,
+  minHeight: 48,
+};
+```
+The browser paints a small drag handle in the bottom-right corner of
+each card and handles the drag itself — no React state, no global
+pointer listeners, no custom ref plumbing. For cards whose content
+does not reflow on container change (e.g. maplibre maps), install a
+`ResizeObserver` inside the component and call its own `resize()` so
+the inner canvas stays in sync with the outer card.
+
 ### DO: Put "Add a plot" inside the `FeatureCard` it belongs to
 ```jsx
 // FeatureCard.jsx

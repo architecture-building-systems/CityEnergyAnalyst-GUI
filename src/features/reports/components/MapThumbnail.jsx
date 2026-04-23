@@ -8,44 +8,20 @@ import { useFetchZoneGeoJSON } from '../hooks/useReportsData';
 
 /**
  * Interactive map showing zone building footprints.
- * Supports zoom, pan, and 3D/2D toggle.
- * Bottom edge is draggable to resize height.
+ * Fills its parent container in both axes; the parent card's CSS
+ * `resize: both` owns all sizing. A ResizeObserver triggers
+ * `map.resize()` so maplibre redraws on container size changes.
  */
-const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
-  const [height, setHeight] = useState(initialHeight);
+const MapThumbnail = ({ project, scenario }) => {
   const [is3D, setIs3D] = useState(false);
   const containerRef = useRef(null);
   const mapRef = useRef(null);
-  const dragRef = useRef(null);
   const boundsRef = useRef(null);
 
   const { data: geojson, isLoading, error } = useFetchZoneGeoJSON(
     project,
     scenario,
   );
-
-  // Height resize drag
-  const handleDragStart = useCallback((e) => {
-    e.preventDefault();
-    dragRef.current = { startY: e.clientY, startHeight: height };
-
-    const handleMove = (moveEvent) => {
-      const delta = moveEvent.clientY - dragRef.current.startY;
-      const newHeight = Math.max(80, dragRef.current.startHeight + delta);
-      setHeight(newHeight);
-      if (mapRef.current) mapRef.current.resize();
-    };
-
-    const handleUp = () => {
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleUp);
-      if (mapRef.current) mapRef.current.resize();
-      dragRef.current = null;
-    };
-
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleUp);
-  }, [height]);
 
   // 3D/2D toggle
   const toggle3D = useCallback(() => {
@@ -173,7 +149,20 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
 
     mapRef.current = map;
 
+    // Keep the map in sync with container size changes. The parent card
+    // uses CSS `resize: both`, so the container can shrink/grow without
+    // a window resize event — maplibre needs an explicit `map.resize()`
+    // to redraw correctly.
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapRef.current) mapRef.current.resize();
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -185,25 +174,22 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
     return (
       <Skeleton.Node
         active
-        style={{ width: '100%', height, borderRadius: 8 }}
+        style={{ width: '100%', height: '100%', borderRadius: 8 }}
       />
     );
   }
 
   if (error || !geojson) {
     return (
-      <div style={{ ...placeholderStyle, height }}>
+      <div style={{ ...placeholderStyle, height: '100%' }}>
         <span style={{ color: '#999', fontSize: 12 }}>Map unavailable</span>
       </div>
     );
   }
 
   return (
-    <div style={{ position: 'relative' }}>
-      <div
-        ref={containerRef}
-        style={{ width: '100%', height, borderRadius: 8, overflow: 'hidden' }}
-      />
+    <div style={wrapperStyle}>
+      <div ref={containerRef} style={mapFillStyle} />
 
       {/* 3D/2D toggle + reset camera buttons */}
       <div style={controlsStyle}>
@@ -225,15 +211,21 @@ const MapThumbnail = ({ project, scenario, height: initialHeight = 180 }) => {
           </button>
         </Tooltip>
       </div>
-
-      {/* Height resize drag handle */}
-      <div
-        onMouseDown={handleDragStart}
-        style={dragHandleStyle}
-        title="Drag to resize"
-      />
     </div>
   );
+};
+
+const wrapperStyle = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+};
+
+const mapFillStyle = {
+  width: '100%',
+  height: '100%',
+  borderRadius: 8,
+  overflow: 'hidden',
 };
 
 const ResetIcon = () => (
@@ -272,20 +264,6 @@ const controlButtonActiveStyle = {
   background: '#1470AF',
   color: '#fff',
   borderColor: '#1470AF',
-};
-
-const dragHandleStyle = {
-  position: 'absolute',
-  bottom: 0,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  width: 40,
-  height: 6,
-  borderRadius: 3,
-  background: 'rgba(0,0,0,0.15)',
-  cursor: 'ns-resize',
-  zIndex: 2,
-  marginBottom: 2,
 };
 
 const placeholderStyle = {

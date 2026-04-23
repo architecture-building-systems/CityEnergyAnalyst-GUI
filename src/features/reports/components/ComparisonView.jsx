@@ -144,9 +144,9 @@ const ComparisonView = () => {
         <div style={featureModeHeaderStyle}>{columns[0].scenario}</div>
       )}
 
-      {/* White card with columns */}
-      <div style={cardWrapperStyle}>
-        <div style={cardStyle}>
+      {/* Canvas — white background fits its columns and grows as more are added. */}
+      <div style={canvasWrapperStyle}>
+        <div style={canvasStyle}>
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
@@ -244,14 +244,19 @@ function columnKey(col) {
   return String(Math.random());
 }
 
-const cardWrapperStyle = {
+const canvasWrapperStyle = {
   position: 'relative',
+  width: 'fit-content',
 };
 
-const cardStyle = {
+// Canvas: white background fits its content. Columns inside carry their
+// own minWidth, so the canvas grows as more columns are added and shrinks
+// back when columns are removed.
+const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
   overflow: 'hidden',
+  width: 'fit-content',
 };
 
 const columnsRowStyle = {

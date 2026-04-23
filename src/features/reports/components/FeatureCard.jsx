@@ -131,6 +131,8 @@ const FeatureCard = ({
   );
 };
 
+// Resizable via CSS. Browser draws a drag handle in the bottom-right
+// corner; `overflow: hidden` is required for `resize` to apply.
 const cardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
@@ -139,6 +141,10 @@ const cardStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
+  resize: 'both',
+  overflow: 'hidden',
+  minWidth: 280,
+  minHeight: 120,
 };
 
 const kpiSectionStyle = {};

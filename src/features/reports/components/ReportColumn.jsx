@@ -99,11 +99,19 @@ const columnStyle = {
   gap: 12,
 };
 
+// Every card inside the canvas uses CSS-native `resize: both`. The
+// browser draws a small handle in the bottom-right corner the user can
+// drag to resize in either axis. `overflow: hidden` is required for
+// `resize` to apply; children clip rather than scroll.
 const titleCardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
   padding: '12px 16px',
+  resize: 'both',
+  overflow: 'hidden',
+  minWidth: 240,
+  minHeight: 48,
 };
 
 const headerStyle = {
@@ -117,6 +125,12 @@ const mapCardStyle = {
   border: '1px solid #e8e8e8',
   borderRadius: 12,
   overflow: 'hidden',
+  resize: 'both',
+  minWidth: 240,
+  minHeight: 120,
+  // Initial size so the map has room to render before any user drag.
+  // `resize: both` lets the user override both axes from here.
+  height: 200,
 };
 
 export default ReportColumn;

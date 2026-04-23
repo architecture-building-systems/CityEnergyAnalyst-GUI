@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -36,29 +36,6 @@ const LaunchView = () => {
     { id: 'launch-default', feature: 'demand' },
   ]);
   const [editingSlotId, setEditingSlotId] = useState(null);
-  const [cardWidth, setCardWidth] = useState(null); // null = use default CSS %
-  const cardDragRef = useRef(null);
-
-  const handleCardDragStart = useCallback((e) => {
-    e.preventDefault();
-    const cardEl = e.target.parentElement;
-    const startWidth = cardEl.offsetWidth;
-    cardDragRef.current = { startX: e.clientX, startWidth };
-
-    const handleMove = (moveEvent) => {
-      const delta = moveEvent.clientX - cardDragRef.current.startX;
-      setCardWidth(Math.max(300, cardDragRef.current.startWidth + delta));
-    };
-
-    const handleUp = () => {
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleUp);
-      cardDragRef.current = null;
-    };
-
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleUp);
-  }, []);
 
   const handleAddPlot = useCallback((feature = 'demand') => {
     setLaunchSlots((prev) => [
@@ -139,8 +116,8 @@ const LaunchView = () => {
   return (
     <>
       <div style={layoutStyle}>
-        {/* White card with scenario column (Add-a-plot is inside each FeatureCard) */}
-        <div style={{ ...cardStyle, ...(cardWidth ? { width: cardWidth } : {}) }}>
+        {/* Canvas — white background fits its content and grows with it. */}
+        <div style={canvasStyle}>
           <ReportColumn
             columnDef={{ type: 'scenario', scenario }}
             plotSlots={launchSlots}
@@ -148,12 +125,6 @@ const LaunchView = () => {
             onResetSlot={handleResetSlot}
             onDeleteSlot={handleDeleteSlot}
             onAddPlot={handleAddPlot}
-          />
-          {/* Right-edge drag handle */}
-          <div
-            onMouseDown={handleCardDragStart}
-            style={cardDragHandleStyle}
-            title="Drag to resize"
           />
         </div>
 
@@ -213,21 +184,20 @@ const LaunchView = () => {
 
 const layoutStyle = {
   display: 'flex',
-  alignItems: 'stretch',
+  alignItems: 'flex-start',
   gap: 24,
 };
 
-const cardStyle = {
+// Canvas: white background that fits its content — no fixed width, no
+// resize handle. Content inside (title card, map, feature cards) drives
+// the size. Grows as cards are added.
+const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
-  overflow: 'hidden',
-  width: '45%',
-  minWidth: 300,
   padding: '20px 24px',
-  flexShrink: 0,
   display: 'flex',
   flexDirection: 'column',
-  position: 'relative',
+  width: 'fit-content',
 };
 
 const actionsStyle = {
@@ -242,20 +212,6 @@ const actionsStyle = {
 const actionSpacerStyle = {
   flex: 1,
   minHeight: 60,
-};
-
-const cardDragHandleStyle = {
-  position: 'absolute',
-  top: '50%',
-  right: 0,
-  transform: 'translateY(-50%)',
-  width: 6,
-  height: 40,
-  borderRadius: 3,
-  background: 'rgba(0,0,0,0.15)',
-  cursor: 'ew-resize',
-  zIndex: 2,
-  marginRight: 2,
 };
 
 const centredStyle = {
