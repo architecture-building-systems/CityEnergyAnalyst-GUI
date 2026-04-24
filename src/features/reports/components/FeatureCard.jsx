@@ -25,16 +25,22 @@ import { useQueryClient } from '@tanstack/react-query';
 // find a card's family label and available plots, walk PLOT_GROUPS
 // looking for the group/subgroup that contains that key. No
 // hardcoded feature→label dictionary to keep in sync.
+//
+// The returned `icon` is the PLOT_GROUPS top-level icon. Subgroups
+// don't define their own, so nested leaves inherit the parent
+// family's icon (e.g. every Life Cycle Analysis subgroup reuses
+// LifeCycleAnalysisIcon). Matches what the "Select a Plot Tool"
+// picker shows.
 function findFamilyForFeature(feature) {
   if (!feature) return null;
   for (const group of PLOT_GROUPS) {
     if (group.keys?.includes(feature)) {
-      return { label: group.label, keys: group.keys };
+      return { label: group.label, keys: group.keys, icon: group.icon };
     }
     if (group.subgroups) {
       for (const sub of group.subgroups) {
         if (sub.keys?.includes(feature)) {
-          return { label: sub.label, keys: sub.keys };
+          return { label: sub.label, keys: sub.keys, icon: group.icon };
         }
       }
     }
@@ -148,7 +154,15 @@ const FeatureCard = ({
     <div style={cardStyle}>
       {/* ── Title section ───────────────────────────────────── */}
       <div style={titleSectionStyle}>
-        <div style={featureTitleStyle}>{title}</div>
+        <div style={featureTitleStyle}>
+          {family?.icon && (
+            <family.icon
+              style={{ fontSize: 18, color: '#555', flexShrink: 0 }}
+              aria-hidden
+            />
+          )}
+          <span>{title}</span>
+        </div>
         {onDeleteCard && <TitleDeleteButton onClick={onDeleteCard} />}
       </div>
 
@@ -433,9 +447,14 @@ const titleSectionStyle = {
 };
 
 const featureTitleStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
   fontWeight: 700,
   fontSize: 15,
   color: '#222',
+  minWidth: 0,
+  overflow: 'hidden',
 };
 
 const sectionDividerStyle = {
