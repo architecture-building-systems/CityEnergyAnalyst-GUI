@@ -1,30 +1,51 @@
+import { Button } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
+
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 /**
  * Bottom card — hosts the map-layer properties form for Reports.
  *
- * No category picker here — we only mount `MapLayerPropertiesCard`,
- * which renders itself only when a map category is active (it reads
- * `useSelectedMapCategoryInfo` internally and returns `null`
- * otherwise). The active category must be set via some other path
- * (e.g. auto-selected from the current plot script).
+ * `MapLayerPropertiesCard` reads the active category + selected layer
+ * from the singleton map stores and renders `null` when nothing is
+ * active. `PlotEditModal` sets the singleton for plot-edit flows;
+ * `FeatureCardMap` sets it for map-card flows.
  *
- * `hideLegend` skips the Legend column inside `MapLayerPropertiesCard`
- * per the "no legend card" requirement.
+ * `hideLayerSelector`: skip the intra-category dropdown — Reports
+ * dictates the layer via the active card.
+ * `hideLegend`: Reports doesn't render the Legend column.
  *
- * Path C caveat: `useMapStore` is a singleton — layer selection made
- * here also affects the main viewport on next visit.
+ * `showClose` toggles a close button (used in map-card mode; plot
+ * drawer has its own close).
+ *
+ * Path-C caveat: `useMapStore` is a singleton, so selections made
+ * here also affect the main viewport on next visit.
  */
-const BottomCard = () => (
-  // `hideLayerSelector`: the intra-category layer dropdown (the
-  // "title dropdown" for LCA, which switches between energy-by-
-  // carrier / emissions / costs / heat-rejection layers) is
-  // redundant in Reports — `PlotEditModal` writes `selectedMapLayer`
-  // directly based on the plot script being edited. Non-LCA
-  // categories only have one layer, so this selector auto-hides
-  // there regardless. No other dropdowns are filtered — the full
-  // parameter form is shown.
-  <MapLayerPropertiesCard hideLegend hideLayerSelector />
+const BottomCard = ({ showClose = false, onClose }) => (
+  <div style={wrapperStyle}>
+    {showClose && (
+      <Button
+        type="text"
+        size="small"
+        icon={<CloseOutlined />}
+        onClick={onClose}
+        aria-label="Close layer parameters"
+        style={closeButtonStyle}
+      />
+    )}
+    <MapLayerPropertiesCard hideLegend hideLayerSelector />
+  </div>
 );
+
+const wrapperStyle = {
+  position: 'relative',
+};
+
+const closeButtonStyle = {
+  position: 'absolute',
+  top: 4,
+  right: 4,
+  zIndex: 1,
+};
 
 export default BottomCard;

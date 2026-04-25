@@ -6,34 +6,35 @@ import 'react-resizable/css/styles.css';
 
 import { CreateNewIcon } from 'assets/icons';
 import {
+  iconMap,
   PLOT_GROUPS,
   PLOT_LABELS,
   VIEW_PLOT_RESULTS,
 } from 'features/plots/constants';
+import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useProjectStore } from 'features/project/stores/projectStore';
+
 import {
   DEFAULT_CARD_W,
   DEFAULT_CARD_H,
   MAP_ANCHOR_W,
   MAP_ANCHOR_H,
 } from '../stores/reportsStore';
-
 import ReportMap from './ReportMap';
 import FeatureCardPlot from './FeatureCardPlot';
 import FeatureCardKpi from './FeatureCardKpi';
+import FeatureCardMap from './FeatureCardMap';
 import './ReportColumn.css';
 
 // Grid sizing. Fixed colWidth × ROW_HEIGHT × GRID_MARGIN gives the
-// map its 500×280px launch size at MAP_DEFAULT_W=6, MAP_DEFAULT_H=5
-// (= 6*70 + 5*16 wide, 5*40 + 4*20 tall). Total width is derived
+// map tile its 500×280px launch size at MAP_ANCHOR_W=6 / MAP_ANCHOR_H=5
+// (= 6*70 + 5*16 wide, 5*40 + 4*20 tall). Total grid width is derived
 // from the current layout so the canvas hugs the map at launch and
 // grows as cards are dragged or added past its right edge.
 const COL_WIDTH_PX = 70;
 const ROW_HEIGHT_PX = 40;
 const GRID_MARGIN = [16, 20];
 const MIN_COLS = MAP_ANCHOR_W;
-const MAP_DEFAULT_W = MAP_ANCHOR_W;
-const MAP_DEFAULT_H = MAP_ANCHOR_H;
 const CARD_MIN_W = 3;
 const CARD_MIN_H = 3;
 
@@ -61,15 +62,14 @@ const absolutePositionStrategy = {
 // Build the antd Dropdown `menu.items` tree for "Add a feature card",
 // derived from PLOT_GROUPS / PLOT_LABELS / VIEW_PLOT_RESULTS so it
 // stays in lock-step with the main viewport's PlotChoices picker.
-const topLabel = (group) => {
-  const Icon = group.icon;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      {Icon && <Icon style={{ fontSize: 16 }} />}
-      {group.label}
-    </span>
-  );
-};
+const labelWithIcon = (Icon, text) => (
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+    {Icon && <Icon style={{ fontSize: 16 }} />}
+    {text}
+  </span>
+);
+
+const topLabel = (group) => labelWithIcon(group.icon, group.label);
 
 const nestedLabel = (text) => `- ${text}`;
 
@@ -109,19 +109,29 @@ function buildPlotMenuItems(onPick) {
 }
 
 /**
- * A single report column. Tiles (map + feature cards) are placed by
- * `react-grid-layout`, which handles drag, resize, collision, and
- * vertical auto-compaction. Map position is local (per-column);
- * feature-card positions are persisted via `onApplyLayouts`.
+ * A single report column. Tiles (primary map + feature cards) are
+ * placed by `react-grid-layout`, which handles drag, resize, collision,
+ * and vertical auto-compaction. Primary-map position is local
+ * (per-column); feature-card positions are persisted via
+ * `onApplyLayouts`.
+ *
+ * Each feature card is dispatched by `card.type`:
+ *   'plot' → `<FeatureCardPlot>`
+ *   'kpi'  → `<FeatureCardKpi>`
+ *   'map'  → `<FeatureCardMap>` (mirrors the primary map widget)
  *
  * Props:
  *   columnDef         — { type, scenario, whatif?, feature? }
- *   cards             — [{ id, row, col, w, h, feature, plots[] }]
- *   onEditPlot,       onDeletePlot, onDeleteCard
+ *   cards             — [{ id, type, row, col, w, h, feature?,
+ *                         category?, layer?, plots? }]
+ *   onEditPlot, onDeletePlot, onDeleteCard
  *   onAddPlotToCard(cardId, script?)
- *   onAddCard({ targetCardId, direction, feature?, script? })
- *   onApplyLayouts(updates) — persist drag/resize, batched
- *   onPlotReady(plotId, div) — y-axis alignment hook
+ *   onAddCard({ targetCardId, direction, type, feature?, script?,
+ *               category?, layer? })
+ *   onApplyLayouts(updates)   — persist drag/resize, batched
+ *   onOpenMapBottom()         — open the page-level
+ *                               MapLayerProperties bottom card
+ *   onPlotReady(plotId, div)  — y-axis alignment hook
  *   onAddColumn / addColumnTooltip — title-card "+" affordance
  */
 const ReportColumn = ({
@@ -135,6 +145,7 @@ const ReportColumn = ({
   onAddPlotToCard,
   onAddCard,
   onApplyLayouts,
+  onOpenMapBottom,
   onAddColumn,
   addColumnTooltip = 'Add column',
 }) => {
@@ -146,8 +157,8 @@ const ReportColumn = ({
   const [mapPos, setMapPos] = useState({
     x: 0,
     y: 0,
-    w: MAP_DEFAULT_W,
-    h: MAP_DEFAULT_H,
+    w: MAP_ANCHOR_W,
+    h: MAP_ANCHOR_H,
   });
 
   const layout = useMemo(() => {
@@ -260,34 +271,81 @@ const ReportColumn = ({
   // immediately adjacent) stay clean.
   const exposureMap = useMemo(() => computeExposure(layout), [layout]);
 
+  // Map menu mirrors the backend's map-layer category tree (same
+  // tree the main viewport's MapLayerCategories uses) — never
+  // hardcoded, just live data shaped into nested antd menu items.
+  const mapData = useMapLayerCategories();
+
   // Card-type picker for a `+` affordance. Top-level Map / Plot /
-  // KPI selection — Map and KPI are placeholders (greyed out) until
-  // their backend selection modules land. Plot expands to the
-  // existing nested feature → leaf picker.
+  // KPI selection. Map expands to the live category tree; Plot
+  // expands to the feature → leaf picker. KPI is disabled until its
+  // backend selection module lands.
+  //
+  // A category's per-layer submenu only appears when it actually
+  // hosts multiple layers (today: only LCA). Single-layer categories
+  // collapse to one click that adds the card directly with that
+  // sole layer — the submenu would be redundant.
   const buildAddCardMenu = useCallback(
-    (targetCardId, direction) =>
-      onAddCard
-        ? {
-            items: [
-              { key: 'map', label: 'Map', disabled: true },
+    (targetCardId, direction) => {
+      if (!onAddCard) return null;
+      const onPickMap = (category, layer) =>
+        onAddCard({ targetCardId, direction, type: 'map', category, layer });
+      const mapCategoryItems =
+        mapData?.categories?.flatMap((cat) => {
+          const label = labelWithIcon(iconMap[cat.name], cat.label || cat.name);
+          const layers = (cat.layers ?? []).filter(
+            (l) => !HIDDEN_MAP_LAYERS.has(l.name),
+          );
+          if (layers.length === 0) return [];
+          if (layers.length > 1) {
+            return [
               {
-                key: 'plot',
-                label: 'Plot',
-                children: buildPlotMenuItems((feature, script) =>
-                  onAddCard({
-                    targetCardId,
-                    direction,
-                    type: 'plot',
-                    feature,
-                    script,
-                  }),
-                ),
+                key: `map-${cat.name}`,
+                label,
+                children: layers.map((layer) => ({
+                  key: `map-${cat.name}-${layer.name}`,
+                  label: layer.label || layer.name,
+                  onClick: () => onPickMap(cat.name, layer.name),
+                })),
               },
-              { key: 'kpi', label: 'KPI', disabled: true },
-            ],
+            ];
           }
-        : null,
-    [onAddCard],
+          const only = layers[0];
+          return [
+            {
+              key: `map-${cat.name}`,
+              label,
+              onClick: () => onPickMap(cat.name, only.name),
+            },
+          ];
+        }) ?? [];
+      return {
+        items: [
+          {
+            key: 'map',
+            label: 'Map',
+            disabled: mapCategoryItems.length === 0,
+            children:
+              mapCategoryItems.length > 0 ? mapCategoryItems : undefined,
+          },
+          {
+            key: 'plot',
+            label: 'Plot',
+            children: buildPlotMenuItems((feature, script) =>
+              onAddCard({
+                targetCardId,
+                direction,
+                type: 'plot',
+                feature,
+                script,
+              }),
+            ),
+          },
+          { key: 'kpi', label: 'KPI', disabled: true },
+        ],
+      };
+    },
+    [onAddCard, mapData],
   );
 
   let headerText = scenario;
@@ -358,6 +416,16 @@ const ReportColumn = ({
                   project={project}
                   scenario={scenario}
                   whatif={whatif}
+                  onDeleteCard={
+                    onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                  }
+                />
+              ) : card.type === 'map' ? (
+                <FeatureCardMap
+                  card={card}
+                  project={project}
+                  scenario={scenario}
+                  onOpenBottom={onOpenMapBottom}
                   onDeleteCard={
                     onDeleteCard ? () => onDeleteCard(card.id) : undefined
                   }
@@ -623,5 +691,14 @@ function findExposedSegments(item, layout, side) {
 // room past adjacent tiles.
 const PLUS_BUTTON_HEIGHT_PX = 38;
 const PLUS_BUTTON_MIN_EDGE_PX = PLUS_BUTTON_HEIGHT_PX * 2.5;
+
+// TODO: drop once these layers exist as real map overlays in the
+// backend `/api/map_layers/` response. They show up in the response
+// but have no overlay data, so picking them yields a card with an
+// empty map. Hidden from the Map picker for now.
+const HIDDEN_MAP_LAYERS = new Set([
+  'emission-timeline',
+  'pathway-emission-timeline',
+]);
 
 export default ReportColumn;

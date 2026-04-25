@@ -15,10 +15,12 @@ import { create } from 'zustand';
  *   { type: 'feature',  scenario, feature }
  *
  * Cards are first-class:
- *   { id, type, row, col, w, h, feature, plots: [{ id, plotConfig }] }
+ *   { id, type, row, col, w, h,
+ *     feature?, plots?:[{ id, plotConfig }],   // type='plot'/'kpi'
+ *     category?, layer? }                      // type='map'
  *
  * `type` ('plot' | 'kpi' | 'map') selects which FeatureCard variant
- * renders the card. `plots[]` is only meaningful for 'plot' cards.
+ * renders the card. Body fields are populated based on type.
  *
  * Card positions form a sparse 2D grid (sized in `react-grid-layout`
  * units; see `ReportColumn`). `addCard({ direction })` shifts existing
@@ -37,7 +39,17 @@ export const DEFAULT_CARD_H = 10;
 export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
-const makeCard = ({ row, col, feature, plotConfig, w, h, type }) => ({
+const makeCard = ({
+  row,
+  col,
+  feature,
+  plotConfig,
+  w,
+  h,
+  type,
+  category,
+  layer,
+}) => ({
   id: makeId('card'),
   type: type ?? 'plot',
   row,
@@ -45,6 +57,8 @@ const makeCard = ({ row, col, feature, plotConfig, w, h, type }) => ({
   w: w ?? DEFAULT_CARD_W,
   h: h ?? DEFAULT_CARD_H,
   feature,
+  category,
+  layer,
   plots: plotConfig != null ? [{ id: makeId('plot'), plotConfig }] : [],
 });
 
@@ -69,7 +83,7 @@ const shiftForInsert = (cards, { row, col, direction }) => {
 // other truthy `targetCard` is an actual card to anchor against.
 const insertCardInto = (
   cards,
-  { targetCard, direction, type, feature, plotConfig },
+  { targetCard, direction, type, feature, plotConfig, category, layer },
 ) => {
   let row = 0;
   let col = 0;
@@ -89,7 +103,10 @@ const insertCardInto = (
     }
   }
   const shifted = shiftForInsert(cards, { row, col, direction });
-  return [...shifted, makeCard({ row, col, type, feature, plotConfig })];
+  return [
+    ...shifted,
+    makeCard({ row, col, type, feature, plotConfig, category, layer }),
+  ];
 };
 
 export const useReportsStore = create((set, get) => ({
@@ -229,7 +246,7 @@ export const useReportsStore = create((set, get) => ({
    */
   addCard: (
     columnIndex,
-    { targetCardId, direction, type, feature, plotConfig },
+    { targetCardId, direction, type, feature, plotConfig, category, layer },
   ) => {
     const { getCards, setCards } = get();
     const cards = getCards(columnIndex);
@@ -249,6 +266,8 @@ export const useReportsStore = create((set, get) => ({
       type,
       feature,
       plotConfig,
+      category,
+      layer,
     });
     setCards(columnIndex, next);
     return next[next.length - 1].id;

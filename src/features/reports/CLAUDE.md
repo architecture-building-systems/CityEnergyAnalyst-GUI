@@ -22,15 +22,28 @@ charts with optional y-axis alignment across columns sharing a slot id.
 
 ## Views & cards
 
-Each view owns a list of columns. Columns hold cards; cards hold plots.
+Each view owns a list of columns. Columns hold cards. A card's `type`
+field decides which body component renders it.
 
 ```
-Card { id, row, col, w, h, feature, plots: [{ id, plotConfig }] }
+Card {
+  id, type, row, col, w, h,
+  feature?,                          // 'plot' / 'kpi'
+  plots?: [{ id, plotConfig }],      // 'plot'
+  category?, layer?,                 // 'map'
+}
 ```
+
+| `type`  | Body                | Purpose                                       |
+|---------|---------------------|-----------------------------------------------|
+| `plot`  | `FeatureCardPlot`   | Stacked Plotly plots + "Add a plot" pill      |
+| `kpi`   | `FeatureCardKpi`    | Single KPI strip for the feature              |
+| `map`   | `FeatureCardMap`    | Mirrors the column's primary map widget       |
 
 Card positions are sparse 2D grid coordinates in `react-grid-layout`
-units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `ReportColumn`). The map is a
-virtual tile at `(0, 0)` — feature cards never occupy that slot.
+units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `ReportColumn`). The column's
+primary map is a virtual tile pinned at `(0, 0)`; feature cards never
+occupy that slot.
 
 | View              | Columns                          | Card storage     |
 |-------------------|----------------------------------|------------------|
@@ -41,10 +54,25 @@ virtual tile at `(0, 0)` — feature cards never occupy that slot.
 
 ## Key Patterns
 
+### DO: Dispatch on `card.type` in `ReportColumn`
+```jsx
+{card.type === 'kpi' ? (
+  <FeatureCardKpi card={card} ... />
+) : card.type === 'map' ? (
+  <FeatureCardMap card={card} ... />
+) : (
+  <FeatureCardPlot card={card} ... />
+)}
+```
+Each card variant wraps its body in `FeatureCardShell` (shared chrome:
+white surface + title row with icon, label, and optional Edit / Delete
+buttons). Variants compute their own `title` + `icon` and pass them in.
+
 ### DO: Route card/plot actions through `columnIndex` (`null` for shared)
 ```jsx
 const columnIndex = isFeatureMode ? i : null;
-addCard(columnIndex, { targetCardId, direction, feature, plotConfig });
+addCard(columnIndex, { targetCardId, direction, type, feature, plotConfig,
+                       category, layer });
 addPlot(columnIndex, cardId, plotConfig);
 updatePlot(columnIndex, cardId, plotId, plotConfig);
 removePlot(columnIndex, cardId, plotId); // drops the card if last plot
@@ -52,22 +80,44 @@ applyCardLayouts(columnIndex, updates); // batched drag/resize results
 ```
 The store's `getCards(columnIndex)` / `setCards(columnIndex, next)`
 helpers abstract shared-vs-per-column dispatch so each action body
-doesn't branch on view mode.
+doesn't branch on view mode. `addCard` carries `type` plus the
+type-specific fields; unrelated fields are simply `undefined`.
+
+### DO: Build the `+` picker top level Map / Plot / KPI from live data
+```jsx
+const mapData = useMapLayerCategories();
+items: [
+  { key: 'map', label: 'Map', children: mapData.categories.flatMap(...) },
+  { key: 'plot', label: 'Plot', children: buildPlotMenuItems(...) },
+  { key: 'kpi', label: 'KPI', disabled: true },
+]
+```
+Map's submenu mirrors the backend's category → layer tree from
+`useMapLayerCategories()` — never hardcoded. Plot's submenu is the
+existing nested feature → leaf picker derived from `PLOT_GROUPS`. KPI
+is greyed out until its backend selection module lands.
 
 ### DO: Use `react-grid-layout` for tile placement, not CSS Grid
-Every tile (map + feature cards) is a draggable, resizable child of
-`<GridLayout>`. The library handles collision detection + vertical
-auto-compaction, so cards push neighbours only when they would
-actually overlap, never overlap each other, and unrelated cards stay
-put. Position state (`{x, y, w, h}`) is persisted via
-`onLayoutChange → onApplyLayouts(updates)`.
+Every tile (primary map + feature cards) is a draggable, resizable child
+of `<GridLayout>`. The library handles collision detection + vertical
+auto-compaction, so cards push neighbours only when they would actually
+overlap, never overlap each other, and unrelated cards stay put.
+Position state (`{x, y, w, h}`) is persisted via `onLayoutChange →
+onApplyLayouts(updates)`.
 
-### DO: Pin map tile size with explicit `MAP_DEFAULT_W/H` units
-The map's launch footprint is exactly 6×5 grid units, working out to
-500×280 px at the configured `COL_WIDTH_PX` (70) / `ROW_HEIGHT_PX`
-(40) / `GRID_MARGIN` ([16, 20]). The same `MAP_ANCHOR_W/H` constants
-are exported from `reportsStore.js` so anchor logic in both
-`LaunchView.insertCard` and the store's `insertCardInto` agree.
+### DO: Pin map tile size with explicit `MAP_ANCHOR_W/H` units
+The primary map's launch footprint is exactly 6×5 grid units, working
+out to 500×280 px at the configured `COL_WIDTH_PX` (70) /
+`ROW_HEIGHT_PX` (40) / `GRID_MARGIN` ([16, 20]). The same
+`MAP_ANCHOR_W/H` constants are exported from `reportsStore.js` so the
+"insert next to MAP" anchor logic in `LaunchView.insertCard` and the
+store's `insertCardInto` agree with the column's grid math.
+
+### DO: Add a `DRAG_BUFFER_COLS` to `effectiveCols`
+Without spare columns past the rightmost tile, react-grid-layout's
+`cols === item.x + item.w` constraint pins the rightmost card east-side.
+`DRAG_BUFFER_COLS` (= `CARD_MIN_W`) gives every card at least one
+card-min-width's worth of slack to drag east; the canvas grows with it.
 
 ### DO: Use the absolute position strategy (no transform)
 ```jsx
@@ -89,27 +139,79 @@ first measurement.
 ### DO: Render the map toolbar with inline-styled buttons, not `MapControls`
 `ReportMap` defines `InlineLayerToggle` / `InlineExtrudeButton` /
 `InlineResetCameraButton` / `InlineResetCompassButton` locally with
-fully explicit inline styles. Reusing the main viewport's
-`MapControls` component left first-paint races where `Toolbar.css`'s
-40×40 / 8 px-padded defaults beat the Reports-scoped overrides and the
-icons would land in the NW of the frame until a later layout pass
-settled. Inline styles on a unique wrapper make the cascade
-irrelevant.
+fully explicit inline styles. Reusing the main viewport's `MapControls`
+left first-paint races where `Toolbar.css`'s 40×40 / 8 px-padded
+defaults beat the Reports-scoped overrides and the icons would land in
+the NW of the frame until a later layout pass settled. Inline styles
+on a unique wrapper make the cascade irrelevant.
 
 ### DO: Initialise layer visibility + colour mode in `ReportMap`
-`useMapStore` is a singleton shared with the main viewport. When
-Reports is the entry point, no other component has flipped layer
-visibility on yet — so `ReportMap` itself runs the first-load init
-(visibility = true for every key in `data`, colour mode =
-CONSTRUCTION_STANDARD) on its own first render. Skip these and the
-toolbar appears but the map stays blank.
+`useMapStore` is a singleton shared with the main viewport. When Reports
+is the entry point, no other component has flipped layer visibility on
+yet — so `ReportMap` itself runs the first-load init (visibility = true
+for every key in `data`, colour mode = CONSTRUCTION_STANDARD) on its
+own first render. Skip these and the toolbar appears but the map stays
+blank.
 
 ### DO: Always seed plots with a `plotConfig.script`
-Every plot on the canvas has a script; `useFetchCustomPlot` is the
-only path. The legacy `useFetchReportPlot` (feature-based) was
-removed because no UI path could reach it. Keep it that way — adding
-a plot always opens `PlotEditModal`, which never returns without a
-populated `plotConfig`.
+Every plot on the canvas has a script; `useFetchCustomPlot` is the only
+path. The legacy `useFetchReportPlot` (feature-based) was removed
+because no UI path could reach it. Adding a plot always opens
+`PlotEditModal`, which never returns without a populated `plotConfig`.
+
+### DO: Render Map cards with the same `<ReportMap>` widget as the primary tile
+```jsx
+const FeatureCardMap = ({ card, project, scenario, ... }) => {
+  // mount: push card.category + card.layer into the singleton stores
+  return (
+    <FeatureCardShell title={layer.label} icon={iconMap[category]} ...>
+      <ReportMap project={project} scenario={scenario} />
+    </FeatureCardShell>
+  );
+};
+```
+The card mirrors the primary map's chrome (4-button toolbar, DeckGL
+overlay) so a Map card visually reads as another map tile bound to a
+specific layer. Path-C limitation: `useMapStore` and
+`useMapCategoryStore` are singletons, so multiple Map cards in one
+column will render the same active layer (last-mounted wins).
+Per-card isolated state is a deeper refactor.
+
+### DO: Auto-grow Plot cards to fit chart natural heights
+```jsx
+// FeatureCardPlot accumulates per-plot natural heights reported by
+// ReportPlot's `onNaturalHeight(heightPx)` callback, sums + chrome,
+// reports upward as `onPreferredHeight(cardId, totalPx)`.
+// ReportColumn keeps a Map<cardId, lastReported> so it grows whenever
+// a fresh report exceeds the previous, never on equal/smaller reports
+// (so user-driven shrinks aren't undone by re-renders).
+```
+Sankey-style figures with backend-baked pixel heights drive the growth.
+Charts without explicit `layout.height` report nothing and autosize
+inside whatever the user has set.
+
+### DO: Fit Plotly figures to their container on resize
+```jsx
+// ReportPlot — ResizeObserver skips its first fire (initial mount),
+// then on every later fire calls `fitPlotToParent` per
+// `.plotly-graph-div`: clears inline width/height, calls
+// `Plotly.relayout({ width, height })` with the parent's measured
+// pixel dims, then `Plots.resize(div)`.
+```
+`autosize: true` alone doesn't reflow Sankey/parallel-coords/treemap
+figures the backend serialised with `update_layout(autosize=False)`.
+Writing explicit pixel dimensions does. Skipping the first RO fire
+is what lets the auto-grow request land before the chart gets crammed
+into the default-size card.
+
+### DO: Open `MapLayerProperties` at the bottom for both Plot and Map flows
+`ReportsPage` carries two parallel switches: `drawer` (plot-tool drawer
+open) and `mapBottomOpen` (map-card flow). Either condition opens the
+bottom row hosting `MapLayerPropertiesCard`. Plot edit pushes the
+singleton via `PlotEditModal`'s `scriptToMapLayer` →
+`findCategoryForLayer`. Map cards push the singleton on mount and on
+edit. The bottom card renders a close button only in map-only mode
+(plot drawer has its own close).
 
 ### DO: Let the canvas hug its content
 ```jsx
@@ -121,16 +223,44 @@ const canvasStyle = {
   height: 'fit-content',
 };
 ```
-The right/bottom padding is sized so the absolutely-positioned `+`
-buttons hanging off the map's edges don't touch the canvas border.
-`fit-content` stops `ReportsPage`'s grid cell from stretching the
-canvas to full row height.
+Right/bottom padding is sized so the absolutely-positioned `+` buttons
+hanging off the map's edges don't touch the canvas border. `fit-content`
+stops `ReportsPage`'s grid cell from stretching the canvas to full row
+height.
+
+### DO: Sticky title row so headers stay visible on scroll
+```jsx
+const titleRowStyle = {
+  position: 'sticky',
+  top: 0,
+  zIndex: 4,
+  background: '#fff',
+  paddingTop: 16,
+  paddingBottom: 8,
+};
+```
+Pinned to the canvas cell's scroll viewport. `paddingTop` keeps the
+title card off the canvas card's top edge when stuck (otherwise the
+two share `y = 0` and the title kisses the rounded corner). The white
+background hides grid content scrolling underneath.
+
+### DON'T: Add `overflowX: auto` to `columnsRowStyle`
+A horizontal-scroll ancestor between the sticky title row and the
+canvas cell would intercept sticky's "nearest scrolling ancestor"
+lookup and break the vertical pin. Horizontal overflow falls through
+to the canvas cell, which already has `overflow: auto` for both axes.
+
+### DO: Place perimeter `+` buttons on exposed edges only
+For each tile, `computeExposure(layout)` walks the right and bottom
+edges, collects the lateral intervals where other tiles touch, and
+finds the longest *exposed* segment (any gap is an exposed segment).
+The `+` button only renders when the exposed segment is at least
+`PLUS_BUTTON_MIN_EDGE_PX` (~95 px = 2.5 × button height) and is
+positioned at the segment's centre as a `0..1` fraction of the edge.
+Cramped slivers and fully-blocked edges hide the button outright.
 
 ### DO: Reuse the main viewport's `<Tool>` for the plot form
 ```jsx
-import Tool from 'features/tools/components/Tools/Tool';
-import { PlotChoices, PlotTool } from 'features/project/components/Cards/plot-tool';
-
 <PlotTool key={selectedScript} script={selectedScript} onRunOverride={...} />
 ```
 `<Tool>` renders the same header, parameter list, and Run button as
@@ -139,13 +269,6 @@ the main viewport's tool card. Reports overrides Run via
 with validated form values instead of creating a job, and the Save /
 Reset buttons hide. Picker phase uses `<PlotChoices>` for visual
 parity.
-
-### DO: Drive the bottom card from the drawer's selected script
-`PlotEditModal` keeps the shared `mapStore` selected layer in sync
-with the plot being edited (via `scriptToMapLayer` →
-`findCategoryForLayer`) so `MapLayerPropertiesCard` in the bottom
-card renders the parameter form for that exact layer. Cleared on
-drawer close.
 
 ### DO: Use `cea-template-select` for the in-card "Add a plot" pill
 ```jsx
@@ -159,14 +282,15 @@ drawer close.
 ```
 Same black-outlined pill the pathway builder uses. Picking a leaf
 script seeds `PlotEditModal` with `{ script }` so it opens directly on
-the parameter form. With no quick-pick options, clicking falls back
-to opening the full `<PlotChoices>` picker.
+the parameter form. With no quick-pick options, clicking falls back to
+opening the full `<PlotChoices>` picker.
 
 ### DO: Derive quick-pick options from `PLOT_GROUPS`
-`FeatureCard.findFamilyForFeature` walks `PLOT_GROUPS` to find the
-group/subgroup that owns a card's `feature` key, then lists every
-sibling key. Adding a new plot to an existing group surfaces it
-automatically — no parallel feature→plots dictionary to maintain.
+`findFamilyForFeature` (in `featureCardCommon.jsx`) walks `PLOT_GROUPS`
+to find the group/subgroup that owns a card's `feature` key, then
+`getQuickPickOptions` lists every sibling key. Adding a new plot to an
+existing group surfaces it automatically — no parallel feature→plots
+dictionary to maintain.
 
 ### DO: Stage plot configs — commit only on Run
 `ReportsPage` owns drawer state. Views call
@@ -249,6 +373,8 @@ axes.
 ### DON'T: Ship disabled-but-visible buttons
 A perma-disabled button reads as "the feature is broken". Hide the
 control until the feature lands, or wrap a "Coming soon" tooltip.
+Exception: the `+` picker's KPI top-level item is intentionally greyed
+out as a structural placeholder for the future selection module.
 
 ### DON'T: Persist `LaunchView` state into the store
 Launch is a throwaway preview — its cards reset the moment a real
@@ -261,24 +387,31 @@ source of truth for card config that the comparison views never read.
 - `hooks/useReportsData.js` - React Query wrappers for `/api/reports/*`.
 - `hooks/useYAxisAlignment.js` - Debounced Plotly y-axis unifier.
 - `components/ReportsPage.jsx` - Top-level grid (nav + canvas + bottom
-  + plot tool); owns drawer state.
+  + plot tool); owns drawer + map-bottom state.
 - `components/NavigatorCard.jsx` - Top-bar navigator (Return, Start
   Over, mode label).
-- `components/BottomCard.jsx` - Map-layer properties form; visible
-  only while the drawer is open.
+- `components/BottomCard.jsx` - Map-layer properties form, opened by
+  Plot drawer or Map card.
 - `components/LaunchView.jsx` - Single-column launch entry + 3 mode
   buttons; owns its own card list locally.
 - `components/ComparisonView.jsx` - Multi-column layout with
   per-column dividers and the "+ column" button.
-- `components/ReportColumn.jsx` - Column shell — title row, then a
-  `<GridLayout>` containing the map tile + one `FeatureCard` per
-  card.
+- `components/ReportColumn.jsx` - Column shell — sticky title row,
+  then `<GridLayout>` containing the primary map tile and the
+  card-type-dispatched FeatureCard variants. Owns the perimeter `+`
+  button geometry.
 - `components/ReportMap.jsx` - Per-column map tile (shared scenario
   data via `useInputs`) with an inline-rendered toolbar.
-- `components/FeatureCard.jsx` - Title + KPI strip + stacked
-  `PlotSlotCard`s + an "Add a plot" pill.
-- `components/PlotSlotCard.jsx` - One plot's caption + Edit/Reset/
-  Delete trio + the `<ReportPlot>` itself.
+- `components/featureCardCommon.jsx` - `FeatureCardShell` (shared
+  chrome) + `findFamilyForFeature` + shared styles.
+- `components/FeatureCardPlot.jsx` - Plot-only card; vertically-stacked
+  `PlotSlotCard`s + "Add a plot" pill + natural-height aggregator.
+- `components/FeatureCardKpi.jsx` - KPI-only card; one KPI strip per
+  feature.
+- `components/FeatureCardMap.jsx` - Map-only card; mirrors the primary
+  map widget for a chosen category + layer.
+- `components/PlotSlotCard.jsx` - One plot's caption + Edit / Delete
+  trio + the `<ReportPlot>` itself.
 - `components/ReportPlot.jsx` - Fetches custom-plot HTML and runs
   the embedded Plotly scripts; lifts the chart title for the slot
   caption.
@@ -290,7 +423,8 @@ source of truth for card config that the comparison views never read.
 ## Icons & buttons
 - Use icons from `assets/icons` (same set as pathway). Avoid
   `@ant-design/icons` — the only acceptable exceptions are
-  `LeftOutlined` (no pathway equivalent for a back arrow) and
-  `LoadingOutlined` (pairs with antd `Spin`).
+  `LeftOutlined` (no pathway equivalent for a back arrow),
+  `LoadingOutlined` (pairs with antd `Spin`), and `CloseOutlined`
+  (close button on `BottomCard`).
 - Use `CircleActionButton` for any blue-circle + label control so new
   call sites stay visually consistent with `LaunchView`.

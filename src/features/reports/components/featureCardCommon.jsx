@@ -1,14 +1,12 @@
-import { useMemo } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
-import { BinAnimationIcon } from 'assets/icons';
+import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 
 import { PLOT_GROUPS } from 'features/plots/constants';
 
 /**
  * Walk PLOT_GROUPS to find the group/subgroup that owns a given
- * feature key. Used by every FeatureCard variant to pick a label and
- * icon for the title row. Subgroups inherit their parent group's
- * icon — there's no per-subgroup icon in PLOT_GROUPS.
+ * feature key. Used by Plot/KPI cards to label their title rows.
+ * Subgroups inherit their parent group's icon.
  */
 export function findFamilyForFeature(feature) {
   if (!feature) return null;
@@ -29,51 +27,64 @@ export function findFamilyForFeature(feature) {
 
 /**
  * Shared FeatureCard chrome — fills the rgl tile with the white
- * rounded surface, renders the title row (family icon + label +
- * delete button), and slots `children` underneath. Each card type
- * (Plot, KPI, Map) wraps its body in this shell.
+ * rounded surface, renders the title row (icon + label + optional
+ * Edit / Delete buttons), and slots `children` underneath. Each
+ * card type (Plot, KPI, Map) computes its own title + icon and
+ * wraps its body here.
  */
-export const FeatureCardShell = ({ feature, onDeleteCard, children }) => {
-  const family = useMemo(() => findFamilyForFeature(feature), [feature]);
-  const title = family?.label || feature;
-  return (
-    <div style={cardStyle}>
-      <div style={titleSectionStyle}>
-        <div style={featureTitleStyle}>
-          {family?.icon && (
-            <family.icon
-              style={{ fontSize: 18, color: '#555', flexShrink: 0 }}
-              aria-hidden
-            />
-          )}
-          <span>{title}</span>
-        </div>
-        {onDeleteCard && <TitleDeleteButton onClick={onDeleteCard} />}
+export const FeatureCardShell = ({
+  title,
+  icon: Icon,
+  onEdit,
+  onDeleteCard,
+  children,
+}) => (
+  <div style={cardStyle}>
+    <div style={titleSectionStyle}>
+      <div style={featureTitleStyle}>
+        {Icon && (
+          <Icon
+            style={{ fontSize: 18, color: '#555', flexShrink: 0 }}
+            aria-hidden
+          />
+        )}
+        <span>{title}</span>
       </div>
-      {children}
+      {(onEdit || onDeleteCard) && (
+        <div className="cea-card-icon-button-container">
+          {onEdit && (
+            <Tooltip title="Edit" placement="bottom">
+              <Button
+                type="text"
+                icon={<InputEditorIcon />}
+                onClick={onEdit}
+                aria-label="Edit card"
+              />
+            </Tooltip>
+          )}
+          {onDeleteCard && (
+            <Popconfirm
+              title="Delete this card?"
+              description="All content inside this card will be removed."
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+              onConfirm={onDeleteCard}
+            >
+              <Tooltip title="Delete card" placement="bottom">
+                <Button
+                  type="text"
+                  icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
+                  aria-label="Delete card"
+                />
+              </Tooltip>
+            </Popconfirm>
+          )}
+        </div>
+      )}
     </div>
-  );
-};
-
-const TitleDeleteButton = ({ onClick }) => (
-  <Popconfirm
-    title="Delete this card?"
-    description="All content inside this card will be removed."
-    okText="Delete"
-    cancelText="Cancel"
-    okButtonProps={{ danger: true }}
-    onConfirm={onClick}
-  >
-    <div className="cea-card-icon-button-container">
-      <Tooltip title="Delete card" placement="bottom">
-        <Button
-          type="text"
-          icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
-          aria-label="Delete card"
-        />
-      </Tooltip>
-    </div>
-  </Popconfirm>
+    {children}
+  </div>
 );
 
 // Fills the tile assigned by react-grid-layout — no own min/max,

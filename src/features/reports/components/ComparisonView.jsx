@@ -10,7 +10,7 @@ import ReportColumn from './ReportColumn';
 import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
 
-const ComparisonView = ({ onOpenDrawer }) => {
+const ComparisonView = ({ onOpenDrawer, onOpenMapBottom }) => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
@@ -55,24 +55,37 @@ const ComparisonView = ({ onOpenDrawer }) => {
     return target?.feature || 'demand';
   };
 
-  const scenarioForColumn = (columnIndex) => {
-    if (columnIndex != null) {
-      return columns[columnIndex]?.scenario || scenario;
-    }
-    return columns[0]?.scenario || scenario;
-  };
-
   // ── Drawer open handlers ──────────────────────────────────────
 
   const handleAddCard =
     (colIndex) =>
-    ({ targetCardId, direction, type = 'plot', feature, script }) => {
+    ({
+      targetCardId,
+      direction,
+      type = 'plot',
+      feature,
+      script,
+      category,
+      layer,
+    }) => {
       const columnIndex = getColumnIndexFor(colIndex);
+      // Map cards skip the plot-tool drawer — insert the card and
+      // open the page-level MapLayerProperties bottom card so the
+      // user can adjust the layer's parameters there.
+      if (type === 'map') {
+        addCard(columnIndex, {
+          targetCardId,
+          direction,
+          type: 'map',
+          category,
+          layer,
+        });
+        onOpenMapBottom?.();
+        return;
+      }
       const resolvedFeature =
         feature || inferFeature(columnIndex, targetCardId);
       onOpenDrawer({
-        mode: 'add',
-        scenario: scenarioForColumn(columnIndex),
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) =>
           addCard(columnIndex, {
@@ -90,8 +103,6 @@ const ComparisonView = ({ onOpenDrawer }) => {
     (cardId, script = null) => {
       const columnIndex = getColumnIndexFor(colIndex);
       onOpenDrawer({
-        mode: 'add',
-        scenario: scenarioForColumn(columnIndex),
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
       });
@@ -104,8 +115,6 @@ const ComparisonView = ({ onOpenDrawer }) => {
       cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
         ?.plotConfig || null;
     onOpenDrawer({
-      mode: 'edit',
-      scenario: scenarioForColumn(columnIndex),
       plotConfig: existing,
       onSave: (plotConfig) =>
         updatePlot(columnIndex, cardId, plotId, plotConfig),
@@ -175,6 +184,7 @@ const ComparisonView = ({ onOpenDrawer }) => {
                   onApplyLayouts={(updates) =>
                     applyCardLayouts(getColumnIndexFor(i), updates)
                   }
+                  onOpenMapBottom={onOpenMapBottom}
                 />
               </div>
             ))}

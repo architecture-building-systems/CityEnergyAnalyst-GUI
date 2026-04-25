@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from 'antd';
 
 import { PLOT_LABELS, VIEW_PLOT_RESULTS } from 'features/plots/constants';
@@ -58,9 +58,14 @@ const FeatureCardPlot = ({
   }, [plotHeights, card.id, onPreferredHeight]);
 
   const quickPickOptions = getQuickPickOptions(feature);
+  const family = useMemo(() => findFamilyForFeature(feature), [feature]);
 
   return (
-    <FeatureCardShell feature={feature} onDeleteCard={onDeleteCard}>
+    <FeatureCardShell
+      title={family?.label || feature}
+      icon={family?.icon}
+      onDeleteCard={onDeleteCard}
+    >
       {(plots.length > 0 || onAddPlot) && (
         <>
           <div style={sectionDividerStyle} />

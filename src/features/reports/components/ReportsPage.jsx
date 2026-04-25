@@ -24,15 +24,25 @@ import PlotEditModal from './PlotEditModal';
  * Drawer state lives here (not in a view) so the tool column can
  * render at page level. Views call `openDrawer({ plotConfig, onSave })`
  * with an `onSave` closure that captures their own state.
+ *
+ * `mapBottomOpen` is a parallel switch that opens the bottom row
+ * for Map cards — Map cards have no right-drawer (no plot-tool form)
+ * but still want `MapLayerPropertiesCard` at the bottom. Both
+ * conditions feed the same `bottomOpen` so the row animates the
+ * same way regardless of which card type triggered it.
  */
 const ReportsPage = () => {
   const view = useReportsStore((s) => s.view);
 
   // drawer = { plotConfig, onSave } | null
   const [drawer, setDrawer] = useState(null);
+  const [mapBottomOpen, setMapBottomOpen] = useState(false);
 
   const openDrawer = useCallback((config) => setDrawer(config), []);
   const closeDrawer = useCallback(() => setDrawer(null), []);
+
+  const openMapBottom = useCallback(() => setMapBottomOpen(true), []);
+  const closeMapBottom = useCallback(() => setMapBottomOpen(false), []);
 
   const handleDrawerSave = useCallback(
     (plotConfig) => {
@@ -43,6 +53,11 @@ const ReportsPage = () => {
   );
 
   const plotToolOpen = drawer != null;
+  const bottomOpen = plotToolOpen || mapBottomOpen;
+  // Show the bottom card's close button only when the bottom is
+  // open *for a map card* — the plot-tool drawer has its own close,
+  // and closing the drawer already collapses the bottom row.
+  const showBottomClose = mapBottomOpen && !plotToolOpen;
 
   return (
     <div
@@ -51,10 +66,9 @@ const ReportsPage = () => {
         gridTemplateColumns: plotToolOpen
           ? `1fr ${PLOT_TOOL_WIDTH}px`
           : '1fr 0px',
-        // Bottom row hosts the map-layer properties card while a
-        // plot is being edited. `auto` sizes to its form's height;
-        // 0 when closed so the canvas reclaims the space.
-        gridTemplateRows: plotToolOpen
+        // `auto` sizes the bottom row to its form's height while
+        // open; 0 when closed so the canvas reclaims the space.
+        gridTemplateRows: bottomOpen
           ? `${NAV_HEIGHT}px 1fr auto`
           : `${NAV_HEIGHT}px 1fr 0px`,
       }}
@@ -65,13 +79,23 @@ const ReportsPage = () => {
 
       <div style={canvasCellStyle}>
         {view === 'launch' ? (
-          <LaunchView onOpenDrawer={openDrawer} />
+          <LaunchView
+            onOpenDrawer={openDrawer}
+            onOpenMapBottom={openMapBottom}
+          />
         ) : (
-          <ComparisonView onOpenDrawer={openDrawer} />
+          <ComparisonView
+            onOpenDrawer={openDrawer}
+            onOpenMapBottom={openMapBottom}
+          />
         )}
       </div>
 
-      <div style={bottomCellStyle}>{plotToolOpen && <BottomCard />}</div>
+      <div style={bottomCellStyle}>
+        {bottomOpen && (
+          <BottomCard showClose={showBottomClose} onClose={closeMapBottom} />
+        )}
+      </div>
 
       {/* Plot tool column. Always rendered so the slide-in transition
           can play; visibility + interactivity are controlled by the

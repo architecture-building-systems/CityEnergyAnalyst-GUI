@@ -14,15 +14,16 @@ import ReportColumn from './ReportColumn';
 import ScenarioPicker from './ScenarioPicker';
 
 /**
- * Launch view — Reports Mode entry. State is local (not store-
- * backed); the card shape matches the store
- * (`{ id, row, col, w, h, feature, plots[] }`) so promoting a draft
- * to a comparison view is a straight assignment when the moment
- * comes.
+ * Launch view — Reports Mode entry. State is local (not store-backed);
+ * the card shape matches the store (`{ id, type, row, col, w, h,
+ * feature?, plots?, category?, layer? }`) so promoting a draft to a
+ * comparison view is a straight assignment when the moment comes.
  *
- * Drawer state lives in `ReportsPage`; `onOpenDrawer` opens it.
+ * Drawer + bottom-card state live in `ReportsPage`; `onOpenDrawer`
+ * opens the plot-tool drawer (Plot cards), `onOpenMapBottom` opens
+ * the `MapLayerPropertiesCard` row at the bottom (Map cards).
  */
-const LaunchView = ({ onOpenDrawer }) => {
+const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
@@ -51,7 +52,15 @@ const LaunchView = ({ onOpenDrawer }) => {
   };
 
   const insertCard = useCallback(
-    ({ targetCardId, direction, type = 'plot', feature, plotConfig }) => {
+    ({
+      targetCardId,
+      direction,
+      type = 'plot',
+      feature,
+      plotConfig,
+      category,
+      layer,
+    }) => {
       setCards((prev) => {
         // `targetCardId === 'MAP'` is the sentinel from the map
         // tile's edge `+` buttons: right → just past the map,
@@ -89,6 +98,8 @@ const LaunchView = ({ onOpenDrawer }) => {
             w: DEFAULT_CARD_W,
             h: DEFAULT_CARD_H,
             feature,
+            category,
+            layer,
             plots: plotConfig ? [{ id: makeId('plot'), plotConfig }] : [],
           },
         ];
@@ -110,12 +121,26 @@ const LaunchView = ({ onOpenDrawer }) => {
   // ── Drawer open handlers ───────────────────────────────────
 
   const handleAddCard = useCallback(
-    ({ targetCardId, direction, type = 'plot', feature, script }) => {
+    ({
+      targetCardId,
+      direction,
+      type = 'plot',
+      feature,
+      script,
+      category,
+      layer,
+    }) => {
+      // Map cards skip the plot-tool drawer — insert the card and
+      // open the page-level MapLayerProperties bottom card so the
+      // user can adjust the layer's parameters there.
+      if (type === 'map') {
+        insertCard({ targetCardId, direction, type: 'map', category, layer });
+        onOpenMapBottom?.();
+        return;
+      }
       const resolvedFeature =
         feature || inferFeatureForTarget(cards, targetCardId);
       onOpenDrawer({
-        mode: 'add',
-        scenario,
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) =>
           insertCard({
@@ -127,14 +152,12 @@ const LaunchView = ({ onOpenDrawer }) => {
           }),
       });
     },
-    [cards, insertCard, onOpenDrawer, scenario],
+    [cards, insertCard, onOpenDrawer, onOpenMapBottom],
   );
 
   const handleAddPlotToCard = useCallback(
     (cardId, script = null) => {
       onOpenDrawer({
-        mode: 'add',
-        scenario,
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) =>
           setCards((prev) =>
@@ -149,7 +172,7 @@ const LaunchView = ({ onOpenDrawer }) => {
           ),
       });
     },
-    [onOpenDrawer, scenario],
+    [onOpenDrawer],
   );
 
   const handleEditPlot = useCallback(
@@ -157,8 +180,6 @@ const LaunchView = ({ onOpenDrawer }) => {
       const card = cards.find((c) => c.id === cardId);
       const existing = card?.plots.find((p) => p.id === plotId)?.plotConfig;
       onOpenDrawer({
-        mode: 'edit',
-        scenario,
         plotConfig: existing || null,
         onSave: (plotConfig) =>
           setCards((prev) =>
@@ -175,7 +196,7 @@ const LaunchView = ({ onOpenDrawer }) => {
           ),
       });
     },
-    [cards, onOpenDrawer, scenario],
+    [cards, onOpenDrawer],
   );
 
   const handleDeletePlot = useCallback((cardId, plotId) => {
@@ -229,6 +250,7 @@ const LaunchView = ({ onOpenDrawer }) => {
           onAddPlotToCard={handleAddPlotToCard}
           onAddCard={handleAddCard}
           onApplyLayouts={applyCardLayouts}
+          onOpenMapBottom={onOpenMapBottom}
           onAddColumn={handleCompareScenarios}
           addColumnTooltip="Add Scenario to compare"
         />

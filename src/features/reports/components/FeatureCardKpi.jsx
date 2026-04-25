@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 
 import { useFetchSummary } from '../hooks/useReportsData';
 import KpiStrip from './KpiStrip';
-import { FeatureCardShell, sectionDividerStyle } from './featureCardCommon';
+import {
+  FeatureCardShell,
+  findFamilyForFeature,
+  sectionDividerStyle,
+} from './featureCardCommon';
 
 /**
  * KPI-only feature card: family title + a single KPI strip for the
@@ -29,9 +33,14 @@ const FeatureCardKpi = ({ card, project, scenario, whatif, onDeleteCard }) => {
   );
 
   const kpiProps = useMemo(() => buildKpiProps(summary), [summary]);
+  const family = useMemo(() => findFamilyForFeature(feature), [feature]);
 
   return (
-    <FeatureCardShell feature={feature} onDeleteCard={onDeleteCard}>
+    <FeatureCardShell
+      title={family?.label || feature}
+      icon={family?.icon}
+      onDeleteCard={onDeleteCard}
+    >
       <div style={sectionDividerStyle} />
       <div style={kpiSectionStyle}>
         <KpiStrip
