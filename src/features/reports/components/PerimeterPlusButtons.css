@@ -1,0 +1,106 @@
+/* Perimeter `+` expansion: each option pill drops/slides in with a
+ * tiny fade + translate. Staggered so the column / row reads as a
+ * cascade from the `+` button's location. `backwards` keeps each
+ * pill invisible during its delay so they don't pop in early.
+ *
+ * Two flavours: `-down` for the right-edge `+` (column → cascades
+ * downward) and `-right` for the bottom-edge `+` (row → cascades
+ * eastward). */
+@keyframes cea-report-expand-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes cea-report-expand-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+.cea-report-expand-item-down {
+  animation: cea-report-expand-in-down 180ms ease-out backwards;
+}
+.cea-report-expand-item-right {
+  animation: cea-report-expand-in-right 180ms ease-out backwards;
+}
+.cea-report-expand-item-down:nth-child(2),
+.cea-report-expand-item-right:nth-child(2) {
+  animation-delay: 60ms;
+}
+.cea-report-expand-item-down:nth-child(3),
+.cea-report-expand-item-right:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+/* Collapse: dedicated keyframes (NOT `animation-direction: reverse`
+ * on the expand keyframe — sharing the animation name made the
+ * browser treat the direction flip as an update to the already-
+ * finished expand animation, snapping the pill straight to the
+ * reverse end frame without re-running the timeline). The
+ * `from`/`to` here are literally the expand keyframes flipped, so
+ * the visual trajectory is a true retreat into the `+` slot.
+ * Stagger inverts the cascade — the FARTHEST pill (3rd) leaves
+ * first, the closest (1st = the `+`'s old spot) leaves last.
+ * `forwards` holds the final invisible state until the parent
+ * unmounts. */
+@keyframes cea-report-collapse-out-down {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.92);
+  }
+}
+@keyframes cea-report-collapse-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.92);
+  }
+}
+.cea-report-collapse-item-down {
+  animation: cea-report-collapse-out-down 180ms ease-in forwards;
+}
+.cea-report-collapse-item-right {
+  animation: cea-report-collapse-out-right 180ms ease-in forwards;
+}
+.cea-report-collapse-item-down:nth-child(2),
+.cea-report-collapse-item-right:nth-child(2) {
+  animation-delay: 60ms;
+}
+.cea-report-collapse-item-down:nth-child(1),
+.cea-report-collapse-item-right:nth-child(1) {
+  animation-delay: 120ms;
+}
+
+/* `+` reappearance after a collapse — small fade + scale-up so the
+ * pill doesn't pop in abruptly when the panel finishes retracting.
+ * Same animation runs on first mount; it's subtle enough not to be
+ * distracting. */
+@keyframes cea-report-plus-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.cea-report-plus-fade-in {
+  animation: cea-report-plus-fade-in 180ms ease-out backwards;
+}

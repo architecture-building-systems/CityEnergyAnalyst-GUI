@@ -47,6 +47,10 @@ import ProIcon from './pro.svg';
 import ReportsIcon from './reports.svg';
 import TimelineIcon from './timeline.svg';
 
+import MapCardIcon from './map.svg';
+import KpiCardIcon from './kpi.svg';
+import PlotCardIcon from './plot.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -87,4 +91,7 @@ export {
   ReportsIcon,
   TimelineIcon,
   SupplySystemIcon,
+  MapCardIcon,
+  KpiCardIcon,
+  PlotCardIcon,
 };

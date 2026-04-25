@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Button, Dropdown, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -24,6 +24,7 @@ import ReportMap from './ReportMap';
 import FeatureCardPlot from './FeatureCardPlot';
 import FeatureCardKpi from './FeatureCardKpi';
 import FeatureCardMap from './FeatureCardMap';
+import { PerimeterPlusButtons, computeExposure } from './PerimeterPlusButtons';
 import './ReportColumn.css';
 
 // Grid sizing. Fixed colWidth × ROW_HEIGHT × GRID_MARGIN gives the
@@ -59,9 +60,8 @@ const absolutePositionStrategy = {
   calcStyle: setTopLeft,
 };
 
-// Build the antd Dropdown `menu.items` tree for "Add a feature card",
-// derived from PLOT_GROUPS / PLOT_LABELS / VIEW_PLOT_RESULTS so it
-// stays in lock-step with the main viewport's PlotChoices picker.
+// Render helper: label cell with a leading icon. Shared by Plot
+// family headers and Map category headers in the `+` picker.
 const labelWithIcon = (Icon, text) => (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
     {Icon && <Icon style={{ fontSize: 16 }} />}
@@ -69,10 +69,11 @@ const labelWithIcon = (Icon, text) => (
   </span>
 );
 
-const topLabel = (group) => labelWithIcon(group.icon, group.label);
-
 const nestedLabel = (text) => `- ${text}`;
 
+// Build the antd `menu.items` tree for the Plot section of the `+`
+// picker, derived from PLOT_GROUPS / PLOT_LABELS / VIEW_PLOT_RESULTS
+// so it stays in lock-step with the main viewport's PlotChoices.
 function buildPlotMenuItems(onPick) {
   const plotLeaf = (key, familyFirstKey) => {
     const script = VIEW_PLOT_RESULTS[key];
@@ -94,13 +95,13 @@ function buildPlotMenuItems(onPick) {
     if (group.subgroups) {
       return {
         key: group.label,
-        label: topLabel(group),
+        label: labelWithIcon(group.icon, group.label),
         children: group.subgroups.map(subgroupLevel),
       };
     }
     return {
       key: group.label,
-      label: topLabel(group),
+      label: labelWithIcon(group.icon, group.label),
       children: group.keys
         .map((k) => plotLeaf(k, group.keys[0]))
         .filter(Boolean),
@@ -266,31 +267,39 @@ const ReportColumn = ({
   );
 
   // For each tile, decide whether its right and bottom edges sit on
-  // the perimeter of the union of all tiles. A `+` button only renders
-  // on an exposed edge — interior edges (where another tile is
-  // immediately adjacent) stay clean.
-  const exposureMap = useMemo(() => computeExposure(layout), [layout]);
+  // the perimeter of the union of all tiles. A `+` button only
+  // renders on an exposed edge — interior edges (where another tile
+  // is immediately adjacent) stay clean. Pitch values let the
+  // helper convert grid units to pixels for the size threshold.
+  const exposureMap = useMemo(
+    () =>
+      computeExposure(layout, {
+        rowPitchPx: ROW_HEIGHT_PX + GRID_MARGIN[1],
+        colPitchPx: COL_WIDTH_PX + GRID_MARGIN[0],
+      }),
+    [layout],
+  );
 
   // Map menu mirrors the backend's map-layer category tree (same
   // tree the main viewport's MapLayerCategories uses) — never
   // hardcoded, just live data shaped into nested antd menu items.
   const mapData = useMapLayerCategories();
 
-  // Card-type picker for a `+` affordance. Top-level Map / Plot /
-  // KPI selection. Map expands to the live category tree; Plot
-  // expands to the feature → leaf picker. KPI is disabled until its
-  // backend selection module lands.
+  // Build the per-section menus that the `+` expanded panel hangs
+  // off. Returns separate `{ mapItems, plotItems }` so each icon in
+  // the panel can be its own sub-Dropdown trigger. Map menu mirrors
+  // the live `useMapLayerCategories` tree (category → layer); Plot
+  // menu mirrors `PLOT_GROUPS` (family → optional subgroup → leaf).
   //
-  // A category's per-layer submenu only appears when it actually
+  // A map category's per-layer submenu only appears when it actually
   // hosts multiple layers (today: only LCA). Single-layer categories
-  // collapse to one click that adds the card directly with that
-  // sole layer — the submenu would be redundant.
-  const buildAddCardMenu = useCallback(
+  // collapse to one click that adds the card directly.
+  const buildSectionMenus = useCallback(
     (targetCardId, direction) => {
-      if (!onAddCard) return null;
+      if (!onAddCard) return { mapItems: [], plotItems: [] };
       const onPickMap = (category, layer) =>
         onAddCard({ targetCardId, direction, type: 'map', category, layer });
-      const mapCategoryItems =
+      const mapItems =
         mapData?.categories?.flatMap((cat) => {
           const label = labelWithIcon(iconMap[cat.name], cat.label || cat.name);
           const layers = (cat.layers ?? []).filter(
@@ -319,31 +328,16 @@ const ReportColumn = ({
             },
           ];
         }) ?? [];
-      return {
-        items: [
-          {
-            key: 'map',
-            label: 'Map',
-            disabled: mapCategoryItems.length === 0,
-            children:
-              mapCategoryItems.length > 0 ? mapCategoryItems : undefined,
-          },
-          {
-            key: 'plot',
-            label: 'Plot',
-            children: buildPlotMenuItems((feature, script) =>
-              onAddCard({
-                targetCardId,
-                direction,
-                type: 'plot',
-                feature,
-                script,
-              }),
-            ),
-          },
-          { key: 'kpi', label: 'KPI', disabled: true },
-        ],
-      };
+      const plotItems = buildPlotMenuItems((feature, script) =>
+        onAddCard({
+          targetCardId,
+          direction,
+          type: 'plot',
+          feature,
+          script,
+        }),
+      );
+      return { mapItems, plotItems };
     },
     [onAddCard, mapData],
   );
@@ -403,7 +397,7 @@ const ReportColumn = ({
             <PerimeterPlusButtons
               targetCardId="MAP"
               exposure={exposureMap['MAP']}
-              buildMenu={buildAddCardMenu}
+              buildSectionMenus={buildSectionMenus}
             />
           </div>
 
@@ -455,7 +449,7 @@ const ReportColumn = ({
               <PerimeterPlusButtons
                 targetCardId={card.id}
                 exposure={exposureMap[card.id]}
-                buildMenu={buildAddCardMenu}
+                buildSectionMenus={buildSectionMenus}
               />
             </div>
           ))}
@@ -529,168 +523,6 @@ const mapFillStyle = {
   width: '100%',
   height: '100%',
 };
-
-// `+` affordances hanging off a tile's right / bottom edges, centred
-// on each edge and nudged 8 px beyond it. `.cea-no-drag` prevents
-// the click from starting a drag.
-const plusRightStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '100%',
-  transform: 'translateY(-50%)',
-  marginLeft: 8,
-  zIndex: 3,
-};
-
-const plusBottomStyle = {
-  position: 'absolute',
-  top: '100%',
-  left: '50%',
-  transform: 'translateX(-50%)',
-  marginTop: 8,
-  zIndex: 3,
-};
-
-// Right-edge + bottom-edge `+` affordances. Each `exposure.{right,
-// bottom}` is either `null` (edge fully blocked or only too-small
-// slivers exposed) or `{ fraction }` — the centre of the largest
-// exposed segment as a 0..1 fraction along the edge. The button's
-// CSS positioning is overridden to that fraction so it lands on the
-// exposed strip even when neighbouring tiles cover part of the edge.
-const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
-  const rightAnchor = exposure?.right;
-  const bottomAnchor = exposure?.bottom;
-  const rightMenu = rightAnchor ? buildMenu(targetCardId, 'right') : null;
-  const bottomMenu = bottomAnchor ? buildMenu(targetCardId, 'bottom') : null;
-  const rightStyle = rightAnchor
-    ? { ...plusRightStyle, top: `${rightAnchor.fraction * 100}%` }
-    : null;
-  const bottomStyle = bottomAnchor
-    ? { ...plusBottomStyle, left: `${bottomAnchor.fraction * 100}%` }
-    : null;
-  return (
-    <>
-      {rightMenu && (
-        <Dropdown menu={rightMenu} trigger={['click']} placement="bottomLeft">
-          <div
-            className="cea-card-icon-button-container cea-no-drag"
-            style={rightStyle}
-          >
-            <Tooltip title="Add a Feature card" placement="bottom">
-              <Button
-                type="text"
-                icon={<CreateNewIcon />}
-                aria-label="Add a Feature card"
-              />
-            </Tooltip>
-          </div>
-        </Dropdown>
-      )}
-      {bottomMenu && (
-        <Dropdown menu={bottomMenu} trigger={['click']} placement="bottomLeft">
-          <div
-            className="cea-card-icon-button-container cea-no-drag"
-            style={bottomStyle}
-          >
-            <Tooltip title="Add a Feature card" placement="bottom">
-              <Button
-                type="text"
-                icon={<CreateNewIcon />}
-                aria-label="Add a Feature card"
-              />
-            </Tooltip>
-          </div>
-        </Dropdown>
-      )}
-    </>
-  );
-};
-
-// Compute right/bottom exposure for every tile in `layout`. Each
-// entry is either `null` (no exposed segment large enough to fit
-// the `+` button — fully interior, or only cramped slivers) or
-// `{ fraction }` — the centre of the largest exposed segment as a
-// 0..1 fraction along the edge. The button is positioned at that
-// fraction so it always lands on the exposed strip.
-function computeExposure(layout) {
-  const out = {};
-  for (const item of layout) {
-    out[item.i] = {
-      right: pickExposedAnchor(item, layout, 'right'),
-      bottom: pickExposedAnchor(item, layout, 'bottom'),
-    };
-  }
-  return out;
-}
-
-function pickExposedAnchor(item, layout, side) {
-  const segments = findExposedSegments(item, layout, side);
-  if (segments.length === 0) return null;
-
-  // Convert segment lengths to pixels and pick the longest. The
-  // grid step (row + Y margin / col + X margin) is the per-unit
-  // pixel approximation — exact within a single tile if there's
-  // no inter-tile gap straddling the segment, slightly generous
-  // otherwise. Fine for the threshold check.
-  const isRight = side === 'right';
-  const unitToPx = isRight
-    ? ROW_HEIGHT_PX + GRID_MARGIN[1]
-    : COL_WIDTH_PX + GRID_MARGIN[0];
-
-  let best = null;
-  let bestLenPx = 0;
-  for (const [s, e] of segments) {
-    const lenPx = (e - s) * unitToPx;
-    if (lenPx > bestLenPx) {
-      bestLenPx = lenPx;
-      best = [s, e];
-    }
-  }
-  if (bestLenPx < PLUS_BUTTON_MIN_EDGE_PX) return null;
-
-  const itemStart = isRight ? item.y : item.x;
-  const itemSpan = isRight ? item.h : item.w;
-  return { fraction: ((best[0] + best[1]) / 2 - itemStart) / itemSpan };
-}
-
-function findExposedSegments(item, layout, side) {
-  const isRight = side === 'right';
-  const edge = isRight ? item.x + item.w : item.y + item.h;
-  const latStart = isRight ? item.y : item.x;
-  const latEnd = latStart + (isRight ? item.h : item.w);
-
-  // Collect the lateral intervals where other tiles touch this edge.
-  const blockers = [];
-  for (const other of layout) {
-    if (other === item) continue;
-    const oPerpStart = isRight ? other.x : other.y;
-    const oPerpEnd = oPerpStart + (isRight ? other.w : other.h);
-    if (oPerpStart > edge || oPerpEnd <= edge) continue;
-    const oLatStart = isRight ? other.y : other.x;
-    const oLatEnd = oLatStart + (isRight ? other.h : other.w);
-    const lo = Math.max(oLatStart, latStart);
-    const hi = Math.min(oLatEnd, latEnd);
-    if (hi > lo) blockers.push([lo, hi]);
-  }
-  blockers.sort((a, b) => a[0] - b[0]);
-
-  // Walk blockers; the gaps between them are the exposed segments.
-  const exposed = [];
-  let cursor = latStart;
-  for (const [s, e] of blockers) {
-    if (s > cursor) exposed.push([cursor, s]);
-    if (e > cursor) cursor = e;
-  }
-  if (cursor < latEnd) exposed.push([cursor, latEnd]);
-  return exposed;
-}
-
-// `cea-card-icon-button-container` renders at ≈ 38 px (30 px icon +
-// 3 px padding + 1 px border each side). Require the longest exposed
-// segment to be at least 2.5 × that so the button has clear breathing
-// room past adjacent tiles.
-const PLUS_BUTTON_HEIGHT_PX = 38;
-const PLUS_BUTTON_MIN_EDGE_PX = PLUS_BUTTON_HEIGHT_PX * 2.5;
 
 // TODO: drop once these layers exist as real map overlays in the
 // backend `/api/map_layers/` response. They show up in the response

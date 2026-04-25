@@ -398,8 +398,14 @@ source of truth for card config that the comparison views never read.
   per-column dividers and the "+ column" button.
 - `components/ReportColumn.jsx` - Column shell — sticky title row,
   then `<GridLayout>` containing the primary map tile and the
-  card-type-dispatched FeatureCard variants. Owns the perimeter `+`
-  button geometry.
+  card-type-dispatched FeatureCard variants. Owns the menu data
+  (`buildSectionMenus`) consumed by the perimeter `+` buttons.
+- `components/PerimeterPlusButtons.jsx` - Perimeter `+` affordance
+  + animated icon-panel expansion (Map / Plot / KPI sub-Dropdowns)
+  + edge-exposure geometry helpers. Lives next to `ReportColumn`
+  but isolated from the grid logic.
+- `components/PerimeterPlusButtons.css` - Expand/collapse keyframes
+  for the icon-panel cascade.
 - `components/ReportMap.jsx` - Per-column map tile (shared scenario
   data via `useInputs`) with an inline-rendered toolbar.
 - `components/featureCardCommon.jsx` - `FeatureCardShell` (shared
