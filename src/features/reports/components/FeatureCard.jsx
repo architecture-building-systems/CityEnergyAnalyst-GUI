@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Popconfirm, Select, Tooltip } from 'antd';
 import { BinAnimationIcon, InputEditorIcon, RefreshIcon } from 'assets/icons';
@@ -85,6 +85,8 @@ function buildKpiProps(summary) {
  *   onAddPlot(script?)             — add a plot to this card
  *   onDeleteCard()
  *   onPlotReady(plotId, plotDiv)   — y-axis alignment hook
+ *   onPreferredHeight(cardId, totalPx) — fires when plots report
+ *     their natural height; parent grows card.h to fit.
  */
 const FeatureCard = ({
   card,
@@ -97,6 +99,7 @@ const FeatureCard = ({
   onAddPlot,
   onDeleteCard,
   onPlotReady,
+  onPreferredHeight,
 }) => {
   const { feature, plots } = card;
   const queryClient = useQueryClient();
@@ -126,6 +129,25 @@ const FeatureCard = ({
   // (card-level deletion lives in the title trio). Not persisted —
   // hiding a strip isn't interesting enough to round-trip.
   const [kpiHidden, setKpiHidden] = useState(false);
+
+  // Per-plot natural-height aggregation: each PlotSlotCard reports
+  // its chart's backend-baked pixel height (or nothing, for plots
+  // that autosize). Sum + chrome → `onPreferredHeight` so the
+  // column can grow `card.h` to fit on first render.
+  const [plotHeights, setPlotHeights] = useState({});
+  const handleNaturalHeight = useCallback(
+    (plotId) => (heightPx) =>
+      setPlotHeights((prev) =>
+        prev[plotId] === heightPx ? prev : { ...prev, [plotId]: heightPx },
+      ),
+    [],
+  );
+  useEffect(() => {
+    const measured = Object.values(plotHeights);
+    if (measured.length === 0 || !onPreferredHeight) return;
+    const total = measured.reduce((a, b) => a + b, 0) + CARD_CHROME_PX;
+    onPreferredHeight(card.id, total);
+  }, [plotHeights, card.id, onPreferredHeight]);
 
   const cardInner = (
     <div style={cardStyle}>
@@ -187,6 +209,7 @@ const FeatureCard = ({
                       ? (plotDiv) => onPlotReady(plot.id, plotDiv)
                       : undefined
                   }
+                  onNaturalHeight={handleNaturalHeight(plot.id)}
                 />
               </Fragment>
             ))}
@@ -367,5 +390,10 @@ const addPlotRowWithDividerStyle = {
 const plotDividerStyle = {
   borderTop: '1px solid #f0f0f0',
 };
+
+// Title row + KPI strip + dividers + padding. Slightly generous —
+// the parent only grows the card if it's currently too small, so
+// over-estimating just means the card lands a row taller.
+const CARD_CHROME_PX = 180;
 
 export default FeatureCard;

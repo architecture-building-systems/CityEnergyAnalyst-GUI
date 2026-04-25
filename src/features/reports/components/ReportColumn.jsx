@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, Dropdown, Tooltip } from 'antd';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -35,6 +35,10 @@ const MAP_DEFAULT_W = MAP_ANCHOR_W;
 const MAP_DEFAULT_H = MAP_ANCHOR_H;
 const CARD_MIN_W = 3;
 const CARD_MIN_H = 3;
+
+// Spare columns at the right edge so the rightmost card always has
+// room to drag east. Sized for one card-min-width's worth of slack.
+const DRAG_BUFFER_COLS = CARD_MIN_W;
 
 // Mirrors react-grid-layout's internal formula with containerPadding
 // = [0, 0]: colWidth = (width - marginX * (cols - 1)) / cols.
@@ -172,17 +176,22 @@ const ReportColumn = ({
     return items;
   }, [cards, mapPos]);
 
-  // Grid width tracks the right-most tile, with MIN_COLS as a floor
-  // so the canvas hugs the map at launch.
+  // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
+  // headroom so the rightmost card always has room to drag east.
+  // Without the buffer, react-grid-layout's `cols === rightmost
+  // edge` constraint pins any rightmost tile in place horizontally —
+  // dragging east would push x+w past `cols`, which the library
+  // refuses. MIN_COLS is the floor at launch (canvas hugs the map).
   const { effectiveCols, gridWidthPx } = useMemo(() => {
     let maxRight = MIN_COLS;
     for (const item of layout) {
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
+    const cols = Math.max(MIN_COLS, maxRight + DRAG_BUFFER_COLS);
     return {
-      effectiveCols: maxRight,
-      gridWidthPx: widthForCols(maxRight),
+      effectiveCols: cols,
+      gridWidthPx: widthForCols(cols),
     };
   }, [layout]);
 
@@ -217,6 +226,30 @@ const ReportColumn = ({
       if (cardUpdates.length > 0) onApplyLayouts?.(cardUpdates);
     },
     [onApplyLayouts],
+  );
+
+  // One-shot card auto-grow: when FeatureCard reports its natural
+  // height (sum of plot heights + chrome), bump card.h up to fit if
+  // it's currently smaller. Grow-only — user-driven shrinks stick.
+  // The `grownCards` ref dedupes so subsequent renders don't re-fire
+  // the same growth.
+  const grownCards = useRef(new Set());
+  const handlePreferredHeight = useCallback(
+    (cardId, totalPx) => {
+      if (grownCards.current.has(cardId)) return;
+      grownCards.current.add(cardId);
+      // Invert rgl's tile-pixel formula: tilePx = h * ROW_HEIGHT +
+      // (h - 1) * marginY → h = ceil((tilePx + marginY) / step).
+      const required = Math.ceil(
+        (totalPx + GRID_MARGIN[1]) / (ROW_HEIGHT_PX + GRID_MARGIN[1]),
+      );
+      const card = cards.find((c) => c.id === cardId);
+      if (!card || card.h >= required) return;
+      onApplyLayouts?.([
+        { id: cardId, row: card.row, col: card.col, w: card.w, h: required },
+      ]);
+    },
+    [cards, onApplyLayouts],
   );
 
   // Plot-picker menu for the map tile's `+` buttons. Forwards the
@@ -374,6 +407,7 @@ const ReportColumn = ({
                   onDeleteCard ? () => onDeleteCard(card.id) : undefined
                 }
                 onPlotReady={onPlotReady}
+                onPreferredHeight={handlePreferredHeight}
               />
             </div>
           ))}

@@ -6,15 +6,22 @@ import parser from 'html-react-parser';
 import { useFetchCustomPlot } from '../hooks/useReportsData';
 
 /**
- * Renders a single Plotly plot for a report column. Every Reports
- * plot has a `plotConfig` with a `script`, so we always fetch via
- * POST /api/reports/plot-custom — no feature-based fallback.
+ * Renders a single Plotly plot. Every Reports plot has a script, so
+ * we always fetch via POST /api/reports/plot-custom.
  *
- * `onCaption` receives the plain-text main title lifted out of the
- * Plotly figure once rendering completes; the caller (PlotSlotCard)
- * decides how to display it.
+ * `onCaption(text)`       — main title lifted from the figure.
+ * `onNaturalHeight(px)`   — fired after newPlot with the figure's
+ *   backend-baked pixel height (e.g. 600 for Sankey). The card uses
+ *   it to auto-grow on first render; subsequent user-driven resizes
+ *   flow back through the ResizeObserver below.
  */
-const ReportPlot = ({ scenario, plotConfig, onPlotReady, onCaption }) => {
+const ReportPlot = ({
+  scenario,
+  plotConfig,
+  onPlotReady,
+  onCaption,
+  onNaturalHeight,
+}) => {
   const uniqueId = useId();
   const containerRef = useRef(null);
   const scriptRef = useRef(null);
@@ -98,9 +105,11 @@ const ReportPlot = ({ scenario, plotConfig, onPlotReady, onCaption }) => {
         const plainText = mainPart.replace(/<[^>]+>/g, '').trim();
         if (plainText && onCaption) onCaption(plainText);
 
+        // Tighten margins now that the title block is gone. Bottom
+        // margin stays default so angled x-axis ticks don't clip.
+        // No fitPlotToParent here — we want the chart at its natural
+        // size on first paint so the card can auto-grow to fit it.
         if (window.Plotly?.relayout) {
-          // Tighten margins now that the title block is gone. Bottom
-          // is left default so angled x-axis ticks don't clip.
           plotDivs.forEach((div) => {
             try {
               window.Plotly.relayout(div, {
@@ -113,6 +122,15 @@ const ReportPlot = ({ scenario, plotConfig, onPlotReady, onCaption }) => {
               // Error-card HTML snippets aren't Plotly figures — skip.
             }
           });
+        }
+
+        // Report the backend-baked natural height (e.g. 600 for
+        // Sankey via `update_layout(height=N, autosize=False)`) so
+        // the card can grow to fit. Charts with no explicit height
+        // report nothing and autosize to the card on next render.
+        const layoutHeight = plotDivs[0].layout?.height;
+        if (typeof layoutHeight === 'number' && onNaturalHeight) {
+          onNaturalHeight(layoutHeight);
         }
 
         if (onPlotReady) onPlotReady(plotDivs[0]);
@@ -132,18 +150,22 @@ const ReportPlot = ({ scenario, plotConfig, onPlotReady, onCaption }) => {
     };
   }, [html, uniqueId, onPlotReady]);
 
-  // Plotly captures the div's pixel size at `newPlot` time, so we
-  // tell it to re-measure on container resize (card drag-resize).
+  // Re-fit on container resize (user drag-resizing the card). The
+  // first RO fire is skipped — fitting on initial mount would crush
+  // figures with backend-baked dimensions (Sankey…) before the
+  // auto-grow request has a chance to land.
   useEffect(() => {
     const container = containerRef.current;
     if (!container || typeof ResizeObserver === 'undefined') return;
+    let initialFire = true;
     const ro = new ResizeObserver(() => {
-      const plotDiv = container.querySelector(
-        '.js-plotly-plot, .plotly-graph-div',
-      );
-      if (plotDiv && window.Plotly?.Plots?.resize) {
-        window.Plotly.Plots.resize(plotDiv);
+      if (initialFire) {
+        initialFire = false;
+        return;
       }
+      container
+        .querySelectorAll('.js-plotly-plot, .plotly-graph-div')
+        .forEach((div) => fitPlotToParent(div));
     });
     ro.observe(container);
     return () => ro.disconnect();
@@ -273,5 +295,25 @@ const errorStyle = {
   minHeight: 200,
   padding: 24,
 };
+
+// Resize a Plotly figure to its parent container. Clears inline
+// width/height first (so Plotly can replace them) then writes the
+// measured dims via `relayout`, which re-flows traces (Sankey,
+// parallel-coords…) that cache pixel geometry from `newPlot`.
+function fitPlotToParent(div) {
+  const parent = div?.parentElement;
+  if (!parent) return;
+  const w = parent.clientWidth;
+  const h = parent.clientHeight;
+  if (w <= 0 || h <= 0) return;
+  div.style.height = '';
+  div.style.width = '';
+  try {
+    window.Plotly?.relayout?.(div, { width: w, height: h });
+    window.Plotly?.Plots?.resize?.(div);
+  } catch {
+    // Error-card HTML snippets aren't Plotly figures — skip.
+  }
+}
 
 export default ReportPlot;

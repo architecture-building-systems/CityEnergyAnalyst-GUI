@@ -15,6 +15,7 @@ const PlotSlotCard = ({
   onReset,
   onDelete,
   onPlotReady,
+  onNaturalHeight,
 }) => {
   // Title lifted out of the Plotly figure by ReportPlot — shown on
   // the controls row instead of inside the chart canvas.
@@ -123,6 +124,7 @@ const PlotSlotCard = ({
         plotConfig={plotConfig}
         onPlotReady={onPlotReady}
         onCaption={setCaption}
+        onNaturalHeight={onNaturalHeight}
       />
     </div>
   );
