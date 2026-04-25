@@ -1,18 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
-import { InputEditorIcon, RefreshIcon, BinAnimationIcon } from 'assets/icons';
+import { InputEditorIcon, BinAnimationIcon } from 'assets/icons';
 
 import ReportPlot from './ReportPlot';
 
 /**
- * A single plot slot within a FeatureCard. Edit / Reset / Delete
- * trio sits above the chart in one shared icon-button container.
+ * A single plot slot within a FeatureCard. Edit / Delete buttons sit
+ * above the chart in one shared icon-button container.
  */
 const PlotSlotCard = ({
   scenario,
   plotConfig,
   onEdit,
-  onReset,
   onDelete,
   onPlotReady,
   onNaturalHeight,
@@ -89,15 +88,6 @@ const PlotSlotCard = ({
               icon={<InputEditorIcon />}
               onClick={onEdit}
               aria-label="Edit plot"
-            />
-          </Tooltip>
-          <Tooltip title="Reset">
-            <Button
-              type="text"
-              icon={<RefreshIcon />}
-              onClick={onReset}
-              disabled={!plotConfig}
-              aria-label="Reset plot"
             />
           </Tooltip>
           {onDelete && (

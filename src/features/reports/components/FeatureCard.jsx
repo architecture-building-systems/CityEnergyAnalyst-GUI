@@ -1,7 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button, Popconfirm, Select, Tooltip } from 'antd';
-import { BinAnimationIcon, InputEditorIcon, RefreshIcon } from 'assets/icons';
+import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 
 import {
   PLOT_GROUPS,
@@ -81,7 +80,7 @@ function buildKpiProps(summary) {
  * Props:
  *   card            — { id, feature, plots }
  *   project,        scenario, whatif — passed through to fetch hooks
- *   onEditPlot(plotId), onResetPlot(plotId), onDeletePlot(plotId)
+ *   onEditPlot(plotId), onDeletePlot(plotId)
  *   onAddPlot(script?)             — add a plot to this card
  *   onDeleteCard()
  *   onPlotReady(plotId, plotDiv)   — y-axis alignment hook
@@ -94,7 +93,6 @@ const FeatureCard = ({
   scenario,
   whatif,
   onEditPlot,
-  onResetPlot,
   onDeletePlot,
   onAddPlot,
   onDeleteCard,
@@ -102,7 +100,6 @@ const FeatureCard = ({
   onPreferredHeight,
 }) => {
   const { feature, plots } = card;
-  const queryClient = useQueryClient();
   const { data: summary, isLoading } = useFetchSummary(
     project,
     scenario,
@@ -110,13 +107,6 @@ const FeatureCard = ({
     whatif,
   );
 
-  // Keep this query key in sync with `useFetchSummary`'s in
-  // useReportsData.js — invalidating refetches the KPI strip.
-  const handleRefreshKpi = () => {
-    queryClient.invalidateQueries({
-      queryKey: ['reports', 'summary', project, scenario, feature, whatif],
-    });
-  };
   const family = useMemo(() => findFamilyForFeature(feature), [feature]);
   const title = family?.label || feature;
   const kpiProps = useMemo(() => buildKpiProps(summary), [summary]);
@@ -180,7 +170,6 @@ const FeatureCard = ({
             <div style={sectionActionsStyle}>
               <KpiActionButtons
                 onEdit={null}
-                onRefresh={handleRefreshKpi}
                 onDelete={() => setKpiHidden(true)}
               />
             </div>
@@ -200,7 +189,6 @@ const FeatureCard = ({
                   scenario={scenario}
                   plotConfig={plot.plotConfig}
                   onEdit={() => onEditPlot?.(plot.id)}
-                  onReset={() => onResetPlot?.(plot.id)}
                   onDelete={
                     onDeletePlot ? () => onDeletePlot(plot.id) : undefined
                   }
@@ -259,7 +247,7 @@ const TitleDeleteButton = ({ onClick }) => (
 // `onEdit` is a placeholder until the KPI editor lands — rendered
 // disabled when not wired. `onDelete` hides just the KPI strip;
 // card-level deletion lives in the title trio.
-const KpiActionButtons = ({ onEdit, onRefresh, onDelete }) => (
+const KpiActionButtons = ({ onEdit, onDelete }) => (
   <div className="cea-card-icon-button-container">
     <Tooltip title="Edit KPI" placement="bottom">
       <Button
@@ -268,14 +256,6 @@ const KpiActionButtons = ({ onEdit, onRefresh, onDelete }) => (
         onClick={onEdit}
         disabled={!onEdit}
         aria-label="Edit KPI"
-      />
-    </Tooltip>
-    <Tooltip title="Refresh" placement="bottom">
-      <Button
-        type="text"
-        icon={<RefreshIcon />}
-        onClick={onRefresh}
-        aria-label="Refresh KPI data"
       />
     </Tooltip>
     {onDelete && (

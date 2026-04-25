@@ -176,21 +176,6 @@ const LaunchView = ({ onOpenDrawer }) => {
     [cards, onOpenDrawer, scenario],
   );
 
-  const handleResetPlot = useCallback((cardId, plotId) => {
-    setCards((prev) =>
-      prev.map((c) =>
-        c.id === cardId
-          ? {
-              ...c,
-              plots: c.plots.map((p) =>
-                p.id === plotId ? { ...p, plotConfig: undefined } : p,
-              ),
-            }
-          : c,
-      ),
-    );
-  }, []);
-
   const handleDeletePlot = useCallback((cardId, plotId) => {
     setCards((prev) =>
       prev
@@ -237,7 +222,6 @@ const LaunchView = ({ onOpenDrawer }) => {
           columnDef={{ type: 'scenario', scenario }}
           cards={cards}
           onEditPlot={handleEditPlot}
-          onResetPlot={handleResetPlot}
           onDeletePlot={handleDeletePlot}
           onDeleteCard={handleDeleteCard}
           onAddPlotToCard={handleAddPlotToCard}

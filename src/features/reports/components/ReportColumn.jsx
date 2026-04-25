@@ -116,7 +116,7 @@ function buildPlotMenuItems(onPick) {
  * Props:
  *   columnDef         — { type, scenario, whatif?, feature? }
  *   cards             — [{ id, row, col, w, h, feature, plots[] }]
- *   onEditPlot,       onResetPlot, onDeletePlot, onDeleteCard
+ *   onEditPlot,       onDeletePlot, onDeleteCard
  *   onAddPlotToCard(cardId, script?)
  *   onAddCard({ targetCardId, direction, feature?, script? })
  *   onApplyLayouts(updates) — persist drag/resize, batched
@@ -128,7 +128,6 @@ const ReportColumn = ({
   cards = [],
   style,
   onEditPlot,
-  onResetPlot,
   onDeletePlot,
   onDeleteCard,
   onPlotReady,
@@ -342,7 +341,6 @@ const ReportColumn = ({
                 scenario={scenario}
                 whatif={whatif}
                 onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
-                onResetPlot={(plotId) => onResetPlot?.(card.id, plotId)}
                 onDeletePlot={
                   onDeletePlot
                     ? (plotId) => onDeletePlot(card.id, plotId)

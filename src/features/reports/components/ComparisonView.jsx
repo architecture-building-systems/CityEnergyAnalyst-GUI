@@ -111,10 +111,6 @@ const ComparisonView = ({ onOpenDrawer }) => {
     });
   };
 
-  const handleResetPlot = (colIndex) => (cardId, plotId) => {
-    updatePlot(getColumnIndexFor(colIndex), cardId, plotId, undefined);
-  };
-
   const handleDeletePlot = (colIndex) => (cardId, plotId) => {
     removePlot(getColumnIndexFor(colIndex), cardId, plotId);
   };
@@ -170,7 +166,6 @@ const ComparisonView = ({ onOpenDrawer }) => {
                   columnDef={col}
                   cards={getCardsForColumn(i)}
                   onEditPlot={handleEditPlot(i)}
-                  onResetPlot={handleResetPlot(i)}
                   onDeletePlot={handleDeletePlot(i)}
                   onDeleteCard={handleDeleteCard(i)}
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
