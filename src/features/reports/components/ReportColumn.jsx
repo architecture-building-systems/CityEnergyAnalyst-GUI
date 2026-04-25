@@ -404,10 +404,27 @@ const columnStyle = {
   alignItems: 'stretch',
 };
 
+// Sticky so the scenario / what-if header stays visible when the
+// canvas grows taller than the viewport. `top: 0` pins it to the
+// top of the canvas cell's scroll container; the white background
+// hides grid content scrolling underneath. zIndex sits above the
+// perimeter `+` buttons (z 3) and rgl items (z 1-2).
+//
+// `paddingTop` keeps the title card off the canvas card's top edge
+// when stuck — without it, the title card would sit flush with the
+// rounded canvas corner since the scroll container and canvasStyle
+// share `y = 0`. The title row's own white background fills the
+// padding region.
 const titleRowStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: 8,
+  position: 'sticky',
+  top: 0,
+  zIndex: 4,
+  background: '#fff',
+  paddingTop: 16,
+  paddingBottom: 8,
 };
 
 const titleCardStyle = {

@@ -244,9 +244,12 @@ const canvasStyle = {
   height: 'fit-content',
 };
 
+// No `overflowX` here — that would create a horizontal scroll
+// context which intercepts sticky's scrolling-ancestor lookup and
+// breaks the title row's vertical pin. Horizontal overflow falls
+// through to ReportsPage's canvas cell (`overflow: auto`).
 const columnsRowStyle = {
   display: 'flex',
-  overflowX: 'auto',
 };
 
 const columnCellStyle = {
