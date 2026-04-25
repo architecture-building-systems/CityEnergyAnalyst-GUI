@@ -228,16 +228,18 @@ const ReportColumn = ({
     [onApplyLayouts],
   );
 
-  // One-shot card auto-grow: when FeatureCard reports its natural
-  // height (sum of plot heights + chrome), bump card.h up to fit if
-  // it's currently smaller. Grow-only — user-driven shrinks stick.
-  // The `grownCards` ref dedupes so subsequent renders don't re-fire
-  // the same growth.
-  const grownCards = useRef(new Set());
+  // Card auto-grow: FeatureCard reports its preferred pixel height
+  // (sum of plot natural heights + chrome). Grow card.h to fit
+  // whenever the report exceeds the previous report for the same
+  // card — that way adding a 2nd/3rd plot keeps growing, while the
+  // re-renders triggered by other layout changes don't undo a
+  // user-driven shrink (same totalPx → no-op).
+  const lastReported = useRef(new Map());
   const handlePreferredHeight = useCallback(
     (cardId, totalPx) => {
-      if (grownCards.current.has(cardId)) return;
-      grownCards.current.add(cardId);
+      const prev = lastReported.current.get(cardId) ?? 0;
+      if (totalPx <= prev) return;
+      lastReported.current.set(cardId, totalPx);
       // Invert rgl's tile-pixel formula: tilePx = h * ROW_HEIGHT +
       // (h - 1) * marginY → h = ceil((tilePx + marginY) / step).
       const required = Math.ceil(
