@@ -460,7 +460,7 @@ const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
               <Button
                 type="text"
                 icon={<CreateNewIcon />}
-                aria-label="Add a Feature card to the right"
+                aria-label="Add a Feature card"
               />
             </Tooltip>
           </div>
@@ -472,11 +472,11 @@ const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
             className="cea-card-icon-button-container cea-no-drag"
             style={plusBottomStyle}
           >
-            <Tooltip title="Add a Feature card below" placement="bottom">
+            <Tooltip title="Add a Feature card" placement="bottom">
               <Button
                 type="text"
                 icon={<CreateNewIcon />}
-                aria-label="Add a Feature card below"
+                aria-label="Add a Feature card"
               />
             </Tooltip>
           </div>
