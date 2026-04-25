@@ -466,14 +466,22 @@ const plusBottomStyle = {
   zIndex: 3,
 };
 
-// Right-edge + bottom-edge `+` affordances, rendered only on edges
-// flagged as exposed by `computeExposure`. Each opens a plot-picker
-// dropdown; selection inserts a new feature card adjacent to this
-// tile (right or bottom).
+// Right-edge + bottom-edge `+` affordances. Each `exposure.{right,
+// bottom}` is either `null` (edge fully blocked or only too-small
+// slivers exposed) or `{ fraction }` — the centre of the largest
+// exposed segment as a 0..1 fraction along the edge. The button's
+// CSS positioning is overridden to that fraction so it lands on the
+// exposed strip even when neighbouring tiles cover part of the edge.
 const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
-  const rightMenu = exposure?.right ? buildMenu(targetCardId, 'right') : null;
-  const bottomMenu = exposure?.bottom
-    ? buildMenu(targetCardId, 'bottom')
+  const rightAnchor = exposure?.right;
+  const bottomAnchor = exposure?.bottom;
+  const rightMenu = rightAnchor ? buildMenu(targetCardId, 'right') : null;
+  const bottomMenu = bottomAnchor ? buildMenu(targetCardId, 'bottom') : null;
+  const rightStyle = rightAnchor
+    ? { ...plusRightStyle, top: `${rightAnchor.fraction * 100}%` }
+    : null;
+  const bottomStyle = bottomAnchor
+    ? { ...plusBottomStyle, left: `${bottomAnchor.fraction * 100}%` }
     : null;
   return (
     <>
@@ -481,7 +489,7 @@ const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
         <Dropdown menu={rightMenu} trigger={['click']} placement="bottomLeft">
           <div
             className="cea-card-icon-button-container cea-no-drag"
-            style={plusRightStyle}
+            style={rightStyle}
           >
             <Tooltip title="Add a Feature card" placement="bottom">
               <Button
@@ -497,7 +505,7 @@ const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
         <Dropdown menu={bottomMenu} trigger={['click']} placement="bottomLeft">
           <div
             className="cea-card-icon-button-container cea-no-drag"
-            style={plusBottomStyle}
+            style={bottomStyle}
           >
             <Tooltip title="Add a Feature card" placement="bottom">
               <Button
@@ -513,33 +521,61 @@ const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
   );
 };
 
-// Compute right/bottom exposure for every tile in `layout`. A tile's
-// right edge is "exposed" iff *any* portion of it sits on the
-// perimeter of the union of all tiles — i.e. there's at least one
-// gap along the edge where no other tile occupies the column at
-// `x + w`. Same logic transposed for the bottom edge. Lenient on
-// purpose so a partially-blocked edge still gets a `+` button.
+// Compute right/bottom exposure for every tile in `layout`. Each
+// entry is either `null` (no exposed segment large enough to fit
+// the `+` button — fully interior, or only cramped slivers) or
+// `{ fraction }` — the centre of the largest exposed segment as a
+// 0..1 fraction along the edge. The button is positioned at that
+// fraction so it always lands on the exposed strip.
 function computeExposure(layout) {
   const out = {};
   for (const item of layout) {
     out[item.i] = {
-      right: hasGapAlongEdge(item, layout, 'right'),
-      bottom: hasGapAlongEdge(item, layout, 'bottom'),
+      right: pickExposedAnchor(item, layout, 'right'),
+      bottom: pickExposedAnchor(item, layout, 'bottom'),
     };
   }
   return out;
 }
 
-function hasGapAlongEdge(item, layout, side) {
+function pickExposedAnchor(item, layout, side) {
+  const segments = findExposedSegments(item, layout, side);
+  if (segments.length === 0) return null;
+
+  // Convert segment lengths to pixels and pick the longest. The
+  // grid step (row + Y margin / col + X margin) is the per-unit
+  // pixel approximation — exact within a single tile if there's
+  // no inter-tile gap straddling the segment, slightly generous
+  // otherwise. Fine for the threshold check.
   const isRight = side === 'right';
-  // The edge sits at this perpendicular coord (column for right edge,
-  // row for bottom edge). Lateral = along the edge.
+  const unitToPx = isRight
+    ? ROW_HEIGHT_PX + GRID_MARGIN[1]
+    : COL_WIDTH_PX + GRID_MARGIN[0];
+
+  let best = null;
+  let bestLenPx = 0;
+  for (const [s, e] of segments) {
+    const lenPx = (e - s) * unitToPx;
+    if (lenPx > bestLenPx) {
+      bestLenPx = lenPx;
+      best = [s, e];
+    }
+  }
+  if (bestLenPx < PLUS_BUTTON_MIN_EDGE_PX) return null;
+
+  const itemStart = isRight ? item.y : item.x;
+  const itemSpan = isRight ? item.h : item.w;
+  return { fraction: ((best[0] + best[1]) / 2 - itemStart) / itemSpan };
+}
+
+function findExposedSegments(item, layout, side) {
+  const isRight = side === 'right';
   const edge = isRight ? item.x + item.w : item.y + item.h;
   const latStart = isRight ? item.y : item.x;
   const latEnd = latStart + (isRight ? item.h : item.w);
 
   // Collect the lateral intervals where other tiles touch this edge.
-  const intervals = [];
+  const blockers = [];
   for (const other of layout) {
     if (other === item) continue;
     const oPerpStart = isRight ? other.x : other.y;
@@ -549,19 +585,26 @@ function hasGapAlongEdge(item, layout, side) {
     const oLatEnd = oLatStart + (isRight ? other.h : other.w);
     const lo = Math.max(oLatStart, latStart);
     const hi = Math.min(oLatEnd, latEnd);
-    if (hi > lo) intervals.push([lo, hi]);
+    if (hi > lo) blockers.push([lo, hi]);
   }
-  if (intervals.length === 0) return true;
+  blockers.sort((a, b) => a[0] - b[0]);
 
-  // Sort by start, walk left→right; any gap means the edge is
-  // partially on the perimeter.
-  intervals.sort((a, b) => a[0] - b[0]);
+  // Walk blockers; the gaps between them are the exposed segments.
+  const exposed = [];
   let cursor = latStart;
-  for (const [s, e] of intervals) {
-    if (s > cursor) return true;
+  for (const [s, e] of blockers) {
+    if (s > cursor) exposed.push([cursor, s]);
     if (e > cursor) cursor = e;
   }
-  return cursor < latEnd;
+  if (cursor < latEnd) exposed.push([cursor, latEnd]);
+  return exposed;
 }
+
+// `cea-card-icon-button-container` renders at ≈ 38 px (30 px icon +
+// 3 px padding + 1 px border each side). Require the longest exposed
+// segment to be at least 2.5 × that so the button has clear breathing
+// room past adjacent tiles.
+const PLUS_BUTTON_HEIGHT_PX = 38;
+const PLUS_BUTTON_MIN_EDGE_PX = PLUS_BUTTON_HEIGHT_PX * 2.5;
 
 export default ReportColumn;
