@@ -15,7 +15,10 @@ import { create } from 'zustand';
  *   { type: 'feature',  scenario, feature }
  *
  * Cards are first-class:
- *   { id, row, col, w, h, feature, plots: [{ id, plotConfig }] }
+ *   { id, type, row, col, w, h, feature, plots: [{ id, plotConfig }] }
+ *
+ * `type` ('plot' | 'kpi' | 'map') selects which FeatureCard variant
+ * renders the card. `plots[]` is only meaningful for 'plot' cards.
  *
  * Card positions form a sparse 2D grid (sized in `react-grid-layout`
  * units; see `ReportColumn`). `addCard({ direction })` shifts existing
@@ -34,8 +37,9 @@ export const DEFAULT_CARD_H = 10;
 export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
-const makeCard = ({ row, col, feature, plotConfig, w, h }) => ({
+const makeCard = ({ row, col, feature, plotConfig, w, h, type }) => ({
   id: makeId('card'),
+  type: type ?? 'plot',
   row,
   col,
   w: w ?? DEFAULT_CARD_W,
@@ -65,7 +69,7 @@ const shiftForInsert = (cards, { row, col, direction }) => {
 // other truthy `targetCard` is an actual card to anchor against.
 const insertCardInto = (
   cards,
-  { targetCard, direction, feature, plotConfig },
+  { targetCard, direction, type, feature, plotConfig },
 ) => {
   let row = 0;
   let col = 0;
@@ -85,7 +89,7 @@ const insertCardInto = (
     }
   }
   const shifted = shiftForInsert(cards, { row, col, direction });
-  return [...shifted, makeCard({ row, col, feature, plotConfig })];
+  return [...shifted, makeCard({ row, col, type, feature, plotConfig })];
 };
 
 export const useReportsStore = create((set, get) => ({
@@ -218,11 +222,15 @@ export const useReportsStore = create((set, get) => ({
    * @param {object} opts
    * @param {string|null} opts.targetCardId — anchor card for `direction`
    * @param {'right'|'bottom'|null} opts.direction
+   * @param {'plot'|'kpi'|'map'} [opts.type='plot']
    * @param {string} opts.feature
    * @param {object|null} opts.plotConfig — if provided, seeds first plot
    * @returns {string} the new card's id
    */
-  addCard: (columnIndex, { targetCardId, direction, feature, plotConfig }) => {
+  addCard: (
+    columnIndex,
+    { targetCardId, direction, type, feature, plotConfig },
+  ) => {
     const { getCards, setCards } = get();
     const cards = getCards(columnIndex);
     // Pass the 'MAP' sentinel straight through — it's not a card ID,
@@ -238,6 +246,7 @@ export const useReportsStore = create((set, get) => ({
     const next = insertCardInto(cards, {
       targetCard,
       direction,
+      type,
       feature,
       plotConfig,
     });

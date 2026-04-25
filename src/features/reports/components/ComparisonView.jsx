@@ -66,7 +66,7 @@ const ComparisonView = ({ onOpenDrawer }) => {
 
   const handleAddCard =
     (colIndex) =>
-    ({ targetCardId, direction, feature, script }) => {
+    ({ targetCardId, direction, type = 'plot', feature, script }) => {
       const columnIndex = getColumnIndexFor(colIndex);
       const resolvedFeature =
         feature || inferFeature(columnIndex, targetCardId);
@@ -78,6 +78,7 @@ const ComparisonView = ({ onOpenDrawer }) => {
           addCard(columnIndex, {
             targetCardId,
             direction,
+            type,
             feature: resolvedFeature,
             plotConfig,
           }),

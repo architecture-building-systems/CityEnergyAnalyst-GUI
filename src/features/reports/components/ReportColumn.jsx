@@ -19,7 +19,8 @@ import {
 } from '../stores/reportsStore';
 
 import ReportMap from './ReportMap';
-import FeatureCard from './FeatureCard';
+import FeatureCardPlot from './FeatureCardPlot';
+import FeatureCardKpi from './FeatureCardKpi';
 import './ReportColumn.css';
 
 // Grid sizing. Fixed colWidth × ROW_HEIGHT × GRID_MARGIN gives the
@@ -259,15 +260,31 @@ const ReportColumn = ({
   // immediately adjacent) stay clean.
   const exposureMap = useMemo(() => computeExposure(layout), [layout]);
 
-  // Build a plot-picker dropdown menu for a `+` affordance. Mirrors
-  // the picker shown by the main viewport's PlotChoices.
+  // Card-type picker for a `+` affordance. Top-level Map / Plot /
+  // KPI selection — Map and KPI are placeholders (greyed out) until
+  // their backend selection modules land. Plot expands to the
+  // existing nested feature → leaf picker.
   const buildAddCardMenu = useCallback(
     (targetCardId, direction) =>
       onAddCard
         ? {
-            items: buildPlotMenuItems((feature, script) =>
-              onAddCard({ targetCardId, direction, feature, script }),
-            ),
+            items: [
+              { key: 'map', label: 'Map', disabled: true },
+              {
+                key: 'plot',
+                label: 'Plot',
+                children: buildPlotMenuItems((feature, script) =>
+                  onAddCard({
+                    targetCardId,
+                    direction,
+                    type: 'plot',
+                    feature,
+                    script,
+                  }),
+                ),
+              },
+              { key: 'kpi', label: 'KPI', disabled: true },
+            ],
           }
         : null,
     [onAddCard],
@@ -335,28 +352,38 @@ const ReportColumn = ({
           {/* ── Feature cards ────────────────────────────────── */}
           {cards.map((card) => (
             <div key={card.id} style={tileStyle} className="cea-report-tile">
-              <FeatureCard
-                card={card}
-                project={project}
-                scenario={scenario}
-                whatif={whatif}
-                onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
-                onDeletePlot={
-                  onDeletePlot
-                    ? (plotId) => onDeletePlot(card.id, plotId)
-                    : undefined
-                }
-                onAddPlot={
-                  onAddPlotToCard
-                    ? (script) => onAddPlotToCard(card.id, script)
-                    : undefined
-                }
-                onDeleteCard={
-                  onDeleteCard ? () => onDeleteCard(card.id) : undefined
-                }
-                onPlotReady={onPlotReady}
-                onPreferredHeight={handlePreferredHeight}
-              />
+              {card.type === 'kpi' ? (
+                <FeatureCardKpi
+                  card={card}
+                  project={project}
+                  scenario={scenario}
+                  whatif={whatif}
+                  onDeleteCard={
+                    onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                  }
+                />
+              ) : (
+                <FeatureCardPlot
+                  card={card}
+                  scenario={scenario}
+                  onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
+                  onDeletePlot={
+                    onDeletePlot
+                      ? (plotId) => onDeletePlot(card.id, plotId)
+                      : undefined
+                  }
+                  onAddPlot={
+                    onAddPlotToCard
+                      ? (script) => onAddPlotToCard(card.id, script)
+                      : undefined
+                  }
+                  onDeleteCard={
+                    onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                  }
+                  onPlotReady={onPlotReady}
+                  onPreferredHeight={handlePreferredHeight}
+                />
+              )}
               <PerimeterPlusButtons
                 targetCardId={card.id}
                 exposure={exposureMap[card.id]}

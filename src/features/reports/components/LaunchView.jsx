@@ -51,7 +51,7 @@ const LaunchView = ({ onOpenDrawer }) => {
   };
 
   const insertCard = useCallback(
-    ({ targetCardId, direction, feature, plotConfig }) => {
+    ({ targetCardId, direction, type = 'plot', feature, plotConfig }) => {
       setCards((prev) => {
         // `targetCardId === 'MAP'` is the sentinel from the map
         // tile's edge `+` buttons: right → just past the map,
@@ -83,6 +83,7 @@ const LaunchView = ({ onOpenDrawer }) => {
           ...shifted,
           {
             id: makeId('card'),
+            type,
             row,
             col,
             w: DEFAULT_CARD_W,
@@ -109,7 +110,7 @@ const LaunchView = ({ onOpenDrawer }) => {
   // ── Drawer open handlers ───────────────────────────────────
 
   const handleAddCard = useCallback(
-    ({ targetCardId, direction, feature, script }) => {
+    ({ targetCardId, direction, type = 'plot', feature, script }) => {
       const resolvedFeature =
         feature || inferFeatureForTarget(cards, targetCardId);
       onOpenDrawer({
@@ -120,6 +121,7 @@ const LaunchView = ({ onOpenDrawer }) => {
           insertCard({
             targetCardId,
             direction,
+            type,
             feature: resolvedFeature,
             plotConfig,
           }),
