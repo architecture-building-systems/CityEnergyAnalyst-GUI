@@ -254,37 +254,20 @@ const ReportColumn = ({
     [cards, onApplyLayouts],
   );
 
-  // Plot-picker menu for the map tile's `+` buttons. Forwards the
-  // 'MAP' sentinel + edge to the store's addCard, which anchors the
-  // new card to the right of (or below) the map's footprint.
-  const mapRightMenu = useMemo(
-    () =>
-      onAddCard
-        ? {
-            items: buildPlotMenuItems((feature, script) =>
-              onAddCard({
-                targetCardId: 'MAP',
-                direction: 'right',
-                feature,
-                script,
-              }),
-            ),
-          }
-        : null,
-    [onAddCard],
-  );
+  // For each tile, decide whether its right and bottom edges sit on
+  // the perimeter of the union of all tiles. A `+` button only renders
+  // on an exposed edge — interior edges (where another tile is
+  // immediately adjacent) stay clean.
+  const exposureMap = useMemo(() => computeExposure(layout), [layout]);
 
-  const mapBottomMenu = useMemo(
-    () =>
+  // Build a plot-picker dropdown menu for a `+` affordance. Mirrors
+  // the picker shown by the main viewport's PlotChoices.
+  const buildAddCardMenu = useCallback(
+    (targetCardId, direction) =>
       onAddCard
         ? {
             items: buildPlotMenuItems((feature, script) =>
-              onAddCard({
-                targetCardId: 'MAP',
-                direction: 'bottom',
-                feature,
-                script,
-              }),
+              onAddCard({ targetCardId, direction, feature, script }),
             ),
           }
         : null,
@@ -343,46 +326,11 @@ const ReportColumn = ({
             <div style={mapFillStyle}>
               <ReportMap project={project} scenario={scenario} />
             </div>
-            {mapRightMenu && (
-              <Dropdown
-                menu={mapRightMenu}
-                trigger={['click']}
-                placement="bottomLeft"
-              >
-                <div
-                  className="cea-card-icon-button-container cea-no-drag"
-                  style={mapPlusRightStyle}
-                >
-                  <Tooltip title="Add a Feature card" placement="bottom">
-                    <Button
-                      type="text"
-                      icon={<CreateNewIcon />}
-                      aria-label="Add a Feature card to the right"
-                    />
-                  </Tooltip>
-                </div>
-              </Dropdown>
-            )}
-            {mapBottomMenu && (
-              <Dropdown
-                menu={mapBottomMenu}
-                trigger={['click']}
-                placement="bottomLeft"
-              >
-                <div
-                  className="cea-card-icon-button-container cea-no-drag"
-                  style={mapPlusBottomStyle}
-                >
-                  <Tooltip title="Add a Feature card below" placement="bottom">
-                    <Button
-                      type="text"
-                      icon={<CreateNewIcon />}
-                      aria-label="Add a Feature card below"
-                    />
-                  </Tooltip>
-                </div>
-              </Dropdown>
-            )}
+            <PerimeterPlusButtons
+              targetCardId="MAP"
+              exposure={exposureMap['MAP']}
+              buildMenu={buildAddCardMenu}
+            />
           </div>
 
           {/* ── Feature cards ────────────────────────────────── */}
@@ -410,6 +358,11 @@ const ReportColumn = ({
                 }
                 onPlotReady={onPlotReady}
                 onPreferredHeight={handlePreferredHeight}
+              />
+              <PerimeterPlusButtons
+                targetCardId={card.id}
+                exposure={exposureMap[card.id]}
+                buildMenu={buildAddCardMenu}
               />
             </div>
           ))}
@@ -467,10 +420,10 @@ const mapFillStyle = {
   height: '100%',
 };
 
-// `+` affordances hanging off the map tile's right / bottom edges,
-// centred on each edge and nudged 8 px beyond it. `.cea-no-drag`
-// prevents the click from starting a drag.
-const mapPlusRightStyle = {
+// `+` affordances hanging off a tile's right / bottom edges, centred
+// on each edge and nudged 8 px beyond it. `.cea-no-drag` prevents
+// the click from starting a drag.
+const plusRightStyle = {
   position: 'absolute',
   top: '50%',
   left: '100%',
@@ -479,7 +432,7 @@ const mapPlusRightStyle = {
   zIndex: 3,
 };
 
-const mapPlusBottomStyle = {
+const plusBottomStyle = {
   position: 'absolute',
   top: '100%',
   left: '50%',
@@ -487,5 +440,103 @@ const mapPlusBottomStyle = {
   marginTop: 8,
   zIndex: 3,
 };
+
+// Right-edge + bottom-edge `+` affordances, rendered only on edges
+// flagged as exposed by `computeExposure`. Each opens a plot-picker
+// dropdown; selection inserts a new feature card adjacent to this
+// tile (right or bottom).
+const PerimeterPlusButtons = ({ targetCardId, exposure, buildMenu }) => {
+  const rightMenu = exposure?.right ? buildMenu(targetCardId, 'right') : null;
+  const bottomMenu = exposure?.bottom
+    ? buildMenu(targetCardId, 'bottom')
+    : null;
+  return (
+    <>
+      {rightMenu && (
+        <Dropdown menu={rightMenu} trigger={['click']} placement="bottomLeft">
+          <div
+            className="cea-card-icon-button-container cea-no-drag"
+            style={plusRightStyle}
+          >
+            <Tooltip title="Add a Feature card" placement="bottom">
+              <Button
+                type="text"
+                icon={<CreateNewIcon />}
+                aria-label="Add a Feature card to the right"
+              />
+            </Tooltip>
+          </div>
+        </Dropdown>
+      )}
+      {bottomMenu && (
+        <Dropdown menu={bottomMenu} trigger={['click']} placement="bottomLeft">
+          <div
+            className="cea-card-icon-button-container cea-no-drag"
+            style={plusBottomStyle}
+          >
+            <Tooltip title="Add a Feature card below" placement="bottom">
+              <Button
+                type="text"
+                icon={<CreateNewIcon />}
+                aria-label="Add a Feature card below"
+              />
+            </Tooltip>
+          </div>
+        </Dropdown>
+      )}
+    </>
+  );
+};
+
+// Compute right/bottom exposure for every tile in `layout`. A tile's
+// right edge is "exposed" iff *any* portion of it sits on the
+// perimeter of the union of all tiles — i.e. there's at least one
+// gap along the edge where no other tile occupies the column at
+// `x + w`. Same logic transposed for the bottom edge. Lenient on
+// purpose so a partially-blocked edge still gets a `+` button.
+function computeExposure(layout) {
+  const out = {};
+  for (const item of layout) {
+    out[item.i] = {
+      right: hasGapAlongEdge(item, layout, 'right'),
+      bottom: hasGapAlongEdge(item, layout, 'bottom'),
+    };
+  }
+  return out;
+}
+
+function hasGapAlongEdge(item, layout, side) {
+  const isRight = side === 'right';
+  // The edge sits at this perpendicular coord (column for right edge,
+  // row for bottom edge). Lateral = along the edge.
+  const edge = isRight ? item.x + item.w : item.y + item.h;
+  const latStart = isRight ? item.y : item.x;
+  const latEnd = latStart + (isRight ? item.h : item.w);
+
+  // Collect the lateral intervals where other tiles touch this edge.
+  const intervals = [];
+  for (const other of layout) {
+    if (other === item) continue;
+    const oPerpStart = isRight ? other.x : other.y;
+    const oPerpEnd = oPerpStart + (isRight ? other.w : other.h);
+    if (oPerpStart > edge || oPerpEnd <= edge) continue;
+    const oLatStart = isRight ? other.y : other.x;
+    const oLatEnd = oLatStart + (isRight ? other.h : other.w);
+    const lo = Math.max(oLatStart, latStart);
+    const hi = Math.min(oLatEnd, latEnd);
+    if (hi > lo) intervals.push([lo, hi]);
+  }
+  if (intervals.length === 0) return true;
+
+  // Sort by start, walk left→right; any gap means the edge is
+  // partially on the perimeter.
+  intervals.sort((a, b) => a[0] - b[0]);
+  let cursor = latStart;
+  for (const [s, e] of intervals) {
+    if (s > cursor) return true;
+    if (e > cursor) cursor = e;
+  }
+  return cursor < latEnd;
+}
 
 export default ReportColumn;
