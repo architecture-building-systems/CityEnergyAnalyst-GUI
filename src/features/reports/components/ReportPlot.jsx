@@ -35,12 +35,13 @@ const ReportPlot = ({
   useEffect(() => {
     if (!html) return;
 
-    // The backend HTML contains both external CDN <script src=...>
-    // tags and an inline Plotly.newPlot(...) script. html-react-parser
-    // doesn't execute either, so we replay them here. The inline
-    // script needs window.Plotly, so externals must load first.
+    // The backend HTML contains external CDN <script src=...> tags
+    // plus one or more inline Plotly.newPlot(...) blocks (one per
+    // figure — multi-figure plots stack several siblings). We replay
+    // all of them; externals first so window.Plotly exists by the
+    // time the inline blocks run.
     const externalSrcs = [];
-    let inlineScript = null;
+    const inlineScripts = [];
     parser(html, {
       replace: function (domNode) {
         if (domNode.type !== 'script') return;
@@ -48,12 +49,11 @@ const ReportPlot = ({
         if (src) {
           externalSrcs.push(src);
         } else if (domNode.children?.[0]?.data) {
-          inlineScript = domNode.children[0].data;
+          inlineScripts.push(domNode.children[0].data);
         }
       },
     });
 
-    const appendedScripts = [];
     let cancelled = false;
 
     const loadExternal = (src) =>
@@ -68,17 +68,18 @@ const ReportPlot = ({
         el.onload = resolve;
         el.onerror = resolve;
         document.head.appendChild(el);
-        appendedScripts.push(el);
       });
 
     const runInline = () => {
-      if (cancelled || !inlineScript) return;
-      const el = document.createElement('script');
-      el.dataset.id = `script-report-${uniqueId}`;
-      el.append(inlineScript);
-      document.body.appendChild(el);
-      appendedScripts.push(el);
-      scriptRef.current = el;
+      if (cancelled) return;
+      const els = inlineScripts.map((src, idx) => {
+        const el = document.createElement('script');
+        el.dataset.id = `script-report-${uniqueId}-${idx}`;
+        el.append(src);
+        document.body.appendChild(el);
+        return el;
+      });
+      scriptRef.current = els;
     };
 
     const run = async () => {
@@ -124,13 +125,19 @@ const ReportPlot = ({
           });
         }
 
-        // Report the backend-baked natural height (e.g. 600 for
-        // Sankey via `update_layout(height=N, autosize=False)`) so
-        // the card can grow to fit. Charts with no explicit height
-        // report nothing and autosize to the card on next render.
-        const layoutHeight = plotDivs[0].layout?.height;
-        if (typeof layoutHeight === 'number' && onNaturalHeight) {
-          onNaturalHeight(layoutHeight);
+        // Sum the backend-baked natural heights across every figure
+        // in this plot (multi-figure plots — e.g. one Sankey per
+        // what-if — return several `.plotly-graph-div` siblings).
+        // The card grows to fit the total. Figures without explicit
+        // height contribute 0 and autosize to whatever space they
+        // get in the flex column below.
+        let totalNaturalHeight = 0;
+        plotDivs.forEach((div) => {
+          const h = div.layout?.height;
+          if (typeof h === 'number') totalNaturalHeight += h;
+        });
+        if (totalNaturalHeight > 0 && onNaturalHeight) {
+          onNaturalHeight(totalNaturalHeight);
         }
 
         if (onPlotReady) onPlotReady(plotDivs[0]);
@@ -139,14 +146,12 @@ const ReportPlot = ({
 
     run();
 
-    // Only the inline exec tag is removed on unmount; CDN tags are
-    // left in <head> so subsequent plots reuse them.
+    // Only inline exec tags are removed on unmount; CDN tags stay in
+    // <head> so subsequent plots reuse them.
     return () => {
       cancelled = true;
-      if (scriptRef.current) {
-        scriptRef.current.remove();
-        scriptRef.current = null;
-      }
+      scriptRef.current?.forEach((el) => el.remove());
+      scriptRef.current = null;
     };
   }, [html, uniqueId, onPlotReady]);
 
@@ -244,10 +249,12 @@ const ReportPlot = ({
     },
   });
 
-  // The backend HTML wraps the plotly-graph-div in an unstyled outer
-  // div. Force it to 100% height so the inner `height: 100%` has
-  // something to resolve against (width works because block elements
-  // fill their parent by default; height does not).
+  // The backend wraps each plotly-graph-div in an unstyled outer
+  // <div>. Force every wrapper to `flex: 1 / minHeight: 0` so:
+  //   - single-figure plots → wrapper fills the container as before
+  //   - multi-figure plots → wrappers share the container's height
+  //     equally (each chart's parent has a real, dynamic pixel
+  //     height that fitPlotToParent reads on user resize)
   const filtered = (Array.isArray(content) ? content : [content])
     .filter((node) => node?.type === 'div' || node?.type === 'style')
     .map((node, i) =>
@@ -256,29 +263,30 @@ const ReportPlot = ({
             key: node.key ?? i,
             style: {
               ...(node.props.style || {}),
-              height: '100%',
               width: '100%',
+              flex: '1 1 0',
+              minHeight: 0,
+              position: 'relative',
             },
           })
         : node,
     );
 
-  // `minHeight: 0` lets multiple plots in the same card divide space
-  // proportionally via `flex: 1` — without it, each plot's natural
-  // height would floor the share it gets when the card is resized.
   return (
-    <div
-      ref={containerRef}
-      style={{
-        flex: 1,
-        minHeight: 0,
-        width: '100%',
-        position: 'relative',
-      }}
-    >
+    <div ref={containerRef} style={containerStyle}>
       {filtered}
     </div>
   );
+};
+
+const containerStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+  width: '100%',
+  gap: 12,
+  position: 'relative',
 };
 
 const loadingStyle = {
