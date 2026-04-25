@@ -138,7 +138,9 @@ const Tool = ({
     if (!rawParameters || Object.keys(pathwayOverrides).length === 0)
       return rawParameters;
     return rawParameters.map((p) =>
-      p.name in pathwayOverrides ? { ...p, value: pathwayOverrides[p.name] } : p,
+      p.name in pathwayOverrides
+        ? { ...p, value: pathwayOverrides[p.name] }
+        : p,
     );
   }, [rawParameters, pathwayOverrides]);
 

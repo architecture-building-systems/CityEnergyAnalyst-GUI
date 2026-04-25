@@ -397,7 +397,13 @@ const PathwaySelect = ({
       ),
       value: pathwayName,
     }));
-  }, [sortedPathways, visibleSet, onToggleVisible, onDeletePathway, onDuplicatePathway]);
+  }, [
+    sortedPathways,
+    visibleSet,
+    onToggleVisible,
+    onDeletePathway,
+    onDuplicatePathway,
+  ]);
 
   const hasPathways = overviewPathways.length > 0;
 
@@ -1416,830 +1422,843 @@ const PathwayPanel = ({
 
   return (
     <>
-    <DuplicatePathwayModal
-      visible={duplicateTarget != null}
-      setVisible={(v) => {
-        if (!v) setDuplicateTarget(null);
-      }}
-      currentPathwayName={duplicateTarget ?? ''}
-      existingPathwayNames={allPathwayNames}
-      onDuplicated={handleDuplicated}
-    />
-    <div
-      style={{
-        minHeight: 290,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        padding: expanded ? '8px 16px 20px' : '4px 12px 16px',
-        background: '#FFFFFF',
-        overflow: 'hidden',
-        borderRadius: 'inherit',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <h2 style={{ margin: 0 }}>Pathway Builder</h2>
-        <InfoTooltip tooltipKey="pathway-builder" placement="right" />
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) auto',
-          gap: 16,
-          alignItems: 'start',
-          paddingBottom: 8,
-          borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+      <DuplicatePathwayModal
+        visible={duplicateTarget != null}
+        setVisible={(v) => {
+          if (!v) setDuplicateTarget(null);
         }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            minWidth: 0,
-          }}
-        >
-          <PathwaySelect
-            selectedPathway={selectedPathway}
-            visiblePathways={visiblePathways}
-            overviewPathways={overviewPathways}
-            onToggleVisible={handleToggleVisible}
-            onDeletePathway={handleDeletePathwayByName}
-            onDuplicatePathway={handleDuplicatePathwayByName}
-            onCreatePathway={handleStartCreatePathway}
-            loading={loadingOverview}
-            allBaked={
-              activeRows.length > 0 &&
-              activeRows.every((row) => {
-                const phase = row?.status?.primary_phase ?? 'none';
-                return phase === 'baked' || phase === 'simulated';
-              })
-            }
-          />
-          <div className="cea-card-icon-button-container">
-            <TooltipFromBackend
-              tooltipKey="create-new-pathway"
-              placement="bottom"
-            >
-              <Button
-                icon={<CreateNewIcon />}
-                type="text"
-                loading={busyAction === 'create-pathway'}
-                onClick={handleStartCreatePathway}
-              />
-            </TooltipFromBackend>
-          </div>
-          <Divider type="vertical" style={{ height: 24, margin: 0 }} />
-          <TemplateSelect
-            templates={templateNames}
-            selectedTemplate={selectedHeaderTemplate}
-            onSelectTemplate={setSelectedHeaderTemplate}
-            onDeleteTemplate={handleDeleteTemplate}
-            onCreateTemplate={handleOpenTemplateTool}
-            loading={loadingTemplates}
-          />
-          <div className="cea-card-icon-button-container">
-            <TooltipFromBackend
-              tooltipKey="define-intervention-template"
-              placement="bottom"
-            >
-              <Button
-                icon={<CreateNewIcon />}
-                type="text"
-                onClick={handleOpenTemplateTool}
-              />
-            </TooltipFromBackend>
-          </div>
-          <InfoTooltip tooltipKey="intervention-templates" />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            gap: 8,
-            flexShrink: 0,
-            maxWidth: '100%',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
-          >
-            {loadingTimeline ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  color: '#64748B',
-                  fontSize: 12,
-                }}
-              >
-                <Spin size="small" />
-                Refreshing active pathway
-              </span>
-            ) : null}
-            <div className="cea-card-icon-button-container">
-              <TooltipFromBackend
-                tooltipKey="refresh-pathway"
-                placement="bottom"
-              >
-                <Button
-                  icon={<RefreshIcon />}
-                  type="text"
-                  loading={loadingOverview || loadingTimeline}
-                  onClick={() => refreshPathwayData()}
-                />
-              </TooltipFromBackend>
-            </div>
-            <Button
-              type="primary"
-              disabled={
-                !selectedPathway ||
-                visiblePathways.length > 1 ||
-                !activeRows.length ||
-                activeRows.some((row) => {
-                  if (row?.status?.has_stale_phase) return true;
-                  const phase = row?.status?.primary_phase ?? 'none';
-                  return phase !== 'baked' && phase !== 'simulated' && phase !== 'custom';
-                })
-              }
-              loading={busyAction === 'pathway-simulations'}
-              onClick={() => handleRunPathwayJob('pathway-simulations')}
-            >
-              {busyAction === 'pathway-simulations' ? (
-                'Starting job...'
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Simulate Pathway
-                  <RunIcon style={{ fontSize: 18 }} />
-                </div>
-              )}
-            </Button>
-            <InfoTooltip tooltipKey="simulate-pathway" />
-          </div>
-        </div>
-      </div>
-
+        currentPathwayName={duplicateTarget ?? ''}
+        existingPathwayNames={allPathwayNames}
+        onDuplicated={handleDuplicated}
+      />
       <div
         style={{
-          minHeight: 0,
-          flex: 1,
-          overflowY: 'auto',
+          minHeight: 290,
           display: 'flex',
           flexDirection: 'column',
           gap: 14,
-          paddingRight: 2,
+          padding: expanded ? '8px 16px 20px' : '4px 12px 16px',
+          background: '#FFFFFF',
+          overflow: 'hidden',
+          borderRadius: 'inherit',
         }}
       >
-        {panelError ? (
-          <Alert
-            type="error"
-            showIcon
-            message={panelError}
-            style={{ borderRadius: 12 }}
-          />
-        ) : null}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h2 style={{ margin: 0 }}>Pathway Builder</h2>
+          <InfoTooltip tooltipKey="pathway-builder" placement="right" />
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            gap: 16,
+            alignItems: 'start',
+            paddingBottom: 8,
+            borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+          }}
+        >
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
-              gap: 14,
-              flexWrap: 'wrap',
               alignItems: 'center',
+              gap: 12,
+              minWidth: 0,
+            }}
+          >
+            <PathwaySelect
+              selectedPathway={selectedPathway}
+              visiblePathways={visiblePathways}
+              overviewPathways={overviewPathways}
+              onToggleVisible={handleToggleVisible}
+              onDeletePathway={handleDeletePathwayByName}
+              onDuplicatePathway={handleDuplicatePathwayByName}
+              onCreatePathway={handleStartCreatePathway}
+              loading={loadingOverview}
+              allBaked={
+                activeRows.length > 0 &&
+                activeRows.every((row) => {
+                  const phase = row?.status?.primary_phase ?? 'none';
+                  return phase === 'baked' || phase === 'simulated';
+                })
+              }
+            />
+            <div className="cea-card-icon-button-container">
+              <TooltipFromBackend
+                tooltipKey="create-new-pathway"
+                placement="bottom"
+              >
+                <Button
+                  icon={<CreateNewIcon />}
+                  type="text"
+                  loading={busyAction === 'create-pathway'}
+                  onClick={handleStartCreatePathway}
+                />
+              </TooltipFromBackend>
+            </div>
+            <Divider type="vertical" style={{ height: 24, margin: 0 }} />
+            <TemplateSelect
+              templates={templateNames}
+              selectedTemplate={selectedHeaderTemplate}
+              onSelectTemplate={setSelectedHeaderTemplate}
+              onDeleteTemplate={handleDeleteTemplate}
+              onCreateTemplate={handleOpenTemplateTool}
+              loading={loadingTemplates}
+            />
+            <div className="cea-card-icon-button-container">
+              <TooltipFromBackend
+                tooltipKey="define-intervention-template"
+                placement="bottom"
+              >
+                <Button
+                  icon={<CreateNewIcon />}
+                  type="text"
+                  onClick={handleOpenTemplateTool}
+                />
+              </TooltipFromBackend>
+            </div>
+            <InfoTooltip tooltipKey="intervention-templates" />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: 8,
+              flexShrink: 0,
+              maxWidth: '100%',
             }}
           >
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
-                width: 549,
+                gap: 10,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
               }}
             >
-              <InputNumber
-                placeholder="2050"
-                precision={0}
-                value={newYearValue}
-                onChange={setNewYearValue}
-                style={{ width: 96 }}
-                disabled={!selectedPathway}
-              />
-              {selectedHeaderTemplate ? (
-                <Button
-                  type="primary"
-                  icon={<CreateNewIcon />}
-                  disabled={!visiblePathways.length || newYearValue == null}
-                  loading={busyAction === 'apply-intervention'}
-                  onClick={handleApplyIntervention}
+              {loadingTimeline ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    color: '#64748B',
+                    fontSize: 12,
+                  }}
                 >
-                  Apply Selected Intervention
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  icon={<CreateNewIcon />}
-                  disabled={!selectedPathway || newYearValue == null}
-                  loading={busyAction === 'add-year'}
-                  onClick={handleAddYear}
-                >
-                  Create Building Event
-                </Button>
-              )}
-              {selectedRow &&
-              (selectedRow.can_delete ||
-                selectedRow.can_clear_manual_changes) ? (
-                <Button
-                  danger
-                  icon={<BinAnimationIcon />}
-                  disabled={!selectedPathway}
-                  loading={busyAction === 'delete-year'}
-                  onClick={handleDeleteSelectedYear}
-                >
-                  {selectedRow.can_clear_manual_changes
-                    ? 'Clear Manual Changes'
-                    : 'Delete State'}
-                </Button>
+                  <Spin size="small" />
+                  Refreshing active pathway
+                </span>
               ) : null}
-              <InfoTooltip tooltipKey="add-building-event-or-intervention" />
+              <div className="cea-card-icon-button-container">
+                <TooltipFromBackend
+                  tooltipKey="refresh-pathway"
+                  placement="bottom"
+                >
+                  <Button
+                    icon={<RefreshIcon />}
+                    type="text"
+                    loading={loadingOverview || loadingTimeline}
+                    onClick={() => refreshPathwayData()}
+                  />
+                </TooltipFromBackend>
+              </div>
+              <Button
+                type="primary"
+                disabled={
+                  !selectedPathway ||
+                  visiblePathways.length > 1 ||
+                  !activeRows.length ||
+                  activeRows.some((row) => {
+                    if (row?.status?.has_stale_phase) return true;
+                    const phase = row?.status?.primary_phase ?? 'none';
+                    return (
+                      phase !== 'baked' &&
+                      phase !== 'simulated' &&
+                      phase !== 'custom'
+                    );
+                  })
+                }
+                loading={busyAction === 'pathway-simulations'}
+                onClick={() => handleRunPathwayJob('pathway-simulations')}
+              >
+                {busyAction === 'pathway-simulations' ? (
+                  'Starting job...'
+                ) : (
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    Simulate Pathway
+                    <RunIcon style={{ fontSize: 18 }} />
+                  </div>
+                )}
+              </Button>
+              <InfoTooltip tooltipKey="simulate-pathway" />
             </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            minHeight: 0,
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            paddingRight: 2,
+          }}
+        >
+          {panelError ? (
+            <Alert
+              type="error"
+              showIcon
+              message={panelError}
+              style={{ borderRadius: 12 }}
+            />
+          ) : null}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div
               style={{
                 display: 'flex',
+                justifyContent: 'space-between',
                 gap: 14,
                 flexWrap: 'wrap',
                 alignItems: 'center',
               }}
             >
-              <LegendChip colour={STATUS_FILL.none} label="Draft" />
-              <LegendChip colour={STATUS_FILL.baked} label="Baked" />
-              <LegendChip colour={STATUS_FILL.custom} label="Custom" />
-              <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
-              <LegendChip
-                colour={STATUS_ACCENT.error}
-                label="Stale (re-bake needed)"
-              />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: 549,
+                }}
+              >
+                <InputNumber
+                  placeholder="2050"
+                  precision={0}
+                  value={newYearValue}
+                  onChange={setNewYearValue}
+                  style={{ width: 96 }}
+                  disabled={!selectedPathway}
+                />
+                {selectedHeaderTemplate ? (
+                  <Button
+                    type="primary"
+                    icon={<CreateNewIcon />}
+                    disabled={!visiblePathways.length || newYearValue == null}
+                    loading={busyAction === 'apply-intervention'}
+                    onClick={handleApplyIntervention}
+                  >
+                    Apply Selected Intervention
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    icon={<CreateNewIcon />}
+                    disabled={!selectedPathway || newYearValue == null}
+                    loading={busyAction === 'add-year'}
+                    onClick={handleAddYear}
+                  >
+                    Create Building Event
+                  </Button>
+                )}
+                {selectedRow &&
+                (selectedRow.can_delete ||
+                  selectedRow.can_clear_manual_changes) ? (
+                  <Button
+                    danger
+                    icon={<BinAnimationIcon />}
+                    disabled={!selectedPathway}
+                    loading={busyAction === 'delete-year'}
+                    onClick={handleDeleteSelectedYear}
+                  >
+                    {selectedRow.can_clear_manual_changes
+                      ? 'Clear Manual Changes'
+                      : 'Delete State'}
+                  </Button>
+                ) : null}
+                <InfoTooltip tooltipKey="add-building-event-or-intervention" />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 14,
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}
+              >
+                <LegendChip colour={STATUS_FILL.none} label="Draft" />
+                <LegendChip colour={STATUS_FILL.baked} label="Baked" />
+                <LegendChip colour={STATUS_FILL.custom} label="Custom" />
+                <LegendChip colour={STATUS_FILL.simulated} label="Simulated" />
+                <LegendChip
+                  colour={STATUS_ACCENT.error}
+                  label="Stale (re-bake needed)"
+                />
+              </div>
             </div>
-          </div>
 
-          <div
-            style={{
-              border: '1px solid rgba(148, 163, 184, 0.22)',
-              borderRadius: 18,
-              background: '#f7f7f7',
-              overflow: 'hidden',
-            }}
-          >
-            {loadingOverview && !overview ? (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: 72,
-                }}
-              >
-                <Spin />
-              </div>
-            ) : visibleOverviewPathways.length === 0 ? (
-              <div
-                style={{
-                  height: RULER_HEIGHT + ACTIVE_LANE_HEIGHT,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text style={{ color: '#94A3B8', fontSize: 12 }}>
-                  Create or select a Pathway
-                </Text>
-              </div>
-            ) : (
-              <div
-                ref={laneStackScrollRef}
-                style={{
-                  maxHeight: timelineViewportHeight,
-                  overflowY:
-                    totalTimelineHeight > timelineViewportHeight
-                      ? 'auto'
-                      : 'hidden',
-                }}
-              >
+            <div
+              style={{
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                borderRadius: 18,
+                background: '#f7f7f7',
+                overflow: 'hidden',
+              }}
+            >
+              {loadingOverview && !overview ? (
                 <div
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr) auto`,
-                    minHeight: totalTimelineHeight,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 72,
+                  }}
+                >
+                  <Spin />
+                </div>
+              ) : visibleOverviewPathways.length === 0 ? (
+                <div
+                  style={{
+                    height: RULER_HEIGHT + ACTIVE_LANE_HEIGHT,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#94A3B8', fontSize: 12 }}>
+                    Create or select a Pathway
+                  </Text>
+                </div>
+              ) : (
+                <div
+                  ref={laneStackScrollRef}
+                  style={{
+                    maxHeight: timelineViewportHeight,
+                    overflowY:
+                      totalTimelineHeight > timelineViewportHeight
+                        ? 'auto'
+                        : 'hidden',
                   }}
                 >
                   <div
                     style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      borderRight: '1px solid rgba(148, 163, 184, 0.18)',
-                      background: '#f7f7f7',
+                      display: 'grid',
+                      gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px minmax(0, 1fr) auto`,
+                      minHeight: totalTimelineHeight,
                     }}
                   >
                     <div
                       style={{
-                        height: RULER_HEIGHT,
-                        padding: '0 16px',
                         display: 'flex',
-                        alignItems: 'flex-end',
+                        flexDirection: 'column',
+                        borderRight: '1px solid rgba(148, 163, 184, 0.18)',
+                        background: '#f7f7f7',
                       }}
                     >
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          letterSpacing: 1,
-                          color: '#64748B',
-                        }}
-                      >
-                        Pathways
-                      </Text>
-                    </div>
-
-                    {visibleOverviewPathways.map((pathway) => (
                       <div
-                        key={`label-${pathway.pathway_name}`}
                         style={{
-                          height: ACTIVE_LANE_HEIGHT,
+                          height: RULER_HEIGHT,
                           padding: '0 16px',
-                          background: 'transparent',
                           display: 'flex',
-                          alignItems: 'center',
-                          width: '100%',
-                          boxSizing: 'border-box',
-                          borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                          alignItems: 'flex-end',
                         }}
                       >
-                        <div
+                        <Text
                           style={{
+                            fontSize: 11,
+                            letterSpacing: 1,
+                            color: '#64748B',
+                          }}
+                        >
+                          Pathways
+                        </Text>
+                      </div>
+
+                      {visibleOverviewPathways.map((pathway) => (
+                        <div
+                          key={`label-${pathway.pathway_name}`}
+                          style={{
+                            height: ACTIVE_LANE_HEIGHT,
+                            padding: '0 16px',
+                            background: 'transparent',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 8,
                             width: '100%',
-                            minWidth: 0,
+                            boxSizing: 'border-box',
+                            borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
                           }}
                         >
                           <div
                             style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              fontWeight: 600,
-                              color: '#0F172A',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 8,
+                              width: '100%',
+                              minWidth: 0,
                             }}
                           >
-                            {pathway.pathway_name}
+                            <div
+                              style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                fontWeight: 600,
+                                color: '#0F172A',
+                              }}
+                            >
+                              {pathway.pathway_name}
+                            </div>
+                            <Text style={{ fontSize: 11, color: '#94A3B8' }}>
+                              {pathway.state_count}
+                            </Text>
                           </div>
-                          <Text style={{ fontSize: 11, color: '#94A3B8' }}>
-                            {pathway.state_count}
-                          </Text>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div
-                    ref={viewportMeasureRef}
-                    style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}
-                  >
-                    <div
-                      ref={scrollViewportRef}
-                      style={{
-                        minWidth: 0,
-                        maxWidth: '100%',
-                        overflowX: 'auto',
-                        overflowY: 'hidden',
-                        cursor: 'default',
-                      }}
-                    >
-                      <div style={{ width: contentWidth, minWidth: '100%' }}>
-                        <div
-                          style={{
-                            position: 'relative',
-                            height: RULER_HEIGHT,
-                          }}
-                        >
-                          {tickYears.map((year) => (
-                            <div
-                              key={`tick-${year}`}
-                              style={{
-                                position: 'absolute',
-                                left: getYearOffset(year),
-                                top: 0,
-                                transform: 'translateX(-50%)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: 0,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  width: 1,
-                                  height: 10,
-                                  background: 'rgba(100, 116, 139, 0.32)',
-                                }}
-                              />
-                              <Text style={{ fontSize: 11, color: '#64748B' }}>
-                                {year}
-                              </Text>
-                            </div>
-                          ))}
-                        </div>
-
-                        {visibleOverviewPathways.map((pathway) => {
-                          const isActive =
-                            pathway.pathway_name === selectedPathway;
-                          const laneYears = isActive
-                            ? activeRows.map((row) => row.year)
-                            : (pathway.years ?? []);
-
-                          return (
-                            <div
-                              key={`lane-${pathway.pathway_name}`}
-                              style={{
-                                position: 'relative',
-                                height: ACTIVE_LANE_HEIGHT,
-                                boxSizing: 'border-box',
-                                background: 'transparent',
-                                borderBottom:
-                                  '1px solid rgba(148, 163, 184, 0.08)',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  left: LANE_PADDING,
-                                  right: LANE_PADDING,
-                                  top: '50%',
-                                  transform: 'translateY(-50%)',
-                                  height: 1,
-                                  background: '#8eb6dc',
-                                  borderRadius: 999,
-                                }}
-                              />
-                              {laneYears.map((year) => {
-                                const row = isActive
-                                  ? activeRowByYear.get(year)
-                                  : null;
-                                const nodeSize = getNodeSize(row, true);
-                                const selected =
-                                  isActive && selectedYear === year;
-                                const validationError =
-                                  isActive &&
-                                  row?.validation?.status === 'error';
-                                const overviewPhase =
-                                  pathway.year_phases?.[String(year)];
-                                const progress =
-                                  simulationProgress[pathway.pathway_name];
-                                const isSimCompleted =
-                                  progress?.completed?.includes(year);
-                                const isSimActive = progress?.active === year;
-                                const nodeFill = isSimCompleted
-                                  ? STATUS_FILL.simulated
-                                  : isActive
-                                    ? validationError
-                                      ? STATUS_ACCENT.error
-                                      : getNodeFill(row)
-                                    : (STATUS_FILL[overviewPhase] ?? '#CBD5E1');
-
-                                return (
-                                  <button
-                                    key={`${pathway.pathway_name}-${year}`}
-                                    type="button"
-                                    className={
-                                      isSimActive ? 'cea-node-breathing' : ''
-                                    }
-                                    onClick={() => {
-                                      void handleSelectPathway(
-                                        pathway.pathway_name,
-                                        year,
-                                      );
-                                    }}
-                                    style={{
-                                      position: 'absolute',
-                                      left: getYearOffset(year),
-                                      top: '50%',
-                                      transform: 'translate(-50%, -50%)',
-                                      width: nodeSize,
-                                      height: nodeSize,
-                                      borderRadius: 999,
-                                      border: '2px solid #FFFFFF',
-                                      background: nodeFill,
-                                      cursor: 'pointer',
-                                      ...(isSimActive
-                                        ? {}
-                                        : {
-                                            boxShadow: selected
-                                              ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
-                                              : '0 4px 10px rgba(15, 23, 42, 0.12)',
-                                          }),
-                                      padding: 0,
-                                    }}
-                                    aria-label={`${pathway.pathway_name} ${year}`}
-                                  />
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
-                      </div>
+                      ))}
                     </div>
-                  </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      borderLeft: '1px solid rgba(148, 163, 184, 0.18)',
-                    }}
-                  >
                     <div
-                      style={{
-                        height: RULER_HEIGHT,
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                      }}
+                      ref={viewportMeasureRef}
+                      style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}
                     >
-                      <InfoTooltip tooltipKey="bake-states" />
-                    </div>
-                    {visibleOverviewPathways.map((pathway) => (
                       <div
-                        key={`bake-${pathway.pathway_name}`}
+                        ref={scrollViewportRef}
                         style={{
-                          height: ACTIVE_LANE_HEIGHT,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0 8px',
-                          boxSizing: 'border-box',
-                          borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                          minWidth: 0,
+                          maxWidth: '100%',
+                          overflowX: 'auto',
+                          overflowY: 'hidden',
+                          cursor: 'default',
                         }}
                       >
-                        <Button
-                          size="small"
-                          loading={
-                            busyAction === `bake-${pathway.pathway_name}`
-                          }
-                          onClick={() =>
-                            handleBakePathway(pathway.pathway_name)
-                          }
-                        >
-                          Bake
-                        </Button>
+                        <div style={{ width: contentWidth, minWidth: '100%' }}>
+                          <div
+                            style={{
+                              position: 'relative',
+                              height: RULER_HEIGHT,
+                            }}
+                          >
+                            {tickYears.map((year) => (
+                              <div
+                                key={`tick-${year}`}
+                                style={{
+                                  position: 'absolute',
+                                  left: getYearOffset(year),
+                                  top: 0,
+                                  transform: 'translateX(-50%)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  gap: 0,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: 1,
+                                    height: 10,
+                                    background: 'rgba(100, 116, 139, 0.32)',
+                                  }}
+                                />
+                                <Text
+                                  style={{ fontSize: 11, color: '#64748B' }}
+                                >
+                                  {year}
+                                </Text>
+                              </div>
+                            ))}
+                          </div>
+
+                          {visibleOverviewPathways.map((pathway) => {
+                            const isActive =
+                              pathway.pathway_name === selectedPathway;
+                            const laneYears = isActive
+                              ? activeRows.map((row) => row.year)
+                              : (pathway.years ?? []);
+
+                            return (
+                              <div
+                                key={`lane-${pathway.pathway_name}`}
+                                style={{
+                                  position: 'relative',
+                                  height: ACTIVE_LANE_HEIGHT,
+                                  boxSizing: 'border-box',
+                                  background: 'transparent',
+                                  borderBottom:
+                                    '1px solid rgba(148, 163, 184, 0.08)',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    left: LANE_PADDING,
+                                    right: LANE_PADDING,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    height: 1,
+                                    background: '#8eb6dc',
+                                    borderRadius: 999,
+                                  }}
+                                />
+                                {laneYears.map((year) => {
+                                  const row = isActive
+                                    ? activeRowByYear.get(year)
+                                    : null;
+                                  const nodeSize = getNodeSize(row, true);
+                                  const selected =
+                                    isActive && selectedYear === year;
+                                  const validationError =
+                                    isActive &&
+                                    row?.validation?.status === 'error';
+                                  const overviewPhase =
+                                    pathway.year_phases?.[String(year)];
+                                  const progress =
+                                    simulationProgress[pathway.pathway_name];
+                                  const isSimCompleted =
+                                    progress?.completed?.includes(year);
+                                  const isSimActive = progress?.active === year;
+                                  const nodeFill = isSimCompleted
+                                    ? STATUS_FILL.simulated
+                                    : isActive
+                                      ? validationError
+                                        ? STATUS_ACCENT.error
+                                        : getNodeFill(row)
+                                      : (STATUS_FILL[overviewPhase] ??
+                                        '#CBD5E1');
+
+                                  return (
+                                    <button
+                                      key={`${pathway.pathway_name}-${year}`}
+                                      type="button"
+                                      className={
+                                        isSimActive ? 'cea-node-breathing' : ''
+                                      }
+                                      onClick={() => {
+                                        void handleSelectPathway(
+                                          pathway.pathway_name,
+                                          year,
+                                        );
+                                      }}
+                                      style={{
+                                        position: 'absolute',
+                                        left: getYearOffset(year),
+                                        top: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        width: nodeSize,
+                                        height: nodeSize,
+                                        borderRadius: 999,
+                                        border: '2px solid #FFFFFF',
+                                        background: nodeFill,
+                                        cursor: 'pointer',
+                                        ...(isSimActive
+                                          ? {}
+                                          : {
+                                              boxShadow: selected
+                                                ? '0 0 0 8px rgba(20, 112, 175, 0.14), 0 4px 10px rgba(15, 23, 42, 0.12)'
+                                                : '0 4px 10px rgba(15, 23, 42, 0.12)',
+                                            }),
+                                        padding: 0,
+                                      }}
+                                      aria-label={`${pathway.pathway_name} ${year}`}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderLeft: '1px solid rgba(148, 163, 184, 0.18)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: RULER_HEIGHT,
+                          display: 'flex',
+                          alignItems: 'flex-end',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <InfoTooltip tooltipKey="bake-states" />
+                      </div>
+                      {visibleOverviewPathways.map((pathway) => (
+                        <div
+                          key={`bake-${pathway.pathway_name}`}
+                          style={{
+                            height: ACTIVE_LANE_HEIGHT,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 8px',
+                            boxSizing: 'border-box',
+                            borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+                          }}
+                        >
+                          <Button
+                            size="small"
+                            loading={
+                              busyAction === `bake-${pathway.pathway_name}`
+                            }
+                            onClick={() =>
+                              handleBakePathway(pathway.pathway_name)
+                            }
+                          >
+                            Bake
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          <div
-            style={{
-              minHeight: 0,
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {selectedRow && visiblePathways.length > 0 ? (
-              <div
-                style={{
-                  borderRadius: 18,
-                  border: '1px solid rgba(148, 163, 184, 0.22)',
-                  background:
-                    'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
-                  padding: 16,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  minHeight: 0,
-                  overflow: 'auto',
-                }}
-              >
+            <div
+              style={{
+                minHeight: 0,
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {selectedRow && visiblePathways.length > 0 ? (
                 <div
                   style={{
+                    borderRadius: 18,
+                    border: '1px solid rgba(148, 163, 184, 0.22)',
+                    background:
+                      'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
+                    padding: 16,
                     display: 'flex',
+                    flexDirection: 'column',
                     gap: 12,
-                    alignItems: 'flex-start',
+                    minHeight: 0,
+                    overflow: 'auto',
                   }}
                 >
                   <div
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      width: '100%',
+                      gap: 12,
+                      alignItems: 'flex-start',
                     }}
                   >
-                    <Title
-                      level={4}
-                      style={{
-                        margin: 0,
-                        marginLeft: 12,
-                        width: 80,
-                        flexShrink: 0,
-                      }}
-                    >
-                      Y_{selectedRow.year}
-                    </Title>
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 6,
-                        flex: 1,
+                        gap: 8,
+                        width: '100%',
                       }}
                     >
-                      {[
-                        {
-                          key: 'auto-stock',
-                          label: 'Auto-Stock',
-                          active:
-                            selectedRow.state_kind === 'stock' ||
-                            selectedRow.state_kind === 'mixed',
-                        },
-                        {
-                          key: 'construct',
-                          label: 'Construct-Event',
-                          active:
-                            (selectedRow.summary?.new_buildings_count ?? 0) > 0,
-                        },
-                        {
-                          key: 'demolish',
-                          label: 'Demolish-Event',
-                          active:
-                            (selectedRow.summary?.demolished_buildings_count ??
-                              0) > 0,
-                        },
-                        {
-                          key: 'intervention',
-                          label: 'Intervention',
-                          active:
-                            (selectedRow.summary?.modification_count ?? 0) > 0,
-                        },
-                        {
-                          key: 'custom-input',
-                          label: 'Custom-Input',
-                          active:
-                            selectedRow.status?.primary_phase === 'custom',
-                          colour: '#C695A7',
-                        },
-                      ].map((tag) => (
-                        <span
-                          key={tag.key}
-                          style={{
-                            padding: '3px 10px',
-                            borderRadius: 999,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            background: tag.active
-                              ? (tag.colour ?? '#8eb6dc')
-                              : '#e8e8e8',
-                            color: tag.active ? '#fff' : '#999',
-                          }}
-                        >
-                          {tag.label}
-                        </span>
-                      ))}
-                      <InfoTooltip tooltipKey="state-types" />
-                      <Text
+                      <Title
+                        level={4}
                         style={{
-                          color: '#94A3B8',
-                          fontSize: 11,
-                          marginLeft: 'auto',
+                          margin: 0,
+                          marginLeft: 12,
+                          width: 80,
+                          flexShrink: 0,
                         }}
                       >
-                        Last updated:{' '}
-                        {formatCompactTimestamp(selectedRow.latest_modified_at)}
-                      </Text>
+                        Y_{selectedRow.year}
+                      </Title>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          flex: 1,
+                        }}
+                      >
+                        {[
+                          {
+                            key: 'auto-stock',
+                            label: 'Auto-Stock',
+                            active:
+                              selectedRow.state_kind === 'stock' ||
+                              selectedRow.state_kind === 'mixed',
+                          },
+                          {
+                            key: 'construct',
+                            label: 'Construct-Event',
+                            active:
+                              (selectedRow.summary?.new_buildings_count ?? 0) >
+                              0,
+                          },
+                          {
+                            key: 'demolish',
+                            label: 'Demolish-Event',
+                            active:
+                              (selectedRow.summary
+                                ?.demolished_buildings_count ?? 0) > 0,
+                          },
+                          {
+                            key: 'intervention',
+                            label: 'Intervention',
+                            active:
+                              (selectedRow.summary?.modification_count ?? 0) >
+                              0,
+                          },
+                          {
+                            key: 'custom-input',
+                            label: 'Custom-Input',
+                            active:
+                              selectedRow.status?.primary_phase === 'custom',
+                            colour: '#C695A7',
+                          },
+                        ].map((tag) => (
+                          <span
+                            key={tag.key}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: 999,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              background: tag.active
+                                ? (tag.colour ?? '#8eb6dc')
+                                : '#e8e8e8',
+                              color: tag.active ? '#fff' : '#999',
+                            }}
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
+                        <InfoTooltip tooltipKey="state-types" />
+                        <Text
+                          style={{
+                            color: '#94A3B8',
+                            fontSize: 11,
+                            marginLeft: 'auto',
+                          }}
+                        >
+                          Last updated:{' '}
+                          {formatCompactTimestamp(
+                            selectedRow.latest_modified_at,
+                          )}
+                        </Text>
+                      </div>
                     </div>
                   </div>
+
+                  {globalValidationIssues.length ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message="Pathway log warnings"
+                      description={
+                        <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                          {globalValidationIssues.map((issue) => (
+                            <li key={issue}>{issue}</li>
+                          ))}
+                        </ul>
+                      }
+                      style={{ borderRadius: 12 }}
+                    />
+                  ) : null}
+
+                  {activeValidationIssues.length ? (
+                    <Alert
+                      type="error"
+                      showIcon
+                      message="Year-specific validation issues"
+                      description={
+                        <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                          {activeValidationIssues.map((issue) => (
+                            <li key={issue}>{issue}</li>
+                          ))}
+                        </ul>
+                      }
+                      style={{ borderRadius: 12 }}
+                    />
+                  ) : null}
+
+                  {(() => {
+                    const hasConstruct =
+                      (selectedRow.building_events?.new_buildings ?? [])
+                        .length > 0;
+                    const hasDemolish =
+                      (selectedRow.building_events?.demolished_buildings ?? [])
+                        .length > 0;
+                    const hasChange =
+                      Object.keys(selectedRow.modifications ?? {}).length > 0;
+                    const visibleCards = [
+                      hasConstruct,
+                      hasDemolish,
+                      hasChange,
+                    ].filter(Boolean).length;
+                    if (!visibleCards) return null;
+                    return (
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                          gap: 12,
+                        }}
+                      >
+                        {hasConstruct && (
+                          <SectionCard
+                            title="Construction"
+                            tooltipKey="construction-card"
+                            content={
+                              <BuildingList
+                                buildings={
+                                  selectedRow.building_events?.new_buildings
+                                }
+                                buildingColorMap={buildingColorMap}
+                                rebuildCounts={rebuildCounts}
+                                onBuildingClick={handleBuildingClick}
+                              />
+                            }
+                          />
+                        )}
+                        {hasDemolish && (
+                          <SectionCard
+                            title="Demolition"
+                            tooltipKey="demolition-card"
+                            content={
+                              <BuildingList
+                                buildings={
+                                  selectedRow.building_events
+                                    ?.demolished_buildings
+                                }
+                                buildingColorMap={buildingColorMap}
+                                onBuildingClick={handleBuildingClick}
+                              />
+                            }
+                          />
+                        )}
+                        {hasChange && (
+                          <SectionCard
+                            title="Intervention"
+                            tooltipKey="intervention-card"
+                            content={
+                              <ModificationSummary
+                                row={selectedRow}
+                                constructionColorMap={constructionColorMap}
+                              />
+                            }
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
-
-                {globalValidationIssues.length ? (
-                  <Alert
-                    type="warning"
-                    showIcon
-                    message="Pathway log warnings"
-                    description={
-                      <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-                        {globalValidationIssues.map((issue) => (
-                          <li key={issue}>{issue}</li>
-                        ))}
-                      </ul>
-                    }
-                    style={{ borderRadius: 12 }}
-                  />
-                ) : null}
-
-                {activeValidationIssues.length ? (
-                  <Alert
-                    type="error"
-                    showIcon
-                    message="Year-specific validation issues"
-                    description={
-                      <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-                        {activeValidationIssues.map((issue) => (
-                          <li key={issue}>{issue}</li>
-                        ))}
-                      </ul>
-                    }
-                    style={{ borderRadius: 12 }}
-                  />
-                ) : null}
-
-                {(() => {
-                  const hasConstruct =
-                    (selectedRow.building_events?.new_buildings ?? []).length >
-                    0;
-                  const hasDemolish =
-                    (selectedRow.building_events?.demolished_buildings ?? [])
-                      .length > 0;
-                  const hasChange =
-                    Object.keys(selectedRow.modifications ?? {}).length > 0;
-                  const visibleCards = [
-                    hasConstruct,
-                    hasDemolish,
-                    hasChange,
-                  ].filter(Boolean).length;
-                  if (!visibleCards) return null;
-                  return (
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                        gap: 12,
-                      }}
-                    >
-                      {hasConstruct && (
-                        <SectionCard
-                          title="Construction"
-                          tooltipKey="construction-card"
-                          content={
-                            <BuildingList
-                              buildings={
-                                selectedRow.building_events?.new_buildings
-                              }
-                              buildingColorMap={buildingColorMap}
-                              rebuildCounts={rebuildCounts}
-                              onBuildingClick={handleBuildingClick}
-                            />
-                          }
-                        />
-                      )}
-                      {hasDemolish && (
-                        <SectionCard
-                          title="Demolition"
-                          tooltipKey="demolition-card"
-                          content={
-                            <BuildingList
-                              buildings={
-                                selectedRow.building_events
-                                  ?.demolished_buildings
-                              }
-                              buildingColorMap={buildingColorMap}
-                              onBuildingClick={handleBuildingClick}
-                            />
-                          }
-                        />
-                      )}
-                      {hasChange && (
-                        <SectionCard
-                          title="Intervention"
-                          tooltipKey="intervention-card"
-                          content={
-                            <ModificationSummary
-                              row={selectedRow}
-                              constructionColorMap={constructionColorMap}
-                            />
-                          }
-                        />
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

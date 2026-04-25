@@ -25,6 +25,7 @@ const ComparisonView = ({ onOpenDrawer }) => {
   const updatePlot = useReportsStore((s) => s.updatePlot);
   const removePlot = useReportsStore((s) => s.removePlot);
   const removeCard = useReportsStore((s) => s.removeCard);
+  const applyCardLayouts = useReportsStore((s) => s.applyCardLayouts);
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
@@ -48,7 +49,9 @@ const ComparisonView = ({ onOpenDrawer }) => {
 
   const inferFeature = (columnIndex, targetCardId) => {
     const cards = getCardsForColumn(columnIndex ?? 0);
-    const target = targetCardId ? cards.find((c) => c.id === targetCardId) : null;
+    const target = targetCardId
+      ? cards.find((c) => c.id === targetCardId)
+      : null;
     return target?.feature || 'demand';
   };
 
@@ -61,32 +64,37 @@ const ComparisonView = ({ onOpenDrawer }) => {
 
   // ── Drawer open handlers ──────────────────────────────────────
 
-  const handleAddCard = (colIndex) => ({ targetCardId, direction, feature, script }) => {
-    const columnIndex = getColumnIndexFor(colIndex);
-    const resolvedFeature = feature || inferFeature(columnIndex, targetCardId);
-    onOpenDrawer({
-      mode: 'add',
-      scenario: scenarioForColumn(columnIndex),
-      plotConfig: script ? { script } : null,
-      onSave: (plotConfig) =>
-        addCard(columnIndex, {
-          targetCardId,
-          direction,
-          feature: resolvedFeature,
-          plotConfig,
-        }),
-    });
-  };
+  const handleAddCard =
+    (colIndex) =>
+    ({ targetCardId, direction, feature, script }) => {
+      const columnIndex = getColumnIndexFor(colIndex);
+      const resolvedFeature =
+        feature || inferFeature(columnIndex, targetCardId);
+      onOpenDrawer({
+        mode: 'add',
+        scenario: scenarioForColumn(columnIndex),
+        plotConfig: script ? { script } : null,
+        onSave: (plotConfig) =>
+          addCard(columnIndex, {
+            targetCardId,
+            direction,
+            feature: resolvedFeature,
+            plotConfig,
+          }),
+      });
+    };
 
-  const handleAddPlotToCard = (colIndex) => (cardId, script = null) => {
-    const columnIndex = getColumnIndexFor(colIndex);
-    onOpenDrawer({
-      mode: 'add',
-      scenario: scenarioForColumn(columnIndex),
-      plotConfig: script ? { script } : null,
-      onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
-    });
-  };
+  const handleAddPlotToCard =
+    (colIndex) =>
+    (cardId, script = null) => {
+      const columnIndex = getColumnIndexFor(colIndex);
+      onOpenDrawer({
+        mode: 'add',
+        scenario: scenarioForColumn(columnIndex),
+        plotConfig: script ? { script } : null,
+        onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
+      });
+    };
 
   const handleEditPlot = (colIndex) => (cardId, plotId) => {
     const columnIndex = getColumnIndexFor(colIndex);
@@ -168,6 +176,9 @@ const ComparisonView = ({ onOpenDrawer }) => {
                   onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
                   onAddPlotToCard={handleAddPlotToCard(i)}
                   onAddCard={handleAddCard(i)}
+                  onApplyLayouts={(updates) =>
+                    applyCardLayouts(getColumnIndexFor(i), updates)
+                  }
                 />
               </div>
             ))}
@@ -194,23 +205,23 @@ const ComparisonView = ({ onOpenDrawer }) => {
         <FeaturePicker
           open
           single
-          scenario={scenario}
           onConfirm={handleAddColumnConfirm}
           onCancel={() => setAddColumnOpen(false)}
         />
       )}
-      {addColumnOpen && (view === 'inter-scenario' || view === 'inter-whatif') && (
-        <ScenarioPicker
-          open
-          single
-          mode={view === 'inter-scenario' ? 'scenario' : 'whatif'}
-          scenarios={scenarios}
-          whatifs={whatifs}
-          scenario={scenario}
-          onConfirm={handleAddColumnConfirm}
-          onCancel={() => setAddColumnOpen(false)}
-        />
-      )}
+      {addColumnOpen &&
+        (view === 'inter-scenario' || view === 'inter-whatif') && (
+          <ScenarioPicker
+            open
+            single
+            mode={view === 'inter-scenario' ? 'scenario' : 'whatif'}
+            scenarios={scenarios}
+            whatifs={whatifs}
+            scenario={scenario}
+            onConfirm={handleAddColumnConfirm}
+            onCancel={() => setAddColumnOpen(false)}
+          />
+        )}
     </div>
   );
 };
@@ -227,11 +238,14 @@ const canvasWrapperStyle = {
   width: 'fit-content',
 };
 
+// Mirrors LaunchView.canvasStyle — see that file's comment for the
+// padding math; both views must stay in sync.
 const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
-  overflow: 'hidden',
+  padding: '16px 72px 72px 16px',
   width: 'fit-content',
+  height: 'fit-content',
 };
 
 const columnsRowStyle = {

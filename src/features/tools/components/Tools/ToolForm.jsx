@@ -17,7 +17,13 @@ const READONLY_PARAMS = {
   'pathway-simulations': ['existing-pathway-name'],
 };
 
-const ToolForm = ({ form, parameters, categoricalParameters, script, extraReadonlyFields = [] }) => {
+const ToolForm = ({
+  form,
+  parameters,
+  categoricalParameters,
+  script,
+  extraReadonlyFields = [],
+}) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);

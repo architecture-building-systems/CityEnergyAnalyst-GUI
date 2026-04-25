@@ -2,20 +2,25 @@ import { useState, useCallback } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useReportsStore } from '../stores/reportsStore';
+import {
+  useReportsStore,
+  DEFAULT_CARD_W,
+  DEFAULT_CARD_H,
+  MAP_ANCHOR_W,
+  MAP_ANCHOR_H,
+} from '../stores/reportsStore';
 import { useFetchScenarios } from '../hooks/useReportsData';
 import ReportColumn from './ReportColumn';
 import ScenarioPicker from './ScenarioPicker';
 
 /**
- * Launch view — entry point for Reports Mode.
+ * Launch view — Reports Mode entry. State is local (not store-
+ * backed); the card shape matches the store
+ * (`{ id, row, col, w, h, feature, plots[] }`) so promoting a draft
+ * to a comparison view is a straight assignment when the moment
+ * comes.
  *
- * State is local (not store-backed). Card grid uses the same shape as
- * the store: `cards: [{ id, row, col, feature, plots: [{ id, plotConfig }] }]`.
- *
- * Drawer state is owned by `ReportsPage` and opened via the
- * `onOpenDrawer` callback — so the plot tool renders in its own
- * grid cell at page level, not nested inside this view.
+ * Drawer state lives in `ReportsPage`; `onOpenDrawer` opens it.
  */
 const LaunchView = ({ onOpenDrawer }) => {
   const project = useProjectStore((s) => s.project);
@@ -48,18 +53,29 @@ const LaunchView = ({ onOpenDrawer }) => {
   const insertCard = useCallback(
     ({ targetCardId, direction, feature, plotConfig }) => {
       setCards((prev) => {
-        const target = targetCardId
-          ? prev.find((c) => c.id === targetCardId)
-          : null;
+        // `targetCardId === 'MAP'` is the sentinel from the map
+        // tile's edge `+` buttons: right → just past the map,
+        // bottom → just below it. Map footprint constants
+        // (MAP_ANCHOR_W/H) are imported from the store so launch +
+        // comparison views agree on the anchor points.
         let row = 0;
         let col = 0;
-        if (target) {
-          if (direction === 'right') {
-            row = target.row;
-            col = target.col + 1;
-          } else if (direction === 'bottom') {
-            row = target.row + 1;
-            col = target.col;
+        if (targetCardId === 'MAP') {
+          if (direction === 'bottom') {
+            row = MAP_ANCHOR_H;
+          } else {
+            col = MAP_ANCHOR_W;
+          }
+        } else if (targetCardId) {
+          const target = prev.find((c) => c.id === targetCardId);
+          if (target) {
+            if (direction === 'right') {
+              row = target.row;
+              col = target.col + 1;
+            } else if (direction === 'bottom') {
+              row = target.row + 1;
+              col = target.col;
+            }
           }
         }
         const shifted = shiftForInsert(prev, { row, col, direction });
@@ -69,16 +85,26 @@ const LaunchView = ({ onOpenDrawer }) => {
             id: makeId('card'),
             row,
             col,
+            w: DEFAULT_CARD_W,
+            h: DEFAULT_CARD_H,
             feature,
-            plots: plotConfig
-              ? [{ id: makeId('plot'), plotConfig }]
-              : [],
+            plots: plotConfig ? [{ id: makeId('plot'), plotConfig }] : [],
           },
         ];
       });
     },
     [],
   );
+
+  const applyCardLayouts = useCallback((updates) => {
+    setCards((prev) => {
+      const byId = new Map(updates.map((u) => [u.id, u]));
+      return prev.map((c) => {
+        const u = byId.get(c.id);
+        return u ? { ...c, row: u.row, col: u.col, w: u.w, h: u.h } : c;
+      });
+    });
+  }, []);
 
   // ── Drawer open handlers ───────────────────────────────────
 
@@ -216,6 +242,7 @@ const LaunchView = ({ onOpenDrawer }) => {
           onDeleteCard={handleDeleteCard}
           onAddPlotToCard={handleAddPlotToCard}
           onAddCard={handleAddCard}
+          onApplyLayouts={applyCardLayouts}
           onAddColumn={handleCompareScenarios}
           addColumnTooltip="Add Scenario to compare"
         />
@@ -242,10 +269,15 @@ function inferFeatureForTarget(cards, targetCardId) {
   return target?.feature || 'demand';
 }
 
+// Right/bottom padding (72 px ≈ 40 px button overhang + 32 px
+// clearance) leaves breathing room past the `+` buttons hanging off
+// the map tile's edges. `fit-content` stops ReportsPage's grid cell
+// from stretching the canvas to full row height.
 const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
-  padding: '20px 56px 20px 24px',
+  padding: '16px 72px 72px 16px',
+  height: 'fit-content',
   display: 'flex',
   flexDirection: 'column',
   width: 'fit-content',

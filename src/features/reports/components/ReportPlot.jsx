@@ -1,64 +1,37 @@
-import {
-  useEffect,
-  useRef,
-  useId,
-  cloneElement,
-  isValidElement,
-} from 'react';
+import { useEffect, useRef, useId, cloneElement, isValidElement } from 'react';
 import { Spin, Empty } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
 
-import { useFetchReportPlot, useFetchCustomPlot } from '../hooks/useReportsData';
+import { useFetchCustomPlot } from '../hooks/useReportsData';
 
 /**
- * Renders a single Plotly plot for a report column.
+ * Renders a single Plotly plot for a report column. Every Reports
+ * plot has a `plotConfig` with a `script`, so we always fetch via
+ * POST /api/reports/plot-custom — no feature-based fallback.
  *
- * Two modes:
- *   - Default: fetches via GET /api/reports/plot (feature-based)
- *   - Custom:  fetches via POST /api/reports/plot-custom (plotConfig with script/parameters)
+ * `onCaption` receives the plain-text main title lifted out of the
+ * Plotly figure once rendering completes; the caller (PlotSlotCard)
+ * decides how to display it.
  */
-const ReportPlot = ({
-  project,
-  scenario,
-  feature,
-  whatif,
-  plotConfig,
-  onPlotReady,
-  // Receives the plain-text main title lifted out of the Plotly
-  // figure once rendering completes. The caller (PlotSlotCard)
-  // decides how to display it — typically on the controls row.
-  onCaption,
-}) => {
+const ReportPlot = ({ scenario, plotConfig, onPlotReady, onCaption }) => {
   const uniqueId = useId();
   const containerRef = useRef(null);
   const scriptRef = useRef(null);
 
-  const isCustom = !!plotConfig?.script;
-
-  const defaultQuery = useFetchReportPlot(
-    project,
-    isCustom ? null : scenario,
-    isCustom ? null : feature,
-    isCustom ? null : whatif,
-  );
-
-  const customQuery = useFetchCustomPlot(
-    isCustom ? plotConfig : null,
-    isCustom ? scenario : null,
-  );
-
-  const { data: html, isLoading, error } = isCustom ? customQuery : defaultQuery;
+  const {
+    data: html,
+    isLoading,
+    error,
+  } = useFetchCustomPlot(plotConfig, scenario);
 
   useEffect(() => {
     if (!html) return;
 
-    // The backend HTML contains both external CDN scripts
-    // (`<script src="https://cdn.plot.ly/...">`) AND an inline
-    // `Plotly.newPlot(...)` script. `html-react-parser` doesn't
-    // execute either when it renders divs, so we replay them here.
-    // The inline script needs `window.Plotly`, so external scripts
-    // must load first.
+    // The backend HTML contains both external CDN <script src=...>
+    // tags and an inline Plotly.newPlot(...) script. html-react-parser
+    // doesn't execute either, so we replay them here. The inline
+    // script needs window.Plotly, so externals must load first.
     const externalSrcs = [];
     let inlineScript = null;
     parser(html, {
@@ -78,8 +51,6 @@ const ReportPlot = ({
 
     const loadExternal = (src) =>
       new Promise((resolve) => {
-        // Reuse an already-loaded CDN tag so we don't double-load
-        // (e.g. when multiple plots render from the same library).
         if (document.querySelector(`script[src="${src}"]`)) {
           resolve();
           return;
@@ -109,10 +80,10 @@ const ReportPlot = ({
         if (cancelled) return;
       }
       runInline();
-      // After Plotly.newPlot runs, lift the main title out of the
-      // figure (the backend embeds `<b>Title</b><br><sub>Subtitle</sub>`)
-      // and blank the in-chart title so the canvas area only has
-      // axes + data. Reports shows its own caption above the plot.
+      // After newPlot, lift the main title out of the figure (the
+      // backend embeds `<b>Title</b><br><sub>Subtitle</sub>`) and
+      // blank the in-chart title — Reports surfaces it as a caption
+      // above the plot via `onCaption` instead.
       setTimeout(() => {
         if (cancelled || !containerRef.current) return;
         const plotDivs = containerRef.current.querySelectorAll(
@@ -128,16 +99,10 @@ const ReportPlot = ({
         if (plainText && onCaption) onCaption(plainText);
 
         if (window.Plotly?.relayout) {
+          // Tighten margins now that the title block is gone. Bottom
+          // is left default so angled x-axis ticks don't clip.
           plotDivs.forEach((div) => {
             try {
-              // Blank the in-chart title (we already surface it as
-              // the slot caption) AND tighten the surrounding
-              // margins. The backend defaults to a lot of breathing
-              // room for the title/subtitle block; in Reports we've
-              // removed that block, so the wasted top/left/right
-              // whitespace can be reclaimed by the data area.
-              // Bottom is left to Plotly's default so x-axis tick
-              // labels (often angled, often long) don't clip.
               window.Plotly.relayout(div, {
                 'title.text': '',
                 'margin.t': 16,
@@ -145,8 +110,7 @@ const ReportPlot = ({
                 'margin.r': 16,
               });
             } catch {
-              // Some figures (e.g. error-card HTML snippets) aren't
-              // Plotly-initialised — skip.
+              // Error-card HTML snippets aren't Plotly figures — skip.
             }
           });
         }
@@ -157,10 +121,10 @@ const ReportPlot = ({
 
     run();
 
+    // Only the inline exec tag is removed on unmount; CDN tags are
+    // left in <head> so subsequent plots reuse them.
     return () => {
       cancelled = true;
-      // Only remove the inline exec tag — leave the CDN tag cached
-      // for subsequent plots.
       if (scriptRef.current) {
         scriptRef.current.remove();
         scriptRef.current = null;
@@ -168,10 +132,8 @@ const ReportPlot = ({
     };
   }, [html, uniqueId, onPlotReady]);
 
-  // Follow container size changes (card drag-resize) — Plotly uses
-  // the div's pixel size at `newPlot` time, so we have to tell it
-  // to re-measure explicitly. `Plots.resize` is a no-op if Plotly
-  // hasn't initialised the div yet, so it's safe to call eagerly.
+  // Plotly captures the div's pixel size at `newPlot` time, so we
+  // tell it to re-measure on container resize (card drag-resize).
   useEffect(() => {
     const container = containerRef.current;
     if (!container || typeof ResizeObserver === 'undefined') return;
@@ -203,14 +165,11 @@ const ReportPlot = ({
   if (error) {
     const detail = error?.response?.data?.detail;
     const serverMessage =
-      (typeof detail === 'string' && detail.trim()) ||
-      detail?.message ||
-      null;
+      (typeof detail === 'string' && detail.trim()) || detail?.message || null;
     const status = error?.response?.status;
 
-    // 404 = the scenario is missing the input/result files this plot
-    // needs. That's a user-recoverable "please run the feature first"
-    // situation, not a backend failure, so present it separately.
+    // 404 = the scenario hasn't been run yet — a user-recoverable
+    // state, not a backend failure. Present it separately.
     if (status === 404) {
       return (
         <div style={errorStyle}>
@@ -256,22 +215,17 @@ const ReportPlot = ({
 
   if (!html) return null;
 
-  // Parse and render the HTML content (excluding scripts)
+  // Render the HTML content; <script> tags are replayed in useEffect.
   const content = parser(html, {
     replace: function (domNode) {
-      // Remove script tags — they're handled via useEffect
-      if (domNode.type === 'script') {
-        return <></>;
-      }
+      if (domNode.type === 'script') return <></>;
     },
   });
 
-  // Filter to only div and style elements, and force the wrapper
-  // div(s) to 100% height. The backend returns `<div><div class=
-  // "plotly-graph-div" style="height:100%; width:100%"/></div>` —
-  // the outer div has no style, so the inner `height:100%` resolves
-  // against `auto` and collapses. Width works without this because
-  // block elements fill their parent by default; height does not.
+  // The backend HTML wraps the plotly-graph-div in an unstyled outer
+  // div. Force it to 100% height so the inner `height: 100%` has
+  // something to resolve against (width works because block elements
+  // fill their parent by default; height does not).
   const filtered = (Array.isArray(content) ? content : [content])
     .filter((node) => node?.type === 'div' || node?.type === 'style')
     .map((node, i) =>
@@ -287,13 +241,9 @@ const ReportPlot = ({
         : node,
     );
 
-  // Flex-fill the parent slot (which itself flex-fills the card's
-  // plot section). `minHeight: 0` is deliberate — with multiple plots
-  // stacked in the same card, each must be able to shrink to any
-  // fraction of the card's height so `flex: 1` can divide space
-  // proportionally. A non-zero floor here prevents the card's drag-
-  // resize from redistributing height across sibling plots. Card-
-  // level `minHeight: 280` still enforces an overall lower bound.
+  // `minHeight: 0` lets multiple plots in the same card divide space
+  // proportionally via `flex: 1` — without it, each plot's natural
+  // height would floor the share it gets when the card is resized.
   return (
     <div
       ref={containerRef}

@@ -14,8 +14,8 @@ import { useMapStore } from 'features/map/stores/mapStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 
-// Plot script → map layer (the specific layer whose parameters the
-// plot reads). Reverses `VIEW_PLOT_RESULTS`.
+// Reverse `VIEW_PLOT_RESULTS` to find the map layer a plot script
+// reads its parameters from.
 const scriptToMapLayer = (script) => {
   if (!script) return null;
   for (const [layerName, plotScript] of Object.entries(VIEW_PLOT_RESULTS)) {
@@ -24,10 +24,9 @@ const scriptToMapLayer = (script) => {
   return null;
 };
 
-// Layer → parent category, looked up in the backend's categories
-// response. Handles the LCA case where multiple layers (energy-by-
-// carrier, operational-emissions, lifecycle-emissions, heat-rejection,
-// …) all live under the `life-cycle-analysis` category.
+// Locate the category that owns a given layer (e.g. all LCA layers
+// — energy-by-carrier, operational-emissions, lifecycle-emissions,
+// heat-rejection — live under `life-cycle-analysis`).
 const findCategoryForLayer = (layerName, categories) => {
   if (!layerName || !categories) return null;
   for (const cat of categories) {
@@ -37,54 +36,40 @@ const findCategoryForLayer = (layerName, categories) => {
 };
 
 /**
- * Plot configuration card — shares the main viewport's tool card
- * chrome AND its form layout. Uses `<PlotTool>` so the plot form's
- * `context`, `what-if-name`, `y-metric-to-plot` etc. are seeded from
- * `useMapStore` — which the bottom card's `MapLayerPropertiesCard`
- * writes to. Reports-specific: `onRunOverride` intercepts the Run
- * click and commits the plot config to the report slot instead of
- * creating a job.
+ * Plot configuration card — same chrome + form layout as the main
+ * viewport's tool card via `<PlotTool>`. The plot form's `context`,
+ * `what-if-name`, `y-metric-to-plot` are seeded from `useMapStore`,
+ * which `MapLayerPropertiesCard` (in the bottom card) writes to.
+ *
+ * `onRunOverride` intercepts Run and commits the resulting params
+ * to the report slot instead of creating a job.
  *
  * Two phases inside the same card:
- *   1. Plot picker — `PlotChoices` imported from the main viewport.
- *   2. Parameter form — rendered by `<PlotTool>` with a Back button
- *      in the card header to return to the picker.
+ *   1. `PlotChoices` picker (imported from the main viewport).
+ *   2. `<PlotTool>` parameter form, with a Back button in the header.
  *
- * Note: edit mode doesn't restore saved `plotConfig.parameters` since
- * `PlotTool` owns its own form internally; users re-tune on edit for
- * now. If that becomes painful we can add a prefill path via the
- * shared `useToolCardStore.plotToolPrefill`.
+ * Edit mode doesn't currently rehydrate saved `plotConfig.parameters`
+ * — PlotTool owns its own form, and users re-tune on edit.
  */
-const PlotEditModal = ({
-  open,
-  scenario: _scenario,
-  plotConfig,
-  mode = 'edit',
-  onSave,
-  onCancel,
-}) => {
+const PlotEditModal = ({ open, plotConfig, onSave, onCancel }) => {
   const [selectedScript, setSelectedScript] = useState(
     plotConfig?.script || null,
   );
 
+  // Hold the current script for the duration of the slide-out
+  // animation, then clear so PlotTool's internal queries stop.
   useEffect(() => {
     if (open) {
       setSelectedScript(plotConfig?.script || null);
       return undefined;
     }
-    // Hold the current script for the duration of the slide-out
-    // animation, then clear it so PlotTool's internal queries stop.
     const t = setTimeout(() => setSelectedScript(null), 350);
     return () => clearTimeout(t);
   }, [open, plotConfig]);
 
-  // Keep the shared map-layer category + selected layer in sync with
-  // the plot being edited. The CATEGORY is derived from the backend's
-  // categories list (looking up which category contains the plot's
-  // layer), and the LAYER is the plot's specific map constant. For
-  // LCA plots this means category = 'life-cycle-analysis' and layer
-  // = (e.g.) 'energy-by-carrier'. Cleared on drawer close so the
-  // bottom card empties out.
+  // Sync the shared map-layer selection to the plot being edited so
+  // MapLayerPropertiesCard (bottom card) renders that layer's form.
+  // Cleared on drawer close.
   const setActiveCategory = useSetActiveMapCategory();
   const setSelectedMapLayer = useMapStore((s) => s.setSelectedMapLayer);
   const mapLayerCategories = useMapLayerCategories();
@@ -114,7 +99,7 @@ const PlotEditModal = ({
   }, []);
 
   // PlotTool → Tool → ToolFormButtons.onRunOverride — called with
-  // validated form values. Commit the plot config to the report slot.
+  // validated form values. Commit them to the report slot.
   const handleRunOverride = useCallback(
     async (params) => {
       onSave({ script: selectedScript, parameters: params });
@@ -133,7 +118,6 @@ const PlotEditModal = ({
         pointerEvents: open ? 'auto' : 'none',
       }}
     >
-      {/* Header — matches ToolCard.jsx: optional Back, close icon right. */}
       <div className="cea-tool-card-header" style={headerStyle}>
         {selectedScript && <Button onClick={handleBack}>Back</Button>}
         <Button
@@ -146,10 +130,6 @@ const PlotEditModal = ({
 
       <div className="cea-tool-card-content" style={contentStyle}>
         {selectedScript ? (
-          // Use the main viewport's PlotTool so the form's `context`
-          // field is populated from `useMapStore` — which the bottom
-          // card's MapLayerPropertiesCard writes to. ConfigProvider
-          // keeps the primary colour on the plots purple.
           <ConfigProvider
             theme={{ token: { colorPrimary: PLOTS_PRIMARY_COLOR } }}
           >
@@ -167,10 +147,8 @@ const PlotEditModal = ({
   );
 };
 
-// The plot tool now lives in its own grid cell (see ReportsPage.jsx),
-// so it fills the cell rather than being `position: fixed`. The grid
-// column animates open/close in ReportsPage; we only handle the card
-// chrome (shadow, radius, padding) here, copied from ToolCard.jsx.
+// Card chrome only — the open/close slide is handled by the parent
+// grid cell in ReportsPage. Shadow/radius/padding mirror ToolCard.jsx.
 const cardStyle = {
   width: '100%',
   height: '100%',

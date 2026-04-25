@@ -305,7 +305,14 @@ const ParameterSelectors = ({ layers, parameterValues, allowParamKeys }) => {
         </div>
       );
     });
-  }, [layers, parameterValues, range, filters, parameterChangeHandlers, isAllowedChoiceKey]);
+  }, [
+    layers,
+    parameterValues,
+    range,
+    filters,
+    parameterChangeHandlers,
+    isAllowedChoiceKey,
+  ]);
 
   return (
     <ConfigProvider

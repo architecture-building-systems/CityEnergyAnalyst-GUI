@@ -9,11 +9,10 @@ import { useFetchFeatures } from '../hooks/useReportsData';
  * Props:
  *   open       — visibility
  *   single     — if true, radio select (add-column); otherwise checkbox (compare entry)
- *   scenario   — default scenario for each feature column
  *   onConfirm  — (selected: { key, label }[]) => void
  *   onCancel   — () => void
  */
-const FeaturePicker = ({ open, single = false, scenario, onConfirm, onCancel }) => {
+const FeaturePicker = ({ open, single = false, onConfirm, onCancel }) => {
   const { data: features = [], isLoading } = useFetchFeatures();
   const [selected, setSelected] = useState([]);
   const [singleValue, setSingleValue] = useState(null);

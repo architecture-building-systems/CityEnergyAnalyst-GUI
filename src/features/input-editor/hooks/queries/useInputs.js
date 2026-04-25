@@ -38,7 +38,10 @@ export function useInputs(options) {
 
       try {
         const params = scenarioOverride
-          ? { scenario: scenarioOverride, project: projectOverride || undefined }
+          ? {
+              scenario: scenarioOverride,
+              project: projectOverride || undefined,
+            }
           : undefined;
         const { data } = await apiClient.get(
           `${API_ENDPOINTS.INPUTS}/all-inputs`,

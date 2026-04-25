@@ -1,214 +1,189 @@
 # Reports Feature
 
-Side-by-side comparison dashboard. Three comparison modes, a Zustand store
-for view/column/slot state, and Plotly-based charts with y-axis alignment
-across shared-slot columns.
+Side-by-side comparison dashboard. Three comparison modes (inter-scenario,
+inter-whatif, inter-feature), a Zustand store for view + card state, a
+`react-grid-layout` canvas for free-form tile placement, and Plotly-based
+charts with optional y-axis alignment across columns sharing a slot id.
 
 ## Main API
-- `useReportsStore()` - View/column/slot state and view transitions.
-- `useFetchWhatifs(project, scenario) -> Query<string[]>` - What-if names
-  under a scenario.
-- `useFetchScenarios(project) -> Query<string[]>` - Sibling scenario names
-  for a project.
-- `useFetchFeatures(project, scenario) -> Query<Feature[]>` - Available
-  plot features for the feature picker.
-- `useFetchSummary(project, scenario, whatif?) -> Query<object>` - KPI
-  strip payload for a column.
-- `useFetchPlot(project, scenario, plotConfig, whatif?) -> Query<object>` -
-  Plotly figure payload for a slot.
-- `useFetchZoneGeojson(project, scenario) -> Query<object>` - Map
-  thumbnail data.
-- `useYAxisAlignment(enabled, numColumns)` - Post-render Plotly hook that
-  unifies y-axis range across columns sharing the same slot id.
+- `useReportsStore()` - View, columns, and card CRUD.
+- `useFetchScenarios(project)` - Sibling scenario names.
+- `useFetchWhatifs(project, scenario)` - What-if names under a scenario.
+- `useFetchFeatures()` - Available plot features for `FeaturePicker`.
+- `useFetchSummary(project, scenario, feature, whatif?)` - KPI strip
+  payload.
+- `useFetchCustomPlot(plotConfig, scenario)` - Plotly figure HTML; the
+  only fetcher used at render time (every Reports plot has a script).
+- `useFetchToolParams(script, scenario)` - Plot-tool parameter schema.
+- `useYAxisAlignment(enabled, numColumns)` - Post-render Plotly hook
+  that unifies y-axis range across columns sharing a slot id.
 - `ReportsPage` - Top-level page; routes between `LaunchView` and
   `ComparisonView` based on `useReportsStore.view`.
 
-## Views & columns
+## Views & cards
 
-Cards are first-class in the store: each column owns a 2D grid of
-feature cards, where each card owns its list of plots.
+Each view owns a list of columns. Columns hold cards; cards hold plots.
 
 ```
-Card { id, row, col, feature, plots: [{ id, plotConfig }] }
+Card { id, row, col, w, h, feature, plots: [{ id, plotConfig }] }
 ```
 
-| View              | Columns                              | Card storage   |
-|-------------------|--------------------------------------|----------------|
-| `launch`          | Single local-state column            | local `useState` |
-| `inter-scenario`  | One per sibling scenario             | `sharedCards`  |
-| `inter-whatif`    | One per what-if under parent         | `sharedCards`  |
-| `inter-feature`   | One per (scenario, feature) pair     | `columnCards`  |
+Card positions are sparse 2D grid coordinates in `react-grid-layout`
+units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `ReportColumn`). The map is a
+virtual tile at `(0, 0)` — feature cards never occupy that slot.
+
+| View              | Columns                          | Card storage     |
+|-------------------|----------------------------------|------------------|
+| `launch`          | 1 (local)                        | `useState`       |
+| `inter-scenario`  | 1 per sibling scenario           | `sharedCards`    |
+| `inter-whatif`    | 1 per what-if under parent       | `sharedCards`    |
+| `inter-feature`   | 1 per (scenario, feature) pair   | `columnCards[i]` |
 
 ## Key Patterns
-### DO: Route card/plot actions through `columnIndex` (null for shared)
+
+### DO: Route card/plot actions through `columnIndex` (`null` for shared)
 ```jsx
 const columnIndex = isFeatureMode ? i : null;
 addCard(columnIndex, { targetCardId, direction, feature, plotConfig });
 addPlot(columnIndex, cardId, plotConfig);
 updatePlot(columnIndex, cardId, plotId, plotConfig);
-removePlot(columnIndex, cardId, plotId); // drops card if last plot
+removePlot(columnIndex, cardId, plotId); // drops the card if last plot
+applyCardLayouts(columnIndex, updates); // batched drag/resize results
 ```
 The store's `getCards(columnIndex)` / `setCards(columnIndex, next)`
-helpers abstract the shared-vs-per-column dispatch, so each action
+helpers abstract shared-vs-per-column dispatch so each action body
 doesn't branch on view mode.
 
-### DO: Render cards on a CSS Grid — `row`/`col` from card state
-```jsx
-<div
-  style={{
-    display: 'grid',
-    gridTemplateRows: `repeat(${rows}, auto)`,
-    gridTemplateColumns: `repeat(${cols}, minmax(280px, 1fr))`,
-  }}
->
-  {cards.map((card) => (
-    <div key={card.id} style={{ gridRow: card.row + 1, gridColumn: card.col + 1 }}>
-      <FeatureCard card={card} ... />
-    </div>
-  ))}
-</div>
-```
-Empty columns render a single "fallback" `FeatureCard` at (0,0) with
-no plots so the user sees the grid's intent and can add the first
-plot — on Run, a real card is committed at (0,0).
+### DO: Use `react-grid-layout` for tile placement, not CSS Grid
+Every tile (map + feature cards) is a draggable, resizable child of
+`<GridLayout>`. The library handles collision detection + vertical
+auto-compaction, so cards push neighbours only when they would
+actually overlap, never overlap each other, and unrelated cards stay
+put. Position state (`{x, y, w, h}`) is persisted via
+`onLayoutChange → onApplyLayouts(updates)`.
 
-### DO: Let + edges grow the grid southeast
-```jsx
-// FeatureCard renders a + on its right edge and its bottom edge.
-onAddCardRight={() => onAddCard({ targetCardId: card.id, direction: 'right' })}
-onAddCardBottom={() => onAddCard({ targetCardId: card.id, direction: 'bottom' })}
-```
-`addCard` shifts any existing card in the target row (for `'right'`)
-or target column (for `'bottom'`) to open space. This keeps the
-mental model "insert here" instead of "append somewhere".
+### DO: Pin map tile size with explicit `MAP_DEFAULT_W/H` units
+The map's launch footprint is exactly 6×5 grid units, working out to
+500×280 px at the configured `COL_WIDTH_PX` (70) / `ROW_HEIGHT_PX`
+(40) / `GRID_MARGIN` ([16, 20]). The same `MAP_ANCHOR_W/H` constants
+are exported from `reportsStore.js` so anchor logic in both
+`LaunchView.insertCard` and the store's `insertCardInto` agree.
 
-### DO: Let the canvas fit its content — don't offer a resize handle
+### DO: Use the absolute position strategy (no transform)
 ```jsx
-// Canvas style in both LaunchView and ComparisonView.
+import { setTopLeft } from 'react-grid-layout';
+
+const absolutePositionStrategy = {
+  type: 'absolute',
+  scale: 1,
+  calcStyle: setTopLeft,
+};
+```
+The library's default `transform: translate(...)` with a CSS transition
+on width/height fires deck.gl's WebGL ResizeObserver mid-animation,
+before the device is ready, producing a `maxTextureDimension2D` error
+and a half-broken map on first mount. `left/top` skips both the
+transform and the transition so deck.gl sees the final tile size on
+first measurement.
+
+### DO: Render the map toolbar with inline-styled buttons, not `MapControls`
+`ReportMap` defines `InlineLayerToggle` / `InlineExtrudeButton` /
+`InlineResetCameraButton` / `InlineResetCompassButton` locally with
+fully explicit inline styles. Reusing the main viewport's
+`MapControls` component left first-paint races where `Toolbar.css`'s
+40×40 / 8 px-padded defaults beat the Reports-scoped overrides and the
+icons would land in the NW of the frame until a later layout pass
+settled. Inline styles on a unique wrapper make the cascade
+irrelevant.
+
+### DO: Initialise layer visibility + colour mode in `ReportMap`
+`useMapStore` is a singleton shared with the main viewport. When
+Reports is the entry point, no other component has flipped layer
+visibility on yet — so `ReportMap` itself runs the first-load init
+(visibility = true for every key in `data`, colour mode =
+CONSTRUCTION_STANDARD) on its own first render. Skip these and the
+toolbar appears but the map stays blank.
+
+### DO: Always seed plots with a `plotConfig.script`
+Every plot on the canvas has a script; `useFetchCustomPlot` is the
+only path. The legacy `useFetchReportPlot` (feature-based) was
+removed because no UI path could reach it. Keep it that way — adding
+a plot always opens `PlotEditModal`, which never returns without a
+populated `plotConfig`.
+
+### DO: Let the canvas hug its content
+```jsx
 const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
+  padding: '16px 72px 72px 16px', // 72 px = button overhang + clearance
   width: 'fit-content',
-  // no fixed width, no drag handle, no ad-hoc useState for size.
+  height: 'fit-content',
 };
 ```
-The outer white "canvas" sizes to its content (title card, map,
-feature cards). It grows as more feature cards or columns are added
-and shrinks back when they're removed. No user-adjustable width — the
-content is the source of truth.
+The right/bottom padding is sized so the absolutely-positioned `+`
+buttons hanging off the map's edges don't touch the canvas border.
+`fit-content` stops `ReportsPage`'s grid cell from stretching the
+canvas to full row height.
 
-### DO: Use CSS-native `resize: both` for cards inside the canvas
-```jsx
-const cardStyle = {
-  ...,
-  resize: 'both',
-  overflow: 'hidden', // required — otherwise `resize` has no effect
-  minWidth: 240,
-  minHeight: 48,
-};
-```
-The browser paints a small drag handle in the bottom-right corner of
-each card and handles the drag itself — no React state, no global
-pointer listeners, no custom ref plumbing. For cards whose content
-does not reflow on container change (e.g. maplibre maps), install a
-`ResizeObserver` inside the component and call its own `resize()` so
-the inner canvas stays in sync with the outer card.
-
-### DO: Put "Add a plot" inside the `FeatureCard` it belongs to
-```jsx
-// FeatureCard.jsx — single cea-template-select dropdown per feature.
-<AddPlotSelect
-  options={quickPickOptions}
-  onPick={(script) => onAddPlot(script)}
-  onFallback={() => onAddPlot()}
-/>
-
-// ReportColumn.jsx — bind the feature so the caller receives it.
-onAddPlot={onAddPlot ? (script) => onAddPlot(feature, script) : undefined}
-```
-The new plot inherits the card's feature. To start a new feature in a
-column, the user changes an existing plot's feature via the drawer —
-it will migrate into a new card on next render. Column-level "Add a
-plot" rows have been removed.
-
-### DO: Reuse the main viewport's `Tool` component for the plot form
+### DO: Reuse the main viewport's `<Tool>` for the plot form
 ```jsx
 import Tool from 'features/tools/components/Tools/Tool';
-import { PlotChoices } from 'features/project/components/Cards/plot-tool';
+import { PlotChoices, PlotTool } from 'features/project/components/Cards/plot-tool';
 
-<Tool
-  script={selectedScript}
-  form={form}
-  onParametersLoaded={handleParametersLoaded}
-  onRunOverride={handleRunOverride}
-/>
+<PlotTool key={selectedScript} script={selectedScript} onRunOverride={...} />
 ```
-`Tool` renders the exact same header, description, parameter list,
-and Run button that appears in the main viewport's tool card. The
-only Reports-specific wiring is `onRunOverride` — when present,
-`ToolFormButtons.runScript` calls it with validated form values
-instead of creating a job, and the Save Settings / Reset buttons are
-hidden (they only make sense for the persistent-tool-params flow).
-Picker phase uses `PlotChoices` imported from the main viewport for
-the same reason: one source of truth, visual parity for free.
+`<Tool>` renders the same header, parameter list, and Run button as
+the main viewport's tool card. Reports overrides Run via
+`onRunOverride` — when present, `ToolFormButtons.runScript` calls it
+with validated form values instead of creating a job, and the Save /
+Reset buttons hide. Picker phase uses `<PlotChoices>` for visual
+parity.
 
-### DO: Use `cea-template-select` for the "Add a plot" dropdown
+### DO: Drive the bottom card from the drawer's selected script
+`PlotEditModal` keeps the shared `mapStore` selected layer in sync
+with the plot being edited (via `scriptToMapLayer` →
+`findCategoryForLayer`) so `MapLayerPropertiesCard` in the bottom
+card renders the parameter form for that exact layer. Cleared on
+drawer close.
+
+### DO: Use `cea-template-select` for the in-card "Add a plot" pill
 ```jsx
-// FeatureCard.jsx — mirrors pathway's TemplateSelect visually.
 <Select
   className={`cea-template-select ${hasOptions ? '' : 'cea-template-select-empty'}`}
-  placeholder="Add a Plot"
+  placeholder="Add a plot"
   options={quickPickOptions.map((o) => ({ label: o.label, value: o.script }))}
   onSelect={(script) => onPick(script)}
   onClick={hasOptions ? undefined : onFallback}
 />
 ```
-Same black-outlined pill the pathway builder uses for Intervention
-Templates. Picking a plot seeds the drawer with `{ script }` so the
-parameter form opens directly. When the feature has no quick-pick
-options, clicking the control falls back to `onAddPlot()` with no
-script — which opens the full `PlotChoices` picker.
+Same black-outlined pill the pathway builder uses. Picking a leaf
+script seeds `PlotEditModal` with `{ script }` so it opens directly on
+the parameter form. With no quick-pick options, clicking falls back
+to opening the full `<PlotChoices>` picker.
 
-### DO: Derive the quick-pick list from `PLOT_GROUPS`, not a local list
-```jsx
-// FeatureCard.jsx
-const FEATURE_ANCHOR = {
-  demand: DEMAND,
-  'final-energy': FINAL_ENERGY,
-  costs: COST_BREAKDOWN,
-  emissions: EMISSIONS_OPERATIONAL,
-  'heat-rejection': ANTHROPOGENIC_HEAT,
-};
-// At render: find the PLOT_GROUPS group/subgroup that contains the
-// anchor and list every key in it.
-```
-The dropdown options come from `PLOT_GROUPS` (the same structure the
-main viewport's `PlotChoices` uses). Adding a new plot to an existing
-group — say a new GHG Emissions plot under Life Cycle Analysis →
-GHG Emissions — surfaces it in the Emissions card's dropdown with no
-change here. Only a brand-new feature card (new family in Reports)
-needs a new `FEATURE_ANCHOR` entry.
+### DO: Derive quick-pick options from `PLOT_GROUPS`
+`FeatureCard.findFamilyForFeature` walks `PLOT_GROUPS` to find the
+group/subgroup that owns a card's `feature` key, then lists every
+sibling key. Adding a new plot to an existing group surfaces it
+automatically — no parallel feature→plots dictionary to maintain.
 
-### DO: Stage plot slots — commit only when the user clicks Run
-```jsx
-// "Add a plot" opens PlotEditModal (right-side drawer) with an in-memory
-// draft. The slot is inserted into the store ONLY when the user clicks
-// Run, at which point it carries a full `plotConfig`.
-const [drawerTarget, setDrawerTarget] = useState(null);
-const handleAddPlot = (feature, columnIndex) =>
-  setDrawerTarget({ mode: 'add', feature, columnIndex });
-```
-No slot ever exists without a `plotConfig`. This means `ReportPlot`
-always uses the custom-plot path (`POST /api/reports/plot-custom`) and
-the bare GET `/api/reports/plot` endpoint is never reached from the
-Reports UI. Entering a comparison view creates empty columns; all
-plots are added explicitly by the user.
+### DO: Stage plot configs — commit only on Run
+`ReportsPage` owns drawer state. Views call
+`onOpenDrawer({ plotConfig, onSave })` with an `onSave` closure that
+captures their local state, so the page doesn't need to know which
+view owns what. The slot is only inserted when `onSave` fires (i.e.
+the user clicks Run inside the drawer).
 
 ### DO: Align y-axes only when columns share a slot id
 ```jsx
-// Disable alignment in feature mode — each column has its own slot list.
-const { handlePlotReady } = useYAxisAlignment(!isFeatureMode && columns.length > 1, columns.length);
+const { handlePlotReady } = useYAxisAlignment(
+  !isFeatureMode && columns.length > 1,
+  columns.length,
+);
 ```
+Disabled in inter-feature mode — each column has its own card list, so
+there's no shared slot to align across.
 
 ### DO: Confirm before clearing comparison state
 ```jsx
@@ -225,95 +200,92 @@ if (scenarios.length <= 1) enterInterScenario([scenario]);
 else setPickerMode('scenario');
 ```
 
-### DO: Let LaunchView own its own slot list locally
+### DO: Re-index `columnCards` when removing a column
 ```jsx
-// Launch is a preview, not part of the comparison state machine.
-const [launchSlots, setLaunchSlots] = useState([...]);
-```
-The launch view is a throwaway preview that resets the moment the user
-enters a real comparison mode. Keeping its slots in the global store
-would force a second source of truth for data the comparison views never
-read.
-
-### DO: Re-index `columnPlotSlots` when removing a column
-```jsx
-// columnPlotSlots is keyed by column index — keep the keys contiguous.
-const newColumnPlotSlots = {};
-Object.keys(columnPlotSlots).forEach((key) => {
+// columnCards is keyed by column index — keep the keys contiguous.
+Object.keys(columnCards).forEach((key) => {
   const k = Number(key);
-  if (k < index) newColumnPlotSlots[k] = columnPlotSlots[k];
-  else if (k > index) newColumnPlotSlots[k - 1] = columnPlotSlots[k];
+  if (k < index) newColumnCards[k] = columnCards[k];
+  else if (k > index) newColumnCards[k - 1] = columnCards[k];
 });
 ```
 
 ### DO: Deduplicate columns on add
 ```jsx
-// Different shapes for scenario/whatif/feature columns — check all three.
 const isDuplicate = columns.some((c) => c.type === column.type && ...);
 if (isDuplicate) return;
 ```
 
-### DO: Seed feature-mode columns with a slot that matches the feature
-```jsx
-columnPlotSlots[newIndex] = [{ id: makeSlotId(), feature: column.feature, label: column.feature }];
-```
-
-### DO: Drive all header navigation through the navigation store
+### DO: Drive header navigation through the navigation store
 ```jsx
 const { push } = useNavigationStore();
-push(routes.PROJECT); // Return to project page.
+push(routes.PROJECT);
 ```
 
 ### DO: Guard API hooks with `enabled` flags
 ```jsx
 useQuery({
   queryKey: ['reports', 'whatifs', project, scenario],
-  enabled: Boolean(project && scenario),
+  enabled: !!project && !!scenario,
   ...
 });
 ```
 
 ### DO: Treat y-axis alignment as a side effect, not a data transform
-```jsx
-// Walk the DOM for `.js-plotly-plot` nodes AFTER render, read their
-// rendered y-range, compute a shared range, and write it back via
-// Plotly.relayout. Do not try to pre-compute aligned ranges in the data
-// layer — the layout only converges after Plotly has sized the axes.
-```
+Walk the DOM for `.js-plotly-plot` nodes after render, read their
+rendered y-range, compute a shared range, write it back via
+`Plotly.relayout`. Pre-computing aligned ranges in the data layer
+won't work — the layout only converges after Plotly has sized the
+axes.
 
 ### DO: Follow the pathway colour palette
-```jsx
-// Primary blue: #1470AF  (action circles, primary buttons)
-// Dark:        #000      (high-contrast solid selects)
-// Accent:      #AC6080   (custom/alternative state)
-// Neutral:     #CBD5E1   (inactive, default)
-// Error:       #f04d5b   (validation errors)
-// Info icon:   #94A3B8   (tooltips)
-```
+- Primary blue:  `#1470AF`  (action circles, primary buttons)
+- Dark:          `#000`     (high-contrast solid selects)
+- Accent:        `#AC6080`  (custom / alternative state)
+- Neutral:       `#CBD5E1`  (inactive default)
+- Error:         `#f04d5b`  (validation errors, delete icons)
+- Info icon:     `#94A3B8`  (tooltips)
 
 ### DON'T: Ship disabled-but-visible buttons
-```jsx
-// Hide the control until the feature lands, or wrap a "Coming soon"
-// tooltip. A perma-disabled button reads as "the feature is broken".
-```
+A perma-disabled button reads as "the feature is broken". Hide the
+control until the feature lands, or wrap a "Coming soon" tooltip.
 
-### DON'T: Persist LaunchView state into the reports store
-Launch is a preview surface. Promoting its slots would mean two sources
-of truth for slot config (the launch-only list and the comparison-view
-lists), and the comparison views never read from launch state anyway.
+### DON'T: Persist `LaunchView` state into the store
+Launch is a throwaway preview — its cards reset the moment a real
+comparison view is entered. Promoting its state would create a second
+source of truth for card config that the comparison views never read.
 
 ## Related Files
-- `stores/reportsStore.js` - View state machine, column & slot CRUD.
+- `stores/reportsStore.js` - View state machine, card CRUD, default
+  card / map-anchor constants.
 - `hooks/useReportsData.js` - React Query wrappers for `/api/reports/*`.
 - `hooks/useYAxisAlignment.js` - Debounced Plotly y-axis unifier.
-- `components/ReportsPage.jsx` - Top-level router (launch vs comparison).
-- `components/TopToolbar.jsx` - Return / Start Over / Export.
-- `components/LaunchView.jsx` - Single-column entry + 3 mode buttons.
-- `components/ComparisonView.jsx` - Multi-column layout with dividers.
-- `components/ReportColumn.jsx` - Column shell: header, map card, then one `FeatureCard` per feature present in `plotSlots`.
-- `components/FeatureCard.jsx` - KPI section + vertically-stacked plots for a single feature.
-- `components/PlotEditModal.jsx` - Slot configuration modal.
-- `components/CircleActionButton.jsx` - Shared blue-circle + label button (`sm` / `md`). Uses `CreateNewIcon` and the pathway palette.
+- `components/ReportsPage.jsx` - Top-level grid (nav + canvas + bottom
+  + plot tool); owns drawer state.
+- `components/NavigatorCard.jsx` - Top-bar navigator (Return, Start
+  Over, mode label).
+- `components/BottomCard.jsx` - Map-layer properties form; visible
+  only while the drawer is open.
+- `components/LaunchView.jsx` - Single-column launch entry + 3 mode
+  buttons; owns its own card list locally.
+- `components/ComparisonView.jsx` - Multi-column layout with
+  per-column dividers and the "+ column" button.
+- `components/ReportColumn.jsx` - Column shell — title row, then a
+  `<GridLayout>` containing the map tile + one `FeatureCard` per
+  card.
+- `components/ReportMap.jsx` - Per-column map tile (shared scenario
+  data via `useInputs`) with an inline-rendered toolbar.
+- `components/FeatureCard.jsx` - Title + KPI strip + stacked
+  `PlotSlotCard`s + an "Add a plot" pill.
+- `components/PlotSlotCard.jsx` - One plot's caption + Edit/Reset/
+  Delete trio + the `<ReportPlot>` itself.
+- `components/ReportPlot.jsx` - Fetches custom-plot HTML and runs
+  the embedded Plotly scripts; lifts the chart title for the slot
+  caption.
+- `components/PlotEditModal.jsx` - Drawer card: PlotChoices picker
+  → PlotTool parameter form.
+- `components/CircleActionButton.jsx` - Shared blue-circle + label
+  button (`sm` / `md`). Uses `CreateNewIcon` and the pathway palette.
 
 ## Icons & buttons
 - Use icons from `assets/icons` (same set as pathway). Avoid

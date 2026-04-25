@@ -1,11 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Dropdown, Popconfirm, Select, Tooltip } from 'antd';
-import {
-  BinAnimationIcon,
-  CreateNewIcon,
-  InputEditorIcon,
-  RefreshIcon,
-} from 'assets/icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { Button, Popconfirm, Select, Tooltip } from 'antd';
+import { BinAnimationIcon, InputEditorIcon, RefreshIcon } from 'assets/icons';
 
 import {
   PLOT_GROUPS,
@@ -18,19 +14,12 @@ import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import { useFetchSummary } from '../hooks/useReportsData';
 import KpiStrip from './KpiStrip';
 import PlotSlotCard from './PlotSlotCard';
-import { useQueryClient } from '@tanstack/react-query';
 
-// `feature` on a card is the first key of the plot family it
-// belongs to (see ReportColumn's `buildFamilyMenuItems`). So to
-// find a card's family label and available plots, walk PLOT_GROUPS
-// looking for the group/subgroup that contains that key. No
-// hardcoded feature→label dictionary to keep in sync.
-//
-// The returned `icon` is the PLOT_GROUPS top-level icon. Subgroups
-// don't define their own, so nested leaves inherit the parent
-// family's icon (e.g. every Life Cycle Analysis subgroup reuses
-// LifeCycleAnalysisIcon). Matches what the "Select a Plot Tool"
-// picker shows.
+// A card's `feature` is the first key in its plot family (see
+// ReportColumn's plot menu builder). Walk PLOT_GROUPS to find the
+// owning group/subgroup so we can label the card and list its
+// quick-pick plots without a parallel feature→label dictionary.
+// Subgroups inherit their parent group's icon.
 function findFamilyForFeature(feature) {
   if (!feature) return null;
   for (const group of PLOT_GROUPS) {
@@ -84,23 +73,17 @@ function buildKpiProps(summary) {
 }
 
 /**
- * Feature-bound card in the report grid: KPI section, vertically-
- * stacked plots, an "Add a plot" dropdown, and hover-revealed +
- * affordances on the right and bottom edges for growing the grid
- * southeast.
+ * Feature-bound card: KPI strip + vertically-stacked plots + an
+ * "Add a plot" dropdown. Sizing is owned by the parent
+ * `react-grid-layout` tile — this component fills 100% of whatever
+ * box the library assigns and never sets its own width/height.
  *
  * Props:
- *   card             — { id, feature, plots }
- *   project/scenario — passed through for data fetching
- *   whatif           — passed through (inter-whatif mode)
- *   onEditPlot(plotId)
- *   onResetPlot(plotId)
- *   onDeletePlot(plotId)
+ *   card            — { id, feature, plots }
+ *   project,        scenario, whatif — passed through to fetch hooks
+ *   onEditPlot(plotId), onResetPlot(plotId), onDeletePlot(plotId)
  *   onAddPlot(script?)             — add a plot to this card
- *   plusRightMenu                  — antd Dropdown `menu` config
- *                                    rendered when the + right button
- *                                    is clicked (nested plot picker)
- *   plusBottomMenu                 — same for the + bottom button
+ *   onDeleteCard()
  *   onPlotReady(plotId, plotDiv)   — y-axis alignment hook
  */
 const FeatureCard = ({
@@ -112,8 +95,6 @@ const FeatureCard = ({
   onResetPlot,
   onDeletePlot,
   onAddPlot,
-  plusRightMenu,
-  plusBottomMenu,
   onDeleteCard,
   onPlotReady,
 }) => {
@@ -126,16 +107,13 @@ const FeatureCard = ({
     whatif,
   );
 
-  // Invalidate the KPI summary query so it refetches. Keyed the same
-  // way `useFetchSummary` keys it in useReportsData.js.
+  // Keep this query key in sync with `useFetchSummary`'s in
+  // useReportsData.js — invalidating refetches the KPI strip.
   const handleRefreshKpi = () => {
     queryClient.invalidateQueries({
       queryKey: ['reports', 'summary', project, scenario, feature, whatif],
     });
   };
-  // Card title is the family label (group or subgroup) from
-  // PLOT_GROUPS — same categorisation the "Select a Plot Tool"
-  // picker uses. No hardcoded title dictionary.
   const family = useMemo(() => findFamilyForFeature(feature), [feature]);
   const title = family?.label || feature;
   const kpiProps = useMemo(() => buildKpiProps(summary), [summary]);
@@ -144,10 +122,9 @@ const FeatureCard = ({
     [feature],
   );
 
-  // KPI (the strip + its action trio) can be dismissed independently
-  // of the card itself. Card-level deletion is still available via
-  // the bin in the title section. Local state only — hiding a KPI
-  // strip isn't interesting enough to persist across reloads.
+  // KPI strip is dismissible independently of the card itself
+  // (card-level deletion lives in the title trio). Not persisted —
+  // hiding a strip isn't interesting enough to round-trip.
   const [kpiHidden, setKpiHidden] = useState(false);
 
   const cardInner = (
@@ -198,10 +175,7 @@ const FeatureCard = ({
               <Fragment key={plot.id}>
                 {idx > 0 && <div style={plotDividerStyle} />}
                 <PlotSlotCard
-                  project={project}
                   scenario={scenario}
-                  feature={feature}
-                  whatif={whatif}
                   plotConfig={plot.plotConfig}
                   onEdit={() => onEditPlot?.(plot.id)}
                   onReset={() => onResetPlot?.(plot.id)}
@@ -217,7 +191,11 @@ const FeatureCard = ({
               </Fragment>
             ))}
             {onAddPlot && (
-              <div style={plots.length > 0 ? addPlotRowWithDividerStyle : undefined}>
+              <div
+                style={
+                  plots.length > 0 ? addPlotRowWithDividerStyle : undefined
+                }
+              >
                 <AddPlotSelect
                   options={quickPickOptions}
                   onPick={(script) => onAddPlot(script)}
@@ -231,69 +209,9 @@ const FeatureCard = ({
     </div>
   );
 
-  return (
-    <div style={outerStyle}>
-      {/* Card fills its parent width (so it matches the map card at
-          launch). The + right button overlays to the right via absolute
-          positioning so the card's width stays intact. */}
-      {cardInner}
-
-      {/* + right — absolutely positioned just outside the card's right
-          edge. Clicking opens a nested plot picker (same items as the
-          empty-state "Add a feature card" dropdown) so the user goes
-          straight to the parameter form for a specific plot. */}
-      {plusRightMenu && (
-        <div style={plusRightWrapperStyle}>
-          <Dropdown
-            menu={plusRightMenu}
-            trigger={['click']}
-            placement="bottomLeft"
-          >
-            <div className="cea-card-icon-button-container">
-              <Tooltip title="Add a card to the right" placement="bottom">
-                <Button
-                  type="text"
-                  icon={<CreateNewIcon />}
-                  aria-label="Add a card to the right"
-                />
-              </Tooltip>
-            </div>
-          </Dropdown>
-        </div>
-      )}
-
-      {/* + bottom — regular flow child below the card, horizontally
-          centered within the card's own width. Same nested picker as
-          the + right button. */}
-      {plusBottomMenu && (
-        <div style={plusBottomWrapperStyle}>
-          <Dropdown
-            menu={plusBottomMenu}
-            trigger={['click']}
-            placement="bottomLeft"
-          >
-            <div className="cea-card-icon-button-container">
-              <Tooltip title="Add a card below" placement="bottom">
-                <Button
-                  type="text"
-                  icon={<CreateNewIcon />}
-                  aria-label="Add a card below"
-                />
-              </Tooltip>
-            </div>
-          </Dropdown>
-        </div>
-      )}
-    </div>
-  );
+  return cardInner;
 };
 
-/**
- * Single delete button in the FeatureCard title section — same
- * `cea-card-icon-button-container` outline as the KPI / plot trios
- * (one container, one button inside). Button is size 30×30 — exact
- * same as any individual icon in the grouped trios.
- */
 const TitleDeleteButton = ({ onClick }) => (
   <Popconfirm
     title="Delete this card?"
@@ -315,13 +233,9 @@ const TitleDeleteButton = ({ onClick }) => (
   </Popconfirm>
 );
 
-/**
- * Edit / Refresh / Delete trio in the KPI section — same shared-
- * container pattern as the map card's toolbar and the plot section's
- * controls. `onEdit` is a placeholder (disabled when not wired);
- * `onRefresh` invalidates the KPI summary query; `onDelete` hides
- * just this KPI section (card-level deletion lives in the title).
- */
+// `onEdit` is a placeholder until the KPI editor lands — rendered
+// disabled when not wired. `onDelete` hides just the KPI strip;
+// card-level deletion lives in the title trio.
 const KpiActionButtons = ({ onEdit, onRefresh, onDelete }) => (
   <div className="cea-card-icon-button-container">
     <Tooltip title="Edit KPI" placement="bottom">
@@ -384,46 +298,9 @@ const AddPlotSelect = ({ options, onPick, onFallback }) => {
   );
 };
 
-// Outer: flex column holding the card on top, optional + bottom
-// underneath, and a relatively-positioned context for the + right
-// button which is absolutely positioned just outside the card's
-// right edge. Keeps the card stretched to its parent's width (so it
-// matches the map card) while the + right button adds to the side
-// without reducing card width.
-const outerStyle = {
-  position: 'relative',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 8,
-};
-
-// + right: 8px outside the card's right edge, vertically centered on
-// the card. `left: 100%` puts it flush to the right edge; margin-left
-// adds the spacer. Wrapper has no width so it hugs the button.
-const plusRightWrapperStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '100%',
-  marginLeft: 8,
-  transform: 'translateY(-50%)',
-};
-
-// + bottom: regular flow, horizontally centered within card width.
-const plusBottomWrapperStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-};
-
-// Shared minimum floor with the map card — see ReportColumn's
-// `CARD_MIN_WIDTH` / `CARD_MIN_HEIGHT`. `box-sizing: border-box` is
-// what makes minWidth/minHeight refer to the outer dimensions so a
-// padded feature card and an unpadded map card land at the same
-// visible size.
-//
-// Vertical padding matches the section `gap` (8px) so each button
-// box sits the same distance below its immediate line above —
-// whether that's the card's top border (title section) or a section
-// divider (KPI / plot sections).
+// Fills the tile assigned by react-grid-layout — no own min/max,
+// no resize handle. Internal overflow is handled by per-section
+// scroll/ellipsis rules below.
 const cardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
@@ -433,10 +310,9 @@ const cardStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
-  resize: 'both',
+  width: '100%',
+  height: '100%',
   overflow: 'hidden',
-  minWidth: 500,
-  minHeight: 280,
 };
 
 const titleSectionStyle = {
@@ -472,11 +348,8 @@ const kpiSectionStyle = {
   gap: 4,
 };
 
-// `flex: 1` + `minHeight: 0` lets the plot section absorb the
-// card's remaining vertical space. Without `minHeight: 0` a flex
-// child refuses to shrink below its content, and the plots would
-// keep their 300px minimum even when the user drags the card
-// shorter.
+// `flex: 1` + `minHeight: 0` lets this section shrink below its
+// content's natural height when the user drags the card shorter.
 const plotsSectionStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -491,9 +364,6 @@ const addPlotRowWithDividerStyle = {
   marginTop: 4,
 };
 
-// Thin grey line between stacked plots — matches the section dividers
-// (`sectionDividerStyle`) and the "Add a plot" divider so the whole
-// card reads with a single visual rhythm.
 const plotDividerStyle = {
   borderTop: '1px solid #f0f0f0',
 };

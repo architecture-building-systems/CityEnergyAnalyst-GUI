@@ -1,94 +1,8 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 
-/**
- * Fetch available what-if names for a scenario.
- */
-export const useFetchWhatifs = (project, scenario) => {
-  return useQuery({
-    queryKey: ['reports', 'whatifs', project, scenario],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/whatifs', {
-        params: { project, scenario },
-      });
-      return data.whatifs;
-    },
-    enabled: !!project && !!scenario,
-    staleTime: 30_000,
-  });
-};
-
-/**
- * Fetch supported features list.
- */
-export const useFetchFeatures = () => {
-  return useQuery({
-    queryKey: ['reports', 'features'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/features');
-      return data.features;
-    },
-    staleTime: 5 * 60_000,
-  });
-};
-
-/**
- * Fetch KPI summary for a scenario + feature + optional what-if.
- */
-export const useFetchSummary = (project, scenario, feature, whatif) => {
-  return useQuery({
-    queryKey: ['reports', 'summary', project, scenario, feature, whatif],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/summary', {
-        params: { project, scenario, feature, whatif: whatif || undefined },
-      });
-      return data;
-    },
-    enabled: !!project && !!scenario && !!feature,
-    staleTime: 30_000,
-  });
-};
-
-/**
- * Fetch plot HTML for a scenario + feature + optional what-if.
- */
-export const useFetchReportPlot = (project, scenario, feature, whatif) => {
-  return useQuery({
-    queryKey: ['reports', 'plot', project, scenario, feature, whatif],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/plot', {
-        params: { project, scenario, feature, whatif: whatif || undefined },
-        responseType: 'text',
-      });
-      return data;
-    },
-    enabled: !!project && !!scenario && !!feature,
-    staleTime: 30_000,
-  });
-};
-
-/**
- * Fetch zone GeoJSON for a scenario (for map thumbnail).
- */
-export const useFetchZoneGeoJSON = (project, scenario) => {
-  return useQuery({
-    queryKey: ['reports', 'zone-geojson', project, scenario],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/zone-geojson', {
-        params: { project, scenario },
-      });
-      return data;
-    },
-    enabled: !!project && !!scenario,
-    staleTime: 5 * 60_000,
-  });
-};
-
-/**
- * Fetch scenarios for a project (for inter-mode).
- */
-export const useFetchScenarios = (project) => {
-  return useQuery({
+export const useFetchScenarios = (project) =>
+  useQuery({
     queryKey: ['reports', 'scenarios', project],
     queryFn: async () => {
       const { data } = await apiClient.get('/api/reports/scenarios', {
@@ -99,13 +13,45 @@ export const useFetchScenarios = (project) => {
     enabled: !!project,
     staleTime: 30_000,
   });
-};
 
-/**
- * Fetch parameters for a visualisation tool script.
- */
-export const useFetchToolParams = (script, scenario) => {
-  return useQuery({
+export const useFetchWhatifs = (project, scenario) =>
+  useQuery({
+    queryKey: ['reports', 'whatifs', project, scenario],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/reports/whatifs', {
+        params: { project, scenario },
+      });
+      return data.whatifs;
+    },
+    enabled: !!project && !!scenario,
+    staleTime: 30_000,
+  });
+
+export const useFetchFeatures = () =>
+  useQuery({
+    queryKey: ['reports', 'features'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/reports/features');
+      return data.features;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+export const useFetchSummary = (project, scenario, feature, whatif) =>
+  useQuery({
+    queryKey: ['reports', 'summary', project, scenario, feature, whatif],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/reports/summary', {
+        params: { project, scenario, feature, whatif: whatif || undefined },
+      });
+      return data;
+    },
+    enabled: !!project && !!scenario && !!feature,
+    staleTime: 30_000,
+  });
+
+export const useFetchToolParams = (script, scenario) =>
+  useQuery({
     queryKey: ['tools', script, scenario],
     queryFn: async () => {
       const { data } = await apiClient.get(`/api/tools/${script}`, {
@@ -116,33 +62,25 @@ export const useFetchToolParams = (script, scenario) => {
     enabled: !!script,
     staleTime: 30_000,
   });
-};
 
-/**
- * Render a custom plot via POST /api/reports/plot-custom.
- * plotConfig shape: { script, parameters }
- *
- * Backend quirk: the endpoint calls `parameter.decode(str(value))`
- * on each parameter, so any dict-typed parameter (e.g. the `context`
- * field on plot forms) must arrive as a JSON string — not a nested
- * object — otherwise `str(pythonDict)` produces single-quoted
- * Python repr and `json.loads` fails. Stringify objects here.
- */
+// Backend quirk: `/plot-custom` calls `parameter.decode(str(value))` per
+// field, so dict-typed values (e.g. plot-form `context`) must arrive as
+// JSON strings — `str(pythonDict)` produces single-quoted Python repr
+// and `json.loads` fails. Stringify objects up front.
 const serializeParameters = (params) => {
   if (!params) return {};
   const out = {};
   for (const [key, value] of Object.entries(params)) {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      out[key] = JSON.stringify(value);
-    } else {
-      out[key] = value;
-    }
+    out[key] =
+      value !== null && typeof value === 'object' && !Array.isArray(value)
+        ? JSON.stringify(value)
+        : value;
   }
   return out;
 };
 
-export const useFetchCustomPlot = (plotConfig, scenario) => {
-  return useQuery({
+export const useFetchCustomPlot = (plotConfig, scenario) =>
+  useQuery({
     queryKey: ['reports', 'custom-plot', plotConfig, scenario],
     queryFn: async () => {
       const { data } = await apiClient.post(
@@ -159,4 +97,3 @@ export const useFetchCustomPlot = (plotConfig, scenario) => {
     enabled: !!plotConfig?.script,
     staleTime: 30_000,
   });
-};

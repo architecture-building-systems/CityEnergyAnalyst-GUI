@@ -5,30 +5,24 @@ import { InputEditorIcon, RefreshIcon, BinAnimationIcon } from 'assets/icons';
 import ReportPlot from './ReportPlot';
 
 /**
- * A single plot slot within a FeatureCard.
- * Edit / Reset / Delete controls sit above the chart in one shared
- * `cea-card-icon-button-container` frame — same visual pattern as
- * the map card's top-left toolbar (see MapThumbnail.jsx).
- * Delete is guarded by a lightweight Popconfirm.
+ * A single plot slot within a FeatureCard. Edit / Reset / Delete
+ * trio sits above the chart in one shared icon-button container.
  */
 const PlotSlotCard = ({
-  project,
   scenario,
-  feature,
-  whatif,
   plotConfig,
   onEdit,
   onReset,
   onDelete,
   onPlotReady,
 }) => {
-  // Main title lifted out of the Plotly figure by `ReportPlot`. When
-  // set, it's shown on the controls row instead of the figure canvas.
+  // Title lifted out of the Plotly figure by ReportPlot — shown on
+  // the controls row instead of inside the chart canvas.
   const [caption, setCaption] = useState('');
 
-  // Append `| {whatif}` only when the user picked exactly one what-if
-  // name. Multi-selection means multiple figures stacked below with
-  // their own labels, so a single suffix would be misleading.
+  // Single what-if pick → append `| {name}` to the title. Multi-pick
+  // stacks multiple figures with their own labels, so a single
+  // suffix would mislabel them.
   const whatifSuffix = useMemo(() => {
     const list = plotConfig?.parameters?.['what-if-name'];
     if (Array.isArray(list) && list.length === 1) return list[0];
@@ -36,13 +30,10 @@ const PlotSlotCard = ({
     return null;
   }, [plotConfig]);
 
-  // Some plot titles come back as a single string with a comma in the
-  // middle (e.g. "Building Energy Demand, what-if-A"). When that
-  // happens, split on the first comma and stack the halves — the
-  // part before the comma is the primary title, the part after is a
-  // qualifier that reads better on a second line. The `| whatif`
-  // suffix joins whichever row is the last one so it stays adjacent
-  // to the qualifier rather than the primary.
+  // Comma-bearing captions split into a primary title (before the
+  // first comma) and a qualifier (after) — rendered on two lines so
+  // long titles stay readable. Any `| whatif` suffix joins the last
+  // visible row.
   const { primaryTitle, secondaryTitle } = useMemo(() => {
     if (!caption) return { primaryTitle: '', secondaryTitle: '' };
     const idx = caption.indexOf(',');
@@ -128,10 +119,7 @@ const PlotSlotCard = ({
         </div>
       </div>
       <ReportPlot
-        project={project}
         scenario={scenario}
-        feature={feature}
-        whatif={whatif}
         plotConfig={plotConfig}
         onPlotReady={onPlotReady}
         onCaption={setCaption}
@@ -140,17 +128,9 @@ const PlotSlotCard = ({
   );
 };
 
-// No top margin on individual slots — vertical spacing between a
-// plot's button row and the section divider above comes from
-// `FeatureCard`'s cardStyle gap (8px). Adding an extra marginTop
-// here made the first plot's trio sit further from the divider
-// than the KPI trio sits from its divider. Plot-to-plot spacing
-// is handled by `plotsSectionStyle.gap` in FeatureCard.
-//
-// `flex: 1` + column layout lets `ReportPlot` fill whatever space
-// the plot section hands down. `minHeight: 0` keeps the child
-// shrinkable when the user drags the card smaller — otherwise the
-// plot's default height would floor the slot.
+// `flex: 1` + `minHeight: 0` lets the inner ReportPlot shrink when
+// the user drags the card shorter. Vertical spacing between slots
+// is owned by `plotsSectionStyle.gap` in FeatureCard.
 const slotStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -158,11 +138,6 @@ const slotStyle = {
   minHeight: 0,
 };
 
-// Controls row now carries the title on the left and the Edit/Reset/
-// Delete trio on the right. `space-between` with `align-items: center`
-// keeps the two ends visually on the same baseline; `min-width: 0` on
-// the title is the standard trick that makes `text-overflow: ellipsis`
-// work inside a flex child.
 const controlsStyle = {
   display: 'flex',
   alignItems: 'center',
@@ -171,9 +146,8 @@ const controlsStyle = {
   marginBottom: 4,
 };
 
-// Title now stacks vertically so a comma-split caption can render
-// as two rows — primary on top, qualifier (+ any `| whatif` suffix)
-// beneath. Single-row captions collapse back to a single child.
+// `minWidth: 0` is the standard fix that lets `text-overflow:
+// ellipsis` actually clip inside a flex child.
 const titleStyle = {
   flex: 1,
   minWidth: 0,
@@ -184,7 +158,6 @@ const titleStyle = {
   overflow: 'hidden',
 };
 
-// Primary title row — unchanged styling from the single-row case.
 const titleRowStyle = {
   display: 'flex',
   alignItems: 'baseline',
@@ -195,9 +168,6 @@ const titleRowStyle = {
   whiteSpace: 'nowrap',
 };
 
-// Secondary row — slightly smaller and lighter so the hierarchy
-// reads, and the pipe separator still has CSS-controlled breathing
-// room on either side.
 const titleRowSecondaryStyle = {
   display: 'flex',
   alignItems: 'baseline',
@@ -215,8 +185,6 @@ const titleTextStyle = {
   minWidth: 0,
 };
 
-// Lighter than the title text so the separator reads as punctuation,
-// not a third word.
 const titleSeparatorStyle = {
   color: '#999',
   fontWeight: 400,

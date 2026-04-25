@@ -52,9 +52,7 @@ const ScenarioPicker = ({
   };
 
   const okDisabled = single ? !singleValue : selected.length === 0;
-  const okLabel = single
-    ? 'Add'
-    : `Compare (${selected.length})`;
+  const okLabel = single ? 'Add' : `Compare (${selected.length})`;
 
   return (
     <Modal

@@ -299,7 +299,8 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
 
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
-    if (phase !== 'baked' && phase !== 'simulated' && phase !== 'custom') return;
+    if (phase !== 'baked' && phase !== 'simulated' && phase !== 'custom')
+      return;
     await activateState(pathwayName, year);
   };
 
@@ -358,11 +359,10 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
               await deactivatePathway();
               return;
             }
-            const pathway = bakedPathways.find(
-              (p) => p.pathway_name === value,
-            );
-            const firstYear = [...(pathway?.years ?? [])]
-              .sort((a, b) => a - b)[0];
+            const pathway = bakedPathways.find((p) => p.pathway_name === value);
+            const firstYear = [...(pathway?.years ?? [])].sort(
+              (a, b) => a - b,
+            )[0];
             if (firstYear != null) {
               try {
                 await activateState(value, firstYear);

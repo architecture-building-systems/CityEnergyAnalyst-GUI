@@ -8,37 +8,28 @@ import ComparisonView from './ComparisonView';
 import PlotEditModal from './PlotEditModal';
 
 /**
- * Reports Mode — root page component.
+ * Reports Mode — root page. 2-column grid:
  *
- * Layout is a 2-column grid with three rows in the left column:
- *   ┌──────────────────────┬──────────────┐
- *   │      Navigator       │              │
- *   ├──────────────────────┤              │
- *   │                      │   Plot tool  │
- *   │       Canvas         │              │
- *   │                      │              │
- *   ├──────────────────────┤              │
- *   │       Bottom         │              │
- *   └──────────────────────┴──────────────┘
+ *   ┌──────────────┬──────────┐
+ *   │  Navigator   │          │
+ *   ├──────────────┤   Plot   │
+ *   │   Canvas     │   tool   │
+ *   ├──────────────┤          │
+ *   │   Bottom     │          │
+ *   └──────────────┴──────────┘
  *
- * - Left column stacks navigator (top, fixed height), canvas
- *   (middle, fills remaining space), and a bottom card anchored
- *   to the viewport bottom.
- * - Right column holds the plot tool card and spans all three
- *   rows. When the plot tool is closed the right column collapses
- *   to 0 and the canvas fills the full width. Animating
- *   `grid-template-columns` provides the push effect.
+ * The plot-tool column collapses to 0 width when no plot is being
+ * edited; animating `grid-template-columns` produces the slide-in.
  *
- * Drawer state lives here so the tool column can render at this
- * level (not buried inside a view). Views call `openDrawer` with
- * an `onSave` closure that captures their local state, so the
- * page doesn't need to know which view owns what.
+ * Drawer state lives here (not in a view) so the tool column can
+ * render at page level. Views call `openDrawer({ plotConfig, onSave })`
+ * with an `onSave` closure that captures their own state.
  */
 const ReportsPage = () => {
   const view = useReportsStore((s) => s.view);
 
+  // drawer = { plotConfig, onSave } | null
   const [drawer, setDrawer] = useState(null);
-  // drawer = { mode, scenario, plotConfig, onSave } | null
 
   const openDrawer = useCallback((config) => setDrawer(config), []);
   const closeDrawer = useCallback(() => setDrawer(null), []);
@@ -60,11 +51,9 @@ const ReportsPage = () => {
         gridTemplateColumns: plotToolOpen
           ? `1fr ${PLOT_TOOL_WIDTH}px`
           : '1fr 0px',
-        // Bottom row hosts the map-layer properties card, shown only
-        // while a plot is being edited (drawer open). `auto` lets the
-        // form size to its content (form height varies by layer type).
-        // Collapses to 0 when the drawer closes so the canvas
-        // reclaims the vertical space.
+        // Bottom row hosts the map-layer properties card while a
+        // plot is being edited. `auto` sizes to its form's height;
+        // 0 when closed so the canvas reclaims the space.
         gridTemplateRows: plotToolOpen
           ? `${NAV_HEIGHT}px 1fr auto`
           : `${NAV_HEIGHT}px 1fr 0px`,
@@ -82,9 +71,7 @@ const ReportsPage = () => {
         )}
       </div>
 
-      <div style={bottomCellStyle}>
-        {plotToolOpen && <BottomCard />}
-      </div>
+      <div style={bottomCellStyle}>{plotToolOpen && <BottomCard />}</div>
 
       {/* Plot tool column. Always rendered so the slide-in transition
           can play; visibility + interactivity are controlled by the
@@ -92,8 +79,6 @@ const ReportsPage = () => {
       <div style={plotToolCellStyle}>
         <PlotEditModal
           open={plotToolOpen}
-          mode={drawer?.mode || 'add'}
-          scenario={drawer?.scenario}
           plotConfig={drawer?.plotConfig || null}
           onSave={handleDrawerSave}
           onCancel={closeDrawer}
@@ -106,10 +91,10 @@ const ReportsPage = () => {
 const PLOT_TOOL_WIDTH = 480;
 const NAV_HEIGHT = 52;
 
+// Rows + columns are set inline on the wrapper above so they can
+// animate in step with the drawer open/close.
 const pageGridStyle = {
   display: 'grid',
-  // Rows are set inline on the wrapper so the bottom row can animate
-  // between 0 and BOTTOM_HEIGHT in step with the drawer open/close.
   gridTemplateAreas: `
     "nav tool"
     "canvas tool"
@@ -119,8 +104,6 @@ const pageGridStyle = {
   padding: 20,
   height: '100%',
   boxSizing: 'border-box',
-  // Smoothly slide both the plot tool column AND the bottom row in/out
-  // when the drawer opens or closes.
   transition:
     'grid-template-columns 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), grid-template-rows 0.3s cubic-bezier(0.22, 0.61, 0.36, 1)',
 };
@@ -133,8 +116,6 @@ const navCellStyle = {
 const canvasCellStyle = {
   gridArea: 'canvas',
   minWidth: 0,
-  // Canvas expands freely right & down; overflow lets oversized
-  // canvas content scroll instead of breaking the grid.
   overflow: 'auto',
 };
 

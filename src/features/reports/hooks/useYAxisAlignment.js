@@ -15,39 +15,36 @@ const useYAxisAlignment = (enabled, columnCount) => {
   // Map of slotId → [plotDiv, plotDiv, ...]
   const plotDivsRef = useRef({});
 
-  const alignSlot = useCallback(
-    (slotId) => {
-      const divs = plotDivsRef.current[slotId];
-      if (!divs || divs.length < 2) return;
+  const alignSlot = useCallback((slotId) => {
+    const divs = plotDivsRef.current[slotId];
+    if (!divs || divs.length < 2) return;
 
-      const Plotly = window.Plotly;
-      if (!Plotly) return;
+    const Plotly = window.Plotly;
+    if (!Plotly) return;
 
-      // Collect y-axis ranges from all divs for this slot
-      let globalMin = Infinity;
-      let globalMax = -Infinity;
+    // Collect y-axis ranges from all divs for this slot
+    let globalMin = Infinity;
+    let globalMax = -Infinity;
 
-      for (const div of divs) {
-        const layout = div.layout;
-        if (!layout?.yaxis?.range) continue;
-        const [yMin, yMax] = layout.yaxis.range;
-        if (yMin < globalMin) globalMin = yMin;
-        if (yMax > globalMax) globalMax = yMax;
+    for (const div of divs) {
+      const layout = div.layout;
+      if (!layout?.yaxis?.range) continue;
+      const [yMin, yMax] = layout.yaxis.range;
+      if (yMin < globalMin) globalMin = yMin;
+      if (yMax > globalMax) globalMax = yMax;
+    }
+
+    if (!isFinite(globalMin) || !isFinite(globalMax)) return;
+
+    // Apply the unified range to all divs
+    for (const div of divs) {
+      try {
+        Plotly.relayout(div, { 'yaxis.range': [globalMin, globalMax] });
+      } catch {
+        // Plot may have been removed
       }
-
-      if (!isFinite(globalMin) || !isFinite(globalMax)) return;
-
-      // Apply the unified range to all divs
-      for (const div of divs) {
-        try {
-          Plotly.relayout(div, { 'yaxis.range': [globalMin, globalMax] });
-        } catch {
-          // Plot may have been removed
-        }
-      }
-    },
-    [],
-  );
+    }
+  }, []);
 
   const handlePlotReady = useCallback(
     (slotId, plotDiv) => {

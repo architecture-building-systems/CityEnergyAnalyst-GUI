@@ -6,44 +6,46 @@ import { create } from 'zustand';
  * Views:
  *   'launch'          — entry point, single column + 3 action buttons
  *   'inter-scenario'  — columns = different scenarios, shared cards
- *   'inter-whatif'    — columns = what-if variants under one parent scenario, shared cards
- *   'inter-feature'   — columns = different feature result sets, independent cards
+ *   'inter-whatif'    — columns = what-if variants, shared cards
+ *   'inter-feature'   — columns = different feature result sets, per-column cards
  *
  * Column shapes:
- *   Inter-scenario: { type: 'scenario', scenario: string }
- *   Inter-whatif:   { type: 'whatif',   scenario: string, whatif: string }
- *   Inter-feature:  { type: 'feature',  scenario: string, feature: string }
+ *   { type: 'scenario', scenario }
+ *   { type: 'whatif',   scenario, whatif }
+ *   { type: 'feature',  scenario, feature }
  *
  * Cards are first-class:
- *   { id, row, col, feature, plots: [{ id, plotConfig }] }
+ *   { id, row, col, w, h, feature, plots: [{ id, plotConfig }] }
  *
- * `sharedCards`  — used by inter-scenario and inter-whatif (every column
- *                  renders the same grid of cards).
- * `columnCards`  — used by inter-feature (one grid per column index).
- *
- * Card positions form a 2D grid inside a column. `row` / `col` are
- * 0-indexed, sparse (not every row/col needs a card). Card insertion
- * with `direction: 'right' | 'bottom'` shifts existing cards to make
- * room so the new card lands immediately next to its neighbour.
+ * Card positions form a sparse 2D grid (sized in `react-grid-layout`
+ * units; see `ReportColumn`). `addCard({ direction })` shifts existing
+ * cards so the new card lands immediately next to its anchor.
  */
 
 let nextId = 1;
 const makeId = (prefix) => `${prefix}-${nextId++}`;
 
-const makeCard = ({ row, col, feature, plotConfig }) => ({
+// Default card size in grid units. See ReportColumn's <GridLayout>
+// config for the pixel mapping. Map's default footprint
+// (MAP_DEFAULT_W/H) lives in ReportColumn and is mirrored below as
+// MAP_ANCHOR_W/H — used to place new cards adjacent to the map.
+export const DEFAULT_CARD_W = 6;
+export const DEFAULT_CARD_H = 10;
+export const MAP_ANCHOR_W = 6;
+export const MAP_ANCHOR_H = 5;
+
+const makeCard = ({ row, col, feature, plotConfig, w, h }) => ({
   id: makeId('card'),
   row,
   col,
+  w: w ?? DEFAULT_CARD_W,
+  h: h ?? DEFAULT_CARD_H,
   feature,
-  plots:
-    plotConfig != null
-      ? [{ id: makeId('plot'), plotConfig }]
-      : [],
+  plots: plotConfig != null ? [{ id: makeId('plot'), plotConfig }] : [],
 });
 
-// Shift any card in `cards` whose row/col matches the shift rule by +1.
-// `direction === 'right'` shifts along the same row; 'bottom' shifts
-// along the same column. A null direction means no shift (append).
+// Shift cards along the affected row ('right') or column ('bottom') by
+// +1 to open space at (row, col). `direction === null` is a no-op.
 const shiftForInsert = (cards, { row, col, direction }) => {
   if (direction === 'right') {
     return cards.map((c) =>
@@ -58,11 +60,22 @@ const shiftForInsert = (cards, { row, col, direction }) => {
   return cards;
 };
 
-// Generic add-card: handles shared (columnIndex === null) and per-column.
-const insertCardInto = (cards, { targetCard, direction, feature, plotConfig }) => {
+// `targetCard === 'MAP'` is the sentinel from the map tile's edge `+`
+// buttons: right → just past the map, bottom → just below it. Any
+// other truthy `targetCard` is an actual card to anchor against.
+const insertCardInto = (
+  cards,
+  { targetCard, direction, feature, plotConfig },
+) => {
   let row = 0;
   let col = 0;
-  if (targetCard) {
+  if (targetCard === 'MAP') {
+    if (direction === 'bottom') {
+      row = MAP_ANCHOR_H;
+    } else {
+      col = MAP_ANCHOR_W;
+    }
+  } else if (targetCard) {
     if (direction === 'right') {
       row = targetCard.row;
       col = targetCard.col + 1;
@@ -212,9 +225,16 @@ export const useReportsStore = create((set, get) => ({
   addCard: (columnIndex, { targetCardId, direction, feature, plotConfig }) => {
     const { getCards, setCards } = get();
     const cards = getCards(columnIndex);
-    const targetCard = targetCardId
-      ? cards.find((c) => c.id === targetCardId)
-      : null;
+    // Pass the 'MAP' sentinel straight through — it's not a card ID,
+    // so `cards.find` would return nothing and the target would
+    // collapse to null. `insertCardInto` interprets the sentinel
+    // itself to decide the slot adjacent to the map.
+    const targetCard =
+      targetCardId === 'MAP'
+        ? 'MAP'
+        : targetCardId
+          ? cards.find((c) => c.id === targetCardId)
+          : null;
     const next = insertCardInto(cards, {
       targetCard,
       direction,
@@ -227,7 +247,25 @@ export const useReportsStore = create((set, get) => ({
 
   removeCard: (columnIndex, cardId) => {
     const { getCards, setCards } = get();
-    setCards(columnIndex, getCards(columnIndex).filter((c) => c.id !== cardId));
+    setCards(
+      columnIndex,
+      getCards(columnIndex).filter((c) => c.id !== cardId),
+    );
+  },
+
+  /**
+   * Apply a batch of {id, row, col, w, h} updates emitted by
+   * react-grid-layout's `onLayoutChange`. Cards not in the batch are
+   * left alone. Used to persist user-driven drag + resize.
+   */
+  applyCardLayouts: (columnIndex, updates) => {
+    const { getCards, setCards } = get();
+    const byId = new Map(updates.map((u) => [u.id, u]));
+    const next = getCards(columnIndex).map((c) => {
+      const u = byId.get(c.id);
+      return u ? { ...c, row: u.row, col: u.col, w: u.w, h: u.h } : c;
+    });
+    setCards(columnIndex, next);
   },
 
   // ── Plot management (inside a card) ─────────────────────────

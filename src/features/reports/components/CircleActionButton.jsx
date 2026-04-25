@@ -9,13 +9,7 @@ import { CreateNewIcon } from 'assets/icons';
  * Two sizes: 'md' (40px circle, for LaunchView hero actions) and
  * 'sm' (32px circle, for "Add a plot" rows).
  */
-const CircleActionButton = ({
-  label,
-  onClick,
-  tooltip,
-  size = 'sm',
-  icon,
-}) => {
+const CircleActionButton = ({ label, onClick, tooltip, size = 'sm', icon }) => {
   const dims = SIZES[size] ?? SIZES.sm;
   const btn = (
     <button type="button" onClick={onClick} style={buttonStyle}>
@@ -26,7 +20,9 @@ const CircleActionButton = ({
           height: dims.circle,
         }}
       >
-        {icon ?? <CreateNewIcon style={{ color: '#fff', fontSize: dims.icon }} />}
+        {icon ?? (
+          <CreateNewIcon style={{ color: '#fff', fontSize: dims.icon }} />
+        )}
       </span>
       <span style={{ ...labelStyle, fontSize: dims.label }}>{label}</span>
     </button>

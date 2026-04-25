@@ -709,7 +709,10 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           dependencies={parameter.depends_on || []}
           hasFeedback={!paramDisabled}
         >
-          <Input placeholder="Enter a name for the network" disabled={paramDisabled} />
+          <Input
+            placeholder="Enter a name for the network"
+            disabled={paramDisabled}
+          />
         </FormField>
       );
     }
@@ -725,7 +728,10 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           dependencies={parameter.depends_on || []}
           hasFeedback={!paramDisabled}
         >
-          <Input placeholder="Enter a name for the what-if scenario" disabled={paramDisabled} />
+          <Input
+            placeholder="Enter a name for the what-if scenario"
+            disabled={paramDisabled}
+          />
         </FormField>
       );
     }

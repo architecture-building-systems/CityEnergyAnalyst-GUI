@@ -1,43 +1,65 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Dropdown, Tooltip } from 'antd';
-import { CreateNewIcon } from 'assets/icons';
+import GridLayout, { setTopLeft } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 
+import { CreateNewIcon } from 'assets/icons';
 import {
   PLOT_GROUPS,
   PLOT_LABELS,
   VIEW_PLOT_RESULTS,
 } from 'features/plots/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import {
+  DEFAULT_CARD_W,
+  DEFAULT_CARD_H,
+  MAP_ANCHOR_W,
+  MAP_ANCHOR_H,
+} from '../stores/reportsStore';
+
 import ReportMap from './ReportMap';
 import FeatureCard from './FeatureCard';
+import './ReportColumn.css';
 
-/**
- * Build the antd Dropdown `menu.items` tree for "Add a feature card".
- * Mirrors the "Select a Plot Tool" picker (PlotChoices) exactly —
- * same nesting, same labels, same leaf-level specific plots. Derived
- * entirely from PLOT_GROUPS / PLOT_LABELS / VIEW_PLOT_RESULTS so new
- * groups or plots show up here automatically.
- *
- * `onPick(feature, script)` fires on a specific-plot click:
- *   - `feature`: the family's first map constant → drives the new
- *                card's title + quick-pick context.
- *   - `script`:  the specific plot's run script → seeds the drawer
- *                so the parameter form opens straight away.
- *
- * Visual conventions (match PlotChoices as closely as the antd Menu
- * allows):
- *   - Top-level group items are prefixed with the group's `icon`
- *     (the feature family icon from PLOT_GROUPS).
- *   - Nested items (subgroups + specific plots) are prefixed with a
- *     dash so the indentation reads even when menus wrap across
- *     column widths.
- */
+// Grid sizing. Fixed colWidth × ROW_HEIGHT × GRID_MARGIN gives the
+// map its 500×280px launch size at MAP_DEFAULT_W=6, MAP_DEFAULT_H=5
+// (= 6*70 + 5*16 wide, 5*40 + 4*20 tall). Total width is derived
+// from the current layout so the canvas hugs the map at launch and
+// grows as cards are dragged or added past its right edge.
+const COL_WIDTH_PX = 70;
+const ROW_HEIGHT_PX = 40;
+const GRID_MARGIN = [16, 20];
+const MIN_COLS = MAP_ANCHOR_W;
+const MAP_DEFAULT_W = MAP_ANCHOR_W;
+const MAP_DEFAULT_H = MAP_ANCHOR_H;
+const CARD_MIN_W = 3;
+const CARD_MIN_H = 3;
+
+// Mirrors react-grid-layout's internal formula with containerPadding
+// = [0, 0]: colWidth = (width - marginX * (cols - 1)) / cols.
+const widthForCols = (cols) =>
+  cols * COL_WIDTH_PX + Math.max(0, cols - 1) * GRID_MARGIN[0];
+
+// react-grid-layout v2 defaults to `transform: translate(...)` with a
+// CSS transition on width/height. That transition fires deck.gl's
+// WebGL ResizeObserver mid-animation, before its device is ready,
+// causing a `maxTextureDimension2D` error and a half-broken map on
+// first mount. `left/top` positioning skips the transform + transition
+// so deck.gl sees the final tile size on its first measurement.
+const absolutePositionStrategy = {
+  type: 'absolute',
+  scale: 1,
+  calcStyle: setTopLeft,
+};
+
+// Build the antd Dropdown `menu.items` tree for "Add a feature card",
+// derived from PLOT_GROUPS / PLOT_LABELS / VIEW_PLOT_RESULTS so it
+// stays in lock-step with the main viewport's PlotChoices picker.
 const topLabel = (group) => {
   const Icon = group.icon;
   return (
-    <span
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
-    >
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
       {Icon && <Icon style={{ fontSize: 16 }} />}
       {group.label}
     </span>
@@ -82,29 +104,20 @@ function buildPlotMenuItems(onPick) {
 }
 
 /**
- * A single report column.
- *
- * Composition:
- *   Title card (header)
- *   Map card
- *   Grid of FeatureCards, positioned by { row, col }.
- *
- * The grid expands southeast as the user clicks + right / + bottom
- * affordances on existing cards. A fallback preview card shows when
- * the column has no cards at all so the user sees KPI data out of
- * the box.
+ * A single report column. Tiles (map + feature cards) are placed by
+ * `react-grid-layout`, which handles drag, resize, collision, and
+ * vertical auto-compaction. Map position is local (per-column);
+ * feature-card positions are persisted via `onApplyLayouts`.
  *
  * Props:
- *   columnDef                  — { type, scenario, whatif?, feature? }
- *   cards                      — [{ id, row, col, feature, plots[] }]
- *   onEditPlot(cardId, plotId)
- *   onResetPlot(cardId, plotId)
- *   onDeletePlot(cardId, plotId)
- *   onPlotReady(plotId, div)   — y-axis alignment hook
+ *   columnDef         — { type, scenario, whatif?, feature? }
+ *   cards             — [{ id, row, col, w, h, feature, plots[] }]
+ *   onEditPlot,       onResetPlot, onDeletePlot, onDeleteCard
  *   onAddPlotToCard(cardId, script?)
- *   onAddCard({ targetCardId, direction, feature? })
- *   onAddColumn()              — title-card "+" handler
- *   addColumnTooltip
+ *   onAddCard({ targetCardId, direction, feature?, script? })
+ *   onApplyLayouts(updates) — persist drag/resize, batched
+ *   onPlotReady(plotId, div) — y-axis alignment hook
+ *   onAddColumn / addColumnTooltip — title-card "+" affordance
  */
 const ReportColumn = ({
   columnDef,
@@ -117,6 +130,7 @@ const ReportColumn = ({
   onPlotReady,
   onAddPlotToCard,
   onAddCard,
+  onApplyLayouts,
   onAddColumn,
   addColumnTooltip = 'Add column',
 }) => {
@@ -125,32 +139,122 @@ const ReportColumn = ({
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
 
-  // Sort cards by row then col for deterministic render order.
-  const sortedCards = useMemo(
-    () => [...cards].sort((a, b) => a.row - b.row || a.col - b.col),
-    [cards],
+  const [mapPos, setMapPos] = useState({
+    x: 0,
+    y: 0,
+    w: MAP_DEFAULT_W,
+    h: MAP_DEFAULT_H,
+  });
+
+  const layout = useMemo(() => {
+    const items = [
+      {
+        i: 'MAP',
+        x: mapPos.x,
+        y: mapPos.y,
+        w: mapPos.w,
+        h: mapPos.h,
+        minW: CARD_MIN_W,
+        minH: CARD_MIN_H,
+      },
+    ];
+    for (const card of cards) {
+      items.push({
+        i: card.id,
+        x: card.col ?? 0,
+        y: card.row ?? 0,
+        w: card.w ?? DEFAULT_CARD_W,
+        h: card.h ?? DEFAULT_CARD_H,
+        minW: CARD_MIN_W,
+        minH: CARD_MIN_H,
+      });
+    }
+    return items;
+  }, [cards, mapPos]);
+
+  // Grid width tracks the right-most tile, with MIN_COLS as a floor
+  // so the canvas hugs the map at launch.
+  const { effectiveCols, gridWidthPx } = useMemo(() => {
+    let maxRight = MIN_COLS;
+    for (const item of layout) {
+      const right = item.x + item.w;
+      if (right > maxRight) maxRight = right;
+    }
+    return {
+      effectiveCols: maxRight,
+      gridWidthPx: widthForCols(maxRight),
+    };
+  }, [layout]);
+
+  // react-grid-layout fires this on mount AND on every drag/resize.
+  // The per-card diff in the store's `applyCardLayouts` skips writes
+  // when nothing actually changed.
+  const handleLayoutChange = useCallback(
+    (nextLayout) => {
+      const cardUpdates = [];
+      for (const item of nextLayout) {
+        if (item.i === 'MAP') {
+          setMapPos((prev) => {
+            if (
+              prev.x === item.x &&
+              prev.y === item.y &&
+              prev.w === item.w &&
+              prev.h === item.h
+            )
+              return prev;
+            return { x: item.x, y: item.y, w: item.w, h: item.h };
+          });
+        } else {
+          cardUpdates.push({
+            id: item.i,
+            row: item.y,
+            col: item.x,
+            w: item.w,
+            h: item.h,
+          });
+        }
+      }
+      if (cardUpdates.length > 0) onApplyLayouts?.(cardUpdates);
+    },
+    [onApplyLayouts],
   );
 
-  // Minimum visible state is just title card + map card. When the
-  // column has no feature cards, we show an explicit "Add a feature
-  // card" button below the map so the user has a clear entry point
-  // without a mock preview card cluttering the view.
-  const fallbackFeature =
-    columnDef.type === 'feature' ? columnDef.feature : 'demand';
+  // Plot-picker menu for the map tile's `+` buttons. Forwards the
+  // 'MAP' sentinel + edge to the store's addCard, which anchors the
+  // new card to the right of (or below) the map's footprint.
+  const mapRightMenu = useMemo(
+    () =>
+      onAddCard
+        ? {
+            items: buildPlotMenuItems((feature, script) =>
+              onAddCard({
+                targetCardId: 'MAP',
+                direction: 'right',
+                feature,
+                script,
+              }),
+            ),
+          }
+        : null,
+    [onAddCard],
+  );
 
-  const hasCards = sortedCards.length > 0;
-
-  // Derive the grid dimensions from card positions.
-  const { rows, cols } = useMemo(() => {
-    if (sortedCards.length === 0) return { rows: 1, cols: 1 };
-    let maxRow = 0;
-    let maxCol = 0;
-    for (const c of sortedCards) {
-      if (c.row > maxRow) maxRow = c.row;
-      if (c.col > maxCol) maxCol = c.col;
-    }
-    return { rows: maxRow + 1, cols: maxCol + 1 };
-  }, [sortedCards]);
+  const mapBottomMenu = useMemo(
+    () =>
+      onAddCard
+        ? {
+            items: buildPlotMenuItems((feature, script) =>
+              onAddCard({
+                targetCardId: 'MAP',
+                direction: 'bottom',
+                feature,
+                script,
+              }),
+            ),
+          }
+        : null,
+    [onAddCard],
+  );
 
   let headerText = scenario;
   if (columnDef.type === 'whatif' && columnDef.whatif) {
@@ -159,7 +263,7 @@ const ReportColumn = ({
 
   return (
     <div style={{ ...columnStyle, ...style }}>
-      {/* Title card + optional "+" */}
+      {/* Title card + optional "+ Add scenario" button. */}
       <div style={titleRowStyle}>
         <div style={titleCardStyle}>
           <div style={headerStyle}>{headerText}</div>
@@ -178,115 +282,103 @@ const ReportColumn = ({
         )}
       </div>
 
-      <div style={mapCardStyle}>
-        <ReportMap project={project} scenario={scenario} />
-      </div>
-
-      {/* Cards grid. Rows × cols pulled from card positions. */}
-      {!hasCards ? (
-        onAddCard && (
-          <div style={addFirstCardRowStyle}>
-            <Dropdown
-              menu={{
-                items: buildPlotMenuItems((feature, script) =>
-                  onAddCard({
-                    targetCardId: null,
-                    direction: null,
-                    feature,
-                    script,
-                  }),
-                ),
-              }}
-              trigger={['click']}
-              placement="bottomLeft"
-            >
-              <div className="cea-card-icon-button-container">
-                <Tooltip title="Add a Feature card" placement="bottom">
-                  <Button
-                    type="text"
-                    icon={<CreateNewIcon />}
-                    aria-label="Add a feature card"
-                  />
-                </Tooltip>
-              </div>
-            </Dropdown>
-          </div>
-        )
-      ) : (
-        <div
-          style={{
-            ...gridStyle,
-            gridTemplateRows: `repeat(${rows}, auto)`,
-            // `auto` columns size to their own content (each card's
-            // resized width) so a wider card doesn't stretch its
-            // siblings. `1fr` would force them to share the grid's
-            // total width, which defeats independent resizing.
-            gridTemplateColumns: `repeat(${cols}, auto)`,
+      <div style={{ ...gridWrapperStyle, width: gridWidthPx }}>
+        <GridLayout
+          className="cea-report-grid"
+          layout={layout}
+          width={gridWidthPx}
+          // react-grid-layout v2 requires sizing knobs nested in
+          // `gridConfig`. The v1 top-level names (cols, rowHeight,
+          // margin, containerPadding) are silently ignored.
+          gridConfig={{
+            cols: effectiveCols,
+            rowHeight: ROW_HEIGHT_PX,
+            margin: GRID_MARGIN,
+            containerPadding: [0, 0],
           }}
+          dragConfig={{
+            cancel:
+              'input,textarea,select,option,button,.ant-dropdown-menu,.ant-select,.cea-no-drag',
+          }}
+          positionStrategy={absolutePositionStrategy}
+          onLayoutChange={handleLayoutChange}
         >
-          {sortedCards.map((card) => {
-            // Build the nested plot picker for each "+" direction so
-            // clicking the button opens the same menu as the empty-
-            // state "Add a feature card" dropdown. Picking a specific
-            // plot seeds the drawer's plotConfig so the parameter
-            // form opens immediately — no "Select a Plot Tool" step.
-            const plusRightMenu = onAddCard && {
-              items: buildPlotMenuItems((feature, script) =>
-                onAddCard({
-                  targetCardId: card.id,
-                  direction: 'right',
-                  feature,
-                  script,
-                }),
-              ),
-            };
-            const plusBottomMenu = onAddCard && {
-              items: buildPlotMenuItems((feature, script) =>
-                onAddCard({
-                  targetCardId: card.id,
-                  direction: 'bottom',
-                  feature,
-                  script,
-                }),
-              ),
-            };
-            return (
-              <div
-                key={card.id}
-                style={{
-                  gridRow: card.row + 1,
-                  gridColumn: card.col + 1,
-                }}
+          {/* ── Map tile ─────────────────────────────────────── */}
+          <div key="MAP" style={tileStyle} className="cea-report-tile">
+            <div style={mapFillStyle}>
+              <ReportMap project={project} scenario={scenario} />
+            </div>
+            {mapRightMenu && (
+              <Dropdown
+                menu={mapRightMenu}
+                trigger={['click']}
+                placement="bottomLeft"
               >
-                <FeatureCard
-                  card={card}
-                  project={project}
-                  scenario={scenario}
-                  whatif={whatif}
-                  onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
-                  onResetPlot={(plotId) => onResetPlot?.(card.id, plotId)}
-                  onDeletePlot={
-                    onDeletePlot
-                      ? (plotId) => onDeletePlot(card.id, plotId)
-                      : undefined
-                  }
-                  onAddPlot={
-                    onAddPlotToCard
-                      ? (script) => onAddPlotToCard(card.id, script)
-                      : undefined
-                  }
-                  plusRightMenu={plusRightMenu}
-                  plusBottomMenu={plusBottomMenu}
-                  onDeleteCard={
-                    onDeleteCard ? () => onDeleteCard(card.id) : undefined
-                  }
-                  onPlotReady={onPlotReady}
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
+                <div
+                  className="cea-card-icon-button-container cea-no-drag"
+                  style={mapPlusRightStyle}
+                >
+                  <Tooltip title="Add a Feature card" placement="bottom">
+                    <Button
+                      type="text"
+                      icon={<CreateNewIcon />}
+                      aria-label="Add a Feature card to the right"
+                    />
+                  </Tooltip>
+                </div>
+              </Dropdown>
+            )}
+            {mapBottomMenu && (
+              <Dropdown
+                menu={mapBottomMenu}
+                trigger={['click']}
+                placement="bottomLeft"
+              >
+                <div
+                  className="cea-card-icon-button-container cea-no-drag"
+                  style={mapPlusBottomStyle}
+                >
+                  <Tooltip title="Add a Feature card below" placement="bottom">
+                    <Button
+                      type="text"
+                      icon={<CreateNewIcon />}
+                      aria-label="Add a Feature card below"
+                    />
+                  </Tooltip>
+                </div>
+              </Dropdown>
+            )}
+          </div>
+
+          {/* ── Feature cards ────────────────────────────────── */}
+          {cards.map((card) => (
+            <div key={card.id} style={tileStyle} className="cea-report-tile">
+              <FeatureCard
+                card={card}
+                project={project}
+                scenario={scenario}
+                whatif={whatif}
+                onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
+                onResetPlot={(plotId) => onResetPlot?.(card.id, plotId)}
+                onDeletePlot={
+                  onDeletePlot
+                    ? (plotId) => onDeletePlot(card.id, plotId)
+                    : undefined
+                }
+                onAddPlot={
+                  onAddPlotToCard
+                    ? (script) => onAddPlotToCard(card.id, script)
+                    : undefined
+                }
+                onDeleteCard={
+                  onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                }
+                onPlotReady={onPlotReady}
+              />
+            </div>
+          ))}
+        </GridLayout>
+      </div>
     </div>
   );
 };
@@ -295,10 +387,7 @@ const columnStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
-  // Each card owns its own size — dragging one card's resize handle
-  // must not stretch or shrink its siblings. `flex-start` stops the
-  // default cross-axis `stretch` so children size to themselves.
-  alignItems: 'flex-start',
+  alignItems: 'stretch',
 };
 
 const titleRowStyle = {
@@ -307,28 +396,17 @@ const titleRowStyle = {
   gap: 8,
 };
 
-// Shared minimums — every card in the column inherits this floor so
-// they stay visually consistent at launch and when the user drags a
-// card's resize handle. Feature cards (in FeatureCard.jsx) share the
-// same minWidth value via their own cardStyle.
-const CARD_MIN_WIDTH = 500;
-const CARD_MIN_HEIGHT = 280;
-
-// The title card is an exception to the shared minimum floor — it
-// holds only a scenario name, so it sizes to its text rather than
-// matching the map / feature cards' 320×160 floor.
 const titleCardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
   padding: '10px 16px',
   boxSizing: 'border-box',
-  resize: 'both',
-  overflow: 'hidden',
   minWidth: 200,
   minHeight: 32,
   display: 'flex',
   alignItems: 'center',
+  width: 'fit-content',
 };
 
 const headerStyle = {
@@ -338,36 +416,40 @@ const headerStyle = {
   lineHeight: 1.2,
 };
 
-const mapCardStyle = {
-  background: '#fff',
-  border: '1px solid #e8e8e8',
-  borderRadius: 12,
-  overflow: 'hidden',
-  boxSizing: 'border-box',
-  resize: 'both',
-  minWidth: CARD_MIN_WIDTH,
-  minHeight: CARD_MIN_HEIGHT,
-  height: 280,
+const gridWrapperStyle = {
+  width: '100%',
 };
 
-const gridStyle = {
-  display: 'grid',
-  gap: 16,
-  // Grid cells don't stretch their content — each card sits at its
-  // own resized size, not at the cell's size. Combined with `auto`
-  // tracks, this means a wider/taller card doesn't drag siblings
-  // with it.
-  justifyItems: 'start',
-  alignItems: 'start',
+const tileStyle = {
+  width: '100%',
+  height: '100%',
+  position: 'relative',
 };
 
-// Row that holds the "Add a feature card" button when no feature
-// cards exist yet. Aligned under the map card (start of the row) so
-// the call-to-action is predictable.
-const addFirstCardRowStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
+const mapFillStyle = {
+  width: '100%',
+  height: '100%',
+};
+
+// `+` affordances hanging off the map tile's right / bottom edges,
+// centred on each edge and nudged 8 px beyond it. `.cea-no-drag`
+// prevents the click from starting a drag.
+const mapPlusRightStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '100%',
+  transform: 'translateY(-50%)',
+  marginLeft: 8,
+  zIndex: 3,
+};
+
+const mapPlusBottomStyle = {
+  position: 'absolute',
+  top: '100%',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  marginTop: 8,
+  zIndex: 3,
 };
 
 export default ReportColumn;
