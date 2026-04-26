@@ -424,6 +424,13 @@ const ReportColumn = ({
             containerPadding: [0, 0],
           }}
           dragConfig={{
+            // Drag only initiates from elements matching `handle` —
+            // the FeatureCardShell title row gets `cea-card-drag-handle`,
+            // the primary map tile has its own drag strip below.
+            // Without this restriction, a mousedown anywhere on the
+            // card (including over the deck.gl canvas) would start a
+            // grid drag and swallow the map's own pan/zoom handling.
+            handle: '.cea-card-drag-handle',
             cancel:
               'input,textarea,select,option,button,.ant-dropdown-menu,.ant-select,.cea-no-drag',
           }}
@@ -432,6 +439,15 @@ const ReportColumn = ({
         >
           {/* ── Map tile ─────────────────────────────────────── */}
           <div key="MAP" style={mapTileStyle} className="cea-report-tile">
+            {/* Top grip — the only drag-initiating area on the
+                primary map tile so the map below stays interactive. */}
+            <div
+              className="cea-card-drag-handle"
+              style={primaryMapDragHandleStyle}
+              aria-label="Drag overview map"
+            >
+              <span style={primaryMapDragGripStyle} />
+            </div>
             <div style={mapFillStyle}>
               <ReportMap project={project} scenario={scenario} />
             </div>
@@ -593,6 +609,26 @@ const overviewLegendStyle = {
   backgroundColor: 'transparent',
   padding: '0 16px 12px',
   maxHeight: 'none',
+};
+
+// The primary map has no title row, so a thin top strip stands in as
+// the drag handle. Centred grip pill mirrors the pathway-panel
+// resize affordance so the affordance reads consistently across the
+// app. Sized small (~14px) to keep the map's vertical real estate.
+const primaryMapDragHandleStyle = {
+  height: 14,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'grab',
+  flexShrink: 0,
+};
+
+const primaryMapDragGripStyle = {
+  width: 36,
+  height: 4,
+  borderRadius: 999,
+  background: 'rgba(148, 163, 184, 0.7)',
 };
 
 // TODO: drop once these layers exist as real map overlays in the

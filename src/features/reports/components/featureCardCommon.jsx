@@ -45,7 +45,12 @@ export const FeatureCardShell = ({
   children,
 }) => (
   <div style={editing ? editingCardStyle : cardStyle}>
-    <div style={titleSectionStyle}>
+    {/* `cea-card-drag-handle` makes only the title row a valid grid
+        drag handle — the body (map / plot / kpi) passes mouse events
+        through to its own interactions. The Edit / Delete buttons
+        sit inside this row but are caught by the GridLayout
+        `draggableCancel` so a click on them never starts a drag. */}
+    <div className="cea-card-drag-handle" style={titleSectionStyle}>
       <div style={featureTitleStyle}>
         {Icon && (
           <Icon
@@ -122,6 +127,7 @@ const titleSectionStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
+  cursor: 'grab',
   gap: 8,
 };
 
