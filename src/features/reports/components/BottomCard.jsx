@@ -1,6 +1,3 @@
-import { Button } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
-
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 
 import { MapInstanceContext, useMapCardStore } from './mapInstance';
@@ -27,14 +24,14 @@ const BottomCard = ({ activeMapCardId, showClose = false, onClose }) => {
   return (
     <div style={wrapperStyle}>
       {showClose && (
-        <Button
-          type="text"
-          size="small"
-          icon={<CloseOutlined />}
+        <button
+          type="button"
           onClick={onClose}
           aria-label="Close layer parameters"
           style={closeButtonStyle}
-        />
+        >
+          &times;
+        </button>
       )}
       {mapCardStore ? (
         <MapInstanceContext.Provider value={mapCardStore}>
@@ -51,11 +48,33 @@ const wrapperStyle = {
   position: 'relative',
 };
 
+// Floating circular `×` clear of the bottom card — mirrors the
+// pathway viewer's "exit child scenario" affordance so the close
+// action reads consistently across the app. Background uses the
+// `purple_light` swatch from the CEA backend palette
+// (`cea/plots/colors.py` → "rgb(198,149,167)") to stay in family
+// with the active card's CEA-purple `editing` stroke.
 const closeButtonStyle = {
   position: 'absolute',
-  top: 4,
-  right: 4,
-  zIndex: 1,
+  top: -44,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 2,
+  width: 32,
+  height: 32,
+  borderRadius: 999,
+  border: '1px solid rgba(0, 0, 0, 0.12)',
+  background: 'rgb(198, 149, 167)',
+  color: '#fff',
+  fontSize: 18,
+  fontWeight: 700,
+  lineHeight: 1,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+  padding: 0,
 };
 
 export default BottomCard;
