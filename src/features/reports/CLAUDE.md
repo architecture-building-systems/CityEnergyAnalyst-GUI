@@ -168,26 +168,33 @@ const FeatureCardMap = ({ card, ... }) => {
     <MapInstanceContext.Provider value={store}>
       <FeatureCardShell ...>
         <ReportMap project={project} scenario={scenario} />
+        <Legend style={legendOverrideStyle}
+                extras={<LegendFilterRow layers={[layerInfo]} />} />
       </FeatureCardShell>
     </MapInstanceContext.Provider>
   );
 };
 ```
 The card mirrors the primary map's chrome (4-button toolbar, DeckGL
-overlay) so a Map card visually reads as another map tile. Each card
-owns a per-card `mapInstance` store (`category`, `selectedMapLayer`,
-`mapLayerParameters`, `mapLayers`, `range`); scoped hooks read from
-the per-card store inside the provider and fall back to the singleton
-outside it (main viewport, plot-edit flow). View-state — camera,
-zoom, layer-type visibility, colour mode — stays singleton.
+overlay) and embeds the Legend below the map so a Map card reads as a
+self-contained "map + legend" tile. Each card owns a per-card
+`mapInstance` store (`category`, `selectedMapLayer`,
+`mapLayerParameters`, `mapLayers`, `mapLayerLegends`, `range`); scoped
+hooks read from the per-card store inside the provider and fall back
+to the singleton outside it (main viewport, plot-edit flow).
+View-state — camera, zoom, layer-type visibility, colour mode — and
+filter values (`scale`, `radius`) stay singleton.
 
-### DO: Set `range` from inside `useGetMapLayers` (not the Legend)
-On the singleton, `range` is set by `Legend`'s `useEffect` whenever
-the layer data lands. Reports hides the Legend (`hideLegend`) so the
-fetch hook itself extracts `properties.range[firstKey]` and writes it
-on the active store. Without this, `HexagonLayer.elevationDomain`
-collapses to `[0, 0]` and the colour gradient pins everything to the
-first stop — visible symptom is "data fetched, map blank".
+### DO: Set `range` from inside `useGetMapLayers`
+On the singleton, `range` is normally set by `Legend`'s `useEffect`
+whenever the layer data lands. The BottomCard's Legend is hidden
+(`hideLegend`) so the fetch hook itself extracts
+`properties.range[firstKey]` and writes it on the active store.
+Without this, `HexagonLayer.elevationDomain` collapses to `[0, 0]`
+and the colour gradient pins everything to the first stop — visible
+symptom is "data fetched, map blank". The embedded Legend in
+`FeatureCardMap` can still write range when the user toggles between
+total / period range modes.
 
 ### DO: Auto-grow Plot cards to fit chart natural heights
 ```jsx

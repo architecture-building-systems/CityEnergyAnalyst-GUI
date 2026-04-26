@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
+import Legend, {
+  LegendFilterRow,
+} from 'features/map/components/Map/Layers/Legend';
 import { iconMap } from 'features/plots/constants';
 
 import ReportMap from './ReportMap';
@@ -69,6 +72,12 @@ const FeatureCardMap = ({
         <div style={mapBodyStyle}>
           <ReportMap project={project} scenario={scenario} />
         </div>
+        <div style={legendBodyStyle}>
+          <Legend
+            style={legendOverrideStyle}
+            extras={layerInfo ? <LegendFilterRow layers={[layerInfo]} /> : null}
+          />
+        </div>
       </FeatureCardShell>
     </MapInstanceContext.Provider>
   );
@@ -78,6 +87,25 @@ const mapBodyStyle = {
   flex: 1,
   minHeight: 0,
   position: 'relative',
+};
+
+// Hosts the Legend below the map. Width spans the card; height grows
+// with the legend's own content (no `flex: 1` so the map keeps the
+// remaining space).
+const legendBodyStyle = {
+  marginTop: 12,
+  width: '100%',
+};
+
+// Override Legend's sidebar defaults: span the full card width and
+// drop the card chrome (shadow + opaque background) so the legend
+// reads as part of the FeatureCardMap surface, not its own card.
+const legendOverrideStyle = {
+  width: '100%',
+  marginRight: 0,
+  boxShadow: 'none',
+  backgroundColor: 'transparent',
+  padding: 0,
 };
 
 export default FeatureCardMap;

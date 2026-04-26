@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
+  useScopedMapLayers,
+  useScopedMapLayerLegends,
   useScopedSelectedMapLayer,
+  useScopedSetMapLayerLegends,
   useScopedSetMapLayers,
   useScopedSetRange,
 } from 'features/reports/components/mapInstance';
@@ -131,13 +133,13 @@ export const useGetMapLayers = (
 };
 
 export const useMapLegends = () => {
-  const mapLayers = useMapStore((state) => state.mapLayers);
-  const mapLegends = useMapStore((state) => state.mapLayerLegends);
-  const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
+  const mapLayers = useScopedMapLayers();
+  const mapLegends = useScopedMapLayerLegends();
+  const setMapLayerLegends = useScopedSetMapLayerLegends();
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
-  const selectedMapLayer = useSelectedMapLayer();
+  const selectedMapLayer = useScopedSelectedMapLayer();
 
   useEffect(() => {
     if (mapLayers?.[SOLAR_IRRADIATION]) {

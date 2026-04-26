@@ -37,10 +37,13 @@ export const createMapInstanceStore = ({ category, layer } = {}) =>
     selectedMapLayer: layer ?? null,
     mapLayerParameters: null,
     mapLayers: null,
+    mapLayerLegends: null,
     // Drives `HexagonLayer.elevationDomain` and the colour-gradient
-    // mapping in `Map.jsx`. On the singleton this is set by `Legend`'s
-    // effect — Reports hides the Legend, so the per-card store sets
-    // its own range from the fetched data inside `useGetMapLayers`.
+    // mapping in `Map.jsx`. Set from the fetched data in
+    // `useGetMapLayers` (the BottomCard hides its Legend, which is
+    // what would otherwise set range on the singleton); also written
+    // back by the Legend embedded in `FeatureCardMap` when the user
+    // toggles between total / period range modes.
     range: [0, 0],
     setCategory: (next) => set({ category: next }),
     setSelectedMapLayer: (next) => set({ selectedMapLayer: next }),
@@ -55,6 +58,7 @@ export const createMapInstanceStore = ({ category, layer } = {}) =>
           typeof value === 'function' ? value(state.mapLayerParameters) : value,
       })),
     setMapLayers: (next) => set({ mapLayers: next }),
+    setMapLayerLegends: (next) => set({ mapLayerLegends: next }),
     setRange: (next) => set({ range: next }),
   }));
 
@@ -120,6 +124,20 @@ export const useScopedSetRange = () => {
   const ctx = useContext(MapInstanceContext);
   const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.setRange);
   const fromSingleton = useMapStore((s) => s.setRange);
+  return ctx ? fromCtx : fromSingleton;
+};
+
+export const useScopedMapLayerLegends = () => {
+  const ctx = useContext(MapInstanceContext);
+  const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.mapLayerLegends);
+  const fromSingleton = useMapStore((s) => s.mapLayerLegends);
+  return ctx ? fromCtx : fromSingleton;
+};
+
+export const useScopedSetMapLayerLegends = () => {
+  const ctx = useContext(MapInstanceContext);
+  const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.setMapLayerLegends);
+  const fromSingleton = useMapStore((s) => s.setMapLayerLegends);
   return ctx ? fromCtx : fromSingleton;
 };
 

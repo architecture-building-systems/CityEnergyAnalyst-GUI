@@ -1,10 +1,85 @@
 import Gradient from 'javascript-color-gradient';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { Select } from 'antd';
-import { useEffect, useState } from 'react';
+import {
+  useScopedRange,
+  useScopedSetRange,
+} from 'features/reports/components/mapInstance';
+import { InputNumber, Select } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 import { useMapLegends } from 'features/map/hooks/map-layers';
 import { formatNumber } from 'features/map/utils';
 import InfoTooltip from 'components/InfoTooltip';
+
+// `scale` and `radius` filters render inline in the Legend (next to
+// the colour ramp) rather than in the parameters panel because they
+// are visualization knobs, not data-fetch parameters.
+export const LEGEND_FILTER_KEYS = ['scale', 'radius'];
+
+const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
+  const value = useMapStore((state) => state.filters?.[filterKey]);
+  const setFilters = useMapStore((state) => state.setFilters);
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      <b>{label}</b>
+      <InputNumber
+        min={range?.[0]}
+        max={range?.[1]}
+        value={value ?? defaultValue}
+        onChange={(v) => setFilters(filterKey, v)}
+        style={{ flex: 1, minWidth: 0 }}
+      />
+    </div>
+  );
+};
+
+export const LegendFilterRow = ({ layers }) => {
+  const fields = useMemo(() => {
+    if (!layers?.length) return [];
+    const layer = layers[0];
+    if (!layer?.parameters) return [];
+
+    const collected = [];
+    for (const key of LEGEND_FILTER_KEYS) {
+      for (const [, parameter] of Object.entries(layer.parameters)) {
+        if (parameter?.filter === key) {
+          collected.push({
+            key,
+            label: parameter.label ?? key,
+            range: parameter.range,
+            defaultValue: parameter.default,
+          });
+          break;
+        }
+      }
+    }
+    return collected;
+  }, [layers]);
+
+  if (!fields.length) return null;
+
+  return (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      {fields.map((f) => (
+        <LegendFilterField
+          key={f.key}
+          label={f.label}
+          filterKey={f.key}
+          range={f.range}
+          defaultValue={f.defaultValue}
+        />
+      ))}
+    </div>
+  );
+};
 
 const InfoRows = ({ info }) => {
   if (!info?.length) return null;
@@ -30,8 +105,8 @@ const InfoRows = ({ info }) => {
 
 const ColourRampLegend = ({ label, colours, points, range, info }) => {
   const [selectedValue, setSelectedValue] = useState(null);
-  const _range = useMapStore((state) => state.range);
-  const setRange = useMapStore((state) => state.setRange);
+  const _range = useScopedRange();
+  const setRange = useScopedSetRange();
 
   const keys = Object.keys(range ?? {});
   const value =
@@ -122,7 +197,7 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
 };
 
 const CategoryLegend = ({ label, categories, range, info }) => {
-  const setRange = useMapStore((state) => state.setRange);
+  const setRange = useScopedSetRange();
 
   // Keep the HexagonLayer-style range state in sync (used by scale filter)
   // using the period/total max so the stacked columns render at an
@@ -191,7 +266,11 @@ const CategoryLegend = ({ label, categories, range, info }) => {
   );
 };
 
-const Legend = ({ extras }) => {
+// `style` is merged on top of the defaults so callers can override
+// width / chrome / spacing. Reports map cards stretch the legend
+// full-width and drop the card chrome (shadow, background, padding)
+// so it reads as part of the surrounding `FeatureCardShell`.
+const Legend = ({ extras, style }) => {
   const mapLayerLegends = useMapLegends();
 
   return (
@@ -218,6 +297,8 @@ const Legend = ({ extras }) => {
         marginRight: 'auto',
 
         opacity: mapLayerLegends ? 1 : 0.8,
+
+        ...style,
       }}
     >
       {mapLayerLegends &&
