@@ -21,6 +21,7 @@ import {
   DEFAULT_CARD_H,
   MAP_ANCHOR_W,
   MAP_ANCHOR_H,
+  useReportsStore,
 } from '../stores/reportsStore';
 import ReportMap from './ReportMap';
 import FeatureCardPlot from './FeatureCardPlot';
@@ -156,6 +157,10 @@ const ReportColumn = ({
   addColumnDisabled = false,
 }) => {
   const project = useProjectStore((s) => s.project);
+  // Export view strips every editing affordance from the canvas:
+  // perimeter `+` buttons, the primary map's drag grip strip, and
+  // grid drag / resize handles. Display content stays.
+  const exportMode = useReportsStore((s) => s.exportMode);
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
@@ -199,6 +204,9 @@ const ReportColumn = ({
         h: mapPos.h + legendExtraRows,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H + legendExtraRows,
+        // Frozen layout in export view — no drag, no resize handles.
+        isDraggable: !exportMode,
+        isResizable: !exportMode,
       },
     ];
     for (const card of cards) {
@@ -210,10 +218,12 @@ const ReportColumn = ({
         h: card.h ?? DEFAULT_CARD_H,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H,
+        isDraggable: !exportMode,
+        isResizable: !exportMode,
       });
     }
     return items;
-  }, [cards, mapPos, legendExtraRows]);
+  }, [cards, mapPos, legendExtraRows, exportMode]);
 
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
   // headroom so the rightmost card always has room to drag east.
@@ -439,25 +449,33 @@ const ReportColumn = ({
         >
           {/* ── Map tile ─────────────────────────────────────── */}
           <div key="MAP" style={mapTileStyle} className="cea-report-tile">
-            {/* Top grip — the only drag-initiating area on the
-                primary map tile so the map below stays interactive. */}
-            <div
-              className="cea-card-drag-handle"
-              style={primaryMapDragHandleStyle}
-              aria-label="Drag overview map"
-            >
-              <span style={primaryMapDragGripStyle} />
-            </div>
+            {/* Top grip is the primary tile's drag handle — hidden
+                in export view since the grid is frozen anyway. */}
+            {!exportMode && (
+              <div
+                className="cea-card-drag-handle"
+                style={primaryMapDragHandleStyle}
+                aria-label="Drag overview map"
+              >
+                <span style={primaryMapDragGripStyle} />
+              </div>
+            )}
             <div style={mapFillStyle}>
-              <ReportMap project={project} scenario={scenario} />
+              <ReportMap
+                project={project}
+                scenario={scenario}
+                showToolbar={!exportMode}
+              />
             </div>
             <ConstructionStandardLegend style={overviewLegendStyle} />
-            <PerimeterPlusButtons
-              targetCardId="MAP"
-              exposure={exposureMap['MAP']}
-              buildSectionMenus={buildSectionMenus}
-              breathing={cards.length === 0}
-            />
+            {!exportMode && (
+              <PerimeterPlusButtons
+                targetCardId="MAP"
+                exposure={exposureMap['MAP']}
+                buildSectionMenus={buildSectionMenus}
+                breathing={cards.length === 0}
+              />
+            )}
           </div>
 
           {/* ── Feature cards ────────────────────────────────── */}
@@ -507,11 +525,13 @@ const ReportColumn = ({
                   onPreferredHeight={handlePreferredHeight}
                 />
               )}
-              <PerimeterPlusButtons
-                targetCardId={card.id}
-                exposure={exposureMap[card.id]}
-                buildSectionMenus={buildSectionMenus}
-              />
+              {!exportMode && (
+                <PerimeterPlusButtons
+                  targetCardId={card.id}
+                  exposure={exposureMap[card.id]}
+                  buildSectionMenus={buildSectionMenus}
+                />
+              )}
             </div>
           ))}
         </GridLayout>

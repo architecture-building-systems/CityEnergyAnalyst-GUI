@@ -2,6 +2,7 @@ import { Button, Popconfirm, Tooltip } from 'antd';
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 
 import { PLOT_GROUPS } from 'features/plots/constants';
+import { useReportsStore } from '../stores/reportsStore';
 
 /**
  * Walk PLOT_GROUPS to find the group/subgroup that owns a given
@@ -43,59 +44,64 @@ export const FeatureCardShell = ({
   onDeleteCard,
   editing = false,
   children,
-}) => (
-  <div style={editing ? editingCardStyle : cardStyle}>
-    {/* `cea-card-drag-handle` makes only the title row a valid grid
-        drag handle — the body (map / plot / kpi) passes mouse events
-        through to its own interactions. The Edit / Delete buttons
-        sit inside this row but are caught by the GridLayout
-        `draggableCancel` so a click on them never starts a drag. */}
-    <div className="cea-card-drag-handle" style={titleSectionStyle}>
-      <div style={featureTitleStyle}>
-        {Icon && (
-          <Icon
-            style={{ fontSize: 18, color: '#555', flexShrink: 0 }}
-            aria-hidden
-          />
-        )}
-        <span>{title}</span>
-      </div>
-      {(onEdit || onDeleteCard) && (
-        <div className="cea-card-icon-button-container">
-          {onEdit && (
-            <Tooltip title="Edit" placement="bottom">
-              <Button
-                type="text"
-                icon={<InputEditorIcon />}
-                onClick={onEdit}
-                aria-label="Edit card"
-              />
-            </Tooltip>
+}) => {
+  // In export view: hide Edit / Delete buttons, drop the
+  // `cea-card-drag-handle` class so grid drag is disabled, and skip
+  // the grab cursor. Title row remains visible for identification.
+  const exportMode = useReportsStore((s) => s.exportMode);
+  const showActions = (onEdit || onDeleteCard) && !exportMode;
+  return (
+    <div style={editing && !exportMode ? editingCardStyle : cardStyle}>
+      <div
+        className={exportMode ? undefined : 'cea-card-drag-handle'}
+        style={exportMode ? titleSectionStaticStyle : titleSectionStyle}
+      >
+        <div style={featureTitleStyle}>
+          {Icon && (
+            <Icon
+              style={{ fontSize: 18, color: '#555', flexShrink: 0 }}
+              aria-hidden
+            />
           )}
-          {onDeleteCard && (
-            <Popconfirm
-              title="Delete this card?"
-              description="All content inside this card will be removed."
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-              onConfirm={onDeleteCard}
-            >
-              <Tooltip title="Delete card" placement="bottom">
+          <span>{title}</span>
+        </div>
+        {showActions && (
+          <div className="cea-card-icon-button-container">
+            {onEdit && (
+              <Tooltip title="Edit" placement="bottom">
                 <Button
                   type="text"
-                  icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
-                  aria-label="Delete card"
+                  icon={<InputEditorIcon />}
+                  onClick={onEdit}
+                  aria-label="Edit card"
                 />
               </Tooltip>
-            </Popconfirm>
-          )}
-        </div>
-      )}
+            )}
+            {onDeleteCard && (
+              <Popconfirm
+                title="Delete this card?"
+                description="All content inside this card will be removed."
+                okText="Delete"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+                onConfirm={onDeleteCard}
+              >
+                <Tooltip title="Delete card" placement="bottom">
+                  <Button
+                    type="text"
+                    icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
+                    aria-label="Delete card"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </div>
+        )}
+      </div>
+      {children}
     </div>
-    {children}
-  </div>
-);
+  );
+};
 
 // Fills the tile assigned by react-grid-layout — no own min/max,
 // no resize handle. Internal overflow is handled by per-section
@@ -128,6 +134,16 @@ const titleSectionStyle = {
   alignItems: 'center',
   justifyContent: 'space-between',
   cursor: 'grab',
+  gap: 8,
+};
+
+// Export-view variant — no grab cursor, no drag-handle class. The
+// `gap` is shared so the title text + icon spacing matches the
+// editable variant for layout parity.
+const titleSectionStaticStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
   gap: 8,
 };
 

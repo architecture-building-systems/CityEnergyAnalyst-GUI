@@ -89,9 +89,11 @@ const FeatureCardMap = ({
     onOpenBottom?.(id);
   }, [onOpenBottom, id]);
 
-  // Hide the in-card 4-button toolbar when "Sync Maps" is on — the
-  // overview map is the sole driver in that mode.
+  // Hide the in-card 4-button toolbar when "Sync Maps" is on (the
+  // overview map is the sole driver) or when "Export View" is on
+  // (no editing chrome anywhere).
   const mapsLinked = useReportsStore((s) => s.mapsLinked);
+  const exportMode = useReportsStore((s) => s.exportMode);
 
   // On the linked → unlinked transition, refresh the per-card view-
   // state from the singleton snapshot so cards continue from the
@@ -125,7 +127,7 @@ const FeatureCardMap = ({
           <ReportMap
             project={project}
             scenario={scenario}
-            showToolbar={!mapsLinked}
+            showToolbar={!mapsLinked && !exportMode}
           />
         </div>
         <div style={legendBodyStyle}>

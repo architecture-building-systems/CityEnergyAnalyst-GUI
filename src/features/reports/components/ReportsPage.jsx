@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useReportsStore } from '../stores/reportsStore';
 import NavigatorCard from './NavigatorCard';
@@ -57,6 +57,23 @@ const ReportsPage = () => {
     setDrawer(null);
   }, []);
   const closeMapBottom = useCallback(() => setActiveMapCardId(null), []);
+
+  // Entering export view shuts any open editing surface — the plot
+  // drawer and the map-card bottom both belong to the editing mode.
+  // Subscribed via zustand directly (rather than `useEffect` on a
+  // selector) so the close action fires once at the moment of the
+  // false → true transition, instead of triggering a cascading
+  // render every time the page consumes the slice.
+  useEffect(
+    () =>
+      useReportsStore.subscribe((state, prev) => {
+        if (state.exportMode && !prev.exportMode) {
+          setDrawer(null);
+          setActiveMapCardId(null);
+        }
+      }),
+    [],
+  );
 
   const handleDrawerSave = useCallback(
     (plotConfig) => {
