@@ -23,7 +23,12 @@ import ScenarioPicker from './ScenarioPicker';
  * opens the plot-tool drawer (Plot cards), `onOpenMapBottom` opens
  * the `MapLayerPropertiesCard` row at the bottom (Map cards).
  */
-const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
+const LaunchView = ({
+  onOpenDrawer,
+  onOpenMapBottom,
+  editingPlotCardId,
+  activeMapCardId,
+}) => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
@@ -168,6 +173,7 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
   const handleAddPlotToCard = useCallback(
     (cardId, script = null) => {
       onOpenDrawer({
+        cardId,
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) =>
           setCards((prev) =>
@@ -190,6 +196,7 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
       const card = cards.find((c) => c.id === cardId);
       const existing = card?.plots.find((p) => p.id === plotId)?.plotConfig;
       onOpenDrawer({
+        cardId,
         plotConfig: existing || null,
         onSave: (plotConfig) =>
           setCards((prev) =>
@@ -261,6 +268,8 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
           onAddCard={handleAddCard}
           onApplyLayouts={applyCardLayouts}
           onOpenMapBottom={onOpenMapBottom}
+          editingPlotCardId={editingPlotCardId}
+          activeMapCardId={activeMapCardId}
           onAddColumn={handleCompareScenarios}
           addColumnTooltip="Add Scenario to compare"
           addColumnDisabled

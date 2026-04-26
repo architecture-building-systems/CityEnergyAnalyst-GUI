@@ -34,19 +34,28 @@ import PlotEditModal from './PlotEditModal';
 const ReportsPage = () => {
   const view = useReportsStore((s) => s.view);
 
-  // drawer = { plotConfig, onSave } | null
+  // drawer = { plotConfig, onSave, cardId? } | null
+  // `cardId` (when present) flags the FeatureCardPlot that owns the
+  // plot being edited so it can paint its `editing` purple stroke.
+  // Adding a brand-new card via the picker leaves it undefined.
   const [drawer, setDrawer] = useState(null);
   // id of the `FeatureCardMap` whose store the bottom form drives;
   // `null` when no map card is being edited.
   const [activeMapCardId, setActiveMapCardId] = useState(null);
 
-  const openDrawer = useCallback((config) => setDrawer(config), []);
+  // Edit-mode is exclusive: opening the plot drawer closes any
+  // active map-card edit (and vice versa) so at most one card wears
+  // the purple `editing` stroke at a time.
+  const openDrawer = useCallback((config) => {
+    setDrawer(config);
+    setActiveMapCardId(null);
+  }, []);
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
-  const openMapBottom = useCallback(
-    (cardId) => setActiveMapCardId(cardId ?? null),
-    [],
-  );
+  const openMapBottom = useCallback((cardId) => {
+    setActiveMapCardId(cardId ?? null);
+    setDrawer(null);
+  }, []);
   const closeMapBottom = useCallback(() => setActiveMapCardId(null), []);
 
   const handleDrawerSave = useCallback(
@@ -88,11 +97,15 @@ const ReportsPage = () => {
           <LaunchView
             onOpenDrawer={openDrawer}
             onOpenMapBottom={openMapBottom}
+            editingPlotCardId={drawer?.cardId ?? null}
+            activeMapCardId={activeMapCardId}
           />
         ) : (
           <ComparisonView
             onOpenDrawer={openDrawer}
             onOpenMapBottom={openMapBottom}
+            editingPlotCardId={drawer?.cardId ?? null}
+            activeMapCardId={activeMapCardId}
           />
         )}
       </div>

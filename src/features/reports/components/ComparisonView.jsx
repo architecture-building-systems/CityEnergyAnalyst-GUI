@@ -10,7 +10,12 @@ import ReportColumn from './ReportColumn';
 import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
 
-const ComparisonView = ({ onOpenDrawer, onOpenMapBottom }) => {
+const ComparisonView = ({
+  onOpenDrawer,
+  onOpenMapBottom,
+  editingPlotCardId,
+  activeMapCardId,
+}) => {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
@@ -103,6 +108,7 @@ const ComparisonView = ({ onOpenDrawer, onOpenMapBottom }) => {
     (cardId, script = null) => {
       const columnIndex = getColumnIndexFor(colIndex);
       onOpenDrawer({
+        cardId,
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
       });
@@ -115,6 +121,7 @@ const ComparisonView = ({ onOpenDrawer, onOpenMapBottom }) => {
       cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
         ?.plotConfig || null;
     onOpenDrawer({
+      cardId,
       plotConfig: existing,
       onSave: (plotConfig) =>
         updatePlot(columnIndex, cardId, plotId, plotConfig),
@@ -185,6 +192,8 @@ const ComparisonView = ({ onOpenDrawer, onOpenMapBottom }) => {
                     applyCardLayouts(getColumnIndexFor(i), updates)
                   }
                   onOpenMapBottom={onOpenMapBottom}
+                  editingPlotCardId={editingPlotCardId}
+                  activeMapCardId={activeMapCardId}
                 />
               </div>
             ))}

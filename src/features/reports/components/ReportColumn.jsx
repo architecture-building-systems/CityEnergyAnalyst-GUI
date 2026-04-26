@@ -149,6 +149,8 @@ const ReportColumn = ({
   onAddCard,
   onApplyLayouts,
   onOpenMapBottom,
+  editingPlotCardId,
+  activeMapCardId,
   onAddColumn,
   addColumnTooltip = 'Add column',
   addColumnDisabled = false,
@@ -461,6 +463,7 @@ const ReportColumn = ({
                   project={project}
                   scenario={scenario}
                   onOpenBottom={onOpenMapBottom}
+                  editing={activeMapCardId === card.id}
                   onDeleteCard={
                     onDeleteCard ? () => onDeleteCard(card.id) : undefined
                   }
@@ -480,6 +483,7 @@ const ReportColumn = ({
                       ? (script) => onAddPlotToCard(card.id, script)
                       : undefined
                   }
+                  editing={editingPlotCardId === card.id}
                   onDeleteCard={
                     onDeleteCard ? () => onDeleteCard(card.id) : undefined
                   }

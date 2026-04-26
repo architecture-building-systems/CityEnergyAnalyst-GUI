@@ -35,6 +35,7 @@ const FeatureCardPlot = ({
   onDeleteCard,
   onPlotReady,
   onPreferredHeight,
+  editing = false,
 }) => {
   const { feature, plots } = card;
 
@@ -65,6 +66,7 @@ const FeatureCardPlot = ({
       title={family?.label || feature}
       icon={family?.icon}
       onDeleteCard={onDeleteCard}
+      editing={editing}
     >
       {(plots.length > 0 || onAddPlot) && (
         <>

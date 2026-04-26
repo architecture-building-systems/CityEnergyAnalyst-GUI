@@ -33,6 +33,7 @@ const FeatureCardMap = ({
   scenario,
   onOpenBottom,
   onDeleteCard,
+  editing = false,
 }) => {
   const { id, category, layer } = card;
   const data = useMapLayerCategories();
@@ -67,6 +68,7 @@ const FeatureCardMap = ({
         icon={Icon}
         onEdit={onOpenBottom ? handleEdit : undefined}
         onDeleteCard={onDeleteCard}
+        editing={editing}
       >
         <div style={sectionDividerStyle} />
         <div style={mapBodyStyle}>

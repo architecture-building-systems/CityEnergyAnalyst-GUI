@@ -31,15 +31,20 @@ export function findFamilyForFeature(feature) {
  * Edit / Delete buttons), and slots `children` underneath. Each
  * card type (Plot, KPI, Map) computes its own title + icon and
  * wraps its body here.
+ *
+ * `editing` swaps the border to the CEA purple stroke so the user
+ * can see which card is currently driving the bottom form / plot
+ * drawer.
  */
 export const FeatureCardShell = ({
   title,
   icon: Icon,
   onEdit,
   onDeleteCard,
+  editing = false,
   children,
 }) => (
-  <div style={cardStyle}>
+  <div style={editing ? editingCardStyle : cardStyle}>
     <div style={titleSectionStyle}>
       <div style={featureTitleStyle}>
         {Icon && (
@@ -102,6 +107,15 @@ const cardStyle = {
   width: '100%',
   height: '100%',
   overflow: 'hidden',
+};
+
+// CEA purple stroke (matches the launch-state `+` glow + accent palette)
+// signals the active edit target. Border width matched to keep the
+// tile's interior dimensions identical so the body doesn't reflow.
+const editingCardStyle = {
+  ...cardStyle,
+  border: '1px solid #AC6080',
+  boxShadow: '0 0 0 1px #AC6080',
 };
 
 const titleSectionStyle = {
