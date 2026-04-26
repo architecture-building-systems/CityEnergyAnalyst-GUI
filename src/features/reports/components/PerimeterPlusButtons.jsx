@@ -25,11 +25,16 @@ import './PerimeterPlusButtons.css';
  * sub-Dropdown trigger for its category/feature tree (built by the
  * caller and passed in via `buildSectionMenus`). KPI is disabled
  * until its backend selection module lands.
+ *
+ * `breathing` (optional) — when true, the closed `+` pulses with a
+ * CEA-purple shadow to draw the user's attention. The caller toggles
+ * this on at launch and off once at least one feature card exists.
  */
 export const PerimeterPlusButtons = ({
   targetCardId,
   exposure,
   buildSectionMenus,
+  breathing = false,
 }) => {
   const rightAnchor = exposure?.right;
   const bottomAnchor = exposure?.bottom;
@@ -63,6 +68,7 @@ export const PerimeterPlusButtons = ({
           sections={rightSections}
           tooltipPlacement="top"
           expandDirection="down"
+          breathing={breathing}
         />
       )}
       {bottomSections && (
@@ -71,6 +77,7 @@ export const PerimeterPlusButtons = ({
           sections={bottomSections}
           tooltipPlacement="left"
           expandDirection="right"
+          breathing={breathing}
         />
       )}
     </>
@@ -93,7 +100,13 @@ export const PerimeterPlusButtons = ({
 // stay rendered for `COLLAPSE_DURATION_MS` while the reverse
 // animation plays (keyframes in PerimeterPlusButtons.css), then
 // `open` flips to false and the `+` reappears.
-const PlusButton = ({ style, sections, tooltipPlacement, expandDirection }) => {
+const PlusButton = ({
+  style,
+  sections,
+  tooltipPlacement,
+  expandDirection,
+  breathing,
+}) => {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const ref = useRef(null);
@@ -194,7 +207,9 @@ const PlusButton = ({ style, sections, tooltipPlacement, expandDirection }) => {
         />
       ) : (
         <div
-          className="cea-card-icon-button-container cea-no-drag cea-report-plus-fade-in"
+          className={`cea-card-icon-button-container cea-no-drag ${
+            breathing ? 'cea-report-plus-breathing' : 'cea-report-plus-fade-in'
+          }`}
           onMouseEnter={handleClosedMouseEnter}
           onMouseLeave={cancelOpenTimer}
         >

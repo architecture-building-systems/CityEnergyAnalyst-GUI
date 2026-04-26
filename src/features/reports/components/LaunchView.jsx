@@ -253,6 +253,7 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
           onOpenMapBottom={onOpenMapBottom}
           onAddColumn={handleCompareScenarios}
           addColumnTooltip="Add Scenario to compare"
+          addColumnDisabled
         />
       </div>
 

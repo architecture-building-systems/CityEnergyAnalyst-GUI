@@ -104,3 +104,31 @@
 .cea-report-plus-fade-in {
   animation: cea-report-plus-fade-in 180ms ease-out backwards;
 }
+
+/* Launch-state guide: pulsing glow on the `+` pill so first-time
+ * users notice it. Mirrors `@keyframes glow` (HomePage.css, applied
+ * to `.cea-template-select-empty` / `.cea-scenario-select-empty` in
+ * the pathway dropdowns) but tinted CEA purple (#AC6080). Stops as
+ * soon as the user adds a feature card — the parent drops
+ * `cea-report-plus-breathing`. The same outline colour is added so
+ * the rim picks up the highlight too. */
+@keyframes cea-report-plus-glow {
+  0% {
+    box-shadow: 0 0 2px 1px #ac6080;
+  }
+  50% {
+    box-shadow: 0 0 8px 2px #ac6080;
+  }
+  100% {
+    box-shadow: 0 0 2px 1px #ac6080;
+  }
+}
+/* Combined rule: when launch-state highlighting is wanted, run the
+ * mount fade-in AND the glow loop. A single-class `animation:`
+ * shorthand wins over the fade-in-only rule above. */
+.cea-report-plus-breathing {
+  outline: 1px solid #ac6080;
+  animation:
+    cea-report-plus-fade-in 180ms ease-out backwards,
+    cea-report-plus-glow 2s infinite;
+}

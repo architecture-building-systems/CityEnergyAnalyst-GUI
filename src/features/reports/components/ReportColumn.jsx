@@ -149,6 +149,7 @@ const ReportColumn = ({
   onOpenMapBottom,
   onAddColumn,
   addColumnTooltip = 'Add column',
+  addColumnDisabled = false,
 }) => {
   const project = useProjectStore((s) => s.project);
 
@@ -191,21 +192,23 @@ const ReportColumn = ({
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
   // headroom so the rightmost card always has room to drag east.
   // Without the buffer, react-grid-layout's `cols === rightmost
-  // edge` constraint pins any rightmost tile in place horizontally —
-  // dragging east would push x+w past `cols`, which the library
-  // refuses. MIN_COLS is the floor at launch (canvas hugs the map).
+  // edge` constraint pins any rightmost tile in place horizontally.
+  // The buffer is skipped when only the map is on the grid — the
+  // map is anchored at (0,0) and almost never dragged east, so the
+  // ~258 px of empty whitespace at launch isn't worth it.
   const { effectiveCols, gridWidthPx } = useMemo(() => {
     let maxRight = MIN_COLS;
     for (const item of layout) {
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
-    const cols = Math.max(MIN_COLS, maxRight + DRAG_BUFFER_COLS);
+    const buffer = cards.length === 0 ? 0 : DRAG_BUFFER_COLS;
+    const cols = Math.max(MIN_COLS, maxRight + buffer);
     return {
       effectiveCols: cols,
       gridWidthPx: widthForCols(cols),
     };
-  }, [layout]);
+  }, [layout, cards.length]);
 
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
@@ -356,11 +359,17 @@ const ReportColumn = ({
         </div>
         {onAddColumn && (
           <div className="cea-card-icon-button-container">
-            <Tooltip title={addColumnTooltip} placement="bottom">
+            <Tooltip
+              title={
+                addColumnDisabled ? `${addColumnTooltip} (coming soon)` : addColumnTooltip
+              }
+              placement="bottom"
+            >
               <Button
                 type="text"
                 icon={<CreateNewIcon />}
                 onClick={onAddColumn}
+                disabled={addColumnDisabled}
                 aria-label={addColumnTooltip}
               />
             </Tooltip>
@@ -398,6 +407,7 @@ const ReportColumn = ({
               targetCardId="MAP"
               exposure={exposureMap['MAP']}
               buildSectionMenus={buildSectionMenus}
+              breathing={cards.length === 0}
             />
           </div>
 
