@@ -73,14 +73,14 @@ const ComparisonView = ({ onOpenDrawer, onOpenMapBottom }) => {
       // open the page-level MapLayerProperties bottom card so the
       // user can adjust the layer's parameters there.
       if (type === 'map') {
-        addCard(columnIndex, {
+        const newCardId = addCard(columnIndex, {
           targetCardId,
           direction,
           type: 'map',
           category,
           layer,
         });
-        onOpenMapBottom?.();
+        onOpenMapBottom?.(newCardId);
         return;
       }
       const resolvedFeature =

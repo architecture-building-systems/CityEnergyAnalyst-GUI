@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useMapStore } from 'features/map/stores/mapStore';
-import {
-  useMapLayerCategories,
-  useSetActiveMapCategory,
-} from 'features/project/components/Cards/MapLayersCard/store';
+import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { iconMap } from 'features/plots/constants';
 
 import ReportMap from './ReportMap';
 import { FeatureCardShell, sectionDividerStyle } from './featureCardCommon';
-import { MapInstanceContext, createMapInstanceStore } from './mapInstance';
+import {
+  MapInstanceContext,
+  createMapInstanceStore,
+  registerMapCardStore,
+  unregisterMapCardStore,
+} from './mapInstance';
 
 /**
  * Map-only feature card. Holds a `category` + `layer` reference
@@ -23,22 +24,18 @@ import { MapInstanceContext, createMapInstanceStore } from './mapInstance';
  *
  * Per-card map store: each instance owns a fresh zustand store via
  * `createMapInstanceStore` and provides it through
- * `<MapInstanceContext>` so layer-state consumers nested under the
- * card (`MapLayerPropertiesCard`, `useGetMapLayers`) can read/write
- * scoped to this card. Main viewport / `BottomCard` are untouched
- * because the scoped hooks fall back to the singleton when no
- * provider is in scope.
- *
- * The singleton-sync effect remains as a temporary bridge: until
- * `BottomCard` is wired to the active card's Provider (Phase 4),
- * the bottom-of-page `MapLayerPropertiesCard` still reads/writes
- * the singleton, so the singleton must point to this card's
- * category/layer for the bottom form to drive the right map.
+ * `<MapInstanceContext>` so the in-card map's deck.gl feed and
+ * any scoped consumer rendered under this provider read/write
+ * this card's own layer state. The store is also registered in
+ * the page-level registry so `BottomCard` can wrap its own
+ * `MapLayerPropertiesCard` in the matching provider when this
+ * card is the active edit target.
  *
  * Props:
  *   card           — { id, category, layer }
  *   project, scenario — passed through to ReportMap
- *   onOpenBottom() — open the page-level MapLayerProperties bottom
+ *   onOpenBottom(cardId) — open the page-level MapLayerProperties
+ *                          bottom for this card
  *   onDeleteCard()
  */
 const FeatureCardMap = ({
@@ -48,10 +45,8 @@ const FeatureCardMap = ({
   onOpenBottom,
   onDeleteCard,
 }) => {
-  const { category, layer } = card;
+  const { id, category, layer } = card;
   const data = useMapLayerCategories();
-  const setActiveCategory = useSetActiveMapCategory();
-  const setSelectedMapLayer = useMapStore((s) => s.setSelectedMapLayer);
 
   // One zustand store per FeatureCardMap instance. `useState`'s lazy
   // initializer creates it on first render and the same instance is
@@ -67,22 +62,16 @@ const FeatureCardMap = ({
     setLayer(layer);
   }, [store, category, layer]);
 
-  // Phase 3 bridge — push this card's category/layer to the
-  // singletons so the page-level BottomCard's MapLayerPropertiesCard
-  // (still on the singleton path) drives the right card. Goes away
-  // when Phase 4 wraps BottomCard in this card's Provider.
-  const syncSingleton = useCallback(() => {
-    setActiveCategory(category);
-    setSelectedMapLayer(layer);
-  }, [category, layer, setActiveCategory, setSelectedMapLayer]);
+  // Publish the store under this card's id so `BottomCard` can look
+  // it up via `useMapCardStore(activeMapCardId)`.
   useEffect(() => {
-    syncSingleton();
-  }, [syncSingleton]);
+    registerMapCardStore(id, store);
+    return () => unregisterMapCardStore(id);
+  }, [id, store]);
 
   const handleEdit = useCallback(() => {
-    syncSingleton();
-    onOpenBottom?.();
-  }, [syncSingleton, onOpenBottom]);
+    onOpenBottom?.(id);
+  }, [onOpenBottom, id]);
 
   const categoryInfo = data?.categories?.find((c) => c.name === category);
   const layerInfo = categoryInfo?.layers?.find((l) => l.name === layer);

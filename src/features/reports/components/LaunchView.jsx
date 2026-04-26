@@ -61,6 +61,9 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
       category,
       layer,
     }) => {
+      // Generate the new card's id outside `setCards` so callers can
+      // act on it (e.g. open the bottom for the newly-added Map card).
+      const newCardId = makeId('card');
       setCards((prev) => {
         // `targetCardId === 'MAP'` is the sentinel from the map
         // tile's edge `+` buttons: right → just past the map,
@@ -91,7 +94,7 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
         return [
           ...shifted,
           {
-            id: makeId('card'),
+            id: newCardId,
             type,
             row,
             col,
@@ -104,6 +107,7 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
           },
         ];
       });
+      return newCardId;
     },
     [],
   );
@@ -134,8 +138,14 @@ const LaunchView = ({ onOpenDrawer, onOpenMapBottom }) => {
       // open the page-level MapLayerProperties bottom card so the
       // user can adjust the layer's parameters there.
       if (type === 'map') {
-        insertCard({ targetCardId, direction, type: 'map', category, layer });
-        onOpenMapBottom?.();
+        const newCardId = insertCard({
+          targetCardId,
+          direction,
+          type: 'map',
+          category,
+          layer,
+        });
+        onOpenMapBottom?.(newCardId);
         return;
       }
       const resolvedFeature =

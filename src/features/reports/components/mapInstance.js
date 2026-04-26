@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo } from 'react';
-import { createStore, useStore } from 'zustand';
+import { create, createStore, useStore } from 'zustand';
 
 import { useMapStore } from 'features/map/stores/mapStore';
 import {
@@ -17,23 +17,20 @@ import {
  * lives in a per-card zustand store; view-state (camera, zoom,
  * layer-type visibility, colour mode) stays singleton.
  *
- * Phases:
- *   1. ✅ Context + factory defined (this file).
- *   2. ✅ `FeatureCardMap` creates a store via
- *      `createMapInstanceStore` and provides it through
- *      `<MapInstanceContext>`.
- *   3. ✅ Layer-state consumers (`MapLayerPropertiesCard`,
- *      `useGetMapLayers`) route reads/writes through the scoped
- *      hooks below. They fall back to the singleton when no
- *      provider is in scope, so main viewport and the page-level
- *      `BottomCard` are untouched.
- *   4. ⏳ Wire `BottomCard` to the active card's Provider (and
- *      switch the deck.gl feed inside `Map.jsx` to the scoped
- *      hooks) — that's when multiple cards visibly diverge.
- *
- * Until Phase 4 lands, `FeatureCardMap` keeps a singleton-sync
- * `useEffect` so the bottom form (still on the singleton path)
- * drives the right card.
+ * How it fits together:
+ *   - `FeatureCardMap` creates a per-card store via
+ *     `createMapInstanceStore` and provides it through
+ *     `<MapInstanceContext>`. The same store is also published in
+ *     the registry below under `card.id`.
+ *   - The deck.gl layer feed inside `Map.jsx`,
+ *     `MapLayerPropertiesCard`, and `useGetMapLayers` all read/write
+ *     through the scoped hooks; when no provider is in scope they
+ *     transparently fall back to the singleton (main viewport keeps
+ *     working untouched).
+ *   - `ReportsPage` tracks `activeMapCardId`; `BottomCard` looks up
+ *     the matching store from the registry and wraps its own
+ *     `MapLayerPropertiesCard` in `<MapInstanceContext>` so the
+ *     bottom form drives the active card's state.
  */
 
 /**
@@ -153,3 +150,34 @@ export const useScopedSelectedCategoryInfo = () => {
     [active, categories],
   );
 };
+
+// ── Card-store registry ────────────────────────────────────────────
+//
+// `FeatureCardMap` instances publish their per-card store under
+// `card.id` so the page-level `BottomCard` can look it up by the
+// `activeMapCardId` it gets from `ReportsPage`. A small zustand
+// store backs the registry so subscribers re-render when a new card
+// (un)registers.
+
+const useCardStoresRegistry = create(() => ({}));
+
+export const registerMapCardStore = (cardId, store) => {
+  useCardStoresRegistry.setState((s) => ({ ...s, [cardId]: store }));
+};
+
+export const unregisterMapCardStore = (cardId) => {
+  useCardStoresRegistry.setState((s) => {
+    if (!(cardId in s)) return s;
+    const next = { ...s };
+    delete next[cardId];
+    return next;
+  });
+};
+
+/**
+ * Look up a card's per-card map store by id. Returns `null` when no
+ * card is active or the card hasn't registered yet (e.g. during the
+ * brief window between insert and mount).
+ */
+export const useMapCardStore = (cardId) =>
+  useCardStoresRegistry((s) => (cardId ? (s[cardId] ?? null) : null));

@@ -26,7 +26,10 @@ import {
   useMapStore,
   COLOR_MODES,
 } from 'features/map/stores/mapStore';
-import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
+import {
+  useScopedMapLayers,
+  useScopedSelectedCategoryInfo,
+} from 'features/reports/components/mapInstance';
 import { useCameraFitBounds } from 'features/map/hooks';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -121,8 +124,8 @@ const normalizeLineWidth = (value, min, max, minWidth = 1, maxWidth = 10) => {
 };
 
 const useMapLayers = (onHover = () => {}) => {
-  const mapLayers = useMapStore((state) => state.mapLayers);
-  const selectedMapCategory = useSelectedMapCategoryInfo();
+  const mapLayers = useScopedMapLayers();
+  const selectedMapCategory = useScopedSelectedCategoryInfo();
   const categoryLayers = selectedMapCategory?.layers;
 
   const range = useMapStore((state) => state.range);

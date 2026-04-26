@@ -36,13 +36,18 @@ const ReportsPage = () => {
 
   // drawer = { plotConfig, onSave } | null
   const [drawer, setDrawer] = useState(null);
-  const [mapBottomOpen, setMapBottomOpen] = useState(false);
+  // activeMapCardId = id of the FeatureCardMap whose store the bottom
+  // form should drive. `null` means no map card is being edited.
+  const [activeMapCardId, setActiveMapCardId] = useState(null);
 
   const openDrawer = useCallback((config) => setDrawer(config), []);
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
-  const openMapBottom = useCallback(() => setMapBottomOpen(true), []);
-  const closeMapBottom = useCallback(() => setMapBottomOpen(false), []);
+  const openMapBottom = useCallback(
+    (cardId) => setActiveMapCardId(cardId ?? null),
+    [],
+  );
+  const closeMapBottom = useCallback(() => setActiveMapCardId(null), []);
 
   const handleDrawerSave = useCallback(
     (plotConfig) => {
@@ -53,6 +58,7 @@ const ReportsPage = () => {
   );
 
   const plotToolOpen = drawer != null;
+  const mapBottomOpen = activeMapCardId != null;
   const bottomOpen = plotToolOpen || mapBottomOpen;
   // Show the bottom card's close button only when the bottom is
   // open *for a map card* — the plot-tool drawer has its own close,
@@ -93,7 +99,11 @@ const ReportsPage = () => {
 
       <div style={bottomCellStyle}>
         {bottomOpen && (
-          <BottomCard showClose={showBottomClose} onClose={closeMapBottom} />
+          <BottomCard
+            activeMapCardId={activeMapCardId}
+            showClose={showBottomClose}
+            onClose={closeMapBottom}
+          />
         )}
       </div>
 
