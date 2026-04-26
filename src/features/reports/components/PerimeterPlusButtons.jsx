@@ -153,12 +153,17 @@ const PlusButton = ({
   // antd Dropdown popup (sub-menus are portaled out of our ref).
   // Outside both → start the close timer; back inside → cancel.
   // `mousedown` outside is a hard collapse.
+  //
+  // Cascade popups use `.ant-dropdown-menu-submenu-popup` (a separate
+  // portal from the parent `.ant-dropdown`); without that selector,
+  // hovering into a category's nested layer list would read as
+  // "outside" and start the collapse mid-selection.
   useEffect(() => {
     if (!open || closing) return;
     const cursorIsInside = (target) => {
       if (ref.current?.contains(target)) return true;
       const popups = document.querySelectorAll(
-        '.ant-dropdown:not(.ant-dropdown-hidden)',
+        '.ant-dropdown:not(.ant-dropdown-hidden), .ant-dropdown-menu-submenu-popup:not(.ant-dropdown-menu-submenu-hidden)',
       );
       for (const p of popups) if (p.contains(target)) return true;
       return false;
