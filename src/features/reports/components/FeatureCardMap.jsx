@@ -18,10 +18,12 @@ import {
 } from './mapInstance';
 
 // Singleton fields whose snapshot we copy into each per-card store
-// when the user flips `mapsLinked` from on → off, so every card
-// continues from the overview map's current view instead of jumping
-// to the per-card defaults. Mirrored back during the on-state via
-// the scoped hooks.
+// at two moments: (a) when a new card mounts so it inherits the
+// overview map's current view, and (b) when the user flips
+// `mapsLinked` from on → off so every existing card continues from
+// the overview map's current view instead of jumping to the per-
+// card defaults. Mirrored back during the on-state via the scoped
+// hooks.
 const VIEW_STATE_KEYS = [
   'viewState',
   'cameraOptions',
@@ -31,6 +33,13 @@ const VIEW_STATE_KEYS = [
   'colorMode',
   'filters',
 ];
+
+const snapshotViewState = () => {
+  const singleton = useMapStore.getState();
+  const seed = {};
+  for (const key of VIEW_STATE_KEYS) seed[key] = singleton[key];
+  return seed;
+};
 
 /**
  * Map-only feature card. Renders the column's `<ReportMap>` widget
@@ -56,8 +65,15 @@ const FeatureCardMap = ({
   const data = useMapLayerCategories();
 
   // `useState` lazy initializer keeps the store stable across renders
-  // without the unsafe `useRef`-mutate-during-render pattern.
-  const [store] = useState(() => createMapInstanceStore({ category, layer }));
+  // without the unsafe `useRef`-mutate-during-render pattern. Seeded
+  // with the singleton's current view-state so a card mounted while
+  // `mapsLinked === false` inherits the overview map's view (camera,
+  // zoom, layer toggles, …) instead of opening at default world.
+  const [store] = useState(() => {
+    const s = createMapInstanceStore({ category, layer });
+    s.setState(snapshotViewState());
+    return s;
+  });
   useEffect(() => {
     const { setCategory, setSelectedMapLayer: setLayer } = store.getState();
     setCategory(category);
@@ -77,18 +93,15 @@ const FeatureCardMap = ({
   // overview map is the sole driver in that mode.
   const mapsLinked = useReportsStore((s) => s.mapsLinked);
 
-  // On the linked → unlinked transition, copy the singleton's
-  // current view-state snapshot into the per-card store so the card
-  // keeps the overview map's view instead of jumping to defaults.
-  // The reverse transition needs no work — scoped hooks read the
-  // singleton directly while linked, so per-card values are dormant.
+  // On the linked → unlinked transition, refresh the per-card view-
+  // state from the singleton snapshot so cards continue from the
+  // overview map's current view. The reverse transition needs no
+  // work — scoped hooks read the singleton directly while linked,
+  // so per-card values are dormant.
   const previouslyLinkedRef = useRef(mapsLinked);
   useEffect(() => {
     if (previouslyLinkedRef.current && !mapsLinked) {
-      const singleton = useMapStore.getState();
-      const seed = {};
-      for (const key of VIEW_STATE_KEYS) seed[key] = singleton[key];
-      store.setState(seed);
+      store.setState(snapshotViewState());
     }
     previouslyLinkedRef.current = mapsLinked;
   }, [mapsLinked, store]);
