@@ -40,6 +40,8 @@ const NavigatorCard = () => {
   const startOver = useReportsStore((s) => s.startOver);
   const mapsLinked = useReportsStore((s) => s.mapsLinked);
   const setMapsLinked = useReportsStore((s) => s.setMapsLinked);
+  const exportMode = useReportsStore((s) => s.exportMode);
+  const setExportMode = useReportsStore((s) => s.setExportMode);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -69,10 +71,14 @@ const NavigatorCard = () => {
         <Button icon={<RefreshIcon />} onClick={handleStartOver}>
           Start Over
         </Button>
+        {/* CEA purple (`#AC6080`) for the on-state — matches the
+            `editing` stroke and the BottomCard close button so the
+            "linked / editing / closing / export" UI reads in one
+            family. Each toggle wraps its own ConfigProvider so Space
+            sees them as separate flex items and lays them out with
+            its own gap (a single shared provider would collapse them
+            into one slot). */}
         <div style={syncToggleWrapperStyle}>
-          {/* CEA purple (`#AC6080`) for the on-state — matches the
-              `editing` stroke and the BottomCard close button so the
-              "linked / editing / closing" UI reads in one family. */}
           <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
             <Tooltip
               title={
@@ -89,6 +95,24 @@ const NavigatorCard = () => {
             </Tooltip>
           </ConfigProvider>
           <span style={syncToggleLabelStyle}>Sync Maps</span>
+        </div>
+        <div style={syncToggleWrapperStyle}>
+          <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
+            <Tooltip
+              title={
+                exportMode
+                  ? 'Editing controls are hidden. Turn off to show toolbars, edit / delete buttons, and grid drag handles.'
+                  : 'Hide all editing controls (toolbars, edit / delete buttons, range dropdowns, perimeter `+` buttons) for an export-ready view.'
+              }
+            >
+              <Switch
+                checked={exportMode}
+                onChange={setExportMode}
+                aria-label="Hide editing controls for export"
+              />
+            </Tooltip>
+          </ConfigProvider>
+          <span style={syncToggleLabelStyle}>Export View</span>
         </div>
       </Space>
 

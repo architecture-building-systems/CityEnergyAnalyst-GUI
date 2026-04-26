@@ -129,6 +129,15 @@ export const useReportsStore = create((set, get) => ({
   mapsLinked: true,
   setMapsLinked: (value) => set({ mapsLinked: !!value }),
 
+  // Export-ready view — when `true`, every editing affordance is
+  // hidden across the canvas (Edit / Delete buttons, map toolbars,
+  // perimeter `+` buttons, "Add a plot" pill, range / scale / radius
+  // legend controls, grid drag + resize). The display content (maps,
+  // plots, KPIs, legends, titles) stays. Used to capture clean
+  // snapshots of the dashboard.
+  exportMode: false,
+  setExportMode: (value) => set({ exportMode: !!value }),
+
   // ── View transitions ────────────────────────────────────────
 
   enterInterScenario: (scenarios) => {
