@@ -11,6 +11,8 @@ import {
   PLOT_LABELS,
   VIEW_PLOT_RESULTS,
 } from 'features/plots/constants';
+import { COLOR_MODES, useMapStore } from 'features/map/stores/mapStore';
+import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
@@ -163,6 +165,28 @@ const ReportColumn = ({
     h: MAP_ANCHOR_H,
   });
 
+  // Map tile auto-grows downward to host the use-type / construction
+  // legend rendered under the map. The legend's pixel height is
+  // estimated from its entry count (one swatch per entry) and
+  // converted to grid rows so the tile owns the legend's space —
+  // bottom `+` button stays at the tile's true bottom edge, cards
+  // below shift to make room. `mapPos.h` keeps the user-set height
+  // (no legend); `legendExtraRows` is the auto-added bump.
+  const colorMode = useMapStore((s) => s.colorMode);
+  const constructionColorMap = useMapStore((s) => s.constructionColorMap);
+  const useTypeColorMap = useMapStore((s) => s.useTypeColorMap);
+  const legendExtraRows = useMemo(() => {
+    let entries = 0;
+    if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD)
+      entries = Object.keys(constructionColorMap).length;
+    else if (colorMode === COLOR_MODES.USE_TYPE)
+      entries = Object.keys(useTypeColorMap).length;
+    if (entries === 0) return 0;
+    // Header (~38 px) + per-entry row (~24 px) + a little padding.
+    const px = 38 + entries * 24 + 16;
+    return Math.ceil(px / (ROW_HEIGHT_PX + GRID_MARGIN[1]));
+  }, [colorMode, constructionColorMap, useTypeColorMap]);
+
   const layout = useMemo(() => {
     const items = [
       {
@@ -170,9 +194,9 @@ const ReportColumn = ({
         x: mapPos.x,
         y: mapPos.y,
         w: mapPos.w,
-        h: mapPos.h,
+        h: mapPos.h + legendExtraRows,
         minW: CARD_MIN_W,
-        minH: CARD_MIN_H,
+        minH: CARD_MIN_H + legendExtraRows,
       },
     ];
     for (const card of cards) {
@@ -187,7 +211,7 @@ const ReportColumn = ({
       });
     }
     return items;
-  }, [cards, mapPos]);
+  }, [cards, mapPos, legendExtraRows]);
 
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
   // headroom so the rightmost card always has room to drag east.
@@ -218,15 +242,19 @@ const ReportColumn = ({
       const cardUpdates = [];
       for (const item of nextLayout) {
         if (item.i === 'MAP') {
+          // The fed-in layout has `legendExtraRows` baked in, so
+          // strip it out before storing — `mapPos.h` is the user's
+          // intended map height (no legend).
+          const userH = Math.max(CARD_MIN_H, item.h - legendExtraRows);
           setMapPos((prev) => {
             if (
               prev.x === item.x &&
               prev.y === item.y &&
               prev.w === item.w &&
-              prev.h === item.h
+              prev.h === userH
             )
               return prev;
-            return { x: item.x, y: item.y, w: item.w, h: item.h };
+            return { x: item.x, y: item.y, w: item.w, h: userH };
           });
         } else {
           cardUpdates.push({
@@ -240,7 +268,7 @@ const ReportColumn = ({
       }
       if (cardUpdates.length > 0) onApplyLayouts?.(cardUpdates);
     },
-    [onApplyLayouts],
+    [onApplyLayouts, legendExtraRows],
   );
 
   // Card auto-grow: FeatureCard reports its preferred pixel height
@@ -401,10 +429,11 @@ const ReportColumn = ({
           onLayoutChange={handleLayoutChange}
         >
           {/* ── Map tile ─────────────────────────────────────── */}
-          <div key="MAP" style={tileStyle} className="cea-report-tile">
+          <div key="MAP" style={mapTileStyle} className="cea-report-tile">
             <div style={mapFillStyle}>
               <ReportMap project={project} scenario={scenario} />
             </div>
+            <ConstructionStandardLegend style={overviewLegendStyle} />
             <PerimeterPlusButtons
               targetCardId="MAP"
               exposure={exposureMap['MAP']}
@@ -531,9 +560,35 @@ const tileStyle = {
   position: 'relative',
 };
 
+// Map tile is a flex column so the legend can sit underneath the map
+// inside the same tile. The tile's `h` is auto-grown by
+// `legendExtraRows` so the map keeps its user-set size and the legend
+// occupies the bump — bottom `+` button stays at the tile's true
+// bottom edge (now below the legend) and below-MAP cards shift down.
+const mapTileStyle = {
+  ...tileStyle,
+  display: 'flex',
+  flexDirection: 'column',
+};
+
 const mapFillStyle = {
+  flex: 1,
+  minHeight: 0,
   width: '100%',
-  height: '100%',
+};
+
+// Strip the floating-card chrome so the legend reads as part of the
+// tile rather than a popover. Horizontal padding (16px) matches
+// `FeatureCardShell.cardStyle` so the legend's swatches + labels
+// align with content in neighbouring FeatureCards. Bottom padding
+// keeps the last entry off the tile edge.
+const overviewLegendStyle = {
+  width: '100%',
+  marginTop: 8,
+  boxShadow: 'none',
+  backgroundColor: 'transparent',
+  padding: '0 16px 12px',
+  maxHeight: 'none',
 };
 
 // TODO: drop once these layers exist as real map overlays in the

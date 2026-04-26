@@ -4,8 +4,12 @@ import InfoTooltip from 'components/InfoTooltip';
 /**
  * Legend component that displays construction archetype or main use type colors.
  * Shows a color swatch and label for each unique category.
+ *
+ * `style` is merged on top of the defaults so callers can override
+ * width / chrome / spacing — e.g. Reports embeds this legend inline
+ * under the column's overview map and drops the floating-card chrome.
  */
-const ConstructionStandardLegend = () => {
+const ConstructionStandardLegend = ({ style }) => {
   const colorMode = useMapStore((state) => state.colorMode);
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
@@ -41,6 +45,7 @@ const ConstructionStandardLegend = () => {
         padding: 12,
         width: 280,
         maxHeight: 200,
+        ...style,
       }}
     >
       <div
