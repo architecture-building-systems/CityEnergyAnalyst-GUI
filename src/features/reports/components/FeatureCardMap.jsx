@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useMapStore } from 'features/map/stores/mapStore';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import Legend, {
   LegendFilterRow,
@@ -15,6 +16,21 @@ import {
   registerMapCardStore,
   unregisterMapCardStore,
 } from './mapInstance';
+
+// Singleton fields whose snapshot we copy into each per-card store
+// when the user flips `mapsLinked` from on → off, so every card
+// continues from the overview map's current view instead of jumping
+// to the per-card defaults. Mirrored back during the on-state via
+// the scoped hooks.
+const VIEW_STATE_KEYS = [
+  'viewState',
+  'cameraOptions',
+  'extruded',
+  'visibility',
+  'mapLabels',
+  'colorMode',
+  'filters',
+];
 
 /**
  * Map-only feature card. Renders the column's `<ReportMap>` widget
@@ -60,6 +76,22 @@ const FeatureCardMap = ({
   // Hide the in-card 4-button toolbar when "Sync Maps" is on — the
   // overview map is the sole driver in that mode.
   const mapsLinked = useReportsStore((s) => s.mapsLinked);
+
+  // On the linked → unlinked transition, copy the singleton's
+  // current view-state snapshot into the per-card store so the card
+  // keeps the overview map's view instead of jumping to defaults.
+  // The reverse transition needs no work — scoped hooks read the
+  // singleton directly while linked, so per-card values are dormant.
+  const previouslyLinkedRef = useRef(mapsLinked);
+  useEffect(() => {
+    if (previouslyLinkedRef.current && !mapsLinked) {
+      const singleton = useMapStore.getState();
+      const seed = {};
+      for (const key of VIEW_STATE_KEYS) seed[key] = singleton[key];
+      store.setState(seed);
+    }
+    previouslyLinkedRef.current = mapsLinked;
+  }, [mapsLinked, store]);
 
   const categoryInfo = data?.categories?.find((c) => c.name === category);
   const layerInfo = categoryInfo?.layers?.find((l) => l.name === layer);

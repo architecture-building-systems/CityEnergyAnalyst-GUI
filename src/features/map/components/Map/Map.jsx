@@ -21,18 +21,24 @@ import './Map.css';
 import { Map } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, HexagonLayer, ColumnLayer } from 'deck.gl';
+import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
-  useCameraOptionsCalculated,
-  useMapStore,
-  COLOR_MODES,
-} from 'features/map/stores/mapStore';
-import {
+  useScopedCameraOptions,
+  useScopedColorMode,
+  useScopedExtruded,
+  useScopedFilters,
+  useScopedMapLabels,
   useScopedMapLayers,
   useScopedRange,
+  useScopedResetCameraOptions,
   useScopedSelectedCategoryInfo,
+  useScopedSetCameraOptions,
+  useScopedSetExtruded,
+  useScopedSetViewState,
+  useScopedViewState,
+  useScopedVisibility,
 } from 'features/reports/components/mapInstance';
 import { useCameraFitBounds } from 'features/map/hooks';
-import { useShallow } from 'zustand/react/shallow';
 
 import {
   DEMAND,
@@ -82,7 +88,7 @@ const useMapAttribution = (mapRef) => {
 };
 
 const useMapStyle = () => {
-  const showMapStyleLabels = useMapStore((state) => state.mapLabels);
+  const showMapStyleLabels = useScopedMapLabels();
 
   return showMapStyleLabels ? positron : no_label;
 };
@@ -130,7 +136,7 @@ const useMapLayers = (onHover = () => {}) => {
   const categoryLayers = selectedMapCategory?.layers;
 
   const range = useScopedRange();
-  const filters = useMapStore((state) => state.filters);
+  const filters = useScopedFilters();
   const radius = filters?.radius ?? 10;
   const scale = filters?.scale ?? 1;
 
@@ -539,20 +545,22 @@ const DeckGLMap = ({ data, colors, interactive = true }) => {
     (state) => state.selectedBuildings,
   );
 
-  const viewState = useMapStore(useShallow((state) => state.viewState));
-  const setViewState = useMapStore((state) => state.setViewState);
+  const viewState = useScopedViewState();
+  const setViewState = useScopedSetViewState();
 
-  const extruded = useMapStore((state) => state.extruded);
-  const setExtruded = useMapStore((state) => state.setExtruded);
+  const extruded = useScopedExtruded();
+  const setExtruded = useScopedSetExtruded();
 
-  const setCameraOptions = useMapStore((state) => state.setCameraOptions);
-  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
-  const cameraOptionsCalulated = useCameraOptionsCalculated();
+  const setCameraOptions = useScopedSetCameraOptions();
+  const resetCameraOptions = useScopedResetCameraOptions();
+  // Inlined `useCameraOptionsCalculated` so the boolean tracks the
+  // scoped store rather than the singleton.
+  const cameraOptionsCalulated = useScopedCameraOptions() !== null;
 
-  const visibility = useMapStore((state) => state.visibility);
+  const visibility = useScopedVisibility();
 
   // Construction standard coloring
-  const colorMode = useMapStore((state) => state.colorMode);
+  const colorMode = useScopedColorMode();
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );

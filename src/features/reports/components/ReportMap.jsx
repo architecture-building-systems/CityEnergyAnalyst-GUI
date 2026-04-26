@@ -9,6 +9,18 @@ import {
   generateConstructionColorMap,
   generateUseTypeColorMap,
 } from 'features/map/utils/constructionColors';
+import {
+  useScopedCameraOptions,
+  useScopedColorMode,
+  useScopedExtruded,
+  useScopedResetCameraOptions,
+  useScopedSetColorMode,
+  useScopedSetExtruded,
+  useScopedSetMapLabels,
+  useScopedSetVisibility,
+  useScopedUpdateViewState,
+  useScopedViewState,
+} from './mapInstance';
 import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
 
 /**
@@ -33,7 +45,7 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
  * tile is the only one that drives the view in that mode.
  */
 const ReportMap = ({ project, scenario, showToolbar = true }) => {
-  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+  const resetCameraOptions = useScopedResetCameraOptions();
 
   const { data, isFetching, isError, refetch } = useInputs(
     scenario ? { scenario } : undefined,
@@ -104,8 +116,8 @@ const iconButtonStyle = {
 };
 
 const InlineExtrudeButton = () => {
-  const extruded = useMapStore((state) => state.extruded);
-  const setExtruded = useMapStore((state) => state.setExtruded);
+  const extruded = useScopedExtruded();
+  const setExtruded = useScopedSetExtruded();
   return (
     <Tooltip title="Toggle 3D" styles={{ body: { fontSize: 12 } }}>
       <div style={iconButtonStyle}>
@@ -116,9 +128,9 @@ const InlineExtrudeButton = () => {
 };
 
 const InlineResetCameraButton = () => {
-  const updateViewState = useMapStore((state) => state.updateViewState);
-  const cameraOptions = useMapStore((state) => state.cameraOptions);
-  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
+  const updateViewState = useScopedUpdateViewState();
+  const cameraOptions = useScopedCameraOptions();
+  const resetCameraOptions = useScopedResetCameraOptions();
 
   const resetCamera = () => {
     if (cameraOptions) {
@@ -145,8 +157,9 @@ const InlineResetCameraButton = () => {
 };
 
 const InlineResetCompassButton = () => {
-  const bearings = useMapStore((state) => state.viewState?.bearing ?? 0);
-  const updateViewState = useMapStore((state) => state.updateViewState);
+  const viewState = useScopedViewState();
+  const bearings = viewState?.bearing ?? 0;
+  const updateViewState = useScopedUpdateViewState();
   return (
     <Tooltip title="Reset Compass" styles={{ body: { fontSize: 12 } }}>
       <div style={iconButtonStyle}>
@@ -164,10 +177,12 @@ const InlineLayerToggle = ({ scenario }) => {
   const { data: inputData } = useInputs(inputsOpts);
   const { geojsons: data } = inputData ?? {};
 
-  const setVisibility = useMapStore((state) => state.setVisibility);
-  const setMapLabels = useMapStore((state) => state.setMapLabels);
-  const colorMode = useMapStore((state) => state.colorMode);
-  const setColorMode = useMapStore((state) => state.setColorMode);
+  const setVisibility = useScopedSetVisibility();
+  const setMapLabels = useScopedSetMapLabels();
+  const colorMode = useScopedColorMode();
+  const setColorMode = useScopedSetColorMode();
+  // Construction / use-type colour maps are derived from zone
+  // features (cheap, identical across cards) so they stay singleton.
   const setConstructionColorMap = useMapStore(
     (state) => state.setConstructionColorMap,
   );

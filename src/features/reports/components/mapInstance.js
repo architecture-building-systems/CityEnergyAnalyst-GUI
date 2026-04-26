@@ -1,11 +1,14 @@
 import { createContext, useContext, useMemo } from 'react';
 import { create, createStore, useStore } from 'zustand';
 
-import { useMapStore } from 'features/map/stores/mapStore';
+import { COLOR_MODES, useMapStore } from 'features/map/stores/mapStore';
+import { defaultViewState } from 'features/map/utils';
 import {
   useMapLayerCategories,
   useMapCategoryStore,
 } from 'features/project/components/Cards/MapLayersCard/store';
+
+import { useReportsStore } from '../stores/reportsStore';
 
 /**
  * Per-card map state for Reports' `FeatureCardMap`.
@@ -60,6 +63,41 @@ export const createMapInstanceStore = ({ category, layer } = {}) =>
     setMapLayers: (next) => set({ mapLayers: next }),
     setMapLayerLegends: (next) => set({ mapLayerLegends: next }),
     setRange: (next) => set({ range: next }),
+
+    // ── View-state slice ─────────────────────────────────────────
+    // Mirrors the singleton's shape so a `mapsLinked=false` card
+    // can drive its own camera, layer toggles, colour mode, and
+    // filters. While `mapsLinked=true`, scoped hooks read from the
+    // singleton — these fields stay dormant.
+    viewState: defaultViewState,
+    cameraOptions: null,
+    extruded: false,
+    visibility: {},
+    mapLabels: true,
+    colorMode: COLOR_MODES.DEFAULT,
+    filters: {},
+
+    setViewState: (value) =>
+      set((state) => ({
+        viewState: typeof value === 'function' ? value(state.viewState) : value,
+      })),
+    updateViewState: (value) =>
+      set((state) => ({ viewState: { ...state.viewState, ...value } })),
+    setCameraOptions: (value) => set({ cameraOptions: value }),
+    resetCameraOptions: () => set({ cameraOptions: null }),
+    setExtruded: (value) => set({ extruded: value }),
+    setVisibility: (layer, value) =>
+      set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
+    setMapLabels: (value) => set({ mapLabels: value }),
+    setColorMode: (value) => set({ colorMode: value }),
+    setFilters: (key, value) =>
+      set((state) => ({
+        filters: {
+          ...state.filters,
+          [key]:
+            typeof value === 'function' ? value(state.filters[key]) : value,
+        },
+      })),
   }));
 
 // ── Scoped hooks ───────────────────────────────────────────────────
@@ -140,6 +178,42 @@ export const useScopedSetMapLayerLegends = () => {
   const fromSingleton = useMapStore((s) => s.setMapLayerLegends);
   return ctx ? fromCtx : fromSingleton;
 };
+
+// ── View-state scoped hooks ──────────────────────────────────────
+//
+// 3-way decision: when `mapsLinked` is on the cards mirror the
+// singleton (overview-map drives them), so always read singleton
+// regardless of provider. When off and a Provider is in scope
+// (FeatureCardMap), read per-card. Outside any Provider (main
+// viewport, primary tile) → singleton, just like the data hooks.
+
+const makeScopedViewStateHook = (key) => () => {
+  const linked = useReportsStore((s) => s.mapsLinked);
+  const ctx = useContext(MapInstanceContext);
+  const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.[key]);
+  const fromSingleton = useMapStore((s) => s[key]);
+  return ctx && !linked ? fromCtx : fromSingleton;
+};
+
+export const useScopedViewState = makeScopedViewStateHook('viewState');
+export const useScopedSetViewState = makeScopedViewStateHook('setViewState');
+export const useScopedUpdateViewState =
+  makeScopedViewStateHook('updateViewState');
+export const useScopedCameraOptions = makeScopedViewStateHook('cameraOptions');
+export const useScopedSetCameraOptions =
+  makeScopedViewStateHook('setCameraOptions');
+export const useScopedResetCameraOptions =
+  makeScopedViewStateHook('resetCameraOptions');
+export const useScopedExtruded = makeScopedViewStateHook('extruded');
+export const useScopedSetExtruded = makeScopedViewStateHook('setExtruded');
+export const useScopedVisibility = makeScopedViewStateHook('visibility');
+export const useScopedSetVisibility = makeScopedViewStateHook('setVisibility');
+export const useScopedMapLabels = makeScopedViewStateHook('mapLabels');
+export const useScopedSetMapLabels = makeScopedViewStateHook('setMapLabels');
+export const useScopedColorMode = makeScopedViewStateHook('colorMode');
+export const useScopedSetColorMode = makeScopedViewStateHook('setColorMode');
+export const useScopedFilters = makeScopedViewStateHook('filters');
+export const useScopedSetFilters = makeScopedViewStateHook('setFilters');
 
 // The singleton "active category" lives on `useMapCategoryStore`,
 // not on `useMapStore`, so the field name differs (`active` vs
