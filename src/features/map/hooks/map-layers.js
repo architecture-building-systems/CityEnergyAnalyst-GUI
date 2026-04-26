@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
+  useScopedSelectedMapLayer,
+  useScopedSetMapLayers,
+} from 'features/reports/components/mapInstance';
+import {
   DEMAND,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
@@ -44,8 +48,8 @@ export const useGetMapLayers = (
   const [error, setError] = useState(null);
   const [fetching, setFetching] = useState(false);
 
-  const setMapLayers = useMapStore((state) => state.setMapLayers);
-  const selectedMapLayer = useSelectedMapLayer();
+  const setMapLayers = useScopedSetMapLayers();
+  const selectedMapLayer = useScopedSelectedMapLayer();
   const childScenario = useProjectStore((state) => state.childScenario);
 
   const { name: categoryName, layers } = categoryInfo || {};

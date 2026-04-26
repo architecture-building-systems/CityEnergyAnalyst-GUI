@@ -2,10 +2,17 @@ import ParameterSelectors from 'features/map/components/Map/Layers/Selectors/bas
 import Legend from 'features/map/components/Map/Layers/Legend';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useGetMapLayers } from 'features/map/hooks/map-layers';
+import {
+  useScopedSelectedMapLayer,
+  useScopedSetSelectedMapLayer,
+  useScopedMapLayerParameters,
+  useScopedSetMapLayerParameters,
+  useScopedSetMapLayers,
+  useScopedSelectedCategoryInfo,
+} from 'features/reports/components/mapInstance';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Alert, InputNumber, Select } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useSelectedMapCategoryInfo } from './store';
 
 const LEGEND_FILTER_KEYS = ['scale', 'radius'];
 
@@ -76,8 +83,8 @@ const LegendFilterRow = ({ layers }) => {
 };
 
 const LayerSelector = ({ layers, onLayerSelect }) => {
-  const selectedLayer = useMapStore((state) => state.selectedMapLayer);
-  const setSelectedLayer = useMapStore((state) => state.setSelectedMapLayer);
+  const selectedLayer = useScopedSelectedMapLayer();
+  const setSelectedLayer = useScopedSetSelectedMapLayer();
 
   const handleLayerSelected = useCallback(
     (layerName) => {
@@ -122,7 +129,7 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
 };
 
 const useFilteredLayers = (layers) => {
-  const selectedLayer = useMapStore((state) => state.selectedMapLayer);
+  const selectedLayer = useScopedSelectedMapLayer();
 
   return useMemo(() => {
     if (!layers || !selectedLayer) return [];
@@ -146,12 +153,10 @@ const MapLayerPropertiesCard = ({
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
 
-  const categoryInfo = useSelectedMapCategoryInfo();
-  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
-  );
-  const setMapLayers = useMapStore((state) => state.setMapLayers);
+  const categoryInfo = useScopedSelectedCategoryInfo();
+  const mapLayerParameters = useScopedMapLayerParameters();
+  const setMapLayerParameters = useScopedSetMapLayerParameters();
+  const setMapLayers = useScopedSetMapLayers();
 
   const layers = categoryInfo?.layers;
   const filteredLayers = useFilteredLayers(layers);

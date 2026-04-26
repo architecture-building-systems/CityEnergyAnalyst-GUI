@@ -21,14 +21,19 @@ import { MapInstanceContext, createMapInstanceStore } from './mapInstance';
  * The properties form launches at the bottom (not inline) — same
  * pattern Plot cards use to host their parameter form.
  *
- * Per-card map store (Phase 2 of the multi-state refactor):
- * each instance owns a fresh zustand store via
+ * Per-card map store: each instance owns a fresh zustand store via
  * `createMapInstanceStore` and provides it through
- * `<MapInstanceContext>` so descendants can scope reads/writes
- * to this card. Phase 2 only sets up the provider — consumers
- * still use the singleton for now (the singleton-sync useEffect
- * below stays in place until Phase 3 routes them through the
- * context).
+ * `<MapInstanceContext>` so layer-state consumers nested under the
+ * card (`MapLayerPropertiesCard`, `useGetMapLayers`) can read/write
+ * scoped to this card. Main viewport / `BottomCard` are untouched
+ * because the scoped hooks fall back to the singleton when no
+ * provider is in scope.
+ *
+ * The singleton-sync effect remains as a temporary bridge: until
+ * `BottomCard` is wired to the active card's Provider (Phase 4),
+ * the bottom-of-page `MapLayerPropertiesCard` still reads/writes
+ * the singleton, so the singleton must point to this card's
+ * category/layer for the bottom form to drive the right map.
  *
  * Props:
  *   card           — { id, category, layer }
@@ -62,11 +67,14 @@ const FeatureCardMap = ({
     setLayer(layer);
   }, [store, category, layer]);
 
+  // Phase 3 bridge — push this card's category/layer to the
+  // singletons so the page-level BottomCard's MapLayerPropertiesCard
+  // (still on the singleton path) drives the right card. Goes away
+  // when Phase 4 wraps BottomCard in this card's Provider.
   const syncSingleton = useCallback(() => {
     setActiveCategory(category);
     setSelectedMapLayer(layer);
   }, [category, layer, setActiveCategory, setSelectedMapLayer]);
-
   useEffect(() => {
     syncSingleton();
   }, [syncSingleton]);
