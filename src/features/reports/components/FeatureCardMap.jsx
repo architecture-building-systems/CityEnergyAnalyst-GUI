@@ -6,6 +6,7 @@ import Legend, {
 } from 'features/map/components/Map/Layers/Legend';
 import { iconMap } from 'features/plots/constants';
 
+import { useReportsStore } from '../stores/reportsStore';
 import ReportMap from './ReportMap';
 import { FeatureCardShell, sectionDividerStyle } from './featureCardCommon';
 import {
@@ -56,6 +57,10 @@ const FeatureCardMap = ({
     onOpenBottom?.(id);
   }, [onOpenBottom, id]);
 
+  // Hide the in-card 4-button toolbar when "Sync Maps" is on — the
+  // overview map is the sole driver in that mode.
+  const mapsLinked = useReportsStore((s) => s.mapsLinked);
+
   const categoryInfo = data?.categories?.find((c) => c.name === category);
   const layerInfo = categoryInfo?.layers?.find((l) => l.name === layer);
   const title = layerInfo?.label || categoryInfo?.label || category || 'Map';
@@ -72,7 +77,11 @@ const FeatureCardMap = ({
       >
         <div style={sectionDividerStyle} />
         <div style={mapBodyStyle}>
-          <ReportMap project={project} scenario={scenario} />
+          <ReportMap
+            project={project}
+            scenario={scenario}
+            showToolbar={!mapsLinked}
+          />
         </div>
         <div style={legendBodyStyle}>
           <Legend

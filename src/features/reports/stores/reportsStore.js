@@ -120,6 +120,15 @@ export const useReportsStore = create((set, get) => ({
   // Per-column card grids keyed by column index (inter-feature).
   columnCards: {},
 
+  // When `true`, every Map card mirrors the column's primary map
+  // (camera, layer toggles, colour mode, etc.) and the FeatureCardMap
+  // toolbars are hidden — only the primary tile drives the view.
+  // When `false`, each card is free to set its own view state and
+  // shows its own toolbar. Defaults to `true` to match the behaviour
+  // before this toggle existed.
+  mapsLinked: true,
+  setMapsLinked: (value) => set({ mapsLinked: !!value }),
+
   // ── View transitions ────────────────────────────────────────
 
   enterInterScenario: (scenarios) => {

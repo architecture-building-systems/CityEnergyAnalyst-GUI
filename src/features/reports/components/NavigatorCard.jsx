@@ -1,4 +1,12 @@
-import { Button, Modal, Select, Space, Tooltip } from 'antd';
+import {
+  Button,
+  ConfigProvider,
+  Modal,
+  Select,
+  Space,
+  Switch,
+  Tooltip,
+} from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import { RefreshIcon } from 'assets/icons';
 
@@ -30,6 +38,8 @@ const NavigatorCard = () => {
   const view = useReportsStore((s) => s.view);
   const columns = useReportsStore((s) => s.columns);
   const startOver = useReportsStore((s) => s.startOver);
+  const mapsLinked = useReportsStore((s) => s.mapsLinked);
+  const setMapsLinked = useReportsStore((s) => s.setMapsLinked);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -52,13 +62,33 @@ const NavigatorCard = () => {
 
   return (
     <div style={cardStyle}>
-      <Space size="small">
+      <Space size="small" align="center">
         <Button icon={<LeftOutlined />} onClick={handleReturn}>
           Return
         </Button>
         <Button icon={<RefreshIcon />} onClick={handleStartOver}>
           Start Over
         </Button>
+        <div style={syncToggleWrapperStyle}>
+          {/* CEA-blue (`#1470AF`) for the on-state — matches the
+              primary palette used elsewhere on Reports. */}
+          <ConfigProvider theme={{ token: { colorPrimary: '#1470AF' } }}>
+            <Tooltip
+              title={
+                mapsLinked
+                  ? 'Map cards mirror the overview map. Turn off to give each card its own view.'
+                  : 'Each map card has its own view. Turn on to mirror the overview map.'
+              }
+            >
+              <Switch
+                checked={mapsLinked}
+                onChange={setMapsLinked}
+                aria-label="Sync map cards with overview"
+              />
+            </Tooltip>
+          </ConfigProvider>
+          <span style={syncToggleLabelStyle}>Sync Maps</span>
+        </div>
       </Space>
 
       <Space size="small">
@@ -99,6 +129,27 @@ const cardStyle = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 12,
+};
+
+// `display: flex` + `alignItems: center` keeps the Switch + label on
+// the same horizontal centerline as the antd buttons in the Space
+// row. The wrapper is a flex item itself, so cross-axis alignment
+// is governed by the Space (which uses `align="center"` above).
+// `height: 32` matches the button height so the centerlines coincide
+// regardless of the Switch's intrinsic height. The extra `marginLeft`
+// doubles the gap inherited from `Space size="small"` so the toggle
+// reads as a separate group from Start Over.
+const syncToggleWrapperStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  marginLeft: 16,
+  height: 32,
+};
+
+const syncToggleLabelStyle = {
+  fontSize: 14,
+  color: '#222',
 };
 
 export default NavigatorCard;

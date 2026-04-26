@@ -27,8 +27,12 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
  * first paint — icons would land in the NW of the frame until a
  * later layout pass settled. Inline styles on a unique wrapper
  * eliminate the race outright.
+ *
+ * `showToolbar` (default `true`) hides the inline 4-button toolbar
+ * for FeatureCardMaps when `mapsLinked` is on — the overview map
+ * tile is the only one that drives the view in that mode.
  */
-const ReportMap = ({ project, scenario }) => {
+const ReportMap = ({ project, scenario, showToolbar = true }) => {
   const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
   const { data, isFetching, isError, refetch } = useInputs(
@@ -54,7 +58,7 @@ const ReportMap = ({ project, scenario }) => {
         </div>
       )}
       <DeckGLMap data={geojsons} colors={data?.colors} interactive={false} />
-      {geojsons?.zone && (
+      {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
           <InlineLayerToggle scenario={scenario} />
           <InlineExtrudeButton />
