@@ -70,9 +70,10 @@ const NavigatorCard = () => {
           Start Over
         </Button>
         <div style={syncToggleWrapperStyle}>
-          {/* CEA-blue (`#1470AF`) for the on-state — matches the
-              primary palette used elsewhere on Reports. */}
-          <ConfigProvider theme={{ token: { colorPrimary: '#1470AF' } }}>
+          {/* CEA purple (`#AC6080`) for the on-state — matches the
+              `editing` stroke and the BottomCard close button so the
+              "linked / editing / closing" UI reads in one family. */}
+          <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
             <Tooltip
               title={
                 mapsLinked

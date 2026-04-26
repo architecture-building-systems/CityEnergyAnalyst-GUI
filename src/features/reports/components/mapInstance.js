@@ -13,18 +13,27 @@ import { useReportsStore } from '../stores/reportsStore';
 /**
  * Per-card map state for Reports' `FeatureCardMap`.
  *
- * The layer-rendering slice (category, selected layer, parameter
- * values, computed deck.gl layers, colour/elevation range) lives on a
- * per-card zustand store so multiple Map cards in one column can show
- * different overlays. View-state (camera, zoom, layer-type visibility,
- * colour mode) stays on the singleton `useMapStore`.
+ * Two slices on the per-card zustand store:
+ *   1. **Layer-rendering** (always per-card): `category`,
+ *      `selectedMapLayer`, `mapLayerParameters`, `mapLayers`,
+ *      `mapLayerLegends`, `range`. Lets each card render a different
+ *      overlay regardless of the `mapsLinked` toggle.
+ *   2. **View-state** (per-card only when `mapsLinked === false`):
+ *      `viewState`, `cameraOptions`, `extruded`, `visibility`,
+ *      `mapLabels`, `colorMode`, `filters`. Mirrors the singleton
+ *      shape so the same hook calls work on either store.
+ *
+ * Scoped hooks split into two families with matching shapes:
+ *   - Layer-rendering hooks: `ctx ? per-card : singleton`.
+ *   - View-state hooks (`makeScopedViewStateHook`):
+ *     `ctx && !mapsLinked ? per-card : singleton`.
  *
  * `FeatureCardMap` creates the store, provides it through
  * `MapInstanceContext`, and publishes it in the registry below so
  * `BottomCard` can wrap its `MapLayerPropertiesCard` in the same
- * provider when the card is the active edit target. Consumers read
- * via the scoped hooks; outside a provider they transparently fall
- * back to the singleton, leaving the main viewport untouched.
+ * provider when the card is the active edit target. Outside any
+ * provider (main viewport, primary overview tile) the scoped hooks
+ * fall back to the singleton — main-viewport behaviour is untouched.
  */
 
 export const MapInstanceContext = createContext(null);
@@ -42,11 +51,10 @@ export const createMapInstanceStore = ({ category, layer } = {}) =>
     mapLayers: null,
     mapLayerLegends: null,
     // Drives `HexagonLayer.elevationDomain` and the colour-gradient
-    // mapping in `Map.jsx`. Set from the fetched data in
-    // `useGetMapLayers` (the BottomCard hides its Legend, which is
-    // what would otherwise set range on the singleton); also written
-    // back by the Legend embedded in `FeatureCardMap` when the user
-    // toggles between total / period range modes.
+    // mapping in `Map.jsx`. Seeded from the fetched data in
+    // `useGetMapLayers` and updated by the Legend embedded in
+    // `FeatureCardMap` when the user toggles between total / period
+    // range modes.
     range: [0, 0],
     setCategory: (next) => set({ category: next }),
     setSelectedMapLayer: (next) => set({ selectedMapLayer: next }),

@@ -178,12 +178,33 @@ const FeatureCardMap = ({ card, ... }) => {
 The card mirrors the primary map's chrome (4-button toolbar, DeckGL
 overlay) and embeds the Legend below the map so a Map card reads as a
 self-contained "map + legend" tile. Each card owns a per-card
-`mapInstance` store (`category`, `selectedMapLayer`,
-`mapLayerParameters`, `mapLayers`, `mapLayerLegends`, `range`); scoped
-hooks read from the per-card store inside the provider and fall back
-to the singleton outside it (main viewport, plot-edit flow).
-View-state — camera, zoom, layer-type visibility, colour mode — and
-filter values (`scale`, `radius`) stay singleton.
+`mapInstance` store with two slices:
+- **Layer-rendering** (always per-card): `category`,
+  `selectedMapLayer`, `mapLayerParameters`, `mapLayers`,
+  `mapLayerLegends`, `range`.
+- **View-state** (per-card only when `mapsLinked === false`):
+  `viewState`, `cameraOptions`, `extruded`, `visibility`,
+  `mapLabels`, `colorMode`, `filters`.
+
+Layer-rendering hooks read per-card whenever a provider is in scope.
+View-state hooks honour the `Sync Maps` toggle on `reportsStore`:
+`mapsLinked === true` → singleton (overview map drives all cards);
+`mapsLinked === false` + provider → per-card. Outside any provider
+(main viewport, primary overview tile) every scoped hook falls back
+to the singleton.
+
+### DO: Hide FeatureCardMap toolbars when `mapsLinked` is on
+`ReportMap` accepts `showToolbar` (default `true`). The primary
+overview tile always renders the 4-button toolbar; FeatureCardMaps
+pass `showToolbar={!mapsLinked}` so when sync is on the overview
+map is the sole driver and per-card toolbars are hidden.
+
+### DO: Seed per-card view-state on the linked → unlinked transition
+`FeatureCardMap` snapshots `useMapStore.getState()` for the
+view-state keys and writes them into the per-card store the first
+time `mapsLinked` flips from `true` to `false`. Each card therefore
+keeps the overview map's current view as its starting point instead
+of jumping to per-card defaults.
 
 ### DO: Set `range` from inside `useGetMapLayers`
 On the singleton, `range` is normally set by `Legend`'s `useEffect`

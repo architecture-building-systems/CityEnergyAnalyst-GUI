@@ -2,8 +2,12 @@ import TimeSeriesSelector from './TimeSeries';
 import ThresholdSelector from './Threshold';
 import SliderSelector from './Slider';
 import { useMemo, useCallback, useEffect } from 'react';
-import { useMapStore } from 'features/map/stores/mapStore';
-import { useScopedSetMapLayerParameters } from 'features/reports/components/mapInstance';
+import {
+  useScopedFilters,
+  useScopedRange,
+  useScopedSetFilters,
+  useScopedSetMapLayerParameters,
+} from 'features/reports/components/mapInstance';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
@@ -25,11 +29,11 @@ const ParameterSelectors = ({ layers, parameterValues, allowParamKeys }) => {
       return (key) => allowParamKeys.includes(key);
     return () => true;
   }, [allowParamKeys]);
-  const range = useMapStore((state) => state.range);
-  const filters = useMapStore((state) => state.filters);
+  const range = useScopedRange();
+  const filters = useScopedFilters();
 
   const setMapLayerParameters = useScopedSetMapLayerParameters();
-  const setFilters = useMapStore((state) => state.setFilters);
+  const setFilters = useScopedSetFilters();
 
   const changeHandler = useCallback(
     (parameterName, filter) => {

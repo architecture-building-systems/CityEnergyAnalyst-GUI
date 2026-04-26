@@ -1,7 +1,8 @@
 import Gradient from 'javascript-color-gradient';
-import { useMapStore } from 'features/map/stores/mapStore';
 import {
+  useScopedFilters,
   useScopedRange,
+  useScopedSetFilters,
   useScopedSetRange,
 } from 'features/reports/components/mapInstance';
 import { InputNumber, Select } from 'antd';
@@ -16,8 +17,9 @@ import InfoTooltip from 'components/InfoTooltip';
 export const LEGEND_FILTER_KEYS = ['scale', 'radius'];
 
 const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
-  const value = useMapStore((state) => state.filters?.[filterKey]);
-  const setFilters = useMapStore((state) => state.setFilters);
+  const filters = useScopedFilters();
+  const value = filters?.[filterKey];
+  const setFilters = useScopedSetFilters();
 
   return (
     <div
