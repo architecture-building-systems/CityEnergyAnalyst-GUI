@@ -1,6 +1,9 @@
 import { Select } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
-import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
+import {
+  useScopedMapLayerParameters,
+  useScopedSelectedCategoryInfo,
+} from 'features/reports/components/mapInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -99,10 +102,10 @@ const ChoiceSelector = ({
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
-  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
+  const mapLayerParameters = useScopedMapLayerParameters();
   const choicesRevision = useMapStore((state) => state.choicesRevision);
   const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
-  const categoryInfo = useSelectedMapCategoryInfo();
+  const categoryInfo = useScopedSelectedCategoryInfo();
 
   const [selected, setSelected] = useState(value ?? defaultValue);
   const [choices, setChoices] = useState(null);

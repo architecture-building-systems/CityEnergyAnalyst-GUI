@@ -3,6 +3,7 @@ import ThresholdSelector from './Threshold';
 import SliderSelector from './Slider';
 import { useMemo, useCallback, useEffect } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
+import { useScopedSetMapLayerParameters } from 'features/reports/components/mapInstance';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';
@@ -27,9 +28,7 @@ const ParameterSelectors = ({ layers, parameterValues, allowParamKeys }) => {
   const range = useMapStore((state) => state.range);
   const filters = useMapStore((state) => state.filters);
 
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
-  );
+  const setMapLayerParameters = useScopedSetMapLayerParameters();
   const setFilters = useMapStore((state) => state.setFilters);
 
   const changeHandler = useCallback(

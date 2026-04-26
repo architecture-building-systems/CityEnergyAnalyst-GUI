@@ -13,30 +13,16 @@ import {
 } from './mapInstance';
 
 /**
- * Map-only feature card. Holds a `category` + `layer` reference
- * (selected via the `+` picker's nested map menu) and renders the
- * column's `<ReportMap>` widget — same DeckGL map + 4-button
- * toolbar suite (Layers / 3D / Camera / Compass) as the column's
- * primary map tile.
+ * Map-only feature card. Renders the column's `<ReportMap>` widget
+ * (same DeckGL map + 4-button toolbar suite as the primary map tile)
+ * bound to a specific category + layer. The properties form launches
+ * at the page bottom — same pattern Plot cards use.
  *
- * The properties form launches at the bottom (not inline) — same
- * pattern Plot cards use to host their parameter form.
- *
- * Per-card map store: each instance owns a fresh zustand store via
- * `createMapInstanceStore` and provides it through
- * `<MapInstanceContext>` so the in-card map's deck.gl feed and
- * any scoped consumer rendered under this provider read/write
- * this card's own layer state. The store is also registered in
- * the page-level registry so `BottomCard` can wrap its own
- * `MapLayerPropertiesCard` in the matching provider when this
- * card is the active edit target.
- *
- * Props:
- *   card           — { id, category, layer }
- *   project, scenario — passed through to ReportMap
- *   onOpenBottom(cardId) — open the page-level MapLayerProperties
- *                          bottom for this card
- *   onDeleteCard()
+ * Owns a per-card `mapInstance` store seeded with the card's category
+ * and layer; the store is published in the registry so `BottomCard`
+ * can wrap its `MapLayerPropertiesCard` in the matching provider when
+ * this card is the active edit target. See `mapInstance.js` for the
+ * scoped read/write surface.
  */
 const FeatureCardMap = ({
   card,
@@ -48,13 +34,8 @@ const FeatureCardMap = ({
   const { id, category, layer } = card;
   const data = useMapLayerCategories();
 
-  // One zustand store per FeatureCardMap instance. `useState`'s lazy
-  // initializer creates it on first render and the same instance is
-  // returned on every subsequent render — without the unsafe
-  // `useRef`-mutate-during-render pattern. Seeded with the card's
-  // initial category/layer; if either prop changes (rare — cards
-  // are typically static after creation) the effect below syncs
-  // the store to match.
+  // `useState` lazy initializer keeps the store stable across renders
+  // without the unsafe `useRef`-mutate-during-render pattern.
   const [store] = useState(() => createMapInstanceStore({ category, layer }));
   useEffect(() => {
     const { setCategory, setSelectedMapLayer: setLayer } = store.getState();
@@ -62,8 +43,6 @@ const FeatureCardMap = ({
     setLayer(layer);
   }, [store, category, layer]);
 
-  // Publish the store under this card's id so `BottomCard` can look
-  // it up via `useMapCardStore(activeMapCardId)`.
   useEffect(() => {
     registerMapCardStore(id, store);
     return () => unregisterMapCardStore(id);

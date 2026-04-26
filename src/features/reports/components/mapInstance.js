@@ -8,51 +8,28 @@ import {
 } from 'features/project/components/Cards/MapLayersCard/store';
 
 /**
- * Per-card map state for Reports' FeatureCardMap.
+ * Per-card map state for Reports' `FeatureCardMap`.
  *
- * The singleton `useMapStore` + `useMapCategoryStore` are shared
- * across the entire app. To let multiple Reports map cards in one
- * column show different overlays, the *layer-rendering* slice
- * (category / selected layer / parameters / computed deck.gl layers)
- * lives in a per-card zustand store; view-state (camera, zoom,
- * layer-type visibility, colour mode) stays singleton.
+ * The layer-rendering slice (category, selected layer, parameter
+ * values, computed deck.gl layers, colour/elevation range) lives on a
+ * per-card zustand store so multiple Map cards in one column can show
+ * different overlays. View-state (camera, zoom, layer-type visibility,
+ * colour mode) stays on the singleton `useMapStore`.
  *
- * How it fits together:
- *   - `FeatureCardMap` creates a per-card store via
- *     `createMapInstanceStore` and provides it through
- *     `<MapInstanceContext>`. The same store is also published in
- *     the registry below under `card.id`.
- *   - The deck.gl layer feed inside `Map.jsx`,
- *     `MapLayerPropertiesCard`, and `useGetMapLayers` all read/write
- *     through the scoped hooks; when no provider is in scope they
- *     transparently fall back to the singleton (main viewport keeps
- *     working untouched).
- *   - `ReportsPage` tracks `activeMapCardId`; `BottomCard` looks up
- *     the matching store from the registry and wraps its own
- *     `MapLayerPropertiesCard` in `<MapInstanceContext>` so the
- *     bottom form drives the active card's state.
+ * `FeatureCardMap` creates the store, provides it through
+ * `MapInstanceContext`, and publishes it in the registry below so
+ * `BottomCard` can wrap its `MapLayerPropertiesCard` in the same
+ * provider when the card is the active edit target. Consumers read
+ * via the scoped hooks; outside a provider they transparently fall
+ * back to the singleton, leaving the main viewport untouched.
  */
 
-/**
- * React context whose value is a zustand `StoreApi` for the per-card
- * map state. `null` means "no provider in scope" — consumers should
- * fall back to the singleton stores.
- */
 export const MapInstanceContext = createContext(null);
 
 /**
- * Build a fresh per-card store seeded with the card's category +
- * layer. Each `FeatureCardMap` should create one of these via
- * `useRef` so the store persists across renders for that card.
- *
- * Shape mirrors the relevant slice of `useMapStore`/`useMapCategoryStore`:
- *   - `category`              — active category for this card
- *   - `selectedMapLayer`      — chosen layer name
- *   - `mapLayerParameters`    — parameter form values
- *   - `mapLayers`             — computed deck.gl layer array
- *
- * Setters use the same names as the singleton equivalents so
- * consumers can swap reads/writes onto this store without renaming.
+ * Build a fresh per-card store. Setters mirror the singleton's names
+ * (`setMapLayerParameters`, `setMapLayers`, etc.) so consumers can
+ * swap reads/writes onto either store without renaming.
  */
 export const createMapInstanceStore = ({ category, layer } = {}) =>
   createStore((set) => ({
@@ -60,22 +37,33 @@ export const createMapInstanceStore = ({ category, layer } = {}) =>
     selectedMapLayer: layer ?? null,
     mapLayerParameters: null,
     mapLayers: null,
+    // Drives `HexagonLayer.elevationDomain` and the colour-gradient
+    // mapping in `Map.jsx`. On the singleton this is set by `Legend`'s
+    // effect — Reports hides the Legend, so the per-card store sets
+    // its own range from the fetched data inside `useGetMapLayers`.
+    range: [0, 0],
     setCategory: (next) => set({ category: next }),
     setSelectedMapLayer: (next) => set({ selectedMapLayer: next }),
-    setMapLayerParameters: (next) => set({ mapLayerParameters: next }),
+    // Mirrors the singleton's functional-update signature: callers
+    // (Slider/Choice/base.changeHandler) pass `(prev) => next`. Without
+    // this unwrap, the function itself would be stored as the value
+    // and `Object.keys(parameters)` checks downstream would see no
+    // keys, stalling the fetch in `useGetMapLayers`.
+    setMapLayerParameters: (value) =>
+      set((state) => ({
+        mapLayerParameters:
+          typeof value === 'function' ? value(state.mapLayerParameters) : value,
+      })),
     setMapLayers: (next) => set({ mapLayers: next }),
+    setRange: (next) => set({ range: next }),
   }));
 
 // ── Scoped hooks ───────────────────────────────────────────────────
 //
-// Each hook returns the per-card value when `MapInstanceContext` has
-// a store in scope; otherwise falls back to the singleton so main-
-// viewport consumers (and any Reports component rendered outside a
-// provider) keep working untouched.
-//
-// All hooks call `useStore` and the singleton hook unconditionally
-// (rules of hooks). When no context is in scope we pass an empty
-// "no-op" store so `useStore` is still satisfied.
+// Each hook returns the per-card value when a provider is in scope,
+// the singleton otherwise. Both subscriptions run on every render
+// (rules of hooks); when no context is active we feed `useStore` an
+// empty no-op store so the call stays valid but produces nothing.
 
 const NULL_STORE = createStore(() => ({}));
 
@@ -121,6 +109,24 @@ export const useScopedSetMapLayers = () => {
   return ctx ? fromCtx : fromSingleton;
 };
 
+export const useScopedRange = () => {
+  const ctx = useContext(MapInstanceContext);
+  const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.range);
+  const fromSingleton = useMapStore((s) => s.range);
+  return ctx ? fromCtx : fromSingleton;
+};
+
+export const useScopedSetRange = () => {
+  const ctx = useContext(MapInstanceContext);
+  const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.setRange);
+  const fromSingleton = useMapStore((s) => s.setRange);
+  return ctx ? fromCtx : fromSingleton;
+};
+
+// The singleton "active category" lives on `useMapCategoryStore`,
+// not on `useMapStore`, so the field name differs (`active` vs
+// `category`). Both hooks unconditionally subscribe; the conditional
+// is on which subscription to return.
 export const useScopedActiveCategory = () => {
   const ctx = useContext(MapInstanceContext);
   const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.category);
@@ -136,11 +142,9 @@ export const useScopedSetActiveCategory = () => {
 };
 
 /**
- * Scoped equivalent of `useSelectedMapCategoryInfo` — looks up the
- * active category in the live `useMapLayerCategories` response, but
- * picks the active name from the per-card store (or singleton
- * fallback). Returns `null` while categories are still loading or
- * no active category is set.
+ * Scoped equivalent of `useSelectedMapCategoryInfo` — picks the active
+ * name from the per-card store (or singleton fallback) and looks it up
+ * in the live `useMapLayerCategories` response.
  */
 export const useScopedSelectedCategoryInfo = () => {
   const active = useScopedActiveCategory();
@@ -153,11 +157,10 @@ export const useScopedSelectedCategoryInfo = () => {
 
 // ── Card-store registry ────────────────────────────────────────────
 //
-// `FeatureCardMap` instances publish their per-card store under
-// `card.id` so the page-level `BottomCard` can look it up by the
-// `activeMapCardId` it gets from `ReportsPage`. A small zustand
-// store backs the registry so subscribers re-render when a new card
-// (un)registers.
+// `FeatureCardMap` publishes its store under `card.id` so the
+// page-level `BottomCard` can look it up by the `activeMapCardId`
+// it gets from `ReportsPage`. Backed by a zustand store so
+// subscribers re-render when a card (un)registers.
 
 const useCardStoresRegistry = create(() => ({}));
 
@@ -176,8 +179,8 @@ export const unregisterMapCardStore = (cardId) => {
 
 /**
  * Look up a card's per-card map store by id. Returns `null` when no
- * card is active or the card hasn't registered yet (e.g. during the
- * brief window between insert and mount).
+ * card is active or the card hasn't registered yet (briefly possible
+ * between insert and mount).
  */
 export const useMapCardStore = (cardId) =>
   useCardStoresRegistry((s) => (cardId ? (s[cardId] ?? null) : null));

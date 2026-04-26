@@ -28,6 +28,7 @@ import {
 } from 'features/map/stores/mapStore';
 import {
   useScopedMapLayers,
+  useScopedRange,
   useScopedSelectedCategoryInfo,
 } from 'features/reports/components/mapInstance';
 import { useCameraFitBounds } from 'features/map/hooks';
@@ -128,7 +129,7 @@ const useMapLayers = (onHover = () => {}) => {
   const selectedMapCategory = useScopedSelectedCategoryInfo();
   const categoryLayers = selectedMapCategory?.layers;
 
-  const range = useMapStore((state) => state.range);
+  const range = useScopedRange();
   const filters = useMapStore((state) => state.filters);
   const radius = filters?.radius ?? 10;
   const scale = filters?.scale ?? 1;

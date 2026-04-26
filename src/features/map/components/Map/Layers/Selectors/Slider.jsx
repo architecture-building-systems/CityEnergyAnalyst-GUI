@@ -1,6 +1,9 @@
 import { Slider } from 'antd';
-import { useMapStore } from 'features/map/stores/mapStore';
-import { useSelectedMapCategoryInfo } from 'features/project/components/Cards/MapLayersCard/store';
+import {
+  useScopedMapLayerParameters,
+  useScopedSetMapLayerParameters,
+  useScopedSelectedCategoryInfo,
+} from 'features/reports/components/mapInstance';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
@@ -67,11 +70,9 @@ const SliderSelector = ({
 }) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
-  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const categoryInfo = useSelectedMapCategoryInfo();
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
-  );
+  const mapLayerParameters = useScopedMapLayerParameters();
+  const categoryInfo = useScopedSelectedCategoryInfo();
+  const setMapLayerParameters = useScopedSetMapLayerParameters();
 
   const [sliderValue, setSliderValue] = useState(value ?? defaultValue);
   const [dynamicRange, setDynamicRange] = useState();

@@ -36,8 +36,8 @@ const ReportsPage = () => {
 
   // drawer = { plotConfig, onSave } | null
   const [drawer, setDrawer] = useState(null);
-  // activeMapCardId = id of the FeatureCardMap whose store the bottom
-  // form should drive. `null` means no map card is being edited.
+  // id of the `FeatureCardMap` whose store the bottom form drives;
+  // `null` when no map card is being edited.
   const [activeMapCardId, setActiveMapCardId] = useState(null);
 
   const openDrawer = useCallback((config) => setDrawer(config), []);

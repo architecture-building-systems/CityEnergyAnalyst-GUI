@@ -161,21 +161,33 @@ because no UI path could reach it. Adding a plot always opens
 
 ### DO: Render Map cards with the same `<ReportMap>` widget as the primary tile
 ```jsx
-const FeatureCardMap = ({ card, project, scenario, ... }) => {
-  // mount: push card.category + card.layer into the singleton stores
+const FeatureCardMap = ({ card, ... }) => {
+  const [store] = useState(() => createMapInstanceStore({ category, layer }));
+  // ...register store under card.id so BottomCard can find it...
   return (
-    <FeatureCardShell title={layer.label} icon={iconMap[category]} ...>
-      <ReportMap project={project} scenario={scenario} />
-    </FeatureCardShell>
+    <MapInstanceContext.Provider value={store}>
+      <FeatureCardShell ...>
+        <ReportMap project={project} scenario={scenario} />
+      </FeatureCardShell>
+    </MapInstanceContext.Provider>
   );
 };
 ```
 The card mirrors the primary map's chrome (4-button toolbar, DeckGL
-overlay) so a Map card visually reads as another map tile bound to a
-specific layer. Path-C limitation: `useMapStore` and
-`useMapCategoryStore` are singletons, so multiple Map cards in one
-column will render the same active layer (last-mounted wins).
-Per-card isolated state is a deeper refactor.
+overlay) so a Map card visually reads as another map tile. Each card
+owns a per-card `mapInstance` store (`category`, `selectedMapLayer`,
+`mapLayerParameters`, `mapLayers`, `range`); scoped hooks read from
+the per-card store inside the provider and fall back to the singleton
+outside it (main viewport, plot-edit flow). View-state — camera,
+zoom, layer-type visibility, colour mode — stays singleton.
+
+### DO: Set `range` from inside `useGetMapLayers` (not the Legend)
+On the singleton, `range` is set by `Legend`'s `useEffect` whenever
+the layer data lands. Reports hides the Legend (`hideLegend`) so the
+fetch hook itself extracts `properties.range[firstKey]` and writes it
+on the active store. Without this, `HexagonLayer.elevationDomain`
+collapses to `[0, 0]` and the colour gradient pins everything to the
+first stop — visible symptom is "data fetched, map blank".
 
 ### DO: Auto-grow Plot cards to fit chart natural heights
 ```jsx
@@ -415,7 +427,11 @@ source of truth for card config that the comparison views never read.
 - `components/FeatureCardKpi.jsx` - KPI-only card; one KPI strip per
   feature.
 - `components/FeatureCardMap.jsx` - Map-only card; mirrors the primary
-  map widget for a chosen category + layer.
+  map widget for a chosen category + layer. Owns a per-card
+  `mapInstance` store and publishes it in the registry.
+- `components/mapInstance.js` - Per-card map state: store factory,
+  scoped hooks (with singleton fallback), and the card-store
+  registry consumed by `BottomCard`.
 - `components/PlotSlotCard.jsx` - One plot's caption + Edit / Delete
   trio + the `<ReportPlot>` itself.
 - `components/ReportPlot.jsx` - Fetches custom-plot HTML and runs

@@ -3,6 +3,7 @@ import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
   useScopedSelectedMapLayer,
   useScopedSetMapLayers,
+  useScopedSetRange,
 } from 'features/reports/components/mapInstance';
 import {
   DEMAND,
@@ -49,6 +50,7 @@ export const useGetMapLayers = (
   const [fetching, setFetching] = useState(false);
 
   const setMapLayers = useScopedSetMapLayers();
+  const setRange = useScopedSetRange();
   const selectedMapLayer = useScopedSelectedMapLayer();
   const childScenario = useProjectStore((state) => state.childScenario);
 
@@ -70,6 +72,10 @@ export const useGetMapLayers = (
       !hasAllParameters(selectedLayerInfo, parameters)
     ) {
       setMapLayers(null);
+      // Reset fetching too — otherwise the loading overlay stays stuck
+      // when `parameters` momentarily becomes incomplete (e.g. while a
+      // Reports BottomCard switches its provider to a new card).
+      setFetching(false);
       return;
     }
 
@@ -89,6 +95,16 @@ export const useGetMapLayers = (
 
         if (!ignore) {
           setMapLayers(out);
+          // `range` was historically set by `Legend`'s effect, but
+          // Reports hides the Legend — set it here so the colour
+          // gradient + elevation domain work whether or not the Legend
+          // renders. Same first-key heuristic Legend uses.
+          const rangeMap = data?.properties?.range;
+          const firstKey = rangeMap && Object.keys(rangeMap)[0];
+          const entry = firstKey ? rangeMap[firstKey] : null;
+          if (entry?.min != null && entry?.max != null) {
+            setRange([entry.min, entry.max]);
+          }
         }
       } catch (error) {
         console.error(error.response?.data);
