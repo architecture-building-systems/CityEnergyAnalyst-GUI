@@ -283,37 +283,51 @@ const InlineLayerToggle = ({ scenario }) => {
   );
 };
 
+// Layer-toggle menu items reuse the main viewport's `.layer-toggle`
+// markup so `Map.css`'s rule strips antd's default dropdown-menu-item
+// padding (otherwise it stacks on top of the row's own padding,
+// widening the spacing). Wrapping input + text in a `<label>` makes
+// clicking the text toggle the checkbox — same as main viewport.
 const menuItem = (value, label, onChange) => ({
   key: value,
   label: (
-    <span
+    <div
+      className="layer-toggle"
       role="presentation"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      style={menuLabelStyle}
     >
-      <input type="checkbox" value={value} defaultChecked onChange={onChange} />
-      {label}
-    </span>
+      <label className="layer-toggle-label">
+        <input
+          type="checkbox"
+          value={value}
+          defaultChecked
+          onChange={onChange}
+        />
+        {label}
+      </label>
+    </div>
   ),
 });
 
 const controlledItem = (key, label, checked, onChange) => ({
   key,
   label: (
-    <span
+    <div
+      className="layer-toggle"
       role="presentation"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      style={menuLabelStyle}
     >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
-    </span>
+      <label className="layer-toggle-label">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        {label}
+      </label>
+    </div>
   ),
 });
 
@@ -339,15 +353,6 @@ const overlayStyle = {
 const spinFillStyle = {
   width: 80,
   height: 80,
-};
-
-const menuLabelStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  padding: '5px 12px',
-  userSelect: 'none',
-  cursor: 'pointer',
 };
 
 const controlsFrameStyle = {
