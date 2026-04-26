@@ -361,7 +361,9 @@ const ReportColumn = ({
           <div className="cea-card-icon-button-container">
             <Tooltip
               title={
-                addColumnDisabled ? `${addColumnTooltip} (coming soon)` : addColumnTooltip
+                addColumnDisabled
+                  ? `${addColumnTooltip} (coming soon)`
+                  : addColumnTooltip
               }
               placement="bottom"
             >
