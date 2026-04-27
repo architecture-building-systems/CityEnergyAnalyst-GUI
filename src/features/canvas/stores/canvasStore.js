@@ -187,36 +187,88 @@ export const useCanvasStore = create((set, get) => ({
   tempUuid: null,
   setTempUuid: (value) => set({ tempUuid: value || null }),
 
-  // Display name of the currently-open canvas. `null` for an
-  // untitled draft; set when the user opens a saved canvas or
-  // commits a draft via Save. The `(canvasName, tempUuid)` pair
-  // describes every legal state:
-  //   (null, null) — fresh, nothing edited yet
-  //   (null,  X )  — untitled draft being edited
-  //   ( A , null)  — viewing saved canvas A (clean)
-  //   ( A ,  X )   — dirty edit of saved canvas A
-  // The backend's canvas.yml records the parent saved name itself
-  // (`parent_canvas_name`), so the frontend doesn't track it.
+  // Display name of the currently-open canvas. Owned by the
+  // dashboard switcher and the canvas.yml's `name` field. Set when:
+  //   - the user opens a saved canvas (canvasName = savedAs = saved
+  //     canvas's name)
+  //   - the user creates a named draft via the navigator's
+  //     "Create new canvas" modal (canvasName = typed name,
+  //     savedAs = null until first Save)
+  //   - the user commits a draft via Save (canvasName = savedAs =
+  //     sanitised name)
+  // Null only between a Start Over and the next named-create, or
+  // for untitled drafts created via paths that bypass the modal.
   canvasName: null,
   setCanvasName: (value) => set({ canvasName: value || null }),
+
+  // The name under which this canvas actually exists on disk.
+  // Diverges from `canvasName` only during a *named* draft — the
+  // user has typed a name (so `canvasName` is set) but hasn't
+  // committed yet (so the saved folder doesn't exist). Autosave
+  // uses this (not `canvasName`) for the `from:` seed, otherwise
+  // a fresh draft would 404 the temp creation against a saved
+  // folder that hasn't been created yet.
+  savedAs: null,
+  setSavedAs: (value) => set({ savedAs: value || null }),
 
   // Wall-clock timestamp (ms) of the last successful autosave
   // flush. Drives the navigator's "Saved · Xm ago" indicator.
   lastSavedAt: null,
   setLastSavedAt: (value) => set({ lastSavedAt: value || null }),
 
+  // True whenever the in-memory state diverges from what's
+  // committed on disk. Set by `useCanvasPersistence` the moment a
+  // persistable mutation lands; reset by `markSaved` (commit) and
+  // `applyLoadedCanvas` (load) and `createNamedDraft` (fresh
+  // draft). Drives the Save button's enabled state — Save fires
+  // even when `tempUuid` is null (autoSave off, or change made
+  // during the debounce window) by force-creating + flushing the
+  // temp before promote.
+  dirty: false,
+  setDirty: (value) => set({ dirty: !!value }),
+
   /**
    * Mark a successful Save: clear the live temp handle, adopt the
-   * sanitised name returned by the backend, and stamp lastSavedAt.
-   * The next persistable edit will then create a fresh temp seeded
-   * from this saved canvas.
+   * sanitised name returned by the backend (which now also exists
+   * on disk, so `savedAs` mirrors `canvasName`), and stamp
+   * lastSavedAt. The next persistable edit will then create a
+   * fresh temp seeded from this saved canvas.
    */
   markSaved: (name) =>
     set({
       canvasName: name,
+      savedAs: name,
       tempUuid: null,
+      dirty: false,
       lastSavedAt: Date.now(),
     }),
+
+  /**
+   * Pathway-style up-front naming for a fresh canvas: clears all
+   * the comparison / launch state (same as `startOver`) but plants
+   * a typed name on `canvasName` so the switcher and the eventual
+   * Save can carry it through. `savedAs` stays null — there's no
+   * folder on disk yet.
+   */
+  createNamedDraft: (name) =>
+    set((state) => ({
+      view: 'launch',
+      columns: [],
+      parentScenario: null,
+      launchCards: [],
+      sharedCards: [],
+      columnCards: {},
+      tempUuid: null,
+      canvasName: name || null,
+      savedAs: null,
+      dirty: false,
+      lastSavedAt: null,
+      // Bump `loadVersion` so the persistence hook treats the
+      // reset as a "load-like" event and resyncs its snapshot
+      // baseline silently — otherwise the cards-reset would look
+      // like a user edit and immediately re-dirty the canvas.
+      loadVersion: state.loadVersion + 1,
+    })),
 
   // Bumped every time external state lands in the store from
   // outside the user's editing flow (loading a saved canvas,
@@ -237,7 +289,13 @@ export const useCanvasStore = create((set, get) => ({
   applyLoadedCanvas: (partial) =>
     set((state) => ({
       ...partial,
+      // A loaded canvas exists on disk under its own name, so
+      // `savedAs` mirrors `canvasName`. Picked up here rather than
+      // inside `deserializeCanvas` so the rest of the deserialiser
+      // stays a pure data converter.
+      savedAs: partial.canvasName ?? null,
       tempUuid: null,
+      dirty: false,
       lastSavedAt: null,
       loadVersion: state.loadVersion + 1,
     })),
@@ -302,7 +360,7 @@ export const useCanvasStore = create((set, get) => ({
   },
 
   startOver: () =>
-    set({
+    set((state) => ({
       view: 'launch',
       columns: [],
       parentScenario: null,
@@ -316,8 +374,14 @@ export const useCanvasStore = create((set, get) => ({
       // the deletion can be awaited / surfaced on failure.
       tempUuid: null,
       canvasName: null,
+      savedAs: null,
+      dirty: false,
       lastSavedAt: null,
-    }),
+      // Same as `createNamedDraft`: tell the persistence hook this
+      // is a reset, not an edit, so it resyncs silently rather
+      // than flagging the cleared state as a user change.
+      loadVersion: state.loadVersion + 1,
+    })),
 
   // ── Column management ───────────────────────────────────────
 

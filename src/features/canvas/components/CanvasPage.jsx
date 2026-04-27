@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useCanvasStore } from '../stores/canvasStore';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
+import { useResumeLastCanvas } from '../hooks/useResumeLastCanvas';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
@@ -34,11 +35,17 @@ import PlotEditModal from './PlotEditModal';
  */
 const CanvasPage = () => {
   const view = useCanvasStore((s) => s.view);
+  const canvasName = useCanvasStore((s) => s.canvasName);
 
   // Subscribe to store changes and debounce-flush to the backend's
   // `temp/<uuid>/` folder while the user works. Idempotent — single
   // mount point owns the autosave debouncer.
   useCanvasPersistence();
+  // Resume the last committed canvas on mount (per-project /
+  // -scenario `localStorage` lookup). When no record exists, leaves
+  // the store in its empty state and the canvas cell renders the
+  // empty-state placeholder below.
+  useResumeLastCanvas();
 
   // drawer = { plotConfig, onSave, cardId? } | null
   // `cardId` (when present) flags the FeatureCardPlot that owns the
@@ -115,21 +122,25 @@ const CanvasPage = () => {
       </div>
 
       <div style={canvasCellStyle}>
-        {view === 'launch' ? (
-          <LaunchView
-            onOpenDrawer={openDrawer}
-            onOpenMapBottom={openMapBottom}
-            editingPlotCardId={drawer?.cardId ?? null}
-            activeMapCardId={activeMapCardId}
-          />
-        ) : (
-          <ComparisonView
-            onOpenDrawer={openDrawer}
-            onOpenMapBottom={openMapBottom}
-            editingPlotCardId={drawer?.cardId ?? null}
-            activeMapCardId={activeMapCardId}
-          />
-        )}
+        {/* Empty entry state renders nothing in the canvas cell —
+            the pulsing dashboard switcher / Import button in the
+            navigator are the user's cue to act. */}
+        {canvasName &&
+          (view === 'launch' ? (
+            <LaunchView
+              onOpenDrawer={openDrawer}
+              onOpenMapBottom={openMapBottom}
+              editingPlotCardId={drawer?.cardId ?? null}
+              activeMapCardId={activeMapCardId}
+            />
+          ) : (
+            <ComparisonView
+              onOpenDrawer={openDrawer}
+              onOpenMapBottom={openMapBottom}
+              editingPlotCardId={drawer?.cardId ?? null}
+              activeMapCardId={activeMapCardId}
+            />
+          ))}
       </div>
 
       <div style={bottomCellStyle}>

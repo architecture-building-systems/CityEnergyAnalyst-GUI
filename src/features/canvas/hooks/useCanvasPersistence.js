@@ -32,9 +32,16 @@ import { serializeCanvas } from '../utils/canvasSerialize';
 
 const DEBOUNCE_MS = 300;
 
-// Only changes to these slices should trigger an autosave flush.
-// Toggles like `autoSave` itself, and ephemeral session state
-// (`lastSavedAt`, `tempUuid`) don't count.
+// Only changes to these slices should trigger an autosave flush
+// + dirty-flag flip. `canvasName` and `savedAs` are deliberately
+// *not* in here even though they live on the same store: they
+// change during Save / Load / Create-named-draft transitions, not
+// from user edits to the canvas content itself, and including
+// them would re-dirty the state immediately after `markSaved`
+// resets it (false-positive `dirty: true` right after a successful
+// commit). Other no-edit transitions (`createNamedDraft`,
+// `startOver`) bump `loadVersion` so the cards-reset resyncs the
+// snapshot silently instead of looking like an edit.
 const PERSISTABLE_SELECTOR = (state) => ({
   view: state.view,
   parentScenario: state.parentScenario,
@@ -44,7 +51,6 @@ const PERSISTABLE_SELECTOR = (state) => ({
   columnCards: state.columnCards,
   mapsLinked: state.mapsLinked,
   fixLayout: state.fixLayout,
-  canvasName: state.canvasName,
 });
 
 const shallowEqual = (a, b) => {
@@ -82,13 +88,16 @@ export function useCanvasPersistence() {
         let uuid = state.tempUuid;
         if (!uuid) {
           // First persistable edit on a clean state — allocate a
-          // server-side uuid. Seed from `canvasName` when present
-          // so the temp's canvas.yml records its parent saved
-          // canvas (used by Save to overwrite the right folder).
+          // server-side uuid. Seed from `savedAs` (not
+          // `canvasName`): a freshly named draft has a name typed
+          // by the user but no folder on disk yet, and 404'ing
+          // the temp seed against a non-existent folder would
+          // block the autosave. `savedAs` is null until Save
+          // commits, exactly the right gate.
           const result = await createTempCanvas({
             project,
             scenario,
-            fromName: state.canvasName ?? null,
+            fromName: state.savedAs ?? null,
           });
           uuid = result.uuid;
           useCanvasStore.getState().setTempUuid(uuid);
@@ -129,6 +138,15 @@ export function useCanvasPersistence() {
       const snapshot = PERSISTABLE_SELECTOR(state);
       if (shallowEqual(snapshot, lastSnapshotRef.current)) return;
       lastSnapshotRef.current = snapshot;
+
+      // Flip the store's `dirty` flag the moment a persistable
+      // change is detected — the Save button reads this so it
+      // can enable even when `tempUuid` is still null (autoSave
+      // off, or an edit made within the debounce window before
+      // the first flush has materialised the temp folder).
+      if (!state.dirty) {
+        useCanvasStore.getState().setDirty(true);
+      }
 
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(flush, DEBOUNCE_MS);

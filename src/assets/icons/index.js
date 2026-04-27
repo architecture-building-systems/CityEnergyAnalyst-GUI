@@ -20,6 +20,9 @@ import ExternalLinkIcon from './external_link.svg';
 import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
 import StartOverIcon from './start_over.svg';
+import SaveIcon from './save.svg';
+import ShareIcon from './share.svg';
+import ImportIcon from './import.svg';
 import DuplicateIcon from './duplicate.svg';
 import UploadDownloadIcon from './upload_download.svg';
 
@@ -70,6 +73,9 @@ export {
   CreateNewIcon,
   RefreshIcon,
   StartOverIcon,
+  SaveIcon,
+  ShareIcon,
+  ImportIcon,
   DuplicateIcon,
   RunIcon,
   ShowHideCardsIcon,
