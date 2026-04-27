@@ -80,8 +80,22 @@ const CanvasPlot = ({
   // alongside the CDN script tags and inline `Plotly.newPlot` blocks.
   // Unwrapping body gives us a fragment shaped exactly like
   // `to_html(full_html=False)` — the render path below handles both
-  // shapes uniformly.
-  const html = useMemo(() => unwrapBody(rawHtml), [rawHtml]);
+  // shapes uniformly. We then rewrite the figure's UUID-style div
+  // IDs (in both the markup and the inline `Plotly.newPlot` calls)
+  // with a per-instance suffix: react-query hands the same HTML to
+  // every card configured the same way, so without this rewrite two
+  // cards share the same `id`, `getElementById` always returns the
+  // first one, and the second card never gets a chart attached.
+  // `useId()` returns React's stable per-instance id (`:r0:`,
+  // `:r1:`…); strip the colons so the result is safe as an HTML id
+  // suffix without escaping.
+  const idSuffix = useMemo(() => uniqueId.replace(/[^a-zA-Z0-9]/g, ''), [
+    uniqueId,
+  ]);
+  const html = useMemo(
+    () => uniquifyPlotIds(unwrapBody(rawHtml), idSuffix),
+    [rawHtml, idSuffix],
+  );
 
   useEffect(() => {
     if (!html) return;
@@ -298,6 +312,35 @@ const CanvasPlot = ({
 };
 
 // ── Helpers ──────────────────────────────────────────────────────
+
+// Rewrite every `<div id="UUID" class="plotly-graph-div">` (and the
+// matching `Plotly.newPlot("UUID", …)` call inside the inline
+// script) so two cards rendering the *same* cached backend HTML
+// don't both emit a div with the same id. `getElementById` returns
+// only the first match, so without this rewrite the second card's
+// chart silently never gets attached.
+function uniquifyPlotIds(html, suffix) {
+  if (!html || !suffix) return html;
+  const ids = new Set();
+  // Match a plotly-graph-div regardless of attribute order — `id`
+  // can come before or after `class`.
+  const re =
+    /<div\b[^>]*\bclass="[^"]*\bplotly-graph-div\b[^"]*"[^>]*\bid="([^"]+)"|<div\b[^>]*\bid="([^"]+)"[^>]*\bclass="[^"]*\bplotly-graph-div\b[^"]*"/g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const id = m[1] || m[2];
+    if (id) ids.add(id);
+  }
+  if (ids.size === 0) return html;
+  let result = html;
+  for (const id of ids) {
+    // Plotly uses UUID-shaped ids — no regex specials — but escape
+    // defensively so any future format change can't break us.
+    const safe = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(safe, 'g'), `${id}-${suffix}`);
+  }
+  return result;
+}
 
 // Strip <html>/<body> wrapping if present so the render path sees the
 // same fragment shape regardless of `to_html(full_html=…)`.

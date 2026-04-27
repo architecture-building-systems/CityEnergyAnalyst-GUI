@@ -27,8 +27,14 @@ import { create } from 'zustand';
  * cards so the new card lands immediately next to its anchor.
  */
 
-let nextId = 1;
-const makeId = (prefix) => `${prefix}-${nextId++}`;
+// Globally-unique ID generator. Uses `crypto.randomUUID()` (the
+// browser's UUID4 implementation) and strips the hyphens to mirror
+// the backend's `uuid.uuid4().hex` shape — same convention used
+// for job / project / dashboard rows server-side. Collision-safe
+// across users + sessions, so cards persisted later can keep the
+// same id without further migration.
+const makeId = (prefix) =>
+  `${prefix}-${crypto.randomUUID().replace(/-/g, '')}`;
 
 // Default card size in grid units. See CanvasColumn's <GridLayout>
 // config for the pixel mapping. Map's default footprint

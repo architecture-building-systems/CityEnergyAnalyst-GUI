@@ -40,8 +40,12 @@ const LaunchView = ({
   const [pickerMode, setPickerMode] = useState(null);
   const [cards, setCards] = useState([]);
 
+  // UUID4-hex IDs (matching the backend's `uuid.uuid4().hex` shape
+  // used for jobs / projects / dashboards) so launch-view drafts
+  // promoted to a comparison view keep an id that's collision-safe
+  // across users + sessions.
   const makeId = (prefix) =>
-    `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    `${prefix}-${crypto.randomUUID().replace(/-/g, '')}`;
 
   const shiftForInsert = (arr, { row, col, direction }) => {
     if (direction === 'right') {
