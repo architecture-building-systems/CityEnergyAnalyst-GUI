@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Button,
@@ -11,7 +11,12 @@ import {
   Tooltip,
   message as antdMessage,
 } from 'antd';
-import { LeftOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DownloadOutlined,
+  LeftOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { StartOverIcon } from 'assets/icons';
 
 import InfoTooltip from 'components/InfoTooltip';
@@ -23,6 +28,8 @@ import { useCanvasStore } from '../stores/canvasStore';
 import { useFetchSavedCanvases } from '../hooks/useCanvasData';
 import {
   deleteTempCanvas,
+  exportCanvasZip,
+  importCanvasZip,
   readSavedCanvas,
   saveTempCanvas,
 } from '../api/canvas';
@@ -53,12 +60,10 @@ const NEW_CANVAS_VALUE = '__new__';
  *                    until Save is clicked
  *   - Save         → promote the active draft to a saved canvas;
  *                    prompts for a name on first save
- *   - Dashboard    → dropdown to switch between saved dashboards
- *                    (stubbed — list-load wiring lands in a later
- *                    phase)
- *
- * Placeholder slot:
- *   - Export
+ *   - Export       → download the saved canvas as a zip
+ *   - Import       → upload a previously-exported canvas zip
+ *   - Dashboard    → dropdown to switch between saved canvases,
+ *                    or `+ New canvas` to start fresh
  */
 const NavigatorCard = () => {
   const { push } = useNavigationStore();
@@ -98,6 +103,14 @@ const NavigatorCard = () => {
   const [pendingName, setPendingName] = useState('');
   const [nameError, setNameError] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Import button is a styled button that proxies clicks to a
+  // hidden `<input type="file">`. The input lives in the JSX tree
+  // below, the ref drives the click; we reset its `value` on the
+  // way out so picking the same zip twice in a row still fires
+  // `onChange`.
+  const fileInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -209,6 +222,61 @@ const NavigatorCard = () => {
       startOverStore();
     });
 
+  const handleExport = async () => {
+    if (!canvasName) return;
+    try {
+      const blob = await exportCanvasZip({
+        project,
+        scenario,
+        name: canvasName,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${canvasName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      antdMessage.error('Could not export canvas — see console for details');
+      // eslint-disable-next-line no-console
+      console.error('Canvas export failed', err);
+    }
+  };
+
+  const handleImportPick = () => fileInputRef.current?.click();
+
+  const handleImportChange = async (event) => {
+    const file = event.target.files?.[0];
+    // Reset early so picking the same zip twice still fires onChange.
+    event.target.value = '';
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const result = await importCanvasZip({ project, scenario, file });
+      invalidateSavedList();
+      antdMessage.success(`Imported "${result.name}"`);
+    } catch (err) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 400) {
+        antdMessage.error(detail || 'Invalid canvas zip');
+      } else if (status === 409) {
+        antdMessage.error(
+          detail || 'A canvas with this name already exists',
+        );
+      } else {
+        antdMessage.error('Import failed — see console for details');
+        // eslint-disable-next-line no-console
+        console.error('Canvas import failed', err);
+      }
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleStartOver = () => {
     Modal.confirm({
       title: 'Start over?',
@@ -294,9 +362,41 @@ const NavigatorCard = () => {
             Save
           </Button>
         </Tooltip>
-        <Tooltip title="Coming soon">
-          <Button disabled>Export</Button>
+        <Tooltip
+          title={
+            canvasName
+              ? `Download "${canvasName}" as a zip`
+              : 'Save the canvas first to enable Export'
+          }
+        >
+          <Button
+            icon={<DownloadOutlined />}
+            disabled={!canvasName}
+            onClick={handleExport}
+            aria-label="Export canvas as zip"
+          >
+            Export
+          </Button>
         </Tooltip>
+        <Tooltip title="Import a canvas zip">
+          <Button
+            icon={<UploadOutlined />}
+            loading={importing}
+            disabled={!project || !scenario}
+            onClick={handleImportPick}
+            aria-label="Import canvas zip"
+          >
+            Import
+          </Button>
+        </Tooltip>
+        {/* Hidden input proxied by the Import button above. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".zip,application/zip"
+          style={{ display: 'none' }}
+          onChange={handleImportChange}
+        />
 
         {/* Dashboard switcher. Lists every saved canvas plus a
             `+ New canvas` entry that resets to launch view. The

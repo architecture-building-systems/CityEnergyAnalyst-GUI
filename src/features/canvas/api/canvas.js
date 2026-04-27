@@ -84,3 +84,37 @@ export const saveTempCanvas = async ({ project, scenario, uuid, name }) => {
   );
   return data; // { name }
 };
+
+// ── Zip export / import ────────────────────────────────────────
+
+/**
+ * Download a saved canvas as a zip. Returns a Blob the caller can
+ * pipe through `URL.createObjectURL` to trigger a browser download
+ * — the apiClient layer adds auth, so a plain `<a href>` link
+ * wouldn't work for protected backends.
+ */
+export const exportCanvasZip = async ({ project, scenario, name }) => {
+  const { data } = await apiClient.get(
+    `${BASE}/${encodeURIComponent(name)}/export`,
+    {
+      params: { project, scenario },
+      responseType: 'blob',
+    },
+  );
+  return data;
+};
+
+/**
+ * Upload a previously-exported canvas zip. Returns `{ name }` on
+ * success — the cleaned name the backend committed under, which
+ * may differ from the zip's top-level folder if it was sanitised.
+ */
+export const importCanvasZip = async ({ project, scenario, file }) => {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await apiClient.post(`${BASE}/import`, form, {
+    params: { project, scenario },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
