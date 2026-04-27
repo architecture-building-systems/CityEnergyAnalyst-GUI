@@ -88,10 +88,15 @@ const CanvasPlot = ({
         if (cancelled) return;
       }
       runInline();
-      // After newPlot, lift the main title out of the figure (the
-      // backend embeds `<b>Title</b><br><sub>Subtitle</sub>`) and
-      // blank the in-chart title — the canvas surfaces it as a caption
-      // above the plot via `onCaption` instead.
+      // After newPlot we lift the main title (the bold first line the
+      // backend embeds as `<b>Title</b><br><sub>Subtitle</sub>`) onto
+      // the card-level caption above the chart and blank the in-chart
+      // title block — single-figure plots end up with no in-chart
+      // title at all. Multi-figure plots are different: each figure
+      // needs its own per-what-if annotation, so we replace each
+      // figure's in-chart title with just the subtitle portion
+      // (the what-if-name) and style it to match the secondary line
+      // styling used by single-plot captions in `PlotSlotCard`.
       setTimeout(() => {
         if (cancelled || !containerRef.current) return;
         const plotDivs = containerRef.current.querySelectorAll(
@@ -99,26 +104,55 @@ const CanvasPlot = ({
         );
         if (plotDivs.length === 0) return;
 
-        const firstRaw = plotDivs[0].layout?.title?.text || '';
-        // Split on the `<br>` that separates title from subtitle,
-        // then strip any HTML (`<b>`, `<sub>`, …) to get plain text.
-        const mainPart = firstRaw.split(/<br\s*\/?>/i)[0];
-        const plainText = mainPart.replace(/<[^>]+>/g, '').trim();
-        if (plainText && onCaption) onCaption(plainText);
+        const isSingleFigure = plotDivs.length === 1;
 
-        // Tighten margins now that the title block is gone. Bottom
-        // margin stays default so angled x-axis ticks don't clip.
+        // Lift the main title from the first figure regardless of
+        // how many figures the response carries — every figure shares
+        // the same main title; only the subtitle (what-if-name) varies.
+        const { main: mainTitle } = splitFigureTitle(
+          plotDivs[0].layout?.title?.text,
+        );
+        if (onCaption) onCaption(mainTitle);
+
         // No fitPlotToParent here — we want the chart at its natural
         // size on first paint so the card can auto-grow to fit it.
         if (window.Plotly?.relayout) {
           plotDivs.forEach((div) => {
             try {
-              window.Plotly.relayout(div, {
-                'title.text': '',
-                'margin.t': 16,
-                'margin.l': 20,
-                'margin.r': 16,
-              });
+              if (isSingleFigure) {
+                window.Plotly.relayout(div, {
+                  'title.text': '',
+                  'margin.t': 16,
+                  'margin.l': 20,
+                  'margin.r': 16,
+                });
+              } else {
+                // Extract the what-if-name from this figure's own
+                // subtitle (the backend formats it as
+                // `MainTitle | Scenario | WhatIfName`, with the name
+                // as the last `|`-separated segment). Reading from
+                // each figure's own metadata rather than a positional
+                // lookup against the input array guarantees the
+                // label always matches the chart, even if the
+                // backend re-orders figures in the response.
+                const { sub } = splitFigureTitle(div.layout?.title?.text);
+                const whatifName = sub.includes('|')
+                  ? sub.split('|').pop().trim()
+                  : sub;
+                // `title.x: 0` + `xanchor: 'left'` puts the title at
+                // the chart's outer (bounding-box) left edge — same
+                // indent as the slot's main title above the plot.
+                window.Plotly.relayout(div, {
+                  'title.text': whatifName,
+                  'title.font.size': 12,
+                  'title.font.color': '#666',
+                  'title.x': 0,
+                  'title.xanchor': 'left',
+                  'margin.t': 28,
+                  'margin.l': 20,
+                  'margin.r': 16,
+                });
+              }
             } catch {
               // Error-card HTML snippets aren't Plotly figures — skip.
             }
@@ -303,6 +337,21 @@ const errorStyle = {
   minHeight: 200,
   padding: 24,
 };
+
+// Split a Plotly figure title into its main and subtitle plain-text
+// parts. The backend embeds the structure as
+// `<b>MainTitle</b><br><sub>…subtitle…</sub>`, where the subtitle
+// itself can contain context (scenario, what-if-name, etc.) separated
+// by `|`. Returns empty strings for whichever part is missing.
+function splitFigureTitle(raw) {
+  const text = raw || '';
+  const parts = text.split(/<br\s*\/?>/i);
+  const stripHtml = (s) => s.replace(/<[^>]+>/g, '').trim();
+  return {
+    main: stripHtml(parts[0] || ''),
+    sub: stripHtml(parts.slice(1).join(' ')),
+  };
+}
 
 // Resize a Plotly figure to its parent container. Clears inline
 // width/height first (so Plotly can replace them) then writes the
