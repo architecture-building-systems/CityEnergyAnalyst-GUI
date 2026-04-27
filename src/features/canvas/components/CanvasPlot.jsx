@@ -526,13 +526,14 @@ const STRIPPED_DEFAULT_HEIGHT = 500;
 const LEGEND_FALLBACK_COLOR = '#888';
 
 // Margins applied to figures with stripped legends — title is lifted
-// to the slot caption (or replaced with a subtitle), so the plot
-// area can fill the wrapper end-to-end with just enough room for
-// axis labels. `b: 70` fits both the x-axis tick labels and the
-// x-axis title (e.g. emission_timeline's "Time horizon - Year")
-// without overlap; with `automargin` pinned off Plotly won't tune
-// this for us, so we reserve enough by hand.
-const STRIPPED_MARGIN = { t: 16, l: 60, r: 16, b: 70 };
+// to the slot caption (or replaced with a subtitle) and axis titles
+// are dropped at the backend, so the plot area can fill the wrapper
+// end-to-end with just enough room for tick labels. With `automargin`
+// pinned off Plotly won't tune this for us, so we reserve enough by
+// hand: `l: 40` fits short y-axis numeric ticks (`0`, `20M`, `60M`),
+// `b: 80` (Plotly's own default) fits 6-character rotated year ticks
+// like `Y_2000` without clipping the last digit.
+const STRIPPED_MARGIN = { t: 16, l: 40, r: 16, b: 80 };
 
 // Margins applied to single-figure plots whose title is lifted to
 // the slot caption — the in-chart title is empty so almost no top
