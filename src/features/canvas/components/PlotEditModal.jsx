@@ -51,7 +51,13 @@ const findCategoryForLayer = (layerName, categories) => {
  * Edit mode doesn't currently rehydrate saved `plotConfig.parameters`
  * — PlotTool owns its own form, and users re-tune on edit.
  */
-const PlotEditModal = ({ open, plotConfig, onSave, onCancel }) => {
+const PlotEditModal = ({
+  open,
+  plotConfig,
+  onSave,
+  onCancel,
+  allowBack = true,
+}) => {
   const [selectedScript, setSelectedScript] = useState(
     plotConfig?.script || null,
   );
@@ -119,7 +125,9 @@ const PlotEditModal = ({ open, plotConfig, onSave, onCancel }) => {
       }}
     >
       <div className="cea-tool-card-header" style={headerStyle}>
-        {selectedScript && <Button onClick={handleBack}>Back</Button>}
+        {selectedScript && allowBack && (
+          <Button onClick={handleBack}>Back</Button>
+        )}
         <Button
           icon={<VerticalLeftOutlined />}
           onClick={onCancel}

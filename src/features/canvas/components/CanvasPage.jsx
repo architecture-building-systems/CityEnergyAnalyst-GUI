@@ -145,6 +145,12 @@ const CanvasPage = () => {
           plotConfig={drawer?.plotConfig || null}
           onSave={handleDrawerSave}
           onCancel={closeDrawer}
+          // Back returns to the PlotChoices picker. Only meaningful
+          // when adding a brand-new card (perimeter `+` flow); for
+          // Edit / "Add a plot" pill flows (`cardId` set), Back
+          // would let the user swap into a different plot type and
+          // turn the operation into something else, so it's hidden.
+          allowBack={!drawer?.cardId}
         />
       </div>
     </div>
