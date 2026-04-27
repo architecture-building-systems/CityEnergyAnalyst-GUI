@@ -20,11 +20,13 @@ import { useReportsStore } from '../stores/reportsStore';
  * Mirrors the main viewport's black toolbar height (≈52px) but uses
  * a white background so it reads as a sibling to the canvas and plot
  * tool cards rather than a toolbar in the traditional sense. Holds
- * navigation actions and the dashboard switcher.
+ * navigation actions, view toggles, and the dashboard switcher.
  *
  * Currently visible controls:
  *   - Return       → back to the project page
  *   - Start Over   → clear comparison state (with confirm)
+ *   - Sync Maps    → mirror every map card to the overview map
+ *   - Export View  → hide all editing controls for clean snapshots
  *   - Dashboard    → dropdown to switch between saved dashboards
  *                    (stubbed — backend persistence not wired yet)
  *
@@ -71,49 +73,28 @@ const NavigatorCard = () => {
         <Button icon={<RefreshIcon />} onClick={handleStartOver}>
           Start Over
         </Button>
-        {/* CEA purple (`#AC6080`) for the on-state — matches the
-            `editing` stroke and the BottomCard close button so the
-            "linked / editing / closing / export" UI reads in one
-            family. Each toggle wraps its own ConfigProvider so Space
-            sees them as separate flex items and lays them out with
-            its own gap (a single shared provider would collapse them
-            into one slot). */}
-        <div style={syncToggleWrapperStyle}>
-          <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
-            <Tooltip
-              title={
-                mapsLinked
-                  ? 'Map cards mirror the overview map. Turn off to give each card its own view.'
-                  : 'Each map card has its own view. Turn on to mirror the overview map.'
-              }
-            >
-              <Switch
-                checked={mapsLinked}
-                onChange={setMapsLinked}
-                aria-label="Sync map cards with overview"
-              />
-            </Tooltip>
-          </ConfigProvider>
-          <span style={syncToggleLabelStyle}>Sync Maps</span>
-        </div>
-        <div style={syncToggleWrapperStyle}>
-          <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
-            <Tooltip
-              title={
-                exportMode
-                  ? 'Editing controls are hidden. Turn off to show toolbars, edit / delete buttons, and grid drag handles.'
-                  : 'Hide all editing controls (toolbars, edit / delete buttons, range dropdowns, perimeter `+` buttons) for an export-ready view.'
-              }
-            >
-              <Switch
-                checked={exportMode}
-                onChange={setExportMode}
-                aria-label="Hide editing controls for export"
-              />
-            </Tooltip>
-          </ConfigProvider>
-          <span style={syncToggleLabelStyle}>Export View</span>
-        </div>
+        <NavigatorToggle
+          checked={mapsLinked}
+          onChange={setMapsLinked}
+          label="Sync Maps"
+          ariaLabel="Sync map cards with overview"
+          tooltip={
+            mapsLinked
+              ? 'Map cards mirror the overview map. Turn off to give each card its own view.'
+              : 'Each map card has its own view. Turn on to mirror the overview map.'
+          }
+        />
+        <NavigatorToggle
+          checked={exportMode}
+          onChange={setExportMode}
+          label="Export View"
+          ariaLabel="Hide editing controls for export"
+          tooltip={
+            exportMode
+              ? 'Editing controls are hidden. Turn off to show toolbars, edit / delete buttons, and grid drag handles.'
+              : 'Hide all editing controls (toolbars, edit / delete buttons, range dropdowns, perimeter `+` buttons) for an export-ready view.'
+          }
+        />
       </Space>
 
       <Space size="small">
@@ -156,14 +137,11 @@ const cardStyle = {
   gap: 12,
 };
 
-// `display: flex` + `alignItems: center` keeps the Switch + label on
-// the same horizontal centerline as the antd buttons in the Space
-// row. The wrapper is a flex item itself, so cross-axis alignment
-// is governed by the Space (which uses `align="center"` above).
-// `height: 32` matches the button height so the centerlines coincide
-// regardless of the Switch's intrinsic height. The extra `marginLeft`
-// doubles the gap inherited from `Space size="small"` so the toggle
-// reads as a separate group from Start Over.
+// `height: 32` matches the antd button height so the toggle's
+// centerline aligns with `Return` / `Start Over` regardless of the
+// Switch's intrinsic height. `marginLeft: 16` doubles the gap
+// inherited from `Space size="small"` so the toggle group reads as a
+// separate cluster from the navigation buttons.
 const syncToggleWrapperStyle = {
   display: 'flex',
   alignItems: 'center',
@@ -176,5 +154,20 @@ const syncToggleLabelStyle = {
   fontSize: 14,
   color: '#222',
 };
+
+// Compact CEA-purple `Switch + label` toggle used in the Navigator
+// row. Wraps its own `ConfigProvider` so each toggle shows up as a
+// distinct child of `Space` and gets the row's flex gap (a shared
+// outer provider would collapse them into one slot).
+const NavigatorToggle = ({ checked, onChange, label, ariaLabel, tooltip }) => (
+  <div style={syncToggleWrapperStyle}>
+    <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
+      <Tooltip title={tooltip}>
+        <Switch checked={checked} onChange={onChange} aria-label={ariaLabel} />
+      </Tooltip>
+    </ConfigProvider>
+    <span style={syncToggleLabelStyle}>{label}</span>
+  </div>
+);
 
 export default NavigatorCard;

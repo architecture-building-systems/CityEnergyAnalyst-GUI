@@ -30,12 +30,16 @@ export function findFamilyForFeature(feature) {
  * Shared FeatureCard chrome — fills the rgl tile with the white
  * rounded surface, renders the title row (icon + label + optional
  * Edit / Delete buttons), and slots `children` underneath. Each
- * card type (Plot, KPI, Map) computes its own title + icon and
+ * card variant (Plot, KPI, Map) computes its own title + icon and
  * wraps its body here.
  *
- * `editing` swaps the border to the CEA purple stroke so the user
- * can see which card is currently driving the bottom form / plot
- * drawer.
+ * `editing` swaps the border to the CEA purple stroke to flag the
+ * card as the active edit target. Suppressed under Export View
+ * since editing is impossible there.
+ *
+ * Export View also strips the title row's drag-handle class + grab
+ * cursor and hides the Edit / Delete buttons — the card surface
+ * still reads, but every editing affordance is gone.
  */
 export const FeatureCardShell = ({
   title,
@@ -45,16 +49,13 @@ export const FeatureCardShell = ({
   editing = false,
   children,
 }) => {
-  // In export view: hide Edit / Delete buttons, drop the
-  // `cea-card-drag-handle` class so grid drag is disabled, and skip
-  // the grab cursor. Title row remains visible for identification.
   const exportMode = useReportsStore((s) => s.exportMode);
   const showActions = (onEdit || onDeleteCard) && !exportMode;
   return (
     <div style={editing && !exportMode ? editingCardStyle : cardStyle}>
       <div
         className={exportMode ? undefined : 'cea-card-drag-handle'}
-        style={exportMode ? titleSectionStaticStyle : titleSectionStyle}
+        style={exportMode ? titleSectionStyle : titleSectionDraggableStyle}
       >
         <div style={featureTitleStyle}>
           {Icon && (
@@ -133,18 +134,14 @@ const titleSectionStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  cursor: 'grab',
   gap: 8,
 };
 
-// Export-view variant — no grab cursor, no drag-handle class. The
-// `gap` is shared so the title text + icon spacing matches the
-// editable variant for layout parity.
-const titleSectionStaticStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 8,
+// Adds the `grab` cursor that signals "this row is the grid drag
+// handle". Swapped in for `titleSectionStyle` outside Export View.
+const titleSectionDraggableStyle = {
+  ...titleSectionStyle,
+  cursor: 'grab',
 };
 
 const featureTitleStyle = {

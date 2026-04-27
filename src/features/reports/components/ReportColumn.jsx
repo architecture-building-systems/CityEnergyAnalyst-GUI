@@ -157,9 +157,6 @@ const ReportColumn = ({
   addColumnDisabled = false,
 }) => {
   const project = useProjectStore((s) => s.project);
-  // Export view strips every editing affordance from the canvas:
-  // perimeter `+` buttons, the primary map's drag grip strip, and
-  // grid drag / resize handles. Display content stays.
   const exportMode = useReportsStore((s) => s.exportMode);
 
   const scenario = columnDef.scenario;
@@ -397,7 +394,7 @@ const ReportColumn = ({
         <div style={titleCardStyle}>
           <div style={headerStyle}>{headerText}</div>
         </div>
-        {onAddColumn && (
+        {onAddColumn && !exportMode && (
           <div className="cea-card-icon-button-container">
             <Tooltip
               title={

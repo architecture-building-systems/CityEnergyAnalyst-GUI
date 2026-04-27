@@ -21,6 +21,7 @@ const ComparisonView = ({
 
   const view = useReportsStore((s) => s.view);
   const columns = useReportsStore((s) => s.columns);
+  const exportMode = useReportsStore((s) => s.exportMode);
   const parentScenario = useReportsStore((s) => s.parentScenario);
   const sharedCards = useReportsStore((s) => s.sharedCards);
   const columnCards = useReportsStore((s) => s.columnCards);
@@ -200,20 +201,22 @@ const ComparisonView = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setAddColumnOpen(true)}
-          style={floatingAddStyle}
-          title={
-            view === 'inter-scenario'
-              ? 'Add a scenario'
-              : view === 'inter-whatif'
-                ? 'Add a what-if'
-                : 'Add a feature'
-          }
-        >
-          <CreateNewIcon style={{ color: '#fff', fontSize: 18 }} />
-        </button>
+        {!exportMode && (
+          <button
+            type="button"
+            onClick={() => setAddColumnOpen(true)}
+            style={floatingAddStyle}
+            title={
+              view === 'inter-scenario'
+                ? 'Add a scenario'
+                : view === 'inter-whatif'
+                  ? 'Add a what-if'
+                  : 'Add a feature'
+            }
+          >
+            <CreateNewIcon style={{ color: '#fff', fontSize: 18 }} />
+          </button>
+        )}
       </div>
 
       {addColumnOpen && view === 'inter-feature' && (

@@ -196,8 +196,33 @@ to the singleton.
 ### DO: Hide FeatureCardMap toolbars when `mapsLinked` is on
 `ReportMap` accepts `showToolbar` (default `true`). The primary
 overview tile always renders the 4-button toolbar; FeatureCardMaps
-pass `showToolbar={!mapsLinked}` so when sync is on the overview
-map is the sole driver and per-card toolbars are hidden.
+pass `showToolbar={!mapsLinked && !exportMode}` so the toolbar
+hides whenever sync is on or Export View is on.
+
+### DO: Strip every editing affordance under `exportMode`
+`reportsStore.exportMode` (driven by the Navigator's "Export View"
+toggle) is the single switch that turns the canvas into a clean
+snapshot surface. Each editing control reads it directly and renders
+nothing when on:
+- `FeatureCardShell` — Edit / Delete buttons; drops the
+  `cea-card-drag-handle` class + grab cursor; suppresses the
+  `editing` purple stroke.
+- `ReportColumn` — both `<PerimeterPlusButtons>` (primary tile +
+  feature cards), the primary map's drag-grip strip, and
+  `isDraggable` / `isResizable` on every layout item.
+- `ReportMap` — toolbar via `showToolbar` (gated by Export View).
+- `Legend.ColourRampLegend` — range-mode `<Select>` row.
+- `Legend.LegendFilterRow` — scale / radius numeric inputs (returns
+  `null`). Gated via `useReportsExportMode()` from `mapInstance`,
+  which also requires a `MapInstanceContext` provider so the main
+  viewport's `Legend` is unaffected.
+- `FeatureCardPlot` — "Add a plot" pill.
+- `PlotSlotCard` — per-plot Edit / Delete trio.
+- `ComparisonView` / `ReportColumn` — the column-add `+` buttons.
+
+`ReportsPage` subscribes to the store and closes the plot drawer +
+map-card bottom on the false → true transition so any open editing
+surface vanishes the moment the toggle flips on.
 
 ### DO: Seed per-card view-state on the linked → unlinked transition
 `FeatureCardMap` snapshots `useMapStore.getState()` for the

@@ -58,12 +58,11 @@ const ReportsPage = () => {
   }, []);
   const closeMapBottom = useCallback(() => setActiveMapCardId(null), []);
 
-  // Entering export view shuts any open editing surface — the plot
-  // drawer and the map-card bottom both belong to the editing mode.
-  // Subscribed via zustand directly (rather than `useEffect` on a
-  // selector) so the close action fires once at the moment of the
-  // false → true transition, instead of triggering a cascading
-  // render every time the page consumes the slice.
+  // Entering export view closes any open editing surface (plot
+  // drawer + map-card bottom). Listened to via zustand's `subscribe`
+  // — a `useEffect` on a selector here would cascade renders every
+  // time the page consumed the slice; we only want the close action
+  // at the false → true transition.
   useEffect(
     () =>
       useReportsStore.subscribe((state, prev) => {
