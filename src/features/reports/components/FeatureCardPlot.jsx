@@ -6,6 +6,7 @@ import { PLOT_LABELS, VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import PlotSlotCard from './PlotSlotCard';
+import { useReportsStore } from '../stores/reportsStore';
 import {
   FeatureCardShell,
   findFamilyForFeature,
@@ -61,6 +62,9 @@ const FeatureCardPlot = ({
   const quickPickOptions = getQuickPickOptions(feature);
   const family = useMemo(() => findFamilyForFeature(feature), [feature]);
 
+  // Hide the "Add a plot" pill in Reports' Export View.
+  const exportMode = useReportsStore((s) => s.exportMode);
+
   return (
     <FeatureCardShell
       title={family?.label || feature}
@@ -91,7 +95,7 @@ const FeatureCardPlot = ({
                 />
               </Fragment>
             ))}
-            {onAddPlot && (
+            {onAddPlot && !exportMode && (
               <div
                 style={
                   plots.length > 0 ? addPlotRowWithDividerStyle : undefined

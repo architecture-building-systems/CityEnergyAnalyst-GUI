@@ -242,6 +242,19 @@ export const useScopedSetActiveCategory = () => {
 };
 
 /**
+ * `true` only when (a) we're rendered inside a `MapInstanceContext`
+ * provider (i.e. a Reports `FeatureCardMap` subtree) and (b) the
+ * Reports "Export View" toggle is on. Lets shared components like
+ * `Legend` strip their editing chrome in Reports' export mode while
+ * leaving the main viewport untouched.
+ */
+export const useReportsExportMode = () => {
+  const ctx = useContext(MapInstanceContext);
+  const exportMode = useReportsStore((s) => s.exportMode);
+  return ctx != null && exportMode;
+};
+
+/**
  * Scoped equivalent of `useSelectedMapCategoryInfo` — picks the active
  * name from the per-card store (or singleton fallback) and looks it up
  * in the live `useMapLayerCategories` response.

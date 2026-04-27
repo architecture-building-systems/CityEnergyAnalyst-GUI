@@ -3,6 +3,7 @@ import { Button, Popconfirm, Tooltip } from 'antd';
 import { InputEditorIcon, BinAnimationIcon } from 'assets/icons';
 
 import ReportPlot from './ReportPlot';
+import { useReportsStore } from '../stores/reportsStore';
 
 /**
  * A single plot slot within a FeatureCard. Edit / Delete buttons sit
@@ -19,6 +20,9 @@ const PlotSlotCard = ({
   // Title lifted out of the Plotly figure by ReportPlot — shown on
   // the controls row instead of inside the chart canvas.
   const [caption, setCaption] = useState('');
+
+  // Hide the per-plot Edit / Delete trio in Reports' Export View.
+  const exportMode = useReportsStore((s) => s.exportMode);
 
   // Single what-if pick → append `| {name}` to the title. Multi-pick
   // stacks multiple figures with their own labels, so a single
@@ -81,33 +85,35 @@ const PlotSlotCard = ({
             </div>
           )}
         </div>
-        <div className="cea-card-icon-button-container">
-          <Tooltip title="Edit">
-            <Button
-              type="text"
-              icon={<InputEditorIcon />}
-              onClick={onEdit}
-              aria-label="Edit plot"
-            />
-          </Tooltip>
-          {onDelete && (
-            <Popconfirm
-              title="Delete this plot?"
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-              onConfirm={onDelete}
-            >
-              <Tooltip title="Delete">
-                <Button
-                  type="text"
-                  icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
-                  aria-label="Delete plot"
-                />
-              </Tooltip>
-            </Popconfirm>
-          )}
-        </div>
+        {!exportMode && (
+          <div className="cea-card-icon-button-container">
+            <Tooltip title="Edit">
+              <Button
+                type="text"
+                icon={<InputEditorIcon />}
+                onClick={onEdit}
+                aria-label="Edit plot"
+              />
+            </Tooltip>
+            {onDelete && (
+              <Popconfirm
+                title="Delete this plot?"
+                okText="Delete"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+                onConfirm={onDelete}
+              >
+                <Tooltip title="Delete">
+                  <Button
+                    type="text"
+                    icon={<BinAnimationIcon style={{ color: '#f04d5b' }} />}
+                    aria-label="Delete plot"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </div>
+        )}
       </div>
       <ReportPlot
         scenario={scenario}

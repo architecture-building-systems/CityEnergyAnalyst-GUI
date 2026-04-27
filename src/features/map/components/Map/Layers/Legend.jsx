@@ -1,5 +1,6 @@
 import Gradient from 'javascript-color-gradient';
 import {
+  useReportsExportMode,
   useScopedFilters,
   useScopedRange,
   useScopedSetFilters,
@@ -44,6 +45,9 @@ const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
 };
 
 export const LegendFilterRow = ({ layers }) => {
+  // Hidden in Reports' Export View — the scale/radius numeric inputs
+  // are an editing affordance.
+  const exportMode = useReportsExportMode();
   const fields = useMemo(() => {
     if (!layers?.length) return [];
     const layer = layers[0];
@@ -66,7 +70,7 @@ export const LegendFilterRow = ({ layers }) => {
     return collected;
   }, [layers]);
 
-  if (!fields.length) return null;
+  if (!fields.length || exportMode) return null;
 
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -109,6 +113,10 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
   const [selectedValue, setSelectedValue] = useState(null);
   const _range = useScopedRange();
   const setRange = useScopedSetRange();
+  // In Reports' Export View, hide the range-mode `<Select>` row —
+  // colour ramp + min/max labels stay so the legend still reads as a
+  // legend.
+  const exportMode = useReportsExportMode();
 
   const keys = Object.keys(range ?? {});
   const value =
@@ -152,16 +160,18 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
     >
       <b>{label}</b>
       <InfoRows info={info} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Select
-          style={{ flex: 1, minWidth: 0 }}
-          value={value}
-          onChange={setSelectedValue}
-          defaultValue={0}
-          options={options}
-        />
-        <InfoTooltip tooltipKey="map-layer-range-mode" placement="left" />
-      </div>
+      {!exportMode && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Select
+            style={{ flex: 1, minWidth: 0 }}
+            value={value}
+            onChange={setSelectedValue}
+            defaultValue={0}
+            options={options}
+          />
+          <InfoTooltip tooltipKey="map-layer-range-mode" placement="left" />
+        </div>
+      )}
       <div
         style={{
           display: 'flex',
