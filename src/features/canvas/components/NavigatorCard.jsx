@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   ConfigProvider,
@@ -10,7 +11,7 @@ import {
   Tooltip,
   message as antdMessage,
 } from 'antd';
-import { LeftOutlined } from '@ant-design/icons';
+import { LeftOutlined, PlusOutlined } from '@ant-design/icons';
 import { StartOverIcon } from 'assets/icons';
 
 import InfoTooltip from 'components/InfoTooltip';
@@ -19,7 +20,15 @@ import routes from 'constants/routes.json';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { useCanvasStore } from '../stores/canvasStore';
-import { deleteTempCanvas, saveTempCanvas } from '../api/canvas';
+import { useFetchSavedCanvases } from '../hooks/useCanvasData';
+import {
+  deleteTempCanvas,
+  readSavedCanvas,
+  saveTempCanvas,
+} from '../api/canvas';
+import { deserializeCanvas } from '../utils/canvasSerialize';
+
+const NEW_CANVAS_VALUE = '__new__';
 
 /**
  * Navigator card — top strip of the Canvas Builder page.
@@ -68,6 +77,18 @@ const NavigatorCard = () => {
   const tempUuid = useCanvasStore((s) => s.tempUuid);
   const canvasName = useCanvasStore((s) => s.canvasName);
   const markSaved = useCanvasStore((s) => s.markSaved);
+  const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
+
+  const queryClient = useQueryClient();
+  const { data: savedCanvases } = useFetchSavedCanvases(project, scenario);
+
+  // When Save commits, the listing is stale until react-query
+  // refetches. Invalidate explicitly so the switcher reflects the
+  // new canvas immediately.
+  const invalidateSavedList = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['canvas', 'saved', project, scenario],
+    });
 
   // Save-name prompt — only used the first time a draft is saved
   // (or when the user wants to Save As, in a later phase). Once the
@@ -99,6 +120,7 @@ const NavigatorCard = () => {
         name,
       });
       markSaved(result.name);
+      invalidateSavedList();
       setNamePromptOpen(false);
       setPendingName('');
       setNameError(null);
@@ -132,6 +154,60 @@ const NavigatorCard = () => {
       setNamePromptOpen(true);
     }
   };
+
+  /**
+   * Confirm-discard-then-load when the user picks a different
+   * saved canvas (or "+ New canvas") from the switcher. Skips the
+   * confirm when there's nothing to lose (no live temp).
+   */
+  const switchCanvas = async (action) => {
+    const proceed = await new Promise((resolve) => {
+      if (!tempUuid) {
+        resolve(true);
+        return;
+      }
+      Modal.confirm({
+        title: 'Discard unsaved changes?',
+        content:
+          'You have unsaved changes to the current canvas. Continuing will discard them.',
+        okText: 'Discard',
+        okButtonProps: { danger: true },
+        cancelText: 'Cancel',
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+    if (!proceed) return;
+
+    if (tempUuid) {
+      try {
+        await deleteTempCanvas({ project, scenario, uuid: tempUuid });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to delete temp canvas', err);
+      }
+    }
+    await action();
+  };
+
+  const handleOpenSaved = (name) =>
+    switchCanvas(async () => {
+      try {
+        const state = await readSavedCanvas({ project, scenario, name });
+        applyLoadedCanvas(deserializeCanvas(state));
+      } catch (err) {
+        antdMessage.error(`Could not open "${name}"`);
+        // eslint-disable-next-line no-console
+        console.error('Open canvas failed', err);
+      }
+    });
+
+  const handleNewCanvas = () =>
+    switchCanvas(async () => {
+      // Reset to a clean launch state. The autosave hook stays
+      // dormant until the user makes a persistable edit.
+      startOverStore();
+    });
 
   const handleStartOver = () => {
     Modal.confirm({
@@ -222,20 +298,23 @@ const NavigatorCard = () => {
           <Button disabled>Export</Button>
         </Tooltip>
 
-        {/* Dashboard switcher — list / load wiring arrives in a
-            later phase; this still acts as a placeholder so the
-            spec stays visible. */}
+        {/* Dashboard switcher. Lists every saved canvas plus a
+            `+ New canvas` entry that resets to launch view. The
+            currently-open canvas's name shows as the selected
+            option; "Untitled draft" is shown when the user is
+            working on a draft that hasn't been saved yet. */}
         <Select
-          value="default"
-          options={[
-            {
-              value: 'default',
-              label: canvasName ? canvasName : 'Untitled dashboard',
-            },
-          ]}
+          value={canvasName || ''}
+          options={buildSwitcherOptions(savedCanvases, canvasName)}
           style={{ minWidth: 200 }}
-          onChange={() => {}}
-          disabled
+          onChange={(value) => {
+            if (value === NEW_CANVAS_VALUE) {
+              handleNewCanvas();
+            } else if (value && value !== canvasName) {
+              handleOpenSaved(value);
+            }
+          }}
+          disabled={!project || !scenario}
         />
       </Space>
 
@@ -261,6 +340,47 @@ const NavigatorCard = () => {
     </div>
   );
 };
+
+/**
+ * Build the dashboard switcher's option list.
+ *
+ *   1. Untitled draft (only when there's an in-progress unnamed
+ *      canvas — keeps the active state visible in the select).
+ *   2. `+ New canvas`
+ *   3. Every saved canvas, alphabetised.
+ *
+ * The current `canvasName`, if it isn't already in the saved list
+ * yet (network race after Save), is added too so the select doesn't
+ * display blank.
+ */
+function buildSwitcherOptions(savedCanvases, canvasName) {
+  const list = Array.isArray(savedCanvases) ? savedCanvases : [];
+  const options = [];
+  if (!canvasName) {
+    options.push({
+      value: '',
+      label: <span style={{ color: '#888' }}>Untitled draft</span>,
+      disabled: true,
+    });
+  }
+  options.push({
+    value: NEW_CANVAS_VALUE,
+    label: (
+      <span>
+        <PlusOutlined style={{ marginRight: 6 }} />
+        New canvas
+      </span>
+    ),
+  });
+  const seen = new Set(list);
+  if (canvasName && !seen.has(canvasName)) {
+    options.push({ value: canvasName, label: canvasName });
+  }
+  for (const name of list) {
+    options.push({ value: name, label: name });
+  }
+  return options;
+}
 
 /**
  * Modal prompt for naming a new canvas. Surfaces 400 / 409 errors

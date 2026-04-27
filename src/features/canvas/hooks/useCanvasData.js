@@ -1,6 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 
+/**
+ * Names of every saved canvas under `<project, scenario>`. Wraps
+ * `GET /api/canvas/`. Used by the navigator's dashboard switcher
+ * to populate its options. Stale-time is short (10s) because users
+ * who just clicked Save expect to see the new canvas appear in
+ * the switcher right away — the save handler also explicitly
+ * invalidates this key for instant refresh.
+ */
+export const useFetchSavedCanvases = (project, scenario) =>
+  useQuery({
+    queryKey: ['canvas', 'saved', project, scenario],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/canvas/', {
+        params: { project, scenario },
+      });
+      return data; // string[]
+    },
+    enabled: !!project && !!scenario,
+    staleTime: 10_000,
+  });
+
 export const useFetchScenarios = (project) =>
   useQuery({
     queryKey: ['reports', 'scenarios', project],

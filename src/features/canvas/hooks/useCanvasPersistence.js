@@ -61,6 +61,7 @@ export function useCanvasPersistence() {
   // pending timer / in-flight request doesn't trigger re-renders.
   const timerRef = useRef(null);
   const lastSnapshotRef = useRef(PERSISTABLE_SELECTOR(useCanvasStore.getState()));
+  const lastLoadVersionRef = useRef(useCanvasStore.getState().loadVersion);
   const inFlightRef = useRef(false);
 
   useEffect(() => {
@@ -115,6 +116,21 @@ export function useCanvasPersistence() {
     };
 
     const unsubscribe = useCanvasStore.subscribe((state) => {
+      // External load (Open / Resume / Import) bumps `loadVersion`.
+      // Resync the diff baseline silently so the just-loaded state
+      // isn't immediately re-flushed back to the backend as a
+      // "change". Cancel any pending edit-flush from before the
+      // load — those edits are gone now.
+      if (state.loadVersion !== lastLoadVersionRef.current) {
+        lastLoadVersionRef.current = state.loadVersion;
+        lastSnapshotRef.current = PERSISTABLE_SELECTOR(state);
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+        return;
+      }
+
       const snapshot = PERSISTABLE_SELECTOR(state);
       if (shallowEqual(snapshot, lastSnapshotRef.current)) return;
       lastSnapshotRef.current = snapshot;

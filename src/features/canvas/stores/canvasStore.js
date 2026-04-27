@@ -211,6 +211,30 @@ export const useCanvasStore = create((set, get) => ({
       lastSavedAt: Date.now(),
     }),
 
+  // Bumped every time external state lands in the store from
+  // outside the user's editing flow (loading a saved canvas,
+  // resuming a draft on app start, importing a zip). The autosave
+  // hook watches this counter so it can resync its diff baseline
+  // *without* flushing the just-loaded state back to the backend
+  // — otherwise opening a saved canvas would immediately create a
+  // temp draft of itself.
+  loadVersion: 0,
+
+  /**
+   * Replace the editable slice of state with a deserialised canvas
+   * read from the backend. Pass the partial returned by
+   * `deserializeCanvas`; this layer handles the bookkeeping
+   * (clearing temp/timestamp, bumping `loadVersion`, leaving
+   * navigator toggles like `autoSave` alone).
+   */
+  applyLoadedCanvas: (partial) =>
+    set((state) => ({
+      ...partial,
+      tempUuid: null,
+      lastSavedAt: null,
+      loadVersion: state.loadVersion + 1,
+    })),
+
   // ── View transitions ────────────────────────────────────────
 
   enterInterScenario: (scenarios) => {
