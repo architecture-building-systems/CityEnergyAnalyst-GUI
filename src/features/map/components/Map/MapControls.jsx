@@ -31,7 +31,7 @@ const ResetCameraButton = () => {
   // bounds effect inside `DeckGLMap` and triggers a fresh
   // `cameraForBounds` recompute + FlyTo transition against the
   // currently-rendered zone. This is robust whether `cameraOptions`
-  // was populated or had been nulled by a sibling map (Reports
+  // was populated or had been nulled by a sibling map (Canvas Builder
   // comparison view shares the singleton). Immediate pitch reset
   // gives the click instant feedback even while the bounds effect
   // is racing.
@@ -87,7 +87,7 @@ const ResetCompassButton = () => {
  *
  * `scenario` (optional) — when provided, `LayerToggle` and the
  * inputs query are scoped to that scenario instead of the active
- * one. Used by Reports so each column's map toolbar reads its own
+ * one. Used by the canvas so each column's map toolbar reads its own
  * scenario's geometry bundle. Main viewport passes nothing and
  * behaves exactly as before.
  */

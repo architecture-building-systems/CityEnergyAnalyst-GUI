@@ -113,7 +113,7 @@ const PlotEditModal = ({ open, plotConfig, onSave, onCancel }) => {
       style={{
         ...cardStyle,
         // Fade + ignore pointer events when closed; the grid column
-        // itself collapses to 0 in ReportsPage.
+        // itself collapses to 0 in CanvasPage.
         opacity: open ? 1 : 0,
         pointerEvents: open ? 'auto' : 'none',
       }}
@@ -148,7 +148,7 @@ const PlotEditModal = ({ open, plotConfig, onSave, onCancel }) => {
 };
 
 // Card chrome only — the open/close slide is handled by the parent
-// grid cell in ReportsPage. Shadow/radius/padding mirror ToolCard.jsx.
+// grid cell in CanvasPage. Shadow/radius/padding mirror ToolCard.jsx.
 const cardStyle = {
   width: '100%',
   height: '100%',

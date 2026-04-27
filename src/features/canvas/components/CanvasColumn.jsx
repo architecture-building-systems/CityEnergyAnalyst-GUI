@@ -21,14 +21,14 @@ import {
   DEFAULT_CARD_H,
   MAP_ANCHOR_W,
   MAP_ANCHOR_H,
-  useReportsStore,
-} from '../stores/reportsStore';
-import ReportMap from './ReportMap';
+  useCanvasStore,
+} from '../stores/canvasStore';
+import CanvasMap from './CanvasMap';
 import FeatureCardPlot from './FeatureCardPlot';
 import FeatureCardKpi from './FeatureCardKpi';
 import FeatureCardMap from './FeatureCardMap';
 import { PerimeterPlusButtons, computeExposure } from './PerimeterPlusButtons';
-import './ReportColumn.css';
+import './CanvasColumn.css';
 
 // Grid sizing. Fixed colWidth × ROW_HEIGHT × GRID_MARGIN gives the
 // map tile its 500×280px launch size at MAP_ANCHOR_W=6 / MAP_ANCHOR_H=5
@@ -138,7 +138,7 @@ function buildPlotMenuItems(onPick) {
  *   onPlotReady(plotId, div)  — y-axis alignment hook
  *   onAddColumn / addColumnTooltip — title-card "+" affordance
  */
-const ReportColumn = ({
+const CanvasColumn = ({
   columnDef,
   cards = [],
   style,
@@ -157,7 +157,7 @@ const ReportColumn = ({
   addColumnDisabled = false,
 }) => {
   const project = useProjectStore((s) => s.project);
-  const exportMode = useReportsStore((s) => s.exportMode);
+  const exportMode = useCanvasStore((s) => s.exportMode);
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
@@ -418,7 +418,7 @@ const ReportColumn = ({
 
       <div style={{ ...gridWrapperStyle, width: gridWidthPx }}>
         <GridLayout
-          className="cea-report-grid"
+          className="cea-canvas-grid"
           layout={layout}
           width={gridWidthPx}
           // react-grid-layout v2 requires sizing knobs nested in
@@ -445,7 +445,7 @@ const ReportColumn = ({
           onLayoutChange={handleLayoutChange}
         >
           {/* ── Map tile ─────────────────────────────────────── */}
-          <div key="MAP" style={mapTileStyle} className="cea-report-tile">
+          <div key="MAP" style={mapTileStyle} className="cea-canvas-tile">
             {/* Top grip is the primary tile's drag handle — hidden
                 in export view since the grid is frozen anyway. */}
             {!exportMode && (
@@ -458,7 +458,7 @@ const ReportColumn = ({
               </div>
             )}
             <div style={mapFillStyle}>
-              <ReportMap
+              <CanvasMap
                 project={project}
                 scenario={scenario}
                 showToolbar={!exportMode}
@@ -477,7 +477,7 @@ const ReportColumn = ({
 
           {/* ── Feature cards ────────────────────────────────── */}
           {cards.map((card) => (
-            <div key={card.id} style={tileStyle} className="cea-report-tile">
+            <div key={card.id} style={tileStyle} className="cea-canvas-tile">
               {card.type === 'kpi' ? (
                 <FeatureCardKpi
                   card={card}
@@ -657,4 +657,4 @@ const HIDDEN_MAP_LAYERS = new Set([
   'pathway-emission-timeline',
 ]);
 
-export default ReportColumn;
+export default CanvasColumn;

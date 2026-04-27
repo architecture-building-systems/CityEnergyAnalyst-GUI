@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
 import { InputEditorIcon, BinAnimationIcon } from 'assets/icons';
 
-import ReportPlot from './ReportPlot';
-import { useReportsStore } from '../stores/reportsStore';
+import CanvasPlot from './CanvasPlot';
+import { useCanvasStore } from '../stores/canvasStore';
 
 /**
  * A single plot slot within a FeatureCard. Edit / Delete buttons sit
@@ -17,12 +17,12 @@ const PlotSlotCard = ({
   onPlotReady,
   onNaturalHeight,
 }) => {
-  // Title lifted out of the Plotly figure by ReportPlot — shown on
+  // Title lifted out of the Plotly figure by CanvasPlot — shown on
   // the controls row instead of inside the chart canvas.
   const [caption, setCaption] = useState('');
 
-  // Hide the per-plot Edit / Delete trio in Reports' Export View.
-  const exportMode = useReportsStore((s) => s.exportMode);
+  // Hide the per-plot Edit / Delete trio in Canvas Builder's Export View.
+  const exportMode = useCanvasStore((s) => s.exportMode);
 
   // Single what-if pick → append `| {name}` to the title. Multi-pick
   // stacks multiple figures with their own labels, so a single
@@ -115,7 +115,7 @@ const PlotSlotCard = ({
           </div>
         )}
       </div>
-      <ReportPlot
+      <CanvasPlot
         scenario={scenario}
         plotConfig={plotConfig}
         onPlotReady={onPlotReady}
@@ -126,7 +126,7 @@ const PlotSlotCard = ({
   );
 };
 
-// `flex: 1` + `minHeight: 0` lets the inner ReportPlot shrink when
+// `flex: 1` + `minHeight: 0` lets the inner CanvasPlot shrink when
 // the user drags the card shorter. Vertical spacing between slots
 // is owned by `plotsSectionStyle.gap` in FeatureCard.
 const slotStyle = {

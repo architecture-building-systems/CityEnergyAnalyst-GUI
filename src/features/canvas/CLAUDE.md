@@ -1,4 +1,4 @@
-# Reports Feature
+# Canvas Builder
 
 Side-by-side comparison dashboard. Three comparison modes (inter-scenario,
 inter-whatif, inter-feature), a Zustand store for view + card state, a
@@ -6,19 +6,19 @@ inter-whatif, inter-feature), a Zustand store for view + card state, a
 charts with optional y-axis alignment across columns sharing a slot id.
 
 ## Main API
-- `useReportsStore()` - View, columns, and card CRUD.
+- `useCanvasStore()` - View, columns, and card CRUD.
 - `useFetchScenarios(project)` - Sibling scenario names.
 - `useFetchWhatifs(project, scenario)` - What-if names under a scenario.
 - `useFetchFeatures()` - Available plot features for `FeaturePicker`.
 - `useFetchSummary(project, scenario, feature, whatif?)` - KPI strip
   payload.
 - `useFetchCustomPlot(plotConfig, scenario)` - Plotly figure HTML; the
-  only fetcher used at render time (every Reports plot has a script).
+  only fetcher used at render time (every canvas plot has a script).
 - `useFetchToolParams(script, scenario)` - Plot-tool parameter schema.
 - `useYAxisAlignment(enabled, numColumns)` - Post-render Plotly hook
   that unifies y-axis range across columns sharing a slot id.
-- `ReportsPage` - Top-level page; routes between `LaunchView` and
-  `ComparisonView` based on `useReportsStore.view`.
+- `CanvasPage` - Top-level page; routes between `LaunchView` and
+  `ComparisonView` based on `useCanvasStore.view`.
 
 ## Views & cards
 
@@ -41,7 +41,7 @@ Card {
 | `map`   | `FeatureCardMap`    | Mirrors the column's primary map widget       |
 
 Card positions are sparse 2D grid coordinates in `react-grid-layout`
-units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `ReportColumn`). The column's
+units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `CanvasColumn`). The column's
 primary map is a virtual tile pinned at `(0, 0)`; feature cards never
 occupy that slot.
 
@@ -54,7 +54,7 @@ occupy that slot.
 
 ## Key Patterns
 
-### DO: Dispatch on `card.type` in `ReportColumn`
+### DO: Dispatch on `card.type` in `CanvasColumn`
 ```jsx
 {card.type === 'kpi' ? (
   <FeatureCardKpi card={card} ... />
@@ -109,7 +109,7 @@ onApplyLayouts(updates)`.
 The primary map's launch footprint is exactly 6×5 grid units, working
 out to 500×280 px at the configured `COL_WIDTH_PX` (70) /
 `ROW_HEIGHT_PX` (40) / `GRID_MARGIN` ([16, 20]). The same
-`MAP_ANCHOR_W/H` constants are exported from `reportsStore.js` so the
+`MAP_ANCHOR_W/H` constants are exported from `canvasStore.js` so the
 "insert next to MAP" anchor logic in `LaunchView.insertCard` and the
 store's `insertCardInto` agree with the column's grid math.
 
@@ -137,29 +137,29 @@ transform and the transition so deck.gl sees the final tile size on
 first measurement.
 
 ### DO: Render the map toolbar with inline-styled buttons, not `MapControls`
-`ReportMap` defines `InlineLayerToggle` / `InlineExtrudeButton` /
+`CanvasMap` defines `InlineLayerToggle` / `InlineExtrudeButton` /
 `InlineResetCameraButton` / `InlineResetCompassButton` locally with
 fully explicit inline styles. Reusing the main viewport's `MapControls`
 left first-paint races where `Toolbar.css`'s 40×40 / 8 px-padded
-defaults beat the Reports-scoped overrides and the icons would land in
+defaults beat the Canvas Builder-scoped overrides and the icons would land in
 the NW of the frame until a later layout pass settled. Inline styles
 on a unique wrapper make the cascade irrelevant.
 
-### DO: Initialise layer visibility + colour mode in `ReportMap`
-`useMapStore` is a singleton shared with the main viewport. When Reports
+### DO: Initialise layer visibility + colour mode in `CanvasMap`
+`useMapStore` is a singleton shared with the main viewport. When Canvas Builder
 is the entry point, no other component has flipped layer visibility on
-yet — so `ReportMap` itself runs the first-load init (visibility = true
+yet — so `CanvasMap` itself runs the first-load init (visibility = true
 for every key in `data`, colour mode = CONSTRUCTION_STANDARD) on its
 own first render. Skip these and the toolbar appears but the map stays
 blank.
 
 ### DO: Always seed plots with a `plotConfig.script`
 Every plot on the canvas has a script; `useFetchCustomPlot` is the only
-path. The legacy `useFetchReportPlot` (feature-based) was removed
+path. The legacy `useFetchCanvasPlot` (feature-based) was removed
 because no UI path could reach it. Adding a plot always opens
 `PlotEditModal`, which never returns without a populated `plotConfig`.
 
-### DO: Render Map cards with the same `<ReportMap>` widget as the primary tile
+### DO: Render Map cards with the same `<CanvasMap>` widget as the primary tile
 ```jsx
 const FeatureCardMap = ({ card, ... }) => {
   const [store] = useState(() => createMapInstanceStore({ category, layer }));
@@ -167,7 +167,7 @@ const FeatureCardMap = ({ card, ... }) => {
   return (
     <MapInstanceContext.Provider value={store}>
       <FeatureCardShell ...>
-        <ReportMap project={project} scenario={scenario} />
+        <CanvasMap project={project} scenario={scenario} />
         <Legend style={legendOverrideStyle}
                 extras={<LegendFilterRow layers={[layerInfo]} />} />
       </FeatureCardShell>
@@ -187,40 +187,40 @@ self-contained "map + legend" tile. Each card owns a per-card
   `mapLabels`, `colorMode`, `filters`.
 
 Layer-rendering hooks read per-card whenever a provider is in scope.
-View-state hooks honour the `Sync Maps` toggle on `reportsStore`:
+View-state hooks honour the `Sync Maps` toggle on `canvasStore`:
 `mapsLinked === true` → singleton (overview map drives all cards);
 `mapsLinked === false` + provider → per-card. Outside any provider
 (main viewport, primary overview tile) every scoped hook falls back
 to the singleton.
 
 ### DO: Hide FeatureCardMap toolbars when `mapsLinked` is on
-`ReportMap` accepts `showToolbar` (default `true`). The primary
+`CanvasMap` accepts `showToolbar` (default `true`). The primary
 overview tile always renders the 4-button toolbar; FeatureCardMaps
 pass `showToolbar={!mapsLinked && !exportMode}` so the toolbar
 hides whenever sync is on or Export View is on.
 
 ### DO: Strip every editing affordance under `exportMode`
-`reportsStore.exportMode` (driven by the Navigator's "Export View"
+`canvasStore.exportMode` (driven by the Navigator's "Export View"
 toggle) is the single switch that turns the canvas into a clean
 snapshot surface. Each editing control reads it directly and renders
 nothing when on:
 - `FeatureCardShell` — Edit / Delete buttons; drops the
   `cea-card-drag-handle` class + grab cursor; suppresses the
   `editing` purple stroke.
-- `ReportColumn` — both `<PerimeterPlusButtons>` (primary tile +
+- `CanvasColumn` — both `<PerimeterPlusButtons>` (primary tile +
   feature cards), the primary map's drag-grip strip, and
   `isDraggable` / `isResizable` on every layout item.
-- `ReportMap` — toolbar via `showToolbar` (gated by Export View).
+- `CanvasMap` — toolbar via `showToolbar` (gated by Export View).
 - `Legend.ColourRampLegend` — range-mode `<Select>` row.
 - `Legend.LegendFilterRow` — scale / radius numeric inputs (returns
-  `null`). Gated via `useReportsExportMode()` from `mapInstance`,
+  `null`). Gated via `useCanvasExportMode()` from `mapInstance`,
   which also requires a `MapInstanceContext` provider so the main
   viewport's `Legend` is unaffected.
 - `FeatureCardPlot` — "Add a plot" pill.
 - `PlotSlotCard` — per-plot Edit / Delete trio.
-- `ComparisonView` / `ReportColumn` — the column-add `+` buttons.
+- `ComparisonView` / `CanvasColumn` — the column-add `+` buttons.
 
-`ReportsPage` subscribes to the store and closes the plot drawer +
+`CanvasPage` subscribes to the store and closes the plot drawer +
 map-card bottom on the false → true transition so any open editing
 surface vanishes the moment the toggle flips on.
 
@@ -245,9 +245,9 @@ total / period range modes.
 ### DO: Auto-grow Plot cards to fit chart natural heights
 ```jsx
 // FeatureCardPlot accumulates per-plot natural heights reported by
-// ReportPlot's `onNaturalHeight(heightPx)` callback, sums + chrome,
+// CanvasPlot's `onNaturalHeight(heightPx)` callback, sums + chrome,
 // reports upward as `onPreferredHeight(cardId, totalPx)`.
-// ReportColumn keeps a Map<cardId, lastReported> so it grows whenever
+// CanvasColumn keeps a Map<cardId, lastReported> so it grows whenever
 // a fresh report exceeds the previous, never on equal/smaller reports
 // (so user-driven shrinks aren't undone by re-renders).
 ```
@@ -257,7 +257,7 @@ inside whatever the user has set.
 
 ### DO: Fit Plotly figures to their container on resize
 ```jsx
-// ReportPlot — ResizeObserver skips its first fire (initial mount),
+// CanvasPlot — ResizeObserver skips its first fire (initial mount),
 // then on every later fire calls `fitPlotToParent` per
 // `.plotly-graph-div`: clears inline width/height, calls
 // `Plotly.relayout({ width, height })` with the parent's measured
@@ -270,7 +270,7 @@ is what lets the auto-grow request land before the chart gets crammed
 into the default-size card.
 
 ### DO: Open `MapLayerProperties` at the bottom for both Plot and Map flows
-`ReportsPage` carries two parallel switches: `drawer` (plot-tool drawer
+`CanvasPage` carries two parallel switches: `drawer` (plot-tool drawer
 open) and `mapBottomOpen` (map-card flow). Either condition opens the
 bottom row hosting `MapLayerPropertiesCard`. Plot edit pushes the
 singleton via `PlotEditModal`'s `scriptToMapLayer` →
@@ -290,7 +290,7 @@ const canvasStyle = {
 ```
 Right/bottom padding is sized so the absolutely-positioned `+` buttons
 hanging off the map's edges don't touch the canvas border. `fit-content`
-stops `ReportsPage`'s grid cell from stretching the canvas to full row
+stops `CanvasPage`'s grid cell from stretching the canvas to full row
 height.
 
 ### DO: Sticky title row so headers stay visible on scroll
@@ -329,7 +329,7 @@ Cramped slivers and fully-blocked edges hide the button outright.
 <PlotTool key={selectedScript} script={selectedScript} onRunOverride={...} />
 ```
 `<Tool>` renders the same header, parameter list, and Run button as
-the main viewport's tool card. Reports overrides Run via
+the main viewport's tool card. Canvas Builder overrides Run via
 `onRunOverride` — when present, `ToolFormButtons.runScript` calls it
 with validated form values instead of creating a job, and the Save /
 Reset buttons hide. Picker phase uses `<PlotChoices>` for visual
@@ -358,7 +358,7 @@ existing group surfaces it automatically — no parallel feature→plots
 dictionary to maintain.
 
 ### DO: Stage plot configs — commit only on Run
-`ReportsPage` owns drawer state. Views call
+`CanvasPage` owns drawer state. Views call
 `onOpenDrawer({ plotConfig, onSave })` with an `onSave` closure that
 captures their local state, so the page doesn't need to know which
 view owns what. The slot is only inserted when `onSave` fires (i.e.
@@ -447,11 +447,11 @@ comparison view is entered. Promoting its state would create a second
 source of truth for card config that the comparison views never read.
 
 ## Related Files
-- `stores/reportsStore.js` - View state machine, card CRUD, default
+- `stores/canvasStore.js` - View state machine, card CRUD, default
   card / map-anchor constants.
-- `hooks/useReportsData.js` - React Query wrappers for `/api/reports/*`.
+- `hooks/useCanvasData.js` - React Query wrappers for `/api/reports/*`.
 - `hooks/useYAxisAlignment.js` - Debounced Plotly y-axis unifier.
-- `components/ReportsPage.jsx` - Top-level grid (nav + canvas + bottom
+- `components/CanvasPage.jsx` - Top-level grid (nav + canvas + bottom
   + plot tool); owns drawer + map-bottom state.
 - `components/NavigatorCard.jsx` - Top-bar navigator (Return, Start
   Over, mode label).
@@ -461,17 +461,17 @@ source of truth for card config that the comparison views never read.
   buttons; owns its own card list locally.
 - `components/ComparisonView.jsx` - Multi-column layout with
   per-column dividers and the "+ column" button.
-- `components/ReportColumn.jsx` - Column shell — sticky title row,
+- `components/CanvasColumn.jsx` - Column shell — sticky title row,
   then `<GridLayout>` containing the primary map tile and the
   card-type-dispatched FeatureCard variants. Owns the menu data
   (`buildSectionMenus`) consumed by the perimeter `+` buttons.
 - `components/PerimeterPlusButtons.jsx` - Perimeter `+` affordance
   + animated icon-panel expansion (Map / Plot / KPI sub-Dropdowns)
-  + edge-exposure geometry helpers. Lives next to `ReportColumn`
+  + edge-exposure geometry helpers. Lives next to `CanvasColumn`
   but isolated from the grid logic.
 - `components/PerimeterPlusButtons.css` - Expand/collapse keyframes
   for the icon-panel cascade.
-- `components/ReportMap.jsx` - Per-column map tile (shared scenario
+- `components/CanvasMap.jsx` - Per-column map tile (shared scenario
   data via `useInputs`) with an inline-rendered toolbar.
 - `components/featureCardCommon.jsx` - `FeatureCardShell` (shared
   chrome) + `findFamilyForFeature` + shared styles.
@@ -486,8 +486,8 @@ source of truth for card config that the comparison views never read.
   scoped hooks (with singleton fallback), and the card-store
   registry consumed by `BottomCard`.
 - `components/PlotSlotCard.jsx` - One plot's caption + Edit / Delete
-  trio + the `<ReportPlot>` itself.
-- `components/ReportPlot.jsx` - Fetches custom-plot HTML and runs
+  trio + the `<CanvasPlot>` itself.
+- `components/CanvasPlot.jsx` - Fetches custom-plot HTML and runs
   the embedded Plotly scripts; lifts the chart title for the slot
   caption.
 - `components/PlotEditModal.jsx` - Drawer card: PlotChoices picker

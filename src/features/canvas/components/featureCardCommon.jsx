@@ -2,7 +2,7 @@ import { Button, Popconfirm, Tooltip } from 'antd';
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 
 import { PLOT_GROUPS } from 'features/plots/constants';
-import { useReportsStore } from '../stores/reportsStore';
+import { useCanvasStore } from '../stores/canvasStore';
 
 /**
  * Walk PLOT_GROUPS to find the group/subgroup that owns a given
@@ -49,7 +49,7 @@ export const FeatureCardShell = ({
   editing = false,
   children,
 }) => {
-  const exportMode = useReportsStore((s) => s.exportMode);
+  const exportMode = useCanvasStore((s) => s.exportMode);
   const showActions = (onEdit || onDeleteCard) && !exportMode;
   return (
     <div style={editing && !exportMode ? editingCardStyle : cardStyle}>

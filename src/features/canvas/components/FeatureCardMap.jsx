@@ -7,8 +7,8 @@ import Legend, {
 } from 'features/map/components/Map/Layers/Legend';
 import { iconMap } from 'features/plots/constants';
 
-import { useReportsStore } from '../stores/reportsStore';
-import ReportMap from './ReportMap';
+import { useCanvasStore } from '../stores/canvasStore';
+import CanvasMap from './CanvasMap';
 import { FeatureCardShell, sectionDividerStyle } from './featureCardCommon';
 import {
   MapInstanceContext,
@@ -42,7 +42,7 @@ const snapshotViewState = () => {
 };
 
 /**
- * Map-only feature card. Renders the column's `<ReportMap>` widget
+ * Map-only feature card. Renders the column's `<CanvasMap>` widget
  * (same DeckGL map + 4-button toolbar suite as the primary map tile)
  * bound to a specific category + layer. The properties form launches
  * at the page bottom — same pattern Plot cards use.
@@ -92,8 +92,8 @@ const FeatureCardMap = ({
   // Hide the in-card 4-button toolbar when "Sync Maps" is on (the
   // overview map is the sole driver) or when "Export View" is on
   // (no editing chrome anywhere).
-  const mapsLinked = useReportsStore((s) => s.mapsLinked);
-  const exportMode = useReportsStore((s) => s.exportMode);
+  const mapsLinked = useCanvasStore((s) => s.mapsLinked);
+  const exportMode = useCanvasStore((s) => s.exportMode);
 
   // On the linked → unlinked transition, refresh the per-card view-
   // state from the singleton snapshot so cards continue from the
@@ -124,7 +124,7 @@ const FeatureCardMap = ({
       >
         <div style={sectionDividerStyle} />
         <div style={mapBodyStyle}>
-          <ReportMap
+          <CanvasMap
             project={project}
             scenario={scenario}
             showToolbar={!mapsLinked && !exportMode}

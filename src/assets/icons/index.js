@@ -50,6 +50,7 @@ import TimelineIcon from './timeline.svg';
 import MapCardIcon from './map.svg';
 import KpiCardIcon from './kpi.svg';
 import PlotCardIcon from './plot.svg';
+import InsightIcon from './insight.svg';
 
 export {
   DataManagementIcon,
@@ -94,4 +95,5 @@ export {
   MapCardIcon,
   KpiCardIcon,
   PlotCardIcon,
+  InsightIcon,
 };

@@ -9,10 +9,10 @@ import { useProjectStore } from 'features/project/stores/projectStore';
  * Default: reads the currently active project+scenario from
  * `useProjectStore`. Pass `{ scenario, project }` to fetch a
  * non-active scenario WITHOUT switching the dashboard's active
- * config — used by Reports to render per-column maps.
+ * config — used by the canvas to render per-column maps.
  *
  * Each distinct (project, scenario) pair caches separately so
- * sibling Reports columns don't thrash each other's data.
+ * sibling Canvas Builder columns don't thrash each other's data.
  */
 export function useInputs(options) {
   const activeProject = useProjectStore((state) => state.name);

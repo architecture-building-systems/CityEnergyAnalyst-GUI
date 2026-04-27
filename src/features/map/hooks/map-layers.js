@@ -6,7 +6,7 @@ import {
   useScopedSetMapLayerLegends,
   useScopedSetMapLayers,
   useScopedSetRange,
-} from 'features/reports/components/mapInstance';
+} from 'features/canvas/components/mapInstance';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -76,7 +76,7 @@ export const useGetMapLayers = (
       setMapLayers(null);
       // Reset fetching too — otherwise the loading overlay stays stuck
       // when `parameters` momentarily becomes incomplete (e.g. while a
-      // Reports BottomCard switches its provider to a new card).
+      // Canvas BottomCard switches its provider to a new card).
       setFetching(false);
       return;
     }
@@ -98,7 +98,7 @@ export const useGetMapLayers = (
         if (!ignore) {
           setMapLayers(out);
           // `range` was historically set by `Legend`'s effect, but
-          // Reports hides the Legend — set it here so the colour
+          // Canvas Builder hides the Legend — set it here so the colour
           // gradient + elevation domain work whether or not the Legend
           // renders. Same first-key heuristic Legend uses.
           const rangeMap = data?.properties?.range;

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /**
- * Reports Mode store.
+ * Canvas Builder store.
  *
  * Views:
  *   'launch'          — entry point, single column + 3 action buttons
@@ -23,16 +23,16 @@ import { create } from 'zustand';
  * renders the card. Body fields are populated based on type.
  *
  * Card positions form a sparse 2D grid (sized in `react-grid-layout`
- * units; see `ReportColumn`). `addCard({ direction })` shifts existing
+ * units; see `CanvasColumn`). `addCard({ direction })` shifts existing
  * cards so the new card lands immediately next to its anchor.
  */
 
 let nextId = 1;
 const makeId = (prefix) => `${prefix}-${nextId++}`;
 
-// Default card size in grid units. See ReportColumn's <GridLayout>
+// Default card size in grid units. See CanvasColumn's <GridLayout>
 // config for the pixel mapping. Map's default footprint
-// (MAP_DEFAULT_W/H) lives in ReportColumn and is mirrored below as
+// (MAP_DEFAULT_W/H) lives in CanvasColumn and is mirrored below as
 // MAP_ANCHOR_W/H — used to place new cards adjacent to the map.
 export const DEFAULT_CARD_W = 6;
 export const DEFAULT_CARD_H = 10;
@@ -109,7 +109,7 @@ const insertCardInto = (
   ];
 };
 
-export const useReportsStore = create((set, get) => ({
+export const useCanvasStore = create((set, get) => ({
   // ── View state ──────────────────────────────────────────────
   view: 'launch',
   parentScenario: null,

@@ -24,7 +24,7 @@ import {
 import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
 
 /**
- * Map card for the Reports grid.
+ * Map card for the Canvas Builder grid.
  *
  * `useInputs({ scenario })` (no project) falls back to the active
  * project's `state.name` — same cache bucket the main viewport uses,
@@ -44,7 +44,7 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
  * for FeatureCardMaps when `mapsLinked` is on — the overview map
  * tile is the only one that drives the view in that mode.
  */
-const ReportMap = ({ project, scenario, showToolbar = true }) => {
+const CanvasMap = ({ project, scenario, showToolbar = true }) => {
   const resetCameraOptions = useScopedResetCameraOptions();
 
   const { data, isFetching, isError, refetch } = useInputs(
@@ -393,4 +393,4 @@ const controlsFrameStyle = {
   height: FRAME_HEIGHT,
 };
 
-export default ReportMap;
+export default CanvasMap;

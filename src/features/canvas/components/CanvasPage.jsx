@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useReportsStore } from '../stores/reportsStore';
+import { useCanvasStore } from '../stores/canvasStore';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
@@ -8,7 +8,7 @@ import ComparisonView from './ComparisonView';
 import PlotEditModal from './PlotEditModal';
 
 /**
- * Reports Mode — root page. 2-column grid:
+ * Canvas Builder — root page. 2-column grid:
  *
  *   ┌──────────────┬──────────┐
  *   │  Navigator   │          │
@@ -31,8 +31,8 @@ import PlotEditModal from './PlotEditModal';
  * conditions feed the same `bottomOpen` so the row animates the
  * same way regardless of which card type triggered it.
  */
-const ReportsPage = () => {
-  const view = useReportsStore((s) => s.view);
+const CanvasPage = () => {
+  const view = useCanvasStore((s) => s.view);
 
   // drawer = { plotConfig, onSave, cardId? } | null
   // `cardId` (when present) flags the FeatureCardPlot that owns the
@@ -65,7 +65,7 @@ const ReportsPage = () => {
   // at the false → true transition.
   useEffect(
     () =>
-      useReportsStore.subscribe((state, prev) => {
+      useCanvasStore.subscribe((state, prev) => {
         if (state.exportMode && !prev.exportMode) {
           setDrawer(null);
           setActiveMapCardId(null);
@@ -193,4 +193,4 @@ const plotToolCellStyle = {
   position: 'relative',
 };
 
-export default ReportsPage;
+export default CanvasPage;

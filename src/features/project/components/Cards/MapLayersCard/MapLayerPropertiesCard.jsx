@@ -10,7 +10,7 @@ import {
   useScopedSetMapLayerParameters,
   useScopedSetMapLayers,
   useScopedSelectedCategoryInfo,
-} from 'features/reports/components/mapInstance';
+} from 'features/canvas/components/mapInstance';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Alert, Select } from 'antd';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -75,11 +75,11 @@ const MapLayerPropertiesCard = ({
   hideLegend = false,
   // When `true`, skip the intra-category `LayerSelector` dropdown —
   // the caller is expected to set `selectedMapLayer` some other way
-  // (e.g. Reports drives it from the plot script being edited).
+  // (e.g. Canvas Builder drives it from the plot script being edited).
   hideLayerSelector = false,
   // Optional allowlist of parameter keys to render. Passed through to
   // ParameterSelectors; `null`/`undefined` = render everything (main
-  // viewport default). Reports uses this to hide anything the plot
+  // viewport default). Canvas Builder uses this to hide anything the plot
   // form already owns (period, data-column, etc.).
   allowParamKeys,
 }) => {

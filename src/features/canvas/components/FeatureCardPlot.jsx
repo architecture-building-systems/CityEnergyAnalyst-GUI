@@ -6,7 +6,7 @@ import { PLOT_LABELS, VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import PlotSlotCard from './PlotSlotCard';
-import { useReportsStore } from '../stores/reportsStore';
+import { useCanvasStore } from '../stores/canvasStore';
 import {
   FeatureCardShell,
   findFamilyForFeature,
@@ -62,8 +62,8 @@ const FeatureCardPlot = ({
   const quickPickOptions = getQuickPickOptions(feature);
   const family = useMemo(() => findFamilyForFeature(feature), [feature]);
 
-  // Hide the "Add a plot" pill in Reports' Export View.
-  const exportMode = useReportsStore((s) => s.exportMode);
+  // Hide the "Add a plot" pill in Canvas Builder's Export View.
+  const exportMode = useCanvasStore((s) => s.exportMode);
 
   return (
     <FeatureCardShell

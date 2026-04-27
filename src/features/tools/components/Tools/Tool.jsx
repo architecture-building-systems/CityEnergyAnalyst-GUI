@@ -38,7 +38,7 @@ const Tool = ({
   onRunOverride,
   // Optional list of parameter names to render as read-only in
   // addition to the pathway-viewer overrides Tool already computes
-  // internally. Main viewport passes nothing; Reports passes
+  // internally. Main viewport passes nothing; the canvas passes
   // `['what-if-name']` so users edit what-if from the bottom map
   // layer card, not from the plot form.
   extraReadonlyFields: externalReadonlyFields,

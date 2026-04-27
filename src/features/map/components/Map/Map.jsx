@@ -37,7 +37,7 @@ import {
   useScopedSetViewState,
   useScopedViewState,
   useScopedVisibility,
-} from 'features/reports/components/mapInstance';
+} from 'features/canvas/components/mapInstance';
 import { useCameraFitBounds } from 'features/map/hooks';
 
 import {
@@ -522,7 +522,7 @@ const useMapLayers = (onHover = () => {}) => {
  * DeckGL map.
  *
  * `interactive` (default: true) — set to false to mount the map in a
- * read-only context (e.g. the Reports comparison view). When false,
+ * read-only context (e.g. the canvas comparison view). When false,
  * building clicks no longer mutate `inputEditorStore`/
  * `buildingSelectionStore`, and tooltip info-panels still work
  * (hover is non-destructive). Everything else — camera controls,
@@ -610,7 +610,7 @@ const DeckGLMap = ({ data, colors, interactive = true }) => {
     // When `interactive` is false, building clicks are a no-op —
     // they shouldn't mutate the input-editor selection or building-
     // selection stores (both global singletons that would bleed from
-    // a Reports column into the main viewport).
+    // a Canvas Builder column into the main viewport).
     const onClick = !interactive
       ? undefined
       : ({ object, layer }, event) => {

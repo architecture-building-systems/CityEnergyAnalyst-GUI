@@ -6,7 +6,7 @@ import InfoTooltip from 'components/InfoTooltip';
  * Shows a color swatch and label for each unique category.
  *
  * `style` is merged on top of the defaults so callers can override
- * width / chrome / spacing — e.g. Reports embeds this legend inline
+ * width / chrome / spacing — e.g. Canvas Builder embeds this legend inline
  * under the column's overview map and drops the floating-card chrome.
  */
 const ConstructionStandardLegend = ({ style }) => {

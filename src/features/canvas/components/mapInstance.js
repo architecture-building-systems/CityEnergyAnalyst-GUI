@@ -8,10 +8,10 @@ import {
   useMapCategoryStore,
 } from 'features/project/components/Cards/MapLayersCard/store';
 
-import { useReportsStore } from '../stores/reportsStore';
+import { useCanvasStore } from '../stores/canvasStore';
 
 /**
- * Per-card map state for Reports' `FeatureCardMap`.
+ * Per-card map state for Canvas Builder's `FeatureCardMap`.
  *
  * Two slices on the per-card zustand store:
  *   1. **Layer-rendering** (always per-card): `category`,
@@ -196,7 +196,7 @@ export const useScopedSetMapLayerLegends = () => {
 // viewport, primary tile) → singleton, just like the data hooks.
 
 const makeScopedViewStateHook = (key) => () => {
-  const linked = useReportsStore((s) => s.mapsLinked);
+  const linked = useCanvasStore((s) => s.mapsLinked);
   const ctx = useContext(MapInstanceContext);
   const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.[key]);
   const fromSingleton = useMapStore((s) => s[key]);
@@ -243,14 +243,14 @@ export const useScopedSetActiveCategory = () => {
 
 /**
  * `true` only when (a) we're rendered inside a `MapInstanceContext`
- * provider (i.e. a Reports `FeatureCardMap` subtree) and (b) the
- * Reports "Export View" toggle is on. Lets shared components like
- * `Legend` strip their editing chrome in Reports' export mode while
+ * provider (i.e. a canvas `FeatureCardMap` subtree) and (b) the
+ * Canvas Builder "Export View" toggle is on. Lets shared components like
+ * `Legend` strip their editing chrome in Canvas Builder's export mode while
  * leaving the main viewport untouched.
  */
-export const useReportsExportMode = () => {
+export const useCanvasExportMode = () => {
   const ctx = useContext(MapInstanceContext);
-  const exportMode = useReportsStore((s) => s.exportMode);
+  const exportMode = useCanvasStore((s) => s.exportMode);
   return ctx != null && exportMode;
 };
 
@@ -272,7 +272,7 @@ export const useScopedSelectedCategoryInfo = () => {
 //
 // `FeatureCardMap` publishes its store under `card.id` so the
 // page-level `BottomCard` can look it up by the `activeMapCardId`
-// it gets from `ReportsPage`. Backed by a zustand store so
+// it gets from `CanvasPage`. Backed by a zustand store so
 // subscribers re-render when a card (un)registers.
 
 const useCardStoresRegistry = create(() => ({}));

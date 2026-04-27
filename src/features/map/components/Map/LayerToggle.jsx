@@ -254,7 +254,7 @@ const LayerToggleRadioControlled = ({ label, checked, onChange }) => {
  * Visibility state still lives on the shared `useMapStore` singleton
  * — toggling here does leak across siblings + main viewport. That
  * matches the Path-C tradeoff already accepted for
- * `MapLayerPropertiesCard` in Reports.
+ * `MapLayerPropertiesCard` in Canvas Builder.
  */
 const LayerToggle = ({ scenario }) => {
   const inputsOpts = scenario ? { scenario } : undefined;

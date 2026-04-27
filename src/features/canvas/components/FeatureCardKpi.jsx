@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useFetchSummary } from '../hooks/useReportsData';
+import { useFetchSummary } from '../hooks/useCanvasData';
 import KpiStrip from './KpiStrip';
 import {
   FeatureCardShell,

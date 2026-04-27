@@ -4,7 +4,7 @@
  * rules only customise the cursor, resize handle, and ghost
  * styling so tiles read like the rest of the app. */
 
-.cea-report-grid {
+.cea-canvas-grid {
   /* The library renders an absolute-positioned child per tile and
    * sizes the outer grid container to fit them all. Ensure the
    * canvas above has enough padding to contain absolutely-placed
@@ -14,24 +14,24 @@
 
 /* Default cursor cue — entire tile is draggable except where
  * `draggableCancel` matches (buttons, inputs, `.cea-no-drag`). */
-.cea-report-tile {
+.cea-canvas-tile {
   cursor: grab;
 }
-.cea-report-tile:active {
+.cea-canvas-tile:active {
   cursor: grabbing;
 }
 
 /* Interactive bits inside a tile should NOT show the drag cursor. */
-.cea-report-tile button,
-.cea-report-tile input,
-.cea-report-tile select,
-.cea-report-tile textarea,
-.cea-report-tile .cea-no-drag {
+.cea-canvas-tile button,
+.cea-canvas-tile input,
+.cea-canvas-tile select,
+.cea-canvas-tile textarea,
+.cea-canvas-tile .cea-no-drag {
   cursor: initial;
 }
 
 /* Ghost placeholder shown while dragging — translucent blue block. */
-.cea-report-grid .react-grid-placeholder {
+.cea-canvas-grid .react-grid-placeholder {
   background: rgba(72, 171, 224, 0.15) !important;
   border: 2px dashed #48abe0 !important;
   border-radius: 12px !important;
@@ -40,11 +40,11 @@
 }
 
 /* Make the resize handle more visible than the library default. */
-.cea-report-grid .react-resizable-handle {
+.cea-canvas-grid .react-resizable-handle {
   width: 16px;
   height: 16px;
   opacity: 0.6;
 }
-.cea-report-grid .react-resizable-handle:hover {
+.cea-canvas-grid .react-resizable-handle:hover {
   opacity: 1;
 }

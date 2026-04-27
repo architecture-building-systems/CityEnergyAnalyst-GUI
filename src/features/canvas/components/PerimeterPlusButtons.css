@@ -26,18 +26,18 @@
     transform: translateX(0) scale(1);
   }
 }
-.cea-report-expand-item-down {
+.cea-canvas-expand-item-down {
   animation: cea-report-expand-in-down 180ms ease-out backwards;
 }
-.cea-report-expand-item-right {
+.cea-canvas-expand-item-right {
   animation: cea-report-expand-in-right 180ms ease-out backwards;
 }
-.cea-report-expand-item-down:nth-child(2),
-.cea-report-expand-item-right:nth-child(2) {
+.cea-canvas-expand-item-down:nth-child(2),
+.cea-canvas-expand-item-right:nth-child(2) {
   animation-delay: 60ms;
 }
-.cea-report-expand-item-down:nth-child(3),
-.cea-report-expand-item-right:nth-child(3) {
+.cea-canvas-expand-item-down:nth-child(3),
+.cea-canvas-expand-item-right:nth-child(3) {
   animation-delay: 120ms;
 }
 
@@ -72,18 +72,18 @@
     transform: translateX(-8px) scale(0.92);
   }
 }
-.cea-report-collapse-item-down {
+.cea-canvas-collapse-item-down {
   animation: cea-report-collapse-out-down 180ms ease-in forwards;
 }
-.cea-report-collapse-item-right {
+.cea-canvas-collapse-item-right {
   animation: cea-report-collapse-out-right 180ms ease-in forwards;
 }
-.cea-report-collapse-item-down:nth-child(2),
-.cea-report-collapse-item-right:nth-child(2) {
+.cea-canvas-collapse-item-down:nth-child(2),
+.cea-canvas-collapse-item-right:nth-child(2) {
   animation-delay: 60ms;
 }
-.cea-report-collapse-item-down:nth-child(1),
-.cea-report-collapse-item-right:nth-child(1) {
+.cea-canvas-collapse-item-down:nth-child(1),
+.cea-canvas-collapse-item-right:nth-child(1) {
   animation-delay: 120ms;
 }
 
@@ -91,7 +91,7 @@
  * pill doesn't pop in abruptly when the panel finishes retracting.
  * Same animation runs on first mount; it's subtle enough not to be
  * distracting. */
-@keyframes cea-report-plus-fade-in {
+@keyframes cea-canvas-plus-fade-in {
   from {
     opacity: 0;
     transform: scale(0.85);
@@ -101,8 +101,8 @@
     transform: scale(1);
   }
 }
-.cea-report-plus-fade-in {
-  animation: cea-report-plus-fade-in 180ms ease-out backwards;
+.cea-canvas-plus-fade-in {
+  animation: cea-canvas-plus-fade-in 180ms ease-out backwards;
 }
 
 /* Launch-state guide: pulsing glow on the `+` pill so first-time
@@ -112,7 +112,7 @@
  * soon as the user adds a feature card — the parent drops
  * `cea-report-plus-breathing`. The same outline colour is added so
  * the rim picks up the highlight too. */
-@keyframes cea-report-plus-glow {
+@keyframes cea-canvas-plus-glow {
   0% {
     box-shadow: 0 0 2px 1px #ac6080;
   }
@@ -129,6 +129,6 @@
 .cea-report-plus-breathing {
   outline: 1px solid #ac6080;
   animation:
-    cea-report-plus-fade-in 180ms ease-out backwards,
-    cea-report-plus-glow 2s infinite;
+    cea-canvas-plus-fade-in 180ms ease-out backwards,
+    cea-canvas-plus-glow 2s infinite;
 }

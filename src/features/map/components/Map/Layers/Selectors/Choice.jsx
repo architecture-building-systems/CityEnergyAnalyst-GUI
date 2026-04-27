@@ -3,7 +3,7 @@ import { useMapStore } from 'features/map/stores/mapStore';
 import {
   useScopedMapLayerParameters,
   useScopedSelectedCategoryInfo,
-} from 'features/reports/components/mapInstance';
+} from 'features/canvas/components/mapInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';

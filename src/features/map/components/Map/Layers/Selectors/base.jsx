@@ -7,7 +7,7 @@ import {
   useScopedRange,
   useScopedSetFilters,
   useScopedSetMapLayerParameters,
-} from 'features/reports/components/mapInstance';
+} from 'features/canvas/components/mapInstance';
 import ChoiceSelector from './Choice';
 import { ConfigProvider } from 'antd';
 import { InputSelector, InputNumberSelector } from './Input';

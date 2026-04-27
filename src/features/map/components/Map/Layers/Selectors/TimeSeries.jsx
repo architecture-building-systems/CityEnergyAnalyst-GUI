@@ -1,5 +1,5 @@
 import { Button, Slider } from 'antd';
-import { useScopedSetMapLayerParameters } from 'features/reports/components/mapInstance';
+import { useScopedSetMapLayerParameters } from 'features/canvas/components/mapInstance';
 import { useMemo, useState } from 'react';
 
 const dayToDateTime = (dayOfYear, year = 2023) => {

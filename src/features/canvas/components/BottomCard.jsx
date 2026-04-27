@@ -3,7 +3,7 @@ import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersC
 import { MapInstanceContext, useMapCardStore } from './mapInstance';
 
 /**
- * Bottom card — hosts the map-layer properties form for Reports.
+ * Bottom card — hosts the map-layer properties form for Canvas Builder.
  *
  * Two entry points into the same form:
  *   - **Plot edit**: `PlotEditModal` sets the singleton's category
@@ -14,7 +14,7 @@ import { MapInstanceContext, useMapCardStore } from './mapInstance';
  *     wraps the form in `MapInstanceContext.Provider` so reads/writes
  *     route to that card's own state.
  *
- * `hideLayerSelector` / `hideLegend` strip Reports-irrelevant chrome.
+ * `hideLayerSelector` / `hideLegend` strip Canvas Builder-irrelevant chrome.
  * `showClose` is only set for the map-card path (the plot drawer has
  * its own close).
  */

@@ -1,11 +1,11 @@
 import Gradient from 'javascript-color-gradient';
 import {
-  useReportsExportMode,
+  useCanvasExportMode,
   useScopedFilters,
   useScopedRange,
   useScopedSetFilters,
   useScopedSetRange,
-} from 'features/reports/components/mapInstance';
+} from 'features/canvas/components/mapInstance';
 import { InputNumber, Select } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useMapLegends } from 'features/map/hooks/map-layers';
@@ -45,9 +45,9 @@ const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
 };
 
 export const LegendFilterRow = ({ layers }) => {
-  // Hidden in Reports' Export View — the scale/radius numeric inputs
+  // Hidden in Canvas Builder's Export View — the scale/radius numeric inputs
   // are an editing affordance.
-  const exportMode = useReportsExportMode();
+  const exportMode = useCanvasExportMode();
   const fields = useMemo(() => {
     if (!layers?.length) return [];
     const layer = layers[0];
@@ -113,10 +113,10 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
   const [selectedValue, setSelectedValue] = useState(null);
   const _range = useScopedRange();
   const setRange = useScopedSetRange();
-  // In Reports' Export View, hide the range-mode `<Select>` row —
+  // In Canvas Builder's Export View, hide the range-mode `<Select>` row —
   // colour ramp + min/max labels stay so the legend still reads as a
   // legend.
-  const exportMode = useReportsExportMode();
+  const exportMode = useCanvasExportMode();
 
   const keys = Object.keys(range ?? {});
   const value =
@@ -279,7 +279,7 @@ const CategoryLegend = ({ label, categories, range, info }) => {
 };
 
 // `style` is merged on top of the defaults so callers can override
-// width / chrome / spacing. Reports map cards stretch the legend
+// width / chrome / spacing. canvas map cards stretch the legend
 // full-width and drop the card chrome (shadow, background, padding)
 // so it reads as part of the surrounding `FeatureCardShell`.
 const Legend = ({ extras, style }) => {

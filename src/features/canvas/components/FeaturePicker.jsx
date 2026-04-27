@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Checkbox, Radio, Button, Spin } from 'antd';
 
-import { useFetchFeatures } from '../hooks/useReportsData';
+import { useFetchFeatures } from '../hooks/useCanvasData';
 
 /**
  * Modal for picking feature result sets.

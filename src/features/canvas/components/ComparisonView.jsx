@@ -3,10 +3,10 @@ import { Empty } from 'antd';
 import { CreateNewIcon } from 'assets/icons';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useReportsStore } from '../stores/reportsStore';
-import { useFetchScenarios, useFetchWhatifs } from '../hooks/useReportsData';
+import { useCanvasStore } from '../stores/canvasStore';
+import { useFetchScenarios, useFetchWhatifs } from '../hooks/useCanvasData';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
-import ReportColumn from './ReportColumn';
+import CanvasColumn from './CanvasColumn';
 import ScenarioPicker from './ScenarioPicker';
 import FeaturePicker from './FeaturePicker';
 
@@ -19,19 +19,19 @@ const ComparisonView = ({
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
-  const view = useReportsStore((s) => s.view);
-  const columns = useReportsStore((s) => s.columns);
-  const exportMode = useReportsStore((s) => s.exportMode);
-  const parentScenario = useReportsStore((s) => s.parentScenario);
-  const sharedCards = useReportsStore((s) => s.sharedCards);
-  const columnCards = useReportsStore((s) => s.columnCards);
-  const addColumn = useReportsStore((s) => s.addColumn);
-  const addCard = useReportsStore((s) => s.addCard);
-  const addPlot = useReportsStore((s) => s.addPlot);
-  const updatePlot = useReportsStore((s) => s.updatePlot);
-  const removePlot = useReportsStore((s) => s.removePlot);
-  const removeCard = useReportsStore((s) => s.removeCard);
-  const applyCardLayouts = useReportsStore((s) => s.applyCardLayouts);
+  const view = useCanvasStore((s) => s.view);
+  const columns = useCanvasStore((s) => s.columns);
+  const exportMode = useCanvasStore((s) => s.exportMode);
+  const parentScenario = useCanvasStore((s) => s.parentScenario);
+  const sharedCards = useCanvasStore((s) => s.sharedCards);
+  const columnCards = useCanvasStore((s) => s.columnCards);
+  const addColumn = useCanvasStore((s) => s.addColumn);
+  const addCard = useCanvasStore((s) => s.addCard);
+  const addPlot = useCanvasStore((s) => s.addPlot);
+  const updatePlot = useCanvasStore((s) => s.updatePlot);
+  const removePlot = useCanvasStore((s) => s.removePlot);
+  const removeCard = useCanvasStore((s) => s.removeCard);
+  const applyCardLayouts = useCanvasStore((s) => s.applyCardLayouts);
 
   const [addColumnOpen, setAddColumnOpen] = useState(false);
 
@@ -180,7 +180,7 @@ const ComparisonView = ({
                     i < columns.length - 1 ? '1px solid #e0e0e0' : 'none',
                 }}
               >
-                <ReportColumn
+                <CanvasColumn
                   columnDef={col}
                   cards={getCardsForColumn(i)}
                   onEditPlot={handleEditPlot(i)}
@@ -269,7 +269,7 @@ const canvasStyle = {
 // No `overflowX` here — that would create a horizontal scroll
 // context which intercepts sticky's scrolling-ancestor lookup and
 // breaks the title row's vertical pin. Horizontal overflow falls
-// through to ReportsPage's canvas cell (`overflow: auto`).
+// through to CanvasPage's canvas cell (`overflow: auto`).
 const columnsRowStyle = {
   display: 'flex',
 };

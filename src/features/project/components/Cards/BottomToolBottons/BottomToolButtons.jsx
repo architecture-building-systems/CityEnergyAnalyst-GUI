@@ -1,6 +1,7 @@
 import { Tooltip } from 'antd';
 import {
   DatabaseEditorIcon,
+  InsightIcon,
   ReportsIcon,
   InputEditorIcon,
   TimelineIcon,
@@ -12,8 +13,9 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { animated } from '@react-spring/web';
 
-// TODO: Remove this
-const TEMP_DISABLED = [];
+// Mark the entry as not yet wired; renders the button with a
+// "[Coming soon]" tooltip and no click handler.
+const TEMP_DISABLED = ['reports'];
 
 const BottomToolButtons = ({
   showTools,
@@ -48,10 +50,16 @@ const BottomToolButtons = ({
       active: pathwayPanelOpen,
     },
     {
+      id: 'canvas',
+      icon: InsightIcon,
+      title: 'Canvas Builder',
+      onClick: () => push(routes?.CANVAS),
+      hidden: !showTools,
+    },
+    {
       id: 'reports',
       icon: ReportsIcon,
-      title: 'Reports',
-      onClick: () => push(routes?.REPORTS),
+      title: 'Report Builder',
       hidden: !showTools,
     },
   ];
@@ -61,7 +69,7 @@ const BottomToolButtons = ({
       className="cea-overlay-card"
       style={{
         display: 'flex',
-        gap: 8,
+        gap: 5,
       }}
     >
       {items.map((item) => (
@@ -97,7 +105,7 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
             }}
           >
             <div>{`${title}`}</div>
-            <div>[Under development]</div>
+            <div>[Coming soon]</div>
           </div>
         }
         styles={{ body: { fontSize: 12 } }}

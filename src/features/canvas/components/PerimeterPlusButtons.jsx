@@ -213,7 +213,7 @@ const PlusButton = ({
       ) : (
         <div
           className={`cea-card-icon-button-container cea-no-drag ${
-            breathing ? 'cea-report-plus-breathing' : 'cea-report-plus-fade-in'
+            breathing ? 'cea-report-plus-breathing' : 'cea-canvas-plus-fade-in'
           }`}
           onMouseEnter={handleClosedMouseEnter}
           onMouseLeave={cancelOpenTimer}

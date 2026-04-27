@@ -3,10 +3,10 @@ import { Spin, Empty } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
 
-import { useFetchCustomPlot } from '../hooks/useReportsData';
+import { useFetchCustomPlot } from '../hooks/useCanvasData';
 
 /**
- * Renders a single Plotly plot. Every Reports plot has a script, so
+ * Renders a single Plotly plot. Every Canvas Builder plot has a script, so
  * we always fetch via POST /api/reports/plot-custom.
  *
  * `onCaption(text)`       — main title lifted from the figure.
@@ -15,7 +15,7 @@ import { useFetchCustomPlot } from '../hooks/useReportsData';
  *   it to auto-grow on first render; subsequent user-driven resizes
  *   flow back through the ResizeObserver below.
  */
-const ReportPlot = ({
+const CanvasPlot = ({
   scenario,
   plotConfig,
   onPlotReady,
@@ -90,7 +90,7 @@ const ReportPlot = ({
       runInline();
       // After newPlot, lift the main title out of the figure (the
       // backend embeds `<b>Title</b><br><sub>Subtitle</sub>`) and
-      // blank the in-chart title — Reports surfaces it as a caption
+      // blank the in-chart title — the canvas surfaces it as a caption
       // above the plot via `onCaption` instead.
       setTimeout(() => {
         if (cancelled || !containerRef.current) return;
@@ -324,4 +324,4 @@ function fitPlotToParent(div) {
   }
 }
 
-export default ReportPlot;
+export default CanvasPlot;

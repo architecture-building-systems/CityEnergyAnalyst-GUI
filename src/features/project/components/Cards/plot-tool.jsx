@@ -120,9 +120,9 @@ export const PlotTool = ({
   onPlotToolSelected,
   onRunOverride,
   // Passed straight through to Tool so callers can grey out specific
-  // form fields without PlotTool needing to know their names. Reports
+  // form fields without PlotTool needing to know their names. Canvas Builder
   // uses this to lock `what-if-name` since that field is driven from
-  // the Reports bottom card, not the plot form.
+  // the canvas bottom card, not the plot form.
   extraReadonlyFields,
 }) => {
   const [form] = Form.useForm();
@@ -428,7 +428,7 @@ export const PlotTool = ({
         // form to the backend defaults, otherwise these values get wiped
         // by `useFormReset`.
         onParametersLoaded={handleParametersLoaded}
-        // Forwarded to ToolFormButtons so Reports can intercept Run
+        // Forwarded to ToolFormButtons so Canvas Builder can intercept Run
         // (commit plot config to a card) without creating a job.
         onRunOverride={onRunOverride}
         extraReadonlyFields={extraReadonlyFields}

@@ -26,7 +26,7 @@ const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
 const OnboardingPage = lazy(() => import('components/OnboardingPage'));
-const Reports = lazy(() => import('features/reports/components/ReportsPage'));
+const Canvas = lazy(() => import('features/canvas/components/CanvasPage'));
 
 const HomePageContent = () => {
   const { data: userInfo, isLoading } = useUserQuery();
@@ -110,10 +110,10 @@ const HomePageContent = () => {
           }
         />
         <Route
-          path={routes.REPORTS}
+          path={routes.CANVAS}
           element={
             <Suspense fallback={<Loading />}>
-              {/* No outer padding here — ReportsPage owns its own
+              {/* No outer padding here — CanvasPage owns its own
                   12px padding, matching the main viewport overlay
                   (`Project.css:15`). Adding a second layer of padding
                   via this wrapper made cards sit way inside the
@@ -125,7 +125,7 @@ const HomePageContent = () => {
                   backgroundColor: '#D4DADC',
                 }}
               >
-                <Reports />
+                <Canvas />
               </div>
             </Suspense>
           }

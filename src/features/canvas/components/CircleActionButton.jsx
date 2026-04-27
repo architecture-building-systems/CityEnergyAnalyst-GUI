@@ -2,7 +2,7 @@ import { Tooltip } from 'antd';
 import { CreateNewIcon } from 'assets/icons';
 
 /**
- * Blue-circle + label button used across the Reports feature.
+ * Blue-circle + label button used across the Canvas Builder.
  * Matches the pathway palette (#1470AF primary blue) and uses the
  * project's custom CreateNewIcon rather than antd icons.
  *

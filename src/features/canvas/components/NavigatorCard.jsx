@@ -13,10 +13,10 @@ import { RefreshIcon } from 'assets/icons';
 import InfoTooltip from 'components/InfoTooltip';
 import useNavigationStore from 'stores/navigationStore';
 import routes from 'constants/routes.json';
-import { useReportsStore } from '../stores/reportsStore';
+import { useCanvasStore } from '../stores/canvasStore';
 
 /**
- * Navigator card — top strip of the Reports page.
+ * Navigator card — top strip of the Canvas Builder page.
  *
  * Mirrors the main viewport's black toolbar height (≈52px) but uses
  * a white background so it reads as a sibling to the canvas and plot
@@ -38,13 +38,13 @@ import { useReportsStore } from '../stores/reportsStore';
  */
 const NavigatorCard = () => {
   const { push } = useNavigationStore();
-  const view = useReportsStore((s) => s.view);
-  const columns = useReportsStore((s) => s.columns);
-  const startOver = useReportsStore((s) => s.startOver);
-  const mapsLinked = useReportsStore((s) => s.mapsLinked);
-  const setMapsLinked = useReportsStore((s) => s.setMapsLinked);
-  const exportMode = useReportsStore((s) => s.exportMode);
-  const setExportMode = useReportsStore((s) => s.setExportMode);
+  const view = useCanvasStore((s) => s.view);
+  const columns = useCanvasStore((s) => s.columns);
+  const startOver = useCanvasStore((s) => s.startOver);
+  const mapsLinked = useCanvasStore((s) => s.mapsLinked);
+  const setMapsLinked = useCanvasStore((s) => s.setMapsLinked);
+  const exportMode = useCanvasStore((s) => s.exportMode);
+  const setExportMode = useCanvasStore((s) => s.setExportMode);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -79,14 +79,14 @@ const NavigatorCard = () => {
           onChange={setMapsLinked}
           label="Sync Maps"
           ariaLabel="Sync map cards with overview"
-          tooltipKey="reports-sync-maps"
+          tooltipKey="canvas-sync-maps"
         />
         <NavigatorToggle
           checked={exportMode}
           onChange={setExportMode}
           label="Export View"
           ariaLabel="Hide editing controls for export"
-          tooltipKey="reports-export-view"
+          tooltipKey="canvas-export-view"
         />
       </Space>
 

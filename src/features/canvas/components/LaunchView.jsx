@@ -3,23 +3,23 @@ import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
-  useReportsStore,
+  useCanvasStore,
   DEFAULT_CARD_W,
   DEFAULT_CARD_H,
   MAP_ANCHOR_W,
   MAP_ANCHOR_H,
-} from '../stores/reportsStore';
-import { useFetchScenarios } from '../hooks/useReportsData';
-import ReportColumn from './ReportColumn';
+} from '../stores/canvasStore';
+import { useFetchScenarios } from '../hooks/useCanvasData';
+import CanvasColumn from './CanvasColumn';
 import ScenarioPicker from './ScenarioPicker';
 
 /**
- * Launch view — Reports Mode entry. State is local (not store-backed);
+ * Launch view — Canvas Builder entry. State is local (not store-backed);
  * the card shape matches the store (`{ id, type, row, col, w, h,
  * feature?, plots?, category?, layer? }`) so promoting a draft to a
  * comparison view is a straight assignment when the moment comes.
  *
- * Drawer + bottom-card state live in `ReportsPage`; `onOpenDrawer`
+ * Drawer + bottom-card state live in `CanvasPage`; `onOpenDrawer`
  * opens the plot-tool drawer (Plot cards), `onOpenMapBottom` opens
  * the `MapLayerPropertiesCard` row at the bottom (Map cards).
  */
@@ -32,7 +32,7 @@ const LaunchView = ({
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
-  const enterInterScenario = useReportsStore((s) => s.enterInterScenario);
+  const enterInterScenario = useCanvasStore((s) => s.enterInterScenario);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
 
@@ -258,7 +258,7 @@ const LaunchView = ({
   return (
     <>
       <div style={canvasStyle}>
-        <ReportColumn
+        <CanvasColumn
           columnDef={{ type: 'scenario', scenario }}
           cards={cards}
           onEditPlot={handleEditPlot}
@@ -299,7 +299,7 @@ function inferFeatureForTarget(cards, targetCardId) {
 
 // Right/bottom padding (72 px ≈ 40 px button overhang + 32 px
 // clearance) leaves breathing room past the `+` buttons hanging off
-// the map tile's edges. `fit-content` stops ReportsPage's grid cell
+// the map tile's edges. `fit-content` stops CanvasPage's grid cell
 // from stretching the canvas to full row height.
 const canvasStyle = {
   background: '#fff',

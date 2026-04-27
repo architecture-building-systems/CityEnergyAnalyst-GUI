@@ -6,7 +6,7 @@ import { useCallback, useRef } from 'react';
  *
  * Usage:
  *   const { handlePlotReady } = useYAxisAlignment(enabled);
- *   // Pass handlePlotReady to each ReportColumn as onPlotReady
+ *   // Pass handlePlotReady to each CanvasColumn as onPlotReady
  *
  * The hook groups divs by slotId (same row across columns) and, once
  * all columns have reported for a given slot, sets a unified y-range.

@@ -30,7 +30,7 @@ export const ToolFormButtons = ({
   // Optional Run handler. When provided, Run calls this with validated
   // form values instead of creating a job. Save Settings / Reset are
   // hidden because they wire to the tool-params backend, not the
-  // embedding flow. Used by Reports to commit a plot config to a slot.
+  // embedding flow. Used by the canvas to commit a plot config to a slot.
   onRunOverride,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
@@ -61,7 +61,7 @@ export const ToolFormButtons = ({
       return;
     }
 
-    // Embedding flow (e.g. Reports): caller owns the Run behaviour.
+    // Embedding flow (e.g. Canvas Builder): caller owns the Run behaviour.
     if (onRunOverride) {
       try {
         await onRunOverride(params);
