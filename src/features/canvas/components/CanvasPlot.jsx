@@ -185,6 +185,13 @@ const CanvasPlot = ({
         if (typeof h === 'number') naturalHeight += h;
         else if (stripLegend) naturalHeight += STRIPPED_DEFAULT_HEIGHT;
       });
+      // Some plots (comfort_chart) embed extra HTML beneath each
+      // figure — academic tables, captions — that the chart's own
+      // `layout.height` doesn't account for. Take the larger of
+      // the layout-sum and the chart-area's measured scrollHeight
+      // so trailing content stays inside the card.
+      const measured = chartAreaRef.current?.scrollHeight ?? 0;
+      naturalHeight = Math.max(naturalHeight, measured);
       if (naturalHeight > 0) onNaturalHeightRef.current?.(naturalHeight);
 
       // Schedule one explicit refit a moment later. By then React
