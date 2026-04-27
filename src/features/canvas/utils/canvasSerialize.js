@@ -18,6 +18,11 @@
  * canvas's view:
  *   - `launch` / `inter-scenario` / `inter-whatif` → `cards`
  *   - `inter-feature`                              → `column_cards`
+ *
+ * Launch view's `launchCards` slice maps to the same `cards` field
+ * on disk (single shared grid). The view name carried in
+ * `canvas.yml` tells the load path which store slice to populate
+ * back into.
  */
 
 const SCHEMA_VERSION = 1;
@@ -94,7 +99,13 @@ export function serializeCanvas(state) {
       });
     });
   } else {
-    (state.sharedCards || []).forEach((card) => {
+    // Launch / inter-scenario / inter-whatif all share the same
+    // single-grid shape on disk.
+    const sourceCards =
+      state.view === 'launch'
+        ? state.launchCards || []
+        : state.sharedCards || [];
+    sourceCards.forEach((card) => {
       layout.cards[card.id] = cardLayoutFromStore(card);
       featureCard.cards[card.id] = cardConfigFromStore(card);
     });
@@ -121,6 +132,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     mapsLinked: !!canvas.maps_linked,
     fixLayout: !!canvas.fix_layout,
     canvasName: canvas.name ?? null,
+    launchCards: [],
     sharedCards: [],
     columnCards: {},
   };
@@ -149,8 +161,13 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
       );
     });
   } else {
+    // Launch / inter-scenario / inter-whatif share the same single
+    // grid on disk; route into `launchCards` vs `sharedCards`
+    // based on the canvas's recorded view.
+    const targetSlice =
+      next.view === 'launch' ? next.launchCards : next.sharedCards;
     Object.entries(feature_card?.cards || {}).forEach(([id, cfg]) => {
-      next.sharedCards.push(buildCard(id, (layout?.cards || {})[id], cfg));
+      targetSlice.push(buildCard(id, (layout?.cards || {})[id], cfg));
     });
   }
 

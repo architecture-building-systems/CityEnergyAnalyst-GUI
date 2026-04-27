@@ -128,6 +128,13 @@ export const useCanvasStore = create((set, get) => ({
   parentScenario: null,
   columns: [],
 
+  // Launch view's draft card grid. Single column, owned by the
+  // store (rather than `LaunchView`'s local state) so the autosave
+  // hook can persist a draft before the user has even decided what
+  // comparison mode to enter. Promoted to `sharedCards` on
+  // `enterInterScenario` / `enterInterWhatif`, and to
+  // `columnCards[0]` on `enterInterFeature`.
+  launchCards: [],
   // Shared card grid (inter-scenario / inter-whatif).
   sharedCards: [],
   // Per-column card grids keyed by column index (inter-feature).
@@ -237,15 +244,23 @@ export const useCanvasStore = create((set, get) => ({
 
   // ── View transitions ────────────────────────────────────────
 
+  // The view-transition actions carry the user's launch-view draft
+  // forward into the chosen comparison mode, so cards built on the
+  // launch surface aren't lost when Add-scenarios-to-compare /
+  // Add-what-ifs / Add-features is clicked. Inter-feature dumps the
+  // draft into column 0 and leaves later columns empty (the
+  // frontend can offer a per-column clone affordance later if the
+  // UX wants identical layouts across columns).
   enterInterScenario: (scenarios) => {
     const columns = scenarios.map((s) => ({ type: 'scenario', scenario: s }));
-    set({
+    set((state) => ({
       view: 'inter-scenario',
       columns,
       parentScenario: null,
-      sharedCards: [],
+      sharedCards: state.launchCards,
       columnCards: {},
-    });
+      launchCards: [],
+    }));
   },
 
   enterInterWhatif: (parentScenario, whatifs) => {
@@ -254,13 +269,14 @@ export const useCanvasStore = create((set, get) => ({
       scenario: parentScenario,
       whatif: w,
     }));
-    set({
+    set((state) => ({
       view: 'inter-whatif',
       columns,
       parentScenario,
-      sharedCards: [],
+      sharedCards: state.launchCards,
       columnCards: {},
-    });
+      launchCards: [],
+    }));
   },
 
   enterInterFeature: (featureColumns) => {
@@ -269,31 +285,28 @@ export const useCanvasStore = create((set, get) => ({
       scenario: fc.scenario,
       feature: fc.feature,
     }));
-    const columnCards = {};
-    featureColumns.forEach((_, i) => {
-      columnCards[i] = [];
-    });
-    set({
-      view: 'inter-feature',
-      columns,
-      parentScenario: null,
-      sharedCards: [],
-      columnCards,
+    set((state) => {
+      const columnCards = {};
+      featureColumns.forEach((_, i) => {
+        columnCards[i] = i === 0 ? state.launchCards : [];
+      });
+      return {
+        view: 'inter-feature',
+        columns,
+        parentScenario: null,
+        sharedCards: [],
+        columnCards,
+        launchCards: [],
+      };
     });
   },
 
-  // `launchResetTick` bumps every time `startOver` runs so the
-  // `LaunchView` (which keeps its draft cards in local `useState`)
-  // can reset by re-mounting on this key. The store can't reach
-  // into LaunchView's local state directly, and putting launch
-  // cards in the store would create a second source of truth that
-  // comparison views never read.
-  launchResetTick: 0,
   startOver: () =>
-    set((state) => ({
+    set({
       view: 'launch',
       columns: [],
       parentScenario: null,
+      launchCards: [],
       sharedCards: [],
       columnCards: {},
       // Persistence state belongs to the discarded canvas; drop it
@@ -304,8 +317,7 @@ export const useCanvasStore = create((set, get) => ({
       tempUuid: null,
       canvasName: null,
       lastSavedAt: null,
-      launchResetTick: state.launchResetTick + 1,
-    })),
+    }),
 
   // ── Column management ───────────────────────────────────────
 
@@ -345,16 +357,25 @@ export const useCanvasStore = create((set, get) => ({
 
   // ── Card helpers ────────────────────────────────────────────
 
-  // Read the cards array for a given column (null for shared).
+  // Read the cards array for a given dispatch target. Three cases:
+  //   `'launch'` → the launch view's draft cards
+  //   `null`     → the shared grid (inter-scenario / inter-whatif)
+  //   number     → per-column grid (inter-feature)
+  // The 'launch' branch lets every existing card-mutating action
+  // (`addCard`, `removeCard`, `applyCardLayouts`, `addPlot`, …)
+  // operate on launch-view state without bespoke wiring.
   getCards: (columnIndex) => {
     const state = get();
+    if (columnIndex === 'launch') return state.launchCards;
     return columnIndex == null
       ? state.sharedCards
       : state.columnCards[columnIndex] || [];
   },
 
   setCards: (columnIndex, next) => {
-    if (columnIndex == null) {
+    if (columnIndex === 'launch') {
+      set({ launchCards: next });
+    } else if (columnIndex == null) {
       set({ sharedCards: next });
     } else {
       const { columnCards } = get();

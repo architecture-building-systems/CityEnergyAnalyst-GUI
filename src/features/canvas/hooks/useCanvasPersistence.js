@@ -13,12 +13,13 @@
  *
  * Activation rules:
  *   - `autoSave` toggle off → do nothing.
- *   - `view === 'launch'` → do nothing. The launch view's cards
- *     live in local React state today (LaunchView's `useState`),
- *     so they aren't part of the persistable surface yet. We'll
- *     fold those in once the launch view is moved into the store.
  *   - No project / scenario selected → do nothing.
  *   - Otherwise: every persistable change fires a 300 ms debounce.
+ *
+ * Launch view cards now live in the store (`launchCards`) so a
+ * draft canvas in the launch view persists too — the user can build
+ * cards before deciding which comparison mode to enter and the
+ * autosave hook captures them just like any other state.
  */
 
 import { useEffect, useRef } from 'react';
@@ -33,11 +34,12 @@ const DEBOUNCE_MS = 300;
 
 // Only changes to these slices should trigger an autosave flush.
 // Toggles like `autoSave` itself, and ephemeral session state
-// (`launchResetTick`, `lastSavedAt`, `tempUuid`) don't count.
+// (`lastSavedAt`, `tempUuid`) don't count.
 const PERSISTABLE_SELECTOR = (state) => ({
   view: state.view,
   parentScenario: state.parentScenario,
   columns: state.columns,
+  launchCards: state.launchCards,
   sharedCards: state.sharedCards,
   columnCards: state.columnCards,
   mapsLinked: state.mapsLinked,
@@ -73,14 +75,7 @@ export function useCanvasPersistence() {
         return;
       }
       const state = useCanvasStore.getState();
-      if (
-        !state.autoSave
-        || state.view === 'launch'
-        || !project
-        || !scenario
-      ) {
-        return;
-      }
+      if (!state.autoSave || !project || !scenario) return;
 
       inFlightRef.current = true;
       try {

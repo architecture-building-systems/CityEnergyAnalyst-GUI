@@ -1,27 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import {
-  useCanvasStore,
-  DEFAULT_CARD_W,
-  DEFAULT_CARD_H,
-  MAP_ANCHOR_W,
-  MAP_ANCHOR_H,
-} from '../stores/canvasStore';
+import { useCanvasStore } from '../stores/canvasStore';
 import { useFetchScenarios } from '../hooks/useCanvasData';
 import CanvasColumn from './CanvasColumn';
 import ScenarioPicker from './ScenarioPicker';
 
 /**
- * Launch view — Canvas Builder entry. State is local (not store-backed);
- * the card shape matches the store (`{ id, type, row, col, w, h,
- * feature?, plots?, category?, layer? }`) so promoting a draft to a
- * comparison view is a straight assignment when the moment comes.
+ * Launch view — Canvas Builder entry. Cards live in the store
+ * (`launchCards`) so the autosave hook can persist a draft canvas
+ * before the user has chosen a comparison mode. Switching into
+ * inter-scenario / inter-whatif promotes the launch cards into
+ * `sharedCards`; inter-feature drops them into `columnCards[0]`.
  *
  * Drawer + bottom-card state live in `CanvasPage`; `onOpenDrawer`
  * opens the plot-tool drawer (Plot cards), `onOpenMapBottom` opens
  * the `MapLayerPropertiesCard` row at the bottom (Map cards).
+ *
+ * The store's existing card-mutating actions (`addCard`,
+ * `removeCard`, `applyCardLayouts`, `addPlot`, …) accept a
+ * dispatch target — we pass `'launch'` so they operate on the
+ * launch-view slice. No bespoke launch wiring lives here anymore.
  */
 const LaunchView = ({
   onOpenDrawer,
@@ -33,216 +33,84 @@ const LaunchView = ({
   const scenario = useProjectStore((s) => s.scenario);
 
   const enterInterScenario = useCanvasStore((s) => s.enterInterScenario);
+  const cards = useCanvasStore((s) => s.launchCards);
+  const addCard = useCanvasStore((s) => s.addCard);
+  const removeCard = useCanvasStore((s) => s.removeCard);
+  const applyCardLayouts = useCanvasStore((s) => s.applyCardLayouts);
+  const addPlot = useCanvasStore((s) => s.addPlot);
+  const updatePlot = useCanvasStore((s) => s.updatePlot);
+  const removePlot = useCanvasStore((s) => s.removePlot);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
 
   const [pickerMode, setPickerMode] = useState(null);
-  const [cards, setCards] = useState([]);
 
-  // UUID4-hex IDs (matching the backend's `uuid.uuid4().hex` shape
-  // used for jobs / projects / dashboards) so launch-view drafts
-  // promoted to a comparison view keep an id that's collision-safe
-  // across users + sessions.
-  const makeId = (prefix) =>
-    `${prefix}-${crypto.randomUUID().replace(/-/g, '')}`;
-
-  const shiftForInsert = (arr, { row, col, direction }) => {
-    if (direction === 'right') {
-      return arr.map((c) =>
-        c.row === row && c.col >= col ? { ...c, col: c.col + 1 } : c,
-      );
-    }
-    if (direction === 'bottom') {
-      return arr.map((c) =>
-        c.col === col && c.row >= row ? { ...c, row: c.row + 1 } : c,
-      );
-    }
-    return arr;
+  const inferFeature = (targetCardId) => {
+    if (!targetCardId) return 'demand';
+    const target = cards.find((c) => c.id === targetCardId);
+    return target?.feature || 'demand';
   };
-
-  const insertCard = useCallback(
-    ({
-      targetCardId,
-      direction,
-      type = 'plot',
-      feature,
-      plotConfig,
-      category,
-      layer,
-    }) => {
-      // Generate the new card's id outside `setCards` so callers can
-      // act on it (e.g. open the bottom for the newly-added Map card).
-      const newCardId = makeId('card');
-      setCards((prev) => {
-        // `targetCardId === 'MAP'` is the sentinel from the map
-        // tile's edge `+` buttons: right → just past the map,
-        // bottom → just below it. Map footprint constants
-        // (MAP_ANCHOR_W/H) are imported from the store so launch +
-        // comparison views agree on the anchor points.
-        let row = 0;
-        let col = 0;
-        if (targetCardId === 'MAP') {
-          if (direction === 'bottom') {
-            row = MAP_ANCHOR_H;
-          } else {
-            col = MAP_ANCHOR_W;
-          }
-        } else if (targetCardId) {
-          const target = prev.find((c) => c.id === targetCardId);
-          if (target) {
-            // Place the new card past the target's right or bottom
-            // edge using the target's actual width / height. A
-            // `+ 1` here lands inside the target's footprint
-            // (default card is 6 cols × 10 rows), and rgl's
-            // collision resolution then pushes the new card down
-            // to the next free row — making every right-insert
-            // silently turn into a bottom-insert.
-            if (direction === 'right') {
-              row = target.row;
-              col = target.col + target.w;
-            } else if (direction === 'bottom') {
-              row = target.row + target.h;
-              col = target.col;
-            }
-          }
-        }
-        const shifted = shiftForInsert(prev, { row, col, direction });
-        return [
-          ...shifted,
-          {
-            id: newCardId,
-            type,
-            row,
-            col,
-            w: DEFAULT_CARD_W,
-            h: DEFAULT_CARD_H,
-            feature,
-            category,
-            layer,
-            plots: plotConfig ? [{ id: makeId('plot'), plotConfig }] : [],
-          },
-        ];
-      });
-      return newCardId;
-    },
-    [],
-  );
-
-  const applyCardLayouts = useCallback((updates) => {
-    setCards((prev) => {
-      const byId = new Map(updates.map((u) => [u.id, u]));
-      return prev.map((c) => {
-        const u = byId.get(c.id);
-        return u ? { ...c, row: u.row, col: u.col, w: u.w, h: u.h } : c;
-      });
-    });
-  }, []);
 
   // ── Drawer open handlers ───────────────────────────────────
 
-  const handleAddCard = useCallback(
-    ({
-      targetCardId,
-      direction,
-      type = 'plot',
-      feature,
-      script,
-      category,
-      layer,
-    }) => {
-      // Map cards skip the plot-tool drawer — insert the card and
-      // open the page-level MapLayerProperties bottom card so the
-      // user can adjust the layer's parameters there.
-      if (type === 'map') {
-        const newCardId = insertCard({
+  const handleAddCard = ({
+    targetCardId,
+    direction,
+    type = 'plot',
+    feature,
+    script,
+    category,
+    layer,
+  }) => {
+    if (type === 'map') {
+      const newCardId = addCard('launch', {
+        targetCardId,
+        direction,
+        type: 'map',
+        category,
+        layer,
+      });
+      onOpenMapBottom?.(newCardId);
+      return;
+    }
+    const resolvedFeature = feature || inferFeature(targetCardId);
+    onOpenDrawer({
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) =>
+        addCard('launch', {
           targetCardId,
           direction,
-          type: 'map',
-          category,
-          layer,
-        });
-        onOpenMapBottom?.(newCardId);
-        return;
-      }
-      const resolvedFeature =
-        feature || inferFeatureForTarget(cards, targetCardId);
-      onOpenDrawer({
-        plotConfig: script ? { script } : null,
-        onSave: (plotConfig) =>
-          insertCard({
-            targetCardId,
-            direction,
-            type,
-            feature: resolvedFeature,
-            plotConfig,
-          }),
-      });
-    },
-    [cards, insertCard, onOpenDrawer, onOpenMapBottom],
-  );
+          type,
+          feature: resolvedFeature,
+          plotConfig,
+        }),
+    });
+  };
 
-  const handleAddPlotToCard = useCallback(
-    (cardId, script = null) => {
-      onOpenDrawer({
-        cardId,
-        plotConfig: script ? { script } : null,
-        onSave: (plotConfig) =>
-          setCards((prev) =>
-            prev.map((c) =>
-              c.id === cardId
-                ? {
-                    ...c,
-                    plots: [...c.plots, { id: makeId('plot'), plotConfig }],
-                  }
-                : c,
-            ),
-          ),
-      });
-    },
-    [onOpenDrawer],
-  );
+  const handleAddPlotToCard = (cardId, script = null) => {
+    onOpenDrawer({
+      cardId,
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) => addPlot('launch', cardId, plotConfig),
+    });
+  };
 
-  const handleEditPlot = useCallback(
-    (cardId, plotId) => {
-      const card = cards.find((c) => c.id === cardId);
-      const existing = card?.plots.find((p) => p.id === plotId)?.plotConfig;
-      onOpenDrawer({
-        cardId,
-        plotConfig: existing || null,
-        onSave: (plotConfig) =>
-          setCards((prev) =>
-            prev.map((c) =>
-              c.id === cardId
-                ? {
-                    ...c,
-                    plots: c.plots.map((p) =>
-                      p.id === plotId ? { ...p, plotConfig } : p,
-                    ),
-                  }
-                : c,
-            ),
-          ),
-      });
-    },
-    [cards, onOpenDrawer],
-  );
+  const handleEditPlot = (cardId, plotId) => {
+    const existing =
+      cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
+        ?.plotConfig || null;
+    onOpenDrawer({
+      cardId,
+      plotConfig: existing,
+      onSave: (plotConfig) => updatePlot('launch', cardId, plotId, plotConfig),
+    });
+  };
 
-  const handleDeletePlot = useCallback((cardId, plotId) => {
-    setCards((prev) =>
-      prev
-        .map((c) =>
-          c.id === cardId
-            ? { ...c, plots: c.plots.filter((p) => p.id !== plotId) }
-            : c,
-        )
-        .filter((c) => c.plots.length > 0),
-    );
-  }, []);
+  const handleDeletePlot = (cardId, plotId) =>
+    removePlot('launch', cardId, plotId);
 
-  const handleDeleteCard = useCallback((cardId) => {
-    setCards((prev) => prev.filter((c) => c.id !== cardId));
-  }, []);
+  const handleDeleteCard = (cardId) => removeCard('launch', cardId);
 
   if (!project || !scenario) {
     return (
@@ -278,7 +146,7 @@ const LaunchView = ({
           onDeleteCard={handleDeleteCard}
           onAddPlotToCard={handleAddPlotToCard}
           onAddCard={handleAddCard}
-          onApplyLayouts={applyCardLayouts}
+          onApplyLayouts={(updates) => applyCardLayouts('launch', updates)}
           onOpenMapBottom={onOpenMapBottom}
           editingPlotCardId={editingPlotCardId}
           activeMapCardId={activeMapCardId}
@@ -302,12 +170,6 @@ const LaunchView = ({
     </>
   );
 };
-
-function inferFeatureForTarget(cards, targetCardId) {
-  if (!targetCardId) return 'demand';
-  const target = cards.find((c) => c.id === targetCardId);
-  return target?.feature || 'demand';
-}
 
 // Right/bottom padding (72 px ≈ 40 px button overhang + 32 px
 // clearance) leaves breathing room past the `+` buttons hanging off
