@@ -1,10 +1,6 @@
 import { useRef, useState, useMemo } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
-import {
-  InputEditorIcon,
-  BinAnimationIcon,
-  RefreshIcon,
-} from 'assets/icons';
+import { InputEditorIcon, BinAnimationIcon, RefreshIcon } from 'assets/icons';
 
 import CanvasPlot, { fitPlotToParent } from './CanvasPlot';
 import { useCanvasStore } from '../stores/canvasStore';

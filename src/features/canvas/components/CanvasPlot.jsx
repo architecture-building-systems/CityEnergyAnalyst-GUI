@@ -89,9 +89,10 @@ const CanvasPlot = ({
   // `useId()` returns React's stable per-instance id (`:r0:`,
   // `:r1:`…); strip the colons so the result is safe as an HTML id
   // suffix without escaping.
-  const idSuffix = useMemo(() => uniqueId.replace(/[^a-zA-Z0-9]/g, ''), [
-    uniqueId,
-  ]);
+  const idSuffix = useMemo(
+    () => uniqueId.replace(/[^a-zA-Z0-9]/g, ''),
+    [uniqueId],
+  );
   const html = useMemo(
     () => uniquifyPlotIds(unwrapBody(rawHtml), idSuffix),
     [rawHtml, idSuffix],
@@ -478,12 +479,10 @@ function splitFigureTitle(raw) {
 // from a cached Plotly CDN can have RO fire before `newPlot`'s
 // promise resolves.
 function refitCharts(area) {
-  area
-    .querySelectorAll('.js-plotly-plot, .plotly-graph-div')
-    .forEach((div) => {
-      if (!div._fullLayout) return;
-      fitPlotToParent(div);
-    });
+  area.querySelectorAll('.js-plotly-plot, .plotly-graph-div').forEach((div) => {
+    if (!div._fullLayout) return;
+    fitPlotToParent(div);
+  });
 }
 
 // Resize a Plotly figure to its parent container. Three steps in

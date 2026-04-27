@@ -54,12 +54,6 @@ const cardConfigFromStore = (card) => ({
  * yet (cheaper to just resend everything for now).
  */
 export function serializeCanvas(state) {
-  // `parent_canvas_name` is intentionally omitted — the backend
-  // sets it on the canvas.yml inside the temp folder when
-  // `create_temp_canvas` is called with a `from` parameter, and a
-  // sparse-write that doesn't include the field leaves the
-  // server-side value untouched. The frontend never needs to track
-  // it locally.
   const canvas = {
     schema_version: SCHEMA_VERSION,
     name: state.canvasName ?? null,
@@ -154,12 +148,14 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
   });
 
   if (next.view === 'inter-feature') {
-    Object.entries(feature_card?.column_cards || {}).forEach(([idx, configs]) => {
-      const layoutForCol = (layout?.column_cards || {})[idx] || {};
-      next.columnCards[idx] = Object.entries(configs).map(([id, cfg]) =>
-        buildCard(id, layoutForCol[id], cfg),
-      );
-    });
+    Object.entries(feature_card?.column_cards || {}).forEach(
+      ([idx, configs]) => {
+        const layoutForCol = (layout?.column_cards || {})[idx] || {};
+        next.columnCards[idx] = Object.entries(configs).map(([id, cfg]) =>
+          buildCard(id, layoutForCol[id], cfg),
+        );
+      },
+    );
   } else {
     // Launch / inter-scenario / inter-whatif share the same single
     // grid on disk; route into `launchCards` vs `sharedCards`

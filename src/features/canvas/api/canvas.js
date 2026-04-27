@@ -6,9 +6,10 @@
  * carries the standard `{ project, scenario }` query params — same
  * convention every other report-style endpoint uses.
  *
- * The autosave path uses `createTemp` (one-shot, on first edit) and
- * `updateTemp` (debounced, on every subsequent change). The Save
- * click promotes via `saveTemp`. Discard hits `deleteTemp`.
+ * No draft / temp staging area: every edit posts straight to the
+ * saved canvas folder via `updateSavedCanvas`. The expensive
+ * plot-data capture pass runs server-side inside the `/export`
+ * endpoint when the user clicks Share.
  */
 
 import { apiClient } from 'lib/api/axios';
@@ -25,11 +26,39 @@ export const listSavedCanvases = async ({ project, scenario }) => {
 };
 
 export const readSavedCanvas = async ({ project, scenario, name }) => {
-  const { data } = await apiClient.get(
-    `${BASE}/${encodeURIComponent(name)}`,
+  const { data } = await apiClient.get(`${BASE}/${encodeURIComponent(name)}`, {
+    params: { project, scenario },
+  });
+  return data; // { canvas, layout, feature_card }
+};
+
+/**
+ * Create a fresh, empty saved canvas under `name`. The backend
+ * sanitises the name and returns the cleaned form. 409 if the
+ * sanitised name already exists; 400 on illegal name.
+ */
+export const createCanvas = async ({ project, scenario, name }) => {
+  const { data } = await apiClient.post(
+    `${BASE}/`,
+    { name },
     { params: { project, scenario } },
   );
-  return data; // { canvas, layout, feature_card }
+  return data; // { name }
+};
+
+/**
+ * Sparse autosave — pass any subset of `{ canvas, layout, feature_card }`.
+ * Slices not present in the body are left untouched on disk.
+ */
+export const updateSavedCanvas = async ({
+  project,
+  scenario,
+  name,
+  payload,
+}) => {
+  await apiClient.put(`${BASE}/${encodeURIComponent(name)}`, payload, {
+    params: { project, scenario },
+  });
 };
 
 export const deleteSavedCanvas = async ({ project, scenario, name }) => {
@@ -38,60 +67,15 @@ export const deleteSavedCanvas = async ({ project, scenario, name }) => {
   });
 };
 
-// ── Temp / draft canvases ──────────────────────────────────────
-
-export const createTempCanvas = async ({ project, scenario, fromName }) => {
-  const body = fromName ? { from: fromName } : {};
-  const { data } = await apiClient.post(`${BASE}/temp`, body, {
-    params: { project, scenario },
-  });
-  return data; // { uuid }
-};
-
-export const readTempCanvas = async ({ project, scenario, uuid }) => {
-  const { data } = await apiClient.get(`${BASE}/temp/${uuid}`, {
-    params: { project, scenario },
-  });
-  return data; // { canvas, layout, feature_card }
-};
-
-/**
- * Sparse autosave — pass any subset of `{ canvas, layout, feature_card }`.
- * Slices not present in the body are left untouched on disk.
- */
-export const updateTempCanvas = async ({
-  project,
-  scenario,
-  uuid,
-  payload,
-}) => {
-  await apiClient.put(`${BASE}/temp/${uuid}`, payload, {
-    params: { project, scenario },
-  });
-};
-
-export const deleteTempCanvas = async ({ project, scenario, uuid }) => {
-  await apiClient.delete(`${BASE}/temp/${uuid}`, {
-    params: { project, scenario },
-  });
-};
-
-export const saveTempCanvas = async ({ project, scenario, uuid, name }) => {
-  const { data } = await apiClient.post(
-    `${BASE}/temp/${uuid}/save`,
-    { name },
-    { params: { project, scenario } },
-  );
-  return data; // { name }
-};
-
 // ── Zip export / import ────────────────────────────────────────
 
 /**
- * Download a saved canvas as a zip. Returns a Blob the caller can
- * pipe through `URL.createObjectURL` to trigger a browser download
- * — the apiClient layer adds auth, so a plain `<a href>` link
- * wouldn't work for protected backends.
+ * Download a saved canvas as a zip. The backend captures every plot
+ * card to HTML before zipping, so this call can take a moment (it
+ * re-renders every plot). Returns a Blob the caller can pipe through
+ * `URL.createObjectURL` to trigger a browser download — the
+ * apiClient layer adds auth, so a plain `<a href>` link wouldn't
+ * work for protected backends.
  */
 export const exportCanvasZip = async ({ project, scenario, name }) => {
   const { data } = await apiClient.get(

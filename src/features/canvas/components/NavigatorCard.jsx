@@ -15,7 +15,6 @@ import { LeftOutlined } from '@ant-design/icons';
 import {
   CreateNewIcon,
   ImportIcon,
-  SaveIcon,
   ShareIcon,
   StartOverIcon,
 } from 'assets/icons';
@@ -27,18 +26,13 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { useCanvasStore } from '../stores/canvasStore';
 import { useFetchSavedCanvases } from '../hooks/useCanvasData';
-import SavedIndicator from './SavedIndicator';
 import {
-  createTempCanvas,
-  deleteTempCanvas,
+  createCanvas,
   exportCanvasZip,
   importCanvasZip,
   readSavedCanvas,
-  saveTempCanvas,
-  updateTempCanvas,
 } from '../api/canvas';
-import { deserializeCanvas, serializeCanvas } from '../utils/canvasSerialize';
-
+import { deserializeCanvas } from '../utils/canvasSerialize';
 
 /**
  * Navigator card — top strip of the Canvas Builder page.
@@ -47,26 +41,27 @@ import { deserializeCanvas, serializeCanvas } from '../utils/canvasSerialize';
  * a white background so it reads as a sibling to the canvas and plot
  * tool cards rather than a toolbar in the traditional sense. Holds
  * navigation actions, view toggles, the dashboard switcher, and the
- * Save / Discard buttons that drive the persistence flow.
+ * Share / Import buttons.
+ *
+ * There is no Save button and no autosave toggle: every persistable
+ * edit hits `PUT /api/canvas/{name}` directly via
+ * `useCanvasPersistence`. The expensive plot-data capture pass runs
+ * server-side inside `/export` when the user clicks Share.
  *
  * Currently visible controls:
  *   - Return       → back to the project page
- *   - Start Over   → delete the active draft and clear comparison
- *                    state (with confirm)
+ *   - Start Over   → clear cards / columns of the current canvas
+ *                    (autosave then flushes the empty state)
  *   - Sync Maps    → mirror every map card to the overview map
- *   - Fix Layout   → lock card positions and sizes
+ *   - Freeze Layout → lock card positions and sizes
  *   - Enable Edit  → show editing controls (default on); off
  *                    hides Edit / Delete / `+` / toolbars / range
  *                    inputs for a clean snapshot
- *   - Auto Save    → flush every change to a backend draft
- *                    (default on); off keeps everything in memory
- *                    until Save is clicked
- *   - Save         → promote the active draft to a saved canvas;
- *                    prompts for a name on first save
- *   - Share        → download the saved canvas as a zip
+ *   - Dashboard    → dropdown to switch between saved canvases
+ *   - `+`          → open "Create new canvas" modal
  *   - Import       → upload a previously-shared canvas zip
- *   - Dashboard    → dropdown to switch between saved canvases,
- *                    or `+ New canvas` to start fresh
+ *   - Share        → capture every plot card to HTML, then download
+ *                    the canvas folder as a zip
  */
 const NavigatorCard = () => {
   const { push } = useNavigationStore();
@@ -80,36 +75,19 @@ const NavigatorCard = () => {
   const setEnableEdit = useCanvasStore((s) => s.setEnableEdit);
   const fixLayout = useCanvasStore((s) => s.fixLayout);
   const setFixLayout = useCanvasStore((s) => s.setFixLayout);
-  const autoSave = useCanvasStore((s) => s.autoSave);
-  const setAutoSave = useCanvasStore((s) => s.setAutoSave);
-  const tempUuid = useCanvasStore((s) => s.tempUuid);
-  const setTempUuid = useCanvasStore((s) => s.setTempUuid);
   const canvasName = useCanvasStore((s) => s.canvasName);
-  const savedAs = useCanvasStore((s) => s.savedAs);
-  const dirty = useCanvasStore((s) => s.dirty);
-  const markSaved = useCanvasStore((s) => s.markSaved);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
-  const createNamedDraft = useCanvasStore((s) => s.createNamedDraft);
 
   const queryClient = useQueryClient();
   const { data: savedCanvases } = useFetchSavedCanvases(project, scenario);
 
-  // When Save commits, the listing is stale until react-query
-  // refetches. Invalidate explicitly so the switcher reflects the
-  // new canvas immediately.
+  // When create / import commits, the listing is stale until
+  // react-query refetches. Invalidate explicitly so the switcher
+  // reflects the new canvas immediately.
   const invalidateSavedList = () =>
     queryClient.invalidateQueries({
       queryKey: ['canvas', 'saved', project, scenario],
     });
-
-  // Save-name prompt — only fired by the (rare) Save path that
-  // doesn't already have a `canvasName`, e.g. after a Start Over.
-  // The default flow names canvases up-front via the New-canvas
-  // modal below, so this stays a fallback.
-  const [namePromptOpen, setNamePromptOpen] = useState(false);
-  const [pendingName, setPendingName] = useState('');
-  const [nameError, setNameError] = useState(null);
-  const [saving, setSaving] = useState(false);
 
   // New-canvas modal — opened by the `+` button and by clicking
   // the empty dashboard switcher, mirroring the pathway dropdown's
@@ -117,6 +95,12 @@ const NavigatorCard = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createError, setCreateError] = useState(null);
+  const [creating, setCreating] = useState(false);
+
+  // Export (Share) flashes a "capturing plots…" loading state on
+  // the Share button — the export endpoint re-renders every plot
+  // server-side before zipping, so the request can take a moment.
+  const [sharing, setSharing] = useState(false);
 
   // Import button is a styled button that proxies clicks to a
   // hidden `<input type="file">`. The input lives in the JSX tree
@@ -141,152 +125,67 @@ const NavigatorCard = () => {
     push(routes.PROJECT);
   };
 
-  /**
-   * Run Save against the backend and commit the result locally.
-   * If no `tempUuid` exists yet — autoSave was off, or the user
-   * clicked Save before the autosave debounce fired — we
-   * materialise the temp on the fly: create folder, flush the
-   * current in-memory state into it, then promote. This is the
-   * "force a flush" path that lets Save work as a one-button
-   * commit regardless of autosave state.
-   *
-   * Surfaces 409 conflicts back into the name-prompt modal so the
-   * user can pick a different name; other errors fall through to
-   * a toast.
-   */
-  const commitSave = async (name) => {
-    setSaving(true);
+  const handleOpenSaved = async (name) => {
     try {
-      let uuid = useCanvasStore.getState().tempUuid;
-      if (!uuid) {
-        const created = await createTempCanvas({
-          project,
-          scenario,
-          fromName: useCanvasStore.getState().savedAs ?? null,
-        });
-        uuid = created.uuid;
-        setTempUuid(uuid);
-        // Flush the in-memory state so the about-to-be-promoted
-        // temp actually carries the user's edits, not an empty
-        // canvas freshly seeded from the parent (or no parent).
-        await updateTempCanvas({
-          project,
-          scenario,
-          uuid,
-          payload: serializeCanvas(useCanvasStore.getState()),
-        });
-      }
-      const result = await saveTempCanvas({
-        project,
-        scenario,
-        uuid,
-        name,
-      });
-      markSaved(result.name);
-      invalidateSavedList();
-      setNamePromptOpen(false);
-      setPendingName('');
-      setNameError(null);
-      antdMessage.success(`Saved as "${result.name}"`);
+      const state = await readSavedCanvas({ project, scenario, name });
+      applyLoadedCanvas(deserializeCanvas(state));
     } catch (err) {
-      const status = err?.response?.status;
-      const detail = err?.response?.data?.detail;
-      if (status === 409 || status === 400) {
-        // Bounce back into the prompt; let the user fix the name.
-        setNameError(detail || 'Could not save with that name');
-        setNamePromptOpen(true);
-      } else {
-        antdMessage.error('Save failed — see console for details');
-        // eslint-disable-next-line no-console
-        console.error('Canvas save failed', err);
-      }
-    } finally {
-      setSaving(false);
+      antdMessage.error(`Could not open "${name}"`);
+      // eslint-disable-next-line no-console
+      console.error('Open canvas failed', err);
     }
   };
 
-  const handleSaveClick = () => {
-    if (!dirty) return;
-    if (canvasName) {
-      // The canvas already has a committed name — overwrite without
-      // re-prompting. (Save As lives in a later phase.)
-      commitSave(canvasName);
-    } else {
-      setPendingName('');
-      setNameError(null);
-      setNamePromptOpen(true);
-    }
+  const handleNewCanvas = () => {
+    setCreateName('');
+    setCreateError(null);
+    setCreateOpen(true);
   };
 
-  /**
-   * Confirm-discard-then-load when the user picks a different
-   * saved canvas (or "+ New canvas") from the switcher. Skips the
-   * confirm when there's nothing to lose (no live temp).
-   */
-  const switchCanvas = async (action) => {
-    const proceed = await new Promise((resolve) => {
-      if (!tempUuid) {
-        resolve(true);
-        return;
-      }
-      Modal.confirm({
-        title: 'Discard unsaved changes?',
-        content:
-          'You have unsaved changes to the current canvas. Continuing will discard them.',
-        okText: 'Discard',
-        okButtonProps: { danger: true },
-        cancelText: 'Cancel',
-        onOk: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
-    if (!proceed) return;
-
-    if (tempUuid) {
-      try {
-        await deleteTempCanvas({ project, scenario, uuid: tempUuid });
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to delete temp canvas', err);
-      }
-    }
-    await action();
-  };
-
-  const handleOpenSaved = (name) =>
-    switchCanvas(async () => {
-      try {
-        const state = await readSavedCanvas({ project, scenario, name });
-        applyLoadedCanvas(deserializeCanvas(state));
-      } catch (err) {
-        antdMessage.error(`Could not open "${name}"`);
-        // eslint-disable-next-line no-console
-        console.error('Open canvas failed', err);
-      }
-    });
-
-  const handleNewCanvas = () =>
-    switchCanvas(async () => {
-      // Pathway-style up-front naming: open a modal asking for the
-      // canvas name. Confirming the modal seeds `canvasName` and
-      // resets to launch view; the autosave hook then materialises
-      // a temp folder on the first persistable edit (with no
-      // `from:` seed since `savedAs` is null until first Save).
-      setCreateName('');
-      setCreateError(null);
-      setCreateOpen(true);
-    });
-
-  const handleCreateConfirm = () => {
+  const handleCreateConfirm = async () => {
     const trimmed = createName.trim();
     if (!trimmed) {
       setCreateError('Name cannot be empty');
       return;
     }
-    createNamedDraft(trimmed);
-    setCreateOpen(false);
-    setCreateName('');
-    setCreateError(null);
+    setCreating(true);
+    try {
+      const result = await createCanvas({
+        project,
+        scenario,
+        name: trimmed,
+      });
+      // Server returns the sanitised name. Apply an empty canvas
+      // state under that name so the persistence hook starts
+      // targeting the new folder.
+      applyLoadedCanvas({
+        view: 'launch',
+        columns: [],
+        parentScenario: null,
+        launchCards: [],
+        sharedCards: [],
+        columnCards: {},
+        mapsLinked: true,
+        fixLayout: false,
+        canvasName: result.name,
+      });
+      invalidateSavedList();
+      setCreateOpen(false);
+      setCreateName('');
+      setCreateError(null);
+    } catch (err) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 409 || status === 400) {
+        setCreateError(detail || 'Could not create canvas with that name');
+      } else {
+        antdMessage.error('Could not create canvas — see console for details');
+        // eslint-disable-next-line no-console
+        console.error('Canvas create failed', err);
+      }
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleCreateCancel = () => {
@@ -297,6 +196,7 @@ const NavigatorCard = () => {
 
   const handleExport = async () => {
     if (!canvasName) return;
+    setSharing(true);
     try {
       const blob = await exportCanvasZip({
         project,
@@ -315,6 +215,8 @@ const NavigatorCard = () => {
       antdMessage.error('Could not share canvas — see console for details');
       // eslint-disable-next-line no-console
       console.error('Canvas export failed', err);
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -404,35 +306,17 @@ const NavigatorCard = () => {
     Modal.confirm({
       title: 'Start over?',
       content:
-        'All cards will be removed and the canvas will return to its launch state. Any unsaved draft will be discarded.',
+        'All cards will be removed and the canvas will return to its launch state.',
       okText: 'Start over',
       cancelText: 'Cancel',
-      onOk: async () => {
-        // Clean up the server-side temp before resetting local
-        // state. If the API call fails we still reset locally —
-        // a stranded temp folder is a recoverable inconvenience,
-        // but blocking the user on it would not be.
-        if (tempUuid) {
-          try {
-            await deleteTempCanvas({ project, scenario, uuid: tempUuid });
-          } catch (err) {
-            // eslint-disable-next-line no-console
-            console.error('Failed to delete temp canvas', err);
-          }
-        }
+      onOk: () => {
+        // Just reset the in-memory cards / columns. The persistence
+        // hook flushes the empty state to the existing canvas
+        // folder on its own.
         startOverStore();
       },
     });
   };
-
-  const saveDisabled = !dirty || saving;
-  const saveTooltip = saving
-    ? 'Saving…'
-    : !dirty
-      ? 'No changes to save'
-      : canvasName
-        ? `Save changes to "${canvasName}"`
-        : 'Save as a new canvas';
 
   return (
     <div style={cardStyle}>
@@ -441,15 +325,15 @@ const NavigatorCard = () => {
           Return
         </Button>
         {/* Icon-only navigator actions all share the same wrapper
-            chrome so Start Over / Save / Share / Import read as one
-            cluster — and match the perimeter "+ Add a Feature card"
+            chrome so Start Over reads as part of the same cluster
+            — and matches the perimeter "+ Add a Feature card"
             affordance the user already knows.
 
-            Everything from Start Over to Auto Save is **hidden**
-            until the user has actually opened or created a canvas
-            (`canvasName` set). Only the dashboard switcher / `+` /
-            Import on the right side stay live so the user has a
-            clear path forward from the empty entry state. */}
+            Everything from Start Over through Enable Edit is
+            **hidden** until the user has actually opened or created
+            a canvas (`canvasName` set). Only the dashboard switcher
+            / `+` / Import on the right side stay live so the user
+            has a clear path forward from the empty entry state. */}
         {canvasName && (
           <>
             <Tooltip title="Start Over">
@@ -486,45 +370,12 @@ const NavigatorCard = () => {
       </Space>
 
       <Space size="small">
-        <SavedIndicator />
-        {/* Order: Auto Save · Save · Switcher · `+` · Import · Share.
-            Auto Save and Save sit together as the persistence pair
-            at the start of the right cluster — the toggle decides
-            *whether* changes flush, the button forces a commit.
-            Switcher + `+` form the create-or-open pair. Import
-            sits to the right of `+` (zip in), Share sits to the
-            right of Import (zip out). The persistence pair and
-            Share hide in the empty entry state; Switcher / `+` /
-            Import are always visible and pulse purple while no
-            canvas is open. */}
-        {canvasName && (
-          <>
-            <NavigatorToggle
-              checked={autoSave}
-              onChange={setAutoSave}
-              label="Auto Save"
-              ariaLabel="Automatically save changes to a draft"
-            />
-            <Tooltip title={saveTooltip}>
-              <div className={iconWrapperClass} style={iconWrapperStyle}>
-                <Button
-                  type="text"
-                  icon={<SaveIcon />}
-                  disabled={saveDisabled}
-                  loading={saving}
-                  onClick={handleSaveClick}
-                  aria-label="Save canvas"
-                />
-              </div>
-            </Tooltip>
-          </>
-        )}
-
-        {/* Dashboard switcher — Select + adjacent `+` button to
-            match the pathway dropdown's chrome. When no saved
-            canvases exist (or none are open), clicking the Select
-            doesn't open the dropdown — it triggers the new-canvas
-            modal, identical to the `+` button's behaviour. */}
+        {/* Order: Switcher · `+` · Import · Share. Switcher + `+`
+            form the create-or-open pair. Import sits to the right
+            of `+` (zip in), Share sits to the right of Import (zip
+            out). Share hides in the empty entry state; Switcher /
+            `+` / Import are always visible and pulse purple while
+            no canvas is open. */}
         <CanvasSwitcher
           savedCanvases={savedCanvases}
           canvasName={canvasName}
@@ -568,6 +419,7 @@ const NavigatorCard = () => {
               <Button
                 type="text"
                 icon={<ShareIcon />}
+                loading={sharing}
                 onClick={handleExport}
                 aria-label="Share canvas as zip"
               />
@@ -589,31 +441,12 @@ const NavigatorCard = () => {
         onChange={handleImportChange}
       />
 
-      <NameSaveModal
-        open={namePromptOpen}
-        value={pendingName}
-        onChange={setPendingName}
-        error={nameError}
-        loading={saving}
-        onCancel={() => {
-          setNamePromptOpen(false);
-          setNameError(null);
-        }}
-        onOk={() => {
-          const trimmed = pendingName.trim();
-          if (!trimmed) {
-            setNameError('Name cannot be empty');
-            return;
-          }
-          commitSave(trimmed);
-        }}
-      />
-
       <Modal
         open={createOpen}
         title="Create new canvas"
         okText="Create"
         cancelText="Cancel"
+        confirmLoading={creating}
         onOk={handleCreateConfirm}
         onCancel={handleCreateCancel}
         destroyOnClose
@@ -648,8 +481,8 @@ const NavigatorCard = () => {
         destroyOnClose
       >
         <p style={{ marginTop: 0 }}>
-          A canvas with this name already exists. Pick a new name to
-          import under:
+          A canvas with this name already exists. Pick a new name to import
+          under:
         </p>
         <Input
           autoFocus
@@ -726,7 +559,7 @@ const CanvasSwitcher = ({
       }`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}
-      placeholder={inCreateMode ? 'Create new Canvas' : 'Select canvas'}
+      placeholder={inCreateMode ? 'Create new Canvas' : 'Select Canvas'}
       options={inCreateMode ? [] : options}
       value={canvasName || undefined}
       disabled={disabled}
@@ -741,49 +574,8 @@ const CanvasSwitcher = ({
   );
 };
 
-/**
- * Modal prompt for naming a new canvas. Surfaces 400 / 409 errors
- * from the backend (illegal name, duplicate) inline below the input
- * so the user can correct without losing the typed name.
- */
-const NameSaveModal = ({
-  open,
-  value,
-  onChange,
-  error,
-  loading,
-  onOk,
-  onCancel,
-}) => (
-  <Modal
-    open={open}
-    title="Save canvas"
-    okText="Save"
-    cancelText="Cancel"
-    confirmLoading={loading}
-    onOk={onOk}
-    onCancel={onCancel}
-    destroyOnClose
-  >
-    <p style={{ marginTop: 0 }}>Choose a name for this canvas:</p>
-    <Input
-      autoFocus
-      value={value}
-      placeholder="e.g. Cumulative Emissions Comparison"
-      onChange={(e) => onChange(e.target.value)}
-      onPressEnter={onOk}
-      status={error ? 'error' : undefined}
-    />
-    {error && (
-      <div style={{ color: '#f04d5b', fontSize: 12, marginTop: 6 }}>
-        {error}
-      </div>
-    )}
-  </Modal>
-);
-
 // Shared chrome for every icon-only action in the navigator
-// (Start Over / Save / Share / Import). The class name is the same
+// (Start Over / Share / Import / `+`). The class name is the same
 // outline + 30×30 icon button rule the perimeter "+ Add a Feature
 // card" affordance uses; solid white background lifts the buttons
 // off the navigator's 50%-opaque white surface so they read as
@@ -827,10 +619,10 @@ const syncToggleLabelStyle = {
   color: '#222',
 };
 
-// Compact CEA-purple `Switch + label + info` toggle used in the
-// Navigator row. Wraps its own `ConfigProvider` so each toggle shows
-// up as a distinct child of `Space` and gets the row's flex gap (a
-// shared outer provider would collapse them into one slot). The info
+// Compact `Switch + label + info` toggle used in the Navigator row.
+// Wraps its own `ConfigProvider` so each toggle shows up as a
+// distinct child of `Space` and gets the row's flex gap (a shared
+// outer provider would collapse them into one slot). The info
 // icon's body is loaded by `InfoTooltip` from the backend
 // `tooltips.yml` keyed by `tooltipKey`.
 const NavigatorToggle = ({

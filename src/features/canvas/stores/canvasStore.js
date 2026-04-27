@@ -33,8 +33,7 @@ import { create } from 'zustand';
 // for job / project / dashboard rows server-side. Collision-safe
 // across users + sessions, so cards persisted later can keep the
 // same id without further migration.
-const makeId = (prefix) =>
-  `${prefix}-${crypto.randomUUID().replace(/-/g, '')}`;
+const makeId = (prefix) => `${prefix}-${crypto.randomUUID().replace(/-/g, '')}`;
 
 // Default card size in grid units. See CanvasColumn's <GridLayout>
 // config for the pixel mapping. Map's default footprint
@@ -170,133 +169,35 @@ export const useCanvasStore = create((set, get) => ({
   fixLayout: false,
   setFixLayout: (value) => set({ fixLayout: !!value }),
 
-  // ── Persistence (Phase 3 wiring) ────────────────────────────
-  // `autoSave` ON (default) flushes every change to a backend temp
-  // folder via `useCanvasPersistence`. OFF leaves the in-memory
-  // state alone until the user hits Save explicitly. The toggle
-  // sits next to Sync Maps / Fix Layout / Enable Edit on the
-  // navigator.
-  autoSave: true,
-  setAutoSave: (value) => set({ autoSave: !!value }),
-
-  // Backend handle for the live in-progress canvas. Allocated
-  // server-side on the first autosave (`POST /api/canvas/temp`)
-  // and used as the path target for every subsequent debounced
-  // `PUT /api/canvas/temp/<uuid>`. `null` until the first edit
-  // creates one.
-  tempUuid: null,
-  setTempUuid: (value) => set({ tempUuid: value || null }),
-
-  // Display name of the currently-open canvas. Owned by the
-  // dashboard switcher and the canvas.yml's `name` field. Set when:
-  //   - the user opens a saved canvas (canvasName = savedAs = saved
-  //     canvas's name)
-  //   - the user creates a named draft via the navigator's
-  //     "Create new canvas" modal (canvasName = typed name,
-  //     savedAs = null until first Save)
-  //   - the user commits a draft via Save (canvasName = savedAs =
-  //     sanitised name)
-  // Null only between a Start Over and the next named-create, or
-  // for untitled drafts created via paths that bypass the modal.
+  // ── Persistence ──────────────────────────────────────────────
+  // Display name of the currently-open canvas — also the on-disk
+  // folder under `<scenario>/outputs/canvas/<name>/`. Set when the
+  // user opens a saved canvas (load), creates one via the
+  // navigator's "Create new canvas" modal (POST /api/canvas/), or
+  // imports a zip. `null` only in the empty entry state (between
+  // a Start Over and the next create / open). The persistence
+  // hook keys every debounced PUT off this name.
   canvasName: null,
   setCanvasName: (value) => set({ canvasName: value || null }),
 
-  // The name under which this canvas actually exists on disk.
-  // Diverges from `canvasName` only during a *named* draft — the
-  // user has typed a name (so `canvasName` is set) but hasn't
-  // committed yet (so the saved folder doesn't exist). Autosave
-  // uses this (not `canvasName`) for the `from:` seed, otherwise
-  // a fresh draft would 404 the temp creation against a saved
-  // folder that hasn't been created yet.
-  savedAs: null,
-  setSavedAs: (value) => set({ savedAs: value || null }),
-
-  // Wall-clock timestamp (ms) of the last successful autosave
-  // flush. Drives the navigator's "Saved · Xm ago" indicator.
-  lastSavedAt: null,
-  setLastSavedAt: (value) => set({ lastSavedAt: value || null }),
-
-  // True whenever the in-memory state diverges from what's
-  // committed on disk. Set by `useCanvasPersistence` the moment a
-  // persistable mutation lands; reset by `markSaved` (commit) and
-  // `applyLoadedCanvas` (load) and `createNamedDraft` (fresh
-  // draft). Drives the Save button's enabled state — Save fires
-  // even when `tempUuid` is null (autoSave off, or change made
-  // during the debounce window) by force-creating + flushing the
-  // temp before promote.
-  dirty: false,
-  setDirty: (value) => set({ dirty: !!value }),
-
-  /**
-   * Mark a successful Save: clear the live temp handle, adopt the
-   * sanitised name returned by the backend (which now also exists
-   * on disk, so `savedAs` mirrors `canvasName`), and stamp
-   * lastSavedAt. The next persistable edit will then create a
-   * fresh temp seeded from this saved canvas.
-   */
-  markSaved: (name) =>
-    set({
-      canvasName: name,
-      savedAs: name,
-      tempUuid: null,
-      dirty: false,
-      lastSavedAt: Date.now(),
-    }),
-
-  /**
-   * Pathway-style up-front naming for a fresh canvas: clears all
-   * the comparison / launch state (same as `startOver`) but plants
-   * a typed name on `canvasName` so the switcher and the eventual
-   * Save can carry it through. `savedAs` stays null — there's no
-   * folder on disk yet.
-   */
-  createNamedDraft: (name) =>
-    set((state) => ({
-      view: 'launch',
-      columns: [],
-      parentScenario: null,
-      launchCards: [],
-      sharedCards: [],
-      columnCards: {},
-      tempUuid: null,
-      canvasName: name || null,
-      savedAs: null,
-      dirty: false,
-      lastSavedAt: null,
-      // Bump `loadVersion` so the persistence hook treats the
-      // reset as a "load-like" event and resyncs its snapshot
-      // baseline silently — otherwise the cards-reset would look
-      // like a user edit and immediately re-dirty the canvas.
-      loadVersion: state.loadVersion + 1,
-    })),
-
   // Bumped every time external state lands in the store from
   // outside the user's editing flow (loading a saved canvas,
-  // resuming a draft on app start, importing a zip). The autosave
-  // hook watches this counter so it can resync its diff baseline
-  // *without* flushing the just-loaded state back to the backend
-  // — otherwise opening a saved canvas would immediately create a
-  // temp draft of itself.
+  // resuming on app start, importing a zip, creating a fresh
+  // canvas). The autosave hook watches this counter so it can
+  // resync its diff baseline *without* flushing the just-loaded
+  // state back to the backend — otherwise opening a saved canvas
+  // would immediately re-write it on top of itself.
   loadVersion: 0,
 
   /**
    * Replace the editable slice of state with a deserialised canvas
    * read from the backend. Pass the partial returned by
-   * `deserializeCanvas`; this layer handles the bookkeeping
-   * (clearing temp/timestamp, bumping `loadVersion`, leaving
-   * navigator toggles like `autoSave` alone).
+   * `deserializeCanvas`; this layer handles the load-version bump
+   * so the persistence hook resyncs its snapshot baseline silently.
    */
   applyLoadedCanvas: (partial) =>
     set((state) => ({
       ...partial,
-      // A loaded canvas exists on disk under its own name, so
-      // `savedAs` mirrors `canvasName`. Picked up here rather than
-      // inside `deserializeCanvas` so the rest of the deserialiser
-      // stays a pure data converter.
-      savedAs: partial.canvasName ?? null,
-      tempUuid: null,
-      dirty: false,
-      lastSavedAt: null,
       loadVersion: state.loadVersion + 1,
     })),
 
@@ -359,29 +260,21 @@ export const useCanvasStore = create((set, get) => ({
     });
   },
 
+  /**
+   * Reset card / column / launch state to a fresh canvas — keeps
+   * `canvasName` so the autosave hook flushes the empty state
+   * back to the same on-disk folder. Used by the navigator's
+   * Start Over button.
+   */
   startOver: () =>
-    set((state) => ({
+    set({
       view: 'launch',
       columns: [],
       parentScenario: null,
       launchCards: [],
       sharedCards: [],
       columnCards: {},
-      // Persistence state belongs to the discarded canvas; drop it
-      // so Start Over leaves no dangling references. The associated
-      // temp folder cleanup (`DELETE /api/canvas/temp/<uuid>`) is
-      // an API call the navigator's handler runs *before* this so
-      // the deletion can be awaited / surfaced on failure.
-      tempUuid: null,
-      canvasName: null,
-      savedAs: null,
-      dirty: false,
-      lastSavedAt: null,
-      // Same as `createNamedDraft`: tell the persistence hook this
-      // is a reset, not an edit, so it resyncs silently rather
-      // than flagging the cleared state as a user change.
-      loadVersion: state.loadVersion + 1,
-    })),
+    }),
 
   // ── Column management ───────────────────────────────────────
 

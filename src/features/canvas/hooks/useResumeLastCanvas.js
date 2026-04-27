@@ -1,17 +1,16 @@
 /**
- * Auto-resume the most recently saved canvas on mount.
+ * Auto-resume the most recently opened canvas on mount.
  *
  * Each `(project, scenario)` pair gets a `localStorage` key holding
- * the name of the last canvas that was committed via Save (or
- * loaded from a saved canvas). On every CanvasPage mount we read
- * that key and, if the canvas still exists on disk, fetch + apply
- * it through the same path the dashboard switcher uses.
+ * the name of the last canvas the user had open. On every CanvasPage
+ * mount we read that key and, if the canvas still exists on disk,
+ * fetch + apply it through the same path the dashboard switcher uses.
  *
  * Two safety rails:
  *
  *   - The resume only runs when the store is in its empty state
  *     (`canvasName === null`). If the user already has something
- *     open from earlier in the session — say a fresh draft they
+ *     open from earlier in the session — say a fresh canvas they
  *     created via the New-canvas modal — we don't clobber it.
  *
  *   - If the recorded canvas no longer exists on disk (deleted
@@ -19,9 +18,9 @@
  *     pruned so we don't keep retrying a 404.
  *
  * Persistence is handled by a sibling effect that watches
- * `savedAs` (the name *committed* on disk, not just the typed
- * draft name) and writes through. Drafts that haven't been saved
- * yet don't pollute the resume target.
+ * `canvasName` and writes through. Since every edit autosaves to
+ * the saved canvas folder, there's no separate "draft vs.
+ * committed" distinction — `canvasName` *is* the on-disk handle.
  */
 
 import { useEffect, useRef } from 'react';
@@ -40,7 +39,7 @@ const storageKey = (project, scenario) =>
 export function useResumeLastCanvas() {
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
-  const savedAs = useCanvasStore((s) => s.savedAs);
+  const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
 
   // Track whether we've already attempted resume for the current
@@ -91,12 +90,11 @@ export function useResumeLastCanvas() {
     };
   }, [project, scenario, applyLoadedCanvas]);
 
-  // Mirror `savedAs` into localStorage on every change. Watching
-  // `savedAs` (not `canvasName`) keeps untitled drafts out of the
-  // resume target; only canvases the user has actually committed
-  // are remembered.
+  // Mirror `canvasName` into localStorage on every change. Every
+  // open canvas exists on disk now (no draft / temp distinction),
+  // so canvasName is always a valid resume target.
   useEffect(() => {
-    if (!project || !scenario || !savedAs) return;
-    localStorage.setItem(storageKey(project, scenario), savedAs);
-  }, [project, scenario, savedAs]);
+    if (!project || !scenario || !canvasName) return;
+    localStorage.setItem(storageKey(project, scenario), canvasName);
+  }, [project, scenario, canvasName]);
 }
