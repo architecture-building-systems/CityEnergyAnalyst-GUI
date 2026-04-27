@@ -107,13 +107,21 @@ export const exportCanvasZip = async ({ project, scenario, name }) => {
 /**
  * Upload a previously-exported canvas zip. Returns `{ name }` on
  * success — the cleaned name the backend committed under, which
- * may differ from the zip's top-level folder if it was sanitised.
+ * may differ from the zip's top-level folder if it was sanitised
+ * (or if the caller passed `as` to override it).
+ *
+ * The `as` parameter is the import-as-rename escape hatch: when
+ * the original zip name conflicts with an existing saved canvas
+ * the backend returns 409, the UI prompts for a fresh name, and
+ * we retry the upload with `as` set.
  */
-export const importCanvasZip = async ({ project, scenario, file }) => {
+export const importCanvasZip = async ({ project, scenario, file, as }) => {
   const form = new FormData();
   form.append('file', file);
+  const params = { project, scenario };
+  if (as) params.as = as;
   const { data } = await apiClient.post(`${BASE}/import`, form, {
-    params: { project, scenario },
+    params,
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;

@@ -26,6 +26,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { useCanvasStore } from '../stores/canvasStore';
 import { useFetchSavedCanvases } from '../hooks/useCanvasData';
+import SavedIndicator from './SavedIndicator';
 import {
   deleteTempCanvas,
   exportCanvasZip,
@@ -111,6 +112,17 @@ const NavigatorCard = () => {
   // `onChange`.
   const fileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
+
+  // Import-as-rename state. When the backend returns 409 on the
+  // first upload attempt we hold the picked file in a ref and open
+  // the rename prompt; the user supplies a fresh name, we retry
+  // the upload with `as: <new>`. The ref (rather than state)
+  // avoids re-rendering the file picker proxy when we stash the
+  // pending file.
+  const pendingImportFileRef = useRef(null);
+  const [renamePromptOpen, setRenamePromptOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState(null);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -247,6 +259,35 @@ const NavigatorCard = () => {
 
   const handleImportPick = () => fileInputRef.current?.click();
 
+  /**
+   * Run an import attempt. Returns `'ok'` on success, `'conflict'`
+   * if the backend returned 409 (caller should open the rename
+   * prompt), or `'error'` for anything else (already toasted).
+   */
+  const runImport = async (file, as) => {
+    try {
+      const result = await importCanvasZip({ project, scenario, file, as });
+      invalidateSavedList();
+      antdMessage.success(`Imported "${result.name}"`);
+      return 'ok';
+    } catch (err) {
+      const httpStatus = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (httpStatus === 409) {
+        setRenameError(detail || null);
+        return 'conflict';
+      }
+      if (httpStatus === 400) {
+        antdMessage.error(detail || 'Invalid canvas zip');
+      } else {
+        antdMessage.error('Import failed — see console for details');
+        // eslint-disable-next-line no-console
+        console.error('Canvas import failed', err);
+      }
+      return 'error';
+    }
+  };
+
   const handleImportChange = async (event) => {
     const file = event.target.files?.[0];
     // Reset early so picking the same zip twice still fires onChange.
@@ -254,27 +295,48 @@ const NavigatorCard = () => {
     if (!file) return;
 
     setImporting(true);
-    try {
-      const result = await importCanvasZip({ project, scenario, file });
-      invalidateSavedList();
-      antdMessage.success(`Imported "${result.name}"`);
-    } catch (err) {
-      const status = err?.response?.status;
-      const detail = err?.response?.data?.detail;
-      if (status === 400) {
-        antdMessage.error(detail || 'Invalid canvas zip');
-      } else if (status === 409) {
-        antdMessage.error(
-          detail || 'A canvas with this name already exists',
-        );
-      } else {
-        antdMessage.error('Import failed — see console for details');
-        // eslint-disable-next-line no-console
-        console.error('Canvas import failed', err);
-      }
-    } finally {
-      setImporting(false);
+    const outcome = await runImport(file);
+    setImporting(false);
+
+    if (outcome === 'conflict') {
+      // Stash the file + open the rename prompt. The retry happens
+      // inside `handleRenameImport` once the user supplies a new
+      // name.
+      pendingImportFileRef.current = file;
+      setRenameValue('');
+      setRenamePromptOpen(true);
     }
+  };
+
+  const handleRenameImport = async () => {
+    const file = pendingImportFileRef.current;
+    if (!file) {
+      setRenamePromptOpen(false);
+      return;
+    }
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      setRenameError('Name cannot be empty');
+      return;
+    }
+    setImporting(true);
+    const outcome = await runImport(file, trimmed);
+    setImporting(false);
+    if (outcome === 'ok') {
+      pendingImportFileRef.current = null;
+      setRenamePromptOpen(false);
+      setRenameValue('');
+      setRenameError(null);
+    }
+    // 'conflict' / 'error' leave the prompt open with the error
+    // populated so the user can try a different name.
+  };
+
+  const handleCancelRenameImport = () => {
+    pendingImportFileRef.current = null;
+    setRenamePromptOpen(false);
+    setRenameValue('');
+    setRenameError(null);
   };
 
   const handleStartOver = () => {
@@ -352,6 +414,7 @@ const NavigatorCard = () => {
       </Space>
 
       <Space size="small">
+        <SavedIndicator />
         <Tooltip title={saveTooltip}>
           <Button
             type="primary"
@@ -437,6 +500,38 @@ const NavigatorCard = () => {
           commitSave(trimmed);
         }}
       />
+
+      <Modal
+        open={renamePromptOpen}
+        title="Import as"
+        okText="Import"
+        cancelText="Cancel"
+        confirmLoading={importing}
+        onOk={handleRenameImport}
+        onCancel={handleCancelRenameImport}
+        destroyOnClose
+      >
+        <p style={{ marginTop: 0 }}>
+          A canvas with this name already exists. Pick a new name to
+          import under:
+        </p>
+        <Input
+          autoFocus
+          value={renameValue}
+          placeholder="New canvas name"
+          onChange={(e) => {
+            setRenameValue(e.target.value);
+            if (renameError) setRenameError(null);
+          }}
+          onPressEnter={handleRenameImport}
+          status={renameError ? 'error' : undefined}
+        />
+        {renameError && (
+          <div style={{ color: '#f04d5b', fontSize: 12, marginTop: 6 }}>
+            {renameError}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
