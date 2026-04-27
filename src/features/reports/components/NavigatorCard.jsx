@@ -10,6 +10,7 @@ import {
 import { LeftOutlined } from '@ant-design/icons';
 import { RefreshIcon } from 'assets/icons';
 
+import InfoTooltip from 'components/InfoTooltip';
 import useNavigationStore from 'stores/navigationStore';
 import routes from 'constants/routes.json';
 import { useReportsStore } from '../stores/reportsStore';
@@ -78,22 +79,14 @@ const NavigatorCard = () => {
           onChange={setMapsLinked}
           label="Sync Maps"
           ariaLabel="Sync map cards with overview"
-          tooltip={
-            mapsLinked
-              ? 'Map cards mirror the overview map. Turn off to give each card its own view.'
-              : 'Each map card has its own view. Turn on to mirror the overview map.'
-          }
+          tooltipKey="reports-sync-maps"
         />
         <NavigatorToggle
           checked={exportMode}
           onChange={setExportMode}
           label="Export View"
           ariaLabel="Hide editing controls for export"
-          tooltip={
-            exportMode
-              ? 'Editing controls are hidden. Turn off to show toolbars, edit / delete buttons, and grid drag handles.'
-              : 'Hide all editing controls (toolbars, edit / delete buttons, range dropdowns, perimeter `+` buttons) for an export-ready view.'
-          }
+          tooltipKey="reports-export-view"
         />
       </Space>
 
@@ -155,18 +148,25 @@ const syncToggleLabelStyle = {
   color: '#222',
 };
 
-// Compact CEA-purple `Switch + label` toggle used in the Navigator
-// row. Wraps its own `ConfigProvider` so each toggle shows up as a
-// distinct child of `Space` and gets the row's flex gap (a shared
-// outer provider would collapse them into one slot).
-const NavigatorToggle = ({ checked, onChange, label, ariaLabel, tooltip }) => (
+// Compact CEA-purple `Switch + label + info` toggle used in the
+// Navigator row. Wraps its own `ConfigProvider` so each toggle shows
+// up as a distinct child of `Space` and gets the row's flex gap (a
+// shared outer provider would collapse them into one slot). The info
+// icon's body is loaded by `InfoTooltip` from the backend
+// `tooltips.yml` keyed by `tooltipKey`.
+const NavigatorToggle = ({
+  checked,
+  onChange,
+  label,
+  ariaLabel,
+  tooltipKey,
+}) => (
   <div style={syncToggleWrapperStyle}>
     <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
-      <Tooltip title={tooltip}>
-        <Switch checked={checked} onChange={onChange} aria-label={ariaLabel} />
-      </Tooltip>
+      <Switch checked={checked} onChange={onChange} aria-label={ariaLabel} />
     </ConfigProvider>
     <span style={syncToggleLabelStyle}>{label}</span>
+    <InfoTooltip tooltipKey={tooltipKey} />
   </div>
 );
 
