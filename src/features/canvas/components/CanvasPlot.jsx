@@ -44,7 +44,7 @@ const CanvasPlot = ({
   onNaturalHeight,
 }) => {
   const uniqueId = useId();
-  const containerRef = useRef(null);
+  const chartAreaRef = useRef(null);
   const scriptRef = useRef(null);
   const [legendItems, setLegendItems] = useState([]);
 
@@ -77,6 +77,7 @@ const CanvasPlot = ({
     });
 
     let cancelled = false;
+    let settleTimer = null;
 
     const loadExternal = (src) =>
       new Promise((resolve) => {
@@ -115,8 +116,8 @@ const CanvasPlot = ({
     };
 
     const postProcess = () => {
-      if (cancelled || !containerRef.current) return;
-      const plotDivs = containerRef.current.querySelectorAll(
+      if (cancelled || !chartAreaRef.current) return;
+      const plotDivs = chartAreaRef.current.querySelectorAll(
         '.js-plotly-plot, .plotly-graph-div',
       );
       if (plotDivs.length === 0) return;
@@ -137,22 +138,20 @@ const CanvasPlot = ({
         if (items.length > 0) setLegendItems(items);
       }
 
-      if (window.Plotly?.relayout) {
-        plotDivs.forEach((div) => {
-          try {
-            window.Plotly.relayout(
-              div,
-              relayoutUpdate({
-                stripLegend,
-                isSingleFigure,
-                rawTitle: div.layout?.title?.text,
-              }),
-            );
-          } catch {
-            // Error-card HTML snippets aren't Plotly figures — skip.
-          }
-        });
-      }
+      plotDivs.forEach((div) => {
+        try {
+          window.Plotly?.relayout?.(
+            div,
+            relayoutUpdate({
+              stripLegend,
+              isSingleFigure,
+              rawTitle: div.layout?.title?.text,
+            }),
+          );
+        } catch {
+          // Error-card HTML snippets aren't Plotly figures — skip.
+        }
+      });
 
       // Sum natural heights so the parent card can auto-grow. Multi-
       // figure plots return several figures with backend-baked
@@ -166,6 +165,19 @@ const CanvasPlot = ({
       });
       if (naturalHeight > 0) onNaturalHeight?.(naturalHeight);
 
+      // Schedule one explicit refit a moment later. By then React
+      // has committed the natural-height state update, react-grid-
+      // layout has applied the new card pixel height, and the flex
+      // chain has propagated to each chart wrapper. Plotly's RO
+      // would normally fire too, but its initial fire at mount can
+      // coalesce with the auto-grow change and get swallowed by the
+      // first-fire skip — this guarantees one fit that lands at
+      // the post-grow wrapper size regardless of RO timing.
+      settleTimer = setTimeout(() => {
+        if (cancelled || !chartAreaRef.current) return;
+        refitCharts(chartAreaRef.current);
+      }, AUTO_GROW_SETTLE_MS);
+
       onPlotReady?.(plotDivs[0]);
     };
 
@@ -173,29 +185,35 @@ const CanvasPlot = ({
 
     return () => {
       cancelled = true;
+      clearTimeout(settleTimer);
       scriptRef.current?.forEach((el) => el.remove());
       scriptRef.current = null;
     };
   }, [html, uniqueId, onPlotReady, onCaption, onNaturalHeight]);
 
-  // Re-fit on container resize (user drag-resize). Skip the first
-  // fire — fitting on initial mount would crush figures with backend-
-  // baked dimensions before the auto-grow request lands.
+  // Re-fit on chart-area resize. The activation timer gates RO
+  // fires until after the auto-grow has settled — without it, a
+  // coalesced first fire can carry the post-auto-grow size change
+  // and we'd have to choose between fitting before the chart is
+  // ready or skipping the only relevant fire. With it, RO is just
+  // a "user dragged the card" listener; the auto-grow path is
+  // handled by the explicit refit scheduled in postProcess.
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || typeof ResizeObserver === 'undefined') return;
-    let initialFire = true;
+    const area = chartAreaRef.current;
+    if (!area || typeof ResizeObserver === 'undefined') return;
+    let active = false;
+    const activateTimer = setTimeout(() => {
+      active = true;
+    }, AUTO_GROW_SETTLE_MS);
     const ro = new ResizeObserver(() => {
-      if (initialFire) {
-        initialFire = false;
-        return;
-      }
-      container
-        .querySelectorAll('.js-plotly-plot, .plotly-graph-div')
-        .forEach((div) => fitPlotToParent(div));
+      if (!active) return;
+      refitCharts(area);
     });
-    ro.observe(container);
-    return () => ro.disconnect();
+    ro.observe(area);
+    return () => {
+      clearTimeout(activateTimer);
+      ro.disconnect();
+    };
   }, [html]);
 
   if (isLoading) {
@@ -241,8 +259,10 @@ const CanvasPlot = ({
     );
 
   return (
-    <div ref={containerRef} style={containerStyle}>
-      <div style={chartAreaStyle}>{filtered}</div>
+    <div style={containerStyle}>
+      <div ref={chartAreaRef} style={chartAreaStyle}>
+        {filtered}
+      </div>
       {legendItems.length > 0 && <PlotLegend items={legendItems} />}
     </div>
   );
@@ -261,15 +281,26 @@ function unwrapBody(html) {
   return match ? match[1] : html;
 }
 
-// True when the chart anchors its legend horizontally beneath the
-// plot area. Such legends rely on the figure being tall enough for
-// the reserved bottom margin to fit them; in an embedded card that's
-// not guaranteed, so we strip them and render externally instead.
+// True when the chart anchors a horizontal legend beneath the plot
+// area AND reserves bottom margin for it. The margin check matters:
+// many ordinary bar plots also default to a horizontal bottom legend
+// without inflating `margin.b`, and they render fine in their own
+// chrome — only plots that explicitly bake extra bottom space (like
+// emission_timeline's `margin.b: 200`) signal "this legend needs to
+// live outside the plot area to fit". `DEFAULT_PLOTLY_BOTTOM_MARGIN`
+// is the documented Plotly default; anything above means the backend
+// reserved space deliberately.
 function hasExternalBottomLegend(layout) {
   if (!layout || layout.showlegend === false) return false;
   const legend = layout.legend;
-  if (!legend) return false;
-  return legend.orientation === 'h' && (legend.y ?? 1) <= 0;
+  if (!legend || legend.orientation !== 'h') return false;
+  // `legend.y <= 0` means the legend is anchored below the plot
+  // area (Plotly normalises plot-area coords so 0 is the bottom).
+  // If `y` is unset, Plotly defaults to a top-right placement —
+  // not below — so we treat that as no external legend.
+  if (typeof legend.y !== 'number' || legend.y > 0) return false;
+  const bottomMargin = layout.margin?.b ?? DEFAULT_PLOTLY_BOTTOM_MARGIN;
+  return bottomMargin > DEFAULT_PLOTLY_BOTTOM_MARGIN;
 }
 
 // Build the `Plotly.relayout` payload for a single figure. Three
@@ -279,12 +310,25 @@ function relayoutUpdate({ stripLegend, isSingleFigure, rawTitle }) {
   if (stripLegend) {
     return {
       'title.text': isSingleFigure ? '' : pickWhatIfName(rawTitle),
-      ...subtitleFontUpdate,
+      ...SUBTITLE_FONT_UPDATE,
       showlegend: false,
+      // Reset the legend's negative-y anchor (e.g. emission_timeline
+      // sets `legend.y: -0.2` to push it below the plot area). Even
+      // with `showlegend: false`, a negative anchor can still reserve
+      // bottom space, squeezing the x-axis title against the tick
+      // labels.
+      'legend.y': 0,
       'margin.t': isSingleFigure ? STRIPPED_MARGIN.t : SUBTITLE_MARGIN.t,
       'margin.l': STRIPPED_MARGIN.l,
       'margin.r': STRIPPED_MARGIN.r,
       'margin.b': STRIPPED_MARGIN.b,
+      // Pin axis margins so Plotly's `automargin` heuristic can't
+      // expand them past the values we set above when the labels
+      // happen to be wide — that's how we'd end up with stray
+      // whitespace between the chart and the React legend, or to
+      // the left of the y-axis.
+      'xaxis.automargin': false,
+      'yaxis.automargin': false,
     };
   }
   if (isSingleFigure) {
@@ -297,7 +341,7 @@ function relayoutUpdate({ stripLegend, isSingleFigure, rawTitle }) {
   }
   return {
     'title.text': pickWhatIfName(rawTitle),
-    ...subtitleFontUpdate,
+    ...SUBTITLE_FONT_UPDATE,
     'margin.t': SUBTITLE_MARGIN.t,
     'margin.l': SUBTITLE_MARGIN.l,
     'margin.r': SUBTITLE_MARGIN.r,
@@ -357,11 +401,26 @@ function splitFigureTitle(raw) {
   };
 }
 
-// Resize a Plotly figure to its parent container. Clears inline
-// width/height first (so Plotly can replace them) then writes the
-// measured dims via relayout, which re-flows traces (Sankey,
-// parallel-coords…) that cache pixel geometry from newPlot.
-function fitPlotToParent(div) {
+// Refit every Plotly chart inside a container element. Skips charts
+// that haven't been initialised yet (no `_fullLayout`) — fast renders
+// from a cached Plotly CDN can have RO fire before `newPlot`'s
+// promise resolves.
+function refitCharts(area) {
+  area
+    .querySelectorAll('.js-plotly-plot, .plotly-graph-div')
+    .forEach((div) => {
+      if (!div._fullLayout) return;
+      fitPlotToParent(div);
+    });
+}
+
+// Resize a Plotly figure to its parent container. Three steps in
+// order: clear the inline width/height that newPlot wrote (so
+// Plotly is free to replace them), `relayout` the layout's dims to
+// the wrapper's measured size, then `Plots.resize` to commit the
+// redraw — Sankey and other fixed-dim traces cache pixel geometry
+// during newPlot and only re-flow when both calls happen together.
+export function fitPlotToParent(div) {
   const parent = div?.parentElement;
   if (!parent) return;
   const w = parent.clientWidth;
@@ -384,7 +443,10 @@ const PlotLegend = ({ items }) => (
     {items.map((item, i) => (
       <div key={`${item.name}-${i}`} style={legendItemStyle}>
         <span
-          style={{ ...legendSwatchStyle, background: item.color || '#888' }}
+          style={{
+            ...legendSwatchStyle,
+            background: item.color || LEGEND_FALLBACK_COLOR,
+          }}
         />
         <span style={legendLabelStyle}>{item.name}</span>
       </div>
@@ -431,10 +493,25 @@ const PlotError = ({ error }) => {
 
 // ── Constants ────────────────────────────────────────────────────
 
+// Plotly's documented default for `layout.margin.b` (px). Plots that
+// reserve more bottom space than this have explicitly tuned their
+// layout for a bottom-anchored horizontal legend — that's the signal
+// the external React legend should take over.
+// https://plotly.com/javascript/reference/layout/#layout-margin
+const DEFAULT_PLOTLY_BOTTOM_MARGIN = 80;
+
 // One-tick wait after `Plotly.newPlot` so `.layout` and `.data` are
 // readable. 200ms covers the slowest figures (large Sankeys) without
 // being noticeably slow on simple bar/line plots.
 const POST_NEWPLOT_DELAY_MS = 200;
+
+// How long to wait after postProcess before treating subsequent
+// resize-observer fires as "user dragged the card". Spans the
+// React state commit → react-grid-layout pixel-height update →
+// flex-tree settle that the auto-grow path goes through. The
+// explicit refit at this moment guarantees the chart matches its
+// final wrapper size.
+const AUTO_GROW_SETTLE_MS = 100;
 
 // Default height for autosize figures whose legend has been stripped.
 // Picked to give the plot area room to breathe alongside the React
@@ -442,11 +519,20 @@ const POST_NEWPLOT_DELAY_MS = 200;
 // drag-resize from there.
 const STRIPPED_DEFAULT_HEIGHT = 500;
 
+// Swatch colour shown next to a legend entry whose Plotly trace
+// didn't expose a colour we could read (rare — most charts wire
+// `marker.color` / `line.color` / `fillcolor`). Neutral grey so it
+// reads as "unknown" rather than introducing a meaningful hue.
+const LEGEND_FALLBACK_COLOR = '#888';
+
 // Margins applied to figures with stripped legends — title is lifted
 // to the slot caption (or replaced with a subtitle), so the plot
 // area can fill the wrapper end-to-end with just enough room for
-// axis labels.
-const STRIPPED_MARGIN = { t: 16, l: 60, r: 16, b: 50 };
+// axis labels. `b: 70` fits both the x-axis tick labels and the
+// x-axis title (e.g. emission_timeline's "Time horizon - Year")
+// without overlap; with `automargin` pinned off Plotly won't tune
+// this for us, so we reserve enough by hand.
+const STRIPPED_MARGIN = { t: 16, l: 60, r: 16, b: 70 };
 
 // Margins applied to single-figure plots whose title is lifted to
 // the slot caption — the in-chart title is empty so almost no top
@@ -460,7 +546,7 @@ const SUBTITLE_MARGIN = { t: 28, l: 20, r: 16 };
 // In-chart subtitle styling. Font size + colour match the secondary
 // title row in `PlotSlotCard` so a stripped chart and a non-stripped
 // chart share visual weight.
-const subtitleFontUpdate = {
+const SUBTITLE_FONT_UPDATE = {
   'title.font.size': 12,
   'title.font.color': '#666',
   'title.x': 0,

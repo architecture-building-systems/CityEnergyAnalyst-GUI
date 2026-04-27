@@ -1,13 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
-import { InputEditorIcon, BinAnimationIcon } from 'assets/icons';
+import {
+  InputEditorIcon,
+  BinAnimationIcon,
+  RefreshIcon,
+} from 'assets/icons';
 
-import CanvasPlot from './CanvasPlot';
+import CanvasPlot, { fitPlotToParent } from './CanvasPlot';
 import { useCanvasStore } from '../stores/canvasStore';
 
 /**
- * A single plot slot within a FeatureCard. Edit / Delete buttons sit
- * above the chart in one shared icon-button container.
+ * A single plot slot within a FeatureCard. Edit / Refit / Delete
+ * buttons sit above the chart in one shared icon-button container.
  */
 const PlotSlotCard = ({
   scenario,
@@ -20,6 +24,18 @@ const PlotSlotCard = ({
   // Title lifted out of the Plotly figure by CanvasPlot — shown on
   // the controls row instead of inside the chart canvas.
   const [caption, setCaption] = useState('');
+
+  // Manual fit escape hatch: the Refresh button below re-runs
+  // `fitPlotToParent` on every Plotly figure inside this slot. The
+  // automated RO + explicit-settle path catches almost everything,
+  // but a button lets the user nudge a chart that ends up at the
+  // wrong size after a complex resize sequence.
+  const slotRef = useRef(null);
+  const handleRefresh = () => {
+    slotRef.current
+      ?.querySelectorAll('.js-plotly-plot, .plotly-graph-div')
+      .forEach((div) => fitPlotToParent(div));
+  };
 
   // Hide the per-plot Edit / Delete trio in Canvas Builder's Export View.
   const exportMode = useCanvasStore((s) => s.exportMode);
@@ -63,7 +79,7 @@ const PlotSlotCard = ({
       : null;
 
   return (
-    <div style={slotStyle}>
+    <div ref={slotRef} style={slotStyle}>
       <div style={controlsStyle}>
         <div style={titleStyle} title={hoverTitle}>
           {primaryTitle && (
@@ -93,6 +109,14 @@ const PlotSlotCard = ({
                 icon={<InputEditorIcon />}
                 onClick={onEdit}
                 aria-label="Edit plot"
+              />
+            </Tooltip>
+            <Tooltip title="Refit chart">
+              <Button
+                type="text"
+                icon={<RefreshIcon />}
+                onClick={handleRefresh}
+                aria-label="Refit chart to its container"
               />
             </Tooltip>
             {onDelete && (
