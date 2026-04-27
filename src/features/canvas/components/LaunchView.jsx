@@ -33,6 +33,7 @@ const LaunchView = ({
   const scenario = useProjectStore((s) => s.scenario);
 
   const enterInterScenario = useCanvasStore((s) => s.enterInterScenario);
+  const exportMode = useCanvasStore((s) => s.exportMode);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
 
@@ -257,7 +258,7 @@ const LaunchView = ({
 
   return (
     <>
-      <div style={canvasStyle}>
+      <div style={exportMode ? canvasExportStyle : canvasStyle}>
         <CanvasColumn
           columnDef={{ type: 'scenario', scenario }}
           cards={cards}
@@ -309,6 +310,13 @@ const canvasStyle = {
   display: 'flex',
   flexDirection: 'column',
   width: 'fit-content',
+};
+
+// Export View hides the perimeter `+` buttons, so the right/bottom
+// padding can match the left/top — symmetric 16px gutter.
+const canvasExportStyle = {
+  ...canvasStyle,
+  padding: 16,
 };
 
 const centredStyle = {

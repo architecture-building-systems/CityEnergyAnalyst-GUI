@@ -226,22 +226,25 @@ const CanvasColumn = ({
   // headroom so the rightmost card always has room to drag east.
   // Without the buffer, react-grid-layout's `cols === rightmost
   // edge` constraint pins any rightmost tile in place horizontally.
-  // The buffer is skipped when only the map is on the grid — the
-  // map is anchored at (0,0) and almost never dragged east, so the
-  // ~258 px of empty whitespace at launch isn't worth it.
+  // The buffer is skipped when (a) only the map is on the grid (the
+  // map is anchored at (0,0) and rarely dragged east, so the
+  // ~258 px launch whitespace isn't worth it) or (b) Export View is
+  // on (the layout is frozen — drag is disabled, so the headroom
+  // serves no purpose and just trails empty space past the cards).
   const { effectiveCols, gridWidthPx } = useMemo(() => {
     let maxRight = MIN_COLS;
     for (const item of layout) {
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
-    const buffer = cards.length === 0 ? 0 : DRAG_BUFFER_COLS;
+    const skipBuffer = cards.length === 0 || exportMode;
+    const buffer = skipBuffer ? 0 : DRAG_BUFFER_COLS;
     const cols = Math.max(MIN_COLS, maxRight + buffer);
     return {
       effectiveCols: cols,
       gridWidthPx: widthForCols(cols),
     };
-  }, [layout, cards.length]);
+  }, [layout, cards.length, exportMode]);
 
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes

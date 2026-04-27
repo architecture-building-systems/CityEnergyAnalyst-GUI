@@ -169,7 +169,7 @@ const ComparisonView = ({
       )}
 
       <div style={canvasWrapperStyle}>
-        <div style={canvasStyle}>
+        <div style={exportMode ? canvasExportStyle : canvasStyle}>
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
@@ -264,6 +264,13 @@ const canvasStyle = {
   padding: '16px 72px 72px 16px',
   width: 'fit-content',
   height: 'fit-content',
+};
+
+// Export View hides the perimeter `+` buttons, so the right/bottom
+// padding can match the left/top — symmetric 16px gutter.
+const canvasExportStyle = {
+  ...canvasStyle,
+  padding: 16,
 };
 
 // No `overflowX` here — that would create a horizontal scroll
