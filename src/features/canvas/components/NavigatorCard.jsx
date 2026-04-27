@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
-import { RefreshIcon } from 'assets/icons';
+import { StartOverIcon } from 'assets/icons';
 
 import InfoTooltip from 'components/InfoTooltip';
 import useNavigationStore from 'stores/navigationStore';
@@ -41,8 +41,6 @@ import { useCanvasStore } from '../stores/canvasStore';
  */
 const NavigatorCard = () => {
   const { push } = useNavigationStore();
-  const view = useCanvasStore((s) => s.view);
-  const columns = useCanvasStore((s) => s.columns);
   const startOver = useCanvasStore((s) => s.startOver);
   const mapsLinked = useCanvasStore((s) => s.mapsLinked);
   const setMapsLinked = useCanvasStore((s) => s.setMapsLinked);
@@ -56,18 +54,14 @@ const NavigatorCard = () => {
   };
 
   const handleStartOver = () => {
-    if (view !== 'launch' && columns.length > 0) {
-      Modal.confirm({
-        title: 'Start over?',
-        content:
-          'This will clear all comparison columns and return to the launch view.',
-        okText: 'Start over',
-        cancelText: 'Cancel',
-        onOk: startOver,
-      });
-    } else {
-      startOver();
-    }
+    Modal.confirm({
+      title: 'Start over?',
+      content:
+        'All cards will be removed and the canvas will return to its launch state.',
+      okText: 'Start over',
+      cancelText: 'Cancel',
+      onOk: startOver,
+    });
   };
 
   return (
@@ -76,9 +70,13 @@ const NavigatorCard = () => {
         <Button icon={<LeftOutlined />} onClick={handleReturn}>
           Return
         </Button>
-        <Button icon={<RefreshIcon />} onClick={handleStartOver}>
-          Start Over
-        </Button>
+        <Tooltip title="Start Over">
+          <Button
+            icon={<StartOverIcon />}
+            onClick={handleStartOver}
+            aria-label="Start over"
+          />
+        </Tooltip>
         <NavigatorToggle
           checked={mapsLinked}
           onChange={setMapsLinked}

@@ -19,6 +19,7 @@ import OpenProjectIcon from './open_project.svg';
 import ExternalLinkIcon from './external_link.svg';
 import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
+import StartOverIcon from './start_over.svg';
 import DuplicateIcon from './duplicate.svg';
 import UploadDownloadIcon from './upload_download.svg';
 
@@ -68,6 +69,7 @@ export {
   ExternalLinkIcon,
   CreateNewIcon,
   RefreshIcon,
+  StartOverIcon,
   DuplicateIcon,
   RunIcon,
   ShowHideCardsIcon,

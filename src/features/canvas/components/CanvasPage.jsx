@@ -33,6 +33,7 @@ import PlotEditModal from './PlotEditModal';
  */
 const CanvasPage = () => {
   const view = useCanvasStore((s) => s.view);
+  const launchResetTick = useCanvasStore((s) => s.launchResetTick);
 
   // drawer = { plotConfig, onSave, cardId? } | null
   // `cardId` (when present) flags the FeatureCardPlot that owns the
@@ -110,7 +111,11 @@ const CanvasPage = () => {
 
       <div style={canvasCellStyle}>
         {view === 'launch' ? (
+          // Re-mount on every Start Over so LaunchView's local card
+          // state resets — the store action can't reach into local
+          // useState, but a key change forces a fresh component.
           <LaunchView
+            key={launchResetTick}
             onOpenDrawer={openDrawer}
             onOpenMapBottom={openMapBottom}
             editingPlotCardId={drawer?.cardId ?? null}

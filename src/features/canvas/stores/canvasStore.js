@@ -204,14 +204,22 @@ export const useCanvasStore = create((set, get) => ({
     });
   },
 
+  // `launchResetTick` bumps every time `startOver` runs so the
+  // `LaunchView` (which keeps its draft cards in local `useState`)
+  // can reset by re-mounting on this key. The store can't reach
+  // into LaunchView's local state directly, and putting launch
+  // cards in the store would create a second source of truth that
+  // comparison views never read.
+  launchResetTick: 0,
   startOver: () =>
-    set({
+    set((state) => ({
       view: 'launch',
       columns: [],
       parentScenario: null,
       sharedCards: [],
       columnCards: {},
-    }),
+      launchResetTick: state.launchResetTick + 1,
+    })),
 
   // ── Column management ───────────────────────────────────────
 
