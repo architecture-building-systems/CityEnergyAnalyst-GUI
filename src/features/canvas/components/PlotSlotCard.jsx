@@ -111,7 +111,7 @@ const PlotSlotCard = ({
                 aria-label="Edit plot"
               />
             </Tooltip>
-            <Tooltip title="Refit chart">
+            <Tooltip title="Refit">
               <Button
                 type="text"
                 icon={<RefreshIcon />}
