@@ -31,6 +31,9 @@ import { useCanvasStore } from '../stores/canvasStore';
  *   - Enable Edit  → show editing controls (default on); off
  *                    hides Edit / Delete / `+` / toolbars / range
  *                    inputs for a clean snapshot
+ *   - Auto Save    → flush every change to a backend draft
+ *                    (default on); off keeps everything in memory
+ *                    until Save is clicked
  *   - Dashboard    → dropdown to switch between saved dashboards
  *                    (stubbed — backend persistence not wired yet)
  *
@@ -48,6 +51,8 @@ const NavigatorCard = () => {
   const setEnableEdit = useCanvasStore((s) => s.setEnableEdit);
   const fixLayout = useCanvasStore((s) => s.fixLayout);
   const setFixLayout = useCanvasStore((s) => s.setFixLayout);
+  const autoSave = useCanvasStore((s) => s.autoSave);
+  const setAutoSave = useCanvasStore((s) => s.setAutoSave);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -95,6 +100,12 @@ const NavigatorCard = () => {
           onChange={setEnableEdit}
           label="Enable Edit"
           ariaLabel="Show editing controls"
+        />
+        <NavigatorToggle
+          checked={autoSave}
+          onChange={setAutoSave}
+          label="Auto Save"
+          ariaLabel="Automatically save changes to a draft"
         />
       </Space>
 

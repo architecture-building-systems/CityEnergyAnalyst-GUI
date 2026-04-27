@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useCanvasStore } from '../stores/canvasStore';
+import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
@@ -34,6 +35,11 @@ import PlotEditModal from './PlotEditModal';
 const CanvasPage = () => {
   const view = useCanvasStore((s) => s.view);
   const launchResetTick = useCanvasStore((s) => s.launchResetTick);
+
+  // Subscribe to store changes and debounce-flush to the backend's
+  // `temp/<uuid>/` folder while the user works. Idempotent — single
+  // mount point owns the autosave debouncer.
+  useCanvasPersistence();
 
   // drawer = { plotConfig, onSave, cardId? } | null
   // `cardId` (when present) flags the FeatureCardPlot that owns the

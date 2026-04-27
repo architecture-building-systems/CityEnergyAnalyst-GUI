@@ -163,6 +163,41 @@ export const useCanvasStore = create((set, get) => ({
   fixLayout: false,
   setFixLayout: (value) => set({ fixLayout: !!value }),
 
+  // ── Persistence (Phase 3 wiring) ────────────────────────────
+  // `autoSave` ON (default) flushes every change to a backend temp
+  // folder via `useCanvasPersistence`. OFF leaves the in-memory
+  // state alone until the user hits Save explicitly. The toggle
+  // sits next to Sync Maps / Fix Layout / Enable Edit on the
+  // navigator.
+  autoSave: true,
+  setAutoSave: (value) => set({ autoSave: !!value }),
+
+  // Backend handle for the live in-progress canvas. Allocated
+  // server-side on the first autosave (`POST /api/canvas/temp`)
+  // and used as the path target for every subsequent debounced
+  // `PUT /api/canvas/temp/<uuid>`. `null` until the first edit
+  // creates one.
+  tempUuid: null,
+  setTempUuid: (value) => set({ tempUuid: value || null }),
+
+  // Display name of the currently-open canvas. `null` for an
+  // untitled draft; set when the user opens a saved canvas or
+  // commits a draft via Save.
+  canvasName: null,
+  setCanvasName: (value) => set({ canvasName: value || null }),
+
+  // Set to the parent saved canvas name when the live edit is a
+  // dirty copy of an already-saved canvas (so Save knows which
+  // root folder to overwrite). `null` for untitled drafts and for
+  // canvases that haven't been edited since they were opened.
+  parentCanvasName: null,
+  setParentCanvasName: (value) => set({ parentCanvasName: value || null }),
+
+  // Wall-clock timestamp (ms) of the last successful autosave
+  // flush. Drives the navigator's "Saved · Xm ago" indicator.
+  lastSavedAt: null,
+  setLastSavedAt: (value) => set({ lastSavedAt: value || null }),
+
   // ── View transitions ────────────────────────────────────────
 
   enterInterScenario: (scenarios) => {
