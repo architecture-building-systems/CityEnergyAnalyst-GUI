@@ -87,11 +87,18 @@ const LaunchView = ({
         } else if (targetCardId) {
           const target = prev.find((c) => c.id === targetCardId);
           if (target) {
+            // Place the new card past the target's right or bottom
+            // edge using the target's actual width / height. A
+            // `+ 1` here lands inside the target's footprint
+            // (default card is 6 cols × 10 rows), and rgl's
+            // collision resolution then pushes the new card down
+            // to the next free row — making every right-insert
+            // silently turn into a bottom-insert.
             if (direction === 'right') {
               row = target.row;
-              col = target.col + 1;
+              col = target.col + target.w;
             } else if (direction === 'bottom') {
-              row = target.row + 1;
+              row = target.row + target.h;
               col = target.col;
             }
           }

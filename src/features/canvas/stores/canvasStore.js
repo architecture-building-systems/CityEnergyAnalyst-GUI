@@ -94,11 +94,18 @@ const insertCardInto = (
       col = MAP_ANCHOR_W;
     }
   } else if (targetCard) {
+    // Place the new card just past the target's right or bottom
+    // edge using the target's actual width / height. A naive `+ 1`
+    // landed inside the target's footprint (cards default to
+    // `DEFAULT_CARD_W: 6 / DEFAULT_CARD_H: 10`), and rgl's
+    // collision resolution then shoved the new card down to the
+    // next free row — making every right-insert silently turn
+    // into a bottom-insert.
     if (direction === 'right') {
       row = targetCard.row;
-      col = targetCard.col + 1;
+      col = targetCard.col + targetCard.w;
     } else if (direction === 'bottom') {
-      row = targetCard.row + 1;
+      row = targetCard.row + targetCard.h;
       col = targetCard.col;
     }
   }
