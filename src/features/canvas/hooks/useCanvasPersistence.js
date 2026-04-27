@@ -43,7 +43,6 @@ const PERSISTABLE_SELECTOR = (state) => ({
   mapsLinked: state.mapsLinked,
   fixLayout: state.fixLayout,
   canvasName: state.canvasName,
-  parentCanvasName: state.parentCanvasName,
 });
 
 const shallowEqual = (a, b) => {
@@ -87,12 +86,13 @@ export function useCanvasPersistence() {
         let uuid = state.tempUuid;
         if (!uuid) {
           // First persistable edit on a clean state — allocate a
-          // server-side uuid. Seed from `parentCanvasName` when
-          // present so the temp records its parent saved canvas.
+          // server-side uuid. Seed from `canvasName` when present
+          // so the temp's canvas.yml records its parent saved
+          // canvas (used by Save to overwrite the right folder).
           const result = await createTempCanvas({
             project,
             scenario,
-            fromName: state.parentCanvasName ?? null,
+            fromName: state.canvasName ?? null,
           });
           uuid = result.uuid;
           useCanvasStore.getState().setTempUuid(uuid);

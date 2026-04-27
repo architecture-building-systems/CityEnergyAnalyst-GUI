@@ -49,10 +49,15 @@ const cardConfigFromStore = (card) => ({
  * yet (cheaper to just resend everything for now).
  */
 export function serializeCanvas(state) {
+  // `parent_canvas_name` is intentionally omitted — the backend
+  // sets it on the canvas.yml inside the temp folder when
+  // `create_temp_canvas` is called with a `from` parameter, and a
+  // sparse-write that doesn't include the field leaves the
+  // server-side value untouched. The frontend never needs to track
+  // it locally.
   const canvas = {
     schema_version: SCHEMA_VERSION,
     name: state.canvasName ?? null,
-    parent_canvas_name: state.parentCanvasName ?? null,
     view: state.view,
     project: state.project ?? null,
     parent_scenario: state.parentScenario ?? null,
@@ -116,7 +121,6 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     mapsLinked: !!canvas.maps_linked,
     fixLayout: !!canvas.fix_layout,
     canvasName: canvas.name ?? null,
-    parentCanvasName: canvas.parent_canvas_name ?? null,
     sharedCards: [],
     columnCards: {},
   };

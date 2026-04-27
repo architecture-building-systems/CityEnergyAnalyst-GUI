@@ -182,21 +182,34 @@ export const useCanvasStore = create((set, get) => ({
 
   // Display name of the currently-open canvas. `null` for an
   // untitled draft; set when the user opens a saved canvas or
-  // commits a draft via Save.
+  // commits a draft via Save. The `(canvasName, tempUuid)` pair
+  // describes every legal state:
+  //   (null, null) — fresh, nothing edited yet
+  //   (null,  X )  — untitled draft being edited
+  //   ( A , null)  — viewing saved canvas A (clean)
+  //   ( A ,  X )   — dirty edit of saved canvas A
+  // The backend's canvas.yml records the parent saved name itself
+  // (`parent_canvas_name`), so the frontend doesn't track it.
   canvasName: null,
   setCanvasName: (value) => set({ canvasName: value || null }),
-
-  // Set to the parent saved canvas name when the live edit is a
-  // dirty copy of an already-saved canvas (so Save knows which
-  // root folder to overwrite). `null` for untitled drafts and for
-  // canvases that haven't been edited since they were opened.
-  parentCanvasName: null,
-  setParentCanvasName: (value) => set({ parentCanvasName: value || null }),
 
   // Wall-clock timestamp (ms) of the last successful autosave
   // flush. Drives the navigator's "Saved · Xm ago" indicator.
   lastSavedAt: null,
   setLastSavedAt: (value) => set({ lastSavedAt: value || null }),
+
+  /**
+   * Mark a successful Save: clear the live temp handle, adopt the
+   * sanitised name returned by the backend, and stamp lastSavedAt.
+   * The next persistable edit will then create a fresh temp seeded
+   * from this saved canvas.
+   */
+  markSaved: (name) =>
+    set({
+      canvasName: name,
+      tempUuid: null,
+      lastSavedAt: Date.now(),
+    }),
 
   // ── View transitions ────────────────────────────────────────
 
@@ -259,6 +272,14 @@ export const useCanvasStore = create((set, get) => ({
       parentScenario: null,
       sharedCards: [],
       columnCards: {},
+      // Persistence state belongs to the discarded canvas; drop it
+      // so Start Over leaves no dangling references. The associated
+      // temp folder cleanup (`DELETE /api/canvas/temp/<uuid>`) is
+      // an API call the navigator's handler runs *before* this so
+      // the deletion can be awaited / surfaced on failure.
+      tempUuid: null,
+      canvasName: null,
+      lastSavedAt: null,
       launchResetTick: state.launchResetTick + 1,
     })),
 
