@@ -37,8 +37,9 @@ const PlotSlotCard = ({
       .forEach((div) => fitPlotToParent(div));
   };
 
-  // Hide the per-plot Edit / Delete trio in Canvas Builder's Export View.
-  const exportMode = useCanvasStore((s) => s.exportMode);
+  // Hide the per-plot Edit / Refit / Delete trio when Canvas
+  // Builder's Enable Edit toggle is off (snapshot mode).
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   // Single what-if pick → append `| {name}` to the title. Multi-pick
   // stacks multiple figures with their own labels, so a single
@@ -101,7 +102,7 @@ const PlotSlotCard = ({
             </div>
           )}
         </div>
-        {!exportMode && (
+        {enableEdit && (
           <div className="cea-card-icon-button-container">
             <Tooltip title="Edit">
               <Button

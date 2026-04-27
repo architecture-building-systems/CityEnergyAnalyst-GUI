@@ -62,8 +62,9 @@ const FeatureCardPlot = ({
   const quickPickOptions = getQuickPickOptions(feature);
   const family = useMemo(() => findFamilyForFeature(feature), [feature]);
 
-  // Hide the "Add a plot" pill in Canvas Builder's Export View.
-  const exportMode = useCanvasStore((s) => s.exportMode);
+  // Hide the "Add a plot" pill when Canvas Builder's Enable Edit
+  // toggle is off (snapshot mode).
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   return (
     <FeatureCardShell
@@ -95,7 +96,7 @@ const FeatureCardPlot = ({
                 />
               </Fragment>
             ))}
-            {onAddPlot && !exportMode && (
+            {onAddPlot && enableEdit && (
               <div
                 style={
                   plots.length > 0 ? addPlotRowWithDividerStyle : undefined

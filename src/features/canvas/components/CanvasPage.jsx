@@ -58,15 +58,15 @@ const CanvasPage = () => {
   }, []);
   const closeMapBottom = useCallback(() => setActiveMapCardId(null), []);
 
-  // Entering export view closes any open editing surface (plot
+  // Turning Enable Edit off closes any open editing surface (plot
   // drawer + map-card bottom). Listened to via zustand's `subscribe`
   // — a `useEffect` on a selector here would cascade renders every
   // time the page consumed the slice; we only want the close action
-  // at the false → true transition.
+  // at the true → false transition.
   useEffect(
     () =>
       useCanvasStore.subscribe((state, prev) => {
-        if (state.exportMode && !prev.exportMode) {
+        if (!state.enableEdit && prev.enableEdit) {
           setDrawer(null);
           setActiveMapCardId(null);
         }

@@ -48,6 +48,28 @@ const CanvasPlot = ({
   const scriptRef = useRef(null);
   const [legendItems, setLegendItems] = useState([]);
 
+  // Stash the current callbacks in refs so the post-process effect
+  // below can call them without listing them as deps. Parents
+  // (FeatureCardPlot in particular) curry per-plot callbacks inline,
+  // so a fresh function identity arrives on every parent render.
+  // If those identities were dep-tracked, the effect would re-fire
+  // on every parent re-render → postProcess would re-read each
+  // figure's `layout.height` (which `fitPlotToParent` has since
+  // overwritten with the wrapper's measured size) and re-report it
+  // as the chart's natural height. The card grew, the wrapper
+  // measured taller, the natural height climbed, the card grew
+  // more — a feedback loop that ran the card off the bottom of the
+  // page. Refs sever the dep chain so postProcess fires once per
+  // html and the loop can't form.
+  const onCaptionRef = useRef(onCaption);
+  const onNaturalHeightRef = useRef(onNaturalHeight);
+  const onPlotReadyRef = useRef(onPlotReady);
+  useEffect(() => {
+    onCaptionRef.current = onCaption;
+    onNaturalHeightRef.current = onNaturalHeight;
+    onPlotReadyRef.current = onPlotReady;
+  });
+
   const {
     data: rawHtml,
     isLoading,
@@ -131,7 +153,7 @@ const CanvasPlot = ({
       const { main: mainTitle } = splitFigureTitle(
         plotDivs[0].layout?.title?.text,
       );
-      onCaption?.(mainTitle);
+      onCaptionRef.current?.(mainTitle);
 
       if (stripLegend) {
         const items = extractLegendItems(plotDivs[0].data);
@@ -163,7 +185,7 @@ const CanvasPlot = ({
         if (typeof h === 'number') naturalHeight += h;
         else if (stripLegend) naturalHeight += STRIPPED_DEFAULT_HEIGHT;
       });
-      if (naturalHeight > 0) onNaturalHeight?.(naturalHeight);
+      if (naturalHeight > 0) onNaturalHeightRef.current?.(naturalHeight);
 
       // Schedule one explicit refit a moment later. By then React
       // has committed the natural-height state update, react-grid-
@@ -178,7 +200,7 @@ const CanvasPlot = ({
         refitCharts(chartAreaRef.current);
       }, AUTO_GROW_SETTLE_MS);
 
-      onPlotReady?.(plotDivs[0]);
+      onPlotReadyRef.current?.(plotDivs[0]);
     };
 
     run();
@@ -189,7 +211,7 @@ const CanvasPlot = ({
       scriptRef.current?.forEach((el) => el.remove());
       scriptRef.current = null;
     };
-  }, [html, uniqueId, onPlotReady, onCaption, onNaturalHeight]);
+  }, [html, uniqueId]);
 
   // Re-fit on chart-area resize. The activation timer gates RO
   // fires until after the auto-grow has settled — without it, a

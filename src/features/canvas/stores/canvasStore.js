@@ -136,14 +136,26 @@ export const useCanvasStore = create((set, get) => ({
   mapsLinked: true,
   setMapsLinked: (value) => set({ mapsLinked: !!value }),
 
-  // Export-ready view — when `true`, every editing affordance is
-  // hidden across the canvas (Edit / Delete buttons, map toolbars,
-  // perimeter `+` buttons, "Add a plot" pill, range / scale / radius
-  // legend controls, grid drag + resize). The display content (maps,
-  // plots, KPIs, legends, titles) stays. Used to capture clean
-  // snapshots of the dashboard.
-  exportMode: false,
-  setExportMode: (value) => set({ exportMode: !!value }),
+  // Master editing-affordance switch. When `true` (the default),
+  // every Edit / Delete button, perimeter `+`, "Add a plot" pill,
+  // map toolbar, range / scale / radius legend control is visible
+  // — Canvas Builder behaves as a fully editable surface. When
+  // `false`, all of those vanish and only the display content
+  // (maps, plots, KPIs, legends, titles) remains; used to capture
+  // a clean snapshot. Layout drag/resize is *not* affected by
+  // this flag — that lives under `fixLayout` so users can lock
+  // positions without giving up editing controls.
+  enableEdit: true,
+  setEnableEdit: (value) => set({ enableEdit: !!value }),
+
+  // Layout lock. When `true`, every tile's drag handle + resize
+  // affordance is suppressed and react-grid-layout's
+  // `isDraggable / isResizable` flip off — the grid is frozen but
+  // editing controls (Edit / Delete buttons, perimeter `+`,
+  // Add-a-plot pill, map toolbars, legends) all stay visible
+  // unless `enableEdit` is also off.
+  fixLayout: false,
+  setFixLayout: (value) => set({ fixLayout: !!value }),
 
   // ── View transitions ────────────────────────────────────────
 

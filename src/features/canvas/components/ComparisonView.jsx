@@ -21,7 +21,7 @@ const ComparisonView = ({
 
   const view = useCanvasStore((s) => s.view);
   const columns = useCanvasStore((s) => s.columns);
-  const exportMode = useCanvasStore((s) => s.exportMode);
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
   const parentScenario = useCanvasStore((s) => s.parentScenario);
   const sharedCards = useCanvasStore((s) => s.sharedCards);
   const columnCards = useCanvasStore((s) => s.columnCards);
@@ -169,7 +169,7 @@ const ComparisonView = ({
       )}
 
       <div style={canvasWrapperStyle}>
-        <div style={exportMode ? canvasExportStyle : canvasStyle}>
+        <div style={enableEdit ? canvasStyle : canvasExportStyle}>
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
@@ -201,7 +201,7 @@ const ComparisonView = ({
           </div>
         </div>
 
-        {!exportMode && (
+        {enableEdit && (
           <button
             type="button"
             onClick={() => setAddColumnOpen(true)}

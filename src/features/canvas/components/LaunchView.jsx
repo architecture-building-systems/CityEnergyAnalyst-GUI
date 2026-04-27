@@ -33,7 +33,7 @@ const LaunchView = ({
   const scenario = useProjectStore((s) => s.scenario);
 
   const enterInterScenario = useCanvasStore((s) => s.enterInterScenario);
-  const exportMode = useCanvasStore((s) => s.exportMode);
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   const { data: scenarios = [] } = useFetchScenarios(project);
 
@@ -265,7 +265,7 @@ const LaunchView = ({
 
   return (
     <>
-      <div style={exportMode ? canvasExportStyle : canvasStyle}>
+      <div style={enableEdit ? canvasStyle : canvasExportStyle}>
         <CanvasColumn
           columnDef={{ type: 'scenario', scenario }}
           cards={cards}

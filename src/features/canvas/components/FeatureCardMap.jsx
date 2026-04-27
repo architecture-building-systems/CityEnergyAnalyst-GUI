@@ -90,10 +90,10 @@ const FeatureCardMap = ({
   }, [onOpenBottom, id]);
 
   // Hide the in-card 4-button toolbar when "Sync Maps" is on (the
-  // overview map is the sole driver) or when "Export View" is on
-  // (no editing chrome anywhere).
+  // overview map is the sole driver) or when "Enable Edit" is off
+  // (snapshot mode — no editing chrome anywhere).
   const mapsLinked = useCanvasStore((s) => s.mapsLinked);
-  const exportMode = useCanvasStore((s) => s.exportMode);
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   // On the linked → unlinked transition, refresh the per-card view-
   // state from the singleton snapshot so cards continue from the
@@ -127,7 +127,7 @@ const FeatureCardMap = ({
           <CanvasMap
             project={project}
             scenario={scenario}
-            showToolbar={!mapsLinked && !exportMode}
+            showToolbar={!mapsLinked && enableEdit}
           />
         </div>
         <div style={legendBodyStyle}>

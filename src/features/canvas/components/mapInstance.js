@@ -243,15 +243,15 @@ export const useScopedSetActiveCategory = () => {
 
 /**
  * `true` only when (a) we're rendered inside a `MapInstanceContext`
- * provider (i.e. a canvas `FeatureCardMap` subtree) and (b) the
- * Canvas Builder "Export View" toggle is on. Lets shared components like
- * `Legend` strip their editing chrome in Canvas Builder's export mode while
- * leaving the main viewport untouched.
+ * provider (i.e. a canvas `FeatureCardMap` subtree) and (b) Canvas
+ * Builder's master `enableEdit` flag is off. Lets shared components
+ * like `Legend` strip their editing chrome in canvas snapshot mode
+ * while leaving the main viewport (no provider) untouched.
  */
-export const useCanvasExportMode = () => {
+export const useCanvasEditDisabled = () => {
   const ctx = useContext(MapInstanceContext);
-  const exportMode = useCanvasStore((s) => s.exportMode);
-  return ctx != null && exportMode;
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
+  return ctx != null && !enableEdit;
 };
 
 /**

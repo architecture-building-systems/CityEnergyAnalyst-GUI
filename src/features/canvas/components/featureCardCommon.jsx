@@ -49,13 +49,14 @@ export const FeatureCardShell = ({
   editing = false,
   children,
 }) => {
-  const exportMode = useCanvasStore((s) => s.exportMode);
-  const showActions = (onEdit || onDeleteCard) && !exportMode;
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
+  const layoutLocked = useCanvasStore((s) => s.fixLayout);
+  const showActions = (onEdit || onDeleteCard) && enableEdit;
   return (
-    <div style={editing && !exportMode ? editingCardStyle : cardStyle}>
+    <div style={editing && enableEdit ? editingCardStyle : cardStyle}>
       <div
-        className={exportMode ? undefined : 'cea-card-drag-handle'}
-        style={exportMode ? titleSectionStyle : titleSectionDraggableStyle}
+        className={layoutLocked ? undefined : 'cea-card-drag-handle'}
+        style={layoutLocked ? titleSectionStyle : titleSectionDraggableStyle}
       >
         <div style={featureTitleStyle}>
           {Icon && (

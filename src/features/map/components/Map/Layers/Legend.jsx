@@ -1,6 +1,6 @@
 import Gradient from 'javascript-color-gradient';
 import {
-  useCanvasExportMode,
+  useCanvasEditDisabled,
   useScopedFilters,
   useScopedRange,
   useScopedSetFilters,
@@ -47,7 +47,7 @@ const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
 export const LegendFilterRow = ({ layers }) => {
   // Hidden in Canvas Builder's Export View — the scale/radius numeric inputs
   // are an editing affordance.
-  const exportMode = useCanvasExportMode();
+  const editDisabled = useCanvasEditDisabled();
   const fields = useMemo(() => {
     if (!layers?.length) return [];
     const layer = layers[0];
@@ -70,7 +70,7 @@ export const LegendFilterRow = ({ layers }) => {
     return collected;
   }, [layers]);
 
-  if (!fields.length || exportMode) return null;
+  if (!fields.length || editDisabled) return null;
 
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -116,7 +116,7 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
   // In Canvas Builder's Export View, hide the range-mode `<Select>` row —
   // colour ramp + min/max labels stay so the legend still reads as a
   // legend.
-  const exportMode = useCanvasExportMode();
+  const editDisabled = useCanvasEditDisabled();
 
   const keys = Object.keys(range ?? {});
   const value =
@@ -160,7 +160,7 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
     >
       <b>{label}</b>
       <InfoRows info={info} />
-      {!exportMode && (
+      {!editDisabled && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Select
             style={{ flex: 1, minWidth: 0 }}

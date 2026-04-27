@@ -27,7 +27,10 @@ import { useCanvasStore } from '../stores/canvasStore';
  *   - Return       → back to the project page
  *   - Start Over   → clear comparison state (with confirm)
  *   - Sync Maps    → mirror every map card to the overview map
- *   - Export View  → hide all editing controls for clean snapshots
+ *   - Fix Layout   → lock card positions and sizes
+ *   - Enable Edit  → show editing controls (default on); off
+ *                    hides Edit / Delete / `+` / toolbars / range
+ *                    inputs for a clean snapshot
  *   - Dashboard    → dropdown to switch between saved dashboards
  *                    (stubbed — backend persistence not wired yet)
  *
@@ -43,8 +46,10 @@ const NavigatorCard = () => {
   const startOver = useCanvasStore((s) => s.startOver);
   const mapsLinked = useCanvasStore((s) => s.mapsLinked);
   const setMapsLinked = useCanvasStore((s) => s.setMapsLinked);
-  const exportMode = useCanvasStore((s) => s.exportMode);
-  const setExportMode = useCanvasStore((s) => s.setExportMode);
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
+  const setEnableEdit = useCanvasStore((s) => s.setEnableEdit);
+  const fixLayout = useCanvasStore((s) => s.fixLayout);
+  const setFixLayout = useCanvasStore((s) => s.setFixLayout);
 
   const handleReturn = () => {
     push(routes.PROJECT);
@@ -82,11 +87,16 @@ const NavigatorCard = () => {
           tooltipKey="canvas-sync-maps"
         />
         <NavigatorToggle
-          checked={exportMode}
-          onChange={setExportMode}
-          label="Export View"
-          ariaLabel="Hide editing controls for export"
-          tooltipKey="canvas-export-view"
+          checked={fixLayout}
+          onChange={setFixLayout}
+          label="Fix Layout"
+          ariaLabel="Lock card positions and sizes"
+        />
+        <NavigatorToggle
+          checked={enableEdit}
+          onChange={setEnableEdit}
+          label="Enable Edit"
+          ariaLabel="Show editing controls"
         />
       </Space>
 
@@ -160,13 +170,19 @@ const NavigatorToggle = ({
   label,
   ariaLabel,
   tooltipKey,
+  disabled = false,
 }) => (
   <div style={syncToggleWrapperStyle}>
     <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
-      <Switch checked={checked} onChange={onChange} aria-label={ariaLabel} />
+      <Switch
+        checked={checked}
+        onChange={onChange}
+        disabled={disabled}
+        aria-label={ariaLabel}
+      />
     </ConfigProvider>
     <span style={syncToggleLabelStyle}>{label}</span>
-    <InfoTooltip tooltipKey={tooltipKey} />
+    {tooltipKey && <InfoTooltip tooltipKey={tooltipKey} />}
   </div>
 );
 

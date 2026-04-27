@@ -157,7 +157,8 @@ const CanvasColumn = ({
   addColumnDisabled = false,
 }) => {
   const project = useProjectStore((s) => s.project);
-  const exportMode = useCanvasStore((s) => s.exportMode);
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
+  const layoutLocked = useCanvasStore((s) => s.fixLayout);
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
@@ -201,9 +202,10 @@ const CanvasColumn = ({
         h: mapPos.h + legendExtraRows,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H + legendExtraRows,
-        // Frozen layout in export view — no drag, no resize handles.
-        isDraggable: !exportMode,
-        isResizable: !exportMode,
+        // Frozen layout when Fix Layout (or Export View) is on — no
+        // drag, no resize handles.
+        isDraggable: !layoutLocked,
+        isResizable: !layoutLocked,
       },
     ];
     for (const card of cards) {
@@ -215,12 +217,12 @@ const CanvasColumn = ({
         h: card.h ?? DEFAULT_CARD_H,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H,
-        isDraggable: !exportMode,
-        isResizable: !exportMode,
+        isDraggable: !layoutLocked,
+        isResizable: !layoutLocked,
       });
     }
     return items;
-  }, [cards, mapPos, legendExtraRows, exportMode]);
+  }, [cards, mapPos, legendExtraRows, layoutLocked]);
 
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
   // headroom so the rightmost card always has room to drag east.
@@ -228,23 +230,23 @@ const CanvasColumn = ({
   // edge` constraint pins any rightmost tile in place horizontally.
   // The buffer is skipped when (a) only the map is on the grid (the
   // map is anchored at (0,0) and rarely dragged east, so the
-  // ~258 px launch whitespace isn't worth it) or (b) Export View is
-  // on (the layout is frozen — drag is disabled, so the headroom
-  // serves no purpose and just trails empty space past the cards).
+  // ~258 px launch whitespace isn't worth it) or (b) the layout is
+  // locked (Fix Layout / Export View) — drag is disabled, so the
+  // headroom serves no purpose and just trails empty space.
   const { effectiveCols, gridWidthPx } = useMemo(() => {
     let maxRight = MIN_COLS;
     for (const item of layout) {
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
-    const skipBuffer = cards.length === 0 || exportMode;
+    const skipBuffer = cards.length === 0 || layoutLocked;
     const buffer = skipBuffer ? 0 : DRAG_BUFFER_COLS;
     const cols = Math.max(MIN_COLS, maxRight + buffer);
     return {
       effectiveCols: cols,
       gridWidthPx: widthForCols(cols),
     };
-  }, [layout, cards.length, exportMode]);
+  }, [layout, cards.length, layoutLocked]);
 
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
@@ -397,7 +399,7 @@ const CanvasColumn = ({
         <div style={titleCardStyle}>
           <div style={headerStyle}>{headerText}</div>
         </div>
-        {onAddColumn && !exportMode && (
+        {onAddColumn && enableEdit && (
           <div className="cea-card-icon-button-container">
             <Tooltip
               title={
@@ -450,8 +452,9 @@ const CanvasColumn = ({
           {/* ── Map tile ─────────────────────────────────────── */}
           <div key="MAP" style={mapTileStyle} className="cea-canvas-tile">
             {/* Top grip is the primary tile's drag handle — hidden
-                in export view since the grid is frozen anyway. */}
-            {!exportMode && (
+                whenever the layout is locked since dragging is
+                disabled anyway. */}
+            {!layoutLocked && (
               <div
                 className="cea-card-drag-handle"
                 style={primaryMapDragHandleStyle}
@@ -464,11 +467,11 @@ const CanvasColumn = ({
               <CanvasMap
                 project={project}
                 scenario={scenario}
-                showToolbar={!exportMode}
+                showToolbar={enableEdit}
               />
             </div>
             <ConstructionStandardLegend style={overviewLegendStyle} />
-            {!exportMode && (
+            {enableEdit && (
               <PerimeterPlusButtons
                 targetCardId="MAP"
                 exposure={exposureMap['MAP']}
@@ -525,7 +528,7 @@ const CanvasColumn = ({
                   onPreferredHeight={handlePreferredHeight}
                 />
               )}
-              {!exportMode && (
+              {enableEdit && (
                 <PerimeterPlusButtons
                   targetCardId={card.id}
                   exposure={exposureMap[card.id]}
