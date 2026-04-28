@@ -8,8 +8,11 @@ import { chmod } from 'fs/promises';
 import { downloadFile } from '../download.mjs';
 import { MicromambaError } from './errors.mjs';
 
-// Pinned micromamba version. Bump here to upgrade.
-const MICROMAMBA_VERSION = '2.0.7-0';
+// Pinned micromamba release tag. Bump here to upgrade.
+// micromamba-releases tags include a build suffix (e.g. "-0"); the binary's
+// own --version output is the leading semver portion.
+const MICROMAMBA_RELEASE = '2.0.7-0';
+const MICROMAMBA_VERSION = MICROMAMBA_RELEASE.split('-')[0];
 
 // micromamba-releases asset names per platform/arch
 const MICROMAMBA_DOWNLOAD = {
@@ -26,7 +29,27 @@ const getMicromambaTargetPath = () => {
   return path.join(getMicromambaDir(), getMicromambaBinaryName());
 };
 
-export const ensureMicromamba = async (onProgress = () => { }) => {
+// Runs `<binPath> --version` and returns the trimmed version string.
+// Throws MicromambaError if the binary cannot be executed.
+const probeMicromambaVersion = (binPath) => {
+  try {
+    return execSync(`"${binPath}" --version`).toString().trim();
+  } catch (error) {
+    console.error(error);
+    throw new MicromambaError('Unable to run micromamba.');
+  }
+};
+
+const setExecutableBit = (binPath) => {
+  if (process.platform === 'win32') return;
+  try {
+    chmodSync(binPath, 0o755);
+  } catch (error) {
+    console.error('Could not set micromamba executable bit:', error);
+  }
+};
+
+export const ensureMicromamba = async (onProgress = () => {}) => {
   const target = getMicromambaTargetPath();
   if (target == null) {
     throw new MicromambaError(
@@ -34,7 +57,20 @@ export const ensureMicromamba = async (onProgress = () => { }) => {
     );
   }
 
-  if (existsSync(target)) return target;
+  // If a binary is already in place, verify it's runnable and the right version.
+  // Otherwise fall through to (re)download.
+  if (existsSync(target)) {
+    setExecutableBit(target);
+    try {
+      const version = probeMicromambaVersion(target);
+      if (version === MICROMAMBA_VERSION) return target;
+      onProgress(
+        `Found micromamba ${version} (expected ${MICROMAMBA_VERSION}); re-downloading...`,
+      );
+    } catch {
+      onProgress('Existing micromamba is not runnable; re-downloading...');
+    }
+  }
 
   const asset = MICROMAMBA_DOWNLOAD?.[process.platform]?.[os.arch()];
   if (!asset) {
@@ -43,7 +79,7 @@ export const ensureMicromamba = async (onProgress = () => { }) => {
     );
   }
 
-  const url = `https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/${asset}`;
+  const url = `https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_RELEASE}/${asset}`;
   onProgress(`Downloading micromamba ${MICROMAMBA_VERSION}...`);
 
   try {
@@ -58,6 +94,14 @@ export const ensureMicromamba = async (onProgress = () => { }) => {
     );
   }
 
+  // Sanity check the downloaded binary
+  const version = probeMicromambaVersion(target);
+  if (version !== MICROMAMBA_VERSION) {
+    throw new MicromambaError(
+      `Downloaded micromamba reports version ${version}, expected ${MICROMAMBA_VERSION}.`,
+    );
+  }
+
   return target;
 };
 
@@ -69,24 +113,9 @@ export const getMicromambaPath = (check = false) => {
     throw new MicromambaError('Unable to find path to micromamba.');
   }
 
-  // Ensure executable bit is set
-  if (process.platform !== 'win32') {
-    try {
-      chmodSync(_path, 0o755);
-    } catch (error) {
-      console.error('Could not set micromamba executable bit:', error);
-    }
-  }
+  setExecutableBit(_path);
 
-  // Try running micromamba
-  if (check) {
-    try {
-      execSync(`"${_path}" --version`);
-    } catch (error) {
-      console.error(error);
-      throw new MicromambaError('Unable to run micromamba.');
-    }
-  }
+  if (check) probeMicromambaVersion(_path);
 
   return _path;
 };
