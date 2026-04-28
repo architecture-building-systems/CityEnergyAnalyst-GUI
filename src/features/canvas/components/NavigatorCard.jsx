@@ -516,19 +516,32 @@ const NavigatorCard = () => {
             />
           </div>
         </Tooltip>
+        {/* Info icon for Import — explains the cross-scenario
+            limitation (canvas column references come along verbatim
+            and may not resolve under a project with different
+            scenario names). Tooltip body lives in the backend's
+            `tooltips.yml` so the wording can be edited without a
+            frontend redeploy. */}
+        <InfoTooltip tooltipKey="canvas-import" />
 
         {canvasName && (
-          <Tooltip title={`Share "${canvasName}" as a zip`}>
-            <div className={iconWrapperClass} style={iconWrapperStyle}>
-              <Button
-                type="text"
-                icon={<ShareIcon />}
-                loading={sharing}
-                onClick={handleExport}
-                aria-label="Share canvas as zip"
-              />
-            </div>
-          </Tooltip>
+          <>
+            <Tooltip title={`Share "${canvasName}" as a zip`}>
+              <div className={iconWrapperClass} style={iconWrapperStyle}>
+                <Button
+                  type="text"
+                  icon={<ShareIcon />}
+                  loading={sharing}
+                  onClick={handleExport}
+                  aria-label="Share canvas as zip"
+                />
+              </div>
+            </Tooltip>
+            {/* Info icon for Share — same pattern as Import.
+                Surfaces the "plot data baked in / column refs by
+                name" limitations of the .zip handoff. */}
+            <InfoTooltip tooltipKey="canvas-share" />
+          </>
         )}
       </Space>
 
