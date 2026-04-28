@@ -25,7 +25,7 @@ const fetchWithRetry = async (url, options = {}, retries = 3, delay = 1000) => {
 export const downloadFile = async (url, dest) => {
   // Ensure directory exists
   const dir = dirname(dest);
-  if (!existsSync(dir)) await mkdir(dir);
+  if (!existsSync(dir)) await mkdir(dir, { recursive: true });
 
   // Overwrite file if exists
   const stream = createWriteStream(dest, { flags: 'w' });

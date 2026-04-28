@@ -2,7 +2,8 @@ import { spawn, execSync } from 'child_process';
 
 import { app, dialog } from 'electron';
 
-import { getMicromambaPath, getCEARootPath } from './env.mjs';
+import { getCEARootPath } from './env.mjs';
+import { getMicromambaPath } from './micromamba.mjs';
 
 let cea;
 let ceaDetached = false;

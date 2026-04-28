@@ -13,7 +13,8 @@ import {
   getCEAenvVersion,
   updateCEAenv,
 } from './cea/env.mjs';
-import { CEAError } from './cea/errors.mjs';
+import { ensureMicromamba } from './cea/micromamba.mjs';
+import { CEAError, MicromambaError } from './cea/errors.mjs';
 import { initLog, openLog } from './log.mjs';
 import { readConfig, writeConfig } from './config.mjs';
 import { checkInternet } from './utils.mjs';
@@ -265,6 +266,21 @@ function createSplashWindow(url) {
         console.log('cea backend already running...');
         createMainWindow();
         return;
+      }
+
+      // Ensure micromamba is downloaded (only needed in packaged builds — dev uses local CEA)
+      if (app.isPackaged) {
+        try {
+          await ensureMicromamba(sendPreflightEvent);
+        } catch (error) {
+          if (!internetConnection) {
+            sendPreflightEvent('No internet connection');
+            throw new MicromambaError(
+              'micromamba is not installed and no internet connection is available to download it.',
+            );
+          }
+          throw error;
+        }
       }
 
       // Check for CEA environment (only in production)
