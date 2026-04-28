@@ -317,6 +317,23 @@ const NavigatorCard = () => {
       const result = await importCanvasZip({ project, scenario, file, as });
       invalidateSavedList();
       antdMessage.success(`Imported "${result.name}"`);
+      // Auto-open the just-imported canvas so the editor lands the
+      // user straight on it — silent imports left the user staring
+      // at the entry state with the new canvas only reachable from
+      // the dropdown. Failure to load is non-fatal: the import
+      // already succeeded, the toast above stands, and the user
+      // can pick the canvas from the switcher.
+      try {
+        const state = await readSavedCanvas({
+          project,
+          scenario,
+          name: result.name,
+        });
+        applyLoadedCanvas(deserializeCanvas(state));
+      } catch (openErr) {
+        // eslint-disable-next-line no-console
+        console.error('Auto-open after import failed', openErr);
+      }
       return 'ok';
     } catch (err) {
       const httpStatus = err?.response?.status;
