@@ -37,6 +37,10 @@ const DEBOUNCE_MS = 300;
 // (loading a saved canvas, importing a zip) bump `loadVersion` so
 // the hook resyncs its baseline silently instead of treating the
 // reset as an edit.
+// Slices serialised to disk by `serializeCanvas`. Any field that
+// round-trips through canvas.yml / layout.yml / feature_card.yml
+// must appear here, otherwise the autosave hook won't notice the
+// user's change and the new value is lost on the next reload.
 const PERSISTABLE_SELECTOR = (state) => ({
   view: state.view,
   parentScenario: state.parentScenario,
@@ -45,6 +49,8 @@ const PERSISTABLE_SELECTOR = (state) => ({
   sharedCards: state.sharedCards,
   mapsLinked: state.mapsLinked,
   fixLayout: state.fixLayout,
+  mapPos: state.mapPos,
+  comparisonSetup: state.comparisonSetup,
 });
 
 const shallowEqual = (a, b) => {

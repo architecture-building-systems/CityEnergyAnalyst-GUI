@@ -44,6 +44,11 @@ const cardConfigFromStore = (card) => ({
   })),
   category: card.category ?? null,
   layer: card.layer ?? null,
+  // Persisted high-water mark of the plot's reported pixel height
+  // (`onPreferredHeight`). Carried so reload doesn't re-fire the
+  // initial auto-grow against a user who has manually shrunk the
+  // card. Stays absent on cards that have never reported.
+  max_reported_height_px: card.maxReportedHeightPx ?? null,
 });
 
 /**
@@ -169,6 +174,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     })),
     category: configEntry.category ?? undefined,
     layer: configEntry.layer ?? undefined,
+    maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
   });
 
   const targetSlice =

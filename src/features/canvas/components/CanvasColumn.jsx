@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
@@ -416,22 +416,36 @@ const CanvasColumn = ({
   // card — that way adding a 2nd/3rd plot keeps growing, while the
   // re-renders triggered by other layout changes don't undo a
   // user-driven shrink (same totalPx → no-op).
-  const lastReported = useRef(new Map());
+  // The "previous report" is persisted on the card itself
+  // (`maxReportedHeightPx`), not in a per-instance ref. Without
+  // persistence, every page reload reset the ref to empty, and
+  // the plot's first natural-height report would force-grow
+  // user-shrunk cards back up. With it, a user who manually
+  // shrank a card below the plot's natural height keeps that
+  // shrink across reloads — the plot may render clipped, but
+  // that's the user's choice. Auto-grow still fires when:
+  //   - a brand-new card with no `maxReportedHeightPx` mounts and
+  //     its plot reports a height > 0 (initial size-to-fit), or
+  //   - the user adds another plot to an existing card and the
+  //     stacked height exceeds whatever was reported before.
   const handlePreferredHeight = useCallback(
     (cardId, totalPx) => {
-      const prev = lastReported.current.get(cardId) ?? 0;
+      const card = cards.find((c) => c.id === cardId);
+      if (!card) return;
+      const prev = card.maxReportedHeightPx ?? 0;
       if (totalPx <= prev) return;
-      lastReported.current.set(cardId, totalPx);
       // Invert rgl's tile-pixel formula: tilePx = h * ROW_HEIGHT +
       // (h - 1) * marginY → h = ceil((tilePx + marginY) / step).
       const required = Math.ceil(
         (totalPx + GRID_MARGIN[1]) / (ROW_HEIGHT_PX + GRID_MARGIN[1]),
       );
-      const card = cards.find((c) => c.id === cardId);
-      if (!card || card.h >= required) return;
-      onApplyLayouts?.([
-        { id: cardId, row: card.row, col: card.col, w: card.w, h: required },
-      ]);
+      // Always persist the new max so future identical reports
+      // are no-ops. Only push a new `h` when the card actually
+      // needs to grow — otherwise we'd undo a user-driven
+      // resize that happened to set h above `required`.
+      const patch = { id: cardId, maxReportedHeightPx: totalPx };
+      if (card.h < required) patch.h = required;
+      onApplyLayouts?.([patch]);
     },
     [cards, onApplyLayouts],
   );
