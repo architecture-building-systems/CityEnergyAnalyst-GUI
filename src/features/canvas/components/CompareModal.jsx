@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Checkbox, Modal } from 'antd';
+import { Alert, Checkbox, ConfigProvider, Modal } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useFetchScenarios } from '../hooks/useCanvasData';
@@ -82,44 +82,55 @@ const CompareModal = ({ open, onCancel }) => {
   const isEmpty = scenarioOptions.length === 0;
 
   return (
-    <Modal
-      open={open}
-      title="Add Scenario to compare"
-      okText={`Compare ${picks.length + 1} scenarios`}
-      cancelText="Cancel"
-      onOk={handleOk}
-      onCancel={onCancel}
-      okButtonProps={{ disabled: picks.length === 0 }}
-      destroyOnClose
-    >
-      <div style={originRowStyle}>
-        <span style={originBadgeStyle}>Origin</span>
-        <span style={{ color: '#222' }}>{scenario}</span>
-      </div>
-      {isEmpty ? (
-        <Alert
-          type="info"
-          showIcon
-          message="No sibling scenarios in this project."
-        />
-      ) : (
-        <>
-          <Checkbox.Group
-            value={picks}
-            onChange={handleChange}
-            options={decoratedOptions}
-            style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+    // CEA-purple primary so the modal's antd surfaces (OK button,
+    // checked checkboxes) match the canvas's accent palette
+    // instead of the default antd blue.
+    <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
+      <Modal
+        open={open}
+        title="Add Scenario to compare"
+        okText={`Compare ${picks.length + 1} scenarios`}
+        cancelText="Cancel"
+        onOk={handleOk}
+        onCancel={onCancel}
+        okButtonProps={{ disabled: picks.length === 0 }}
+        destroyOnClose
+      >
+        <div style={originRowStyle}>
+          <span style={originBadgeStyle}>Origin</span>
+          <span style={{ color: '#222' }}>{scenario}</span>
+        </div>
+        {isEmpty ? (
+          <Alert
+            type="info"
+            showIcon
+            message="No sibling scenarios in this project."
           />
-          <div style={remainingHintStyle}>
-            {remaining > 0
-              ? `Up to ${remaining} more (4 columns max).`
-              : 'Maximum reached (4 columns).'}
-          </div>
-        </>
-      )}
-    </Modal>
+        ) : (
+          <>
+            <Checkbox.Group
+              value={picks}
+              onChange={handleChange}
+              options={decoratedOptions}
+              style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+            />
+            <div style={remainingHintStyle}>
+              {remaining > 0
+                ? `Up to ${remaining} more (4 columns max).`
+                : 'Maximum reached (4 columns).'}
+            </div>
+          </>
+        )}
+      </Modal>
+    </ConfigProvider>
   );
 };
+
+// CEA accent purple — matches the navigator toggles' "on" track
+// and the canvas-purple blink animation. Used here for the
+// Origin badge background and (via ConfigProvider) the OK button
+// + checked-checkbox tint.
+const CEA_PURPLE = '#AC6080';
 
 const originRowStyle = {
   display: 'flex',
@@ -134,7 +145,7 @@ const originBadgeStyle = {
   fontSize: 11,
   fontWeight: 600,
   color: '#fff',
-  background: '#1471B0',
+  background: CEA_PURPLE,
   padding: '2px 8px',
   borderRadius: 4,
 };

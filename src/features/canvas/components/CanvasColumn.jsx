@@ -773,11 +773,14 @@ const headerStyle = {
 // scenario name. Brand-blue background mirrors the Compare
 // button's active state so the connection ("this is where the
 // edits happen") is visible at a glance.
+// CEA accent purple — matches the navigator toggles' "on" track,
+// the canvas-purple blink animation, and the CompareModal's OK
+// button. Keeps the comparison-mode chrome visually unified.
 const originBadgeStyle = {
   fontSize: 11,
   fontWeight: 600,
   color: '#fff',
-  background: '#1471B0',
+  background: '#AC6080',
   padding: '2px 8px',
   borderRadius: 4,
   letterSpacing: 0.3,
