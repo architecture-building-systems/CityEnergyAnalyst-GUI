@@ -543,14 +543,14 @@ const NavigatorCard = () => {
 
         {canvasName && (
           <>
-            <Tooltip title={`Share "${canvasName}" as a zip`}>
+            <Tooltip title={`Share "${canvasName}" as a .zip`}>
               <div className={iconWrapperClass} style={iconWrapperStyle}>
                 <Button
                   type="text"
                   icon={<ShareIcon />}
                   loading={sharing}
                   onClick={handleExport}
-                  aria-label="Share canvas as zip"
+                  aria-label="Share Canvas as .zip"
                 />
               </div>
             </Tooltip>
