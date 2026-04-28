@@ -795,8 +795,15 @@ const CanvasOptionRow = ({ name, onDuplicate, onDelete }) => {
             }}
           />
           <BinAnimationIcon
+            // Inline `color` beats antd's
+            // `.ant-select-item-option-selected` rule, which would
+            // otherwise tint the bin black/brand-blue when this row
+            // is the currently-open canvas (matched specificity,
+            // antd wins by source order). Bin SVG paints with
+            // `fill="currentColor"`, so setting `color` inline
+            // forces the red regardless of cascade.
             style={canvasOptionDeleteIconStyle}
-            className="cea-job-info-icon danger shake"
+            className="cea-job-info-icon shake"
             onClick={(e) => {
               e.stopPropagation();
               onDelete?.(name);
@@ -834,7 +841,17 @@ const canvasOptionDuplicateIconStyle = {
   opacity: 0.55,
 };
 
-const canvasOptionDeleteIconStyle = { padding: '2px 4px' };
+// Hardcoded brand-red so the bin stays red even when its parent
+// option is the currently-selected canvas (antd's
+// `.ant-select-item-option-selected` recolours descendants and
+// would otherwise win by source order). `cursor: pointer` because
+// `BinAnimationIcon` ships with the shake animation but no hover
+// affordance of its own here.
+const canvasOptionDeleteIconStyle = {
+  padding: '2px 4px',
+  color: '#f04d5b',
+  cursor: 'pointer',
+};
 
 // Shared chrome for every icon-only action in the navigator
 // (Start Over / Share / Import / `+`). The class name is the same
