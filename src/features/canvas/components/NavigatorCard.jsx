@@ -41,6 +41,10 @@ import {
   readSavedCanvas,
 } from '../api/canvas';
 import { deserializeCanvas } from '../utils/canvasSerialize';
+import {
+  writeLastCanvas,
+  clearLastCanvas,
+} from '../hooks/useResumeLastCanvas';
 
 /**
  * Navigator card — top strip of the Canvas Builder page.
@@ -139,6 +143,7 @@ const NavigatorCard = () => {
     try {
       const state = await readSavedCanvas({ project, scenario, name });
       applyLoadedCanvas(deserializeCanvas(state));
+      writeLastCanvas(project, scenario, name);
     } catch (err) {
       antdMessage.error(`Could not open "${name}"`);
       // eslint-disable-next-line no-console
@@ -198,17 +203,9 @@ const NavigatorCard = () => {
               canvasName: null,
             });
             // Clear the localStorage resume target too — the
-            // sibling effect in `useResumeLastCanvas` only writes
-            // when `canvasName` is truthy, so a manual purge is
-            // needed to stop the next mount from 404'ing on the
-            // just-deleted name.
-            try {
-              localStorage.removeItem(
-                `cea:canvas:lastSaved:${project}:${scenario}`,
-              );
-            } catch (_err) {
-              // localStorage can throw in privacy modes; ignore.
-            }
+            // resume hook would otherwise 404 on the next mount
+            // trying to fetch the just-deleted canvas.
+            clearLastCanvas(project, scenario);
           }
           antdMessage.success(`Deleted "${name}"`);
         } catch (err) {
@@ -253,6 +250,7 @@ const NavigatorCard = () => {
         fixLayout: false,
         canvasName: result.name,
       });
+      writeLastCanvas(project, scenario, result.name);
       invalidateSavedList();
       setCreateOpen(false);
       setCreateName('');
@@ -329,6 +327,7 @@ const NavigatorCard = () => {
           name: result.name,
         });
         applyLoadedCanvas(deserializeCanvas(state));
+        writeLastCanvas(project, scenario, result.name);
       } catch (openErr) {
         // eslint-disable-next-line no-console
         console.error('Auto-open after import failed', openErr);
