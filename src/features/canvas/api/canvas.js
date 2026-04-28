@@ -67,6 +67,22 @@ export const deleteSavedCanvas = async ({ project, scenario, name }) => {
   });
 };
 
+/**
+ * Copy a saved canvas to a new folder. Pass ``as`` to override the
+ * default target name (the backend auto-picks
+ * ``"<name> (copy)"`` / ``"<name> (copy 2)"`` / … when omitted).
+ * Returns ``{ name }`` — the cleaned target name committed on disk.
+ */
+export const duplicateCanvas = async ({ project, scenario, name, as }) => {
+  const body = as ? { name: as } : {};
+  const { data } = await apiClient.post(
+    `${BASE}/${encodeURIComponent(name)}/duplicate`,
+    body,
+    { params: { project, scenario } },
+  );
+  return data;
+};
+
 // ── Zip export / import ────────────────────────────────────────
 
 /**

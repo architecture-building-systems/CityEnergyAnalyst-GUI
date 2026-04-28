@@ -11,9 +11,15 @@ import {
   Tooltip,
   message as antdMessage,
 } from 'antd';
-import { LeftOutlined } from '@ant-design/icons';
 import {
+  CheckOutlined,
+  LeftOutlined,
+  LoadingOutlined,
+} from '@ant-design/icons';
+import {
+  BinAnimationIcon,
   CreateNewIcon,
+  DuplicateIcon,
   ImportIcon,
   ShareIcon,
   StartOverIcon,
@@ -28,6 +34,8 @@ import { useCanvasStore } from '../stores/canvasStore';
 import { useFetchSavedCanvases } from '../hooks/useCanvasData';
 import {
   createCanvas,
+  deleteSavedCanvas,
+  duplicateCanvas,
   exportCanvasZip,
   importCanvasZip,
   readSavedCanvas,
@@ -77,9 +85,11 @@ const NavigatorCard = () => {
   const setFixLayout = useCanvasStore((s) => s.setFixLayout);
   const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
+  const autosaveStatus = useCanvasStore((s) => s.autosaveStatus);
 
   const queryClient = useQueryClient();
   const { data: savedCanvases } = useFetchSavedCanvases(project, scenario);
+  const hasSaved = Array.isArray(savedCanvases) && savedCanvases.length > 0;
 
   // When create / import commits, the listing is stale until
   // react-query refetches. Invalidate explicitly so the switcher
@@ -134,6 +144,81 @@ const NavigatorCard = () => {
       // eslint-disable-next-line no-console
       console.error('Open canvas failed', err);
     }
+  };
+
+  /**
+   * Per-option `⎘` handler in the dropdown — copy a saved canvas
+   * into a fresh folder and refresh the listing. The backend picks
+   * the target name (``"<source> (copy)"`` series) so the user
+   * sees the new entry in the dropdown without a naming step.
+   */
+  const handleDuplicateCanvas = async (name) => {
+    try {
+      const result = await duplicateCanvas({ project, scenario, name });
+      invalidateSavedList();
+      antdMessage.success(`Duplicated as "${result.name}"`);
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      antdMessage.error(detail || `Could not duplicate "${name}"`);
+      // eslint-disable-next-line no-console
+      console.error('Canvas duplicate failed', err);
+    }
+  };
+
+  /**
+   * Per-option 🗑 handler in the dropdown. Confirms first; deleting
+   * the currently-open canvas drops it from the editor (back to
+   * the empty entry state) so the autosave hook doesn't keep
+   * trying to PUT to a folder that no longer exists.
+   */
+  const handleDeleteCanvas = (name) => {
+    Modal.confirm({
+      title: `Delete "${name}"?`,
+      content:
+        'This permanently removes the canvas folder and any captured plots. This cannot be undone.',
+      okText: 'Delete',
+      okButtonProps: { danger: true },
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await deleteSavedCanvas({ project, scenario, name });
+          invalidateSavedList();
+          if (canvasName === name) {
+            // The editor was looking at the canvas we just removed
+            // — reset back to the empty entry state so the
+            // autosave hook stops targeting the missing folder.
+            applyLoadedCanvas({
+              view: 'launch',
+              columns: [],
+              parentScenario: null,
+              launchCards: [],
+              sharedCards: [],
+              columnCards: {},
+              mapsLinked: true,
+              fixLayout: false,
+              canvasName: null,
+            });
+            // Clear the localStorage resume target too — the
+            // sibling effect in `useResumeLastCanvas` only writes
+            // when `canvasName` is truthy, so a manual purge is
+            // needed to stop the next mount from 404'ing on the
+            // just-deleted name.
+            try {
+              localStorage.removeItem(
+                `cea:canvas:lastSaved:${project}:${scenario}`,
+              );
+            } catch (_err) {
+              // localStorage can throw in privacy modes; ignore.
+            }
+          }
+          antdMessage.success(`Deleted "${name}"`);
+        } catch (err) {
+          antdMessage.error(`Could not delete "${name}"`);
+          // eslint-disable-next-line no-console
+          console.error('Canvas delete failed', err);
+        }
+      },
+    });
   };
 
   const handleNewCanvas = () => {
@@ -370,21 +455,40 @@ const NavigatorCard = () => {
       </Space>
 
       <Space size="small">
-        {/* Order: Switcher · `+` · Import · Share. Switcher + `+`
-            form the create-or-open pair. Import sits to the right
-            of `+` (zip in), Share sits to the right of Import (zip
-            out). Share hides in the empty entry state; Switcher /
-            `+` / Import are always visible and pulse purple while
-            no canvas is open. */}
+        {/* Order: Autosave dot · Switcher · `+` · Import · Share.
+            The autosave dot sits to the immediate left of the
+            switcher and only paints while a flush is in flight (or
+            for the brief 1.5 s confirmation flash that follows).
+            In the empty entry state nothing is autosaving, so the
+            dot stays hidden and the switcher remains the leftmost
+            element of the cluster. Switcher + `+` form the
+            create-or-open pair. Import sits to the right of `+`
+            (zip in), Share sits to the right of Import (zip out).
+            Share hides in the empty entry state; Switcher / `+` /
+            Import are always visible and pulse purple while no
+            canvas is open. The `+` button only pulses when the
+            switcher reads "Select Canvas" (saved canvases exist
+            but none is open) — when the switcher itself is in
+            create-mode ("Create new Canvas"), the switcher *is*
+            the call-to-action, so doubling up with a pulsing `+`
+            would just compete for the user's eye. */}
+        <AutosaveIndicator status={autosaveStatus} />
         <CanvasSwitcher
           savedCanvases={savedCanvases}
           canvasName={canvasName}
           disabled={!project || !scenario}
           onOpen={handleOpenSaved}
           onCreate={handleNewCanvas}
+          onDuplicate={handleDuplicateCanvas}
+          onDelete={handleDeleteCanvas}
         />
         <Tooltip title="New canvas" placement="bottom">
-          <div className={iconWrapperClass} style={iconWrapperStyle}>
+          <div
+            className={`${iconWrapperClass}${
+              !canvasName && hasSaved ? ' cea-canvas-blink' : ''
+            }`}
+            style={iconWrapperStyle}
+          >
             <Button
               type="text"
               icon={<CreateNewIcon />}
@@ -506,6 +610,56 @@ const NavigatorCard = () => {
 };
 
 /**
+ * Autosave activity indicator. Sits to the left of the dashboard
+ * switcher and paints only while a backend flush is in flight, plus
+ * a brief check-mark confirmation after a successful save. Stays
+ * hidden in the empty / idle state so the navigator reads as
+ * unchanged when nothing is happening.
+ *
+ * - 'saving' → spinning loader, tooltip "Saving…"
+ * - 'saved'  → green check, tooltip "Saved just now"
+ * - 'idle'   → renders nothing
+ *
+ * Width is reserved (16 px) only when the indicator is visible —
+ * empty state collapses to zero so it doesn't push the switcher
+ * leftward while waiting for the first edit.
+ */
+const AutosaveIndicator = ({ status }) => {
+  if (status === 'idle') return null;
+
+  const isSaving = status === 'saving';
+  const tooltip = isSaving ? 'Saving…' : 'Saved just now';
+  const icon = isSaving ? (
+    <LoadingOutlined style={autosaveSavingIconStyle} />
+  ) : (
+    <CheckOutlined style={autosaveSavedIconStyle} />
+  );
+
+  return (
+    <Tooltip title={tooltip} placement="bottom">
+      <span style={autosaveIndicatorStyle} aria-live="polite">
+        {icon}
+      </span>
+    </Tooltip>
+  );
+};
+
+const autosaveIndicatorStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 16,
+  height: 16,
+};
+
+// CEA primary blue — matches the action-button accent so the spinner
+// reads as "I'm working" without inventing a new colour.
+const autosaveSavingIconStyle = { fontSize: 12, color: '#1470AF' };
+
+// Slightly muted green — confirmation, not a system success toast.
+const autosaveSavedIconStyle = { fontSize: 12, color: '#52c41a' };
+
+/**
  * Dashboard switcher modelled after the pathway builder's
  * `PathwaySelect`. Same dimensions (208 px wide, 270 px popup),
  * same `cea-scenario-select` family of classes, same empty-state
@@ -524,19 +678,40 @@ const CanvasSwitcher = ({
   disabled,
   onOpen,
   onCreate,
+  onDuplicate,
+  onDelete,
 }) => {
   const [open, setOpen] = useState(false);
   const list = Array.isArray(savedCanvases) ? savedCanvases : [];
-  const options = useMemo(() => {
+  const sortedNames = useMemo(() => {
     const seen = new Set(list);
     const names = [...list];
-    // The just-saved canvas may not be in the freshly fetched list
+    // The just-created canvas may not be in the freshly fetched list
     // yet (react-query refetch hasn't landed); make sure it shows.
     if (canvasName && !seen.has(canvasName)) names.push(canvasName);
-    return names
-      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-      .map((name) => ({ value: name, label: name }));
+    return names.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   }, [list, canvasName]);
+
+  const options = useMemo(
+    () =>
+      sortedNames.map((name) => ({
+        value: name,
+        // The dropdown row is a hover-revealing
+        // ``Duplicate · Delete`` pair next to the name — same
+        // affordance the pathway dropdown uses. ``label`` is what
+        // antd renders inside each option; the field's selected-
+        // value display ignores this and shows the bare ``value``,
+        // which is what we want.
+        label: (
+          <CanvasOptionRow
+            name={name}
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+          />
+        ),
+      })),
+    [sortedNames, onDuplicate, onDelete],
+  );
 
   const hasSaved = options.length > 0;
   const hasSelection = !!canvasName;
@@ -566,6 +741,21 @@ const CanvasSwitcher = ({
       onChange={(name) => {
         if (name && name !== canvasName) onOpen(name);
       }}
+      // antd uses ``label`` (our row component) for the field
+      // display by default; force the bare name there so the
+      // selected canvas reads as plain text rather than a stretched
+      // option-row layout.
+      labelRender={({ value }) => (
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {value}
+        </span>
+      )}
       open={inCreateMode ? false : open}
       onOpenChange={inCreateMode ? undefined : setOpen}
       onClick={inCreateMode ? onCreate : undefined}
@@ -573,6 +763,78 @@ const CanvasSwitcher = ({
     />
   );
 };
+
+/**
+ * One row in the canvas dropdown: name on the left, hover-revealed
+ * Duplicate + Delete icons on the right. Mirrors
+ * ``PathwayOptionWithCheckbox`` from the pathway builder
+ * (sans-checkbox — canvases are single-select, not toggle-visible).
+ *
+ * Click handlers ``stopPropagation`` so the icon clicks don't also
+ * fire ``onChange`` on the parent ``Select`` (which would open the
+ * canvas the user was trying to delete).
+ */
+const CanvasOptionRow = ({ name, onDuplicate, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  return (
+    <div
+      style={canvasOptionRowStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={canvasOptionNameStyle} title={name}>
+        {name}
+      </div>
+      {isHovered && (
+        <div style={canvasOptionActionsStyle}>
+          <DuplicateIcon
+            style={canvasOptionDuplicateIconStyle}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate?.(name);
+            }}
+          />
+          <BinAnimationIcon
+            style={canvasOptionDeleteIconStyle}
+            className="cea-job-info-icon danger shake"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(name);
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const canvasOptionRowStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+};
+
+const canvasOptionNameStyle = {
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  flex: 1,
+};
+
+const canvasOptionActionsStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  flexShrink: 0,
+};
+
+const canvasOptionDuplicateIconStyle = {
+  padding: '2px 4px',
+  cursor: 'pointer',
+  opacity: 0.55,
+};
+
+const canvasOptionDeleteIconStyle = { padding: '2px 4px' };
 
 // Shared chrome for every icon-only action in the navigator
 // (Start Over / Share / Import / `+`). The class name is the same

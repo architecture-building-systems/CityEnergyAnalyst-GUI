@@ -189,6 +189,15 @@ export const useCanvasStore = create((set, get) => ({
   // would immediately re-write it on top of itself.
   loadVersion: 0,
 
+  // Autosave activity status. 'idle' = nothing happening (no
+  // indicator shown); 'saving' = a PUT to the saved folder is in
+  // flight (spinner); 'saved' = a flush just landed (brief check,
+  // auto-reverts to 'idle' after ~1.5 s). Updated exclusively by
+  // `useCanvasPersistence`; the navigator subscribes to drive the
+  // status icon to the left of the dashboard switcher.
+  autosaveStatus: 'idle',
+  setAutosaveStatus: (value) => set({ autosaveStatus: value || 'idle' }),
+
   /**
    * Replace the editable slice of state with a deserialised canvas
    * read from the backend. Pass the partial returned by

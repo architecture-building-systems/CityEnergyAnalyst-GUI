@@ -68,6 +68,10 @@ export function useCanvasPersistence() {
   );
   const lastLoadVersionRef = useRef(useCanvasStore.getState().loadVersion);
   const inFlightRef = useRef(false);
+  // Timer for reverting `autosaveStatus` from 'saved' back to
+  // 'idle' after the brief confirmation flash. Held in a ref so a
+  // rapid succession of saves cancels the previous countdown.
+  const savedFlashTimerRef = useRef(null);
 
   useEffect(() => {
     const flush = async () => {
@@ -82,6 +86,16 @@ export function useCanvasPersistence() {
       if (!project || !scenario || !name) return;
 
       inFlightRef.current = true;
+      // Pulse the indicator: 'saving' goes up the moment the PUT
+      // starts so the user sees the dot whether the request takes
+      // 50 ms or 500 ms. Cancel any pending saved → idle revert
+      // from a previous save so a rapid edit doesn't flash 'saved'
+      // *during* the next save.
+      if (savedFlashTimerRef.current) {
+        clearTimeout(savedFlashTimerRef.current);
+        savedFlashTimerRef.current = null;
+      }
+      useCanvasStore.getState().setAutosaveStatus('saving');
       try {
         await updateSavedCanvas({
           project,
@@ -89,7 +103,15 @@ export function useCanvasPersistence() {
           name,
           payload: serializeCanvas(state),
         });
+        useCanvasStore.getState().setAutosaveStatus('saved');
+        // Brief confirmation flash; then back to 'idle' so the
+        // indicator disappears between saves.
+        savedFlashTimerRef.current = setTimeout(() => {
+          savedFlashTimerRef.current = null;
+          useCanvasStore.getState().setAutosaveStatus('idle');
+        }, 1500);
       } catch (err) {
+        useCanvasStore.getState().setAutosaveStatus('idle');
         // Autosave is best-effort — surface the error in the
         // console but don't disrupt the user's flow.
         // eslint-disable-next-line no-console
@@ -127,6 +149,10 @@ export function useCanvasPersistence() {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
+      }
+      if (savedFlashTimerRef.current) {
+        clearTimeout(savedFlashTimerRef.current);
+        savedFlashTimerRef.current = null;
       }
       unsubscribe();
     };
