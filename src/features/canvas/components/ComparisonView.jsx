@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { Empty } from 'antd';
-import { CreateNewIcon } from 'assets/icons';
 
-import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchScenarios, useFetchWhatifs } from '../hooks/useCanvasData';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
-import ScenarioPicker from './ScenarioPicker';
+import CompareModal from './CompareModal';
 
 const ComparisonView = ({
   onOpenDrawer,
@@ -15,15 +12,9 @@ const ComparisonView = ({
   editingPlotCardId,
   activeMapCardId,
 }) => {
-  const project = useProjectStore((s) => s.project);
-  const scenario = useProjectStore((s) => s.scenario);
-
-  const view = useCanvasStore((s) => s.view);
   const columns = useCanvasStore((s) => s.columns);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
-  const parentScenario = useCanvasStore((s) => s.parentScenario);
   const sharedCards = useCanvasStore((s) => s.sharedCards);
-  const addColumn = useCanvasStore((s) => s.addColumn);
   const removeColumn = useCanvasStore((s) => s.removeColumn);
   const addCard = useCanvasStore((s) => s.addCard);
   const addPlot = useCanvasStore((s) => s.addPlot);
@@ -32,13 +23,7 @@ const ComparisonView = ({
   const removeCard = useCanvasStore((s) => s.removeCard);
   const applyCardLayouts = useCanvasStore((s) => s.applyCardLayouts);
 
-  const [addColumnOpen, setAddColumnOpen] = useState(false);
-
-  const { data: scenarios = [] } = useFetchScenarios(project);
-  const { data: whatifs = [] } = useFetchWhatifs(
-    project,
-    view === 'inter-whatif' ? parentScenario : null,
-  );
+  const [compareOpen, setCompareOpen] = useState(false);
 
   // Both comparison modes share a single card list across columns
   // — one row per card, mirrored across every scenario / what-if
@@ -123,19 +108,6 @@ const ComparisonView = ({
     removeCard(null, cardId);
   };
 
-  // ── Add-column picker ─────────────────────────────────────────
-
-  const handleAddColumnConfirm = (selected) => {
-    if (view === 'inter-scenario') {
-      selected.forEach((s) => addColumn({ type: 'scenario', scenario: s }));
-    } else if (view === 'inter-whatif') {
-      selected.forEach((w) =>
-        addColumn({ type: 'whatif', scenario: parentScenario, whatif: w }),
-      );
-    }
-    setAddColumnOpen(false);
-  };
-
   if (columns.length === 0) {
     return (
       <div style={emptyStyle}>
@@ -177,6 +149,15 @@ const ComparisonView = ({
                   isOrigin={i === 0}
                   lockedReadOnly={i !== 0}
                   onCloseColumn={i !== 0 ? () => removeColumn(i) : undefined}
+                  // Origin column's title-row `+` re-opens the
+                  // CompareModal so the user can add or remove
+                  // scenarios from the comparison. Pre-fills with
+                  // the current picks; confirming with a different
+                  // selection rebuilds the columns. Non-origin
+                  // columns don't get `onAddColumn` (they already
+                  // carry the `×` close affordance for removal).
+                  onAddColumn={i === 0 ? () => setCompareOpen(true) : undefined}
+                  addColumnTooltip="Add Scenario to compare"
                   // Compact layout: every column is a single
                   // vertical stack at the map's width. Right-edge
                   // perimeter `+` is suppressed; horizontal
@@ -187,33 +168,9 @@ const ComparisonView = ({
             ))}
           </div>
         </div>
-
-        {enableEdit && (
-          <button
-            type="button"
-            onClick={() => setAddColumnOpen(true)}
-            style={floatingAddStyle}
-            title={
-              view === 'inter-scenario' ? 'Add a scenario' : 'Add a what-if'
-            }
-          >
-            <CreateNewIcon style={{ color: '#fff', fontSize: 18 }} />
-          </button>
-        )}
       </div>
 
-      {addColumnOpen && (
-        <ScenarioPicker
-          open
-          single
-          mode={view === 'inter-scenario' ? 'scenario' : 'whatif'}
-          scenarios={scenarios}
-          whatifs={whatifs}
-          scenario={scenario}
-          onConfirm={handleAddColumnConfirm}
-          onCancel={() => setAddColumnOpen(false)}
-        />
-      )}
+      <CompareModal open={compareOpen} onCancel={() => setCompareOpen(false)} />
     </div>
   );
 };
@@ -258,23 +215,6 @@ const columnCellStyle = {
   flex: '1 1 0',
   minWidth: '30vw',
   padding: '20px 24px',
-};
-
-const floatingAddStyle = {
-  position: 'absolute',
-  top: -8,
-  right: -8,
-  width: 40,
-  height: 40,
-  borderRadius: '50%',
-  background: '#1470AF',
-  border: 'none',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 5,
-  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
 };
 
 const emptyStyle = {
