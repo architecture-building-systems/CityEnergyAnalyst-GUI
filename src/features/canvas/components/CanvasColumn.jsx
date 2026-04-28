@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
@@ -186,6 +186,15 @@ const CanvasColumn = ({
   const mapPos = useCanvasStore((s) => s.mapPos);
   const setMapPos = useCanvasStore((s) => s.setMapPos);
 
+  // True while the user is actively dragging or resizing a tile.
+  // Used to add `DRAG_BUFFER_COLS` of east-edge headroom only
+  // during the gesture — at rest the column hugs its content (no
+  // trailing whitespace), and the moment a drag/resize starts rgl
+  // gets the room it needs to grow the rightmost tile.
+  const [isInteracting, setIsInteracting] = useState(false);
+  const startInteract = useCallback(() => setIsInteracting(true), []);
+  const stopInteract = useCallback(() => setIsInteracting(false), []);
+
   // Mirror cards include the alignment revision in their layout
   // `i` and DOM `key` so the Realign button forces a full rebuild
   // of the mirror's react-grid-layout (rgl caches internal layout
@@ -322,31 +331,31 @@ const CanvasColumn = ({
   ]);
 
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
-  // headroom so the rightmost card always has room to drag east.
-  // Without the buffer, react-grid-layout's `cols === rightmost
-  // edge` constraint pins any rightmost tile in place horizontally.
-  // The buffer is skipped when (a) only the map is on the grid (the
-  // map is anchored at (0,0) and rarely dragged east, so the
-  // ~258 px launch whitespace isn't worth it), (b) the layout is
-  // locked (Fix Layout / Export View) — drag is disabled, so the
-  // headroom serves no purpose and just trails empty space, or
-  // (c) compact-layout (compare mode) is on — every card is pinned
-  // to x=0/w=mapPos.w and horizontal drag is ignored, so the
-  // buffer would just bloat each column with empty space.
+  // headroom so the rightmost card always has room to drag/resize
+  // east. Without the buffer, react-grid-layout's
+  // `cols === rightmost edge` constraint pins resize at the
+  // card's current width.
+  //
+  // The buffer is *only* applied during an active drag/resize
+  // gesture — at rest the column hugs its widest tile, so there's
+  // no trailing whitespace. The buffer kicks in on
+  // `onDragStart`/`onResizeStart`, gives rgl the headroom it needs
+  // for the gesture, and is removed again on stop. Mirrors
+  // (lockedReadOnly) and locked layouts never need it.
   const { effectiveCols, gridWidthPx } = useMemo(() => {
     let maxRight = MIN_COLS;
     for (const item of layout) {
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
-    const skipBuffer = cards.length === 0 || layoutLocked || compactLayout;
-    const buffer = skipBuffer ? 0 : DRAG_BUFFER_COLS;
+    const allowBuffer = isInteracting && !layoutLocked && !lockedReadOnly;
+    const buffer = allowBuffer ? DRAG_BUFFER_COLS : 0;
     const cols = Math.max(MIN_COLS, maxRight + buffer);
     return {
       effectiveCols: cols,
       gridWidthPx: widthForCols(cols),
     };
-  }, [layout, cards.length, layoutLocked, compactLayout]);
+  }, [layout, layoutLocked, lockedReadOnly, isInteracting]);
 
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
@@ -596,6 +605,10 @@ const CanvasColumn = ({
           }}
           positionStrategy={absolutePositionStrategy}
           onLayoutChange={handleLayoutChange}
+          onDragStart={startInteract}
+          onDragStop={stopInteract}
+          onResizeStart={startInteract}
+          onResizeStop={stopInteract}
         >
           {/* ── Map tile ─────────────────────────────────────── */}
           <div key="MAP" style={mapTileStyle} className="cea-canvas-tile">

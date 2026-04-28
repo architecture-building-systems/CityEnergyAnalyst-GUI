@@ -211,9 +211,13 @@ const columnsRowStyle = {
   display: 'flex',
 };
 
+// Each column hugs its inner GridLayout width (no flex-grow, no
+// minWidth floor) so there's no trailing whitespace between the
+// rightmost tile and the column boundary. The canvas wrapper has
+// `width: fit-content`, so the canvas itself only spans as wide
+// as the sum of its columns.
 const columnCellStyle = {
-  flex: '1 1 0',
-  minWidth: '30vw',
+  flex: '0 0 auto',
   padding: '20px 24px',
 };
 
