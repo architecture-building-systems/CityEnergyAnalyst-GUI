@@ -35,8 +35,13 @@ export const PerimeterPlusButtons = ({
   exposure,
   buildSectionMenus,
   breathing = false,
+  // Compare mode constrains every column to a single vertical
+  // stack — placing cards side-by-side wouldn't make sense, so the
+  // right-edge `+` is suppressed even when there's exposed space
+  // on that edge. Bottom-edge `+` stays so users can append.
+  hideRight = false,
 }) => {
-  const rightAnchor = exposure?.right;
+  const rightAnchor = hideRight ? null : exposure?.right;
   const bottomAnchor = exposure?.bottom;
   const rightSections = rightAnchor
     ? buildSectionMenus(targetCardId, 'right')

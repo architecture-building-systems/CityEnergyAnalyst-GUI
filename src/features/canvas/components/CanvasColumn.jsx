@@ -150,6 +150,13 @@ function buildPlotMenuItems(onPick) {
  *                               in the title row that drops this
  *                               scenario / what-if from the
  *                               comparison.
+ *   compactLayout             — comparison-mode flag. Cards
+ *                               display in a single vertical stack
+ *                               at the map's width; horizontal
+ *                               drag/resize is suppressed and the
+ *                               right-edge `+` is hidden. Drag
+ *                               still works for vertical reordering;
+ *                               vertical resize still works.
  */
 const CanvasColumn = ({
   columnDef,
@@ -171,6 +178,7 @@ const CanvasColumn = ({
   isOrigin = false,
   lockedReadOnly = false,
   onCloseColumn,
+  compactLayout = false,
 }) => {
   const project = useProjectStore((s) => s.project);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
@@ -243,20 +251,33 @@ const CanvasColumn = ({
       },
     ];
     for (const card of cards) {
+      // Compact layout pins every card to the column-left at the
+      // map's current width — single vertical stack matching the
+      // primary map's footprint. Stored card.col / card.w are
+      // ignored at render time and protected from clobbering on
+      // drag (see `handleLayoutChange` below) so the original
+      // free-form layout survives a round-trip back to launch.
+      const cardX = compactLayout ? 0 : card.col ?? 0;
+      const cardW = compactLayout ? mapPos.w : card.w ?? DEFAULT_CARD_W;
       items.push({
         i: card.id,
-        x: card.col ?? 0,
+        x: cardX,
         y: card.row ?? 0,
-        w: card.w ?? DEFAULT_CARD_W,
+        w: cardW,
         h: card.h ?? DEFAULT_CARD_H,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H,
+        // Compact mode locks horizontal drag/resize via `static`
+        // on the x/w axes — react-grid-layout v2 doesn't expose
+        // axis-specific locks, so we keep drag/resize on and
+        // simply ignore col/w in the change handler. The visual
+        // is the layout we just emitted.
         isDraggable: !layoutLocked,
         isResizable: !layoutLocked,
       });
     }
     return items;
-  }, [cards, mapPos, legendExtraRows, layoutLocked]);
+  }, [cards, mapPos, legendExtraRows, layoutLocked, compactLayout]);
 
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
   // headroom so the rightmost card always has room to drag east.
@@ -264,23 +285,26 @@ const CanvasColumn = ({
   // edge` constraint pins any rightmost tile in place horizontally.
   // The buffer is skipped when (a) only the map is on the grid (the
   // map is anchored at (0,0) and rarely dragged east, so the
-  // ~258 px launch whitespace isn't worth it) or (b) the layout is
+  // ~258 px launch whitespace isn't worth it), (b) the layout is
   // locked (Fix Layout / Export View) — drag is disabled, so the
-  // headroom serves no purpose and just trails empty space.
+  // headroom serves no purpose and just trails empty space, or
+  // (c) compact-layout (compare mode) is on — every card is pinned
+  // to x=0/w=mapPos.w and horizontal drag is ignored, so the
+  // buffer would just bloat each column with empty space.
   const { effectiveCols, gridWidthPx } = useMemo(() => {
     let maxRight = MIN_COLS;
     for (const item of layout) {
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
-    const skipBuffer = cards.length === 0 || layoutLocked;
+    const skipBuffer = cards.length === 0 || layoutLocked || compactLayout;
     const buffer = skipBuffer ? 0 : DRAG_BUFFER_COLS;
     const cols = Math.max(MIN_COLS, maxRight + buffer);
     return {
       effectiveCols: cols,
       gridWidthPx: widthForCols(cols),
     };
-  }, [layout, cards.length, layoutLocked]);
+  }, [layout, cards.length, layoutLocked, compactLayout]);
 
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
@@ -305,18 +329,26 @@ const CanvasColumn = ({
             return { x: item.x, y: item.y, w: item.w, h: userH };
           });
         } else {
-          cardUpdates.push({
-            id: item.i,
-            row: item.y,
-            col: item.x,
-            w: item.w,
-            h: item.h,
-          });
+          // Compact mode: only persist row/h — col/w are display-
+          // only (forced to 0 / mapPos.w in the layout memo) and
+          // shouldn't overwrite the user's original free-form
+          // values stored on the card.
+          if (compactLayout) {
+            cardUpdates.push({ id: item.i, row: item.y, h: item.h });
+          } else {
+            cardUpdates.push({
+              id: item.i,
+              row: item.y,
+              col: item.x,
+              w: item.w,
+              h: item.h,
+            });
+          }
         }
       }
       if (cardUpdates.length > 0) onApplyLayouts?.(cardUpdates);
     },
-    [onApplyLayouts, legendExtraRows],
+    [onApplyLayouts, legendExtraRows, compactLayout],
   );
 
   // Card auto-grow: FeatureCard reports its preferred pixel height
@@ -529,6 +561,7 @@ const CanvasColumn = ({
                 exposure={exposureMap['MAP']}
                 buildSectionMenus={buildSectionMenus}
                 breathing={cards.length === 0}
+                hideRight={compactLayout}
               />
             )}
           </div>
@@ -585,6 +618,7 @@ const CanvasColumn = ({
                   targetCardId={card.id}
                   exposure={exposureMap[card.id]}
                   buildSectionMenus={buildSectionMenus}
+                  hideRight={compactLayout}
                 />
               )}
             </div>

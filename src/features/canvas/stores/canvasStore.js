@@ -436,16 +436,23 @@ export const useCanvasStore = create((set, get) => ({
   },
 
   /**
-   * Apply a batch of {id, row, col, w, h} updates emitted by
-   * react-grid-layout's `onLayoutChange`. Cards not in the batch are
-   * left alone. Used to persist user-driven drag + resize.
+   * Apply a batch of position/size updates emitted by
+   * react-grid-layout's `onLayoutChange`. Each update is
+   * `{ id, row?, col?, w?, h? }` — fields are sparse so the caller
+   * can omit dimensions that compact-layout mode forces (e.g.
+   * `col` and `w` are not user-controlled in compare mode and
+   * shouldn't be overwritten on every drag). Cards not in the
+   * batch are left alone.
    */
   applyCardLayouts: (columnIndex, updates) => {
     const { getCards, setCards } = get();
     const byId = new Map(updates.map((u) => [u.id, u]));
     const next = getCards(columnIndex).map((c) => {
       const u = byId.get(c.id);
-      return u ? { ...c, row: u.row, col: u.col, w: u.w, h: u.h } : c;
+      if (!u) return c;
+      // Spread the update directly; `c.id` and `u.id` are equal,
+      // so the spread is a no-op for the id field.
+      return { ...c, ...u };
     });
     setCards(columnIndex, next);
   },

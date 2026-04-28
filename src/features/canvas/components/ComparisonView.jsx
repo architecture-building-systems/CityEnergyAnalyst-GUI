@@ -177,6 +177,11 @@ const ComparisonView = ({
                   isOrigin={i === 0}
                   lockedReadOnly={i !== 0}
                   onCloseColumn={i !== 0 ? () => removeColumn(i) : undefined}
+                  // Compact layout: every column is a single
+                  // vertical stack at the map's width. Right-edge
+                  // perimeter `+` is suppressed; horizontal
+                  // drag/resize is ignored.
+                  compactLayout
                 />
               </div>
             ))}
