@@ -76,7 +76,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     dialog.showMessageBoxSync(BrowserWindow, {
       type: 'error',
       title: 'CEA Error',
-      message: 'CEA has encounted an error on startup',
+      message: 'CEA has encountered an error on startup',
       detail: startupError,
       buttons: ['Exit CEA'],
     });

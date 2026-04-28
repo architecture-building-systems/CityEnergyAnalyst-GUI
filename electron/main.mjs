@@ -360,7 +360,7 @@ function createSplashWindow(url) {
         type: 'error',
         title: 'CEA Error',
         message:
-          'CEA has encounted an error on startup.\n The application will exit now.',
+          'CEA has encountered an error on startup.\n The application will exit now.',
         detail: `${errorMessage}You can report this error to us at our GitHub page\n (https://github.com/architecture-building-systems/CityEnergyAnalyst/issues).`,
         buttons: ['Show logs', 'Exit'],
         defaultId: 0,
