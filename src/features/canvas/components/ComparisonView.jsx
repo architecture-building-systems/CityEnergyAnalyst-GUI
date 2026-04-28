@@ -215,10 +215,12 @@ const columnsRowStyle = {
 // minWidth floor) so there's no trailing whitespace between the
 // rightmost tile and the column boundary. The canvas wrapper has
 // `width: fit-content`, so the canvas itself only spans as wide
-// as the sum of its columns.
+// as the sum of its columns. Top padding is small so the title
+// card sits close to the canvas-card top; bottom padding is
+// roomier so the last tile has breathing room.
 const columnCellStyle = {
   flex: '0 0 auto',
-  padding: '20px 24px',
+  padding: '4px 24px 20px 24px',
 };
 
 const emptyStyle = {

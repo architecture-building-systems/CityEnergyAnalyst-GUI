@@ -758,7 +758,11 @@ const titleRowStyle = {
   top: 0,
   zIndex: 4,
   background: '#fff',
-  paddingTop: 16,
+  // Small clearance so the title doesn't sit flush against the
+  // canvas-card edge when the column scrolls — but trimmed from
+  // the original 16 px to bring the title closer to the canvas
+  // top in both launch and compare layouts.
+  paddingTop: 4,
   paddingBottom: 8,
 };
 
