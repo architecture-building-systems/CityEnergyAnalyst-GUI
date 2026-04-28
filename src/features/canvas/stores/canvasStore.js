@@ -342,7 +342,24 @@ export const useCanvasStore = create((set, get) => ({
 
   removeColumn: (index) => {
     const { columns } = get();
-    set({ columns: columns.filter((_, i) => i !== index) });
+    const next = columns.filter((_, i) => i !== index);
+    // When the last non-origin column is dropped (`columns` falls
+    // to ≤ 1) there's nothing left to compare — fold back to
+    // launch view so the user isn't stranded in a single-column
+    // compare layout. Cards survive (`sharedCards` → `launchCards`)
+    // and `comparisonSetup` stays intact so the `+` button can
+    // re-enter with the previous picks pre-filled.
+    if (next.length <= 1) {
+      set((state) => ({
+        view: 'launch',
+        columns: [],
+        parentScenario: null,
+        launchCards: state.sharedCards,
+        sharedCards: [],
+      }));
+      return;
+    }
+    set({ columns: next });
   },
 
   // ── Card helpers ────────────────────────────────────────────
