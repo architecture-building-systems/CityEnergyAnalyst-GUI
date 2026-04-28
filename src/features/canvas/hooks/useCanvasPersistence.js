@@ -43,7 +43,6 @@ const PERSISTABLE_SELECTOR = (state) => ({
   columns: state.columns,
   launchCards: state.launchCards,
   sharedCards: state.sharedCards,
-  columnCards: state.columnCards,
   mapsLinked: state.mapsLinked,
   fixLayout: state.fixLayout,
 });

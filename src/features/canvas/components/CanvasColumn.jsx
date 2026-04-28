@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -137,6 +138,18 @@ function buildPlotMenuItems(onPick) {
  *                               MapLayerProperties bottom card
  *   onPlotReady(plotId, div)  — y-axis alignment hook
  *   onAddColumn / addColumnTooltip — title-card "+" affordance
+ *   isOrigin                  — leftmost column in compare mode;
+ *                               renders "Origin" badge.
+ *   lockedReadOnly            — non-origin column in compare mode;
+ *                               drops every editing affordance
+ *                               (perimeter `+`, card Edit/Delete,
+ *                               map-card open). Display content
+ *                               (plots, KPIs, maps, legends) still
+ *                               renders normally.
+ *   onCloseColumn             — non-origin only; renders an `×`
+ *                               in the title row that drops this
+ *                               scenario / what-if from the
+ *                               comparison.
  */
 const CanvasColumn = ({
   columnDef,
@@ -155,6 +168,9 @@ const CanvasColumn = ({
   onAddColumn,
   addColumnTooltip = 'Add column',
   addColumnDisabled = false,
+  isOrigin = false,
+  lockedReadOnly = false,
+  onCloseColumn,
 }) => {
   const project = useProjectStore((s) => s.project);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
@@ -162,6 +178,24 @@ const CanvasColumn = ({
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
+
+  // Non-origin columns in compare mode are pure mirrors — drop the
+  // editing callbacks at the top so the existing "callback ?
+  // wrapper : undefined" patterns below remove the corresponding
+  // chrome on FeatureCardShell. Map cards' onOpenMapBottom is
+  // also dropped so the bottom-card edit flow can't be triggered
+  // from a non-origin map. The display content (Plot HTML, KPI
+  // strips, MapLibre tiles) renders normally — only the editing
+  // surface is gated.
+  if (lockedReadOnly) {
+    onEditPlot = undefined;
+    onDeletePlot = undefined;
+    onDeleteCard = undefined;
+    onAddPlotToCard = undefined;
+    onAddCard = undefined;
+    onOpenMapBottom = undefined;
+  }
+  const showPerimeterPlus = enableEdit && !lockedReadOnly;
 
   const [mapPos, setMapPos] = useState({
     x: 0,
@@ -394,11 +428,29 @@ const CanvasColumn = ({
 
   return (
     <div style={{ ...columnStyle, ...style }}>
-      {/* Title card + optional "+ Add scenario" button. */}
+      {/* Title card + optional badges / close. The Origin badge
+          on the leftmost compare column makes the
+          "edit-once-mirror-everywhere" affordance discoverable
+          (only the origin shows Edit / Delete / `+`). The `×`
+          close on non-origin columns drops that scenario /
+          what-if from the comparison via `removeColumn(i)`. */}
       <div style={titleRowStyle}>
         <div style={titleCardStyle}>
+          {isOrigin && <span style={originBadgeStyle}>Origin</span>}
           <div style={headerStyle}>{headerText}</div>
         </div>
+        {onCloseColumn && (
+          <Tooltip title="Remove from comparison" placement="bottom">
+            <div className="cea-card-icon-button-container">
+              <Button
+                type="text"
+                icon={<CloseOutlined />}
+                onClick={onCloseColumn}
+                aria-label="Remove column"
+              />
+            </div>
+          </Tooltip>
+        )}
         {onAddColumn && enableEdit && (
           <div className="cea-card-icon-button-container">
             <Tooltip
@@ -471,7 +523,7 @@ const CanvasColumn = ({
               />
             </div>
             <ConstructionStandardLegend style={overviewLegendStyle} />
-            {enableEdit && (
+            {showPerimeterPlus && (
               <PerimeterPlusButtons
                 targetCardId="MAP"
                 exposure={exposureMap['MAP']}
@@ -528,7 +580,7 @@ const CanvasColumn = ({
                   onPreferredHeight={handlePreferredHeight}
                 />
               )}
-              {enableEdit && (
+              {showPerimeterPlus && (
                 <PerimeterPlusButtons
                   targetCardId={card.id}
                   exposure={exposureMap[card.id]}
@@ -583,6 +635,7 @@ const titleCardStyle = {
   minHeight: 32,
   display: 'flex',
   alignItems: 'center',
+  gap: 10,
   width: 'fit-content',
 };
 
@@ -591,6 +644,20 @@ const headerStyle = {
   fontWeight: 700,
   color: '#222',
   lineHeight: 1.2,
+};
+
+// Origin-column accent — sits inside the title card before the
+// scenario name. Brand-blue background mirrors the Compare
+// button's active state so the connection ("this is where the
+// edits happen") is visible at a glance.
+const originBadgeStyle = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#fff',
+  background: '#1471B0',
+  padding: '2px 8px',
+  borderRadius: 4,
+  letterSpacing: 0.3,
 };
 
 const gridWrapperStyle = {

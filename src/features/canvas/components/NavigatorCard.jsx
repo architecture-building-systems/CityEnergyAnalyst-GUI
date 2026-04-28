@@ -12,6 +12,7 @@ import {
   message as antdMessage,
 } from 'antd';
 import {
+  BlockOutlined,
   CheckOutlined,
   LeftOutlined,
   LoadingOutlined,
@@ -41,6 +42,7 @@ import {
   readSavedCanvas,
 } from '../api/canvas';
 import { deserializeCanvas } from '../utils/canvasSerialize';
+import CompareModal from './CompareModal';
 
 /**
  * Navigator card — top strip of the Canvas Builder page.
@@ -86,6 +88,10 @@ const NavigatorCard = () => {
   const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
   const autosaveStatus = useCanvasStore((s) => s.autosaveStatus);
+  const view = useCanvasStore((s) => s.view);
+  const comparisonSetup = useCanvasStore((s) => s.comparisonSetup);
+  const enterCompareMode = useCanvasStore((s) => s.enterCompareMode);
+  const stopCompareMode = useCanvasStore((s) => s.stopCompareMode);
 
   const queryClient = useQueryClient();
   const { data: savedCanvases } = useFetchSavedCanvases(project, scenario);
@@ -106,6 +112,10 @@ const NavigatorCard = () => {
   const [createName, setCreateName] = useState('');
   const [createError, setCreateError] = useState(null);
   const [creating, setCreating] = useState(false);
+
+  // Compare modal — opened by the Compare button (state machine
+  // below). Closed via Cancel or after a successful pick.
+  const [compareOpen, setCompareOpen] = useState(false);
 
   // Export (Share) flashes a "capturing plots…" loading state on
   // the Share button — the export endpoint re-renders every plot
@@ -193,7 +203,6 @@ const NavigatorCard = () => {
               parentScenario: null,
               launchCards: [],
               sharedCards: [],
-              columnCards: {},
               mapsLinked: true,
               fixLayout: false,
               canvasName: null,
@@ -404,6 +413,30 @@ const NavigatorCard = () => {
     setRenameError(null);
   };
 
+  /**
+   * Compare-button click. Three states based on (view,
+   * comparisonSetup):
+   *   - launch + no setup → open the picker.
+   *   - launch + setup    → resume the saved comparison directly.
+   *                         (Shift-click or a long-press could open
+   *                         the picker for editing — defer to a
+   *                         later iteration; today the user opens
+   *                         "Start Over" + Compare again to re-pick.)
+   *   - comparing         → stop comparing (revert to launch,
+   *                         keep the setup).
+   */
+  const handleCompareClick = () => {
+    if (view !== 'launch') {
+      stopCompareMode();
+      return;
+    }
+    if (comparisonSetup) {
+      enterCompareMode(scenario);
+      return;
+    }
+    setCompareOpen(true);
+  };
+
   const handleStartOver = () => {
     Modal.confirm({
       title: 'Start over?',
@@ -448,6 +481,11 @@ const NavigatorCard = () => {
                 />
               </div>
             </Tooltip>
+            <CompareButton
+              view={view}
+              comparisonSetup={comparisonSetup}
+              onClick={handleCompareClick}
+            />
             <NavigatorToggle
               checked={mapsLinked}
               onChange={setMapsLinked}
@@ -635,6 +673,11 @@ const NavigatorCard = () => {
           </div>
         )}
       </Modal>
+
+      <CompareModal
+        open={compareOpen}
+        onCancel={() => setCompareOpen(false)}
+      />
     </div>
   );
 };
@@ -688,6 +731,79 @@ const autosaveSavingIconStyle = { fontSize: 12, color: '#1470AF' };
 
 // Slightly muted green — confirmation, not a system success toast.
 const autosaveSavedIconStyle = { fontSize: 12, color: '#52c41a' };
+
+/**
+ * Compare button — single navigator action that toggles between
+ * three states based on (view, comparisonSetup):
+ *
+ *   - launch + no setup → "Compare" (opens the picker).
+ *   - launch + setup    → "Resume comparing (X)" (one click
+ *                         re-enters using saved picks).
+ *   - comparing         → "Stop comparing" (reverts to launch,
+ *                         keeps the setup so Resume works).
+ *
+ * The icon stays consistent across states; the tooltip explains
+ * the current behaviour. Background flips to ``uuen_blue`` while
+ * comparing so the active state is visible at a glance.
+ */
+const CompareButton = ({ view, comparisonSetup, onClick }) => {
+  const isComparing = view !== 'launch';
+  const hasSetup = !!comparisonSetup;
+
+  let title;
+  if (isComparing) {
+    title = 'Stop comparing';
+  } else if (hasSetup) {
+    const count =
+      comparisonSetup.kind === 'inter-scenario'
+        ? (comparisonSetup.scenarios || []).length
+        : (comparisonSetup.whatifs || []).length;
+    title = `Resume comparing (${count + 1} columns)`;
+  } else {
+    title = 'Compare';
+  }
+
+  // Active state mirrors Save-button styling (blue tile + white
+  // glyph). Inactive uses the standard outlined wrapper.
+  const wrapperStyle = isComparing
+    ? compareActiveWrapperStyle
+    : iconWrapperStyle;
+  const buttonStyle = isComparing ? { color: '#fff' } : undefined;
+
+  return (
+    <div style={compareButtonClusterStyle}>
+      <Tooltip title={title} placement="bottom">
+        <div className={iconWrapperClass} style={wrapperStyle}>
+          <Button
+            type="text"
+            icon={<BlockOutlined />}
+            onClick={onClick}
+            style={buttonStyle}
+            aria-label={title}
+          />
+        </div>
+      </Tooltip>
+      {/* Info icon explains the three button states + the
+          edit-once-mirror-everywhere model. Backend-keyed so the
+          wording can be edited without a frontend redeploy. */}
+      <InfoTooltip tooltipKey="canvas-compare" />
+    </div>
+  );
+};
+
+// Cluster wrapper so the info icon sits flush with the button
+// without inheriting `Space size="small"`'s 8 px gap from siblings.
+const compareButtonClusterStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+};
+
+const compareActiveWrapperStyle = {
+  background: '#1471B0',
+  color: '#fff',
+  outline: 'none',
+};
 
 /**
  * Dashboard switcher modelled after the pathway builder's

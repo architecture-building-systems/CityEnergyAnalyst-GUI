@@ -14,15 +14,11 @@
  * (drag/resize) without rewriting card configs, and lets the
  * zip-export pass round-trip the full state with no extra metadata.
  *
- * Either `cards` or `column_cards` is populated depending on the
- * canvas's view:
- *   - `launch` / `inter-scenario` / `inter-whatif` → `cards`
- *   - `inter-feature`                              → `column_cards`
- *
- * Launch view's `launchCards` slice maps to the same `cards` field
- * on disk (single shared grid). The view name carried in
- * `canvas.yml` tells the load path which store slice to populate
- * back into.
+ * The view name carried in `canvas.yml` tells the load path which
+ * store slice to populate back into:
+ *   - `launch` → `launchCards`
+ *   - `inter-scenario` / `inter-whatif` → `sharedCards`
+ * Both populate the same single `cards` map on disk.
  */
 
 const SCHEMA_VERSION = 1;
@@ -64,46 +60,41 @@ export function serializeCanvas(state) {
       type: c.type,
       scenario: c.scenario ?? null,
       whatif: c.whatif ?? null,
-      feature: c.feature ?? null,
     })),
     maps_linked: !!state.mapsLinked,
     fix_layout: !!state.fixLayout,
+    // Persisted Compare-mode picks; survives Stop-comparing so
+    // Resume can re-enter without re-picking. snake_case mirrors
+    // the Pydantic field name on `CanvasMeta`.
+    comparison_setup: state.comparisonSetup
+      ? {
+          kind: state.comparisonSetup.kind,
+          scenarios: state.comparisonSetup.scenarios ?? null,
+          whatifs: state.comparisonSetup.whatifs ?? null,
+          parent_scenario: state.comparisonSetup.parentScenario ?? null,
+        }
+      : null,
   };
 
   const layout = {
     schema_version: SCHEMA_VERSION,
     map_positions: [],
     cards: {},
-    column_cards: {},
   };
 
   const featureCard = {
     schema_version: SCHEMA_VERSION,
     cards: {},
-    column_cards: {},
   };
 
-  if (state.view === 'inter-feature') {
-    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
-      layout.column_cards[idx] = {};
-      featureCard.column_cards[idx] = {};
-      (cards || []).forEach((card) => {
-        layout.column_cards[idx][card.id] = cardLayoutFromStore(card);
-        featureCard.column_cards[idx][card.id] = cardConfigFromStore(card);
-      });
-    });
-  } else {
-    // Launch / inter-scenario / inter-whatif all share the same
-    // single-grid shape on disk.
-    const sourceCards =
-      state.view === 'launch'
-        ? state.launchCards || []
-        : state.sharedCards || [];
-    sourceCards.forEach((card) => {
-      layout.cards[card.id] = cardLayoutFromStore(card);
-      featureCard.cards[card.id] = cardConfigFromStore(card);
-    });
-  }
+  // Single-grid shape on disk for every view: launch sources from
+  // `launchCards`, comparison views source from `sharedCards`.
+  const sourceCards =
+    state.view === 'launch' ? state.launchCards || [] : state.sharedCards || [];
+  sourceCards.forEach((card) => {
+    layout.cards[card.id] = cardLayoutFromStore(card);
+    featureCard.cards[card.id] = cardConfigFromStore(card);
+  });
 
   return { canvas, layout, feature_card: featureCard };
 }
@@ -120,15 +111,21 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
       type: c.type,
       scenario: c.scenario ?? undefined,
       whatif: c.whatif ?? undefined,
-      feature: c.feature ?? undefined,
     })),
     parentScenario: canvas.parent_scenario ?? null,
     mapsLinked: !!canvas.maps_linked,
     fixLayout: !!canvas.fix_layout,
     canvasName: canvas.name ?? null,
+    comparisonSetup: canvas.comparison_setup
+      ? {
+          kind: canvas.comparison_setup.kind,
+          scenarios: canvas.comparison_setup.scenarios ?? null,
+          whatifs: canvas.comparison_setup.whatifs ?? null,
+          parentScenario: canvas.comparison_setup.parent_scenario ?? null,
+        }
+      : null,
     launchCards: [],
     sharedCards: [],
-    columnCards: {},
   };
 
   const buildCard = (id, layoutEntry, configEntry) => ({
@@ -147,25 +144,11 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     layer: configEntry.layer ?? undefined,
   });
 
-  if (next.view === 'inter-feature') {
-    Object.entries(feature_card?.column_cards || {}).forEach(
-      ([idx, configs]) => {
-        const layoutForCol = (layout?.column_cards || {})[idx] || {};
-        next.columnCards[idx] = Object.entries(configs).map(([id, cfg]) =>
-          buildCard(id, layoutForCol[id], cfg),
-        );
-      },
-    );
-  } else {
-    // Launch / inter-scenario / inter-whatif share the same single
-    // grid on disk; route into `launchCards` vs `sharedCards`
-    // based on the canvas's recorded view.
-    const targetSlice =
-      next.view === 'launch' ? next.launchCards : next.sharedCards;
-    Object.entries(feature_card?.cards || {}).forEach(([id, cfg]) => {
-      targetSlice.push(buildCard(id, (layout?.cards || {})[id], cfg));
-    });
-  }
+  const targetSlice =
+    next.view === 'launch' ? next.launchCards : next.sharedCards;
+  Object.entries(feature_card?.cards || {}).forEach(([id, cfg]) => {
+    targetSlice.push(buildCard(id, (layout?.cards || {})[id], cfg));
+  });
 
   return next;
 }

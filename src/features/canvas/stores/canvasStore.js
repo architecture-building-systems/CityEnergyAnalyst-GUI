@@ -4,15 +4,13 @@ import { create } from 'zustand';
  * Canvas Builder store.
  *
  * Views:
- *   'launch'          — entry point, single column + 3 action buttons
+ *   'launch'          — entry point, single column
  *   'inter-scenario'  — columns = different scenarios, shared cards
  *   'inter-whatif'    — columns = what-if variants, shared cards
- *   'inter-feature'   — columns = different feature result sets, per-column cards
  *
  * Column shapes:
  *   { type: 'scenario', scenario }
  *   { type: 'whatif',   scenario, whatif }
- *   { type: 'feature',  scenario, feature }
  *
  * Cards are first-class:
  *   { id, type, row, col, w, h,
@@ -131,13 +129,12 @@ export const useCanvasStore = create((set, get) => ({
   // store (rather than `LaunchView`'s local state) so the autosave
   // hook can persist a draft before the user has even decided what
   // comparison mode to enter. Promoted to `sharedCards` on
-  // `enterInterScenario` / `enterInterWhatif`, and to
-  // `columnCards[0]` on `enterInterFeature`.
+  // `enterInterScenario` / `enterInterWhatif`.
   launchCards: [],
-  // Shared card grid (inter-scenario / inter-whatif).
+  // Shared card grid for both comparison views — every column
+  // (scenarios in inter-scenario, what-ifs in inter-whatif) renders
+  // the same card list, one row per card.
   sharedCards: [],
-  // Per-column card grids keyed by column index (inter-feature).
-  columnCards: {},
 
   // When `true`, every Map card mirrors the column's primary map
   // (camera, layer toggles, colour mode, etc.) and the FeatureCardMap
@@ -198,6 +195,20 @@ export const useCanvasStore = create((set, get) => ({
   autosaveStatus: 'idle',
   setAutosaveStatus: (value) => set({ autosaveStatus: value || 'idle' }),
 
+  // ── Compare mode ────────────────────────────────────────────
+  // Saved Compare-mode picks. Decoupled from the live `view`
+  // field so the user can "Stop comparing" (revert `view` to
+  // `launch`) without losing their chosen scenarios / what-ifs.
+  // Shape:
+  //   { kind: 'inter-scenario', scenarios: [...] }
+  //   { kind: 'inter-whatif',   parentScenario, whatifs: [...] }
+  // `null` until the user first enters Compare mode for this
+  // canvas. The CompareButton in the navigator reads this to
+  // decide between "Compare" (no setup) and "Resume comparing"
+  // (setup exists but view === 'launch').
+  comparisonSetup: null,
+  setComparisonSetup: (setup) => set({ comparisonSetup: setup || null }),
+
   /**
    * Replace the editable slice of state with a deserialised canvas
    * read from the backend. Pass the partial returned by
@@ -214,20 +225,31 @@ export const useCanvasStore = create((set, get) => ({
 
   // The view-transition actions carry the user's launch-view draft
   // forward into the chosen comparison mode, so cards built on the
-  // launch surface aren't lost when Add-scenarios-to-compare /
-  // Add-what-ifs / Add-features is clicked. Inter-feature dumps the
-  // draft into column 0 and leaves later columns empty (the
-  // frontend can offer a per-column clone affordance later if the
-  // UX wants identical layouts across columns).
+  // launch surface aren't lost when Compare is clicked. Both modes
+  // share the same `sharedCards` list — one row per card, mirrored
+  // across every column.
+  //
+  // ``scenarios`` is the *full* column list, origin-first (caller
+  // is expected to put the project's active scenario at index 0).
+  // The leftmost column is treated as the "origin" by convention;
+  // editing affordances only appear there.
+  //
+  // Both helpers also persist the picks to ``comparisonSetup`` so
+  // the user can later Stop comparing and Resume without losing
+  // their selection.
   enterInterScenario: (scenarios) => {
     const columns = scenarios.map((s) => ({ type: 'scenario', scenario: s }));
     set((state) => ({
       view: 'inter-scenario',
       columns,
       parentScenario: null,
-      sharedCards: state.launchCards,
-      columnCards: {},
-      launchCards: [],
+      sharedCards:
+        state.view === 'launch' ? state.launchCards : state.sharedCards,
+      launchCards: state.view === 'launch' ? [] : state.launchCards,
+      comparisonSetup: {
+        kind: 'inter-scenario',
+        scenarios: scenarios.slice(1),
+      },
     }));
   },
 
@@ -241,39 +263,57 @@ export const useCanvasStore = create((set, get) => ({
       view: 'inter-whatif',
       columns,
       parentScenario,
-      sharedCards: state.launchCards,
-      columnCards: {},
-      launchCards: [],
+      sharedCards:
+        state.view === 'launch' ? state.launchCards : state.sharedCards,
+      launchCards: state.view === 'launch' ? [] : state.launchCards,
+      comparisonSetup: {
+        kind: 'inter-whatif',
+        parentScenario,
+        whatifs: whatifs.slice(1),
+      },
     }));
   },
 
-  enterInterFeature: (featureColumns) => {
-    const columns = featureColumns.map((fc) => ({
-      type: 'feature',
-      scenario: fc.scenario,
-      feature: fc.feature,
-    }));
-    set((state) => {
-      const columnCards = {};
-      featureColumns.forEach((_, i) => {
-        columnCards[i] = i === 0 ? state.launchCards : [];
-      });
-      return {
-        view: 'inter-feature',
-        columns,
-        parentScenario: null,
-        sharedCards: [],
-        columnCards,
-        launchCards: [],
-      };
-    });
+  /**
+   * Re-enter the previously-saved Compare mode using the persisted
+   * ``comparisonSetup``. The leftmost column is rebuilt from the
+   * project's active scenario (passed by the caller via
+   * ``activeScenario``); the remaining columns come from the saved
+   * picks. No-op if there's no saved setup.
+   */
+  enterCompareMode: (activeScenario) => {
+    const setup = get().comparisonSetup;
+    if (!setup) return;
+    if (setup.kind === 'inter-scenario') {
+      const cols = [activeScenario, ...(setup.scenarios || [])];
+      get().enterInterScenario(cols);
+    } else if (setup.kind === 'inter-whatif') {
+      const cols = [activeScenario, ...(setup.whatifs || [])];
+      get().enterInterWhatif(setup.parentScenario || activeScenario, cols);
+    }
   },
+
+  /**
+   * Revert ``view`` to ``launch`` while keeping ``comparisonSetup``
+   * intact so the user can Resume later. Cards survive — the
+   * shared list folds back into ``launchCards`` so the single
+   * column shows the same content that was being mirrored.
+   */
+  stopCompareMode: () =>
+    set((state) => ({
+      view: 'launch',
+      columns: [],
+      parentScenario: null,
+      launchCards: state.sharedCards,
+      sharedCards: [],
+    })),
 
   /**
    * Reset card / column / launch state to a fresh canvas — keeps
    * `canvasName` so the autosave hook flushes the empty state
-   * back to the same on-disk folder. Used by the navigator's
-   * Start Over button.
+   * back to the same on-disk folder. Also drops the saved
+   * ``comparisonSetup`` since "Start Over" implies starting from
+   * scratch including the comparison picks.
    */
   startOver: () =>
     set({
@@ -282,70 +322,49 @@ export const useCanvasStore = create((set, get) => ({
       parentScenario: null,
       launchCards: [],
       sharedCards: [],
-      columnCards: {},
+      comparisonSetup: null,
     }),
 
   // ── Column management ───────────────────────────────────────
 
   addColumn: (column) => {
-    const { columns, view, columnCards } = get();
+    const { columns } = get();
     const isDuplicate = columns.some((c) => {
       if (c.type !== column.type) return false;
       if (c.type === 'scenario') return c.scenario === column.scenario;
       if (c.type === 'whatif')
         return c.scenario === column.scenario && c.whatif === column.whatif;
-      if (c.type === 'feature')
-        return c.scenario === column.scenario && c.feature === column.feature;
       return false;
     });
     if (isDuplicate) return;
-
-    const newColumns = [...columns, column];
-    const updates = { columns: newColumns };
-    if (view === 'inter-feature' && column.type === 'feature') {
-      const newIndex = newColumns.length - 1;
-      updates.columnCards = { ...columnCards, [newIndex]: [] };
-    }
-    set(updates);
+    set({ columns: [...columns, column] });
   },
 
   removeColumn: (index) => {
-    const { columns, columnCards } = get();
-    const newColumns = columns.filter((_, i) => i !== index);
-    const newColumnCards = {};
-    Object.keys(columnCards).forEach((key) => {
-      const k = Number(key);
-      if (k < index) newColumnCards[k] = columnCards[k];
-      else if (k > index) newColumnCards[k - 1] = columnCards[k];
-    });
-    set({ columns: newColumns, columnCards: newColumnCards });
+    const { columns } = get();
+    set({ columns: columns.filter((_, i) => i !== index) });
   },
 
   // ── Card helpers ────────────────────────────────────────────
 
-  // Read the cards array for a given dispatch target. Three cases:
+  // Read the cards array for a given dispatch target. Two cases:
   //   `'launch'` → the launch view's draft cards
-  //   `null`     → the shared grid (inter-scenario / inter-whatif)
-  //   number     → per-column grid (inter-feature)
-  // The 'launch' branch lets every existing card-mutating action
-  // (`addCard`, `removeCard`, `applyCardLayouts`, `addPlot`, …)
-  // operate on launch-view state without bespoke wiring.
+  //   anything else → the shared grid (mirrored across every
+  //                   column in inter-scenario / inter-whatif)
+  // The `columnIndex` parameter is preserved on every action so
+  // callers don't have to know which slice they're targeting; the
+  // dispatcher handles it.
   getCards: (columnIndex) => {
     const state = get();
     if (columnIndex === 'launch') return state.launchCards;
-    return columnIndex == null
-      ? state.sharedCards
-      : state.columnCards[columnIndex] || [];
+    return state.sharedCards;
   },
 
   setCards: (columnIndex, next) => {
     if (columnIndex === 'launch') {
       set({ launchCards: next });
-    } else if (columnIndex == null) {
-      set({ sharedCards: next });
     } else {
-      const { columnCards } = get();
-      set({ columnCards: { ...columnCards, [columnIndex]: next } });
+      set({ sharedCards: next });
     }
   },
 

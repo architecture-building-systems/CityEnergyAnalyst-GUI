@@ -8,7 +8,6 @@ import { useFetchScenarios, useFetchWhatifs } from '../hooks/useCanvasData';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
 import ScenarioPicker from './ScenarioPicker';
-import FeaturePicker from './FeaturePicker';
 
 const ComparisonView = ({
   onOpenDrawer,
@@ -24,8 +23,8 @@ const ComparisonView = ({
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const parentScenario = useCanvasStore((s) => s.parentScenario);
   const sharedCards = useCanvasStore((s) => s.sharedCards);
-  const columnCards = useCanvasStore((s) => s.columnCards);
   const addColumn = useCanvasStore((s) => s.addColumn);
+  const removeColumn = useCanvasStore((s) => s.removeColumn);
   const addCard = useCanvasStore((s) => s.addCard);
   const addPlot = useCanvasStore((s) => s.addPlot);
   const updatePlot = useCanvasStore((s) => s.updatePlot);
@@ -41,103 +40,90 @@ const ComparisonView = ({
     view === 'inter-whatif' ? parentScenario : null,
   );
 
-  const isFeatureMode = view === 'inter-feature';
-  const columnKeyForMode = isFeatureMode ? 'per-column' : 'shared';
-
+  // Both comparison modes share a single card list across columns
+  // — one row per card, mirrored across every scenario / what-if
+  // column. No per-column dispatch needed; every store action
+  // targets the shared slice via `columnIndex = null`.
   const { handlePlotReady } = useYAxisAlignment(
-    !isFeatureMode && columns.length > 1,
+    columns.length > 1,
     columns.length,
   );
 
-  const getColumnIndexFor = (colIndex) => (isFeatureMode ? colIndex : null);
-  const getCardsForColumn = (colIndex) =>
-    isFeatureMode ? columnCards[colIndex] || [] : sharedCards;
-
-  const inferFeature = (columnIndex, targetCardId) => {
-    const cards = getCardsForColumn(columnIndex ?? 0);
+  const inferFeature = (targetCardId) => {
     const target = targetCardId
-      ? cards.find((c) => c.id === targetCardId)
+      ? sharedCards.find((c) => c.id === targetCardId)
       : null;
     return target?.feature || 'demand';
   };
 
   // ── Drawer open handlers ──────────────────────────────────────
 
-  const handleAddCard =
-    (colIndex) =>
-    ({
-      targetCardId,
-      direction,
-      type = 'plot',
-      feature,
-      script,
-      category,
-      layer,
-    }) => {
-      const columnIndex = getColumnIndexFor(colIndex);
-      // Map cards skip the plot-tool drawer — insert the card and
-      // open the page-level MapLayerProperties bottom card so the
-      // user can adjust the layer's parameters there.
-      if (type === 'map') {
-        const newCardId = addCard(columnIndex, {
+  const handleAddCard = ({
+    targetCardId,
+    direction,
+    type = 'plot',
+    feature,
+    script,
+    category,
+    layer,
+  }) => {
+    // Map cards skip the plot-tool drawer — insert the card and
+    // open the page-level MapLayerProperties bottom card so the
+    // user can adjust the layer's parameters there.
+    if (type === 'map') {
+      const newCardId = addCard(null, {
+        targetCardId,
+        direction,
+        type: 'map',
+        category,
+        layer,
+      });
+      onOpenMapBottom?.(newCardId);
+      return;
+    }
+    const resolvedFeature = feature || inferFeature(targetCardId);
+    onOpenDrawer({
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) =>
+        addCard(null, {
           targetCardId,
           direction,
-          type: 'map',
-          category,
-          layer,
-        });
-        onOpenMapBottom?.(newCardId);
-        return;
-      }
-      const resolvedFeature =
-        feature || inferFeature(columnIndex, targetCardId);
-      onOpenDrawer({
-        plotConfig: script ? { script } : null,
-        onSave: (plotConfig) =>
-          addCard(columnIndex, {
-            targetCardId,
-            direction,
-            type,
-            feature: resolvedFeature,
-            plotConfig,
-          }),
-      });
-    };
-
-  const handleAddPlotToCard =
-    (colIndex) =>
-    (cardId, script = null) => {
-      const columnIndex = getColumnIndexFor(colIndex);
-      onOpenDrawer({
-        cardId,
-        plotConfig: script ? { script } : null,
-        onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
-      });
-    };
-
-  const handleEditPlot = (colIndex) => (cardId, plotId) => {
-    const columnIndex = getColumnIndexFor(colIndex);
-    const cards = getCardsForColumn(colIndex);
-    const existing =
-      cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
-        ?.plotConfig || null;
-    onOpenDrawer({
-      cardId,
-      plotConfig: existing,
-      onSave: (plotConfig) =>
-        updatePlot(columnIndex, cardId, plotId, plotConfig),
+          type,
+          feature: resolvedFeature,
+          plotConfig,
+        }),
     });
   };
 
-  const handleDeletePlot = (colIndex) => (cardId, plotId) => {
-    removePlot(getColumnIndexFor(colIndex), cardId, plotId);
+  const handleAddPlotToCard = (cardId, script = null) => {
+    onOpenDrawer({
+      cardId,
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) => addPlot(null, cardId, plotConfig),
+    });
   };
 
-  const handleDeleteCard = (colIndex) => (cardId) => {
-    removeCard(getColumnIndexFor(colIndex), cardId);
+  const handleEditPlot = (cardId, plotId) => {
+    const existing =
+      sharedCards
+        .find((c) => c.id === cardId)
+        ?.plots.find((p) => p.id === plotId)?.plotConfig || null;
+    onOpenDrawer({
+      cardId,
+      plotConfig: existing,
+      onSave: (plotConfig) => updatePlot(null, cardId, plotId, plotConfig),
+    });
   };
 
-  // ── Add-column picker (unchanged) ─────────────────────────────
+  const handleDeletePlot = (cardId, plotId) => {
+    removePlot(null, cardId, plotId);
+  };
+
+  const handleDeleteCard = (cardId) => {
+    removeCard(null, cardId);
+  };
+
+  // ── Add-column picker ─────────────────────────────────────────
 
   const handleAddColumnConfirm = (selected) => {
     if (view === 'inter-scenario') {
@@ -145,10 +131,6 @@ const ComparisonView = ({
     } else if (view === 'inter-whatif') {
       selected.forEach((w) =>
         addColumn({ type: 'whatif', scenario: parentScenario, whatif: w }),
-      );
-    } else if (view === 'inter-feature') {
-      selected.forEach((f) =>
-        addColumn({ type: 'feature', scenario: scenario, feature: f.key }),
       );
     }
     setAddColumnOpen(false);
@@ -164,16 +146,12 @@ const ComparisonView = ({
 
   return (
     <div>
-      {isFeatureMode && columns.length > 0 && (
-        <div style={featureModeHeaderStyle}>{columns[0].scenario}</div>
-      )}
-
       <div style={canvasWrapperStyle}>
         <div style={enableEdit ? canvasStyle : canvasExportStyle}>
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
-                key={`${columnKeyForMode}-${columnKey(col)}`}
+                key={columnKey(col)}
                 style={{
                   ...columnCellStyle,
                   borderRight:
@@ -182,19 +160,23 @@ const ComparisonView = ({
               >
                 <CanvasColumn
                   columnDef={col}
-                  cards={getCardsForColumn(i)}
-                  onEditPlot={handleEditPlot(i)}
-                  onDeletePlot={handleDeletePlot(i)}
-                  onDeleteCard={handleDeleteCard(i)}
-                  onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
-                  onAddPlotToCard={handleAddPlotToCard(i)}
-                  onAddCard={handleAddCard(i)}
-                  onApplyLayouts={(updates) =>
-                    applyCardLayouts(getColumnIndexFor(i), updates)
-                  }
+                  cards={sharedCards}
+                  onEditPlot={handleEditPlot}
+                  onDeletePlot={handleDeletePlot}
+                  onDeleteCard={handleDeleteCard}
+                  onPlotReady={handlePlotReady}
+                  onAddPlotToCard={handleAddPlotToCard}
+                  onAddCard={handleAddCard}
+                  onApplyLayouts={(updates) => applyCardLayouts(null, updates)}
                   onOpenMapBottom={onOpenMapBottom}
                   editingPlotCardId={editingPlotCardId}
                   activeMapCardId={activeMapCardId}
+                  // Compare-mode chrome: leftmost is origin (full
+                  // editing), the rest are read-only mirrors with
+                  // an `×` to drop the column.
+                  isOrigin={i === 0}
+                  lockedReadOnly={i !== 0}
+                  onCloseColumn={i !== 0 ? () => removeColumn(i) : undefined}
                 />
               </div>
             ))}
@@ -207,11 +189,7 @@ const ComparisonView = ({
             onClick={() => setAddColumnOpen(true)}
             style={floatingAddStyle}
             title={
-              view === 'inter-scenario'
-                ? 'Add a scenario'
-                : view === 'inter-whatif'
-                  ? 'Add a what-if'
-                  : 'Add a feature'
+              view === 'inter-scenario' ? 'Add a scenario' : 'Add a what-if'
             }
           >
             <CreateNewIcon style={{ color: '#fff', fontSize: 18 }} />
@@ -219,27 +197,18 @@ const ComparisonView = ({
         )}
       </div>
 
-      {addColumnOpen && view === 'inter-feature' && (
-        <FeaturePicker
+      {addColumnOpen && (
+        <ScenarioPicker
           open
           single
+          mode={view === 'inter-scenario' ? 'scenario' : 'whatif'}
+          scenarios={scenarios}
+          whatifs={whatifs}
+          scenario={scenario}
           onConfirm={handleAddColumnConfirm}
           onCancel={() => setAddColumnOpen(false)}
         />
       )}
-      {addColumnOpen &&
-        (view === 'inter-scenario' || view === 'inter-whatif') && (
-          <ScenarioPicker
-            open
-            single
-            mode={view === 'inter-scenario' ? 'scenario' : 'whatif'}
-            scenarios={scenarios}
-            whatifs={whatifs}
-            scenario={scenario}
-            onConfirm={handleAddColumnConfirm}
-            onCancel={() => setAddColumnOpen(false)}
-          />
-        )}
     </div>
   );
 };
@@ -247,7 +216,6 @@ const ComparisonView = ({
 function columnKey(col) {
   if (col.type === 'scenario') return `s-${col.scenario}`;
   if (col.type === 'whatif') return `w-${col.scenario}-${col.whatif}`;
-  if (col.type === 'feature') return `f-${col.scenario}-${col.feature}`;
   return String(Math.random());
 }
 
@@ -302,13 +270,6 @@ const floatingAddStyle = {
   justifyContent: 'center',
   zIndex: 5,
   boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-};
-
-const featureModeHeaderStyle = {
-  fontSize: 22,
-  fontWeight: 700,
-  color: '#222',
-  marginBottom: 8,
 };
 
 const emptyStyle = {

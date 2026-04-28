@@ -1,7 +1,7 @@
 # Canvas Builder
 
-Side-by-side comparison dashboard. Three comparison modes (inter-scenario,
-inter-whatif, inter-feature), a Zustand store for view + card state, a
+Side-by-side comparison dashboard. Two comparison modes (inter-scenario,
+inter-whatif), a Zustand store for view + card state, a
 `react-grid-layout` canvas for free-form tile placement, and Plotly-based
 charts with optional y-axis alignment across columns sharing a slot id.
 
@@ -9,7 +9,6 @@ charts with optional y-axis alignment across columns sharing a slot id.
 - `useCanvasStore()` - View, columns, and card CRUD.
 - `useFetchScenarios(project)` - Sibling scenario names.
 - `useFetchWhatifs(project, scenario)` - What-if names under a scenario.
-- `useFetchFeatures()` - Available plot features for `FeaturePicker`.
 - `useFetchSummary(project, scenario, feature, whatif?)` - KPI strip
   payload.
 - `useFetchCustomPlot(plotConfig, scenario)` - Plotly figure HTML; the
@@ -47,10 +46,14 @@ occupy that slot.
 
 | View              | Columns                          | Card storage     |
 |-------------------|----------------------------------|------------------|
-| `launch`          | 1 (local)                        | `useState`       |
-| `inter-scenario`  | 1 per sibling scenario           | `sharedCards`    |
-| `inter-whatif`    | 1 per what-if under parent       | `sharedCards`    |
-| `inter-feature`   | 1 per (scenario, feature) pair   | `columnCards[i]` |
+| `launch`          | 1                                | `launchCards`    |
+| `inter-scenario`  | 1 per scenario (origin first)    | `sharedCards`    |
+| `inter-whatif`    | 1 per what-if (origin first)     | `sharedCards`    |
+
+Both comparison modes share a single card list across columns —
+one row per card, mirrored across every column. The leftmost
+column is the **origin** (only column with editing affordances);
+the rest are read-only mirrors.
 
 ## Key Patterns
 
@@ -70,7 +73,7 @@ buttons). Variants compute their own `title` + `icon` and pass them in.
 
 ### DO: Route card/plot actions through `columnIndex` (`null` for shared)
 ```jsx
-const columnIndex = isFeatureMode ? i : null;
+const columnIndex = null; // Comparison modes share a single card list
 addCard(columnIndex, { targetCardId, direction, type, feature, plotConfig,
                        category, layer });
 addPlot(columnIndex, cardId, plotConfig);
@@ -268,6 +271,40 @@ figures the backend serialised with `update_layout(autosize=False)`.
 Writing explicit pixel dimensions does. Skipping the first RO fire
 is what lets the auto-grow request land before the chart gets crammed
 into the default-size card.
+
+### DO: Treat the leftmost compare column as the editing "origin"
+```jsx
+<CanvasColumn
+  isOrigin={i === 0}                                 // shows the
+                                                      // "Origin" badge
+  lockedReadOnly={i !== 0}                            // strips Edit
+                                                      // / Delete /
+                                                      // perimeter `+`
+                                                      // / map-bottom
+  onCloseColumn={i !== 0 ? () => removeColumn(i) : undefined}
+/>
+```
+The card list is *shared* across every comparison column — adding
+or removing a card on the origin propagates to all mirrors via
+`sharedCards`. Non-origin columns drop every editing affordance so
+the user can't be confused about which column "owns" a card.
+`onCloseColumn` renders an `×` in the title row that drops that
+scenario / what-if from the comparison.
+
+### DO: Persist Compare picks across "Stop comparing"
+```js
+// canvasStore
+comparisonSetup: { kind, scenarios?, whatifs?, parentScenario? }
+// Set automatically by `enterInterScenario` / `enterInterWhatif`.
+// Survives `stopCompareMode` (revert to launch); cleared by
+// `startOver`. The CompareButton in the navigator uses this to
+// decide between "Compare" (no setup) and "Resume comparing"
+// (setup exists, view === 'launch').
+```
+Comparison setup lives on `canvas.yml` as `comparison_setup`,
+decoupled from the active `view` field — the canvas opens in
+whichever view it was last in, and the saved picks resume on
+demand.
 
 ### DO: Open `MapLayerProperties` at the bottom for both Plot and Map flows
 `CanvasPage` carries two parallel switches: `drawer` (plot-tool drawer

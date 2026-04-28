@@ -12,7 +12,7 @@ import ScenarioPicker from './ScenarioPicker';
  * (`launchCards`) so the autosave hook can persist a draft canvas
  * before the user has chosen a comparison mode. Switching into
  * inter-scenario / inter-whatif promotes the launch cards into
- * `sharedCards`; inter-feature drops them into `columnCards[0]`.
+ * `sharedCards`, where every column mirrors the same list.
  *
  * Drawer + bottom-card state live in `CanvasPage`; `onOpenDrawer`
  * opens the plot-tool drawer (Plot cards), `onOpenMapBottom` opens
