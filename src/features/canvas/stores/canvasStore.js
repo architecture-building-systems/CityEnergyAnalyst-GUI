@@ -42,6 +42,10 @@ export const DEFAULT_CARD_H = 10;
 export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
+// Initial primary-map tile position. Used both by the store's
+// `mapPos` field at boot and by `startOver` to reset.
+const DEFAULT_MAP_POS = { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H };
+
 const makeCard = ({
   row,
   col,
@@ -195,6 +199,39 @@ export const useCanvasStore = create((set, get) => ({
   autosaveStatus: 'idle',
   setAutosaveStatus: (value) => set({ autosaveStatus: value || 'idle' }),
 
+  // Manual realignment counter. Bumped by the "Realign" button
+  // next to the origin's `+` in compare mode. Mirror columns
+  // (lockedReadOnly) include this in their card keys so a click
+  // forces every mirror's react-grid-layout to rebuild from the
+  // current `sharedCards.row` values — the workaround for rgl
+  // not always re-syncing layout-prop positions on subsequent
+  // renders. Origin's card keys are insensitive to this counter
+  // so its plots survive the click without losing Plotly state.
+  alignmentRevision: 0,
+  bumpAlignmentRevision: () =>
+    set((state) => ({ alignmentRevision: state.alignmentRevision + 1 })),
+
+  // Primary map tile's position and size in grid units. Shared
+  // across every column so origin's drag/resize of the map (e.g.
+  // moving it below the feature cards) propagates to every
+  // mirror. Lifted out of `CanvasColumn`'s local useState because
+  // per-column state meant mirrors kept their map at (0, 0) while
+  // origin's map was elsewhere — the layout never matched.
+  mapPos: { ...DEFAULT_MAP_POS },
+  setMapPos: (next) =>
+    set((state) => {
+      const cur = state.mapPos;
+      if (
+        next.x === cur.x &&
+        next.y === cur.y &&
+        next.w === cur.w &&
+        next.h === cur.h
+      ) {
+        return {};
+      }
+      return { mapPos: next };
+    }),
+
   // ── Compare mode ────────────────────────────────────────────
   // Saved Compare-mode picks. Decoupled from the live `view`
   // field so the user can "Stop comparing" (revert `view` to
@@ -323,6 +360,7 @@ export const useCanvasStore = create((set, get) => ({
       launchCards: [],
       sharedCards: [],
       comparisonSetup: null,
+      mapPos: { ...DEFAULT_MAP_POS },
     }),
 
   // ── Column management ───────────────────────────────────────

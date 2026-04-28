@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Button, Tooltip } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-import { CreateNewIcon } from 'assets/icons';
+import { CreateNewIcon, RefreshIcon } from 'assets/icons';
 import {
   iconMap,
   PLOT_GROUPS,
@@ -21,7 +21,6 @@ import {
   DEFAULT_CARD_W,
   DEFAULT_CARD_H,
   MAP_ANCHOR_W,
-  MAP_ANCHOR_H,
   useCanvasStore,
 } from '../stores/canvasStore';
 import CanvasMap from './CanvasMap';
@@ -174,7 +173,6 @@ const CanvasColumn = ({
   activeMapCardId,
   onAddColumn,
   addColumnTooltip = 'Add column',
-  addColumnDisabled = false,
   isOrigin = false,
   lockedReadOnly = false,
   onCloseColumn,
@@ -183,6 +181,19 @@ const CanvasColumn = ({
   const project = useProjectStore((s) => s.project);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const layoutLocked = useCanvasStore((s) => s.fixLayout);
+  const alignmentRevision = useCanvasStore((s) => s.alignmentRevision);
+  const bumpAlignmentRevision = useCanvasStore((s) => s.bumpAlignmentRevision);
+  const mapPos = useCanvasStore((s) => s.mapPos);
+  const setMapPos = useCanvasStore((s) => s.setMapPos);
+
+  // Mirror cards include the alignment revision in their layout
+  // `i` and DOM `key` so the Realign button forces a full rebuild
+  // of the mirror's react-grid-layout (rgl caches internal layout
+  // state and doesn't always re-pick up new y values on
+  // subsequent renders). Origin's keys are stable so its plots
+  // don't remount on click.
+  const cardKey = (cardId) =>
+    lockedReadOnly ? `${cardId}::r${alignmentRevision}` : cardId;
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
@@ -204,13 +215,6 @@ const CanvasColumn = ({
     onOpenMapBottom = undefined;
   }
   const showPerimeterPlus = enableEdit && !lockedReadOnly;
-
-  const [mapPos, setMapPos] = useState({
-    x: 0,
-    y: 0,
-    w: MAP_ANCHOR_W,
-    h: MAP_ANCHOR_H,
-  });
 
   // Map tile auto-grows downward to host the use-type / construction
   // legend rendered under the map. The legend's pixel height is
@@ -234,6 +238,25 @@ const CanvasColumn = ({
     return Math.ceil(px / (ROW_HEIGHT_PX + GRID_MARGIN[1]));
   }, [colorMode, constructionColorMap, useTypeColorMap]);
 
+  // Sort cards by row before rendering. react-grid-layout v2's
+  // layout-prop sync sometimes uses children DOM order to anchor
+  // positions, so a mirror column receiving a new `layout` prop
+  // (with reordered y values) wouldn't visually re-arrange unless
+  // the children themselves are emitted in the new visual order.
+  // Sorting here keeps DOM order in lock-step with layout order
+  // for both origin and mirrors. Stable sort: equal rows keep
+  // their relative order from the source list.
+  const sortedCards = useMemo(() => {
+    const indexed = cards.map((c, i) => ({ c, i }));
+    indexed.sort((a, b) => {
+      const ay = a.c.row ?? 0;
+      const by = b.c.row ?? 0;
+      if (ay !== by) return ay - by;
+      return a.i - b.i;
+    });
+    return indexed.map((entry) => entry.c);
+  }, [cards]);
+
   const layout = useMemo(() => {
     const items = [
       {
@@ -250,34 +273,53 @@ const CanvasColumn = ({
         isResizable: !layoutLocked,
       },
     ];
-    for (const card of cards) {
-      // Compact layout pins every card to the column-left at the
-      // map's current width — single vertical stack matching the
-      // primary map's footprint. Stored card.col / card.w are
-      // ignored at render time and protected from clobbering on
-      // drag (see `handleLayoutChange` below) so the original
-      // free-form layout survives a round-trip back to launch.
+    for (const card of sortedCards) {
+      // Compact layout pins every card to the column-left (single
+      // vertical stack). Width stays at the card's stored `w` so
+      // every column shows cards at the *origin* column's
+      // user-set width — non-origin columns are pure mirrors of
+      // the origin's card sizes (origin resize → sharedCards.w
+      // updates → every mirror re-renders at the new width).
       const cardX = compactLayout ? 0 : card.col ?? 0;
-      const cardW = compactLayout ? mapPos.w : card.w ?? DEFAULT_CARD_W;
+      const cardW = card.w ?? DEFAULT_CARD_W;
+      // Non-origin columns in compare mode are pure mirrors —
+      // dragging or resizing here would mutate `sharedCards` and
+      // propagate to every column, which would confuse the
+      // "edit-only-on-origin" model. Lock both axes outright AND
+      // mark `static: true` so rgl's auto-compaction doesn't
+      // re-pack them by array iteration order — without `static`
+      // the mirror columns reorder back to insertion order even
+      // though their stored `row` values reflect the origin's
+      // drag, breaking visual sync.
+      const editable = !layoutLocked && !lockedReadOnly;
       items.push({
-        i: card.id,
+        i: cardKey(card.id),
         x: cardX,
         y: card.row ?? 0,
         w: cardW,
         h: card.h ?? DEFAULT_CARD_H,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H,
-        // Compact mode locks horizontal drag/resize via `static`
-        // on the x/w axes — react-grid-layout v2 doesn't expose
-        // axis-specific locks, so we keep drag/resize on and
-        // simply ignore col/w in the change handler. The visual
-        // is the layout we just emitted.
-        isDraggable: !layoutLocked,
-        isResizable: !layoutLocked,
+        // In compact mode the x axis is "locked" by the layout
+        // memo (`x = 0`) and protected in the change handler (col
+        // updates are skipped). Drag/resize stays enabled on the
+        // origin column so the user can reorder vertically and
+        // resize w/h.
+        isDraggable: editable,
+        isResizable: editable,
+        static: lockedReadOnly,
       });
     }
     return items;
-  }, [cards, mapPos, legendExtraRows, layoutLocked, compactLayout]);
+  }, [
+    sortedCards,
+    mapPos,
+    legendExtraRows,
+    layoutLocked,
+    lockedReadOnly,
+    compactLayout,
+    alignmentRevision,
+  ]);
 
   // Grid width tracks the right-most tile + a `DRAG_BUFFER_COLS`
   // headroom so the rightmost card always has room to drag east.
@@ -311,6 +353,12 @@ const CanvasColumn = ({
   // when nothing actually changed.
   const handleLayoutChange = useCallback(
     (nextLayout) => {
+      // Mirror columns never propagate layout changes — every card
+      // is `static: true` and the column is read-only. Bail early
+      // so no stray updates land in `sharedCards`. Also avoids
+      // having to strip the alignment-revision suffix from
+      // `item.i` (mirrors append it to keys).
+      if (lockedReadOnly) return;
       const cardUpdates = [];
       for (const item of nextLayout) {
         if (item.i === 'MAP') {
@@ -318,23 +366,25 @@ const CanvasColumn = ({
           // strip it out before storing — `mapPos.h` is the user's
           // intended map height (no legend).
           const userH = Math.max(CARD_MIN_H, item.h - legendExtraRows);
-          setMapPos((prev) => {
-            if (
-              prev.x === item.x &&
-              prev.y === item.y &&
-              prev.w === item.w &&
-              prev.h === userH
-            )
-              return prev;
-            return { x: item.x, y: item.y, w: item.w, h: userH };
-          });
+          // Store-level setMapPos dedups internally — passing the
+          // same values is a no-op, so origin's onLayoutChange
+          // mount-time fire doesn't cause a stale write.
+          setMapPos({ x: item.x, y: item.y, w: item.w, h: userH });
         } else {
-          // Compact mode: only persist row/h — col/w are display-
-          // only (forced to 0 / mapPos.w in the layout memo) and
-          // shouldn't overwrite the user's original free-form
-          // values stored on the card.
+          // Compact mode: persist row / w / h. Skip `col` — every
+          // card is pinned to x=0 by the layout memo, so writing
+          // it back would just clobber the user's free-form `col`
+          // stored from launch view (we want the original layout
+          // to survive a round-trip back). Width persists so the
+          // user can resize cards horizontally on the origin
+          // column and have every mirror follow.
           if (compactLayout) {
-            cardUpdates.push({ id: item.i, row: item.y, h: item.h });
+            cardUpdates.push({
+              id: item.i,
+              row: item.y,
+              w: item.w,
+              h: item.h,
+            });
           } else {
             cardUpdates.push({
               id: item.i,
@@ -348,7 +398,7 @@ const CanvasColumn = ({
       }
       if (cardUpdates.length > 0) onApplyLayouts?.(cardUpdates);
     },
-    [onApplyLayouts, legendExtraRows, compactLayout],
+    [onApplyLayouts, legendExtraRows, compactLayout, lockedReadOnly, setMapPos],
   );
 
   // Card auto-grow: FeatureCard reports its preferred pixel height
@@ -485,20 +535,34 @@ const CanvasColumn = ({
         )}
         {onAddColumn && enableEdit && (
           <div className="cea-card-icon-button-container">
-            <Tooltip
-              title={
-                addColumnDisabled
-                  ? `${addColumnTooltip} (coming soon)`
-                  : addColumnTooltip
-              }
-              placement="bottom"
-            >
+            <Tooltip title={addColumnTooltip} placement="bottom">
               <Button
                 type="text"
                 icon={<CreateNewIcon />}
                 onClick={onAddColumn}
-                disabled={addColumnDisabled}
                 aria-label={addColumnTooltip}
+              />
+            </Tooltip>
+          </div>
+        )}
+        {/* Realign button — only on the origin column in compare
+            mode. Bumps the alignment revision so every mirror's
+            grid layout rebuilds from the current `sharedCards.row`
+            values (rgl's internal layout state can drift from the
+            layout prop after origin drags reorder cards). The
+            origin's own keys stay stable, so its plots don't
+            remount on click. */}
+        {compactLayout && isOrigin && enableEdit && (
+          <div className="cea-card-icon-button-container">
+            <Tooltip
+              title="Realign mirror columns to origin"
+              placement="bottom"
+            >
+              <Button
+                type="text"
+                icon={<RefreshIcon />}
+                onClick={bumpAlignmentRevision}
+                aria-label="Realign mirror columns"
               />
             </Tooltip>
           </div>
@@ -567,8 +631,12 @@ const CanvasColumn = ({
           </div>
 
           {/* ── Feature cards ────────────────────────────────── */}
-          {cards.map((card) => (
-            <div key={card.id} style={tileStyle} className="cea-canvas-tile">
+          {sortedCards.map((card) => (
+            <div
+              key={cardKey(card.id)}
+              style={tileStyle}
+              className="cea-canvas-tile"
+            >
               {card.type === 'kpi' ? (
                 <FeatureCardKpi
                   card={card}
@@ -610,13 +678,21 @@ const CanvasColumn = ({
                     onDeleteCard ? () => onDeleteCard(card.id) : undefined
                   }
                   onPlotReady={onPlotReady}
-                  onPreferredHeight={handlePreferredHeight}
+                  // Auto-grow is owned by the origin column. Mirror
+                  // columns skip the report — otherwise every
+                  // Realign-click remounts the mirror's plot, which
+                  // re-measures slightly larger (now-grown card has
+                  // more chrome) and writes back to `sharedCards.h`,
+                  // compounding the height on every refresh.
+                  onPreferredHeight={
+                    lockedReadOnly ? undefined : handlePreferredHeight
+                  }
                 />
               )}
               {showPerimeterPlus && (
                 <PerimeterPlusButtons
                   targetCardId={card.id}
-                  exposure={exposureMap[card.id]}
+                  exposure={exposureMap[cardKey(card.id)]}
                   buildSectionMenus={buildSectionMenus}
                   hideRight={compactLayout}
                 />

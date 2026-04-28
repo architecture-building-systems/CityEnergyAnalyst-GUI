@@ -21,7 +21,10 @@
  * Both populate the same single `cards` map on disk.
  */
 
+import { MAP_ANCHOR_W, MAP_ANCHOR_H } from '../stores/canvasStore';
+
 const SCHEMA_VERSION = 1;
+const DEFAULT_MAP_POS = { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H };
 
 const cardLayoutFromStore = (card) => ({
   x: card.col ?? 0,
@@ -76,9 +79,22 @@ export function serializeCanvas(state) {
       : null,
   };
 
+  // Persist the shared `mapPos` as a single-entry list (every
+  // column mirrors the same primary-map tile position now). Old
+  // canvases without a stored mapPos fall back to defaults on
+  // load.
   const layout = {
     schema_version: SCHEMA_VERSION,
-    map_positions: [],
+    map_positions: state.mapPos
+      ? [
+          {
+            x: state.mapPos.x ?? 0,
+            y: state.mapPos.y ?? 0,
+            w: state.mapPos.w ?? 1,
+            h: state.mapPos.h ?? 1,
+          },
+        ]
+      : [],
     cards: {},
   };
 
@@ -126,6 +142,17 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
       : null,
     launchCards: [],
     sharedCards: [],
+    // Restore the shared primary-map tile position. First entry of
+    // `map_positions` only — all columns share it now. Falls back
+    // to anchor defaults when the field is missing or empty.
+    mapPos: layout?.map_positions?.[0]
+      ? {
+          x: layout.map_positions[0].x ?? DEFAULT_MAP_POS.x,
+          y: layout.map_positions[0].y ?? DEFAULT_MAP_POS.y,
+          w: layout.map_positions[0].w ?? DEFAULT_MAP_POS.w,
+          h: layout.map_positions[0].h ?? DEFAULT_MAP_POS.h,
+        }
+      : { ...DEFAULT_MAP_POS },
   };
 
   const buildCard = (id, layoutEntry, configEntry) => ({
