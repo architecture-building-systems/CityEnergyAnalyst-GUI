@@ -7,9 +7,18 @@ import {
   cloneElement,
   isValidElement,
 } from 'react';
-import { Spin, Empty } from 'antd';
+import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
+
+import {
+  ACCENT_PURPLE,
+  BORDER_SUBTLE,
+  ERROR_RED,
+  SYSTEM_FONT_STACK,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+} from 'constants/theme';
 
 import { useFetchCustomPlot } from '../hooks/useCanvasData';
 
@@ -273,7 +282,7 @@ const CanvasPlot = ({
     );
   }
 
-  if (error) return <PlotError error={error} />;
+  if (error) return <PlotError error={error} scenario={scenario} />;
 
   if (!html) return null;
 
@@ -525,39 +534,45 @@ const PlotLegend = ({ items }) => (
   </div>
 );
 
-const PlotError = ({ error }) => {
+// Mirrors `FeatureCardMap`'s error overlay style — calm white card,
+// 3px red left accent, no bold heading. Most plot errors in
+// practice come from the upstream tool not having run for the
+// scenario; we surface that hint for both 404 and 500-without-
+// detail (backend exceptions on missing inputs typically lack a
+// useful detail string). Genuine technical errors fall through to
+// "Failed to load plot" with the server detail / JS message.
+const PlotError = ({ error, scenario }) => {
   const detail = error?.response?.data?.detail;
   const serverMessage =
     (typeof detail === 'string' && detail.trim()) || detail?.message || null;
   const status = error?.response?.status;
+  const fallback = error?.message;
 
-  if (status === 404) {
-    return (
-      <div style={errorStyle}>
-        <Empty
-          description={
-            serverMessage ||
-            'This plot has no data yet. Run the feature for this scenario first.'
-          }
-        />
-      </div>
-    );
-  }
+  const isMissingData =
+    status === 404 || (status >= 500 && status < 600 && !serverMessage);
+
   return (
     <div style={errorStyle}>
-      <Empty
-        description={
+      <div style={errorCardStyle}>
+        {isMissingData ? (
           <>
-            <div>Failed to load plot.</div>
-            {serverMessage && (
-              <div style={errorDetailStyle}>{serverMessage}</div>
-            )}
-            {!serverMessage && error?.message && (
-              <div style={errorDetailStyle}>{error.message}</div>
+            <div style={errorTitleStyle}>
+              No plot data for{' '}
+              <span style={{ color: ACCENT_PURPLE }}>{scenario}</span>
+            </div>
+            <div style={errorBodyStyle}>
+              Run the upstream tool for this scenario first.
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={errorTitleStyle}>Failed to load plot</div>
+            {(serverMessage || fallback) && (
+              <div style={errorDetailStyle}>{serverMessage || fallback}</div>
             )}
           </>
-        }
-      />
+        )}
+      </div>
     </div>
   );
 };
@@ -695,11 +710,35 @@ const errorStyle = {
   padding: 24,
 };
 
+const errorCardStyle = {
+  maxWidth: 320,
+  padding: '12px 14px',
+  border: `1px solid ${BORDER_SUBTLE}`,
+  borderLeft: `3px solid ${ERROR_RED}`,
+  borderRadius: 8,
+  background: '#fff',
+  fontFamily: SYSTEM_FONT_STACK,
+};
+
+const errorTitleStyle = {
+  fontSize: 13,
+  fontWeight: 500,
+  color: TEXT_PRIMARY,
+  marginBottom: 4,
+};
+
+const errorBodyStyle = {
+  fontSize: 12,
+  color: TEXT_SECONDARY,
+};
+
 const errorDetailStyle = {
   marginTop: 6,
-  fontSize: 12,
-  color: '#666',
+  fontSize: 11,
+  color: TEXT_SECONDARY,
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
 };
 
 export default CanvasPlot;

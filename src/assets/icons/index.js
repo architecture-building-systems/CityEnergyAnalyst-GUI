@@ -19,6 +19,8 @@ import OpenProjectIcon from './open_project.svg';
 import ExternalLinkIcon from './external_link.svg';
 import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
+import LockOnIcon from './lock_on.svg';
+import LockOffIcon from './lock_off.svg';
 import StartOverIcon from './start_over.svg';
 import SaveIcon from './save.svg';
 import ShareIcon from './share.svg';
@@ -72,6 +74,8 @@ export {
   ExternalLinkIcon,
   CreateNewIcon,
   RefreshIcon,
+  LockOnIcon,
+  LockOffIcon,
   StartOverIcon,
   SaveIcon,
   ShareIcon,

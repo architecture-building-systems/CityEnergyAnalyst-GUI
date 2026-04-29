@@ -1,31 +1,49 @@
 import { useState } from 'react';
 import { Empty } from 'antd';
-import { CreateNewIcon } from 'assets/icons';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchScenarios, useFetchWhatifs } from '../hooks/useCanvasData';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
-import ScenarioPicker from './ScenarioPicker';
-import FeaturePicker from './FeaturePicker';
+import CompareModal from './CompareModal';
 
 const ComparisonView = ({
   onOpenDrawer,
   onOpenMapBottom,
   editingPlotCardId,
+  editingColumnIndex,
   activeMapCardId,
+  activeMapColumnIndex,
 }) => {
   const project = useProjectStore((s) => s.project);
-  const scenario = useProjectStore((s) => s.scenario);
-
-  const view = useCanvasStore((s) => s.view);
   const columns = useCanvasStore((s) => s.columns);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
-  const parentScenario = useCanvasStore((s) => s.parentScenario);
-  const sharedCards = useCanvasStore((s) => s.sharedCards);
   const columnCards = useCanvasStore((s) => s.columnCards);
-  const addColumn = useCanvasStore((s) => s.addColumn);
+
+  // Build the full scenario path the plot-tool form expects in
+  // its `general:scenario` parameter (POSIX-style join — works on
+  // every platform since the dashboard server normalises paths
+  // server-side). When the user clicks Edit on a plot in column
+  // N, we rewrite `parameters.scenario` to N's path so the
+  // form's pickers (what-if names, building lists, etc.) load
+  // from N's scenario folder rather than whichever scenario the
+  // plot was originally created under.
+  const scenarioPathFor = (columnIndex) => {
+    const name = columns[columnIndex]?.scenario;
+    if (!project || !name) return null;
+    return `${project}/${name}`;
+  };
+
+  const withColumnScenario = (plotConfig, columnIndex) => {
+    if (!plotConfig) return plotConfig;
+    const path = scenarioPathFor(columnIndex);
+    if (!path) return plotConfig;
+    return {
+      ...plotConfig,
+      parameters: { ...(plotConfig.parameters || {}), scenario: path },
+    };
+  };
+  const removeColumn = useCanvasStore((s) => s.removeColumn);
   const addCard = useCanvasStore((s) => s.addCard);
   const addPlot = useCanvasStore((s) => s.addPlot);
   const updatePlot = useCanvasStore((s) => s.updatePlot);
@@ -33,30 +51,23 @@ const ComparisonView = ({
   const removeCard = useCanvasStore((s) => s.removeCard);
   const applyCardLayouts = useCanvasStore((s) => s.applyCardLayouts);
 
-  const [addColumnOpen, setAddColumnOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
-  const { data: scenarios = [] } = useFetchScenarios(project);
-  const { data: whatifs = [] } = useFetchWhatifs(
-    project,
-    view === 'inter-whatif' ? parentScenario : null,
-  );
-
-  const isFeatureMode = view === 'inter-feature';
-  const columnKeyForMode = isFeatureMode ? 'per-column' : 'shared';
-
+  // Per-column model: layout (row/col/w/h) is fanned out across
+  // columns by the store, but plot content (plots, category,
+  // layer) is per-column. Plot-level handlers carry the column
+  // index so edits land in the right slice; row-level handlers
+  // (add card, delete card, drag/resize) fan out internally —
+  // the column index they're called with is just the originating
+  // column.
   const { handlePlotReady } = useYAxisAlignment(
-    !isFeatureMode && columns.length > 1,
+    columns.length > 1,
     columns.length,
   );
 
-  const getColumnIndexFor = (colIndex) => (isFeatureMode ? colIndex : null);
-  const getCardsForColumn = (colIndex) =>
-    isFeatureMode ? columnCards[colIndex] || [] : sharedCards;
-
   const inferFeature = (columnIndex, targetCardId) => {
-    const cards = getCardsForColumn(columnIndex ?? 0);
     const target = targetCardId
-      ? cards.find((c) => c.id === targetCardId)
+      ? (columnCards?.[columnIndex] || []).find((c) => c.id === targetCardId)
       : null;
     return target?.feature || 'demand';
   };
@@ -64,17 +75,8 @@ const ComparisonView = ({
   // ── Drawer open handlers ──────────────────────────────────────
 
   const handleAddCard =
-    (colIndex) =>
-    ({
-      targetCardId,
-      direction,
-      type = 'plot',
-      feature,
-      script,
-      category,
-      layer,
-    }) => {
-      const columnIndex = getColumnIndexFor(colIndex);
+    (columnIndex) =>
+    ({ targetCardId, direction, type = 'plot', feature, script, category, layer }) => {
       // Map cards skip the plot-tool drawer — insert the card and
       // open the page-level MapLayerProperties bottom card so the
       // user can adjust the layer's parameters there.
@@ -86,11 +88,10 @@ const ComparisonView = ({
           category,
           layer,
         });
-        onOpenMapBottom?.(newCardId);
+        onOpenMapBottom?.(newCardId, columnIndex);
         return;
       }
-      const resolvedFeature =
-        feature || inferFeature(columnIndex, targetCardId);
+      const resolvedFeature = feature || inferFeature(columnIndex, targetCardId);
       onOpenDrawer({
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) =>
@@ -104,54 +105,60 @@ const ComparisonView = ({
       });
     };
 
-  const handleAddPlotToCard =
-    (colIndex) =>
-    (cardId, script = null) => {
-      const columnIndex = getColumnIndexFor(colIndex);
-      onOpenDrawer({
-        cardId,
-        plotConfig: script ? { script } : null,
-        onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
-      });
-    };
+  // Build the (project, scenarioName) pair the form needs to
+  // scope its choice generators to the column being edited.
+  const scenarioOverrideFor = (columnIndex) => {
+    const name = columns[columnIndex]?.scenario;
+    if (!project || !name) return null;
+    return { project, scenarioName: name };
+  };
 
-  const handleEditPlot = (colIndex) => (cardId, plotId) => {
-    const columnIndex = getColumnIndexFor(colIndex);
-    const cards = getCardsForColumn(colIndex);
+  const handleAddPlotToCard = (columnIndex) => (cardId, script = null) => {
+    onOpenDrawer({
+      cardId,
+      // Stamp the originating column so CanvasPage can paint the
+      // editing purple stroke only on the column being edited
+      // (not on every column showing this card id).
+      columnIndex,
+      // Form scopes its parameter-schema fetch to this column's
+      // scenario via `ToolScenarioOverrideContext` in
+      // PlotEditModal — without this the form would always pull
+      // choices from the project's active scenario.
+      scenarioOverride: scenarioOverrideFor(columnIndex),
+      plotConfig: script ? { script } : null,
+      onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
+    });
+  };
+
+  const handleEditPlot = (columnIndex) => (cardId, plotId) => {
+    const cards = columnCards?.[columnIndex] || [];
     const existing =
       cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
         ?.plotConfig || null;
     onOpenDrawer({
       cardId,
-      plotConfig: existing,
+      columnIndex,
+      scenarioOverride: scenarioOverrideFor(columnIndex),
+      // Rewrite the saved plotConfig's `parameters.scenario` to
+      // this column's scenario before opening the form. The plot
+      // was originally created under origin's scenario; without
+      // this override the form's scenario picker would show
+      // origin's name even when editing in a mirror column.
+      plotConfig: withColumnScenario(existing, columnIndex),
       onSave: (plotConfig) =>
         updatePlot(columnIndex, cardId, plotId, plotConfig),
     });
   };
 
-  const handleDeletePlot = (colIndex) => (cardId, plotId) => {
-    removePlot(getColumnIndexFor(colIndex), cardId, plotId);
+  const handleDeletePlot = (columnIndex) => (cardId, plotId) => {
+    removePlot(columnIndex, cardId, plotId);
   };
 
-  const handleDeleteCard = (colIndex) => (cardId) => {
-    removeCard(getColumnIndexFor(colIndex), cardId);
-  };
-
-  // ── Add-column picker (unchanged) ─────────────────────────────
-
-  const handleAddColumnConfirm = (selected) => {
-    if (view === 'inter-scenario') {
-      selected.forEach((s) => addColumn({ type: 'scenario', scenario: s }));
-    } else if (view === 'inter-whatif') {
-      selected.forEach((w) =>
-        addColumn({ type: 'whatif', scenario: parentScenario, whatif: w }),
-      );
-    } else if (view === 'inter-feature') {
-      selected.forEach((f) =>
-        addColumn({ type: 'feature', scenario: scenario, feature: f.key }),
-      );
-    }
-    setAddColumnOpen(false);
+  // Row-level delete: fans out across every column via the store.
+  // The originating columnIndex is unused at the action layer;
+  // pass it through anyway so the dispatcher API stays uniform.
+  const handleDeleteCard = (columnIndex) => (cardId) => {
+    removeCard(columnIndex, cardId);
   };
 
   if (columns.length === 0) {
@@ -164,16 +171,12 @@ const ComparisonView = ({
 
   return (
     <div>
-      {isFeatureMode && columns.length > 0 && (
-        <div style={featureModeHeaderStyle}>{columns[0].scenario}</div>
-      )}
-
       <div style={canvasWrapperStyle}>
         <div style={enableEdit ? canvasStyle : canvasExportStyle}>
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
-                key={`${columnKeyForMode}-${columnKey(col)}`}
+                key={columnKey(col)}
                 style={{
                   ...columnCellStyle,
                   borderRight:
@@ -182,64 +185,55 @@ const ComparisonView = ({
               >
                 <CanvasColumn
                   columnDef={col}
-                  cards={getCardsForColumn(i)}
+                  columnIndex={i}
+                  cards={columnCards?.[i] || []}
                   onEditPlot={handleEditPlot(i)}
                   onDeletePlot={handleDeletePlot(i)}
                   onDeleteCard={handleDeleteCard(i)}
-                  onPlotReady={!isFeatureMode ? handlePlotReady : undefined}
+                  onPlotReady={handlePlotReady}
                   onAddPlotToCard={handleAddPlotToCard(i)}
                   onAddCard={handleAddCard(i)}
-                  onApplyLayouts={(updates) =>
-                    applyCardLayouts(getColumnIndexFor(i), updates)
-                  }
+                  onApplyLayouts={(updates) => applyCardLayouts(i, updates)}
                   onOpenMapBottom={onOpenMapBottom}
-                  editingPlotCardId={editingPlotCardId}
-                  activeMapCardId={activeMapCardId}
+                  // Per-column editing stroke: pass the active
+                  // edit's card id only to the column it
+                  // originated from. Other columns see `null` and
+                  // skip the purple outline even though they hold
+                  // the same card id.
+                  editingPlotCardId={
+                    editingColumnIndex === i ? editingPlotCardId : null
+                  }
+                  activeMapCardId={
+                    activeMapColumnIndex === i ? activeMapCardId : null
+                  }
+                  // Compare-mode chrome: leftmost is origin (full
+                  // editing), the rest are read-only mirrors with
+                  // an `×` to drop the column.
+                  isOrigin={i === 0}
+                  lockedReadOnly={i !== 0}
+                  onCloseColumn={i !== 0 ? () => removeColumn(i) : undefined}
+                  // Origin column's title-row `+` re-opens the
+                  // CompareModal so the user can add or remove
+                  // scenarios from the comparison. Pre-fills with
+                  // the current picks; confirming with a different
+                  // selection rebuilds the columns. Non-origin
+                  // columns don't get `onAddColumn` (they already
+                  // carry the `×` close affordance for removal).
+                  onAddColumn={i === 0 ? () => setCompareOpen(true) : undefined}
+                  addColumnTooltip="Add Scenario to compare"
+                  // Compact layout: every column is a single
+                  // vertical stack at the map's width. Right-edge
+                  // perimeter `+` is suppressed; horizontal
+                  // drag/resize is ignored.
+                  compactLayout
                 />
               </div>
             ))}
           </div>
         </div>
-
-        {enableEdit && (
-          <button
-            type="button"
-            onClick={() => setAddColumnOpen(true)}
-            style={floatingAddStyle}
-            title={
-              view === 'inter-scenario'
-                ? 'Add a scenario'
-                : view === 'inter-whatif'
-                  ? 'Add a what-if'
-                  : 'Add a feature'
-            }
-          >
-            <CreateNewIcon style={{ color: '#fff', fontSize: 18 }} />
-          </button>
-        )}
       </div>
 
-      {addColumnOpen && view === 'inter-feature' && (
-        <FeaturePicker
-          open
-          single
-          onConfirm={handleAddColumnConfirm}
-          onCancel={() => setAddColumnOpen(false)}
-        />
-      )}
-      {addColumnOpen &&
-        (view === 'inter-scenario' || view === 'inter-whatif') && (
-          <ScenarioPicker
-            open
-            single
-            mode={view === 'inter-scenario' ? 'scenario' : 'whatif'}
-            scenarios={scenarios}
-            whatifs={whatifs}
-            scenario={scenario}
-            onConfirm={handleAddColumnConfirm}
-            onCancel={() => setAddColumnOpen(false)}
-          />
-        )}
+      <CompareModal open={compareOpen} onCancel={() => setCompareOpen(false)} />
     </div>
   );
 };
@@ -247,7 +241,6 @@ const ComparisonView = ({
 function columnKey(col) {
   if (col.type === 'scenario') return `s-${col.scenario}`;
   if (col.type === 'whatif') return `w-${col.scenario}-${col.whatif}`;
-  if (col.type === 'feature') return `f-${col.scenario}-${col.feature}`;
   return String(Math.random());
 }
 
@@ -281,34 +274,16 @@ const columnsRowStyle = {
   display: 'flex',
 };
 
+// Each column hugs its inner GridLayout width (no flex-grow, no
+// minWidth floor) so there's no trailing whitespace between the
+// rightmost tile and the column boundary. The canvas wrapper has
+// `width: fit-content`, so the canvas itself only spans as wide
+// as the sum of its columns. Top padding is small so the title
+// card sits close to the canvas-card top; bottom padding is
+// roomier so the last tile has breathing room.
 const columnCellStyle = {
-  flex: '1 1 0',
-  minWidth: '30vw',
-  padding: '20px 24px',
-};
-
-const floatingAddStyle = {
-  position: 'absolute',
-  top: -8,
-  right: -8,
-  width: 40,
-  height: 40,
-  borderRadius: '50%',
-  background: '#1470AF',
-  border: 'none',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 5,
-  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-};
-
-const featureModeHeaderStyle = {
-  fontSize: 22,
-  fontWeight: 700,
-  color: '#222',
-  marginBottom: 8,
+  flex: '0 0 auto',
+  padding: '4px 24px 20px 24px',
 };
 
 const emptyStyle = {

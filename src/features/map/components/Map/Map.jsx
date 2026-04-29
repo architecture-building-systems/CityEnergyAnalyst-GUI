@@ -1,4 +1,11 @@
-import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { DeckGL } from '@deck.gl/react';
 import {
@@ -23,6 +30,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, HexagonLayer, ColumnLayer } from 'deck.gl';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
+  MapColumnContext,
   useScopedCameraOptions,
   useScopedColorMode,
   useScopedExtruded,
@@ -528,7 +536,12 @@ const useMapLayers = (onHover = () => {}) => {
  * (hover is non-destructive). Everything else — camera controls,
  * map style, colour modes — still responds normally.
  */
-const DeckGLMap = ({ data, colors, interactive = true }) => {
+const DeckGLMap = ({
+  data,
+  colors,
+  interactive = true,
+  showBasemap = true,
+}) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
 
@@ -545,8 +558,52 @@ const DeckGLMap = ({ data, colors, interactive = true }) => {
     (state) => state.selectedBuildings,
   );
 
-  const viewState = useScopedViewState();
-  const setViewState = useScopedSetViewState();
+  const baseViewState = useScopedViewState();
+  const setBaseViewState = useScopedSetViewState();
+  // When a `MapColumnContext` is in scope (compare-mode columns
+  // each provide their own), override the singleton's lat/lng with
+  // the column's local centre so cross-geography compares can show
+  // both cities at once. Pan deltas route to `column.setCenter`
+  // instead of the singleton — zoom / bearing / pitch still flow
+  // through `setBaseViewState` so the angle stays in sync across
+  // columns.
+  const column = useContext(MapColumnContext);
+  const viewState = useMemo(() => {
+    if (!column?.center) return baseViewState;
+    return {
+      ...baseViewState,
+      latitude: column.center.latitude,
+      longitude: column.center.longitude,
+    };
+  }, [baseViewState, column?.center]);
+  // Mirror the live `column` and `viewState` values onto refs so
+  // `setViewState` can read them without listing them in its deps.
+  // Listing `viewState` made `setViewState` recreate on every
+  // animation frame, which recreated `_onViewStateChange`, which
+  // re-bound DeckGL's view-state handler, which re-fired
+  // onViewStateChange — a max-update-depth loop on lock-toggle
+  // when FlyToInterpolator was animating the title map's camera.
+  const columnRef = useRef(column);
+  const viewStateRef = useRef(viewState);
+  useEffect(() => {
+    columnRef.current = column;
+    viewStateRef.current = viewState;
+  });
+  const setViewState = useCallback(
+    (next) => {
+      const resolved =
+        typeof next === 'function' ? next(viewStateRef.current) : next;
+      const col = columnRef.current;
+      if (col?.setCenter) {
+        col.setCenter({
+          latitude: resolved.latitude,
+          longitude: resolved.longitude,
+        });
+      }
+      setBaseViewState(resolved);
+    },
+    [setBaseViewState],
+  );
 
   const extruded = useScopedExtruded();
   const setExtruded = useScopedSetExtruded();
@@ -561,10 +618,19 @@ const DeckGLMap = ({ data, colors, interactive = true }) => {
 
   // Construction standard coloring
   const colorMode = useScopedColorMode();
-  const constructionColorMap = useMapStore(
+  // Compare-mode columns publish their own zone-derived colour maps
+  // through `MapColumnContext`. Outside any provider (main viewport,
+  // launch view) we fall through to the singleton — last-writer-wins
+  // is fine when only one map is on screen.
+  const singletonConstructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );
-  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const singletonUseTypeColorMap = useMapStore(
+    (state) => state.useTypeColorMap,
+  );
+  const constructionColorMap =
+    column?.constructionColorMap ?? singletonConstructionColorMap;
+  const useTypeColorMap = column?.useTypeColorMap ?? singletonUseTypeColorMap;
   const stateZoneOverride = useMapStore((state) => state.stateZoneOverride);
 
   const mapStyle = useMapStyle();
@@ -894,12 +960,18 @@ const DeckGLMap = ({ data, colors, interactive = true }) => {
         onDragStart={onDragStart}
         onContextMenu={onContextMenu}
       >
-        <Map
-          ref={mapRef}
-          mapStyle={mapStyle}
-          minZoom={1}
-          attributionControl={false} // Disable default attribution control
-        />
+        {/* Omitting maplibre halves the tile's WebGL context count
+            (deck.gl + maplibre → deck.gl only). Canvas Builder's
+            FeatureCardMap uses this to stay under the browser's
+            per-tab WebGL ceiling in compare mode. */}
+        {showBasemap && (
+          <Map
+            ref={mapRef}
+            mapStyle={mapStyle}
+            minZoom={1}
+            attributionControl={false}
+          />
+        )}
       </DeckGL>
       <MapTooltip info={tooltipInfo} />
     </div>

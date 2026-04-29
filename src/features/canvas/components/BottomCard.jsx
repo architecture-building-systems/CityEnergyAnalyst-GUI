@@ -1,6 +1,10 @@
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
 
-import { MapInstanceContext, useMapCardStore } from './mapInstance';
+import {
+  MapInstanceContext,
+  MapLayerScenarioOverrideContext,
+  useMapCardStore,
+} from './mapInstance';
 
 /**
  * Bottom card — hosts the map-layer properties form for Canvas Builder.
@@ -18,9 +22,39 @@ import { MapInstanceContext, useMapCardStore } from './mapInstance';
  * `showClose` is only set for the map-card path (the plot drawer has
  * its own close).
  */
-const BottomCard = ({ activeMapCardId, showClose = false, onClose }) => {
-  const mapCardStore = useMapCardStore(activeMapCardId);
-  const form = <MapLayerPropertiesCard hideLegend hideLayerSelector />;
+const BottomCard = ({
+  activeMapCardId,
+  // Pairs with `activeMapCardId` to look up the column-specific
+  // per-card store; `null` during plot-edit flow.
+  activeMapColumnIndex = null,
+  // `{ project, scenarioName }` for the active card's column.
+  // Forwarded into the form via `MapLayerScenarioOverrideContext`
+  // so dependent dropdowns (what-if-name, network-name, …) fetch
+  // choices scoped to the column instead of the project store's
+  // active scenario. `null` → fall through to the project store.
+  scenarioOverride = null,
+  showClose = false,
+  onClose,
+}) => {
+  const mapCardStore = useMapCardStore(activeMapColumnIndex, activeMapCardId);
+  // Re-key on `(column, card)` so switching the active edit target
+  // remounts the form. ParameterSelectors and ChoiceSelector hold
+  // local `selected` state via `useState(value ?? defaultValue)`
+  // that doesn't sync to a later prop change — without the
+  // remount, the form would keep showing the previous column's
+  // selections even though the underlying scoped store has
+  // already pivoted.
+  const formKey = `${activeMapColumnIndex ?? '∅'}::${activeMapCardId ?? '∅'}`;
+  const form = (
+    <MapLayerPropertiesCard key={formKey} hideLegend hideLayerSelector />
+  );
+  const wrapped = mapCardStore ? (
+    <MapInstanceContext.Provider value={mapCardStore}>
+      {form}
+    </MapInstanceContext.Provider>
+  ) : (
+    form
+  );
   return (
     <div style={wrapperStyle}>
       {showClose && (
@@ -33,13 +67,9 @@ const BottomCard = ({ activeMapCardId, showClose = false, onClose }) => {
           &times;
         </button>
       )}
-      {mapCardStore ? (
-        <MapInstanceContext.Provider value={mapCardStore}>
-          {form}
-        </MapInstanceContext.Provider>
-      ) : (
-        form
-      )}
+      <MapLayerScenarioOverrideContext.Provider value={scenarioOverride}>
+        {wrapped}
+      </MapLayerScenarioOverrideContext.Provider>
     </div>
   );
 };

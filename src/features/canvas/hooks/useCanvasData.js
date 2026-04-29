@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 
+import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
+import { findFamilyForFeature } from 'features/canvas/components/featureCardCommon';
+
 import { listSavedCanvases } from '../api/canvas';
 
 // Shared so create / duplicate / import / delete handlers in the
@@ -12,6 +15,25 @@ export const savedCanvasesQueryKey = (project, scenario) => [
   project,
   scenario,
 ];
+
+// Reverse `VIEW_PLOT_RESULTS` (feature → script) so we can look
+// up a feature key from a plot script name. Used by
+// `featureLabelForScript` to walk the existing `PLOT_GROUPS`
+// nesting and pick the human-readable family label — same source
+// the navigator's plot picker reads, so feature labels stay in
+// sync without a duplicated mapping.
+const PLOT_SCRIPT_TO_FEATURE = Object.fromEntries(
+  Object.entries(VIEW_PLOT_RESULTS)
+    .filter(([, script]) => Boolean(script))
+    .map(([feature, script]) => [script, feature]),
+);
+
+const featureLabelForScript = (script) => {
+  if (!script) return null;
+  const feature = PLOT_SCRIPT_TO_FEATURE[script];
+  if (!feature) return null;
+  return findFamilyForFeature(feature)?.label ?? null;
+};
 
 /**
  * Names of every saved canvas under `<project, scenario>`. Used by
@@ -110,12 +132,29 @@ export const useFetchCustomPlot = (plotConfig, scenario) =>
   useQuery({
     queryKey: ['reports', 'custom-plot', plotConfig, scenario],
     queryFn: async () => {
+      // Strip any `scenario` field from `parameters` before sending.
+      // The top-level `scenario` field already sets the backend's
+      // `config.scenario_name` via `render_plot_html`. The plot-tool
+      // form bakes the user's selected scenario into
+      // `parameters.scenario` too, and the backend's parameter loop
+      // (`config.matching_parameters` → `parameter.set(...)`) would
+      // otherwise *override* the top-level scenario with the form's
+      // baked-in value — so every comparison column would render
+      // origin's data instead of its own. Top-level wins.
+      // eslint-disable-next-line no-unused-vars
+      const { scenario: _scenario, ...rest } = plotConfig.parameters || {};
       const { data } = await apiClient.post(
         '/api/reports/plot-custom',
         {
           script: plotConfig.script,
-          parameters: serializeParameters(plotConfig.parameters),
+          parameters: serializeParameters(rest),
           scenario,
+          // Human-readable feature label (from `PLOT_GROUPS`) so
+          // the backend's styled error cards can read e.g.
+          // "Run Energy by Carrier for baseline" instead of the
+          // CLI script name. Optional — backend falls back to
+          // `script_name` when absent.
+          feature_label: featureLabelForScript(plotConfig.script),
         },
         { responseType: 'text' },
       );

@@ -3,16 +3,15 @@ import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchScenarios } from '../hooks/useCanvasData';
 import CanvasColumn from './CanvasColumn';
-import ScenarioPicker from './ScenarioPicker';
+import CompareModal from './CompareModal';
 
 /**
  * Launch view — Canvas Builder entry. Cards live in the store
  * (`launchCards`) so the autosave hook can persist a draft canvas
  * before the user has chosen a comparison mode. Switching into
- * inter-scenario / inter-whatif promotes the launch cards into
- * `sharedCards`; inter-feature drops them into `columnCards[0]`.
+ * inter-scenario promotes the launch cards into `sharedCards`,
+ * where every column mirrors the same list.
  *
  * Drawer + bottom-card state live in `CanvasPage`; `onOpenDrawer`
  * opens the plot-tool drawer (Plot cards), `onOpenMapBottom` opens
@@ -22,6 +21,12 @@ import ScenarioPicker from './ScenarioPicker';
  * `removeCard`, `applyCardLayouts`, `addPlot`, …) accept a
  * dispatch target — we pass `'launch'` so they operate on the
  * launch-view slice. No bespoke launch wiring lives here anymore.
+ *
+ * The `+` button next to the scenario title in the column header
+ * is the entry point into Compare mode — opens `CompareModal` so
+ * the user can pick up to 3 sibling scenarios. After confirm, the
+ * store transitions to `inter-scenario` and `ComparisonView`
+ * takes over.
  */
 const LaunchView = ({
   onOpenDrawer,
@@ -32,7 +37,6 @@ const LaunchView = ({
   const project = useProjectStore((s) => s.project);
   const scenario = useProjectStore((s) => s.scenario);
 
-  const enterInterScenario = useCanvasStore((s) => s.enterInterScenario);
   const cards = useCanvasStore((s) => s.launchCards);
   const addCard = useCanvasStore((s) => s.addCard);
   const removeCard = useCanvasStore((s) => s.removeCard);
@@ -42,9 +46,7 @@ const LaunchView = ({
   const removePlot = useCanvasStore((s) => s.removePlot);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
 
-  const { data: scenarios = [] } = useFetchScenarios(project);
-
-  const [pickerMode, setPickerMode] = useState(null);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const inferFeature = (targetCardId) => {
     if (!targetCardId) return 'demand';
@@ -71,7 +73,10 @@ const LaunchView = ({
         category,
         layer,
       });
-      onOpenMapBottom?.(newCardId);
+      // `'launch'` is the canvasStore's column-index sentinel for
+      // launch view — keeps registry, BottomCard lookup, and
+      // setCardMapLayerParameters all routed to `launchCards`.
+      onOpenMapBottom?.(newCardId, 'launch');
       return;
     }
     const resolvedFeature = feature || inferFeature(targetCardId);
@@ -120,26 +125,12 @@ const LaunchView = ({
     );
   }
 
-  const handleCompareScenarios = () => {
-    if (scenarios.length <= 1) {
-      enterInterScenario([scenario]);
-    } else {
-      setPickerMode('scenario');
-    }
-  };
-
-  const handlePickerConfirm = (selected) => {
-    if (pickerMode === 'scenario') {
-      enterInterScenario(selected);
-    }
-    setPickerMode(null);
-  };
-
   return (
     <>
       <div style={enableEdit ? canvasStyle : canvasExportStyle}>
         <CanvasColumn
           columnDef={{ type: 'scenario', scenario }}
+          columnIndex="launch"
           cards={cards}
           onEditPlot={handleEditPlot}
           onDeletePlot={handleDeletePlot}
@@ -150,23 +141,12 @@ const LaunchView = ({
           onOpenMapBottom={onOpenMapBottom}
           editingPlotCardId={editingPlotCardId}
           activeMapCardId={activeMapCardId}
-          onAddColumn={handleCompareScenarios}
+          onAddColumn={() => setCompareOpen(true)}
           addColumnTooltip="Add Scenario to compare"
-          addColumnDisabled
         />
       </div>
 
-      {pickerMode && (
-        <ScenarioPicker
-          open
-          mode={pickerMode}
-          project={project}
-          scenario={scenario}
-          scenarios={scenarios}
-          onConfirm={handlePickerConfirm}
-          onCancel={() => setPickerMode(null)}
-        />
-      )}
+      <CompareModal open={compareOpen} onCancel={() => setCompareOpen(false)} />
     </>
   );
 };

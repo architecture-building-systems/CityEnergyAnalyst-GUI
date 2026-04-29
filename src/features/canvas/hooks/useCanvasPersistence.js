@@ -40,15 +40,20 @@ const SAVED_FLASH_MS = 1500;
 // (loading a saved canvas, importing a zip) bump `loadVersion` so
 // the hook resyncs its baseline silently instead of treating the
 // reset as an edit.
+// Slices serialised to disk by `serializeCanvas`. Any field that
+// round-trips through canvas.yml / layout.yml / feature_card.yml
+// must appear here, otherwise the autosave hook won't notice the
+// user's change and the new value is lost on the next reload.
 const PERSISTABLE_SELECTOR = (state) => ({
   view: state.view,
   parentScenario: state.parentScenario,
   columns: state.columns,
   launchCards: state.launchCards,
-  sharedCards: state.sharedCards,
   columnCards: state.columnCards,
   mapsLinked: state.mapsLinked,
   fixLayout: state.fixLayout,
+  mapPos: state.mapPos,
+  comparisonSetup: state.comparisonSetup,
 });
 
 const shallowEqual = (a, b) => {
@@ -77,14 +82,16 @@ export function useCanvasPersistence() {
   const savedFlashTimerRef = useRef(null);
 
   useEffect(() => {
-    const flush = async () => {
-      timerRef.current = null;
+    // PUT a snapshot to its own canvas folder. Taking `state` as
+    // an arg (not reading the live store) lets the load-detection
+    // branch save the *pre-load* state before the active state
+    // pivots to the new canvas.
+    const flushState = async (state) => {
       if (inFlightRef.current) {
         // Re-arm and let the in-flight call finish first; whichever
         // change arrives next will schedule the next flush.
         return;
       }
-      const state = useCanvasStore.getState();
       const name = state.canvasName;
       if (!project || !scenario || !name) return;
 
@@ -124,19 +131,27 @@ export function useCanvasPersistence() {
       }
     };
 
-    const unsubscribe = useCanvasStore.subscribe((state) => {
+    // Debounced edit flush — reads the live store because by the
+    // time the timer fires, no load has intervened (a load would
+    // have flushed pre-load and cleared this timer below).
+    const flushLatest = () => {
+      timerRef.current = null;
+      flushState(useCanvasStore.getState());
+    };
+
+    const unsubscribe = useCanvasStore.subscribe((state, prevState) => {
       // External load (Open / Resume / Import / Create) bumps
-      // `loadVersion`. Resync the diff baseline silently so the
-      // just-loaded state isn't immediately re-flushed back to the
-      // backend as a "change". Cancel any pending edit-flush from
-      // before the load — those edits are gone now.
+      // `loadVersion`. Flush any pending edit against `prevState`
+      // first so the user's last change still lands in its own
+      // canvas folder, then resync the baseline silently.
       if (state.loadVersion !== lastLoadVersionRef.current) {
-        lastLoadVersionRef.current = state.loadVersion;
-        lastSnapshotRef.current = PERSISTABLE_SELECTOR(state);
         if (timerRef.current) {
           clearTimeout(timerRef.current);
           timerRef.current = null;
+          flushState(prevState);
         }
+        lastLoadVersionRef.current = state.loadVersion;
+        lastSnapshotRef.current = PERSISTABLE_SELECTOR(state);
         return;
       }
 
@@ -145,7 +160,7 @@ export function useCanvasPersistence() {
       lastSnapshotRef.current = snapshot;
 
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(flush, DEBOUNCE_MS);
+      timerRef.current = setTimeout(flushLatest, DEBOUNCE_MS);
     });
 
     return () => {

@@ -1,11 +1,11 @@
 import { Slider } from 'antd';
 import {
   useScopedMapLayerParameters,
+  useScopedProjectScenario,
   useScopedSetMapLayerParameters,
   useScopedSelectedCategoryInfo,
 } from 'features/canvas/components/mapInstance';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 import useDependsOn from './useDependsOn';
 
@@ -68,8 +68,7 @@ const SliderSelector = ({
   range: staticRange,
   dependsOn,
 }) => {
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
+  const { project, scenarioName } = useScopedProjectScenario();
   const mapLayerParameters = useScopedMapLayerParameters();
   const categoryInfo = useScopedSelectedCategoryInfo();
   const setMapLayerParameters = useScopedSetMapLayerParameters();

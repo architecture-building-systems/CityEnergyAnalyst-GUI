@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import { useResumeLastCanvas } from '../hooks/useResumeLastCanvas';
@@ -36,6 +37,8 @@ import PlotEditModal from './PlotEditModal';
 const CanvasPage = () => {
   const view = useCanvasStore((s) => s.view);
   const canvasName = useCanvasStore((s) => s.canvasName);
+  const columns = useCanvasStore((s) => s.columns);
+  const project = useProjectStore((s) => s.project);
 
   // Subscribe to store changes and debounce-flush to the backend's
   // `temp/<uuid>/` folder while the user works. Idempotent — single
@@ -52,9 +55,13 @@ const CanvasPage = () => {
   // plot being edited so it can paint its `editing` purple stroke.
   // Adding a brand-new card via the picker leaves it undefined.
   const [drawer, setDrawer] = useState(null);
-  // id of the `FeatureCardMap` whose store the bottom form drives;
-  // `null` when no map card is being edited.
+  // `(activeMapCardId, activeMapColumnIndex)` identifies which
+  // FeatureCardMap drives the bottom form. The column index is
+  // load-bearing in compare mode: mirrors share `card.id` across
+  // every column, so without it both the registry lookup and the
+  // editing stroke would resolve ambiguously.
   const [activeMapCardId, setActiveMapCardId] = useState(null);
+  const [activeMapColumnIndex, setActiveMapColumnIndex] = useState(null);
 
   // Edit-mode is exclusive: opening the plot drawer closes any
   // active map-card edit (and vice versa) so at most one card wears
@@ -62,30 +69,37 @@ const CanvasPage = () => {
   const openDrawer = useCallback((config) => {
     setDrawer(config);
     setActiveMapCardId(null);
+    setActiveMapColumnIndex(null);
   }, []);
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
-  const openMapBottom = useCallback((cardId) => {
+  const openMapBottom = useCallback((cardId, columnIndex = null) => {
     setActiveMapCardId(cardId ?? null);
+    setActiveMapColumnIndex(cardId ? columnIndex : null);
     setDrawer(null);
   }, []);
-  const closeMapBottom = useCallback(() => setActiveMapCardId(null), []);
+  const closeMapBottom = useCallback(() => {
+    setActiveMapCardId(null);
+    setActiveMapColumnIndex(null);
+  }, []);
 
-  // Turning Enable Edit off closes any open editing surface (plot
-  // drawer + map-card bottom). Listened to via zustand's `subscribe`
-  // — a `useEffect` on a selector here would cascade renders every
-  // time the page consumed the slice; we only want the close action
-  // at the true → false transition.
-  useEffect(
-    () =>
-      useCanvasStore.subscribe((state, prev) => {
-        if (!state.enableEdit && prev.enableEdit) {
-          setDrawer(null);
-          setActiveMapCardId(null);
-        }
-      }),
-    [],
-  );
+  // Close every editing surface (plot drawer + map-card bottom) on
+  // two transitions: Enable Edit → off (snapshot mode), and any
+  // canvas load (`loadVersion` bumps) so chrome from the previous
+  // canvas doesn't linger over the new one. Subscribed directly
+  // instead of via a selector useEffect so the page doesn't
+  // re-render on every store tick.
+  useEffect(() => {
+    const closeAll = () => {
+      setDrawer(null);
+      setActiveMapCardId(null);
+      setActiveMapColumnIndex(null);
+    };
+    return useCanvasStore.subscribe((state, prev) => {
+      if (!state.enableEdit && prev.enableEdit) closeAll();
+      else if (state.loadVersion !== prev.loadVersion) closeAll();
+    });
+  }, []);
 
   const handleDrawerSave = useCallback(
     (plotConfig) => {
@@ -102,6 +116,16 @@ const CanvasPage = () => {
   // open *for a map card* — the plot-tool drawer has its own close,
   // and closing the drawer already collapses the bottom row.
   const showBottomClose = mapBottomOpen && !plotToolOpen;
+
+  // `(project, scenarioName)` for the column whose card opened the
+  // bottom form. Forwarded into BottomCard so its choice/range
+  // fetches scope to that column instead of the project store.
+  const mapBottomScenarioOverride = useMemo(() => {
+    if (activeMapColumnIndex == null) return null;
+    const col = columns?.[activeMapColumnIndex];
+    if (!project || !col?.scenario) return null;
+    return { project, scenarioName: col.scenario };
+  }, [activeMapColumnIndex, columns, project]);
 
   return (
     <div
@@ -138,7 +162,16 @@ const CanvasPage = () => {
               onOpenDrawer={openDrawer}
               onOpenMapBottom={openMapBottom}
               editingPlotCardId={drawer?.cardId ?? null}
+              // The originating column for an active plot edit. Used
+              // by ComparisonView to paint the editing purple
+              // stroke on *only* that column rather than every
+              // column showing the same card id.
+              editingColumnIndex={drawer?.columnIndex ?? null}
               activeMapCardId={activeMapCardId}
+              // Same per-column scoping for map-card edits — the
+              // card id is shared across mirrors, so without the
+              // column filter every mirror would light up purple.
+              activeMapColumnIndex={activeMapColumnIndex}
             />
           ))}
       </div>
@@ -147,6 +180,8 @@ const CanvasPage = () => {
         {bottomOpen && (
           <BottomCard
             activeMapCardId={activeMapCardId}
+            activeMapColumnIndex={activeMapColumnIndex}
+            scenarioOverride={mapBottomScenarioOverride}
             showClose={showBottomClose}
             onClose={closeMapBottom}
           />
@@ -162,6 +197,14 @@ const CanvasPage = () => {
           plotConfig={drawer?.plotConfig || null}
           onSave={handleDrawerSave}
           onCancel={closeDrawer}
+          // Compare-mode per-column edit: ComparisonView attaches
+          // a `{ project, scenarioName }` to the drawer config so
+          // the form fetches its parameter schema (and choice
+          // generators) against the column's scenario instead of
+          // whichever scenario is currently active in the project
+          // store. `null` outside compare mode → form falls
+          // through to project-store values.
+          scenarioOverride={drawer?.scenarioOverride || null}
           // Back returns to the PlotChoices picker. Only meaningful
           // when adding a brand-new card (perimeter `+` flow); for
           // Edit / "Add a plot" pill flows (`cardId` set), Back

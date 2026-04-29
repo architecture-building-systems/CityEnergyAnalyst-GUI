@@ -13,6 +13,7 @@ import {
 import { useMapStore } from 'features/map/stores/mapStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { ToolScenarioOverrideContext } from 'features/tools/hooks/useToolParams';
 
 // Reverse `VIEW_PLOT_RESULTS` to find the map layer a plot script
 // reads its parameters from.
@@ -57,6 +58,13 @@ const PlotEditModal = ({
   onSave,
   onCancel,
   allowBack = true,
+  // Optional `{ project, scenarioName }` to scope the form's
+  // parameter-schema fetch to a specific (project, scenario) —
+  // overrides the project store. Used by Compare-mode
+  // per-column edit so each column's form loads its own
+  // scenario's choice generators (what-if names, building
+  // lists, etc.). `null` falls through to project-store values.
+  scenarioOverride = null,
 }) => {
   const [selectedScript, setSelectedScript] = useState(
     plotConfig?.script || null,
@@ -138,15 +146,17 @@ const PlotEditModal = ({
 
       <div className="cea-tool-card-content" style={contentStyle}>
         {selectedScript ? (
-          <ConfigProvider
-            theme={{ token: { colorPrimary: PLOTS_PRIMARY_COLOR } }}
-          >
-            <PlotTool
-              key={selectedScript}
-              script={selectedScript}
-              onRunOverride={handleRunOverride}
-            />
-          </ConfigProvider>
+          <ToolScenarioOverrideContext.Provider value={scenarioOverride}>
+            <ConfigProvider
+              theme={{ token: { colorPrimary: PLOTS_PRIMARY_COLOR } }}
+            >
+              <PlotTool
+                key={selectedScript}
+                script={selectedScript}
+                onRunOverride={handleRunOverride}
+              />
+            </ConfigProvider>
+          </ToolScenarioOverrideContext.Provider>
         ) : (
           <PlotChoices onSelected={setSelectedScript} />
         )}

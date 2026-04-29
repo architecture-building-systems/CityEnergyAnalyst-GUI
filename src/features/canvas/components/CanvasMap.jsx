@@ -44,7 +44,14 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
  * for FeatureCardMaps when `mapsLinked` is on — the overview map
  * tile is the only one that drives the view in that mode.
  */
-const CanvasMap = ({ project, scenario, showToolbar = true }) => {
+const CanvasMap = ({
+  project,
+  scenario,
+  showToolbar = true,
+  // `false` skips the maplibre child to save a WebGL context per
+  // tile (see DeckGLMap). Primary column tiles keep the basemap.
+  showBasemap = true,
+}) => {
   const resetCameraOptions = useScopedResetCameraOptions();
 
   const { data, isFetching, isError, refetch } = useInputs(
@@ -69,7 +76,12 @@ const CanvasMap = ({ project, scenario, showToolbar = true }) => {
           </Spin>
         </div>
       )}
-      <DeckGLMap data={geojsons} colors={data?.colors} interactive={false} />
+      <DeckGLMap
+        data={geojsons}
+        colors={data?.colors}
+        interactive={false}
+        showBasemap={showBasemap}
+      />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
           <InlineLayerToggle scenario={scenario} />
