@@ -31,7 +31,10 @@ import routes from 'constants/routes.json';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchSavedCanvases } from '../hooks/useCanvasData';
+import {
+  savedCanvasesQueryKey,
+  useFetchSavedCanvases,
+} from '../hooks/useCanvasData';
 import {
   createCanvas,
   deleteSavedCanvas,
@@ -41,6 +44,7 @@ import {
   readSavedCanvas,
 } from '../api/canvas';
 import { deserializeCanvas } from '../utils/canvasSerialize';
+import { lastCanvasStorageKey } from '../hooks/useResumeLastCanvas';
 
 /**
  * Navigator card — top strip of the Canvas Builder page.
@@ -96,7 +100,7 @@ const NavigatorCard = () => {
   // reflects the new canvas immediately.
   const invalidateSavedList = () =>
     queryClient.invalidateQueries({
-      queryKey: ['canvas', 'saved', project, scenario],
+      queryKey: savedCanvasesQueryKey(project, scenario),
     });
 
   // New-canvas modal — opened by the `+` button and by clicking
@@ -204,9 +208,7 @@ const NavigatorCard = () => {
             // needed to stop the next mount from 404'ing on the
             // just-deleted name.
             try {
-              localStorage.removeItem(
-                `cea:canvas:lastSaved:${project}:${scenario}`,
-              );
+              localStorage.removeItem(lastCanvasStorageKey(project, scenario));
             } catch (_err) {
               // localStorage can throw in privacy modes; ignore.
             }

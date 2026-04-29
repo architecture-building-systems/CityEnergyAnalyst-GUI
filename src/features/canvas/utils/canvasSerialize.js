@@ -58,7 +58,6 @@ export function serializeCanvas(state) {
     schema_version: SCHEMA_VERSION,
     name: state.canvasName ?? null,
     view: state.view,
-    project: state.project ?? null,
     parent_scenario: state.parentScenario ?? null,
     columns: (state.columns || []).map((c) => ({
       type: c.type,
@@ -72,7 +71,6 @@ export function serializeCanvas(state) {
 
   const layout = {
     schema_version: SCHEMA_VERSION,
-    map_positions: [],
     cards: {},
     column_cards: {},
   };

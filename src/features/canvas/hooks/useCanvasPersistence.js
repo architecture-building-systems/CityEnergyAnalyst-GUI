@@ -28,6 +28,9 @@ import { updateSavedCanvas } from '../api/canvas';
 import { serializeCanvas } from '../utils/canvasSerialize';
 
 const DEBOUNCE_MS = 300;
+// 'saved' indicator briefly flashes after each successful PUT, then
+// fades back to 'idle' so the dot doesn't loiter between edits.
+const SAVED_FLASH_MS = 1500;
 
 // Only changes to these slices should trigger an autosave flush.
 // `canvasName` is deliberately *not* in here: it changes during
@@ -109,7 +112,7 @@ export function useCanvasPersistence() {
         savedFlashTimerRef.current = setTimeout(() => {
           savedFlashTimerRef.current = null;
           useCanvasStore.getState().setAutosaveStatus('idle');
-        }, 1500);
+        }, SAVED_FLASH_MS);
       } catch (err) {
         useCanvasStore.getState().setAutosaveStatus('idle');
         // Autosave is best-effort — surface the error in the

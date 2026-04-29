@@ -1,23 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 
+import { listSavedCanvases } from '../api/canvas';
+
+// Shared so create / duplicate / import / delete handlers in the
+// navigator can invalidate the same react-query cache the switcher
+// reads from, without re-spelling the array literal in every site.
+export const savedCanvasesQueryKey = (project, scenario) => [
+  'canvas',
+  'saved',
+  project,
+  scenario,
+];
+
 /**
- * Names of every saved canvas under `<project, scenario>`. Wraps
- * `GET /api/canvas/`. Used by the navigator's dashboard switcher
- * to populate its options. Stale-time is short (10s) because users
- * who just clicked Save expect to see the new canvas appear in
- * the switcher right away — the save handler also explicitly
- * invalidates this key for instant refresh.
+ * Names of every saved canvas under `<project, scenario>`. Used by
+ * the navigator's dashboard switcher to populate its options. Stale
+ * time is short (10 s) so a freshly created / duplicated / imported
+ * canvas appears promptly; the matching handlers also explicitly
+ * invalidate this key for instant refresh.
  */
 export const useFetchSavedCanvases = (project, scenario) =>
   useQuery({
-    queryKey: ['canvas', 'saved', project, scenario],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/canvas/', {
-        params: { project, scenario },
-      });
-      return data; // string[]
-    },
+    queryKey: savedCanvasesQueryKey(project, scenario),
+    queryFn: () => listSavedCanvases({ project, scenario }),
     enabled: !!project && !!scenario,
     staleTime: 10_000,
   });

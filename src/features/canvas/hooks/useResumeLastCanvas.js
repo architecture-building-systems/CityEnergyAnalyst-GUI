@@ -33,7 +33,7 @@ import { deserializeCanvas } from '../utils/canvasSerialize';
 
 const KEY_PREFIX = 'cea:canvas:lastSaved';
 
-const storageKey = (project, scenario) =>
+export const lastCanvasStorageKey = (project, scenario) =>
   `${KEY_PREFIX}:${project}:${scenario}`;
 
 export function useResumeLastCanvas() {
@@ -50,7 +50,7 @@ export function useResumeLastCanvas() {
 
   useEffect(() => {
     if (!project || !scenario) return;
-    const key = storageKey(project, scenario);
+    const key = lastCanvasStorageKey(project, scenario);
     if (attemptedKeyRef.current === key) return;
     attemptedKeyRef.current = key;
 
@@ -95,6 +95,6 @@ export function useResumeLastCanvas() {
   // so canvasName is always a valid resume target.
   useEffect(() => {
     if (!project || !scenario || !canvasName) return;
-    localStorage.setItem(storageKey(project, scenario), canvasName);
+    localStorage.setItem(lastCanvasStorageKey(project, scenario), canvasName);
   }, [project, scenario, canvasName]);
 }
