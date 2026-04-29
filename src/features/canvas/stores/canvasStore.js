@@ -33,6 +33,19 @@ import { create } from 'zustand';
 // same id without further migration.
 const makeId = (prefix) => `${prefix}-${crypto.randomUUID().replace(/-/g, '')}`;
 
+// Shallow object equality used to short-circuit no-op writes from
+// `setCardMapLayerParameters` (the per-card store-sync effect re-
+// emits the same parameters object on every render until the user
+// changes a control).
+const shallowEqual = (a, b) => {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => Object.is(a[k], b[k]));
+};
+
 // Default card size in grid units. See CanvasColumn's <GridLayout>
 // config for the pixel mapping. Map's default footprint
 // (MAP_DEFAULT_W/H) lives in CanvasColumn and is mirrored below as
@@ -619,6 +632,24 @@ export const useCanvasStore = create((set, get) => ({
             ),
           }
         : c,
+    );
+    setCards(columnIndex, next);
+  },
+
+  /**
+   * Persist a map-card's parameter selections (what-if-name,
+   * carrier, …) onto the card so reload restores them. Per-column
+   * by design — mirrors keep their own selections. Driven by
+   * `FeatureCardMap`'s store-sync effect.
+   */
+  setCardMapLayerParameters: (columnIndex, cardId, mapLayerParameters) => {
+    const { getCards, setCards } = get();
+    const cards = getCards(columnIndex);
+    const target = cards.find((c) => c.id === cardId);
+    if (!target) return;
+    if (shallowEqual(target.mapLayerParameters, mapLayerParameters)) return;
+    const next = cards.map((c) =>
+      c.id === cardId ? { ...c, mapLayerParameters } : c,
     );
     setCards(columnIndex, next);
   },

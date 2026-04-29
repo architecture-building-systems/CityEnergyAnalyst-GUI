@@ -41,6 +41,11 @@ const cardConfigFromStore = (card) => ({
   })),
   category: card.category ?? null,
   layer: card.layer ?? null,
+  // Map-card parameter selections (what-if-name, carrier, …).
+  // Persisting them keeps reload from rerunning the autonomous
+  // first-choice resolution in `FeatureCardMap` over the user's
+  // picks.
+  map_layer_parameters: card.mapLayerParameters ?? null,
   // Persisted high-water mark of the plot's reported pixel height
   // (`onPreferredHeight`). Carried so reload doesn't re-fire the
   // initial auto-grow against a user who has manually shrunk the
@@ -180,6 +185,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     })),
     category: configEntry.category ?? undefined,
     layer: configEntry.layer ?? undefined,
+    mapLayerParameters: configEntry.map_layer_parameters ?? undefined,
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
   });
 

@@ -79,17 +79,39 @@ const FeatureCardMap = ({
 }) => {
   const { id, category, layer } = card;
   const data = useMapLayerCategories();
+  const setCardMapLayerParameters = useCanvasStore(
+    (s) => s.setCardMapLayerParameters,
+  );
 
-  // `useState` lazy initializer keeps the store stable across renders
-  // without the unsafe `useRef`-mutate-during-render pattern. Seeded
-  // with the singleton's current view-state so a card mounted while
-  // `mapsLinked === false` inherits the overview map's view (camera,
-  // zoom, layer toggles, …) instead of opening at default world.
+  // Lazy initializer keeps the store stable across renders. Two
+  // seeds matter: (a) the singleton's view-state, so a card mounted
+  // while `mapsLinked === false` opens at the overview map's
+  // current camera/zoom; (b) any saved `mapLayerParameters`, so
+  // reload restores the user's selections before
+  // `FeatureCardMapBody`'s autonomous init can refetch first-choice
+  // defaults over them.
   const [store] = useState(() => {
     const s = createMapInstanceStore({ category, layer });
     s.setState(snapshotViewState());
+    if (card.mapLayerParameters != null) {
+      s.setState({ mapLayerParameters: card.mapLayerParameters });
+    }
     return s;
   });
+
+  // Round-trip per-card parameter changes onto the canvasStore so
+  // autosave persists them. Skip `null` updates — both
+  // `MapLayerPropertiesCard`'s reset and `ChoiceSelector`'s
+  // pre-fetch render null the parameters transiently, and
+  // propagating those would let autosave flush an empty payload
+  // and drop the user's selection on reload.
+  useEffect(() => {
+    return store.subscribe((state, prev) => {
+      if (state.mapLayerParameters === prev.mapLayerParameters) return;
+      if (state.mapLayerParameters == null) return;
+      setCardMapLayerParameters(columnIndex, id, state.mapLayerParameters);
+    });
+  }, [store, columnIndex, id, setCardMapLayerParameters]);
   useEffect(() => {
     const { setCategory, setSelectedMapLayer: setLayer } = store.getState();
     setCategory(category);

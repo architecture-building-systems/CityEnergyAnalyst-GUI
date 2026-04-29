@@ -79,14 +79,16 @@ export function useCanvasPersistence() {
   const savedFlashTimerRef = useRef(null);
 
   useEffect(() => {
-    const flush = async () => {
-      timerRef.current = null;
+    // PUT a snapshot to its own canvas folder. Taking `state` as
+    // an arg (not reading the live store) lets the load-detection
+    // branch save the *pre-load* state before the active state
+    // pivots to the new canvas.
+    const flushState = async (state) => {
       if (inFlightRef.current) {
         // Re-arm and let the in-flight call finish first; whichever
         // change arrives next will schedule the next flush.
         return;
       }
-      const state = useCanvasStore.getState();
       const name = state.canvasName;
       if (!project || !scenario || !name) return;
 
@@ -126,19 +128,27 @@ export function useCanvasPersistence() {
       }
     };
 
-    const unsubscribe = useCanvasStore.subscribe((state) => {
+    // Debounced edit flush — reads the live store because by the
+    // time the timer fires, no load has intervened (a load would
+    // have flushed pre-load and cleared this timer below).
+    const flushLatest = () => {
+      timerRef.current = null;
+      flushState(useCanvasStore.getState());
+    };
+
+    const unsubscribe = useCanvasStore.subscribe((state, prevState) => {
       // External load (Open / Resume / Import / Create) bumps
-      // `loadVersion`. Resync the diff baseline silently so the
-      // just-loaded state isn't immediately re-flushed back to the
-      // backend as a "change". Cancel any pending edit-flush from
-      // before the load — those edits are gone now.
+      // `loadVersion`. Flush any pending edit against `prevState`
+      // first so the user's last change still lands in its own
+      // canvas folder, then resync the baseline silently.
       if (state.loadVersion !== lastLoadVersionRef.current) {
-        lastLoadVersionRef.current = state.loadVersion;
-        lastSnapshotRef.current = PERSISTABLE_SELECTOR(state);
         if (timerRef.current) {
           clearTimeout(timerRef.current);
           timerRef.current = null;
+          flushState(prevState);
         }
+        lastLoadVersionRef.current = state.loadVersion;
+        lastSnapshotRef.current = PERSISTABLE_SELECTOR(state);
         return;
       }
 
@@ -147,7 +157,7 @@ export function useCanvasPersistence() {
       lastSnapshotRef.current = snapshot;
 
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(flush, DEBOUNCE_MS);
+      timerRef.current = setTimeout(flushLatest, DEBOUNCE_MS);
     });
 
     return () => {

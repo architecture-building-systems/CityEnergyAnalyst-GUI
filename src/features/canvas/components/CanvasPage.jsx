@@ -83,22 +83,23 @@ const CanvasPage = () => {
     setActiveMapColumnIndex(null);
   }, []);
 
-  // Turning Enable Edit off closes any open editing surface (plot
-  // drawer + map-card bottom). Listened to via zustand's `subscribe`
-  // — a `useEffect` on a selector here would cascade renders every
-  // time the page consumed the slice; we only want the close action
-  // at the true → false transition.
-  useEffect(
-    () =>
-      useCanvasStore.subscribe((state, prev) => {
-        if (!state.enableEdit && prev.enableEdit) {
-          setDrawer(null);
-          setActiveMapCardId(null);
-          setActiveMapColumnIndex(null);
-        }
-      }),
-    [],
-  );
+  // Close every editing surface (plot drawer + map-card bottom) on
+  // two transitions: Enable Edit → off (snapshot mode), and any
+  // canvas load (`loadVersion` bumps) so chrome from the previous
+  // canvas doesn't linger over the new one. Subscribed directly
+  // instead of via a selector useEffect so the page doesn't
+  // re-render on every store tick.
+  useEffect(() => {
+    const closeAll = () => {
+      setDrawer(null);
+      setActiveMapCardId(null);
+      setActiveMapColumnIndex(null);
+    };
+    return useCanvasStore.subscribe((state, prev) => {
+      if (!state.enableEdit && prev.enableEdit) closeAll();
+      else if (state.loadVersion !== prev.loadVersion) closeAll();
+    });
+  }, []);
 
   const handleDrawerSave = useCallback(
     (plotConfig) => {

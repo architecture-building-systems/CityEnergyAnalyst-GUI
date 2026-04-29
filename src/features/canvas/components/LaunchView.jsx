@@ -73,9 +73,10 @@ const LaunchView = ({
         category,
         layer,
       });
-      // Launch is single-column → index 0 matches the slot
-      // FeatureCardMap registers under.
-      onOpenMapBottom?.(newCardId, 0);
+      // `'launch'` is the canvasStore's column-index sentinel for
+      // launch view — keeps registry, BottomCard lookup, and
+      // setCardMapLayerParameters all routed to `launchCards`.
+      onOpenMapBottom?.(newCardId, 'launch');
       return;
     }
     const resolvedFeature = feature || inferFeature(targetCardId);
@@ -129,7 +130,7 @@ const LaunchView = ({
       <div style={enableEdit ? canvasStyle : canvasExportStyle}>
         <CanvasColumn
           columnDef={{ type: 'scenario', scenario }}
-          columnIndex={0}
+          columnIndex="launch"
           cards={cards}
           onEditPlot={handleEditPlot}
           onDeletePlot={handleDeletePlot}
