@@ -1,4 +1,11 @@
-import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { DeckGL } from '@deck.gl/react';
 import {
@@ -23,6 +30,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { COORDINATE_SYSTEM, HexagonLayer, ColumnLayer } from 'deck.gl';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
+  MapColumnContext,
   useScopedCameraOptions,
   useScopedColorMode,
   useScopedExtruded,
@@ -528,7 +536,12 @@ const useMapLayers = (onHover = () => {}) => {
  * (hover is non-destructive). Everything else — camera controls,
  * map style, colour modes — still responds normally.
  */
-const DeckGLMap = ({ data, colors, interactive = true, showBasemap = true }) => {
+const DeckGLMap = ({
+  data,
+  colors,
+  interactive = true,
+  showBasemap = true,
+}) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
 
@@ -545,8 +558,37 @@ const DeckGLMap = ({ data, colors, interactive = true, showBasemap = true }) => 
     (state) => state.selectedBuildings,
   );
 
-  const viewState = useScopedViewState();
-  const setViewState = useScopedSetViewState();
+  const baseViewState = useScopedViewState();
+  const setBaseViewState = useScopedSetViewState();
+  // When a `MapColumnContext` is in scope (compare-mode columns
+  // each provide their own), override the singleton's lat/lng with
+  // the column's local centre so cross-geography compares can show
+  // both cities at once. Pan deltas route to `column.setCenter`
+  // instead of the singleton — zoom / bearing / pitch still flow
+  // through `setBaseViewState` so the angle stays in sync across
+  // columns.
+  const column = useContext(MapColumnContext);
+  const viewState = useMemo(() => {
+    if (!column?.center) return baseViewState;
+    return {
+      ...baseViewState,
+      latitude: column.center.latitude,
+      longitude: column.center.longitude,
+    };
+  }, [baseViewState, column?.center]);
+  const setViewState = useCallback(
+    (next) => {
+      const resolved = typeof next === 'function' ? next(viewState) : next;
+      if (column?.setCenter) {
+        column.setCenter({
+          latitude: resolved.latitude,
+          longitude: resolved.longitude,
+        });
+      }
+      setBaseViewState(resolved);
+    },
+    [column, setBaseViewState, viewState],
+  );
 
   const extruded = useScopedExtruded();
   const setExtruded = useScopedSetExtruded();

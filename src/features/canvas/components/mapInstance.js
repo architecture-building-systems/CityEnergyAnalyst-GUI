@@ -39,6 +39,26 @@ export const useScopedProjectScenario = () => {
 };
 
 /**
+ * Per-column camera centre — `{ center, setCenter }` where
+ * `center` is `{ latitude, longitude } | null` and `setCenter`
+ * mutates that state.
+ *
+ * In compare mode, scenarios may live in different cities (e.g.
+ * Zurich vs Singapore). The singleton's camera centre can only
+ * point at one of them, so the others render empty ocean. This
+ * context lets each column hold its own centre while
+ * `zoom`/`bearing`/`pitch` still sync via the singleton — the
+ * "frame the same way, look at different places" model.
+ *
+ * Consumers (`Map.jsx`) override the singleton's lat/lng with
+ * `center` when this context is present, and route pan deltas to
+ * `setCenter` instead of the singleton's `setViewState`. Outside
+ * any provider (main viewport, launch view) the singleton owns
+ * lat/lng, exactly like before.
+ */
+export const MapColumnContext = createContext(null);
+
+/**
  * Per-card map state for Canvas Builder's `FeatureCardMap`.
  *
  * Two slices on the per-card zustand store:

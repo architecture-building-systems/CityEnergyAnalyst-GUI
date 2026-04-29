@@ -244,6 +244,15 @@ export const useCanvasStore = create((set, get) => ({
   bumpAlignmentRevision: () =>
     set((state) => ({ alignmentRevision: state.alignmentRevision + 1 })),
 
+  // Counter the refresh button bumps to refit every column's
+  // primary map back to its zone-bbox centre. Each `CanvasColumn`
+  // watches it and resets its local `MapColumnContext.center` —
+  // restores cross-geography compare mode after the user has
+  // panned individual columns away from their home positions.
+  columnRefitVersion: 0,
+  bumpColumnRefitVersion: () =>
+    set((state) => ({ columnRefitVersion: state.columnRefitVersion + 1 })),
+
   // Primary map tile's position and size in grid units. Shared
   // across every column so origin's drag/resize of the map (e.g.
   // moving it below the feature cards) propagates to every
@@ -666,9 +675,7 @@ export const useCanvasStore = create((set, get) => ({
     const target = cards.find((c) => c.id === cardId);
     if (!target) return;
     if (shallowEqual(target.filters, filters)) return;
-    const next = cards.map((c) =>
-      c.id === cardId ? { ...c, filters } : c,
-    );
+    const next = cards.map((c) => (c.id === cardId ? { ...c, filters } : c));
     setCards(columnIndex, next);
   },
 
