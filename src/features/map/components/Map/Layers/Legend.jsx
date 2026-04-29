@@ -70,6 +70,23 @@ export const LegendFilterRow = ({ layers }) => {
     return collected;
   }, [layers]);
 
+  // Seed missing filters from the layer's per-parameter defaults.
+  // ParameterSelectors does the same seed for the editor panel,
+  // but FeatureCardMap renders this row without ever mounting the
+  // editor — so without this hook a freshly-mounted card uses
+  // `Map.jsx`'s `?? 10` fallback for radius (a stand-in default
+  // 5× larger than the configured `2`), and buildings briefly
+  // render at the wrong scale.
+  const filters = useScopedFilters();
+  const setFilters = useScopedSetFilters();
+  useEffect(() => {
+    fields.forEach((f) => {
+      if (filters?.[f.key] == null && f.defaultValue != null) {
+        setFilters(f.key, f.defaultValue);
+      }
+    });
+  }, [fields, filters, setFilters]);
+
   if (!fields.length || editDisabled) return null;
 
   return (
