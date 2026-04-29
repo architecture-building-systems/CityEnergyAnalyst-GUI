@@ -542,7 +542,7 @@ const CanvasColumn = ({
           what-if from the comparison via `removeColumn(i)`. */}
       <div style={titleRowStyle}>
         <div style={titleCardStyle}>
-          {isOrigin && <span style={originBadgeStyle}>Origin</span>}
+          {isOrigin && <span style={originBadgeStyle}>Current</span>}
           <div style={headerStyle}>{headerText}</div>
         </div>
         {onCloseColumn && (

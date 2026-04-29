@@ -97,7 +97,7 @@ const CompareModal = ({ open, onCancel }) => {
         destroyOnClose
       >
         <div style={originRowStyle}>
-          <span style={originBadgeStyle}>Origin</span>
+          <span style={originBadgeStyle}>Current</span>
           <span style={{ color: '#222' }}>{scenario}</span>
         </div>
         {isEmpty ? (
