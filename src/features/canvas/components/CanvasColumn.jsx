@@ -15,6 +15,10 @@ import {
 } from 'features/plots/constants';
 import { COLOR_MODES, useMapStore } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
+import {
+  generateConstructionColorMap,
+  generateUseTypeColorMap,
+} from 'features/map/utils/constructionColors';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
@@ -241,10 +245,6 @@ const CanvasColumn = ({
       // fall through to the singleton viewState.
     }
   }, [columnInputs, columnRefitVersion]);
-  const columnContextValue = useMemo(
-    () => ({ center: columnCenter, setCenter: setColumnCenter }),
-    [columnCenter],
-  );
 
   // Non-origin columns in compare mode keep per-column editing
   // for individual plots' parameters (`onEditPlot`) and the
@@ -262,27 +262,83 @@ const CanvasColumn = ({
   }
   const showPerimeterPlus = enableEdit && !lockedReadOnly;
 
-  // Map tile auto-grows downward to host the use-type / construction
-  // legend rendered under the map. The legend's pixel height is
-  // estimated from its entry count (one swatch per entry) and
-  // converted to grid rows so the tile owns the legend's space —
-  // bottom `+` button stays at the tile's true bottom edge, cards
-  // below shift to make room. `mapPos.h` keeps the user-set height
-  // (no legend); `legendExtraRows` is the auto-added bump.
+  // The title-map tile reserves rows underneath the map for the
+  // use-type / construction legend (`legendExtraRows`). The map area
+  // itself stays fixed at `mapPos.h` rows; the legend lives in the
+  // reserved bump; `+` button stays anchored to the tile's true
+  // bottom edge; cards below shift to make room.
   const colorMode = useMapStore((s) => s.colorMode);
-  const constructionColorMap = useMapStore((s) => s.constructionColorMap);
-  const useTypeColorMap = useMapStore((s) => s.useTypeColorMap);
-  const legendExtraRows = useMemo(() => {
+  // Per-column colour maps derived from this column's own zone
+  // features. Drives both the column's title-map legend and the
+  // building geometry colours via `MapColumnContext` — without
+  // column-local maps every column rendered the singleton's
+  // last-written archetypes (e.g. Zurich's STANDARD list overwriting
+  // Singapore's once its zone data landed).
+  const columnZoneFeatures = columnInputs?.geojsons?.zone?.features;
+  const constructionColorMap = useMemo(
+    () =>
+      columnZoneFeatures
+        ? generateConstructionColorMap(columnZoneFeatures)
+        : {},
+    [columnZoneFeatures],
+  );
+  const useTypeColorMap = useMemo(
+    () =>
+      columnZoneFeatures ? generateUseTypeColorMap(columnZoneFeatures) : {},
+    [columnZoneFeatures],
+  );
+  const columnContextValue = useMemo(
+    () => ({
+      center: columnCenter,
+      setCenter: setColumnCenter,
+      constructionColorMap,
+      useTypeColorMap,
+    }),
+    [columnCenter, constructionColorMap, useTypeColorMap],
+  );
+
+  // Origin column owns map sizing: it publishes the row allowance
+  // it computed from its own zone, and every column (origin and
+  // mirrors) reads back the same number so the title-map tile's `h`
+  // is identical across the row. The map area itself is pinned to a
+  // fixed pixel size driven by `mapPos.h`, so a mirror whose own
+  // legend is shorter just shows whitespace below — never resizes
+  // the map or pushes its cards out of alignment with origin. In
+  // launch / single-column mode there's no `lockedReadOnly`, and
+  // origin's local count == the store value, so behaviour is
+  // unchanged.
+  const ownLegendExtraRows = useMemo(() => {
     let entries = 0;
     if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD)
       entries = Object.keys(constructionColorMap).length;
     else if (colorMode === COLOR_MODES.USE_TYPE)
       entries = Object.keys(useTypeColorMap).length;
     if (entries === 0) return 0;
-    // Header (~38 px) + per-entry row (~24 px) + a little padding.
-    const px = 38 + entries * 24 + 16;
+    // Reserved space sits between the map's bottom edge and the
+    // tile's bottom edge. The legend's natural height is a header
+    // (~38 px) plus a per-entry row (~24 px) plus its own bottom
+    // padding (~16 px); the chrome above it inside the same span is
+    // the drag handle (14 px) + the legend's `marginTop` (8 px).
+    // Without the chrome term the reserved rows fell short by a
+    // sub-row, so the legend pushed against the tile bottom and flex
+    // shrank the map.
+    const LEGEND_CHROME_PX = 14 + 8;
+    const px = 38 + entries * 24 + 16 + LEGEND_CHROME_PX;
     return Math.ceil(px / (ROW_HEIGHT_PX + GRID_MARGIN[1]));
   }, [colorMode, constructionColorMap, useTypeColorMap]);
+  const originLegendExtraRows = useCanvasStore(
+    (s) => s.originLegendExtraRows,
+  );
+  const setOriginLegendExtraRows = useCanvasStore(
+    (s) => s.setOriginLegendExtraRows,
+  );
+  useEffect(() => {
+    if (lockedReadOnly) return;
+    setOriginLegendExtraRows(ownLegendExtraRows);
+  }, [lockedReadOnly, ownLegendExtraRows, setOriginLegendExtraRows]);
+  const legendExtraRows = lockedReadOnly
+    ? originLegendExtraRows
+    : ownLegendExtraRows;
 
   // Sort cards by row before rendering. react-grid-layout v2's
   // layout-prop sync sometimes uses children DOM order to anchor
@@ -688,7 +744,7 @@ const CanvasColumn = ({
                   <span style={primaryMapDragGripStyle} />
                 </div>
               )}
-              <div style={mapFillStyle}>
+              <div style={mapFillStyle(mapPos.h)}>
                 <CanvasMap
                   project={project}
                   scenario={scenario}
@@ -701,7 +757,11 @@ const CanvasColumn = ({
                   showToolbar={enableEdit && !lockedReadOnly}
                 />
               </div>
-              <ConstructionStandardLegend style={overviewLegendStyle} />
+              <ConstructionStandardLegend
+                style={overviewLegendStyle}
+                constructionColorMapOverride={constructionColorMap}
+                useTypeColorMapOverride={useTypeColorMap}
+              />
               {showPerimeterPlus && (
                 <PerimeterPlusButtons
                   targetCardId="MAP"
@@ -872,22 +932,26 @@ const tileStyle = {
   position: 'relative',
 };
 
-// Map tile is a flex column so the legend can sit underneath the map
-// inside the same tile. The tile's `h` is auto-grown by
-// `legendExtraRows` so the map keeps its user-set size and the legend
-// occupies the bump — bottom `+` button stays at the tile's true
-// bottom edge (now below the legend) and below-MAP cards shift down.
+// Tile lays out as a flex column: drag handle, fixed-pixel map,
+// then the legend at its natural height, with whitespace filling any
+// remaining tile height. Layout sizing is in `mapFillStyle` below.
 const mapTileStyle = {
   ...tileStyle,
   display: 'flex',
   flexDirection: 'column',
 };
 
-const mapFillStyle = {
-  flex: 1,
-  minHeight: 0,
+// Pin the map to the user-set `mapPos.h` rows in pixels so every
+// column's map renders at the same size regardless of how many legend
+// entries that column happens to have. `flexShrink: 0` is the part
+// that *enforces* the size — without it, a tall legend in the same
+// flex column would push against the tile's bottom edge and the map
+// would shrink to make room ("eaten" look).
+const mapFillStyle = (mapPosH) => ({
   width: '100%',
-};
+  height: mapPosH * ROW_HEIGHT_PX + (mapPosH - 1) * GRID_MARGIN[1],
+  flexShrink: 0,
+});
 
 // Strip the floating-card chrome so the legend reads as part of the
 // tile rather than a popover. Horizontal padding (16px) matches

@@ -8,13 +8,27 @@ import InfoTooltip from 'components/InfoTooltip';
  * `style` is merged on top of the defaults so callers can override
  * width / chrome / spacing — e.g. Canvas Builder embeds this legend inline
  * under the column's overview map and drops the floating-card chrome.
+ *
+ * `constructionColorMapOverride` / `useTypeColorMapOverride` let
+ * callers supply per-source maps instead of reading from the
+ * singleton — used by Canvas Builder so each compare-mode column's
+ * legend reflects its own scenario's archetypes (Zurich's "STANDARD3"
+ * isn't necessarily Singapore's). Omitting the overrides falls back
+ * to the singleton, so the main viewport behaves as before.
  */
-const ConstructionStandardLegend = ({ style }) => {
+const ConstructionStandardLegend = ({
+  style,
+  constructionColorMapOverride,
+  useTypeColorMapOverride,
+}) => {
   const colorMode = useMapStore((state) => state.colorMode);
-  const constructionColorMap = useMapStore(
+  const singletonConstruction = useMapStore(
     (state) => state.constructionColorMap,
   );
-  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const singletonUseType = useMapStore((state) => state.useTypeColorMap);
+  const constructionColorMap =
+    constructionColorMapOverride ?? singletonConstruction;
+  const useTypeColorMap = useTypeColorMapOverride ?? singletonUseType;
 
   const isConstruction = colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
   const isUseType = colorMode === COLOR_MODES.USE_TYPE;

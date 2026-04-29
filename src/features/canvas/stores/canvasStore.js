@@ -274,6 +274,19 @@ export const useCanvasStore = create((set, get) => ({
       return { mapPos: next };
     }),
 
+  // Extra grid rows the origin column reserves for the title-map
+  // legend (use-type / construction archetype). Published by the
+  // origin column and consumed by every column so the title-map
+  // tile's `h` is identical across the row — without this, mirrors
+  // computed their own count from their own zone load timing, which
+  // grew the tile after first paint and made react-grid-layout shove
+  // that column's cards down out of alignment with origin.
+  originLegendExtraRows: 0,
+  setOriginLegendExtraRows: (next) =>
+    set((state) =>
+      state.originLegendExtraRows === next ? {} : { originLegendExtraRows: next },
+    ),
+
   // ── Compare mode ────────────────────────────────────────────
   // Saved Compare-mode picks. Decoupled from the live `view`
   // field so the user can "Stop comparing" (revert `view` to

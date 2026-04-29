@@ -603,10 +603,19 @@ const DeckGLMap = ({
 
   // Construction standard coloring
   const colorMode = useScopedColorMode();
-  const constructionColorMap = useMapStore(
+  // Compare-mode columns publish their own zone-derived colour maps
+  // through `MapColumnContext`. Outside any provider (main viewport,
+  // launch view) we fall through to the singleton — last-writer-wins
+  // is fine when only one map is on screen.
+  const singletonConstructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
   );
-  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const singletonUseTypeColorMap = useMapStore(
+    (state) => state.useTypeColorMap,
+  );
+  const constructionColorMap =
+    column?.constructionColorMap ?? singletonConstructionColorMap;
+  const useTypeColorMap = column?.useTypeColorMap ?? singletonUseTypeColorMap;
   const stateZoneOverride = useMapStore((state) => state.stateZoneOverride);
 
   const mapStyle = useMapStyle();
