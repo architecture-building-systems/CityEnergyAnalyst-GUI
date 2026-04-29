@@ -46,6 +46,11 @@ const cardConfigFromStore = (card) => ({
   // first-choice resolution in `FeatureCardMap` over the user's
   // picks.
   map_layer_parameters: card.mapLayerParameters ?? null,
+  // Slider/range filters (radius, scale, range) — separate slice
+  // because deck.gl consumes them directly, not via the layer
+  // fetch. Persisted alongside parameters so the slider knobs
+  // come back where the user left them.
+  map_filters: card.filters ?? null,
   // Persisted high-water mark of the plot's reported pixel height
   // (`onPreferredHeight`). Carried so reload doesn't re-fire the
   // initial auto-grow against a user who has manually shrunk the
@@ -186,6 +191,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     category: configEntry.category ?? undefined,
     layer: configEntry.layer ?? undefined,
     mapLayerParameters: configEntry.map_layer_parameters ?? undefined,
+    filters: configEntry.map_filters ?? undefined,
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
   });
 

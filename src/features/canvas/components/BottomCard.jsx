@@ -37,7 +37,17 @@ const BottomCard = ({
   onClose,
 }) => {
   const mapCardStore = useMapCardStore(activeMapColumnIndex, activeMapCardId);
-  const form = <MapLayerPropertiesCard hideLegend hideLayerSelector />;
+  // Re-key on `(column, card)` so switching the active edit target
+  // remounts the form. ParameterSelectors and ChoiceSelector hold
+  // local `selected` state via `useState(value ?? defaultValue)`
+  // that doesn't sync to a later prop change — without the
+  // remount, the form would keep showing the previous column's
+  // selections even though the underlying scoped store has
+  // already pivoted.
+  const formKey = `${activeMapColumnIndex ?? '∅'}::${activeMapCardId ?? '∅'}`;
+  const form = (
+    <MapLayerPropertiesCard key={formKey} hideLegend hideLayerSelector />
+  );
   const wrapped = mapCardStore ? (
     <MapInstanceContext.Provider value={mapCardStore}>
       {form}

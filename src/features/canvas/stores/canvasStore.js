@@ -654,6 +654,24 @@ export const useCanvasStore = create((set, get) => ({
     setCards(columnIndex, next);
   },
 
+  /**
+   * Persist a map-card's `filters` slice (radius / scale / range
+   * sliders that deck.gl consumes directly, separate from the
+   * fetch payload). Same per-column lifecycle as
+   * `setCardMapLayerParameters`.
+   */
+  setCardFilters: (columnIndex, cardId, filters) => {
+    const { getCards, setCards } = get();
+    const cards = getCards(columnIndex);
+    const target = cards.find((c) => c.id === cardId);
+    if (!target) return;
+    if (shallowEqual(target.filters, filters)) return;
+    const next = cards.map((c) =>
+      c.id === cardId ? { ...c, filters } : c,
+    );
+    setCards(columnIndex, next);
+  },
+
   removePlot: (columnIndex, cardId, plotId) => {
     const state = get();
     const isCompare = columnIndex !== 'launch';
