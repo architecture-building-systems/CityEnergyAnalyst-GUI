@@ -297,16 +297,22 @@ const CanvasColumn = ({
     [columnCenter, constructionColorMap, useTypeColorMap],
   );
 
-  // Origin column owns map sizing: it publishes the row allowance
-  // it computed from its own zone, and every column (origin and
-  // mirrors) reads back the same number so the title-map tile's `h`
-  // is identical across the row. The map area itself is pinned to a
-  // fixed pixel size driven by `mapPos.h`, so a mirror whose own
-  // legend is shorter just shows whitespace below — never resizes
-  // the map or pushes its cards out of alignment with origin. In
-  // launch / single-column mode there's no `lockedReadOnly`, and
-  // origin's local count == the store value, so behaviour is
-  // unchanged.
+  // Title-map tile sizing: each column publishes the row allowance
+  // it needs for its own legend; every column then takes the *max*
+  // across the row so the tile is identical and the column with the
+  // tallest legend lands at zero (modulo rgl row rounding) whitespace
+  // below its legend, while shorter columns pad up to the same tile
+  // bottom. Without max-across, the tallest mirror would overflow
+  // when origin reserved less.
+  //
+  // Pixel budget for one legend (matches the rendered DOM):
+  //   header  31  = 13 px font @ ~1.2 lh + 6 paddingBottom + 1 border
+  //                + 8 marginBottom
+  //   entries (24n − 8)  = 16 px swatch row × n + 8 gap × (n − 1)
+  //   bottom padding 2
+  //   chrome  22  = 14 drag-handle + 8 legend marginTop above the
+  //                legend, sitting in the same reserved span
+  // Total = 24n + 47. Rounded up to whole grid rows.
   const ownLegendExtraRows = useMemo(() => {
     let entries = 0;
     if (colorMode === COLOR_MODES.CONSTRUCTION_STANDARD)
@@ -314,31 +320,28 @@ const CanvasColumn = ({
     else if (colorMode === COLOR_MODES.USE_TYPE)
       entries = Object.keys(useTypeColorMap).length;
     if (entries === 0) return 0;
-    // Reserved space sits between the map's bottom edge and the
-    // tile's bottom edge. The legend's natural height is a header
-    // (~38 px) plus a per-entry row (~24 px) plus its own bottom
-    // padding (~16 px); the chrome above it inside the same span is
-    // the drag handle (14 px) + the legend's `marginTop` (8 px).
-    // Without the chrome term the reserved rows fell short by a
-    // sub-row, so the legend pushed against the tile bottom and flex
-    // shrank the map.
-    const LEGEND_CHROME_PX = 14 + 8;
-    const px = 38 + entries * 24 + 16 + LEGEND_CHROME_PX;
+    const px = 24 * entries + 48;
     return Math.ceil(px / (ROW_HEIGHT_PX + GRID_MARGIN[1]));
   }, [colorMode, constructionColorMap, useTypeColorMap]);
-  const originLegendExtraRows = useCanvasStore(
-    (s) => s.originLegendExtraRows,
-  );
-  const setOriginLegendExtraRows = useCanvasStore(
-    (s) => s.setOriginLegendExtraRows,
-  );
+  const columnLegendRows = useCanvasStore((s) => s.columnLegendRows);
+  const setColumnLegendRows = useCanvasStore((s) => s.setColumnLegendRows);
+  // Stable key per column. `columnIndex === null` is the launch view
+  // (single column), kept distinct from compare-mode column 0.
+  const columnLegendKey = columnIndex ?? 'launch';
+  // Two effects: the publish runs whenever the value changes; the
+  // cleanup *only* runs on unmount or column-key change. Combining
+  // them removed and re-added the entry on every value change, which
+  // briefly dropped this column from the max calculation.
   useEffect(() => {
-    if (lockedReadOnly) return;
-    setOriginLegendExtraRows(ownLegendExtraRows);
-  }, [lockedReadOnly, ownLegendExtraRows, setOriginLegendExtraRows]);
-  const legendExtraRows = lockedReadOnly
-    ? originLegendExtraRows
-    : ownLegendExtraRows;
+    setColumnLegendRows(columnLegendKey, ownLegendExtraRows);
+  }, [columnLegendKey, ownLegendExtraRows, setColumnLegendRows]);
+  useEffect(() => {
+    return () => setColumnLegendRows(columnLegendKey, null);
+  }, [columnLegendKey, setColumnLegendRows]);
+  const legendExtraRows = useMemo(
+    () => Math.max(0, ...Object.values(columnLegendRows)),
+    [columnLegendRows],
+  );
 
   // Sort cards by row before rendering. react-grid-layout v2's
   // layout-prop sync sometimes uses children DOM order to anchor
@@ -972,14 +975,13 @@ const mapFillStyle = (mapPosH) => ({
 // Strip the floating-card chrome so the legend reads as part of the
 // tile rather than a popover. Horizontal padding (16px) matches
 // `FeatureCardShell.cardStyle` so the legend's swatches + labels
-// align with content in neighbouring FeatureCards. Bottom padding
-// keeps the last entry off the tile edge.
+// align with content in neighbouring FeatureCards.
 const overviewLegendStyle = {
   width: '100%',
   marginTop: 8,
   boxShadow: 'none',
   backgroundColor: 'transparent',
-  padding: '0 16px 12px',
+  padding: '0 16px 2px',
   maxHeight: 'none',
 };
 

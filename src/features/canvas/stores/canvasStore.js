@@ -274,18 +274,28 @@ export const useCanvasStore = create((set, get) => ({
       return { mapPos: next };
     }),
 
-  // Extra grid rows the origin column reserves for the title-map
-  // legend (use-type / construction archetype). Published by the
-  // origin column and consumed by every column so the title-map
-  // tile's `h` is identical across the row — without this, mirrors
-  // computed their own count from their own zone load timing, which
-  // grew the tile after first paint and made react-grid-layout shove
-  // that column's cards down out of alignment with origin.
-  originLegendExtraRows: 0,
-  setOriginLegendExtraRows: (next) =>
-    set((state) =>
-      state.originLegendExtraRows === next ? {} : { originLegendExtraRows: next },
-    ),
+  // Each column publishes the row allowance its own legend needs
+  // (`columnLegendRows[columnKey] = rows`); every column then sizes
+  // its title-map tile to the *max* across the row, so the column
+  // with the tallest legend has zero (or near-zero, modulo grid
+  // rounding) whitespace below its legend and shorter columns pad
+  // up to the same tile bottom. Without the per-column map, mirrors
+  // either overflowed (origin shorter) or carried excess whitespace
+  // (origin tallest by far). Cleanup runs on column unmount so
+  // stale entries from closed columns don't pin the tile tall.
+  columnLegendRows: {},
+  setColumnLegendRows: (columnKey, rows) =>
+    set((state) => {
+      const cur = state.columnLegendRows;
+      if (rows == null) {
+        if (!(columnKey in cur)) return {};
+        const next = { ...cur };
+        delete next[columnKey];
+        return { columnLegendRows: next };
+      }
+      if (cur[columnKey] === rows) return {};
+      return { columnLegendRows: { ...cur, [columnKey]: rows } };
+    }),
 
   // ── Compare mode ────────────────────────────────────────────
   // Saved Compare-mode picks. Decoupled from the live `view`
