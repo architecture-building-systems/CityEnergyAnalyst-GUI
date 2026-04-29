@@ -19,7 +19,11 @@ import {
 
 import { useCanvasStore } from '../stores/canvasStore';
 import CanvasMap from './CanvasMap';
-import { FeatureCardShell, sectionDividerStyle } from './featureCardCommon';
+import {
+  FeatureCardShell,
+  findFamilyForFeature,
+  sectionDividerStyle,
+} from './featureCardCommon';
 import {
   MapInstanceContext,
   MapLayerScenarioOverrideContext,
@@ -159,6 +163,22 @@ const FeatureCardMap = ({
     previouslyLinkedRef.current = mapsLinked;
   }, [mapsLinked, store]);
 
+  // Mirror columns (numeric `columnIndex > 0` in compare mode) are
+  // read-only follower columns. `originWhatifName` is the value
+  // the origin column has currently picked — used by
+  // `FeatureCardMapBody` to align mirrors to the same comparison
+  // axis (and surface a mismatch overlay when origin's pick isn't
+  // available in the mirror's scenario).
+  const isMirror = typeof columnIndex === 'number' && columnIndex > 0;
+  const originWhatifName = useCanvasStore((s) => {
+    if (!isMirror) return null;
+    const originCards = s.columnCards?.[0] || [];
+    const originCard = originCards.find((c) => c.id === id);
+    const value = originCard?.mapLayerParameters?.whatif_name;
+    if (Array.isArray(value)) return value[0] ?? null;
+    return value ?? null;
+  });
+
   const categoryInfo = data?.categories?.find((c) => c.name === category);
   const layerInfo = categoryInfo?.layers?.find((l) => l.name === layer);
   const title = layerInfo?.label || categoryInfo?.label || category || 'Map';
@@ -189,6 +209,8 @@ const FeatureCardMap = ({
             enableEdit={enableEdit}
             categoryInfo={categoryInfo}
             layerInfo={layerInfo}
+            isMirror={isMirror}
+            originWhatifName={originWhatifName}
           />
         </FeatureCardShell>
       </MapLayerScenarioOverrideContext.Provider>
@@ -213,38 +235,63 @@ const FeatureCardMapBody = ({
   enableEdit,
   categoryInfo,
   layerInfo,
+  // Compare-mode signals: mirrors track origin's `whatif_name`
+  // (the comparison axis). When origin's pick isn't in this
+  // column's `/choices` we surface a mismatch overlay rather
+  // than silently substituting a different what-if — see
+  // `whatifMismatch` below.
+  isMirror = false,
+  originWhatifName = null,
 }) => {
   // Resolve a complete, scenario-valid parameter set before the
   // first layer fetch. Static defaults (`default != null`) come
   // straight from the schema; dynamic params (`selector === 'choice'`
-  // with `default: null`, e.g. `what_if_name`) need a `/choices` round
+  // with `default: null`, e.g. `whatif_name`) need a `/choices` round
   // trip — copying their `null` defaults verbatim would 400 the fetch
   // and paint a false-positive error overlay.
   const mapLayerParameters = useScopedMapLayerParameters();
   const setMapLayerParameters = useScopedSetMapLayerParameters();
+  // Mismatch error specific to the mirror "origin's what-if isn't in
+  // this column" case. Distinct from the layer-fetch error so we
+  // can render a different overlay copy. Holds the offending value
+  // *and* the column's available choices so the overlay can list
+  // alternatives the user could pick instead.
+  const [whatifMismatch, setWhatifMismatch] = useState(null);
   const initialisedKeyRef = useRef(null);
-  const initKey = `${project}::${scenario}::${categoryInfo?.name}::${layerInfo?.name}`;
+  // Origin's pick is part of the init key — when origin changes
+  // (or first lands after mirror's mount), the effect re-runs and
+  // re-resolves whatif_name against the new value.
+  const initKey = `${project}::${scenario}::${categoryInfo?.name}::${layerInfo?.name}::${originWhatifName ?? ''}`;
   useEffect(() => {
-    if (mapLayerParameters != null) return;
     if (!project || !scenario) return;
     if (!categoryInfo?.name || !layerInfo?.parameters) return;
     if (initialisedKeyRef.current === initKey) return;
-    initialisedKeyRef.current = initKey;
 
     const paramSchema = layerInfo.parameters;
     let cancelled = false;
 
     const resolveDefaults = async () => {
-      const out = {};
+      // Start from the existing parameters so re-runs (origin
+      // changing) preserve other params the user may have edited.
+      const out = { ...(mapLayerParameters || {}) };
+      let mismatch = null;
       for (const [key, value] of Object.entries(paramSchema)) {
-        if (value?.default != null) out[key] = value.default;
+        if (value?.default != null && out[key] === undefined) {
+          out[key] = value.default;
+        }
       }
       // Schema iteration order matches `expected_parameters` insertion
       // order, so `depends_on` chains (e.g. `data-column` depends on
       // `whatif_name`) see prior resolutions in `out`.
       for (const [key, value] of Object.entries(paramSchema)) {
-        if (value?.default != null) continue;
         if (value?.selector !== 'choice') continue;
+        // For mirrors with a known origin pick, we need to verify
+        // it against this column's choices regardless of whether
+        // the slot is already filled — origin may have changed
+        // since the last init. For other params, skip when set.
+        const isWhatifSync =
+          isMirror && key === 'whatif_name' && originWhatifName != null;
+        if (!isWhatifSync && out[key] !== undefined) continue;
         try {
           const resp = await apiClient.post(
             `/api/map_layers/${categoryInfo.name}/${layerInfo.name}/${key}/choices`,
@@ -252,6 +299,23 @@ const FeatureCardMapBody = ({
           );
           const data = resp.data;
           const choices = Array.isArray(data) ? data : data?.choices;
+          if (isWhatifSync) {
+            const choiceValues = (choices || []).map((c) => c?.value ?? c);
+            if (choiceValues.includes(originWhatifName)) {
+              out[key] = value.multi ? [originWhatifName] : originWhatifName;
+            } else {
+              // Mark the mismatch and drop the param so the layer
+              // fetch doesn't 400 with an invalid what-if. Carry
+              // the column's available choices so the overlay can
+              // list them as substitutes.
+              mismatch = {
+                missing: originWhatifName,
+                available: choiceValues,
+              };
+              delete out[key];
+            }
+            continue;
+          }
           const first = choices?.[0];
           const firstValue = first?.value ?? first;
           if (firstValue != null) {
@@ -264,7 +328,12 @@ const FeatureCardMapBody = ({
         }
       }
       if (cancelled) return;
-      if (Object.keys(out).length) setMapLayerParameters(out);
+      // Mark complete only on success — a cancelled run (e.g.
+      // React strict-mode double-mount) leaves the ref unchanged
+      // so the follow-up run can still do the work.
+      initialisedKeyRef.current = initKey;
+      setWhatifMismatch(mismatch);
+      setMapLayerParameters(out);
     };
 
     resolveDefaults();
@@ -273,11 +342,13 @@ const FeatureCardMapBody = ({
     };
   }, [
     initKey,
-    mapLayerParameters,
     project,
     scenario,
     categoryInfo,
     layerInfo,
+    isMirror,
+    originWhatifName,
+    mapLayerParameters,
     setMapLayerParameters,
   ]);
 
@@ -311,18 +382,54 @@ const FeatureCardMapBody = ({
           // under the browser cap in compare mode (3+ columns).
           showBasemap={false}
         />
-        {layerError && (
+        {whatifMismatch && mapLayerParameters?.whatif_name == null ? (
           <div style={errorOverlayStyle}>
             <div style={errorCardStyle}>
               <div style={errorTitleStyle}>
-                {`No ${layerInfo?.label || 'layer'} data for `}
+                what-if-name{' '}
+                <span style={{ color: ACCENT_PURPLE }}>
+                  {whatifMismatch.missing}
+                </span>{' '}
+                not available in{' '}
                 <span style={{ color: ACCENT_PURPLE }}>{scenario}</span>
               </div>
-              <div style={errorBodyStyle}>
-                Run the upstream tool for this scenario first.
-              </div>
+              <ul style={errorListStyle}>
+                {whatifMismatch.available.length > 0 && (
+                  <li>
+                    Pick from{' '}
+                    <span style={{ color: ACCENT_PURPLE }}>
+                      {whatifMismatch.available.join(', ')}
+                    </span>
+                  </li>
+                )}
+                <li>
+                  Run{' '}
+                  {findFamilyForFeature(layerInfo?.name)?.label ||
+                    layerInfo?.label ||
+                    'the upstream tool'}{' '}
+                  for{' '}
+                  <span style={{ color: ACCENT_PURPLE }}>
+                    {whatifMismatch.missing}
+                  </span>
+                </li>
+                <li>Remove this row</li>
+              </ul>
             </div>
           </div>
+        ) : (
+          layerError && (
+            <div style={errorOverlayStyle}>
+              <div style={errorCardStyle}>
+                <div style={errorTitleStyle}>
+                  {`No ${layerInfo?.label || 'layer'} data for `}
+                  <span style={{ color: ACCENT_PURPLE }}>{scenario}</span>
+                </div>
+                <div style={errorBodyStyle}>
+                  Run the upstream tool for this scenario first.
+                </div>
+              </div>
+            </div>
+          )
         )}
       </div>
       <div style={legendBodyStyle}>
@@ -379,8 +486,8 @@ const errorOverlayStyle = {
 };
 
 const errorCardStyle = {
-  maxWidth: '90%',
-  padding: '14px 18px',
+  maxWidth: 320,
+  padding: '12px 14px',
   border: `1px solid ${BORDER_SUBTLE}`,
   borderLeft: `3px solid ${ERROR_RED}`,
   borderRadius: 8,
@@ -398,6 +505,14 @@ const errorTitleStyle = {
 const errorBodyStyle = {
   fontSize: 12,
   color: TEXT_SECONDARY,
+};
+
+const errorListStyle = {
+  margin: 0,
+  paddingLeft: 18,
+  fontSize: 12,
+  color: TEXT_SECONDARY,
+  lineHeight: 1.5,
 };
 
 // Hosts the Legend below the map. Width spans the card; height grows
