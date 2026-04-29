@@ -640,7 +640,23 @@ const CanvasColumn = ({
         <div style={titleRowStyle}>
           <div style={titleCardStyle}>
             {isOrigin && <span style={originBadgeStyle}>Current</span>}
-            <div style={headerStyle}>{headerText}</div>
+            {/* Cap the rendered name at 75% of the column's grid
+              width so a long scenario name
+              (`_ZRH_ copy 2_morph_stochastic`) doesn't blow the
+              title card past its column. The full name is preserved
+              in the `title` attribute for hover. */}
+            <div
+              style={{
+                ...headerStyle,
+                maxWidth: gridWidthPx * 0.75,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              title={headerText}
+            >
+              {headerText}
+            </div>
           </div>
           {onCloseColumn && (
             <Tooltip title="Remove from comparison" placement="bottom">
