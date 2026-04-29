@@ -304,6 +304,7 @@ const CanvasColumn = ({
   }, [cards]);
 
   const layout = useMemo(() => {
+    const mapEditable = !layoutLocked && !lockedReadOnly;
     const items = [
       {
         i: 'MAP',
@@ -313,10 +314,13 @@ const CanvasColumn = ({
         h: mapPos.h + legendExtraRows,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H + legendExtraRows,
-        // Frozen layout when Fix Layout (or Export View) is on — no
-        // drag, no resize handles.
-        isDraggable: !layoutLocked,
-        isResizable: !layoutLocked,
+        // Frozen when Fix Layout / Export View is on, AND in
+        // mirror columns: their primary tile follows origin's
+        // `mapPos` so drag/resize there would propagate the
+        // change back to every column. Origin owns map sizing.
+        isDraggable: mapEditable,
+        isResizable: mapEditable,
+        static: lockedReadOnly,
       },
     ];
     for (const card of sortedCards) {
@@ -688,7 +692,13 @@ const CanvasColumn = ({
                 <CanvasMap
                   project={project}
                   scenario={scenario}
-                  showToolbar={enableEdit}
+                  // Toolbar (layer toggle / extrude / reset
+                  // camera / reset compass) drives view-state and
+                  // visibility on the singleton — origin owns
+                  // those for the comparison. Mirrors render
+                  // their map but follow origin's state, so the
+                  // toolbar would be no-op clutter.
+                  showToolbar={enableEdit && !lockedReadOnly}
                 />
               </div>
               <ConstructionStandardLegend style={overviewLegendStyle} />
