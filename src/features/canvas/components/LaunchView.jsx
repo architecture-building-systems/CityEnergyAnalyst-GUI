@@ -73,7 +73,9 @@ const LaunchView = ({
         category,
         layer,
       });
-      onOpenMapBottom?.(newCardId);
+      // Launch is single-column → index 0 matches the slot
+      // FeatureCardMap registers under.
+      onOpenMapBottom?.(newCardId, 0);
       return;
     }
     const resolvedFeature = feature || inferFeature(targetCardId);
@@ -127,6 +129,7 @@ const LaunchView = ({
       <div style={enableEdit ? canvasStyle : canvasExportStyle}>
         <CanvasColumn
           columnDef={{ type: 'scenario', scenario }}
+          columnIndex={0}
           cards={cards}
           onEditPlot={handleEditPlot}
           onDeletePlot={handleDeletePlot}

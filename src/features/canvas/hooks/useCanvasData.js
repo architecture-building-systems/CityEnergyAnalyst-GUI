@@ -104,11 +104,22 @@ export const useFetchCustomPlot = (plotConfig, scenario) =>
   useQuery({
     queryKey: ['reports', 'custom-plot', plotConfig, scenario],
     queryFn: async () => {
+      // Strip any `scenario` field from `parameters` before sending.
+      // The top-level `scenario` field already sets the backend's
+      // `config.scenario_name` via `render_plot_html`. The plot-tool
+      // form bakes the user's selected scenario into
+      // `parameters.scenario` too, and the backend's parameter loop
+      // (`config.matching_parameters` → `parameter.set(...)`) would
+      // otherwise *override* the top-level scenario with the form's
+      // baked-in value — so every comparison column would render
+      // origin's data instead of its own. Top-level wins.
+      // eslint-disable-next-line no-unused-vars
+      const { scenario: _scenario, ...rest } = plotConfig.parameters || {};
       const { data } = await apiClient.post(
         '/api/reports/plot-custom',
         {
           script: plotConfig.script,
-          parameters: serializeParameters(plotConfig.parameters),
+          parameters: serializeParameters(rest),
           scenario,
         },
         { responseType: 'text' },

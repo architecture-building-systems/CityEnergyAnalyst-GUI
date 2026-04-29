@@ -2,10 +2,10 @@ import { Select } from 'antd';
 import { useMapStore } from 'features/map/stores/mapStore';
 import {
   useScopedMapLayerParameters,
+  useScopedProjectScenario,
   useScopedSelectedCategoryInfo,
 } from 'features/canvas/components/mapInstance';
 import { useEffect, useMemo, useState } from 'react';
-import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
 import { BinAnimationIcon } from 'assets/icons';
 import DeleteChoiceModal from './DeleteChoiceModal';
@@ -100,8 +100,10 @@ const ChoiceSelector = ({
   dependsOn,
   multi = false,
 }) => {
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
+  // Scoped to the column's scenario when rendered inside a
+  // FeatureCardMap / BottomCard with override; falls back to the
+  // project store outside any provider (main viewport).
+  const { project, scenarioName } = useScopedProjectScenario();
   const mapLayerParameters = useScopedMapLayerParameters();
   const choicesRevision = useMapStore((state) => state.choicesRevision);
   const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);

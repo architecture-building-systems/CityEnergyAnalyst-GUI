@@ -7,8 +7,36 @@ import {
   useMapLayerCategories,
   useMapCategoryStore,
 } from 'features/project/components/Cards/MapLayersCard/store';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { useCanvasStore } from '../stores/canvasStore';
+
+/**
+ * Per-column override for the `(project, scenarioName)` pair that
+ * map-layer choice/range/generate fetches use. Compare-mode mirrors
+ * publish their column's scenario through this context so dependent
+ * dropdowns (what-if-name, network-name, …) source options from
+ * *that* column rather than the project store's active scenario.
+ *
+ * `null` outside any provider → consumers fall through to the
+ * project store, preserving main-viewport behaviour.
+ */
+export const MapLayerScenarioOverrideContext = createContext(null);
+
+/**
+ * Reads `(project, scenarioName)` honouring the override above.
+ * Drop-in replacement for direct `useProjectStore` reads in
+ * components that may be mounted under a per-column scope.
+ */
+export const useScopedProjectScenario = () => {
+  const override = useContext(MapLayerScenarioOverrideContext);
+  const projectFallback = useProjectStore((s) => s.project);
+  const scenarioFallback = useProjectStore((s) => s.scenario);
+  return {
+    project: override?.project ?? projectFallback,
+    scenarioName: override?.scenarioName ?? scenarioFallback,
+  };
+};
 
 /**
  * Per-card map state for Canvas Builder's `FeatureCardMap`.
@@ -270,30 +298,38 @@ export const useScopedSelectedCategoryInfo = () => {
 
 // ── Card-store registry ────────────────────────────────────────────
 //
-// `FeatureCardMap` publishes its store under `card.id` so the
-// page-level `BottomCard` can look it up by the `activeMapCardId`
-// it gets from `CanvasPage`. Backed by a zustand store so
-// subscribers re-render when a card (un)registers.
+// `FeatureCardMap` publishes its store under `(columnIndex, cardId)`.
+// Compare-mode mirrors share `card.id`, so the column index is what
+// keeps each column's slot distinct in the registry — without it,
+// later mirrors would clobber earlier ones and BottomCard's edit
+// would land on whichever store happened to mount last.
 
 const useCardStoresRegistry = create(() => ({}));
 
-export const registerMapCardStore = (cardId, store) => {
-  useCardStoresRegistry.setState((s) => ({ ...s, [cardId]: store }));
+const registryKey = (columnIndex, cardId) =>
+  `${columnIndex ?? 'launch'}::${cardId}`;
+
+export const registerMapCardStore = (columnIndex, cardId, store) => {
+  const key = registryKey(columnIndex, cardId);
+  useCardStoresRegistry.setState((s) => ({ ...s, [key]: store }));
 };
 
-export const unregisterMapCardStore = (cardId) => {
+export const unregisterMapCardStore = (columnIndex, cardId) => {
+  const key = registryKey(columnIndex, cardId);
   useCardStoresRegistry.setState((s) => {
-    if (!(cardId in s)) return s;
+    if (!(key in s)) return s;
     const next = { ...s };
-    delete next[cardId];
+    delete next[key];
     return next;
   });
 };
 
 /**
- * Look up a card's per-card map store by id. Returns `null` when no
- * card is active or the card hasn't registered yet (briefly possible
- * between insert and mount).
+ * Look up a per-card map store by `(columnIndex, cardId)`. Returns
+ * `null` when no card is active or the card hasn't registered yet
+ * (briefly possible between insert and mount).
  */
-export const useMapCardStore = (cardId) =>
-  useCardStoresRegistry((s) => (cardId ? (s[cardId] ?? null) : null));
+export const useMapCardStore = (columnIndex, cardId) => {
+  const key = cardId ? registryKey(columnIndex, cardId) : null;
+  return useCardStoresRegistry((s) => (key ? (s[key] ?? null) : null));
+};

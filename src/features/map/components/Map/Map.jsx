@@ -528,7 +528,7 @@ const useMapLayers = (onHover = () => {}) => {
  * (hover is non-destructive). Everything else — camera controls,
  * map style, colour modes — still responds normally.
  */
-const DeckGLMap = ({ data, colors, interactive = true }) => {
+const DeckGLMap = ({ data, colors, interactive = true, showBasemap = true }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
 
@@ -894,12 +894,18 @@ const DeckGLMap = ({ data, colors, interactive = true }) => {
         onDragStart={onDragStart}
         onContextMenu={onContextMenu}
       >
-        <Map
-          ref={mapRef}
-          mapStyle={mapStyle}
-          minZoom={1}
-          attributionControl={false} // Disable default attribution control
-        />
+        {/* Omitting maplibre halves the tile's WebGL context count
+            (deck.gl + maplibre → deck.gl only). Canvas Builder's
+            FeatureCardMap uses this to stay under the browser's
+            per-tab WebGL ceiling in compare mode. */}
+        {showBasemap && (
+          <Map
+            ref={mapRef}
+            mapStyle={mapStyle}
+            minZoom={1}
+            attributionControl={false}
+          />
+        )}
       </DeckGL>
       <MapTooltip info={tooltipInfo} />
     </div>

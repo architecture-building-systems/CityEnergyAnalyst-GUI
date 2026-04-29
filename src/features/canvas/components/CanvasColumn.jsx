@@ -177,6 +177,9 @@ const CanvasColumn = ({
   lockedReadOnly = false,
   onCloseColumn,
   compactLayout = false,
+  // Forwarded to FeatureCardMap so per-card stores key on
+  // `(columnIndex, cardId)` — see mapInstance.js.
+  columnIndex = null,
 }) => {
   const project = useProjectStore((s) => s.project);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
@@ -207,21 +210,19 @@ const CanvasColumn = ({
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
 
-  // Non-origin columns in compare mode are pure mirrors — drop the
-  // editing callbacks at the top so the existing "callback ?
-  // wrapper : undefined" patterns below remove the corresponding
-  // chrome on FeatureCardShell. Map cards' onOpenMapBottom is
-  // also dropped so the bottom-card edit flow can't be triggered
-  // from a non-origin map. The display content (Plot HTML, KPI
-  // strips, MapLibre tiles) renders normally — only the editing
-  // surface is gated.
+  // Non-origin columns in compare mode keep per-column editing
+  // for individual plots' parameters (`onEditPlot`) and the
+  // map-card bottom flow (`onOpenMapBottom`). Everything that
+  // changes the row's *structure* — adding a new card, adding a
+  // plot to a card, deleting a plot, deleting the whole card,
+  // dragging / resizing layout — is origin-only and fans out
+  // across columns at the store layer so the row skeleton stays
+  // consistent.
   if (lockedReadOnly) {
-    onEditPlot = undefined;
-    onDeletePlot = undefined;
+    onAddCard = undefined;
     onDeleteCard = undefined;
     onAddPlotToCard = undefined;
-    onAddCard = undefined;
-    onOpenMapBottom = undefined;
+    onDeletePlot = undefined;
   }
   const showPerimeterPlus = enableEdit && !lockedReadOnly;
 
@@ -684,6 +685,7 @@ const CanvasColumn = ({
                   onDeleteCard={
                     onDeleteCard ? () => onDeleteCard(card.id) : undefined
                   }
+                  columnIndex={columnIndex}
                 />
               ) : (
                 <FeatureCardPlot

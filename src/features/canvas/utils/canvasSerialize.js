@@ -6,19 +6,16 @@
  *   `{ id, type, row, col, w, h, feature, plots, category, layer }`
  * — `row/col` because that's what `react-grid-layout` consumes.
  *
- * The YAML splits this into two slices keyed by card id:
+ * The YAML splits this into two slices:
  *   layout.yml       → `{ cards: { id: { x, y, w, h } } }`
- *   feature_card.yml → `{ cards: { id: { type, feature, plots, … } } }`
- *
- * Splitting lets the autosave path flush a layout-only change
- * (drag/resize) without rewriting card configs, and lets the
- * zip-export pass round-trip the full state with no extra metadata.
+ *                      (single shared map across columns; layout
+ *                      stays in lock-step in compare mode)
+ *   feature_card.yml → either `{ cards: ... }` (launch view) or
+ *                      `{ column_cards: { 0: ..., 1: ... } }`
+ *                      (compare views — per-column plot content)
  *
  * The view name carried in `canvas.yml` tells the load path which
- * store slice to populate back into:
- *   - `launch` → `launchCards`
- *   - `inter-scenario` / `inter-whatif` → `sharedCards`
- * Both populate the same single `cards` map on disk.
+ * shape to emit / read.
  */
 
 import { MAP_ANCHOR_W, MAP_ANCHOR_H } from '../stores/canvasStore';
@@ -47,7 +44,7 @@ const cardConfigFromStore = (card) => ({
   // Persisted high-water mark of the plot's reported pixel height
   // (`onPreferredHeight`). Carried so reload doesn't re-fire the
   // initial auto-grow against a user who has manually shrunk the
-  // card. Stays absent on cards that have never reported.
+  // card.
   max_reported_height_px: card.maxReportedHeightPx ?? null,
 });
 
@@ -55,7 +52,7 @@ const cardConfigFromStore = (card) => ({
  * Build the `{ canvas, layout, feature_card }` payload for a sparse
  * autosave PUT. Always returns the full bundle — the backend
  * accepts any subset, but we're not trying to track per-slice diffs
- * yet (cheaper to just resend everything for now).
+ * yet.
  */
 export function serializeCanvas(state) {
   const canvas = {
@@ -71,9 +68,6 @@ export function serializeCanvas(state) {
     })),
     maps_linked: !!state.mapsLinked,
     fix_layout: !!state.fixLayout,
-    // Persisted Compare-mode picks; survives Stop-comparing so
-    // Resume can re-enter without re-picking. snake_case mirrors
-    // the Pydantic field name on `CanvasMeta`.
     comparison_setup: state.comparisonSetup
       ? {
           kind: state.comparisonSetup.kind,
@@ -84,10 +78,6 @@ export function serializeCanvas(state) {
       : null,
   };
 
-  // Persist the shared `mapPos` as a single-entry list (every
-  // column mirrors the same primary-map tile position now). Old
-  // canvases without a stored mapPos fall back to defaults on
-  // load.
   const layout = {
     schema_version: SCHEMA_VERSION,
     map_positions: state.mapPos
@@ -106,16 +96,35 @@ export function serializeCanvas(state) {
   const featureCard = {
     schema_version: SCHEMA_VERSION,
     cards: {},
+    column_cards: {},
   };
 
-  // Single-grid shape on disk for every view: launch sources from
-  // `launchCards`, comparison views source from `sharedCards`.
-  const sourceCards =
-    state.view === 'launch' ? state.launchCards || [] : state.sharedCards || [];
-  sourceCards.forEach((card) => {
-    layout.cards[card.id] = cardLayoutFromStore(card);
-    featureCard.cards[card.id] = cardConfigFromStore(card);
-  });
+  const isCompare = state.view !== 'launch';
+
+  if (isCompare) {
+    // Layout: take from column 0 (every column has the same
+    // layout because `applyCardLayouts` fans out drag/resize
+    // updates). Per-column `feature_card.column_cards` holds the
+    // per-column plot / category / layer divergence.
+    const cols = state.columnCards || {};
+    const layoutSource = cols[0] || [];
+    layoutSource.forEach((card) => {
+      layout.cards[card.id] = cardLayoutFromStore(card);
+    });
+    Object.entries(cols).forEach(([idx, cards]) => {
+      const map = {};
+      (cards || []).forEach((card) => {
+        map[card.id] = cardConfigFromStore(card);
+      });
+      featureCard.column_cards[idx] = map;
+    });
+  } else {
+    // Launch view: single grid, single content map.
+    (state.launchCards || []).forEach((card) => {
+      layout.cards[card.id] = cardLayoutFromStore(card);
+      featureCard.cards[card.id] = cardConfigFromStore(card);
+    });
+  }
 
   return { canvas, layout, feature_card: featureCard };
 }
@@ -146,10 +155,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
         }
       : null,
     launchCards: [],
-    sharedCards: [],
-    // Restore the shared primary-map tile position. First entry of
-    // `map_positions` only — all columns share it now. Falls back
-    // to anchor defaults when the field is missing or empty.
+    columnCards: {},
     mapPos: layout?.map_positions?.[0]
       ? {
           x: layout.map_positions[0].x ?? DEFAULT_MAP_POS.x,
@@ -177,11 +183,25 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
   });
 
-  const targetSlice =
-    next.view === 'launch' ? next.launchCards : next.sharedCards;
-  Object.entries(feature_card?.cards || {}).forEach(([id, cfg]) => {
-    targetSlice.push(buildCard(id, (layout?.cards || {})[id], cfg));
-  });
+  const isCompare = next.view !== 'launch';
+  const sharedLayout = layout?.cards || {};
+
+  if (isCompare) {
+    // Per-column content from `feature_card.column_cards`. Layout
+    // is shared across columns so each column reads the same
+    // entry from `layout.cards` keyed by card id.
+    const cols = feature_card?.column_cards || {};
+    Object.entries(cols).forEach(([idx, configs]) => {
+      next.columnCards[idx] = Object.entries(configs).map(([id, cfg]) =>
+        buildCard(id, sharedLayout[id], cfg),
+      );
+    });
+  } else {
+    // Launch view: single content map.
+    Object.entries(feature_card?.cards || {}).forEach(([id, cfg]) => {
+      next.launchCards.push(buildCard(id, sharedLayout[id], cfg));
+    });
+  }
 
   return next;
 }

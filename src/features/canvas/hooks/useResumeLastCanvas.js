@@ -55,7 +55,7 @@ const EMPTY_CANVAS_STATE = {
   columns: [],
   parentScenario: null,
   launchCards: [],
-  sharedCards: [],
+  columnCards: {},
   comparisonSetup: null,
   canvasName: null,
   mapPos: { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H },

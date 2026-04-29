@@ -7,13 +7,13 @@ import {
   useScopedSelectedMapLayer,
   useScopedSetSelectedMapLayer,
   useScopedMapLayerParameters,
+  useScopedProjectScenario,
   useScopedSetMapLayerParameters,
   useScopedSetMapLayers,
   useScopedSelectedCategoryInfo,
 } from 'features/canvas/components/mapInstance';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Alert, Select } from 'antd';
-import { useProjectStore } from 'features/project/stores/projectStore';
 
 const LayerSelector = ({ layers, onLayerSelect }) => {
   const selectedLayer = useScopedSelectedMapLayer();
@@ -83,8 +83,10 @@ const MapLayerPropertiesCard = ({
   // form already owns (period, data-column, etc.).
   allowParamKeys,
 }) => {
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
+  // Compare-mode FeatureCardMap / BottomCard publish a per-column
+  // override via `MapLayerScenarioOverrideContext`; outside any
+  // provider falls back to the project store (main viewport).
+  const { project, scenarioName } = useScopedProjectScenario();
 
   const categoryInfo = useScopedSelectedCategoryInfo();
   const mapLayerParameters = useScopedMapLayerParameters();

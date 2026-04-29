@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Empty } from 'antd';
 
+import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
@@ -10,11 +11,38 @@ const ComparisonView = ({
   onOpenDrawer,
   onOpenMapBottom,
   editingPlotCardId,
+  editingColumnIndex,
   activeMapCardId,
+  activeMapColumnIndex,
 }) => {
+  const project = useProjectStore((s) => s.project);
   const columns = useCanvasStore((s) => s.columns);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
-  const sharedCards = useCanvasStore((s) => s.sharedCards);
+  const columnCards = useCanvasStore((s) => s.columnCards);
+
+  // Build the full scenario path the plot-tool form expects in
+  // its `general:scenario` parameter (POSIX-style join — works on
+  // every platform since the dashboard server normalises paths
+  // server-side). When the user clicks Edit on a plot in column
+  // N, we rewrite `parameters.scenario` to N's path so the
+  // form's pickers (what-if names, building lists, etc.) load
+  // from N's scenario folder rather than whichever scenario the
+  // plot was originally created under.
+  const scenarioPathFor = (columnIndex) => {
+    const name = columns[columnIndex]?.scenario;
+    if (!project || !name) return null;
+    return `${project}/${name}`;
+  };
+
+  const withColumnScenario = (plotConfig, columnIndex) => {
+    if (!plotConfig) return plotConfig;
+    const path = scenarioPathFor(columnIndex);
+    if (!path) return plotConfig;
+    return {
+      ...plotConfig,
+      parameters: { ...(plotConfig.parameters || {}), scenario: path },
+    };
+  };
   const removeColumn = useCanvasStore((s) => s.removeColumn);
   const addCard = useCanvasStore((s) => s.addCard);
   const addPlot = useCanvasStore((s) => s.addPlot);
@@ -25,87 +53,112 @@ const ComparisonView = ({
 
   const [compareOpen, setCompareOpen] = useState(false);
 
-  // Both comparison modes share a single card list across columns
-  // — one row per card, mirrored across every scenario / what-if
-  // column. No per-column dispatch needed; every store action
-  // targets the shared slice via `columnIndex = null`.
+  // Per-column model: layout (row/col/w/h) is fanned out across
+  // columns by the store, but plot content (plots, category,
+  // layer) is per-column. Plot-level handlers carry the column
+  // index so edits land in the right slice; row-level handlers
+  // (add card, delete card, drag/resize) fan out internally —
+  // the column index they're called with is just the originating
+  // column.
   const { handlePlotReady } = useYAxisAlignment(
     columns.length > 1,
     columns.length,
   );
 
-  const inferFeature = (targetCardId) => {
+  const inferFeature = (columnIndex, targetCardId) => {
     const target = targetCardId
-      ? sharedCards.find((c) => c.id === targetCardId)
+      ? (columnCards?.[columnIndex] || []).find((c) => c.id === targetCardId)
       : null;
     return target?.feature || 'demand';
   };
 
   // ── Drawer open handlers ──────────────────────────────────────
 
-  const handleAddCard = ({
-    targetCardId,
-    direction,
-    type = 'plot',
-    feature,
-    script,
-    category,
-    layer,
-  }) => {
-    // Map cards skip the plot-tool drawer — insert the card and
-    // open the page-level MapLayerProperties bottom card so the
-    // user can adjust the layer's parameters there.
-    if (type === 'map') {
-      const newCardId = addCard(null, {
-        targetCardId,
-        direction,
-        type: 'map',
-        category,
-        layer,
-      });
-      onOpenMapBottom?.(newCardId);
-      return;
-    }
-    const resolvedFeature = feature || inferFeature(targetCardId);
-    onOpenDrawer({
-      plotConfig: script ? { script } : null,
-      onSave: (plotConfig) =>
-        addCard(null, {
+  const handleAddCard =
+    (columnIndex) =>
+    ({ targetCardId, direction, type = 'plot', feature, script, category, layer }) => {
+      // Map cards skip the plot-tool drawer — insert the card and
+      // open the page-level MapLayerProperties bottom card so the
+      // user can adjust the layer's parameters there.
+      if (type === 'map') {
+        const newCardId = addCard(columnIndex, {
           targetCardId,
           direction,
-          type,
-          feature: resolvedFeature,
-          plotConfig,
-        }),
-    });
+          type: 'map',
+          category,
+          layer,
+        });
+        onOpenMapBottom?.(newCardId, columnIndex);
+        return;
+      }
+      const resolvedFeature = feature || inferFeature(columnIndex, targetCardId);
+      onOpenDrawer({
+        plotConfig: script ? { script } : null,
+        onSave: (plotConfig) =>
+          addCard(columnIndex, {
+            targetCardId,
+            direction,
+            type,
+            feature: resolvedFeature,
+            plotConfig,
+          }),
+      });
+    };
+
+  // Build the (project, scenarioName) pair the form needs to
+  // scope its choice generators to the column being edited.
+  const scenarioOverrideFor = (columnIndex) => {
+    const name = columns[columnIndex]?.scenario;
+    if (!project || !name) return null;
+    return { project, scenarioName: name };
   };
 
-  const handleAddPlotToCard = (cardId, script = null) => {
+  const handleAddPlotToCard = (columnIndex) => (cardId, script = null) => {
     onOpenDrawer({
       cardId,
+      // Stamp the originating column so CanvasPage can paint the
+      // editing purple stroke only on the column being edited
+      // (not on every column showing this card id).
+      columnIndex,
+      // Form scopes its parameter-schema fetch to this column's
+      // scenario via `ToolScenarioOverrideContext` in
+      // PlotEditModal — without this the form would always pull
+      // choices from the project's active scenario.
+      scenarioOverride: scenarioOverrideFor(columnIndex),
       plotConfig: script ? { script } : null,
-      onSave: (plotConfig) => addPlot(null, cardId, plotConfig),
+      onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
     });
   };
 
-  const handleEditPlot = (cardId, plotId) => {
+  const handleEditPlot = (columnIndex) => (cardId, plotId) => {
+    const cards = columnCards?.[columnIndex] || [];
     const existing =
-      sharedCards
-        .find((c) => c.id === cardId)
-        ?.plots.find((p) => p.id === plotId)?.plotConfig || null;
+      cards.find((c) => c.id === cardId)?.plots.find((p) => p.id === plotId)
+        ?.plotConfig || null;
     onOpenDrawer({
       cardId,
-      plotConfig: existing,
-      onSave: (plotConfig) => updatePlot(null, cardId, plotId, plotConfig),
+      columnIndex,
+      scenarioOverride: scenarioOverrideFor(columnIndex),
+      // Rewrite the saved plotConfig's `parameters.scenario` to
+      // this column's scenario before opening the form. The plot
+      // was originally created under origin's scenario; without
+      // this override the form's scenario picker would show
+      // origin's name even when editing in a mirror column.
+      plotConfig: withColumnScenario(existing, columnIndex),
+      onSave: (plotConfig) =>
+        updatePlot(columnIndex, cardId, plotId, plotConfig),
     });
   };
 
-  const handleDeletePlot = (cardId, plotId) => {
-    removePlot(null, cardId, plotId);
+  const handleDeletePlot = (columnIndex) => (cardId, plotId) => {
+    removePlot(columnIndex, cardId, plotId);
   };
 
-  const handleDeleteCard = (cardId) => {
-    removeCard(null, cardId);
+  // Row-level delete: fans out across every column via the store.
+  // The originating columnIndex is unused at the action layer;
+  // pass it through anyway so the dispatcher API stays uniform.
+  const handleDeleteCard = (columnIndex) => (cardId) => {
+    removeCard(columnIndex, cardId);
   };
 
   if (columns.length === 0) {
@@ -132,17 +185,27 @@ const ComparisonView = ({
               >
                 <CanvasColumn
                   columnDef={col}
-                  cards={sharedCards}
-                  onEditPlot={handleEditPlot}
-                  onDeletePlot={handleDeletePlot}
-                  onDeleteCard={handleDeleteCard}
+                  columnIndex={i}
+                  cards={columnCards?.[i] || []}
+                  onEditPlot={handleEditPlot(i)}
+                  onDeletePlot={handleDeletePlot(i)}
+                  onDeleteCard={handleDeleteCard(i)}
                   onPlotReady={handlePlotReady}
-                  onAddPlotToCard={handleAddPlotToCard}
-                  onAddCard={handleAddCard}
-                  onApplyLayouts={(updates) => applyCardLayouts(null, updates)}
+                  onAddPlotToCard={handleAddPlotToCard(i)}
+                  onAddCard={handleAddCard(i)}
+                  onApplyLayouts={(updates) => applyCardLayouts(i, updates)}
                   onOpenMapBottom={onOpenMapBottom}
-                  editingPlotCardId={editingPlotCardId}
-                  activeMapCardId={activeMapCardId}
+                  // Per-column editing stroke: pass the active
+                  // edit's card id only to the column it
+                  // originated from. Other columns see `null` and
+                  // skip the purple outline even though they hold
+                  // the same card id.
+                  editingPlotCardId={
+                    editingColumnIndex === i ? editingPlotCardId : null
+                  }
+                  activeMapCardId={
+                    activeMapColumnIndex === i ? activeMapCardId : null
+                  }
                   // Compare-mode chrome: leftmost is origin (full
                   // editing), the rest are read-only mirrors with
                   // an `×` to drop the column.

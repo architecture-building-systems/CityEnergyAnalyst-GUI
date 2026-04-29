@@ -91,6 +91,12 @@ const shiftForInsert = (cards, { row, col, direction }) => {
 const insertCardInto = (
   cards,
   { targetCard, direction, type, feature, plotConfig, category, layer },
+  // Optional override for compare-mode fan-out: every column
+  // gets the SAME card id and plot identities at insert time so
+  // the per-column dispatch can find the card across columns
+  // by id later. Plot configs may diverge over time via
+  // per-column edits.
+  override = {},
 ) => {
   let row = 0;
   let col = 0;
@@ -117,10 +123,20 @@ const insertCardInto = (
     }
   }
   const shifted = shiftForInsert(cards, { row, col, direction });
-  return [
-    ...shifted,
-    makeCard({ row, col, type, feature, plotConfig, category, layer }),
-  ];
+  const card = makeCard({
+    row,
+    col,
+    type,
+    feature,
+    plotConfig,
+    category,
+    layer,
+  });
+  // Apply override AFTER `makeCard` so the override's id / plots
+  // win over the freshly-generated ones.
+  if (override.id) card.id = override.id;
+  if (override.plots) card.plots = override.plots;
+  return [...shifted, card];
 };
 
 export const useCanvasStore = create((set, get) => ({
@@ -132,13 +148,17 @@ export const useCanvasStore = create((set, get) => ({
   // Launch view's draft card grid. Single column, owned by the
   // store (rather than `LaunchView`'s local state) so the autosave
   // hook can persist a draft before the user has even decided what
-  // comparison mode to enter. Promoted to `sharedCards` on
-  // `enterInterScenario` / `enterInterWhatif`.
+  // comparison mode to enter. Cloned into every entry of
+  // `columnCards` when the user enters Compare mode.
   launchCards: [],
-  // Shared card grid for both comparison views — every column
-  // (scenarios in inter-scenario, what-ifs in inter-whatif) renders
-  // the same card list, one row per card.
-  sharedCards: [],
+  // Per-column card grid for comparison views. Keyed by column
+  // index as a string ("0", "1", …). Layout fields (row, col, w,
+  // h) stay in sync across columns — `applyCardLayouts` fans out
+  // any drag/resize so visual rows line up. Plot / category /
+  // layer content is *per column*: editing a plot in column 1
+  // doesn't propagate to column 0. Add / remove of a card row
+  // also fans out so the row skeleton stays consistent.
+  columnCards: {},
 
   // When `true`, every Map card mirrors the column's primary map
   // (camera, layer toggles, colour mode, etc.) and the FeatureCardMap
@@ -280,8 +300,15 @@ export const useCanvasStore = create((set, get) => ({
       view: 'inter-scenario',
       columns,
       parentScenario: null,
-      sharedCards:
-        state.view === 'launch' ? state.launchCards : state.sharedCards,
+      // Seed every column with a clone of the source cards so the
+      // initial config matches across columns. Per-column edits
+      // diverge from there. Coming *from* a previous compare
+      // mode, keep that mode's columnCards (the user's per-column
+      // edits survive the kind-switch).
+      columnCards:
+        state.view === 'launch'
+          ? cloneCardsAcrossColumns(state.launchCards, columns.length)
+          : reshapeColumnCards(state.columnCards, columns.length),
       launchCards: state.view === 'launch' ? [] : state.launchCards,
       comparisonSetup: {
         kind: 'inter-scenario',
@@ -300,8 +327,10 @@ export const useCanvasStore = create((set, get) => ({
       view: 'inter-whatif',
       columns,
       parentScenario,
-      sharedCards:
-        state.view === 'launch' ? state.launchCards : state.sharedCards,
+      columnCards:
+        state.view === 'launch'
+          ? cloneCardsAcrossColumns(state.launchCards, columns.length)
+          : reshapeColumnCards(state.columnCards, columns.length),
       launchCards: state.view === 'launch' ? [] : state.launchCards,
       comparisonSetup: {
         kind: 'inter-whatif',
@@ -341,8 +370,14 @@ export const useCanvasStore = create((set, get) => ({
       view: 'launch',
       columns: [],
       parentScenario: null,
-      launchCards: state.sharedCards,
-      sharedCards: [],
+      // Fold the origin column's cards back into launchCards
+      // (column 0 is the origin in compare mode; other columns'
+      // per-column edits are discarded — they only existed for
+      // the comparison view). The user can re-enter compare via
+      // the saved `comparisonSetup` and the same starting cards
+      // will be cloned into each new column.
+      launchCards: state.columnCards?.[0] || [],
+      columnCards: {},
     })),
 
   /**
@@ -358,7 +393,7 @@ export const useCanvasStore = create((set, get) => ({
       columns: [],
       parentScenario: null,
       launchCards: [],
-      sharedCards: [],
+      columnCards: {},
       comparisonSetup: null,
       mapPos: { ...DEFAULT_MAP_POS },
     }),
@@ -379,135 +414,198 @@ export const useCanvasStore = create((set, get) => ({
   },
 
   removeColumn: (index) => {
-    const { columns } = get();
+    const { columns, columnCards } = get();
     const next = columns.filter((_, i) => i !== index);
     // When the last non-origin column is dropped (`columns` falls
     // to ≤ 1) there's nothing left to compare — fold back to
     // launch view so the user isn't stranded in a single-column
-    // compare layout. Cards survive (`sharedCards` → `launchCards`)
-    // and `comparisonSetup` stays intact so the `+` button can
-    // re-enter with the previous picks pre-filled.
+    // compare layout. Origin's cards survive as the new
+    // `launchCards`; `comparisonSetup` stays intact so the `+`
+    // button can re-enter with the previous picks pre-filled.
     if (next.length <= 1) {
-      set((state) => ({
+      set({
         view: 'launch',
         columns: [],
         parentScenario: null,
-        launchCards: state.sharedCards,
-        sharedCards: [],
-      }));
+        launchCards: columnCards?.[0] || [],
+        columnCards: {},
+      });
       return;
     }
-    set({ columns: next });
+    // Re-key the surviving columns so indices stay 0..n-1 (the
+    // canvas columns array is positional, not name-keyed).
+    const nextCards = {};
+    next.forEach((_, newIdx) => {
+      const oldIdx = newIdx >= index ? newIdx + 1 : newIdx;
+      nextCards[newIdx] = columnCards[oldIdx] || [];
+    });
+    set({ columns: next, columnCards: nextCards });
   },
 
   // ── Card helpers ────────────────────────────────────────────
 
-  // Read the cards array for a given dispatch target. Two cases:
-  //   `'launch'` → the launch view's draft cards
-  //   anything else → the shared grid (mirrored across every
-  //                   column in inter-scenario / inter-whatif)
-  // The `columnIndex` parameter is preserved on every action so
-  // callers don't have to know which slice they're targeting; the
-  // dispatcher handles it.
+  // Read the cards array for a given dispatch target.
+  //   `'launch'` → launch view's single draft list
+  //   number     → comparison view's per-column list
+  // Helpers for the per-column-cards model: row-level operations
+  // (add / remove / applyCardLayouts) fan out across every
+  // column; plot-level operations (add / update / remove plot)
+  // touch only the target column.
   getCards: (columnIndex) => {
     const state = get();
     if (columnIndex === 'launch') return state.launchCards;
-    return state.sharedCards;
+    return state.columnCards?.[columnIndex] || [];
   },
 
   setCards: (columnIndex, next) => {
     if (columnIndex === 'launch') {
       set({ launchCards: next });
     } else {
-      set({ sharedCards: next });
+      set((state) => ({
+        columnCards: { ...state.columnCards, [columnIndex]: next },
+      }));
     }
   },
 
   // ── Card management ─────────────────────────────────────────
 
   /**
-   * Add a new card to the grid.
-   * @param {number|null} columnIndex — null for shared modes
-   * @param {object} opts
-   * @param {string|null} opts.targetCardId — anchor card for `direction`
-   * @param {'right'|'bottom'|null} opts.direction
-   * @param {'plot'|'kpi'|'map'} [opts.type='plot']
-   * @param {string} opts.feature
-   * @param {object|null} opts.plotConfig — if provided, seeds first plot
-   * @returns {string} the new card's id
+   * Add a new card. In launch view, appends to `launchCards`; in
+   * compare view, fans out the *same* card (same id, same
+   * content seed) into every column so the row skeleton stays
+   * consistent across columns. The originating column is the one
+   * whose `targetCardId` anchored the insert — its current cards
+   * drive the position math; other columns get the card inserted
+   * at the matching position keyed off the same `targetCardId`.
    */
   addCard: (
     columnIndex,
     { targetCardId, direction, type, feature, plotConfig, category, layer },
   ) => {
-    const { getCards, setCards } = get();
-    const cards = getCards(columnIndex);
-    // Pass the 'MAP' sentinel straight through — it's not a card ID,
-    // so `cards.find` would return nothing and the target would
-    // collapse to null. `insertCardInto` interprets the sentinel
-    // itself to decide the slot adjacent to the map.
-    const targetCard =
-      targetCardId === 'MAP'
-        ? 'MAP'
-        : targetCardId
-          ? cards.find((c) => c.id === targetCardId)
-          : null;
-    const next = insertCardInto(cards, {
-      targetCard,
-      direction,
-      type,
-      feature,
-      plotConfig,
-      category,
-      layer,
+    const state = get();
+    if (columnIndex === 'launch') {
+      const cards = state.launchCards;
+      const targetCard = resolveTargetCard(cards, targetCardId);
+      const next = insertCardInto(cards, {
+        targetCard,
+        direction,
+        type,
+        feature,
+        plotConfig,
+        category,
+        layer,
+      });
+      set({ launchCards: next });
+      return next[next.length - 1].id;
+    }
+    // Compare mode: generate one id, build the card once, then
+    // insert into every column at the matching anchor. Plot ids
+    // are also generated once so each column starts with the
+    // same plot identity (their plotConfigs can diverge later).
+    const sharedId = makeId('card');
+    const sharedPlots =
+      plotConfig != null ? [{ id: makeId('plot'), plotConfig }] : [];
+    const updatedColumnCards = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      const targetCard = resolveTargetCard(cards, targetCardId);
+      updatedColumnCards[idx] = insertCardInto(
+        cards,
+        { targetCard, direction, type, feature, category, layer },
+        // Force a stable id + pre-built plots across columns so
+        // the per-column dispatch can find the card by id later.
+        { id: sharedId, plots: sharedPlots },
+      );
     });
-    setCards(columnIndex, next);
-    return next[next.length - 1].id;
-  },
-
-  removeCard: (columnIndex, cardId) => {
-    const { getCards, setCards } = get();
-    setCards(
-      columnIndex,
-      getCards(columnIndex).filter((c) => c.id !== cardId),
-    );
+    set({ columnCards: updatedColumnCards });
+    return sharedId;
   },
 
   /**
-   * Apply a batch of position/size updates emitted by
-   * react-grid-layout's `onLayoutChange`. Each update is
-   * `{ id, row?, col?, w?, h? }` — fields are sparse so the caller
-   * can omit dimensions that compact-layout mode forces (e.g.
-   * `col` and `w` are not user-controlled in compare mode and
-   * shouldn't be overwritten on every drag). Cards not in the
-   * batch are left alone.
+   * Remove a card across every column (compare mode) or from
+   * `launchCards` (launch view). Card row deletion is always a
+   * row-level operation: per-column independence applies to plot
+   * content, not to whether the row exists.
+   */
+  removeCard: (columnIndex, cardId) => {
+    const state = get();
+    if (columnIndex === 'launch') {
+      set({
+        launchCards: state.launchCards.filter((c) => c.id !== cardId),
+      });
+      return;
+    }
+    const updatedColumnCards = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updatedColumnCards[idx] = cards.filter((c) => c.id !== cardId);
+    });
+    set({ columnCards: updatedColumnCards });
+  },
+
+  /**
+   * Apply layout updates (row / col / w / h). In launch view,
+   * targets `launchCards`. In compare view, fans out across every
+   * column so the visual rows stay aligned even when the user
+   * drags from one column. Sparse fields are spread-merged so
+   * compact-mode (which omits `col`) doesn't clobber the stored
+   * launch-view free-form positions.
    */
   applyCardLayouts: (columnIndex, updates) => {
-    const { getCards, setCards } = get();
+    const state = get();
     const byId = new Map(updates.map((u) => [u.id, u]));
-    const next = getCards(columnIndex).map((c) => {
-      const u = byId.get(c.id);
-      if (!u) return c;
-      // Spread the update directly; `c.id` and `u.id` are equal,
-      // so the spread is a no-op for the id field.
-      return { ...c, ...u };
+    const merge = (cards) =>
+      cards.map((c) => {
+        const u = byId.get(c.id);
+        return u ? { ...c, ...u } : c;
+      });
+    if (columnIndex === 'launch') {
+      set({ launchCards: merge(state.launchCards) });
+      return;
+    }
+    const updatedColumnCards = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updatedColumnCards[idx] = merge(cards);
     });
-    setCards(columnIndex, next);
+    set({ columnCards: updatedColumnCards });
   },
 
   // ── Plot management (inside a card) ─────────────────────────
+  // - `addPlot` and `removePlot` are *row-level* in compare mode
+  //   (fan out across every column) so the plot list stays
+  //   aligned across columns.
+  // - `updatePlot` is per-column — editing a plot's parameters
+  //   in column 1 doesn't affect column 0's copy. That's where
+  //   the per-column independence actually lives.
 
   addPlot: (columnIndex, cardId, plotConfig) => {
-    const { getCards, setCards } = get();
-    const next = getCards(columnIndex).map((c) =>
-      c.id === cardId
-        ? {
-            ...c,
-            plots: [...c.plots, { id: makeId('plot'), plotConfig }],
-          }
-        : c,
-    );
-    setCards(columnIndex, next);
+    const state = get();
+    const isCompare = columnIndex !== 'launch';
+    if (!isCompare) {
+      const next = state.launchCards.map((c) =>
+        c.id === cardId
+          ? { ...c, plots: [...c.plots, { id: makeId('plot'), plotConfig }] }
+          : c,
+      );
+      set({ launchCards: next });
+      return;
+    }
+    // Compare mode: fan out the new plot across every column.
+    // One shared plot id so per-column `updatePlot` can find the
+    // matching plot across columns; one shared `plotConfig` seed
+    // so each column starts with the same parameters (and may
+    // diverge via per-column edits afterwards).
+    const sharedPlotId = makeId('plot');
+    const updated = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updated[idx] = cards.map((c) =>
+        c.id === cardId
+          ? {
+              ...c,
+              plots: [...c.plots, { id: sharedPlotId, plotConfig }],
+            }
+          : c,
+      );
+    });
+    set({ columnCards: updated });
   },
 
   updatePlot: (columnIndex, cardId, plotId, plotConfig) => {
@@ -526,14 +624,92 @@ export const useCanvasStore = create((set, get) => ({
   },
 
   removePlot: (columnIndex, cardId, plotId) => {
-    const { getCards, setCards } = get();
-    const next = getCards(columnIndex)
-      .map((c) => {
-        if (c.id !== cardId) return c;
-        return { ...c, plots: c.plots.filter((p) => p.id !== plotId) };
-      })
-      // Drop the card entirely if it ends up empty — keeps the grid tidy.
-      .filter((c) => c.plots.length > 0);
-    setCards(columnIndex, next);
+    const state = get();
+    const isCompare = columnIndex !== 'launch';
+    const updateOne = (cards) =>
+      cards
+        .map((c) => {
+          if (c.id !== cardId) return c;
+          return { ...c, plots: c.plots.filter((p) => p.id !== plotId) };
+        })
+        // Auto-clean empty cards in launch view only. In compare
+        // mode the row skeleton is shared across columns, so the
+        // empty-card auto-clean fires only when *every* column's
+        // card ends up empty (handled below after the fan-out).
+        .filter((c) => isCompare || c.plots.length > 0);
+    if (!isCompare) {
+      set({ launchCards: updateOne(state.launchCards) });
+      return;
+    }
+    // Compare mode: fan out the deletion across every column so
+    // the row stays in lock-step. Plot deletion is treated as a
+    // row-level operation (just like card add / delete and
+    // drag/resize); plot *editing* — `updatePlot` — remains
+    // per-column.
+    const updated = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updated[idx] = updateOne(cards);
+    });
+    // If every column's card now has zero plots, drop the row
+    // entirely from every column so an empty skeleton doesn't
+    // linger.
+    const allEmpty = Object.values(updated).every((cards) => {
+      const c = cards.find((x) => x.id === cardId);
+      return !c || c.plots.length === 0;
+    });
+    if (allEmpty) {
+      Object.keys(updated).forEach((idx) => {
+        updated[idx] = updated[idx].filter((c) => c.id !== cardId);
+      });
+    }
+    set({ columnCards: updated });
   },
 }));
+
+// Resolve a `targetCardId` into either the literal `'MAP'`
+// sentinel (for the map-tile edge `+`), the matching card object,
+// or `null` (insert from a corner).
+function resolveTargetCard(cards, targetCardId) {
+  if (targetCardId === 'MAP') return 'MAP';
+  if (!targetCardId) return null;
+  return cards.find((c) => c.id === targetCardId) ?? null;
+}
+
+// Deep-clone the launch-view cards into N column entries. Each
+// column gets its own card / plot identities so per-column edits
+// stay isolated.
+function cloneCardsAcrossColumns(launchCards, columnCount) {
+  const out = {};
+  for (let i = 0; i < columnCount; i++) {
+    out[i] = (launchCards || []).map((card) => ({
+      ...card,
+      plots: (card.plots || []).map((plot) => ({
+        id: plot.id,
+        plotConfig: { ...plot.plotConfig },
+      })),
+    }));
+  }
+  return out;
+}
+
+// When transitioning between compare modes (e.g. inter-scenario →
+// inter-whatif via a Compare-modal re-pick) the new column count
+// may differ. Pad short with clones of column 0; truncate long.
+function reshapeColumnCards(prev, columnCount) {
+  const next = {};
+  const seed = prev?.[0] || [];
+  for (let i = 0; i < columnCount; i++) {
+    if (prev?.[i]) {
+      next[i] = prev[i];
+    } else {
+      next[i] = seed.map((card) => ({
+        ...card,
+        plots: (card.plots || []).map((plot) => ({
+          id: plot.id,
+          plotConfig: { ...plot.plotConfig },
+        })),
+      }));
+    }
+  }
+  return next;
+}
