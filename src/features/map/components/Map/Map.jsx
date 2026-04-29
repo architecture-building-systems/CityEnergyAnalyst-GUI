@@ -576,18 +576,33 @@ const DeckGLMap = ({
       longitude: column.center.longitude,
     };
   }, [baseViewState, column?.center]);
+  // Mirror the live `column` and `viewState` values onto refs so
+  // `setViewState` can read them without listing them in its deps.
+  // Listing `viewState` made `setViewState` recreate on every
+  // animation frame, which recreated `_onViewStateChange`, which
+  // re-bound DeckGL's view-state handler, which re-fired
+  // onViewStateChange — a max-update-depth loop on lock-toggle
+  // when FlyToInterpolator was animating the title map's camera.
+  const columnRef = useRef(column);
+  const viewStateRef = useRef(viewState);
+  useEffect(() => {
+    columnRef.current = column;
+    viewStateRef.current = viewState;
+  });
   const setViewState = useCallback(
     (next) => {
-      const resolved = typeof next === 'function' ? next(viewState) : next;
-      if (column?.setCenter) {
-        column.setCenter({
+      const resolved =
+        typeof next === 'function' ? next(viewStateRef.current) : next;
+      const col = columnRef.current;
+      if (col?.setCenter) {
+        col.setCenter({
           latitude: resolved.latitude,
           longitude: resolved.longitude,
         });
       }
       setBaseViewState(resolved);
     },
-    [column, setBaseViewState, viewState],
+    [setBaseViewState],
   );
 
   const extruded = useScopedExtruded();

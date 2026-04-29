@@ -244,6 +244,61 @@ export const useCanvasStore = create((set, get) => ({
   bumpAlignmentRevision: () =>
     set((state) => ({ alignmentRevision: state.alignmentRevision + 1 })),
 
+  // Compare-mode mirror lock. When `true` (default) mirror columns
+  // strip layout affordances and inherit origin's positions / sizes
+  // / order via the layout fan-out in `applyCardLayouts`. When
+  // `false` every column edits its own layout independently — the
+  // fan-out is gated and drag/resize works on mirror cards / their
+  // title maps. Structural edits (add/delete card, add/edit/delete
+  // plot) and the title-map toolbar stay origin-only regardless, so
+  // every column shares the same row skeleton and the same
+  // singleton-driven map view. The Refresh button calls
+  // `resyncMirrorsToOrigin` to copy origin's positions back into
+  // every mirror — useful after a divergent unlock session.
+  mirrorsLocked: true,
+  setMirrorsLocked: (next) =>
+    set((state) =>
+      state.mirrorsLocked === next ? {} : { mirrorsLocked: next },
+    ),
+
+  // Copy origin column's per-card `row` / `col` / `w` / `h` into
+  // every other column. Used by the Refresh button so mirror
+  // layouts snap back to origin's even after the user drove them
+  // apart with the lock off. No-op outside compare mode.
+  resyncMirrorsToOrigin: () => {
+    const state = get();
+    const cols = state.columnCards || {};
+    const origin = cols[0];
+    if (!origin) return;
+    const positionById = new Map(
+      origin.map((c) => [c.id, { row: c.row, col: c.col, w: c.w, h: c.h }]),
+    );
+    const updated = {};
+    Object.entries(cols).forEach(([idx, cards]) => {
+      if (Number(idx) === 0) {
+        updated[idx] = cards;
+        return;
+      }
+      updated[idx] = cards.map((c) => {
+        const pos = positionById.get(c.id);
+        return pos ? { ...c, ...pos } : c;
+      });
+    });
+    // Promote origin's effective map size to the singleton before
+    // clearing overrides — origin may have resized its title map
+    // while mirrors were unlocked (the resize landed in
+    // `columnMapPos['0']`, not in `mapPos`), and the user expects
+    // refresh to snap *every* column to origin's *current* size,
+    // not the stale singleton from before the unlock session.
+    const originMapPos = state.columnMapPos['0'] ?? state.mapPos;
+    set({
+      columnCards: updated,
+      mapPos: originMapPos,
+      columnMapPos: {},
+      alignmentRevision: state.alignmentRevision + 1,
+    });
+  },
+
   // Counter the refresh button bumps to refit every column's
   // primary map back to its zone-bbox centre. Each `CanvasColumn`
   // watches it and resets its local `MapColumnContext.center` —
@@ -272,6 +327,29 @@ export const useCanvasStore = create((set, get) => ({
         return {};
       }
       return { mapPos: next };
+    }),
+
+  // Per-column override for the title-map tile size. When mirrors
+  // are unlocked, each column writes its own resize here so the
+  // singleton `mapPos` (origin's size) doesn't propagate. When
+  // mirrors are locked again, the override is ignored — every
+  // column reads `mapPos`. Refresh clears every override so the
+  // row snaps back to origin's size.
+  columnMapPos: {},
+  setColumnMapPos: (columnIndex, next) =>
+    set((state) => {
+      const key = String(columnIndex);
+      const cur = state.columnMapPos[key];
+      if (
+        cur &&
+        next.x === cur.x &&
+        next.y === cur.y &&
+        next.w === cur.w &&
+        next.h === cur.h
+      ) {
+        return {};
+      }
+      return { columnMapPos: { ...state.columnMapPos, [key]: next } };
     }),
 
   // Each column publishes the row allowance its own legend needs
@@ -604,6 +682,19 @@ export const useCanvasStore = create((set, get) => ({
       });
     if (columnIndex === 'launch') {
       set({ launchCards: merge(state.launchCards) });
+      return;
+    }
+    // When mirrors are unlocked, each column owns its own layout —
+    // origin's drag/resize stays in column 0, mirrors' edits stay
+    // in their column. When locked, fan out so every column tracks
+    // origin's positions.
+    if (state.mirrorsLocked === false) {
+      set({
+        columnCards: {
+          ...state.columnCards,
+          [columnIndex]: merge(state.columnCards?.[columnIndex] || []),
+        },
+      });
       return;
     }
     const updatedColumnCards = {};

@@ -6,7 +6,12 @@ import GridLayout, { setTopLeft } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-import { CreateNewIcon, RefreshIcon } from 'assets/icons';
+import {
+  CreateNewIcon,
+  LockOffIcon,
+  LockOnIcon,
+  RefreshIcon,
+} from 'assets/icons';
 import {
   iconMap,
   PLOT_GROUPS,
@@ -193,8 +198,41 @@ const CanvasColumn = ({
   const layoutLocked = useCanvasStore((s) => s.fixLayout);
   const alignmentRevision = useCanvasStore((s) => s.alignmentRevision);
   const bumpAlignmentRevision = useCanvasStore((s) => s.bumpAlignmentRevision);
-  const mapPos = useCanvasStore((s) => s.mapPos);
-  const setMapPos = useCanvasStore((s) => s.setMapPos);
+  const mirrorsLocked = useCanvasStore((s) => s.mirrorsLocked);
+  const setMirrorsLocked = useCanvasStore((s) => s.setMirrorsLocked);
+  const resyncMirrorsToOrigin = useCanvasStore(
+    (s) => s.resyncMirrorsToOrigin,
+  );
+  const singletonMapPos = useCanvasStore((s) => s.mapPos);
+  const setSingletonMapPos = useCanvasStore((s) => s.setMapPos);
+  const columnMapPosOverride = useCanvasStore(
+    (s) => s.columnMapPos[String(columnIndex)],
+  );
+  const setColumnMapPos = useCanvasStore((s) => s.setColumnMapPos);
+  // When mirrors are unlocked, this column owns its title-map size
+  // via `columnMapPos[columnIndex]`; reads fall through to the
+  // singleton until the user resizes (the override slot starts
+  // empty). When locked, every column reads the singleton so
+  // origin's resize fans out and mirrors stay in lock-step.
+  const useColumnMapPos = !mirrorsLocked && columnIndex !== null;
+  const mapPos = useColumnMapPos
+    ? (columnMapPosOverride ?? singletonMapPos)
+    : singletonMapPos;
+  const setMapPos = useCallback(
+    (next) => {
+      if (useColumnMapPos) setColumnMapPos(columnIndex, next);
+      else setSingletonMapPos(next);
+    },
+    [useColumnMapPos, columnIndex, setColumnMapPos, setSingletonMapPos],
+  );
+
+  // Mirror columns are *layout-editable* when the user has
+  // unlocked mirrors via the title-row lock toggle. Origin is
+  // always layout-editable. Structural editing (add/delete card,
+  // add/edit/delete plot) is governed by `lockedReadOnly` and
+  // stays origin-only regardless — the comparison view assumes
+  // every column shares the same row skeleton.
+  const layoutEditableHere = !lockedReadOnly || !mirrorsLocked;
 
   // True while the user is actively dragging or resizing a tile.
   // Used to add `DRAG_BUFFER_COLS` of east-edge headroom only
@@ -205,12 +243,13 @@ const CanvasColumn = ({
   const startInteract = useCallback(() => setIsInteracting(true), []);
   const stopInteract = useCallback(() => setIsInteracting(false), []);
 
-  // Mirror cards include the alignment revision in their layout
-  // `i` and DOM `key` so the Realign button forces a full rebuild
-  // of the mirror's react-grid-layout (rgl caches internal layout
-  // state and doesn't always re-pick up new y values on
-  // subsequent renders). Origin's keys are stable so its plots
-  // don't remount on click.
+  // Mirror cards carry the alignment revision in their layout `i`
+  // and DOM `key` so Refresh forces a full rgl rebuild from the
+  // resynced positions (rgl's internal layout state can drift from
+  // the layout prop). Origin's keys are stable so its plots don't
+  // remount on click. Mirrors keep the suffix in both lock states —
+  // unlocked mirrors still need the rebuild after Refresh copies
+  // origin's positions back into them.
   const cardKey = (cardId) =>
     lockedReadOnly ? `${cardId}::r${alignmentRevision}` : cardId;
 
@@ -363,7 +402,17 @@ const CanvasColumn = ({
   }, [cards]);
 
   const layout = useMemo(() => {
-    const mapEditable = !layoutLocked && !lockedReadOnly;
+    // Title map: origin-owned when mirrors are locked (singleton
+    // mapPos fans out to every column). When unlocked, each column
+    // owns its own `mapPos` via `columnMapPos` so mirror resizes
+    // stay local.
+    const mapEditable = !layoutLocked && layoutEditableHere;
+    // Feature cards: editable on origin always, on mirrors only
+    // when `mirrorsLocked === false`. When locked, mirrors are
+    // `static: true` so rgl's auto-compaction doesn't re-pack
+    // them by insertion order while their stored `row` values
+    // reflect origin's positions.
+    const cardsEditable = !layoutLocked && layoutEditableHere;
     const items = [
       {
         i: 'MAP',
@@ -373,34 +422,16 @@ const CanvasColumn = ({
         h: mapPos.h + legendExtraRows,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H + legendExtraRows,
-        // Frozen when Fix Layout / Export View is on, AND in
-        // mirror columns: their primary tile follows origin's
-        // `mapPos` so drag/resize there would propagate the
-        // change back to every column. Origin owns map sizing.
         isDraggable: mapEditable,
         isResizable: mapEditable,
-        static: lockedReadOnly,
+        static: !mapEditable,
       },
     ];
     for (const card of sortedCards) {
       // Compact layout pins every card to the column-left (single
-      // vertical stack). Width stays at the card's stored `w` so
-      // every column shows cards at the *origin* column's
-      // user-set width — non-origin columns are pure mirrors of
-      // the origin's card sizes (origin resize → sharedCards.w
-      // updates → every mirror re-renders at the new width).
+      // vertical stack). Width stays at the card's stored `w`.
       const cardX = compactLayout ? 0 : (card.col ?? 0);
       const cardW = card.w ?? DEFAULT_CARD_W;
-      // Non-origin columns in compare mode are pure mirrors —
-      // dragging or resizing here would mutate `sharedCards` and
-      // propagate to every column, which would confuse the
-      // "edit-only-on-origin" model. Lock both axes outright AND
-      // mark `static: true` so rgl's auto-compaction doesn't
-      // re-pack them by array iteration order — without `static`
-      // the mirror columns reorder back to insertion order even
-      // though their stored `row` values reflect the origin's
-      // drag, breaking visual sync.
-      const editable = !layoutLocked && !lockedReadOnly;
       items.push({
         i: cardKey(card.id),
         x: cardX,
@@ -409,14 +440,9 @@ const CanvasColumn = ({
         h: card.h ?? DEFAULT_CARD_H,
         minW: CARD_MIN_W,
         minH: CARD_MIN_H,
-        // In compact mode the x axis is "locked" by the layout
-        // memo (`x = 0`) and protected in the change handler (col
-        // updates are skipped). Drag/resize stays enabled on the
-        // origin column so the user can reorder vertically and
-        // resize w/h.
-        isDraggable: editable,
-        isResizable: editable,
-        static: lockedReadOnly,
+        isDraggable: cardsEditable,
+        isResizable: cardsEditable,
+        static: !cardsEditable,
       });
     }
     return items;
@@ -426,6 +452,7 @@ const CanvasColumn = ({
     legendExtraRows,
     layoutLocked,
     lockedReadOnly,
+    layoutEditableHere,
     compactLayout,
     alignmentRevision,
   ]);
@@ -448,36 +475,35 @@ const CanvasColumn = ({
       const right = item.x + item.w;
       if (right > maxRight) maxRight = right;
     }
-    const allowBuffer = isInteracting && !layoutLocked && !lockedReadOnly;
+    const allowBuffer = isInteracting && !layoutLocked && layoutEditableHere;
     const buffer = allowBuffer ? DRAG_BUFFER_COLS : 0;
     const cols = Math.max(MIN_COLS, maxRight + buffer);
     return {
       effectiveCols: cols,
       gridWidthPx: widthForCols(cols),
     };
-  }, [layout, layoutLocked, lockedReadOnly, isInteracting]);
+  }, [layout, layoutLocked, layoutEditableHere, isInteracting]);
 
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
   // when nothing actually changed.
   const handleLayoutChange = useCallback(
     (nextLayout) => {
-      // Mirror columns never propagate layout changes — every card
-      // is `static: true` and the column is read-only. Bail early
-      // so no stray updates land in `sharedCards`. Also avoids
-      // having to strip the alignment-revision suffix from
-      // `item.i` (mirrors append it to keys).
-      if (lockedReadOnly) return;
+      // Locked mirrors never propagate — their cards are `static:
+      // true`. Unlocked mirrors propagate *only* feature-card
+      // positions (their column's `applyCardLayouts`); they never
+      // touch `mapPos` because it's a singleton owned by origin.
+      if (lockedReadOnly && mirrorsLocked) return;
       const cardUpdates = [];
       for (const item of nextLayout) {
         if (item.i === 'MAP') {
           // The fed-in layout has `legendExtraRows` baked in, so
           // strip it out before storing — `mapPos.h` is the user's
-          // intended map height (no legend).
+          // intended map height (no legend). `setMapPos` routes to
+          // the singleton or this column's `columnMapPos` slot
+          // depending on `mirrorsLocked`; both setters dedup so the
+          // mount-time fire is a no-op.
           const userH = Math.max(CARD_MIN_H, item.h - legendExtraRows);
-          // Store-level setMapPos dedups internally — passing the
-          // same values is a no-op, so origin's onLayoutChange
-          // mount-time fire doesn't cause a stale write.
           setMapPos({ x: item.x, y: item.y, w: item.w, h: userH });
         } else {
           // Compact mode: persist row / w / h. Skip `col` — every
@@ -487,16 +513,20 @@ const CanvasColumn = ({
           // to survive a round-trip back). Width persists so the
           // user can resize cards horizontally on the origin
           // column and have every mirror follow.
+          // Mirror cards carry an `::r<rev>` suffix on their rgl
+          // `i`; strip it so `applyCardLayouts` finds the card by
+          // its real id when an unlocked mirror persists positions.
+          const cardId = item.i.split('::')[0];
           if (compactLayout) {
             cardUpdates.push({
-              id: item.i,
+              id: cardId,
               row: item.y,
               w: item.w,
               h: item.h,
             });
           } else {
             cardUpdates.push({
-              id: item.i,
+              id: cardId,
               row: item.y,
               col: item.x,
               w: item.w,
@@ -507,7 +537,14 @@ const CanvasColumn = ({
       }
       if (cardUpdates.length > 0) onApplyLayouts?.(cardUpdates);
     },
-    [onApplyLayouts, legendExtraRows, compactLayout, lockedReadOnly, setMapPos],
+    [
+      onApplyLayouts,
+      legendExtraRows,
+      compactLayout,
+      lockedReadOnly,
+      mirrorsLocked,
+      setMapPos,
+    ],
   );
 
   // Card auto-grow: FeatureCard reports its preferred pixel height
@@ -685,35 +722,51 @@ const CanvasColumn = ({
               </Tooltip>
             </div>
           )}
-          {/* Refresh button — only on the origin column in compare
-            mode. Bumps two counters:
-            - `alignmentRevision`: rebuilds every mirror's
-              react-grid-layout from the current `sharedCards.row`
-              values (rgl's internal layout state can drift from
-              the layout prop after origin drags reorder cards).
-              Origin's keys are stable so its plots don't remount.
-            - `columnRefitVersion`: each `CanvasColumn` recomputes
-              its primary map's home centre from its own zone
-              bbox — restores cross-geography compares (e.g.
-              Zurich + Singapore) after the user has panned
-              individual columns. */}
+          {/* Refresh resyncs every mirror to origin's positions /
+            sizes / order and refits each column's map to its zone
+            bbox. Lock toggles `mirrorsLocked` — on: mirrors track
+            origin; off: each column edits its own layout. Structural
+            edits (add/delete card, add/edit/delete plot) stay
+            origin-only either way. */}
           {compactLayout && isOrigin && enableEdit && (
-            <div className="cea-card-icon-button-container">
-              <Tooltip
-                title="Realign mirrors and refit maps to scenarios"
-                placement="bottom"
-              >
-                <Button
-                  type="text"
-                  icon={<RefreshIcon />}
-                  onClick={() => {
-                    bumpAlignmentRevision();
-                    bumpColumnRefitVersion();
-                  }}
-                  aria-label="Refresh comparison"
-                />
-              </Tooltip>
-            </div>
+            <>
+              <div className="cea-card-icon-button-container">
+                <Tooltip
+                  title="Realign mirrors to current and refit maps"
+                  placement="bottom"
+                >
+                  <Button
+                    type="text"
+                    icon={<RefreshIcon />}
+                    onClick={() => {
+                      resyncMirrorsToOrigin();
+                      bumpAlignmentRevision();
+                      bumpColumnRefitVersion();
+                    }}
+                    aria-label="Refresh comparison"
+                  />
+                </Tooltip>
+              </div>
+              <div className="cea-card-icon-button-container">
+                <Tooltip
+                  title={
+                    mirrorsLocked
+                      ? 'Unlock mirrors - let each column edit its own layout'
+                      : 'Lock mirrors - every column follows Current'
+                  }
+                  placement="bottom"
+                >
+                  <Button
+                    type="text"
+                    icon={mirrorsLocked ? <LockOnIcon /> : <LockOffIcon />}
+                    onClick={() => setMirrorsLocked(!mirrorsLocked)}
+                    aria-label={
+                      mirrorsLocked ? 'Unlock mirrors' : 'Lock mirrors'
+                    }
+                  />
+                </Tooltip>
+              </div>
+            </>
           )}
         </div>
 
@@ -767,12 +820,11 @@ const CanvasColumn = ({
                 <CanvasMap
                   project={project}
                   scenario={scenario}
-                  // Toolbar (layer toggle / extrude / reset
-                  // camera / reset compass) drives view-state and
-                  // visibility on the singleton — origin owns
-                  // those for the comparison. Mirrors render
-                  // their map but follow origin's state, so the
-                  // toolbar would be no-op clutter.
+                  // Origin only — mirror title maps share the
+                  // singleton view-state / visibility, so a mirror
+                  // toolbar would silently drive origin's state
+                  // (misleading clutter). Per-column title-map
+                  // independence is a separate follow-up.
                   showToolbar={enableEdit && !lockedReadOnly}
                 />
               </div>
