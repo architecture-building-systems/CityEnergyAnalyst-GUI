@@ -288,8 +288,19 @@ const FeatureCardMapBody = ({
     mapLayerParameters,
   );
 
+  // Surface the active what-if name (if the layer has one) so
+  // the user can read it without opening BottomCard. LCA layers
+  // declare the parameter as `whatif_name`; layers without one
+  // (thermal-network, demand, …) leave the subtitle absent.
+  const whatifValue = formatParamValue(mapLayerParameters?.whatif_name);
+
   return (
     <>
+      {whatifValue && (
+        <div style={subtitleStyle} title={whatifValue}>
+          {whatifValue}
+        </div>
+      )}
       <div style={mapBodyStyle}>
         <CanvasMap
           project={project}
@@ -322,6 +333,29 @@ const FeatureCardMapBody = ({
       </div>
     </>
   );
+};
+
+// Stringify a parameter value for display. Choice params can be
+// single-valued (string) or multi-valued (array); other shapes
+// (number, boolean) round-trip through `String(...)`. Returns
+// `null` for null/empty so the caller can skip rendering.
+const formatParamValue = (value) => {
+  if (value == null) return null;
+  if (Array.isArray(value)) {
+    if (!value.length) return null;
+    return value.join(', ');
+  }
+  return String(value);
+};
+
+const subtitleStyle = {
+  fontSize: 12,
+  color: TEXT_SECONDARY,
+  marginBottom: 8,
+  fontFamily: SYSTEM_FONT_STACK,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
 const mapBodyStyle = {
