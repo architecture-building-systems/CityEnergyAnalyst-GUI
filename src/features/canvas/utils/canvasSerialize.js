@@ -56,6 +56,10 @@ const cardConfigFromStore = (card) => ({
   // initial auto-grow against a user who has manually shrunk the
   // card.
   max_reported_height_px: card.maxReportedHeightPx ?? null,
+  // Text card body (TipTap HTML). Per-column — the text card row
+  // is mirrored across columns but the HTML is not fanned out, so
+  // each column can hold its own annotation.
+  html: card.html ?? null,
 });
 
 /**
@@ -192,6 +196,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     mapLayerParameters: configEntry.map_layer_parameters ?? undefined,
     filters: configEntry.map_filters ?? undefined,
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
+    html: configEntry.html ?? undefined,
   });
 
   const isCompare = next.view !== 'launch';

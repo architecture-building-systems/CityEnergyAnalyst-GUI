@@ -79,6 +79,13 @@ const LaunchView = ({
       onOpenMapBottom?.(newCardId, 'launch');
       return;
     }
+    if (type === 'text') {
+      // Text cards skip the plot-tool drawer entirely — they have
+      // no upstream config to pick. Insert empty; the user types
+      // into the TipTap editor directly.
+      addCard('launch', { targetCardId, direction, type: 'text' });
+      return;
+    }
     const resolvedFeature = feature || inferFeature(targetCardId);
     onOpenDrawer({
       plotConfig: script ? { script } : null,

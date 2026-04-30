@@ -30,6 +30,7 @@ Card {
   feature?,                          // 'plot' / 'kpi'
   plots?: [{ id, plotConfig }],      // 'plot'
   category?, layer?,                 // 'map'
+  html?,                             // 'text' (TipTap HTML, per-column)
 }
 ```
 
@@ -38,6 +39,7 @@ Card {
 | `plot`  | `FeatureCardPlot`   | Stacked Plotly plots + "Add a plot" pill      |
 | `kpi`   | `FeatureCardKpi`    | Single KPI strip for the feature              |
 | `map`   | `FeatureCardMap`    | Mirrors the column's primary map widget       |
+| `text`  | `FeatureCardText`   | TipTap rich-text editor for annotations       |
 
 Card positions are sparse 2D grid coordinates in `react-grid-layout`
 units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `CanvasColumn`). The column's
@@ -61,6 +63,8 @@ the rest are read-only mirrors.
 ```jsx
 {card.type === 'kpi' ? (
   <FeatureCardKpi card={card} ... />
+) : card.type === 'text' ? (
+  <FeatureCardText card={card} columnIndex={columnIndex} ... />
 ) : card.type === 'map' ? (
   <FeatureCardMap card={card} ... />
 ) : (

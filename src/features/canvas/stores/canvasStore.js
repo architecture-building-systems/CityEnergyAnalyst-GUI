@@ -81,6 +81,14 @@ export const canvasPersistableSelector = (state) => ({
 // `mapPos` field at boot and by `startOver` to reset.
 const DEFAULT_MAP_POS = { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H };
 
+// Text cards take the standard card width (matches plot / map /
+// kpi cards so the perimeter `+` lines up across types) but the
+// shortest sensible default height — annotations are typically
+// one or two lines. The user can drag down to a single row
+// (`CanvasColumn` overrides `minH` for text cards) or up to fit
+// longer copy.
+const TEXT_CARD_DEFAULT_H = 2;
+
 const makeCard = ({
   row,
   col,
@@ -91,18 +99,25 @@ const makeCard = ({
   type,
   category,
   layer,
-}) => ({
-  id: makeId('card'),
-  type: type ?? 'plot',
-  row,
-  col,
-  w: w ?? DEFAULT_CARD_W,
-  h: h ?? DEFAULT_CARD_H,
-  feature,
-  category,
-  layer,
-  plots: plotConfig != null ? [{ id: makeId('plot'), plotConfig }] : [],
-});
+}) => {
+  const cardType = type ?? 'plot';
+  const isText = cardType === 'text';
+  return {
+    id: makeId('card'),
+    type: cardType,
+    row,
+    col,
+    w: w ?? DEFAULT_CARD_W,
+    h: h ?? (isText ? TEXT_CARD_DEFAULT_H : DEFAULT_CARD_H),
+    feature,
+    category,
+    layer,
+    plots: plotConfig != null ? [{ id: makeId('plot'), plotConfig }] : [],
+    // Text cards carry their own per-column HTML (set via
+    // `setCardText`); start empty so the placeholder is visible.
+    html: isText ? '' : undefined,
+  };
+};
 
 // Shift cards along the affected row ('right') or column ('bottom') by
 // +1 to open space at (row, col). `direction === null` is a no-op.
@@ -868,6 +883,24 @@ export const useCanvasStore = create((set, get) => ({
     if (!target) return;
     if (shallowEqual(target.filters, filters)) return;
     const next = cards.map((c) => (c.id === cardId ? { ...c, filters } : c));
+    setCards(columnIndex, next);
+  },
+
+  /**
+   * Persist a text card's HTML payload onto the card itself —
+   * **per column only**. The text card row is mirrored across
+   * columns (size + position via `applyCardLayouts`), but the
+   * content is intentionally not fanned out so each column can
+   * carry its own annotation. No store action ever copies `html`
+   * between columns.
+   */
+  setCardText: (columnIndex, cardId, html) => {
+    const { getCards, setCards } = get();
+    const cards = getCards(columnIndex);
+    const target = cards.find((c) => c.id === cardId);
+    if (!target) return;
+    if (target.html === html) return;
+    const next = cards.map((c) => (c.id === cardId ? { ...c, html } : c));
     setCards(columnIndex, next);
   },
 

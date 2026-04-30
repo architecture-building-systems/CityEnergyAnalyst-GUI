@@ -147,9 +147,7 @@ const PlotEditModal = ({
       <div className="cea-tool-card-content" style={contentStyle}>
         {selectedScript ? (
           <ToolScenarioOverrideContext.Provider value={scenarioOverride}>
-            <ConfigProvider
-              theme={{ token: { colorPrimary: CEA_PURPLE } }}
-            >
+            <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
               <PlotTool
                 key={selectedScript}
                 script={selectedScript}

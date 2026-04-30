@@ -99,6 +99,12 @@ const ComparisonView = ({
         onOpenMapBottom?.(newCardId, columnIndex);
         return;
       }
+      // Text cards have no upstream config; skip the drawer and
+      // insert empty so the user can type directly into the editor.
+      if (type === 'text') {
+        addCard(columnIndex, { targetCardId, direction, type: 'text' });
+        return;
+      }
       const resolvedFeature =
         feature || inferFeature(columnIndex, targetCardId);
       onOpenDrawer({

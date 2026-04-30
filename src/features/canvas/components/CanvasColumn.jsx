@@ -39,6 +39,7 @@ import CanvasMap from './CanvasMap';
 import FeatureCardPlot from './FeatureCardPlot';
 import FeatureCardKpi from './FeatureCardKpi';
 import FeatureCardMap from './FeatureCardMap';
+import FeatureCardText from './FeatureCardText';
 import { MapColumnContext } from './mapInstance';
 import { PerimeterPlusButtons, computeExposure } from './PerimeterPlusButtons';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
@@ -432,6 +433,11 @@ const CanvasColumn = ({
       // vertical stack). Width stays at the card's stored `w`.
       const cardX = compactLayout ? 0 : (card.col ?? 0);
       const cardW = card.w ?? DEFAULT_CARD_W;
+      // Text cards can shrink to a single row — annotation cards
+      // should hug the rendered text instead of locking to the
+      // global 3-row minimum that makes plot/map/kpi cards
+      // legible.
+      const minH = card.type === 'text' ? 1 : CARD_MIN_H;
       items.push({
         i: cardKey(card.id),
         x: cardX,
@@ -439,7 +445,7 @@ const CanvasColumn = ({
         w: cardW,
         h: card.h ?? DEFAULT_CARD_H,
         minW: CARD_MIN_W,
-        minH: CARD_MIN_H,
+        minH,
         isDraggable: cardsEditable,
         isResizable: cardsEditable,
         static: !cardsEditable,
@@ -617,7 +623,7 @@ const CanvasColumn = ({
   // collapse to one click that adds the card directly.
   const buildSectionMenus = useCallback(
     (targetCardId, direction) => {
-      if (!onAddCard) return { mapItems: [], plotItems: [] };
+      if (!onAddCard) return { mapItems: [], plotItems: [], onPickText: null };
       const onPickMap = (category, layer) =>
         onAddCard({ targetCardId, direction, type: 'map', category, layer });
       const mapItems =
@@ -658,7 +664,12 @@ const CanvasColumn = ({
           script,
         }),
       );
-      return { mapItems, plotItems };
+      // Text card has no nested options — clicking the pill just
+      // adds an empty text card. Per-column content is whatever the
+      // user types in each column; the row itself is mirrored.
+      const onPickText = () =>
+        onAddCard({ targetCardId, direction, type: 'text' });
+      return { mapItems, plotItems, onPickText };
     },
     [onAddCard, mapData],
   );
@@ -857,6 +868,14 @@ const CanvasColumn = ({
                     project={project}
                     scenario={scenario}
                     whatif={whatif}
+                    onDeleteCard={
+                      onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                    }
+                  />
+                ) : card.type === 'text' ? (
+                  <FeatureCardText
+                    card={card}
+                    columnIndex={columnIndex}
                     onDeleteCard={
                       onDeleteCard ? () => onDeleteCard(card.id) : undefined
                     }

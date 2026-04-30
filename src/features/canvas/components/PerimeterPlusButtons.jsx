@@ -6,6 +6,7 @@ import {
   KpiCardIcon,
   MapCardIcon,
   PlotCardIcon,
+  TextCardIcon,
 } from 'assets/icons';
 
 import './PerimeterPlusButtons.css';
@@ -244,7 +245,7 @@ const PlusButton = ({
 // swaps to the reverse-animation variant. `onPick` triggers the
 // collapse after a leaf is chosen.
 const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
-  const { mapItems, plotItems } = sections;
+  const { mapItems, plotItems, onPickText } = sections;
   const isRow = direction === 'right';
   const containerStyle = isRow ? expandedRowStyle : expandedColumnStyle;
   const axis = isRow ? 'right' : 'down';
@@ -294,6 +295,17 @@ const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
           </Tooltip>
         </div>
       </Dropdown>
+      <div className={`cea-card-icon-button-container ${itemClass}`}>
+        <Tooltip title="Text" placement={tooltipPlacement}>
+          <Button
+            type="text"
+            icon={<TextCardIcon />}
+            onClick={onPickText}
+            disabled={!onPickText}
+            aria-label="Add a Text card"
+          />
+        </Tooltip>
+      </div>
       <div className={`cea-card-icon-button-container ${itemClass}`}>
         <Tooltip title="KPI (coming soon)" placement={tooltipPlacement}>
           <Button
