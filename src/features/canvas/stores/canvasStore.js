@@ -55,6 +55,28 @@ export const DEFAULT_CARD_H = 10;
 export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
+// Cap the undo history at 20 steps (oldest dropped on overflow).
+// Sized to match what the user expects from a desktop editor —
+// large enough to recover from a frantic drag-then-regret without
+// pinning indefinite memory growth on long sessions.
+const UNDO_STACK_LIMIT = 20;
+
+// Slice that round-trips through `canvas.yml` / `layout.yml` /
+// `feature_card.yml` and that the undo stack snapshots. Single
+// source of truth — `useCanvasPersistence` imports it as
+// `canvasPersistableSelector` to share the shape.
+export const canvasPersistableSelector = (state) => ({
+  view: state.view,
+  parentScenario: state.parentScenario,
+  columns: state.columns,
+  launchCards: state.launchCards,
+  columnCards: state.columnCards,
+  mapsLinked: state.mapsLinked,
+  fixLayout: state.fixLayout,
+  mapPos: state.mapPos,
+  comparisonSetup: state.comparisonSetup,
+});
+
 // Initial primary-map tile position. Used both by the store's
 // `mapPos` field at boot and by `startOver` to reset.
 const DEFAULT_MAP_POS = { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H };
@@ -244,6 +266,34 @@ export const useCanvasStore = create((set, get) => ({
   bumpAlignmentRevision: () =>
     set((state) => ({ alignmentRevision: state.alignmentRevision + 1 })),
 
+  // ── Undo ────────────────────────────────────────────────────
+  // Snapshot stack capped at `UNDO_STACK_LIMIT`. Each entry is a
+  // `canvasPersistableSelector`-shape snapshot, pushed by
+  // `useCanvasPersistence` on every debounced edit-flush — so a
+  // drag burst becomes a single undo step.
+  //
+  // `undoVersion` bumps on every undo apply. The persistence
+  // subscriber watches it so the undone state still gets flushed
+  // to disk but isn't re-pushed onto the stack.
+  undoStack: [],
+  undoVersion: 0,
+  pushUndoSnapshot: (snapshot) =>
+    set((state) => {
+      const next = state.undoStack.concat([snapshot]);
+      if (next.length > UNDO_STACK_LIMIT) next.shift();
+      return { undoStack: next };
+    }),
+  undo: () =>
+    set((state) => {
+      if (!state.undoStack.length) return {};
+      const last = state.undoStack[state.undoStack.length - 1];
+      return {
+        ...last,
+        undoStack: state.undoStack.slice(0, -1),
+        undoVersion: state.undoVersion + 1,
+      };
+    }),
+
   // Compare-mode mirror lock. When `true` (default) mirror columns
   // strip layout affordances and inherit origin's positions / sizes
   // / order via the layout fan-out in `applyCardLayouts`. When
@@ -398,6 +448,9 @@ export const useCanvasStore = create((set, get) => ({
   applyLoadedCanvas: (partial) =>
     set((state) => ({
       ...partial,
+      // Drop history — undo across a canvas swap would jump
+      // between unrelated documents.
+      undoStack: [],
       loadVersion: state.loadVersion + 1,
     })),
 
@@ -675,13 +728,37 @@ export const useCanvasStore = create((set, get) => ({
   applyCardLayouts: (columnIndex, updates) => {
     const state = get();
     const byId = new Map(updates.map((u) => [u.id, u]));
-    const merge = (cards) =>
-      cards.map((c) => {
+    // No-op guard: rgl fires `onLayoutChange` on mount and after
+    // prop-driven re-renders with the *same* positions. Without
+    // this dedup each such fire would write a fresh
+    // `columnCards` reference, the autosave subscriber would log
+    // it as an edit, and the user would need a second Cmd+Z to
+    // revert one real change.
+    let anyChanged = false;
+    const merge = (cards) => {
+      let changed = false;
+      const next = cards.map((c) => {
         const u = byId.get(c.id);
-        return u ? { ...c, ...u } : c;
+        if (!u) return c;
+        let same = true;
+        for (const k in u) {
+          if (k === 'id') continue;
+          if (c[k] !== u[k]) {
+            same = false;
+            break;
+          }
+        }
+        if (same) return c;
+        changed = true;
+        return { ...c, ...u };
       });
+      if (changed) anyChanged = true;
+      return changed ? next : cards;
+    };
     if (columnIndex === 'launch') {
-      set({ launchCards: merge(state.launchCards) });
+      const next = merge(state.launchCards);
+      if (!anyChanged) return;
+      set({ launchCards: next });
       return;
     }
     // When mirrors are unlocked, each column owns its own layout —
@@ -689,11 +766,11 @@ export const useCanvasStore = create((set, get) => ({
     // in their column. When locked, fan out so every column tracks
     // origin's positions.
     if (state.mirrorsLocked === false) {
+      const colCards = state.columnCards?.[columnIndex] || [];
+      const nextCol = merge(colCards);
+      if (!anyChanged) return;
       set({
-        columnCards: {
-          ...state.columnCards,
-          [columnIndex]: merge(state.columnCards?.[columnIndex] || []),
-        },
+        columnCards: { ...state.columnCards, [columnIndex]: nextCol },
       });
       return;
     }
@@ -701,6 +778,7 @@ export const useCanvasStore = create((set, get) => ({
     Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
       updatedColumnCards[idx] = merge(cards);
     });
+    if (!anyChanged) return;
     set({ columnCards: updatedColumnCards });
   },
 

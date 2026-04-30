@@ -23,7 +23,10 @@ import { useEffect, useRef } from 'react';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
 
-import { useCanvasStore } from '../stores/canvasStore';
+import {
+  canvasPersistableSelector,
+  useCanvasStore,
+} from '../stores/canvasStore';
 import { updateSavedCanvas } from '../api/canvas';
 import { serializeCanvas } from '../utils/canvasSerialize';
 
@@ -31,30 +34,6 @@ const DEBOUNCE_MS = 300;
 // 'saved' indicator briefly flashes after each successful PUT, then
 // fades back to 'idle' so the dot doesn't loiter between edits.
 const SAVED_FLASH_MS = 1500;
-
-// Only changes to these slices should trigger an autosave flush.
-// `canvasName` is deliberately *not* in here: it changes during
-// load / open / start-over transitions, not from user edits to the
-// canvas content itself, and including it would re-flush the same
-// content the moment a load finishes. Other no-edit transitions
-// (loading a saved canvas, importing a zip) bump `loadVersion` so
-// the hook resyncs its baseline silently instead of treating the
-// reset as an edit.
-// Slices serialised to disk by `serializeCanvas`. Any field that
-// round-trips through canvas.yml / layout.yml / feature_card.yml
-// must appear here, otherwise the autosave hook won't notice the
-// user's change and the new value is lost on the next reload.
-const PERSISTABLE_SELECTOR = (state) => ({
-  view: state.view,
-  parentScenario: state.parentScenario,
-  columns: state.columns,
-  launchCards: state.launchCards,
-  columnCards: state.columnCards,
-  mapsLinked: state.mapsLinked,
-  fixLayout: state.fixLayout,
-  mapPos: state.mapPos,
-  comparisonSetup: state.comparisonSetup,
-});
 
 const shallowEqual = (a, b) => {
   if (a === b) return true;
@@ -72,9 +51,14 @@ export function useCanvasPersistence() {
   // pending timer / in-flight request doesn't trigger re-renders.
   const timerRef = useRef(null);
   const lastSnapshotRef = useRef(
-    PERSISTABLE_SELECTOR(useCanvasStore.getState()),
+    canvasPersistableSelector(useCanvasStore.getState()),
   );
   const lastLoadVersionRef = useRef(useCanvasStore.getState().loadVersion);
+  const lastUndoVersionRef = useRef(useCanvasStore.getState().undoVersion);
+  // Snapshot to push onto the undo stack when the next debounced
+  // flush fires. Captured once per debounce burst (so a drag-tick
+  // sequence becomes a single undo step) and reset after the push.
+  const pendingUndoSnapshotRef = useRef(null);
   const inFlightRef = useRef(false);
   // Timer for reverting `autosaveStatus` from 'saved' back to
   // 'idle' after the brief confirmation flash. Held in a ref so a
@@ -133,9 +117,16 @@ export function useCanvasPersistence() {
 
     // Debounced edit flush — reads the live store because by the
     // time the timer fires, no load has intervened (a load would
-    // have flushed pre-load and cleared this timer below).
+    // have flushed pre-load and cleared this timer below). Also
+    // commits the pending undo-stack push at the same moment so
+    // a single drag burst is one undo step, not many.
     const flushLatest = () => {
       timerRef.current = null;
+      const pre = pendingUndoSnapshotRef.current;
+      if (pre != null) {
+        pendingUndoSnapshotRef.current = null;
+        useCanvasStore.getState().pushUndoSnapshot(pre);
+      }
       flushState(useCanvasStore.getState());
     };
 
@@ -150,13 +141,32 @@ export function useCanvasPersistence() {
           timerRef.current = null;
           flushState(prevState);
         }
+        pendingUndoSnapshotRef.current = null;
         lastLoadVersionRef.current = state.loadVersion;
-        lastSnapshotRef.current = PERSISTABLE_SELECTOR(state);
+        lastUndoVersionRef.current = state.undoVersion;
+        lastSnapshotRef.current = canvasPersistableSelector(state);
         return;
       }
 
-      const snapshot = PERSISTABLE_SELECTOR(state);
+      // Undo applied — flush the new state so disk matches, but
+      // don't push it back onto the undo stack (would loop).
+      if (state.undoVersion !== lastUndoVersionRef.current) {
+        lastUndoVersionRef.current = state.undoVersion;
+        lastSnapshotRef.current = canvasPersistableSelector(state);
+        pendingUndoSnapshotRef.current = null;
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(flushLatest, DEBOUNCE_MS);
+        return;
+      }
+
+      const snapshot = canvasPersistableSelector(state);
       if (shallowEqual(snapshot, lastSnapshotRef.current)) return;
+      // Capture the pre-edit snapshot once per debounce window so
+      // each burst of changes (drag tick stream, multi-write
+      // action) collapses into one undo step.
+      if (pendingUndoSnapshotRef.current == null) {
+        pendingUndoSnapshotRef.current = lastSnapshotRef.current;
+      }
       lastSnapshotRef.current = snapshot;
 
       if (timerRef.current) clearTimeout(timerRef.current);

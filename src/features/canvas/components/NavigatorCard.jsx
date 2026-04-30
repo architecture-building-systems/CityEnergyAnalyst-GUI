@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Button,
@@ -12,11 +12,12 @@ import {
   message as antdMessage,
 } from 'antd';
 import {
-  CheckOutlined,
+  CheckCircleFilled,
   LeftOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
 import {
+  BackIcon,
   BinAnimationIcon,
   CreateNewIcon,
   DuplicateIcon,
@@ -93,6 +94,26 @@ const NavigatorCard = () => {
   const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
   const autosaveStatus = useCanvasStore((s) => s.autosaveStatus);
+  const undo = useCanvasStore((s) => s.undo);
+  const canUndo = useCanvasStore((s) => s.undoStack.length > 0);
+
+  // Ctrl+Z (Win/Linux) / Cmd+Z (Mac) — same effect as the Back
+  // button. Skipped when focus is in a text-entry field so the
+  // browser's native input-undo still works there.
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key !== 'z' && e.key !== 'Z') return;
+      if (!(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+      const t = e.target;
+      const tag = t?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || t?.isContentEditable) return;
+      if (useCanvasStore.getState().undoStack.length === 0) return;
+      e.preventDefault();
+      useCanvasStore.getState().undo();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const queryClient = useQueryClient();
   const { data: savedCanvases } = useFetchSavedCanvases(project, scenario);
@@ -490,6 +511,17 @@ const NavigatorCard = () => {
             the call-to-action, so doubling up with a pulsing `+`
             would just compete for the user's eye. */}
         <AutosaveIndicator status={autosaveStatus} />
+        <Tooltip title={`Undo (${UNDO_SHORTCUT_HINT})`} placement="bottom">
+          <div className={iconWrapperClass} style={iconWrapperStyle}>
+            <Button
+              type="text"
+              icon={<BackIcon />}
+              onClick={undo}
+              disabled={!canUndo}
+              aria-label="Undo last edit"
+            />
+          </div>
+        </Tooltip>
         <CanvasSwitcher
           savedCanvases={savedCanvases}
           canvasName={canvasName}
@@ -663,7 +695,7 @@ const AutosaveIndicator = ({ status }) => {
   const icon = isSaving ? (
     <LoadingOutlined style={autosaveSavingIconStyle} />
   ) : (
-    <CheckOutlined style={autosaveSavedIconStyle} />
+    <CheckCircleFilled style={autosaveSavedIconStyle} />
   );
 
   return (
@@ -687,8 +719,11 @@ const autosaveIndicatorStyle = {
 // reads as "I'm working" without inventing a new colour.
 const autosaveSavingIconStyle = { fontSize: 12, color: '#1470AF' };
 
-// Slightly muted green — confirmation, not a system success toast.
-const autosaveSavedIconStyle = { fontSize: 12, color: '#52c41a' };
+// Solid green disc with a white tick inside — antd's `Filled`
+// variant draws the check mark in the inverse fill colour so the
+// `color` style controls the disc and the tick stays white. Sits
+// in the same green family as the job-card success state.
+const autosaveSavedIconStyle = { fontSize: 12, color: 'green' };
 
 /**
  * Dashboard switcher modelled after the pathway builder's
@@ -892,6 +927,15 @@ const canvasOptionDeleteIconStyle = {
 // raised tiles.
 const iconWrapperClass = 'cea-card-icon-button-container';
 const iconWrapperStyle = { background: '#fff' };
+
+// Mac vs. Windows/Linux shortcut hint for the Back button tooltip.
+// Computed once at module load — `navigator.platform` doesn't change
+// across renders.
+const UNDO_SHORTCUT_HINT =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+    ? '⌘Z'
+    : 'Ctrl+Z';
 
 // Matches the main viewport's black toolbar height — 24px icon +
 // 2×8px icon padding + 2×6px container padding ≈ 52px. Kept at 52

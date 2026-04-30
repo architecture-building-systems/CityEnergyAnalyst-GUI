@@ -21,6 +21,7 @@ import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
 import LockOnIcon from './lock_on.svg';
 import LockOffIcon from './lock_off.svg';
+import BackIcon from './back.svg';
 import StartOverIcon from './start_over.svg';
 import SaveIcon from './save.svg';
 import ShareIcon from './share.svg';
@@ -76,6 +77,7 @@ export {
   RefreshIcon,
   LockOnIcon,
   LockOffIcon,
+  BackIcon,
   StartOverIcon,
   SaveIcon,
   ShareIcon,
