@@ -6,7 +6,7 @@
  * Two flavours: `-down` for the right-edge `+` (column → cascades
  * downward) and `-right` for the bottom-edge `+` (row → cascades
  * eastward). */
-@keyframes cea-report-expand-in-down {
+@keyframes cea-canvas-expand-in-down {
   from {
     opacity: 0;
     transform: translateY(-8px) scale(0.92);
@@ -16,7 +16,7 @@
     transform: translateY(0) scale(1);
   }
 }
-@keyframes cea-report-expand-in-right {
+@keyframes cea-canvas-expand-in-right {
   from {
     opacity: 0;
     transform: translateX(-8px) scale(0.92);
@@ -27,10 +27,10 @@
   }
 }
 .cea-canvas-expand-item-down {
-  animation: cea-report-expand-in-down 180ms ease-out backwards;
+  animation: cea-canvas-expand-in-down 180ms ease-out backwards;
 }
 .cea-canvas-expand-item-right {
-  animation: cea-report-expand-in-right 180ms ease-out backwards;
+  animation: cea-canvas-expand-in-right 180ms ease-out backwards;
 }
 .cea-canvas-expand-item-down:nth-child(2),
 .cea-canvas-expand-item-right:nth-child(2) {
@@ -52,7 +52,7 @@
  * first, the closest (1st = the `+`'s old spot) leaves last.
  * `forwards` holds the final invisible state until the parent
  * unmounts. */
-@keyframes cea-report-collapse-out-down {
+@keyframes cea-canvas-collapse-out-down {
   from {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -62,7 +62,7 @@
     transform: translateY(-8px) scale(0.92);
   }
 }
-@keyframes cea-report-collapse-out-right {
+@keyframes cea-canvas-collapse-out-right {
   from {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -73,10 +73,10 @@
   }
 }
 .cea-canvas-collapse-item-down {
-  animation: cea-report-collapse-out-down 180ms ease-in forwards;
+  animation: cea-canvas-collapse-out-down 180ms ease-in forwards;
 }
 .cea-canvas-collapse-item-right {
-  animation: cea-report-collapse-out-right 180ms ease-in forwards;
+  animation: cea-canvas-collapse-out-right 180ms ease-in forwards;
 }
 .cea-canvas-collapse-item-down:nth-child(2),
 .cea-canvas-collapse-item-right:nth-child(2) {
@@ -110,7 +110,7 @@
  * to `.cea-template-select-empty` / `.cea-scenario-select-empty` in
  * the pathway dropdowns) but tinted CEA purple (#AC6080). Stops as
  * soon as the user adds a feature card — the parent drops
- * `cea-report-plus-breathing`. The same outline colour is added so
+ * `cea-canvas-plus-breathing`. The same outline colour is added so
  * the rim picks up the highlight too. */
 @keyframes cea-canvas-plus-glow {
   0% {
@@ -126,7 +126,7 @@
 /* Combined rule: when launch-state highlighting is wanted, run the
  * mount fade-in AND the glow loop. A single-class `animation:`
  * shorthand wins over the fade-in-only rule above. */
-.cea-report-plus-breathing {
+.cea-canvas-plus-breathing {
   outline: 1px solid #ac6080;
   animation:
     cea-canvas-plus-fade-in 180ms ease-out backwards,

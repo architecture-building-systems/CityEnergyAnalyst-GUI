@@ -218,7 +218,7 @@ const PlusButton = ({
       ) : (
         <div
           className={`cea-card-icon-button-container cea-no-drag ${
-            breathing ? 'cea-report-plus-breathing' : 'cea-canvas-plus-fade-in'
+            breathing ? 'cea-canvas-plus-breathing' : 'cea-canvas-plus-fade-in'
           }`}
           onMouseEnter={handleClosedMouseEnter}
           onMouseLeave={cancelOpenTimer}
@@ -249,8 +249,8 @@ const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
   const containerStyle = isRow ? expandedRowStyle : expandedColumnStyle;
   const axis = isRow ? 'right' : 'down';
   const itemClass = closing
-    ? `cea-report-collapse-item-${axis}`
-    : `cea-report-expand-item-${axis}`;
+    ? `cea-canvas-collapse-item-${axis}`
+    : `cea-canvas-expand-item-${axis}`;
   // Sub-Dropdowns open to the right for the column (right-edge `+`)
   // and below for the row (bottom-edge `+`) so the menu doesn't
   // overlap its own pill column/row. Per-button tooltips mirror
