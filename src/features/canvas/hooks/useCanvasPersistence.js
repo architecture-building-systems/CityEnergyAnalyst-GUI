@@ -115,18 +115,14 @@ export function useCanvasPersistence() {
       }
     };
 
-    // Debounced edit flush — reads the live store because by the
-    // time the timer fires, no load has intervened (a load would
-    // have flushed pre-load and cleared this timer below). Also
-    // commits the pending undo-stack push at the same moment so
-    // a single drag burst is one undo step, not many.
+    // Debounced disk flush. The undo-stack push happens synchronously
+    // on first detect (see below) so the Back button enables right
+    // away — only the network PUT is deferred here.
     const flushLatest = () => {
       timerRef.current = null;
-      const pre = pendingUndoSnapshotRef.current;
-      if (pre != null) {
-        pendingUndoSnapshotRef.current = null;
-        useCanvasStore.getState().pushUndoSnapshot(pre);
-      }
+      // Reset the burst marker so the next edit pushes a fresh
+      // pre-edit snapshot.
+      pendingUndoSnapshotRef.current = null;
       flushState(useCanvasStore.getState());
     };
 
@@ -161,13 +157,22 @@ export function useCanvasPersistence() {
 
       const snapshot = canvasPersistableSelector(state);
       if (shallowEqual(snapshot, lastSnapshotRef.current)) return;
-      // Capture the pre-edit snapshot once per debounce window so
-      // each burst of changes (drag tick stream, multi-write
-      // action) collapses into one undo step.
-      if (pendingUndoSnapshotRef.current == null) {
-        pendingUndoSnapshotRef.current = lastSnapshotRef.current;
-      }
+      // First detect of a debounce burst: push the pre-edit
+      // snapshot onto the undo stack *now* so the Back button
+      // enables synchronously. Subsequent detects in the same
+      // burst (drag-tick stream, multi-set action) skip the push
+      // — the stack already records the burst's starting point.
+      const isFirstDetectInBurst = pendingUndoSnapshotRef.current == null;
+      const preEditSnapshot = lastSnapshotRef.current;
       lastSnapshotRef.current = snapshot;
+      if (isFirstDetectInBurst) {
+        pendingUndoSnapshotRef.current = preEditSnapshot;
+        // `pushUndoSnapshot` triggers a recursive subscribe call;
+        // by this point `lastSnapshotRef` already matches the
+        // current state, so the recursive call short-circuits at
+        // the `shallowEqual` guard above.
+        useCanvasStore.getState().pushUndoSnapshot(preEditSnapshot);
+      }
 
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(flushLatest, DEBOUNCE_MS);
