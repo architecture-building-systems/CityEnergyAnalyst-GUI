@@ -76,7 +76,15 @@ const ComparisonView = ({
 
   const handleAddCard =
     (columnIndex) =>
-    ({ targetCardId, direction, type = 'plot', feature, script, category, layer }) => {
+    ({
+      targetCardId,
+      direction,
+      type = 'plot',
+      feature,
+      script,
+      category,
+      layer,
+    }) => {
       // Map cards skip the plot-tool drawer — insert the card and
       // open the page-level MapLayerProperties bottom card so the
       // user can adjust the layer's parameters there.
@@ -91,7 +99,8 @@ const ComparisonView = ({
         onOpenMapBottom?.(newCardId, columnIndex);
         return;
       }
-      const resolvedFeature = feature || inferFeature(columnIndex, targetCardId);
+      const resolvedFeature =
+        feature || inferFeature(columnIndex, targetCardId);
       onOpenDrawer({
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) =>
@@ -113,22 +122,24 @@ const ComparisonView = ({
     return { project, scenarioName: name };
   };
 
-  const handleAddPlotToCard = (columnIndex) => (cardId, script = null) => {
-    onOpenDrawer({
-      cardId,
-      // Stamp the originating column so CanvasPage can paint the
-      // editing purple stroke only on the column being edited
-      // (not on every column showing this card id).
-      columnIndex,
-      // Form scopes its parameter-schema fetch to this column's
-      // scenario via `ToolScenarioOverrideContext` in
-      // PlotEditModal — without this the form would always pull
-      // choices from the project's active scenario.
-      scenarioOverride: scenarioOverrideFor(columnIndex),
-      plotConfig: script ? { script } : null,
-      onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
-    });
-  };
+  const handleAddPlotToCard =
+    (columnIndex) =>
+    (cardId, script = null) => {
+      onOpenDrawer({
+        cardId,
+        // Stamp the originating column so CanvasPage can paint the
+        // editing purple stroke only on the column being edited
+        // (not on every column showing this card id).
+        columnIndex,
+        // Form scopes its parameter-schema fetch to this column's
+        // scenario via `ToolScenarioOverrideContext` in
+        // PlotEditModal — without this the form would always pull
+        // choices from the project's active scenario.
+        scenarioOverride: scenarioOverrideFor(columnIndex),
+        plotConfig: script ? { script } : null,
+        onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
+      });
+    };
 
   const handleEditPlot = (columnIndex) => (cardId, plotId) => {
     const cards = columnCards?.[columnIndex] || [];

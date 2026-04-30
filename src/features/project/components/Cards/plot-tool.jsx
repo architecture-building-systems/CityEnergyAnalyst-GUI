@@ -1,6 +1,6 @@
 import Tool from 'features/tools/components/Tools/Tool';
 import { Button, ConfigProvider, Divider, Form } from 'antd';
-import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { CEA_PURPLE } from 'constants/theme';
 import { useCallback, useEffect, useRef } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import { useSelectedPlotToolSeed } from 'features/project/stores/tool-card';
@@ -414,7 +414,7 @@ export const PlotTool = ({
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: PLOTS_PRIMARY_COLOR,
+          colorPrimary: CEA_PURPLE,
         },
       }}
     >

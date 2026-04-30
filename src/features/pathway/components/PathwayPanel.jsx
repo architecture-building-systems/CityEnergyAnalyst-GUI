@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InfoTooltip, { TooltipFromBackend } from 'components/InfoTooltip';
+import { CEA_PURPLE, ERROR_RED, PATHWAY_PRIMARY } from 'constants/theme';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { getMainUseType } from 'features/map/utils/constructionColors';
@@ -55,13 +56,13 @@ const MAX_VISIBLE_TIMELINE_LANES = 3;
 const STATUS_FILL = {
   none: '#CBD5E1',
   validated: '#CBD5E1',
-  baked: '#1470AF',
-  custom: '#AC6080',
+  baked: PATHWAY_PRIMARY,
+  custom: CEA_PURPLE,
   simulated: '#000000',
 };
 
 const STATUS_ACCENT = {
-  error: '#f04d5b',
+  error: ERROR_RED,
   changed: '#D97706',
 };
 

@@ -9,7 +9,7 @@ import Legend, {
 } from 'features/map/components/Map/Layers/Legend';
 import { iconMap } from 'features/plots/constants';
 import {
-  ACCENT_PURPLE,
+  CEA_PURPLE,
   BORDER_SUBTLE,
   ERROR_RED,
   SYSTEM_FONT_STACK,
@@ -387,17 +387,17 @@ const FeatureCardMapBody = ({
             <div style={errorCardStyle}>
               <div style={errorTitleStyle}>
                 what-if-name{' '}
-                <span style={{ color: ACCENT_PURPLE }}>
+                <span style={{ color: CEA_PURPLE }}>
                   {whatifMismatch.missing}
                 </span>{' '}
                 not available in{' '}
-                <span style={{ color: ACCENT_PURPLE }}>{scenario}</span>
+                <span style={{ color: CEA_PURPLE }}>{scenario}</span>
               </div>
               <ul style={errorListStyle}>
                 {whatifMismatch.available.length > 0 && (
                   <li>
                     Pick from{' '}
-                    <span style={{ color: ACCENT_PURPLE }}>
+                    <span style={{ color: CEA_PURPLE }}>
                       {whatifMismatch.available.join(', ')}
                     </span>
                   </li>
@@ -408,7 +408,7 @@ const FeatureCardMapBody = ({
                     layerInfo?.label ||
                     'the upstream tool'}{' '}
                   for{' '}
-                  <span style={{ color: ACCENT_PURPLE }}>
+                  <span style={{ color: CEA_PURPLE }}>
                     {whatifMismatch.missing}
                   </span>
                 </li>
@@ -422,7 +422,7 @@ const FeatureCardMapBody = ({
               <div style={errorCardStyle}>
                 <div style={errorTitleStyle}>
                   {`No ${layerInfo?.label || 'layer'} data for `}
-                  <span style={{ color: ACCENT_PURPLE }}>{scenario}</span>
+                  <span style={{ color: CEA_PURPLE }}>{scenario}</span>
                 </div>
                 <div style={errorBodyStyle}>
                   Run the upstream tool for this scenario first.

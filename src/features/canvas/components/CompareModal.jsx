@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Checkbox, ConfigProvider, Modal } from 'antd';
 
+import { CEA_PURPLE } from 'constants/theme';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useFetchScenarios } from '../hooks/useCanvasData';
 import { useCanvasStore } from '../stores/canvasStore';
@@ -125,12 +126,6 @@ const CompareModal = ({ open, onCancel }) => {
     </ConfigProvider>
   );
 };
-
-// CEA accent purple — matches the navigator toggles' "on" track
-// and the canvas-purple blink animation. Used here for the
-// Origin badge background and (via ConfigProvider) the OK button
-// + checked-checkbox tint.
-const CEA_PURPLE = '#AC6080';
 
 const originRowStyle = {
   display: 'flex',

@@ -2,6 +2,7 @@ import { Divider, Modal, Select, Spin, Tooltip } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
@@ -151,8 +152,8 @@ const TIMELINE_HEIGHT = 36;
 const STATUS_FILL = {
   none: '#CBD5E1',
   validated: '#CBD5E1',
-  baked: '#1470AF',
-  custom: '#AC6080',
+  baked: PATHWAY_PRIMARY,
+  custom: CEA_PURPLE,
   simulated: '#000000',
 };
 

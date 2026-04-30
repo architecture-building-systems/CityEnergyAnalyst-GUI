@@ -404,12 +404,10 @@ the user clicks Run inside the drawer).
 ### DO: Align y-axes only when columns share a slot id
 ```jsx
 const { handlePlotReady } = useYAxisAlignment(
-  !isFeatureMode && columns.length > 1,
+  columns.length > 1,
   columns.length,
 );
 ```
-Disabled in inter-feature mode — each column has its own card list, so
-there's no shared slot to align across.
 
 ### DO: Confirm before clearing comparison state
 ```jsx

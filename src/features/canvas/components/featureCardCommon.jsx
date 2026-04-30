@@ -1,6 +1,7 @@
 import { Button, Popconfirm, Tooltip } from 'antd';
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 
+import { CEA_PURPLE } from 'constants/theme';
 import { PLOT_GROUPS } from 'features/plots/constants';
 import { useCanvasStore } from '../stores/canvasStore';
 
@@ -127,8 +128,8 @@ const cardStyle = {
 // tile's interior dimensions identical so the body doesn't reflow.
 const editingCardStyle = {
   ...cardStyle,
-  border: '1px solid #AC6080',
-  boxShadow: '0 0 0 1px #AC6080',
+  border: `1px solid ${CEA_PURPLE}`,
+  boxShadow: `0 0 0 1px ${CEA_PURPLE}`,
 };
 
 const titleSectionStyle = {

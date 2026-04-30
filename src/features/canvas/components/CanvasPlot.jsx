@@ -12,7 +12,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import parser from 'html-react-parser';
 
 import {
-  ACCENT_PURPLE,
+  CEA_PURPLE,
   BORDER_SUBTLE,
   ERROR_RED,
   SYSTEM_FONT_STACK,
@@ -558,7 +558,7 @@ const PlotError = ({ error, scenario }) => {
           <>
             <div style={errorTitleStyle}>
               No plot data for{' '}
-              <span style={{ color: ACCENT_PURPLE }}>{scenario}</span>
+              <span style={{ color: CEA_PURPLE }}>{scenario}</span>
             </div>
             <div style={errorBodyStyle}>
               Run the upstream tool for this scenario first.

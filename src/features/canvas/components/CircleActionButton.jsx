@@ -1,9 +1,11 @@
 import { Tooltip } from 'antd';
 import { CreateNewIcon } from 'assets/icons';
 
+import { PATHWAY_PRIMARY } from 'constants/theme';
+
 /**
  * Blue-circle + label button used across the Canvas Builder.
- * Matches the pathway palette (#1470AF primary blue) and uses the
+ * Matches the pathway palette (`PATHWAY_PRIMARY`) and uses the
  * project's custom CreateNewIcon rather than antd icons.
  *
  * Two sizes: 'md' (40px circle, for LaunchView hero actions) and
@@ -54,7 +56,7 @@ const buttonStyle = {
 
 const circleStyle = {
   borderRadius: '50%',
-  background: '#1470AF',
+  background: PATHWAY_PRIMARY,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

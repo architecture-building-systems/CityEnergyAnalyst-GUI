@@ -40,8 +40,8 @@ const CanvasPage = () => {
   const columns = useCanvasStore((s) => s.columns);
   const project = useProjectStore((s) => s.project);
 
-  // Subscribe to store changes and debounce-flush to the backend's
-  // `temp/<uuid>/` folder while the user works. Idempotent — single
+  // Subscribe to store changes and debounce-flush them to the
+  // saved canvas folder while the user works. Idempotent — single
   // mount point owns the autosave debouncer.
   useCanvasPersistence();
   // Resume the last committed canvas on mount (per-project /

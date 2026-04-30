@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as turf from '@turf/turf';
 import { Button, Tooltip } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+
+import { CEA_PURPLE } from 'constants/theme';
 import GridLayout, { setTopLeft } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -200,9 +202,7 @@ const CanvasColumn = ({
   const bumpAlignmentRevision = useCanvasStore((s) => s.bumpAlignmentRevision);
   const mirrorsLocked = useCanvasStore((s) => s.mirrorsLocked);
   const setMirrorsLocked = useCanvasStore((s) => s.setMirrorsLocked);
-  const resyncMirrorsToOrigin = useCanvasStore(
-    (s) => s.resyncMirrorsToOrigin,
-  );
+  const resyncMirrorsToOrigin = useCanvasStore((s) => s.resyncMirrorsToOrigin);
   const singletonMapPos = useCanvasStore((s) => s.mapPos);
   const setSingletonMapPos = useCanvasStore((s) => s.setMapPos);
   const columnMapPosOverride = useCanvasStore(
@@ -987,7 +987,7 @@ const originBadgeStyle = {
   fontSize: 11,
   fontWeight: 600,
   color: '#fff',
-  background: '#AC6080',
+  background: CEA_PURPLE,
   padding: '2px 8px',
   borderRadius: 4,
   letterSpacing: 0.3,

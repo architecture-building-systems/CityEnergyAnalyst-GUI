@@ -45,10 +45,8 @@ import {
   readSavedCanvas,
 } from '../api/canvas';
 import { deserializeCanvas } from '../utils/canvasSerialize';
-import {
-  writeLastCanvas,
-  clearLastCanvas,
-} from '../hooks/useResumeLastCanvas';
+import { writeLastCanvas, clearLastCanvas } from '../hooks/useResumeLastCanvas';
+import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
 
 /**
  * Navigator card — top strip of the Canvas Builder page.
@@ -667,7 +665,6 @@ const NavigatorCard = () => {
           </div>
         )}
       </Modal>
-
     </div>
   );
 };
@@ -717,7 +714,7 @@ const autosaveIndicatorStyle = {
 
 // CEA primary blue — matches the action-button accent so the spinner
 // reads as "I'm working" without inventing a new colour.
-const autosaveSavingIconStyle = { fontSize: 12, color: '#1470AF' };
+const autosaveSavingIconStyle = { fontSize: 12, color: PATHWAY_PRIMARY };
 
 // Solid green disc with a white tick inside — antd's `Filled`
 // variant draws the check mark in the inverse fill colour so the
@@ -988,7 +985,7 @@ const NavigatorToggle = ({
   disabled = false,
 }) => (
   <div style={syncToggleWrapperStyle}>
-    <ConfigProvider theme={{ token: { colorPrimary: '#AC6080' } }}>
+    <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
       <Switch
         checked={checked}
         onChange={onChange}

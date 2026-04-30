@@ -12,7 +12,7 @@ import {
 } from 'features/project/components/Cards/MapLayersCard/store';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
-import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { CEA_PURPLE } from 'constants/theme';
 import { ToolScenarioOverrideContext } from 'features/tools/hooks/useToolParams';
 
 // Reverse `VIEW_PLOT_RESULTS` to find the map layer a plot script
@@ -148,7 +148,7 @@ const PlotEditModal = ({
         {selectedScript ? (
           <ToolScenarioOverrideContext.Provider value={scenarioOverride}>
             <ConfigProvider
-              theme={{ token: { colorPrimary: PLOTS_PRIMARY_COLOR } }}
+              theme={{ token: { colorPrimary: CEA_PURPLE } }}
             >
               <PlotTool
                 key={selectedScript}

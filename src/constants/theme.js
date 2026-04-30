@@ -1,6 +1,6 @@
 // CEA palette — see src/features/canvas/CLAUDE.md for usage notes.
-export const PLOTS_PRIMARY_COLOR = '#ac6080';
-export const ACCENT_PURPLE = '#AC6080';
+export const CEA_PURPLE = '#AC6080';
+export const PATHWAY_PRIMARY = '#1470AF';
 export const ERROR_RED = '#f04d5b';
 
 // Neutral text + surface tones used by error/empty-state cards. Mirror
