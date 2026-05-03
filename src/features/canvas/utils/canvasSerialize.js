@@ -60,6 +60,10 @@ const cardConfigFromStore = (card) => ({
   // is mirrored across columns but the HTML is not fanned out, so
   // each column can hold its own annotation.
   html: card.html ?? null,
+  // Divider card config (orientation, style, thickness, colour).
+  // Shared across columns via `setCardDividerConfig`'s fan-out, so
+  // the YAML carries the same blob in every column entry.
+  divider: card.divider ?? null,
 });
 
 /**
@@ -197,6 +201,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     filters: configEntry.map_filters ?? undefined,
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
     html: configEntry.html ?? undefined,
+    divider: configEntry.divider ?? undefined,
   });
 
   const isCompare = next.view !== 'launch';

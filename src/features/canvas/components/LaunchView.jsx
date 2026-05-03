@@ -86,6 +86,12 @@ const LaunchView = ({
       addCard('launch', { targetCardId, direction, type: 'text' });
       return;
     }
+    if (type === 'divider') {
+      // Divider cards have no upstream config — orientation / style /
+      // thickness all live in the card's own toolbar.
+      addCard('launch', { targetCardId, direction, type: 'divider' });
+      return;
+    }
     const resolvedFeature = feature || inferFeature(targetCardId);
     onOpenDrawer({
       plotConfig: script ? { script } : null,

@@ -89,6 +89,16 @@ const DEFAULT_MAP_POS = { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H };
 // longer copy.
 const TEXT_CARD_DEFAULT_H = 2;
 
+// Divider cards default to a thin rule across the standard card
+// width when horizontal and a tall single-column rule when
+// vertical. Settings live on `card.divider`.
+const DEFAULT_DIVIDER_CONFIG = {
+  orientation: 'horizontal',
+  style: 'solid',
+  thickness: 1,
+  color: '#000000',
+};
+
 const makeCard = ({
   row,
   col,
@@ -102,13 +112,14 @@ const makeCard = ({
 }) => {
   const cardType = type ?? 'plot';
   const isText = cardType === 'text';
+  const isDivider = cardType === 'divider';
   return {
     id: makeId('card'),
     type: cardType,
     row,
     col,
     w: w ?? DEFAULT_CARD_W,
-    h: h ?? (isText ? TEXT_CARD_DEFAULT_H : DEFAULT_CARD_H),
+    h: h ?? (isText ? TEXT_CARD_DEFAULT_H : isDivider ? 1 : DEFAULT_CARD_H),
     feature,
     category,
     layer,
@@ -116,6 +127,11 @@ const makeCard = ({
     // Text cards carry their own per-column HTML (set via
     // `setCardText`); start empty so the placeholder is visible.
     html: isText ? '' : undefined,
+    // Divider config is a small shared blob — orientation, style,
+    // thickness, colour. Mutated by `setCardDividerConfig` which fans
+    // out across columns: the divider is structural chrome, not
+    // per-column content like the text card's `html`.
+    divider: isDivider ? { ...DEFAULT_DIVIDER_CONFIG } : undefined,
   };
 };
 
@@ -902,6 +918,50 @@ export const useCanvasStore = create((set, get) => ({
     if (target.html === html) return;
     const next = cards.map((c) => (c.id === cardId ? { ...c, html } : c));
     setCards(columnIndex, next);
+  },
+
+  /**
+   * Update a divider card's config (orientation, style, thickness,
+   * colour). Unlike `setCardText`, this **fans out** across every
+   * column — the divider is shared structural chrome, not per-column
+   * content. Pass a partial; the existing config is shallow-merged
+   * in.
+   *
+   * When `orientation` flips, the card's `w` and `h` swap so the
+   * card visually rotates instead of collapsing into the wrong
+   * footprint (a 6 × 1 horizontal divider becomes 1 × 6 vertical).
+   */
+  setCardDividerConfig: (columnIndex, cardId, partial) => {
+    const state = get();
+    const isCompare = columnIndex !== 'launch';
+    const sourceCards = isCompare
+      ? state.columnCards?.[columnIndex] || []
+      : state.launchCards;
+    const target = sourceCards.find((c) => c.id === cardId);
+    if (!target) return;
+    const prevConfig = target.divider ?? DEFAULT_DIVIDER_CONFIG;
+    const nextConfig = { ...prevConfig, ...partial };
+    const flipping =
+      partial.orientation && partial.orientation !== prevConfig.orientation;
+    const apply = (cards) =>
+      cards.map((c) => {
+        if (c.id !== cardId) return c;
+        const next = { ...c, divider: nextConfig };
+        if (flipping) {
+          next.w = c.h;
+          next.h = c.w;
+        }
+        return next;
+      });
+    if (!isCompare) {
+      set({ launchCards: apply(state.launchCards) });
+      return;
+    }
+    const updated = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updated[idx] = apply(cards);
+    });
+    set({ columnCards: updated });
   },
 
   removePlot: (columnIndex, cardId, plotId) => {

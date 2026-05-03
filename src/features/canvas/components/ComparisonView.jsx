@@ -105,6 +105,12 @@ const ComparisonView = ({
         addCard(columnIndex, { targetCardId, direction, type: 'text' });
         return;
       }
+      // Divider cards: orientation / style / thickness live in the
+      // card's own toolbar, no drawer needed.
+      if (type === 'divider') {
+        addCard(columnIndex, { targetCardId, direction, type: 'divider' });
+        return;
+      }
       const resolvedFeature =
         feature || inferFeature(columnIndex, targetCardId);
       onOpenDrawer({

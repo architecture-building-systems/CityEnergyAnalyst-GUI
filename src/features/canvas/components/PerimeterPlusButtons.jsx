@@ -3,6 +3,7 @@ import { Button, Dropdown, Tooltip } from 'antd';
 
 import {
   CreateNewIcon,
+  DividerCardIcon,
   KpiCardIcon,
   MapCardIcon,
   PlotCardIcon,
@@ -245,7 +246,7 @@ const PlusButton = ({
 // swaps to the reverse-animation variant. `onPick` triggers the
 // collapse after a leaf is chosen.
 const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
-  const { mapItems, plotItems, onPickText } = sections;
+  const { mapItems, plotItems, onPickText, onPickDivider } = sections;
   const isRow = direction === 'right';
   const containerStyle = isRow ? expandedRowStyle : expandedColumnStyle;
   const axis = isRow ? 'right' : 'down';
@@ -303,6 +304,17 @@ const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
             onClick={onPickText}
             disabled={!onPickText}
             aria-label="Add a Text card"
+          />
+        </Tooltip>
+      </div>
+      <div className={`cea-card-icon-button-container ${itemClass}`}>
+        <Tooltip title="Divider" placement={tooltipPlacement}>
+          <Button
+            type="text"
+            icon={<DividerCardIcon />}
+            onClick={onPickDivider}
+            disabled={!onPickDivider}
+            aria-label="Add a Divider card"
           />
         </Tooltip>
       </div>

@@ -40,6 +40,7 @@ import FeatureCardPlot from './FeatureCardPlot';
 import FeatureCardKpi from './FeatureCardKpi';
 import FeatureCardMap from './FeatureCardMap';
 import FeatureCardText from './FeatureCardText';
+import FeatureCardDivider from './FeatureCardDivider';
 import { MapColumnContext } from './mapInstance';
 import { PerimeterPlusButtons, computeExposure } from './PerimeterPlusButtons';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
@@ -433,18 +434,21 @@ const CanvasColumn = ({
       // vertical stack). Width stays at the card's stored `w`.
       const cardX = compactLayout ? 0 : (card.col ?? 0);
       const cardW = card.w ?? DEFAULT_CARD_W;
-      // Text cards can shrink to a single row — annotation cards
-      // should hug the rendered text instead of locking to the
-      // global 3-row minimum that makes plot/map/kpi cards
-      // legible.
-      const minH = card.type === 'text' ? 1 : CARD_MIN_H;
+      // Text + divider cards can shrink past the global 3-row /
+      // 3-col minimum that keeps plot/map/kpi cards legible —
+      // annotations hug the rendered text and dividers can be a
+      // single unit thick on whichever axis is the line.
+      const isText = card.type === 'text';
+      const isDivider = card.type === 'divider';
+      const minH = isText || isDivider ? 1 : CARD_MIN_H;
+      const minW = isDivider ? 1 : CARD_MIN_W;
       items.push({
         i: cardKey(card.id),
         x: cardX,
         y: card.row ?? 0,
         w: cardW,
         h: card.h ?? DEFAULT_CARD_H,
-        minW: CARD_MIN_W,
+        minW,
         minH,
         isDraggable: cardsEditable,
         isResizable: cardsEditable,
@@ -623,7 +627,13 @@ const CanvasColumn = ({
   // collapse to one click that adds the card directly.
   const buildSectionMenus = useCallback(
     (targetCardId, direction) => {
-      if (!onAddCard) return { mapItems: [], plotItems: [], onPickText: null };
+      if (!onAddCard)
+        return {
+          mapItems: [],
+          plotItems: [],
+          onPickText: null,
+          onPickDivider: null,
+        };
       const onPickMap = (category, layer) =>
         onAddCard({ targetCardId, direction, type: 'map', category, layer });
       const mapItems =
@@ -669,7 +679,12 @@ const CanvasColumn = ({
       // user types in each column; the row itself is mirrored.
       const onPickText = () =>
         onAddCard({ targetCardId, direction, type: 'text' });
-      return { mapItems, plotItems, onPickText };
+      // Divider card mirrors the same flat-pick pattern; orientation /
+      // style / thickness are edited inside the card's own toolbar
+      // and the config is fanned out across columns.
+      const onPickDivider = () =>
+        onAddCard({ targetCardId, direction, type: 'divider' });
+      return { mapItems, plotItems, onPickText, onPickDivider };
     },
     [onAddCard, mapData],
   );
@@ -874,6 +889,14 @@ const CanvasColumn = ({
                   />
                 ) : card.type === 'text' ? (
                   <FeatureCardText
+                    card={card}
+                    columnIndex={columnIndex}
+                    onDeleteCard={
+                      onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                    }
+                  />
+                ) : card.type === 'divider' ? (
+                  <FeatureCardDivider
                     card={card}
                     columnIndex={columnIndex}
                     onDeleteCard={

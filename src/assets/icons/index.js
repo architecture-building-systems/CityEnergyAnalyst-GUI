@@ -58,6 +58,7 @@ import MapCardIcon from './map.svg';
 import KpiCardIcon from './kpi.svg';
 import PlotCardIcon from './plot.svg';
 import TextCardIcon from './text.svg';
+import DividerCardIcon from './divider.svg';
 import InsightIcon from './insight.svg';
 
 export {
@@ -111,5 +112,6 @@ export {
   KpiCardIcon,
   PlotCardIcon,
   TextCardIcon,
+  DividerCardIcon,
   InsightIcon,
 };

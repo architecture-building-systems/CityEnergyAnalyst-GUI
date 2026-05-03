@@ -31,15 +31,17 @@ Card {
   plots?: [{ id, plotConfig }],      // 'plot'
   category?, layer?,                 // 'map'
   html?,                             // 'text' (TipTap HTML, per-column)
+  divider?: { orientation, style, thickness },  // 'divider' (mirrored)
 }
 ```
 
-| `type`  | Body                | Purpose                                       |
-|---------|---------------------|-----------------------------------------------|
-| `plot`  | `FeatureCardPlot`   | Stacked Plotly plots + "Add a plot" pill      |
-| `kpi`   | `FeatureCardKpi`    | Single KPI strip for the feature              |
-| `map`   | `FeatureCardMap`    | Mirrors the column's primary map widget       |
-| `text`  | `FeatureCardText`   | TipTap rich-text editor for annotations       |
+| `type`     | Body                  | Purpose                                       |
+|------------|-----------------------|-----------------------------------------------|
+| `plot`     | `FeatureCardPlot`     | Stacked Plotly plots + "Add a plot" pill      |
+| `kpi`      | `FeatureCardKpi`      | Single KPI strip for the feature              |
+| `map`      | `FeatureCardMap`      | Mirrors the column's primary map widget       |
+| `text`     | `FeatureCardText`     | TipTap rich-text editor for annotations       |
+| `divider`  | `FeatureCardDivider`  | Black horizontal / vertical rule between sections |
 
 Card positions are sparse 2D grid coordinates in `react-grid-layout`
 units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `CanvasColumn`). The column's
@@ -65,6 +67,8 @@ the rest are read-only mirrors.
   <FeatureCardKpi card={card} ... />
 ) : card.type === 'text' ? (
   <FeatureCardText card={card} columnIndex={columnIndex} ... />
+) : card.type === 'divider' ? (
+  <FeatureCardDivider card={card} columnIndex={columnIndex} ... />
 ) : card.type === 'map' ? (
   <FeatureCardMap card={card} ... />
 ) : (
@@ -518,6 +522,10 @@ source of truth for card config that the comparison views never read.
   `PlotSlotCard`s + "Add a plot" pill + natural-height aggregator.
 - `components/FeatureCardKpi.jsx` - KPI-only card; one KPI strip per
   feature.
+- `components/FeatureCardDivider.jsx` - Divider card; renders a black
+  horizontal or vertical rule. Orientation / style / thickness live in
+  a hover-revealed floating toolbar and are fanned out across columns
+  via `setCardDividerConfig`.
 - `components/FeatureCardMap.jsx` - Map-only card; mirrors the primary
   map widget for a chosen category + layer. Owns a per-card
   `mapInstance` store and publishes it in the registry.
