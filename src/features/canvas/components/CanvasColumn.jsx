@@ -196,6 +196,12 @@ const CanvasColumn = ({
   // Forwarded to FeatureCardMap so per-card stores key on
   // `(columnIndex, cardId)` — see mapInstance.js.
   columnIndex = null,
+  // Optional render slot appearing right of the title card and
+  // before the close / +-add / refresh / lock buttons. Used by
+  // Pathway View (`<PathwayCompareSelect>`) so the pathway picker
+  // sits next to the scenario name without displacing the system
+  // buttons. `null` in non-pathway modes.
+  titleRowSlot = null,
 }) => {
   const project = useProjectStore((s) => s.project);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
@@ -724,6 +730,7 @@ const CanvasColumn = ({
               {headerText}
             </div>
           </div>
+          {titleRowSlot}
           {onCloseColumn && (
             <Tooltip title="Remove from comparison" placement="bottom">
               <div className="cea-card-icon-button-container">

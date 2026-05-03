@@ -5,6 +5,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import CanvasColumn from './CanvasColumn';
 import CompareModal from './CompareModal';
+import PathwayCompareSelect from './PathwayCompareSelect';
 
 /**
  * Launch view — Canvas Builder entry. Cards live in the store
@@ -45,6 +46,7 @@ const LaunchView = ({
   const updatePlot = useCanvasStore((s) => s.updatePlot);
   const removePlot = useCanvasStore((s) => s.removePlot);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
+  const pathwayView = useCanvasStore((s) => s.pathwayView);
 
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -154,8 +156,9 @@ const LaunchView = ({
           onOpenMapBottom={onOpenMapBottom}
           editingPlotCardId={editingPlotCardId}
           activeMapCardId={activeMapCardId}
-          onAddColumn={() => setCompareOpen(true)}
+          onAddColumn={pathwayView ? undefined : () => setCompareOpen(true)}
           addColumnTooltip="Add Scenario to compare"
+          titleRowSlot={pathwayView ? <PathwayCompareSelect /> : null}
         />
       </div>
 

@@ -100,6 +100,23 @@ const DEFAULT_DIVIDER_CONFIG = {
   color: '#000000',
 };
 
+// Build the child-scenario path for a pathway state year. Mirrors
+// the backend's ``InputLocator.get_state_in_time_scenario_folder``
+// layout (``scenario/outputs/pathways/{name}/state_{year}``) so the
+// frontend can hand a state-folder path to map / plot endpoints
+// without an extra round-trip to resolve it.
+const childStateScenarioPath = (parentScenario, pathwayName, year) => {
+  if (!parentScenario || !pathwayName || year == null) return null;
+  // Mixed separators — works for both POSIX and Windows scenarios
+  // (backend joins with `os.path.join`, which normalises). The
+  // frontend only stores the resolved path for downstream APIs that
+  // expect a scenario path string; no path math happens here.
+  const sep = parentScenario.includes('\\') ? '\\' : '/';
+  return [parentScenario, 'outputs', 'pathways', pathwayName, `state_${year}`].join(
+    sep,
+  );
+};
+
 const makeCard = ({
   row,
   col,
@@ -563,6 +580,71 @@ export const useCanvasStore = create((set, get) => ({
         kind: 'inter-whatif',
         parentScenario,
         whatifs: whatifs.slice(1),
+      },
+    }));
+  },
+
+  /**
+   * Enter Pathway View — single pathway. One column per state year of
+   * the chosen pathway; each column points at a child scenario at
+   * ``{parentScenario}/outputs/pathways/{pathwayName}/state_{year}``.
+   * The column header renders ``Y_{year}`` instead of the scenario
+   * name (see ``CanvasColumn``). Phase 5 will add a spanning Emission
+   * Timeline strip above the columns; until then this is just an
+   * inter-scenario-style compare with state folders.
+   */
+  enterPathwaySingle: (parentScenario, pathwayName, stateYears) => {
+    const years = (stateYears || []).map((y) => Number(y)).sort((a, b) => a - b);
+    const columns = years.map((year) => ({
+      type: 'pathway-state',
+      pathwayName,
+      year,
+      scenario: childStateScenarioPath(parentScenario, pathwayName, year),
+    }));
+    set((state) => ({
+      view: 'pathway-single',
+      columns,
+      parentScenario,
+      columnCards:
+        state.view === 'launch'
+          ? cloneCardsAcrossColumns(state.launchCards, columns.length)
+          : reshapeColumnCards(state.columnCards, columns.length),
+      launchCards: state.view === 'launch' ? [] : state.launchCards,
+      comparisonSetup: {
+        kind: 'pathway-single',
+        pathwayName,
+        stateYears: years,
+        parentScenario,
+      },
+    }));
+  },
+
+  /**
+   * Enter Pathway View — multi pathway. Row-based layout; one row per
+   * pathway, each row pinned to the pathway's final-year state
+   * scenario. The full row machinery (final-year title map + Emission
+   * Pathway plot, shared timescale) lands in Phase 6 — for now the
+   * action just records the picks and flips ``view``.
+   */
+  enterPathwayMulti: (parentScenario, pathwayNames) => {
+    const columns = (pathwayNames || []).map((pathwayName) => ({
+      type: 'pathway',
+      pathwayName,
+      scenario: parentScenario,
+    }));
+    set((state) => ({
+      view: 'pathway-multi',
+      columns,
+      parentScenario,
+      columnCards:
+        state.view === 'launch'
+          ? cloneCardsAcrossColumns(state.launchCards, columns.length)
+          : reshapeColumnCards(state.columnCards, columns.length),
+      launchCards: state.view === 'launch' ? [] : state.launchCards,
+      comparisonSetup: {
+        kind: 'pathway-multi',
+        pathwayNames: [...(pathwayNames || [])],
+        parentScenario,
       },
     }));
   },

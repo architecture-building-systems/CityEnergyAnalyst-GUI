@@ -6,6 +6,7 @@ import { useCanvasStore } from '../stores/canvasStore';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
 import CompareModal from './CompareModal';
+import PathwayCompareSelect from './PathwayCompareSelect';
 
 const ComparisonView = ({
   onOpenDrawer,
@@ -19,6 +20,7 @@ const ComparisonView = ({
   const columns = useCanvasStore((s) => s.columns);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const columnCards = useCanvasStore((s) => s.columnCards);
+  const pathwayView = useCanvasStore((s) => s.pathwayView);
 
   // Build the full scenario path the plot-tool form expects in
   // its `general:scenario` parameter (POSIX-style join — works on
@@ -242,8 +244,17 @@ const ComparisonView = ({
                   // selection rebuilds the columns. Non-origin
                   // columns don't get `onAddColumn` (they already
                   // carry the `×` close affordance for removal).
-                  onAddColumn={i === 0 ? () => setCompareOpen(true) : undefined}
+                  // Pathway View hides the `+` in favour of the
+                  // multi-select dropdown rendered in `titleRowSlot`.
+                  onAddColumn={
+                    i === 0 && !pathwayView
+                      ? () => setCompareOpen(true)
+                      : undefined
+                  }
                   addColumnTooltip="Add Scenario to compare"
+                  titleRowSlot={
+                    i === 0 && pathwayView ? <PathwayCompareSelect /> : null
+                  }
                   // Compact layout: every column is a single
                   // vertical stack at the map's width. Right-edge
                   // perimeter `+` is suppressed; horizontal
