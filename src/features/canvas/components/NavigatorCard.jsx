@@ -31,6 +31,8 @@ import useNavigationStore from 'stores/navigationStore';
 import routes from 'constants/routes.json';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
+import { useHasBakedPathway } from 'features/pathway/hooks/usePathwayOverview';
+
 import { useCanvasStore } from '../stores/canvasStore';
 import {
   savedCanvasesQueryKey,
@@ -66,6 +68,11 @@ import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
  *   - Return       → back to the project page
  *   - Start Over   → clear cards / columns of the current canvas
  *                    (autosave then flushes the empty state)
+ *   - Pathway View → swap Compare from scenarios / what-ifs to
+ *                    pathways; only visible when the active scenario
+ *                    has at least one fully-baked pathway. Painted
+ *                    with PATHWAY_PRIMARY (uuen blue) when on so it
+ *                    reads as part of the pathway chrome family.
  *   - Sync Maps    → mirror every map card to the overview map
  *   - Freeze Layout → lock card positions and sizes
  *   - Enable Edit  → show editing controls (default on); off
@@ -89,6 +96,10 @@ const NavigatorCard = () => {
   const setEnableEdit = useCanvasStore((s) => s.setEnableEdit);
   const fixLayout = useCanvasStore((s) => s.fixLayout);
   const setFixLayout = useCanvasStore((s) => s.setFixLayout);
+  const pathwayView = useCanvasStore((s) => s.pathwayView);
+  const setPathwayView = useCanvasStore((s) => s.setPathwayView);
+  const view = useCanvasStore((s) => s.view);
+  const hasBakedPathway = useHasBakedPathway();
   const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
   const autosaveStatus = useCanvasStore((s) => s.autosaveStatus);
@@ -439,6 +450,39 @@ const NavigatorCard = () => {
     });
   };
 
+  /**
+   * Pathway View toggle handler.
+   *
+   * The toggle just stores a flag — entering / leaving an actual
+   * pathway compare view happens later via the Compare modal (Phase
+   * 3). The flag flips immediately when no compare columns are at
+   * stake, but if the user is currently inside a non-pathway compare
+   * (or vice versa) we confirm before walking back to launch, since
+   * the column / row layout is incompatible across modes.
+   */
+  const handlePathwayViewChange = (next) => {
+    const inNonPathwayCompare =
+      next && (view === 'inter-scenario' || view === 'inter-whatif');
+    const inPathwayCompare =
+      !next && (view === 'pathway-single' || view === 'pathway-multi');
+    if (!inNonPathwayCompare && !inPathwayCompare) {
+      setPathwayView(next);
+      return;
+    }
+    Modal.confirm({
+      title: next ? 'Switch to Pathway View?' : 'Leave Pathway View?',
+      content: next
+        ? 'The current comparison columns will be cleared so you can pick a pathway to compare.'
+        : 'The current pathway comparison will be cleared and the canvas will return to its launch state.',
+      okText: next ? 'Switch' : 'Leave',
+      cancelText: 'Cancel',
+      onOk: () => {
+        startOverStore();
+        setPathwayView(next);
+      },
+    });
+  };
+
   return (
     <div style={cardStyle}>
       <Space size="small" align="center">
@@ -467,6 +511,15 @@ const NavigatorCard = () => {
                 />
               </div>
             </Tooltip>
+            {hasBakedPathway && (
+              <NavigatorToggle
+                checked={pathwayView}
+                onChange={handlePathwayViewChange}
+                label="Pathway View"
+                ariaLabel="Compare pathways across state years"
+                colorPrimary={PATHWAY_PRIMARY}
+              />
+            )}
             <NavigatorToggle
               checked={mapsLinked}
               onChange={setMapsLinked}
@@ -983,9 +1036,14 @@ const NavigatorToggle = ({
   ariaLabel,
   tooltipKey,
   disabled = false,
+  // Most navigator toggles use the canonical CEA_PURPLE accent;
+  // Pathway View overrides to PATHWAY_PRIMARY so the "on" track
+  // matches the rest of the pathway chrome (timeline ruler, baked
+  // state colours).
+  colorPrimary = CEA_PURPLE,
 }) => (
   <div style={syncToggleWrapperStyle}>
-    <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
+    <ConfigProvider theme={{ token: { colorPrimary } }}>
       <Switch
         checked={checked}
         onChange={onChange}
