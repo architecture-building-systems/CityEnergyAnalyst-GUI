@@ -75,6 +75,7 @@ export const canvasPersistableSelector = (state) => ({
   fixLayout: state.fixLayout,
   mapPos: state.mapPos,
   comparisonSetup: state.comparisonSetup,
+  pathwayView: state.pathwayView,
 });
 
 // Initial primary-map tile position. Used both by the store's
@@ -255,6 +256,23 @@ export const useCanvasStore = create((set, get) => ({
   // unless `enableEdit` is also off.
   fixLayout: false,
   setFixLayout: (value) => set({ fixLayout: !!value }),
+
+  // Master switch for Pathway View — turns the canvas into a
+  // pathway-comparison surface. Two derived modes (set up by the
+  // upcoming `enterPathwaySingle` / `enterPathwayMulti` actions):
+  //   * one selected pathway → columns are state years
+  //     (`Y_2020`, `Y_2030`, …), each pointing at the child
+  //     scenario `state_{year}` folder, with a spanning Emission
+  //     Timeline strip above the columns.
+  //   * multiple pathways → row-based layout, one row per pathway,
+  //     each row holding a final-year title map plus an Emission
+  //     Pathway plot, with the timescale aligned across rows.
+  // Visibility-gated upstream by "active scenario has ≥1 fully-baked
+  // pathway"; flipping the toggle while a non-pathway compare view
+  // is active triggers a confirmation modal at the call site, then
+  // re-enters via the relevant `enterPathway*` action.
+  pathwayView: false,
+  setPathwayView: (value) => set({ pathwayView: !!value }),
 
   // ── Persistence ──────────────────────────────────────────────
   // Display name of the currently-open canvas — also the on-disk
@@ -461,8 +479,10 @@ export const useCanvasStore = create((set, get) => ({
   // field so the user can "Stop comparing" (revert `view` to
   // `launch`) without losing their chosen scenarios / what-ifs.
   // Shape:
-  //   { kind: 'inter-scenario', scenarios: [...] }
-  //   { kind: 'inter-whatif',   parentScenario, whatifs: [...] }
+  //   { kind: 'inter-scenario',  scenarios: [...] }
+  //   { kind: 'inter-whatif',    parentScenario, whatifs: [...] }
+  //   { kind: 'pathway-single',  pathwayName, stateYears: [...] }
+  //   { kind: 'pathway-multi',   pathwayNames: [...] }
   // `null` until the user first enters Compare mode for this
   // canvas. The CompareButton in the navigator reads this to
   // decide between "Compare" (no setup) and "Resume comparing"
@@ -603,6 +623,7 @@ export const useCanvasStore = create((set, get) => ({
       columnCards: {},
       comparisonSetup: null,
       mapPos: { ...DEFAULT_MAP_POS },
+      pathwayView: false,
     }),
 
   // ── Column management ───────────────────────────────────────

@@ -85,12 +85,19 @@ export function serializeCanvas(state) {
     })),
     maps_linked: !!state.mapsLinked,
     fix_layout: !!state.fixLayout,
+    pathway_view: !!state.pathwayView,
     comparison_setup: state.comparisonSetup
       ? {
           kind: state.comparisonSetup.kind,
           scenarios: state.comparisonSetup.scenarios ?? null,
           whatifs: state.comparisonSetup.whatifs ?? null,
           parent_scenario: state.comparisonSetup.parentScenario ?? null,
+          // Pathway-mode picks. `pathway_name` + `state_years` are
+          // populated by `pathway-single`; `pathway_names` by
+          // `pathway-multi`. Other kinds leave them null.
+          pathway_name: state.comparisonSetup.pathwayName ?? null,
+          state_years: state.comparisonSetup.stateYears ?? null,
+          pathway_names: state.comparisonSetup.pathwayNames ?? null,
         }
       : null,
   };
@@ -162,6 +169,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     parentScenario: canvas.parent_scenario ?? null,
     mapsLinked: !!canvas.maps_linked,
     fixLayout: !!canvas.fix_layout,
+    pathwayView: !!canvas.pathway_view,
     canvasName: canvas.name ?? null,
     comparisonSetup: canvas.comparison_setup
       ? {
@@ -169,6 +177,9 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
           scenarios: canvas.comparison_setup.scenarios ?? null,
           whatifs: canvas.comparison_setup.whatifs ?? null,
           parentScenario: canvas.comparison_setup.parent_scenario ?? null,
+          pathwayName: canvas.comparison_setup.pathway_name ?? null,
+          stateYears: canvas.comparison_setup.state_years ?? null,
+          pathwayNames: canvas.comparison_setup.pathway_names ?? null,
         }
       : null,
     launchCards: [],
