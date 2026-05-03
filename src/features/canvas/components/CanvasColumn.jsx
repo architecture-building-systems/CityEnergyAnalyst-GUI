@@ -698,6 +698,16 @@ const CanvasColumn = ({
   let headerText = scenario;
   if (columnDef.type === 'whatif' && columnDef.whatif) {
     headerText = `${scenario}: ${columnDef.whatif}`;
+  } else if (columnDef.type === 'pathway-state' && columnDef.year != null) {
+    // Single-pathway mode: the column represents a state year of the
+    // selected pathway. The scenario name is shared across columns
+    // (rendered once at the canvas-level header in Phase 7), so each
+    // column header is just the year (`Y_2020`, `Y_2030`, …).
+    headerText = `Y_${columnDef.year}`;
+  } else if (columnDef.type === 'pathway' && columnDef.pathwayName) {
+    // Multi-pathway mode (row-based, Phase 6): each "column" wraps a
+    // whole pathway, so the header is the pathway name.
+    headerText = columnDef.pathwayName;
   }
 
   return (
@@ -711,7 +721,16 @@ const CanvasColumn = ({
           what-if from the comparison via `removeColumn(i)`. */}
         <div style={titleRowStyle}>
           <div style={titleCardStyle}>
-            {isOrigin && <span style={originBadgeStyle}>Current</span>}
+            {/* The `Current` badge marks the editing-origin column in
+                inter-scenario / inter-whatif compare. Pathway modes
+                don't have a single "current" — every column is a
+                state year (single) or a pathway (multi), so the
+                badge would read as noise. Hide it there. */}
+            {isOrigin &&
+              columnDef.type !== 'pathway-state' &&
+              columnDef.type !== 'pathway' && (
+                <span style={originBadgeStyle}>Current</span>
+              )}
             {/* Cap the rendered name at 75% of the column's grid
               width so a long scenario name
               (`_ZRH_ copy 2_morph_stochastic`) doesn't blow the

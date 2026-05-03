@@ -233,10 +233,18 @@ const ComparisonView = ({
                   }
                   // Compare-mode chrome: leftmost is origin (full
                   // editing), the rest are read-only mirrors with
-                  // an `×` to drop the column.
+                  // an `×` to drop the column. Pathway View hides
+                  // the `×` since the column set is fixed by the
+                  // pathway's baked years (single) or the picker
+                  // selection (multi); change picks via the
+                  // dropdown instead.
                   isOrigin={i === 0}
                   lockedReadOnly={i !== 0}
-                  onCloseColumn={i !== 0 ? () => removeColumn(i) : undefined}
+                  onCloseColumn={
+                    i !== 0 && !pathwayView
+                      ? () => removeColumn(i)
+                      : undefined
+                  }
                   // Origin column's title-row `+` re-opens the
                   // CompareModal so the user can add or remove
                   // scenarios from the comparison. Pre-fills with
