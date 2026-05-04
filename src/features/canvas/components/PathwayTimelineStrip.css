@@ -2,15 +2,20 @@
  *
  * `CanvasPlot` (shared with every other plot on the canvas) renders
  * the React-side legend as a sibling *below* the chart inside its
- * flex-column container. We don't want to touch the shared component,
- * so the card wraps `<CanvasPlot>` in a div with this class and the
- * rule below flips the inner flex direction — legend ends up above
- * the chart, chart still claims `flex: 1` of the remaining height.
+ * flex-column container. We flip the inner flex direction so the
+ * legend ends up above the chart; chart still claims `flex: 1` of
+ * the remaining height.
+ *
+ * The descendant selector skips past the absolute-fill wrapper that
+ * sits between this class and `CanvasPlot.containerStyle`; that
+ * wrapper exists so plotly's pixel width doesn't leak into the
+ * canvas's intrinsic-size calculation (see `chartAreaStyle`).
  *
  * `!important` is required because `CanvasPlot.containerStyle` sets
  * `flex-direction: column` inline (inline beats external CSS without
  * `!important`). Scoped to `.cea-pathway-timeline-strip` so the
  * override only reaches this one card. */
-.cea-pathway-timeline-strip > div {
+.cea-pathway-timeline-strip > div > div {
   flex-direction: column-reverse !important;
 }
+

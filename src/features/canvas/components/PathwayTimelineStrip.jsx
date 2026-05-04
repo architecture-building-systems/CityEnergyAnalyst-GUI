@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Popconfirm, Tooltip } from 'antd';
 
 import {
@@ -15,6 +15,255 @@ import CanvasPlot, { fitPlotToParent } from './CanvasPlot';
 import './PathwayTimelineStrip.css';
 
 const TIMELINE_SCRIPT = 'plot-pathway-emission-timeline';
+
+// Force the x-axis to label only the years ending in `5`
+// (Y_2005, Y_2015, …). Pulling years out of the rendered figure
+// data lets us pin exact tick positions regardless of plotly's
+// auto-ticking (which emits every 2nd year by default and so
+// never lands on a year ending in 5).
+//
+// The backend's axis type varies by plot-type — line is numeric,
+// stacked-area is categorical — and plotly drops `tickvals` that
+// don't match the axis type (the symptom: "all labels gone"). We
+// detect the type from `div._fullLayout.xaxis.type` and pass
+// tickvals in the matching shape (numbers for numeric / date,
+// category strings for categorical).
+function applyStateYearTicks(div) {
+  if (!div || !window.Plotly?.relayout) return;
+  const layout = div._fullLayout;
+  const xData = div.data?.[0]?.x;
+  if (!Array.isArray(xData) || xData.length === 0) return;
+
+  const isCategorical = layout?.xaxis?.type === 'category';
+
+  const matches = xData
+    .map((raw) => {
+      const m = String(raw).match(/(\d+)/);
+      return m ? { raw, year: parseInt(m[1], 10) } : null;
+    })
+    .filter((entry) => entry && entry.year % 10 === 5);
+
+  if (matches.length === 0) return;
+
+  const tickvals = isCategorical
+    ? matches.map((m) => m.raw)
+    : matches.map((m) => m.year);
+  const ticktext = matches.map((m) => `Y_${m.year}`);
+
+  window.Plotly.relayout(div, {
+    'xaxis.tickmode': 'array',
+    'xaxis.tickvals': tickvals,
+    'xaxis.ticktext': ticktext,
+    // Plotly draws vertical gridlines at the major tick positions,
+    // so pinning tickvals above also pins the gridlines to the
+    // years ending in 5. Make sure the grid is on (the standalone
+    // builder may have flipped it off through `update_layout`).
+    'xaxis.showgrid': true,
+  });
+  raiseGridlayer(div);
+}
+
+// Move every subplot's `gridlayer` to after the corresponding
+// `plot` group in the SVG so the gridlines paint on top of the
+// data fill instead of behind it. SVG paints in document order
+// and ignores `z-index`, so plotly's `xaxis.layer: 'above traces'`
+// only lifts the axis lines / labels — not the gridlines. The
+// move is idempotent: the second call does nothing because
+// `gridlayer` is already the last sibling.
+function raiseGridlayer(div) {
+  const subplots = div?.querySelectorAll('g.cartesianlayer > g.subplot');
+  subplots?.forEach((subplot) => {
+    const grid = subplot.querySelector(':scope > g.gridlayer');
+    if (grid && subplot.lastElementChild !== grid) {
+      subplot.appendChild(grid);
+    }
+  });
+}
+
+// Plotly may re-derive auto-ticks on resize / refit / autorange
+// settle and overwrite our explicit tickvals. Watch the xaxis
+// tick layer and re-apply the filter (plus the state-year marker
+// lines) whenever plotly mutates it. `getYears` is read fresh on
+// each fire so the observer doesn't need to be reattached when
+// the picker changes its selection. Returns a cleanup function
+// the caller invokes on unmount.
+function watchXTicks(div, getYears) {
+  if (!div || typeof MutationObserver === 'undefined') return () => {};
+  const layer = div.querySelector('.xaxislayer-above');
+  if (!layer) return () => {};
+  const observer = new MutationObserver(() => {
+    applyStateYearTicks(div);
+    applyStateYearMarkers(div, getYears?.());
+  });
+  observer.observe(layer, { childList: true, subtree: true });
+  return () => observer.disconnect();
+}
+
+// Tag added to every state-year marker shape so we can rewrite
+// our own without nuking shapes the backend may have set.
+const STATE_MARKER_TAG = 'cea-pathway-state-marker';
+
+// How far the chart-side dashed marker extends below the plot
+// area (into the bottom margin), in pixels. The connector curve
+// starts where the marker ends so the two read as one polyline.
+const MARKER_OVERHANG_PX = 20;
+
+// The connector dot lands inside the title card, `DOT_INSET_PX`
+// from the card's right edge. `DOT_RADIUS_PX` is its radius.
+const DOT_INSET_PX = 12;
+const DOT_RADIUS_PX = 3;
+
+// Draw a dashed vertical line at every state-year on the chart,
+// spanning the plot area top-to-bottom plus a `MARKER_OVERHANG_PX`
+// overhang below the x-axis. Tickvals format follows the axis
+// type, mirroring `applyStateYearTicks`.
+function applyStateYearMarkers(div, years) {
+  if (!div || !window.Plotly?.relayout) return;
+  const layout = div._fullLayout;
+  if (!layout) return;
+  const xData = div.data?.[0]?.x;
+  if (!Array.isArray(xData) || xData.length === 0) return;
+
+  const isCategorical = layout?.xaxis?.type === 'category';
+
+  // Resolve each state year to a value the axis actually plots —
+  // for categorical axes that's the matching `'Y_<year>'` string,
+  // for numeric/date it's the year number. State years not present
+  // in the data are skipped silently.
+  const positions = (Array.isArray(years) ? years : [])
+    .map((year) => {
+      if (!isCategorical) return year;
+      const found = xData.find(
+        (raw) => String(raw).match(/(\d+)/)?.[1] === String(year),
+      );
+      return found ?? null;
+    })
+    .filter((v) => v !== null && v !== undefined);
+
+  // Replace previously-emitted markers; keep any other shapes in
+  // place. Identified by `name === STATE_MARKER_TAG`.
+  const otherShapes = (layout.shapes || []).filter(
+    (s) => s?.name !== STATE_MARKER_TAG,
+  );
+
+  // Extend each marker `MARKER_OVERHANG_PX` below the plot area
+  // (into the bottom margin) so the dashed line carries past the
+  // x-axis and visually meets the connector strip below the card.
+  // `yref: 'paper'` accepts values outside `[0, 1]`; we just need
+  // to express the overhang as a fraction of plot-area height.
+  const plotHeight =
+    (layout.height ?? 0) -
+    (layout.margin?.t ?? 0) -
+    (layout.margin?.b ?? 0);
+  const overhangFrac =
+    plotHeight > 0 ? MARKER_OVERHANG_PX / plotHeight : 0;
+
+  const markers = positions.map((x) => ({
+    name: STATE_MARKER_TAG,
+    type: 'line',
+    xref: 'x',
+    yref: 'paper',
+    x0: x,
+    x1: x,
+    y0: -overhangFrac,
+    y1: 1,
+    // Match the connector path's `strokeDasharray="4 3"` so the
+    // vertical chart marker and the curved connector below it
+    // read as a single continuous dashed line.
+    line: { color: '#000', width: 1, dash: '4px,3px' },
+    layer: 'above',
+  }));
+
+  window.Plotly.relayout(div, { shapes: [...otherShapes, ...markers] });
+}
+
+// Measure the screen-space positions needed to draw a connector
+// from each state year on the chart down to its matching column-
+// header card. Returns one `{ x1, y1, x2, y2 }` entry per state-
+// year, in connector-local coords. Resilient — returns [] if the
+// chart isn't rendered yet.
+function computeConnections(slotEl, connectorEl, stateYears) {
+  if (!slotEl || !connectorEl) return [];
+  if (!Array.isArray(stateYears) || stateYears.length === 0) return [];
+
+  const plotDiv = slotEl.querySelector('.js-plotly-plot, .plotly-graph-div');
+  const layout = plotDiv?._fullLayout;
+  const xaxis = layout?.xaxis;
+  const svg = plotDiv?.querySelector('svg.main-svg');
+  if (!plotDiv || !layout || !xaxis || !svg) return [];
+  // `l2p` (linear-to-pixel) works on every axis type. Plotly's
+  // `c2p` returns `undefined` for categorical axes when given a
+  // category name (it expects the category *index*). For
+  // categorical we look the index up in `xData` ourselves; for
+  // numeric we pass the value through.
+  if (typeof xaxis.l2p !== 'function') return [];
+
+  const xData = plotDiv.data?.[0]?.x;
+  if (!Array.isArray(xData) || xData.length === 0) return [];
+  const isCategorical = xaxis.type === 'category';
+
+  const svgRect = svg.getBoundingClientRect();
+  const connRect = connectorEl.getBoundingClientRect();
+  const xOffset = xaxis._offset ?? 0;
+  // Bottom of the plot area in SVG-local pixels. `layout.margin.b`
+  // is the bottom margin reserved for x-axis labels.
+  const plotBottomInSvg =
+    (layout.height ?? svgRect.height) - (layout.margin?.b ?? 0);
+
+  const columnsRow = connectorEl.nextElementSibling;
+  if (!columnsRow) return [];
+  const columnCells = Array.from(columnsRow.children);
+
+  const out = [];
+  stateYears.forEach((year, i) => {
+    const cell = columnCells[i];
+    if (!cell) return;
+    const titleCard =
+      cell.firstElementChild?.firstElementChild?.firstElementChild;
+    if (!titleCard) return;
+
+    let linearVal;
+    if (isCategorical) {
+      const x0 = xData.find(
+        (raw) => String(raw).match(/(\d+)/)?.[1] === String(year),
+      );
+      if (x0 == null) return;
+      linearVal = xData.indexOf(x0);
+      if (linearVal < 0) return;
+    } else {
+      linearVal = year;
+    }
+    const xPx = xaxis.l2p(linearVal);
+    if (typeof xPx !== 'number' || Number.isNaN(xPx)) return;
+
+    const x1Viewport = svgRect.left + xOffset + xPx;
+    // Start the connector curve where the chart marker now *ends*
+    // (its 20-px overhang past the plot bottom), so the marker
+    // and the curve form one continuous polyline with no gap.
+    const y1Viewport =
+      svgRect.top + plotBottomInSvg + MARKER_OVERHANG_PX;
+    const tRect = titleCard.getBoundingClientRect();
+
+    out.push({
+      // Chart marker bottom (where the line starts).
+      x1: x1Viewport - connRect.left,
+      y1: y1Viewport - connRect.top,
+      // Dot anchor: lands INSIDE the title card near its right
+      // edge, vertically centred. `DOT_INSET_PX` is the distance
+      // from the card's right edge to the dot's centre.
+      x2: tRect.right - DOT_INSET_PX - connRect.left,
+      y2: tRect.top + tRect.height / 2 - connRect.top,
+      // Top edge of the title card in connector-local coords.
+      // The curve must finish here (vertical tangent), then a
+      // straight vertical segment continues from this point down
+      // to the dot inside the card — so the section inside the
+      // card is completely straight.
+      cardTopY: tRect.top - connRect.top,
+    });
+  });
+
+  return out;
+}
 
 /**
  * Pathway Emission Timeline card spanning the canvas above the
@@ -49,10 +298,20 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
   const setOverrideConfig = useCanvasStore(
     (s) => s.setPathwayTimelinePlotConfig,
   );
+  const stateYears = useCanvasStore(
+    (s) => s.comparisonSetup?.stateYears ?? null,
+  );
   const project = useProjectStore((s) => s.project);
 
   const [caption, setCaption] = useState('');
   const slotRef = useRef(null);
+  const connectorRef = useRef(null);
+  const [connections, setConnections] = useState([]);
+  // Bumped in `handlePlotReady` so the connector-measurement effect
+  // can re-run once plotly has initialised — without this, the
+  // effect mounts before plotly is ready and never attaches its
+  // event listeners.
+  const [plotReadyVersion, setPlotReadyVersion] = useState(0);
 
   /** Effective config = override-or-default with the live pathway
    * pick re-injected. Re-running this on every render means the
@@ -78,6 +337,97 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
       ?.querySelectorAll('.js-plotly-plot, .plotly-graph-div')
       .forEach((div) => fitPlotToParent(div));
   };
+
+  // Live ref so observer/event callbacks below can read the
+  // current `stateYears` without re-attaching on every picker
+  // change.
+  const stateYearsRef = useRef(stateYears);
+  stateYearsRef.current = stateYears;
+
+  // Move the y-axis (ticks + title) to the right side of the chart.
+  // Done at runtime via `Plotly.relayout` rather than in the figure
+  // template because the same backend script is also used by the
+  // standalone Pathway Builder where the axis stays on the left.
+  const handlePlotReady = (div) => {
+    window.Plotly?.relayout?.(div, { 'yaxis.side': 'right' });
+    applyStateYearTicks(div);
+    applyStateYearMarkers(div, stateYearsRef.current);
+    // Triggers the connector-measurement effect now that plotly's
+    // graph div is initialised and ready to be queried.
+    setPlotReadyVersion((v) => v + 1);
+  };
+
+  // Re-apply the tick filter + state-year markers on every chart
+  // re-render, and keep them sticky against plotly's internal
+  // redraws (`watchXTicks` MutationObserver re-applies on each
+  // tick-layer mutation).
+  useEffect(() => {
+    const slot = slotRef.current;
+    if (!slot) return undefined;
+    const cleanups = [];
+    slot
+      .querySelectorAll('.js-plotly-plot, .plotly-graph-div')
+      .forEach((div) => {
+        applyStateYearTicks(div);
+        applyStateYearMarkers(div, stateYears);
+        cleanups.push(
+          watchXTicks(div, () => stateYearsRef.current),
+        );
+      });
+    return () => cleanups.forEach((fn) => fn());
+  }, [plotConfig, stateYears]);
+
+  // Recompute the dashed connectors that link each chart marker
+  // to its title-card dot. Re-fires on: effect deps (picker /
+  // chart re-render / plot-ready), ResizeObserver on the three
+  // contributing boxes (chart slot, connector strip, columns
+  // row), plotly's own redraw events, and a DOM-mutation backstop.
+  // Multiple triggers are intentional — plotly's layout settles
+  // asynchronously, so the first synchronous measure can run
+  // before `_fullLayout` is populated.
+  useEffect(() => {
+    const slot = slotRef.current;
+    const connector = connectorRef.current;
+    if (!slot || !connector) return undefined;
+
+    const update = () => {
+      setConnections(
+        computeConnections(slot, connector, stateYearsRef.current),
+      );
+    };
+
+    // Synchronous measure plus a next-frame retry — covers cases
+    // where plotly updated `_fullLayout` synchronously but hasn't
+    // yet emitted a redraw event we can hook.
+    update();
+    const raf = requestAnimationFrame(update);
+
+    const ro = new ResizeObserver(update);
+    ro.observe(slot);
+    ro.observe(connector);
+    const columnsRow = connector.nextElementSibling;
+    if (columnsRow) ro.observe(columnsRow);
+
+    const mo = new MutationObserver(update);
+    const svg = slot.querySelector('svg.main-svg');
+    if (svg)
+      mo.observe(svg, { childList: true, subtree: true, attributes: true });
+
+    const plotDiv = slot.querySelector('.js-plotly-plot, .plotly-graph-div');
+    const plotEvents = ['plotly_relayout', 'plotly_redraw', 'plotly_afterplot'];
+    if (plotDiv?.on) {
+      plotEvents.forEach((evt) => plotDiv.on(evt, update));
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      mo.disconnect();
+      if (plotDiv?.removeListener) {
+        plotEvents.forEach((evt) => plotDiv.removeListener(evt, update));
+      }
+    };
+  }, [plotConfig, stateYears, plotReadyVersion]);
 
   /**
    * Open the standard plot-edit drawer with the current config. On
@@ -112,76 +462,107 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
   }
 
   return (
-    <div style={cardStyle}>
-      <div style={titleRowStyle}>
-        <div style={titleLeftStyle}>
-          <TimelineIcon style={titleIconStyle} aria-hidden />
-          <span style={titleTextStyle}>Pathway Emission Timeline</span>
-          {caption && (
-            <>
-              <span style={titleSeparatorStyle}>—</span>
-              <span style={subtitleTextStyle} title={caption}>
-                {caption}
-              </span>
-            </>
-          )}
-        </div>
-        {enableEdit && (
-          <div className="cea-card-icon-button-container">
-            <Tooltip title="Edit" placement="bottom">
-              <Button
-                type="text"
-                icon={<InputEditorIcon />}
-                onClick={handleEdit}
-                disabled={!onOpenDrawer}
-                aria-label="Edit pathway emission timeline"
-              />
-            </Tooltip>
-            <Tooltip title="Refit" placement="bottom">
-              <Button
-                type="text"
-                icon={<RefreshIcon />}
-                onClick={handleRefit}
-                aria-label="Refit chart to its container"
-              />
-            </Tooltip>
-            <Popconfirm
-              title="Remove the pathway timeline?"
-              description="This exits Pathway View."
-              okText="Remove"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-              onConfirm={startOver}
-            >
-              <Tooltip title="Delete card" placement="bottom">
+    <>
+      <div style={cardStyle}>
+        <div style={titleRowStyle}>
+          <div style={titleLeftStyle}>
+            <TimelineIcon style={titleIconStyle} aria-hidden />
+            <span style={titleTextStyle}>Pathway Emission Timeline</span>
+            {caption && (
+              <>
+                <span style={titleSeparatorStyle}>—</span>
+                <span style={subtitleTextStyle} title={caption}>
+                  {caption}
+                </span>
+              </>
+            )}
+          </div>
+          {enableEdit && (
+            <div className="cea-card-icon-button-container">
+              <Tooltip title="Edit" placement="bottom">
                 <Button
                   type="text"
-                  icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
-                  aria-label="Delete pathway emission timeline"
+                  icon={<InputEditorIcon />}
+                  onClick={handleEdit}
+                  disabled={!onOpenDrawer}
+                  aria-label="Edit pathway emission timeline"
                 />
               </Tooltip>
-            </Popconfirm>
+              <Tooltip title="Refit" placement="bottom">
+                <Button
+                  type="text"
+                  icon={<RefreshIcon />}
+                  onClick={handleRefit}
+                  aria-label="Refit chart to its container"
+                />
+              </Tooltip>
+              <Popconfirm
+                title="Remove the pathway timeline?"
+                description="This exits Pathway View."
+                okText="Remove"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+                onConfirm={startOver}
+              >
+                <Tooltip title="Delete card" placement="bottom">
+                  <Button
+                    type="text"
+                    icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
+                    aria-label="Delete pathway emission timeline"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            </div>
+          )}
+        </div>
+        <div
+          ref={slotRef}
+          className="cea-pathway-timeline-strip"
+          style={chartAreaStyle}
+        >
+          <div style={chartFillStyle}>
+            <CanvasPlot
+              scenario={parentScenario}
+              plotConfig={plotConfig}
+              onCaption={setCaption}
+              onPlotReady={handlePlotReady}
+            />
           </div>
-        )}
+        </div>
       </div>
-      <div
-        ref={slotRef}
-        className="cea-pathway-timeline-strip"
-        style={chartAreaStyle}
-      >
-        <CanvasPlot
-          scenario={parentScenario}
-          plotConfig={plotConfig}
-          onCaption={setCaption}
-        />
+      <div ref={connectorRef} style={connectorStyle}>
+        <svg style={connectorSvgStyle} overflow="visible">
+          {connections.map((c, i) => {
+            // Two-segment path: a Grasshopper-style cubic bezier
+            // with vertical tangents at both ends, finishing at
+            // the *top* of the title card; then a straight vertical
+            // line from the card top down to the dot inside the
+            // card. Drawing the in-card section as `L` (not part
+            // of the curve) guarantees it stays perfectly vertical
+            // regardless of how the curve splines.
+            const midY = (c.y1 + c.cardTopY) / 2;
+            const d = `M ${c.x1} ${c.y1} C ${c.x1} ${midY}, ${c.x2} ${midY}, ${c.x2} ${c.cardTopY} L ${c.x2} ${c.y2}`;
+            return (
+              <g key={i}>
+                <path
+                  d={d}
+                  stroke="#000"
+                  strokeWidth={1}
+                  strokeDasharray="4 3"
+                  fill="none"
+                />
+                <circle cx={c.x2} cy={c.y2} r={DOT_RADIUS_PX} fill="#000" />
+              </g>
+            );
+          })}
+        </svg>
       </div>
-    </div>
+    </>
   );
 };
 
 const cardStyle = {
   background: '#fff',
-  border: '1px solid #e8e8e8',
   borderRadius: 12,
   padding: '8px 16px',
   boxSizing: 'border-box',
@@ -190,8 +571,35 @@ const cardStyle = {
   gap: 4,
   width: '100%',
   height: 360,
-  marginBottom: 12,
   overflow: 'hidden',
+  // Bottom gap lives on `connectorStyle` so the dashed connector
+  // SVG sits between the card and the columns row.
+};
+
+// The connector strip lives between the card and the columns row.
+// `position: relative` anchors the SVG, which uses `overflow:
+// visible` so dashed paths can extend slightly above (into the
+// card's bottom area) and below (into the columns row's title
+// row) without being clipped. `z-index` lifts the strip above the
+// columns row that follows it in DOM order — without it, every
+// title card paints over our dashed lines and dots, making them
+// effectively invisible.
+const connectorStyle = {
+  position: 'relative',
+  width: '100%',
+  height: 12,
+  marginBottom: 12,
+  zIndex: 10,
+};
+
+const connectorSvgStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  overflow: 'visible',
+  pointerEvents: 'none',
 };
 
 const titleRowStyle = {
@@ -240,10 +648,24 @@ const subtitleTextStyle = {
   minWidth: 0,
 };
 
+// `position: relative` anchor for the absolute-fill chart wrapper
+// below. The absolute child takes the Plotly chart out of the
+// canvas's intrinsic-size flow — without this, plotly's pixel width
+// (set once by `fitPlotToParent` on first measure) leaks up the
+// flex chain into the canvas's `fit-content` width and locks it at
+// the widest measurement, so removing columns can't shrink the
+// canvas (the chart never refits and stays oversized).
 const chartAreaStyle = {
-  display: 'flex',
   flex: 1,
   minHeight: 0,
+  minWidth: 0,
+  position: 'relative',
+};
+
+const chartFillStyle = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
 };
 
 export default PathwayTimelineStrip;
