@@ -82,100 +82,25 @@ function raiseGridlayer(div) {
 
 // Plotly may re-derive auto-ticks on resize / refit / autorange
 // settle and overwrite our explicit tickvals. Watch the xaxis
-// tick layer and re-apply the filter (plus the state-year marker
-// lines) whenever plotly mutates it. `getYears` is read fresh on
-// each fire so the observer doesn't need to be reattached when
-// the picker changes its selection. Returns a cleanup function
-// the caller invokes on unmount.
-function watchXTicks(div, getYears) {
+// tick layer and re-apply the filter whenever plotly mutates it.
+// Returns a cleanup function the caller invokes on unmount.
+function watchXTicks(div) {
   if (!div || typeof MutationObserver === 'undefined') return () => {};
   const layer = div.querySelector('.xaxislayer-above');
   if (!layer) return () => {};
-  const observer = new MutationObserver(() => {
-    applyStateYearTicks(div);
-    applyStateYearMarkers(div, getYears?.());
-  });
+  const observer = new MutationObserver(() => applyStateYearTicks(div));
   observer.observe(layer, { childList: true, subtree: true });
   return () => observer.disconnect();
 }
 
-// Tag added to every state-year marker shape so we can rewrite
-// our own without nuking shapes the backend may have set.
-const STATE_MARKER_TAG = 'cea-pathway-state-marker';
-
-// How far the chart-side dashed marker extends below the plot
-// area (into the bottom margin), in pixels. The connector curve
-// starts where the marker ends so the two read as one polyline.
+// How far the chart-side segment of the connector polyline drops
+// below the plot area (into the bottom margin), in pixels.
 const MARKER_OVERHANG_PX = 20;
 
 // The connector dot lands inside the title card, `DOT_INSET_PX`
 // from the card's right edge. `DOT_RADIUS_PX` is its radius.
 const DOT_INSET_PX = 12;
 const DOT_RADIUS_PX = 3;
-
-// Draw a dashed vertical line at every state-year on the chart,
-// spanning the plot area top-to-bottom plus a `MARKER_OVERHANG_PX`
-// overhang below the x-axis. Tickvals format follows the axis
-// type, mirroring `applyStateYearTicks`.
-function applyStateYearMarkers(div, years) {
-  if (!div || !window.Plotly?.relayout) return;
-  const layout = div._fullLayout;
-  if (!layout) return;
-  const xData = div.data?.[0]?.x;
-  if (!Array.isArray(xData) || xData.length === 0) return;
-
-  const isCategorical = layout?.xaxis?.type === 'category';
-
-  // Resolve each state year to a value the axis actually plots —
-  // for categorical axes that's the matching `'Y_<year>'` string,
-  // for numeric/date it's the year number. State years not present
-  // in the data are skipped silently.
-  const positions = (Array.isArray(years) ? years : [])
-    .map((year) => {
-      if (!isCategorical) return year;
-      const found = xData.find(
-        (raw) => String(raw).match(/(\d+)/)?.[1] === String(year),
-      );
-      return found ?? null;
-    })
-    .filter((v) => v !== null && v !== undefined);
-
-  // Replace previously-emitted markers; keep any other shapes in
-  // place. Identified by `name === STATE_MARKER_TAG`.
-  const otherShapes = (layout.shapes || []).filter(
-    (s) => s?.name !== STATE_MARKER_TAG,
-  );
-
-  // Extend each marker `MARKER_OVERHANG_PX` below the plot area
-  // (into the bottom margin) so the dashed line carries past the
-  // x-axis and visually meets the connector strip below the card.
-  // `yref: 'paper'` accepts values outside `[0, 1]`; we just need
-  // to express the overhang as a fraction of plot-area height.
-  const plotHeight =
-    (layout.height ?? 0) -
-    (layout.margin?.t ?? 0) -
-    (layout.margin?.b ?? 0);
-  const overhangFrac =
-    plotHeight > 0 ? MARKER_OVERHANG_PX / plotHeight : 0;
-
-  const markers = positions.map((x) => ({
-    name: STATE_MARKER_TAG,
-    type: 'line',
-    xref: 'x',
-    yref: 'paper',
-    x0: x,
-    x1: x,
-    y0: -overhangFrac,
-    y1: 1,
-    // Match the connector path's `strokeDasharray="4 3"` so the
-    // vertical chart marker and the curved connector below it
-    // read as a single continuous dashed line.
-    line: { color: '#000', width: 1, dash: '4px,3px' },
-    layer: 'above',
-  }));
-
-  window.Plotly.relayout(div, { shapes: [...otherShapes, ...markers] });
-}
 
 // Measure the screen-space positions needed to draw a connector
 // from each state year on the chart down to its matching column-
@@ -237,27 +162,27 @@ function computeConnections(slotEl, connectorEl, stateYears) {
     if (typeof xPx !== 'number' || Number.isNaN(xPx)) return;
 
     const x1Viewport = svgRect.left + xOffset + xPx;
-    // Start the connector curve where the chart marker now *ends*
-    // (its 20-px overhang past the plot bottom), so the marker
-    // and the curve form one continuous polyline with no gap.
-    const y1Viewport =
-      svgRect.top + plotBottomInSvg + MARKER_OVERHANG_PX;
+    const plotTopInSvg = layout.margin?.t ?? 0;
     const tRect = titleCard.getBoundingClientRect();
 
     out.push({
-      // Chart marker bottom (where the line starts).
+      // Top of the plot area — the polyline starts here as a
+      // vertical line that crosses the chart, drops below the
+      // x-axis by `MARKER_OVERHANG_PX`, then curves into the dot.
       x1: x1Viewport - connRect.left,
-      y1: y1Viewport - connRect.top,
-      // Dot anchor: lands INSIDE the title card near its right
-      // edge, vertically centred. `DOT_INSET_PX` is the distance
-      // from the card's right edge to the dot's centre.
+      chartTopY: svgRect.top + plotTopInSvg - connRect.top,
+      // Where the vertical chart segment ends and the curve begins.
+      curveStartY:
+        svgRect.top + plotBottomInSvg + MARKER_OVERHANG_PX - connRect.top,
+      // Dot anchor: INSIDE the title card near its right edge,
+      // vertically centred. `DOT_INSET_PX` is the distance from
+      // the card's right edge to the dot's centre.
       x2: tRect.right - DOT_INSET_PX - connRect.left,
       y2: tRect.top + tRect.height / 2 - connRect.top,
-      // Top edge of the title card in connector-local coords.
-      // The curve must finish here (vertical tangent), then a
-      // straight vertical segment continues from this point down
-      // to the dot inside the card — so the section inside the
-      // card is completely straight.
+      // Top edge of the title card. The curve finishes here with
+      // a vertical tangent and a straight vertical segment carries
+      // the line down to the dot — keeps the in-card section
+      // perfectly straight regardless of curve splining.
       cardTopY: tRect.top - connRect.top,
     });
   });
@@ -351,16 +276,14 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
   const handlePlotReady = (div) => {
     window.Plotly?.relayout?.(div, { 'yaxis.side': 'right' });
     applyStateYearTicks(div);
-    applyStateYearMarkers(div, stateYearsRef.current);
     // Triggers the connector-measurement effect now that plotly's
     // graph div is initialised and ready to be queried.
     setPlotReadyVersion((v) => v + 1);
   };
 
-  // Re-apply the tick filter + state-year markers on every chart
-  // re-render, and keep them sticky against plotly's internal
-  // redraws (`watchXTicks` MutationObserver re-applies on each
-  // tick-layer mutation).
+  // Re-apply the tick filter on every chart re-render, and keep it
+  // sticky against plotly's internal redraws (`watchXTicks`
+  // MutationObserver re-applies on each tick-layer mutation).
   useEffect(() => {
     const slot = slotRef.current;
     if (!slot) return undefined;
@@ -369,13 +292,10 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
       .querySelectorAll('.js-plotly-plot, .plotly-graph-div')
       .forEach((div) => {
         applyStateYearTicks(div);
-        applyStateYearMarkers(div, stateYears);
-        cleanups.push(
-          watchXTicks(div, () => stateYearsRef.current),
-        );
+        cleanups.push(watchXTicks(div));
       });
     return () => cleanups.forEach((fn) => fn());
-  }, [plotConfig, stateYears]);
+  }, [plotConfig]);
 
   // Recompute the dashed connectors that link each chart marker
   // to its title-card dot. Re-fires on: effect deps (picker /
@@ -390,17 +310,23 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
     const connector = connectorRef.current;
     if (!slot || !connector) return undefined;
 
+    // Always defer the measure to the next animation frame so the
+    // layout has fully settled — title cards reflow when columns
+    // grow taller from new cards, and a synchronous measure inside
+    // a ResizeObserver callback can capture the *previous* frame's
+    // positions while React is still committing the new tile.
+    let pendingRaf = null;
     const update = () => {
-      setConnections(
-        computeConnections(slot, connector, stateYearsRef.current),
-      );
+      if (pendingRaf != null) return;
+      pendingRaf = requestAnimationFrame(() => {
+        pendingRaf = null;
+        setConnections(
+          computeConnections(slot, connector, stateYearsRef.current),
+        );
+      });
     };
 
-    // Synchronous measure plus a next-frame retry — covers cases
-    // where plotly updated `_fullLayout` synchronously but hasn't
-    // yet emitted a redraw event we can hook.
     update();
-    const raf = requestAnimationFrame(update);
 
     const ro = new ResizeObserver(update);
     ro.observe(slot);
@@ -412,6 +338,18 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
     const svg = slot.querySelector('svg.main-svg');
     if (svg)
       mo.observe(svg, { childList: true, subtree: true, attributes: true });
+    // Adding/removing tiles in a column rewrites the grid's children
+    // but doesn't always change the columns-row's outer size, so
+    // ResizeObserver wouldn't fire. Watch the columns row's subtree
+    // for any DOM mutation (`react-grid-layout` re-renders, tile
+    // inserts) so we re-measure after every layout change.
+    if (columnsRow)
+      mo.observe(columnsRow, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style'],
+      });
 
     const plotDiv = slot.querySelector('.js-plotly-plot, .plotly-graph-div');
     const plotEvents = ['plotly_relayout', 'plotly_redraw', 'plotly_afterplot'];
@@ -420,7 +358,7 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
     }
 
     return () => {
-      cancelAnimationFrame(raf);
+      if (pendingRaf != null) cancelAnimationFrame(pendingRaf);
       ro.disconnect();
       mo.disconnect();
       if (plotDiv?.removeListener) {
@@ -533,15 +471,22 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
       <div ref={connectorRef} style={connectorStyle}>
         <svg style={connectorSvgStyle} overflow="visible">
           {connections.map((c, i) => {
-            // Two-segment path: a Grasshopper-style cubic bezier
-            // with vertical tangents at both ends, finishing at
-            // the *top* of the title card; then a straight vertical
-            // line from the card top down to the dot inside the
-            // card. Drawing the in-card section as `L` (not part
-            // of the curve) guarantees it stays perfectly vertical
-            // regardless of how the curve splines.
-            const midY = (c.y1 + c.cardTopY) / 2;
-            const d = `M ${c.x1} ${c.y1} C ${c.x1} ${midY}, ${c.x2} ${midY}, ${c.x2} ${c.cardTopY} L ${c.x2} ${c.y2}`;
+            // One continuous polyline drawn entirely in this SVG
+            // (the Plotly-shape markers were dropped because their
+            // dash phase doesn't align with ours, leaving a visible
+            // gap at the join). Segments:
+            //   1. vertical from plot top → past x-axis (chart-side
+            //      marker, overhanging into the bottom margin);
+            //   2. cubic bezier with vertical tangents at both ends
+            //      (Grasshopper-style wire) into the title card top;
+            //   3. straight vertical from card top → dot inside the
+            //      title card.
+            const midY = (c.curveStartY + c.cardTopY) / 2;
+            const d =
+              `M ${c.x1} ${c.chartTopY} ` +
+              `L ${c.x1} ${c.curveStartY} ` +
+              `C ${c.x1} ${midY}, ${c.x2} ${midY}, ${c.x2} ${c.cardTopY} ` +
+              `L ${c.x2} ${c.y2}`;
             return (
               <g key={i}>
                 <path
