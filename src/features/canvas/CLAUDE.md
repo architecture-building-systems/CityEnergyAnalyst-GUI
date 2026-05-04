@@ -1,9 +1,10 @@
 # Canvas Builder
 
-Side-by-side comparison dashboard. Two comparison modes (inter-scenario,
-inter-whatif), a Zustand store for view + card state, a
-`react-grid-layout` canvas for free-form tile placement, and Plotly-based
-charts with optional y-axis alignment across columns sharing a slot id.
+Side-by-side comparison dashboard. Four comparison modes
+(inter-scenario, inter-whatif, pathway-single, pathway-multi), a
+Zustand store for view + card state, a `react-grid-layout` canvas for
+free-form tile placement, and Plotly-based charts with optional y-axis
+alignment across columns sharing a slot id.
 
 ## Main API
 - `useCanvasStore()` - View, columns, and card CRUD.
@@ -48,16 +49,38 @@ units (`COL_WIDTH_PX`/`ROW_HEIGHT_PX` in `CanvasColumn`). The column's
 primary map is a virtual tile pinned at `(0, 0)`; feature cards never
 occupy that slot.
 
-| View              | Columns                          | Card storage     |
-|-------------------|----------------------------------|------------------|
-| `launch`          | 1                                | `launchCards`    |
-| `inter-scenario`  | 1 per scenario (origin first)    | `sharedCards`    |
-| `inter-whatif`    | 1 per what-if (origin first)     | `sharedCards`    |
+| View                | Columns                                   | Card storage     |
+|---------------------|-------------------------------------------|------------------|
+| `launch`            | 1                                         | `launchCards`    |
+| `inter-scenario`    | 1 per scenario (origin first)             | `sharedCards`    |
+| `inter-whatif`      | 1 per what-if (origin first)              | `sharedCards`    |
+| `pathway-single`    | 1 per state year of the chosen pathway    | `sharedCards`    |
+| `pathway-multi`     | 1 per pathway (row-based stack, no rgl)   | n/a              |
 
-Both comparison modes share a single card list across columns —
-one row per card, mirrored across every column. The leftmost
-column is the **origin** (only column with editing affordances);
-the rest are read-only mirrors.
+`inter-scenario` / `inter-whatif` / `pathway-single` share a single
+card list across columns — one row per card, mirrored across every
+column. The leftmost column is the **origin** (only column with
+editing affordances); the rest are read-only mirrors. `pathway-multi`
+is the exception: it skips the column grid entirely and renders a
+vertical stack of `<PathwayRow>`s (pathway name + Emission Pathway
+plot per row), with no per-card editing surface.
+
+Pathway modes are gated by the **Pathway View** toggle in the
+`NavigatorCard` (visible only when the active scenario has ≥1
+fully-baked pathway). The multi-select pathway picker (`<PathwayCompareSelect>`)
+sits in the column-0 title row replacing the *Add Scenario to compare*
+`+` button:
+- 1 pathway picked  → `enterPathwaySingle(...)` → `pathway-single`
+- ≥2 pathways picked → `enterPathwayMulti(...)`  → `pathway-multi`
+- empty selection    → `startOver()`
+
+Each `pathway-single` column is a `pathway-state` column carrying
+`{ pathwayName, year, scenario: <child-state path> }`. The
+`scenario` field is the child path under
+`<parent>/outputs/pathways/<name>/state_<year>` so per-column data
+fetches go through the existing scenario-scoped APIs. Column header
+renders `Y_<year>` instead of the scenario name; the parent
+scenario is shown once at the top via `<CanvasScenarioHeader>`.
 
 ## Key Patterns
 
@@ -302,17 +325,77 @@ scenario / what-if from the comparison.
 ### DO: Persist Compare picks across "Stop comparing"
 ```js
 // canvasStore
-comparisonSetup: { kind, scenarios?, whatifs?, parentScenario? }
-// Set automatically by `enterInterScenario` / `enterInterWhatif`.
-// Survives `stopCompareMode` (revert to launch); cleared by
-// `startOver`. The CompareButton in the navigator uses this to
-// decide between "Compare" (no setup) and "Resume comparing"
-// (setup exists, view === 'launch').
+comparisonSetup:
+  | { kind: 'inter-scenario',  scenarios }
+  | { kind: 'inter-whatif',    parentScenario, whatifs }
+  | { kind: 'pathway-single',  pathwayName, stateYears, parentScenario }
+  | { kind: 'pathway-multi',   pathwayNames, parentScenario }
+// Set by `enterInterScenario` / `enterInterWhatif` /
+// `enterPathwaySingle` / `enterPathwayMulti`. Survives
+// `stopCompareMode` (revert to launch); cleared by `startOver`. The
+// CompareButton in the navigator uses this to decide between
+// "Compare" (no setup) and "Resume comparing" (setup exists,
+// view === 'launch').
 ```
 Comparison setup lives on `canvas.yml` as `comparison_setup`,
 decoupled from the active `view` field — the canvas opens in
 whichever view it was last in, and the saved picks resume on
 demand.
+
+### DO: Gate Pathway View on the active scenario's baked pathways
+```jsx
+const hasBakedPathway = useHasBakedPathway();
+{hasBakedPathway && (
+  <NavigatorToggle
+    checked={pathwayView}
+    onChange={handlePathwayViewChange}
+    label="Pathway View"
+    colorPrimary={PATHWAY_PRIMARY}
+  />
+)}
+```
+The toggle and the picker dropdown both live behind
+`useHasBakedPathway()` — same predicate `OverviewCard`'s pathway
+viewer uses, so a user only sees Pathway View affordances in
+scenarios where they're meaningful. `pathwayView` resets on every
+scenario switch (see `useResumeLastCanvas.EMPTY_CANVAS_STATE`)
+because its meaning is scenario-scoped, unlike `mapsLinked` /
+`fixLayout` / `enableEdit` which survive switches as user prefs.
+
+### DO: Treat `pathway-single` columns as inter-scenario columns with state folders
+```js
+// enterPathwaySingle resolves each year's child-scenario path:
+columns = years.map((year) => ({
+  type: 'pathway-state',
+  pathwayName,
+  year,
+  scenario: `${parent}/outputs/pathways/${pathwayName}/state_${year}`,
+}));
+```
+Each `pathway-state` column is a regular comparison column with the
+state-folder path as its `scenario`. KPI / Plot / Map cards reuse
+the existing per-column fetch path; only the column header label
+swaps from the scenario name to `Y_<year>`. Adding cards / dragging
+layout / running compare-mode toggles still works because the
+column shape is otherwise identical.
+
+### DO: Render pathway chrome through `ComparisonView`, not new pages
+```jsx
+// ComparisonView.jsx
+if (view === 'pathway-multi') return <PathwayMultiView />;
+return (
+  <div>
+    <CanvasScenarioHeader />
+    {view === 'pathway-single' && <PathwayTimelineStrip />}
+    <div style={columnsRowStyle}>...</div>
+  </div>
+);
+```
+`CanvasScenarioHeader` and `PathwayTimelineStrip` are pathway-only
+chrome — they early-return `null` outside their target views, so
+`ComparisonView` can render them unconditionally. `pathway-multi`
+short-circuits the column grid entirely because its row layout is
+incompatible with the rgl-based comparison columns.
 
 ### DO: Open `MapLayerProperties` at the bottom for both Plot and Map flows
 `CanvasPage` carries two parallel switches: `drawer` (plot-tool drawer
@@ -541,6 +624,31 @@ source of truth for card config that the comparison views never read.
   → PlotTool parameter form.
 - `components/CircleActionButton.jsx` - Shared blue-circle + label
   button (`sm` / `md`). Uses `CreateNewIcon` and the pathway palette.
+- `components/PathwayCompareSelect.jsx` - Multi-select pathway
+  picker that replaces the *Add Scenario to compare* `+` button
+  whenever Pathway View is on. Reads baked pathways via
+  `usePathwayOverview`; calls `enterPathwaySingle` /
+  `enterPathwayMulti` on change; clearing selection runs
+  `startOver`. Wears the same black-pill `cea-scenario-select`
+  styling as `OverviewCard`'s pathway dropdown.
+- `components/PathwayTimelineStrip.jsx` - Spanning Emission Timeline
+  rendered above the columns row in `pathway-single`. Uses
+  `plot-pathway-emission-timeline` against the parent scenario; the
+  pathway picker's selection drives the `existing-pathway-names`
+  parameter. Pixel-perfect tick alignment to column centres is
+  deferred — the chart currently spans the full canvas width with
+  the same year domain as the column headers.
+- `components/PathwayMultiView.jsx` - Row-based multi-pathway view.
+  Vertical stack of `<PathwayRow>`s, one per selected pathway, each
+  rendering the pathway name + an Emission Pathway plot. Rows share
+  a computed year range so the timescale aligns visually. Bypasses
+  the column grid and `react-grid-layout` entirely.
+- `components/CanvasScenarioHeader.jsx` - One-line scenario header
+  rendered at the top of the canvas in pathway modes
+  (`Scenario: <name> — Pathway View`). Optional `trailing` slot
+  hosts the `<PathwayCompareSelect>` in `pathway-multi`. Hidden in
+  non-pathway modes — `NavigatorCard` provides scenario context
+  there.
 
 ## Icons & buttons
 - Use icons from `assets/icons` (same set as pathway). Avoid

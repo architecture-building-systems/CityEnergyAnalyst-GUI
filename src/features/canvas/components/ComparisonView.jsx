@@ -5,8 +5,11 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
+import CanvasScenarioHeader from './CanvasScenarioHeader';
 import CompareModal from './CompareModal';
 import PathwayCompareSelect from './PathwayCompareSelect';
+import PathwayMultiView from './PathwayMultiView';
+import PathwayTimelineStrip from './PathwayTimelineStrip';
 
 const ComparisonView = ({
   onOpenDrawer,
@@ -21,6 +24,7 @@ const ComparisonView = ({
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const columnCards = useCanvasStore((s) => s.columnCards);
   const pathwayView = useCanvasStore((s) => s.pathwayView);
+  const view = useCanvasStore((s) => s.view);
 
   // Build the full scenario path the plot-tool form expects in
   // its `general:scenario` parameter (POSIX-style join — works on
@@ -186,6 +190,15 @@ const ComparisonView = ({
     removeCard(columnIndex, cardId);
   };
 
+  // Multi-pathway mode renders a row-based layout instead of the
+  // column grid below. Routing here keeps the scenario-name header,
+  // picker dropdown, and stacked rows scoped to one component
+  // (`PathwayMultiView`) without bloating the inter-scenario /
+  // inter-whatif / pathway-single render path.
+  if (view === 'pathway-multi') {
+    return <PathwayMultiView />;
+  }
+
   if (columns.length === 0) {
     return (
       <div style={emptyStyle}>
@@ -198,6 +211,8 @@ const ComparisonView = ({
     <div>
       <div style={canvasWrapperStyle}>
         <div style={enableEdit ? canvasStyle : canvasExportStyle}>
+          <CanvasScenarioHeader />
+          {view === 'pathway-single' && <PathwayTimelineStrip />}
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
@@ -241,9 +256,7 @@ const ComparisonView = ({
                   isOrigin={i === 0}
                   lockedReadOnly={i !== 0}
                   onCloseColumn={
-                    i !== 0 && !pathwayView
-                      ? () => removeColumn(i)
-                      : undefined
+                    i !== 0 && !pathwayView ? () => removeColumn(i) : undefined
                   }
                   // Origin column's title-row `+` re-opens the
                   // CompareModal so the user can add or remove

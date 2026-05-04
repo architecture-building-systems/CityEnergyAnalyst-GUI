@@ -112,9 +112,13 @@ const childStateScenarioPath = (parentScenario, pathwayName, year) => {
   // frontend only stores the resolved path for downstream APIs that
   // expect a scenario path string; no path math happens here.
   const sep = parentScenario.includes('\\') ? '\\' : '/';
-  return [parentScenario, 'outputs', 'pathways', pathwayName, `state_${year}`].join(
-    sep,
-  );
+  return [
+    parentScenario,
+    'outputs',
+    'pathways',
+    pathwayName,
+    `state_${year}`,
+  ].join(sep);
 };
 
 const makeCard = ({
@@ -594,7 +598,9 @@ export const useCanvasStore = create((set, get) => ({
    * inter-scenario-style compare with state folders.
    */
   enterPathwaySingle: (parentScenario, pathwayName, stateYears) => {
-    const years = (stateYears || []).map((y) => Number(y)).sort((a, b) => a - b);
+    const years = (stateYears || [])
+      .map((y) => Number(y))
+      .sort((a, b) => a - b);
     const columns = years.map((year) => ({
       type: 'pathway-state',
       pathwayName,

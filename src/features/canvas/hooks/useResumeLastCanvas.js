@@ -50,6 +50,13 @@ export const lastCanvasStorageKey = (project, scenario) =>
 // listed (navigator toggles like `mapsLinked`, `fixLayout`,
 // `enableEdit`) is treated as a user pref that survives the
 // scenario switch.
+//
+// ``pathwayView`` *does* reset here even though it's a navigator
+// toggle, because its meaning is scenario-scoped (the toggle
+// depends on the active scenario having ≥1 baked pathway). Letting
+// it survive a switch into a scenario without baked pathways would
+// strand the user with the toggle's "on" state but no usable
+// picker.
 const EMPTY_CANVAS_STATE = {
   view: 'launch',
   columns: [],
@@ -59,6 +66,7 @@ const EMPTY_CANVAS_STATE = {
   comparisonSetup: null,
   canvasName: null,
   mapPos: { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H },
+  pathwayView: false,
 };
 
 export function useResumeLastCanvas() {

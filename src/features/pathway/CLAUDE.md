@@ -4,6 +4,8 @@
 - `fetchPathwayOverview() -> Promise<object>` - Shared span and year lanes for all pathways.
 - `fetchPathwayTimeline(pathwayName) -> Promise<object>` - Active-pathway detail rows with status and YAML preview.
 - `fetchYearEditorOptions(pathwayName, year) -> Promise<object>` - Choices for building/template editors.
+- `usePathwayOverview({ enabled? })` - React Query hook keyed on the active scenario; cached, shared across consumers (currently the Canvas Builder's `NavigatorCard` toggle gating + `PathwayCompareSelect` options).
+- `useHasBakedPathway()` - Boolean derivative — `true` iff the active scenario has at least one fully-baked pathway. Same predicate `OverviewCard`'s viewer uses; gates the Canvas Builder's Pathway View toggle so the affordance only appears in scenarios where pathways exist.
 - `PathwayPanel({ expanded, onExpandedChange, ... })` - Bottom-panel stacked timeline with shared ruler, inspector, editor modals, and full-screen toggle.
 
 ## Key Patterns
@@ -149,5 +151,6 @@ onKeyDown={(event) => handleYamlTextareaKeyDown(event, yamlDraft, setYamlDraft)}
 
 ## Related Files
 - `api.js` - Dedicated pathway API client helpers.
+- `hooks/usePathwayOverview.js` - React Query wrapper around `fetchPathwayOverview` plus the `useHasBakedPathway` boolean derivative.
 - `components/PathwayPanel.jsx` - Stacked-lane panel, shared ruler, inspector, and editor workflows.
 - `../project/components/ProjectOverlay.jsx` - Bottom-panel mounting point and transition sizing.

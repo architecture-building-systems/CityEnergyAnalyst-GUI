@@ -82,6 +82,13 @@ export function serializeCanvas(state) {
       type: c.type,
       scenario: c.scenario ?? null,
       whatif: c.whatif ?? null,
+      // Pathway-mode column fields. ``pathway-state`` columns carry
+      // ``pathwayName`` + ``year`` so a reload can rebuild
+      // ``Y_{year}`` headers and the child-state ``scenario`` path.
+      // ``pathway`` rows (multi-pathway view) carry just
+      // ``pathwayName``.
+      pathway_name: c.pathwayName ?? null,
+      year: c.year ?? null,
     })),
     maps_linked: !!state.mapsLinked,
     fix_layout: !!state.fixLayout,
@@ -165,6 +172,8 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
       type: c.type,
       scenario: c.scenario ?? undefined,
       whatif: c.whatif ?? undefined,
+      pathwayName: c.pathway_name ?? undefined,
+      year: c.year ?? undefined,
     })),
     parentScenario: canvas.parent_scenario ?? null,
     mapsLinked: !!canvas.maps_linked,
