@@ -43,8 +43,12 @@ const PathwayCompareSelect = () => {
 
   const [open, setOpen] = useState(false);
 
-  const bakedPathways = useMemo(
-    () => (overview?.pathways ?? []).filter((p) => p.all_baked),
+  // Picker only accepts pathways whose every state year has been
+  // simulated — otherwise per-column emission / demand fetches
+  // would land on missing outputs. Mirrors the
+  // `useHasSimulatedPathway` predicate that gates picker visibility.
+  const simulatedPathways = useMemo(
+    () => (overview?.pathways ?? []).filter((p) => p.all_simulated),
     [overview],
   );
 
@@ -63,11 +67,11 @@ const PathwayCompareSelect = () => {
   }, [setup]);
 
   const pickedSet = useMemo(() => new Set(picks), [picks]);
-  const hasPathways = bakedPathways.length > 0;
+  const hasPathways = simulatedPathways.length > 0;
 
   const options = useMemo(
     () =>
-      bakedPathways.map((p) => ({
+      simulatedPathways.map((p) => ({
         value: p.pathway_name,
         label: (
           <PathwayOption
@@ -76,7 +80,7 @@ const PathwayCompareSelect = () => {
           />
         ),
       })),
-    [bakedPathways, pickedSet],
+    [simulatedPathways, pickedSet],
   );
 
   const enterMode = (nextPicks) => {
@@ -85,7 +89,7 @@ const PathwayCompareSelect = () => {
       return;
     }
     if (nextPicks.length === 1) {
-      const pathway = bakedPathways.find(
+      const pathway = simulatedPathways.find(
         (p) => p.pathway_name === nextPicks[0],
       );
       enterPathwaySingle(scenario, nextPicks[0], pathway?.years ?? []);

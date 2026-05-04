@@ -2,21 +2,19 @@ import { useCanvasStore } from '../stores/canvasStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
 /**
- * Once-per-canvas header rendered at the top of the canvas in
- * pathway modes. Replaces the per-column scenario label (which the
- * column headers now use for state-year / pathway-name) so the
- * shared parent scenario stays anchored in one place.
+ * Top-of-canvas header for pathway modes — renders the parent
+ * scenario name in the same 38 px black-bordered title card the
+ * column-0 origin uses in launch / inter-scenario / inter-whatif,
+ * with an optional trailing slot for the `<PathwayCompareSelect>`.
  *
- * Format:
- *   Scenario: <scenario-name>  —  Pathway View
+ * Sits above the columns row in `pathway-single` and above the row
+ * stack in `pathway-multi`. The shared parent scenario only needs
+ * to be shown once (every column / row is rooted in it), so the
+ * column / row headers below are free to show year labels
+ * (`Y_2020`) or pathway names instead of repeating the scenario.
  *
- * The `trailing` slot is for content that should sit on the right
- * side of the header — used by `PathwayMultiView` to host the
- * `<PathwayCompareSelect>` picker so the user can change pathway
- * picks without leaving the row layout.
- *
- * Hidden in non-pathway modes; the existing `NavigatorCard`
- * already provides scenario context there.
+ * Hidden in non-pathway modes — `NavigatorCard` + the column title
+ * cards already provide scenario context there.
  */
 const CanvasScenarioHeader = ({ trailing = null }) => {
   const view = useCanvasStore((s) => s.view);
@@ -31,72 +29,56 @@ const CanvasScenarioHeader = ({ trailing = null }) => {
 
   return (
     <div style={rowStyle}>
-      <div style={textStyle}>
-        <span style={labelStyle}>Scenario:</span>{' '}
-        <span style={nameStyle} title={scenarioName}>
+      <div style={titleCardStyle}>
+        <div style={headerStyle} title={scenarioName}>
           {scenarioName}
-        </span>
-        <span style={separatorStyle}>—</span>
-        <span style={modeStyle}>Pathway View</span>
+        </div>
       </div>
-      {trailing && <div style={trailingStyle}>{trailing}</div>}
+      {trailing}
     </div>
   );
 };
 
 // Strip path prefix when the scenario field is a full filesystem
-// path (`enterPathwaySingle` stores child-state paths there in a
-// related field, but `parentScenario` is normally just the name).
-// Keeps the header readable when called with either shape.
+// path (`enterPathwaySingle` stores child-state paths there in the
+// columns; `parentScenario` is normally just the name).
 const scenarioBasename = (raw) => {
   if (!raw) return '';
   const sep = raw.includes('\\') ? '\\' : '/';
   return raw.split(sep).filter(Boolean).pop() ?? raw;
 };
 
+// Mirrors `CanvasColumn`'s title card so the scenario reads as a
+// peer to the column-header cards below.
 const rowStyle = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 16,
+  gap: 8,
   paddingBottom: 8,
 };
 
-const textStyle = {
+const titleCardStyle = {
+  background: '#fff',
+  border: '1px solid #e8e8e8',
+  borderRadius: 12,
+  padding: '4px 14px',
+  boxSizing: 'border-box',
+  minWidth: 200,
+  height: 38,
   display: 'flex',
-  alignItems: 'baseline',
-  gap: 8,
-  fontSize: 16,
-  color: '#222',
-  minWidth: 0,
+  alignItems: 'center',
+  width: 'fit-content',
 };
 
-const labelStyle = {
-  fontWeight: 500,
-  color: '#666',
-};
-
-const nameStyle = {
+const headerStyle = {
+  fontSize: 18,
   fontWeight: 700,
+  color: '#222',
+  lineHeight: 1.2,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-  maxWidth: 320,
-};
-
-const separatorStyle = {
-  color: '#bbb',
-};
-
-const modeStyle = {
-  color: '#666',
-  fontStyle: 'italic',
-};
-
-const trailingStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  flexShrink: 0,
+  maxWidth: 360,
 };
 
 export default CanvasScenarioHeader;

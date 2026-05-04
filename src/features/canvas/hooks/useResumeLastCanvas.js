@@ -59,6 +59,7 @@ const EMPTY_CANVAS_STATE = {
   comparisonSetup: null,
   canvasName: null,
   mapPos: { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H },
+  pathwayTimelinePlotConfig: null,
 };
 
 export function useResumeLastCanvas() {

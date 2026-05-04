@@ -92,6 +92,7 @@ export function serializeCanvas(state) {
     })),
     maps_linked: !!state.mapsLinked,
     fix_layout: !!state.fixLayout,
+    pathway_timeline_plot_config: state.pathwayTimelinePlotConfig ?? null,
     comparison_setup: state.comparisonSetup
       ? {
           kind: state.comparisonSetup.kind,
@@ -177,6 +178,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     parentScenario: canvas.parent_scenario ?? null,
     mapsLinked: !!canvas.maps_linked,
     fixLayout: !!canvas.fix_layout,
+    pathwayTimelinePlotConfig: canvas.pathway_timeline_plot_config ?? null,
     canvasName: canvas.name ?? null,
     comparisonSetup: canvas.comparison_setup
       ? {

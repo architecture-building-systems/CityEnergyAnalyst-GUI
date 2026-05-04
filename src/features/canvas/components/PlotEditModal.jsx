@@ -11,6 +11,7 @@ import {
   useSetActiveMapCategory,
 } from 'features/project/components/Cards/MapLayersCard/store';
 import { useMapStore } from 'features/map/stores/mapStore';
+import { useToolCardStore } from 'features/project/stores/tool-card';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { CEA_PURPLE } from 'constants/theme';
 import { ToolScenarioOverrideContext } from 'features/tools/hooks/useToolParams';
@@ -65,6 +66,11 @@ const PlotEditModal = ({
   // scenario's choice generators (what-if names, building
   // lists, etc.). `null` falls through to project-store values.
   scenarioOverride = null,
+  // Parameter names to render disabled in the form. Used by callers
+  // that pre-fix a parameter and don't want the user to change it
+  // (e.g. `PathwayTimelineStrip` locks `existing-pathway-names` so
+  // the picked pathway can't drift from the canvas dropdown's pick).
+  extraReadonlyFields,
 }) => {
   const [selectedScript, setSelectedScript] = useState(
     plotConfig?.script || null,
@@ -79,6 +85,18 @@ const PlotEditModal = ({
     }
     const t = setTimeout(() => setSelectedScript(null), 350);
     return () => clearTimeout(t);
+  }, [open, plotConfig]);
+
+  // Seed `plotConfig.parameters` via the one-shot prefill that
+  // `PlotTool` consumes in `onParametersLoaded` (the same path
+  // `selectPlotTool`'s "View Results" flow uses). Without this, the
+  // drawer opens to backend defaults and any pre-fixed value is lost.
+  useEffect(() => {
+    if (!open) return;
+    const params = plotConfig?.parameters;
+    if (params && Object.keys(params).length > 0) {
+      useToolCardStore.setState({ plotToolPrefill: params });
+    }
   }, [open, plotConfig]);
 
   // Sync the shared map-layer selection to the plot being edited so
@@ -152,6 +170,7 @@ const PlotEditModal = ({
                 key={selectedScript}
                 script={selectedScript}
                 onRunOverride={handleRunOverride}
+                extraReadonlyFields={extraReadonlyFields}
               />
             </ConfigProvider>
           </ToolScenarioOverrideContext.Provider>

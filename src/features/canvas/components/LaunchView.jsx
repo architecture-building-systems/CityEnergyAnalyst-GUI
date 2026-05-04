@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useHasBakedPathway } from 'features/pathway/hooks/usePathwayOverview';
+import { useHasSimulatedPathway } from 'features/pathway/hooks/usePathwayOverview';
 
 import { useCanvasStore } from '../stores/canvasStore';
 import CanvasColumn from './CanvasColumn';
@@ -48,7 +48,7 @@ const LaunchView = ({
   const updatePlot = useCanvasStore((s) => s.updatePlot);
   const removePlot = useCanvasStore((s) => s.removePlot);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
-  const hasBakedPathway = useHasBakedPathway();
+  const hasSimulatedPathway = useHasSimulatedPathway();
   // Treat the launch surface as "fresh" whenever no cards live on
   // it. Drives both the pulsing blue glow on the `+` *Add Scenario
   // to compare* button and the visibility of the Pathway picker —
@@ -60,7 +60,7 @@ const LaunchView = ({
   // state still looks fresh.
   const isFreshLaunch = cards.length === 0;
   const addColumnBlink = isFreshLaunch;
-  const showPathwaySelect = hasBakedPathway && isFreshLaunch;
+  const showPathwaySelect = hasSimulatedPathway && isFreshLaunch;
 
   const [compareOpen, setCompareOpen] = useState(false);
 

@@ -75,6 +75,7 @@ export const canvasPersistableSelector = (state) => ({
   fixLayout: state.fixLayout,
   mapPos: state.mapPos,
   comparisonSetup: state.comparisonSetup,
+  pathwayTimelinePlotConfig: state.pathwayTimelinePlotConfig,
 });
 
 // Initial primary-map tile position. Used both by the store's
@@ -493,6 +494,18 @@ export const useCanvasStore = create((set, get) => ({
   comparisonSetup: null,
   setComparisonSetup: (setup) => set({ comparisonSetup: setup || null }),
 
+  // User-edited plot config for the spanning Pathway Emission
+  // Timeline card in `pathway-single`. `null` means use the default
+  // (`plot-pathway-emission-timeline` with the current pathway and
+  // built-in parameters); when the user clicks Edit on the card and
+  // saves new parameters (e.g. plot-type, y-categories), we stash
+  // the returned `plotConfig` here so the card renders with their
+  // picks. The `existing-pathway-names` parameter is re-injected at
+  // render time so the override survives a pathway-pick change.
+  pathwayTimelinePlotConfig: null,
+  setPathwayTimelinePlotConfig: (config) =>
+    set({ pathwayTimelinePlotConfig: config || null }),
+
   /**
    * Replace the editable slice of state with a deserialised canvas
    * read from the backend. Pass the partial returned by
@@ -693,6 +706,7 @@ export const useCanvasStore = create((set, get) => ({
       columnCards: {},
       comparisonSetup: null,
       mapPos: { ...DEFAULT_MAP_POS },
+      pathwayTimelinePlotConfig: null,
     }),
 
   // ── Column management ───────────────────────────────────────

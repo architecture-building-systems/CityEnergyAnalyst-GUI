@@ -2,9 +2,14 @@
  * React Query wrapper around `fetchPathwayOverview()`.
  *
  * Single source of truth for "which pathways exist for the active
- * scenario, and which are fully baked". Two consumers today:
- *   - `OverviewCard`'s pathway viewer in the main CEA viewport.
- *   - `NavigatorCard`'s Pathway View toggle in the Canvas Builder.
+ * scenario, and which phases their states sit in". Two consumers
+ * today:
+ *   - `OverviewCard`'s pathway viewer in the main CEA viewport
+ *     (gates on ``all_baked`` — pathways with every state in a
+ *     usable phase, ready to explore).
+ *   - `PathwayCompareSelect` in the Canvas Builder (gates on
+ *     ``all_simulated`` — pathways whose every state has run
+ *     simulations, so per-column data is available).
  *
  * Keyed by the active scenario so a scenario switch refetches; gated
  * by `enabled` so we don't hit the endpoint before a scenario is
@@ -32,12 +37,14 @@ export function usePathwayOverview({ enabled = true } = {}) {
 
 /**
  * Boolean derivative: does the active scenario have at least one
- * fully-baked pathway? Mirrors the predicate `OverviewCard` uses to
- * decide whether to render the pathway-viewer row, so the Canvas
- * Builder's Pathway View toggle gates on the same data.
+ * pathway whose every state has been simulated? Drives the visibility
+ * of the Canvas Builder's Pathway picker — picking a non-simulated
+ * pathway would land the user in pathway-single / pathway-multi
+ * columns with missing emission / demand outputs and a useless
+ * comparison.
  */
-export function useHasBakedPathway() {
+export function useHasSimulatedPathway() {
   const { data } = usePathwayOverview();
   const pathways = data?.pathways ?? [];
-  return pathways.some((p) => p.all_baked);
+  return pathways.some((p) => p.all_simulated);
 }

@@ -205,12 +205,15 @@ const CanvasPage = () => {
           // store. `null` outside compare mode → form falls
           // through to project-store values.
           scenarioOverride={drawer?.scenarioOverride || null}
-          // Back returns to the PlotChoices picker. Only meaningful
-          // when adding a brand-new card (perimeter `+` flow); for
-          // Edit / "Add a plot" pill flows (`cardId` set), Back
-          // would let the user swap into a different plot type and
-          // turn the operation into something else, so it's hidden.
-          allowBack={!drawer?.cardId}
+          // Parameter names to render disabled in the form — for
+          // callers that pre-fix a parameter and want it locked.
+          extraReadonlyFields={drawer?.extraReadonlyFields}
+          // Back returns to the PlotChoices picker. Hidden when a
+          // `cardId` is set (Edit / "Add a plot" pill flows — Back
+          // would let the user swap plot types and turn the
+          // operation into something else) or when the caller
+          // explicitly opts out via `allowBack: false`.
+          allowBack={drawer?.allowBack !== false && !drawer?.cardId}
         />
       </div>
     </div>

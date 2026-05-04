@@ -342,23 +342,25 @@ decoupled from the active `view` field — the canvas opens in
 whichever view it was last in, and the saved picks resume on
 demand.
 
-### DO: Gate the Pathway picker on the active scenario's baked pathways
+### DO: Gate the Pathway picker on the active scenario's *simulated* pathways
 ```jsx
-const hasBakedPathway = useHasBakedPathway();
+const hasSimulatedPathway = useHasSimulatedPathway();
 <CanvasColumn
   ...
-  titleRowSlot={hasBakedPathway ? <PathwayCompareSelect /> : null}
+  titleRowSlot={hasSimulatedPathway ? <PathwayCompareSelect /> : null}
 />
 ```
 There is no toggle: the multi-select dropdown sits directly in the
-column-0 title row whenever the active scenario has a fully-baked
-pathway. Selection drives the entry into pathway-single /
-pathway-multi (and back to launch when cleared). Same predicate
-`OverviewCard`'s pathway viewer uses, so the picker only appears in
-scenarios where pathways are meaningful. `PathwayCompareSelect`
-itself fires a confirmation modal when the user is mid-way through
-an inter-scenario / inter-whatif compare and picks a pathway,
-because the column / card layout is incompatible across modes.
+column-0 title row whenever the active scenario has a pathway whose
+every state has been *simulated*. Stricter than `OverviewCard`'s
+pathway viewer (which gates on `all_baked`) — picking a pathway whose
+states are merely baked but unsimulated would land the canvas in
+columns with missing emission / demand outputs. Selection drives
+the entry into pathway-single / pathway-multi (and back to launch
+when cleared). `PathwayCompareSelect` itself fires a confirmation
+modal when the user is mid-way through an inter-scenario /
+inter-whatif compare and picks a pathway, because the column /
+card layout is incompatible across modes.
 
 ### DO: Treat `pathway-single` columns as inter-scenario columns with state folders
 ```js
@@ -383,7 +385,7 @@ column shape is otherwise identical.
 if (view === 'pathway-multi') return <PathwayMultiView />;
 return (
   <div>
-    <CanvasScenarioHeader />
+    <CanvasScenarioHeader trailing={...} />
     {view === 'pathway-single' && <PathwayTimelineStrip />}
     <div style={columnsRowStyle}>...</div>
   </div>
@@ -391,9 +393,12 @@ return (
 ```
 `CanvasScenarioHeader` and `PathwayTimelineStrip` are pathway-only
 chrome — they early-return `null` outside their target views, so
-`ComparisonView` can render them unconditionally. `pathway-multi`
-short-circuits the column grid entirely because its row layout is
-incompatible with the rgl-based comparison columns.
+`ComparisonView` can render them unconditionally. The canvasStyle
+is a flex column so they stack above the columns row (the
+timeline card spans the full canvas width above every state-year
+column). `pathway-multi` short-circuits the column grid entirely
+because its row layout is incompatible with the rgl-based
+comparison columns.
 
 ### DO: Open `MapLayerProperties` at the bottom for both Plot and Map flows
 `CanvasPage` carries two parallel switches: `drawer` (plot-tool drawer
@@ -629,13 +634,13 @@ source of truth for card config that the comparison views never read.
   `enterPathwayMulti` on change; clearing selection runs
   `startOver`. Wears the same black-pill `cea-scenario-select`
   styling as `OverviewCard`'s pathway dropdown.
-- `components/PathwayTimelineStrip.jsx` - Spanning Emission Timeline
-  rendered above the columns row in `pathway-single`. Uses
-  `plot-pathway-emission-timeline` against the parent scenario; the
-  pathway picker's selection drives the `existing-pathway-names`
-  parameter. Pixel-perfect tick alignment to column centres is
-  deferred — the chart currently spans the full canvas width with
-  the same year domain as the column headers.
+- `components/PathwayTimelineStrip.jsx` - Pathway Emission Timeline
+  card spanning the full canvas width above the state-year columns
+  in `pathway-single`. Wears the same chrome as `FeatureCardShell`
+  (white surface, 1 px border, 12 px radius) but is positioned at
+  the canvas level rather than inside a column's grid — one shared
+  timeline across every column, not one per column. Uses
+  `plot-pathway-emission-timeline` against the parent scenario.
 - `components/PathwayMultiView.jsx` - Row-based multi-pathway view.
   Vertical stack of `<PathwayRow>`s, one per selected pathway, each
   rendering the pathway name + an Emission Pathway plot. Rows share

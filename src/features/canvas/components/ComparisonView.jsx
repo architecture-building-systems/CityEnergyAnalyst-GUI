@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useHasBakedPathway } from 'features/pathway/hooks/usePathwayOverview';
+import { useHasSimulatedPathway } from 'features/pathway/hooks/usePathwayOverview';
 
 import { useCanvasStore } from '../stores/canvasStore';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
@@ -26,7 +26,7 @@ const ComparisonView = ({
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const columnCards = useCanvasStore((s) => s.columnCards);
   const view = useCanvasStore((s) => s.view);
-  const hasBakedPathway = useHasBakedPathway();
+  const hasSimulatedPathway = useHasSimulatedPathway();
   const isPathwayView = view === 'pathway-single' || view === 'pathway-multi';
 
   // Build the full scenario path the plot-tool form expects in
@@ -214,14 +214,35 @@ const ComparisonView = ({
     <div>
       <div style={canvasWrapperStyle}>
         <div style={enableEdit ? canvasStyle : canvasExportStyle}>
-          <CanvasScenarioHeader />
-          {view === 'pathway-single' && <PathwayTimelineStrip />}
+          {/* Pathway-single hosts the scenario title card + pathway
+              picker as a top-of-canvas row, so column-0's title row
+              is free to show the bare ``Y_<year>`` label. Other
+              compare modes don't render the header. */}
+          <CanvasScenarioHeader
+            trailing={
+              view === 'pathway-single' && hasSimulatedPathway ? (
+                <PathwayCompareSelect />
+              ) : null
+            }
+          />
+          {view === 'pathway-single' && (
+            <PathwayTimelineStrip onOpenDrawer={onOpenDrawer} />
+          )}
           <div style={columnsRowStyle}>
             {columns.map((col, i) => (
               <div
                 key={columnKey(col)}
                 style={{
                   ...columnCellStyle,
+                  // Pathway-single: align column 0's left edge with
+                  // the canvas's scenario title card by dropping the
+                  // 24 px left padding the State columns would
+                  // otherwise inherit. Other compare modes keep the
+                  // padding so the origin column has breathing room
+                  // from the canvas border.
+                  ...(view === 'pathway-single' && i === 0
+                    ? { paddingLeft: 0 }
+                    : null),
                   borderRight:
                     i < columns.length - 1 ? '1px solid #e0e0e0' : 'none',
                 }}
@@ -270,20 +291,22 @@ const ComparisonView = ({
                   // selection rebuilds the columns. Non-origin
                   // columns don't get `onAddColumn` (they already
                   // carry the `×` close affordance for removal).
-                  onAddColumn={i === 0 ? () => setCompareOpen(true) : undefined}
-                  addColumnTooltip="Add Scenario to compare"
-                  // Pathway picker sits next to the origin column
-                  // only while we're already in pathway mode (so the
-                  // user can change picks). It's hidden in
-                  // inter-scenario / inter-whatif compare so the
-                  // empty-state CTA doesn't compete with the user's
-                  // current comparison work; `LaunchView` shows the
-                  // picker on a fresh canvas as the entry point.
-                  titleRowSlot={
-                    i === 0 && hasBakedPathway && isPathwayView ? (
-                      <PathwayCompareSelect />
-                    ) : null
+                  // Pathway compare hides it entirely — the picker
+                  // dropdown above the columns is the only entry
+                  // for changing pathway selection.
+                  onAddColumn={
+                    i === 0 && !isPathwayView
+                      ? () => setCompareOpen(true)
+                      : undefined
                   }
+                  addColumnTooltip="Add Scenario to compare"
+                  // No `titleRowSlot` here — pathway-single hosts the
+                  // picker in the canvas-level scenario header above
+                  // the columns row, and pathway-multi has its own
+                  // layout. Inter-scenario / inter-whatif compare
+                  // doesn't show the picker (entry happens via
+                  // LaunchView).
+                  titleRowSlot={null}
                   // Compact layout: every column is a single
                   // vertical stack at the map's width. Right-edge
                   // perimeter `+` is suppressed; horizontal
@@ -301,10 +324,17 @@ const ComparisonView = ({
   );
 };
 
+// Stable per-render key. A `Math.random()` fallback here used to
+// remount `CanvasColumn` on every render, tearing down deck.gl's
+// WebGL context mid-init and aborting the camera fit — so hard
+// refresh landed the maps at regional zoom instead of the building-
+// level fit.
 function columnKey(col) {
   if (col.type === 'scenario') return `s-${col.scenario}`;
   if (col.type === 'whatif') return `w-${col.scenario}-${col.whatif}`;
-  return String(Math.random());
+  if (col.type === 'pathway-state')
+    return `p-${col.pathwayName}-${col.year}`;
+  return col.scenario || col.type || 'col';
 }
 
 const canvasWrapperStyle = {
@@ -313,13 +343,18 @@ const canvasWrapperStyle = {
 };
 
 // Mirrors LaunchView.canvasStyle — see that file's comment for the
-// padding math; both views must stay in sync.
+// padding math; both views must stay in sync. `display: flex` +
+// `flex-direction: column` stacks the scenario header / pathway
+// timeline / columns row vertically so the timeline sits above the
+// columns instead of overlapping them.
 const canvasStyle = {
   background: '#fff',
   borderRadius: 12,
   padding: '16px 72px 72px 16px',
   width: 'fit-content',
   height: 'fit-content',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 // Export View hides the perimeter `+` buttons, so the right/bottom
