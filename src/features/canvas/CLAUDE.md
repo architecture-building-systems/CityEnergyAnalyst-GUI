@@ -342,25 +342,23 @@ decoupled from the active `view` field — the canvas opens in
 whichever view it was last in, and the saved picks resume on
 demand.
 
-### DO: Gate Pathway View on the active scenario's baked pathways
+### DO: Gate the Pathway picker on the active scenario's baked pathways
 ```jsx
 const hasBakedPathway = useHasBakedPathway();
-{hasBakedPathway && (
-  <NavigatorToggle
-    checked={pathwayView}
-    onChange={handlePathwayViewChange}
-    label="Pathway View"
-    colorPrimary={PATHWAY_PRIMARY}
-  />
-)}
+<CanvasColumn
+  ...
+  titleRowSlot={hasBakedPathway ? <PathwayCompareSelect /> : null}
+/>
 ```
-The toggle and the picker dropdown both live behind
-`useHasBakedPathway()` — same predicate `OverviewCard`'s pathway
-viewer uses, so a user only sees Pathway View affordances in
-scenarios where they're meaningful. `pathwayView` resets on every
-scenario switch (see `useResumeLastCanvas.EMPTY_CANVAS_STATE`)
-because its meaning is scenario-scoped, unlike `mapsLinked` /
-`fixLayout` / `enableEdit` which survive switches as user prefs.
+There is no toggle: the multi-select dropdown sits directly in the
+column-0 title row whenever the active scenario has a fully-baked
+pathway. Selection drives the entry into pathway-single /
+pathway-multi (and back to launch when cleared). Same predicate
+`OverviewCard`'s pathway viewer uses, so the picker only appears in
+scenarios where pathways are meaningful. `PathwayCompareSelect`
+itself fires a confirmation modal when the user is mid-way through
+an inter-scenario / inter-whatif compare and picks a pathway,
+because the column / card layout is incompatible across modes.
 
 ### DO: Treat `pathway-single` columns as inter-scenario columns with state folders
 ```js

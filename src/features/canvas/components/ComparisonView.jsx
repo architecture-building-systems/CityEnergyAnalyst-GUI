@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useHasBakedPathway } from 'features/pathway/hooks/usePathwayOverview';
+
 import { useCanvasStore } from '../stores/canvasStore';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasColumn from './CanvasColumn';
@@ -23,8 +25,9 @@ const ComparisonView = ({
   const columns = useCanvasStore((s) => s.columns);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const columnCards = useCanvasStore((s) => s.columnCards);
-  const pathwayView = useCanvasStore((s) => s.pathwayView);
   const view = useCanvasStore((s) => s.view);
+  const hasBakedPathway = useHasBakedPathway();
+  const isPathwayView = view === 'pathway-single' || view === 'pathway-multi';
 
   // Build the full scenario path the plot-tool form expects in
   // its `general:scenario` parameter (POSIX-style join — works on
@@ -248,15 +251,17 @@ const ComparisonView = ({
                   }
                   // Compare-mode chrome: leftmost is origin (full
                   // editing), the rest are read-only mirrors with
-                  // an `×` to drop the column. Pathway View hides
-                  // the `×` since the column set is fixed by the
-                  // pathway's baked years (single) or the picker
-                  // selection (multi); change picks via the
+                  // an `×` to drop the column. Pathway compare
+                  // hides the `×` because the column set is fixed
+                  // by the pathway's baked years (single) or the
+                  // picker selection (multi); change picks via the
                   // dropdown instead.
                   isOrigin={i === 0}
                   lockedReadOnly={i !== 0}
                   onCloseColumn={
-                    i !== 0 && !pathwayView ? () => removeColumn(i) : undefined
+                    i !== 0 && !isPathwayView
+                      ? () => removeColumn(i)
+                      : undefined
                   }
                   // Origin column's title-row `+` re-opens the
                   // CompareModal so the user can add or remove
@@ -265,16 +270,19 @@ const ComparisonView = ({
                   // selection rebuilds the columns. Non-origin
                   // columns don't get `onAddColumn` (they already
                   // carry the `×` close affordance for removal).
-                  // Pathway View hides the `+` in favour of the
-                  // multi-select dropdown rendered in `titleRowSlot`.
-                  onAddColumn={
-                    i === 0 && !pathwayView
-                      ? () => setCompareOpen(true)
-                      : undefined
-                  }
+                  onAddColumn={i === 0 ? () => setCompareOpen(true) : undefined}
                   addColumnTooltip="Add Scenario to compare"
+                  // Pathway picker sits next to the origin column
+                  // only while we're already in pathway mode (so the
+                  // user can change picks). It's hidden in
+                  // inter-scenario / inter-whatif compare so the
+                  // empty-state CTA doesn't compete with the user's
+                  // current comparison work; `LaunchView` shows the
+                  // picker on a fresh canvas as the entry point.
                   titleRowSlot={
-                    i === 0 && pathwayView ? <PathwayCompareSelect /> : null
+                    i === 0 && hasBakedPathway && isPathwayView ? (
+                      <PathwayCompareSelect />
+                    ) : null
                   }
                   // Compact layout: every column is a single
                   // vertical stack at the map's width. Right-edge

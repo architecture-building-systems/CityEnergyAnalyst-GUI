@@ -31,8 +31,6 @@ import useNavigationStore from 'stores/navigationStore';
 import routes from 'constants/routes.json';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
-import { useHasBakedPathway } from 'features/pathway/hooks/usePathwayOverview';
-
 import { useCanvasStore } from '../stores/canvasStore';
 import {
   savedCanvasesQueryKey,
@@ -64,20 +62,20 @@ import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
  * `useCanvasPersistence`. The expensive plot-data capture pass runs
  * server-side inside `/export` when the user clicks Share.
  *
- * Currently visible controls:
+ * Currently visible controls (left cluster, then right cluster):
  *   - Return       → back to the project page
- *   - Start Over   → clear cards / columns of the current canvas
- *                    (autosave then flushes the empty state)
- *   - Pathway View → swap Compare from scenarios / what-ifs to
- *                    pathways; only visible when the active scenario
- *                    has at least one fully-baked pathway. Painted
- *                    with PATHWAY_PRIMARY (uuen blue) when on so it
- *                    reads as part of the pathway chrome family.
  *   - Sync Maps    → mirror every map card to the overview map
  *   - Freeze Layout → lock card positions and sizes
  *   - Enable Edit  → show editing controls (default on); off
  *                    hides Edit / Delete / `+` / toolbars / range
  *                    inputs for a clean snapshot
+ *   - Autosave dot → flashes "saving" / "saved" while flushes are
+ *                    in flight
+ *   - Start Over   → clear cards / columns of the current canvas
+ *                    (autosave then flushes the empty state). Sits
+ *                    next to Undo so the two recovery affordances
+ *                    are paired.
+ *   - Undo         → revert the last persistable edit
  *   - Dashboard    → dropdown to switch between saved canvases
  *   - `+`          → open "Create new canvas" modal
  *   - Import       → upload a previously-shared canvas zip
@@ -96,10 +94,6 @@ const NavigatorCard = () => {
   const setEnableEdit = useCanvasStore((s) => s.setEnableEdit);
   const fixLayout = useCanvasStore((s) => s.fixLayout);
   const setFixLayout = useCanvasStore((s) => s.setFixLayout);
-  const pathwayView = useCanvasStore((s) => s.pathwayView);
-  const setPathwayView = useCanvasStore((s) => s.setPathwayView);
-  const view = useCanvasStore((s) => s.view);
-  const hasBakedPathway = useHasBakedPathway();
   const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
   const autosaveStatus = useCanvasStore((s) => s.autosaveStatus);
@@ -450,76 +444,28 @@ const NavigatorCard = () => {
     });
   };
 
-  /**
-   * Pathway View toggle handler.
-   *
-   * The toggle just stores a flag — entering / leaving an actual
-   * pathway compare view happens later via the Compare modal (Phase
-   * 3). The flag flips immediately when no compare columns are at
-   * stake, but if the user is currently inside a non-pathway compare
-   * (or vice versa) we confirm before walking back to launch, since
-   * the column / row layout is incompatible across modes.
-   */
-  const handlePathwayViewChange = (next) => {
-    const inNonPathwayCompare =
-      next && (view === 'inter-scenario' || view === 'inter-whatif');
-    const inPathwayCompare =
-      !next && (view === 'pathway-single' || view === 'pathway-multi');
-    if (!inNonPathwayCompare && !inPathwayCompare) {
-      setPathwayView(next);
-      return;
-    }
-    Modal.confirm({
-      title: next ? 'Switch to Pathway View?' : 'Leave Pathway View?',
-      content: next
-        ? 'The current comparison columns will be cleared so you can pick a pathway to compare.'
-        : 'The current pathway comparison will be cleared and the canvas will return to its launch state.',
-      okText: next ? 'Switch' : 'Leave',
-      cancelText: 'Cancel',
-      onOk: () => {
-        startOverStore();
-        setPathwayView(next);
-      },
-    });
-  };
-
   return (
     <div style={cardStyle}>
       <Space size="small" align="center">
-        <Button icon={<LeftOutlined />} onClick={handleReturn}>
-          Return
-        </Button>
-        {/* Icon-only navigator actions all share the same wrapper
-            chrome so Start Over reads as part of the same cluster
-            — and matches the perimeter "+ Add a Feature card"
-            affordance the user already knows.
-
-            Everything from Start Over through Enable Edit is
+        <Tooltip title="Return to project" placement="bottom">
+          <div className={iconWrapperClass} style={iconWrapperStyle}>
+            <Button
+              type="text"
+              icon={<LeftOutlined />}
+              onClick={handleReturn}
+              aria-label="Return to project"
+            />
+          </div>
+        </Tooltip>
+        {/* Sync Maps / Freeze Layout / Enable Edit toggles are
             **hidden** until the user has actually opened or created
             a canvas (`canvasName` set). Only the dashboard switcher
             / `+` / Import on the right side stay live so the user
-            has a clear path forward from the empty entry state. */}
+            has a clear path forward from the empty entry state.
+            The Return icon stays visible regardless so the user
+            always has a way back to the project page. */}
         {canvasName && (
           <>
-            <Tooltip title="Start Over">
-              <div className={iconWrapperClass} style={iconWrapperStyle}>
-                <Button
-                  type="text"
-                  icon={<StartOverIcon />}
-                  onClick={handleStartOver}
-                  aria-label="Start over"
-                />
-              </div>
-            </Tooltip>
-            {hasBakedPathway && (
-              <NavigatorToggle
-                checked={pathwayView}
-                onChange={handlePathwayViewChange}
-                label="Pathway View"
-                ariaLabel="Compare pathways across state years"
-                colorPrimary={PATHWAY_PRIMARY}
-              />
-            )}
             <NavigatorToggle
               checked={mapsLinked}
               onChange={setMapsLinked}
@@ -544,24 +490,38 @@ const NavigatorCard = () => {
       </Space>
 
       <Space size="small">
-        {/* Order: Autosave dot · Switcher · `+` · Import · Share.
-            The autosave dot sits to the immediate left of the
-            switcher and only paints while a flush is in flight (or
-            for the brief 1.5 s confirmation flash that follows).
-            In the empty entry state nothing is autosaving, so the
-            dot stays hidden and the switcher remains the leftmost
-            element of the cluster. Switcher + `+` form the
-            create-or-open pair. Import sits to the right of `+`
-            (zip in), Share sits to the right of Import (zip out).
-            Share hides in the empty entry state; Switcher / `+` /
-            Import are always visible and pulse purple while no
-            canvas is open. The `+` button only pulses when the
-            switcher reads "Select Canvas" (saved canvases exist
-            but none is open) — when the switcher itself is in
-            create-mode ("Create new Canvas"), the switcher *is*
-            the call-to-action, so doubling up with a pulsing `+`
-            would just compete for the user's eye. */}
+        {/* Order: Autosave dot · Start Over · Undo · Switcher · `+`
+            · Import · Share. The autosave dot sits at the leftmost
+            edge and only paints while a flush is in flight (or for
+            the brief 1.5 s confirmation flash that follows); in the
+            empty entry state nothing is autosaving so the dot stays
+            hidden. Start Over and Undo are paired as the two
+            recovery affordances — Start Over wipes the canvas back
+            to launch, Undo walks back one edit. Switcher + `+` form
+            the create-or-open pair; Import sits to the right of `+`
+            (zip in), Share to the right of Import (zip out). Share
+            and Start Over hide in the empty entry state; Switcher /
+            `+` / Import / Undo / Autosave dot are always visible.
+            Switcher / `+` / Import pulse purple while no canvas is
+            open. The `+` button only pulses when the switcher reads
+            "Select Canvas" (saved canvases exist but none is open)
+            — when the switcher itself is in create-mode ("Create
+            new Canvas"), the switcher *is* the call-to-action, so
+            doubling up with a pulsing `+` would just compete for
+            the user's eye. */}
         <AutosaveIndicator status={autosaveStatus} />
+        {canvasName && (
+          <Tooltip title="Start Over">
+            <div className={iconWrapperClass} style={iconWrapperStyle}>
+              <Button
+                type="text"
+                icon={<StartOverIcon />}
+                onClick={handleStartOver}
+                aria-label="Start over"
+              />
+            </div>
+          </Tooltip>
+        )}
         <Tooltip title={`Undo (${UNDO_SHORTCUT_HINT})`} placement="bottom">
           <div className={iconWrapperClass} style={iconWrapperStyle}>
             <Button
@@ -1036,14 +996,9 @@ const NavigatorToggle = ({
   ariaLabel,
   tooltipKey,
   disabled = false,
-  // Most navigator toggles use the canonical CEA_PURPLE accent;
-  // Pathway View overrides to PATHWAY_PRIMARY so the "on" track
-  // matches the rest of the pathway chrome (timeline ruler, baked
-  // state colours).
-  colorPrimary = CEA_PURPLE,
 }) => (
   <div style={syncToggleWrapperStyle}>
-    <ConfigProvider theme={{ token: { colorPrimary } }}>
+    <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
       <Switch
         checked={checked}
         onChange={onChange}

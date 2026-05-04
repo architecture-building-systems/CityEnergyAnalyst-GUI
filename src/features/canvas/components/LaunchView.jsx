@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Empty } from 'antd';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useHasBakedPathway } from 'features/pathway/hooks/usePathwayOverview';
+
 import { useCanvasStore } from '../stores/canvasStore';
 import CanvasColumn from './CanvasColumn';
 import CompareModal from './CompareModal';
@@ -46,7 +48,19 @@ const LaunchView = ({
   const updatePlot = useCanvasStore((s) => s.updatePlot);
   const removePlot = useCanvasStore((s) => s.removePlot);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
-  const pathwayView = useCanvasStore((s) => s.pathwayView);
+  const hasBakedPathway = useHasBakedPathway();
+  // Treat the launch surface as "fresh" whenever no cards live on
+  // it. Drives both the pulsing blue glow on the `+` *Add Scenario
+  // to compare* button and the visibility of the Pathway picker —
+  // both empty-state CTAs reappear after the user empties the
+  // canvas (e.g. removing every comparison column folds back to
+  // launch with `launchCards = []`). `comparisonSetup` is metadata
+  // for the navigator's *Resume Comparing* affordance and is
+  // intentionally NOT consulted here, so a Stop Comparing → empty
+  // state still looks fresh.
+  const isFreshLaunch = cards.length === 0;
+  const addColumnBlink = isFreshLaunch;
+  const showPathwaySelect = hasBakedPathway && isFreshLaunch;
 
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -156,9 +170,10 @@ const LaunchView = ({
           onOpenMapBottom={onOpenMapBottom}
           editingPlotCardId={editingPlotCardId}
           activeMapCardId={activeMapCardId}
-          onAddColumn={pathwayView ? undefined : () => setCompareOpen(true)}
+          onAddColumn={() => setCompareOpen(true)}
           addColumnTooltip="Add Scenario to compare"
-          titleRowSlot={pathwayView ? <PathwayCompareSelect /> : null}
+          addColumnBlink={addColumnBlink}
+          titleRowSlot={showPathwaySelect ? <PathwayCompareSelect /> : null}
         />
       </div>
 

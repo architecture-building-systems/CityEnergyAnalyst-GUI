@@ -196,11 +196,15 @@ const CanvasColumn = ({
   // Forwarded to FeatureCardMap so per-card stores key on
   // `(columnIndex, cardId)` — see mapInstance.js.
   columnIndex = null,
+  // When true, the `+` *Add Scenario to compare* button pulses with
+  // the same blue empty-state glow as the navigator dropdowns, used
+  // by `LaunchView` to draw attention to the entry point on a fresh
+  // canvas.
+  addColumnBlink = false,
   // Optional render slot appearing right of the title card and
-  // before the close / +-add / refresh / lock buttons. Used by
-  // Pathway View (`<PathwayCompareSelect>`) so the pathway picker
-  // sits next to the scenario name without displacing the system
-  // buttons. `null` in non-pathway modes.
+  // before the close / +-add / refresh / lock buttons. Hosts the
+  // `<PathwayCompareSelect>` picker on origin columns when the
+  // active scenario has a baked pathway; `null` everywhere else.
   titleRowSlot = null,
 }) => {
   const project = useProjectStore((s) => s.project);
@@ -763,7 +767,11 @@ const CanvasColumn = ({
             </Tooltip>
           )}
           {onAddColumn && enableEdit && (
-            <div className="cea-card-icon-button-container">
+            <div
+              className={`cea-card-icon-button-container${
+                addColumnBlink ? ' active' : ''
+              }`}
+            >
               <Tooltip title={addColumnTooltip} placement="bottom">
                 <Button
                   type="text"
@@ -1023,14 +1031,19 @@ const titleRowStyle = {
   paddingBottom: 8,
 };
 
+// Height matches the 38 px `cea-card-icon-button-container` used by
+// the perimeter `+` buttons (and every other navigator icon-button
+// frame), so the title card sits flush in the same row family as the
+// add / refresh / lock buttons sitting beside it. The 12 px radius
+// and grey 1 px border match the `+` button container's chrome.
 const titleCardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
-  padding: '10px 16px',
+  padding: '4px 14px',
   boxSizing: 'border-box',
   minWidth: 200,
-  minHeight: 32,
+  height: 39.3,
   display: 'flex',
   alignItems: 'center',
   gap: 10,
@@ -1038,7 +1051,7 @@ const titleCardStyle = {
 };
 
 const headerStyle = {
-  fontSize: 22,
+  fontSize: 18,
   fontWeight: 700,
   color: '#222',
   lineHeight: 1.2,
