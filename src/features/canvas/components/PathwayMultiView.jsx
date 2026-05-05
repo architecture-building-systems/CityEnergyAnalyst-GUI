@@ -83,14 +83,25 @@ function applyEndsInFiveTicks(div) {
 // Move the y-axis (ticks + title) to the right side of the chart.
 // Mirrors PathwayTimelineStrip's relayout so multi-view rows read
 // the same way as the single-pathway timeline strip.
+//
+// `tickformat: '~s'` is only applied when the backend hasn't already
+// pinned a percentage format on the axis — otherwise the SI prefix
+// override silently strips the `%` suffix and the percentage chart
+// (`shaded_stack_percentage_cumulative`) reads as raw numbers.
 function applyYAxisRight(div) {
   if (!div || !window.Plotly?.relayout) return;
-  window.Plotly.relayout(div, {
+  const existingFormat = div._fullLayout?.yaxis?.tickformat;
+  const isPercent =
+    typeof existingFormat === 'string' && existingFormat.includes('%');
+  const update = {
     'yaxis.side': 'right',
-    'yaxis.tickformat': '~s',
     'yaxis.ticklabelposition': 'outside',
     'yaxis.automargin': true,
-  });
+  };
+  if (!isPercent) {
+    update['yaxis.tickformat'] = '~s';
+  }
+  window.Plotly.relayout(div, update);
 }
 
 const STATE_REF_TAG = 'cea-pathway-state-reference';
