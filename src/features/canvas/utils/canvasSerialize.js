@@ -93,6 +93,12 @@ export function serializeCanvas(state) {
     maps_linked: !!state.mapsLinked,
     fix_layout: !!state.fixLayout,
     pathway_timeline_plot_config: state.pathwayTimelinePlotConfig ?? null,
+    // Pathway-multi state — row dimensions and per-row plot-config
+    // overrides. Persisted so resize / Edit-drawer changes survive
+    // reload and round-trip through undo. Both default to the
+    // store's initial values when absent (fresh canvases).
+    pathway_multi_row_size: state.pathwayMultiRowSize ?? null,
+    pathway_multi_plot_configs: state.pathwayMultiPlotConfigs ?? null,
     comparison_setup: state.comparisonSetup
       ? {
           kind: state.comparisonSetup.kind,
@@ -179,6 +185,12 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     mapsLinked: !!canvas.maps_linked,
     fixLayout: !!canvas.fix_layout,
     pathwayTimelinePlotConfig: canvas.pathway_timeline_plot_config ?? null,
+    pathwayMultiRowSize: canvas.pathway_multi_row_size ?? {
+      width: null,
+      height: 320,
+      mapWidth: 320,
+    },
+    pathwayMultiPlotConfigs: canvas.pathway_multi_plot_configs ?? {},
     canvasName: canvas.name ?? null,
     comparisonSetup: canvas.comparison_setup
       ? {

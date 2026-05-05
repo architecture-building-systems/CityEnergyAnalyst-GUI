@@ -76,6 +76,8 @@ export const canvasPersistableSelector = (state) => ({
   mapPos: state.mapPos,
   comparisonSetup: state.comparisonSetup,
   pathwayTimelinePlotConfig: state.pathwayTimelinePlotConfig,
+  pathwayMultiRowSize: state.pathwayMultiRowSize,
+  pathwayMultiPlotConfigs: state.pathwayMultiPlotConfigs,
 });
 
 // Initial primary-map tile position. Used both by the store's
@@ -506,6 +508,39 @@ export const useCanvasStore = create((set, get) => ({
   setPathwayTimelinePlotConfig: (config) =>
     set({ pathwayTimelinePlotConfig: config || null }),
 
+  // Shared row dimensions for the pathway-multi view's row stack.
+  // Driven by the first row's resize handles (in-map for `mapWidth`,
+  // body for `width` / `height`); every other row mirrors. Lifted
+  // out of `PathwayMultiView`'s local state so resize gestures fire
+  // through `setState`, hit the autosave subscriber, and round-trip
+  // via undo / reload. `null` defaults are seeded by the view at
+  // first render.
+  pathwayMultiRowSize: { width: null, height: 320, mapWidth: 320 },
+  setPathwayMultiRowSize: (next) =>
+    set((state) => ({
+      pathwayMultiRowSize:
+        typeof next === 'function'
+          ? next(state.pathwayMultiRowSize)
+          : { ...state.pathwayMultiRowSize, ...next },
+    })),
+
+  // Per-row plot-config overrides for the pathway-multi view's
+  // chart cards. Keys: `__shared__` for the locked-mode shared
+  // override, or a pathway name for a row's own override. Values:
+  // the saved `plotConfig` returned by the chart-card Edit drawer.
+  // Same lift-to-store rationale as `pathwayMultiRowSize` — keeps
+  // edits autosaved and undoable.
+  pathwayMultiPlotConfigs: {},
+  setPathwayMultiPlotConfig: (key, config) =>
+    set((state) => ({
+      pathwayMultiPlotConfigs: {
+        ...state.pathwayMultiPlotConfigs,
+        [key]: config,
+      },
+    })),
+  replacePathwayMultiPlotConfigs: (next) =>
+    set({ pathwayMultiPlotConfigs: next || {} }),
+
   /**
    * Replace the editable slice of state with a deserialised canvas
    * read from the backend. Pass the partial returned by
@@ -707,6 +742,8 @@ export const useCanvasStore = create((set, get) => ({
       comparisonSetup: null,
       mapPos: { ...DEFAULT_MAP_POS },
       pathwayTimelinePlotConfig: null,
+      pathwayMultiRowSize: { width: null, height: 320, mapWidth: 320 },
+      pathwayMultiPlotConfigs: {},
     }),
 
   // ── Column management ───────────────────────────────────────

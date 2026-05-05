@@ -290,18 +290,25 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   //   - one inside the map card (drives `mapWidth` + row `height`)
   //   - one inside the body (drives row `width` + `height`)
   // Mirror rows lock to whatever those handles produce.
-  const [rowSize, setRowSize] = useState({
-    width: null,
-    height: 320,
-    mapWidth: 320,
-  });
+  //
+  // Lives on `canvasStore` (not in component state) so resize
+  // gestures fire through `setState`, hit the autosave subscriber,
+  // and round-trip through undo / reload.
+  const rowSize = useCanvasStore((s) => s.pathwayMultiRowSize);
+  const setRowSize = useCanvasStore((s) => s.setPathwayMultiRowSize);
 
-  // Per-pathway plot-config overrides keyed by pathway name.
-  // Populated when the user runs a save from the chart card's Edit
-  // drawer; each row reads its own override (or falls back to the
-  // default config) so changing plot-type / parameters on one row
-  // applies just to that pathway and survives a re-render.
-  const [pathwayPlotConfigs, setPathwayPlotConfigs] = useState({});
+  // Per-pathway plot-config overrides keyed by `__shared__` (the
+  // shared slot, used in locked mode and as fallback) or a pathway
+  // name (a row's own override). Populated when the user saves from
+  // the chart card's Edit drawer; lifted to the store for the same
+  // autosave / undo / reload reasons as `pathwayMultiRowSize`.
+  const pathwayPlotConfigs = useCanvasStore((s) => s.pathwayMultiPlotConfigs);
+  const setPathwayMultiPlotConfig = useCanvasStore(
+    (s) => s.setPathwayMultiPlotConfig,
+  );
+  const replacePathwayMultiPlotConfigs = useCanvasStore(
+    (s) => s.replacePathwayMultiPlotConfigs,
+  );
   // Counter bumped on every override save. Passed to
   // `useYAxisAlignment` as its `generation` so the alignment hook
   // forgets the previous render's plot divs — otherwise stale divs
@@ -309,10 +316,13 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   // percentage charts and Plotly would re-apply the old `[0, ~70M]`
   // range to data that's now `0–100`, squashing it flat.
   const [plotConfigGeneration, setPlotConfigGeneration] = useState(0);
-  const setPathwayPlotConfig = useCallback((name, nextConfig) => {
-    setPathwayPlotConfigs((prev) => ({ ...prev, [name]: nextConfig }));
-    setPlotConfigGeneration((g) => g + 1);
-  }, []);
+  const setPathwayPlotConfig = useCallback(
+    (name, nextConfig) => {
+      setPathwayMultiPlotConfig(name, nextConfig);
+      setPlotConfigGeneration((g) => g + 1);
+    },
+    [setPathwayMultiPlotConfig],
+  );
 
   // Unify the y-axis range across every row's emission-timeline so
   // the rows are visually comparable. Only enabled when rows are
@@ -366,14 +376,16 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   // (`resyncMirrorsToOrigin` + refit) adapted to the row stack.
   const [refreshTick, setRefreshTick] = useState(0);
   const handleRefreshAll = useCallback(() => {
-    setPathwayPlotConfigs((prev) => {
-      const firstRow = pathwayNames[0];
-      if (!firstRow) return {};
+    const prev = useCanvasStore.getState().pathwayMultiPlotConfigs;
+    const firstRow = pathwayNames[0];
+    let nextConfigs = {};
+    if (firstRow) {
       const firstEffective = prev[firstRow] ?? prev[SHARED_OVERRIDE_KEY];
-      return firstEffective !== undefined
-        ? { [SHARED_OVERRIDE_KEY]: firstEffective }
-        : {};
-    });
+      if (firstEffective !== undefined) {
+        nextConfigs = { [SHARED_OVERRIDE_KEY]: firstEffective };
+      }
+    }
+    replacePathwayMultiPlotConfigs(nextConfigs);
     setPlotConfigGeneration((g) => g + 1);
     setRefreshTick((t) => t + 1);
 
@@ -403,7 +415,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
         if (other) other.setState(sync);
       }
     }, 1500);
-  }, [pathwayNames, mirrorsLocked]);
+  }, [pathwayNames, mirrorsLocked, replacePathwayMultiPlotConfigs]);
 
   // Map of pathway -> { years, lastYear }. `years` drives the
   // dashed reference lines drawn at every state year on the
