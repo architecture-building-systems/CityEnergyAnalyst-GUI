@@ -243,6 +243,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   const view = useCanvasStore((s) => s.view);
   const setup = useCanvasStore((s) => s.comparisonSetup);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
+  const fixLayout = useCanvasStore((s) => s.fixLayout);
   const parentScenario = useCanvasStore((s) => s.parentScenario);
   const projectScenario = useProjectStore((s) => s.scenario);
   const project = useProjectStore((s) => s.project);
@@ -381,6 +382,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
                   isFirst={i === 0}
                   isLast={i === pathwayNames.length - 1}
                   enableEdit={enableEdit}
+                  layoutLocked={fixLayout}
                   locked={mirrorsLocked}
                   onToggleLock={() => setMirrorsLocked(!mirrorsLocked)}
                   onRefresh={handleRefreshAll}
@@ -433,6 +435,7 @@ const PathwayRow = ({
   isFirst,
   isLast,
   enableEdit,
+  layoutLocked,
   locked,
   onToggleLock,
   onRefresh,
@@ -522,8 +525,19 @@ const PathwayRow = ({
   // `enableEdit` so Export View hides the chrome everywhere. The
   // chart card's three-button row (Edit / Refit / Delete) follows
   // the same `(!locked || isFirst)` rule.
+  //
+  // `layoutLocked` (= store.fixLayout, the navigator's Freeze Layout
+  // toggle) is intentionally NOT factored in here — it freezes
+  // *layout* (resize handles), not editing chrome. Mirrors how
+  // `CanvasColumn` keeps Edit / Delete / toolbars visible when the
+  // grid is frozen.
   const showMapToolbar = enableEdit && (!locked || isFirst);
   const showCardActions = enableEdit && (!locked || isFirst);
+  // Resize affordances follow `fixLayout` only — Export View
+  // (`enableEdit === false`) doesn't freeze the layout, mirroring
+  // `CanvasColumn`'s `mapEditable = !layoutLocked && layoutEditableHere`
+  // gate.
+  const showResizeHandles = !layoutLocked && (!locked || isFirst);
 
   const handleRefitChart = () => {
     slotRef.current
@@ -635,7 +649,7 @@ const PathwayRow = ({
             </div>
             <ConstructionStandardLegend style={legendStyle} />
           </MapInstanceContext.Provider>
-          {(!locked || isFirst) && enableEdit && (
+          {showResizeHandles && (
             <ResizeCornerHandle
               ariaLabel="Resize title map"
               getStartSize={() => {
@@ -696,7 +710,7 @@ const PathwayRow = ({
             </div>
           </FeatureCardShell>
         </div>
-        {(!locked || isFirst) && enableEdit && (
+        {showResizeHandles && (
           <ResizeCornerHandle
             ariaLabel="Resize row"
             getStartSize={() => {
