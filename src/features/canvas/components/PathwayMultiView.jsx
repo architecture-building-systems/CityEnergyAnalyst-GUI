@@ -20,24 +20,36 @@ import CanvasPlot, { fitPlotToParent } from './CanvasPlot';
 import PathwayCompareSelect from './PathwayCompareSelect';
 import { FeatureCardShell } from './featureCardCommon';
 import {
+  ForceScopedMapContext,
   MapInstanceContext,
   createMapInstanceStore,
 } from './mapInstance';
 
-// Snapshot of singleton view-state keys copied into each per-row
-// map store on creation, so the map opens at the active viewport's
-// camera (typically already centred on the project) rather than at
-// the global default of `(lat 0, lng 0, zoom 0)`. Mirrors
-// `FeatureCardMap`'s `VIEW_STATE_KEYS`.
+// Per-row map view-state: chrome (extrude / visibility / labels /
+// colour mode / filters) plus `viewState`. Two consumers:
+//
+//  - `snapshotMapView()` seeds a fresh per-row store on mount so
+//    the map opens at the singleton's current view (no
+//    world-view flash) with familiar chrome. `cameraOptions` is
+//    DELIBERATELY excluded — seeding it would flip
+//    `useCameraFitBounds`'s `cameraOptionsCalculated` gate to
+//    true and the per-row map would never auto-fit to its own
+//    scenario zone.
+//
+//  - `MAP_SYNC_KEYS` (= the same set + `cameraOptions`) is what
+//    the locked-mode Refresh propagates from row 1 to rows 2+.
+//    `cameraOptions` is included here because at sync time it's
+//    already populated from row 1's fit and we want rows 2+ to
+//    inherit row 1's zoom / centre / bearing.
 const VIEW_STATE_KEYS = [
   'viewState',
-  'cameraOptions',
   'extruded',
   'visibility',
   'mapLabels',
   'colorMode',
   'filters',
 ];
+const MAP_SYNC_KEYS = ['cameraOptions', ...VIEW_STATE_KEYS];
 
 const snapshotMapView = () => {
   const singleton = useMapStore.getState();
@@ -255,9 +267,16 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   const parentScenario = useCanvasStore((s) => s.parentScenario);
   const projectScenario = useProjectStore((s) => s.scenario);
   const project = useProjectStore((s) => s.project);
-  // Reused as the row-resize lock in pathway-multi (mirrors aren't a
-  // concept here; the state slot is otherwise unused in this mode).
-  // Locked → `rowBodyStyle.resize = 'none'`; unlocked → `'both'`.
+  // Reused from compare-mode for pathway-multi's "all rows follow
+  // row 1" lock. Drives three things:
+  //  - resize handles: only the first row carries them when locked
+  //  - editing chrome (Edit / Refit / Delete + map toolbar): only
+  //    the first row when locked, every row when unlocked
+  //  - plot-config WRITE target: locked → SHARED slot (so future
+  //    edits propagate to rows without their own override),
+  //    unlocked → row's own slot (edits stay local)
+  // Reads always prefer a row's own override before falling back
+  // to shared, so toggling lock never silently drops a per-row edit.
   const mirrorsLocked = useCanvasStore((s) => s.mirrorsLocked);
   const setMirrorsLocked = useCanvasStore((s) => s.setMirrorsLocked);
   const enterPathwayMulti = useCanvasStore((s) => s.enterPathwayMulti);
@@ -303,21 +322,15 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   // larger sibling's domain (e.g. a 0–100% chart pinned to a
   // 0–70M absolute range reads as a flat strip near zero).
   //
-  // `generation` forces the hook to forget previously tracked divs
-  // whenever the plots are about to re-mount with a new
-  // configuration — combines `plotConfigGeneration` (bumped on
-  // every Edit-drawer save and on Refresh) and `mirrorsLocked`
-  // (toggling it can swap each row's override key, re-mounting
-  // every CanvasPlot).
+  // `plotConfigGeneration` (bumped on every Edit-drawer save and
+  // on Refresh) is the cache invalidator: it forces the hook to
+  // drop previously tracked divs so a fresh round of `onPlotReady`
+  // calls populates a clean set with the new plot type's ranges.
   const pathwayCount = setup?.pathwayNames?.length ?? 0;
-  const alignmentGeneration = useMemo(
-    () => `${plotConfigGeneration}-${mirrorsLocked ? 'L' : 'U'}`,
-    [plotConfigGeneration, mirrorsLocked],
-  );
   const { handlePlotReady: handleAlignPlot } = useYAxisAlignment(
     pathwayCount > 1 && mirrorsLocked,
     pathwayCount,
-    alignmentGeneration,
+    plotConfigGeneration,
   );
   const onRowPlotReady = useCallback(
     (div) => handleAlignPlot('pathway-emission-timeline', div),
@@ -327,14 +340,30 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   const pathwayNames = setup?.pathwayNames ?? [];
   const scenario = parentScenario || projectScenario;
 
-  // Refresh = "resync all rows to the first row". Promotes the
-  // first row's effective config to the shared slot (own override
-  // if it has one, else whatever was already shared), then drops
-  // every per-row override so all rows fall through to the shared
-  // override. Bumps a tick so each `PathwayRow` resets its
-  // mapInstance camera and refits its Plotly chart. Mirrors the
-  // compare-mode Refresh affordance (`resyncMirrorsToOrigin` +
-  // refit) adapted to the row stack's per-pathway override model.
+  // Per-row map stores registered by each `PathwayRow` on mount.
+  // Lets the Refresh handler reach into rows 2+ when locked and
+  // mirror row 1's map view there — the cross-row map sync the
+  // user expects from a "resync to first row" affordance.
+  const mapStoresRef = useRef(new Map());
+  const registerMapStore = useCallback((name, store) => {
+    if (store) mapStoresRef.current.set(name, store);
+    else mapStoresRef.current.delete(name);
+  }, []);
+
+  // Refresh = "resync all rows to row 1". Three coordinated steps:
+  //   1. Plot configs: promote row 1's effective config (own
+  //      override or, failing that, the existing shared slot) into
+  //      `SHARED_OVERRIDE_KEY` and drop every per-row override.
+  //      Every row now reads the same plot-config.
+  //   2. Charts: bump `refreshTick` so each row refits its Plotly
+  //      figure to the row body's current dimensions.
+  //   3. Maps: reset every row's `cameraOptions` so each fits to
+  //      its own scenario zone via `useCameraFitBounds`. When
+  //      LOCKED, after row 1's fly-to settles, copy row 1's full
+  //      map state (camera + view-state chrome) onto rows 2+ so
+  //      every title map matches row 1.
+  // Mirrors the compare-mode Refresh affordance
+  // (`resyncMirrorsToOrigin` + refit) adapted to the row stack.
   const [refreshTick, setRefreshTick] = useState(0);
   const handleRefreshAll = useCallback(() => {
     setPathwayPlotConfigs((prev) => {
@@ -347,7 +376,34 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
     });
     setPlotConfigGeneration((g) => g + 1);
     setRefreshTick((t) => t + 1);
-  }, [pathwayNames]);
+
+    // Step 1: reset every row's camera so each fits its own zone
+    // bbox via `useCameraFitBounds`. When unlocked we stop here —
+    // rows are independent.
+    mapStoresRef.current.forEach((store) => {
+      store.setState({ cameraOptions: null });
+    });
+    if (!mirrorsLocked || pathwayNames.length < 2) return;
+
+    // Step 2 (locked only): once row 1's fit-bounds animation has
+    // settled, copy its FULL map settings to rows 2+ — camera,
+    // view state, extrude, layer visibility, labels, colour mode,
+    // filters. The fly-to interpolation in `useCameraFitBounds`
+    // runs ~1s — wait a bit longer so the sync reads the
+    // post-animation view, not the mid-flight one.
+    const firstName = pathwayNames[0];
+    setTimeout(() => {
+      const firstStore = mapStoresRef.current.get(firstName);
+      if (!firstStore) return;
+      const firstState = firstStore.getState();
+      const sync = {};
+      for (const key of MAP_SYNC_KEYS) sync[key] = firstState[key];
+      for (let i = 1; i < pathwayNames.length; i += 1) {
+        const other = mapStoresRef.current.get(pathwayNames[i]);
+        if (other) other.setState(sync);
+      }
+    }, 1500);
+  }, [pathwayNames, mirrorsLocked]);
 
   // Map of pathway -> { years, lastYear }. `years` drives the
   // dashed reference lines drawn at every state year on the
@@ -387,36 +443,34 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   }
 
   return (
-    <div style={canvasWrapperStyle}>
-      <div style={enableEdit ? canvasStyle : canvasExportStyle}>
-        <CanvasScenarioHeader trailing={<PathwayCompareSelect />} />
-        <div style={rowStackStyle}>
+    <ForceScopedMapContext.Provider value={true}>
+      <div style={canvasWrapperStyle}>
+        <div style={enableEdit ? canvasStyle : canvasExportStyle}>
+          <CanvasScenarioHeader trailing={<PathwayCompareSelect />} />
+          <div style={rowStackStyle}>
           {pathwayNames.length === 0 ? (
             <div style={emptyHintStyle}>
               Pick at least one pathway to compare.
             </div>
           ) : (
             pathwayNames.map((name, i) => {
-              // Read priority:
-              //  - locked → every row reads the SHARED override so
-              //    edits on any row propagate to all.
-              //  - unlocked → row reads its OWN override; if it
-              //    doesn't have one yet, falls back to the shared
-              //    override (so toggling lock off doesn't revert
-              //    non-first rows to the base default).
-              // Write priority:
-              //  - locked   → writes to the SHARED key.
-              //  - unlocked → writes to the row's OWN key (the
-              //    only way to diverge a single row from shared,
-              //    AND the only way to keep the edit local — using
-              //    the first row's pathway name as the shared key
-              //    would mean editing row 1 while unlocked would
-              //    spill into row 2 / 3 via their fallback).
+              // Read priority — ALWAYS prefer the row's own
+              // override, falling back to the shared override.
+              // Toggling lock therefore never silently destroys a
+              // per-row edit that was made while unlocked; rows
+              // hold onto their own config until the user resets
+              // them explicitly (via Refresh, which clears every
+              // per-row override).
+              //
+              // Write priority — driven by lock state:
+              //  - locked   → writes to the SHARED key. New edits
+              //    propagate to every row that doesn't already
+              //    carry its own override.
+              //  - unlocked → writes to the row's OWN key. New
+              //    edits stay local to that row.
               const sharedOverride = pathwayPlotConfigs[SHARED_OVERRIDE_KEY];
               const ownOverride = pathwayPlotConfigs[name];
-              const plotConfigOverride = mirrorsLocked
-                ? sharedOverride
-                : (ownOverride ?? sharedOverride);
+              const plotConfigOverride = ownOverride ?? sharedOverride;
               const writeKey = mirrorsLocked ? SHARED_OVERRIDE_KEY : name;
               const pathwayInfo = yearsByPathway[name];
               return (
@@ -436,6 +490,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
                   onToggleLock={() => setMirrorsLocked(!mirrorsLocked)}
                   onRefresh={handleRefreshAll}
                   refreshTick={refreshTick}
+                  registerMapStore={registerMapStore}
                   onPlotReady={onRowPlotReady}
                   onOpenDrawer={onOpenDrawer}
                   rowSize={rowSize}
@@ -456,9 +511,10 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
               );
             })
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </ForceScopedMapContext.Provider>
   );
 };
 
@@ -490,6 +546,7 @@ const PathwayRow = ({
   onToggleLock,
   onRefresh,
   refreshTick,
+  registerMapStore,
   onPlotReady,
   onOpenDrawer,
   onRemovePathway,
@@ -541,31 +598,41 @@ const PathwayRow = ({
       : scenario;
 
   // Per-row mapInstance store so each row's toolbar (Layers /
-  // Extrude / Reset Camera / Reset Compass) acts on its own map
-  // rather than the shared singleton. Same pattern `FeatureCardMap`
-  // uses for compare-mode maps. Seed with the singleton snapshot so
-  // the camera opens at the active viewport's view (typically
-  // already centred on the project) instead of the default world
-  // view at `(lat 0, lng 0, zoom 0)`.
+  // Extrude / Reset Camera / Reset Compass) and camera act on its
+  // own map rather than the shared singleton. The
+  // `ForceScopedMapContext` wrapper above this view tells the
+  // scoped hooks to always read this per-row store, so each row
+  // can fit-bounds to its own scenario zone independently. Seed
+  // with the singleton snapshot (chrome only — no `cameraOptions`)
+  // so the map opens at the singleton's current view before
+  // `useCameraFitBounds` settles it onto the row's zone.
   const [mapStore] = useState(() => {
     const s = createMapInstanceStore();
     s.setState(snapshotMapView());
     return s;
   });
 
-  // Refresh: when the parent bumps `refreshTick`, reset this row's
-  // map camera (drops cameraOptions so the map re-fits to the zone
-  // bbox) and refit the Plotly chart to the row body's current
-  // dimensions. Skipped on the initial render so the row's
-  // first-mount snapshotMapView() seed isn't immediately wiped.
+  // Register this row's map store with the parent so the Refresh
+  // handler can reach in and mirror row 1's view across the others
+  // when locked. Cleanup on unmount drops the entry so a removed
+  // pathway doesn't linger in the registry.
+  useEffect(() => {
+    registerMapStore?.(pathwayName, mapStore);
+    return () => registerMapStore?.(pathwayName, null);
+  }, [pathwayName, mapStore, registerMapStore]);
+
+  // Refresh: when the parent bumps `refreshTick`, refit the Plotly
+  // chart to the row body's current dimensions. The map camera
+  // reset is owned by the parent's `handleRefreshAll` so the
+  // locked-mode mirror copy can fire after row 1's fit settles.
+  // Skipped on the initial render so first mount doesn't run.
   const initialTickRef = useRef(refreshTick);
   useEffect(() => {
     if (refreshTick === initialTickRef.current) return;
-    mapStore.setState({ cameraOptions: null });
     slotRef.current
       ?.querySelectorAll('.js-plotly-plot, .plotly-graph-div')
       .forEach((div) => fitPlotToParent(div));
-  }, [refreshTick, mapStore]);
+  }, [refreshTick]);
 
   // Live caption lifted from the chart's main title (e.g.
   // "Cumulative Emissions (kgCO2e) by Year") — rendered as the
@@ -660,8 +727,8 @@ const PathwayRow = ({
               <Tooltip
                 title={
                   locked
-                    ? 'Unlock rows — let each row resize independently'
-                    : 'Lock rows — disable the resize handle'
+                    ? 'Unlock rows — let each row resize and edit independently'
+                    : 'Lock rows — sync resize and propagate edits from row 1'
                 }
                 placement="bottom"
               >
@@ -739,10 +806,9 @@ const PathwayRow = ({
           <FeatureCardShell
             title={chartTitleNode}
             icon={TimelineIcon}
-            // All three actions follow the locked-mirror gate: only
-            // the first row when locked (one writer, all rows
-            // mirror via the shared override key), every row when
-            // unlocked (per-row overrides).
+            // Edit / Refit / Delete follow the locked-mirror gate:
+            // only the first row when locked (the one writer to the
+            // shared slot), every row when unlocked (per-row writes).
             onEdit={
               showCardActions && onOpenDrawer ? handleEditChart : undefined
             }
@@ -760,12 +826,15 @@ const PathwayRow = ({
                 plotConfig={plotConfig}
                 onCaption={setCaption}
                 onPlotReady={(div) => {
-                  // Apply pathway-single's "Y_xxxx5 only" tick
-                  // filter and overlay dashed reference lines at
-                  // every year that has a state in this pathway,
-                  // *before* handing the div to the parent's
-                  // y-axis alignment hook so the alignment reads
-                  // the post-relayout axis range.
+                  // Apply ticks (Y_xxxx5 only), flip the y-axis to
+                  // the right, and overlay dashed reference lines
+                  // at every state year — *before* handing the div
+                  // to the parent's y-axis alignment hook so it
+                  // reads post-relayout ranges. Cross-row x-axis
+                  // alignment is handled in the backend
+                  // (`emission_timeline.py` pads zero rows when
+                  // `period-start` is earlier than the pathway's
+                  // first data year).
                   applyEndsInFiveTicks(div);
                   applyYAxisRight(div);
                   applyStateReferenceLines(div, stateYears);

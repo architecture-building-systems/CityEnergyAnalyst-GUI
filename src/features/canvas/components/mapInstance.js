@@ -87,6 +87,22 @@ export const MapColumnContext = createContext(null);
 export const MapInstanceContext = createContext(null);
 
 /**
+ * Subtree flag that forces the scoped view-state hooks to ALWAYS
+ * read from `MapInstanceContext` (i.e. the per-card store),
+ * bypassing the `mapsLinked` gate.
+ *
+ * Pathway-multi opts in: each row's title map shows a different
+ * pathway-state scenario, so the global "Sync Maps" toggle (which
+ * was designed for FeatureCardMaps that mirror the singleton when
+ * linked) doesn't apply — every row genuinely needs its own
+ * camera and view state regardless of the toggle.
+ *
+ * `false` outside any provider → standard `mapsLinked` semantics
+ * (FeatureCardMap mirrors the singleton when linked).
+ */
+export const ForceScopedMapContext = createContext(false);
+
+/**
  * Build a fresh per-card store. Setters mirror the singleton's names
  * (`setMapLayerParameters`, `setMapLayers`, etc.) so consumers can
  * swap reads/writes onto either store without renaming.
@@ -245,10 +261,14 @@ export const useScopedSetMapLayerLegends = () => {
 
 const makeScopedViewStateHook = (key) => () => {
   const linked = useCanvasStore((s) => s.mapsLinked);
+  const forceScoped = useContext(ForceScopedMapContext);
   const ctx = useContext(MapInstanceContext);
   const fromCtx = useStore(ctx ?? NULL_STORE, (s) => s?.[key]);
   const fromSingleton = useMapStore((s) => s[key]);
-  return ctx && !linked ? fromCtx : fromSingleton;
+  // `forceScoped` (set by pathway-multi) overrides the `mapsLinked`
+  // gate: when each row shows a different scenario, mirroring the
+  // singleton would collapse all rows onto one camera.
+  return ctx && (forceScoped || !linked) ? fromCtx : fromSingleton;
 };
 
 export const useScopedViewState = makeScopedViewStateHook('viewState');
