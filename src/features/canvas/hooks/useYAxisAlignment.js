@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * Hook that collects Plotly div references across columns and aligns
@@ -10,10 +10,23 @@ import { useCallback, useRef } from 'react';
  *
  * The hook groups divs by slotId (same row across columns) and, once
  * all columns have reported for a given slot, sets a unified y-range.
+ *
+ * `generation` (optional) lets the caller invalidate the tracked
+ * divs when the underlying plot configuration changes — without it,
+ * a re-rendered chart's NEW plot div would be pushed alongside the
+ * (now stale) OLD one, and the unifier would compute its range
+ * from the wrong axis (e.g. an absolute-value range applied to a
+ * percentage chart, squashing the data flat near zero).
  */
-const useYAxisAlignment = (enabled, columnCount) => {
+const useYAxisAlignment = (enabled, columnCount, generation = 0) => {
   // Map of slotId → [plotDiv, plotDiv, ...]
   const plotDivsRef = useRef({});
+
+  // Bumping `generation` clears the tracked divs so the next round
+  // of `handlePlotReady` calls populates a fresh set.
+  useEffect(() => {
+    plotDivsRef.current = {};
+  }, [generation]);
 
   const alignSlot = useCallback((slotId) => {
     const divs = plotDivsRef.current[slotId];

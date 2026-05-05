@@ -1,5 +1,5 @@
 import { Button, Popconfirm, Tooltip } from 'antd';
-import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
+import { BinAnimationIcon, InputEditorIcon, RefreshIcon } from 'assets/icons';
 
 import { CEA_PURPLE } from 'constants/theme';
 import { PLOT_GROUPS } from 'features/plots/constants';
@@ -46,13 +46,14 @@ export const FeatureCardShell = ({
   title,
   icon: Icon,
   onEdit,
+  onRefit,
   onDeleteCard,
   editing = false,
   children,
 }) => {
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const layoutLocked = useCanvasStore((s) => s.fixLayout);
-  const showActions = (onEdit || onDeleteCard) && enableEdit;
+  const showActions = (onEdit || onRefit || onDeleteCard) && enableEdit;
   return (
     <div style={editing && enableEdit ? editingCardStyle : cardStyle}>
       <div
@@ -77,6 +78,16 @@ export const FeatureCardShell = ({
                   icon={<InputEditorIcon />}
                   onClick={onEdit}
                   aria-label="Edit card"
+                />
+              </Tooltip>
+            )}
+            {onRefit && (
+              <Tooltip title="Refit" placement="bottom">
+                <Button
+                  type="text"
+                  icon={<RefreshIcon />}
+                  onClick={onRefit}
+                  aria-label="Refit chart to its container"
                 />
               </Tooltip>
             )}
@@ -137,6 +148,13 @@ const titleSectionStyle = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 8,
+  // Reserve the height the action-button row occupies so the card
+  // body starts at the same vertical position whether or not the
+  // Edit / Refit / Delete buttons are shown — otherwise hiding the
+  // actions tightens the title row by ~16 px and the body shifts
+  // upward, leaving the chart with an asymmetric padding compared
+  // to siblings that *do* show the actions.
+  minHeight: 38,
 };
 
 // Adds the `grab` cursor that signals "this row is the grid drag

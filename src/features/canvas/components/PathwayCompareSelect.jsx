@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Modal, Select } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 
@@ -42,6 +42,19 @@ const PathwayCompareSelect = () => {
   const view = useCanvasStore((s) => s.view);
 
   const [open, setOpen] = useState(false);
+  // Picks staged while the dropdown is OPEN. Selections only commit
+  // (entering pathway-single / -multi) when the popup closes — so a
+  // user who intends to pick two pathways can finish toggling
+  // without the canvas snapping into pathway-single after the first
+  // click and tearing down their work mid-selection.
+  const [pendingPicks, setPendingPicks] = useState(null);
+  // antd's single-select Select fires onOpenChange(false) immediately
+  // after onSelect (auto-close). Without this guard, picking the
+  // first pathway would trigger the close handler and commit before
+  // the user could toggle a second pathway. The flag is set in
+  // handleSelect and consumed (then cleared) by the very next
+  // handleOpenChange(false).
+  const justSelectedRef = useRef(false);
 
   // Picker only accepts pathways whose every state year has been
   // simulated — otherwise per-column emission / demand fetches
@@ -66,7 +79,12 @@ const PathwayCompareSelect = () => {
     return [];
   }, [setup]);
 
-  const pickedSet = useMemo(() => new Set(picks), [picks]);
+  // While the popup is open, the displayed selection mirrors
+  // `pendingPicks`; when closed, it falls back to the committed
+  // `picks` so an external state change (e.g. resume from disk)
+  // is reflected immediately.
+  const displayedPicks = pendingPicks ?? picks;
+  const pickedSet = useMemo(() => new Set(displayedPicks), [displayedPicks]);
   const hasPathways = simulatedPathways.length > 0;
 
   const options = useMemo(
@@ -128,20 +146,48 @@ const PathwayCompareSelect = () => {
   };
 
   const handleSelect = (pathwayName) => {
-    const nextPicks = pickedSet.has(pathwayName)
-      ? picks.filter((name) => name !== pathwayName)
-      : [...picks, pathwayName];
-    applyPicks(nextPicks);
-    // Keep the popup open so the user can toggle additional pathways
-    // without re-opening it; matches the `PathwayPanel` UX.
-    setOpen(true);
+    // Stage the toggle locally — don't enter pathway mode yet.
+    // Commits to the canvas store on popup close (`handleOpenChange`).
+    setPendingPicks((prev) => {
+      const current = prev ?? picks;
+      return current.includes(pathwayName)
+        ? current.filter((name) => name !== pathwayName)
+        : [...current, pathwayName];
+    });
+    // Mark that the immediately-following onOpenChange(false) is
+    // antd's auto-close after a selection, not a user dismissal,
+    // so handleOpenChange skips the commit.
+    justSelectedRef.current = true;
+  };
+
+  const handleOpenChange = (nextOpen) => {
+    if (nextOpen) {
+      // Seed the staging buffer from the committed picks so the
+      // user starts editing from the current selection.
+      setPendingPicks(picks);
+      setOpen(true);
+      return;
+    }
+    // antd auto-closes after onSelect on a single-select. Swallow
+    // that close so the popup stays open and the staged pick stays
+    // pending until the user explicitly dismisses the dropdown.
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
+    // Closing the popup commits the staged selection.
+    setOpen(false);
+    if (pendingPicks != null && !arrayShallowEqual(pendingPicks, picks)) {
+      applyPicks(pendingPicks);
+    }
+    setPendingPicks(null);
   };
 
   // Single-select `value` is the "primary" pathway (first picked) so
   // antd has something to anchor on; the rendered label is overridden
   // below to show the joined picks.
-  const primary = picks[0] ?? undefined;
-  const isEmpty = picks.length === 0;
+  const primary = displayedPicks[0] ?? undefined;
+  const isEmpty = displayedPicks.length === 0;
   const className = `cea-scenario-select${
     isEmpty ? ' cea-scenario-select-empty' : ''
   }`;
@@ -157,19 +203,29 @@ const PathwayCompareSelect = () => {
       onChange={() => {}}
       onSelect={handleSelect}
       open={hasPathways ? open : false}
-      onOpenChange={hasPathways ? setOpen : undefined}
+      onOpenChange={hasPathways ? handleOpenChange : undefined}
       disabled={!hasPathways}
       notFoundContent={<small>No pathways</small>}
       aria-label="Select pathways to compare"
       labelRender={() =>
-        picks.length > 0 ? (
-          <span style={joinedLabelStyle} title={picks.join('; ')}>
-            {picks.join('; ')}
+        displayedPicks.length > 0 ? (
+          <span style={joinedLabelStyle} title={displayedPicks.join('; ')}>
+            {displayedPicks.join('; ')}
           </span>
         ) : null
       }
     />
   );
+};
+
+const arrayShallowEqual = (a, b) => {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 };
 
 /**

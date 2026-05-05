@@ -199,7 +199,7 @@ const ComparisonView = ({
   // (`PathwayMultiView`) without bloating the inter-scenario /
   // inter-whatif / pathway-single render path.
   if (view === 'pathway-multi') {
-    return <PathwayMultiView />;
+    return <PathwayMultiView onOpenDrawer={onOpenDrawer} />;
   }
 
   if (columns.length === 0) {
