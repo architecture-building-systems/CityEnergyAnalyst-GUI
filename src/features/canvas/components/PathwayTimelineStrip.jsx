@@ -273,8 +273,48 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
   // Done at runtime via `Plotly.relayout` rather than in the figure
   // template because the same backend script is also used by the
   // standalone Pathway Builder where the axis stays on the left.
+  //
+  // Render tick labels INSIDE the plot area (`ticklabelposition`)
+  // so they don't depend on `margin.r` for room — the right-side
+  // axis was losing the SI suffix because the magnitude prefix
+  // ("M", "K") sits past the plot edge and gets clipped by the
+  // card's `overflow: hidden`. Pinning labels inside also lets us
+  // stop fighting plotly's auto-margin. `tickformat: '~s'` forces
+  // an explicit SI suffix on every tick (e.g. "60M", "1.2G") and
+  // `automargin: false` stops plotly from re-growing the right
+  // margin once the labels move inside.
   const handlePlotReady = (div) => {
-    window.Plotly?.relayout?.(div, { 'yaxis.side': 'right' });
+    const relayout = {
+      'yaxis.side': 'right',
+      'yaxis.tickformat': '~s',
+      // Render labels OUTSIDE the plot area on the right so the
+      // coloured data fill stops cleanly at the y-axis instead of
+      // running under the tick text. `automargin: true` lets
+      // plotly grow `margin.r` enough to seat the longest label.
+      'yaxis.ticklabelposition': 'outside',
+      'yaxis.automargin': true,
+    };
+    // Tighten the x-axis range to the actual data extent so the
+    // y-axis line sits flush against the rightmost data point.
+    // Plotly's default `autorange` adds a small padding past the
+    // last category, leaving an empty band between the coloured
+    // area and the axis line; pinning `xaxis.range` removes it.
+    const layout = div._fullLayout;
+    const xData = div.data?.[0]?.x;
+    if (Array.isArray(xData) && xData.length > 0) {
+      const isCategorical = layout?.xaxis?.type === 'category';
+      if (isCategorical) {
+        relayout['xaxis.range'] = [0, xData.length - 1];
+      } else {
+        const nums = xData
+          .map((v) => Number(String(v).match(/(\d+)/)?.[1]))
+          .filter((n) => Number.isFinite(n));
+        if (nums.length > 0) {
+          relayout['xaxis.range'] = [Math.min(...nums), Math.max(...nums)];
+        }
+      }
+    }
+    window.Plotly?.relayout?.(div, relayout);
     applyStateYearTicks(div);
     // Triggers the connector-measurement effect now that plotly's
     // graph div is initialised and ready to be queried.
