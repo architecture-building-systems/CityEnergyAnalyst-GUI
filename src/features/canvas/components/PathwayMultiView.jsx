@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 
 import {
@@ -79,6 +79,14 @@ function applyEndsInFiveTicks(div) {
     'xaxis.showgrid': true,
   });
 }
+
+// Synthetic key for the "shared" plot-config override slot in
+// `pathwayPlotConfigs`. Decouples it from any pathway name so a
+// row's own override (under `pathwayName`) and the shared override
+// can coexist — required for the unlocked-edit-stays-local rule:
+// editing the first row in unlocked mode must NOT spill into the
+// other rows' fallback.
+const SHARED_OVERRIDE_KEY = '__shared__';
 
 // Move the y-axis (ticks + title) to the right side of the chart.
 // Mirrors PathwayTimelineStrip's relayout so multi-view rows read
@@ -252,7 +260,6 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   // Locked → `rowBodyStyle.resize = 'none'`; unlocked → `'both'`.
   const mirrorsLocked = useCanvasStore((s) => s.mirrorsLocked);
   const setMirrorsLocked = useCanvasStore((s) => s.setMirrorsLocked);
-  const stackRef = useRef(null);
   const enterPathwayMulti = useCanvasStore((s) => s.enterPathwayMulti);
   const stopCompareMode = useCanvasStore((s) => s.stopCompareMode);
   const { data: overview } = usePathwayOverview();
@@ -289,31 +296,58 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   }, []);
 
   // Unify the y-axis range across every row's emission-timeline so
-  // the rows are visually comparable. `useYAxisAlignment` collects
-  // each chart div via `onPlotReady` and rewrites their
-  // `yaxis.range` to the common max once they've all reported.
+  // the rows are visually comparable. Only enabled when rows are
+  // LOCKED — in unlocked mode every row can carry its own plot
+  // config (different plot-type, different y-units), and forcing a
+  // unified range would squash whichever row's data sits inside the
+  // larger sibling's domain (e.g. a 0–100% chart pinned to a
+  // 0–70M absolute range reads as a flat strip near zero).
+  //
+  // `generation` forces the hook to forget previously tracked divs
+  // whenever the plots are about to re-mount with a new
+  // configuration — combines `plotConfigGeneration` (bumped on
+  // every Edit-drawer save and on Refresh) and `mirrorsLocked`
+  // (toggling it can swap each row's override key, re-mounting
+  // every CanvasPlot).
   const pathwayCount = setup?.pathwayNames?.length ?? 0;
+  const alignmentGeneration = useMemo(
+    () => `${plotConfigGeneration}-${mirrorsLocked ? 'L' : 'U'}`,
+    [plotConfigGeneration, mirrorsLocked],
+  );
   const { handlePlotReady: handleAlignPlot } = useYAxisAlignment(
-    pathwayCount > 1,
+    pathwayCount > 1 && mirrorsLocked,
     pathwayCount,
+    alignmentGeneration,
   );
   const onRowPlotReady = useCallback(
     (div) => handleAlignPlot('pathway-emission-timeline', div),
     [handleAlignPlot],
   );
 
-  // Refit every Plotly figure currently rendered in the row stack.
-  // Mirrors the compare-mode "Refresh" affordance — useful after
-  // resizing rows or when a chart's container changed but the
-  // figure's pixel dims didn't follow.
-  const handleRefreshAll = () => {
-    stackRef.current
-      ?.querySelectorAll('.js-plotly-plot, .plotly-graph-div')
-      .forEach((div) => fitPlotToParent(div));
-  };
-
   const pathwayNames = setup?.pathwayNames ?? [];
   const scenario = parentScenario || projectScenario;
+
+  // Refresh = "resync all rows to the first row". Promotes the
+  // first row's effective config to the shared slot (own override
+  // if it has one, else whatever was already shared), then drops
+  // every per-row override so all rows fall through to the shared
+  // override. Bumps a tick so each `PathwayRow` resets its
+  // mapInstance camera and refits its Plotly chart. Mirrors the
+  // compare-mode Refresh affordance (`resyncMirrorsToOrigin` +
+  // refit) adapted to the row stack's per-pathway override model.
+  const [refreshTick, setRefreshTick] = useState(0);
+  const handleRefreshAll = useCallback(() => {
+    setPathwayPlotConfigs((prev) => {
+      const firstRow = pathwayNames[0];
+      if (!firstRow) return {};
+      const firstEffective = prev[firstRow] ?? prev[SHARED_OVERRIDE_KEY];
+      return firstEffective !== undefined
+        ? { [SHARED_OVERRIDE_KEY]: firstEffective }
+        : {};
+    });
+    setPlotConfigGeneration((g) => g + 1);
+    setRefreshTick((t) => t + 1);
+  }, [pathwayNames]);
 
   // Map of pathway -> { years, lastYear }. `years` drives the
   // dashed reference lines drawn at every state year on the
@@ -356,19 +390,34 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
     <div style={canvasWrapperStyle}>
       <div style={enableEdit ? canvasStyle : canvasExportStyle}>
         <CanvasScenarioHeader trailing={<PathwayCompareSelect />} />
-        <div ref={stackRef} style={rowStackStyle}>
+        <div style={rowStackStyle}>
           {pathwayNames.length === 0 ? (
             <div style={emptyHintStyle}>
               Pick at least one pathway to compare.
             </div>
           ) : (
             pathwayNames.map((name, i) => {
-              // When locked, every row reads (and writes) the FIRST
-              // row's override key — so editing any chart card
-              // propagates the new plot-type / parameters to every
-              // row in the stack. When unlocked, rows are
-              // independent and each carries its own override.
-              const overrideKey = mirrorsLocked ? pathwayNames[0] : name;
+              // Read priority:
+              //  - locked → every row reads the SHARED override so
+              //    edits on any row propagate to all.
+              //  - unlocked → row reads its OWN override; if it
+              //    doesn't have one yet, falls back to the shared
+              //    override (so toggling lock off doesn't revert
+              //    non-first rows to the base default).
+              // Write priority:
+              //  - locked   → writes to the SHARED key.
+              //  - unlocked → writes to the row's OWN key (the
+              //    only way to diverge a single row from shared,
+              //    AND the only way to keep the edit local — using
+              //    the first row's pathway name as the shared key
+              //    would mean editing row 1 while unlocked would
+              //    spill into row 2 / 3 via their fallback).
+              const sharedOverride = pathwayPlotConfigs[SHARED_OVERRIDE_KEY];
+              const ownOverride = pathwayPlotConfigs[name];
+              const plotConfigOverride = mirrorsLocked
+                ? sharedOverride
+                : (ownOverride ?? sharedOverride);
+              const writeKey = mirrorsLocked ? SHARED_OVERRIDE_KEY : name;
               const pathwayInfo = yearsByPathway[name];
               return (
                 <PathwayRow
@@ -386,13 +435,14 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
                   locked={mirrorsLocked}
                   onToggleLock={() => setMirrorsLocked(!mirrorsLocked)}
                   onRefresh={handleRefreshAll}
+                  refreshTick={refreshTick}
                   onPlotReady={onRowPlotReady}
                   onOpenDrawer={onOpenDrawer}
                   rowSize={rowSize}
                   onRowResize={setRowSize}
-                  plotConfigOverride={pathwayPlotConfigs[overrideKey]}
+                  plotConfigOverride={plotConfigOverride}
                   onPlotConfigSave={(next) =>
-                    setPathwayPlotConfig(overrideKey, next)
+                    setPathwayPlotConfig(writeKey, next)
                   }
                   onRemovePathway={() => {
                     const remaining = pathwayNames.filter((p) => p !== name);
@@ -439,6 +489,7 @@ const PathwayRow = ({
   locked,
   onToggleLock,
   onRefresh,
+  refreshTick,
   onPlotReady,
   onOpenDrawer,
   onRemovePathway,
@@ -501,6 +552,20 @@ const PathwayRow = ({
     s.setState(snapshotMapView());
     return s;
   });
+
+  // Refresh: when the parent bumps `refreshTick`, reset this row's
+  // map camera (drops cameraOptions so the map re-fits to the zone
+  // bbox) and refit the Plotly chart to the row body's current
+  // dimensions. Skipped on the initial render so the row's
+  // first-mount snapshotMapView() seed isn't immediately wiped.
+  const initialTickRef = useRef(refreshTick);
+  useEffect(() => {
+    if (refreshTick === initialTickRef.current) return;
+    mapStore.setState({ cameraOptions: null });
+    slotRef.current
+      ?.querySelectorAll('.js-plotly-plot, .plotly-graph-div')
+      .forEach((div) => fitPlotToParent(div));
+  }, [refreshTick, mapStore]);
 
   // Live caption lifted from the chart's main title (e.g.
   // "Cumulative Emissions (kgCO2e) by Year") — rendered as the
