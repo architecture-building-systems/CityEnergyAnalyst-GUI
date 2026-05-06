@@ -30,6 +30,15 @@ export const useMapStore = create((set) => ({
   colorMode: COLOR_MODES.DEFAULT,
   constructionColorMap: {},
   useTypeColorMap: {},
+  // Per-archetype / per-use-type GFA totals + share, populated
+  // alongside the colour maps when zone data lands. Drives the
+  // right-aligned "<gfa> m² (<pct>%)" column in
+  // ConstructionStandardLegend. Shape:
+  //   { '<TYPE>': { gfa: <m²>, pct: <0..100> } }
+  // `{}` when zone data is absent or every building has zero
+  // floors_ag (in which case the legend renders the labels alone).
+  constructionGfaTotals: {},
+  useTypeGfaTotals: {},
 
   // Pathway state geometry override
   stateZoneOverride: null,
@@ -81,6 +90,9 @@ export const useMapStore = create((set) => ({
   setColorMode: (value) => set({ colorMode: value }),
   setConstructionColorMap: (value) => set({ constructionColorMap: value }),
   setUseTypeColorMap: (value) => set({ useTypeColorMap: value }),
+  setConstructionGfaTotals: (value) =>
+    set({ constructionGfaTotals: value || {} }),
+  setUseTypeGfaTotals: (value) => set({ useTypeGfaTotals: value || {} }),
   setStateZoneOverride: (value) => set({ stateZoneOverride: value }),
 }));
 

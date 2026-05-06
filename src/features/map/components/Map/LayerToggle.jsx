@@ -5,7 +5,9 @@ import { Dropdown, Tooltip } from 'antd';
 import { LayersIcon } from 'assets/icons';
 import {
   generateConstructionColorMap,
+  generateConstructionGfaTotals,
   generateUseTypeColorMap,
+  generateUseTypeGfaTotals,
 } from 'features/map/utils/constructionColors';
 
 const NetworkRadioInput = ({ value, label, selected, onSelect }) => {
@@ -273,6 +275,10 @@ const LayerToggle = ({ scenario }) => {
     (state) => state.setConstructionColorMap,
   );
   const setUseTypeColorMap = useMapStore((state) => state.setUseTypeColorMap);
+  const setConstructionGfaTotals = useMapStore(
+    (state) => state.setConstructionGfaTotals,
+  );
+  const setUseTypeGfaTotals = useMapStore((state) => state.setUseTypeGfaTotals);
   const isConstructionColorEnabled =
     colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
   const isUseTypeColorEnabled = colorMode === COLOR_MODES.USE_TYPE;
@@ -298,10 +304,16 @@ const LayerToggle = ({ scenario }) => {
   // Only auto-enable on true first load; respect user's toggle choice on refetch
   useEffect(() => {
     if (data?.zone?.features) {
-      const colorMap = generateConstructionColorMap(data.zone.features);
-      setConstructionColorMap(colorMap);
-      const useTypeMap = generateUseTypeColorMap(data.zone.features);
-      setUseTypeColorMap(useTypeMap);
+      setConstructionColorMap(generateConstructionColorMap(data.zone.features));
+      setUseTypeColorMap(generateUseTypeColorMap(data.zone.features));
+      // Same call site for the GFA aggregates so the legend's
+      // right-aligned "<gfa> m² (<pct>%)" column tracks the
+      // colour map exactly — when zone data lands the legend
+      // gets both at once.
+      setConstructionGfaTotals(
+        generateConstructionGfaTotals(data.zone.features),
+      );
+      setUseTypeGfaTotals(generateUseTypeGfaTotals(data.zone.features));
       // Only enable on first load — not on refetch after user toggled off
       if (!constructionColorInitialized.current) {
         setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
@@ -312,12 +324,16 @@ const LayerToggle = ({ scenario }) => {
       setColorMode(COLOR_MODES.DEFAULT);
       setConstructionColorMap({});
       setUseTypeColorMap({});
+      setConstructionGfaTotals({});
+      setUseTypeGfaTotals({});
       constructionColorInitialized.current = false;
     }
   }, [
     data?.zone?.features,
     setConstructionColorMap,
     setUseTypeColorMap,
+    setConstructionGfaTotals,
+    setUseTypeGfaTotals,
     setColorMode,
   ]);
 

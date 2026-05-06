@@ -24,7 +24,9 @@ import { COLOR_MODES, useMapStore } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 import {
   generateConstructionColorMap,
+  generateConstructionGfaTotals,
   generateUseTypeColorMap,
+  generateUseTypeGfaTotals,
 } from 'features/map/utils/constructionColors';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -357,14 +359,37 @@ const CanvasColumn = ({
       columnZoneFeatures ? generateUseTypeColorMap(columnZoneFeatures) : {},
     [columnZoneFeatures],
   );
+  // Per-column GFA aggregates so each column's legend reads its
+  // own scenario's totals — same per-column rationale as the
+  // colour maps above.
+  const constructionGfaTotals = useMemo(
+    () =>
+      columnZoneFeatures
+        ? generateConstructionGfaTotals(columnZoneFeatures)
+        : {},
+    [columnZoneFeatures],
+  );
+  const useTypeGfaTotals = useMemo(
+    () =>
+      columnZoneFeatures ? generateUseTypeGfaTotals(columnZoneFeatures) : {},
+    [columnZoneFeatures],
+  );
   const columnContextValue = useMemo(
     () => ({
       center: columnCenter,
       setCenter: setColumnCenter,
       constructionColorMap,
       useTypeColorMap,
+      constructionGfaTotals,
+      useTypeGfaTotals,
     }),
-    [columnCenter, constructionColorMap, useTypeColorMap],
+    [
+      columnCenter,
+      constructionColorMap,
+      useTypeColorMap,
+      constructionGfaTotals,
+      useTypeGfaTotals,
+    ],
   );
 
   // Title-map tile sizing: each column publishes the row allowance
@@ -939,6 +964,8 @@ const CanvasColumn = ({
                 style={overviewLegendStyle}
                 constructionColorMapOverride={constructionColorMap}
                 useTypeColorMapOverride={useTypeColorMap}
+                constructionGfaTotalsOverride={constructionGfaTotals}
+                useTypeGfaTotalsOverride={useTypeGfaTotals}
               />
               {showPerimeterPlus && (
                 <PerimeterPlusButtons
