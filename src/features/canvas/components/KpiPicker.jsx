@@ -163,7 +163,7 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
             showIcon
           />
         )}
-        {!isLoading && !isError && features.length === 0 && (
+        {!isLoading && !isError && visibleGroups.length === 0 && (
           <Alert
             type="info"
             message="No KPIs registered"
@@ -171,7 +171,7 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
             showIcon
           />
         )}
-        {!isLoading && !isError && features.length > 0 && (
+        {!isLoading && !isError && visibleGroups.length > 0 && (
           <Collapse
             items={items}
             activeKey={activeKeys}
