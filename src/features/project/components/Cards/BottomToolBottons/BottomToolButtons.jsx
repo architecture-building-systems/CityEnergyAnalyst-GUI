@@ -88,7 +88,11 @@ const BottomToolButtons = ({
 };
 
 const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
-  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
+  // Half the default hover-enlarge (1.2 → 1.1) so the five bottom-
+  // left buttons read as a tighter row — the default 20 % grow felt
+  // too prominent at this scale. Other call sites of `useHoverGrow`
+  // (ToolFormButtons, ShowHideCardsButton) keep the default.
+  const { styles, onMouseEnter, onMouseLeave } = useHoverGrow(1, 1.1);
   const _icon = icon;
 
   if (hidden) return null;
