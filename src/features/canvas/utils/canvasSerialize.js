@@ -64,6 +64,11 @@ const cardConfigFromStore = (card) => ({
   // Shared across columns via `setCardDividerConfig`'s fan-out, so
   // the YAML carries the same blob in every column entry.
   divider: card.divider ?? null,
+  // KPI cards' bound registry id (e.g. ``demand.eui_kwh_m2``).
+  // ``null`` for every other card type. Older saves omit the
+  // field entirely, which deserialiseses back to ``undefined`` —
+  // safe because non-KPI cards never look at it.
+  kpi_id: card.kpiId ?? null,
 });
 
 /**
@@ -234,6 +239,10 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
     html: configEntry.html ?? undefined,
     divider: configEntry.divider ?? undefined,
+    // Round-trip the KPI-card registry id. ``undefined`` (not
+    // ``null``) for non-KPI cards so the in-memory shape matches
+    // the rest of the camelCase fields on this object.
+    kpiId: configEntry.kpi_id ?? undefined,
   });
 
   const isCompare = next.view !== 'launch';
