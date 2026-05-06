@@ -503,8 +503,8 @@ const NavigatorCard = () => {
               <NavigatorToggle
                 checked={showKpiDeltas}
                 onChange={setShowKpiDeltas}
-                label="Show Deltas"
-                ariaLabel="Show KPI deltas vs the origin column"
+                label="Show Deltas against Current"
+                ariaLabel="Show KPI deltas against the Current (origin) column"
               />
             )}
           </>

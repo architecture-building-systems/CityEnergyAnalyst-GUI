@@ -102,7 +102,10 @@ const RibbonTile = ({ kpi, onClick }) => {
         <span style={tileFeatureDotStyle}>·</span>
         <span style={tileLabelTextStyle}>{kpi.label}</span>
         {kpi.info_note && (
-          <Tooltip title={kpi.info_note} placement="top">
+          <Tooltip
+            title={<span style={tooltipBodyStyle}>{kpi.info_note}</span>}
+            placement="top"
+          >
             <InfoCircleOutlined
               style={tileInfoIconStyle}
               aria-label="More info"
@@ -211,6 +214,14 @@ const tileInfoIconStyle = {
   fontSize: 10,
   color: '#94A3B8',
   cursor: 'help',
+};
+
+// `whiteSpace: pre-wrap` keeps yml-authored newlines visible — so
+// the formula on its own line renders as the author intended. See
+// `FeatureCardKpi.jsx` for the matching style on canvas cards.
+const tooltipBodyStyle = {
+  whiteSpace: 'pre-wrap',
+  lineHeight: 1.4,
 };
 
 const tileValueStyle = {

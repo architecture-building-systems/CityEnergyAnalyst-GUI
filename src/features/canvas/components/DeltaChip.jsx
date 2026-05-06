@@ -32,6 +32,11 @@ const DeltaChip = ({
   const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '—';
   const colour = SIGN_COLOURS[sign];
 
+  // The "vs <baseline>" suffix used to render inline; it's now in
+  // the `title` attribute (hover tooltip) so the chip stays
+  // compact enough to fit beside the info icon on row 4. The
+  // delta is implicitly relative to whatever baseline the
+  // navigator's toggle names ("…against Current").
   return (
     <span
       style={{ ...chipStyle, color: colour }}
@@ -41,7 +46,6 @@ const DeltaChip = ({
         {arrow}
       </span>
       {text}
-      <span style={baselineStyle}>vs {baselineLabel}</span>
     </span>
   );
 };
@@ -63,12 +67,6 @@ const chipStyle = {
 
 const arrowStyle = {
   fontSize: 10,
-};
-
-const baselineStyle = {
-  marginLeft: 4,
-  color: '#888',
-  fontWeight: 400,
 };
 
 export default DeltaChip;

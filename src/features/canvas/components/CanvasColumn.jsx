@@ -446,18 +446,28 @@ const CanvasColumn = ({
       },
     ];
     for (const card of sortedCards) {
-      // Compact layout pins every card to the column-left (single
-      // vertical stack). Width stays at the card's stored `w`.
-      const cardX = compactLayout ? 0 : (card.col ?? 0);
+      // Compact layout pins plot / map cards to the column-left
+      // (single vertical stack) so the larger 6-wide cards don't
+      // require horizontal scroll inside a compare-mode column.
+      // KPI cards opt out: they're 2-wide tiles and three of
+      // them sit comfortably side-by-side in one column, which
+      // the user expects to be able to lay out freely.
+      const isKpiCard = card.type === 'kpi';
+      const cardX = compactLayout && !isKpiCard ? 0 : (card.col ?? 0);
       const cardW = card.w ?? DEFAULT_CARD_W;
-      // Text + divider cards can shrink past the global 3-row /
-      // 3-col minimum that keeps plot/map/kpi cards legible —
-      // annotations hug the rendered text and dividers can be a
-      // single unit thick on whichever axis is the line.
+      // Per-type minimum dimensions:
+      //  - text + divider can shrink past the global 3-row / 3-col
+      //    minimum that keeps plot / map cards legible — annotations
+      //    hug the rendered text and dividers can be a single unit
+      //    thick on whichever axis is the line.
+      //  - kpi is a number tile, not a chart canvas: 2×2 is enough
+      //    for label + value + unit. Sparklines crop above this
+      //    minimum — users drag the card taller when they want one.
       const isText = card.type === 'text';
       const isDivider = card.type === 'divider';
-      const minH = isText || isDivider ? 1 : CARD_MIN_H;
-      const minW = isDivider ? 1 : CARD_MIN_W;
+      const isKpi = card.type === 'kpi';
+      const minH = isText || isDivider ? 1 : isKpi ? 2 : CARD_MIN_H;
+      const minW = isDivider ? 1 : isKpi ? 2 : CARD_MIN_W;
       items.push({
         i: cardKey(card.id),
         x: cardX,
@@ -510,6 +520,16 @@ const CanvasColumn = ({
     };
   }, [layout, layoutLocked, layoutEditableHere, isInteracting]);
 
+  // Map of card id → type, used by the handler below to decide
+  // whether `col` should round-trip into the store. KPI cards
+  // opt out of compact-mode's "x=0 only" pin, so their `col`
+  // updates need to persist.
+  const cardTypeById = useMemo(() => {
+    const out = {};
+    for (const card of sortedCards) out[card.id] = card.type;
+    return out;
+  }, [sortedCards]);
+
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
   // when nothing actually changed.
@@ -532,18 +552,17 @@ const CanvasColumn = ({
           const userH = Math.max(CARD_MIN_H, item.h - legendExtraRows);
           setMapPos({ x: item.x, y: item.y, w: item.w, h: userH });
         } else {
-          // Compact mode: persist row / w / h. Skip `col` — every
-          // card is pinned to x=0 by the layout memo, so writing
-          // it back would just clobber the user's free-form `col`
-          // stored from launch view (we want the original layout
-          // to survive a round-trip back). Width persists so the
-          // user can resize cards horizontally on the origin
-          // column and have every mirror follow.
           // Mirror cards carry an `::r<rev>` suffix on their rgl
           // `i`; strip it so `applyCardLayouts` finds the card by
           // its real id when an unlocked mirror persists positions.
           const cardId = item.i.split('::')[0];
-          if (compactLayout) {
+          const isKpiCard = cardTypeById[cardId] === 'kpi';
+          // Compact mode pins plot / map cards to x=0, so writing
+          // `col` back would clobber the user's free-form `col`
+          // stored from launch view. KPI cards bypass compact's
+          // pin, so their `col` updates DO need to persist.
+          const skipCol = compactLayout && !isKpiCard;
+          if (skipCol) {
             cardUpdates.push({
               id: cardId,
               row: item.y,
@@ -565,6 +584,7 @@ const CanvasColumn = ({
     },
     [
       onApplyLayouts,
+      cardTypeById,
       legendExtraRows,
       compactLayout,
       lockedReadOnly,

@@ -56,15 +56,14 @@ export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
 // KPI cards are number-tiles, not chart canvases — they need much
-// less footprint than a plot card. Default 3×5 grid units
-// (~210×200 px at COL_WIDTH_PX:70 / ROW_HEIGHT_PX:40) is sized
-// to fit label + value + unit + delta chip + a sparkline (which
-// only renders on headline KPIs in pathway-single mode but we
-// pre-allocate the height so they don't have to be resized).
-// Non-headline cards run with empty bottom space; users can
-// drag them down to ~3h if they want a denser tile.
-export const KPI_CARD_DEFAULT_W = 3;
-export const KPI_CARD_DEFAULT_H = 5;
+// less footprint than a plot card. Default 2×3 grid units lands a
+// compact tile with the six fixed rows (feature → name → info →
+// value → unit). Compare-mode delta chip rides inline on row 4
+// (right of the info icon) so no extra height is needed.
+// Sparklines still require dragging taller. `CanvasColumn` keeps
+// the per-type rgl minimum at 2×2 so users can resize tighter.
+export const KPI_CARD_DEFAULT_W = 2;
+export const KPI_CARD_DEFAULT_H = 3;
 
 // Cap the undo history at 20 steps (oldest dropped on overflow).
 // Sized to match what the user expects from a desktop editor —

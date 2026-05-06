@@ -213,12 +213,24 @@ const FeatureCardKpi = ({
   );
 };
 
-// Body splits into four logical regions stacked vertically:
-//   1. Label row (feature prefix + KPI label + info icon)
-//   2. Value (big number)
-//   3. Unit (one line under)
-//   4. Delta chip OR upstream-tool hint (mutually exclusive)
-//   5. Optional sparkline (headline KPI in pathway-single mode)
+// Fixed six-row layout — every KPI card renders these rows in
+// the same vertical positions regardless of card dimensions, so
+// users scanning a grid of cards always find the value at the
+// same eye-line:
+//
+//   row 1 — feature label  (e.g. "Demand")
+//   row 2 — KPI name line 1
+//   row 3 — KPI name line 2 (the name is clamped to 2 lines max;
+//           short names render in row 2 with row 3 empty)
+//   row 4 — info icon (or empty cell when no info_note)
+//   row 5 — value (the metric)
+//   row 6 — unit
+//
+// Compare-mode delta chip / sparkline / unavailable hint render
+// BELOW row 6 — so they're optional add-ons, not replacements
+// for any of the fixed rows. At cramped sizes (2×3 launch
+// default) the bottom rows clip via the card's `overflow: hidden`,
+// rather than reshuffling — the row order itself is locked.
 const KpiBody = ({
   kpi,
   feature,
@@ -231,97 +243,83 @@ const KpiBody = ({
   sparklinePoints,
   cardYear,
 }) => {
-  if (isError) {
-    return (
-      <>
-        <Label feature={feature} label={fallbackLabel(kpiId)} />
-        <ValuePlaceholder />
-        <div style={hintStyle}>{error?.message ?? 'Failed to load KPI'}</div>
-      </>
-    );
-  }
-
-  if (isLoading || !kpi) {
-    return (
-      <>
-        <Label feature={feature} label={fallbackLabel(kpiId)} loading />
-        <ValuePlaceholder loading />
-      </>
-    );
-  }
-
-  const available = kpi.available !== false;
+  const available = !!kpi && kpi.available !== false;
+  const label = kpi?.label ?? fallbackLabel(kpiId);
+  const infoNote = kpi?.info_note;
+  const valueText = available ? formatKpiNumber(kpi.value, kpi.unit) : '—';
+  const showSkeleton = isLoading || !kpi;
 
   return (
     <>
-      <Label
-        feature={feature}
-        label={kpi.label ?? fallbackLabel(kpiId)}
-        infoNote={kpi.info_note}
-      />
-      <div style={available ? valueStyle : valueDimStyle}>
-        {available ? formatKpiNumber(kpi.value, kpi.unit) : '—'}
+      {/* Row 1 — feature */}
+      <div style={featureRowStyle}>{feature ? titleCase(feature) : '\u00A0'}</div>
+
+      {/* Rows 2–3 — KPI name (2-line clamp) */}
+      <div style={nameRowStyle} title={label}>
+        {showSkeleton ? '\u00A0' : label}
       </div>
-      <div style={unitStyle}>{kpi.unit ?? ''}</div>
-      {available && showDeltas && baseline != null && (
-        <div style={deltaRowStyle}>
-          <DeltaChip
-            value={kpi.value}
-            baseline={baseline}
-            betterDirection={kpi.better_direction}
-          />
-        </div>
+
+      {/* Row 4 — info icon (left) + optional delta chip (right).
+          Always reserves the row height so the value and unit
+          don't shift up when a KPI carries no `info_note`. The
+          delta chip lives on the same row, pushed to the right
+          edge with `margin-left: auto`, so it's visible at the
+          launch size without forcing the user to drag the card
+          taller. */}
+      <div style={infoRowStyle}>
+        {infoNote && !showSkeleton && (
+          <Tooltip
+            title={<span style={tooltipBodyStyle}>{infoNote}</span>}
+            placement="top"
+          >
+            <InfoCircleOutlined
+              style={infoIconStyle}
+              aria-label="More info"
+            />
+          </Tooltip>
+        )}
+        {!showSkeleton && available && showDeltas && baseline != null && (
+          <div style={infoRowDeltaStyle}>
+            <DeltaChip
+              value={kpi.value}
+              baseline={baseline}
+              betterDirection={kpi.better_direction}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Row 5 — value */}
+      <div style={available ? valueStyle : valueDimStyle}>
+        {showSkeleton ? '\u00A0' : valueText}
+      </div>
+
+      {/* Row 6 — unit */}
+      <div style={unitStyle}>
+        {showSkeleton ? '\u00A0' : kpi?.unit ?? ''}
+      </div>
+
+      {/* Optional add-ons below the fixed six rows */}
+      {isError && (
+        <div style={hintStyle}>{error?.message ?? 'Failed to load KPI'}</div>
       )}
-      {available && sparklinePoints && (
-        <KpiSparkline
-          points={sparklinePoints}
-          highlightYear={cardYear}
-          betterDirection={kpi.better_direction}
-        />
-      )}
-      {!available && (
+      {!showSkeleton && !isError && !available && (
         <div style={hintStyle}>
           {kpi.upstream_tool
             ? `Run ${kpi.upstream_tool} to see this`
             : kpi.reason ?? 'Not available'}
         </div>
       )}
+      {!showSkeleton && available && sparklinePoints && (
+        <KpiSparkline
+          points={sparklinePoints}
+          highlightYear={cardYear}
+          betterDirection={kpi.better_direction}
+        />
+      )}
     </>
   );
 };
-
-const Label = ({ feature, label, infoNote, loading = false }) => {
-  if (loading) {
-    return <div style={{ ...labelStyle, ...skeletonLabelStyle }}>&nbsp;</div>;
-  }
-  return (
-    <div style={labelStyle}>
-      {feature && (
-        <>
-          <span style={featurePrefixStyle}>{titleCase(feature)}</span>
-          <span style={featureDotStyle}>·</span>
-        </>
-      )}
-      <span style={labelTextStyle}>{label}</span>
-      {infoNote && (
-        <Tooltip title={infoNote} placement="top">
-          <InfoCircleOutlined style={infoIconStyle} aria-label="More info" />
-        </Tooltip>
-      )}
-    </div>
-  );
-};
-
-const ValuePlaceholder = ({ loading = false }) => (
-  <div
-    style={{
-      ...valueDimStyle,
-      ...(loading ? skeletonValueStyle : null),
-    }}
-  >
-    {loading ? '\u00A0' : '—'}
-  </div>
-);
 
 // Fallback label when fetch is in flight or registry doesn't
 // carry a `label` field — derive a readable string from the id
@@ -336,54 +334,110 @@ const cardStyle = {
   background: '#fff',
   border: '1px solid #e8e8e8',
   borderRadius: 12,
-  padding: '12px 16px',
+  padding: '8px 12px',
   boxSizing: 'border-box',
   display: 'flex',
   flexDirection: 'column',
-  gap: 4,
+  // Row gap is intentionally tight — the six fixed rows have
+  // their own min-heights / line-heights, so this controls the
+  // breathing room *between* them. Content overflows past the
+  // bottom rather than reshuffling when the card is shorter
+  // than the rows want.
+  gap: 2,
   width: '100%',
   height: '100%',
   overflow: 'hidden',
 };
 
-const labelStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: 4,
-  fontSize: 11,
-  color: '#666',
+// ── Fixed-row styles ────────────────────────────────────────────────
+// Every row carries a `flex: '0 0 auto'` (implicit via not setting
+// flex) plus an explicit min-height so the row's vertical position
+// stays stable across card sizes. The card body itself is a flex
+// column with `overflow: hidden`, so when a card is narrower /
+// shorter than the rows want, content clips at the bottom rather
+// than reshuffling vertically.
+
+const featureRowStyle = {
+  fontSize: 10,
+  color: '#888',
   fontWeight: 500,
   lineHeight: 1.3,
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
-const featurePrefixStyle = {
-  color: '#888',
-};
-
-const featureDotStyle = {
-  color: '#bbb',
-  margin: '0 2px',
-};
-
-const labelTextStyle = {
+const nameRowStyle = {
+  fontSize: 12,
   color: '#222',
+  fontWeight: 600,
+  lineHeight: 1.25,
+  // Two-line clamp (rows 2–3). Short names render in row 2 with
+  // row 3 empty; long names truncate with an ellipsis at the end
+  // of line 2 so the value below never shifts down.
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  // Reserve two lines' worth of height even when the name only
+  // takes one line — keeps row 4 (info icon) at the same y across
+  // every card.
+  minHeight: 30,
+};
+
+const infoRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  // The delta chip lives on this same row in compare mode; the
+  // gap keeps it off the info icon, and the chip's wrapper uses
+  // `marginLeft: auto` to push it to the right edge.
+  gap: 6,
+  // Fixed `height` (not `minHeight`) so the row stays the same y
+  // whether or not the delta chip is present. `overflow: hidden`
+  // clips the chip's tail rather than letting it inflate the row
+  // and shift rows 5–6 (value + unit) downward.
+  height: 18,
+  overflow: 'hidden',
+};
+
+const infoRowDeltaStyle = {
+  marginLeft: 'auto',
+  // Delta chip needs to clip cleanly at the card's right edge
+  // when the card is narrow — `min-width: 0` lets the parent
+  // flex-row shrink the chip's container instead of bulging the
+  // whole row.
+  minWidth: 0,
+  overflow: 'hidden',
 };
 
 const infoIconStyle = {
-  fontSize: 11,
+  fontSize: 12,
   color: '#94A3B8',
-  marginLeft: 2,
   cursor: 'help',
 };
 
+// `whiteSpace: pre-wrap` keeps yml-authored newlines visible — so
+// a multi-line `info_note` with a formula on its own line renders
+// as the author intended. Sans-serif font; Unicode math glyphs
+// (Σ Δ ÷ × ² ³ ₁ ₂ Greek) render fine in the default font and
+// don't need a separate monospace family.
+const tooltipBodyStyle = {
+  whiteSpace: 'pre-wrap',
+  lineHeight: 1.4,
+};
+
 const valueStyle = {
-  fontSize: 28,
+  fontSize: 26,
   fontWeight: 700,
   color: '#222',
   lineHeight: 1.1,
-  marginTop: 4,
+  marginTop: 2,
   fontVariantNumeric: 'tabular-nums',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
 const valueDimStyle = {
@@ -392,15 +446,14 @@ const valueDimStyle = {
 };
 
 const unitStyle = {
-  fontSize: 12,
+  fontSize: 11,
   color: '#666',
   lineHeight: 1.2,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
-const deltaRowStyle = {
-  marginTop: 'auto',
-  paddingTop: 4,
-};
 
 const hintStyle = {
   fontSize: 11,
@@ -433,21 +486,6 @@ const deleteButtonStyle = {
   justifyContent: 'center',
   color: '#666',
   padding: 0,
-};
-
-// Skeleton bars — flat dim grey is enough; the layout stays
-// stable while loading and React Query's <1s typical first-paint
-// makes a shimmer animation overkill.
-const skeletonLabelStyle = {
-  width: '60%',
-  background: '#f0f0f0',
-  borderRadius: 4,
-};
-
-const skeletonValueStyle = {
-  background: '#f4f4f4',
-  borderRadius: 6,
-  width: '50%',
 };
 
 export default FeatureCardKpi;
