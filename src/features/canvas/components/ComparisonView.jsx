@@ -332,8 +332,7 @@ const ComparisonView = ({
 function columnKey(col) {
   if (col.type === 'scenario') return `s-${col.scenario}`;
   if (col.type === 'whatif') return `w-${col.scenario}-${col.whatif}`;
-  if (col.type === 'pathway-state')
-    return `p-${col.pathwayName}-${col.year}`;
+  if (col.type === 'pathway-state') return `p-${col.pathwayName}-${col.year}`;
   return col.scenario || col.type || 'col';
 }
 

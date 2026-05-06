@@ -460,69 +460,69 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
         <div style={enableEdit ? canvasStyle : canvasExportStyle}>
           <CanvasScenarioHeader trailing={<PathwayCompareSelect />} />
           <div style={rowStackStyle}>
-          {pathwayNames.length === 0 ? (
-            <div style={emptyHintStyle}>
-              Pick at least one pathway to compare.
-            </div>
-          ) : (
-            pathwayNames.map((name, i) => {
-              // Read priority — ALWAYS prefer the row's own
-              // override, falling back to the shared override.
-              // Toggling lock therefore never silently destroys a
-              // per-row edit that was made while unlocked; rows
-              // hold onto their own config until the user resets
-              // them explicitly (via Refresh, which clears every
-              // per-row override).
-              //
-              // Write priority — driven by lock state:
-              //  - locked   → writes to the SHARED key. New edits
-              //    propagate to every row that doesn't already
-              //    carry its own override.
-              //  - unlocked → writes to the row's OWN key. New
-              //    edits stay local to that row.
-              const sharedOverride = pathwayPlotConfigs[SHARED_OVERRIDE_KEY];
-              const ownOverride = pathwayPlotConfigs[name];
-              const plotConfigOverride = ownOverride ?? sharedOverride;
-              const writeKey = mirrorsLocked ? SHARED_OVERRIDE_KEY : name;
-              const pathwayInfo = yearsByPathway[name];
-              return (
-                <PathwayRow
-                  key={name}
-                  pathwayName={name}
-                  scenario={scenario}
-                  project={project}
-                  lastYear={pathwayInfo?.lastYear}
-                  stateYears={pathwayInfo?.years}
-                  sharedRange={sharedRange}
-                  isFirst={i === 0}
-                  isLast={i === pathwayNames.length - 1}
-                  enableEdit={enableEdit}
-                  layoutLocked={fixLayout}
-                  locked={mirrorsLocked}
-                  onToggleLock={() => setMirrorsLocked(!mirrorsLocked)}
-                  onRefresh={handleRefreshAll}
-                  refreshTick={refreshTick}
-                  registerMapStore={registerMapStore}
-                  onPlotReady={onRowPlotReady}
-                  onOpenDrawer={onOpenDrawer}
-                  rowSize={rowSize}
-                  onRowResize={setRowSize}
-                  plotConfigOverride={plotConfigOverride}
-                  onPlotConfigSave={(next) =>
-                    setPathwayPlotConfig(writeKey, next)
-                  }
-                  onRemovePathway={() => {
-                    const remaining = pathwayNames.filter((p) => p !== name);
-                    if (remaining.length === 0) {
-                      stopCompareMode();
-                    } else {
-                      enterPathwayMulti(scenario, remaining);
+            {pathwayNames.length === 0 ? (
+              <div style={emptyHintStyle}>
+                Pick at least one pathway to compare.
+              </div>
+            ) : (
+              pathwayNames.map((name, i) => {
+                // Read priority — ALWAYS prefer the row's own
+                // override, falling back to the shared override.
+                // Toggling lock therefore never silently destroys a
+                // per-row edit that was made while unlocked; rows
+                // hold onto their own config until the user resets
+                // them explicitly (via Refresh, which clears every
+                // per-row override).
+                //
+                // Write priority — driven by lock state:
+                //  - locked   → writes to the SHARED key. New edits
+                //    propagate to every row that doesn't already
+                //    carry its own override.
+                //  - unlocked → writes to the row's OWN key. New
+                //    edits stay local to that row.
+                const sharedOverride = pathwayPlotConfigs[SHARED_OVERRIDE_KEY];
+                const ownOverride = pathwayPlotConfigs[name];
+                const plotConfigOverride = ownOverride ?? sharedOverride;
+                const writeKey = mirrorsLocked ? SHARED_OVERRIDE_KEY : name;
+                const pathwayInfo = yearsByPathway[name];
+                return (
+                  <PathwayRow
+                    key={name}
+                    pathwayName={name}
+                    scenario={scenario}
+                    project={project}
+                    lastYear={pathwayInfo?.lastYear}
+                    stateYears={pathwayInfo?.years}
+                    sharedRange={sharedRange}
+                    isFirst={i === 0}
+                    isLast={i === pathwayNames.length - 1}
+                    enableEdit={enableEdit}
+                    layoutLocked={fixLayout}
+                    locked={mirrorsLocked}
+                    onToggleLock={() => setMirrorsLocked(!mirrorsLocked)}
+                    onRefresh={handleRefreshAll}
+                    refreshTick={refreshTick}
+                    registerMapStore={registerMapStore}
+                    onPlotReady={onRowPlotReady}
+                    onOpenDrawer={onOpenDrawer}
+                    rowSize={rowSize}
+                    onRowResize={setRowSize}
+                    plotConfigOverride={plotConfigOverride}
+                    onPlotConfigSave={(next) =>
+                      setPathwayPlotConfig(writeKey, next)
                     }
-                  }}
-                />
-              );
-            })
-          )}
+                    onRemovePathway={() => {
+                      const remaining = pathwayNames.filter((p) => p !== name);
+                      if (remaining.length === 0) {
+                        stopCompareMode();
+                      } else {
+                        enterPathwayMulti(scenario, remaining);
+                      }
+                    }}
+                  />
+                );
+              })
+            )}
           </div>
         </div>
       </div>
@@ -775,9 +775,7 @@ const PathwayRow = ({
             position: 'relative',
             // First-row map width is driven by the in-map corner
             // arrow; mirror rows track that pixel value.
-            ...(rowSize?.mapWidth != null
-              ? { width: rowSize.mapWidth }
-              : null),
+            ...(rowSize?.mapWidth != null ? { width: rowSize.mapWidth } : null),
           }}
         >
           {/* Map renders frame-less (no FeatureCardShell border) to

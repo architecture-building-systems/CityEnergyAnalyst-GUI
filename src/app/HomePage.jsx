@@ -28,7 +28,16 @@ const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
 const OnboardingPage = lazy(() => import('components/OnboardingPage'));
 const Canvas = lazy(() => import('features/canvas/components/CanvasPage'));
 
+import { useKpiCacheInvalidator } from 'features/canvas/hooks/useFetchKpis';
+
 const HomePageContent = () => {
+  // Invalidates the React Query KPI cache whenever a CEA tool
+  // finishes (the dashboard emits `cea-worker-success`). Mounted
+  // once here so the subscriber lifecycle matches the QueryClient's;
+  // any open canvas / KpiRibbon refetches automatically without a
+  // manual reload.
+  useKpiCacheInvalidator();
+
   const { data: userInfo, isLoading } = useUserQuery();
   const isValidUser = useIsValidUser();
   const fetchServerLimits = useFetchServerLimits();
