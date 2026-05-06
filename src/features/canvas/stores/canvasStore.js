@@ -55,6 +55,15 @@ export const DEFAULT_CARD_H = 10;
 export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
+// KPI cards are number-tiles, not chart canvases — they need much
+// less footprint than a plot card. 3×3 grid units works out to
+// ~210×120 px (label + value + unit + delta chip line) at the
+// COL_WIDTH_PX:70 / ROW_HEIGHT_PX:40 settings used in CanvasColumn.
+// With a sparkline, FeatureCardKpi auto-grows by ~3 rows once the
+// line has measured itself.
+export const KPI_CARD_DEFAULT_W = 3;
+export const KPI_CARD_DEFAULT_H = 3;
+
 // Cap the undo history at 20 steps (oldest dropped on overflow).
 // Sized to match what the user expects from a desktop editor —
 // large enough to recover from a frantic drag-then-regret without
@@ -78,6 +87,7 @@ export const canvasPersistableSelector = (state) => ({
   pathwayTimelinePlotConfig: state.pathwayTimelinePlotConfig,
   pathwayMultiRowSize: state.pathwayMultiRowSize,
   pathwayMultiPlotConfigs: state.pathwayMultiPlotConfigs,
+  showKpiDeltas: state.showKpiDeltas,
 });
 
 // Initial primary-map tile position. Used both by the store's
@@ -133,17 +143,29 @@ const makeCard = ({
   type,
   category,
   layer,
+  kpiId,
 }) => {
   const cardType = type ?? 'plot';
   const isText = cardType === 'text';
   const isDivider = cardType === 'divider';
+  const isKpi = cardType === 'kpi';
+  // Per-type default dimensions. KPI cards are intentionally
+  // smaller than plots — they're number tiles, not chart canvases.
+  const defaultW = isKpi ? KPI_CARD_DEFAULT_W : DEFAULT_CARD_W;
+  const defaultH = isText
+    ? TEXT_CARD_DEFAULT_H
+    : isDivider
+    ? 1
+    : isKpi
+    ? KPI_CARD_DEFAULT_H
+    : DEFAULT_CARD_H;
   return {
     id: makeId('card'),
     type: cardType,
     row,
     col,
-    w: w ?? DEFAULT_CARD_W,
-    h: h ?? (isText ? TEXT_CARD_DEFAULT_H : isDivider ? 1 : DEFAULT_CARD_H),
+    w: w ?? defaultW,
+    h: h ?? defaultH,
     feature,
     category,
     layer,
@@ -156,6 +178,10 @@ const makeCard = ({
     // out across columns: the divider is structural chrome, not
     // per-column content like the text card's `html`.
     divider: isDivider ? { ...DEFAULT_DIVIDER_CONFIG } : undefined,
+    // KPI cards bind to a single registry id (e.g.
+    // `demand.eui_kwh_m2`). The category is implicit from the id's
+    // prefix; we store both so other code can look up either.
+    kpiId: isKpi ? kpiId ?? null : undefined,
   };
 };
 
@@ -180,7 +206,7 @@ const shiftForInsert = (cards, { row, col, direction }) => {
 // other truthy `targetCard` is an actual card to anchor against.
 const insertCardInto = (
   cards,
-  { targetCard, direction, type, feature, plotConfig, category, layer },
+  { targetCard, direction, type, feature, plotConfig, category, layer, kpiId },
   // Optional override for compare-mode fan-out: every column
   // gets the SAME card id and plot identities at insert time so
   // the per-column dispatch can find the card across columns
@@ -221,6 +247,7 @@ const insertCardInto = (
     plotConfig,
     category,
     layer,
+    kpiId,
   });
   // Apply override AFTER `makeCard` so the override's id / plots
   // win over the freshly-generated ones.
@@ -258,6 +285,16 @@ export const useCanvasStore = create((set, get) => ({
   // before this toggle existed.
   mapsLinked: true,
   setMapsLinked: (value) => set({ mapsLinked: !!value }),
+
+  // Compare-mode toggle: when `true`, every non-origin KPI card
+  // renders a `DeltaChip` next to its value showing the % change
+  // vs the origin column's reading of the same KPI. Default OFF
+  // because the chip can be visually busy when the user just
+  // wants to read absolute values; opt-in via the navigator's
+  // "Show deltas" button (wired in Phase 2e). Ignored entirely
+  // outside compare modes — origin-vs-self has no meaning.
+  showKpiDeltas: false,
+  setShowKpiDeltas: (value) => set({ showKpiDeltas: !!value }),
 
   // Master editing-affordance switch. When `true` (the default),
   // every Edit / Delete button, perimeter `+`, "Add a plot" pill,
@@ -828,7 +865,16 @@ export const useCanvasStore = create((set, get) => ({
    */
   addCard: (
     columnIndex,
-    { targetCardId, direction, type, feature, plotConfig, category, layer },
+    {
+      targetCardId,
+      direction,
+      type,
+      feature,
+      plotConfig,
+      category,
+      layer,
+      kpiId,
+    },
   ) => {
     const state = get();
     if (columnIndex === 'launch') {
@@ -842,6 +888,7 @@ export const useCanvasStore = create((set, get) => ({
         plotConfig,
         category,
         layer,
+        kpiId,
       });
       set({ launchCards: next });
       return next[next.length - 1].id;
@@ -858,7 +905,7 @@ export const useCanvasStore = create((set, get) => ({
       const targetCard = resolveTargetCard(cards, targetCardId);
       updatedColumnCards[idx] = insertCardInto(
         cards,
-        { targetCard, direction, type, feature, category, layer },
+        { targetCard, direction, type, feature, category, layer, kpiId },
         // Force a stable id + pre-built plots across columns so
         // the per-column dispatch can find the card by id later.
         { id: sharedId, plots: sharedPlots },
