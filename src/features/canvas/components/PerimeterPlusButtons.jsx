@@ -23,10 +23,12 @@ import './PerimeterPlusButtons.css';
  * edge. See `computeExposure` in this file.
  *
  * Clicking (or hovering) the `+` swaps it for an icon panel —
- * Map / Plot / KPI as glyph buttons. Each glyph is itself a
- * sub-Dropdown trigger for its category/feature tree (built by the
- * caller and passed in via `buildSectionMenus`). KPI is disabled
- * until its backend selection module lands.
+ * Map / Plot / Text / Divider / KPI as glyph buttons. Map and
+ * Plot expand to sub-Dropdowns for their category/feature tree;
+ * Text / Divider trigger immediate inserts; KPI opens the
+ * page-level multi-pick modal owned by `CanvasPage`. Trees,
+ * inserts, and the modal-open callback all flow in via
+ * `buildSectionMenus`.
  *
  * `breathing` (optional) — when true, the closed `+` pulses with a
  * CEA-purple shadow to draw the user's attention. The caller toggles
@@ -246,7 +248,8 @@ const PlusButton = ({
 // swaps to the reverse-animation variant. `onPick` triggers the
 // collapse after a leaf is chosen.
 const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
-  const { mapItems, plotItems, onPickText, onPickDivider } = sections;
+  const { mapItems, plotItems, onPickText, onPickDivider, onPickKpi } =
+    sections;
   const isRow = direction === 'right';
   const containerStyle = isRow ? expandedRowStyle : expandedColumnStyle;
   const axis = isRow ? 'right' : 'down';
@@ -319,11 +322,18 @@ const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
         </Tooltip>
       </div>
       <div className={`cea-card-icon-button-container ${itemClass}`}>
-        <Tooltip title="KPI (coming soon)" placement={tooltipPlacement}>
+        <Tooltip title="KPI" placement={tooltipPlacement}>
           <Button
             type="text"
             icon={<KpiCardIcon />}
-            disabled
+            onClick={() => {
+              onPickKpi?.();
+              // Close the perimeter panel after the click — the
+              // KPI picker modal is what the user interacts with
+              // next, not the pill column.
+              onPick?.();
+            }}
+            disabled={!onPickKpi}
             aria-label="Add a KPI card"
           />
         </Tooltip>

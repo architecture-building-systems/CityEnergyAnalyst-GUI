@@ -9,6 +9,7 @@ import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
 import ComparisonView from './ComparisonView';
 import PlotEditModal from './PlotEditModal';
+import KpiPicker from './KpiPicker';
 
 /**
  * Canvas Builder — root page. 2-column grid:
@@ -62,6 +63,51 @@ const CanvasPage = () => {
   // editing stroke would resolve ambiguously.
   const [activeMapCardId, setActiveMapCardId] = useState(null);
   const [activeMapColumnIndex, setActiveMapColumnIndex] = useState(null);
+
+  // KPI picker anchor — captured at the moment a perimeter `+`
+  // chooses the KPI pill, replayed against `addCard` once the
+  // user confirms a multi-pick. `null` means the picker is closed.
+  // Shape: { columnIndex, targetCardId, direction }. Lifted to
+  // page level so any column / launch view can open the same
+  // singleton modal without each view duplicating the wiring.
+  const [kpiPickerAnchor, setKpiPickerAnchor] = useState(null);
+  const openKpiPicker = useCallback((anchor) => {
+    setKpiPickerAnchor(anchor);
+    // Close any open editing surfaces so the modal isn't competing
+    // for attention.
+    setDrawer(null);
+    setActiveMapCardId(null);
+    setActiveMapColumnIndex(null);
+  }, []);
+  const closeKpiPicker = useCallback(() => setKpiPickerAnchor(null), []);
+
+  const addCard = useCanvasStore((s) => s.addCard);
+  const handleKpiPickerConfirm = useCallback(
+    (kpiIds) => {
+      if (kpiPickerAnchor && kpiIds.length > 0) {
+        const { columnIndex, targetCardId, direction } = kpiPickerAnchor;
+        // Stack new cards: the first anchors against the original
+        // target / direction; each subsequent card anchors against
+        // the previous one with `direction: 'bottom'` so they
+        // line up vertically. `addCard` returns the new id which
+        // we feed back as the next anchor.
+        let nextTarget = targetCardId;
+        let nextDir = direction;
+        for (const kpiId of kpiIds) {
+          const newId = addCard(columnIndex, {
+            targetCardId: nextTarget,
+            direction: nextDir,
+            type: 'kpi',
+            kpiId,
+          });
+          nextTarget = newId;
+          nextDir = 'bottom';
+        }
+      }
+      setKpiPickerAnchor(null);
+    },
+    [kpiPickerAnchor, addCard],
+  );
 
   // Edit-mode is exclusive: opening the plot drawer closes any
   // active map-card edit (and vice versa) so at most one card wears
@@ -154,6 +200,7 @@ const CanvasPage = () => {
             <LaunchView
               onOpenDrawer={openDrawer}
               onOpenMapBottom={openMapBottom}
+              onOpenKpiPicker={openKpiPicker}
               editingPlotCardId={drawer?.cardId ?? null}
               activeMapCardId={activeMapCardId}
             />
@@ -161,6 +208,7 @@ const CanvasPage = () => {
             <ComparisonView
               onOpenDrawer={openDrawer}
               onOpenMapBottom={openMapBottom}
+              onOpenKpiPicker={openKpiPicker}
               editingPlotCardId={drawer?.cardId ?? null}
               // The originating column for an active plot edit. Used
               // by ComparisonView to paint the editing purple
@@ -216,6 +264,16 @@ const CanvasPage = () => {
           allowBack={drawer?.allowBack !== false && !drawer?.cardId}
         />
       </div>
+
+      {/* KPI picker — page-level singleton. Opens via the
+          perimeter `+` KPI pill on any column / launch view; the
+          anchor captured at open time gets replayed against
+          `addCard` on confirm. */}
+      <KpiPicker
+        open={kpiPickerAnchor !== null}
+        onCancel={closeKpiPicker}
+        onConfirm={handleKpiPickerConfirm}
+      />
     </div>
   );
 };

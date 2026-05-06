@@ -34,6 +34,7 @@ import PathwayCompareSelect from './PathwayCompareSelect';
 const LaunchView = ({
   onOpenDrawer,
   onOpenMapBottom,
+  onOpenKpiPicker,
   editingPlotCardId,
   activeMapCardId,
 }) => {
@@ -106,6 +107,13 @@ const LaunchView = ({
       // Divider cards have no upstream config — orientation / style /
       // thickness all live in the card's own toolbar.
       addCard('launch', { targetCardId, direction, type: 'divider' });
+      return;
+    }
+    if (type === 'kpi') {
+      // KPI cards open the page-level multi-pick modal; the
+      // anchor (column index + target + direction) is captured
+      // here and replayed against `addCard` on confirm.
+      onOpenKpiPicker?.({ columnIndex: 'launch', targetCardId, direction });
       return;
     }
     const resolvedFeature = feature || inferFeature(targetCardId);

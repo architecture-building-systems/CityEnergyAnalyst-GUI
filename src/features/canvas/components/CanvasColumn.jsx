@@ -643,6 +643,7 @@ const CanvasColumn = ({
           plotItems: [],
           onPickText: null,
           onPickDivider: null,
+          onPickKpi: null,
         };
       const onPickMap = (category, layer) =>
         onAddCard({ targetCardId, direction, type: 'map', category, layer });
@@ -694,7 +695,14 @@ const CanvasColumn = ({
       // and the config is fanned out across columns.
       const onPickDivider = () =>
         onAddCard({ targetCardId, direction, type: 'divider' });
-      return { mapItems, plotItems, onPickText, onPickDivider };
+      // KPI pill: open the page-level multi-pick modal. The view's
+      // `handleAddCard` short-circuits `type === 'kpi'` and forwards
+      // to `onOpenKpiPicker`; the anchor (column index + target +
+      // direction) is captured at click time so confirm replays
+      // against the same insertion point.
+      const onPickKpi = () =>
+        onAddCard({ targetCardId, direction, type: 'kpi' });
+      return { mapItems, plotItems, onPickText, onPickDivider, onPickKpi };
     },
     [onAddCard, mapData],
   );

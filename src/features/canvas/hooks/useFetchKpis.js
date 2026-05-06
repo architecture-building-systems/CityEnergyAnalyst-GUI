@@ -66,6 +66,25 @@ export const useFetchKpis = (project, scenario, feature, whatif) =>
   });
 
 /**
+ * Fetch the KPI catalogue — metadata only, no scenario context.
+ * Used by `KpiPicker` to render the flat grouped multi-select.
+ *
+ * Long stale time: the registry is yml-baked and changes only
+ * when a CEA release ships, so a per-session fetch is enough.
+ * Not invalidated by tool-finish events — registry contents are
+ * independent of any scenario's tool runs.
+ */
+export const useFetchKpiRegistry = () =>
+  useQuery({
+    queryKey: ['kpi-registry'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/kpis/registry');
+      return data;
+    },
+    staleTime: 60 * 60_000, // 1h
+  });
+
+/**
  * App-level subscriber: invalidates every `['kpis', ...]` query
  * whenever a CEA tool finishes, so any open canvas / ribbon
  * re-fetches without a manual reload.

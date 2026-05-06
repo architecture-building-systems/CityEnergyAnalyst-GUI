@@ -16,6 +16,7 @@ import PathwayTimelineStrip from './PathwayTimelineStrip';
 const ComparisonView = ({
   onOpenDrawer,
   onOpenMapBottom,
+  onOpenKpiPicker,
   editingPlotCardId,
   editingColumnIndex,
   activeMapCardId,
@@ -118,6 +119,15 @@ const ComparisonView = ({
       // card's own toolbar, no drawer needed.
       if (type === 'divider') {
         addCard(columnIndex, { targetCardId, direction, type: 'divider' });
+        return;
+      }
+      if (type === 'kpi') {
+        // KPI cards open the page-level multi-pick modal; the
+        // anchor (column index + target + direction) is captured
+        // here and replayed against `addCard` on confirm. The
+        // store fans the resulting cards out across every
+        // column, same as for any other card type.
+        onOpenKpiPicker?.({ columnIndex, targetCardId, direction });
         return;
       }
       const resolvedFeature =
