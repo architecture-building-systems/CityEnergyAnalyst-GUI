@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Dropdown, Tooltip } from 'antd';
 
+import { useCanvasStore } from '../stores/canvasStore';
 import {
   CreateNewIcon,
   DividerCardIcon,
@@ -69,10 +70,19 @@ export const PerimeterPlusButtons = ({
         left: `calc(${bottomAnchor.fraction * 100}% - ${halfPx}px)`,
       }
     : null;
+  // Stable id per `+` instance, used by the canvasStore's
+  // `activePerimeterPlusId` slot to coordinate "only one panel
+  // open at a time" — every other `+` hides while one is
+  // expanded into its option-strip. ``targetCardId`` is either a
+  // card id or the ``'MAP'`` sentinel (set by the primary tile);
+  // ``-right`` / ``-bottom`` distinguishes the two edges of one
+  // card.
+  const anchorId = targetCardId || 'MAP';
   return (
     <>
       {rightSections && (
         <PlusButton
+          id={`${anchorId}-right`}
           style={rightStyle}
           sections={rightSections}
           tooltipPlacement="top"
@@ -82,6 +92,7 @@ export const PerimeterPlusButtons = ({
       )}
       {bottomSections && (
         <PlusButton
+          id={`${anchorId}-bottom`}
           style={bottomStyle}
           sections={bottomSections}
           tooltipPlacement="left"
@@ -110,6 +121,7 @@ export const PerimeterPlusButtons = ({
 // animation plays (keyframes in PerimeterPlusButtons.css), then
 // `open` flips to false and the `+` reappears.
 const PlusButton = ({
+  id,
   style,
   sections,
   tooltipPlacement,
@@ -122,6 +134,38 @@ const PlusButton = ({
   const openTimerRef = useRef(null);
   const closeTimerRef = useRef(null);
   const collapseTimerRef = useRef(null);
+
+  // ── "Only one panel at a time" coordination ────────────────────
+  // When this button opens, claim the global slot. When it closes
+  // (collapse triggered), release it. Other `PlusButton` instances
+  // read the slot and hide themselves while another button owns it
+  // — keeps the canvas uncluttered while the user is choosing
+  // an option.
+  const activePerimeterPlusId = useCanvasStore(
+    (s) => s.activePerimeterPlusId,
+  );
+  const setActivePerimeterPlusId = useCanvasStore(
+    (s) => s.setActivePerimeterPlusId,
+  );
+  const hidden =
+    activePerimeterPlusId !== null && activePerimeterPlusId !== id;
+
+  // Claim the slot on open.
+  useEffect(() => {
+    if (open && !closing) setActivePerimeterPlusId(id);
+  }, [open, closing, id, setActivePerimeterPlusId]);
+
+  // If we own the slot at unmount time (rare — e.g. card deleted
+  // while panel was open), clear it so a sibling button isn't
+  // permanently hidden.
+  useEffect(
+    () => () => {
+      if (useCanvasStore.getState().activePerimeterPlusId === id) {
+        setActivePerimeterPlusId(null);
+      }
+    },
+    [id, setActivePerimeterPlusId],
+  );
 
   const cancelOpenTimer = () => {
     if (openTimerRef.current) {
@@ -139,15 +183,19 @@ const PlusButton = ({
   // Start the collapse: flip `closing=true` so the pills get the
   // reverse-animation class, then unmount them after the animation
   // finishes. `closing` itself blocks re-entry while in progress.
+  // Releases the global slot at the START of collapse (not the
+  // end) so sibling `+` buttons fade back in alongside this
+  // panel's collapse animation rather than after it.
   const startCollapse = useCallback(() => {
     if (!open || closing) return;
     setClosing(true);
+    setActivePerimeterPlusId(null);
     collapseTimerRef.current = setTimeout(() => {
       setOpen(false);
       setClosing(false);
       collapseTimerRef.current = null;
     }, COLLAPSE_DURATION_MS);
-  }, [open, closing]);
+  }, [open, closing, setActivePerimeterPlusId]);
 
   const handleClosedMouseEnter = () => {
     if (openTimerRef.current || open) return;
@@ -210,8 +258,20 @@ const PlusButton = ({
     [],
   );
 
+  // Use `visibility: hidden` (not `display: none`) so the wrapper
+  // keeps its absolute-positioned slot in the DOM — re-showing
+  // is instant on collapse without any layout reshuffle. Pointer
+  // events drop too so clicks pass through to whatever's behind.
   return (
-    <div ref={ref} style={style}>
+    <div
+      ref={ref}
+      style={{
+        ...style,
+        ...(hidden
+          ? { visibility: 'hidden', pointerEvents: 'none' }
+          : null),
+      }}
+    >
       {open ? (
         <ExpandedOptions
           sections={sections}

@@ -297,6 +297,17 @@ export const useCanvasStore = create((set, get) => ({
   showKpiDeltas: false,
   setShowKpiDeltas: (value) => set({ showKpiDeltas: !!value }),
 
+  // Transient: which perimeter `+` panel is currently expanded
+  // into the five-pill option strip. `null` when nothing's open.
+  // Each `PlusButton` reads this and hides itself when another
+  // button owns the slot, so only one panel is ever visible —
+  // the rest of the canvas stays uncluttered until the open one
+  // collapses. NOT persisted (excluded from
+  // `canvasPersistableSelector`); pure UI ephemera.
+  activePerimeterPlusId: null,
+  setActivePerimeterPlusId: (id) =>
+    set({ activePerimeterPlusId: id ?? null }),
+
   // Master editing-affordance switch. When `true` (the default),
   // every Edit / Delete button, perimeter `+`, "Add a plot" pill,
   // map toolbar, range / scale / radius legend control is visible

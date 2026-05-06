@@ -18,18 +18,25 @@
  *  - Empty default selection (locked decision 2026-05-06). The
  *    confirm button's "Add N KPIs" label is the user's count
  *    feedback.
- *  - Headline KPIs marked with a yellow star.
+ *  - Headline subset isn't decorated in the picker; the
+ *    distinction surfaces later (KpiRibbon under OverviewCard
+ *    auto-promotes them).
  *  - Feature accordion sections; all collapsed-default would hide
  *    too much, so the first section is open and the rest closed
  *    on first render.
+ *  - CEA-purple is wired through a wrapping `ConfigProvider` so
+ *    every antd primitive inside the modal (Checkbox, OK button,
+ *    Collapse expand chevrons) picks up the brand colour without
+ *    having to override each component individually.
  *
  *  - Confirm fires `onConfirm(kpiIds)` and closes the modal. The
  *    page-level handler decides what to do with the ids.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Checkbox, Collapse, Modal, Spin } from 'antd';
-import { StarFilled } from '@ant-design/icons';
+import { Alert, Checkbox, Collapse, ConfigProvider, Modal, Spin } from 'antd';
+
+import { CEA_PURPLE } from 'constants/theme';
 
 import { useFetchKpiRegistry } from '../hooks/useFetchKpis';
 
@@ -102,49 +109,57 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
       ? 'Add KPIs'
       : `Add ${selectedCount} KPI${selectedCount === 1 ? '' : 's'}`;
 
+  // `ConfigProvider` overrides antd's default blue with CEA
+  // purple for every component rendered inside the modal —
+  // checkbox tick, OK button background, Collapse expand-arrow
+  // hover, etc. — without us having to override each component
+  // individually. Same pattern `NavigatorCard.jsx` uses for the
+  // toggles on the navigator.
   return (
-    <Modal
-      title="Add KPI cards"
-      open={open}
-      onCancel={onCancel}
-      onOk={() => onConfirm(Array.from(selected))}
-      okText={confirmLabel}
-      okButtonProps={{ disabled: selectedCount === 0 }}
-      cancelText="Cancel"
-      width={520}
-      destroyOnHidden
-    >
-      {isLoading && (
-        <div style={loadingStyle}>
-          <Spin />
-        </div>
-      )}
-      {isError && (
-        <Alert
-          type="error"
-          message="Could not load KPI catalogue"
-          description={error?.message ?? 'Unknown error'}
-          showIcon
-        />
-      )}
-      {!isLoading && !isError && features.length === 0 && (
-        <Alert
-          type="info"
-          message="No KPIs registered"
-          description="Add yml entries under cea/kpi/definitions/ to populate the picker."
-          showIcon
-        />
-      )}
-      {!isLoading && !isError && features.length > 0 && (
-        <Collapse
-          items={items}
-          activeKey={activeKeys}
-          onChange={(keys) => setActiveKeys(keys)}
-          bordered={false}
-          ghost
-        />
-      )}
-    </Modal>
+    <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
+      <Modal
+        title="Add KPI cards"
+        open={open}
+        onCancel={onCancel}
+        onOk={() => onConfirm(Array.from(selected))}
+        okText={confirmLabel}
+        okButtonProps={{ disabled: selectedCount === 0 }}
+        cancelText="Cancel"
+        width={520}
+        destroyOnHidden
+      >
+        {isLoading && (
+          <div style={loadingStyle}>
+            <Spin />
+          </div>
+        )}
+        {isError && (
+          <Alert
+            type="error"
+            message="Could not load KPI catalogue"
+            description={error?.message ?? 'Unknown error'}
+            showIcon
+          />
+        )}
+        {!isLoading && !isError && features.length === 0 && (
+          <Alert
+            type="info"
+            message="No KPIs registered"
+            description="Add yml entries under cea/kpi/definitions/ to populate the picker."
+            showIcon
+          />
+        )}
+        {!isLoading && !isError && features.length > 0 && (
+          <Collapse
+            items={items}
+            activeKey={activeKeys}
+            onChange={(keys) => setActiveKeys(keys)}
+            bordered={false}
+            ghost
+          />
+        )}
+      </Modal>
+    </ConfigProvider>
   );
 };
 
@@ -154,12 +169,6 @@ const KpiRow = ({ kpi, checked, onToggle }) => (
     <div style={rowTextStyle}>
       <div style={rowLabelLineStyle}>
         <span style={rowLabelStyle}>{kpi.label}</span>
-        {kpi.headline && (
-          <StarFilled
-            style={headlineIconStyle}
-            aria-label="Headline KPI — surfaced in the OverviewCard ribbon"
-          />
-        )}
         <span style={rowUnitStyle}>{kpi.unit}</span>
       </div>
       {kpi.info_note && <div style={rowInfoStyle}>{kpi.info_note}</div>}
@@ -225,11 +234,6 @@ const rowLabelStyle = {
 const rowUnitStyle = {
   fontSize: 11,
   color: '#888',
-};
-
-const headlineIconStyle = {
-  color: '#f0b90b',
-  fontSize: 11,
 };
 
 const rowInfoStyle = {

@@ -32,6 +32,20 @@
 .cea-canvas-expand-item-right {
   animation: cea-canvas-expand-in-right 180ms ease-out backwards;
 }
+
+/* Solid white background on the panel pills — distinguishes the
+ * perimeter `+` options from whatever map / plot tile happens to
+ * sit behind them. Scoped to the four expand/collapse classes
+ * (only set on the perimeter panel) so the same
+ * `cea-card-icon-button-container` shell stays transparent every
+ * other place it's used (navigator, FeatureCardShell title row,
+ * etc.). */
+.cea-card-icon-button-container.cea-canvas-expand-item-down,
+.cea-card-icon-button-container.cea-canvas-expand-item-right,
+.cea-card-icon-button-container.cea-canvas-collapse-item-down,
+.cea-card-icon-button-container.cea-canvas-collapse-item-right {
+  background: #fff;
+}
 .cea-canvas-expand-item-down:nth-child(2),
 .cea-canvas-expand-item-right:nth-child(2) {
   animation-delay: 60ms;
