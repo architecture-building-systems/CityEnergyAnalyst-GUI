@@ -279,6 +279,13 @@ const LayerToggle = ({ scenario }) => {
     (state) => state.setConstructionGfaTotals,
   );
   const setUseTypeGfaTotals = useMapStore((state) => state.setUseTypeGfaTotals);
+  // Pathway-state override: when the user activates a state year on
+  // the OverviewCard's timeline, the map's geometry switches to the
+  // state's zone. The colour maps + GFA totals must follow so the
+  // legend reflects the *state's* archetypes / floor counts (which
+  // can diverge from the parent — e.g. retrofitting an archetype
+  // upgrade flips a building's `const_type`).
+  const stateZoneOverride = useMapStore((state) => state.stateZoneOverride);
   const isConstructionColorEnabled =
     colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
   const isUseTypeColorEnabled = colorMode === COLOR_MODES.USE_TYPE;
@@ -300,27 +307,26 @@ const LayerToggle = ({ scenario }) => {
     }
   }, [data]);
 
-  // Initialize construction color map when zone data changes
-  // Only auto-enable on true first load; respect user's toggle choice on refetch
+  // Initialize construction color map when zone data changes.
+  // Source preference: pathway-state override first (active state
+  // year on the OverviewCard timeline), parent zone otherwise.
+  // Recomputes whenever either input changes so the legend always
+  // reflects the geometry currently rendered on the map.
   useEffect(() => {
-    if (data?.zone?.features) {
-      setConstructionColorMap(generateConstructionColorMap(data.zone.features));
-      setUseTypeColorMap(generateUseTypeColorMap(data.zone.features));
-      // Same call site for the GFA aggregates so the legend's
-      // right-aligned "<gfa> m² (<pct>%)" column tracks the
-      // colour map exactly — when zone data lands the legend
-      // gets both at once.
-      setConstructionGfaTotals(
-        generateConstructionGfaTotals(data.zone.features),
-      );
-      setUseTypeGfaTotals(generateUseTypeGfaTotals(data.zone.features));
-      // Only enable on first load — not on refetch after user toggled off
+    const features =
+      stateZoneOverride?.features ?? data?.zone?.features ?? null;
+    if (features) {
+      setConstructionColorMap(generateConstructionColorMap(features));
+      setUseTypeColorMap(generateUseTypeColorMap(features));
+      setConstructionGfaTotals(generateConstructionGfaTotals(features));
+      setUseTypeGfaTotals(generateUseTypeGfaTotals(features));
+      // Only auto-enable colouring on true first load — not on
+      // refetch after user toggled off.
       if (!constructionColorInitialized.current) {
         setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
         constructionColorInitialized.current = true;
       }
     } else {
-      // Reset construction coloring state when zone data becomes unavailable
       setColorMode(COLOR_MODES.DEFAULT);
       setConstructionColorMap({});
       setUseTypeColorMap({});
@@ -330,6 +336,7 @@ const LayerToggle = ({ scenario }) => {
     }
   }, [
     data?.zone?.features,
+    stateZoneOverride,
     setConstructionColorMap,
     setUseTypeColorMap,
     setConstructionGfaTotals,
