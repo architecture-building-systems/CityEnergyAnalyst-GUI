@@ -5,10 +5,17 @@
  *   <FeatureCardKpi
  *     card={{ id, type: 'kpi', kpiId: 'demand.eui_kwh_m2' }}
  *     project, scenario, whatif      // forwarded to useFetchKpis
- *     baseline={originColumnValue}   // compare-mode origin's value
+ *     originScenario={originPath}    // compare-mode origin's scenario
  *     readOnly={false}               // KpiRibbon passes true
  *     onDeleteCard={() => removeCard(...)}
  *   />
+ *
+ * Compare-mode baseline: the card fetches the origin scenario's
+ * same KPI via a second `useFetchKpis` call. React Query keys
+ * include the scenario, so the origin column's prior fetch
+ * already populates the cache — non-origin cards pay no extra
+ * network round-trip. The fetch is skipped (hook disabled) when
+ * `originScenario` is null or matches this card's own scenario.
  *
  * Card states (rendered identically by the same component):
  *   - loading        → skeleton bars in label / value slots
@@ -57,7 +64,7 @@ const FeatureCardKpi = ({
   project,
   scenario,
   whatif,
-  baseline,
+  originScenario = null,
   readOnly = false,
   onDeleteCard,
 }) => {
@@ -82,6 +89,32 @@ const FeatureCardKpi = ({
     () => (data?.kpis ?? []).find((k) => k.id === kpiId) ?? null,
     [data, kpiId],
   );
+
+  // Compare-mode baseline. Only fires when:
+  //   - `originScenario` is set (compare mode)
+  //   - it differs from this card's own scenario (origin column
+  //     diffing against itself would always be 0%)
+  //   - `showDeltas` is on (no point fetching if the chip won't
+  //     render)
+  // React Query's `enabled` flag uses null-fall-through so the
+  // call is fully skipped on origin / non-compare / non-readonly
+  // ribbons. Same query key as the origin column → cache hit.
+  const wantBaseline =
+    showDeltas && !readOnly && !!originScenario && originScenario !== scenario;
+  const { data: originData } = useFetchKpis(
+    project,
+    wantBaseline ? originScenario : null,
+    wantBaseline ? feature : null,
+    whatif,
+  );
+  const baselineKpi = useMemo(
+    () =>
+      wantBaseline
+        ? (originData?.kpis ?? []).find((k) => k.id === kpiId) ?? null
+        : null,
+    [wantBaseline, originData, kpiId],
+  );
+  const baseline = baselineKpi?.available !== false ? baselineKpi?.value : null;
 
   const showCardActions = enableEdit && !readOnly;
 

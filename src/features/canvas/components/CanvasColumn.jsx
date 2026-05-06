@@ -191,6 +191,12 @@ const CanvasColumn = ({
   addColumnTooltip = 'Add column',
   isOrigin = false,
   lockedReadOnly = false,
+  // Origin column's scenario path, used by KPI cards in this
+  // column to fetch the origin's same KPI as their delta
+  // baseline. `null` outside compare mode → `FeatureCardKpi`
+  // skips the baseline fetch (the hook's `enabled` flag is
+  // gated on a truthy scenario).
+  originScenario = null,
   onCloseColumn,
   compactLayout = false,
   // Forwarded to FeatureCardMap so per-card stores key on
@@ -925,6 +931,12 @@ const CanvasColumn = ({
                     project={project}
                     scenario={scenario}
                     whatif={whatif}
+                    // Compare-mode delta baseline: every column —
+                    // origin included — receives the same prop. The
+                    // card itself decides whether to fetch / use it
+                    // (skipped on the origin column where
+                    // `originScenario === scenario`).
+                    originScenario={originScenario}
                     onDeleteCard={
                       onDeleteCard ? () => onDeleteCard(card.id) : undefined
                     }

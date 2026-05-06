@@ -261,6 +261,16 @@ const ComparisonView = ({
                   columnDef={col}
                   columnIndex={i}
                   cards={columnCards?.[i] || []}
+                  // Origin column's scenario, threaded into every
+                  // column so non-origin KPI cards can fetch the
+                  // origin's same KPI as their delta baseline.
+                  // The origin column sees the same value but
+                  // `FeatureCardKpi` skips its own delta render
+                  // when scenario === originScenario. React Query
+                  // dedupes — the origin column's fetch satisfies
+                  // every non-origin column's baseline read for
+                  // free.
+                  originScenario={columns[0]?.scenario ?? null}
                   onEditPlot={handleEditPlot(i)}
                   onDeletePlot={handleDeletePlot(i)}
                   onDeleteCard={handleDeleteCard(i)}
