@@ -68,6 +68,92 @@ export const useFetchKpis = (project, scenario, feature, whatif) =>
   });
 
 /**
+ * Aggregate headline KPIs across every registered feature for one
+ * scenario — feed for the OverviewCard's `KpiRibbon`.
+ *
+ * Uses the registry to discover the feature list (so a new feature
+ * yml lands in the ribbon without code changes), then fans out per-
+ * feature `useFetchKpis` reads via `useQueries`. Filters each
+ * response to `headline === true && available !== false` and
+ * concatenates in a stable order: feature name (alphabetical), then
+ * KPI id within feature.
+ *
+ * Returns `{ headlineKpis: [{ ...kpi, feature, scenario }], isLoading,
+ * isError, allUnavailable }`. `allUnavailable` is true when *every*
+ * registered headline KPI came back unavailable — the ribbon uses
+ * this to hide itself entirely (no row of empty tiles).
+ */
+export const useFetchHeadlineKpis = (project, scenario, whatif) => {
+  const { data: registry } = useFetchKpiRegistry();
+  const features = useMemo(() => {
+    if (!registry?.features) return [];
+    // Only fetch features that actually carry at least one
+    // headline KPI — saves a round-trip per non-headline-only
+    // feature.
+    return registry.features
+      .filter((f) => f.kpis.some((k) => k.headline))
+      .map((f) => f.name);
+  }, [registry]);
+
+  const enabled = !!project && !!scenario && features.length > 0;
+
+  const queries = useQueries({
+    queries: features.map((feature) => ({
+      queryKey: [
+        KPIS_QUERY_ROOT,
+        project,
+        scenario,
+        feature,
+        whatif ?? null,
+      ],
+      queryFn: async () => {
+        const { data } = await apiClient.get('/api/kpis/', {
+          params: {
+            project,
+            scenario,
+            feature,
+            whatif: whatif || undefined,
+          },
+        });
+        return data;
+      },
+      enabled,
+      staleTime: 0,
+    })),
+  });
+
+  const { headlineKpis, totalHeadlines, availableHeadlines } = useMemo(() => {
+    const kpis = [];
+    let total = 0;
+    let available = 0;
+    queries.forEach((q) => {
+      (q?.data?.kpis ?? []).forEach((k) => {
+        if (!k.headline) return;
+        total += 1;
+        if (k.available !== false) {
+          available += 1;
+          kpis.push({ ...k, scenario });
+        }
+      });
+    });
+    return {
+      headlineKpis: kpis,
+      totalHeadlines: total,
+      availableHeadlines: available,
+    };
+  }, [queries, scenario]);
+
+  return {
+    headlineKpis,
+    totalHeadlines,
+    availableHeadlines,
+    allUnavailable: totalHeadlines > 0 && availableHeadlines === 0,
+    isLoading: queries.some((q) => q?.isLoading),
+    isError: queries.some((q) => q?.isError),
+  };
+};
+
+/**
  * Per-state-year fan-out for a pathway sparkline. Issues one
  * `useQuery` per state year (deduped by React Query against the
  * column-level fetches that already live in the cache for the

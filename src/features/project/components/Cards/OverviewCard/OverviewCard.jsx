@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
+import KpiRibbon from './KpiRibbon';
 import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
@@ -74,6 +75,14 @@ const OverviewCard = ({
         scenarioName={scenarioName}
         scenarioList={scenarioList}
       />
+      {/* Headline KPI ribbon — read-only horizontal row of the
+          scenario's headline indicators. Auto-hides when no
+          headline KPI has data, so the OverviewCard's footprint
+          doesn't change for projects that haven't run any tools
+          yet. */}
+      {scenarioName && (
+        <KpiRibbon project={project} scenario={scenarioName} />
+      )}
     </div>
   );
 };
