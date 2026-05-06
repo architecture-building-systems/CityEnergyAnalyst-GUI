@@ -168,6 +168,11 @@ export const PLOT_GROUPS = [
     keys: [RENEWABLE_ENERGY_POTENTIALS],
   },
   {
+    label: 'Thermal Networks',
+    icon: iconMap[THERMAL_NETWORK],
+    keys: [THERMAL_NETWORK],
+  },
+  {
     label: 'Life Cycle Analysis',
     icon: iconMap[FINAL_ENERGY],
     subgroups: [
