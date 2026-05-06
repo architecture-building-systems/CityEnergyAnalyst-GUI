@@ -56,8 +56,22 @@ const splitKpiId = (kpiId) => {
   return [kpiId.slice(0, dotIdx), kpiId.slice(dotIdx + 1)];
 };
 
-// Capitalise the feature segment for display ("demand" → "Demand").
-const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+// Capitalise the feature segment for display, splitting on the
+// underscore / hyphen separators yml authors use to compound
+// multi-word feature names. Examples:
+//   "demand"          → "Demand"
+//   "heat_rejection"  → "Heat Rejection"
+//   "final_energy"    → "Final Energy"
+// Bare titleCase would have rendered "Heat_rejection" with the
+// underscore preserved.
+const titleCase = (s) =>
+  s
+    ? s
+        .split(/[_-]/)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    : s;
 
 const FeatureCardKpi = ({
   card,

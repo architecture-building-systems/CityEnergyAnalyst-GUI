@@ -3,6 +3,7 @@ import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
+import { childStateScenarioPath } from 'features/canvas/stores/canvasStore';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import KpiRibbon from './KpiRibbon';
@@ -27,6 +28,31 @@ const OverviewCard = ({
   scenarioList,
   onToggleHideAll,
 }) => {
+  // When the user activates a pathway state via the timeline below,
+  // `childScenario` carries `{ pathway_name, year, parent_scenario }`.
+  // The KPI ribbon then fetches from the child state's folder
+  // (`<parent>/outputs/pathways/<name>/state_<year>`) instead of the
+  // parent — so the values walk the timeline as the user clicks
+  // year nodes. Pinned-KPI persistence stays keyed by the parent
+  // scenario (passed separately via `scenario` to KpiRibbon) so
+  // the user's selection of which KPIs to track survives across
+  // state-year switches.
+  const childScenario = useProjectStore((s) => s.childScenario);
+  const childDataScenario = useMemo(() => {
+    if (
+      !childScenario?.parent_scenario ||
+      !childScenario?.pathway_name ||
+      childScenario?.year == null
+    ) {
+      return null;
+    }
+    return childStateScenarioPath(
+      childScenario.parent_scenario,
+      childScenario.pathway_name,
+      childScenario.year,
+    );
+  }, [childScenario]);
+
   return (
     <div
       id="cea-overview-card"
@@ -75,12 +101,30 @@ const OverviewCard = ({
         scenarioName={scenarioName}
         scenarioList={scenarioList}
       />
-      {/* Headline KPI ribbon — read-only horizontal row of the
-          scenario's headline indicators. Auto-hides when no
-          headline KPI has data, so the OverviewCard's footprint
-          doesn't change for projects that haven't run any tools
-          yet. */}
-      {scenarioName && <KpiRibbon project={project} scenario={scenarioName} />}
+      {/* KPI section — same divider treatment as Project /
+          Scenario / Pathway above so the four sections read as
+          one stack of labelled rows. The ribbon itself renders
+          three default KPI cards (FeatureCardKpi-styled) in a
+          3-column grid; auto-hides when nothing's available so
+          the OverviewCard's footprint doesn't change for
+          projects that haven't run any tools yet. */}
+      {scenarioName && (
+        <>
+          <Divider
+            titlePlacement="right"
+            orientationMargin={2}
+            plain
+            style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
+          >
+            KPI
+          </Divider>
+          <KpiRibbon
+            project={project}
+            scenario={scenarioName}
+            dataScenario={childDataScenario}
+          />
+        </>
+      )}
     </div>
   );
 };

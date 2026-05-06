@@ -96,3 +96,18 @@
 .cea-timeline-tooltip .ant-tooltip-inner {
   box-shadow: none !important;
 }
+
+/* KPI ribbon tile wrappers — used by KpiRibbon. The wrapper is a
+   `<div role="button" tabIndex={0} draggable>` so click + drag
+   coexist on the same surface. Browsers paint the default dark
+   focus ring on the wrapper after a drop or mouse click, which
+   reads as visual noise once the user has finished reordering.
+   Suppress the ring for mouse/drag interactions but keep it for
+   `:focus-visible` (keyboard tab) so keyboard a11y survives. */
+.cea-overview-kpi-tile {
+  outline: none;
+}
+.cea-overview-kpi-tile:focus-visible {
+  outline: 2px solid #7e559a;
+  outline-offset: 2px;
+}

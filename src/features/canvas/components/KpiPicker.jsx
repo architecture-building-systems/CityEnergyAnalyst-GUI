@@ -41,24 +41,50 @@ import { PLOT_GROUPS } from 'features/plots/constants';
 
 import { useFetchKpiRegistry } from '../hooks/useFetchKpis';
 
-const KpiPicker = ({ open, onCancel, onConfirm, initialFeature = null }) => {
+const KpiPicker = ({
+  open,
+  onCancel,
+  onConfirm,
+  initialFeature = null,
+  // Pre-checked KPI ids when the modal opens. The OverviewCard
+  // ribbon passes its current picks here so the user sees and
+  // edits the existing selection rather than starting from
+  // scratch. Canvas-mode callers omit it (each open is a fresh
+  // "add" gesture).
+  initialSelection = null,
+  // Optional cap on the number of simultaneously-selected KPIs.
+  // The OverviewCard ribbon passes 6 to keep the expanded panel
+  // bounded; canvas callers omit it (no cap). When set, the
+  // confirm-button label flips from the canvas "Add N KPIs"
+  // wording to a "Save (N/MAX)" wording so the cap is visible.
+  maxSelected = null,
+}) => {
   const { data, isLoading, isError, error } = useFetchKpiRegistry();
   const allKpis = data?.kpis ?? [];
 
-  // Selection state — local to the modal session. Reset to empty
-  // every time the modal opens so previous picks don't leak into
-  // the next add.
+  // Selection state — local to the modal session. Seeded from
+  // `initialSelection` so the existing pinned set is checked on
+  // open; falls through to empty for canvas callers that don't
+  // pass one.
   const [selected, setSelected] = useState(() => new Set());
   useEffect(() => {
-    if (open) setSelected(new Set());
-  }, [open]);
+    if (open) setSelected(new Set(initialSelection ?? []));
+  }, [open, initialSelection]);
 
   const selectedCount = selected.size;
+  const atCap = maxSelected != null && selectedCount >= maxSelected;
   const toggle = (id) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (maxSelected == null || next.size < maxSelected) {
+        next.add(id);
+      }
+      // Already at cap and the user clicked an unchecked row —
+      // silent no-op. The row's checkbox is rendered disabled
+      // when `atCap && !checked`, so this branch only runs on a
+      // race (rapid clicks).
       return next;
     });
   };
@@ -117,14 +143,22 @@ const KpiPicker = ({ open, onCancel, onConfirm, initialFeature = null }) => {
                   <div style={subgroupHeaderStyle}>{sub.label}</div>
                 )}
                 <div style={kpiListStyle}>
-                  {sub.kpis.map((kpi) => (
-                    <KpiRow
-                      key={kpi.id}
-                      kpi={kpi}
-                      checked={selected.has(kpi.id)}
-                      onToggle={() => toggle(kpi.id)}
-                    />
-                  ))}
+                  {sub.kpis.map((kpi) => {
+                    const checked = selected.has(kpi.id);
+                    return (
+                      <KpiRow
+                        key={kpi.id}
+                        kpi={kpi}
+                        checked={checked}
+                        // At-cap rows that aren't already checked
+                        // disable so the user can't exceed the
+                        // limit. The cap-is-reached hint sits on
+                        // the modal title (see `titleNode`).
+                        disabled={atCap && !checked}
+                        onToggle={() => toggle(kpi.id)}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -134,10 +168,22 @@ const KpiPicker = ({ open, onCancel, onConfirm, initialFeature = null }) => {
     [visibleGroups, selected],
   );
 
-  const confirmLabel =
-    selectedCount === 0
+  // Two confirm-label modes:
+  //   - canvas (`maxSelected == null`): "Add N KPIs" — the picker
+  //     is an additive flow against the canvas.
+  //   - overview (`maxSelected != null`): "Save (N/MAX)" — the
+  //     picker replaces a fixed-cap pinned set, and 0-selection
+  //     is a legitimate "clear" gesture, so the button stays
+  //     enabled even at zero.
+  const isReplaceMode = maxSelected != null;
+  const confirmLabel = isReplaceMode
+    ? `Save (${selectedCount}/${maxSelected})`
+    : selectedCount === 0
       ? 'Add KPIs'
       : `Add ${selectedCount} KPI${selectedCount === 1 ? '' : 's'}`;
+  const titleText = isReplaceMode
+    ? `Pin KPIs (up to ${maxSelected})`
+    : 'Add KPI cards';
 
   // `ConfigProvider` overrides antd's default blue with CEA
   // purple for every component rendered inside the modal —
@@ -148,12 +194,17 @@ const KpiPicker = ({ open, onCancel, onConfirm, initialFeature = null }) => {
   return (
     <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
       <Modal
-        title="Add KPI cards"
+        title={titleText}
         open={open}
         onCancel={onCancel}
         onOk={() => onConfirm(Array.from(selected))}
         okText={confirmLabel}
-        okButtonProps={{ disabled: selectedCount === 0 }}
+        okButtonProps={{
+          // Replace-mode: 0 picks is a legitimate clear gesture,
+          // so leave the button enabled. Add-mode: 0 picks would
+          // be a no-op, so keep it disabled (existing behaviour).
+          disabled: !isReplaceMode && selectedCount === 0,
+        }}
         cancelText="Cancel"
         // Wider than the default to fit the two-column KPI grid
         // without forcing each row's `info_note` to wrap into
@@ -203,9 +254,16 @@ const KpiPicker = ({ open, onCancel, onConfirm, initialFeature = null }) => {
   );
 };
 
-const KpiRow = ({ kpi, checked, onToggle }) => (
-  <label style={rowStyle}>
-    <Checkbox checked={checked} onChange={onToggle} />
+const KpiRow = ({ kpi, checked, onToggle, disabled = false }) => (
+  <label
+    style={disabled ? { ...rowStyle, ...rowDisabledStyle } : rowStyle}
+    title={
+      disabled
+        ? 'Selection limit reached — uncheck another KPI to pick this one.'
+        : undefined
+    }
+  >
+    <Checkbox checked={checked} onChange={onToggle} disabled={disabled} />
     <div style={rowTextStyle}>
       <div style={rowLabelLineStyle}>
         <span style={rowLabelStyle}>{kpi.label}</span>
@@ -375,6 +433,15 @@ const rowStyle = {
   gap: 10,
   cursor: 'pointer',
   padding: '4px 0',
+};
+
+// Applied on top of `rowStyle` for at-cap unchecked rows. Greys
+// out the label / unit / info-note and flips the cursor so the
+// row reads as inactive — the antd checkbox itself already
+// renders a disabled visual via the `disabled` prop.
+const rowDisabledStyle = {
+  cursor: 'not-allowed',
+  opacity: 0.45,
 };
 
 const rowTextStyle = {
