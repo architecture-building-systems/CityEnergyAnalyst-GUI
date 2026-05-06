@@ -21,11 +21,13 @@
  * what-if requested" from a what-if that hasn't loaded yet.
  */
 
-import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiClient } from 'lib/api/axios';
 import socket, { waitForConnection } from 'lib/socket';
+
+import { childStateScenarioPath } from '../stores/canvasStore';
 
 const KPIS_QUERY_ROOT = 'kpis';
 
@@ -64,6 +66,99 @@ export const useFetchKpis = (project, scenario, feature, whatif) =>
     enabled: !!project && !!scenario && !!feature,
     staleTime: 0,
   });
+
+/**
+ * Per-state-year fan-out for a pathway sparkline. Issues one
+ * `useQuery` per state year (deduped by React Query against the
+ * column-level fetches that already live in the cache for the
+ * same `(scenario, feature, whatif)` key) and returns the
+ * combined `[{ year, value }]` series in chronological order.
+ *
+ * Inputs:
+ *   project          — the canvas project
+ *   pathwayName      — selected pathway (from `comparisonSetup`)
+ *   parentScenario   — pathway's parent scenario folder
+ *   stateYears       — full list of years (e.g. [2020, 2030, 2040, 2050])
+ *   feature, kpiId   — which KPI to extract from each year's response
+ *   whatif           — optional, forwarded straight through
+ *
+ * Returns `{ points: Array<{year, value}> | null, isLoading, isError }`.
+ * Years missing data carry `value: null` so consumers can break the
+ * polyline at gaps. `null` ``points`` means the inputs are not yet
+ * sufficient to fetch (no project, no state-years, etc.).
+ */
+export const useFetchKpiSparkline = ({
+  project,
+  pathwayName,
+  parentScenario,
+  stateYears,
+  feature,
+  kpiId,
+  whatif,
+}) => {
+  const enabled =
+    !!project &&
+    !!parentScenario &&
+    !!pathwayName &&
+    !!feature &&
+    !!kpiId &&
+    Array.isArray(stateYears) &&
+    stateYears.length > 1;
+
+  const yearsAndPaths = useMemo(() => {
+    if (!enabled) return [];
+    return stateYears
+      .map((year) => ({
+        year,
+        scenario: childStateScenarioPath(parentScenario, pathwayName, year),
+      }))
+      .filter((e) => !!e.scenario);
+  }, [enabled, stateYears, parentScenario, pathwayName]);
+
+  const queries = useQueries({
+    queries: yearsAndPaths.map(({ scenario }) => ({
+      queryKey: [
+        KPIS_QUERY_ROOT,
+        project,
+        scenario,
+        feature,
+        whatif ?? null,
+      ],
+      queryFn: async () => {
+        const { data } = await apiClient.get('/api/kpis/', {
+          params: {
+            project,
+            scenario,
+            feature,
+            whatif: whatif || undefined,
+          },
+        });
+        return data;
+      },
+      enabled,
+      staleTime: 0,
+    })),
+  });
+
+  const points = useMemo(() => {
+    if (!enabled) return null;
+    return yearsAndPaths.map(({ year }, i) => {
+      const result = queries[i];
+      const kpi = (result?.data?.kpis ?? []).find((k) => k.id === kpiId);
+      const isAvailable = kpi && kpi.available !== false;
+      return {
+        year,
+        value: isAvailable ? kpi.value : null,
+      };
+    });
+  }, [enabled, yearsAndPaths, queries, kpiId]);
+
+  return {
+    points,
+    isLoading: queries.some((q) => q?.isLoading),
+    isError: queries.some((q) => q?.isError),
+  };
+};
 
 /**
  * Fetch the KPI catalogue — metadata only, no scenario context.

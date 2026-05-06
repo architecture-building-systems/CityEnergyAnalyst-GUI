@@ -56,13 +56,15 @@ export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
 // KPI cards are number-tiles, not chart canvases — they need much
-// less footprint than a plot card. 3×3 grid units works out to
-// ~210×120 px (label + value + unit + delta chip line) at the
-// COL_WIDTH_PX:70 / ROW_HEIGHT_PX:40 settings used in CanvasColumn.
-// With a sparkline, FeatureCardKpi auto-grows by ~3 rows once the
-// line has measured itself.
+// less footprint than a plot card. Default 3×5 grid units
+// (~210×200 px at COL_WIDTH_PX:70 / ROW_HEIGHT_PX:40) is sized
+// to fit label + value + unit + delta chip + a sparkline (which
+// only renders on headline KPIs in pathway-single mode but we
+// pre-allocate the height so they don't have to be resized).
+// Non-headline cards run with empty bottom space; users can
+// drag them down to ~3h if they want a denser tile.
 export const KPI_CARD_DEFAULT_W = 3;
-export const KPI_CARD_DEFAULT_H = 3;
+export const KPI_CARD_DEFAULT_H = 5;
 
 // Cap the undo history at 20 steps (oldest dropped on overflow).
 // Sized to match what the user expects from a desktop editor —
@@ -117,7 +119,7 @@ const DEFAULT_DIVIDER_CONFIG = {
 // layout (``scenario/outputs/pathways/{name}/state_{year}``) so the
 // frontend can hand a state-folder path to map / plot endpoints
 // without an extra round-trip to resolve it.
-const childStateScenarioPath = (parentScenario, pathwayName, year) => {
+export const childStateScenarioPath = (parentScenario, pathwayName, year) => {
   if (!parentScenario || !pathwayName || year == null) return null;
   // Mixed separators — works for both POSIX and Windows scenarios
   // (backend joins with `os.path.join`, which normalises). The
