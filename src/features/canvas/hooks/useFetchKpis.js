@@ -104,13 +104,7 @@ export const useFetchHeadlineKpis = (project, scenario, whatif) => {
 
   const queries = useQueries({
     queries: features.map((feature) => ({
-      queryKey: [
-        KPIS_QUERY_ROOT,
-        project,
-        scenario,
-        feature,
-        whatif ?? null,
-      ],
+      queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
       queryFn: async () => {
         const { data } = await apiClient.get('/api/kpis/', {
           params: {
@@ -208,13 +202,7 @@ export const useFetchKpiSparkline = ({
 
   const queries = useQueries({
     queries: yearsAndPaths.map(({ scenario }) => ({
-      queryKey: [
-        KPIS_QUERY_ROOT,
-        project,
-        scenario,
-        feature,
-        whatif ?? null,
-      ],
+      queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
       queryFn: async () => {
         const { data } = await apiClient.get('/api/kpis/', {
           params: {

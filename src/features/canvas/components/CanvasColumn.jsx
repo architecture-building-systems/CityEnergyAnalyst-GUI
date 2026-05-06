@@ -104,28 +104,41 @@ function buildPlotMenuItems(onPick) {
     };
   };
 
-  const subgroupLevel = (sub) => ({
-    key: sub.label,
-    label: nestedLabel(sub.label),
-    children: sub.keys.map((k) => plotLeaf(k, sub.keys[0])).filter(Boolean),
-  });
+  const subgroupLevel = (sub) => {
+    const children = sub.keys
+      .map((k) => plotLeaf(k, sub.keys[0]))
+      .filter(Boolean);
+    if (children.length === 0) return null;
+    return {
+      key: sub.label,
+      label: nestedLabel(sub.label),
+      children,
+    };
+  };
 
+  // Drop any group / subgroup whose `keys` carry no plot script —
+  // KPI-only groups (e.g. "Building Architecture") would otherwise
+  // surface an empty submenu in the perimeter `+` Plot picker.
   return PLOT_GROUPS.map((group) => {
     if (group.subgroups) {
+      const subChildren = group.subgroups.map(subgroupLevel).filter(Boolean);
+      if (subChildren.length === 0) return null;
       return {
         key: group.label,
         label: labelWithIcon(group.icon, group.label),
-        children: group.subgroups.map(subgroupLevel),
+        children: subChildren,
       };
     }
+    const children = group.keys
+      .map((k) => plotLeaf(k, group.keys[0]))
+      .filter(Boolean);
+    if (children.length === 0) return null;
     return {
       key: group.label,
       label: labelWithIcon(group.icon, group.label),
-      children: group.keys
-        .map((k) => plotLeaf(k, group.keys[0]))
-        .filter(Boolean),
+      children,
     };
-  });
+  }).filter(Boolean);
 }
 
 /**

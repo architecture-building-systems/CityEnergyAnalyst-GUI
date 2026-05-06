@@ -80,9 +80,7 @@ const OverviewCard = ({
           headline KPI has data, so the OverviewCard's footprint
           doesn't change for projects that haven't run any tools
           yet. */}
-      {scenarioName && (
-        <KpiRibbon project={project} scenario={scenarioName} />
-      )}
+      {scenarioName && <KpiRibbon project={project} scenario={scenarioName} />}
     </div>
   );
 };

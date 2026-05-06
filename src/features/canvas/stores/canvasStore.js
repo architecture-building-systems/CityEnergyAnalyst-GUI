@@ -156,10 +156,10 @@ const makeCard = ({
   const defaultH = isText
     ? TEXT_CARD_DEFAULT_H
     : isDivider
-    ? 1
-    : isKpi
-    ? KPI_CARD_DEFAULT_H
-    : DEFAULT_CARD_H;
+      ? 1
+      : isKpi
+        ? KPI_CARD_DEFAULT_H
+        : DEFAULT_CARD_H;
   return {
     id: makeId('card'),
     type: cardType,
@@ -182,7 +182,7 @@ const makeCard = ({
     // KPI cards bind to a single registry id (e.g.
     // `demand.eui_kwh_m2`). The category is implicit from the id's
     // prefix; we store both so other code can look up either.
-    kpiId: isKpi ? kpiId ?? null : undefined,
+    kpiId: isKpi ? (kpiId ?? null) : undefined,
   };
 };
 
@@ -305,8 +305,7 @@ export const useCanvasStore = create((set, get) => ({
   // collapses. NOT persisted (excluded from
   // `canvasPersistableSelector`); pure UI ephemera.
   activePerimeterPlusId: null,
-  setActivePerimeterPlusId: (id) =>
-    set({ activePerimeterPlusId: id ?? null }),
+  setActivePerimeterPlusId: (id) => set({ activePerimeterPlusId: id ?? null }),
 
   // Master editing-affordance switch. When `true` (the default),
   // every Edit / Delete button, perimeter `+`, "Add a plot" pill,

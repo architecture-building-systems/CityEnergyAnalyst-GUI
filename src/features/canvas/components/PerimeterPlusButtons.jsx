@@ -141,14 +141,11 @@ const PlusButton = ({
   // read the slot and hide themselves while another button owns it
   // — keeps the canvas uncluttered while the user is choosing
   // an option.
-  const activePerimeterPlusId = useCanvasStore(
-    (s) => s.activePerimeterPlusId,
-  );
+  const activePerimeterPlusId = useCanvasStore((s) => s.activePerimeterPlusId);
   const setActivePerimeterPlusId = useCanvasStore(
     (s) => s.setActivePerimeterPlusId,
   );
-  const hidden =
-    activePerimeterPlusId !== null && activePerimeterPlusId !== id;
+  const hidden = activePerimeterPlusId !== null && activePerimeterPlusId !== id;
 
   // Claim the slot on open.
   useEffect(() => {
@@ -267,9 +264,7 @@ const PlusButton = ({
       ref={ref}
       style={{
         ...style,
-        ...(hidden
-          ? { visibility: 'hidden', pointerEvents: 'none' }
-          : null),
+        ...(hidden ? { visibility: 'hidden', pointerEvents: 'none' } : null),
       }}
     >
       {open ? (

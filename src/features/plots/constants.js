@@ -1,5 +1,6 @@
 import { DotChartOutlined } from '@ant-design/icons';
 import {
+  ArchitectureIcon,
   SolarRadiationIcon,
   NetworksIcon,
   PlugInIcon,
@@ -12,6 +13,7 @@ import {
 } from 'assets/icons';
 import {
   DEMAND,
+  BUILDING_ARCHITECTURE,
   FINAL_ENERGY,
   SOLAR_IRRADIATION,
   RENEWABLE_ENERGY_POTENTIALS,
@@ -157,6 +159,17 @@ export const PLOT_LABELS = {
 // Groups matching top-level feature categories in scripts.yml.
 // A group may have `keys` (flat list) or `subgroups` (nested sub-features).
 export const PLOT_GROUPS = [
+  {
+    label: 'Building Architecture',
+    icon: ArchitectureIcon,
+    // KPI-only group for now — no plot family lives under this
+    // key. Surfaces in the KPI picker (`KpiPicker.jsx`) so
+    // architecture KPIs (GFA / conditioned share / roof area)
+    // get their own section instead of being lumped under
+    // demand. Plots authored against this key in the future
+    // slot in automatically.
+    keys: [BUILDING_ARCHITECTURE],
+  },
   {
     label: 'Energy Demand Forecasting',
     icon: iconMap[DEMAND],

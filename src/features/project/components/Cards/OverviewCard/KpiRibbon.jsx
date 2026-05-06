@@ -34,8 +34,7 @@ import useNavigationStore from 'stores/navigationStore';
 import { useFetchHeadlineKpis } from 'features/canvas/hooks/useFetchKpis';
 import { formatKpiNumber } from 'features/canvas/utils/formatKpiValue';
 
-const titleCase = (s) =>
-  s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 const KpiRibbon = ({ project, scenario, whatif }) => {
   const { headlineKpis, totalHeadlines, allUnavailable, isLoading } =
@@ -54,12 +53,16 @@ const KpiRibbon = ({ project, scenario, whatif }) => {
   if (!isLoading && allUnavailable) return null;
 
   const handleTileClick = (kpi) => {
-    // Navigate to the canvas with the tile's feature carried on
-    // the route hash. The canvas itself doesn't yet read this
-    // (Phase 2g v1 ships navigation only); the param is parked
-    // for the follow-up that wires "feature focus" on the canvas
-    // landing.
-    push(`${routes.CANVAS}?focusFeature=${encodeURIComponent(kpi.category)}`);
+    // Navigate to the canvas with the tile's *feature* (the
+    // `<feature>.<short_name>` prefix on `kpi.id`) carried on
+    // the URL. The canvas reads it via `useFocusFeature` and
+    // either scrolls to an existing matching KPI card or opens
+    // the picker pre-expanded on that feature's group. Sending
+    // the feature prefix (not `kpi.category`) keeps the param
+    // semantically aligned with how cards bind their `kpiId`.
+    const dot = kpi.id?.indexOf?.('.') ?? -1;
+    const feature = dot > 0 ? kpi.id.slice(0, dot) : kpi.category;
+    push(`${routes.CANVAS}?focusFeature=${encodeURIComponent(feature)}`);
   };
 
   return (

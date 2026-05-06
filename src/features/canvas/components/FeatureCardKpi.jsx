@@ -57,8 +57,7 @@ const splitKpiId = (kpiId) => {
 };
 
 // Capitalise the feature segment for display ("demand" → "Demand").
-const titleCase = (s) =>
-  s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 const FeatureCardKpi = ({
   card,
@@ -112,7 +111,7 @@ const FeatureCardKpi = ({
   const baselineKpi = useMemo(
     () =>
       wantBaseline
-        ? (originData?.kpis ?? []).find((k) => k.id === kpiId) ?? null
+        ? ((originData?.kpis ?? []).find((k) => k.id === kpiId) ?? null)
         : null,
     [wantBaseline, originData, kpiId],
   );
@@ -127,7 +126,7 @@ const FeatureCardKpi = ({
   const pathwayName = isPathwaySingle ? comparisonSetup?.pathwayName : null;
   const stateYears = isPathwaySingle ? comparisonSetup?.stateYears : null;
   const parentScenario = isPathwaySingle
-    ? comparisonSetup?.parentScenario ?? null
+    ? (comparisonSetup?.parentScenario ?? null)
     : null;
   const wantSparkline =
     isPathwaySingle &&
@@ -176,6 +175,12 @@ const FeatureCardKpi = ({
       className={
         showCardActions ? 'cea-card-drag-handle cea-kpi-card' : 'cea-kpi-card'
       }
+      // The "feature focus" landing flow (`useFocusFeature`) finds
+      // the first KPI card matching the URL's feature segment via
+      // `[data-card-id]` and scrolls + flashes it. Plot / Map cards
+      // don't carry this attribute because the focus flow is
+      // KPI-only.
+      data-card-id={card.id}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -252,7 +257,9 @@ const KpiBody = ({
   return (
     <>
       {/* Row 1 — feature */}
-      <div style={featureRowStyle}>{feature ? titleCase(feature) : '\u00A0'}</div>
+      <div style={featureRowStyle}>
+        {feature ? titleCase(feature) : '\u00A0'}
+      </div>
 
       {/* Rows 2–3 — KPI name (2-line clamp) */}
       <div style={nameRowStyle} title={label}>
@@ -272,10 +279,7 @@ const KpiBody = ({
             title={<span style={tooltipBodyStyle}>{infoNote}</span>}
             placement="top"
           >
-            <InfoCircleOutlined
-              style={infoIconStyle}
-              aria-label="More info"
-            />
+            <InfoCircleOutlined style={infoIconStyle} aria-label="More info" />
           </Tooltip>
         )}
         {!showSkeleton && available && showDeltas && baseline != null && (
@@ -295,9 +299,7 @@ const KpiBody = ({
       </div>
 
       {/* Row 6 — unit */}
-      <div style={unitStyle}>
-        {showSkeleton ? '\u00A0' : kpi?.unit ?? ''}
-      </div>
+      <div style={unitStyle}>{showSkeleton ? '\u00A0' : (kpi?.unit ?? '')}</div>
 
       {/* Optional add-ons below the fixed six rows */}
       {isError && (
@@ -307,7 +309,7 @@ const KpiBody = ({
         <div style={hintStyle}>
           {kpi.upstream_tool
             ? `Run ${kpi.upstream_tool} to see this`
-            : kpi.reason ?? 'Not available'}
+            : (kpi.reason ?? 'Not available')}
         </div>
       )}
       {!showSkeleton && available && sparklinePoints && (
@@ -453,7 +455,6 @@ const unitStyle = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
 };
-
 
 const hintStyle = {
   fontSize: 11,

@@ -41,7 +41,7 @@ import { PLOT_GROUPS } from 'features/plots/constants';
 
 import { useFetchKpiRegistry } from '../hooks/useFetchKpis';
 
-const KpiPicker = ({ open, onCancel, onConfirm }) => {
+const KpiPicker = ({ open, onCancel, onConfirm, initialFeature = null }) => {
   const { data, isLoading, isError, error } = useFetchKpiRegistry();
   const allKpis = data?.kpis ?? [];
 
@@ -77,13 +77,24 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
   );
 
   // First non-empty group opens by default so users see content
-  // on first render. Reset whenever the modal reopens.
+  // on first render. Reset whenever the modal reopens. When the
+  // caller passes `initialFeature` (the "feature focus" landing
+  // from the OverviewCard's KpiRibbon), pre-expand the group whose
+  // KPIs carry that feature prefix instead — so the user lands on
+  // the KPIs they came to add, not on whatever happens to be
+  // alphabetically first.
   const [activeKeys, setActiveKeys] = useState([]);
   useEffect(() => {
-    if (open && visibleGroups.length > 0) {
-      setActiveKeys([visibleGroups[0].key]);
+    if (!open || visibleGroups.length === 0) return;
+    if (initialFeature) {
+      const match = findGroupForFeature(visibleGroups, initialFeature);
+      if (match) {
+        setActiveKeys([match.key]);
+        return;
+      }
     }
-  }, [open, visibleGroups]);
+    setActiveKeys([visibleGroups[0].key]);
+  }, [open, visibleGroups, initialFeature]);
 
   const items = useMemo(
     () =>
@@ -91,13 +102,10 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
         key: group.key,
         label: (
           <span style={groupHeaderStyle}>
-            {group.icon && (
-              <group.icon style={groupIconStyle} aria-hidden />
-            )}
+            {group.icon && <group.icon style={groupIconStyle} aria-hidden />}
             {group.label}
             <span style={groupCountStyle}>
-              {countSelectedInGroup(selected, group)}
-              /{group.totalKpis}
+              {countSelectedInGroup(selected, group)}/{group.totalKpis}
             </span>
           </span>
         ),
@@ -147,7 +155,10 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
         okText={confirmLabel}
         okButtonProps={{ disabled: selectedCount === 0 }}
         cancelText="Cancel"
-        width={520}
+        // Wider than the default to fit the two-column KPI grid
+        // without forcing each row's `info_note` to wrap into
+        // half a dozen lines.
+        width={640}
         destroyOnHidden
       >
         {isLoading && (
@@ -174,8 +185,15 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
         {!isLoading && !isError && visibleGroups.length > 0 && (
           <Collapse
             items={items}
+            // antd's `accordion` prop hands `onChange` a string
+            // (the single open key) instead of an array — wrap to
+            // either the array or `[]` so our `activeKeys` state
+            // stays one consistent shape regardless of mode.
+            accordion
             activeKey={activeKeys}
-            onChange={(keys) => setActiveKeys(keys)}
+            onChange={(key) =>
+              setActiveKeys(Array.isArray(key) ? key : key ? [key] : [])
+            }
             bordered={false}
             ghost
           />
@@ -263,6 +281,24 @@ const buildVisibleGroups = (plotGroups, allKpis) => {
   return result;
 };
 
+// Find the visible group whose subgroups contain at least one KPI
+// with id starting `<feature>.`. Returns `null` if no group hosts
+// the feature (registry hasn't shipped any matching KPIs yet, or
+// the URL param was wrong) — caller falls back to opening the
+// first group.
+const findGroupForFeature = (visibleGroups, feature) => {
+  if (!feature) return null;
+  const prefix = `${feature}.`;
+  for (const group of visibleGroups) {
+    for (const sub of group.subgroups) {
+      if (sub.kpis.some((k) => k.id?.startsWith(prefix))) {
+        return group;
+      }
+    }
+  }
+  return null;
+};
+
 const countSelectedInGroup = (selected, group) =>
   group.subgroups.reduce(
     (n, sub) =>
@@ -320,10 +356,16 @@ const subgroupHeaderStyle = {
   letterSpacing: 0.4,
 };
 
+// Two-column KPI grid. Cuts the visible list height roughly in
+// half for subgroups with many entries (e.g. Energy by Carrier
+// when it grows). The subgroup header sits OUTSIDE this grid so
+// it spans the full width as a section divider; only KPI rows
+// land in the columns.
 const kpiListStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 8,
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  columnGap: 16,
+  rowGap: 8,
   paddingLeft: 4,
 };
 

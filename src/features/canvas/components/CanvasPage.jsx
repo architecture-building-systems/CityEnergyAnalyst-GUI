@@ -4,6 +4,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import { useResumeLastCanvas } from '../hooks/useResumeLastCanvas';
+import { useFocusFeature } from '../hooks/useFocusFeature';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
@@ -39,6 +40,8 @@ const CanvasPage = () => {
   const view = useCanvasStore((s) => s.view);
   const canvasName = useCanvasStore((s) => s.canvasName);
   const columns = useCanvasStore((s) => s.columns);
+  const launchCards = useCanvasStore((s) => s.launchCards);
+  const columnCards = useCanvasStore((s) => s.columnCards);
   const project = useProjectStore((s) => s.project);
 
   // Subscribe to store changes and debounce-flush them to the
@@ -80,6 +83,65 @@ const CanvasPage = () => {
     setActiveMapColumnIndex(null);
   }, []);
   const closeKpiPicker = useCallback(() => setKpiPickerAnchor(null), []);
+
+  // "Feature focus" landing — the OverviewCard's KpiRibbon pushes
+  // the canvas route with `?focusFeature=<feature>` when the user
+  // clicks a headline tile. We act on that exactly once per arrival:
+  //   - existing card on the canvas with `kpiId.startsWith('<feature>.')`
+  //     → scroll it into view + flash the CEA-purple stroke.
+  //   - no matching card → open the picker pre-expanded to that
+  //     feature's group so the user can add one in two clicks.
+  // The hook strips the param from the URL on first capture so a
+  // refresh / back navigation doesn't replay the action; `consume()`
+  // gates the dispatch so it doesn't repeat as cards re-render.
+  const { focusFeature, consume: consumeFocusFeature } = useFocusFeature();
+  useEffect(() => {
+    if (!focusFeature) return;
+    // Wait until the canvas has loaded — `useResumeLastCanvas`
+    // sets `canvasName` once the saved canvas (if any) is in. On
+    // a brand-new entry with no saved canvas the user has nothing
+    // to scroll into; the picker is the right action there too.
+    if (!canvasName) return;
+    const cards = view === 'launch' ? launchCards : (columnCards?.[0] ?? []);
+    const prefix = `${focusFeature}.`;
+    const match = cards.find(
+      (c) =>
+        c.type === 'kpi' &&
+        typeof c.kpiId === 'string' &&
+        c.kpiId.startsWith(prefix),
+    );
+    if (match) {
+      // Defer one frame so the rgl-positioned card has its final
+      // top/left applied before we scroll to it.
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-card-id="${match.id}"]`);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('cea-card-flash');
+        setTimeout(() => el.classList.remove('cea-card-flash'), 2000);
+      });
+    } else {
+      // No matching card → open the picker anchored next to the
+      // primary map tile (sentinel `'MAP'`, `direction: 'right'`)
+      // so `addCard` lands the new card at a stable spot rather
+      // than colliding with the map at (0, 0). `initialFeature`
+      // pre-expands the right group inside the picker.
+      setKpiPickerAnchor({
+        columnIndex: view === 'launch' ? 'launch' : 0,
+        targetCardId: 'MAP',
+        direction: 'right',
+        initialFeature: focusFeature,
+      });
+    }
+    consumeFocusFeature();
+  }, [
+    focusFeature,
+    canvasName,
+    view,
+    launchCards,
+    columnCards,
+    consumeFocusFeature,
+  ]);
 
   const addCard = useCanvasStore((s) => s.addCard);
   const handleKpiPickerConfirm = useCallback(
@@ -268,11 +330,14 @@ const CanvasPage = () => {
       {/* KPI picker — page-level singleton. Opens via the
           perimeter `+` KPI pill on any column / launch view; the
           anchor captured at open time gets replayed against
-          `addCard` on confirm. */}
+          `addCard` on confirm. `initialFeature` (when set by the
+          feature-focus landing) pre-expands the matching group;
+          omitted when the perimeter `+` is the trigger. */}
       <KpiPicker
         open={kpiPickerAnchor !== null}
         onCancel={closeKpiPicker}
         onConfirm={handleKpiPickerConfirm}
+        initialFeature={kpiPickerAnchor?.initialFeature ?? null}
       />
     </div>
   );

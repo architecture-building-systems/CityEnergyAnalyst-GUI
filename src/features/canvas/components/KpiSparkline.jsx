@@ -37,7 +37,11 @@ const LINE_HEIGHT = HEIGHT - TOP_PAD - BOTTOM_PAD;
 const LABEL_HEIGHT = 14;
 const TOTAL_HEIGHT = HEIGHT + LABEL_HEIGHT;
 
-const KpiSparkline = ({ points, highlightYear, betterDirection = 'neutral' }) => {
+const KpiSparkline = ({
+  points,
+  highlightYear,
+  betterDirection = 'neutral',
+}) => {
   const computed = useMemo(() => {
     if (!Array.isArray(points) || points.length < 2) return null;
     const validValues = points
@@ -131,36 +135,30 @@ const KpiSparkline = ({ points, highlightYear, betterDirection = 'neutral' }) =>
       {/* Dots — open circles for "other" years, filled for the
           highlighted year so the user can pick out "this is the
           card's state". */}
-      {dots
-        .filter(Boolean)
-        .map((d) => (
-          <circle
-            key={d.key}
-            cx={d.cx}
-            cy={d.cy}
-            r={d.isHighlight ? 3 : 2}
-            fill={d.isHighlight ? CEA_PURPLE : '#fff'}
-            stroke={d.isHighlight ? CEA_PURPLE : trendColour}
-            strokeWidth={1}
-            vectorEffect="non-scaling-stroke"
-          >
-            <title>{`${d.year}: ${d.value}`}</title>
-          </circle>
-        ))}
+      {dots.filter(Boolean).map((d) => (
+        <circle
+          key={d.key}
+          cx={d.cx}
+          cy={d.cy}
+          r={d.isHighlight ? 3 : 2}
+          fill={d.isHighlight ? CEA_PURPLE : '#fff'}
+          stroke={d.isHighlight ? CEA_PURPLE : trendColour}
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        >
+          <title>{`${d.year}: ${d.value}`}</title>
+        </circle>
+      ))}
       {/* Year labels under each dot */}
       {points.map((p, i) => (
         <text
           key={`label-${p.year}`}
           x={xFor(i)}
           y={HEIGHT + LABEL_HEIGHT - 2}
-          textAnchor={
-            i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'
-          }
+          textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}
           fontSize="8"
           fill={
-            highlightYear != null && p.year === highlightYear
-              ? '#222'
-              : '#888'
+            highlightYear != null && p.year === highlightYear ? '#222' : '#888'
           }
           // Text doesn't scale with viewBox the way strokes do —
           // declare the font-size in viewBox units so the
