@@ -37,15 +37,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Checkbox, Collapse, ConfigProvider, Modal, Spin } from 'antd';
 
 import { CEA_PURPLE } from 'constants/theme';
+import { PLOT_GROUPS } from 'features/plots/constants';
 
 import { useFetchKpiRegistry } from '../hooks/useFetchKpis';
 
-const titleCase = (s) =>
-  s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-
 const KpiPicker = ({ open, onCancel, onConfirm }) => {
   const { data, isLoading, isError, error } = useFetchKpiRegistry();
-  const features = data?.features ?? [];
+  const allKpis = data?.kpis ?? [];
 
   // Selection state — local to the modal session. Reset to empty
   // every time the modal opens so previous picks don't leak into
@@ -65,43 +63,67 @@ const KpiPicker = ({ open, onCancel, onConfirm }) => {
     });
   };
 
-  // Keep accordion-open state local to a session; first feature
-  // opens by default so users see something on first render
-  // without having to expand a header.
+  // Reorganise the flat KPI list into the same hierarchy
+  // `FeatureCardPlot` uses (PLOT_GROUPS in features/plots/constants).
+  // Each yml KPI's `category` field is one of the leaf plot keys
+  // (`demand`, `lifecycle-emissions`, `cost-breakdown`, etc.); the
+  // group / subgroup an entry belongs to is derived from
+  // PLOT_GROUPS at render time, not duplicated in the picker.
+  // Empty groups are filtered out so the modal only shows
+  // sections that actually have something pickable.
+  const visibleGroups = useMemo(
+    () => buildVisibleGroups(PLOT_GROUPS, allKpis),
+    [allKpis],
+  );
+
+  // First non-empty group opens by default so users see content
+  // on first render. Reset whenever the modal reopens.
   const [activeKeys, setActiveKeys] = useState([]);
   useEffect(() => {
-    if (open && features.length > 0) {
-      setActiveKeys([features[0].name]);
+    if (open && visibleGroups.length > 0) {
+      setActiveKeys([visibleGroups[0].key]);
     }
-  }, [open, features]);
+  }, [open, visibleGroups]);
 
   const items = useMemo(
     () =>
-      features.map((feature) => ({
-        key: feature.name,
+      visibleGroups.map((group) => ({
+        key: group.key,
         label: (
-          <span style={featureHeaderStyle}>
-            {titleCase(feature.name)}
-            <span style={featureCountStyle}>
-              {countSelectedInFeature(selected, feature.kpis)}
-              /{feature.kpis.length}
+          <span style={groupHeaderStyle}>
+            {group.icon && (
+              <group.icon style={groupIconStyle} aria-hidden />
+            )}
+            {group.label}
+            <span style={groupCountStyle}>
+              {countSelectedInGroup(selected, group)}
+              /{group.totalKpis}
             </span>
           </span>
         ),
         children: (
-          <div style={kpiListStyle}>
-            {feature.kpis.map((kpi) => (
-              <KpiRow
-                key={kpi.id}
-                kpi={kpi}
-                checked={selected.has(kpi.id)}
-                onToggle={() => toggle(kpi.id)}
-              />
+          <div style={groupBodyStyle}>
+            {group.subgroups.map((sub) => (
+              <div key={sub.key} style={subgroupStyle}>
+                {sub.label && (
+                  <div style={subgroupHeaderStyle}>{sub.label}</div>
+                )}
+                <div style={kpiListStyle}>
+                  {sub.kpis.map((kpi) => (
+                    <KpiRow
+                      key={kpi.id}
+                      kpi={kpi}
+                      checked={selected.has(kpi.id)}
+                      onToggle={() => toggle(kpi.id)}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         ),
       })),
-    [features, selected],
+    [visibleGroups, selected],
   );
 
   const confirmLabel =
@@ -176,8 +198,77 @@ const KpiRow = ({ kpi, checked, onToggle }) => (
   </label>
 );
 
-const countSelectedInFeature = (selected, kpis) =>
-  kpis.reduce((n, k) => n + (selected.has(k.id) ? 1 : 0), 0);
+// Walk PLOT_GROUPS and bucket the flat KPI list by category. The
+// shape returned by this helper is the SOLE place that knows
+// about the group-and-subgroup hierarchy in the picker; everything
+// else just consumes it. Returns:
+//
+//   [
+//     {
+//       key, label, icon, totalKpis,
+//       subgroups: [
+//         { key, label: string|null, kpis: [...] },
+//         ...
+//       ],
+//     },
+//     ...
+//   ]
+//
+// A top-level group with `keys` (no nested subgroups) collapses to
+// a single subgroup with `label: null` so the render path is
+// uniform. Groups with no matching KPIs are filtered out.
+const buildVisibleGroups = (plotGroups, allKpis) => {
+  const byCategory = new Map();
+  for (const kpi of allKpis) {
+    const list = byCategory.get(kpi.category) ?? [];
+    list.push(kpi);
+    byCategory.set(kpi.category, list);
+  }
+
+  const collectKpisForKeys = (keys) => {
+    const out = [];
+    for (const key of keys ?? []) {
+      const list = byCategory.get(key);
+      if (list) out.push(...list);
+    }
+    return out;
+  };
+
+  const result = [];
+  for (const group of plotGroups) {
+    const subgroups = [];
+    if (group.subgroups) {
+      for (const sub of group.subgroups) {
+        const kpis = collectKpisForKeys(sub.keys);
+        if (kpis.length > 0) {
+          subgroups.push({ key: sub.label, label: sub.label, kpis });
+        }
+      }
+    } else {
+      const kpis = collectKpisForKeys(group.keys);
+      if (kpis.length > 0) {
+        subgroups.push({ key: group.label, label: null, kpis });
+      }
+    }
+    if (subgroups.length === 0) continue;
+    const totalKpis = subgroups.reduce((n, s) => n + s.kpis.length, 0);
+    result.push({
+      key: group.label,
+      label: group.label,
+      icon: group.icon ?? null,
+      subgroups,
+      totalKpis,
+    });
+  }
+  return result;
+};
+
+const countSelectedInGroup = (selected, group) =>
+  group.subgroups.reduce(
+    (n, sub) =>
+      n + sub.kpis.reduce((m, k) => m + (selected.has(k.id) ? 1 : 0), 0),
+    0,
+  );
 
 // ── Styles ──────────────────────────────────────────────────────────
 
@@ -186,23 +277,54 @@ const loadingStyle = {
   textAlign: 'center',
 };
 
-const featureHeaderStyle = {
+const groupHeaderStyle = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: 8,
   fontWeight: 600,
 };
 
-const featureCountStyle = {
+const groupIconStyle = {
+  fontSize: 16,
+  color: '#555',
+  flexShrink: 0,
+};
+
+const groupCountStyle = {
   fontSize: 11,
   color: '#888',
   fontWeight: 400,
+};
+
+const groupBodyStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
+
+const subgroupStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+};
+
+// Subgroup header (e.g. "GHG Emissions" inside "Life Cycle
+// Analysis"). Only renders for top-level groups that have nested
+// subgroups; flat groups (e.g. "Energy Demand Forecasting") set
+// `label: null` and skip this row entirely.
+const subgroupHeaderStyle = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#666',
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
 };
 
 const kpiListStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
+  paddingLeft: 4,
 };
 
 const rowStyle = {

@@ -85,14 +85,19 @@ export const useFetchKpis = (project, scenario, feature, whatif) =>
  */
 export const useFetchHeadlineKpis = (project, scenario, whatif) => {
   const { data: registry } = useFetchKpiRegistry();
+  // Discover the features-with-headline-KPIs from the flat
+  // registry list. Feature membership is the id-prefix
+  // (`<feature>.<short_name>`); we deduplicate so each feature
+  // only fires one /api/kpis/ fetch.
   const features = useMemo(() => {
-    if (!registry?.features) return [];
-    // Only fetch features that actually carry at least one
-    // headline KPI — saves a round-trip per non-headline-only
-    // feature.
-    return registry.features
-      .filter((f) => f.kpis.some((k) => k.headline))
-      .map((f) => f.name);
+    const flat = registry?.kpis ?? [];
+    const set = new Set();
+    for (const k of flat) {
+      if (!k.headline) continue;
+      const dot = k.id.indexOf('.');
+      if (dot > 0) set.add(k.id.slice(0, dot));
+    }
+    return Array.from(set).sort();
   }, [registry]);
 
   const enabled = !!project && !!scenario && features.length > 0;
