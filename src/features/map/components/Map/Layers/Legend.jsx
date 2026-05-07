@@ -280,9 +280,15 @@ const CategoryLegend = ({ label, categories, range, info }) => {
           >
             <div
               style={{
-                width: 16,
-                height: 16,
+                // Matches the status-legend dot in PathwayPanel
+                // and the Construction Archetypes / Main Use
+                // Types legend (12 × 12 circle) so all
+                // categorical legends across the app read as
+                // one family.
+                width: 12,
+                height: 12,
                 backgroundColor: cat.colour,
+                borderRadius: 999,
                 border: '1px solid rgba(0,0,0,0.15)',
                 flexShrink: 0,
               }}
