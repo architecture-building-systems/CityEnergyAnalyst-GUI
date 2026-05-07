@@ -108,22 +108,16 @@ const OverviewCard = ({
           3-column grid; auto-hides when nothing's available so
           the OverviewCard's footprint doesn't change for
           projects that haven't run any tools yet. */}
+      {/* KPI section — divider + tile grid live inside KpiRibbon
+          so the section hides cleanly (including the divider)
+          whenever the active map layer has no aggregate KPI to
+          show. */}
       {scenarioName && (
-        <>
-          <Divider
-            titlePlacement="right"
-            orientationMargin={2}
-            plain
-            style={{ margin: 0, fontSize: 12, color: 'rgba(5, 5, 5, 0.25)' }}
-          >
-            KPI
-          </Divider>
-          <KpiRibbon
-            project={project}
-            scenario={scenarioName}
-            dataScenario={childDataScenario}
-          />
-        </>
+        <KpiRibbon
+          project={project}
+          scenario={scenarioName}
+          dataScenario={childDataScenario}
+        />
       )}
     </div>
   );
