@@ -110,8 +110,7 @@ const FeatureCardKpi = ({
     (s) => s.setActiveKpiActionsCardId,
   );
   const [hovered, setHovered] = useState(false);
-  const actionsOpen =
-    !!card?.id && activeKpiActionsCardId === card.id;
+  const actionsOpen = !!card?.id && activeKpiActionsCardId === card.id;
 
   const kpiId = card?.kpiId ?? null;
   const locatorArgs = card?.locatorArgs ?? null;
@@ -645,6 +644,5 @@ const overlayStyle = {
   // overflow:hidden so the white surface doesn't bleed past the
   // card edge.
 };
-
 
 export default FeatureCardKpi;

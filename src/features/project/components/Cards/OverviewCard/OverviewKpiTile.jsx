@@ -34,7 +34,12 @@ const OverviewKpiTile = ({ card, project, scenario, whatif }) => {
   const kpiId = card?.kpiId ?? null;
   const locatorArgs = card?.locatorArgs ?? null;
 
-  const { data: kpi, isLoading, isError, error } = useFetchKpiValue({
+  const {
+    data: kpi,
+    isLoading,
+    isError,
+    error,
+  } = useFetchKpiValue({
     project,
     scenario,
     kpiId,

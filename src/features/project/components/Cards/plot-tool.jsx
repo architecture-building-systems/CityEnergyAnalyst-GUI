@@ -3,7 +3,10 @@ import { Button, ConfigProvider, Divider, Form } from 'antd';
 import { CEA_PURPLE } from 'constants/theme';
 import { useCallback, useEffect, useRef } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
-import { useSelectedPlotToolSeed } from 'features/project/stores/tool-card';
+import {
+  useSelectedPlotToolSeed,
+  useToolCardStore,
+} from 'features/project/stores/tool-card';
 import {
   DEMAND,
   EMISSIONS_EMBODIED,
@@ -16,7 +19,6 @@ import {
   PLOT_LABELS,
   PLOT_GROUPS,
 } from 'features/plots/constants';
-import { useToolCardStore } from 'features/project/stores/tool-card';
 import './tool-choices.css';
 
 // Both the plot forms and the map layers now use snake_case display
