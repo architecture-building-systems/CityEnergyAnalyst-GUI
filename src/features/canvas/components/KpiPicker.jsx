@@ -117,6 +117,12 @@ const KpiPicker = ({
   // Step 2 — fetch the parameter schema (label + choices) for
   // the picked KPI. Only enabled once the user advances past step
   // 1, so no wasteful fetches when the user is browsing step 1.
+  //
+  // ``args`` forwards the draft to the backend so dependent
+  // generators (e.g. ``phases_for_plan`` filters by ``plan_name``)
+  // see the latest picks; React Query's queryKey includes the
+  // draft so the picker re-fetches automatically when any
+  // dependency changes.
   const {
     data: paramsData,
     isLoading: paramsLoading,
@@ -125,21 +131,40 @@ const KpiPicker = ({
     project,
     scenario,
     kpiId: step === 2 ? selectedId : null,
+    args: argsDraft,
   });
   const paramSpec = paramsData?.parameters ?? {};
   const paramKeys = Object.keys(paramSpec);
 
   // Pre-fill draft with defaults when the spec arrives so the
   // user sees something selected. The user can still change any
-  // value via the dropdowns.
+  // value via the dropdowns. ALSO clear any stale value that's no
+  // longer in the freshly-fetched choice list — happens when a
+  // dependency changes (e.g. picking a different plan invalidates
+  // the previously-picked phase).
   useEffect(() => {
     if (step !== 2 || paramKeys.length === 0) return;
     setArgsDraft((prev) => {
       const next = { ...prev };
       let changed = false;
       for (const key of paramKeys) {
-        if (next[key] == null && paramSpec[key]?.default != null) {
-          next[key] = paramSpec[key].default;
+        const spec = paramSpec[key];
+        const choices = spec?.choices ?? [];
+        const choiceValues = new Set(choices.map((c) => c.value));
+        const current = next[key];
+        // Drop a stale value that disappeared from the new choice
+        // list so the dropdown doesn't render a phantom selection
+        // pointing at an invalid option.
+        if (
+          current != null &&
+          choices.length > 0 &&
+          !choiceValues.has(current)
+        ) {
+          delete next[key];
+          changed = true;
+        }
+        if (next[key] == null && spec?.default != null) {
+          next[key] = spec.default;
           changed = true;
         }
       }

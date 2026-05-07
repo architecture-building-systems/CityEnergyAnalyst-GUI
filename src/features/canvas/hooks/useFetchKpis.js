@@ -91,18 +91,42 @@ export const useFetchKpiValue = ({
   });
 };
 
-export const useFetchKpiParameters = ({ project, scenario, kpiId }) =>
-  useQuery({
-    queryKey: [KPIS_QUERY_ROOT, 'parameters', project, scenario, kpiId],
+// Fetch the parameter spec for a KPI. ``args`` carries the
+// user's current draft of parameter values; the backend forwards
+// it to dependent generators (e.g. ``phases_for_plan`` filters
+// by the picked ``plan_name``). The query key includes the args
+// so distinct draft states cache separately and the picker
+// re-fetches automatically when the user changes a dependency.
+export const useFetchKpiParameters = ({
+  project,
+  scenario,
+  kpiId,
+  args = null,
+}) => {
+  const argsKey = _argsKey(args);
+  return useQuery({
+    queryKey: [
+      KPIS_QUERY_ROOT,
+      'parameters',
+      project,
+      scenario,
+      kpiId,
+      argsKey,
+    ],
     queryFn: async () => {
       const { data } = await apiClient.get(`/api/kpis/${kpiId}/parameters`, {
-        params: { project, scenario },
+        params: {
+          project,
+          scenario,
+          args: argsKey || undefined,
+        },
       });
       return data;
     },
     enabled: !!project && !!scenario && !!kpiId,
     staleTime: 30_000,
   });
+};
 
 /**
  * Per-state-year fan-out for a pathway sparkline. Issues one

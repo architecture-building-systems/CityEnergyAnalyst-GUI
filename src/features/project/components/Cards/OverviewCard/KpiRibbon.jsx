@@ -122,6 +122,44 @@ const getRibbonKpis = (layerName, parameters) => {
     }
 
     case 'thermal-network': {
+      // Multi-phase plans appear in the map layer's `network-name`
+      // dropdown with the literal `(Multi-Phase)` suffix. Per-phase
+      // CSV outputs live under
+      // ``thermal-network/phasing-plans/<plan>/<type>/<phase>/`` —
+      // a different path from the single-phase
+      // ``thermal-network/<name>/`` one the standard KPIs read.
+      // Route to the multi-phase KPI variants in that case, with
+      // ``plan_name`` (suffix-stripped) + ``phase`` (the layer's
+      // active phase parameter) forwarded as `locatorArgs`.
+      const networkName = firstString(parameters?.['network-name']);
+      const isMultiPhase =
+        !!networkName && networkName.endsWith(' (Multi-Phase)');
+      if (isMultiPhase) {
+        const planName = networkName.slice(
+          0,
+          networkName.length - ' (Multi-Phase)'.length,
+        );
+        const phase = firstString(parameters?.phase);
+        const networkType = firstString(parameters?.['network-type']) || 'DH';
+        // Without a phase pick the resolver can't figure out which
+        // CSV to read. Hide the ribbon until the user picks one;
+        // the layer auto-defaults to the first phase on selection
+        // so this is a brief transient state.
+        if (!phase) return { kpis: [], locatorArgs: {} };
+        const args = {
+          network_type: networkType,
+          plan_name: planName,
+          phase,
+        };
+        const kpis = [
+          'networks.phase_total_length_m',
+          'networks.phase_peak_thermal_load_kw',
+        ];
+        return {
+          kpis,
+          locatorArgs: Object.fromEntries(kpis.map((id) => [id, args])),
+        };
+      }
       const args = pickArgs(parameters, {
         network_type: 'network-type',
         network_name: 'network-name',
