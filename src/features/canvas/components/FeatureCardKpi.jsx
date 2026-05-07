@@ -1,46 +1,49 @@
 /**
- * KPI card body — one card per KPI, no `FeatureCardShell`.
+ * KPI card body — canvas variant. One card per KPI, no
+ * `FeatureCardShell`.
  *
  * Shape:
  *   <FeatureCardKpi
- *     card={{ id, type: 'kpi', kpiId: 'demand.eui_kwh_m2' }}
- *     project, scenario, whatif      // forwarded to useFetchKpis
- *     originScenario={originPath}    // compare-mode origin's scenario
- *     readOnly={false}               // KpiRibbon passes true
+ *     card={{ id, type: 'kpi', kpiId, locatorArgs }}
+ *     project, scenario, whatif        // fetch context
+ *     originScenario={originPath}      // compare-mode origin's scenario
+ *     readOnly={false}                 // suppress editing chrome
  *     onDeleteCard={() => removeCard(...)}
+ *     onReplaceCard={() => openPicker(card)}
  *   />
  *
- * Compare-mode baseline: the card fetches the origin scenario's
- * same KPI via a second `useFetchKpis` call. React Query keys
- * include the scenario, so the origin column's prior fetch
- * already populates the cache — non-origin cards pay no extra
- * network round-trip. The fetch is skipped (hook disabled) when
- * `originScenario` is null or matches this card's own scenario.
+ * Per-card fetch via ``useFetchKpiValue`` — the query key
+ * includes ``card.locatorArgs`` so two cards on the same
+ * ``kpiId`` but different overrides cache distinctly. Compare-
+ * mode baseline (delta chip) fires a second ``useFetchKpiValue``
+ * against ``originScenario``; React Query dedupes against the
+ * origin column's own fetch.
  *
  * Card states (rendered identically by the same component):
- *   - loading        → skeleton bars in label / value slots
+ *   - loading        → skeleton spaces in label / value slots
  *   - available      → label + big value + unit + (optional delta chip)
  *   - unavailable    → dim placeholder + "Run <upstream tool> to see this"
  *   - missing kpiId  → renders an empty placeholder; never throws
  *
- * Visual identity is intentionally minimal — no title bar, no
- * drag handle inside the body, no editing chrome. The card body
- * IS the number. Drag is handled by react-grid-layout's outer
- * wrapper through the `cea-card-drag-handle` class, attached
- * here only when the card is editable.
+ * Editing affordances (only when ``enableEdit && !readOnly``):
+ *   - Hover-revealed × top-right for quick delete.
+ *   - Click anywhere on the card → inline action overlay with
+ *     Replace + Delete icons painted over the body. Mouse-leave
+ *     dismisses; clicking either icon fires its handler.
  *
- * Deletion: a hover-revealed `×` button top-right when
- * `enableEdit && !readOnly`. There's no edit drawer because
- * there's nothing to edit on a KPI card; pick a different
- * `kpiId` via the picker (Phase 2c).
+ * Drag/resize follows the FeatureCardShell convention — the
+ * ``cea-card-drag-handle`` class is gated on ``fixLayout`` only,
+ * so layout edits are independent of the editing-affordance
+ * switch (``enableEdit``).
  */
 
 import { useMemo, useState } from 'react';
-import { Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
+import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchKpis, useFetchKpiSparkline } from '../hooks/useFetchKpis';
+import { useFetchKpiSparkline, useFetchKpiValue } from '../hooks/useFetchKpis';
 import { formatKpiNumber } from '../utils/formatKpiValue';
 import DeltaChip from './DeltaChip';
 import KpiSparkline from './KpiSparkline';
@@ -81,29 +84,55 @@ const FeatureCardKpi = ({
   originScenario = null,
   readOnly = false,
   onDeleteCard,
+  // Click-to-replace handler. When set + the card is editable,
+  // clicking the card surface flips an inline overlay with two
+  // actions (Edit-icon / Delete-icon) painted directly on top
+  // of the KPI body. When unset, the card stays click-inert
+  // (used by OverviewCard ribbon and the read-only KpiRibbon).
+  onReplaceCard,
 }) => {
   const enableEdit = useCanvasStore((s) => s.enableEdit);
+  // Layout drag/resize is independent of `enableEdit` — matches
+  // `FeatureCardShell`'s convention for Plot / Map cards. Only
+  // `fixLayout` freezes the drag handle so users can lay out a
+  // KPI dashboard, then flip Export View off without losing the
+  // ability to rearrange.
+  const layoutLocked = useCanvasStore((s) => s.fixLayout);
   const showDeltas = useCanvasStore((s) => s.showKpiDeltas);
   const comparisonSetup = useCanvasStore((s) => s.comparisonSetup);
+  // Coordinated through the store so only one KPI card's overlay
+  // is open at a time, and so PerimeterPlusButtons can hide every
+  // card-add affordance while ANY KPI card is in action mode.
+  const activeKpiActionsCardId = useCanvasStore(
+    (s) => s.activeKpiActionsCardId,
+  );
+  const setActiveKpiActionsCardId = useCanvasStore(
+    (s) => s.setActiveKpiActionsCardId,
+  );
   const [hovered, setHovered] = useState(false);
+  const actionsOpen =
+    !!card?.id && activeKpiActionsCardId === card.id;
 
   const kpiId = card?.kpiId ?? null;
+  const locatorArgs = card?.locatorArgs ?? null;
   const [feature] = splitKpiId(kpiId);
 
-  const { data, isLoading, isError, error } = useFetchKpis(
+  // Per-card single-KPI fetch. The query key includes
+  // ``locatorArgs`` so two cards with the same KPI but different
+  // overrides (e.g. monocrystalline vs amorphous solar) cache
+  // separately.
+  const {
+    data: kpi,
+    isLoading,
+    isError,
+    error,
+  } = useFetchKpiValue({
     project,
     scenario,
-    feature,
+    kpiId,
+    locatorArgs,
     whatif,
-  );
-
-  // Pull just this card's KPI out of the feature-level response.
-  // The hook caches at the feature level so multiple KPI cards in
-  // the same feature share the same fetch.
-  const kpi = useMemo(
-    () => (data?.kpis ?? []).find((k) => k.id === kpiId) ?? null,
-    [data, kpiId],
-  );
+  });
 
   // Compare-mode baseline. Only fires when:
   //   - `originScenario` is set (compare mode)
@@ -113,22 +142,17 @@ const FeatureCardKpi = ({
   //     render)
   // React Query's `enabled` flag uses null-fall-through so the
   // call is fully skipped on origin / non-compare / non-readonly
-  // ribbons. Same query key as the origin column → cache hit.
+  // ribbons. Same `locatorArgs` is forwarded so the baseline reads
+  // the same configuration as this card.
   const wantBaseline =
     showDeltas && !readOnly && !!originScenario && originScenario !== scenario;
-  const { data: originData } = useFetchKpis(
+  const { data: baselineKpi } = useFetchKpiValue({
     project,
-    wantBaseline ? originScenario : null,
-    wantBaseline ? feature : null,
+    scenario: wantBaseline ? originScenario : null,
+    kpiId: wantBaseline ? kpiId : null,
+    locatorArgs,
     whatif,
-  );
-  const baselineKpi = useMemo(
-    () =>
-      wantBaseline
-        ? ((originData?.kpis ?? []).find((k) => k.id === kpiId) ?? null)
-        : null,
-    [wantBaseline, originData, kpiId],
-  );
+  });
   const baseline = baselineKpi?.available !== false ? baselineKpi?.value : null;
 
   // Pathway sparkline: only for headline KPIs in pathway-single
@@ -183,11 +207,38 @@ const FeatureCardKpi = ({
     );
   }
 
+  // Whether the inline action overlay is active. When true the
+  // body stays mounted underneath but a white surface covers the
+  // KPI numbers and two icon buttons paint over the centre.
+  const showOverlay = showCardActions && !!onReplaceCard && actionsOpen;
+
+  // Click anywhere on the card surface toggles the overlay (when
+  // the card is editable + has a Replace handler). Goes through
+  // the canvas store so opening one card's overlay closes any
+  // other card's overlay automatically.
+  const handleCardClick = () => {
+    if (!showCardActions || !onReplaceCard) return;
+    setActiveKpiActionsCardId(actionsOpen ? null : card.id);
+  };
+
+  // Cursor leaves the card → close the overlay. This is the
+  // primary dismissal gesture (no need for explicit click-out
+  // detection on the overlay surface). When some other card
+  // owns the active slot, leaving this one is a no-op.
+  const handleCardMouseLeave = () => {
+    setHovered(false);
+    if (actionsOpen) setActiveKpiActionsCardId(null);
+  };
+
   return (
     <div
       style={cardStyle}
       className={
-        showCardActions ? 'cea-card-drag-handle cea-kpi-card' : 'cea-kpi-card'
+        // Drag handle gated on `fixLayout` only — matches the
+        // FeatureCardShell pattern. `enableEdit` controls
+        // editing affordances (delete, replace overlay), not
+        // drag/resize.
+        layoutLocked ? 'cea-kpi-card' : 'cea-card-drag-handle cea-kpi-card'
       }
       // The "feature focus" landing flow (`useFocusFeature`) finds
       // the first KPI card matching the URL's feature segment via
@@ -196,12 +247,15 @@ const FeatureCardKpi = ({
       // KPI-only.
       data-card-id={card.id}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={handleCardMouseLeave}
+      onClick={handleCardClick}
     >
-      {/* Hover-revealed delete. Hidden in Export View / read-only
-          (KpiRibbon). Stops drag-event propagation so clicking
-          the close button never accidentally drags the card. */}
-      {showCardActions && hovered && onDeleteCard && (
+      {/* Hover-revealed close. Hidden when the action overlay is
+          active (the overlay's Delete button takes its place).
+          Stops drag-event propagation so clicking the close
+          button never accidentally drags the card or opens the
+          overlay behind it. */}
+      {showCardActions && hovered && !actionsOpen && onDeleteCard && (
         <button
           type="button"
           aria-label="Delete KPI card"
@@ -228,9 +282,77 @@ const FeatureCardKpi = ({
         sparklinePoints={wantSparkline ? sparklinePoints : null}
         cardYear={cardYear}
       />
+
+      {showOverlay && (
+        <CardActions
+          onReplace={() => {
+            setActiveKpiActionsCardId(null);
+            onReplaceCard();
+          }}
+          onDelete={
+            onDeleteCard
+              ? () => {
+                  setActiveKpiActionsCardId(null);
+                  onDeleteCard();
+                }
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 };
+
+// Inline action overlay — paints a white surface over the KPI
+// body and centres a shared icon-button container (matches the
+// `cea-card-icon-button-container` convention used by
+// `PlotSlotCard` / `featureCardCommon` so the outline reads as
+// the same family across the app). Two borderless antd Buttons
+// inside; the container itself owns the 1 px grey outline.
+//
+// Dismissal: cursor leaving the card (handled by the parent's
+// `onMouseLeave`) closes the overlay. The buttons stop
+// propagation so action clicks only fire their own handler;
+// `pointerdown` is also stopped so rgl's drag-handle doesn't
+// catch button presses as drag attempts.
+const CardActions = ({ onReplace, onDelete }) => (
+  <div
+    style={overlayStyle}
+    onPointerDown={(e) => e.stopPropagation()}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <div className="cea-card-icon-button-container">
+      {onReplace && (
+        <Tooltip title="Replace KPI">
+          <Button
+            type="text"
+            icon={<InputEditorIcon />}
+            aria-label="Replace KPI"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onReplace();
+            }}
+          />
+        </Tooltip>
+      )}
+      {onDelete && (
+        <Tooltip title="Delete card">
+          <Button
+            type="text"
+            icon={<BinAnimationIcon />}
+            aria-label="Delete card"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          />
+        </Tooltip>
+      )}
+    </div>
+  </div>
+);
 
 // Fixed six-row layout — every KPI card renders these rows in
 // the same vertical positions regardless of card dimensions, so
@@ -502,5 +624,27 @@ const deleteButtonStyle = {
   color: '#666',
   padding: 0,
 };
+
+// Inline action overlay — white surface that covers the KPI
+// body to its rounded edges. The two icon buttons are
+// horizontally centred so the surface reads as "the card has
+// switched into edit-mode" rather than "a popover floats above
+// it". `inset: 0` makes the overlay match whatever the card's
+// current size is (resizing the card resizes the overlay too).
+const overlayStyle = {
+  position: 'absolute',
+  inset: 0,
+  background: '#fff',
+  borderRadius: 12,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 16,
+  // Sits above the KpiBody (no explicit z-index needed since
+  // sibling order does the work) but matches the parent's
+  // overflow:hidden so the white surface doesn't bleed past the
+  // card edge.
+};
+
 
 export default FeatureCardKpi;

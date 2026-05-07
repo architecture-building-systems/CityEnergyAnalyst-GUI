@@ -43,6 +43,7 @@ const CanvasPage = () => {
   const launchCards = useCanvasStore((s) => s.launchCards);
   const columnCards = useCanvasStore((s) => s.columnCards);
   const project = useProjectStore((s) => s.project);
+  const projectScenario = useProjectStore((s) => s.scenario);
 
   // Subscribe to store changes and debounce-flush them to the
   // saved canvas folder while the user works. Idempotent — single
@@ -144,31 +145,34 @@ const CanvasPage = () => {
   ]);
 
   const addCard = useCanvasStore((s) => s.addCard);
+  const replaceKpiCard = useCanvasStore((s) => s.replaceKpiCard);
+  // Picker confirm — single-pick + optional locator-args from the
+  // step-2 form. Two flows share the handler:
+  //   - Add: anchor carries `targetCardId` + `direction` from the
+  //     perimeter `+` click → ``addCard``.
+  //   - Replace: anchor carries `replaceCardId` (set by the
+  //     existing-card click flow in FeatureCardKpi) → swap the
+  //     binding in place via ``replaceKpiCard``.
   const handleKpiPickerConfirm = useCallback(
-    (kpiIds) => {
-      if (kpiPickerAnchor && kpiIds.length > 0) {
-        const { columnIndex, targetCardId, direction } = kpiPickerAnchor;
-        // Stack new cards: the first anchors against the original
-        // target / direction; each subsequent card anchors against
-        // the previous one with `direction: 'bottom'` so they
-        // line up vertically. `addCard` returns the new id which
-        // we feed back as the next anchor.
-        let nextTarget = targetCardId;
-        let nextDir = direction;
-        for (const kpiId of kpiIds) {
-          const newId = addCard(columnIndex, {
-            targetCardId: nextTarget,
-            direction: nextDir,
+    (kpiId, locatorArgs) => {
+      if (kpiPickerAnchor && kpiId) {
+        const { columnIndex, targetCardId, direction, replaceCardId } =
+          kpiPickerAnchor;
+        if (replaceCardId) {
+          replaceKpiCard(columnIndex, replaceCardId, { kpiId, locatorArgs });
+        } else {
+          addCard(columnIndex, {
+            targetCardId,
+            direction,
             type: 'kpi',
             kpiId,
+            locatorArgs,
           });
-          nextTarget = newId;
-          nextDir = 'bottom';
         }
       }
       setKpiPickerAnchor(null);
     },
-    [kpiPickerAnchor, addCard],
+    [kpiPickerAnchor, addCard, replaceKpiCard],
   );
 
   // Edit-mode is exclusive: opening the plot drawer closes any
@@ -337,7 +341,22 @@ const CanvasPage = () => {
         open={kpiPickerAnchor !== null}
         onCancel={closeKpiPicker}
         onConfirm={handleKpiPickerConfirm}
+        project={project}
+        // Picker step-2 hits ``/api/kpis/<id>/parameters`` — option
+        // generators scan the active scenario's output folders, so
+        // we forward whichever scenario the anchor's column reads
+        // from. Compare-mode anchors (columnIndex >= 0) take the
+        // column's scenario; launch-mode anchors fall back to the
+        // project store's scenario.
+        scenario={
+          kpiPickerAnchor?.columnIndex != null &&
+          kpiPickerAnchor.columnIndex !== 'launch' &&
+          columns?.[kpiPickerAnchor.columnIndex]?.scenario
+            ? columns[kpiPickerAnchor.columnIndex].scenario
+            : projectScenario
+        }
         initialFeature={kpiPickerAnchor?.initialFeature ?? null}
+        initialKpiId={kpiPickerAnchor?.initialKpiId ?? null}
       />
     </div>
   );

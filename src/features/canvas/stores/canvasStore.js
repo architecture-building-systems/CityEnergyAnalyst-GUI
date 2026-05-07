@@ -145,6 +145,7 @@ const makeCard = ({
   category,
   layer,
   kpiId,
+  locatorArgs,
 }) => {
   const cardType = type ?? 'plot';
   const isText = cardType === 'text';
@@ -183,6 +184,12 @@ const makeCard = ({
     // `demand.eui_kwh_m2`). The category is implicit from the id's
     // prefix; we store both so other code can look up either.
     kpiId: isKpi ? (kpiId ?? null) : undefined,
+    // Per-card override forwarded to the resolver's
+    // `locator_args_override`. Lets two cards bound to the same
+    // KPI render distinct values (e.g. solar with `panel_type=mono`
+    // vs `panel_type=amorphous`). Null/empty for KPIs whose yml
+    // `locator_args` are fully fixed.
+    locatorArgs: isKpi ? (locatorArgs ?? null) : undefined,
   };
 };
 
@@ -207,7 +214,17 @@ const shiftForInsert = (cards, { row, col, direction }) => {
 // other truthy `targetCard` is an actual card to anchor against.
 const insertCardInto = (
   cards,
-  { targetCard, direction, type, feature, plotConfig, category, layer, kpiId },
+  {
+    targetCard,
+    direction,
+    type,
+    feature,
+    plotConfig,
+    category,
+    layer,
+    kpiId,
+    locatorArgs,
+  },
   // Optional override for compare-mode fan-out: every column
   // gets the SAME card id and plot identities at insert time so
   // the per-column dispatch can find the card across columns
@@ -249,6 +266,7 @@ const insertCardInto = (
     category,
     layer,
     kpiId,
+    locatorArgs,
   });
   // Apply override AFTER `makeCard` so the override's id / plots
   // win over the freshly-generated ones.
@@ -306,6 +324,17 @@ export const useCanvasStore = create((set, get) => ({
   // `canvasPersistableSelector`); pure UI ephemera.
   activePerimeterPlusId: null,
   setActivePerimeterPlusId: (id) => set({ activePerimeterPlusId: id ?? null }),
+
+  // Transient: which KPI card has its in-card action overlay
+  // (Replace / Delete buttons painted over the body) open. `null`
+  // when nothing's open. `FeatureCardKpi` reads this to decide
+  // whether to render its own overlay; PerimeterPlusButtons
+  // hides every card-add affordance while one is set, so the
+  // user's focus stays on the action they just opened. Pure UI
+  // ephemera, not persisted.
+  activeKpiActionsCardId: null,
+  setActiveKpiActionsCardId: (id) =>
+    set({ activeKpiActionsCardId: id ?? null }),
 
   // Master editing-affordance switch. When `true` (the default),
   // every Edit / Delete button, perimeter `+`, "Add a plot" pill,
@@ -885,6 +914,7 @@ export const useCanvasStore = create((set, get) => ({
       category,
       layer,
       kpiId,
+      locatorArgs,
     },
   ) => {
     const state = get();
@@ -900,6 +930,7 @@ export const useCanvasStore = create((set, get) => ({
         category,
         layer,
         kpiId,
+        locatorArgs,
       });
       set({ launchCards: next });
       return next[next.length - 1].id;
@@ -916,7 +947,16 @@ export const useCanvasStore = create((set, get) => ({
       const targetCard = resolveTargetCard(cards, targetCardId);
       updatedColumnCards[idx] = insertCardInto(
         cards,
-        { targetCard, direction, type, feature, category, layer, kpiId },
+        {
+          targetCard,
+          direction,
+          type,
+          feature,
+          category,
+          layer,
+          kpiId,
+          locatorArgs,
+        },
         // Force a stable id + pre-built plots across columns so
         // the per-column dispatch can find the card by id later.
         { id: sharedId, plots: sharedPlots },
@@ -924,6 +964,35 @@ export const useCanvasStore = create((set, get) => ({
     });
     set({ columnCards: updatedColumnCards });
     return sharedId;
+  },
+
+  /**
+   * Replace the KPI binding on an existing kpi card. Per-card
+   * `kpiId` + `locatorArgs` are swapped in place; layout (row /
+   * col / w / h) is preserved so the user's resize / drag work
+   * survives the swap.
+   *
+   * Fans out across columns in compare mode (same row-level
+   * pattern as ``addCard``) so every mirror agrees on which KPI
+   * each shared row binds to.
+   */
+  replaceKpiCard: (columnIndex, cardId, { kpiId, locatorArgs }) => {
+    const state = get();
+    const apply = (cards) =>
+      cards.map((c) =>
+        c.id === cardId && c.type === 'kpi'
+          ? { ...c, kpiId: kpiId ?? null, locatorArgs: locatorArgs ?? null }
+          : c,
+      );
+    if (columnIndex === 'launch') {
+      set({ launchCards: apply(state.launchCards) });
+      return;
+    }
+    const updated = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updated[idx] = apply(cards);
+    });
+    set({ columnCards: updated });
   },
 
   /**

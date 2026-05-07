@@ -21,12 +21,13 @@
  *  - Pathway-state aware: when the OverviewCard timeline activates
  *    a state year, `dataScenario` overrides the parent path for
  *    fetches; KPI selection still tracks the active map layer.
- *  - `panel-type` (PV1 / PV2 / monocrystalline / amorphous) and
- *    other settings beyond the ones explicitly mapped below do
- *    NOT swap the KPI today — the v1 KPI registry hardcodes
- *    `panel_type: monocrystalline`. To make those reactive, the
- *    resolver would need to forward map-layer's parameters into
- *    `locator_args` at fetch time, which is out of scope here.
+ *  - Active map-layer parameters that match a KPI's
+ *    `locator_args` keys (panel_type, whatif_name, network_type,
+ *    network_name, district_energy_system_id) flow through as
+ *    per-card `locatorArgs` overrides. So switching the
+ *    renewable-energy-potentials layer's panel-type dropdown
+ *    from monocrystalline to amorphous swaps the ribbon's solar
+ *    KPI value to read the amorphous totals file instead.
  *
  * The "KPI" section divider lives inside this component (not
  * the parent OverviewCard) so the divider hides together with
@@ -36,8 +37,9 @@
 import { useMemo } from 'react';
 import { Divider } from 'antd';
 
-import FeatureCardKpi from 'features/canvas/components/FeatureCardKpi';
 import { useMapStore } from 'features/map/stores/mapStore';
+
+import OverviewKpiTile from './OverviewKpiTile';
 
 const FALLBACK_KPI_IDS = ['architecture.total_gfa_m2'];
 
@@ -54,13 +56,34 @@ const firstString = (val) => {
   return null;
 };
 
-// Layer-name → 2 KPI ids (or 1, or []). Settings-driven swaps
-// for the "second" slot live inside each branch. Returning `[]`
-// means "hide the ribbon entirely for this layer" — solar-
-// irradiation / lifecycle-emissions / emission-timeline have no
-// aggregate KPI in v1.
-const getRibbonKpiIds = (layerName, parameters) => {
-  if (!layerName) return FALLBACK_KPI_IDS;
+// Pluck a subset of map-layer parameters into a KPI
+// `locator_args` payload. Returns ``null`` when nothing maps so
+// FeatureCardKpi falls through to the resolver's yml defaults
+// (matches the canvas's "no override" behaviour).
+const pickArgs = (parameters, mapping) => {
+  const out = {};
+  for (const [argKey, paramKey] of Object.entries(mapping)) {
+    const raw = parameters?.[paramKey];
+    const val = Array.isArray(raw) ? raw[0] : raw;
+    if (val !== undefined && val !== null && val !== '') {
+      out[argKey] = val;
+    }
+  }
+  return Object.keys(out).length ? out : null;
+};
+
+// Layer-name → ``{ kpis: [...], locatorArgs: {kpiId: argsObj} }``.
+// Settings-driven swaps for the "second" slot live inside each
+// branch. ``kpis: []`` means "hide the ribbon entirely for this
+// layer" — solar-irradiation / lifecycle-emissions /
+// emission-timeline have no aggregate KPI in v1.
+//
+// `locatorArgs` is per-KPI keyed so the same map-layer parameter
+// flows through to whichever KPIs actually accept it. KPIs with
+// no entry in `locatorArgs` get ``undefined`` and the resolver
+// uses yml defaults.
+const getRibbonKpis = (layerName, parameters) => {
+  if (!layerName) return { kpis: FALLBACK_KPI_IDS, locatorArgs: {} };
 
   switch (layerName) {
     case 'demand': {
@@ -73,7 +96,10 @@ const getRibbonKpiIds = (layerName, parameters) => {
             : dc === 'domestic_hot_water'
               ? 'demand.heating_share_pct'
               : 'demand.electricity_share_pct';
-      return ['demand.eui_kwh_m2', second];
+      // Demand KPIs take no locator_args — the layer's
+      // data-column / period parameters drive WHICH KPI we
+      // surface, not WHICH file the resolver reads.
+      return { kpis: ['demand.eui_kwh_m2', second], locatorArgs: {} };
     }
 
     case 'renewable-energy-potentials': {
@@ -84,11 +110,28 @@ const getRibbonKpiIds = (layerName, parameters) => {
           : surface === 'walls_south'
             ? 'solar.south_facade_share_pct'
             : 'solar.system_efficiency_pct';
-      return ['solar.annual_pv_generation_kwh', second];
+      // Map layer's `panel-type` parameter forwards to the KPI's
+      // `panel_type` locator_arg so PV1 / PV2 dropdown changes
+      // swap the totals file the KPIs read.
+      const args = pickArgs(parameters, { panel_type: 'panel-type' });
+      const kpis = ['solar.annual_pv_generation_kwh', second];
+      const locatorArgs = args
+        ? Object.fromEntries(kpis.map((id) => [id, args]))
+        : {};
+      return { kpis, locatorArgs };
     }
 
-    case 'thermal-network':
-      return ['networks.total_length_m', 'networks.peak_thermal_load_kw'];
+    case 'thermal-network': {
+      const args = pickArgs(parameters, {
+        network_type: 'network-type',
+        network_name: 'network-name',
+      });
+      const kpis = ['networks.total_length_m', 'networks.peak_thermal_load_kw'];
+      const locatorArgs = args
+        ? Object.fromEntries(kpis.map((id) => [id, args]))
+        : {};
+      return { kpis, locatorArgs };
+    }
 
     case 'energy-by-carrier': {
       const carrier = parameters?.category;
@@ -102,29 +145,56 @@ const getRibbonKpiIds = (layerName, parameters) => {
                 carrier === 'COAL'
               ? 'final_energy.fossil_share_pct'
               : 'final_energy.grid_share_pct';
-      return ['final_energy.total_final_mwh', second];
+      const args = pickArgs(parameters, { whatif_name: 'whatif_name' });
+      const kpis = ['final_energy.total_final_mwh', second];
+      const locatorArgs = args
+        ? Object.fromEntries(kpis.map((id) => [id, args]))
+        : {};
+      return { kpis, locatorArgs };
     }
 
-    case 'operational-emissions':
-      return [
+    case 'operational-emissions': {
+      // Emissions KPIs migrated to `get_emissions_whatif_buildings_file`;
+      // the layer's `whatif_name` forwards through to the resolver
+      // so dropdown changes swap which what-if folder the values
+      // come from. The 4 carrier-share KPIs were dropped during
+      // the migration (no per-carrier breakdown in the whatif
+      // file) — pair the headline KPI with the new GFA-normalised
+      // intensity instead.
+      const args = pickArgs(parameters, { whatif_name: 'whatif_name' });
+      const kpis = [
         'emissions.annual_operational_kgco2e',
-        'emissions.fossil_fuel_share_pct',
+        'emissions.intensity_kgco2_m2',
       ];
+      const locatorArgs = args
+        ? Object.fromEntries(kpis.map((id) => [id, args]))
+        : {};
+      return { kpis, locatorArgs };
+    }
 
-    case 'anthropogenic-heat-rejection':
-      return [
+    case 'anthropogenic-heat-rejection': {
+      // Heat-rejection KPIs migrated to whatif locator; layer's
+      // `whatif_name` forwards through to read the matching
+      // analysis folder.
+      const args = pickArgs(parameters, { whatif_name: 'whatif_name' });
+      const kpis = [
         'heat_rejection.annual_heat_rejection_mwh',
         'heat_rejection.peak_heat_rejection_kw',
       ];
+      const locatorArgs = args
+        ? Object.fromEntries(kpis.map((id) => [id, args]))
+        : {};
+      return { kpis, locatorArgs };
+    }
 
     case 'solar-irradiation':
     case 'lifecycle-emissions':
     case 'emission-timeline':
       // No aggregate KPI fits these layers — hide the ribbon.
-      return [];
+      return { kpis: [], locatorArgs: {} };
 
     default:
-      return FALLBACK_KPI_IDS;
+      return { kpis: FALLBACK_KPI_IDS, locatorArgs: {} };
   }
 };
 
@@ -137,8 +207,8 @@ const KpiRibbon = ({ project, scenario, dataScenario = null, whatif }) => {
   const selectedMapLayer = useMapStore((s) => s.selectedMapLayer);
   const mapLayerParameters = useMapStore((s) => s.mapLayerParameters);
 
-  const kpiIds = useMemo(
-    () => getRibbonKpiIds(selectedMapLayer, mapLayerParameters),
+  const { kpis: kpiIds, locatorArgs: argsByKpiId } = useMemo(
+    () => getRibbonKpis(selectedMapLayer, mapLayerParameters),
     [selectedMapLayer, mapLayerParameters],
   );
 
@@ -152,20 +222,19 @@ const KpiRibbon = ({ project, scenario, dataScenario = null, whatif }) => {
         id: `overview-kpi-${kpiId}`,
         type: 'kpi',
         kpiId,
+        // Per-KPI locator_args derived from the active map
+        // layer. ``null`` for KPIs whose locators take no args
+        // or where the layer doesn't expose a relevant
+        // parameter.
+        locatorArgs: argsByKpiId[kpiId] ?? null,
       })),
-    [kpiIds],
+    [kpiIds, argsByKpiId],
   );
 
   // Hide the entire section (including the divider) when no
   // KPIs apply — beats showing "Run X to see this" placeholders
   // for layers that have no KPI mapping at all.
   if (cards.length === 0) return null;
-
-  // 1-card layouts (GFA fallback when no layer is active) get a
-  // single full-width column; 2-card layouts split 50/50. Same
-  // 8 px gap so vertical alignment with the rest of the
-  // OverviewCard's stack stays consistent.
-  const columns = cards.length === 1 ? '1fr' : 'repeat(2, 1fr)';
 
   return (
     <>
@@ -177,28 +246,29 @@ const KpiRibbon = ({ project, scenario, dataScenario = null, whatif }) => {
       >
         KPI
       </Divider>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: columns,
-          gap: 8,
-          alignItems: 'stretch',
-        }}
-        aria-label="Map-layer-driven KPIs"
-      >
+      {/* Tiles stack as full-width landscape rows. Each row is
+          its own card matching the OverviewCard's other section
+          rows (Project / Scenario / Pathway) so the ribbon reads
+          as part of the same vertical stack. */}
+      <div style={stackStyle} aria-label="Map-layer-driven KPIs">
         {cards.map((card) => (
-          <FeatureCardKpi
+          <OverviewKpiTile
             key={card.id}
             card={card}
             project={project}
             scenario={effectiveScenario}
             whatif={whatif}
-            readOnly
           />
         ))}
       </div>
     </>
   );
+};
+
+const stackStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
 };
 
 export default KpiRibbon;

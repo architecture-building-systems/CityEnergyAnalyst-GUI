@@ -198,6 +198,10 @@ const CanvasColumn = ({
   onPlotReady,
   onAddPlotToCard,
   onAddCard,
+  // Direct picker handle — used by the Replace flow on existing
+  // KPI cards (which need to open the picker pre-selected on the
+  // current `kpiId`, bypassing the new-card `onAddCard` path).
+  onOpenKpiPicker,
   onApplyLayouts,
   onOpenMapBottom,
   editingPlotCardId,
@@ -999,6 +1003,29 @@ const CanvasColumn = ({
                     originScenario={originScenario}
                     onDeleteCard={
                       onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                    }
+                    // Replace flow — re-opens the KPI picker with
+                    // this card's `kpiId` pre-selected. Per the
+                    // locked product decision (2026-05-07), params
+                    // reset to defaults on Replace; the picker's
+                    // step 2 starts fresh from yml defaults rather
+                    // than inheriting the existing card's
+                    // `locatorArgs`.
+                    onReplaceCard={
+                      onOpenKpiPicker
+                        ? () =>
+                            onOpenKpiPicker({
+                              // Picker anchor: 'launch' for the
+                              // launch view (columnIndex is null
+                              // there), numeric index in compare
+                              // mode — matches the dispatch shape
+                              // the store's ``replaceKpiCard`` /
+                              // ``addCard`` already use.
+                              columnIndex: columnIndex ?? 'launch',
+                              replaceCardId: card.id,
+                              initialKpiId: card.kpiId ?? null,
+                            })
+                        : undefined
                     }
                   />
                 ) : card.type === 'text' ? (

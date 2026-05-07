@@ -174,6 +174,7 @@ const LaunchView = ({
           onDeleteCard={handleDeleteCard}
           onAddPlotToCard={handleAddPlotToCard}
           onAddCard={handleAddCard}
+          onOpenKpiPicker={onOpenKpiPicker}
           onApplyLayouts={(updates) => applyCardLayouts('launch', updates)}
           onOpenMapBottom={onOpenMapBottom}
           editingPlotCardId={editingPlotCardId}

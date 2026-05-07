@@ -277,6 +277,7 @@ const ComparisonView = ({
                   onPlotReady={handlePlotReady}
                   onAddPlotToCard={handleAddPlotToCard(i)}
                   onAddCard={handleAddCard(i)}
+                  onOpenKpiPicker={onOpenKpiPicker}
                   onApplyLayouts={(updates) => applyCardLayouts(i, updates)}
                   onOpenMapBottom={onOpenMapBottom}
                   // Per-column editing stroke: pass the active

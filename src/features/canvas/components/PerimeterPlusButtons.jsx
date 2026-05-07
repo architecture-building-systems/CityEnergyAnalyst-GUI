@@ -46,6 +46,14 @@ export const PerimeterPlusButtons = ({
   // on that edge. Bottom-edge `+` stays so users can append.
   hideRight = false,
 }) => {
+  // Suppress every perimeter `+` while a KPI card has its action
+  // overlay open — the user just clicked into "edit this card"
+  // mode, surfacing card-add affordances would just be visual
+  // noise on top of the action overlay.
+  const kpiActionsActive = useCanvasStore(
+    (s) => s.activeKpiActionsCardId !== null,
+  );
+  if (kpiActionsActive) return null;
   const rightAnchor = hideRight ? null : exposure?.right;
   const bottomAnchor = exposure?.bottom;
   const rightSections = rightAnchor
