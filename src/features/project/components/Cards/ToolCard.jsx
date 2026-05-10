@@ -12,6 +12,7 @@ import {
   useToolCardStore,
 } from 'features/project/stores/tool-card';
 import { BuildingEditor } from 'features/building-editor/components/building-editor';
+import BuildingLifecycleCard from 'features/pathway/components/BuildingLifecycleCard';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { PlotTool } from './plot-tool';
 
@@ -24,6 +25,9 @@ const ToolCard = ({ onPlotToolSelected }) => {
   const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
   const setSelectedPlotTool = useToolCardStore(
     (state) => state.setSelectedPlotTool,
+  );
+  const buildingLifecycleData = useToolCardStore(
+    (state) => state.buildingLifecycleData,
   );
   const [form] = Form.useForm();
 
@@ -57,7 +61,16 @@ const ToolCard = ({ onPlotToolSelected }) => {
       );
       break;
     case toolTypes.BUILDING_INFO:
-      content = <BuildingEditor />;
+      content = buildingLifecycleData ? (
+        <BuildingLifecycleCard
+          buildingName={buildingLifecycleData.building_name}
+          pathways={buildingLifecycleData.pathways}
+          fixedStartYear={buildingLifecycleData.span?.start_year}
+          fixedEndYear={buildingLifecycleData.span?.end_year}
+        />
+      ) : (
+        <BuildingEditor />
+      );
       break;
     default:
       content = null;
