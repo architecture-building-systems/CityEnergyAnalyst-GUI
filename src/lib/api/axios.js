@@ -176,3 +176,28 @@ addAuthInterceptor(
   authClient,
   `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
 );
+
+// JSON requests can't carry a browser File — JSON.stringify(File) yields
+// {"uid":"rc-upload-..."} because only antd's added `uid` is enumerable.
+// Strip File instances down to file.name on the way out, but skip multipart
+// payloads so postForm and explicit FormData uploads still send file bytes.
+const stripFiles = (data) => {
+  if (data == null) return data;
+  if (data instanceof File) return data.name;
+  if (Array.isArray(data)) return data.map(stripFiles);
+  if (typeof data === 'object' && data.constructor === Object) {
+    return Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [k, stripFiles(v)]),
+    );
+  }
+  return data;
+};
+
+apiClient.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) return config;
+  const ct =
+    config.headers?.['Content-Type'] ?? config.headers?.['content-type'] ?? '';
+  if (String(ct).includes('multipart/form-data')) return config;
+  if (config.data != null) config.data = stripFiles(config.data);
+  return config;
+});
