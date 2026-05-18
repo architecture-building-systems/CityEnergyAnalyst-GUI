@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
 import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
@@ -7,6 +8,7 @@ import BottomToolButtons from 'features/project/components/Cards/BottomToolBotto
 import MapControls from 'features/map/components/Map/MapControls';
 import MapLayerCategoriesCard from 'features/project/components/Cards/MapLayersCard/MapLayersCard';
 import MapLayerPropertiesCard from 'features/project/components/Cards/MapLayersCard/MapLayerPropertiesCard';
+import PathwayPanel from 'features/pathway/components/PathwayPanel';
 
 import UserInfo from 'components/UserInfo';
 import ShowHideCardsButton from 'components/ShowHideCardsButton';
@@ -18,21 +20,30 @@ import {
   useSetToolType,
   useSelectPlotTool,
 } from 'features/project/stores/tool-card';
+import useJobsStore from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
-import { useResetSelected } from 'features/input-editor/stores/inputEditorStore';
+import {
+  useResetSelected,
+  useSelected,
+  useSelectionSource,
+} from 'features/input-editor/stores/inputEditorStore';
 import { InputChangesCard } from './Cards/input-changes-card';
 import { isElectron } from 'utils/electron';
 import {
   useMapLayerCategories,
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
-import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
+import {
+  useMapStore,
+  useSetSelectedMapLayer,
+} from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
+  const queryClient = useQueryClient();
   const name = useProjectStore((state) => state.name);
   const scenarioList = useProjectStore((state) => state.scenariosList);
 
@@ -41,9 +52,13 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const selectPlotTool = useSelectPlotTool();
 
   const resetSelected = useResetSelected();
+  const selectedBuildings = useSelected();
+  const selectionSource = useSelectionSource();
+  const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setSelectedLayer = useSetSelectedMapLayer();
+  const childScenario = useProjectStore((s) => s.childScenario);
 
   const handlePlotToolSelected = (tool) => {
     // Get map layer category from plot script name
@@ -78,17 +93,172 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const [hideAll, setHideAll] = useState(false);
   const [showInputEditor, setInputEditor] = useState(false);
+  const [showPathwayPanel, setShowPathwayPanel] = useState(false);
+  const pathwayPanelHiddenForToolRef = useRef(false);
+  const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
+  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(425);
+  const pathwayResizeStateRef = useRef(null);
+  const pathwayPanelContentRef = useRef(null);
+  const [pathwayPanelHiddenForTool, setPathwayPanelHiddenForTool] =
+    useState(false);
 
   const showToolBar = scenarioName != null && !hideAll;
   const showToolCardSideButtons = scenarioName != null && !hideAll;
   const showToolCard = scenarioName != null && !hideAll && toolType != null;
 
+  useEffect(() => {
+    if (!showToolCard && pathwayPanelHiddenForToolRef.current) {
+      pathwayPanelHiddenForToolRef.current = false;
+      setPathwayPanelHiddenForTool(false);
+    }
+  }, [showToolCard]);
+
+  // Watch for building events job completion to close tool card
+  const jobs = useJobsStore((state) => state.jobs);
+  const buildingEventsHandledRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!jobs || !pathwayPanelHiddenForToolRef.current) {
+      return;
+    }
+
+    const completedJobs = Object.entries(jobs).filter(
+      ([id, job]) =>
+        job.state === 2 &&
+        job.script === 'pathway-update-building-events' &&
+        !buildingEventsHandledRef.current.has(id),
+    );
+
+    if (completedJobs.length > 0) {
+      completedJobs.forEach(([id]) => buildingEventsHandledRef.current.add(id));
+      setToolType(null);
+    }
+  }, [jobs, setToolType]);
+
+  // Watch for pathway-simulations job start to close tool card and restore panel
+  const pathwaySimHandledRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!jobs || !pathwayPanelHiddenForToolRef.current) {
+      return;
+    }
+
+    const startedJobs = Object.entries(jobs).filter(
+      ([id, job]) =>
+        job.state >= 1 &&
+        job.script === 'pathway-simulations' &&
+        !pathwaySimHandledRef.current.has(id),
+    );
+
+    if (startedJobs.length > 0) {
+      startedJobs.forEach(([id]) => pathwaySimHandledRef.current.add(id));
+      setToolType(null);
+    }
+  }, [jobs, setToolType]);
+
+  const fullscreenPathwayPanelRightInset = showToolCard
+    ? 'calc(var(--right-sidebar-width) + 56px)'
+    : 12;
+
   const closeInputEditor = () => {
     setInputEditor(false);
   };
 
+  const toggleInputEditor = () => {
+    setInputEditor((prev) => {
+      const next = !prev;
+      if (next) {
+        setShowPathwayPanel(false);
+        setPathwayPanelExpanded(false);
+      }
+      return next;
+    });
+  };
+
+  const togglePathwayPanel = () => {
+    setShowPathwayPanel((prev) => {
+      const next = !prev;
+      if (next) {
+        setInputEditor(false);
+        setToolType(null);
+      } else {
+        setPathwayPanelExpanded(false);
+        useToolCardStore.getState().clearBuildingLifecycleData();
+        useMapStore.getState().setStateZoneOverride(null);
+      }
+      return next;
+    });
+  };
+
   const handleHideAll = () => {
-    setHideAll((prev) => !prev);
+    setHideAll((prev) => {
+      const next = !prev;
+      if (next) {
+        setPathwayPanelExpanded(false);
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const clampHeight = (height) =>
+      Math.max(290, Math.min(height, window.innerHeight - 220));
+
+    const handleResize = () => {
+      setPathwayPanelHeight((current) => clampHeight(current));
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handlePointerMove = (event) => {
+      const resizeState = pathwayResizeStateRef.current;
+      if (!resizeState) {
+        return;
+      }
+
+      const contentHeight =
+        pathwayPanelContentRef.current?.scrollHeight ?? Infinity;
+      const nextHeight = Math.max(
+        360,
+        Math.min(
+          resizeState.startHeight - (event.clientY - resizeState.startY),
+          window.innerHeight - 220,
+          contentHeight + 18,
+        ),
+      );
+      setPathwayPanelHeight(nextHeight);
+    };
+
+    const handlePointerUp = () => {
+      pathwayResizeStateRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+    };
+  }, []);
+
+  const handlePathwayResizeStart = (event) => {
+    if (pathwayPanelExpanded || event.button !== 0) {
+      return;
+    }
+
+    pathwayResizeStateRef.current = {
+      startY: event.clientY,
+      startHeight: pathwayPanelHeight,
+    };
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    event.preventDefault();
   };
 
   const tension = 150;
@@ -124,6 +294,25 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
+  const pathwayPanelTransition = useTransition(!hideAll && showPathwayPanel, {
+    from: { transform: 'translateY(100%)', opacity: 0, maxHeight: '0vh' },
+    enter: {
+      transform: 'translateY(0%)',
+      opacity: 1,
+      maxHeight: pathwayPanelExpanded
+        ? 'calc(100vh - 152px)'
+        : `${pathwayPanelHeight}px`,
+      marginBlock: '0px',
+    },
+    leave: {
+      transform: 'translateY(100%)',
+      opacity: 0,
+      maxHeight: '0vh',
+      marginBlock: '-12px',
+    },
+    config: { tension, friction },
+  });
+
   const transitionFromTop = useTransition(showToolBar, {
     from: { transform: 'translateY(-100%)', opacity: 0 }, // Start off-screen (top) and invisible
     enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in from top and become visible
@@ -131,17 +320,143 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  // Reset state when project or scenario name changes
+  // On mount / scenario change: clear any stuck child-scenario state
+  const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
+  useEffect(() => {
+    import('features/pathway/api').then(({ switchToParentScenario }) => {
+      switchToParentScenario().catch(() => {});
+    });
+    clearChildScenario();
+  }, [scenarioName, clearChildScenario]);
+
+  // When a pathway is selected in the viewer, collapse the builder panel
+  useEffect(() => {
+    if (childScenario?.pathway_name) {
+      setShowPathwayPanel(false);
+      setPathwayPanelExpanded(false);
+    }
+  }, [childScenario?.pathway_name]);
+
+  // Reset state when project or scenario name changes.
+  // Keep the tool card open so the user can compare settings
+  // across scenarios without re-launching the form.
   useEffect(() => {
     resetSelected();
     setInputEditor(false);
-  }, [name, scenarioName, resetSelected]);
+    setShowPathwayPanel(false);
+    setPathwayPanelExpanded(false);
+  }, [name, scenarioName]);
+
+  useEffect(() => {
+    // Show building info tool card when buildings are selected on map and input editor is not open
+    if (
+      selectedBuildings.length > 0 &&
+      selectionSource === 'map' &&
+      !showInputEditor
+    ) {
+      // If pathway builder is active with visible pathways, show lifecycle timeline
+      if (
+        showPathwayPanel &&
+        selectedBuildings.length === 1 &&
+        useToolCardStore.getState().visiblePathways.length > 0
+      ) {
+        import('features/pathway/api').then(({ fetchBuildingLifecycle }) => {
+          const vp = useToolCardStore.getState().visiblePathways;
+          fetchBuildingLifecycle(
+            selectedBuildings[0],
+            vp.length ? vp : undefined,
+          )
+            .then((data) => {
+              useToolCardStore.getState().setBuildingLifecycleData(data);
+              setToolType(toolTypes.BUILDING_INFO);
+            })
+            .catch(() => {
+              setToolType(toolTypes.BUILDING_INFO);
+            });
+        });
+      } else if (!showPathwayPanel) {
+        // Clear lifecycle data so building info shows regular mode
+        // (skip when pathway panel is open but has no pathways)
+        useToolCardStore.getState().clearBuildingLifecycleData();
+        setToolType(toolTypes.BUILDING_INFO);
+      }
+    } else if (
+      selectedBuildings.length === 0 &&
+      toolType === toolTypes.BUILDING_INFO
+    ) {
+      setToolType(null);
+    }
+  }, [
+    selectedBuildings,
+    selectionSource,
+    setToolType,
+    showInputEditor,
+    showPathwayPanel,
+    toolType,
+  ]);
 
   return (
     <div
       id="cea-project-overlay"
       className={showToolCard ? 'show-right-sidebar' : ''}
     >
+      {childScenario && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 24,
+              border: '3px solid rgba(20, 112, 175, 0.6)',
+              boxShadow: 'inset 0 0 200px 60px rgba(20, 112, 175, 0.35)',
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              import('features/pathway/api').then(
+                ({ switchToParentScenario }) => {
+                  switchToParentScenario()
+                    .then(() => {
+                      clearChildScenario();
+                      queryClient.invalidateQueries();
+                    })
+                    .catch(() => {});
+                },
+              );
+            }}
+            style={{
+              position: 'fixed',
+              top: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 10000,
+              pointerEvents: 'auto',
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              border: '1px solid rgba(0,0,0,0.12)',
+              background: 'rgba(148, 163, 184, 0.85)',
+              color: '#fff',
+              fontSize: 18,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              lineHeight: 1,
+            }}
+            aria-label="Exit child scenario"
+          >
+            &times;
+          </button>
+        </>
+      )}
       <div id="cea-project-overlay-left-sidebar">
         {hideAll && (
           <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
@@ -228,6 +543,80 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             </animated.div>
           ) : null,
         )}
+
+        {pathwayPanelTransition((styles, item) =>
+          item ? (
+            <animated.div
+              className="cea-overlay-card"
+              style={{
+                ...styles,
+                overflow: 'hidden',
+                borderRadius: 20,
+                boxShadow: '0 24px 54px rgba(15, 23, 42, 0.16)',
+                background: 'rgba(255, 255, 255, 0.94)',
+                display: pathwayPanelHiddenForTool ? 'none' : 'flex',
+                flexDirection: 'column',
+                height: pathwayPanelExpanded ? 'auto' : pathwayPanelHeight,
+                maxHeight: pathwayPanelExpanded
+                  ? 'calc(100vh - 152px)'
+                  : pathwayPanelHeight,
+                zIndex: 10,
+                ...(pathwayPanelExpanded
+                  ? {
+                      position: 'fixed',
+                      top: 64,
+                      right: fullscreenPathwayPanelRightInset,
+                      bottom: 96,
+                      left: 12,
+                      maxHeight: 'none',
+                      zIndex: 1400,
+                    }
+                  : null),
+              }}
+            >
+              {!pathwayPanelExpanded ? (
+                <button
+                  type="button"
+                  aria-label="Resize pathway panel"
+                  onMouseDown={handlePathwayResizeStart}
+                  style={{
+                    height: 18,
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'ns-resize',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                    flex: '0 0 auto',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 56,
+                      height: 5,
+                      borderRadius: 999,
+                      background: 'rgba(148, 163, 184, 0.7)',
+                    }}
+                  />
+                </button>
+              ) : null}
+              <div ref={pathwayPanelContentRef}>
+                <PathwayPanel
+                  open={showPathwayPanel}
+                  project={project}
+                  scenarioName={scenarioName}
+                  expanded={pathwayPanelExpanded}
+                  onExpandedChange={setPathwayPanelExpanded}
+                  onHidePanel={() => {
+                    setPathwayPanelHiddenForTool(true);
+                    pathwayPanelHiddenForToolRef.current = true;
+                  }}
+                />
+              </div>
+            </animated.div>
+          ) : null,
+        )}
       </div>
 
       <div id="cea-project-overlay-right-sidebar">
@@ -261,8 +650,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         >
           {!hideAll && (
             <BottomToolButtons
-              onOpenInputEditor={() => setInputEditor((prev) => !prev)}
+              onOpenInputEditor={toggleInputEditor}
+              onTogglePathwayPanel={togglePathwayPanel}
+              pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}
+              hidePathwayBuilder={!!childScenario?.pathway_name}
             />
           )}
           <div

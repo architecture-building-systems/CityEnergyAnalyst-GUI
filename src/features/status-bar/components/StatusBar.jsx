@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 
 import useJobsStore from 'features/jobs/stores/jobsStore';
+import { useProjectStore } from 'features/project/stores/projectStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
@@ -12,12 +13,17 @@ import {
 } from 'features/project/components/Cards/MapLayersCard/store';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { CEA_PURPLE } from 'constants/theme';
 import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
 import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
-import { PLOT_SCRIPTS, VIEW_MAP_RESULTS } from 'features/plots/constants';
+import {
+  PLOT_SCRIPTS,
+  VIEW_MAP_RESULTS,
+  VIEW_TOOL_RESULTS,
+  buildPlotToolPrefillFromJob,
+} from 'features/plots/constants';
 import { useSelectPlotTool } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
@@ -212,9 +218,10 @@ const JobStatusBar = () => {
           }
 
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
+          const hasToolResult = !!VIEW_TOOL_RESULTS[job.script];
 
           const key = job.id;
-          const duration = isPlotJob ? 0 : 5;
+          const duration = isPlotJob || hasToolResult ? 0 : 5;
 
           notification.success({
             key,
@@ -235,6 +242,22 @@ const JobStatusBar = () => {
                 >
                   View Logs
                 </Button>
+
+                {VIEW_TOOL_RESULTS[job.script] && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => {
+                      notification.destroy(key);
+                      depsRef.current.selectPlotTool(
+                        VIEW_TOOL_RESULTS[job.script],
+                        { prefill: buildPlotToolPrefillFromJob(job) },
+                      );
+                    }}
+                  >
+                    View Results
+                  </Button>
+                )}
 
                 {job.script in VIEW_MAP_RESULTS && (
                   <Button
@@ -287,7 +310,7 @@ const JobStatusBar = () => {
                           job?.parameters?.['what-if-name'],
                         );
                         const seed = names ? { 'what-if-name': names } : null;
-                        depsRef.current.selectPlotTool(plot, seed);
+                        depsRef.current.selectPlotTool(plot, { seed });
                       }
                     }}
                   >
@@ -299,7 +322,7 @@ const JobStatusBar = () => {
                   <Button
                     type="primary"
                     size="small"
-                    style={{ background: PLOTS_PRIMARY_COLOR }}
+                    style={{ background: CEA_PURPLE }}
                     onClick={() => {
                       notification.destroy(key);
                       const plothtml = job.output;
@@ -375,17 +398,46 @@ const JobStatusBar = () => {
             return;
           }
 
-          const lines = data.message
-            .split(/\r?\n/)
-            .map((x) => x.trim())
-            .filter((x) => x.length > 0);
+          // The backend worker coalesces multiple print() calls into a single
+          // socket message, so progress markers can arrive mixed with regular
+          // log lines. Scan every line for the marker instead of checking the
+          // message prefix.
+          const rawLines = data.message.split(/\r?\n/);
+          const nonProgressLines = [];
+          for (const rawLine of rawLines) {
+            const trimmed = rawLine.trim();
+            if (!trimmed) continue;
+            if (trimmed.startsWith('{"__cea_progress__"')) {
+              try {
+                const progress = JSON.parse(trimmed);
+                const store = useProjectStore.getState();
+                if (progress.__cea_progress__ === 'pathway-state-started') {
+                  store.setSimulationYearStarted(
+                    progress.pathway_name,
+                    progress.year,
+                  );
+                } else if (
+                  progress.__cea_progress__ === 'pathway-state-simulated'
+                ) {
+                  store.setSimulationYearCompleted(
+                    progress.pathway_name,
+                    progress.year,
+                  );
+                }
+              } catch {
+                /* not valid JSON, fall through as regular log line */
+                nonProgressLines.push(trimmed);
+              }
+              continue;
+            }
+            nonProgressLines.push(trimmed);
+          }
 
-          // Ensure lines array is not empty before accessing
-          if (lines.length === 0) {
+          if (nonProgressLines.length === 0) {
             return;
           }
 
-          const last_line = lines[lines.length - 1];
+          const last_line = nonProgressLines[nonProgressLines.length - 1];
 
           // Only call setMessage if both jobid and last_line exist
           if (data.jobid && last_line) {

@@ -1,83 +1,23 @@
 import ParameterSelectors from 'features/map/components/Map/Layers/Selectors/base';
-import Legend from 'features/map/components/Map/Layers/Legend';
-import { useMapStore } from 'features/map/stores/mapStore';
+import Legend, {
+  LegendFilterRow,
+} from 'features/map/components/Map/Layers/Legend';
 import { useGetMapLayers } from 'features/map/hooks/map-layers';
+import {
+  useScopedSelectedMapLayer,
+  useScopedSetSelectedMapLayer,
+  useScopedMapLayerParameters,
+  useScopedProjectScenario,
+  useScopedSetMapLayerParameters,
+  useScopedSetMapLayers,
+  useScopedSelectedCategoryInfo,
+} from 'features/canvas/components/mapInstance';
 import { useCallback, useEffect, useMemo } from 'react';
-import { Alert, InputNumber, Select } from 'antd';
-import { useProjectStore } from 'features/project/stores/projectStore';
-import { useSelectedMapCategoryInfo } from './store';
-
-const LEGEND_FILTER_KEYS = ['scale', 'radius'];
-
-const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
-  const value = useMapStore((state) => state.filters?.[filterKey]);
-  const setFilters = useMapStore((state) => state.setFilters);
-
-  return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-      }}
-    >
-      <b>{label}</b>
-      <InputNumber
-        min={range?.[0]}
-        max={range?.[1]}
-        value={value ?? defaultValue}
-        onChange={(v) => setFilters(filterKey, v)}
-        style={{ flex: 1, minWidth: 0 }}
-      />
-    </div>
-  );
-};
-
-const LegendFilterRow = ({ layers }) => {
-  const fields = useMemo(() => {
-    if (!layers?.length) return [];
-    const layer = layers[0];
-    if (!layer?.parameters) return [];
-
-    const collected = [];
-    for (const key of LEGEND_FILTER_KEYS) {
-      for (const [, parameter] of Object.entries(layer.parameters)) {
-        if (parameter?.filter === key) {
-          collected.push({
-            key,
-            label: parameter.label ?? key,
-            range: parameter.range,
-            defaultValue: parameter.default,
-          });
-          break;
-        }
-      }
-    }
-    return collected;
-  }, [layers]);
-
-  if (!fields.length) return null;
-
-  return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-      {fields.map((f) => (
-        <LegendFilterField
-          key={f.key}
-          label={f.label}
-          filterKey={f.key}
-          range={f.range}
-          defaultValue={f.defaultValue}
-        />
-      ))}
-    </div>
-  );
-};
+import { Alert, Select } from 'antd';
 
 const LayerSelector = ({ layers, onLayerSelect }) => {
-  const selectedLayer = useMapStore((state) => state.selectedMapLayer);
-  const setSelectedLayer = useMapStore((state) => state.setSelectedMapLayer);
+  const selectedLayer = useScopedSelectedMapLayer();
+  const setSelectedLayer = useScopedSetSelectedMapLayer();
 
   const handleLayerSelected = useCallback(
     (layerName) => {
@@ -122,7 +62,7 @@ const LayerSelector = ({ layers, onLayerSelect }) => {
 };
 
 const useFilteredLayers = (layers) => {
-  const selectedLayer = useMapStore((state) => state.selectedMapLayer);
+  const selectedLayer = useScopedSelectedMapLayer();
 
   return useMemo(() => {
     if (!layers || !selectedLayer) return [];
@@ -130,16 +70,28 @@ const useFilteredLayers = (layers) => {
   }, [layers, selectedLayer]);
 };
 
-const MapLayerPropertiesCard = ({ onLayerSelect }) => {
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
+const MapLayerPropertiesCard = ({
+  onLayerSelect,
+  hideLegend = false,
+  // When `true`, skip the intra-category `LayerSelector` dropdown —
+  // the caller is expected to set `selectedMapLayer` some other way
+  // (e.g. Canvas Builder drives it from the plot script being edited).
+  hideLayerSelector = false,
+  // Optional allowlist of parameter keys to render. Passed through to
+  // ParameterSelectors; `null`/`undefined` = render everything (main
+  // viewport default). Canvas Builder uses this to hide anything the plot
+  // form already owns (period, data-column, etc.).
+  allowParamKeys,
+}) => {
+  // Compare-mode FeatureCardMap / BottomCard publish a per-column
+  // override via `MapLayerScenarioOverrideContext`; outside any
+  // provider falls back to the project store (main viewport).
+  const { project, scenarioName } = useScopedProjectScenario();
 
-  const categoryInfo = useSelectedMapCategoryInfo();
-  const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
-  const setMapLayerParameters = useMapStore(
-    (state) => state.setMapLayerParameters,
-  );
-  const setMapLayers = useMapStore((state) => state.setMapLayers);
+  const categoryInfo = useScopedSelectedCategoryInfo();
+  const mapLayerParameters = useScopedMapLayerParameters();
+  const setMapLayerParameters = useScopedSetMapLayerParameters();
+  const setMapLayers = useScopedSetMapLayers();
 
   const layers = categoryInfo?.layers;
   const filteredLayers = useFilteredLayers(layers);
@@ -186,7 +138,9 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
         }}
       >
         {fetching && <Loading />}
-        <Legend extras={<LegendFilterRow layers={filteredLayers} />} />
+        {!hideLegend && (
+          <Legend extras={<LegendFilterRow layers={filteredLayers} />} />
+        )}
 
         <div
           className="cea-overlay-card"
@@ -207,10 +161,13 @@ const MapLayerPropertiesCard = ({ onLayerSelect }) => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
-          <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
+          {!hideLayerSelector && (
+            <LayerSelector layers={layers} onLayerSelect={onLayerSelect} />
+          )}
           <ParameterSelectors
             layers={filteredLayers}
             parameterValues={mapLayerParameters}
+            allowParamKeys={allowParamKeys}
           />
         </div>
       </div>

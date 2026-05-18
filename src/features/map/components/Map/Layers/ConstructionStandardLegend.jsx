@@ -1,24 +1,34 @@
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
-
-const INFO_TEXT = {
-  construction:
-    'Construction Archetypes define the building envelope and systems standards. Assign in Input Editor > zone (const_type). Edit or add in Database Editor > CONSTRUCTION_ARCHETYPES.',
-  mainUseType:
-    'Main use type is the use type with the highest occupancy ratio. Assign in Input Editor > zone (use_type1, use_type2, use_type3 and their ratios). Edit or add in Database Editor > USE_TYPES.',
-};
+import InfoTooltip from 'components/InfoTooltip';
 
 /**
  * Legend component that displays construction archetype or main use type colors.
  * Shows a color swatch and label for each unique category.
+ *
+ * `style` is merged on top of the defaults so callers can override
+ * width / chrome / spacing — e.g. Canvas Builder embeds this legend inline
+ * under the column's overview map and drops the floating-card chrome.
+ *
+ * `constructionColorMapOverride` / `useTypeColorMapOverride` let
+ * callers supply per-source maps instead of reading from the
+ * singleton — used by Canvas Builder so each compare-mode column's
+ * legend reflects its own scenario's archetypes (Zurich's "STANDARD3"
+ * isn't necessarily Singapore's). Omitting the overrides falls back
+ * to the singleton, so the main viewport behaves as before.
  */
-const ConstructionStandardLegend = () => {
+const ConstructionStandardLegend = ({
+  style,
+  constructionColorMapOverride,
+  useTypeColorMapOverride,
+}) => {
   const colorMode = useMapStore((state) => state.colorMode);
-  const constructionColorMap = useMapStore(
+  const singletonConstruction = useMapStore(
     (state) => state.constructionColorMap,
   );
-  const useTypeColorMap = useMapStore((state) => state.useTypeColorMap);
+  const singletonUseType = useMapStore((state) => state.useTypeColorMap);
+  const constructionColorMap =
+    constructionColorMapOverride ?? singletonConstruction;
+  const useTypeColorMap = useTypeColorMapOverride ?? singletonUseType;
 
   const isConstruction = colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
   const isUseType = colorMode === COLOR_MODES.USE_TYPE;
@@ -49,6 +59,7 @@ const ConstructionStandardLegend = () => {
         padding: 12,
         width: 280,
         maxHeight: 200,
+        ...style,
       }}
     >
       <div
@@ -65,14 +76,14 @@ const ConstructionStandardLegend = () => {
         }}
       >
         {title}
-        <Tooltip
-          title={
-            isConstruction ? INFO_TEXT.construction : INFO_TEXT.mainUseType
+        <InfoTooltip
+          tooltipKey={
+            isConstruction
+              ? 'construction-archetypes-info'
+              : 'main-use-type-info'
           }
-          styles={{ body: { fontSize: 12 } }}
-        >
-          <InfoCircleOutlined style={{ color: '#999', cursor: 'pointer' }} />
-        </Tooltip>
+          style={{ color: '#999' }}
+        />
       </div>
 
       <div

@@ -19,6 +19,13 @@ import OpenProjectIcon from './open_project.svg';
 import ExternalLinkIcon from './external_link.svg';
 import CreateNewIcon from './create_new.svg';
 import RefreshIcon from './refresh.svg';
+import LockOnIcon from './lock_on.svg';
+import LockOffIcon from './lock_off.svg';
+import BackIcon from './back.svg';
+import StartOverIcon from './start_over.svg';
+import SaveIcon from './save.svg';
+import ShareIcon from './share.svg';
+import ImportIcon from './import.svg';
 import DuplicateIcon from './duplicate.svg';
 import UploadDownloadIcon from './upload_download.svg';
 
@@ -47,6 +54,13 @@ import ProIcon from './pro.svg';
 import ReportsIcon from './reports.svg';
 import TimelineIcon from './timeline.svg';
 
+import MapCardIcon from './map.svg';
+import KpiCardIcon from './kpi.svg';
+import PlotCardIcon from './plot.svg';
+import TextCardIcon from './text.svg';
+import DividerCardIcon from './divider.svg';
+import InsightIcon from './insight.svg';
+
 export {
   DataManagementIcon,
   DemandForecastingIcon,
@@ -63,6 +77,13 @@ export {
   ExternalLinkIcon,
   CreateNewIcon,
   RefreshIcon,
+  LockOnIcon,
+  LockOffIcon,
+  BackIcon,
+  StartOverIcon,
+  SaveIcon,
+  ShareIcon,
+  ImportIcon,
   DuplicateIcon,
   RunIcon,
   ShowHideCardsIcon,
@@ -87,4 +108,10 @@ export {
   ReportsIcon,
   TimelineIcon,
   SupplySystemIcon,
+  MapCardIcon,
+  KpiCardIcon,
+  PlotCardIcon,
+  TextCardIcon,
+  DividerCardIcon,
+  InsightIcon,
 };

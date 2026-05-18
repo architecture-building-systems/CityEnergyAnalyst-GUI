@@ -17,7 +17,7 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
@@ -66,40 +66,60 @@ const useParameterAsyncValidation = ({
   form,
   nullable,
 }) => {
-  // Create async validator for Ant Design Form.Item rules
+  const timerRef = useRef(null);
+  const cancelRef = useRef(null);
+
   const validator = useCallback(
-    async (_, fieldValue) => {
-      // Skip validation if not needed
+    (_, fieldValue) => {
       if (!needs_validation || !toolName || !name) return Promise.resolve();
 
-      // Skip validation if field is nullable and value is empty
       if (
         nullable &&
         (fieldValue === null || fieldValue === undefined || fieldValue === '')
       )
         return Promise.resolve();
 
-      try {
-        const formValues = form.getFieldsValue();
-        const response = await apiClient.post(
-          `/api/tools/${toolName}/validate-field`,
-          {
-            parameter_name: name,
-            value: fieldValue,
-            form_values: formValues,
-          },
-        );
+      // Cancel previous debounced validation so antd's
+      // form.validateFields() never hangs on an orphaned promise.
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (cancelRef.current) cancelRef.current();
 
-        if (response.data.valid) {
-          return Promise.resolve();
-        } else {
-          return Promise.reject(new Error(response.data.error));
-        }
-      } catch (error) {
-        const errorMessage =
-          error?.response?.data?.error || error?.message || 'Validation failed';
-        return Promise.reject(new Error(errorMessage));
-      }
+      return new Promise((resolve, reject) => {
+        cancelRef.current = resolve;
+        timerRef.current = setTimeout(async () => {
+          cancelRef.current = null;
+          try {
+            const formValues = form.getFieldsValue();
+            const response = await apiClient.post(
+              `/api/tools/${toolName}/validate-field`,
+              {
+                parameter_name: name,
+                value: fieldValue,
+                form_values: formValues,
+              },
+            );
+
+            if (response.data.valid) {
+              const rawWarnings = response.data.warnings ?? [];
+              const messages = rawWarnings
+                .filter((w) => w.field === name)
+                .map((w) => w.message);
+              requestAnimationFrame(() => {
+                form.setFields([{ name, warnings: messages }]);
+              });
+              resolve();
+            } else {
+              reject(new Error(response.data.error));
+            }
+          } catch (error) {
+            const errorMessage =
+              error?.response?.data?.error ||
+              error?.message ||
+              'Validation failed';
+            reject(new Error(errorMessage));
+          }
+        }, 400);
+      });
     },
     [needs_validation, toolName, name, form, nullable],
   );
@@ -107,7 +127,7 @@ const useParameterAsyncValidation = ({
   return validator;
 };
 
-const Parameter = ({ parameter, form, toolName }) => {
+const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
   const { name, type, value, choices, nullable, help, needs_validation } =
     parameter;
   const { setFieldsValue } = form;
@@ -319,7 +339,8 @@ const Parameter = ({ parameter, form, toolName }) => {
         </FormField>
       );
     }
-    case 'BuildingsParameter': {
+    case 'BuildingsParameter':
+    case 'OptionalBuildingsParameter': {
       return (
         <BuildingsParameter
           name={name}
@@ -336,9 +357,12 @@ const Parameter = ({ parameter, form, toolName }) => {
     case 'MultiChoiceFeedstockParameter':
     case 'MultiSystemParameter':
     case 'ColumnMultiChoiceParameter':
+    case 'EnergyCarrierMultiChoiceParameter':
     case 'InterventionTemplateMultiChoiceParameter':
     case 'NetworkLayoutMultiChoiceParameter':
     case 'ScenarioNameMultiChoiceParameter':
+    case 'SimulatedPathwayMultiChoiceParameter':
+    case 'SubfolderMultiChoiceParameter':
     case 'WhatIfNameMultiChoiceParameter':
     case 'SolarPanelMultiChoiceParameter':
     case 'ComponentMultiChoiceParameter': {
@@ -421,6 +445,7 @@ const Parameter = ({ parameter, form, toolName }) => {
             style={{ width: '100%' }}
             placeholder={'Nothing Selected'}
             maxTagCount={10}
+            disabled={paramDisabled}
             popupRender={(menu) => (
               <div>
                 <div style={{ padding: '8px', textAlign: 'center' }}>
@@ -649,7 +674,7 @@ const Parameter = ({ parameter, form, toolName }) => {
           initialValue={value}
           valuePropName="checked"
         >
-          <Switch />
+          <Switch disabled={paramDisabled} />
         </FormField>
       );
 
@@ -679,12 +704,15 @@ const Parameter = ({ parameter, form, toolName }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator: validatorAsync }]}
-          validateTrigger="onBlur"
+          rules={paramDisabled ? [] : [{ validator: validatorAsync }]}
+          validateTrigger={['onChange', 'onBlur']}
           dependencies={parameter.depends_on || []}
-          hasFeedback
+          hasFeedback={!paramDisabled}
         >
-          <Input placeholder="Enter a name for the network" />
+          <Input
+            placeholder="Enter a name for the network"
+            disabled={paramDisabled}
+          />
         </FormField>
       );
     }
@@ -695,12 +723,15 @@ const Parameter = ({ parameter, form, toolName }) => {
           name={name}
           help={help}
           initialValue={value}
-          rules={[{ validator: validatorAsync }]}
-          validateTrigger="onBlur"
+          rules={paramDisabled ? [] : [{ validator: validatorAsync }]}
+          validateTrigger={['onChange', 'onBlur']}
           dependencies={parameter.depends_on || []}
-          hasFeedback
+          hasFeedback={!paramDisabled}
         >
-          <Input placeholder="Enter a name for the what-if scenario" />
+          <Input
+            placeholder="Enter a name for the what-if scenario"
+            disabled={paramDisabled}
+          />
         </FormField>
       );
     }

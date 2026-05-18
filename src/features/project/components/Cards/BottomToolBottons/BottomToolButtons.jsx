@@ -1,5 +1,11 @@
 import { Tooltip } from 'antd';
-import { DatabaseEditorIcon, ReportsIcon, InputEditorIcon } from 'assets/icons';
+import {
+  DatabaseEditorIcon,
+  InsightIcon,
+  ReportsIcon,
+  InputEditorIcon,
+  TimelineIcon,
+} from 'assets/icons';
 import useNavigationStore from 'stores/navigationStore';
 
 import routes from 'constants/routes.json';
@@ -7,10 +13,17 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { animated } from '@react-spring/web';
 
-// TODO: Remove this
+// Mark the entry as not yet wired; renders the button with a
+// "[Coming soon]" tooltip and no click handler.
 const TEMP_DISABLED = ['reports'];
 
-const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
+const BottomToolButtons = ({
+  showTools,
+  onOpenInputEditor,
+  onTogglePathwayPanel,
+  pathwayPanelOpen,
+  hidePathwayBuilder,
+}) => {
   const { push } = useNavigationStore();
 
   const items = [
@@ -29,10 +42,24 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
       hidden: !showTools,
     },
     {
+      id: 'pathway',
+      icon: TimelineIcon,
+      title: 'Pathway Builder',
+      onClick: () => onTogglePathwayPanel?.(),
+      hidden: !showTools || hidePathwayBuilder,
+      active: pathwayPanelOpen,
+    },
+    {
+      id: 'canvas',
+      icon: InsightIcon,
+      title: 'Canvas Builder',
+      onClick: () => push(routes?.CANVAS),
+      hidden: !showTools,
+    },
+    {
       id: 'reports',
       icon: ReportsIcon,
-      title: 'Reports',
-      onClick: () => push(routes?.REPORTS),
+      title: 'Report Builder',
       hidden: !showTools,
     },
   ];
@@ -42,7 +69,7 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
       className="cea-overlay-card"
       style={{
         display: 'flex',
-        gap: 8,
+        gap: 5,
       }}
     >
       {items.map((item) => (
@@ -53,13 +80,14 @@ const BottomToolButtons = ({ showTools, onOpenInputEditor }) => {
           title={item.title}
           onClick={item.onClick}
           hidden={item.hidden}
+          active={item.active}
         />
       ))}
     </div>
   );
 };
 
-const ToolHoverButton = ({ id, title, icon, onClick, hidden }) => {
+const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const _icon = icon;
 
@@ -77,7 +105,7 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden }) => {
             }}
           >
             <div>{`${title}`}</div>
-            <div>[Under development]</div>
+            <div>[Coming soon]</div>
           </div>
         }
         styles={{ body: { fontSize: 12 } }}
@@ -97,7 +125,13 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden }) => {
         onMouseLeave={onMouseLeave}
         style={styles}
       >
-        <button className="cea-card-toolbar-icon-container" onClick={onClick}>
+        <button
+          className="cea-card-toolbar-icon-container"
+          onClick={onClick}
+          style={{
+            background: active ? 'rgba(38, 89, 160, 0.12)' : undefined,
+          }}
+        >
           <div className="cea-card-toolbar-icon no-hover-color">
             <_icon />
           </div>
