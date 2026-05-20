@@ -340,7 +340,9 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
       );
     }
     case 'BuildingsParameter':
-    case 'OptionalBuildingsParameter': {
+    case 'OptionalBuildingsParameter':
+    case 'PathwayConstructBuildingsParameter':
+    case 'PathwayDemolishBuildingsParameter': {
       return (
         <BuildingsParameter
           name={name}
