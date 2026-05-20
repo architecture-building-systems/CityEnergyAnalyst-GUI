@@ -113,6 +113,13 @@ export const fetchInterventionTemplate = async (templateName) => {
   return data;
 };
 
+export const fetchTemplateUsage = async (templateName) => {
+  const { data } = await apiClient.get(
+    `/api/pathways/templates/${encodeURIComponent(templateName)}/usage`,
+  );
+  return data?.usage ?? [];
+};
+
 export const preSaveDefineTemplateConfig = async (configPayload) => {
   await apiClient.post(
     '/api/tools/pathway-intervention-templates-define/save-config',

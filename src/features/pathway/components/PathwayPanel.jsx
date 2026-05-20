@@ -42,6 +42,7 @@ import {
   fetchPathwayOverview,
   fetchPathwayTimeline,
   fetchStateGeojson,
+  fetchTemplateUsage,
   preSaveBuildingEventsConfig,
   preSaveDefineTemplateConfig,
   preSaveSimulatePathwayConfig,
@@ -1369,20 +1370,63 @@ const PathwayPanel = ({
     await openForm(configPayload);
   };
 
-  const handleDeleteTemplate = (templateName) => {
+  const handleDeleteTemplate = async (templateName) => {
     if (!templateName) {
       return;
     }
 
+    // Best-effort: warn if this template's changes appear in any pathway-year. A scan failure
+    // must never block deletion, so fall back to an empty list on error.
+    let usage = [];
+    try {
+      usage = await fetchTemplateUsage(templateName);
+    } catch {
+      usage = [];
+    }
+
+    let usageNote = null;
+    if (usage.length > 0) {
+      const byPathway = usage.reduce((acc, { pathway, year }) => {
+        (acc[pathway] = acc[pathway] || []).push(year);
+        return acc;
+      }, {});
+      const summary = Object.entries(byPathway)
+        .map(
+          ([pathway, years]) =>
+            `${pathway} (${years.sort((a, b) => a - b).join(', ')})`,
+        )
+        .join('; ');
+      usageNote = (
+        <p style={{ marginTop: 8 }}>
+          Changes matching this template appear in{' '}
+          <strong>{usage.length}</strong> pathway year
+          {usage.length === 1 ? '' : 's'}: {summary}. Those years keep their own
+          copy and are <strong>not</strong> affected by deleting the template.
+        </p>
+      );
+    }
+
     Modal.confirm({
       title: `Delete template '${templateName}'?`,
-      content:
-        'This removes the intervention template definition. This cannot be undone.',
+      content: (
+        <>
+          <p style={{ margin: 0 }}>
+            This removes the intervention template definition. This cannot be
+            undone.
+          </p>
+          {usageNote}
+        </>
+      ),
       okText: 'Delete template',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
           await deleteInterventionTemplate(templateName);
+          // Clear the selection if the deleted template was the selected one, so it doesn't
+          // linger as a dangling value in the dropdown.
+          setSelectedHeaderTemplate((current) =>
+            current === templateName ? null : current,
+          );
           await loadTemplates();
         } catch (error) {
           setPanelError(
