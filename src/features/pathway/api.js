@@ -106,6 +106,20 @@ export const deleteInterventionTemplate = async (templateName) => {
   return data;
 };
 
+export const fetchInterventionTemplate = async (templateName) => {
+  const { data } = await apiClient.get(
+    `/api/pathways/templates/${encodeURIComponent(templateName)}`,
+  );
+  return data;
+};
+
+export const preSaveDefineTemplateConfig = async (configPayload) => {
+  await apiClient.post(
+    '/api/tools/pathway-intervention-templates-define/save-config',
+    configPayload,
+  );
+};
+
 export const preSaveSimulatePathwayConfig = async (pathwayName) => {
   await apiClient.post('/api/tools/pathway-simulations/save-config', {
     'existing-pathway-name': pathwayName,
