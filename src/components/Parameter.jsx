@@ -173,7 +173,10 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           ]}
           initialValue={stringValue}
         >
-          <Input placeholder={nullable ? 'Leave blank for default' : null} />
+          <Input
+            placeholder={nullable ? 'Leave blank for default' : null}
+            disabled={paramDisabled}
+          />
         </FormField>
       );
     }
@@ -446,6 +449,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
             style={{ width: '100%' }}
             placeholder={'Nothing Selected'}
             maxTagCount={10}
+            disabled={paramDisabled}
             popupRender={(menu) => (
               <div>
                 <div style={{ padding: '8px', textAlign: 'center' }}>
