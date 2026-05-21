@@ -709,7 +709,18 @@ const PathwayPanel = ({
     }
   }, [selectedPathway, selectedRow, setStateZoneOverride]);
 
-  const span = timeline?.span ?? overview?.span ?? {};
+  // Scale the shared ruler to the currently visible lanes rather than the global span the
+  // backend reports (the union of every pathway). Otherwise a freshly created/launched pathway
+  // would inherit the previous pathway's year range instead of showing its own.
+  const visibleSpan = useMemo(() => {
+    const years = visibleOverviewPathways.flatMap((p) => p.years ?? []);
+    if (!years.length) {
+      return null;
+    }
+    return { start_year: Math.min(...years), end_year: Math.max(...years) };
+  }, [visibleOverviewPathways]);
+
+  const span = visibleSpan ?? timeline?.span ?? overview?.span ?? {};
   const startYear = span?.start_year;
   const endYear = span?.end_year;
   const yearRange = useMemo(() => {
@@ -792,47 +803,55 @@ const PathwayPanel = ({
     [],
   );
 
-  const loadOverview = useCallback(async (preferredPathway = null) => {
-    setLoadingOverview(true);
-    setPanelError(null);
-    try {
-      const data = await fetchPathwayOverview();
-      setOverview(data);
-      const pathwayNames = (data?.pathways ?? []).map(
-        (item) => item.pathway_name,
-      );
-      const activePathway =
-        (preferredPathway && pathwayNames.includes(preferredPathway)
-          ? preferredPathway
-          : null) ??
-        (selectedPathwayRef.current &&
-        pathwayNames.includes(selectedPathwayRef.current)
-          ? selectedPathwayRef.current
-          : null) ??
-        pathwayNames[0] ??
-        null;
-      setSelectedPathway(activePathway);
-      setVisiblePathways((prev) => {
-        if (prev.length > 0) {
-          const kept = prev.filter((p) => pathwayNames.includes(p));
-          if (activePathway && !kept.includes(activePathway)) {
-            kept.push(activePathway);
+  const loadOverview = useCallback(
+    async (preferredPathway = null, { exclusiveVisible = false } = {}) => {
+      setLoadingOverview(true);
+      setPanelError(null);
+      try {
+        const data = await fetchPathwayOverview();
+        setOverview(data);
+        const pathwayNames = (data?.pathways ?? []).map(
+          (item) => item.pathway_name,
+        );
+        const activePathway =
+          (preferredPathway && pathwayNames.includes(preferredPathway)
+            ? preferredPathway
+            : null) ??
+          (selectedPathwayRef.current &&
+          pathwayNames.includes(selectedPathwayRef.current)
+            ? selectedPathwayRef.current
+            : null) ??
+          pathwayNames[0] ??
+          null;
+        setSelectedPathway(activePathway);
+        setVisiblePathways((prev) => {
+          // After creating a new pathway, show only it so building events and interventions
+          // (which target every visible lane) do not silently also apply to the old pathways.
+          if (exclusiveVisible) {
+            return activePathway ? [activePathway] : [];
           }
-          return kept;
-        }
-        return activePathway ? [activePathway] : [];
-      });
-      return activePathway;
-    } catch (error) {
-      setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
-      setOverview(null);
-      setSelectedPathway(null);
-      setVisiblePathways([]);
-      return null;
-    } finally {
-      setLoadingOverview(false);
-    }
-  }, []);
+          if (prev.length > 0) {
+            const kept = prev.filter((p) => pathwayNames.includes(p));
+            if (activePathway && !kept.includes(activePathway)) {
+              kept.push(activePathway);
+            }
+            return kept;
+          }
+          return activePathway ? [activePathway] : [];
+        });
+        return activePathway;
+      } catch (error) {
+        setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
+        setOverview(null);
+        setSelectedPathway(null);
+        setVisiblePathways([]);
+        return null;
+      } finally {
+        setLoadingOverview(false);
+      }
+    },
+    [],
+  );
 
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -850,9 +869,12 @@ const PathwayPanel = ({
     async ({
       preferredPathway = selectedPathwayRef.current,
       preferredYear = selectedYearRef.current,
+      exclusiveVisible = false,
     } = {}) => {
       setBuildingLifecycleData(null);
-      const activePathway = await loadOverview(preferredPathway);
+      const activePathway = await loadOverview(preferredPathway, {
+        exclusiveVisible,
+      });
       if (!activePathway) {
         setTimeline(null);
         setSelectedYear(null);
@@ -1072,14 +1094,13 @@ const PathwayPanel = ({
     }
 
     if (job.state === 2) {
-      if (pendingPanelJob.onSuccess === 'created-pathway') {
-        // pathway created successfully
-      }
       setPanelError(null);
       void refreshPathwayData({
         preferredPathway:
           pendingPanelJob.preferredPathway ?? selectedPathwayRef.current,
         preferredYear: pendingPanelJob.preferredYear,
+        // A freshly created pathway should start as the only visible lane.
+        exclusiveVisible: pendingPanelJob.onSuccess === 'created-pathway',
       });
       setPendingPanelJob(null);
       setBusyAction(null);
