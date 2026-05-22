@@ -96,7 +96,10 @@ export const saveYearYaml = async (pathwayName, year, rawYaml) => {
 
 export const fetchInterventionTemplates = async () => {
   const { data } = await apiClient.get('/api/pathways/templates');
-  return data?.templates ?? [];
+  return {
+    names: data?.templates ?? [],
+    descriptions: data?.descriptions ?? {},
+  };
 };
 
 export const deleteInterventionTemplate = async (templateName) => {

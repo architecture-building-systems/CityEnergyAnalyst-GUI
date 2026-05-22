@@ -455,7 +455,7 @@ const PathwaySelect = ({
   );
 };
 
-const TemplateOption = ({ templateName, onEdit, onDelete }) => {
+const TemplateOption = ({ templateName, description, onEdit, onDelete }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleEditClick = (e) => {
@@ -486,9 +486,12 @@ const TemplateOption = ({ templateName, onEdit, onDelete }) => {
           whiteSpace: 'nowrap',
           flexGrow: 1,
         }}
-        title={templateName}
+        title={description ? `${templateName}: ${description}` : templateName}
       >
         {templateName}
+        {description ? (
+          <span style={{ color: 'rgba(0, 0, 0, 0.45)' }}>: {description}</span>
+        ) : null}
       </div>
       {isHovered && (
         <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
@@ -512,6 +515,7 @@ const TemplateOption = ({ templateName, onEdit, onDelete }) => {
 
 const TemplateSelect = ({
   templates,
+  descriptions,
   selectedTemplates,
   onSelectTemplates,
   onEditTemplate,
@@ -532,22 +536,24 @@ const TemplateSelect = ({
       label: (
         <TemplateOption
           templateName={name}
+          description={descriptions?.[name]}
           onEdit={onEditTemplate}
           onDelete={onDeleteTemplate}
         />
       ),
       value: name,
     }));
-  }, [sortedTemplates, onEditTemplate, onDeleteTemplate]);
+  }, [sortedTemplates, descriptions, onEditTemplate, onDeleteTemplate]);
 
   const hasTemplates = sortedTemplates.length > 0;
 
   return (
     <Select
       mode="multiple"
+      optionLabelProp="value"
       className={`cea-template-select ${!hasTemplates ? 'cea-template-select-empty' : ''}`}
-      style={{ width: 208 }}
-      styles={{ popup: { root: { width: 270 } } }}
+      style={{ width: 416 }}
+      styles={{ popup: { root: { width: 416 } } }}
       placeholder={
         hasTemplates ? 'Intervention Templates' : 'Create Intervention Template'
       }
@@ -641,6 +647,7 @@ const PathwayPanel = ({
   const [newYearValue, setNewYearValue] = useState(null);
 
   const [templateNames, setTemplateNames] = useState([]);
+  const [templateDescriptions, setTemplateDescriptions] = useState({});
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const [selectedHeaderTemplates, setSelectedHeaderTemplates] = useState([]);
@@ -862,10 +869,12 @@ const PathwayPanel = ({
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true);
     try {
-      const names = await fetchInterventionTemplates();
+      const { names, descriptions } = await fetchInterventionTemplates();
       setTemplateNames(names);
+      setTemplateDescriptions(descriptions);
     } catch {
       setTemplateNames([]);
+      setTemplateDescriptions({});
     } finally {
       setLoadingTemplates(false);
     }
@@ -1690,6 +1699,7 @@ const PathwayPanel = ({
             <Divider type="vertical" style={{ height: 24, margin: 0 }} />
             <TemplateSelect
               templates={templateNames}
+              descriptions={templateDescriptions}
               selectedTemplates={selectedHeaderTemplates}
               onSelectTemplates={setSelectedHeaderTemplates}
               onEditTemplate={handleEditTemplate}
@@ -1828,7 +1838,7 @@ const PathwayPanel = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  width: 549,
+                  flexWrap: 'wrap',
                 }}
               >
                 <InputNumber
@@ -1836,7 +1846,7 @@ const PathwayPanel = ({
                   precision={0}
                   value={newYearValue}
                   onChange={setNewYearValue}
-                  style={{ width: 96 }}
+                  style={{ width: 96, flexShrink: 0 }}
                   disabled={!selectedPathway}
                 />
                 {selectedHeaderTemplates.length ? (
