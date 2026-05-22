@@ -55,6 +55,9 @@ const LABEL_COLUMN_WIDTH = 208;
 const RULER_HEIGHT = 24;
 const ACTIVE_LANE_HEIGHT = 48;
 const MAX_VISIBLE_TIMELINE_LANES = 3;
+// Minimum horizon for the shared ruler so sparse, near-term pathways still render against a
+// long-term scale. Pathways that already run past this keep their own end year.
+const MIN_TIMELINE_END_YEAR = 2100;
 
 const STATUS_FILL = {
   none: '#CBD5E1',
@@ -722,7 +725,12 @@ const PathwayPanel = ({
 
   const span = visibleSpan ?? timeline?.span ?? overview?.span ?? {};
   const startYear = span?.start_year;
-  const endYear = span?.end_year;
+  // Extend the ruler to at least 2100 so sparse, near-term pathways still show a long-term
+  // horizon; pathways that already run past 2100 keep their own end year.
+  const endYear =
+    span?.end_year != null
+      ? Math.max(span.end_year, MIN_TIMELINE_END_YEAR)
+      : span?.end_year;
   const yearRange = useMemo(() => {
     if (startYear == null || endYear == null) {
       return 1;
