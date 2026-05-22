@@ -511,8 +511,8 @@ const TemplateOption = ({ templateName, onEdit, onDelete }) => {
 
 const TemplateSelect = ({
   templates,
-  selectedTemplate,
-  onSelectTemplate,
+  selectedTemplates,
+  onSelectTemplates,
   onEditTemplate,
   onDeleteTemplate,
   onCreateTemplate,
@@ -543,6 +543,7 @@ const TemplateSelect = ({
 
   return (
     <Select
+      mode="multiple"
       className={`cea-template-select ${!hasTemplates ? 'cea-template-select-empty' : ''}`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}
@@ -550,13 +551,9 @@ const TemplateSelect = ({
         hasTemplates ? 'Intervention Templates' : 'Create Intervention Template'
       }
       options={hasTemplates ? options : []}
-      value={selectedTemplate}
-      onChange={onSelectTemplate}
-      onSelect={(value) => {
-        if (value === selectedTemplate) {
-          onSelectTemplate(null);
-        }
-      }}
+      value={selectedTemplates}
+      onChange={onSelectTemplates}
+      maxTagCount="responsive"
       allowClear={hasTemplates}
       loading={loading}
       open={hasTemplates ? open : false}
@@ -645,7 +642,7 @@ const PathwayPanel = ({
   const [templateNames, setTemplateNames] = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
-  const [selectedHeaderTemplate, setSelectedHeaderTemplate] = useState(null);
+  const [selectedHeaderTemplates, setSelectedHeaderTemplates] = useState([]);
 
   const scenarioPath = useMemo(
     () => buildScenarioPath(project, scenarioName),
@@ -1178,7 +1175,7 @@ const PathwayPanel = ({
 
   const handleApplyIntervention = async () => {
     if (
-      !selectedHeaderTemplate ||
+      !selectedHeaderTemplates.length ||
       newYearValue == null ||
       !visiblePathways.length
     ) {
@@ -1193,7 +1190,7 @@ const PathwayPanel = ({
         scenario: scenarioPath,
         existing_pathway_names: visiblePathways,
         year_of_state: targetYear,
-        intervention_templates: [selectedHeaderTemplate],
+        intervention_templates: selectedHeaderTemplates,
       },
       busyKey: 'apply-intervention',
       failedToStartMessage: 'Failed to start the apply-intervention job.',
@@ -1353,7 +1350,9 @@ const PathwayPanel = ({
     const openForm = async (configPayload) => {
       try {
         await preSaveDefineTemplateConfig(configPayload);
-        setSelectedHeaderTemplate(templateName);
+        setSelectedHeaderTemplates((current) =>
+          current.includes(templateName) ? current : [...current, templateName],
+        );
         handleOpenTemplateTool();
         // The define form caches its parameters per script name. Switching templates does
         // not change the script, so force a refetch to reload the freshly-saved values into
@@ -1451,10 +1450,10 @@ const PathwayPanel = ({
       onOk: async () => {
         try {
           await deleteInterventionTemplate(templateName);
-          // Clear the selection if the deleted template was the selected one, so it doesn't
-          // linger as a dangling value in the dropdown.
-          setSelectedHeaderTemplate((current) =>
-            current === templateName ? null : current,
+          // Drop the deleted template from the selection so it doesn't linger as a
+          // dangling value in the dropdown.
+          setSelectedHeaderTemplates((current) =>
+            current.filter((name) => name !== templateName),
           );
           await loadTemplates();
         } catch (error) {
@@ -1649,8 +1648,8 @@ const PathwayPanel = ({
             <Divider type="vertical" style={{ height: 24, margin: 0 }} />
             <TemplateSelect
               templates={templateNames}
-              selectedTemplate={selectedHeaderTemplate}
-              onSelectTemplate={setSelectedHeaderTemplate}
+              selectedTemplates={selectedHeaderTemplates}
+              onSelectTemplates={setSelectedHeaderTemplates}
               onEditTemplate={handleEditTemplate}
               onDeleteTemplate={handleDeleteTemplate}
               onCreateTemplate={handleOpenTemplateTool}
@@ -1798,7 +1797,7 @@ const PathwayPanel = ({
                   style={{ width: 96 }}
                   disabled={!selectedPathway}
                 />
-                {selectedHeaderTemplate ? (
+                {selectedHeaderTemplates.length ? (
                   <Button
                     type="primary"
                     icon={<CreateNewIcon />}
@@ -1806,7 +1805,9 @@ const PathwayPanel = ({
                     loading={busyAction === 'apply-intervention'}
                     onClick={handleApplyIntervention}
                   >
-                    Apply Selected Intervention
+                    {selectedHeaderTemplates.length > 1
+                      ? `Apply ${selectedHeaderTemplates.length} Interventions`
+                      : 'Apply Selected Intervention'}
                   </Button>
                 ) : (
                   <Button
