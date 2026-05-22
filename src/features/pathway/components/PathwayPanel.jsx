@@ -43,6 +43,7 @@ import {
   fetchPathwayTimeline,
   fetchStateGeojson,
   fetchTemplateUsage,
+  fetchYearEditorOptions,
   preSaveBuildingEventsConfig,
   preSaveDefineTemplateConfig,
   preSaveSimulatePathwayConfig,
@@ -1203,6 +1204,47 @@ const PathwayPanel = ({
     setNewYearValue(null);
   };
 
+  const handleCopyState = async () => {
+    if (!selectedPathway || !selectedRow || newYearValue == null) {
+      return;
+    }
+
+    const targetYear = Number(newYearValue);
+    try {
+      // Reuse the year's expert-YAML round-trip: read the selected state's full entry, then
+      // write it under the target year (the save-yaml job revalidates the resulting log).
+      const options = await fetchYearEditorOptions(
+        selectedPathway,
+        selectedRow.year,
+      );
+      const rawYaml = options?.yaml_preview;
+      if (!rawYaml || !rawYaml.trim()) {
+        setPanelError('The selected state has no content to copy.');
+        return;
+      }
+      pendingPreferredYearRef.current = targetYear;
+      await startPanelJob({
+        script: 'pathway-save-yaml',
+        parameters: {
+          scenario: scenarioPath,
+          existing_pathway_names: [selectedPathway],
+          year_of_state: targetYear,
+          raw_yaml: rawYaml,
+        },
+        busyKey: 'copy-state',
+        failedToStartMessage: 'Failed to start the copy-state job.',
+        failureMessage:
+          'Copying state failed. Open Job Info in the status bar for details.',
+        preferredPathway: selectedPathway,
+        preferredYear: targetYear,
+        onSuccess: 'copied-state',
+      });
+      setNewYearValue(null);
+    } catch (error) {
+      setPanelError(getErrorMessage(error, 'Failed to copy state.'));
+    }
+  };
+
   const handleDeletePathwayByName = (pathwayName) => {
     if (!pathwayName || !scenarioPath) {
       return;
@@ -1820,6 +1862,16 @@ const PathwayPanel = ({
                     Create Building Event
                   </Button>
                 )}
+                {selectedRow ? (
+                  <Button
+                    icon={<DuplicateIcon />}
+                    disabled={!selectedPathway || newYearValue == null}
+                    loading={busyAction === 'copy-state'}
+                    onClick={handleCopyState}
+                  >
+                    Copy State
+                  </Button>
+                ) : null}
                 {selectedRow &&
                 (selectedRow.can_delete ||
                   selectedRow.can_clear_manual_changes) ? (
