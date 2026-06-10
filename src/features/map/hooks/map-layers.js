@@ -79,6 +79,9 @@ export const useGetMapLayers = (
         const data = await fetchMapLayer(categoryName, selectedLayerInfo.name, {
           project,
           scenario_name: scenarioName,
+          ...(childScenario?.scenario_path
+            ? { scenario_path: childScenario.scenario_path }
+            : {}),
           parameters,
         });
         out[selectedLayerInfo.name] = data;

@@ -4,18 +4,26 @@ import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
 export function useInputs() {
-  const projectName = useProjectStore((state) => state.name);
+  const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
+
+  const scenarioPath = childScenario?.scenario_path ?? null;
 
   return useQuery({
-    queryKey: ['inputs', projectName, scenarioName],
+    queryKey: ['inputs', project, scenarioName, scenarioPath],
     queryFn: async () => {
-      // Return empty object if projectName or scenarioName is not defined
-      if (!projectName || !scenarioName) return {};
+      // Return empty object if project or scenarioName is not defined
+      if (!project || !scenarioName) return {};
+
+      const params = scenarioPath
+        ? { scenario_path: scenarioPath }
+        : { project, scenario_name: scenarioName };
 
       try {
         const { data } = await apiClient.get(
           `${API_ENDPOINTS.INPUTS}/all-inputs`,
+          { params },
         );
         return data;
       } catch (error) {

@@ -320,12 +320,9 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  // On mount / scenario change: clear any stuck child-scenario state
+  // On mount / scenario change: clear any active child-scenario state
   const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
   useEffect(() => {
-    import('features/pathway/api').then(({ switchToParentScenario }) => {
-      switchToParentScenario().catch(() => {});
-    });
     clearChildScenario();
   }, [scenarioName, clearChildScenario]);
 
@@ -418,16 +415,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           <button
             type="button"
             onClick={() => {
-              import('features/pathway/api').then(
-                ({ switchToParentScenario }) => {
-                  switchToParentScenario()
-                    .then(() => {
-                      clearChildScenario();
-                      queryClient.invalidateQueries();
-                    })
-                    .catch(() => {});
-                },
-              );
+              clearChildScenario();
+              queryClient.invalidateQueries();
             }}
             style={{
               position: 'fixed',

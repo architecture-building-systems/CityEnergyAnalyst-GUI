@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { fetchPathwayOverview, switchToChildScenario } from '../api';
+import { fetchPathwayOverview, fetchStateFolderPath } from '../api';
 
 const { Text } = Typography;
 
@@ -21,6 +21,8 @@ const PathwayViewer = ({ hidden }) => {
   const queryClient = useQueryClient();
   const childScenario = useProjectStore((s) => s.childScenario);
   const setChildScenario = useProjectStore((s) => s.setChildScenario);
+  const project = useProjectStore((s) => s.project);
+  const scenarioName = useProjectStore((s) => s.scenario);
 
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -97,12 +99,12 @@ const PathwayViewer = ({ hidden }) => {
 
     setSwitching(true);
     try {
-      const result = await switchToChildScenario(pathwayName, year);
+      const result = await fetchStateFolderPath(pathwayName, year, project, scenarioName);
       setChildScenario({
         pathway_name: pathwayName,
         year,
         parent_scenario: result.parent_scenario,
-        scenario_path: result.child_scenario,
+        scenario_path: result.scenario_path,
       });
       queryClient.invalidateQueries();
     } catch {

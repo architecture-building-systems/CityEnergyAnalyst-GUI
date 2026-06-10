@@ -165,16 +165,16 @@ export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   return data;
 };
 
-export const switchToChildScenario = async (pathwayName, year) => {
-  const { data } = await apiClient.put('/api/project/child-scenario', {
-    pathway_name: pathwayName,
-    year,
+export const fetchStateFolderPath = async (pathwayName, year, project, scenarioName) => {
+  const { data } = await apiClient.get('/api/project/state-folder', {
+    params: {
+      pathway_name: pathwayName,
+      year,
+      ...(project != null && scenarioName != null
+        ? { project, scenario_name: scenarioName }
+        : {}),
+    },
   });
-  return data;
-};
-
-export const switchToParentScenario = async () => {
-  const { data } = await apiClient.delete('/api/project/child-scenario');
   return data;
 };
 

@@ -9,8 +9,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   fetchPathwayOverview,
   fetchStateGeojson,
-  switchToChildScenario,
-  switchToParentScenario,
+  fetchStateFolderPath,
 } from 'features/pathway/api';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
@@ -271,12 +270,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     async (pathwayName, year) => {
       setSwitching(true);
       try {
-        const result = await switchToChildScenario(pathwayName, year);
+        const result = await fetchStateFolderPath(pathwayName, year, project, scenarioName);
         setChildScenario({
           pathway_name: pathwayName,
           year,
           parent_scenario: result.parent_scenario,
-          scenario_path: result.child_scenario,
+          scenario_path: result.scenario_path,
         });
         fetchStateGeojson(pathwayName, year)
           .then((data) => setStateZoneOverride(data?.geojson ?? null))
@@ -287,13 +286,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         setSwitching(false);
       }
     },
-    [setChildScenario, setStateZoneOverride, queryClient],
+    [project, scenarioName, setChildScenario, setStateZoneOverride, queryClient],
   );
 
-  const deactivatePathway = useCallback(async () => {
+  const deactivatePathway = useCallback(() => {
     setChildScenario(null);
     setStateZoneOverride(null);
-    await switchToParentScenario().catch(() => {});
     queryClient.invalidateQueries({ queryKey: ['toolParams'] });
     queryClient.invalidateQueries({ queryKey: ['inputs'] });
   }, [setChildScenario, setStateZoneOverride, queryClient]);
