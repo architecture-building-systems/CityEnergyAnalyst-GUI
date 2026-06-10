@@ -276,6 +276,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
           pathway_name: pathwayName,
           year,
           parent_scenario: result.parent_scenario,
+          scenario_path: result.child_scenario,
         });
         fetchStateGeojson(pathwayName, year)
           .then((data) => setStateZoneOverride(data?.geojson ?? null))

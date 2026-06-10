@@ -116,7 +116,7 @@ export const useProjectStore = create((set) => ({
   setRecentProjects: (projects) => set({ recentProjects: projects }),
 
   // Pathway Viewer: child scenario state
-  childScenario: null, // { pathway_name, year, parent_scenario }
+  childScenario: null, // { pathway_name, year, parent_scenario, scenario_path }
   setChildScenario: (data) => set({ childScenario: data }),
   clearChildScenario: () => set({ childScenario: null }),
 

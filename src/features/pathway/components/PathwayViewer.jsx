@@ -102,6 +102,7 @@ const PathwayViewer = ({ hidden }) => {
         pathway_name: pathwayName,
         year,
         parent_scenario: result.parent_scenario,
+        scenario_path: result.child_scenario,
       });
       queryClient.invalidateQueries();
     } catch {
