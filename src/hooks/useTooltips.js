@@ -1,26 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import tooltips from 'data/tooltips.json';
 
-const fetchTooltips = async () => {
-  const { data } = await apiClient.get('/api/tooltips/');
-  return data;
-};
-
-export const useTooltips = () => {
-  return useQuery({
-    queryKey: ['tooltips'],
-    queryFn: fetchTooltips,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-  });
-};
+// Returns the full tooltip map, matching the previous useQuery return shape.
+export const useTooltips = () => ({ data: tooltips });
 
 /**
  * Get a tooltip entry by key.
  * Returns { title, body } or { body } for simple tooltips.
- * Returns null if not found or not loaded.
+ * Returns null if not found.
  */
-export const useTooltip = (key) => {
-  const { data } = useTooltips();
-  return data?.[key] ?? null;
-};
+export const useTooltip = (key) => tooltips?.[key] ?? null;
