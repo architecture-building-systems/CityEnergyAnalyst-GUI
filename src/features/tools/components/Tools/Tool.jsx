@@ -19,6 +19,11 @@ import { useToolFormStore } from 'features/tools/stores/tool-form-store';
 import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
+const SCRIPT_READONLY_PARAMS = {
+  'pathway-update-building-events': ['existing-pathway-names', 'year-of-state'],
+  'pathway-simulations': ['existing-pathway-name'],
+};
+
 const PATHWAY_VIEWER_OVERRIDES = {
   'network-layout': (year) => ({
     'network-name': `thermal_network_${year}`,
@@ -79,9 +84,9 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
     return builder ? builder(childScenario.year) : {};
   }, [childScenario, script]);
 
-  const pathwayReadonlyFields = useMemo(
-    () => Object.keys(pathwayOverrides),
-    [pathwayOverrides],
+  const readonlyFields = useMemo(
+    () => [...(SCRIPT_READONLY_PARAMS[script] ?? []), ...Object.keys(pathwayOverrides)],
+    [script, pathwayOverrides],
   );
 
   const {
@@ -293,7 +298,7 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            extraReadonlyFields={pathwayReadonlyFields}
+            readonlyFields={readonlyFields}
           />
         </div>
       </Spin>
