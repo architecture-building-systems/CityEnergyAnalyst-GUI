@@ -1,21 +1,14 @@
 import { Typography } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
+import { getTickStep } from '../constants';
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
 
 const NODE_SIZE = 12;
 const PX_PER_YEAR = 8;
 const MIN_HEIGHT = 200;
 const ONGOING_HEIGHT = 24;
 const AXIS_WIDTH = 40;
-
-const getTickStep = (pxPerYear) => {
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-  for (const step of steps) {
-    if (pxPerYear * step >= 56) return step;
-  }
-  return 1000;
-};
 
 const BuildingLifecycleCard = ({
   buildingName,

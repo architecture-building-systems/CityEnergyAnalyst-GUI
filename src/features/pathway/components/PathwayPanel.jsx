@@ -33,6 +33,7 @@ import {
 
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import DuplicatePathwayModal from 'features/project/components/modals/DuplicatePathwayModal';
+import { STATUS_FILL, buildScenarioPath, getTickStep } from '../constants';
 
 import {
   deleteInterventionTemplate,
@@ -60,14 +61,6 @@ const MAX_VISIBLE_TIMELINE_LANES = 3;
 // long-term scale. Pathways that already run past this keep their own end year.
 const MIN_TIMELINE_END_YEAR = 2100;
 
-const STATUS_FILL = {
-  none: '#CBD5E1',
-  validated: '#CBD5E1',
-  baked: '#1470AF',
-  custom: '#AC6080',
-  simulated: '#000000',
-};
-
 const STATUS_ACCENT = {
   error: '#f04d5b',
   changed: '#D97706',
@@ -87,13 +80,6 @@ const getErrorMessage = (error, fallbackMessage) => {
   return fallbackMessage;
 };
 
-const buildScenarioPath = (project, scenarioName) => {
-  if (!project || !scenarioName) {
-    return null;
-  }
-  return `${String(project).replace(/[\\/]+$/, '')}/${scenarioName}`;
-};
-
 const formatCompactTimestamp = (value) => {
   if (!value) {
     return 'Not recorded';
@@ -106,16 +92,6 @@ const formatCompactTimestamp = (value) => {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-};
-
-const getTickStep = (pxPerYear) => {
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-  for (const step of steps) {
-    if (pxPerYear * step >= 56) {
-      return step;
-    }
-  }
-  return 1000;
 };
 
 const pickClosestYear = (years, preferredYear) => {

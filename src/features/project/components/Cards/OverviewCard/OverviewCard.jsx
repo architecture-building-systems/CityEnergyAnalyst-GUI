@@ -11,6 +11,7 @@ import {
   fetchStateGeojson,
   fetchStateFolderPath,
 } from 'features/pathway/api';
+import { STATUS_FILL, buildScenarioPath } from 'features/pathway/constants';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useMapStore } from 'features/map/stores/mapStore';
@@ -147,14 +148,6 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
 const LANE_PADDING = 18;
 const TIMELINE_HEIGHT = 36;
 
-const STATUS_FILL = {
-  none: '#CBD5E1',
-  validated: '#CBD5E1',
-  baked: '#1470AF',
-  custom: '#AC6080',
-  simulated: '#000000',
-};
-
 const PathwayViewerRow = ({ scenarioName, project }) => {
   const queryClient = useQueryClient();
   const [overview, setOverview] = useState(null);
@@ -270,7 +263,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     async (pathwayName, year) => {
       setSwitching(true);
       try {
-        const result = await fetchStateFolderPath(pathwayName, year, project, scenarioName);
+        const result = await fetchStateFolderPath(
+          pathwayName,
+          year,
+          project,
+          scenarioName,
+        );
         setChildScenario({
           pathway_name: pathwayName,
           year,
@@ -286,7 +284,13 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         setSwitching(false);
       }
     },
-    [project, scenarioName, setChildScenario, setStateZoneOverride, queryClient],
+    [
+      project,
+      scenarioName,
+      setChildScenario,
+      setStateZoneOverride,
+      queryClient,
+    ],
   );
 
   const deactivatePathway = useCallback(() => {
@@ -298,12 +302,13 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
 
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
-    if (phase !== 'baked' && phase !== 'simulated' && phase !== 'custom') return;
+    if (phase !== 'baked' && phase !== 'simulated' && phase !== 'custom')
+      return;
     await activateState(pathwayName, year);
   };
 
   const handleDelete = (pathwayName) => {
-    const scenarioPath = `${String(project).replace(/[\\/]+$/, '')}/${scenarioName}`;
+    const scenarioPath = buildScenarioPath(project, scenarioName);
     Modal.confirm({
       title: `Delete pathway '${pathwayName}'?`,
       content:
@@ -357,11 +362,10 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
               await deactivatePathway();
               return;
             }
-            const pathway = bakedPathways.find(
-              (p) => p.pathway_name === value,
-            );
-            const firstYear = [...(pathway?.years ?? [])]
-              .sort((a, b) => a - b)[0];
+            const pathway = bakedPathways.find((p) => p.pathway_name === value);
+            const firstYear = [...(pathway?.years ?? [])].sort(
+              (a, b) => a - b,
+            )[0];
             if (firstYear != null) {
               try {
                 await activateState(value, firstYear);
