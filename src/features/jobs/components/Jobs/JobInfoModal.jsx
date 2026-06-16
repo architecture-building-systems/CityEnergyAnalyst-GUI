@@ -110,10 +110,9 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
             type="primary"
             onClick={() => {
               setVisible(false);
-              selectPlotTool(
-                VIEW_TOOL_RESULTS[job.script],
-                buildPlotToolPrefillFromJob(job),
-              );
+              selectPlotTool(VIEW_TOOL_RESULTS[job.script], {
+                prefill: buildPlotToolPrefillFromJob(job),
+              });
             }}
           >
             View Results
