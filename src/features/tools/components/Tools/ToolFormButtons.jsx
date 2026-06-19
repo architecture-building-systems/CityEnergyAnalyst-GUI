@@ -159,8 +159,10 @@ export const ToolFormButtons = ({
             });
             return;
           }
-        } catch {
-          // Validation error — doRun will catch it via form validation
+        } catch (err) {
+          // Best-effort overwrite check: if the endpoint is unavailable, proceed
+          // with the run so a backend restart doesn't permanently block the UI.
+          console.error('Field collision check failed:', err);
         }
       }
     }

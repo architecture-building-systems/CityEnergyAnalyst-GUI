@@ -13,39 +13,44 @@ import { useProjectStore } from 'features/project/stores/projectStore';
  *
  * Each distinct (project, scenario) pair caches separately so
  * sibling Canvas Builder columns don't thrash each other's data.
+ *
+ * When no override is given, `childScenario.scenario_path` (set by
+ * the pathway viewer) takes effect so the input editor and map reflect
+ * the selected pathway state.
  */
 export function useInputs(options) {
-  const activeProject = useProjectStore((state) => state.name);
-  const activeScenario = useProjectStore((state) => state.scenario);
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   const scenarioOverride = options?.scenario ?? null;
   const projectOverride = options?.project ?? null;
 
-  // When the caller hands in a scenario override, gate the query on
-  // that (not on the active scenario). The active project name is
-  // still used as the fallback project so callers usually only need
-  // to pass `scenario`.
-  const projectName = scenarioOverride
-    ? projectOverride || activeProject
-    : activeProject;
-  const scenarioName = scenarioOverride ?? activeScenario;
+  // Canvas per-column override wins; fetch a named scenario without
+  // touching the active config or the pathway child-scenario.
+  const effectiveProject = scenarioOverride
+    ? projectOverride || project
+    : project;
+  const effectiveScenario = scenarioOverride ?? scenarioName;
+  // child-scenario path only applies to the active (non-override) fetch
+  const scenarioPath = scenarioOverride
+    ? null
+    : (childScenario?.scenario_path ?? null);
 
   return useQuery({
-    queryKey: ['inputs', projectName, scenarioName],
+    queryKey: ['inputs', effectiveProject, effectiveScenario, scenarioPath],
     queryFn: async () => {
-      // Return empty object if projectName or scenarioName is not defined
-      if (!projectName || !scenarioName) return {};
+      if (scenarioPath == null && (!effectiveProject || !effectiveScenario))
+        return {};
+
+      const params = scenarioPath
+        ? { scenario_path: scenarioPath }
+        : { project: effectiveProject, scenario_name: effectiveScenario };
 
       try {
-        const params = scenarioOverride
-          ? {
-              scenario: scenarioOverride,
-              project: projectOverride || undefined,
-            }
-          : undefined;
         const { data } = await apiClient.get(
           `${API_ENDPOINTS.INPUTS}/all-inputs`,
-          params ? { params } : undefined,
+          { params },
         );
         return data;
       } catch (error) {

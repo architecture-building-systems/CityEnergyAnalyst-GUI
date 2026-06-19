@@ -96,7 +96,10 @@ export const saveYearYaml = async (pathwayName, year, rawYaml) => {
 
 export const fetchInterventionTemplates = async () => {
   const { data } = await apiClient.get('/api/pathways/templates');
-  return data?.templates ?? [];
+  return {
+    names: data?.templates ?? [],
+    descriptions: data?.descriptions ?? {},
+  };
 };
 
 export const deleteInterventionTemplate = async (templateName) => {
@@ -104,6 +107,27 @@ export const deleteInterventionTemplate = async (templateName) => {
     `/api/pathways/templates/${encodeURIComponent(templateName)}`,
   );
   return data;
+};
+
+export const fetchInterventionTemplate = async (templateName) => {
+  const { data } = await apiClient.get(
+    `/api/pathways/templates/${encodeURIComponent(templateName)}`,
+  );
+  return data;
+};
+
+export const fetchTemplateUsage = async (templateName) => {
+  const { data } = await apiClient.get(
+    `/api/pathways/templates/${encodeURIComponent(templateName)}/usage`,
+  );
+  return data?.usage ?? [];
+};
+
+export const preSaveDefineTemplateConfig = async (configPayload) => {
+  await apiClient.post(
+    '/api/tools/pathway-intervention-templates-define/save-config',
+    configPayload,
+  );
 };
 
 export const preSaveSimulatePathwayConfig = async (pathwayName) => {
@@ -141,16 +165,16 @@ export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   return data;
 };
 
-export const switchToChildScenario = async (pathwayName, year) => {
-  const { data } = await apiClient.put('/api/project/child-scenario', {
-    pathway_name: pathwayName,
-    year,
+export const fetchStateFolderPath = async (pathwayName, year, project, scenarioName) => {
+  const { data } = await apiClient.get('/api/project/state-folder', {
+    params: {
+      pathway_name: pathwayName,
+      year,
+      ...(project != null && scenarioName != null
+        ? { project, scenario_name: scenarioName }
+        : {}),
+    },
   });
-  return data;
-};
-
-export const switchToParentScenario = async () => {
-  const { data } = await apiClient.delete('/api/project/child-scenario');
   return data;
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
@@ -26,7 +26,6 @@ import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import JobInfoList from 'features/jobs/components/Jobs/JobInfoList';
 import { ToolCardSideButtons } from 'features/project/components/Cards/ToolCardSideButtons';
 import {
-  useResetSelected,
   useSelected,
   useSelectionSource,
 } from 'features/input-editor/stores/inputEditorStore';
@@ -36,32 +35,57 @@ import {
   useMapLayerCategories,
   useSetActiveMapCategory,
 } from './Cards/MapLayersCard/store';
-import {
-  useMapStore,
-  useSetSelectedMapLayer,
-} from 'features/map/stores/mapStore';
+import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
+import { usePanelVisibility } from 'features/project/hooks/usePanelVisibility';
+import { usePathwayPanelResize } from 'features/pathway/hooks/usePathwayPanelResize';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const queryClient = useQueryClient();
   const name = useProjectStore((state) => state.name);
   const scenarioList = useProjectStore((state) => state.scenariosList);
+  const childScenario = useProjectStore((s) => s.childScenario);
+  const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
 
   const toolType = useToolType();
   const setToolType = useSetToolType();
   const selectPlotTool = useSelectPlotTool();
 
-  const resetSelected = useResetSelected();
   const selectedBuildings = useSelected();
   const selectionSource = useSelectionSource();
-  const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
   const mapLayerCategories = useMapLayerCategories();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setSelectedLayer = useSetSelectedMapLayer();
-  const childScenario = useProjectStore((s) => s.childScenario);
+
+  const {
+    hideAll,
+    showInputEditor,
+    showPathwayPanel,
+    pathwayPanelExpanded,
+    setPathwayPanelExpanded,
+    pathwayPanelHiddenForTool,
+    pathwayPanelHiddenForToolRef,
+    showToolBar,
+    showToolCardSideButtons,
+    showToolCard,
+    closeInputEditor,
+    toggleInputEditor,
+    togglePathwayPanel,
+    handleHideAll,
+    hidePathwayPanel,
+  } = usePanelVisibility({ scenarioName, toolType });
+
+  const {
+    pathwayPanelHeight,
+    pathwayPanelContentRef,
+    handlePathwayResizeStart,
+    pathwayPanelTransition,
+  } = usePathwayPanelResize({
+    open: !hideAll && showPathwayPanel,
+    expanded: pathwayPanelExpanded,
+  });
 
   const handlePlotToolSelected = (tool) => {
-    // Get map layer category from plot script name
     const layer = Object.keys(VIEW_PLOT_RESULTS).find(
       (key) => VIEW_PLOT_RESULTS[key] === tool,
     );
@@ -72,55 +96,30 @@ const ProjectOverlay = ({ project, scenarioName }) => {
       setActiveMapCategory(category.name);
       setSelectedLayer(layer);
     }
-
     selectPlotTool(tool);
   };
 
   const handleCategorySelected = (category) => {
-    // Chose the first layer in the category by default
     const firstLayer = category?.layers?.[0];
-    if (firstLayer) {
-      handleLayerSelected(firstLayer.name);
-    }
+    if (firstLayer) handleLayerSelected(firstLayer.name);
   };
 
   const handleLayerSelected = (layer) => {
     const plotScriptName = VIEW_PLOT_RESULTS?.[layer] ?? null;
-
     useToolCardStore.getState().setSelectedPlotTool(plotScriptName);
     if (plotScriptName) setToolType(toolTypes.MAP_LAYERS);
   };
 
-  const [hideAll, setHideAll] = useState(false);
-  const [showInputEditor, setInputEditor] = useState(false);
-  const [showPathwayPanel, setShowPathwayPanel] = useState(false);
-  const pathwayPanelHiddenForToolRef = useRef(false);
-  const [pathwayPanelExpanded, setPathwayPanelExpanded] = useState(false);
-  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(425);
-  const pathwayResizeStateRef = useRef(null);
-  const pathwayPanelContentRef = useRef(null);
-  const [pathwayPanelHiddenForTool, setPathwayPanelHiddenForTool] =
-    useState(false);
-
-  const showToolBar = scenarioName != null && !hideAll;
-  const showToolCardSideButtons = scenarioName != null && !hideAll;
-  const showToolCard = scenarioName != null && !hideAll && toolType != null;
-
-  useEffect(() => {
-    if (!showToolCard && pathwayPanelHiddenForToolRef.current) {
-      pathwayPanelHiddenForToolRef.current = false;
-      setPathwayPanelHiddenForTool(false);
-    }
-  }, [showToolCard]);
+  const fullscreenPathwayPanelRightInset = showToolCard
+    ? 'calc(var(--right-sidebar-width) + 56px)'
+    : 12;
 
   // Watch for building events job completion to close tool card
   const jobs = useJobsStore((state) => state.jobs);
   const buildingEventsHandledRef = useRef(new Set());
 
   useEffect(() => {
-    if (!jobs || !pathwayPanelHiddenForToolRef.current) {
-      return;
-    }
+    if (!jobs || !pathwayPanelHiddenForToolRef.current) return;
 
     const completedJobs = Object.entries(jobs).filter(
       ([id, job]) =>
@@ -139,9 +138,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
   const pathwaySimHandledRef = useRef(new Set());
 
   useEffect(() => {
-    if (!jobs || !pathwayPanelHiddenForToolRef.current) {
-      return;
-    }
+    if (!jobs || !pathwayPanelHiddenForToolRef.current) return;
 
     const startedJobs = Object.entries(jobs).filter(
       ([id, job]) =>
@@ -156,110 +153,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     }
   }, [jobs, setToolType]);
 
-  const fullscreenPathwayPanelRightInset = showToolCard
-    ? 'calc(var(--right-sidebar-width) + 56px)'
-    : 12;
-
-  const closeInputEditor = () => {
-    setInputEditor(false);
-  };
-
-  const toggleInputEditor = () => {
-    setInputEditor((prev) => {
-      const next = !prev;
-      if (next) {
-        setShowPathwayPanel(false);
-        setPathwayPanelExpanded(false);
-      }
-      return next;
-    });
-  };
-
-  const togglePathwayPanel = () => {
-    setShowPathwayPanel((prev) => {
-      const next = !prev;
-      if (next) {
-        setInputEditor(false);
-        setToolType(null);
-      } else {
-        setPathwayPanelExpanded(false);
-        useToolCardStore.getState().clearBuildingLifecycleData();
-        useMapStore.getState().setStateZoneOverride(null);
-      }
-      return next;
-    });
-  };
-
-  const handleHideAll = () => {
-    setHideAll((prev) => {
-      const next = !prev;
-      if (next) {
-        setPathwayPanelExpanded(false);
-      }
-      return next;
-    });
-  };
-
+  // On mount / scenario change: clear any active child-scenario state
   useEffect(() => {
-    const clampHeight = (height) =>
-      Math.max(290, Math.min(height, window.innerHeight - 220));
-
-    const handleResize = () => {
-      setPathwayPanelHeight((current) => clampHeight(current));
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handlePointerMove = (event) => {
-      const resizeState = pathwayResizeStateRef.current;
-      if (!resizeState) {
-        return;
-      }
-
-      const contentHeight =
-        pathwayPanelContentRef.current?.scrollHeight ?? Infinity;
-      const nextHeight = Math.max(
-        360,
-        Math.min(
-          resizeState.startHeight - (event.clientY - resizeState.startY),
-          window.innerHeight - 220,
-          contentHeight + 18,
-        ),
-      );
-      setPathwayPanelHeight(nextHeight);
-    };
-
-    const handlePointerUp = () => {
-      pathwayResizeStateRef.current = null;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseup', handlePointerUp);
-    return () => {
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('mouseup', handlePointerUp);
-    };
-  }, []);
-
-  const handlePathwayResizeStart = (event) => {
-    if (pathwayPanelExpanded || event.button !== 0) {
-      return;
-    }
-
-    pathwayResizeStateRef.current = {
-      startY: event.clientY,
-      startHeight: pathwayPanelHeight,
-    };
-    document.body.style.cursor = 'ns-resize';
-    document.body.style.userSelect = 'none';
-    event.preventDefault();
-  };
+    clearChildScenario();
+  }, [scenarioName, clearChildScenario]);
 
   const tension = 150;
   const friction = 20;
@@ -294,58 +191,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
-  const pathwayPanelTransition = useTransition(!hideAll && showPathwayPanel, {
-    from: { transform: 'translateY(100%)', opacity: 0, maxHeight: '0vh' },
-    enter: {
-      transform: 'translateY(0%)',
-      opacity: 1,
-      maxHeight: pathwayPanelExpanded
-        ? 'calc(100vh - 152px)'
-        : `${pathwayPanelHeight}px`,
-      marginBlock: '0px',
-    },
-    leave: {
-      transform: 'translateY(100%)',
-      opacity: 0,
-      maxHeight: '0vh',
-      marginBlock: '-12px',
-    },
-    config: { tension, friction },
-  });
-
   const transitionFromTop = useTransition(showToolBar, {
     from: { transform: 'translateY(-100%)', opacity: 0 }, // Start off-screen (top) and invisible
     enter: { transform: 'translateY(0%)', opacity: 1 }, // Slide in from top and become visible
     leave: { transform: 'translateY(-100%)', opacity: 0 }, // Slide out to top and fade out
     config: { tension, friction }, // Control the speed of the animation
   });
-
-  // On mount / scenario change: clear any stuck child-scenario state
-  const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
-  useEffect(() => {
-    import('features/pathway/api').then(({ switchToParentScenario }) => {
-      switchToParentScenario().catch(() => {});
-    });
-    clearChildScenario();
-  }, [scenarioName, clearChildScenario]);
-
-  // When a pathway is selected in the viewer, collapse the builder panel
-  useEffect(() => {
-    if (childScenario?.pathway_name) {
-      setShowPathwayPanel(false);
-      setPathwayPanelExpanded(false);
-    }
-  }, [childScenario?.pathway_name]);
-
-  // Reset state when project or scenario name changes.
-  // Keep the tool card open so the user can compare settings
-  // across scenarios without re-launching the form.
-  useEffect(() => {
-    resetSelected();
-    setInputEditor(false);
-    setShowPathwayPanel(false);
-    setPathwayPanelExpanded(false);
-  }, [name, scenarioName]);
 
   useEffect(() => {
     // Show building info tool card when buildings are selected on map and input editor is not open
@@ -418,16 +269,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           <button
             type="button"
             onClick={() => {
-              import('features/pathway/api').then(
-                ({ switchToParentScenario }) => {
-                  switchToParentScenario()
-                    .then(() => {
-                      clearChildScenario();
-                      queryClient.invalidateQueries();
-                    })
-                    .catch(() => {});
-                },
-              );
+              clearChildScenario();
+              queryClient.invalidateQueries();
             }}
             style={{
               position: 'fixed',
@@ -608,10 +451,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   scenarioName={scenarioName}
                   expanded={pathwayPanelExpanded}
                   onExpandedChange={setPathwayPanelExpanded}
-                  onHidePanel={() => {
-                    setPathwayPanelHiddenForTool(true);
-                    pathwayPanelHiddenForToolRef.current = true;
-                  }}
+                  onHidePanel={hidePathwayPanel}
                 />
               </div>
             </animated.div>

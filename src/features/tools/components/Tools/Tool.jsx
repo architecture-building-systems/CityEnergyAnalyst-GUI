@@ -19,6 +19,11 @@ import { useToolFormStore } from 'features/tools/stores/tool-form-store';
 import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
+const SCRIPT_READONLY_PARAMS = {
+  'pathway-update-building-events': ['existing-pathway-names', 'year-of-state'],
+  'pathway-simulations': ['existing-pathway-name'],
+};
+
 const PATHWAY_VIEWER_OVERRIDES = {
   'network-layout': (year) => ({
     'network-name': `thermal_network_${year}`,
@@ -91,17 +96,15 @@ const Tool = ({
     return builder ? builder(childScenario.year) : {};
   }, [childScenario, script]);
 
-  const pathwayReadonlyFields = useMemo(
-    () => Object.keys(pathwayOverrides),
-    [pathwayOverrides],
-  );
-
-  // Merge internal (pathway) and external (caller-provided) readonly
-  // lists. `externalReadonlyFields` is optional; when absent this is
-  // identical to `pathwayReadonlyFields` — main viewport unchanged.
-  const allReadonlyFields = useMemo(
-    () => [...pathwayReadonlyFields, ...(externalReadonlyFields || [])],
-    [pathwayReadonlyFields, externalReadonlyFields],
+  // Combine: script-static readonly params, pathway-viewer overrides,
+  // and any caller-supplied extras (e.g. canvas passes ['what-if-name']).
+  const readonlyFields = useMemo(
+    () => [
+      ...(SCRIPT_READONLY_PARAMS[script] ?? []),
+      ...Object.keys(pathwayOverrides),
+      ...(externalReadonlyFields || []),
+    ],
+    [script, pathwayOverrides, externalReadonlyFields],
   );
 
   const {
@@ -316,7 +319,7 @@ const Tool = ({
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            extraReadonlyFields={allReadonlyFields}
+            readonlyFields={readonlyFields}
           />
         </div>
       </Spin>
