@@ -199,14 +199,17 @@ function deleteBuildings(state, buildings, changes, onChange) {
 export const useUpdateInputs = () => {
   const queryClient = useQueryClient();
 
-  const projectName = useProjectStore((state) => state.name);
+  const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   const updateChanges = useUpdateChanges();
 
+  const scenarioPath = childScenario?.scenario_path ?? null;
+
   return (table = '', buildings = [], properties = []) =>
     queryClient.setQueryData(
-      ['inputs', projectName, scenarioName],
+      ['inputs', project, scenarioName, scenarioPath],
       (oldData) => ({
         ...oldData,
         ...updateData(oldData, table, buildings, properties, updateChanges),
@@ -271,15 +274,18 @@ export const useUpdateDaySchedule = () => {
 export const useDeleteBuildings = () => {
   const queryClient = useQueryClient();
 
-  const projectName = useProjectStore((state) => state.name);
+  const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   const changes = useChanges();
   const setChanges = useSetChanges();
 
+  const scenarioPath = childScenario?.scenario_path ?? null;
+
   return (buildings = []) =>
     queryClient.setQueryData(
-      ['inputs', projectName, scenarioName],
+      ['inputs', project, scenarioName, scenarioPath],
       (oldData) => {
         // Update the old data
         return {
@@ -293,9 +299,5 @@ export const useDeleteBuildings = () => {
 export const useResyncInputs = () => {
   const queryClient = useQueryClient();
 
-  const projectName = useProjectStore((state) => state.name);
-  const scenarioName = useProjectStore((state) => state.scenario);
-
-  return async () =>
-    queryClient.invalidateQueries(['inputs', projectName, scenarioName]);
+  return async () => queryClient.invalidateQueries({ queryKey: ['inputs'] });
 };

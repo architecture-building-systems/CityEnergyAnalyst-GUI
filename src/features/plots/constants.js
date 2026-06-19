@@ -118,6 +118,23 @@ export const VIEW_PLOT_RESULTS = {
 
 export const PLOT_SCRIPTS = Object.values(VIEW_PLOT_RESULTS).filter(Boolean);
 
+// Maps script name to a plot tool script to open on completion
+export const VIEW_TOOL_RESULTS = {
+  'pathway-simulations': 'plot-pathway-emission-timeline',
+};
+
+// Build a prefill patch for the target plot form from a completed job's
+// parameters. Returns null when nothing worth seeding is available.
+export const buildPlotToolPrefillFromJob = (job) => {
+  if (!job?.parameters) return null;
+  if (job.script === 'pathway-simulations') {
+    const name = job.parameters['existing-pathway-name'];
+    if (!name) return null;
+    return { 'existing-pathway-names': [name] };
+  }
+  return null;
+};
+
 // Labels matching scripts.yml (without the "Plot - " prefix)
 export const PLOT_LABELS = {
   [DEMAND]: 'Building Energy Demand',
@@ -128,6 +145,7 @@ export const PLOT_LABELS = {
   [EMISSIONS_EMBODIED]: 'Lifecycle Emissions',
   [EMISSIONS_OPERATIONAL]: 'Operational Emissions',
   [EMISSION_TIMELINE]: 'Emission Timeline',
+  [PATHWAY_EMISSION_TIMELINE]: 'Pathway Emission Timeline',
   [SUPPLY_SYSTEM]: 'Supply System',
   [COST_BREAKDOWN]: 'Cost Breakdown',
   [COST_SANKEY]: 'System Cost Sankey',
@@ -159,7 +177,12 @@ export const PLOT_GROUPS = [
       },
       {
         label: 'GHG Emissions',
-        keys: [EMISSIONS_EMBODIED, EMISSIONS_OPERATIONAL, EMISSION_TIMELINE],
+        keys: [
+          EMISSIONS_EMBODIED,
+          EMISSIONS_OPERATIONAL,
+          EMISSION_TIMELINE,
+          PATHWAY_EMISSION_TIMELINE,
+        ],
       },
       { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
       { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },

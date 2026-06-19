@@ -1,13 +1,19 @@
-import { Alert, Modal } from 'antd';
+import { Alert, Button, Modal } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 import socket, { waitForConnection } from 'lib/socket';
 import { apiClient } from 'lib/api/axios';
+import {
+  VIEW_TOOL_RESULTS,
+  buildPlotToolPrefillFromJob,
+} from 'features/plots/constants';
+import { useToolCardStore } from 'features/project/stores/tool-card';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
   const containerRef = useRef();
   const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
+  const selectPlotTool = useToolCardStore((state) => state.selectPlotTool);
 
   // Scroll to bottom if shouldScroll is true
   const scrollToBottom = () => {
@@ -98,6 +104,20 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         {job.state === 1 && <Alert title="Job running..." type="info" />}
         {job.state === 2 && <Alert title="Job completed" type="success" />}
         {job?.error && <Alert title={job.error} type="error" />}
+
+        {job.state === 2 && VIEW_TOOL_RESULTS[job.script] && (
+          <Button
+            type="primary"
+            onClick={() => {
+              setVisible(false);
+              selectPlotTool(VIEW_TOOL_RESULTS[job.script], {
+                prefill: buildPlotToolPrefillFromJob(job),
+              });
+            }}
+          >
+            View Results
+          </Button>
+        )}
 
         <details>
           <summary>More Info</summary>

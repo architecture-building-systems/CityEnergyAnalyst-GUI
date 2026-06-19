@@ -11,18 +11,23 @@ import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateIn
 export function useSaveInputs() {
   const queryClient = useQueryClient();
 
+  const project = useProjectStore((state) => state.project);
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   const changes = useChanges();
   const resetStore = useResetStore();
   const resyncInputs = useResyncInputs();
 
+  const scenarioPath = childScenario?.scenario_path ?? null;
+
   const { tables, geojsons, crs } = queryClient.getQueryData([
     'inputs',
-    projectName,
+    project,
     scenarioName,
-  ]);
+    scenarioPath,
+  ]) ?? {};
 
   const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
     (obj, key) => {
@@ -38,6 +43,10 @@ export function useSaveInputs() {
     {},
   );
 
+  const scenarioParams = scenarioPath
+    ? { scenario_path: scenarioPath }
+    : { project, scenario_name: scenarioName };
+
   return useMutation({
     mutationFn: async () => {
       const { data } = await apiClient.put(
@@ -48,6 +57,7 @@ export function useSaveInputs() {
           crs,
           schedules,
         },
+        { params: scenarioParams },
       );
       return data;
     },

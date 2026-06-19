@@ -12,7 +12,7 @@ const ELECTRON_ONLY = [
   'debug',
 ];
 
-const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
+const ToolForm = ({ form, parameters, categoricalParameters, script, readonlyFields = [] }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
@@ -101,19 +101,25 @@ const ToolForm = ({ form, parameters, categoricalParameters, script }) => {
     param.type === 'ScenarioParameter' ||
     (!isElectron() && ELECTRON_ONLY.includes(param.name));
 
+  const readonlySet = new Set(readonlyFields);
+
   let toolParams = null;
   if (parameters) {
     toolParams = parameters
       .filter((param) => !shouldHideParam(param))
-      .map((param) => (
-        <Parameter
-          key={param.name}
-          form={form}
-          parameter={param}
-          allParameters={parameters}
-          toolName={script}
-        />
-      ));
+      .map((param) => {
+        const isReadOnly = readonlySet.has(param.name);
+        return (
+          <Parameter
+            key={param.name}
+            form={form}
+            parameter={param}
+            allParameters={parameters}
+            toolName={script}
+            disabled={isReadOnly}
+          />
+        );
+      });
   }
 
   let categoricalParams = null;

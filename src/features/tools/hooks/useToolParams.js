@@ -9,14 +9,16 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 const useFetchToolParams = (script) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   return useQuery({
-    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script, project, scenarioName],
+    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script, project, scenarioName, childScenario?.scenario_path],
     queryFn: async () => {
       if (!script) return null;
-      const response = await apiClient.get(`/api/tools/${script}`, {
-        params: { project, scenario_name: scenarioName },
-      });
+      const params = childScenario?.scenario_path
+        ? { scenario_path: childScenario.scenario_path }
+        : { project, scenario_name: scenarioName };
+      const response = await apiClient.get(`/api/tools/${script}`, { params });
       return response.data;
     },
     enabled: !!script,

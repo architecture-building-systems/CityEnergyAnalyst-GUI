@@ -46,6 +46,7 @@ export const useGetMapLayers = (
 
   const setMapLayers = useMapStore((state) => state.setMapLayers);
   const selectedMapLayer = useSelectedMapLayer();
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   const { name: categoryName, layers } = categoryInfo || {};
   const selectedLayerInfo = useMemo(
@@ -78,6 +79,9 @@ export const useGetMapLayers = (
         const data = await fetchMapLayer(categoryName, selectedLayerInfo.name, {
           project,
           scenario_name: scenarioName,
+          ...(childScenario?.scenario_path
+            ? { scenario_path: childScenario.scenario_path }
+            : {}),
           parameters,
         });
         out[selectedLayerInfo.name] = data;
@@ -104,7 +108,7 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [categoryName, parameters, selectedLayerInfo]);
+  }, [categoryName, parameters, selectedLayerInfo, childScenario]);
 
   return { fetching, error };
 };
