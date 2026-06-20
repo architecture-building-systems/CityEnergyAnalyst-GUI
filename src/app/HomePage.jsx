@@ -26,7 +26,6 @@ const UploadDownload = lazy(() => import('app/UploadDownload'));
 // const Dashboard = lazy(() => import('components/Dashboard/Dashboard'));
 const DatabaseEditor = lazy(() => import('app/DatabaseEditor'));
 const OnboardingPage = lazy(() => import('components/OnboardingPage'));
-const Canvas = lazy(() => import('features/canvas/components/CanvasPage'));
 
 const HomePageContent = () => {
   const { data: userInfo, isLoading } = useUserQuery();
@@ -106,27 +105,6 @@ const HomePageContent = () => {
                   <DatabaseEditor />
                 </div>
               </Cardwrapper>
-            </Suspense>
-          }
-        />
-        <Route
-          path={routes.CANVAS}
-          element={
-            <Suspense fallback={<Loading />}>
-              {/* No outer padding here — CanvasPage owns its own
-                  12px padding, matching the main viewport overlay
-                  (`Project.css:15`). Adding a second layer of padding
-                  via this wrapper made cards sit way inside the
-                  window edge. */}
-              <div
-                style={{
-                  height: '100%',
-                  overflow: 'auto',
-                  backgroundColor: '#D4DADC',
-                }}
-              >
-                <Canvas />
-              </div>
             </Suspense>
           }
         />

@@ -12,13 +12,7 @@ const ELECTRON_ONLY = [
   'debug',
 ];
 
-const ToolForm = ({
-  form,
-  parameters,
-  categoricalParameters,
-  script,
-  readonlyFields = [],
-}) => {
+const ToolForm = ({ form, parameters, categoricalParameters, script, readonlyFields = [] }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
@@ -144,11 +138,6 @@ const ToolForm = ({
               parameter={param}
               allParameters={parameters}
               toolName={script}
-              // Honour the readonly set here too; otherwise params
-              // nested under a categorical group (e.g. `what-if-name`
-              // under Input data on LCA plots) stay editable even
-              // when the caller asked to lock them.
-              disabled={readonlySet.has(param.name)}
             />
           )),
       }))

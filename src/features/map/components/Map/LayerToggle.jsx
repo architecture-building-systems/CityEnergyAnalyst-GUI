@@ -245,20 +245,8 @@ const LayerToggleRadioControlled = ({ label, checked, onChange }) => {
   );
 };
 
-/**
- * Layer toggle dropdown.
- *
- * `scenario` (optional) — when provided, forwards to `useInputs` so
- * the toggle lists whatever geometries that scenario has. Main
- * viewport passes nothing and reads the active scenario as before.
- * Visibility state still lives on the shared `useMapStore` singleton
- * — toggling here does leak across siblings + main viewport. That
- * matches the Path-C tradeoff already accepted for
- * `MapLayerPropertiesCard` in Canvas Builder.
- */
-const LayerToggle = ({ scenario }) => {
-  const inputsOpts = scenario ? { scenario } : undefined;
-  const { data: inputData } = useInputs(inputsOpts);
+const LayerToggle = () => {
+  const { data: inputData } = useInputs();
   const { geojsons: data } = inputData;
 
   const dataLoaded = useRef(false);

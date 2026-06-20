@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  useScopedMapLayers,
-  useScopedMapLayerLegends,
-  useScopedSelectedMapLayer,
-  useScopedSetMapLayerLegends,
-  useScopedSetMapLayers,
-  useScopedSetRange,
-} from 'features/canvas/components/mapInstance';
+import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import {
   DEMAND,
   SOLAR_IRRADIATION,
@@ -51,9 +44,8 @@ export const useGetMapLayers = (
   const [error, setError] = useState(null);
   const [fetching, setFetching] = useState(false);
 
-  const setMapLayers = useScopedSetMapLayers();
-  const setRange = useScopedSetRange();
-  const selectedMapLayer = useScopedSelectedMapLayer();
+  const setMapLayers = useMapStore((state) => state.setMapLayers);
+  const selectedMapLayer = useSelectedMapLayer();
   const childScenario = useProjectStore((state) => state.childScenario);
 
   const { name: categoryName, layers } = categoryInfo || {};
@@ -74,10 +66,6 @@ export const useGetMapLayers = (
       !hasAllParameters(selectedLayerInfo, parameters)
     ) {
       setMapLayers(null);
-      // Reset fetching too — otherwise the loading overlay stays stuck
-      // when `parameters` momentarily becomes incomplete (e.g. while a
-      // Canvas BottomCard switches its provider to a new card).
-      setFetching(false);
       return;
     }
 
@@ -100,16 +88,6 @@ export const useGetMapLayers = (
 
         if (!ignore) {
           setMapLayers(out);
-          // `range` was historically set by `Legend`'s effect, but
-          // Canvas Builder hides the Legend — set it here so the colour
-          // gradient + elevation domain work whether or not the Legend
-          // renders. Same first-key heuristic Legend uses.
-          const rangeMap = data?.properties?.range;
-          const firstKey = rangeMap && Object.keys(rangeMap)[0];
-          const entry = firstKey ? rangeMap[firstKey] : null;
-          if (entry?.min != null && entry?.max != null) {
-            setRange([entry.min, entry.max]);
-          }
         }
       } catch (error) {
         console.error(error.response?.data);
@@ -136,13 +114,13 @@ export const useGetMapLayers = (
 };
 
 export const useMapLegends = () => {
-  const mapLayers = useScopedMapLayers();
-  const mapLegends = useScopedMapLayerLegends();
-  const setMapLayerLegends = useScopedSetMapLayerLegends();
+  const mapLayers = useMapStore((state) => state.mapLayers);
+  const mapLegends = useMapStore((state) => state.mapLayerLegends);
+  const setMapLayerLegends = useMapStore((state) => state.setMapLayerLegends);
 
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
-  const selectedMapLayer = useScopedSelectedMapLayer();
+  const selectedMapLayer = useSelectedMapLayer();
 
   useEffect(() => {
     if (mapLayers?.[SOLAR_IRRADIATION]) {

@@ -13,7 +13,7 @@ import {
 } from 'features/project/components/Cards/MapLayersCard/store';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { CEA_PURPLE } from 'constants/theme';
+import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
@@ -322,7 +322,7 @@ const JobStatusBar = () => {
                   <Button
                     type="primary"
                     size="small"
-                    style={{ background: CEA_PURPLE }}
+                    style={{ background: PLOTS_PRIMARY_COLOR }}
                     onClick={() => {
                       notification.destroy(key);
                       const plothtml = job.output;

@@ -1,6 +1,6 @@
 import { Button, ConfigProvider } from 'antd';
 import { GraphsIcon, InformationIcon, ToolsIcon } from 'assets/icons';
-import { CEA_PURPLE } from 'constants/theme';
+import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
 import {
   toolTypes,
   useToggleToolType,
@@ -38,7 +38,7 @@ export const ToolCardSideButtons = () => {
       <ConfigProvider
         theme={{
           token: {
-            colorPrimary: CEA_PURPLE,
+            colorPrimary: PLOTS_PRIMARY_COLOR,
           },
         }}
       >

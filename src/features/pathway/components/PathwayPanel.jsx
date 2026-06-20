@@ -11,7 +11,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InfoTooltip, { TooltipFromBackend } from 'components/InfoTooltip';
-import { ERROR_RED } from 'constants/theme';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { getMainUseType } from 'features/map/utils/constructionColors';
@@ -63,7 +62,7 @@ const MAX_VISIBLE_TIMELINE_LANES = 3;
 const MIN_TIMELINE_END_YEAR = 2100;
 
 const STATUS_ACCENT = {
-  error: ERROR_RED,
+  error: '#f04d5b',
   changed: '#D97706',
 };
 

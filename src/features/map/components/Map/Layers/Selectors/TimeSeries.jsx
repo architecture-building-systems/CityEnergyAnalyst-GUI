@@ -1,5 +1,5 @@
 import { Button, Slider } from 'antd';
-import { useScopedSetMapLayerParameters } from 'features/canvas/components/mapInstance';
+import { useMapStore } from 'features/map/stores/mapStore';
 import { useMemo, useState } from 'react';
 
 const dayToDateTime = (dayOfYear, year = 2023) => {
@@ -80,7 +80,9 @@ const TimeSeriesSelector = ({ parameterName, value, defaultValue }) => {
     return _marks;
   }, []);
 
-  const setMapLayerParameters = useScopedSetMapLayerParameters();
+  const setMapLayerParameters = useMapStore(
+    (state) => state.setMapLayerParameters,
+  );
 
   const handleChange = (newValue) => {
     setPeriod(newValue);

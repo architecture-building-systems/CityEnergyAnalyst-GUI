@@ -1,108 +1,10 @@
 import Gradient from 'javascript-color-gradient';
-import {
-  useCanvasEditDisabled,
-  useScopedFilters,
-  useScopedRange,
-  useScopedSetFilters,
-  useScopedSetRange,
-} from 'features/canvas/components/mapInstance';
-import { InputNumber, Select } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useMapStore } from 'features/map/stores/mapStore';
+import { Select } from 'antd';
+import { useEffect, useState } from 'react';
 import { useMapLegends } from 'features/map/hooks/map-layers';
 import { formatNumber } from 'features/map/utils';
 import InfoTooltip from 'components/InfoTooltip';
-
-// `scale` and `radius` filters render inline in the Legend (next to
-// the colour ramp) rather than in the parameters panel because they
-// are visualization knobs, not data-fetch parameters.
-export const LEGEND_FILTER_KEYS = ['scale', 'radius'];
-
-const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
-  const filters = useScopedFilters();
-  const value = filters?.[filterKey];
-  const setFilters = useScopedSetFilters();
-
-  return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-      }}
-    >
-      <b>{label}</b>
-      <InputNumber
-        min={range?.[0]}
-        max={range?.[1]}
-        value={value ?? defaultValue}
-        onChange={(v) => setFilters(filterKey, v)}
-        style={{ flex: 1, minWidth: 0 }}
-      />
-    </div>
-  );
-};
-
-export const LegendFilterRow = ({ layers }) => {
-  // Hidden in Canvas Builder's Export View — the scale/radius numeric inputs
-  // are an editing affordance.
-  const editDisabled = useCanvasEditDisabled();
-  const fields = useMemo(() => {
-    if (!layers?.length) return [];
-    const layer = layers[0];
-    if (!layer?.parameters) return [];
-
-    const collected = [];
-    for (const key of LEGEND_FILTER_KEYS) {
-      for (const [, parameter] of Object.entries(layer.parameters)) {
-        if (parameter?.filter === key) {
-          collected.push({
-            key,
-            label: parameter.label ?? key,
-            range: parameter.range,
-            defaultValue: parameter.default,
-          });
-          break;
-        }
-      }
-    }
-    return collected;
-  }, [layers]);
-
-  // Seed missing filters from the layer's per-parameter defaults.
-  // ParameterSelectors does the same seed for the editor panel,
-  // but FeatureCardMap renders this row without ever mounting the
-  // editor — so without this hook a freshly-mounted card uses
-  // `Map.jsx`'s `?? 10` fallback for radius (a stand-in default
-  // 5× larger than the configured `2`), and buildings briefly
-  // render at the wrong scale.
-  const filters = useScopedFilters();
-  const setFilters = useScopedSetFilters();
-  useEffect(() => {
-    fields.forEach((f) => {
-      if (filters?.[f.key] == null && f.defaultValue != null) {
-        setFilters(f.key, f.defaultValue);
-      }
-    });
-  }, [fields, filters, setFilters]);
-
-  if (!fields.length || editDisabled) return null;
-
-  return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-      {fields.map((f) => (
-        <LegendFilterField
-          key={f.key}
-          label={f.label}
-          filterKey={f.key}
-          range={f.range}
-          defaultValue={f.defaultValue}
-        />
-      ))}
-    </div>
-  );
-};
 
 const InfoRows = ({ info }) => {
   if (!info?.length) return null;
@@ -128,12 +30,8 @@ const InfoRows = ({ info }) => {
 
 const ColourRampLegend = ({ label, colours, points, range, info }) => {
   const [selectedValue, setSelectedValue] = useState(null);
-  const _range = useScopedRange();
-  const setRange = useScopedSetRange();
-  // In Canvas Builder's Export View, hide the range-mode `<Select>` row —
-  // colour ramp + min/max labels stay so the legend still reads as a
-  // legend.
-  const editDisabled = useCanvasEditDisabled();
+  const _range = useMapStore((state) => state.range);
+  const setRange = useMapStore((state) => state.setRange);
 
   const keys = Object.keys(range ?? {});
   const value =
@@ -177,18 +75,16 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
     >
       <b>{label}</b>
       <InfoRows info={info} />
-      {!editDisabled && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Select
-            style={{ flex: 1, minWidth: 0 }}
-            value={value}
-            onChange={setSelectedValue}
-            defaultValue={0}
-            options={options}
-          />
-          <InfoTooltip tooltipKey="map-layer-range-mode" placement="left" />
-        </div>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Select
+          style={{ flex: 1, minWidth: 0 }}
+          value={value}
+          onChange={setSelectedValue}
+          defaultValue={0}
+          options={options}
+        />
+        <InfoTooltip tooltipKey="map-layer-range-mode" placement="left" />
+      </div>
       <div
         style={{
           display: 'flex',
@@ -226,7 +122,7 @@ const ColourRampLegend = ({ label, colours, points, range, info }) => {
 };
 
 const CategoryLegend = ({ label, categories, range, info }) => {
-  const setRange = useScopedSetRange();
+  const setRange = useMapStore((state) => state.setRange);
 
   // Keep the HexagonLayer-style range state in sync (used by scale filter)
   // using the period/total max so the stacked columns render at an
@@ -295,11 +191,7 @@ const CategoryLegend = ({ label, categories, range, info }) => {
   );
 };
 
-// `style` is merged on top of the defaults so callers can override
-// width / chrome / spacing. canvas map cards stretch the legend
-// full-width and drop the card chrome (shadow, background, padding)
-// so it reads as part of the surrounding `FeatureCardShell`.
-const Legend = ({ extras, style }) => {
+const Legend = ({ extras }) => {
   const mapLayerLegends = useMapLegends();
 
   return (
@@ -326,8 +218,6 @@ const Legend = ({ extras, style }) => {
         marginRight: 'auto',
 
         opacity: mapLayerLegends ? 1 : 0.8,
-
-        ...style,
       }}
     >
       {mapLayerLegends &&

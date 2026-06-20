@@ -2,7 +2,6 @@ import { Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { PATHWAY_PRIMARY } from 'constants/theme';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { fetchPathwayOverview, fetchStateFolderPath } from '../api';
 
@@ -14,7 +13,7 @@ const BAR_HEIGHT = 55;
 const STATUS_FILL = {
   none: '#CBD5E1',
   validated: '#CBD5E1',
-  baked: PATHWAY_PRIMARY,
+  baked: '#1470AF',
   simulated: '#000000',
 };
 

@@ -53,25 +53,6 @@
   animation: glow 2s infinite;
 }
 
-/* CEA-purple variant of the empty-state blink, used by the Canvas
-   Builder's entry-state CTAs (the dashboard switcher and the
-   Import button) so the empty-state palette stays on-brand for
-   canvas (purple) instead of the global blue. The selectors lean
-   on `.ant-select` / `.cea-card-icon-button-container` for matching
-   specificity with the rules above so the purple wins by source
-   order without `!important`. */
-@keyframes glow-purple {
-  0% { box-shadow: 0 0 2px 1px #AC6080; }
-  50% { box-shadow: 0 0 8px 2px #AC6080; }
-  100% { box-shadow: 0 0 2px 1px #AC6080; }
-}
-
-.cea-canvas-blink.ant-select,
-.cea-card-icon-button-container.cea-canvas-blink {
-  outline: 1px solid #AC6080;
-  animation: glow-purple 2s infinite;
-}
-
 .cea-card-icon-button-container button {
   border-radius: 8px;
   width: 30px !important;
