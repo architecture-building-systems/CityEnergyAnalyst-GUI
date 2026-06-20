@@ -93,13 +93,14 @@ const getRibbonKpis = (layerName, parameters) => {
           ? 'demand.peak_heating_w_m2'
           : dc === 'space_cooling'
             ? 'demand.peak_cooling_w_m2'
-            : dc === 'domestic_hot_water'
-              ? 'demand.heating_share_pct'
-              : 'demand.electricity_share_pct';
+            : null;
       // Demand KPIs take no locator_args — the layer's
       // data-column / period parameters drive WHICH KPI we
       // surface, not WHICH file the resolver reads.
-      return { kpis: ['demand.eui_kwh_m2', second], locatorArgs: {} };
+      const kpis = second
+        ? ['demand.eui_kwh_m2', second]
+        : ['demand.eui_kwh_m2'];
+      return { kpis, locatorArgs: {} };
     }
 
     case 'renewable-energy-potentials': {
@@ -174,15 +175,9 @@ const getRibbonKpis = (layerName, parameters) => {
     case 'energy-by-carrier': {
       const carrier = parameters?.category;
       const second =
-        carrier === 'GRID'
-          ? 'final_energy.grid_share_pct'
-          : carrier === 'DH'
-            ? 'final_energy.district_heating_share_pct'
-            : carrier === 'NATURALGAS' ||
-                carrier === 'OIL' ||
-                carrier === 'COAL'
-              ? 'final_energy.fossil_share_pct'
-              : 'final_energy.grid_share_pct';
+        carrier === 'PV' || carrier === 'SOLAR'
+          ? 'final_energy.solar_share_pct'
+          : 'final_energy.fossil_share_pct';
       const args = pickArgs(parameters, { whatif_name: 'whatif_name' });
       const kpis = ['final_energy.total_final_mwh', second];
       const locatorArgs = args
