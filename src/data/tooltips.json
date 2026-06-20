@@ -22,7 +22,7 @@
   },
   "simulate-pathway": {
     "title": "Simulate Pathway",
-    "body": "To enable, ensure:\n1. Only one Pathway is checked\n2. All states are baked (blue nodes)"
+    "body": "To enable, ensure:\n1. Only one Pathway is checked\n2. All states are baked (blue nodes)\n\nThis button facilitates batch processing of all States at one go. Consider manual simulation for each State when having complex input settings or simulation error persists."
   },
   "add-building-event-or-intervention": {
     "title": "Add a Building Event or Apply an Intervention",
