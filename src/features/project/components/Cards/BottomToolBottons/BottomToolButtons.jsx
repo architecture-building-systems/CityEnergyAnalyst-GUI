@@ -52,7 +52,7 @@ const BottomToolButtons = ({
     {
       id: 'canvas',
       icon: InsightIcon,
-      title: 'Canvas Builder',
+      title: 'Canvas Builder [BETA]',
       onClick: () => push(routes?.CANVAS),
       hidden: !showTools,
     },
