@@ -1621,7 +1621,7 @@ const PathwayPanel = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ margin: 0 }}>Pathway Builder</h2>
+          <h2 style={{ margin: 0, fontSize: 24 }}>Pathway Builder</h2>
           <InfoTooltip tooltipKey="pathway-builder" placement="right" />
         </div>
         <div
@@ -2260,6 +2260,7 @@ const PathwayPanel = ({
                           marginLeft: 12,
                           width: 80,
                           flexShrink: 0,
+                          fontSize: 18,
                         }}
                       >
                         Y_{selectedRow.year}
