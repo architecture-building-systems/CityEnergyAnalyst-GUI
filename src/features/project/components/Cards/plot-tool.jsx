@@ -1,6 +1,6 @@
 import Tool from 'features/tools/components/Tools/Tool';
 import { Button, ConfigProvider, Divider, Form } from 'antd';
-import { PLOTS_PRIMARY_COLOR } from 'constants/theme';
+import { CEA_PURPLE } from 'constants/theme';
 import { useCallback, useEffect, useRef } from 'react';
 import { useMapStore, useSelectedMapLayer } from 'features/map/stores/mapStore';
 import { useSelectedPlotToolSeed } from 'features/project/stores/tool-card';
@@ -64,7 +64,7 @@ const PlotButton = ({ plotKey, onSelected }) => {
   );
 };
 
-const PlotChoices = ({ onSelected }) => {
+export const PlotChoices = ({ onSelected }) => {
   return (
     <div className="cea-tool-choices">
       <h2>Select a Plot Tool</h2>
@@ -114,7 +114,17 @@ const PlotChoices = ({ onSelected }) => {
   );
 };
 
-export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
+export const PlotTool = ({
+  script,
+  onToolSelected,
+  onPlotToolSelected,
+  onRunOverride,
+  // Passed straight through to Tool so callers can grey out specific
+  // form fields without PlotTool needing to know their names. Canvas Builder
+  // uses this to lock `what-if-name` since that field is driven from
+  // the canvas bottom card, not the plot form.
+  extraReadonlyFields,
+}) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
   const selectedMapLayer = useSelectedMapLayer();
@@ -404,7 +414,7 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: PLOTS_PRIMARY_COLOR,
+          colorPrimary: CEA_PURPLE,
         },
       }}
     >
@@ -418,6 +428,10 @@ export const PlotTool = ({ script, onToolSelected, onPlotToolSelected }) => {
         // form to the backend defaults, otherwise these values get wiped
         // by `useFormReset`.
         onParametersLoaded={handleParametersLoaded}
+        // Forwarded to ToolFormButtons so Canvas Builder can intercept Run
+        // (commit plot config to a card) without creating a job.
+        onRunOverride={onRunOverride}
+        extraReadonlyFields={extraReadonlyFields}
       />
     </ConfigProvider>
   );

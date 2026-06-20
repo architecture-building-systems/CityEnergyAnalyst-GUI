@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import useFormReset from './useFormReset';
@@ -6,18 +6,51 @@ import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
+/**
+ * Optional scenario override consumed by `useFetchToolParams`.
+ * A `{ project, scenarioName }` value installed via this
+ * context replaces the values normally read from
+ * `useProjectStore`, so a tool form can fetch its parameter
+ * schema against a *different* scenario than the one currently
+ * active in the project store.
+ *
+ * Used by the Canvas Builder's compare mode: when the user
+ * clicks Edit on a plot in a non-origin column, the modal wraps
+ * the form in this provider with the column's project /
+ * scenario, so the form's choice generators (what-if names,
+ * building lists, etc.) load from that column's scenario folder
+ * rather than whichever scenario the project is currently
+ * pointed at.
+ *
+ * Default value is `null` — most call sites need no override and
+ * fall through to `useProjectStore`.
+ */
+export const ToolScenarioOverrideContext = createContext(null);
+
 const useFetchToolParams = (script) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const childScenario = useProjectStore((state) => state.childScenario);
+  const override = useContext(ToolScenarioOverrideContext);
+
+  const effectiveProject = override?.project || project;
+  const effectiveScenarioName = override?.scenarioName || scenarioName;
+  // child-scenario path only applies when no canvas scenario override is active
+  const scenarioPath = override ? null : (childScenario?.scenario_path ?? null);
 
   return useQuery({
-    queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, script, project, scenarioName, childScenario?.scenario_path],
+    queryKey: [
+      TOOLS_QUERY_KEYS.TOOL_PARAMS,
+      script,
+      effectiveProject,
+      effectiveScenarioName,
+      scenarioPath,
+    ],
     queryFn: async () => {
       if (!script) return null;
-      const params = childScenario?.scenario_path
-        ? { scenario_path: childScenario.scenario_path }
-        : { project, scenario_name: scenarioName };
+      const params = scenarioPath
+        ? { scenario_path: scenarioPath }
+        : { project: effectiveProject, scenario_name: effectiveScenarioName };
       const response = await apiClient.get(`/api/tools/${script}`, { params });
       return response.data;
     },

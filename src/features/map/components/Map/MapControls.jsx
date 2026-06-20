@@ -24,15 +24,30 @@ const ExtrudeButton = () => {
 const ResetCameraButton = () => {
   const updateViewState = useMapStore((state) => state.updateViewState);
   const cameraOptions = useMapStore((state) => state.cameraOptions);
+  const resetCameraOptions = useMapStore((state) => state.resetCameraOptions);
 
+  // Reset via `useCameraFitBounds`: nulling `cameraOptions` flips
+  // `cameraOptionsCalculated` from true → false, which unblocks the
+  // bounds effect inside `DeckGLMap` and triggers a fresh
+  // `cameraForBounds` recompute + FlyTo transition against the
+  // currently-rendered zone. This is robust whether `cameraOptions`
+  // was populated or had been nulled by a sibling map (Canvas Builder
+  // comparison view shares the singleton). Immediate pitch reset
+  // gives the click instant feedback even while the bounds effect
+  // is racing.
   const resetCamera = () => {
-    updateViewState({
-      pitch: 0,
-      zoom: cameraOptions.zoom,
-      bearing: cameraOptions.bearing,
-      latitude: cameraOptions.center.lat,
-      longitude: cameraOptions.center.lng,
-    });
+    if (cameraOptions) {
+      updateViewState({
+        pitch: 0,
+        zoom: cameraOptions.zoom,
+        bearing: cameraOptions.bearing,
+        latitude: cameraOptions.center.lat,
+        longitude: cameraOptions.center.lng,
+      });
+    } else {
+      updateViewState({ pitch: 0 });
+    }
+    resetCameraOptions();
   };
   return (
     <Tooltip title="Reset Camera" styles={{ body: { fontSize: 12 } }}>
@@ -67,15 +82,25 @@ const ResetCompassButton = () => {
   );
 };
 
-const MapControls = () => {
-  const { data: inputData } = useInputs();
+/**
+ * Map controls toolbar.
+ *
+ * `scenario` (optional) — when provided, `LayerToggle` and the
+ * inputs query are scoped to that scenario instead of the active
+ * one. Used by the canvas so each column's map toolbar reads its own
+ * scenario's geometry bundle. Main viewport passes nothing and
+ * behaves exactly as before.
+ */
+const MapControls = ({ scenario }) => {
+  const inputsOpts = scenario ? { scenario } : undefined;
+  const { data: inputData } = useInputs(inputsOpts);
   const { geojsons: data } = inputData;
 
   return (
     <div id="map-controls">
       {data?.zone && (
         <>
-          <LayerToggle />
+          <LayerToggle scenario={scenario} />
           <ExtrudeButton />
           <ResetCameraButton />
         </>

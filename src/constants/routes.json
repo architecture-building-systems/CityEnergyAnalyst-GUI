@@ -8,5 +8,6 @@
   "CREATE_SCENARIO": "/create-scenario",
   "SPLASH": "/splash",
   "UPLOAD_DOWNLOAD": "/upload-download",
-  "ONBOARDING": "/onboarding"
+  "ONBOARDING": "/onboarding",
+  "CANVAS": "/canvas"
 }

@@ -35,7 +35,19 @@ const PATHWAY_VIEWER_OVERRIDES = {
   }),
 };
 
-const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
+const Tool = ({
+  script,
+  onToolSelected,
+  form,
+  onParametersLoaded,
+  onRunOverride,
+  // Optional list of parameter names to render as read-only in
+  // addition to the pathway-viewer overrides Tool already computes
+  // internally. Main viewport passes nothing; the canvas passes
+  // `['what-if-name']` so users edit what-if from the bottom map
+  // layer card, not from the plot form.
+  extraReadonlyFields: externalReadonlyFields,
+}) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
 
@@ -84,9 +96,15 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
     return builder ? builder(childScenario.year) : {};
   }, [childScenario, script]);
 
+  // Combine: script-static readonly params, pathway-viewer overrides,
+  // and any caller-supplied extras (e.g. canvas passes ['what-if-name']).
   const readonlyFields = useMemo(
-    () => [...(SCRIPT_READONLY_PARAMS[script] ?? []), ...Object.keys(pathwayOverrides)],
-    [script, pathwayOverrides],
+    () => [
+      ...(SCRIPT_READONLY_PARAMS[script] ?? []),
+      ...Object.keys(pathwayOverrides),
+      ...(externalReadonlyFields || []),
+    ],
+    [script, pathwayOverrides, externalReadonlyFields],
   );
 
   const {
@@ -123,7 +141,9 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
     if (!rawParameters || Object.keys(pathwayOverrides).length === 0)
       return rawParameters;
     return rawParameters.map((p) =>
-      p.name in pathwayOverrides ? { ...p, value: pathwayOverrides[p.name] } : p,
+      p.name in pathwayOverrides
+        ? { ...p, value: pathwayOverrides[p.name] }
+        : p,
     );
   }, [rawParameters, pathwayOverrides]);
 
@@ -249,6 +269,7 @@ const Tool = ({ script, onToolSelected, form, onParametersLoaded }) => {
                   script={script}
                   setError={setToolError}
                   onValidationError={onValidationError}
+                  onRunOverride={onRunOverride}
                 />
               </div>
               <Button
