@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Typography } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
 import { getTickStep } from '../constants';
@@ -5,10 +6,11 @@ import { getTickStep } from '../constants';
 const { Title } = Typography;
 
 const NODE_SIZE = 12;
-const PX_PER_YEAR = 8;
-const MIN_HEIGHT = 200;
 const ONGOING_HEIGHT = 24;
 const AXIS_WIDTH = 40;
+const NAME_ROW_HEIGHT = 20;
+// Minimum pxPerYear so nodes don't collapse on top of each other
+const MIN_PX_PER_YEAR = 2;
 
 const BuildingLifecycleCard = ({
   buildingName,
@@ -16,6 +18,19 @@ const BuildingLifecycleCard = ({
   fixedStartYear,
   fixedEndYear,
 }) => {
+  const contentRef = useRef(null);
+  const [availableHeight, setAvailableHeight] = useState(0);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setAvailableHeight(entry.contentRect.height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   if (!buildingName || !pathways?.length) return null;
 
   // Collect all years across all pathways for unified scale
@@ -34,7 +49,6 @@ const BuildingLifecycleCard = ({
     }
     events.sort((a, b) => a.year - b.year);
 
-    // Count constructions for rebuild labels
     let constructCount = 0;
     for (const e of events) {
       if (e.type === 'construct') {
@@ -49,17 +63,11 @@ const BuildingLifecycleCard = ({
     const ongoing = lastInterval && lastInterval[1] == null;
     if (ongoing) anyOngoing = true;
 
-    return {
-      pathwayName: pw.pathway_name,
-      intervals,
-      events,
-      ongoing,
-    };
+    return { pathwayName: pw.pathway_name, intervals, events, ongoing };
   });
 
   if (minYear === Infinity) return null;
 
-  // Add padding only when not using fixed scale
   const hasFixedScale = fixedStartYear != null && fixedEndYear != null;
   const yearPadding = hasFixedScale
     ? 2
@@ -70,21 +78,26 @@ const BuildingLifecycleCard = ({
 
   // Always reserve ongoing space when using fixed scale for consistent height
   const showOngoing = hasFixedScale ? true : anyOngoing;
-  const contentHeight = Math.max(yearRange * PX_PER_YEAR, MIN_HEIGHT);
-  const totalHeight = contentHeight + (showOngoing ? ONGOING_HEIGHT : 0);
+
+  // Derive pxPerYear from available container height so everything fits
+  // without scrolling. Falls back to MIN_PX_PER_YEAR on first render before
+  // ResizeObserver has fired.
+  const svgHeight = Math.max(availableHeight, (yearRange * MIN_PX_PER_YEAR) + ONGOING_HEIGHT + NAME_ROW_HEIGHT);
+  const totalHeight = svgHeight - NAME_ROW_HEIGHT;
+  const contentHeight = totalHeight - (showOngoing ? ONGOING_HEIGHT : 0);
+  const pxPerYear = yearRange > 0
+    ? Math.max(contentHeight / yearRange, MIN_PX_PER_YEAR)
+    : MIN_PX_PER_YEAR;
+
+  const tickStep = getTickStep(pxPerYear);
 
   // Year to Y position (top = latest, bottom = earliest)
-  const yearToY = (year) => {
-    return (
-      (showOngoing ? ONGOING_HEIGHT : 0) +
-      ((scaleMaxYear - year) / yearRange) * contentHeight
-    );
-  };
+  const yearToY = (year) =>
+    (showOngoing ? ONGOING_HEIGHT : 0) +
+    ((scaleMaxYear - year) / yearRange) * contentHeight;
 
   const cx = NODE_SIZE / 2;
-  const tickStep = getTickStep(PX_PER_YEAR);
 
-  // Generate tick years
   const ticks = [];
   const firstTick = Math.ceil(scaleMinYear / tickStep) * tickStep;
   for (let y = firstTick; y <= scaleMaxYear; y += tickStep) {
@@ -93,17 +106,19 @@ const BuildingLifecycleCard = ({
 
   const colWidth = 100;
   const scrollWidth = pathwayData.length * colWidth;
-  const svgHeight = totalHeight + 20;
 
   return (
     <div
       style={{
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: 0,
+        overflow: 'hidden',
         padding: '16px 24px',
+        boxSizing: 'border-box',
       }}
     >
+      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -112,6 +127,7 @@ const BuildingLifecycleCard = ({
           paddingBottom: 12,
           marginBottom: 12,
           borderBottom: '1px solid #e0e0e0',
+          flexShrink: 0,
         }}
       >
         <Title level={5} style={{ margin: 0 }}>
@@ -120,7 +136,11 @@ const BuildingLifecycleCard = ({
         <InfoTooltip tooltipKey="building-lifecycle" />
       </div>
 
-      <div style={{ display: 'flex' }}>
+      {/* Timeline area — fills remaining height, measured for scaling */}
+      <div
+        ref={contentRef}
+        style={{ flex: 1, minHeight: 0, display: 'flex' }}
+      >
         {/* Scrollable pathway columns */}
         <div style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
           <svg
@@ -128,7 +148,7 @@ const BuildingLifecycleCard = ({
             height={svgHeight}
             style={{ display: 'block' }}
           >
-            {/* Grey line between timelines and pathway names */}
+            {/* Separator above pathway name row */}
             <line
               x1={0}
               y1={totalHeight + 2}
@@ -188,19 +208,15 @@ const BuildingLifecycleCard = ({
                   {pd.events.map((e, i) => {
                     if (i >= pd.events.length - 1) return null;
                     const next = pd.events[i + 1];
-                    const y1 = yearToY(e.year);
-                    const y2 = yearToY(next.year);
-                    // Solid when construct→demolish (active period)
-                    // Dashed when demolish→construct (gap)
                     const isDashed =
                       e.type === 'demolish' && next.type === 'construct';
                     return (
                       <line
                         key={`line-${colIdx}-${i}`}
                         x1={offsetX}
-                        y1={y1}
+                        y1={yearToY(e.year)}
                         x2={offsetX}
-                        y2={y2}
+                        y2={yearToY(next.year)}
                         stroke={isDashed ? '#999' : '#000'}
                         strokeWidth={1}
                         strokeDasharray={isDashed ? '4 4' : 'none'}
