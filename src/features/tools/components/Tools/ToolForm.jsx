@@ -12,18 +12,7 @@ const ELECTRON_ONLY = [
   'debug',
 ];
 
-const READONLY_PARAMS = {
-  'pathway-update-building-events': ['existing-pathway-names', 'year-of-state'],
-  'pathway-simulations': ['existing-pathway-name'],
-};
-
-const ToolForm = ({
-  form,
-  parameters,
-  categoricalParameters,
-  script,
-  extraReadonlyFields = [],
-}) => {
+const ToolForm = ({ form, parameters, categoricalParameters, script, readonlyFields = [] }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);
@@ -112,10 +101,7 @@ const ToolForm = ({
     param.type === 'ScenarioParameter' ||
     (!isElectron() && ELECTRON_ONLY.includes(param.name));
 
-  const readonlySet = new Set([
-    ...(READONLY_PARAMS[script] ?? []),
-    ...extraReadonlyFields,
-  ]);
+  const readonlySet = new Set(readonlyFields);
 
   let toolParams = null;
   if (parameters) {

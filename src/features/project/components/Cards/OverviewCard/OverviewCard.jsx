@@ -12,9 +12,9 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   fetchPathwayOverview,
   fetchStateGeojson,
-  switchToChildScenario,
-  switchToParentScenario,
+  fetchStateFolderPath,
 } from 'features/pathway/api';
+import { STATUS_FILL, buildScenarioPath } from 'features/pathway/constants';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useMapStore } from 'features/map/stores/mapStore';
@@ -194,14 +194,6 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
 const LANE_PADDING = 18;
 const TIMELINE_HEIGHT = 36;
 
-const STATUS_FILL = {
-  none: '#CBD5E1',
-  validated: '#CBD5E1',
-  baked: PATHWAY_PRIMARY,
-  custom: CEA_PURPLE,
-  simulated: '#000000',
-};
-
 const PathwayViewerRow = ({ scenarioName, project }) => {
   const queryClient = useQueryClient();
   const [overview, setOverview] = useState(null);
@@ -317,11 +309,17 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     async (pathwayName, year) => {
       setSwitching(true);
       try {
-        const result = await switchToChildScenario(pathwayName, year);
+        const result = await fetchStateFolderPath(
+          pathwayName,
+          year,
+          project,
+          scenarioName,
+        );
         setChildScenario({
           pathway_name: pathwayName,
           year,
           parent_scenario: result.parent_scenario,
+          scenario_path: result.scenario_path,
         });
         fetchStateGeojson(pathwayName, year)
           .then((data) => setStateZoneOverride(data?.geojson ?? null))
@@ -332,13 +330,18 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         setSwitching(false);
       }
     },
-    [setChildScenario, setStateZoneOverride, queryClient],
+    [
+      project,
+      scenarioName,
+      setChildScenario,
+      setStateZoneOverride,
+      queryClient,
+    ],
   );
 
-  const deactivatePathway = useCallback(async () => {
+  const deactivatePathway = useCallback(() => {
     setChildScenario(null);
     setStateZoneOverride(null);
-    await switchToParentScenario().catch(() => {});
     queryClient.invalidateQueries({ queryKey: ['toolParams'] });
     queryClient.invalidateQueries({ queryKey: ['inputs'] });
   }, [setChildScenario, setStateZoneOverride, queryClient]);
@@ -351,7 +354,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   };
 
   const handleDelete = (pathwayName) => {
-    const scenarioPath = `${String(project).replace(/[\\/]+$/, '')}/${scenarioName}`;
+    const scenarioPath = buildScenarioPath(project, scenarioName);
     Modal.confirm({
       title: `Delete pathway '${pathwayName}'?`,
       content:

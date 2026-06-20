@@ -19,6 +19,7 @@ import {
   BinAnimationIcon,
   CreateNewIcon,
   DuplicateIcon,
+  InputEditorIcon,
   RefreshIcon,
   RunIcon,
 } from 'assets/icons';
@@ -33,15 +34,20 @@ import {
 
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import DuplicatePathwayModal from 'features/project/components/modals/DuplicatePathwayModal';
+import { STATUS_FILL, buildScenarioPath, getTickStep } from '../constants';
 
 import {
   deleteInterventionTemplate,
   fetchBuildingLifecycle,
+  fetchInterventionTemplate,
   fetchInterventionTemplates,
   fetchPathwayOverview,
   fetchPathwayTimeline,
   fetchStateGeojson,
+  fetchTemplateUsage,
+  fetchYearEditorOptions,
   preSaveBuildingEventsConfig,
+  preSaveDefineTemplateConfig,
   preSaveSimulatePathwayConfig,
 } from '../api';
 
@@ -52,14 +58,9 @@ const LABEL_COLUMN_WIDTH = 208;
 const RULER_HEIGHT = 24;
 const ACTIVE_LANE_HEIGHT = 48;
 const MAX_VISIBLE_TIMELINE_LANES = 3;
-
-const STATUS_FILL = {
-  none: '#CBD5E1',
-  validated: '#CBD5E1',
-  baked: PATHWAY_PRIMARY,
-  custom: CEA_PURPLE,
-  simulated: '#000000',
-};
+// Minimum horizon for the shared ruler so sparse, near-term pathways still render against a
+// long-term scale. Pathways that already run past this keep their own end year.
+const MIN_TIMELINE_END_YEAR = 2100;
 
 const STATUS_ACCENT = {
   error: ERROR_RED,
@@ -80,13 +81,6 @@ const getErrorMessage = (error, fallbackMessage) => {
   return fallbackMessage;
 };
 
-const buildScenarioPath = (project, scenarioName) => {
-  if (!project || !scenarioName) {
-    return null;
-  }
-  return `${String(project).replace(/[\\/]+$/, '')}/${scenarioName}`;
-};
-
 const formatCompactTimestamp = (value) => {
   if (!value) {
     return 'Not recorded';
@@ -99,16 +93,6 @@ const formatCompactTimestamp = (value) => {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-};
-
-const getTickStep = (pxPerYear) => {
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-  for (const step of steps) {
-    if (pxPerYear * step >= 56) {
-      return step;
-    }
-  }
-  return 1000;
 };
 
 const pickClosestYear = (years, preferredYear) => {
@@ -448,10 +432,15 @@ const PathwaySelect = ({
   );
 };
 
-const TemplateOption = ({ templateName, onDelete }) => {
+const TemplateOption = ({ templateName, description, onEdit, onDelete }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const onClick = (e) => {
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    onEdit?.(templateName);
+  };
+
+  const handleDeleteClick = (e) => {
     e.stopPropagation();
     onDelete?.(templateName);
   };
@@ -474,16 +463,28 @@ const TemplateOption = ({ templateName, onDelete }) => {
           whiteSpace: 'nowrap',
           flexGrow: 1,
         }}
-        title={templateName}
+        title={description ? `${templateName}: ${description}` : templateName}
       >
         {templateName}
+        {description ? (
+          <span style={{ color: 'rgba(0, 0, 0, 0.45)' }}>: {description}</span>
+        ) : null}
       </div>
       {isHovered && (
-        <BinAnimationIcon
-          style={{ padding: '2px 8px' }}
-          className="cea-job-info-icon danger shake"
-          onClick={onClick}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <InputEditorIcon
+            style={{ padding: '2px 6px' }}
+            className="cea-job-info-icon"
+            title={`Edit '${templateName}'`}
+            onClick={handleEditClick}
+          />
+          <BinAnimationIcon
+            style={{ padding: '2px 8px' }}
+            className="cea-job-info-icon danger shake"
+            title={`Delete '${templateName}'`}
+            onClick={handleDeleteClick}
+          />
+        </div>
       )}
     </div>
   );
@@ -491,8 +492,10 @@ const TemplateOption = ({ templateName, onDelete }) => {
 
 const TemplateSelect = ({
   templates,
-  selectedTemplate,
-  onSelectTemplate,
+  descriptions,
+  selectedTemplates,
+  onSelectTemplates,
+  onEditTemplate,
   onDeleteTemplate,
   onCreateTemplate,
   loading,
@@ -507,29 +510,34 @@ const TemplateSelect = ({
 
   const options = useMemo(() => {
     return sortedTemplates.map((name) => ({
-      label: <TemplateOption templateName={name} onDelete={onDeleteTemplate} />,
+      label: (
+        <TemplateOption
+          templateName={name}
+          description={descriptions?.[name]}
+          onEdit={onEditTemplate}
+          onDelete={onDeleteTemplate}
+        />
+      ),
       value: name,
     }));
-  }, [sortedTemplates, onDeleteTemplate]);
+  }, [sortedTemplates, descriptions, onEditTemplate, onDeleteTemplate]);
 
   const hasTemplates = sortedTemplates.length > 0;
 
   return (
     <Select
+      mode="multiple"
+      optionLabelProp="value"
       className={`cea-template-select ${!hasTemplates ? 'cea-template-select-empty' : ''}`}
-      style={{ width: 208 }}
-      styles={{ popup: { root: { width: 270 } } }}
+      style={{ width: 416 }}
+      styles={{ popup: { root: { width: 416 } } }}
       placeholder={
         hasTemplates ? 'Intervention Templates' : 'Create Intervention Template'
       }
       options={hasTemplates ? options : []}
-      value={selectedTemplate}
-      onChange={onSelectTemplate}
-      onSelect={(value) => {
-        if (value === selectedTemplate) {
-          onSelectTemplate(null);
-        }
-      }}
+      value={selectedTemplates}
+      onChange={onSelectTemplates}
+      maxTagCount="responsive"
       allowClear={hasTemplates}
       loading={loading}
       open={hasTemplates ? open : false}
@@ -616,9 +624,10 @@ const PathwayPanel = ({
   const [newYearValue, setNewYearValue] = useState(null);
 
   const [templateNames, setTemplateNames] = useState([]);
+  const [templateDescriptions, setTemplateDescriptions] = useState({});
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
-  const [selectedHeaderTemplate, setSelectedHeaderTemplate] = useState(null);
+  const [selectedHeaderTemplates, setSelectedHeaderTemplates] = useState([]);
 
   const scenarioPath = useMemo(
     () => buildScenarioPath(project, scenarioName),
@@ -685,9 +694,25 @@ const PathwayPanel = ({
     }
   }, [selectedPathway, selectedRow, setStateZoneOverride]);
 
-  const span = timeline?.span ?? overview?.span ?? {};
+  // Scale the shared ruler to the currently visible lanes rather than the global span the
+  // backend reports (the union of every pathway). Otherwise a freshly created/launched pathway
+  // would inherit the previous pathway's year range instead of showing its own.
+  const visibleSpan = useMemo(() => {
+    const years = visibleOverviewPathways.flatMap((p) => p.years ?? []);
+    if (!years.length) {
+      return null;
+    }
+    return { start_year: Math.min(...years), end_year: Math.max(...years) };
+  }, [visibleOverviewPathways]);
+
+  const span = visibleSpan ?? timeline?.span ?? overview?.span ?? {};
   const startYear = span?.start_year;
-  const endYear = span?.end_year;
+  // Extend the ruler to at least 2100 so sparse, near-term pathways still show a long-term
+  // horizon; pathways that already run past 2100 keep their own end year.
+  const endYear =
+    span?.end_year != null
+      ? Math.max(span.end_year, MIN_TIMELINE_END_YEAR)
+      : span?.end_year;
   const yearRange = useMemo(() => {
     if (startYear == null || endYear == null) {
       return 1;
@@ -768,55 +793,65 @@ const PathwayPanel = ({
     [],
   );
 
-  const loadOverview = useCallback(async (preferredPathway = null) => {
-    setLoadingOverview(true);
-    setPanelError(null);
-    try {
-      const data = await fetchPathwayOverview();
-      setOverview(data);
-      const pathwayNames = (data?.pathways ?? []).map(
-        (item) => item.pathway_name,
-      );
-      const activePathway =
-        (preferredPathway && pathwayNames.includes(preferredPathway)
-          ? preferredPathway
-          : null) ??
-        (selectedPathwayRef.current &&
-        pathwayNames.includes(selectedPathwayRef.current)
-          ? selectedPathwayRef.current
-          : null) ??
-        pathwayNames[0] ??
-        null;
-      setSelectedPathway(activePathway);
-      setVisiblePathways((prev) => {
-        if (prev.length > 0) {
-          const kept = prev.filter((p) => pathwayNames.includes(p));
-          if (activePathway && !kept.includes(activePathway)) {
-            kept.push(activePathway);
+  const loadOverview = useCallback(
+    async (preferredPathway = null, { exclusiveVisible = false } = {}) => {
+      setLoadingOverview(true);
+      setPanelError(null);
+      try {
+        const data = await fetchPathwayOverview();
+        setOverview(data);
+        const pathwayNames = (data?.pathways ?? []).map(
+          (item) => item.pathway_name,
+        );
+        const activePathway =
+          (preferredPathway && pathwayNames.includes(preferredPathway)
+            ? preferredPathway
+            : null) ??
+          (selectedPathwayRef.current &&
+          pathwayNames.includes(selectedPathwayRef.current)
+            ? selectedPathwayRef.current
+            : null) ??
+          pathwayNames[0] ??
+          null;
+        setSelectedPathway(activePathway);
+        setVisiblePathways((prev) => {
+          // After creating a new pathway, show only it so building events and interventions
+          // (which target every visible lane) do not silently also apply to the old pathways.
+          if (exclusiveVisible) {
+            return activePathway ? [activePathway] : [];
           }
-          return kept;
-        }
-        return activePathway ? [activePathway] : [];
-      });
-      return activePathway;
-    } catch (error) {
-      setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
-      setOverview(null);
-      setSelectedPathway(null);
-      setVisiblePathways([]);
-      return null;
-    } finally {
-      setLoadingOverview(false);
-    }
-  }, []);
+          if (prev.length > 0) {
+            const kept = prev.filter((p) => pathwayNames.includes(p));
+            if (activePathway && !kept.includes(activePathway)) {
+              kept.push(activePathway);
+            }
+            return kept;
+          }
+          return activePathway ? [activePathway] : [];
+        });
+        return activePathway;
+      } catch (error) {
+        setPanelError(getErrorMessage(error, 'Failed to load pathways.'));
+        setOverview(null);
+        setSelectedPathway(null);
+        setVisiblePathways([]);
+        return null;
+      } finally {
+        setLoadingOverview(false);
+      }
+    },
+    [],
+  );
 
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true);
     try {
-      const names = await fetchInterventionTemplates();
+      const { names, descriptions } = await fetchInterventionTemplates();
       setTemplateNames(names);
+      setTemplateDescriptions(descriptions);
     } catch {
       setTemplateNames([]);
+      setTemplateDescriptions({});
     } finally {
       setLoadingTemplates(false);
     }
@@ -826,9 +861,12 @@ const PathwayPanel = ({
     async ({
       preferredPathway = selectedPathwayRef.current,
       preferredYear = selectedYearRef.current,
+      exclusiveVisible = false,
     } = {}) => {
       setBuildingLifecycleData(null);
-      const activePathway = await loadOverview(preferredPathway);
+      const activePathway = await loadOverview(preferredPathway, {
+        exclusiveVisible,
+      });
       if (!activePathway) {
         setTimeline(null);
         setSelectedYear(null);
@@ -1048,14 +1086,13 @@ const PathwayPanel = ({
     }
 
     if (job.state === 2) {
-      if (pendingPanelJob.onSuccess === 'created-pathway') {
-        // pathway created successfully
-      }
       setPanelError(null);
       void refreshPathwayData({
         preferredPathway:
           pendingPanelJob.preferredPathway ?? selectedPathwayRef.current,
         preferredYear: pendingPanelJob.preferredYear,
+        // A freshly created pathway should start as the only visible lane.
+        exclusiveVisible: pendingPanelJob.onSuccess === 'created-pathway',
       });
       setPendingPanelJob(null);
       setBusyAction(null);
@@ -1125,7 +1162,7 @@ const PathwayPanel = ({
 
   const handleApplyIntervention = async () => {
     if (
-      !selectedHeaderTemplate ||
+      !selectedHeaderTemplates.length ||
       newYearValue == null ||
       !visiblePathways.length
     ) {
@@ -1140,7 +1177,7 @@ const PathwayPanel = ({
         scenario: scenarioPath,
         existing_pathway_names: visiblePathways,
         year_of_state: targetYear,
-        intervention_templates: [selectedHeaderTemplate],
+        intervention_templates: selectedHeaderTemplates,
       },
       busyKey: 'apply-intervention',
       failedToStartMessage: 'Failed to start the apply-intervention job.',
@@ -1151,6 +1188,47 @@ const PathwayPanel = ({
       onSuccess: 'saved-templates',
     });
     setNewYearValue(null);
+  };
+
+  const handleCopyState = async () => {
+    if (!selectedPathway || !selectedRow || newYearValue == null) {
+      return;
+    }
+
+    const targetYear = Number(newYearValue);
+    try {
+      // Reuse the year's expert-YAML round-trip: read the selected state's full entry, then
+      // write it under the target year (the save-yaml job revalidates the resulting log).
+      const options = await fetchYearEditorOptions(
+        selectedPathway,
+        selectedRow.year,
+      );
+      const rawYaml = options?.yaml_preview;
+      if (!rawYaml || !rawYaml.trim()) {
+        setPanelError('The selected state has no content to copy.');
+        return;
+      }
+      pendingPreferredYearRef.current = targetYear;
+      await startPanelJob({
+        script: 'pathway-save-yaml',
+        parameters: {
+          scenario: scenarioPath,
+          existing_pathway_names: [selectedPathway],
+          year_of_state: targetYear,
+          raw_yaml: rawYaml,
+        },
+        busyKey: 'copy-state',
+        failedToStartMessage: 'Failed to start the copy-state job.',
+        failureMessage:
+          'Copying state failed. Open Job Info in the status bar for details.',
+        preferredPathway: selectedPathway,
+        preferredYear: targetYear,
+        onSuccess: 'copied-state',
+      });
+      setNewYearValue(null);
+    } catch (error) {
+      setPanelError(getErrorMessage(error, 'Failed to copy state.'));
+    }
   };
 
   const handleDeletePathwayByName = (pathwayName) => {
@@ -1292,20 +1370,119 @@ const PathwayPanel = ({
     setToolType(toolTypes.TOOLS);
   };
 
-  const handleDeleteTemplate = (templateName) => {
+  const handleEditTemplate = async (templateName) => {
     if (!templateName) {
       return;
     }
 
+    const openForm = async (configPayload) => {
+      try {
+        await preSaveDefineTemplateConfig(configPayload);
+        setSelectedHeaderTemplates((current) =>
+          current.includes(templateName) ? current : [...current, templateName],
+        );
+        handleOpenTemplateTool();
+        // The define form caches its parameters per script name. Switching templates does
+        // not change the script, so force a refetch to reload the freshly-saved values into
+        // an already-open form. This resets the form, discarding any unsaved edits — matching
+        // how every CEA tool form behaves when its data reloads.
+        await queryClient.invalidateQueries({
+          queryKey: ['toolParams', 'pathway-intervention-templates-define'],
+        });
+      } catch (error) {
+        setPanelError(
+          getErrorMessage(
+            error,
+            'Failed to open intervention template for editing.',
+          ),
+        );
+      }
+    };
+
+    let template;
+    try {
+      template = await fetchInterventionTemplate(templateName);
+    } catch (error) {
+      setPanelError(
+        getErrorMessage(error, 'Failed to load intervention template.'),
+      );
+      return;
+    }
+
+    const configPayload = template?.config ?? {};
+
+    if (template?.diverged) {
+      Modal.confirm({
+        title: `Edit template '${templateName}'?`,
+        content:
+          'This template applies different changes to different construction types, which the edit form cannot show. ' +
+          'Opening it for editing will use the first construction type’s values for all of them. Saving will overwrite the others.',
+        okText: 'Edit anyway',
+        onOk: () => openForm(configPayload),
+      });
+      return;
+    }
+
+    await openForm(configPayload);
+  };
+
+  const handleDeleteTemplate = async (templateName) => {
+    if (!templateName) {
+      return;
+    }
+
+    // Best-effort: warn if this template's changes appear in any pathway-year. A scan failure
+    // must never block deletion, so fall back to an empty list on error.
+    let usage = [];
+    try {
+      usage = await fetchTemplateUsage(templateName);
+    } catch {
+      usage = [];
+    }
+
+    let usageNote = null;
+    if (usage.length > 0) {
+      const byPathway = usage.reduce((acc, { pathway, year }) => {
+        (acc[pathway] = acc[pathway] || []).push(year);
+        return acc;
+      }, {});
+      const summary = Object.entries(byPathway)
+        .map(
+          ([pathway, years]) =>
+            `${pathway} (${years.sort((a, b) => a - b).join(', ')})`,
+        )
+        .join('; ');
+      usageNote = (
+        <p style={{ marginTop: 8 }}>
+          Changes matching this template appear in{' '}
+          <strong>{usage.length}</strong> pathway year
+          {usage.length === 1 ? '' : 's'}: {summary}. Those years keep their own
+          copy and are <strong>not</strong> affected by deleting the template.
+        </p>
+      );
+    }
+
     Modal.confirm({
       title: `Delete template '${templateName}'?`,
-      content:
-        'This removes the intervention template definition. This cannot be undone.',
+      content: (
+        <>
+          <p style={{ margin: 0 }}>
+            This removes the intervention template definition. This cannot be
+            undone.
+          </p>
+          {usageNote}
+        </>
+      ),
       okText: 'Delete template',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
           await deleteInterventionTemplate(templateName);
+          // Drop the deleted template from the selection so it doesn't linger as a
+          // dangling value in the dropdown.
+          setSelectedHeaderTemplates((current) =>
+            current.filter((name) => name !== templateName),
+          );
           await loadTemplates();
         } catch (error) {
           setPanelError(
@@ -1445,7 +1622,7 @@ const PathwayPanel = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ margin: 0 }}>Pathway Builder</h2>
+          <h2 style={{ margin: 0, fontSize: 18 }}>Pathway Builder</h2>
           <InfoTooltip tooltipKey="pathway-builder" placement="right" />
         </div>
         <div
@@ -1499,8 +1676,10 @@ const PathwayPanel = ({
             <Divider type="vertical" style={{ height: 24, margin: 0 }} />
             <TemplateSelect
               templates={templateNames}
-              selectedTemplate={selectedHeaderTemplate}
-              onSelectTemplate={setSelectedHeaderTemplate}
+              descriptions={templateDescriptions}
+              selectedTemplates={selectedHeaderTemplates}
+              onSelectTemplates={setSelectedHeaderTemplates}
+              onEditTemplate={handleEditTemplate}
               onDeleteTemplate={handleDeleteTemplate}
               onCreateTemplate={handleOpenTemplateTool}
               loading={loadingTemplates}
@@ -1636,7 +1815,7 @@ const PathwayPanel = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  width: 549,
+                  flexWrap: 'wrap',
                 }}
               >
                 <InputNumber
@@ -1644,10 +1823,10 @@ const PathwayPanel = ({
                   precision={0}
                   value={newYearValue}
                   onChange={setNewYearValue}
-                  style={{ width: 96 }}
+                  style={{ width: 96, flexShrink: 0 }}
                   disabled={!selectedPathway}
                 />
-                {selectedHeaderTemplate ? (
+                {selectedHeaderTemplates.length ? (
                   <Button
                     type="primary"
                     icon={<CreateNewIcon />}
@@ -1655,7 +1834,9 @@ const PathwayPanel = ({
                     loading={busyAction === 'apply-intervention'}
                     onClick={handleApplyIntervention}
                   >
-                    Apply Selected Intervention
+                    {selectedHeaderTemplates.length > 1
+                      ? `Apply ${selectedHeaderTemplates.length} Interventions`
+                      : 'Apply Selected Intervention'}
                   </Button>
                 ) : (
                   <Button
@@ -1668,6 +1849,16 @@ const PathwayPanel = ({
                     Create Building Event
                   </Button>
                 )}
+                {selectedRow ? (
+                  <Button
+                    icon={<DuplicateIcon />}
+                    disabled={!selectedPathway || newYearValue == null}
+                    loading={busyAction === 'copy-state'}
+                    onClick={handleCopyState}
+                  >
+                    Copy State
+                  </Button>
+                ) : null}
                 {selectedRow &&
                 (selectedRow.can_delete ||
                   selectedRow.can_clear_manual_changes) ? (
@@ -2070,6 +2261,7 @@ const PathwayPanel = ({
                           marginLeft: 12,
                           width: 80,
                           flexShrink: 0,
+                          fontSize: 18,
                         }}
                       >
                         Y_{selectedRow.year}

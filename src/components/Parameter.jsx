@@ -173,7 +173,10 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           ]}
           initialValue={stringValue}
         >
-          <Input placeholder={nullable ? 'Leave blank for default' : null} />
+          <Input
+            placeholder={nullable ? 'Leave blank for default' : null}
+            disabled={paramDisabled}
+          />
         </FormField>
       );
     }
@@ -340,7 +343,9 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
       );
     }
     case 'BuildingsParameter':
-    case 'OptionalBuildingsParameter': {
+    case 'OptionalBuildingsParameter':
+    case 'PathwayConstructBuildingsParameter':
+    case 'PathwayDemolishBuildingsParameter': {
       return (
         <BuildingsParameter
           name={name}
