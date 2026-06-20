@@ -96,17 +96,15 @@ const Tool = ({
     return builder ? builder(childScenario.year) : {};
   }, [childScenario, script]);
 
+  // Combine: script-static readonly params, pathway-viewer overrides,
+  // and any caller-supplied extras (e.g. canvas passes ['what-if-name']).
   const readonlyFields = useMemo(
-    () => [...(SCRIPT_READONLY_PARAMS[script] ?? []), ...Object.keys(pathwayOverrides)],
-    [script, pathwayOverrides],
-  );
-
-  // Merge internal (pathway) and external (caller-provided) readonly
-  // lists. `externalReadonlyFields` is optional; when absent this is
-  // identical to `readonlyFields` — main viewport unchanged.
-  const allReadonlyFields = useMemo(
-    () => [...readonlyFields, ...(externalReadonlyFields || [])],
-    [readonlyFields, externalReadonlyFields],
+    () => [
+      ...(SCRIPT_READONLY_PARAMS[script] ?? []),
+      ...Object.keys(pathwayOverrides),
+      ...(externalReadonlyFields || []),
+    ],
+    [script, pathwayOverrides, externalReadonlyFields],
   );
 
   const {
@@ -321,7 +319,7 @@ const Tool = ({
             parameters={parameters}
             categoricalParameters={categoricalParameters}
             script={script}
-            readonlyFields={allReadonlyFields}
+            readonlyFields={readonlyFields}
           />
         </div>
       </Spin>

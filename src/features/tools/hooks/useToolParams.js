@@ -35,8 +35,8 @@ const useFetchToolParams = (script) => {
 
   const effectiveProject = override?.project || project;
   const effectiveScenarioName = override?.scenarioName || scenarioName;
-  // childScenario path only applies when no canvas override is active
-  const effectiveScenarioPath = !override && childScenario?.scenario_path;
+  // child-scenario path only applies when no canvas scenario override is active
+  const scenarioPath = override ? null : (childScenario?.scenario_path ?? null);
 
   return useQuery({
     queryKey: [
@@ -44,12 +44,12 @@ const useFetchToolParams = (script) => {
       script,
       effectiveProject,
       effectiveScenarioName,
-      effectiveScenarioPath,
+      scenarioPath,
     ],
     queryFn: async () => {
       if (!script) return null;
-      const params = effectiveScenarioPath
-        ? { scenario_path: effectiveScenarioPath }
+      const params = scenarioPath
+        ? { scenario_path: scenarioPath }
         : { project: effectiveProject, scenario_name: effectiveScenarioName };
       const response = await apiClient.get(`/api/tools/${script}`, { params });
       return response.data;

@@ -12,7 +12,13 @@ const ELECTRON_ONLY = [
   'debug',
 ];
 
-const ToolForm = ({ form, parameters, categoricalParameters, script, readonlyFields = [] }) => {
+const ToolForm = ({
+  form,
+  parameters,
+  categoricalParameters,
+  script,
+  readonlyFields = [],
+}) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
   const setActiveKey = useToolFormStore((state) => state.setActiveKey);

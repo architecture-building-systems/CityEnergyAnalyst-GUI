@@ -14,35 +14,41 @@ import { useProjectStore } from 'features/project/stores/projectStore';
  * Each distinct (project, scenario, childScenario) tuple caches
  * separately so sibling Canvas Builder columns don't thrash each
  * other's data, and the pathway viewer shows state-folder inputs.
+ *
+ * When no override is given, `childScenario.scenario_path` (set by
+ * the pathway viewer) takes effect so the input editor and map reflect
+ * the selected pathway state.
  */
 export function useInputs(options) {
-  const activeProject = useProjectStore((state) => state.project);
-  const activeScenario = useProjectStore((state) => state.scenario);
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
   const childScenario = useProjectStore((state) => state.childScenario);
 
   const scenarioOverride = options?.scenario ?? null;
   const projectOverride = options?.project ?? null;
 
-  const projectName = scenarioOverride
-    ? projectOverride || activeProject
-    : activeProject;
-  const scenarioName = scenarioOverride ?? activeScenario;
-  // childScenario only applies when no explicit caller override is given
+  // Canvas per-column override wins; fetch a named scenario without
+  // touching the active config or the pathway child-scenario.
+  const effectiveProject = scenarioOverride
+    ? projectOverride || project
+    : project;
+  const effectiveScenario = scenarioOverride ?? scenarioName;
+  // child-scenario path only applies to the active (non-override) fetch
   const scenarioPath = scenarioOverride
     ? null
     : (childScenario?.scenario_path ?? null);
 
   return useQuery({
-    queryKey: ['inputs', projectName, scenarioName, scenarioPath],
+    queryKey: ['inputs', effectiveProject, effectiveScenario, scenarioPath],
     queryFn: async () => {
-      if (!projectName || !scenarioName) return {};
+      if (scenarioPath == null && (!effectiveProject || !effectiveScenario))
+        return {};
+
+      const params = scenarioPath
+        ? { scenario_path: scenarioPath }
+        : { project: effectiveProject, scenario_name: effectiveScenario };
 
       try {
-        const params = scenarioOverride
-          ? { scenario: scenarioOverride, project: projectOverride || undefined }
-          : scenarioPath
-          ? { scenario_path: scenarioPath }
-          : { project: projectName, scenario_name: scenarioName };
         const { data } = await apiClient.get(
           `${API_ENDPOINTS.INPUTS}/all-inputs`,
           { params },

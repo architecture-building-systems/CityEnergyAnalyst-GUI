@@ -2,8 +2,6 @@ import { Divider, Modal, Select, Spin, Tooltip } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
-import { childStateScenarioPath } from 'features/canvas/stores/canvasStore';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import KpiRibbon from './KpiRibbon';
@@ -39,18 +37,8 @@ const OverviewCard = ({
   // state-year switches.
   const childScenario = useProjectStore((s) => s.childScenario);
   const childDataScenario = useMemo(() => {
-    if (
-      !childScenario?.parent_scenario ||
-      !childScenario?.pathway_name ||
-      childScenario?.year == null
-    ) {
-      return null;
-    }
-    return childStateScenarioPath(
-      childScenario.parent_scenario,
-      childScenario.pathway_name,
-      childScenario.year,
-    );
+    if (!childScenario?.scenario_path) return null;
+    return childScenario.scenario_path;
   }, [childScenario]);
 
   return (

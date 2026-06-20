@@ -11,7 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InfoTooltip, { TooltipFromBackend } from 'components/InfoTooltip';
-import { CEA_PURPLE, ERROR_RED, PATHWAY_PRIMARY } from 'constants/theme';
+import { ERROR_RED } from 'constants/theme';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { getMainUseType } from 'features/map/utils/constructionColors';
