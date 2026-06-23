@@ -534,6 +534,8 @@ const FormContent = ({ onSuccess }) => {
         } finally {
           form.resetFields();
         }
+      } else if (xhr.status === 502 || xhr.status === 504) {
+        message.error('Upload failed: Server error');
       } else {
         try {
           const errorResponse = JSON.parse(xhr.responseText);
