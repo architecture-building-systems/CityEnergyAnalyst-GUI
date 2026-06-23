@@ -28,6 +28,7 @@ export function useSchedules() {
 
           const { data } = await apiClient.get(
             `${API_ENDPOINTS.INPUTS}/building-schedule/${building}`,
+            { params: { project: projectName, scenario_name: scenarioName } },
           );
           return data;
         },

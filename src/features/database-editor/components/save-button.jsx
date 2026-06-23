@@ -3,6 +3,7 @@ import { apiClient } from 'lib/api/axios';
 import { Button } from 'antd';
 import SavingDatabaseModal from 'features/database-editor/components/DatabaseEditor/SavingDatabaseModal';
 import { useState } from 'react';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 export const SaveDatabaseButton = () => {
   const databasesData = useDatabaseEditorStore((state) => state.data);
@@ -13,6 +14,8 @@ export const SaveDatabaseButton = () => {
   const resetDatabaseChanges = useDatabaseEditorStore(
     (state) => state.resetDatabaseChanges,
   );
+  const project = useProjectStore((s) => s.project);
+  const scenario = useProjectStore((s) => s.scenario);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -27,9 +30,13 @@ export const SaveDatabaseButton = () => {
 
   const saveDB = async () => {
     setModalVisible(true);
+    const scenarioParams =
+      project && scenario ? { project, scenario_name: scenario } : {};
     try {
       console.log(databasesData);
-      await apiClient.put(`/api/inputs/databases`, databasesData);
+      await apiClient.put(`/api/inputs/databases`, databasesData, {
+        params: scenarioParams,
+      });
       setSuccess(true);
       resetDatabaseChanges();
     } catch (err) {

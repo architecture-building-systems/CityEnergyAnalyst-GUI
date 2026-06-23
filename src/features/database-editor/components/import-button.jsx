@@ -4,6 +4,7 @@ import { Modal, message, Alert, Upload, Button } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import Dragger from 'antd/es/upload/Dragger';
 import { apiClient } from 'lib/api/axios';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 export const ImportDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
@@ -35,6 +36,8 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
     (state) => state.initDatabaseState,
   );
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
+  const project = useProjectStore((s) => s.project);
+  const scenario = useProjectStore((s) => s.scenario);
 
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
@@ -52,11 +55,12 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
     const formData = new FormData();
     formData.append('file', fileList[0].originFileObj);
 
+    const scenarioParams =
+      project && scenario ? { project, scenario_name: scenario } : {};
     try {
       await apiClient.post(`/api/inputs/databases/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
+        params: scenarioParams,
       });
       // Reload the database after successful upload
       await initDatabaseState();

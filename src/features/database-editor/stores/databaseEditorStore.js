@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { apiClient } from 'lib/api/axios';
 import { arrayStartsWith } from 'utils';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 export const FETCHING_STATUS = 'fetching';
 export const SUCCESS_STATUS = 'success';
@@ -46,9 +47,15 @@ const useDatabaseEditorStore = create((set, get) => ({
       return;
     }
 
+    const { project, scenario } = useProjectStore.getState();
+    const scenarioParams =
+      project && scenario ? { project, scenario_name: scenario } : {};
+
     set({ databaseValidation: { status: 'checking', message: null } });
     try {
-      await apiClient.get('/api/inputs/databases/check');
+      await apiClient.get('/api/inputs/databases/check', {
+        params: scenarioParams,
+      });
       set({ databaseValidation: { status: 'valid', message: null } });
     } catch (error) {
       console.log(error);
@@ -72,9 +79,15 @@ const useDatabaseEditorStore = create((set, get) => ({
   },
 
   initDatabaseState: async () => {
+    const { project, scenario } = useProjectStore.getState();
+    const scenarioParams =
+      project && scenario ? { project, scenario_name: scenario } : {};
+
     set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
-      const { data } = await apiClient.get('/api/inputs/databases');
+      const { data } = await apiClient.get('/api/inputs/databases', {
+        params: scenarioParams,
+      });
       set({
         data,
         status: { status: SUCCESS_STATUS },
@@ -117,10 +130,15 @@ const useDatabaseEditorStore = create((set, get) => ({
 
   saveDatabaseState: async () => {
     const data = useDatabaseEditorStore.getState().data;
+    const { project, scenario } = useProjectStore.getState();
+    const scenarioParams =
+      project && scenario ? { project, scenario_name: scenario } : {};
 
     try {
       set({ status: { status: SAVING_STATUS } });
-      await apiClient.put('/api/inputs/databases', data);
+      await apiClient.put('/api/inputs/databases', data, {
+        params: scenarioParams,
+      });
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } finally {
       set({ status: { status: null } });

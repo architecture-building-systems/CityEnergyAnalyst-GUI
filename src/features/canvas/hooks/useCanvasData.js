@@ -99,13 +99,16 @@ export const useFetchSummary = (project, scenario, feature, whatif) =>
     staleTime: 30_000,
   });
 
-export const useFetchToolParams = (script, scenario) =>
+export const useFetchToolParams = (script, scenario, project) =>
   useQuery({
-    queryKey: ['tools', script, scenario],
+    queryKey: ['tools', script, project, scenario],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/api/tools/${script}`, {
-        params: scenario ? { scenario_name: scenario } : {},
-      });
+      const params = scenario
+        ? project
+          ? { project, scenario_name: scenario }
+          : { scenario_name: scenario }
+        : {};
+      const { data } = await apiClient.get(`/api/tools/${script}`, { params });
       return data;
     },
     enabled: !!script,
