@@ -22,12 +22,9 @@ export function useSaveInputs() {
 
   const scenarioPath = childScenario?.scenario_path ?? null;
 
-  const { tables, geojsons, crs } = queryClient.getQueryData([
-    'inputs',
-    project,
-    scenarioName,
-    scenarioPath,
-  ]) ?? {};
+  const { tables, geojsons, crs } =
+    queryClient.getQueryData(['inputs', project, scenarioName, scenarioPath]) ??
+    {};
 
   const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
     (obj, key) => {
