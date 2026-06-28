@@ -1,7 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders, childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
+import {
+  activeScenarioHeaders,
+  childScenarioToken,
+  scenarioHeaders,
+} from 'lib/api/scenarioContext';
 import useFormReset from './useFormReset';
 import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
@@ -14,7 +18,9 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
 
   const effectiveProject = scenarioOverride?.project || project;
   const effectiveScenarioName = scenarioOverride?.scenarioName || scenarioName;
-  const childToken = scenarioOverride ? null : childScenarioToken(childScenario);
+  const childToken = scenarioOverride
+    ? null
+    : childScenarioToken(childScenario);
 
   return useQuery({
     queryKey: [
@@ -28,13 +34,16 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
       if (!script) return null;
       const requestConfig = scenarioOverride
         ? {
-            headers: scenarioHeaders({
-              project: effectiveProject,
-              scenarioName: effectiveScenarioName,
-            }),
-          }
+          headers: scenarioHeaders({
+            project: effectiveProject,
+            scenarioName: effectiveScenarioName,
+          }),
+        }
         : { headers: activeScenarioHeaders() };
-      const response = await apiClient.get(`/api/tools/${script}`, requestConfig);
+      const response = await apiClient.get(
+        `/api/tools/${script}`,
+        requestConfig,
+      );
       return response.data;
     },
     enabled: !!script,
@@ -42,7 +51,13 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
   });
 };
 
-const useToolParams = (script, form, onError, onParametersChange, scenarioOverride = null) => {
+const useToolParams = (
+  script,
+  form,
+  onError,
+  onParametersChange,
+  scenarioOverride = null,
+) => {
   const {
     data: params,
     isLoading,

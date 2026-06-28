@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { ConfigProvider, Button } from 'antd';
 import { VerticalLeftOutlined } from '@ant-design/icons';
 
-import { PlotChoices, PlotTool } from 'features/project/components/Cards/plot-tool';
+import {
+  PlotChoices,
+  PlotTool,
+} from 'features/project/components/Cards/plot-tool';
 import {
   useMapLayerCategories,
   useSetActiveMapCategory,

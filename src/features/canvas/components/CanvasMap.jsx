@@ -54,7 +54,9 @@ const CanvasMap = ({
 
   const activeInputs = useInputs();
   const columnInputs = useColumnInputs(scenario, project);
-  const { data, isFetching, isError, refetch } = scenario ? columnInputs : activeInputs;
+  const { data, isFetching, isError, refetch } = scenario
+    ? columnInputs
+    : activeInputs;
   const { geojsons } = data ?? {};
 
   useEffect(() => {

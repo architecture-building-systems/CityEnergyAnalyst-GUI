@@ -55,7 +55,10 @@ export const scenarioHeaders = ({
  * to use inside async query functions and event handlers.
  */
 export const activeScenarioHeaders = () => {
-  const { project, scenario: scenarioName, childScenario } =
-    useProjectStore.getState();
+  const {
+    project,
+    scenario: scenarioName,
+    childScenario,
+  } = useProjectStore.getState();
   return scenarioHeaders({ project, scenarioName, childScenario });
 };

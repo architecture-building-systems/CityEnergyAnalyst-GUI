@@ -154,7 +154,6 @@ export const useProjectStore = create((set) => ({
   clearSimulationProgress: () => set({ simulationProgress: {} }),
 }));
 
-
 export const useProjectLoading = () =>
   useProjectStore((state) => state.isFetching);
 

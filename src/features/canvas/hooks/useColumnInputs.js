@@ -20,7 +20,12 @@ export function useColumnInputs(scenario, project) {
       if (!effectiveProject || !scenario) return {};
       const { data } = await apiClient.get(
         `${API_ENDPOINTS.INPUTS}/all-inputs`,
-        { headers: scenarioHeaders({ project: effectiveProject, scenarioName: scenario }) },
+        {
+          headers: scenarioHeaders({
+            project: effectiveProject,
+            scenarioName: scenario,
+          }),
+        },
       );
       return data;
     },

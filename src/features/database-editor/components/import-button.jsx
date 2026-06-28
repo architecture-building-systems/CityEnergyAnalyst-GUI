@@ -55,7 +55,10 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
 
     try {
       await apiClient.post(`/api/inputs/databases/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data', ...activeScenarioHeaders() },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...activeScenarioHeaders(),
+        },
       });
       // Reload the database after successful upload
       await initDatabaseState();

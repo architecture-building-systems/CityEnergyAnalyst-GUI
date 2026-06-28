@@ -1,6 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders, scenarioHeaders } from 'lib/api/scenarioContext';
+import {
+  activeScenarioHeaders,
+  scenarioHeaders,
+} from 'lib/api/scenarioContext';
 import { TOOLS_MUTATION_KEYS } from '../../constants/queryKeys';
 
 export function useCheckInputsMutation(scenarioOverride = null) {

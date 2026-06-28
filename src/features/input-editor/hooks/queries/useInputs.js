@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { activeScenarioHeaders, childScenarioToken } from 'lib/api/scenarioContext';
+import {
+  activeScenarioHeaders,
+  childScenarioToken,
+} from 'lib/api/scenarioContext';
 
 export function useInputs() {
   const project = useProjectStore((state) => state.project);

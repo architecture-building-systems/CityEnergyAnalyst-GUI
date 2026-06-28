@@ -112,7 +112,13 @@ const Tool = ({
     fetchError: error,
     inputError,
     recheckInputs,
-  } = useToolParams(script, form, onValidationError, onParametersChange, scenarioOverride);
+  } = useToolParams(
+    script,
+    form,
+    onValidationError,
+    onParametersChange,
+    scenarioOverride,
+  );
 
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;
