@@ -4,6 +4,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 
 import DeckGLMap from 'features/map/components/Map/Map';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
+import { useColumnInputs } from 'features/canvas/hooks/useColumnInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
   generateConstructionColorMap,
@@ -28,10 +29,7 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
 /**
  * Map card for the Canvas Builder grid.
  *
- * `useInputs({ scenario })` (no project) falls back to the active
- * project's `state.name` — same cache bucket the main viewport uses,
- * so the toolbar's `data?.zone`-gated buttons see the same fetched
- * data. `interactive={false}` gates `DeckGLMap` click handlers so a
+ * `interactive={false}` gates `DeckGLMap` click handlers so a
  * building click never writes into the singleton input/selection
  * stores; hover tooltips still work.
  *
@@ -56,9 +54,11 @@ const CanvasMap = ({
 }) => {
   const resetCameraOptions = useScopedResetCameraOptions();
 
-  const { data, isFetching, isError, refetch } = useInputs(
-    scenario ? { scenario } : undefined,
-  );
+  const activeInputs = useInputs();
+  const columnInputs = useColumnInputs(scenario, project);
+  const { data, isFetching, isError, refetch } = scenario
+    ? columnInputs
+    : activeInputs;
   const { geojsons } = data ?? {};
 
   useEffect(() => {
@@ -86,7 +86,7 @@ const CanvasMap = ({
       />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
-          <InlineLayerToggle scenario={scenario} />
+          <InlineLayerToggle scenario={scenario} project={project} />
           <InlineExtrudeButton />
           <InlineResetCameraButton />
           <InlineResetCompassButton />
@@ -186,9 +186,10 @@ const InlineResetCompassButton = () => {
   );
 };
 
-const InlineLayerToggle = ({ scenario }) => {
-  const inputsOpts = scenario ? { scenario } : undefined;
-  const { data: inputData } = useInputs(inputsOpts);
+const InlineLayerToggle = ({ scenario, project }) => {
+  const active = useInputs();
+  const column = useColumnInputs(scenario, project);
+  const { data: inputData } = scenario ? column : active;
   const { geojsons: data } = inputData ?? {};
 
   const setVisibility = useScopedSetVisibility();

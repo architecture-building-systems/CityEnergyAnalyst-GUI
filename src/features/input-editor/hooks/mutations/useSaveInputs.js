@@ -1,4 +1,8 @@
 import { apiClient } from 'lib/api/axios';
+import {
+  activeScenarioHeaders,
+  childScenarioToken,
+} from 'lib/api/scenarioContext';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
@@ -20,14 +24,11 @@ export function useSaveInputs() {
   const resetStore = useResetStore();
   const resyncInputs = useResyncInputs();
 
-  const scenarioPath = childScenario?.scenario_path ?? null;
+  const childToken = childScenarioToken(childScenario);
 
-  const { tables, geojsons, crs } = queryClient.getQueryData([
-    'inputs',
-    project,
-    scenarioName,
-    scenarioPath,
-  ]) ?? {};
+  const { tables, geojsons, crs } =
+    queryClient.getQueryData(['inputs', project, scenarioName, childToken]) ??
+    {};
 
   const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
     (obj, key) => {
@@ -37,27 +38,19 @@ export function useSaveInputs() {
         key,
         projectName,
         scenarioName,
+        childToken,
       ]);
       return obj;
     },
     {},
   );
 
-  const scenarioParams = scenarioPath
-    ? { scenario_path: scenarioPath }
-    : { project, scenario_name: scenarioName };
-
   return useMutation({
     mutationFn: async () => {
       const { data } = await apiClient.put(
         `${API_ENDPOINTS.INPUTS}/all-inputs`,
-        {
-          tables,
-          geojsons,
-          crs,
-          schedules,
-        },
-        { params: scenarioParams },
+        { tables, geojsons, crs, schedules },
+        { headers: activeScenarioHeaders() },
       );
       return data;
     },

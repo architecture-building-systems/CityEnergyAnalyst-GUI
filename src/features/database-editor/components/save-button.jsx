@@ -1,5 +1,6 @@
 import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { Button } from 'antd';
 import SavingDatabaseModal from 'features/database-editor/components/DatabaseEditor/SavingDatabaseModal';
 import { useState } from 'react';
@@ -28,8 +29,9 @@ export const SaveDatabaseButton = () => {
   const saveDB = async () => {
     setModalVisible(true);
     try {
-      console.log(databasesData);
-      await apiClient.put(`/api/inputs/databases`, databasesData);
+      await apiClient.put(`/api/inputs/databases`, databasesData, {
+        headers: activeScenarioHeaders(),
+      });
       setSuccess(true);
       resetDatabaseChanges();
     } catch (err) {

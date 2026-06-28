@@ -3,8 +3,9 @@
  *
  * Thin axios wrappers around the `/api/canvas/*` endpoints (router
  * lives in `cea/interfaces/dashboard/api/canvas.py`). Each call
- * carries the standard `{ project, scenario }` query params — same
- * convention every other report-style endpoint uses.
+ * carries the active scenario via `X-CEA-*` request headers
+ * (preferred by the backend's `CEAScenario` dependency over query
+ * params, and avoids leaking absolute filesystem paths into URLs).
  *
  * No draft / temp staging area: every edit posts straight to the
  * saved canvas folder via `updateSavedCanvas`. The expensive
@@ -13,6 +14,7 @@
  */
 
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 const BASE = '/api/canvas';
 
@@ -20,14 +22,14 @@ const BASE = '/api/canvas';
 
 export const listSavedCanvases = async ({ project, scenario }) => {
   const { data } = await apiClient.get(`${BASE}/`, {
-    params: { project, scenario },
+    headers: scenarioHeaders({ project, scenarioName: scenario }),
   });
   return data; // string[]
 };
 
 export const readSavedCanvas = async ({ project, scenario, name }) => {
   const { data } = await apiClient.get(`${BASE}/${encodeURIComponent(name)}`, {
-    params: { project, scenario },
+    headers: scenarioHeaders({ project, scenarioName: scenario }),
   });
   return data; // { canvas, layout, feature_card }
 };
@@ -41,7 +43,7 @@ export const createCanvas = async ({ project, scenario, name }) => {
   const { data } = await apiClient.post(
     `${BASE}/`,
     { name },
-    { params: { project, scenario } },
+    { headers: scenarioHeaders({ project, scenarioName: scenario }) },
   );
   return data; // { name }
 };
@@ -57,13 +59,13 @@ export const updateSavedCanvas = async ({
   payload,
 }) => {
   await apiClient.put(`${BASE}/${encodeURIComponent(name)}`, payload, {
-    params: { project, scenario },
+    headers: scenarioHeaders({ project, scenarioName: scenario }),
   });
 };
 
 export const deleteSavedCanvas = async ({ project, scenario, name }) => {
   await apiClient.delete(`${BASE}/${encodeURIComponent(name)}`, {
-    params: { project, scenario },
+    headers: scenarioHeaders({ project, scenarioName: scenario }),
   });
 };
 
@@ -78,7 +80,7 @@ export const duplicateCanvas = async ({ project, scenario, name, as }) => {
   const { data } = await apiClient.post(
     `${BASE}/${encodeURIComponent(name)}/duplicate`,
     body,
-    { params: { project, scenario } },
+    { headers: scenarioHeaders({ project, scenarioName: scenario }) },
   );
   return data;
 };
@@ -97,7 +99,7 @@ export const exportCanvasZip = async ({ project, scenario, name }) => {
   const { data } = await apiClient.get(
     `${BASE}/${encodeURIComponent(name)}/export`,
     {
-      params: { project, scenario },
+      headers: scenarioHeaders({ project, scenarioName: scenario }),
       responseType: 'blob',
     },
   );
@@ -118,11 +120,13 @@ export const exportCanvasZip = async ({ project, scenario, name }) => {
 export const importCanvasZip = async ({ project, scenario, file, as }) => {
   const form = new FormData();
   form.append('file', file);
-  const params = { project, scenario };
-  if (as) params.as = as;
+  const params = as ? { as } : {};
   const { data } = await apiClient.post(`${BASE}/import`, form, {
     params,
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      ...scenarioHeaders({ project, scenarioName: scenario }),
+    },
   });
   return data;
 };

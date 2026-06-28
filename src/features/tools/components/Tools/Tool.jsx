@@ -41,12 +41,10 @@ const Tool = ({
   form,
   onParametersLoaded,
   onRunOverride,
-  // Optional list of parameter names to render as read-only in
-  // addition to the pathway-viewer overrides Tool already computes
-  // internally. Main viewport passes nothing; the canvas passes
-  // `['what-if-name']` so users edit what-if from the bottom map
-  // layer card, not from the plot form.
   extraReadonlyFields: externalReadonlyFields,
+  // When set, parameter fetches and input validation target this
+  // specific scenario instead of the active project scenario.
+  scenarioOverride = null,
 }) => {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [toolError, setToolError] = useState(null);
@@ -91,10 +89,11 @@ const Tool = ({
   const childScenario = useProjectStore((state) => state.childScenario);
 
   const pathwayOverrides = useMemo(() => {
-    if (!childScenario || childScenario.year == null) return {};
+    if (scenarioOverride || !childScenario || childScenario.year == null)
+      return {};
     const builder = PATHWAY_VIEWER_OVERRIDES[script];
     return builder ? builder(childScenario.year) : {};
-  }, [childScenario, script]);
+  }, [scenarioOverride, childScenario, script]);
 
   // Combine: script-static readonly params, pathway-viewer overrides,
   // and any caller-supplied extras (e.g. canvas passes ['what-if-name']).
@@ -114,7 +113,13 @@ const Tool = ({
     fetchError: error,
     inputError,
     recheckInputs,
-  } = useToolParams(script, form, onValidationError, onParametersChange);
+  } = useToolParams(
+    script,
+    form,
+    onValidationError,
+    onParametersChange,
+    scenarioOverride,
+  );
 
   const isChecking =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS] }) > 0;

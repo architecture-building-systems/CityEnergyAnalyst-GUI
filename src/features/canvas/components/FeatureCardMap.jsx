@@ -4,6 +4,7 @@ import { useMapStore } from 'features/map/stores/mapStore';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useGetMapLayers } from 'features/map/hooks/map-layers';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import Legend, {
   LegendFilterRow,
 } from 'features/map/components/Map/Layers/Legend';
@@ -295,7 +296,8 @@ const FeatureCardMapBody = ({
         try {
           const resp = await apiClient.post(
             `/api/map_layers/${categoryInfo.name}/${layerInfo.name}/${key}/choices`,
-            { project, scenario_name: scenario, parameters: out },
+            { parameters: out },
+            { headers: scenarioHeaders({ project, scenarioName: scenario }) },
           );
           const data = resp.data;
           const choices = Array.isArray(data) ? data : data?.choices;

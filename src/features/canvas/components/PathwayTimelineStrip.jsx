@@ -500,7 +500,8 @@ const PathwayTimelineStrip = ({ onOpenDrawer }) => {
         >
           <div style={chartFillStyle}>
             <CanvasPlot
-              scenario={parentScenario}
+              project={project}
+              scenarioContext={{ scenarioName: parentScenario }}
               plotConfig={plotConfig}
               onCaption={setCaption}
               onPlotReady={handlePlotReady}

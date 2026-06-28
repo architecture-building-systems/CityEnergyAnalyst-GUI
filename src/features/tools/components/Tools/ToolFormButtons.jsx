@@ -6,6 +6,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { getFormValues } from 'features/tools/utils';
 import {
   useSetDefaultToolParamsMutation,
@@ -146,6 +147,7 @@ export const ToolFormButtons = ({
               value,
               form_values: formValues,
             },
+            { headers: activeScenarioHeaders() },
           );
           const warnings = resp.data?.warnings ?? [];
           if (warnings.length > 0) {

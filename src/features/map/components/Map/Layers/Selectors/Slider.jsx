@@ -7,6 +7,7 @@ import {
 } from 'features/canvas/components/mapInstance';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import useDependsOn from './useDependsOn';
 
 const getRange = async (
@@ -16,14 +17,12 @@ const getRange = async (
   project,
   scenarioName,
   parameters,
+  childScenario = null,
 ) => {
   const resp = await apiClient.post(
     `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/range`,
-    {
-      project,
-      scenario_name: scenarioName,
-      parameters,
-    },
+    { parameters },
+    { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
   );
   return resp.data;
 };
@@ -68,7 +67,7 @@ const SliderSelector = ({
   range: staticRange,
   dependsOn,
 }) => {
-  const { project, scenarioName } = useScopedProjectScenario();
+  const { project, scenarioName, childScenario } = useScopedProjectScenario();
   const mapLayerParameters = useScopedMapLayerParameters();
   const categoryInfo = useScopedSelectedCategoryInfo();
   const setMapLayerParameters = useScopedSetMapLayerParameters();
@@ -135,6 +134,7 @@ const SliderSelector = ({
           project,
           scenarioName,
           mapLayerParametersRef.current ?? {},
+          childScenario,
         );
 
         if (checkIsValidRange(rangeData)) {
@@ -179,6 +179,7 @@ const SliderSelector = ({
     }
   }, [
     categoryInfo?.name,
+    childScenario,
     layerName,
     parameterName,
     project,

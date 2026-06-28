@@ -832,7 +832,8 @@ const PathwayRow = ({
                 plot's tick labels and legend need breathing room. */}
             <div style={chartCardBodyStyle}>
               <CanvasPlot
-                scenario={scenario}
+                project={project}
+                scenarioContext={{ scenarioName: scenario }}
                 plotConfig={plotConfig}
                 onCaption={setCaption}
                 onPlotReady={(div) => {

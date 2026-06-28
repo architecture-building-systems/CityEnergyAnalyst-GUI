@@ -2,6 +2,7 @@ import { Button, Input, message, Modal } from 'antd';
 import { CopyTwoTone } from '@ant-design/icons';
 import { useState } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 const DeleteChoiceModal = ({
   visible,
@@ -14,6 +15,7 @@ const DeleteChoiceModal = ({
   displayName,
   project,
   scenarioName,
+  childScenario = null,
   onDeleted,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -33,11 +35,8 @@ const DeleteChoiceModal = ({
     try {
       await apiClient.post(
         `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choice/delete`,
-        {
-          project,
-          scenario_name: scenarioName,
-          value,
-        },
+        { value },
+        { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
       );
       message.success(`Deleted "${nameToConfirm}"`);
       onDeleted?.();

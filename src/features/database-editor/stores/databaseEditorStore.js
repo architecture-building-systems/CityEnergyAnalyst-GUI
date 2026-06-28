@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { arrayStartsWith } from 'utils';
 
 export const FETCHING_STATUS = 'fetching';
@@ -48,7 +49,9 @@ const useDatabaseEditorStore = create((set, get) => ({
 
     set({ databaseValidation: { status: 'checking', message: null } });
     try {
-      await apiClient.get('/api/inputs/databases/check');
+      await apiClient.get('/api/inputs/databases/check', {
+        headers: activeScenarioHeaders(),
+      });
       set({ databaseValidation: { status: 'valid', message: null } });
     } catch (error) {
       console.log(error);
@@ -74,7 +77,9 @@ const useDatabaseEditorStore = create((set, get) => ({
   initDatabaseState: async () => {
     set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
-      const { data } = await apiClient.get('/api/inputs/databases');
+      const { data } = await apiClient.get('/api/inputs/databases', {
+        headers: activeScenarioHeaders(),
+      });
       set({
         data,
         status: { status: SUCCESS_STATUS },
@@ -120,7 +125,9 @@ const useDatabaseEditorStore = create((set, get) => ({
 
     try {
       set({ status: { status: SAVING_STATUS } });
-      await apiClient.put('/api/inputs/databases', data);
+      await apiClient.put('/api/inputs/databases', data, {
+        headers: activeScenarioHeaders(),
+      });
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
     } finally {
       set({ status: { status: null } });

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { findFamilyForFeature } from 'features/canvas/components/featureCardCommon';
@@ -68,7 +69,7 @@ export const useFetchWhatifs = (project, scenario) =>
     queryKey: ['reports', 'whatifs', project, scenario],
     queryFn: async () => {
       const { data } = await apiClient.get('/api/reports/whatifs', {
-        params: { project, scenario },
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data.whatifs;
     },
@@ -91,7 +92,8 @@ export const useFetchSummary = (project, scenario, feature, whatif) =>
     queryKey: ['reports', 'summary', project, scenario, feature, whatif],
     queryFn: async () => {
       const { data } = await apiClient.get('/api/reports/summary', {
-        params: { project, scenario, feature, whatif: whatif || undefined },
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
+        params: { feature, whatif: whatif || undefined },
       });
       return data;
     },
@@ -99,12 +101,12 @@ export const useFetchSummary = (project, scenario, feature, whatif) =>
     staleTime: 30_000,
   });
 
-export const useFetchToolParams = (script, scenario) =>
+export const useFetchToolParams = (script, scenario, project) =>
   useQuery({
-    queryKey: ['tools', script, scenario],
+    queryKey: ['tools', script, project, scenario],
     queryFn: async () => {
       const { data } = await apiClient.get(`/api/tools/${script}`, {
-        params: scenario ? { scenario_name: scenario } : {},
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data;
     },
@@ -128,9 +130,15 @@ const serializeParameters = (params) => {
   return out;
 };
 
-export const useFetchCustomPlot = (plotConfig, scenario) =>
-  useQuery({
-    queryKey: ['reports', 'custom-plot', plotConfig, scenario],
+// scenarioContext = { scenarioName, pathwayName?, year? }
+// Pathway-single columns supply pathwayName + year so the backend
+// resolves the child state via X-CEA-Child-Scenario instead of
+// receiving the filesystem subpath in the body.
+export const useFetchCustomPlot = (plotConfig, scenarioContext, project) => {
+  const { scenarioName, pathwayName, year } = scenarioContext ?? {};
+  const isPathwayChild = !!pathwayName && year != null;
+  return useQuery({
+    queryKey: ['reports', 'custom-plot', plotConfig, scenarioContext, project],
     queryFn: async () => {
       // Strip any `scenario` field from `parameters` before sending.
       // The top-level `scenario` field already sets the backend's
@@ -148,7 +156,9 @@ export const useFetchCustomPlot = (plotConfig, scenario) =>
         {
           script: plotConfig.script,
           parameters: serializeParameters(rest),
-          scenario,
+          // Scenario context is fully expressed in the X-CEA-* headers for
+          // all column types — effective_scenario resolves to the target
+          // path via headers alone, so no body `scenario` is needed.
           // Human-readable feature label (from `PLOT_GROUPS`) so
           // the backend's styled error cards can read e.g.
           // "Run Energy by Carrier for baseline" instead of the
@@ -156,10 +166,20 @@ export const useFetchCustomPlot = (plotConfig, scenario) =>
           // `script_name` when absent.
           feature_label: featureLabelForScript(plotConfig.script),
         },
-        { responseType: 'text' },
+        {
+          responseType: 'text',
+          headers: scenarioHeaders({
+            project,
+            scenarioName,
+            ...(isPathwayChild
+              ? { childScenario: { pathway_name: pathwayName, year } }
+              : {}),
+          }),
+        },
       );
       return data;
     },
     enabled: !!plotConfig?.script,
     staleTime: 30_000,
   });
+};

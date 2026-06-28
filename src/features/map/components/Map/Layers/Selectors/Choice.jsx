@@ -7,6 +7,7 @@ import {
 } from 'features/canvas/components/mapInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { BinAnimationIcon } from 'assets/icons';
 import DeleteChoiceModal from './DeleteChoiceModal';
 import useDependsOn from './useDependsOn';
@@ -37,14 +38,12 @@ const getChoices = async (
   project,
   scenarioName,
   parameters,
+  childScenario = null,
 ) => {
   const resp = await apiClient.post(
     `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
-    {
-      project,
-      scenario_name: scenarioName,
-      parameters,
-    },
+    { parameters },
+    { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
   );
   return resp.data;
 };
@@ -103,7 +102,7 @@ const ChoiceSelector = ({
   // Scoped to the column's scenario when rendered inside a
   // FeatureCardMap / BottomCard with override; falls back to the
   // project store outside any provider (main viewport).
-  const { project, scenarioName } = useScopedProjectScenario();
+  const { project, scenarioName, childScenario } = useScopedProjectScenario();
   const mapLayerParameters = useScopedMapLayerParameters();
   const choicesRevision = useMapStore((state) => state.choicesRevision);
   const bumpChoicesRevision = useMapStore((state) => state.bumpChoicesRevision);
@@ -148,6 +147,7 @@ const ChoiceSelector = ({
           project,
           scenarioName,
           mapLayerParameters ?? {},
+          childScenario,
         );
         if (Array.isArray(data)) {
           setChoices({ choices: data, default: data[0] });
@@ -165,7 +165,7 @@ const ChoiceSelector = ({
     // forces all ChoiceSelectors to refetch their options after external
     // filesystem changes (e.g. a successful network-layout run creating a
     // new network in `outputs/thermal-network/`).
-  }, [dependsOnValues, dependsValid, choicesRevision]);
+  }, [categoryInfo?.name, layerName, parameterName, project, scenarioName, childScenario, dependsOnValues, dependsValid, choicesRevision]);
 
   useEffect(() => {
     if (choices) {
@@ -264,6 +264,7 @@ const ChoiceSelector = ({
           displayName={getDisplayName(choiceToDelete)}
           project={project}
           scenarioName={scenarioName}
+          childScenario={childScenario}
           onDeleted={() => {
             setChoiceToDelete(null);
             bumpChoicesRevision();
