@@ -4,6 +4,7 @@ import { Modal, message, Alert, Upload, Button } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import Dragger from 'antd/es/upload/Dragger';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 
 export const ImportDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
@@ -56,6 +57,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
       await apiClient.post(`/api/inputs/databases/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          ...activeScenarioHeaders(),
         },
       });
       // Reload the database after successful upload

@@ -18,6 +18,7 @@ import {
 } from 'features/map/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 const hasAllParameters = (layer, parameters) => {
   if (!layer || !layer.parameters) return false;
@@ -47,6 +48,7 @@ export const useGetMapLayers = (
   project,
   scenarioName,
   parameters,
+  childScenario = null,
 ) => {
   const [error, setError] = useState(null);
   const [fetching, setFetching] = useState(false);
@@ -54,7 +56,6 @@ export const useGetMapLayers = (
   const setMapLayers = useScopedSetMapLayers();
   const setRange = useScopedSetRange();
   const selectedMapLayer = useScopedSelectedMapLayer();
-  const childScenario = useProjectStore((state) => state.childScenario);
 
   const { name: categoryName, layers } = categoryInfo || {};
   const selectedLayerInfo = useMemo(
@@ -88,14 +89,12 @@ export const useGetMapLayers = (
       try {
         setFetching(true);
         setError(null);
-        const data = await fetchMapLayer(categoryName, selectedLayerInfo.name, {
-          project,
-          scenario_name: scenarioName,
-          ...(childScenario?.scenario_path
-            ? { scenario_path: childScenario.scenario_path }
-            : {}),
-          parameters,
-        });
+        const data = await fetchMapLayer(
+          categoryName,
+          selectedLayerInfo.name,
+          { parameters },
+          scenarioHeaders({ project, scenarioName, childScenario }),
+        );
         out[selectedLayerInfo.name] = data;
 
         if (!ignore) {
@@ -130,7 +129,7 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [categoryName, parameters, selectedLayerInfo, childScenario]);
+  }, [categoryName, parameters, selectedLayerInfo, project, scenarioName, childScenario]);
 
   return { fetching, error };
 };
@@ -187,10 +186,11 @@ export const useMapLegends = () => {
   return mapLegends;
 };
 
-const fetchMapLayer = async (category, layer_name, params) => {
+const fetchMapLayer = async (category, layer_name, body, headers = {}) => {
   const resp = await apiClient.post(
     `/api/map_layers/${category}/${layer_name}/generate`,
-    params,
+    body,
+    { headers },
   );
   return resp.data;
 };

@@ -1,12 +1,15 @@
 import { useQueries } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
+import { activeScenarioHeaders, childScenarioToken } from 'lib/api/scenarioContext';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useFetchedSchedules } from 'features/input-editor/stores/inputEditorStore';
 
 export function useSchedules() {
   const projectName = useProjectStore((state) => state.name);
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
+  const childToken = childScenarioToken(childScenario);
 
   const buildings = Array.from(useFetchedSchedules());
 
@@ -18,6 +21,7 @@ export function useSchedules() {
         building,
         projectName,
         scenarioName,
+        childToken,
       ];
 
       return {
@@ -28,6 +32,7 @@ export function useSchedules() {
 
           const { data } = await apiClient.get(
             `${API_ENDPOINTS.INPUTS}/building-schedule/${building}`,
+            { headers: activeScenarioHeaders() },
           );
           return data;
         },

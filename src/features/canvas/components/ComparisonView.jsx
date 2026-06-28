@@ -153,9 +153,8 @@ const ComparisonView = ({
         // (not on every column showing this card id).
         columnIndex,
         // Form scopes its parameter-schema fetch to this column's
-        // scenario via `ToolScenarioOverrideContext` in
-        // PlotEditModal — without this the form would always pull
-        // choices from the project's active scenario.
+        // scenario via `scenarioOverride` prop — without this the
+        // form would always pull choices from the active scenario.
         scenarioOverride: scenarioOverrideFor(columnIndex),
         plotConfig: script ? { script } : null,
         onSave: (plotConfig) => addPlot(columnIndex, cardId, plotConfig),
@@ -332,8 +331,7 @@ const ComparisonView = ({
 function columnKey(col) {
   if (col.type === 'scenario') return `s-${col.scenario}`;
   if (col.type === 'whatif') return `w-${col.scenario}-${col.whatif}`;
-  if (col.type === 'pathway-state')
-    return `p-${col.pathwayName}-${col.year}`;
+  if (col.type === 'pathway-state') return `p-${col.pathwayName}-${col.year}`;
   return col.scenario || col.type || 'col';
 }
 

@@ -10,7 +10,8 @@ import { useCanvasStore } from '../stores/canvasStore';
  * buttons sit above the chart in one shared icon-button container.
  */
 const PlotSlotCard = ({
-  scenario,
+  project,
+  scenarioContext,
   plotConfig,
   onEdit,
   onDelete,
@@ -137,7 +138,8 @@ const PlotSlotCard = ({
         )}
       </div>
       <CanvasPlot
-        scenario={scenario}
+        project={project}
+        scenarioContext={scenarioContext}
         plotConfig={plotConfig}
         onPlotReady={onPlotReady}
         onCaption={setCaption}

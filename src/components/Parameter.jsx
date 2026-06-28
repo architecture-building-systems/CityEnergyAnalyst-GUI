@@ -22,6 +22,7 @@ import { forwardRef, useCallback, useRef } from 'react';
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { useMapStore } from 'features/map/stores/mapStore';
 import BuildingsParameter from 'components/BuildingsParameter';
 
@@ -97,6 +98,7 @@ const useParameterAsyncValidation = ({
                 value: fieldValue,
                 form_values: formValues,
               },
+              { headers: activeScenarioHeaders() },
             );
 
             if (response.data.valid) {

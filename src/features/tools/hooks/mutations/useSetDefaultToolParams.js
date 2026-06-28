@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import {
   TOOLS_MUTATION_KEYS,
   TOOLS_QUERY_KEYS,
@@ -12,7 +13,11 @@ export function useSetDefaultToolParamsMutation() {
     mutationKey: [TOOLS_MUTATION_KEYS.SET_DEFAULT_TOOL_PARAMS],
     mutationFn: async (tool) => {
       try {
-        const response = await apiClient.post(`/api/tools/${tool}/default`);
+        const response = await apiClient.post(
+          `/api/tools/${tool}/default`,
+          undefined,
+          { headers: activeScenarioHeaders() },
+        );
         await queryClient.refetchQueries({
           queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
         });

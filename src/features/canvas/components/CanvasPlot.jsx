@@ -46,7 +46,8 @@ import { useFetchCustomPlot } from '../hooks/useCanvasData';
  *   height. Card uses it to auto-grow on first render.
  */
 const CanvasPlot = ({
-  scenario,
+  project,
+  scenarioContext,
   plotConfig,
   onPlotReady,
   onCaption,
@@ -83,7 +84,7 @@ const CanvasPlot = ({
     data: rawHtml,
     isLoading,
     error,
-  } = useFetchCustomPlot(plotConfig, scenario);
+  } = useFetchCustomPlot(plotConfig, scenarioContext, project);
 
   // Backend full-HTML responses embed the chart inside a real <body>
   // alongside the CDN script tags and inline `Plotly.newPlot` blocks.
@@ -282,7 +283,14 @@ const CanvasPlot = ({
     );
   }
 
-  if (error) return <PlotError error={error} scenario={scenario} />;
+  if (error) {
+    const { scenarioName, pathwayName, year } = scenarioContext ?? {};
+    const errorLabel =
+      pathwayName != null && year != null
+        ? `${scenarioName} / ${pathwayName} Y_${year}`
+        : scenarioName;
+    return <PlotError error={error} scenario={errorLabel} />;
+  }
 
   if (!html) return null;
 

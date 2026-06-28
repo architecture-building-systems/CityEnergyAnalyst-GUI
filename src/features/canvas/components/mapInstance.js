@@ -24,17 +24,26 @@ import { useCanvasStore } from '../stores/canvasStore';
 export const MapLayerScenarioOverrideContext = createContext(null);
 
 /**
- * Reads `(project, scenarioName)` honouring the override above.
- * Drop-in replacement for direct `useProjectStore` reads in
- * components that may be mounted under a per-column scope.
+ * Reads `(project, scenarioName, childScenario)` honouring the override above.
+ * Drop-in replacement for direct `useProjectStore` reads in components that
+ * may be mounted under a per-column canvas scope.
+ *
+ * `childScenario` is only populated from the store when no per-column override
+ * is present (main-viewport path). Canvas column overrides pin a specific
+ * scenario and have no child-scenario concept, so `childScenario` is `null`
+ * there — callers building X-CEA-Child-Scenario tokens should check this.
  */
 export const useScopedProjectScenario = () => {
   const override = useContext(MapLayerScenarioOverrideContext);
   const projectFallback = useProjectStore((s) => s.project);
   const scenarioFallback = useProjectStore((s) => s.scenario);
+  const childScenarioFallback = useProjectStore((s) => s.childScenario);
+  const isOverride = override != null;
   return {
     project: override?.project ?? projectFallback,
     scenarioName: override?.scenarioName ?? scenarioFallback,
+    // Child scenario only applies when using the active (non-override) scenario.
+    childScenario: isOverride ? null : childScenarioFallback,
   };
 };
 

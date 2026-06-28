@@ -100,7 +100,12 @@ const PathwayViewer = ({ hidden }) => {
 
     setSwitching(true);
     try {
-      const result = await fetchStateFolderPath(pathwayName, year, project, scenarioName);
+      const result = await fetchStateFolderPath(
+        pathwayName,
+        year,
+        project,
+        scenarioName,
+      );
       setChildScenario({
         pathway_name: pathwayName,
         year,

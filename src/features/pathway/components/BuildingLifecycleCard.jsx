@@ -82,12 +82,16 @@ const BuildingLifecycleCard = ({
   // Derive pxPerYear from available container height so everything fits
   // without scrolling. Falls back to MIN_PX_PER_YEAR on first render before
   // ResizeObserver has fired.
-  const svgHeight = Math.max(availableHeight, (yearRange * MIN_PX_PER_YEAR) + ONGOING_HEIGHT + NAME_ROW_HEIGHT);
+  const svgHeight = Math.max(
+    availableHeight,
+    yearRange * MIN_PX_PER_YEAR + ONGOING_HEIGHT + NAME_ROW_HEIGHT,
+  );
   const totalHeight = svgHeight - NAME_ROW_HEIGHT;
   const contentHeight = totalHeight - (showOngoing ? ONGOING_HEIGHT : 0);
-  const pxPerYear = yearRange > 0
-    ? Math.max(contentHeight / yearRange, MIN_PX_PER_YEAR)
-    : MIN_PX_PER_YEAR;
+  const pxPerYear =
+    yearRange > 0
+      ? Math.max(contentHeight / yearRange, MIN_PX_PER_YEAR)
+      : MIN_PX_PER_YEAR;
 
   const tickStep = getTickStep(pxPerYear);
 
@@ -137,10 +141,7 @@ const BuildingLifecycleCard = ({
       </div>
 
       {/* Timeline area — fills remaining height, measured for scaling */}
-      <div
-        ref={contentRef}
-        style={{ flex: 1, minHeight: 0, display: 'flex' }}
-      >
+      <div ref={contentRef} style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         {/* Scrollable pathway columns */}
         <div style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
           <svg
