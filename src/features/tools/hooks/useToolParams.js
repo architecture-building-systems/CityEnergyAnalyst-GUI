@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders, childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import useFormReset from './useFormReset';
 import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
@@ -35,8 +36,8 @@ const useFetchToolParams = (script) => {
 
   const effectiveProject = override?.project || project;
   const effectiveScenarioName = override?.scenarioName || scenarioName;
-  // child-scenario path only applies when no canvas scenario override is active
-  const scenarioPath = override ? null : (childScenario?.scenario_path ?? null);
+  // Child-scenario token only applies when no canvas scenario override is active.
+  const childToken = override ? null : childScenarioToken(childScenario);
 
   return useQuery({
     queryKey: [
@@ -44,14 +45,22 @@ const useFetchToolParams = (script) => {
       script,
       effectiveProject,
       effectiveScenarioName,
-      scenarioPath,
+      childToken,
     ],
     queryFn: async () => {
       if (!script) return null;
-      const params = scenarioPath
-        ? { scenario_path: scenarioPath }
-        : { project: effectiveProject, scenario_name: effectiveScenarioName };
-      const response = await apiClient.get(`/api/tools/${script}`, { params });
+      const requestConfig = override
+        ? {
+            headers: scenarioHeaders({
+              project: effectiveProject,
+              scenarioName: effectiveScenarioName,
+            }),
+          }
+        : { headers: activeScenarioHeaders() };
+      const response = await apiClient.get(
+        `/api/tools/${script}`,
+        requestConfig,
+      );
       return response.data;
     },
     enabled: !!script,

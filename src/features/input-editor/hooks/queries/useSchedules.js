@@ -1,6 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useFetchedSchedules } from 'features/input-editor/stores/inputEditorStore';
 
@@ -28,7 +29,7 @@ export function useSchedules() {
 
           const { data } = await apiClient.get(
             `${API_ENDPOINTS.INPUTS}/building-schedule/${building}`,
-            { params: { project: projectName, scenario_name: scenarioName } },
+            { headers: activeScenarioHeaders() },
           );
           return data;
         },

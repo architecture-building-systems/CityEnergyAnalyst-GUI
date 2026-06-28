@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { childScenarioToken } from 'lib/api/scenarioContext';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
@@ -205,11 +206,11 @@ export const useUpdateInputs = () => {
 
   const updateChanges = useUpdateChanges();
 
-  const scenarioPath = childScenario?.scenario_path ?? null;
+  const childToken = childScenarioToken(childScenario);
 
   return (table = '', buildings = [], properties = []) =>
     queryClient.setQueryData(
-      ['inputs', project, scenarioName, scenarioPath],
+      ['inputs', project, scenarioName, childToken],
       (oldData) => ({
         ...oldData,
         ...updateData(oldData, table, buildings, properties, updateChanges),
@@ -281,11 +282,11 @@ export const useDeleteBuildings = () => {
   const changes = useChanges();
   const setChanges = useSetChanges();
 
-  const scenarioPath = childScenario?.scenario_path ?? null;
+  const childToken = childScenarioToken(childScenario);
 
   return (buildings = []) =>
     queryClient.setQueryData(
-      ['inputs', project, scenarioName, scenarioPath],
+      ['inputs', project, scenarioName, childToken],
       (oldData) => {
         // Update the old data
         return {

@@ -952,6 +952,7 @@ const CanvasColumn = ({
                 ) : (
                   <FeatureCardPlot
                     card={card}
+                    project={project}
                     scenario={scenario}
                     onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
                     onDeletePlot={

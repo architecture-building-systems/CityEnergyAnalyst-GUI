@@ -3,7 +3,7 @@ import { Button, message, Modal } from 'antd';
 import { useState } from 'react';
 import { DownloadOutlined } from '@ant-design/icons';
 import { apiClient } from 'lib/api/axios';
-import { useProjectStore } from 'features/project/stores/projectStore';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 
 export const ExportDatabaseButton = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
@@ -12,8 +12,6 @@ export const ExportDatabaseButton = () => {
   );
   const databaseChanges = useDatabaseEditorStore((state) => state.changes);
   const [loading, setLoading] = useState(false);
-  const project = useProjectStore((s) => s.project);
-  const scenario = useProjectStore((s) => s.scenario);
 
   if (status !== 'success') return null;
 
@@ -28,15 +26,10 @@ export const ExportDatabaseButton = () => {
       cancelText: 'Cancel',
       onOk: async () => {
         setLoading(true);
-        const scenarioParams =
-          project && scenario ? { project, scenario_name: scenario } : {};
         try {
           const response = await apiClient.get(
             '/api/inputs/databases/download',
-            {
-              responseType: 'blob',
-              params: scenarioParams,
-            },
+            { responseType: 'blob', headers: activeScenarioHeaders() },
           );
 
           // Create download link

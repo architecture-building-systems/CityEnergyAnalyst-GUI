@@ -2,21 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { activeScenarioHeaders, childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 
 /**
  * Fetch the map + input-editor data bundle.
  *
  * Default: reads the currently active project+scenario from
- * `useProjectStore`. Pass `{ scenario, project }` to fetch a
- * non-active scenario WITHOUT switching the dashboard's active
- * config — used by the canvas to render per-column maps.
+ * `useProjectStore`. The global axios interceptor injects
+ * `X-CEA-Project` / `X-CEA-Scenario-Name` / `X-CEA-Child-Scenario`
+ * headers automatically for active-scenario requests.
+ *
+ * Pass `{ scenario, project }` to fetch a non-active scenario WITHOUT
+ * switching the dashboard's active config — used by the canvas to
+ * render per-column maps. These calls use explicit header overrides so
+ * the interceptor's active-scenario headers are suppressed.
  *
  * Each distinct (project, scenario) pair caches separately so
  * sibling Canvas Builder columns don't thrash each other's data.
- *
- * When no override is given, `childScenario.scenario_path` (set by
- * the pathway viewer) takes effect so the input editor and map reflect
- * the selected pathway state.
  */
 export function useInputs(options) {
   const project = useProjectStore((state) => state.project);
@@ -32,25 +34,31 @@ export function useInputs(options) {
     ? projectOverride || project
     : project;
   const effectiveScenario = scenarioOverride ?? scenarioName;
-  // child-scenario path only applies to the active (non-override) fetch
-  const scenarioPath = scenarioOverride
-    ? null
-    : (childScenario?.scenario_path ?? null);
+  // Child-scenario token only applies to the active (non-override) fetch.
+  const childToken =
+    scenarioOverride == null ? childScenarioToken(childScenario) : null;
 
   return useQuery({
-    queryKey: ['inputs', effectiveProject, effectiveScenario, scenarioPath],
+    queryKey: ['inputs', effectiveProject, effectiveScenario, childToken],
     queryFn: async () => {
-      if (scenarioPath == null && (!effectiveProject || !effectiveScenario))
-        return {};
+      if (!effectiveProject || !effectiveScenario) return {};
 
-      const params = scenarioPath
-        ? { scenario_path: scenarioPath }
-        : { project: effectiveProject, scenario_name: effectiveScenario };
+      // For the canvas per-column override path, pass explicit headers so the
+      // global interceptor's active-scenario context is suppressed. The active
+      // path relies on the interceptor and sends no per-request headers.
+      const requestConfig = scenarioOverride
+        ? {
+            headers: scenarioHeaders({
+              project: effectiveProject,
+              scenarioName: effectiveScenario,
+            }),
+          }
+        : { headers: activeScenarioHeaders() };
 
       try {
         const { data } = await apiClient.get(
           `${API_ENDPOINTS.INPUTS}/all-inputs`,
-          { params },
+          requestConfig,
         );
         return data;
       } catch (error) {

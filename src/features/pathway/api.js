@@ -1,23 +1,18 @@
 import { apiClient } from 'lib/api/axios';
-import { useProjectStore } from 'features/project/stores/projectStore';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 
 const encodePathwayName = (pathwayName) => encodeURIComponent(pathwayName);
 
-const getScenarioParams = () => {
-  const { project, scenario } = useProjectStore.getState();
-  return project && scenario ? { project, scenario_name: scenario } : {};
-};
-
 export const fetchPathways = async () => {
   const { data } = await apiClient.get('/api/pathways/', {
-    params: getScenarioParams(),
+    headers: activeScenarioHeaders(),
   });
   return data?.pathways ?? [];
 };
 
 export const fetchPathwayOverview = async () => {
   const { data } = await apiClient.get('/api/pathways/overview', {
-    params: getScenarioParams(),
+    headers: activeScenarioHeaders(),
   });
   return data;
 };
@@ -26,7 +21,7 @@ export const createPathway = async (pathwayName) => {
   const { data } = await apiClient.post(
     '/api/pathways/',
     { pathway_name: pathwayName },
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -34,7 +29,7 @@ export const createPathway = async (pathwayName) => {
 export const fetchPathwayTimeline = async (pathwayName) => {
   const { data } = await apiClient.get(
     `/api/pathways/${encodePathwayName(pathwayName)}/timeline`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -43,7 +38,7 @@ export const addPathwayYear = async (pathwayName, year) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}`,
     undefined,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -51,7 +46,7 @@ export const addPathwayYear = async (pathwayName, year) => {
 export const deletePathwayYear = async (pathwayName, year) => {
   const { data } = await apiClient.delete(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -60,7 +55,7 @@ export const validatePathwayLog = async (pathwayName) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/validate-log`,
     undefined,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -68,7 +63,7 @@ export const validatePathwayLog = async (pathwayName) => {
 export const fetchYearEditorOptions = async (pathwayName, year) => {
   const { data } = await apiClient.get(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/editor-options`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -81,11 +76,8 @@ export const saveBuildingEvents = async (
 ) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/building-events`,
-    {
-      new_buildings: newBuildings,
-      demolished_buildings: demolishedBuildings,
-    },
-    { params: getScenarioParams() },
+    { new_buildings: newBuildings, demolished_buildings: demolishedBuildings },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -98,7 +90,7 @@ export const applyTemplatesToYear = async (
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/apply-templates`,
     { template_names: templateNames },
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -107,14 +99,14 @@ export const saveYearYaml = async (pathwayName, year, rawYaml) => {
   const { data } = await apiClient.put(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/yaml`,
     { raw_yaml: rawYaml },
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
 
 export const fetchInterventionTemplates = async () => {
   const { data } = await apiClient.get('/api/pathways/templates', {
-    params: getScenarioParams(),
+    headers: activeScenarioHeaders(),
   });
   return {
     names: data?.templates ?? [],
@@ -125,7 +117,7 @@ export const fetchInterventionTemplates = async () => {
 export const deleteInterventionTemplate = async (templateName) => {
   const { data } = await apiClient.delete(
     `/api/pathways/templates/${encodeURIComponent(templateName)}`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -133,7 +125,7 @@ export const deleteInterventionTemplate = async (templateName) => {
 export const fetchInterventionTemplate = async (templateName) => {
   const { data } = await apiClient.get(
     `/api/pathways/templates/${encodeURIComponent(templateName)}`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -141,7 +133,7 @@ export const fetchInterventionTemplate = async (templateName) => {
 export const fetchTemplateUsage = async (templateName) => {
   const { data } = await apiClient.get(
     `/api/pathways/templates/${encodeURIComponent(templateName)}/usage`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data?.usage ?? [];
 };
@@ -150,13 +142,16 @@ export const preSaveDefineTemplateConfig = async (configPayload) => {
   await apiClient.post(
     '/api/tools/pathway-intervention-templates-define/save-config',
     configPayload,
+    { headers: activeScenarioHeaders() },
   );
 };
 
 export const preSaveSimulatePathwayConfig = async (pathwayName) => {
-  await apiClient.post('/api/tools/pathway-simulations/save-config', {
-    'existing-pathway-name': pathwayName,
-  });
+  await apiClient.post(
+    '/api/tools/pathway-simulations/save-config',
+    { 'existing-pathway-name': pathwayName },
+    { headers: activeScenarioHeaders() },
+  );
 };
 
 export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
@@ -168,13 +163,14 @@ export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
       'buildings-to-construct': '',
       'buildings-to-demolish': '',
     },
+    { headers: activeScenarioHeaders() },
   );
 };
 
 export const fetchStateGeojson = async (pathwayName, year) => {
   const { data } = await apiClient.get(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/geojson`,
-    { params: getScenarioParams() },
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -185,7 +181,7 @@ export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
     : {};
   const { data } = await apiClient.get(
     `/api/pathways/building-lifecycle/${encodeURIComponent(buildingName)}`,
-    { params: { ...getScenarioParams(), ...pathwayParams } },
+    { params: pathwayParams, headers: activeScenarioHeaders() },
   );
   return data;
 };
@@ -196,14 +192,16 @@ export const fetchStateFolderPath = async (
   project,
   scenarioName,
 ) => {
+  // /api/project/state-folder is a project endpoint that reads project and
+  // scenario_name as query params (not via CEAScenario headers), so explicit
+  // params are kept here. When project/scenarioName are not provided the
+  // active-scenario headers from the global interceptor supply the context.
+  const scenarioParams =
+    project != null && scenarioName != null
+      ? { project, scenario_name: scenarioName }
+      : {};
   const { data } = await apiClient.get('/api/project/state-folder', {
-    params: {
-      pathway_name: pathwayName,
-      year,
-      ...(project != null && scenarioName != null
-        ? { project, scenario_name: scenarioName }
-        : getScenarioParams()),
-    },
+    params: { pathway_name: pathwayName, year, ...scenarioParams },
   });
   return data;
 };
@@ -212,7 +210,6 @@ export const validateStateYear = async (pathwayName, year) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/validate-state`,
     undefined,
-    { params: getScenarioParams() },
   );
   return data;
 };

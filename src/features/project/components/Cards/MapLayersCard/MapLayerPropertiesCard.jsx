@@ -86,7 +86,7 @@ const MapLayerPropertiesCard = ({
   // Compare-mode FeatureCardMap / BottomCard publish a per-column
   // override via `MapLayerScenarioOverrideContext`; outside any
   // provider falls back to the project store (main viewport).
-  const { project, scenarioName } = useScopedProjectScenario();
+  const { project, scenarioName, childScenario } = useScopedProjectScenario();
 
   const categoryInfo = useScopedSelectedCategoryInfo();
   const mapLayerParameters = useScopedMapLayerParameters();
@@ -123,6 +123,7 @@ const MapLayerPropertiesCard = ({
     project,
     scenarioName,
     mapLayerParameters,
+    childScenario,
   );
 
   if (!layers) return null;
