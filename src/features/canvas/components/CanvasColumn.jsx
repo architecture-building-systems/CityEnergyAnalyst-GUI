@@ -44,6 +44,7 @@ import FeatureCardDivider from './FeatureCardDivider';
 import { MapColumnContext } from './mapInstance';
 import { PerimeterPlusButtons, computeExposure } from './PerimeterPlusButtons';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
+import { useColumnInputs } from 'features/canvas/hooks/useColumnInputs';
 import './CanvasColumn.css';
 
 // Grid sizing. Fixed colWidth × ROW_HEIGHT × GRID_MARGIN gives the
@@ -273,15 +274,15 @@ const CanvasColumn = ({
   // vs Singapore) while still syncing zoom / bearing / pitch via
   // the singleton. `Map.jsx` reads this through `MapColumnContext`.
   const [columnCenter, setColumnCenter] = useState(null);
-  const { data: columnInputs } = useInputs(scenario ? { scenario } : undefined);
+  const activeInputs = useInputs();
+  const scenarioColumnInputs = useColumnInputs(scenario);
+  const { data: columnInputs } = scenario ? scenarioColumnInputs : activeInputs;
   const columnRefitVersion = useCanvasStore((s) => s.columnRefitVersion);
   const bumpColumnRefitVersion = useCanvasStore(
     (s) => s.bumpColumnRefitVersion,
   );
-  // Re-seed the column's centre from the zone bbox when its data
-  // lands and whenever the refresh button bumps `columnRefitVersion`.
-  // `useInputs` is shared via React Query so the primary tile and
-  // this effect see the same cached fetch.
+  // Re-seed the column's centre from the zone bbox when its data lands
+  // and whenever the refresh button bumps `columnRefitVersion`.
   useEffect(() => {
     const zone = columnInputs?.geojsons?.zone;
     if (!zone) return;

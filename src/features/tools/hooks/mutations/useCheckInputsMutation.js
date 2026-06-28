@@ -1,20 +1,9 @@
-import { useContext } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { activeScenarioHeaders, scenarioHeaders } from 'lib/api/scenarioContext';
 import { TOOLS_MUTATION_KEYS } from '../../constants/queryKeys';
-import { ToolScenarioOverrideContext } from '../useToolParams';
-import { useProjectStore } from 'features/project/stores/projectStore';
 
-export function useCheckInputsMutation() {
-  // Same override the schema fetcher uses — when a tool form is
-  // mounted under a `ToolScenarioOverrideContext.Provider` (e.g.
-  // Canvas Builder's compare-mode per-column edit), supply explicit
-  // X-CEA-* headers so `/check` validates against the same scenario
-  // the form is displaying choices from. Without this the validation
-  // would silently use the project store's active scenario, surfacing
-  // "Invalid value" errors with the wrong "Available: …" list.
-  const override = useContext(ToolScenarioOverrideContext);
+export function useCheckInputsMutation(scenarioOverride = null) {
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS],
     mutationFn: async ({ tool, parameters }) => {
@@ -25,11 +14,11 @@ export function useCheckInputsMutation() {
         throw new Error('Parameters not provided for checking missing inputs.');
       }
 
-      const requestConfig = override
+      const requestConfig = scenarioOverride
         ? {
             headers: scenarioHeaders({
-              project: override.project,
-              scenarioName: override.scenarioName,
+              project: scenarioOverride.project,
+              scenarioName: scenarioOverride.scenarioName,
             }),
           }
         : { headers: activeScenarioHeaders() };

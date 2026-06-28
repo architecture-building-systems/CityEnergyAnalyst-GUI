@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
 import { activeScenarioHeaders, childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
@@ -7,37 +7,14 @@ import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
-/**
- * Optional scenario override consumed by `useFetchToolParams`.
- * A `{ project, scenarioName }` value installed via this
- * context replaces the values normally read from
- * `useProjectStore`, so a tool form can fetch its parameter
- * schema against a *different* scenario than the one currently
- * active in the project store.
- *
- * Used by the Canvas Builder's compare mode: when the user
- * clicks Edit on a plot in a non-origin column, the modal wraps
- * the form in this provider with the column's project /
- * scenario, so the form's choice generators (what-if names,
- * building lists, etc.) load from that column's scenario folder
- * rather than whichever scenario the project is currently
- * pointed at.
- *
- * Default value is `null` — most call sites need no override and
- * fall through to `useProjectStore`.
- */
-export const ToolScenarioOverrideContext = createContext(null);
-
-const useFetchToolParams = (script) => {
+const useFetchToolParams = (script, scenarioOverride = null) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const childScenario = useProjectStore((state) => state.childScenario);
-  const override = useContext(ToolScenarioOverrideContext);
 
-  const effectiveProject = override?.project || project;
-  const effectiveScenarioName = override?.scenarioName || scenarioName;
-  // Child-scenario token only applies when no canvas scenario override is active.
-  const childToken = override ? null : childScenarioToken(childScenario);
+  const effectiveProject = scenarioOverride?.project || project;
+  const effectiveScenarioName = scenarioOverride?.scenarioName || scenarioName;
+  const childToken = scenarioOverride ? null : childScenarioToken(childScenario);
 
   return useQuery({
     queryKey: [
@@ -49,7 +26,7 @@ const useFetchToolParams = (script) => {
     ],
     queryFn: async () => {
       if (!script) return null;
-      const requestConfig = override
+      const requestConfig = scenarioOverride
         ? {
             headers: scenarioHeaders({
               project: effectiveProject,
@@ -57,10 +34,7 @@ const useFetchToolParams = (script) => {
             }),
           }
         : { headers: activeScenarioHeaders() };
-      const response = await apiClient.get(
-        `/api/tools/${script}`,
-        requestConfig,
-      );
+      const response = await apiClient.get(`/api/tools/${script}`, requestConfig);
       return response.data;
     },
     enabled: !!script,
@@ -68,23 +42,21 @@ const useFetchToolParams = (script) => {
   });
 };
 
-const useToolParams = (script, form, onError, onParametersChange) => {
+const useToolParams = (script, form, onError, onParametersChange, scenarioOverride = null) => {
   const {
     data: params,
     isLoading,
     isFetching,
     error: fetchError,
     dataUpdatedAt,
-  } = useFetchToolParams(script);
+  } = useFetchToolParams(script, scenarioOverride);
 
-  // Memoize parameters to avoid creating new objects on every render
   const parameters = useMemo(() => params?.parameters, [params]);
   const categoricalParameters = useMemo(
     () => params?.categorical_parameters,
     [params],
   );
 
-  // Call onParametersChange whenever parameters or inputError change
   useEffect(() => {
     if (onParametersChange) {
       onParametersChange?.({ parameters, categoricalParameters });
@@ -100,6 +72,7 @@ const useToolParams = (script, form, onError, onParametersChange) => {
     form,
     onError,
     dataUpdatedAt,
+    scenarioOverride,
   );
 
   return {

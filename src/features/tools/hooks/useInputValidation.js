@@ -13,9 +13,10 @@ const useInputValidation = (
   form,
   onError,
   dataUpdatedAt,
+  scenarioOverride = null,
 ) => {
   const [inputError, setInputError] = useState(undefined);
-  const { mutateAsync: checkInputs } = useCheckInputsMutation();
+  const { mutateAsync: checkInputs } = useCheckInputsMutation(scenarioOverride);
 
   const runCheck = useCallback(
     async (cancelled = { value: false }) => {

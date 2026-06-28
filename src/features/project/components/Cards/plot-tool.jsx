@@ -124,6 +124,7 @@ export const PlotTool = ({
   // uses this to lock `what-if-name` since that field is driven from
   // the canvas bottom card, not the plot form.
   extraReadonlyFields,
+  scenarioOverride = null,
 }) => {
   const [form] = Form.useForm();
   const mapLayerParameters = useMapStore((state) => state.mapLayerParameters);
@@ -432,6 +433,7 @@ export const PlotTool = ({
         // (commit plot config to a card) without creating a job.
         onRunOverride={onRunOverride}
         extraReadonlyFields={extraReadonlyFields}
+        scenarioOverride={scenarioOverride}
       />
     </ConfigProvider>
   );

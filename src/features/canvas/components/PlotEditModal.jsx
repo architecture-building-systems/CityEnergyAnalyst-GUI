@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ConfigProvider, Button } from 'antd';
 import { VerticalLeftOutlined } from '@ant-design/icons';
 
-import {
-  PlotChoices,
-  PlotTool,
-} from 'features/project/components/Cards/plot-tool';
+import { PlotChoices, PlotTool } from 'features/project/components/Cards/plot-tool';
 import {
   useMapLayerCategories,
   useSetActiveMapCategory,
@@ -14,7 +11,6 @@ import { useMapStore } from 'features/map/stores/mapStore';
 import { useToolCardStore } from 'features/project/stores/tool-card';
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { CEA_PURPLE } from 'constants/theme';
-import { ToolScenarioOverrideContext } from 'features/tools/hooks/useToolParams';
 
 // Reverse `VIEW_PLOT_RESULTS` to find the map layer a plot script
 // reads its parameters from.
@@ -164,16 +160,15 @@ const PlotEditModal = ({
 
       <div className="cea-tool-card-content" style={contentStyle}>
         {selectedScript ? (
-          <ToolScenarioOverrideContext.Provider value={scenarioOverride}>
-            <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
-              <PlotTool
-                key={selectedScript}
-                script={selectedScript}
-                onRunOverride={handleRunOverride}
-                extraReadonlyFields={extraReadonlyFields}
-              />
-            </ConfigProvider>
-          </ToolScenarioOverrideContext.Provider>
+          <ConfigProvider theme={{ token: { colorPrimary: CEA_PURPLE } }}>
+            <PlotTool
+              key={selectedScript}
+              script={selectedScript}
+              onRunOverride={handleRunOverride}
+              extraReadonlyFields={extraReadonlyFields}
+              scenarioOverride={scenarioOverride}
+            />
+          </ConfigProvider>
         ) : (
           <PlotChoices onSelected={setSelectedScript} />
         )}
