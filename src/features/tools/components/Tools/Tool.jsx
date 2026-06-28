@@ -89,10 +89,11 @@ const Tool = ({
   const childScenario = useProjectStore((state) => state.childScenario);
 
   const pathwayOverrides = useMemo(() => {
-    if (!childScenario || childScenario.year == null) return {};
+    if (scenarioOverride || !childScenario || childScenario.year == null)
+      return {};
     const builder = PATHWAY_VIEWER_OVERRIDES[script];
     return builder ? builder(childScenario.year) : {};
-  }, [childScenario, script]);
+  }, [scenarioOverride, childScenario, script]);
 
   // Combine: script-static readonly params, pathway-viewer overrides,
   // and any caller-supplied extras (e.g. canvas passes ['what-if-name']).

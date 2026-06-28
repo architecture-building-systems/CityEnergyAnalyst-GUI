@@ -29,7 +29,6 @@ export const SaveDatabaseButton = () => {
   const saveDB = async () => {
     setModalVisible(true);
     try {
-      console.log(databasesData);
       await apiClient.put(`/api/inputs/databases`, databasesData, {
         headers: activeScenarioHeaders(),
       });

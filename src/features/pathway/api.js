@@ -177,7 +177,7 @@ export const fetchStateGeojson = async (pathwayName, year) => {
 
 export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   const pathwayParams = pathwayNames?.length
-    ? { pathways: pathwayNames.map(encodePathwayName).join(',') }
+    ? { pathways: pathwayNames.join(',') }
     : {};
   const { data } = await apiClient.get(
     `/api/pathways/building-lifecycle/${encodeURIComponent(buildingName)}`,

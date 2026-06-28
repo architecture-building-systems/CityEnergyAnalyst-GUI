@@ -179,6 +179,7 @@ const SliderSelector = ({
     }
   }, [
     categoryInfo?.name,
+    childScenario,
     layerName,
     parameterName,
     project,

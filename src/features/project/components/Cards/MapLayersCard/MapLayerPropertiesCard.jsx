@@ -101,7 +101,7 @@ const MapLayerPropertiesCard = ({
   useEffect(() => {
     setMapLayers(null);
     setMapLayerParameters(null);
-  }, [project, scenarioName, categoryInfo]);
+  }, [project, scenarioName, childScenario, categoryInfo]);
 
   // Initialize parameters from active layer when it changes
   useEffect(() => {

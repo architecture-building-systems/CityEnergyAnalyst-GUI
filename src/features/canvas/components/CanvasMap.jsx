@@ -84,7 +84,7 @@ const CanvasMap = ({
       />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
-          <InlineLayerToggle scenario={scenario} />
+          <InlineLayerToggle scenario={scenario} project={project} />
           <InlineExtrudeButton />
           <InlineResetCameraButton />
           <InlineResetCompassButton />
@@ -184,9 +184,9 @@ const InlineResetCompassButton = () => {
   );
 };
 
-const InlineLayerToggle = ({ scenario }) => {
+const InlineLayerToggle = ({ scenario, project }) => {
   const active = useInputs();
-  const column = useColumnInputs(scenario);
+  const column = useColumnInputs(scenario, project);
   const { data: inputData } = scenario ? column : active;
   const { geojsons: data } = inputData ?? {};
 

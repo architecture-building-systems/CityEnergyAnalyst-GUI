@@ -283,8 +283,14 @@ const CanvasPlot = ({
     );
   }
 
-  if (error)
-    return <PlotError error={error} scenario={scenarioContext?.scenarioName} />;
+  if (error) {
+    const { scenarioName, pathwayName, year } = scenarioContext ?? {};
+    const errorLabel =
+      pathwayName != null && year != null
+        ? `${scenarioName} / ${pathwayName} Y_${year}`
+        : scenarioName;
+    return <PlotError error={error} scenario={errorLabel} />;
+  }
 
   if (!html) return null;
 

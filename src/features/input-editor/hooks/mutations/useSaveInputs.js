@@ -38,6 +38,7 @@ export function useSaveInputs() {
         key,
         projectName,
         scenarioName,
+        childToken,
       ]);
       return obj;
     },

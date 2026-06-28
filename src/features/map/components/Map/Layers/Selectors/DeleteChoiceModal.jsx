@@ -15,6 +15,7 @@ const DeleteChoiceModal = ({
   displayName,
   project,
   scenarioName,
+  childScenario = null,
   onDeleted,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ const DeleteChoiceModal = ({
       await apiClient.post(
         `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choice/delete`,
         { value },
-        { headers: scenarioHeaders({ project, scenarioName }) },
+        { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
       );
       message.success(`Deleted "${nameToConfirm}"`);
       onDeleted?.();
