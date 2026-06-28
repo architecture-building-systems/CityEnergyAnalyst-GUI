@@ -37,6 +37,7 @@ import { useEffect, useMemo } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import socket, { waitForConnection } from 'lib/socket';
 
 import { childStateScenarioPath } from '../stores/canvasStore';
@@ -77,9 +78,8 @@ export const useFetchKpiValue = ({
     ],
     queryFn: async () => {
       const { data } = await apiClient.get(`/api/kpis/${kpiId}/value`, {
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
         params: {
-          project,
-          scenario,
           locator_args: argsKey || undefined,
           whatif: whatif || undefined,
         },
@@ -115,9 +115,8 @@ export const useFetchKpiParameters = ({
     ],
     queryFn: async () => {
       const { data } = await apiClient.get(`/api/kpis/${kpiId}/parameters`, {
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
         params: {
-          project,
-          scenario,
           args: argsKey || undefined,
         },
       });
@@ -173,13 +172,16 @@ export const useFetchKpiSparkline = ({
   }, [enabled, stateYears, parentScenario, pathwayName]);
 
   const queries = useQueries({
-    queries: yearsAndPaths.map(({ scenario }) => ({
+    queries: yearsAndPaths.map(({ year, scenario }) => ({
       queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
       queryFn: async () => {
         const { data } = await apiClient.get('/api/kpis/', {
-          params: {
+          headers: scenarioHeaders({
             project,
-            scenario,
+            scenarioName: parentScenario,
+            childScenario: { pathway_name: pathwayName, year },
+          }),
+          params: {
             feature,
             whatif: whatif || undefined,
           },
