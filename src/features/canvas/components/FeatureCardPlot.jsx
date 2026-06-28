@@ -19,7 +19,7 @@ import {
  *
  * Props:
  *   card             — { id, feature, plots }
- *   project, scenario — passed through to PlotSlotCard for per-column header targeting
+ *   project, scenarioContext — passed through to PlotSlotCard for per-column header targeting
  *   onEditPlot(plotId), onDeletePlot(plotId)
  *   onAddPlot(script?)              — add a plot to this card
  *   onDeleteCard()
@@ -30,7 +30,7 @@ import {
 const FeatureCardPlot = ({
   card,
   project,
-  scenario,
+  scenarioContext,
   onEditPlot,
   onDeletePlot,
   onAddPlot,
@@ -83,7 +83,7 @@ const FeatureCardPlot = ({
                 {idx > 0 && <div style={plotDividerStyle} />}
                 <PlotSlotCard
                   project={project}
-                  scenario={scenario}
+                  scenarioContext={scenarioContext}
                   plotConfig={plot.plotConfig}
                   onEdit={() => onEditPlot?.(plot.id)}
                   onDelete={

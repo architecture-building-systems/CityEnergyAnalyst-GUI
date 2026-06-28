@@ -833,7 +833,7 @@ const PathwayRow = ({
             <div style={chartCardBodyStyle}>
               <CanvasPlot
                 project={project}
-                scenario={scenario}
+                scenarioContext={{ scenarioName: scenario }}
                 plotConfig={plotConfig}
                 onCaption={setCaption}
                 onPlotReady={(div) => {

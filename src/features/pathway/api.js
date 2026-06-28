@@ -210,6 +210,7 @@ export const validateStateYear = async (pathwayName, year) => {
   const { data } = await apiClient.post(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/validate-state`,
     undefined,
+    { headers: activeScenarioHeaders() },
   );
   return data;
 };

@@ -149,8 +149,23 @@ onKeyDown={(event) => handleYamlTextareaKeyDown(event, yamlDraft, setYamlDraft)}
 // State kind comes from `state_kind` and the row content itself.
 ```
 
+### DO: Always pass `activeScenarioHeaders()` in every `api.js` call
+The pathway router applies `_apply_parent_scenario` globally (a
+`CEAScenario` dependency on every route), so every request needs
+`X-CEA-Project` + `X-CEA-Scenario-Name` headers. Omitting them causes
+the backend to fall back to server-side config, which may not reflect
+the user's active scenario.
+```js
+const { data } = await apiClient.post(url, body, {
+  headers: activeScenarioHeaders(),
+});
+```
+Exception: `fetchStateFolderPath` targets a project endpoint that reads
+`project` + `scenario_name` as query params — documented in its comment.
+
 ## Related Files
-- `api.js` - Dedicated pathway API client helpers.
+- `api.js` - Dedicated pathway API client helpers. Every call uses
+  `activeScenarioHeaders()` except `fetchStateFolderPath` (query params).
 - `hooks/usePathwayOverview.js` - React Query wrapper around `fetchPathwayOverview` plus the `useHasSimulatedPathway` boolean derivative.
 - `components/PathwayPanel.jsx` - Stacked-lane panel, shared ruler, inspector, and editor workflows.
 - `../project/components/ProjectOverlay.jsx` - Bottom-panel mounting point and transition sizing.

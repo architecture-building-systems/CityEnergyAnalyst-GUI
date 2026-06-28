@@ -47,7 +47,7 @@ import { useFetchCustomPlot } from '../hooks/useCanvasData';
  */
 const CanvasPlot = ({
   project,
-  scenario,
+  scenarioContext,
   plotConfig,
   onPlotReady,
   onCaption,
@@ -84,7 +84,7 @@ const CanvasPlot = ({
     data: rawHtml,
     isLoading,
     error,
-  } = useFetchCustomPlot(plotConfig, scenario, project);
+  } = useFetchCustomPlot(plotConfig, scenarioContext, project);
 
   // Backend full-HTML responses embed the chart inside a real <body>
   // alongside the CDN script tags and inline `Plotly.newPlot` blocks.
@@ -283,7 +283,8 @@ const CanvasPlot = ({
     );
   }
 
-  if (error) return <PlotError error={error} scenario={scenario} />;
+  if (error)
+    return <PlotError error={error} scenario={scenarioContext?.scenarioName} />;
 
   if (!html) return null;
 

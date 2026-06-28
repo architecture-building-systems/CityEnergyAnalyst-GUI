@@ -34,11 +34,11 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
       if (!script) return null;
       const requestConfig = scenarioOverride
         ? {
-          headers: scenarioHeaders({
-            project: effectiveProject,
-            scenarioName: effectiveScenarioName,
-          }),
-        }
+            headers: scenarioHeaders({
+              project: effectiveProject,
+              scenarioName: effectiveScenarioName,
+            }),
+          }
         : { headers: activeScenarioHeaders() };
       const response = await apiClient.get(
         `/api/tools/${script}`,

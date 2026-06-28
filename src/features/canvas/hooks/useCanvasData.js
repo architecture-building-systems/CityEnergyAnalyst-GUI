@@ -130,9 +130,15 @@ const serializeParameters = (params) => {
   return out;
 };
 
-export const useFetchCustomPlot = (plotConfig, scenario, project) =>
-  useQuery({
-    queryKey: ['reports', 'custom-plot', plotConfig, scenario, project],
+// scenarioContext = { scenarioName, pathwayName?, year? }
+// Pathway-single columns supply pathwayName + year so the backend
+// resolves the child state via X-CEA-Child-Scenario instead of
+// receiving the filesystem subpath in the body.
+export const useFetchCustomPlot = (plotConfig, scenarioContext, project) => {
+  const { scenarioName, pathwayName, year } = scenarioContext ?? {};
+  const isPathwayChild = !!pathwayName && year != null;
+  return useQuery({
+    queryKey: ['reports', 'custom-plot', plotConfig, scenarioContext, project],
     queryFn: async () => {
       // Strip any `scenario` field from `parameters` before sending.
       // The top-level `scenario` field already sets the backend's
@@ -150,11 +156,9 @@ export const useFetchCustomPlot = (plotConfig, scenario, project) =>
         {
           script: plotConfig.script,
           parameters: serializeParameters(rest),
-          // Body `scenario` is the per-column target the backend resolves via
-          // `validate_scenario_name_or_subpath` against the project from the
-          // X-CEA-Project header. Accepts bare names and pathway child subpaths
-          // (e.g. `<scenario>/outputs/pathways/<name>/state_<year>`).
-          scenario,
+          // Scenario context is fully expressed in the X-CEA-* headers for
+          // all column types — effective_scenario resolves to the target
+          // path via headers alone, so no body `scenario` is needed.
           // Human-readable feature label (from `PLOT_GROUPS`) so
           // the backend's styled error cards can read e.g.
           // "Run Energy by Carrier for baseline" instead of the
@@ -164,11 +168,13 @@ export const useFetchCustomPlot = (plotConfig, scenario, project) =>
         },
         {
           responseType: 'text',
-          // Supply the project (and bare parent scenario name) via headers so
-          // the backend's CEAScenarioLenient has a project root for resolving
-          // the body `scenario` field. For pathway-single columns, `scenario`
-          // holds the child subpath — the header carries the parent scenario.
-          headers: scenarioHeaders({ project }),
+          headers: scenarioHeaders({
+            project,
+            scenarioName,
+            ...(isPathwayChild
+              ? { childScenario: { pathway_name: pathwayName, year } }
+              : {}),
+          }),
         },
       );
       return data;
@@ -176,3 +182,4 @@ export const useFetchCustomPlot = (plotConfig, scenario, project) =>
     enabled: !!plotConfig?.script,
     staleTime: 30_000,
   });
+};

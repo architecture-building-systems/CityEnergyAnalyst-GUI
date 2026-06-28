@@ -12,8 +12,11 @@ alignment across columns sharing a slot id.
 - `useFetchWhatifs(project, scenario)` - What-if names under a scenario.
 - `useFetchSummary(project, scenario, feature, whatif?)` - KPI strip
   payload.
-- `useFetchCustomPlot(plotConfig, scenario)` - Plotly figure HTML; the
+- `useFetchCustomPlot(plotConfig, scenarioContext, project)` - Plotly figure HTML; the
   only fetcher used at render time (every canvas plot has a script).
+  `scenarioContext = { scenarioName, pathwayName?, year? }`. Pathway-single
+  columns supply `pathwayName` + `year`; the backend resolves the child
+  state via `X-CEA-Child-Scenario` header rather than a body `scenario` field.
 - `useFetchToolParams(script, scenario)` - Plot-tool parameter schema.
 - `useYAxisAlignment(enabled, numColumns)` - Post-render Plotly hook
   that unifies y-axis range across columns sharing a slot id.
@@ -364,20 +367,28 @@ card layout is incompatible across modes.
 
 ### DO: Treat `pathway-single` columns as inter-scenario columns with state folders
 ```js
-// enterPathwaySingle resolves each year's child-scenario path:
+// enterPathwaySingle stores pathwayName + year on the column def.
+// CanvasColumn reads parentScenario from the store and builds scenarioContext:
 columns = years.map((year) => ({
   type: 'pathway-state',
   pathwayName,
   year,
   scenario: `${parent}/outputs/pathways/${pathwayName}/state_${year}`,
 }));
+
+// CanvasColumn → scenarioContext for FeatureCardPlot / CanvasPlot:
+const scenarioContext =
+  columnDef.type === 'pathway-state'
+    ? { scenarioName: parentScenario, pathwayName: columnDef.pathwayName, year: columnDef.year }
+    : { scenarioName: scenario };
 ```
-Each `pathway-state` column is a regular comparison column with the
-state-folder path as its `scenario`. KPI / Plot / Map cards reuse
-the existing per-column fetch path; only the column header label
-swaps from the scenario name to `Y_<year>`. Adding cards / dragging
-layout / running compare-mode toggles still works because the
-column shape is otherwise identical.
+Each `pathway-state` column passes `scenarioContext` (not a raw `scenario`
+string) to `FeatureCardPlot` → `PlotSlotCard` → `CanvasPlot` →
+`useFetchCustomPlot`. The hook sends `X-CEA-Scenario-Name` (parent) +
+`X-CEA-Child-Scenario` (`pathwayName/year` token) in headers; the backend
+resolves the child state via InputLocator. KPI / Map cards still use the
+`columnDef.scenario` subpath directly. Only the column header label swaps
+from the scenario name to `Y_<year>`.
 
 ### DO: Render pathway chrome through `ComparisonView`, not new pages
 ```jsx
@@ -579,6 +590,8 @@ source of truth for card config that the comparison views never read.
 - `stores/canvasStore.js` - View state machine, card CRUD, default
   card / map-anchor constants.
 - `hooks/useCanvasData.js` - React Query wrappers for `/api/reports/*`.
+  `useFetchCustomPlot` takes `scenarioContext = { scenarioName, pathwayName?, year? }`;
+  pathway-single uses `X-CEA-Child-Scenario` header, others use `X-CEA-Scenario-Name` only.
 - `hooks/useYAxisAlignment.js` - Debounced Plotly y-axis unifier.
 - `components/CanvasPage.jsx` - Top-level grid (nav + canvas + bottom
   + plot tool); owns drawer + map-bottom state.

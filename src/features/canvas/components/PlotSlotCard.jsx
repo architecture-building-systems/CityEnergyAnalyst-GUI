@@ -11,7 +11,7 @@ import { useCanvasStore } from '../stores/canvasStore';
  */
 const PlotSlotCard = ({
   project,
-  scenario,
+  scenarioContext,
   plotConfig,
   onEdit,
   onDelete,
@@ -139,7 +139,7 @@ const PlotSlotCard = ({
       </div>
       <CanvasPlot
         project={project}
-        scenario={scenario}
+        scenarioContext={scenarioContext}
         plotConfig={plotConfig}
         onPlotReady={onPlotReady}
         onCaption={setCaption}

@@ -268,6 +268,15 @@ const CanvasColumn = ({
 
   const scenario = columnDef.scenario;
   const whatif = columnDef.whatif || null;
+  const parentScenario = useCanvasStore((s) => s.parentScenario);
+  const scenarioContext =
+    columnDef.type === 'pathway-state'
+      ? {
+          scenarioName: parentScenario,
+          pathwayName: columnDef.pathwayName,
+          year: columnDef.year,
+        }
+      : { scenarioName: scenario };
 
   // Per-column camera centre. Decouples lat/lng from the singleton
   // so compare-mode columns can show different cities (e.g. Zurich
@@ -954,7 +963,7 @@ const CanvasColumn = ({
                   <FeatureCardPlot
                     card={card}
                     project={project}
-                    scenario={scenario}
+                    scenarioContext={scenarioContext}
                     onEditPlot={(plotId) => onEditPlot?.(card.id, plotId)}
                     onDeletePlot={
                       onDeletePlot
