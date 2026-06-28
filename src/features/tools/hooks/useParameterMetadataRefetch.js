@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { TOOLS_QUERY_KEYS, TOOLS_MUTATION_KEYS } from '../constants/queryKeys';
 
 const useParameterMetadataRefetch = (script, form) => {
@@ -16,6 +17,7 @@ const useParameterMetadataRefetch = (script, form) => {
             form_values: formValues,
             affected_parameters: affectedParams,
           },
+          { headers: activeScenarioHeaders() },
         );
       } catch (err) {
         const error = new Error(err.message);

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import {
   TOOLS_MUTATION_KEYS,
   TOOLS_QUERY_KEYS,
@@ -15,6 +16,7 @@ export function useSaveToolParamsMutation() {
         const response = await apiClient.post(
           `/api/tools/${tool}/save-config`,
           params,
+          { headers: activeScenarioHeaders() },
         );
         await queryClient.refetchQueries({
           queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
