@@ -1,5 +1,11 @@
 export const SOLAR_IRRADIATION = 'solar-irradiation';
 export const DEMAND = 'demand';
+// Building-architecture KPIs (GFA / conditioned share / roof
+// area). Currently a KPI-only group — no plot family lives under
+// this key yet, but the picker hierarchy is unified through
+// PLOT_GROUPS so future plots slotting into "Building Architecture"
+// pick this key up automatically.
+export const BUILDING_ARCHITECTURE = 'building-architecture';
 export const FINAL_ENERGY = 'energy-by-carrier';
 export const THERMAL_NETWORK = 'thermal-network';
 export const RENEWABLE_ENERGY_POTENTIALS = 'renewable-energy-potentials';

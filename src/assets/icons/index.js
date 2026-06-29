@@ -1,3 +1,4 @@
+import ArchitectureIcon from './architecture.svg';
 import DataManagementIcon from './data_management.svg';
 import DemandForecastingIcon from './demand_forecasting.svg';
 import EnergyPotentialsIcon from './energy_potentials.svg';
@@ -62,6 +63,7 @@ import DividerCardIcon from './divider.svg';
 import InsightIcon from './insight.svg';
 
 export {
+  ArchitectureIcon,
   DataManagementIcon,
   DemandForecastingIcon,
   EnergyPotentialsIcon,

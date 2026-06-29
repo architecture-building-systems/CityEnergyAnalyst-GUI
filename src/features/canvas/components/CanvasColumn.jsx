@@ -24,7 +24,9 @@ import { COLOR_MODES, useMapStore } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 import {
   generateConstructionColorMap,
+  generateConstructionGfaTotals,
   generateUseTypeColorMap,
+  generateUseTypeGfaTotals,
 } from 'features/map/utils/constructionColors';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -105,28 +107,41 @@ function buildPlotMenuItems(onPick) {
     };
   };
 
-  const subgroupLevel = (sub) => ({
-    key: sub.label,
-    label: nestedLabel(sub.label),
-    children: sub.keys.map((k) => plotLeaf(k, sub.keys[0])).filter(Boolean),
-  });
+  const subgroupLevel = (sub) => {
+    const children = sub.keys
+      .map((k) => plotLeaf(k, sub.keys[0]))
+      .filter(Boolean);
+    if (children.length === 0) return null;
+    return {
+      key: sub.label,
+      label: nestedLabel(sub.label),
+      children,
+    };
+  };
 
+  // Drop any group / subgroup whose `keys` carry no plot script —
+  // KPI-only groups (e.g. "Building Architecture") would otherwise
+  // surface an empty submenu in the perimeter `+` Plot picker.
   return PLOT_GROUPS.map((group) => {
     if (group.subgroups) {
+      const subChildren = group.subgroups.map(subgroupLevel).filter(Boolean);
+      if (subChildren.length === 0) return null;
       return {
         key: group.label,
         label: labelWithIcon(group.icon, group.label),
-        children: group.subgroups.map(subgroupLevel),
+        children: subChildren,
       };
     }
+    const children = group.keys
+      .map((k) => plotLeaf(k, group.keys[0]))
+      .filter(Boolean);
+    if (children.length === 0) return null;
     return {
       key: group.label,
       label: labelWithIcon(group.icon, group.label),
-      children: group.keys
-        .map((k) => plotLeaf(k, group.keys[0]))
-        .filter(Boolean),
+      children,
     };
-  });
+  }).filter(Boolean);
 }
 
 /**
@@ -184,6 +199,10 @@ const CanvasColumn = ({
   onPlotReady,
   onAddPlotToCard,
   onAddCard,
+  // Direct picker handle — used by the Replace flow on existing
+  // KPI cards (which need to open the picker pre-selected on the
+  // current `kpiId`, bypassing the new-card `onAddCard` path).
+  onOpenKpiPicker,
   onApplyLayouts,
   onOpenMapBottom,
   editingPlotCardId,
@@ -192,6 +211,12 @@ const CanvasColumn = ({
   addColumnTooltip = 'Add column',
   isOrigin = false,
   lockedReadOnly = false,
+  // Origin column's scenario path, used by KPI cards in this
+  // column to fetch the origin's same KPI as their delta
+  // baseline. `null` outside compare mode → `FeatureCardKpi`
+  // skips the baseline fetch (the hook's `enabled` flag is
+  // gated on a truthy scenario).
+  originScenario = null,
   onCloseColumn,
   compactLayout = false,
   // Forwarded to FeatureCardMap so per-card stores key on
@@ -348,14 +373,37 @@ const CanvasColumn = ({
       columnZoneFeatures ? generateUseTypeColorMap(columnZoneFeatures) : {},
     [columnZoneFeatures],
   );
+  // Per-column GFA aggregates so each column's legend reads its
+  // own scenario's totals — same per-column rationale as the
+  // colour maps above.
+  const constructionGfaTotals = useMemo(
+    () =>
+      columnZoneFeatures
+        ? generateConstructionGfaTotals(columnZoneFeatures)
+        : {},
+    [columnZoneFeatures],
+  );
+  const useTypeGfaTotals = useMemo(
+    () =>
+      columnZoneFeatures ? generateUseTypeGfaTotals(columnZoneFeatures) : {},
+    [columnZoneFeatures],
+  );
   const columnContextValue = useMemo(
     () => ({
       center: columnCenter,
       setCenter: setColumnCenter,
       constructionColorMap,
       useTypeColorMap,
+      constructionGfaTotals,
+      useTypeGfaTotals,
     }),
-    [columnCenter, constructionColorMap, useTypeColorMap],
+    [
+      columnCenter,
+      constructionColorMap,
+      useTypeColorMap,
+      constructionGfaTotals,
+      useTypeGfaTotals,
+    ],
   );
 
   // Title-map tile sizing: each column publishes the row allowance
@@ -450,18 +498,28 @@ const CanvasColumn = ({
       },
     ];
     for (const card of sortedCards) {
-      // Compact layout pins every card to the column-left (single
-      // vertical stack). Width stays at the card's stored `w`.
-      const cardX = compactLayout ? 0 : (card.col ?? 0);
+      // Compact layout pins plot / map cards to the column-left
+      // (single vertical stack) so the larger 6-wide cards don't
+      // require horizontal scroll inside a compare-mode column.
+      // KPI cards opt out: they're 2-wide tiles and three of
+      // them sit comfortably side-by-side in one column, which
+      // the user expects to be able to lay out freely.
+      const isKpiCard = card.type === 'kpi';
+      const cardX = compactLayout && !isKpiCard ? 0 : (card.col ?? 0);
       const cardW = card.w ?? DEFAULT_CARD_W;
-      // Text + divider cards can shrink past the global 3-row /
-      // 3-col minimum that keeps plot/map/kpi cards legible —
-      // annotations hug the rendered text and dividers can be a
-      // single unit thick on whichever axis is the line.
+      // Per-type minimum dimensions:
+      //  - text + divider can shrink past the global 3-row / 3-col
+      //    minimum that keeps plot / map cards legible — annotations
+      //    hug the rendered text and dividers can be a single unit
+      //    thick on whichever axis is the line.
+      //  - kpi is a number tile, not a chart canvas: 2×2 is enough
+      //    for label + value + unit. Sparklines crop above this
+      //    minimum — users drag the card taller when they want one.
       const isText = card.type === 'text';
       const isDivider = card.type === 'divider';
-      const minH = isText || isDivider ? 1 : CARD_MIN_H;
-      const minW = isDivider ? 1 : CARD_MIN_W;
+      const isKpi = card.type === 'kpi';
+      const minH = isText || isDivider ? 1 : isKpi ? 2 : CARD_MIN_H;
+      const minW = isDivider ? 1 : isKpi ? 2 : CARD_MIN_W;
       items.push({
         i: cardKey(card.id),
         x: cardX,
@@ -514,6 +572,16 @@ const CanvasColumn = ({
     };
   }, [layout, layoutLocked, layoutEditableHere, isInteracting]);
 
+  // Map of card id → type, used by the handler below to decide
+  // whether `col` should round-trip into the store. KPI cards
+  // opt out of compact-mode's "x=0 only" pin, so their `col`
+  // updates need to persist.
+  const cardTypeById = useMemo(() => {
+    const out = {};
+    for (const card of sortedCards) out[card.id] = card.type;
+    return out;
+  }, [sortedCards]);
+
   // react-grid-layout fires this on mount AND on every drag/resize.
   // The per-card diff in the store's `applyCardLayouts` skips writes
   // when nothing actually changed.
@@ -536,18 +604,17 @@ const CanvasColumn = ({
           const userH = Math.max(CARD_MIN_H, item.h - legendExtraRows);
           setMapPos({ x: item.x, y: item.y, w: item.w, h: userH });
         } else {
-          // Compact mode: persist row / w / h. Skip `col` — every
-          // card is pinned to x=0 by the layout memo, so writing
-          // it back would just clobber the user's free-form `col`
-          // stored from launch view (we want the original layout
-          // to survive a round-trip back). Width persists so the
-          // user can resize cards horizontally on the origin
-          // column and have every mirror follow.
           // Mirror cards carry an `::r<rev>` suffix on their rgl
           // `i`; strip it so `applyCardLayouts` finds the card by
           // its real id when an unlocked mirror persists positions.
           const cardId = item.i.split('::')[0];
-          if (compactLayout) {
+          const isKpiCard = cardTypeById[cardId] === 'kpi';
+          // Compact mode pins plot / map cards to x=0, so writing
+          // `col` back would clobber the user's free-form `col`
+          // stored from launch view. KPI cards bypass compact's
+          // pin, so their `col` updates DO need to persist.
+          const skipCol = compactLayout && !isKpiCard;
+          if (skipCol) {
             cardUpdates.push({
               id: cardId,
               row: item.y,
@@ -569,6 +636,7 @@ const CanvasColumn = ({
     },
     [
       onApplyLayouts,
+      cardTypeById,
       legendExtraRows,
       compactLayout,
       lockedReadOnly,
@@ -653,6 +721,7 @@ const CanvasColumn = ({
           plotItems: [],
           onPickText: null,
           onPickDivider: null,
+          onPickKpi: null,
         };
       const onPickMap = (category, layer) =>
         onAddCard({ targetCardId, direction, type: 'map', category, layer });
@@ -704,7 +773,14 @@ const CanvasColumn = ({
       // and the config is fanned out across columns.
       const onPickDivider = () =>
         onAddCard({ targetCardId, direction, type: 'divider' });
-      return { mapItems, plotItems, onPickText, onPickDivider };
+      // KPI pill: open the page-level multi-pick modal. The view's
+      // `handleAddCard` short-circuits `type === 'kpi'` and forwards
+      // to `onOpenKpiPicker`; the anchor (column index + target +
+      // direction) is captured at click time so confirm replays
+      // against the same insertion point.
+      const onPickKpi = () =>
+        onAddCard({ targetCardId, direction, type: 'kpi' });
+      return { mapItems, plotItems, onPickText, onPickDivider, onPickKpi };
     },
     [onAddCard, mapData],
   );
@@ -902,6 +978,8 @@ const CanvasColumn = ({
                 style={overviewLegendStyle}
                 constructionColorMapOverride={constructionColorMap}
                 useTypeColorMapOverride={useTypeColorMap}
+                constructionGfaTotalsOverride={constructionGfaTotals}
+                useTypeGfaTotalsOverride={useTypeGfaTotals}
               />
               {showPerimeterPlus && (
                 <PerimeterPlusButtons
@@ -927,8 +1005,37 @@ const CanvasColumn = ({
                     project={project}
                     scenario={scenario}
                     whatif={whatif}
+                    // Compare-mode delta baseline: every column —
+                    // origin included — receives the same prop. The
+                    // card itself decides whether to fetch / use it
+                    // (skipped on the origin column where
+                    // `originScenario === scenario`).
+                    originScenario={originScenario}
                     onDeleteCard={
                       onDeleteCard ? () => onDeleteCard(card.id) : undefined
+                    }
+                    // Replace flow — re-opens the KPI picker with
+                    // this card's `kpiId` pre-selected. Per the
+                    // locked product decision (2026-05-07), params
+                    // reset to defaults on Replace; the picker's
+                    // step 2 starts fresh from yml defaults rather
+                    // than inheriting the existing card's
+                    // `locatorArgs`.
+                    onReplaceCard={
+                      onOpenKpiPicker
+                        ? () =>
+                            onOpenKpiPicker({
+                              // Picker anchor: 'launch' for the
+                              // launch view (columnIndex is null
+                              // there), numeric index in compare
+                              // mode — matches the dispatch shape
+                              // the store's ``replaceKpiCard`` /
+                              // ``addCard`` already use.
+                              columnIndex: columnIndex ?? 'launch',
+                              replaceCardId: card.id,
+                              initialKpiId: card.kpiId ?? null,
+                            })
+                        : undefined
                     }
                   />
                 ) : card.type === 'text' ? (

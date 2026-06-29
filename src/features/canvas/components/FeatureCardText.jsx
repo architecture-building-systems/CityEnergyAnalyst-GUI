@@ -102,7 +102,11 @@ const FeatureCardText = ({ card, columnIndex, onDeleteCard }) => {
   const surfaceStyle = enableEdit ? cardStyle : cardStyleExport;
   return (
     <div style={surfaceStyle} className="cea-canvas-text-card">
-      {!layoutLocked && enableEdit && (
+      {/* Drag handle gated on `fixLayout` only — matches the
+          FeatureCardShell pattern. `enableEdit` (Export View
+          toggle) controls editing chrome elsewhere on the
+          card, not drag/resize. */}
+      {!layoutLocked && (
         <div
           className="cea-card-drag-handle"
           style={dragStripStyle}

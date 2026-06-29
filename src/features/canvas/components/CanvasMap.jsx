@@ -8,7 +8,9 @@ import { useColumnInputs } from 'features/canvas/hooks/useColumnInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
   generateConstructionColorMap,
+  generateConstructionGfaTotals,
   generateUseTypeColorMap,
+  generateUseTypeGfaTotals,
 } from 'features/map/utils/constructionColors';
 import {
   useScopedCameraOptions,
@@ -200,6 +202,10 @@ const InlineLayerToggle = ({ scenario, project }) => {
     (state) => state.setConstructionColorMap,
   );
   const setUseTypeColorMap = useMapStore((state) => state.setUseTypeColorMap);
+  const setConstructionGfaTotals = useMapStore(
+    (state) => state.setConstructionGfaTotals,
+  );
+  const setUseTypeGfaTotals = useMapStore((state) => state.setUseTypeGfaTotals);
 
   // When zone data lands, flip every layer visible. Otherwise the
   // singleton mapStore's visibility map stays empty and deck.gl
@@ -222,6 +228,13 @@ const InlineLayerToggle = ({ scenario, project }) => {
     if (data?.zone?.features) {
       setConstructionColorMap(generateConstructionColorMap(data.zone.features));
       setUseTypeColorMap(generateUseTypeColorMap(data.zone.features));
+      // Same call site for the GFA aggregates so the legend's
+      // right-aligned "<gfa> m² (<pct>%)" column lands together
+      // with the colour swatches.
+      setConstructionGfaTotals(
+        generateConstructionGfaTotals(data.zone.features),
+      );
+      setUseTypeGfaTotals(generateUseTypeGfaTotals(data.zone.features));
       if (!colorInitDone.current) {
         setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
         colorInitDone.current = true;
@@ -233,6 +246,8 @@ const InlineLayerToggle = ({ scenario, project }) => {
     data?.zone?.features,
     setConstructionColorMap,
     setUseTypeColorMap,
+    setConstructionGfaTotals,
+    setUseTypeGfaTotals,
     setColorMode,
   ]);
 

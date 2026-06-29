@@ -55,6 +55,16 @@ export const DEFAULT_CARD_H = 10;
 export const MAP_ANCHOR_W = 6;
 export const MAP_ANCHOR_H = 5;
 
+// KPI cards are number-tiles, not chart canvases — they need much
+// less footprint than a plot card. Default 2×3 grid units lands a
+// compact tile with the six fixed rows (feature → name → info →
+// value → unit). Compare-mode delta chip rides inline on row 4
+// (right of the info icon) so no extra height is needed.
+// Sparklines still require dragging taller. `CanvasColumn` keeps
+// the per-type rgl minimum at 2×2 so users can resize tighter.
+export const KPI_CARD_DEFAULT_W = 2;
+export const KPI_CARD_DEFAULT_H = 3;
+
 // Cap the undo history at 20 steps (oldest dropped on overflow).
 // Sized to match what the user expects from a desktop editor —
 // large enough to recover from a frantic drag-then-regret without
@@ -78,6 +88,7 @@ export const canvasPersistableSelector = (state) => ({
   pathwayTimelinePlotConfig: state.pathwayTimelinePlotConfig,
   pathwayMultiRowSize: state.pathwayMultiRowSize,
   pathwayMultiPlotConfigs: state.pathwayMultiPlotConfigs,
+  showKpiDeltas: state.showKpiDeltas,
 });
 
 // Initial primary-map tile position. Used both by the store's
@@ -107,7 +118,7 @@ const DEFAULT_DIVIDER_CONFIG = {
 // layout (``scenario/outputs/pathways/{name}/state_{year}``) so the
 // frontend can hand a state-folder path to map / plot endpoints
 // without an extra round-trip to resolve it.
-const childStateScenarioPath = (parentScenario, pathwayName, year) => {
+export const childStateScenarioPath = (parentScenario, pathwayName, year) => {
   if (!parentScenario || !pathwayName || year == null) return null;
   // Mixed separators — works for both POSIX and Windows scenarios
   // (backend joins with `os.path.join`, which normalises). The
@@ -133,17 +144,30 @@ const makeCard = ({
   type,
   category,
   layer,
+  kpiId,
+  locatorArgs,
 }) => {
   const cardType = type ?? 'plot';
   const isText = cardType === 'text';
   const isDivider = cardType === 'divider';
+  const isKpi = cardType === 'kpi';
+  // Per-type default dimensions. KPI cards are intentionally
+  // smaller than plots — they're number tiles, not chart canvases.
+  const defaultW = isKpi ? KPI_CARD_DEFAULT_W : DEFAULT_CARD_W;
+  const defaultH = isText
+    ? TEXT_CARD_DEFAULT_H
+    : isDivider
+      ? 1
+      : isKpi
+        ? KPI_CARD_DEFAULT_H
+        : DEFAULT_CARD_H;
   return {
     id: makeId('card'),
     type: cardType,
     row,
     col,
-    w: w ?? DEFAULT_CARD_W,
-    h: h ?? (isText ? TEXT_CARD_DEFAULT_H : isDivider ? 1 : DEFAULT_CARD_H),
+    w: w ?? defaultW,
+    h: h ?? defaultH,
     feature,
     category,
     layer,
@@ -156,6 +180,16 @@ const makeCard = ({
     // out across columns: the divider is structural chrome, not
     // per-column content like the text card's `html`.
     divider: isDivider ? { ...DEFAULT_DIVIDER_CONFIG } : undefined,
+    // KPI cards bind to a single registry id (e.g.
+    // `demand.eui_kwh_m2`). The category is implicit from the id's
+    // prefix; we store both so other code can look up either.
+    kpiId: isKpi ? (kpiId ?? null) : undefined,
+    // Per-card override forwarded to the resolver's
+    // `locator_args_override`. Lets two cards bound to the same
+    // KPI render distinct values (e.g. solar with `panel_type=mono`
+    // vs `panel_type=amorphous`). Null/empty for KPIs whose yml
+    // `locator_args` are fully fixed.
+    locatorArgs: isKpi ? (locatorArgs ?? null) : undefined,
   };
 };
 
@@ -180,7 +214,17 @@ const shiftForInsert = (cards, { row, col, direction }) => {
 // other truthy `targetCard` is an actual card to anchor against.
 const insertCardInto = (
   cards,
-  { targetCard, direction, type, feature, plotConfig, category, layer },
+  {
+    targetCard,
+    direction,
+    type,
+    feature,
+    plotConfig,
+    category,
+    layer,
+    kpiId,
+    locatorArgs,
+  },
   // Optional override for compare-mode fan-out: every column
   // gets the SAME card id and plot identities at insert time so
   // the per-column dispatch can find the card across columns
@@ -221,6 +265,8 @@ const insertCardInto = (
     plotConfig,
     category,
     layer,
+    kpiId,
+    locatorArgs,
   });
   // Apply override AFTER `makeCard` so the override's id / plots
   // win over the freshly-generated ones.
@@ -258,6 +304,37 @@ export const useCanvasStore = create((set, get) => ({
   // before this toggle existed.
   mapsLinked: true,
   setMapsLinked: (value) => set({ mapsLinked: !!value }),
+
+  // Compare-mode toggle: when `true`, every non-origin KPI card
+  // renders a `DeltaChip` next to its value showing the % change
+  // vs the origin column's reading of the same KPI. Default OFF
+  // because the chip can be visually busy when the user just
+  // wants to read absolute values; opt-in via the navigator's
+  // "Show deltas" button (wired in Phase 2e). Ignored entirely
+  // outside compare modes — origin-vs-self has no meaning.
+  showKpiDeltas: false,
+  setShowKpiDeltas: (value) => set({ showKpiDeltas: !!value }),
+
+  // Transient: which perimeter `+` panel is currently expanded
+  // into the five-pill option strip. `null` when nothing's open.
+  // Each `PlusButton` reads this and hides itself when another
+  // button owns the slot, so only one panel is ever visible —
+  // the rest of the canvas stays uncluttered until the open one
+  // collapses. NOT persisted (excluded from
+  // `canvasPersistableSelector`); pure UI ephemera.
+  activePerimeterPlusId: null,
+  setActivePerimeterPlusId: (id) => set({ activePerimeterPlusId: id ?? null }),
+
+  // Transient: which KPI card has its in-card action overlay
+  // (Replace / Delete buttons painted over the body) open. `null`
+  // when nothing's open. `FeatureCardKpi` reads this to decide
+  // whether to render its own overlay; PerimeterPlusButtons
+  // hides every card-add affordance while one is set, so the
+  // user's focus stays on the action they just opened. Pure UI
+  // ephemera, not persisted.
+  activeKpiActionsCardId: null,
+  setActiveKpiActionsCardId: (id) =>
+    set({ activeKpiActionsCardId: id ?? null }),
 
   // Master editing-affordance switch. When `true` (the default),
   // every Edit / Delete button, perimeter `+`, "Add a plot" pill,
@@ -828,7 +905,17 @@ export const useCanvasStore = create((set, get) => ({
    */
   addCard: (
     columnIndex,
-    { targetCardId, direction, type, feature, plotConfig, category, layer },
+    {
+      targetCardId,
+      direction,
+      type,
+      feature,
+      plotConfig,
+      category,
+      layer,
+      kpiId,
+      locatorArgs,
+    },
   ) => {
     const state = get();
     if (columnIndex === 'launch') {
@@ -842,6 +929,8 @@ export const useCanvasStore = create((set, get) => ({
         plotConfig,
         category,
         layer,
+        kpiId,
+        locatorArgs,
       });
       set({ launchCards: next });
       return next[next.length - 1].id;
@@ -858,7 +947,16 @@ export const useCanvasStore = create((set, get) => ({
       const targetCard = resolveTargetCard(cards, targetCardId);
       updatedColumnCards[idx] = insertCardInto(
         cards,
-        { targetCard, direction, type, feature, category, layer },
+        {
+          targetCard,
+          direction,
+          type,
+          feature,
+          category,
+          layer,
+          kpiId,
+          locatorArgs,
+        },
         // Force a stable id + pre-built plots across columns so
         // the per-column dispatch can find the card by id later.
         { id: sharedId, plots: sharedPlots },
@@ -866,6 +964,35 @@ export const useCanvasStore = create((set, get) => ({
     });
     set({ columnCards: updatedColumnCards });
     return sharedId;
+  },
+
+  /**
+   * Replace the KPI binding on an existing kpi card. Per-card
+   * `kpiId` + `locatorArgs` are swapped in place; layout (row /
+   * col / w / h) is preserved so the user's resize / drag work
+   * survives the swap.
+   *
+   * Fans out across columns in compare mode (same row-level
+   * pattern as ``addCard``) so every mirror agrees on which KPI
+   * each shared row binds to.
+   */
+  replaceKpiCard: (columnIndex, cardId, { kpiId, locatorArgs }) => {
+    const state = get();
+    const apply = (cards) =>
+      cards.map((c) =>
+        c.id === cardId && c.type === 'kpi'
+          ? { ...c, kpiId: kpiId ?? null, locatorArgs: locatorArgs ?? null }
+          : c,
+      );
+    if (columnIndex === 'launch') {
+      set({ launchCards: apply(state.launchCards) });
+      return;
+    }
+    const updated = {};
+    Object.entries(state.columnCards || {}).forEach(([idx, cards]) => {
+      updated[idx] = apply(cards);
+    });
+    set({ columnCards: updated });
   },
 
   /**

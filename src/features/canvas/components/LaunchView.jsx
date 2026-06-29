@@ -34,6 +34,7 @@ import PathwayCompareSelect from './PathwayCompareSelect';
 const LaunchView = ({
   onOpenDrawer,
   onOpenMapBottom,
+  onOpenKpiPicker,
   editingPlotCardId,
   activeMapCardId,
 }) => {
@@ -108,6 +109,13 @@ const LaunchView = ({
       addCard('launch', { targetCardId, direction, type: 'divider' });
       return;
     }
+    if (type === 'kpi') {
+      // KPI cards open the page-level multi-pick modal; the
+      // anchor (column index + target + direction) is captured
+      // here and replayed against `addCard` on confirm.
+      onOpenKpiPicker?.({ columnIndex: 'launch', targetCardId, direction });
+      return;
+    }
     const resolvedFeature = feature || inferFeature(targetCardId);
     onOpenDrawer({
       plotConfig: script ? { script } : null,
@@ -166,6 +174,7 @@ const LaunchView = ({
           onDeleteCard={handleDeleteCard}
           onAddPlotToCard={handleAddPlotToCard}
           onAddCard={handleAddCard}
+          onOpenKpiPicker={onOpenKpiPicker}
           onApplyLayouts={(updates) => applyCardLayouts('launch', updates)}
           onOpenMapBottom={onOpenMapBottom}
           editingPlotCardId={editingPlotCardId}

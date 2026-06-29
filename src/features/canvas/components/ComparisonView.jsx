@@ -16,6 +16,7 @@ import PathwayTimelineStrip from './PathwayTimelineStrip';
 const ComparisonView = ({
   onOpenDrawer,
   onOpenMapBottom,
+  onOpenKpiPicker,
   editingPlotCardId,
   editingColumnIndex,
   activeMapCardId,
@@ -118,6 +119,15 @@ const ComparisonView = ({
       // card's own toolbar, no drawer needed.
       if (type === 'divider') {
         addCard(columnIndex, { targetCardId, direction, type: 'divider' });
+        return;
+      }
+      if (type === 'kpi') {
+        // KPI cards open the page-level multi-pick modal; the
+        // anchor (column index + target + direction) is captured
+        // here and replayed against `addCard` on confirm. The
+        // store fans the resulting cards out across every
+        // column, same as for any other card type.
+        onOpenKpiPicker?.({ columnIndex, targetCardId, direction });
         return;
       }
       const resolvedFeature =
@@ -250,12 +260,23 @@ const ComparisonView = ({
                   columnDef={col}
                   columnIndex={i}
                   cards={columnCards?.[i] || []}
+                  // Origin column's scenario, threaded into every
+                  // column so non-origin KPI cards can fetch the
+                  // origin's same KPI as their delta baseline.
+                  // The origin column sees the same value but
+                  // `FeatureCardKpi` skips its own delta render
+                  // when scenario === originScenario. React Query
+                  // dedupes — the origin column's fetch satisfies
+                  // every non-origin column's baseline read for
+                  // free.
+                  originScenario={columns[0]?.scenario ?? null}
                   onEditPlot={handleEditPlot(i)}
                   onDeletePlot={handleDeletePlot(i)}
                   onDeleteCard={handleDeleteCard(i)}
                   onPlotReady={handlePlotReady}
                   onAddPlotToCard={handleAddPlotToCard(i)}
                   onAddCard={handleAddCard(i)}
+                  onOpenKpiPicker={onOpenKpiPicker}
                   onApplyLayouts={(updates) => applyCardLayouts(i, updates)}
                   onOpenMapBottom={onOpenMapBottom}
                   // Per-column editing stroke: pass the active

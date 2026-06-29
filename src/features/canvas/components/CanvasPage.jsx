@@ -4,11 +4,13 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import { useResumeLastCanvas } from '../hooks/useResumeLastCanvas';
+import { useFocusFeature } from '../hooks/useFocusFeature';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
 import ComparisonView from './ComparisonView';
 import PlotEditModal from './PlotEditModal';
+import KpiPicker from './KpiPicker';
 
 /**
  * Canvas Builder — root page. 2-column grid:
@@ -38,7 +40,10 @@ const CanvasPage = () => {
   const view = useCanvasStore((s) => s.view);
   const canvasName = useCanvasStore((s) => s.canvasName);
   const columns = useCanvasStore((s) => s.columns);
+  const launchCards = useCanvasStore((s) => s.launchCards);
+  const columnCards = useCanvasStore((s) => s.columnCards);
   const project = useProjectStore((s) => s.project);
+  const projectScenario = useProjectStore((s) => s.scenario);
 
   // Subscribe to store changes and debounce-flush them to the
   // saved canvas folder while the user works. Idempotent — single
@@ -62,6 +67,113 @@ const CanvasPage = () => {
   // editing stroke would resolve ambiguously.
   const [activeMapCardId, setActiveMapCardId] = useState(null);
   const [activeMapColumnIndex, setActiveMapColumnIndex] = useState(null);
+
+  // KPI picker anchor — captured at the moment a perimeter `+`
+  // chooses the KPI pill, replayed against `addCard` once the
+  // user confirms a multi-pick. `null` means the picker is closed.
+  // Shape: { columnIndex, targetCardId, direction }. Lifted to
+  // page level so any column / launch view can open the same
+  // singleton modal without each view duplicating the wiring.
+  const [kpiPickerAnchor, setKpiPickerAnchor] = useState(null);
+  const openKpiPicker = useCallback((anchor) => {
+    setKpiPickerAnchor(anchor);
+    // Close any open editing surfaces so the modal isn't competing
+    // for attention.
+    setDrawer(null);
+    setActiveMapCardId(null);
+    setActiveMapColumnIndex(null);
+  }, []);
+  const closeKpiPicker = useCallback(() => setKpiPickerAnchor(null), []);
+
+  // "Feature focus" landing — the OverviewCard's KpiRibbon pushes
+  // the canvas route with `?focusFeature=<feature>` when the user
+  // clicks a headline tile. We act on that exactly once per arrival:
+  //   - existing card on the canvas with `kpiId.startsWith('<feature>.')`
+  //     → scroll it into view + flash the CEA-purple stroke.
+  //   - no matching card → open the picker pre-expanded to that
+  //     feature's group so the user can add one in two clicks.
+  // The hook strips the param from the URL on first capture so a
+  // refresh / back navigation doesn't replay the action; `consume()`
+  // gates the dispatch so it doesn't repeat as cards re-render.
+  const { focusFeature, consume: consumeFocusFeature } = useFocusFeature();
+  useEffect(() => {
+    if (!focusFeature) return;
+    // Wait until the canvas has loaded — `useResumeLastCanvas`
+    // sets `canvasName` once the saved canvas (if any) is in. On
+    // a brand-new entry with no saved canvas the user has nothing
+    // to scroll into; the picker is the right action there too.
+    if (!canvasName) return;
+    const cards = view === 'launch' ? launchCards : (columnCards?.[0] ?? []);
+    const prefix = `${focusFeature}.`;
+    const match = cards.find(
+      (c) =>
+        c.type === 'kpi' &&
+        typeof c.kpiId === 'string' &&
+        c.kpiId.startsWith(prefix),
+    );
+    if (match) {
+      // Defer one frame so the rgl-positioned card has its final
+      // top/left applied before we scroll to it.
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-card-id="${match.id}"]`);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('cea-card-flash');
+        setTimeout(() => el.classList.remove('cea-card-flash'), 2000);
+      });
+    } else {
+      // No matching card → open the picker anchored next to the
+      // primary map tile (sentinel `'MAP'`, `direction: 'right'`)
+      // so `addCard` lands the new card at a stable spot rather
+      // than colliding with the map at (0, 0). `initialFeature`
+      // pre-expands the right group inside the picker.
+      setKpiPickerAnchor({
+        columnIndex: view === 'launch' ? 'launch' : 0,
+        targetCardId: 'MAP',
+        direction: 'right',
+        initialFeature: focusFeature,
+      });
+    }
+    consumeFocusFeature();
+  }, [
+    focusFeature,
+    canvasName,
+    view,
+    launchCards,
+    columnCards,
+    consumeFocusFeature,
+  ]);
+
+  const addCard = useCanvasStore((s) => s.addCard);
+  const replaceKpiCard = useCanvasStore((s) => s.replaceKpiCard);
+  // Picker confirm — single-pick + optional locator-args from the
+  // step-2 form. Two flows share the handler:
+  //   - Add: anchor carries `targetCardId` + `direction` from the
+  //     perimeter `+` click → ``addCard``.
+  //   - Replace: anchor carries `replaceCardId` (set by the
+  //     existing-card click flow in FeatureCardKpi) → swap the
+  //     binding in place via ``replaceKpiCard``.
+  const handleKpiPickerConfirm = useCallback(
+    (kpiId, locatorArgs) => {
+      if (kpiPickerAnchor && kpiId) {
+        const { columnIndex, targetCardId, direction, replaceCardId } =
+          kpiPickerAnchor;
+        if (replaceCardId) {
+          replaceKpiCard(columnIndex, replaceCardId, { kpiId, locatorArgs });
+        } else {
+          addCard(columnIndex, {
+            targetCardId,
+            direction,
+            type: 'kpi',
+            kpiId,
+            locatorArgs,
+          });
+        }
+      }
+      setKpiPickerAnchor(null);
+    },
+    [kpiPickerAnchor, addCard, replaceKpiCard],
+  );
 
   // Edit-mode is exclusive: opening the plot drawer closes any
   // active map-card edit (and vice versa) so at most one card wears
@@ -154,6 +266,7 @@ const CanvasPage = () => {
             <LaunchView
               onOpenDrawer={openDrawer}
               onOpenMapBottom={openMapBottom}
+              onOpenKpiPicker={openKpiPicker}
               editingPlotCardId={drawer?.cardId ?? null}
               activeMapCardId={activeMapCardId}
             />
@@ -161,6 +274,7 @@ const CanvasPage = () => {
             <ComparisonView
               onOpenDrawer={openDrawer}
               onOpenMapBottom={openMapBottom}
+              onOpenKpiPicker={openKpiPicker}
               editingPlotCardId={drawer?.cardId ?? null}
               // The originating column for an active plot edit. Used
               // by ComparisonView to paint the editing purple
@@ -216,6 +330,34 @@ const CanvasPage = () => {
           allowBack={drawer?.allowBack !== false && !drawer?.cardId}
         />
       </div>
+
+      {/* KPI picker — page-level singleton. Opens via the
+          perimeter `+` KPI pill on any column / launch view; the
+          anchor captured at open time gets replayed against
+          `addCard` on confirm. `initialFeature` (when set by the
+          feature-focus landing) pre-expands the matching group;
+          omitted when the perimeter `+` is the trigger. */}
+      <KpiPicker
+        open={kpiPickerAnchor !== null}
+        onCancel={closeKpiPicker}
+        onConfirm={handleKpiPickerConfirm}
+        project={project}
+        // Picker step-2 hits ``/api/kpis/<id>/parameters`` — option
+        // generators scan the active scenario's output folders, so
+        // we forward whichever scenario the anchor's column reads
+        // from. Compare-mode anchors (columnIndex >= 0) take the
+        // column's scenario; launch-mode anchors fall back to the
+        // project store's scenario.
+        scenario={
+          kpiPickerAnchor?.columnIndex != null &&
+          kpiPickerAnchor.columnIndex !== 'launch' &&
+          columns?.[kpiPickerAnchor.columnIndex]?.scenario
+            ? columns[kpiPickerAnchor.columnIndex].scenario
+            : projectScenario
+        }
+        initialFeature={kpiPickerAnchor?.initialFeature ?? null}
+        initialKpiId={kpiPickerAnchor?.initialKpiId ?? null}
+      />
     </div>
   );
 };

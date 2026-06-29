@@ -48,7 +48,11 @@ const FeatureCardDivider = ({ card, columnIndex, onDeleteCard }) => {
         isVertical ? ' cea-canvas-divider-card-vertical' : ''
       }`}
     >
-      {!layoutLocked && enableEdit && (
+      {/* Drag handle gated on `fixLayout` only — matches the
+          FeatureCardShell pattern. `enableEdit` controls the
+          orientation/style toolbar elsewhere on the card, not
+          drag/resize. */}
+      {!layoutLocked && (
         <div
           className="cea-card-drag-handle"
           style={isVertical ? dragStripVerticalStyle : dragStripStyle}

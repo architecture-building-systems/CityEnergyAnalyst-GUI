@@ -101,7 +101,16 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
   const handleCategorySelected = (category) => {
     const firstLayer = category?.layers?.[0];
-    if (firstLayer) handleLayerSelected(firstLayer.name);
+    if (firstLayer) {
+      handleLayerSelected(firstLayer.name);
+      return;
+    }
+    // No category active (user toggled it off, or scenario reset
+    // wiped the active state). Clear the selected layer too —
+    // otherwise consumers like the OverviewCard's `KpiRibbon`
+    // keep deriving KPIs against the stale layer name and the
+    // ribbon never falls back to the no-layer GFA default.
+    setSelectedLayer(null);
   };
 
   const handleLayerSelected = (layer) => {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Dropdown, Tooltip } from 'antd';
 
+import { useCanvasStore } from '../stores/canvasStore';
 import {
   CreateNewIcon,
   DividerCardIcon,
@@ -23,10 +24,12 @@ import './PerimeterPlusButtons.css';
  * edge. See `computeExposure` in this file.
  *
  * Clicking (or hovering) the `+` swaps it for an icon panel —
- * Map / Plot / KPI as glyph buttons. Each glyph is itself a
- * sub-Dropdown trigger for its category/feature tree (built by the
- * caller and passed in via `buildSectionMenus`). KPI is disabled
- * until its backend selection module lands.
+ * Map / Plot / Text / Divider / KPI as glyph buttons. Map and
+ * Plot expand to sub-Dropdowns for their category/feature tree;
+ * Text / Divider trigger immediate inserts; KPI opens the
+ * page-level multi-pick modal owned by `CanvasPage`. Trees,
+ * inserts, and the modal-open callback all flow in via
+ * `buildSectionMenus`.
  *
  * `breathing` (optional) — when true, the closed `+` pulses with a
  * CEA-purple shadow to draw the user's attention. The caller toggles
@@ -43,6 +46,14 @@ export const PerimeterPlusButtons = ({
   // on that edge. Bottom-edge `+` stays so users can append.
   hideRight = false,
 }) => {
+  // Suppress every perimeter `+` while a KPI card has its action
+  // overlay open — the user just clicked into "edit this card"
+  // mode, surfacing card-add affordances would just be visual
+  // noise on top of the action overlay.
+  const kpiActionsActive = useCanvasStore(
+    (s) => s.activeKpiActionsCardId !== null,
+  );
+  if (kpiActionsActive) return null;
   const rightAnchor = hideRight ? null : exposure?.right;
   const bottomAnchor = exposure?.bottom;
   const rightSections = rightAnchor
@@ -67,10 +78,19 @@ export const PerimeterPlusButtons = ({
         left: `calc(${bottomAnchor.fraction * 100}% - ${halfPx}px)`,
       }
     : null;
+  // Stable id per `+` instance, used by the canvasStore's
+  // `activePerimeterPlusId` slot to coordinate "only one panel
+  // open at a time" — every other `+` hides while one is
+  // expanded into its option-strip. ``targetCardId`` is either a
+  // card id or the ``'MAP'`` sentinel (set by the primary tile);
+  // ``-right`` / ``-bottom`` distinguishes the two edges of one
+  // card.
+  const anchorId = targetCardId || 'MAP';
   return (
     <>
       {rightSections && (
         <PlusButton
+          id={`${anchorId}-right`}
           style={rightStyle}
           sections={rightSections}
           tooltipPlacement="top"
@@ -80,6 +100,7 @@ export const PerimeterPlusButtons = ({
       )}
       {bottomSections && (
         <PlusButton
+          id={`${anchorId}-bottom`}
           style={bottomStyle}
           sections={bottomSections}
           tooltipPlacement="left"
@@ -108,6 +129,7 @@ export const PerimeterPlusButtons = ({
 // animation plays (keyframes in PerimeterPlusButtons.css), then
 // `open` flips to false and the `+` reappears.
 const PlusButton = ({
+  id,
   style,
   sections,
   tooltipPlacement,
@@ -120,6 +142,35 @@ const PlusButton = ({
   const openTimerRef = useRef(null);
   const closeTimerRef = useRef(null);
   const collapseTimerRef = useRef(null);
+
+  // ── "Only one panel at a time" coordination ────────────────────
+  // When this button opens, claim the global slot. When it closes
+  // (collapse triggered), release it. Other `PlusButton` instances
+  // read the slot and hide themselves while another button owns it
+  // — keeps the canvas uncluttered while the user is choosing
+  // an option.
+  const activePerimeterPlusId = useCanvasStore((s) => s.activePerimeterPlusId);
+  const setActivePerimeterPlusId = useCanvasStore(
+    (s) => s.setActivePerimeterPlusId,
+  );
+  const hidden = activePerimeterPlusId !== null && activePerimeterPlusId !== id;
+
+  // Claim the slot on open.
+  useEffect(() => {
+    if (open && !closing) setActivePerimeterPlusId(id);
+  }, [open, closing, id, setActivePerimeterPlusId]);
+
+  // If we own the slot at unmount time (rare — e.g. card deleted
+  // while panel was open), clear it so a sibling button isn't
+  // permanently hidden.
+  useEffect(
+    () => () => {
+      if (useCanvasStore.getState().activePerimeterPlusId === id) {
+        setActivePerimeterPlusId(null);
+      }
+    },
+    [id, setActivePerimeterPlusId],
+  );
 
   const cancelOpenTimer = () => {
     if (openTimerRef.current) {
@@ -137,15 +188,19 @@ const PlusButton = ({
   // Start the collapse: flip `closing=true` so the pills get the
   // reverse-animation class, then unmount them after the animation
   // finishes. `closing` itself blocks re-entry while in progress.
+  // Releases the global slot at the START of collapse (not the
+  // end) so sibling `+` buttons fade back in alongside this
+  // panel's collapse animation rather than after it.
   const startCollapse = useCallback(() => {
     if (!open || closing) return;
     setClosing(true);
+    setActivePerimeterPlusId(null);
     collapseTimerRef.current = setTimeout(() => {
       setOpen(false);
       setClosing(false);
       collapseTimerRef.current = null;
     }, COLLAPSE_DURATION_MS);
-  }, [open, closing]);
+  }, [open, closing, setActivePerimeterPlusId]);
 
   const handleClosedMouseEnter = () => {
     if (openTimerRef.current || open) return;
@@ -208,8 +263,18 @@ const PlusButton = ({
     [],
   );
 
+  // Use `visibility: hidden` (not `display: none`) so the wrapper
+  // keeps its absolute-positioned slot in the DOM — re-showing
+  // is instant on collapse without any layout reshuffle. Pointer
+  // events drop too so clicks pass through to whatever's behind.
   return (
-    <div ref={ref} style={style}>
+    <div
+      ref={ref}
+      style={{
+        ...style,
+        ...(hidden ? { visibility: 'hidden', pointerEvents: 'none' } : null),
+      }}
+    >
       {open ? (
         <ExpandedOptions
           sections={sections}
@@ -246,7 +311,8 @@ const PlusButton = ({
 // swaps to the reverse-animation variant. `onPick` triggers the
 // collapse after a leaf is chosen.
 const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
-  const { mapItems, plotItems, onPickText, onPickDivider } = sections;
+  const { mapItems, plotItems, onPickText, onPickDivider, onPickKpi } =
+    sections;
   const isRow = direction === 'right';
   const containerStyle = isRow ? expandedRowStyle : expandedColumnStyle;
   const axis = isRow ? 'right' : 'down';
@@ -319,11 +385,18 @@ const ExpandedOptions = ({ sections, onPick, direction, closing }) => {
         </Tooltip>
       </div>
       <div className={`cea-card-icon-button-container ${itemClass}`}>
-        <Tooltip title="KPI (coming soon)" placement={tooltipPlacement}>
+        <Tooltip title="KPI" placement={tooltipPlacement}>
           <Button
             type="text"
             icon={<KpiCardIcon />}
-            disabled
+            onClick={() => {
+              onPickKpi?.();
+              // Close the perimeter panel after the click — the
+              // KPI picker modal is what the user interacts with
+              // next, not the pill column.
+              onPick?.();
+            }}
+            disabled={!onPickKpi}
             aria-label="Add a KPI card"
           />
         </Tooltip>

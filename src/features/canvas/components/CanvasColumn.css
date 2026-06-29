@@ -48,3 +48,19 @@
 .cea-canvas-grid .react-resizable-handle:hover {
   opacity: 1;
 }
+
+/* Feature-focus landing flash. Applied to a KPI card by
+ * `CanvasPage`'s focus-feature effect when a `?focusFeature=...`
+ * arrival lands on a card already on the canvas — pulses the
+ * CEA-purple stroke twice so the user's eye latches onto the
+ * matching card after the scroll. Removed via setTimeout after
+ * the animation finishes so the stroke goes back to default. */
+@keyframes cea-card-flash-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(126, 85, 154, 0.6); }
+  50%  { box-shadow: 0 0 0 6px rgba(126, 85, 154, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(126, 85, 154, 0); }
+}
+.cea-card-flash {
+  animation: cea-card-flash-pulse 0.9s ease-out 2;
+  border-color: #7e559a !important;
+}

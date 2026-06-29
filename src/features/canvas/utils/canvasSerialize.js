@@ -64,6 +64,17 @@ const cardConfigFromStore = (card) => ({
   // Shared across columns via `setCardDividerConfig`'s fan-out, so
   // the YAML carries the same blob in every column entry.
   divider: card.divider ?? null,
+  // KPI cards' bound registry id (e.g. ``demand.eui_kwh_m2``).
+  // ``null`` for every other card type. Older saves omit the
+  // field entirely, which deserialiseses back to ``undefined`` —
+  // safe because non-KPI cards never look at it.
+  kpi_id: card.kpiId ?? null,
+  // KPI cards' per-card locator-args override (e.g. {panel_type:
+  // 'amorphous'}). Forwarded to the resolver's
+  // ``locator_args_override`` at fetch time so two cards with the
+  // same KPI but different overrides cache + display distinct
+  // values. ``null`` when the card uses yml defaults.
+  locator_args: card.locatorArgs ?? null,
 });
 
 /**
@@ -234,6 +245,12 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
     html: configEntry.html ?? undefined,
     divider: configEntry.divider ?? undefined,
+    // Round-trip the KPI-card registry id. ``undefined`` (not
+    // ``null``) for non-KPI cards so the in-memory shape matches
+    // the rest of the camelCase fields on this object.
+    kpiId: configEntry.kpi_id ?? undefined,
+    // Round-trip the per-card locator-args override.
+    locatorArgs: configEntry.locator_args ?? undefined,
   });
 
   const isCompare = next.view !== 'launch';

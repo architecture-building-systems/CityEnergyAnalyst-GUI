@@ -1,5 +1,5 @@
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { activeScenarioHeaders, scenarioHeaders } from 'lib/api/scenarioContext';
 
 const encodePathwayName = (pathwayName) => encodeURIComponent(pathwayName);
 
@@ -192,16 +192,9 @@ export const fetchStateFolderPath = async (
   project,
   scenarioName,
 ) => {
-  // /api/project/state-folder is a project endpoint that reads project and
-  // scenario_name as query params (not via CEAScenario headers), so explicit
-  // params are kept here. When project/scenarioName are not provided the
-  // active-scenario headers from the global interceptor supply the context.
-  const scenarioParams =
-    project != null && scenarioName != null
-      ? { project, scenario_name: scenarioName }
-      : {};
   const { data } = await apiClient.get('/api/project/state-folder', {
-    params: { pathway_name: pathwayName, year, ...scenarioParams },
+    headers: scenarioHeaders({ project, scenarioName }),
+    params: { pathway_name: pathwayName, year },
   });
   return data;
 };
