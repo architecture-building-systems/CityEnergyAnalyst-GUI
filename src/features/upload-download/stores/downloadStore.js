@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import socket, {
+import {
+  getSocket,
   waitForConnection,
   removeConnectionCallback,
 } from 'lib/socket';
@@ -146,6 +147,7 @@ const useDownloadStore = create((set, get) => ({
 
   // Cleanup socket listeners (for unmount)
   cleanupSocketListeners: () => {
+    const socket = getSocket();
     socket.off('download-created');
     socket.off('download-progress');
     socket.off('download-ready');
@@ -163,6 +165,8 @@ const useDownloadStore = create((set, get) => ({
 
       // Remove any existing listeners first to prevent duplicates on reconnect
       get().cleanupSocketListeners();
+
+      const socket = getSocket();
 
       // Download created
       socket.on('download-created', (download) => {

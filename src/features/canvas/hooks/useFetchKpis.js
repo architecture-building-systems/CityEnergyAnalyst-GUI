@@ -38,7 +38,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
-import socket, { waitForConnection } from 'lib/socket';
+import { getSocket, waitForConnection } from 'lib/socket';
 
 import { childStateScenarioPath } from '../stores/canvasStore';
 
@@ -225,6 +225,7 @@ export const useFetchKpiRegistry = () =>
 
 export const useKpiCacheInvalidator = () => {
   const queryClient = useQueryClient();
+  const socket = getSocket();
 
   useEffect(() => {
     const handler = () => {
@@ -240,5 +241,5 @@ export const useKpiCacheInvalidator = () => {
       cleanup = () => socket.off('cea-worker-success', handler);
     });
     return () => cleanup();
-  }, [queryClient]);
+  }, [queryClient, socket]);
 };

@@ -1,10 +1,16 @@
+import { useEffect } from 'react';
 import { Button } from 'antd';
 
 import Loading from 'components/Loading';
 import { useWaitForServer } from 'stores/useServerVersionQuery';
+import { getSocket } from 'lib/socket';
 
 const ServerCheckGate = ({ children }) => {
   const serverStatus = useWaitForServer();
+
+  useEffect(() => {
+    if (serverStatus.isSuccess) getSocket();
+  }, [serverStatus.isSuccess]);
 
   if (serverStatus.isUnreachable) {
     return (
