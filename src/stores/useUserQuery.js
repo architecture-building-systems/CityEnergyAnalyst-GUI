@@ -5,8 +5,13 @@ import { isElectron } from 'utils/electron';
 export const USER_QUERY_KEY = ['user'];
 
 const fetchUser = async () => {
-  const resp = await apiClient.get('/api/user');
-  return resp.data;
+  try {
+    const resp = await apiClient.get('/api/user');
+    return resp.data;
+  } catch (err) {
+    if (err.response?.status === 401) return null; // no session or unauthorized
+    throw err;
+  }
 };
 
 export const useUserQuery = () => {

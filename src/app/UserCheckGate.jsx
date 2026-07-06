@@ -8,13 +8,19 @@ import { useFetchServerLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
 
 const UserCheckGate = ({ children }) => {
-  const { data: userInfo, isLoading } = useUserQuery();
+  const { data: userInfo, isLoading, isError } = useUserQuery();
   const isValidUser = useIsValidUser();
   const fetchServerLimits = useFetchServerLimits();
 
   const { push } = useNavigationStore();
 
   useEffect(() => {
+    // Fall back to the project page if no active session or network error
+    if (userInfo === null || isError) {
+      push(routes.PROJECT);
+      return;
+    }
+
     // Wait for userInfo to be loaded
     // Also not fetch server limits if Electron or localuser
     if (isElectron() || !isValidUser) return;
@@ -27,9 +33,11 @@ const UserCheckGate = ({ children }) => {
       push(routes.PROJECT);
     }
     fetchServerLimits();
-  }, [userInfo, isValidUser, fetchServerLimits, push]);
+  }, [userInfo, isError, isValidUser, fetchServerLimits, push]);
 
   if (isLoading) return <Loading />;
+
+  if (isError) return <div>Error loading user info. Redirecting...</div>;
 
   return children;
 };
