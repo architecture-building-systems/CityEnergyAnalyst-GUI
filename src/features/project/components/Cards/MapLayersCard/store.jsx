@@ -1,4 +1,4 @@
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { useQuery } from '@tanstack/react-query';
 import { create } from 'zustand';
 import { useMemo } from 'react';
@@ -12,7 +12,7 @@ export const MAP_LAYER_CATEGORIES_QUERY_KEY = ['map-layer-categories'];
 
 export const fetchMapLayerCategories = async () => {
   try {
-    const { data } = await apiClient.get('/api/map_layers/');
+    const { data } = await getScenarioClient().get('/api/map_layers/');
     return data;
   } catch (err) {
     console.error(err);

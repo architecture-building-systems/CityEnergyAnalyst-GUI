@@ -1,7 +1,10 @@
 import { useQueries } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
-import { activeScenarioHeaders, childScenarioToken } from 'lib/api/scenarioContext';
+import {
+  activeScenarioHeaders,
+  childScenarioToken,
+} from 'lib/api/scenarioContext';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useFetchedSchedules } from 'features/input-editor/stores/inputEditorStore';
 
@@ -30,7 +33,7 @@ export function useSchedules() {
           // Return empty object if projectName or scenarioName is not defined
           if (!projectName || !scenarioName) return {};
 
-          const { data } = await apiClient.get(
+          const { data } = await getScenarioClient().get(
             `${API_ENDPOINTS.INPUTS}/building-schedule/${building}`,
             { headers: activeScenarioHeaders() },
           );

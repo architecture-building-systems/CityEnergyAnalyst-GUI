@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { apiClient, getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
@@ -68,7 +68,7 @@ export const useFetchWhatifs = (project, scenario) =>
   useQuery({
     queryKey: ['reports', 'whatifs', project, scenario],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/whatifs', {
+      const { data } = await getScenarioClient().get('/api/reports/whatifs', {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data.whatifs;
@@ -81,7 +81,7 @@ export const useFetchFeatures = () =>
   useQuery({
     queryKey: ['reports', 'features'],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/features');
+      const { data } = await getScenarioClient().get('/api/reports/features');
       return data.features;
     },
     staleTime: 5 * 60_000,
@@ -91,7 +91,7 @@ export const useFetchSummary = (project, scenario, feature, whatif) =>
   useQuery({
     queryKey: ['reports', 'summary', project, scenario, feature, whatif],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/summary', {
+      const { data } = await getScenarioClient().get('/api/reports/summary', {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
         params: { feature, whatif: whatif || undefined },
       });
@@ -105,7 +105,7 @@ export const useFetchToolParams = (script, scenario, project) =>
   useQuery({
     queryKey: ['tools', script, project, scenario],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/api/tools/${script}`, {
+      const { data } = await getScenarioClient().get(`/api/tools/${script}`, {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data;
@@ -151,7 +151,7 @@ export const useFetchCustomPlot = (plotConfig, scenarioContext, project) => {
       // origin's data instead of its own. Top-level wins.
       // eslint-disable-next-line no-unused-vars
       const { scenario: _scenario, ...rest } = plotConfig.parameters || {};
-      const { data } = await apiClient.post(
+      const { data } = await getScenarioClient().post(
         '/api/reports/plot-custom',
         {
           script: plotConfig.script,

@@ -9,10 +9,11 @@
  */
 
 import { useProjectStore } from 'features/project/stores/projectStore';
-
-export const PROJECT_HEADER = 'X-CEA-Project';
-export const SCENARIO_NAME_HEADER = 'X-CEA-Scenario-Name';
-export const CHILD_SCENARIO_HEADER = 'X-CEA-Child-Scenario';
+import {
+  PROJECT_HEADER,
+  SCENARIO_NAME_HEADER,
+  CHILD_SCENARIO_HEADER,
+} from 'lib/api/scenarioContextHeaders';
 
 /**
  * Build the logical child-scenario token `<pathway_name>/<year>` from a

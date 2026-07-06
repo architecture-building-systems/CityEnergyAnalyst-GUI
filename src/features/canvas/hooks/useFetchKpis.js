@@ -36,7 +36,7 @@
 import { useEffect, useMemo } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { getSocket, waitForConnection } from 'lib/socket';
 
@@ -77,13 +77,16 @@ export const useFetchKpiValue = ({
       whatif ?? null,
     ],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/api/kpis/${kpiId}/value`, {
-        headers: scenarioHeaders({ project, scenarioName: scenario }),
-        params: {
-          locator_args: argsKey || undefined,
-          whatif: whatif || undefined,
+      const { data } = await getScenarioClient().get(
+        `/api/kpis/${kpiId}/value`,
+        {
+          headers: scenarioHeaders({ project, scenarioName: scenario }),
+          params: {
+            locator_args: argsKey || undefined,
+            whatif: whatif || undefined,
+          },
         },
-      });
+      );
       return data;
     },
     enabled: !!project && !!scenario && !!kpiId,
@@ -114,12 +117,15 @@ export const useFetchKpiParameters = ({
       argsKey,
     ],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/api/kpis/${kpiId}/parameters`, {
-        headers: scenarioHeaders({ project, scenarioName: scenario }),
-        params: {
-          args: argsKey || undefined,
+      const { data } = await getScenarioClient().get(
+        `/api/kpis/${kpiId}/parameters`,
+        {
+          headers: scenarioHeaders({ project, scenarioName: scenario }),
+          params: {
+            args: argsKey || undefined,
+          },
         },
-      });
+      );
       return data;
     },
     enabled: !!project && !!scenario && !!kpiId,
@@ -175,7 +181,7 @@ export const useFetchKpiSparkline = ({
     queries: yearsAndPaths.map(({ year, scenario }) => ({
       queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
       queryFn: async () => {
-        const { data } = await apiClient.get('/api/kpis/', {
+        const { data } = await getScenarioClient().get('/api/kpis/', {
           headers: scenarioHeaders({
             project,
             scenarioName: parentScenario,
@@ -217,7 +223,7 @@ export const useFetchKpiRegistry = () =>
   useQuery({
     queryKey: ['kpi-registry'],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/kpis/registry');
+      const { data } = await getScenarioClient().get('/api/kpis/registry');
       return data;
     },
     staleTime: 60 * 60_000, // 1h

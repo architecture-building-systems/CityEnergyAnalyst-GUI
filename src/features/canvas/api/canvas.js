@@ -13,24 +13,29 @@
  * endpoint when the user clicks Share.
  */
 
-import { apiClient } from 'lib/api/axios';
+import { apiClient, getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 const BASE = '/api/canvas';
 
 // ── Saved canvases ─────────────────────────────────────────────
+// Reads (list/read) go through getScenarioClient() so they also work
+// against the read-only public demo API in demo mode; every write below
+// stays on apiClient - demo mode has no write routes and hides these
+// affordances in the UI (see ProjectOverlay/CanvasPage demo gating).
 
 export const listSavedCanvases = async ({ project, scenario }) => {
-  const { data } = await apiClient.get(`${BASE}/`, {
+  const { data } = await getScenarioClient().get(`${BASE}/`, {
     headers: scenarioHeaders({ project, scenarioName: scenario }),
   });
   return data; // string[]
 };
 
 export const readSavedCanvas = async ({ project, scenario, name }) => {
-  const { data } = await apiClient.get(`${BASE}/${encodeURIComponent(name)}`, {
-    headers: scenarioHeaders({ project, scenarioName: scenario }),
-  });
+  const { data } = await getScenarioClient().get(
+    `${BASE}/${encodeURIComponent(name)}`,
+    { headers: scenarioHeaders({ project, scenarioName: scenario }) },
+  );
   return data; // { canvas, layout, feature_card }
 };
 

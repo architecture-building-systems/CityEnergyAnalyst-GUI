@@ -6,7 +6,7 @@ import {
   useScopedSelectedCategoryInfo,
 } from 'features/canvas/components/mapInstance';
 import { useEffect, useMemo, useState } from 'react';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { BinAnimationIcon } from 'assets/icons';
 import DeleteChoiceModal from './DeleteChoiceModal';
@@ -40,7 +40,7 @@ const getChoices = async (
   parameters,
   childScenario = null,
 ) => {
-  const resp = await apiClient.post(
+  const resp = await getScenarioClient().post(
     `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
     { parameters },
     { headers: scenarioHeaders({ project, scenarioName, childScenario }) },

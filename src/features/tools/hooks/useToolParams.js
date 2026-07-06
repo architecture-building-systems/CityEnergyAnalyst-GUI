@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import {
   activeScenarioHeaders,
   childScenarioToken,
@@ -40,7 +40,7 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
             }),
           }
         : { headers: activeScenarioHeaders() };
-      const response = await apiClient.get(
+      const response = await getScenarioClient().get(
         `/api/tools/${script}`,
         requestConfig,
       );
