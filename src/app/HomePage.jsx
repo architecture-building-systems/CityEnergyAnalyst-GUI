@@ -17,7 +17,7 @@ import Loading from 'components/Loading';
 import { useIsValidUser, useUserQuery } from 'stores/useUserQuery';
 import { useFetchServerLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
-import { useWaitForServer } from 'stores/useServerVersionQuery';
+import ServerCheckGate from 'app/ServerCheckGate';
 
 // Route-level code splitting for better performance
 const Project = lazy(() => import('app/Project'));
@@ -205,28 +205,6 @@ if (import.meta.env.DEV) {
   window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 }
 
-const HomePageInner = () => {
-  const serverStatus = useWaitForServer();
-  const shouldWaitForServer =
-    // Backend readiness for Electron is handled in the main process, so we can skip this check in Electron
-    !isElectron() &&
-    navigator.onLine !== false &&
-    (serverStatus.isLoading || serverStatus.isPending);
-
-  if (shouldWaitForServer) return <Loading />;
-
-  return (
-    <div id="homepage-container">
-      <div id="homepage-content-container">
-        <HomePageContent />
-      </div>
-      <div id="homepage-status-bar-container">
-        <StatusBar />
-      </div>
-    </div>
-  );
-};
-
 const HomePage = () => {
   return (
     <ConfigProvider
@@ -243,7 +221,16 @@ const HomePage = () => {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <HomePageInner />
+        <ServerCheckGate>
+          <div id="homepage-container">
+            <div id="homepage-content-container">
+              <HomePageContent />
+            </div>
+            <div id="homepage-status-bar-container">
+              <StatusBar />
+            </div>
+          </div>
+        </ServerCheckGate>
       </QueryClientProvider>
     </ConfigProvider>
   );

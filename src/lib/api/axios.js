@@ -97,6 +97,12 @@ export const authClient = axios.create({
   baseURL: `${import.meta.env.VITE_AUTH_URL}`,
 });
 
+// For public, unauthenticated backend routes (e.g. /server/version) that
+// shouldn't go through the token-refresh interceptor at all.
+export const publicClient = axios.create({
+  baseURL: `${import.meta.env.VITE_CEA_URL}`,
+});
+
 // Helper function for request interceptor logic
 let refreshPromise = null; // single-flight
 const addAuthInterceptor = (client, refreshUrl) => {
