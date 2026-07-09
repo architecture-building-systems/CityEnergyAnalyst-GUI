@@ -15,7 +15,7 @@ import InfoTooltip from 'components/InfoTooltip';
 // `scale` and `radius` filters render inline in the Legend (next to
 // the colour ramp) rather than in the parameters panel because they
 // are visualization knobs, not data-fetch parameters.
-export const LEGEND_FILTER_KEYS = ['scale', 'radius'];
+const LEGEND_FILTER_KEYS = ['scale', 'radius'];
 
 const LegendFilterField = ({ label, filterKey, range, defaultValue }) => {
   const filters = useScopedFilters();
