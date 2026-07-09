@@ -2,10 +2,12 @@
  * Scenario context headers for the CEA backend.
  *
  * The backend's `CEAScenario` / `CEAScenarioLenient` dependencies resolve
- * scenario context from `X-CEA-*` request headers first, falling back to
- * query params only as a deprecated compat path. Sending context as headers
- * rather than query strings avoids leaking absolute filesystem paths into
- * URLs, browser history, referrers, and server access logs.
+ * scenario context exclusively from `X-CEA-*` request headers — there is no
+ * query/body/form param fallback. A missing/invalid header results in a 404
+ * (or, for `CEAScenarioLenient`, falls back to the server's local config).
+ * Sending context as headers rather than query strings also avoids leaking
+ * absolute filesystem paths into URLs, browser history, referrers, and
+ * server access logs.
  */
 
 import { useProjectStore } from 'features/project/stores/projectStore';

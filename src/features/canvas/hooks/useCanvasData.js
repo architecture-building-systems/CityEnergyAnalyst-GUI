@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, getScenarioClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { findFamilyForFeature } from 'features/canvas/components/featureCardCommon';
+import { fetchProjectInfo } from 'features/project/stores/projectStore';
 
 import { listSavedCanvases } from '../api/canvas';
 
@@ -53,12 +54,10 @@ export const useFetchSavedCanvases = (project, scenario) =>
 
 export const useFetchScenarios = (project) =>
   useQuery({
-    queryKey: ['reports', 'scenarios', project],
+    queryKey: ['project', 'scenarios', project],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/scenarios', {
-        params: { project },
-      });
-      return data.scenarios;
+      const { scenarios_list: scenariosList } = await fetchProjectInfo(project);
+      return scenariosList;
     },
     enabled: !!project,
     staleTime: 30_000,

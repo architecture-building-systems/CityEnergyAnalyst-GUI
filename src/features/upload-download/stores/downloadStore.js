@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import {
   getSocket,
   waitForConnection,
@@ -40,12 +41,15 @@ const useDownloadStore = create((set, get) => ({
   // Prepare a download (start the process)
   prepareDownload: async (project, scenarios, inputFiles, outputFiles) => {
     try {
-      const response = await apiClient.post('/api/downloads/prepare', {
-        project,
-        scenarios,
-        input_files: inputFiles,
-        output_files: outputFiles,
-      });
+      const response = await apiClient.post(
+        '/api/downloads/prepare',
+        {
+          scenarios,
+          input_files: inputFiles,
+          output_files: outputFiles,
+        },
+        { headers: scenarioHeaders({ project }) },
+      );
 
       const download = response.data;
       get().upsertDownload(download);

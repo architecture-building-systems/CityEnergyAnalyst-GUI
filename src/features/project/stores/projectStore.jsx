@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useUserInfo } from 'stores/useUserQuery';
 
 const DEFAULT_PROJECT_PROPS = {
@@ -19,7 +20,7 @@ export const fetchProjectInfo = async (project) => {
   if (!project) throw new Error('Project cannot be empty');
   try {
     const { data } = await apiClient.get(`/api/project/`, {
-      params: { project },
+      headers: scenarioHeaders({ project }),
     });
 
     return data;
@@ -35,7 +36,8 @@ export const deleteScenario = async (project, scenario) => {
 
   try {
     const { data } = await apiClient.delete(`/api/project/scenario`, {
-      data: { project, scenario_name: scenario },
+      headers: scenarioHeaders({ project }),
+      data: { scenario_name: scenario },
     });
 
     return data;

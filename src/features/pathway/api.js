@@ -1,5 +1,8 @@
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders, scenarioHeaders } from 'lib/api/scenarioContext';
+import {
+  activeScenarioHeaders,
+  scenarioHeaders,
+} from 'lib/api/scenarioContext';
 
 const encodePathwayName = (pathwayName) => encodeURIComponent(pathwayName);
 

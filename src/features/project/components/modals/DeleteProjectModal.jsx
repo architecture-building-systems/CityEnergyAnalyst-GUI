@@ -1,6 +1,7 @@
 import { Button, Input, message, Modal } from 'antd';
 import { useState } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useInvalidateProjectChoices } from 'features/project/hooks/queries/useProjectChoices';
 import { CopyTwoTone } from '@ant-design/icons';
 
@@ -20,7 +21,9 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
   const onClick = async () => {
     setLoading(true);
     try {
-      await apiClient.delete(`/api/project/`, { data: { project } });
+      await apiClient.delete(`/api/project/`, {
+        headers: scenarioHeaders({ project }),
+      });
       setVisible(false);
       message.success('Successfully deleted project ' + project);
       await invalidateProjectChoices();

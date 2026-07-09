@@ -129,7 +129,14 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [categoryName, parameters, selectedLayerInfo, project, scenarioName, childScenario]);
+  }, [
+    categoryName,
+    parameters,
+    selectedLayerInfo,
+    project,
+    scenarioName,
+    childScenario,
+  ]);
 
   return { fetching, error };
 };

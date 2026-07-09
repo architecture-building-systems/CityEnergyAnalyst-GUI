@@ -165,7 +165,17 @@ const ChoiceSelector = ({
     // forces all ChoiceSelectors to refetch their options after external
     // filesystem changes (e.g. a successful network-layout run creating a
     // new network in `outputs/thermal-network/`).
-  }, [categoryInfo?.name, layerName, parameterName, project, scenarioName, childScenario, dependsOnValues, dependsValid, choicesRevision]);
+  }, [
+    categoryInfo?.name,
+    layerName,
+    parameterName,
+    project,
+    scenarioName,
+    childScenario,
+    dependsOnValues,
+    dependsValid,
+    choicesRevision,
+  ]);
 
   useEffect(() => {
     if (choices) {
