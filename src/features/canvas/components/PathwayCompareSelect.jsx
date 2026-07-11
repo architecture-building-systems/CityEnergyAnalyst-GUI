@@ -189,7 +189,7 @@ const PathwayCompareSelect = () => {
   const primary = displayedPicks[0] ?? undefined;
   const isEmpty = displayedPicks.length === 0;
   const className = `cea-scenario-select${
-    isEmpty ? ' cea-scenario-select-empty cea-select-glow' : ''
+    isEmpty ? ' cea-select-empty cea-select-glow' : ''
   }`;
 
   return (

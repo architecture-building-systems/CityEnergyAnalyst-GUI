@@ -480,7 +480,7 @@ parity.
 ### DO: Use `cea-template-select` for the in-card "Add a plot" pill
 ```jsx
 <Select
-  className={`cea-template-select ${hasOptions ? '' : 'cea-template-select-empty cea-select-glow'}`}
+  className={`cea-template-select ${hasOptions ? '' : 'cea-select-empty cea-select-glow'}`}
   placeholder="Add a plot"
   options={quickPickOptions.map((o) => ({ label: o.label, value: o.script }))}
   onSelect={(script) => onPick(script)}

@@ -829,7 +829,7 @@ const CanvasSwitcher = ({
   return (
     <Select
       className={`cea-scenario-select ${
-        hasSelection ? '' : 'cea-scenario-select-empty cea-select-glow cea-canvas-blink'
+        hasSelection ? '' : 'cea-select-empty cea-select-glow cea-canvas-blink'
       }`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}

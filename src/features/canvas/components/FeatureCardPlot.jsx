@@ -139,7 +139,7 @@ const AddPlotSelect = ({ options, onPick, onFallback }) => {
     <Select
       key={resetKey}
       className={`cea-template-select ${
-        hasOptions ? '' : 'cea-template-select-empty cea-select-glow'
+        hasOptions ? '' : 'cea-select-empty cea-select-glow'
       }`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}
