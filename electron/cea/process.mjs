@@ -2,7 +2,8 @@ import { spawn, execSync } from 'child_process';
 
 import { app, dialog } from 'electron';
 
-import { getMicromambaPath, getCEARootPath } from './env.mjs';
+import { getCEARootPath } from './env.mjs';
+import { getMicromambaPath } from './micromamba.mjs';
 
 let cea;
 let ceaDetached = false;
@@ -75,7 +76,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     dialog.showMessageBoxSync(BrowserWindow, {
       type: 'error',
       title: 'CEA Error',
-      message: 'CEA has encounted an error on startup',
+      message: 'CEA has encountered an error on startup',
       detail: startupError,
       buttons: ['Exit CEA'],
     });

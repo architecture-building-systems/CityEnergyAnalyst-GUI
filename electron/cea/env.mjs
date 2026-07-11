@@ -1,72 +1,27 @@
 import { app } from 'electron';
 import path from 'path';
-import os from 'os';
-import { exec, execSync, spawn } from 'child_process';
-import { existsSync } from 'fs';
-import { CEAError, MicromambaError } from './errors.mjs';
-import { downloadFile } from '../download.mjs';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
+
+import { CEAError, MicromambaError } from './errors.mjs';
+import { getMicromambaPath } from './micromamba.mjs';
+import { downloadFile } from '../download.mjs';
 
 const execAsync = promisify(exec);
 
-// Get app path - handles both packaged and dev modes
-const getAppPath = () => {
-  return app.isPackaged ? app.getAppPath() : process.cwd();
-};
-
-// Build paths object once
-const buildPaths = () => {
-  const appPath = getAppPath();
-  const isPackaged = app.isPackaged;
-
-  return {
-    darwin: {
-      micromamba: isPackaged
-        ? path.join(process.resourcesPath, os.arch(), 'micromamba')
-        : path.join(appPath, 'dependencies', os.arch(), 'micromamba'),
-      root: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
-    },
-    win32: {
-      micromamba: path.join(
-        path.dirname(process.execPath),
-        '..',
-        'dependencies',
-        'micromamba.exe',
-      ),
-      root: path.join(
-        path.dirname(process.execPath),
-        '..',
-        'dependencies',
-        'micromamba',
-      ),
-    },
-  };
-};
-
-const paths = buildPaths();
-export const getMicromambaPath = (check = false) => {
-  const _path = paths?.[process.platform]?.['micromamba'];
-
-  if (_path == null || !existsSync(_path)) {
-    console.debug({ micromambaPath: _path });
-    throw new MicromambaError('Unable to find path to micromamba.');
-  }
-
-  // Try running micromamba
-  if (check) {
-    try {
-      execSync(`"${_path}" --version`);
-    } catch (error) {
-      console.error(error);
-      throw new MicromambaError('Unable to run micromamba.');
-    }
-  }
-
-  return _path;
+// CEA env root location per platform
+const ceaRootPaths = {
+  darwin: path.join(app.getPath('documents'), 'CityEnergyAnalyst'),
+  win32: path.join(
+    path.dirname(process.execPath),
+    '..',
+    'dependencies',
+    'micromamba',
+  ),
 };
 
 export const getCEARootPath = () => {
-  const _path = paths?.[process.platform]?.['root'];
+  const _path = ceaRootPaths[process.platform];
 
   if (_path == null) {
     console.debug({ ceaPath: _path });

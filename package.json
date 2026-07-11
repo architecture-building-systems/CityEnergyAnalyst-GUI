@@ -113,12 +113,6 @@
     "mac": {
       "icon": "public/cea.png",
       "target": "default",
-      "extraResources": [
-        {
-          "from": "dependencies",
-          "to": "."
-        }
-      ],
       "publish": [
         "github"
       ]
