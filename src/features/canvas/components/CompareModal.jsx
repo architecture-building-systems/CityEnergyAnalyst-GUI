@@ -3,7 +3,7 @@ import { Alert, Checkbox, ConfigProvider, Modal } from 'antd';
 
 import { CEA_PURPLE } from 'constants/theme';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { useFetchScenarios } from '../hooks/useCanvasData';
+import { useSiblingScenarios } from '../hooks/useCanvasData';
 import { useCanvasStore } from '../stores/canvasStore';
 
 const MAX_TOTAL_COLUMNS = 4;
@@ -30,7 +30,7 @@ const CompareModal = ({ open, onCancel }) => {
   const enterInterScenario = useCanvasStore((s) => s.enterInterScenario);
   const comparisonSetup = useCanvasStore((s) => s.comparisonSetup);
 
-  const { data: siblingScenarios = [] } = useFetchScenarios(project);
+  const { data: siblingScenarios = [] } = useSiblingScenarios(project);
 
   // Filter out the origin so the user can't pick it twice.
   const scenarioOptions = useMemo(

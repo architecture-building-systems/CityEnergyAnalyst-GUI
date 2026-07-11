@@ -8,7 +8,8 @@ alignment across columns sharing a slot id.
 
 ## Main API
 - `useCanvasStore()` - View, columns, and card CRUD.
-- `useFetchScenarios(project)` - Sibling scenario names.
+- `useSiblingScenarios(project)` - Sibling scenario names, read from
+  the project store's `scenariosList` (no network call).
 - `useFetchWhatifs(project, scenario)` - What-if names under a scenario.
 - `useFetchSummary(project, scenario, feature, whatif?)` - KPI strip
   payload.

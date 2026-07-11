@@ -4,7 +4,7 @@ import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
 import { findFamilyForFeature } from 'features/canvas/components/featureCardCommon';
-import { fetchProjectInfo } from 'features/project/stores/projectStore';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { listSavedCanvases } from '../api/canvas';
 
@@ -52,16 +52,17 @@ export const useFetchSavedCanvases = (project, scenario) =>
     staleTime: 10_000,
   });
 
-export const useFetchScenarios = (project) =>
-  useQuery({
-    queryKey: ['project', 'scenarios', project],
-    queryFn: async () => {
-      const { scenarios_list: scenariosList } = await fetchProjectInfo(project);
-      return scenariosList;
-    },
-    enabled: !!project,
-    staleTime: 30_000,
-  });
+// Reads the project store's `scenariosList` directly instead of an
+// independent `/api/project/` fetch - that route requires a session
+// and isn't mounted under the demo sub-app, but `scenariosList` is
+// already kept fresh there (seeded on demo entry, refetched on every
+// project load / scenario create-duplicate-delete), so no network
+// call is needed here at all.
+export const useSiblingScenarios = (project) => {
+  const activeProject = useProjectStore((s) => s.project);
+  const scenariosList = useProjectStore((s) => s.scenariosList);
+  return { data: project && project === activeProject ? scenariosList : [] };
+};
 
 export const useFetchWhatifs = (project, scenario) =>
   useQuery({
