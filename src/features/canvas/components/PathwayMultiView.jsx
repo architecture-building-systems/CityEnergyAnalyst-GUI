@@ -16,9 +16,10 @@ import { useCanvasStore } from '../stores/canvasStore';
 import useYAxisAlignment from '../hooks/useYAxisAlignment';
 import CanvasScenarioHeader from './CanvasScenarioHeader';
 import CanvasMap from './CanvasMap';
-import CanvasPlot, { fitPlotToParent } from './CanvasPlot';
+import CanvasPlot from './CanvasPlot';
+import { fitPlotToParent } from '../utils/plotResize';
 import PathwayCompareSelect from './PathwayCompareSelect';
-import { FeatureCardShell } from './featureCardCommon';
+import { FeatureCardShell } from './FeatureCardShell';
 import {
   ForceScopedMapContext,
   MapInstanceContext,

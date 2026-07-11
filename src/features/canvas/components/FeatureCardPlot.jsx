@@ -7,11 +7,11 @@ import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import PlotSlotCard from './PlotSlotCard';
 import { useCanvasStore } from '../stores/canvasStore';
+import { FeatureCardShell } from './FeatureCardShell';
 import {
-  FeatureCardShell,
   findFamilyForFeature,
   sectionDividerStyle,
-} from './featureCardCommon';
+} from '../utils/featureFamily';
 
 /**
  * Plot-only feature card: vertically-stacked plots + an "Add a plot"

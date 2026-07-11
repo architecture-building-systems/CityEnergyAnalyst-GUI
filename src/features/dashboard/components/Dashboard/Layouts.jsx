@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Row, Col, Affix } from 'antd';
 import { Plot, EmptyPlot } from './Plot';
-import { ModalContext } from 'features/dashboard/hooks/modal-manager';
+import { ModalContext } from 'features/dashboard/context/modal-context';
 
 export const RowLayout = ({ dashIndex, plots, activePlotRef }) => {
   const { modals, setModalVisible } = useContext(ModalContext);

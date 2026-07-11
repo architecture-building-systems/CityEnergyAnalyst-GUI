@@ -13,12 +13,6 @@ MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
 MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
 MapboxDraw.constants.classes.ATTRIBUTION = 'maplibregl-ctrl-attrib';
 
-export const DRAW_MODES = {
-  draw: 'draw_polygon',
-  edit: 'direct_select',
-  view: 'simple_select',
-};
-
 const styles = [
   // ACTIVE (being drawn)
   // line stroke

@@ -26,3 +26,9 @@ export const LDC_COMPONENT = 'ldc-component';
 
 export const DEFAULT_LEGEND_COLOUR_ARRAY = ['#2A7BB2', '#eb5025', '#f9e246'];
 export const DEFAULT_LEGEND_POINTS = 12;
+
+export const DRAW_MODES = {
+  draw: 'draw_polygon',
+  edit: 'direct_select',
+  view: 'simple_select',
+};

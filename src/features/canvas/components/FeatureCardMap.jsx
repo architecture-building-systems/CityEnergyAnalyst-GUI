@@ -20,11 +20,11 @@ import {
 
 import { useCanvasStore } from '../stores/canvasStore';
 import CanvasMap from './CanvasMap';
+import { FeatureCardShell } from './FeatureCardShell';
 import {
-  FeatureCardShell,
   findFamilyForFeature,
   sectionDividerStyle,
-} from './featureCardCommon';
+} from '../utils/featureFamily';
 import {
   MapInstanceContext,
   MapLayerScenarioOverrideContext,

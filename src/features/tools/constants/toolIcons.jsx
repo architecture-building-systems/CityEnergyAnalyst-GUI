@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- constants-only file, never a fast-refresh boundary */
 import {
   DataManagementIcon,
   SolarRadiationIcon,

@@ -3,7 +3,7 @@ import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
-import { findFamilyForFeature } from 'features/canvas/components/featureCardCommon';
+import { findFamilyForFeature } from 'features/canvas/utils/featureFamily';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { listSavedCanvases } from '../api/canvas';

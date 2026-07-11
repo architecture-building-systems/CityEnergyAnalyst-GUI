@@ -241,7 +241,7 @@ const Toolbar = ({ editor, onDeleteCard }) => {
   );
 };
 
-// Mirrors `featureCardCommon.cardStyle` but skips the title row's
+// Mirrors `FeatureCardShell`'s `cardStyle` but skips the title row's
 // padding because the body owns the entire interior.
 const cardStyle = {
   width: '100%',

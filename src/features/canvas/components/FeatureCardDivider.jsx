@@ -108,7 +108,7 @@ const THICKNESS_OPTIONS = [1, 2, 3, 4].map((px) => ({
 
 // Seven shades from pure black to the card-outline grey. Last stop
 // is `#e8e8e8` so a divider can blend with the surrounding card
-// borders (matches `featureCardCommon`'s `1px solid #e8e8e8`).
+// borders (matches `FeatureCardShell`'s `1px solid #e8e8e8`).
 const COLOR_OPTIONS = [
   '#000000',
   '#2a2a2a',
