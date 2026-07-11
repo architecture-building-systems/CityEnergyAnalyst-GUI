@@ -23,6 +23,7 @@ const BottomToolButtons = ({
   onTogglePathwayPanel,
   pathwayPanelOpen,
   hidePathwayBuilder,
+  demoMode,
 }) => {
   const { push } = useNavigationStore();
 
@@ -32,7 +33,10 @@ const BottomToolButtons = ({
       icon: DatabaseEditorIcon,
       title: 'Database Editor',
       onClick: () => push(routes.DATABASE_EDITOR),
-      hidden: !showTools,
+      // Demo scenarios are read-only and the demo API doesn't mount
+      // database write routes - hide entirely rather than open an editor
+      // that can't save.
+      hidden: !showTools || demoMode,
     },
     {
       id: 'input-editor',
@@ -46,7 +50,8 @@ const BottomToolButtons = ({
       icon: TimelineIcon,
       title: 'Pathway Builder [BETA]',
       onClick: () => onTogglePathwayPanel?.(),
-      hidden: !showTools || hidePathwayBuilder,
+      // Pathways aren't part of the public demo API at all.
+      hidden: !showTools || hidePathwayBuilder || demoMode,
       active: pathwayPanelOpen,
     },
     {

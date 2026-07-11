@@ -39,9 +39,12 @@ import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 import { usePanelVisibility } from 'features/project/hooks/usePanelVisibility';
 import { usePathwayPanelResize } from 'features/pathway/hooks/usePathwayPanelResize';
+import { useDemoMode } from 'stores/demoStore';
+import DemoBanner from 'components/DemoBanner';
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const queryClient = useQueryClient();
+  const demoMode = useDemoMode();
   const name = useProjectStore((state) => state.name);
   const scenarioList = useProjectStore((state) => state.scenariosList);
   const childScenario = useProjectStore((s) => s.childScenario);
@@ -338,6 +341,12 @@ const ProjectOverlay = ({ project, scenarioName }) => {
                   />
                 </div>
 
+                {demoMode && (
+                  <div className="cea-overlay-card">
+                    <DemoBanner />
+                  </div>
+                )}
+
                 {`${import.meta.env.VITE_AUTH_URL}` && !isElectron() ? (
                   // FIXME: Login disabled for electron
                   <div className="cea-overlay-card">
@@ -504,6 +513,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}
               hidePathwayBuilder={!!childScenario?.pathway_name}
+              demoMode={demoMode}
             />
           )}
           <div
@@ -533,9 +543,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         </div>
       </div>
 
-      <div id="cea-project-overlay-status">
-        <JobInfoList />
-      </div>
+      <div id="cea-project-overlay-status">{!demoMode && <JobInfoList />}</div>
     </div>
   );
 };

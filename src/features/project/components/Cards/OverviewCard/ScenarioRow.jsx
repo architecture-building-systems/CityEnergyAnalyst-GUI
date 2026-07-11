@@ -17,10 +17,15 @@ import DeleteScenarioModal from 'features/project/components/modals/DeleteScenar
 import { useScenarioLimits } from 'stores/serverStore';
 import { isElectron } from 'utils/electron';
 import { useIsValidUser } from 'stores/useUserQuery';
+import useDemoStore from 'stores/demoStore';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 const ScenarioRow = ({ project, scenarioName, scenarioList }) => {
   const isValidUser = useIsValidUser();
   const changesExist = useChangesExist();
+  const demoMode = useDemoStore((state) => state.demoMode);
+
+  if (demoMode) return <DemoScenarioSelect scenarioName={scenarioName} />;
 
   return (
     <div
@@ -98,6 +103,47 @@ const ScenarioOption = ({ scenarioName, onDelete }) => {
         />
       )}
     </div>
+  );
+};
+
+// Demo mode's scenario switcher: no `/api/project/*` writes (that requires
+// a session), so switching just repoints the demo id + project store's
+// scenario field directly. Every read hook keys its React Query cache off
+// `useProjectStore`'s `scenario` value, so this alone is enough to refetch
+// inputs / map layers / canvas for the newly selected demo scenario.
+const DemoScenarioSelect = ({ scenarioName }) => {
+  const [open, setOpen] = useState(false);
+  const demoScenarios = useDemoStore((state) => state.demoScenarios);
+  const setDemoId = useDemoStore((state) => state.setDemoId);
+  const updateScenario = useProjectStore((state) => state.updateScenario);
+
+  const options = useMemo(
+    () => demoScenarios.map((s) => ({ label: s.name, value: s.id })),
+    [demoScenarios],
+  );
+
+  // With only one (or no) demo scenario there's nothing else to switch to,
+  // so keep the dropdown from opening and hide its arrow.
+  const hasChoices = options.length > 1;
+
+  const handleChange = (value) => {
+    setDemoId(value);
+    updateScenario(value);
+  };
+
+  return (
+    <Select
+      className={`cea-scenario-select ${hasChoices ? '' : 'cea-scenario-select-empty'}`}
+      style={{ width: '100%' }}
+      styles={{ popup: { root: { width: 270 } } }}
+      placeholder="Select demo scenario"
+      options={options}
+      value={scenarioName}
+      onChange={handleChange}
+      open={hasChoices ? open : false}
+      onOpenChange={hasChoices ? setOpen : undefined}
+      notFoundContent={<small>No demo scenarios available</small>}
+    />
   );
 };
 
