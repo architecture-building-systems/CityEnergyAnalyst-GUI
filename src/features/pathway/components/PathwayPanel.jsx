@@ -399,7 +399,7 @@ const PathwaySelect = ({
 
   return (
     <Select
-      className={`${visiblePathways.length === 1 && allBaked ? 'cea-scenario-select-blue' : 'cea-scenario-select'} ${!hasPathways || !selectedPathway || visiblePathways.length === 0 ? 'cea-scenario-select-empty' : ''}`}
+      className={`${visiblePathways.length === 1 && allBaked ? 'cea-scenario-select-blue' : 'cea-scenario-select'} ${!hasPathways || !selectedPathway || visiblePathways.length === 0 ? 'cea-scenario-select-empty cea-select-glow' : ''}`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}
       placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
@@ -528,7 +528,7 @@ const TemplateSelect = ({
     <Select
       mode="multiple"
       optionLabelProp="value"
-      className={`cea-template-select ${!hasTemplates ? 'cea-template-select-empty' : ''}`}
+      className={`cea-template-select ${!hasTemplates ? 'cea-template-select-empty cea-select-glow' : ''}`}
       style={{ width: 416 }}
       styles={{ popup: { root: { width: 416 } } }}
       placeholder={

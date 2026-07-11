@@ -825,11 +825,11 @@ const CanvasSwitcher = ({
   // The empty entry state pulses purple (CEA-canvas accent) so the
   // dashboard switcher reads as a primary CTA before the user has
   // any canvas open. `cea-canvas-blink`'s rule overrides the blue
-  // glow that `cea-scenario-select-empty` ships with.
+  // glow that `cea-select-glow` ships with.
   return (
     <Select
       className={`cea-scenario-select ${
-        hasSelection ? '' : 'cea-scenario-select-empty cea-canvas-blink'
+        hasSelection ? '' : 'cea-scenario-select-empty cea-select-glow cea-canvas-blink'
       }`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}

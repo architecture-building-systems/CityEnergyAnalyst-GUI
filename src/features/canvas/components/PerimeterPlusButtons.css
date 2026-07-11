@@ -121,8 +121,8 @@
 
 /* Launch-state guide: pulsing glow on the `+` pill so first-time
  * users notice it. Mirrors `@keyframes glow` (HomePage.css, applied
- * to `.cea-template-select-empty` / `.cea-scenario-select-empty` in
- * the pathway dropdowns) but tinted CEA purple (#AC6080). Stops as
+ * to `.cea-select-glow` in the pathway dropdowns) but tinted CEA
+ * purple (#AC6080). Stops as
  * soon as the user adds a feature card — the parent drops
  * `cea-canvas-plus-breathing`. The same outline colour is added so
  * the rim picks up the highlight too. */
