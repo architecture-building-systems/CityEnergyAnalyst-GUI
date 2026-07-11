@@ -10,7 +10,6 @@ export const CreateComponentModal = ({
   indexColumn,
 }) => {
   const [form] = Form.useForm();
-  const storeData = useDatabaseEditorStore((state) => state.data);
 
   const handleAddNew = () => {
     form.submit();
@@ -37,7 +36,8 @@ export const CreateComponentModal = ({
       ? structuredClone(sourceComponentData)
       : [];
 
-    const newData = structuredClone(storeData);
+    const currentState = useDatabaseEditorStore.getState();
+    const newData = structuredClone(currentState.data);
 
     // Navigate to the nested location and add the new component
     let current = newData;
@@ -55,7 +55,6 @@ export const CreateComponentModal = ({
     }
 
     // Update store with new data and add change entry
-    const currentState = useDatabaseEditorStore.getState();
     useDatabaseEditorStore.setState({
       data: newData,
       changes: [

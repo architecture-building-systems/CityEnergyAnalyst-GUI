@@ -200,33 +200,34 @@ function deleteBuildings(state, buildings, changes, onChange) {
 export const useUpdateInputs = () => {
   const queryClient = useQueryClient();
 
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
-  const childScenario = useProjectStore((state) => state.childScenario);
-
   const updateChanges = useUpdateChanges();
 
-  const childToken = childScenarioToken(childScenario);
+  return (table = '', buildings = [], properties = []) => {
+    const {
+      project,
+      scenario: scenarioName,
+      childScenario,
+    } = useProjectStore.getState();
+    const childToken = childScenarioToken(childScenario);
 
-  return (table = '', buildings = [], properties = []) =>
-    queryClient.setQueryData(
+    return queryClient.setQueryData(
       ['inputs', project, scenarioName, childToken],
       (oldData) => ({
         ...oldData,
         ...updateData(oldData, table, buildings, properties, updateChanges),
       }),
     );
+  };
 };
 
 export const useUpdateYearSchedule = () => {
   const queryClient = useQueryClient();
 
-  const projectName = useProjectStore((state) => state.name);
-  const scenarioName = useProjectStore((state) => state.scenario);
-
   const updateChanges = useUpdateChanges();
 
   return (buildings = [], month = '', value = 0) => {
+    const { name: projectName, scenario: scenarioName } =
+      useProjectStore.getState();
     for (const building of buildings) {
       queryClient.setQueryData(
         ['inputs', 'building-schedule', building, projectName, scenarioName],
@@ -247,12 +248,11 @@ export const useUpdateYearSchedule = () => {
 export const useUpdateDaySchedule = () => {
   const queryClient = useQueryClient();
 
-  const projectName = useProjectStore((state) => state.name);
-  const scenarioName = useProjectStore((state) => state.scenario);
-
   const updateChanges = useUpdateChanges();
 
   return (buildings = [], tab = '', day = '', hour = 0, value = '') => {
+    const { name: projectName, scenario: scenarioName } =
+      useProjectStore.getState();
     for (const building of buildings) {
       queryClient.setQueryData(
         ['inputs', 'building-schedule', building, projectName, scenarioName],
@@ -275,17 +275,18 @@ export const useUpdateDaySchedule = () => {
 export const useDeleteBuildings = () => {
   const queryClient = useQueryClient();
 
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
-  const childScenario = useProjectStore((state) => state.childScenario);
-
   const changes = useChanges();
   const setChanges = useSetChanges();
 
-  const childToken = childScenarioToken(childScenario);
+  return (buildings = []) => {
+    const {
+      project,
+      scenario: scenarioName,
+      childScenario,
+    } = useProjectStore.getState();
+    const childToken = childScenarioToken(childScenario);
 
-  return (buildings = []) =>
-    queryClient.setQueryData(
+    return queryClient.setQueryData(
       ['inputs', project, scenarioName, childToken],
       (oldData) => {
         // Update the old data
@@ -295,6 +296,7 @@ export const useDeleteBuildings = () => {
         };
       },
     );
+  };
 };
 
 export const useResyncInputs = () => {
