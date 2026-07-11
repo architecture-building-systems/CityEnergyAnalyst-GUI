@@ -5,7 +5,7 @@ import { animated } from '@react-spring/web';
 import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { getFormValues } from 'features/tools/utils';
 import {
@@ -140,7 +140,7 @@ export const ToolFormButtons = ({
       const value = formValues[fieldName];
       if (value) {
         try {
-          const resp = await apiClient.post(
+          const resp = await getScenarioClient().post(
             `/api/tools/${script}/validate-field`,
             {
               parameter_name: fieldName,

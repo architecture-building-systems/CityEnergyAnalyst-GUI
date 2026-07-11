@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import {
   activeScenarioHeaders,
   scenarioHeaders,
@@ -27,7 +27,7 @@ export function useCheckInputsMutation(scenarioOverride = null) {
         : { headers: activeScenarioHeaders() };
 
       try {
-        const response = await apiClient.post(
+        const response = await getScenarioClient().post(
           `/api/tools/${tool}/check`,
           parameters,
           requestConfig,

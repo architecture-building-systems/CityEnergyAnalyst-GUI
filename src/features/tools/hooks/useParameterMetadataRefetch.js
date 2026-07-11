@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { TOOLS_QUERY_KEYS, TOOLS_MUTATION_KEYS } from '../constants/queryKeys';
 
@@ -11,7 +11,7 @@ const useParameterMetadataRefetch = (script, form) => {
     mutationFn: async ({ formValues, affectedParams }) => {
       let response;
       try {
-        response = await apiClient.post(
+        response = await getScenarioClient().post(
           `/api/tools/${script}/parameter-metadata`,
           {
             form_values: formValues,

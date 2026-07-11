@@ -21,7 +21,7 @@ import { forwardRef, useCallback, useRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { useMapStore } from 'features/map/stores/mapStore';
 import BuildingsParameter from 'components/BuildingsParameter';
@@ -91,7 +91,7 @@ const useParameterAsyncValidation = ({
           cancelRef.current = null;
           try {
             const formValues = form.getFieldsValue();
-            const response = await apiClient.post(
+            const response = await getScenarioClient().post(
               `/api/tools/${toolName}/validate-field`,
               {
                 parameter_name: name,
