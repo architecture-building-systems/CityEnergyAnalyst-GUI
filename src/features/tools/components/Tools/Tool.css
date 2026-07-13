@@ -12,22 +12,20 @@
 
 .cea-tool-description-wrapper {
   overflow: hidden;
-  max-height: 240px;
   transition:
     max-height 0.2s ease-out,
     opacity 0.2s ease-out;
-  opacity: 1;
   font-size: 13px;
-}
-
-#cea-tool-header-description {
-  overflow-y: auto;
-  max-height: 240px;
 }
 
 .cea-tool-description-wrapper.collapsed {
   max-height: 0;
   opacity: 0;
+}
+
+.cea-tool-description-wrapper.expanded {
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .cea-tool-form-buttongroup {
