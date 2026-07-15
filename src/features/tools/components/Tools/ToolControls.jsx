@@ -88,7 +88,13 @@ export const ToolControls = ({
   }, [handleReCheck, onRecheckReady]);
 
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
       <div
         style={{
           display: 'flex',
