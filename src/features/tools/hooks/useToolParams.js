@@ -8,11 +8,19 @@ import {
 import useFormReset from './useFormReset';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useIsNonLocalMode, useUserInfo } from 'stores/useUserQuery';
+import {
+  readStoredToolConfig,
+  overlayStoredValues,
+} from '../toolConfigStorage';
 
 const useFetchToolParams = (script, scenarioOverride = null) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const childScenario = useProjectStore((state) => state.childScenario);
+
+  const isNonLocal = useIsNonLocalMode();
+  const userId = useUserInfo()?.id;
 
   const effectiveProject = scenarioOverride?.project || project;
   const effectiveScenarioName = scenarioOverride?.scenarioName || scenarioName;
@@ -42,6 +50,13 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
         `/api/tools/${script}`,
         requestConfig,
       );
+
+      // Non-local backend config is stateless (save-config is a no-op), so
+      // saved values live client-side - overlay them onto the defaults the
+      // backend just returned. See toolConfigStorage.js.
+      if (isNonLocal) {
+        return overlayStoredValues(response.data, readStoredToolConfig(userId));
+      }
       return response.data;
     },
     enabled: !!script,
