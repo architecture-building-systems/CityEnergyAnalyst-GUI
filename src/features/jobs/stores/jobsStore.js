@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 
 const JOBS_PAGE_SIZE = 10;
 
@@ -26,6 +27,7 @@ const useJobsStore = create((set, get) => ({
   fetchJobs: async () => {
     try {
       const response = await apiClient.get('/server/jobs/', {
+        headers: activeScenarioHeaders(),
         params: { limit: JOBS_PAGE_SIZE },
       });
       set({
@@ -43,6 +45,7 @@ const useJobsStore = create((set, get) => ({
     if (!jobs) return;
     try {
       const response = await apiClient.get('/server/jobs/', {
+        headers: activeScenarioHeaders(),
         params: { limit: JOBS_PAGE_SIZE, offset: nextOffset },
       });
       set((state) => ({
@@ -71,10 +74,14 @@ const useJobsStore = create((set, get) => ({
     });
 
     try {
-      const response = await apiClient.postForm('/server/jobs/new', {
-        script,
-        parameters: formattedData,
-      });
+      const response = await apiClient.postForm(
+        '/server/jobs/new',
+        {
+          script,
+          parameters: formattedData,
+        },
+        { headers: activeScenarioHeaders() },
+      );
 
       const jobData = response.data;
       set((state) => ({
