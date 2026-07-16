@@ -22,6 +22,7 @@ import {
   useProjectChoicesQuery,
   useInvalidateProjectChoices,
 } from 'features/project/hooks/queries/useProjectChoices';
+import { PROJECT_HEADER } from 'lib/api/scenarioContextHeaders';
 import { CheckCircleFilled } from '@ant-design/icons';
 
 const UploadForm = () => {
@@ -498,7 +499,6 @@ const FormContent = ({ onSuccess }) => {
     const file = values.upload?.[0]?.originFileObj;
     formData.append('file', file);
     formData.append('type', values.project.type);
-    formData.append('project', values.project.project);
 
     // Use fetch with progress tracking
     const xhr = new XMLHttpRequest();
@@ -560,6 +560,7 @@ const FormContent = ({ onSuccess }) => {
       `${import.meta.env.VITE_CEA_URL}/api/contents/scenario/upload`,
       true,
     );
+    xhr.setRequestHeader(PROJECT_HEADER, values.project.project);
     xhr.send(formData);
   };
 

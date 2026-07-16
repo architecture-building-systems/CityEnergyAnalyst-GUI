@@ -18,6 +18,7 @@ import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useMapStore } from 'features/map/stores/mapStore';
 
 import CeaLogoSVG from 'assets/cea-logo.svg';
+import { useDemoMode } from 'stores/demoStore';
 
 const OverviewCard = ({
   project,
@@ -117,11 +118,13 @@ const OverviewCardProjectInfo = ({
   scenarioName,
   scenarioList,
 }) => {
+  const demoMode = useDemoMode();
+
   if (!project) return null;
 
   return (
     <>
-      <ProjectRow projectName={projectName} />
+      {!demoMode && <ProjectRow projectName={projectName} />}
       <Divider
         titlePlacement="right"
         orientationMargin={2}

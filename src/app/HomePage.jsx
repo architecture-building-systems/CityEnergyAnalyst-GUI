@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { Route, Routes, Navigate } from 'react-router';
 
 import routes from 'constants/routes.json';
@@ -14,10 +14,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInitProjectStore } from 'features/project/stores/projectStore';
 
 import Loading from 'components/Loading';
-import { useIsValidUser, useUserQuery } from 'stores/useUserQuery';
-import { useFetchServerLimits } from 'stores/serverStore';
-import { isElectron } from 'utils/electron';
-import { useWaitForServer } from 'stores/useServerVersionQuery';
+import ServerCheckGate from 'app/ServerCheckGate';
+import UserCheckGate from 'app/UserCheckGate';
 
 // Route-level code splitting for better performance
 const Project = lazy(() => import('app/Project'));
@@ -38,31 +36,7 @@ const HomePageContent = () => {
   // manual reload.
   useKpiCacheInvalidator();
 
-  const { data: userInfo, isLoading } = useUserQuery();
-  const isValidUser = useIsValidUser();
-  const fetchServerLimits = useFetchServerLimits();
-
-  const { push } = useNavigationStore();
-
-  useEffect(() => {
-    // Wait for userInfo to be loaded
-    // Also not fetch server limits if Electron or localuser
-    if (isElectron() || !isValidUser) return;
-
-    if (!userInfo?.onboarded) {
-      // Redirect to onboarding page
-      push(routes.ONBOARDING);
-    } else if (window.location.pathname === routes.ONBOARDING) {
-      // Redirect to project page
-      push(routes.PROJECT);
-    }
-    fetchServerLimits();
-  }, [userInfo]);
-
   useInitProjectStore();
-
-  // Load user info before rendering
-  if (isLoading) return <Loading />;
 
   return (
     <ErrorBoundary>
@@ -123,10 +97,10 @@ const HomePageContent = () => {
           element={
             <Suspense fallback={<Loading />}>
               {/* No outer padding here — CanvasPage owns its own
-                  12px padding, matching the main viewport overlay
-                  (`Project.css:15`). Adding a second layer of padding
-                  via this wrapper made cards sit way inside the
-                  window edge. */}
+                    12px padding, matching the main viewport overlay
+                    (`Project.css:15`). Adding a second layer of padding
+                    via this wrapper made cards sit way inside the
+                    window edge. */}
               <div
                 style={{
                   height: '100%',
@@ -205,28 +179,6 @@ if (import.meta.env.DEV) {
   window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 }
 
-const HomePageInner = () => {
-  const serverStatus = useWaitForServer();
-  const shouldWaitForServer =
-    // Backend readiness for Electron is handled in the main process, so we can skip this check in Electron
-    !isElectron() &&
-    navigator.onLine !== false &&
-    (serverStatus.isLoading || serverStatus.isPending);
-
-  if (shouldWaitForServer) return <Loading />;
-
-  return (
-    <div id="homepage-container">
-      <div id="homepage-content-container">
-        <HomePageContent />
-      </div>
-      <div id="homepage-status-bar-container">
-        <StatusBar />
-      </div>
-    </div>
-  );
-};
-
 const HomePage = () => {
   return (
     <ConfigProvider
@@ -243,7 +195,18 @@ const HomePage = () => {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <HomePageInner />
+        <ServerCheckGate>
+          <UserCheckGate>
+            <div id="homepage-container">
+              <div id="homepage-content-container">
+                <HomePageContent />
+              </div>
+              <div id="homepage-status-bar-container">
+                <StatusBar />
+              </div>
+            </div>
+          </UserCheckGate>
+        </ServerCheckGate>
       </QueryClientProvider>
     </ConfigProvider>
   );

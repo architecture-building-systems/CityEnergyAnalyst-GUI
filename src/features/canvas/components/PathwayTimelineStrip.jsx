@@ -11,7 +11,8 @@ import { ERROR_RED } from 'constants/theme';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { useCanvasStore } from '../stores/canvasStore';
-import CanvasPlot, { fitPlotToParent } from './CanvasPlot';
+import CanvasPlot from './CanvasPlot';
+import { fitPlotToParent } from '../utils/plotResize';
 import './PathwayTimelineStrip.css';
 
 const TIMELINE_SCRIPT = 'plot-pathway-emission-timeline';

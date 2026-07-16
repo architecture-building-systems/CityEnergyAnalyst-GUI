@@ -6,13 +6,15 @@ import {
 } from 'features/project/stores/projectStore';
 import { message } from 'antd';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
-    const resp = await apiClient.put(`/api/project/`, {
-      project,
-      scenario_name: scenarioName,
-    });
+    const resp = await apiClient.put(
+      `/api/project/`,
+      { scenario_name: scenarioName },
+      { headers: scenarioHeaders({ project }) },
+    );
     console.log(resp.data);
     return resp.data;
   } catch (err) {

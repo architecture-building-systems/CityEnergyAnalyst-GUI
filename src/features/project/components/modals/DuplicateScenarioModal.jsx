@@ -1,6 +1,7 @@
 import { Button, Form, Input, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { getValidateScenarioNameFunc } from 'utils/project';
 
@@ -26,6 +27,7 @@ const DuplicateScenarioModal = ({
         {
           name: values.scenario_name,
         },
+        { headers: scenarioHeaders({ project }) },
       );
       await fetchInfo(project);
       setVisible(false);

@@ -6,7 +6,7 @@ import {
   useScopedSelectedCategoryInfo,
 } from 'features/canvas/components/mapInstance';
 import { useEffect, useMemo, useState } from 'react';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { BinAnimationIcon } from 'assets/icons';
 import DeleteChoiceModal from './DeleteChoiceModal';
@@ -40,7 +40,7 @@ const getChoices = async (
   parameters,
   childScenario = null,
 ) => {
-  const resp = await apiClient.post(
+  const resp = await getScenarioClient().post(
     `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
     { parameters },
     { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
@@ -165,7 +165,17 @@ const ChoiceSelector = ({
     // forces all ChoiceSelectors to refetch their options after external
     // filesystem changes (e.g. a successful network-layout run creating a
     // new network in `outputs/thermal-network/`).
-  }, [categoryInfo?.name, layerName, parameterName, project, scenarioName, childScenario, dependsOnValues, dependsValid, choicesRevision]);
+  }, [
+    categoryInfo?.name,
+    layerName,
+    parameterName,
+    project,
+    scenarioName,
+    childScenario,
+    dependsOnValues,
+    dependsValid,
+    choicesRevision,
+  ]);
 
   useEffect(() => {
     if (choices) {

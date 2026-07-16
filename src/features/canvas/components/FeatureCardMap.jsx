@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMapStore } from 'features/map/stores/mapStore';
 import { useMapLayerCategories } from 'features/project/components/Cards/MapLayersCard/store';
 import { useGetMapLayers } from 'features/map/hooks/map-layers';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 import Legend, {
   LegendFilterRow,
@@ -20,11 +20,11 @@ import {
 
 import { useCanvasStore } from '../stores/canvasStore';
 import CanvasMap from './CanvasMap';
+import { FeatureCardShell } from './FeatureCardShell';
 import {
-  FeatureCardShell,
   findFamilyForFeature,
   sectionDividerStyle,
-} from './featureCardCommon';
+} from '../utils/featureFamily';
 import {
   MapInstanceContext,
   MapLayerScenarioOverrideContext,
@@ -294,7 +294,7 @@ const FeatureCardMapBody = ({
           isMirror && key === 'whatif_name' && originWhatifName != null;
         if (!isWhatifSync && out[key] !== undefined) continue;
         try {
-          const resp = await apiClient.post(
+          const resp = await getScenarioClient().post(
             `/api/map_layers/${categoryInfo.name}/${layerInfo.name}/${key}/choices`,
             { parameters: out },
             { headers: scenarioHeaders({ project, scenarioName: scenario }) },

@@ -6,7 +6,6 @@ import SavingDatabaseModal from 'features/database-editor/components/DatabaseEdi
 import { useState } from 'react';
 
 export const SaveDatabaseButton = () => {
-  const databasesData = useDatabaseEditorStore((state) => state.data);
   const databaseValidation = useDatabaseEditorStore(
     (state) => state.validation,
   );
@@ -29,6 +28,7 @@ export const SaveDatabaseButton = () => {
   const saveDB = async () => {
     setModalVisible(true);
     try {
+      const { data: databasesData } = useDatabaseEditorStore.getState();
       await apiClient.put(`/api/inputs/databases`, databasesData, {
         headers: activeScenarioHeaders(),
       });

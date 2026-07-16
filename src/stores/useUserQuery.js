@@ -5,8 +5,13 @@ import { isElectron } from 'utils/electron';
 export const USER_QUERY_KEY = ['user'];
 
 const fetchUser = async () => {
-  const resp = await apiClient.get('/api/user');
-  return resp.data;
+  try {
+    const resp = await apiClient.get('/api/user');
+    return resp.data;
+  } catch (err) {
+    if (err.response?.status === 401) return null; // no session or unauthorized
+    throw err;
+  }
 };
 
 export const useUserQuery = () => {
@@ -30,4 +35,13 @@ export const useUserInfo = () => {
 export const useIsValidUser = () => {
   const userInfo = useUserInfo();
   return isElectron() || (userInfo && userInfo?.id != 'localuser');
+};
+
+// True when talking to a stateless (non-local/cloud) backend, where config
+// save() is a no-op server-side - see CEAStatelessConfig. Local server and
+// Electron builds resolve to user id `localuser` (disk-backed config), so
+// they're excluded here. Demo mode has no user, so this is also false there.
+export const useIsNonLocalMode = () => {
+  const userInfo = useUserInfo();
+  return !isElectron() && !!userInfo && userInfo?.id !== 'localuser';
 };

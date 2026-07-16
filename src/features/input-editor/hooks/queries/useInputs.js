@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
@@ -17,7 +17,7 @@ export function useInputs() {
     queryKey: ['inputs', project, scenarioName, childToken],
     queryFn: async () => {
       if (!project || !scenarioName) return {};
-      const { data } = await apiClient.get(
+      const { data } = await getScenarioClient().get(
         `${API_ENDPOINTS.INPUTS}/all-inputs`,
         { headers: activeScenarioHeaders() },
       );

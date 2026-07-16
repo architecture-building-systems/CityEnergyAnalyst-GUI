@@ -40,7 +40,6 @@ export const TableGroupDataset = ({
 }) => {
   const schema = useDatabaseSchema(dataKey);
   const schemaColumns = Object.keys(schema?.columns ?? {});
-  const storeData = useDatabaseEditorStore((state) => state.data);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDelete = (key) => {
@@ -52,7 +51,8 @@ export const TableGroupDataset = ({
       okType: 'danger',
       cancelText: 'Cancel',
       onOk: () => {
-        const newData = structuredClone(storeData);
+        const currentState = useDatabaseEditorStore.getState();
+        const newData = structuredClone(currentState.data);
 
         // Navigate to the nested location and delete the key
         let current = newData;
@@ -69,7 +69,6 @@ export const TableGroupDataset = ({
         }
 
         // Update store with new data and add change entry
-        const currentState = useDatabaseEditorStore.getState();
         useDatabaseEditorStore.setState({
           data: newData,
           changes: [

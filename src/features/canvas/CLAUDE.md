@@ -8,7 +8,8 @@ alignment across columns sharing a slot id.
 
 ## Main API
 - `useCanvasStore()` - View, columns, and card CRUD.
-- `useFetchScenarios(project)` - Sibling scenario names.
+- `useSiblingScenarios(project)` - Sibling scenario names, read from
+  the project store's `scenariosList` (no network call).
 - `useFetchWhatifs(project, scenario)` - What-if names under a scenario.
 - `useFetchSummary(project, scenario, feature, whatif?)` - KPI strip
   payload.
@@ -480,7 +481,7 @@ parity.
 ### DO: Use `cea-template-select` for the in-card "Add a plot" pill
 ```jsx
 <Select
-  className={`cea-template-select ${hasOptions ? '' : 'cea-template-select-empty'}`}
+  className={`cea-template-select ${hasOptions ? '' : 'cea-select-empty cea-select-glow'}`}
   placeholder="Add a plot"
   options={quickPickOptions.map((o) => ({ label: o.label, value: o.script }))}
   onSelect={(script) => onPick(script)}
@@ -493,7 +494,7 @@ the parameter form. With no quick-pick options, clicking falls back to
 opening the full `<PlotChoices>` picker.
 
 ### DO: Derive quick-pick options from `PLOT_GROUPS`
-`findFamilyForFeature` (in `featureCardCommon.jsx`) walks `PLOT_GROUPS`
+`findFamilyForFeature` (in `featureFamily.js`) walks `PLOT_GROUPS`
 to find the group/subgroup that owns a card's `feature` key, then
 `getQuickPickOptions` lists every sibling key. Adding a new plot to an
 existing group surfaces it automatically — no parallel feature→plots
@@ -608,15 +609,20 @@ source of truth for card config that the comparison views never read.
   card-type-dispatched FeatureCard variants. Owns the menu data
   (`buildSectionMenus`) consumed by the perimeter `+` buttons.
 - `components/PerimeterPlusButtons.jsx` - Perimeter `+` affordance
-  + animated icon-panel expansion (Map / Plot / KPI sub-Dropdowns)
-  + edge-exposure geometry helpers. Lives next to `CanvasColumn`
-  but isolated from the grid logic.
+  + animated icon-panel expansion (Map / Plot / KPI sub-Dropdowns).
+  Lives next to `CanvasColumn` but isolated from the grid logic.
+- `utils/exposureGeometry.js` - `computeExposure` + edge-exposure
+  geometry helpers, split out from `PerimeterPlusButtons.jsx` so that
+  file only exports components (Fast Refresh boundary).
 - `components/PerimeterPlusButtons.css` - Expand/collapse keyframes
   for the icon-panel cascade.
 - `components/CanvasMap.jsx` - Per-column map tile (shared scenario
   data via `useInputs`) with an inline-rendered toolbar.
-- `components/featureCardCommon.jsx` - `FeatureCardShell` (shared
-  chrome) + `findFamilyForFeature` + shared styles.
+- `components/FeatureCardShell.jsx` - `FeatureCardShell` (shared
+  chrome) + shared styles.
+- `utils/featureFamily.js` - `findFamilyForFeature` +
+  `sectionDividerStyle`, split out from `FeatureCardShell.jsx` so
+  that file only exports components (Fast Refresh boundary).
 - `components/FeatureCardPlot.jsx` - Plot-only card; vertically-stacked
   `PlotSlotCard`s + "Add a plot" pill + natural-height aggregator.
 - `components/FeatureCardKpi.jsx` - KPI-only card; one KPI strip per
@@ -636,6 +642,10 @@ source of truth for card config that the comparison views never read.
 - `components/CanvasPlot.jsx` - Fetches custom-plot HTML and runs
   the embedded Plotly scripts; lifts the chart title for the slot
   caption.
+- `utils/plotResize.js` - `fitPlotToParent` + `refitCharts`,
+  split out from `CanvasPlot.jsx` so that file only exports
+  components (Fast Refresh boundary). Shared by `PlotSlotCard`,
+  `PathwayTimelineStrip`, and `PathwayMultiView`.
 - `components/PlotEditModal.jsx` - Drawer card: PlotChoices picker
   → PlotTool parameter form.
 - `components/CircleActionButton.jsx` - Shared blue-circle + label

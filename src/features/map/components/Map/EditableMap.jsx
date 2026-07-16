@@ -13,7 +13,8 @@ import { Map, useControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import LocationSearchBar from './LocationSearchBar';
-import DrawControl, { DRAW_MODES } from './DrawControl';
+import DrawControl from './DrawControl';
+import { DRAW_MODES } from 'features/map/constants';
 
 import './EditableMap.css';
 

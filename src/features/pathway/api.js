@@ -1,17 +1,20 @@
-import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders, scenarioHeaders } from 'lib/api/scenarioContext';
+import { apiClient, getScenarioClient } from 'lib/api/axios';
+import {
+  activeScenarioHeaders,
+  scenarioHeaders,
+} from 'lib/api/scenarioContext';
 
 const encodePathwayName = (pathwayName) => encodeURIComponent(pathwayName);
 
 export const fetchPathways = async () => {
-  const { data } = await apiClient.get('/api/pathways/', {
+  const { data } = await getScenarioClient().get('/api/pathways/', {
     headers: activeScenarioHeaders(),
   });
   return data?.pathways ?? [];
 };
 
 export const fetchPathwayOverview = async () => {
-  const { data } = await apiClient.get('/api/pathways/overview', {
+  const { data } = await getScenarioClient().get('/api/pathways/overview', {
     headers: activeScenarioHeaders(),
   });
   return data;
@@ -27,7 +30,7 @@ export const createPathway = async (pathwayName) => {
 };
 
 export const fetchPathwayTimeline = async (pathwayName) => {
-  const { data } = await apiClient.get(
+  const { data } = await getScenarioClient().get(
     `/api/pathways/${encodePathwayName(pathwayName)}/timeline`,
     { headers: activeScenarioHeaders() },
   );
@@ -61,7 +64,7 @@ export const validatePathwayLog = async (pathwayName) => {
 };
 
 export const fetchYearEditorOptions = async (pathwayName, year) => {
-  const { data } = await apiClient.get(
+  const { data } = await getScenarioClient().get(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/editor-options`,
     { headers: activeScenarioHeaders() },
   );
@@ -105,7 +108,7 @@ export const saveYearYaml = async (pathwayName, year, rawYaml) => {
 };
 
 export const fetchInterventionTemplates = async () => {
-  const { data } = await apiClient.get('/api/pathways/templates', {
+  const { data } = await getScenarioClient().get('/api/pathways/templates', {
     headers: activeScenarioHeaders(),
   });
   return {
@@ -123,7 +126,7 @@ export const deleteInterventionTemplate = async (templateName) => {
 };
 
 export const fetchInterventionTemplate = async (templateName) => {
-  const { data } = await apiClient.get(
+  const { data } = await getScenarioClient().get(
     `/api/pathways/templates/${encodeURIComponent(templateName)}`,
     { headers: activeScenarioHeaders() },
   );
@@ -131,7 +134,7 @@ export const fetchInterventionTemplate = async (templateName) => {
 };
 
 export const fetchTemplateUsage = async (templateName) => {
-  const { data } = await apiClient.get(
+  const { data } = await getScenarioClient().get(
     `/api/pathways/templates/${encodeURIComponent(templateName)}/usage`,
     { headers: activeScenarioHeaders() },
   );
@@ -168,7 +171,7 @@ export const preSaveBuildingEventsConfig = async (pathwayNames, year) => {
 };
 
 export const fetchStateGeojson = async (pathwayName, year) => {
-  const { data } = await apiClient.get(
+  const { data } = await getScenarioClient().get(
     `/api/pathways/${encodePathwayName(pathwayName)}/years/${year}/geojson`,
     { headers: activeScenarioHeaders() },
   );
@@ -179,7 +182,7 @@ export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   const pathwayParams = pathwayNames?.length
     ? { pathways: pathwayNames.join(',') }
     : {};
-  const { data } = await apiClient.get(
+  const { data } = await getScenarioClient().get(
     `/api/pathways/building-lifecycle/${encodeURIComponent(buildingName)}`,
     { params: pathwayParams, headers: activeScenarioHeaders() },
   );
@@ -192,7 +195,7 @@ export const fetchStateFolderPath = async (
   project,
   scenarioName,
 ) => {
-  const { data } = await apiClient.get('/api/project/state-folder', {
+  const { data } = await getScenarioClient().get('/api/project/state-folder', {
     headers: scenarioHeaders({ project, scenarioName }),
     params: { pathway_name: pathwayName, year },
   });

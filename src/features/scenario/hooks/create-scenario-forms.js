@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 export const MapFormContext = createContext();
 
@@ -53,11 +54,10 @@ export const useCreateScenario = (projectPath, { onSuccess }) => {
           formattedData[key] = data[key];
         }
       });
-      formattedData['project'] = projectPath;
-
       const response = await apiClient.postForm(
         `/api/project/scenario/v2`,
         formattedData,
+        { headers: scenarioHeaders({ project: projectPath }) },
       );
       onSuccess?.(response.data);
     } catch (error) {

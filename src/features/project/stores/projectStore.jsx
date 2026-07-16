@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useUserInfo } from 'stores/useUserQuery';
 
 const DEFAULT_PROJECT_PROPS = {
@@ -9,6 +10,13 @@ const DEFAULT_PROJECT_PROPS = {
 
   recentProjects: [],
 };
+
+// Synthetic `project` value used while viewing public demo scenarios
+// (anonymous, no valid session - see stores/demoStore.js and
+// app/UserCheckGate.jsx). Just needs to be truthy so `Project.jsx`/
+// `ProjectOverlay` render their normal (scenario-loaded) view instead of
+// the "no project open" empty state.
+const DEMO_PROJECT_TOKEN = '__demo__';
 
 export const fetchConfig = async () => {
   const response = await apiClient.get(`/api/project/config`);
@@ -19,7 +27,7 @@ export const fetchProjectInfo = async (project) => {
   if (!project) throw new Error('Project cannot be empty');
   try {
     const { data } = await apiClient.get(`/api/project/`, {
-      params: { project },
+      headers: scenarioHeaders({ project }),
     });
 
     return data;
@@ -35,7 +43,8 @@ export const deleteScenario = async (project, scenario) => {
 
   try {
     const { data } = await apiClient.delete(`/api/project/scenario`, {
-      data: { project, scenario_name: scenario },
+      headers: scenarioHeaders({ project }),
+      data: { scenario_name: scenario },
     });
 
     return data;
@@ -114,6 +123,24 @@ export const useProjectStore = create((set) => ({
   },
   updateScenario: (scenario) => set({ scenario }),
   setRecentProjects: (projects) => set({ recentProjects: projects }),
+
+  // Demo mode (anonymous, no valid session): seed project/scenario state
+  // directly from the public demo scenario allowlist (`GET
+  // /api/demo/scenarios`) instead of fetching from `/api/project/*`, which
+  // requires a session. See stores/demoStore.js and app/UserCheckGate.jsx.
+  seedDemoProject: ({ scenario, scenariosList }) =>
+    set({
+      name: 'Demo',
+      project: DEMO_PROJECT_TOKEN,
+      scenario,
+      scenariosList,
+    }),
+
+  // Reverts seedDemoProject - called when a real session appears (e.g. the
+  // visitor logs in) so useInitProjectStore's normal localStorage-driven
+  // flow starts from a clean slate instead of the stale demo project.
+  clearDemoProject: () =>
+    set({ name: null, project: null, scenario: null, scenariosList: [] }),
 
   // Pathway Viewer: child scenario state
   childScenario: null, // { pathway_name, year, parent_scenario, scenario_path }

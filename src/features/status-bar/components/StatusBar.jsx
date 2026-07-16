@@ -5,7 +5,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import './StatusBar.css';
 import './StatusBarNotification.css';
 
-import socket, { waitForConnection } from 'lib/socket';
+import { getSocket, waitForConnection } from 'lib/socket';
 import { Button, Dropdown, notification } from 'antd';
 import {
   useSetActiveMapCategory,
@@ -134,6 +134,7 @@ const JobStatusBar = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
 
+  const socket = getSocket();
   const handlersRef = useRef(null);
   const depsRef = useRef({});
 
@@ -492,7 +493,7 @@ const JobStatusBar = () => {
       socket.off('connect', handleConnect);
       removeSocketListeners();
     };
-  }, []);
+  }, [socket]);
 
   if (output.length < 1 && !selectedJob) return null;
 

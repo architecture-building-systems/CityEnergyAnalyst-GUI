@@ -1,21 +1,87 @@
 import { io } from 'socket.io-client';
 import { getAccessTokenStringFromCookies } from './api/axios';
 
-const socket = io(`${import.meta.env.VITE_CEA_URL}`, {
-  withCredentials: !!getAccessTokenStringFromCookies(),
-
-  transports: ['websocket', 'polling'], // Try websocket first
-  upgrade: true,
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  reconnectionAttempts: Infinity, // Keep trying to reconnect
-  timeout: 20000,
-});
+let socket = null;
 
 // Track connection readiness
-let isConnected = socket.connected;
+let isConnected = false;
 const connectionCallbacks = [];
+
+const createSocket = () => {
+  const instance = io(`${import.meta.env.VITE_CEA_URL}`, {
+    withCredentials: !!getAccessTokenStringFromCookies(),
+
+    transports: ['websocket', 'polling'], // Try websocket first
+    upgrade: true,
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity, // Keep trying to reconnect
+    timeout: 20000,
+  });
+
+  isConnected = instance.connected;
+
+  // Connection event handlers
+  instance.on('connect', () => {
+    isConnected = true;
+
+    if (import.meta.env.DEV) {
+      console.log('Socket.IO connected:', instance.id);
+    }
+
+    // Resolve all pending connection promises
+    while (connectionCallbacks.length > 0) {
+      const callback = connectionCallbacks.shift();
+      callback();
+    }
+  });
+
+  instance.on('disconnect', (reason) => {
+    isConnected = false;
+
+    if (import.meta.env.DEV) {
+      console.log('Socket.IO disconnected:', reason);
+    }
+  });
+
+  instance.io.on('reconnect', (attemptNumber) => {
+    if (import.meta.env.DEV) {
+      console.log('Socket.IO reconnected after', attemptNumber, 'attempts');
+    }
+  });
+
+  instance.io.on('reconnect_attempt', (attemptNumber) => {
+    if (import.meta.env.DEV) {
+      console.log('Socket.IO reconnection attempt:', attemptNumber);
+    }
+  });
+
+  instance.io.on('reconnect_error', (error) => {
+    if (import.meta.env.DEV) {
+      console.error('Socket.IO reconnection error:', error.message);
+    }
+  });
+
+  instance.io.on('reconnect_failed', () => {
+    if (import.meta.env.DEV) {
+      console.error('Socket.IO reconnection failed after all attempts');
+    }
+  });
+
+  instance.on('connect_error', (error) => {
+    if (import.meta.env.DEV) {
+      console.error('Socket.IO connection error:', error.message);
+    }
+  });
+
+  return instance;
+};
+
+export const getSocket = () => {
+  if (!socket) socket = createSocket();
+  return socket;
+};
 
 // Helper to remove a specific callback from the queue
 export const removeConnectionCallback = (callback) => {
@@ -50,58 +116,3 @@ export const waitForConnection = (callback) => {
 
 // Helper to check if socket is connected
 export const isSocketConnected = () => isConnected;
-
-// Connection event handlers
-socket.on('connect', () => {
-  isConnected = true;
-
-  if (import.meta.env.DEV) {
-    console.log('Socket.IO connected:', socket.id);
-  }
-
-  // Resolve all pending connection promises
-  while (connectionCallbacks.length > 0) {
-    const callback = connectionCallbacks.shift();
-    callback();
-  }
-});
-
-socket.on('disconnect', (reason) => {
-  isConnected = false;
-
-  if (import.meta.env.DEV) {
-    console.log('Socket.IO disconnected:', reason);
-  }
-});
-
-socket.io.on('reconnect', (attemptNumber) => {
-  if (import.meta.env.DEV) {
-    console.log('Socket.IO reconnected after', attemptNumber, 'attempts');
-  }
-});
-
-socket.io.on('reconnect_attempt', (attemptNumber) => {
-  if (import.meta.env.DEV) {
-    console.log('Socket.IO reconnection attempt:', attemptNumber);
-  }
-});
-
-socket.io.on('reconnect_error', (error) => {
-  if (import.meta.env.DEV) {
-    console.error('Socket.IO reconnection error:', error.message);
-  }
-});
-
-socket.io.on('reconnect_failed', () => {
-  if (import.meta.env.DEV) {
-    console.error('Socket.IO reconnection failed after all attempts');
-  }
-});
-
-socket.on('connect_error', (error) => {
-  if (import.meta.env.DEV) {
-    console.error('Socket.IO connection error:', error.message);
-  }
-});
-
-export default socket;

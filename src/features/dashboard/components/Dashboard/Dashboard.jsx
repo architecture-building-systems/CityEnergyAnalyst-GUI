@@ -12,13 +12,11 @@ import {
   ModalNewDashboard,
   ModalPlotFiles,
 } from './Modals';
-import {
-  ModalContext,
-  ModalManager,
-} from 'features/dashboard/hooks/modal-manager';
+import { ModalManager } from 'features/dashboard/hooks/modal-manager';
+import { ModalContext } from 'features/dashboard/context/modal-context';
 import { RowLayout, GridLayout } from './Layouts';
 import './Dashboard.css';
-import { withErrorBoundary } from 'utils/ErrorBoundary';
+import { withErrorBoundary } from 'utils/withErrorBoundary';
 
 const { Option } = Select;
 const modals = {
@@ -198,7 +196,7 @@ const useDashboardData = () => {
   return { dashboards, fetchDashboards, categories };
 };
 
-export const usePlotDependencies = () => {
+const usePlotDependencies = () => {
   const [isMounted, setIsMounted] = useState(false);
   const PlotDependencies = [
     ['script', 'https://cdn.plot.ly/plotly-latest.min.js'],
@@ -265,4 +263,6 @@ export const usePlotDependencies = () => {
   return isMounted;
 };
 
-export default withErrorBoundary(Dashboard);
+const DashboardWithErrorBoundary = withErrorBoundary(Dashboard);
+
+export default DashboardWithErrorBoundary;

@@ -15,38 +15,43 @@ import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateIn
 export function useSaveInputs() {
   const queryClient = useQueryClient();
 
-  const project = useProjectStore((state) => state.project);
-  const projectName = useProjectStore((state) => state.name);
-  const scenarioName = useProjectStore((state) => state.scenario);
-  const childScenario = useProjectStore((state) => state.childScenario);
-
   const changes = useChanges();
   const resetStore = useResetStore();
   const resyncInputs = useResyncInputs();
 
-  const childToken = childScenarioToken(childScenario);
-
-  const { tables, geojsons, crs } =
-    queryClient.getQueryData(['inputs', project, scenarioName, childToken]) ??
-    {};
-
-  const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
-    (obj, key) => {
-      obj[key] = queryClient.getQueryData([
-        'inputs',
-        'building-schedule',
-        key,
-        projectName,
-        scenarioName,
-        childToken,
-      ]);
-      return obj;
-    },
-    {},
-  );
-
   return useMutation({
     mutationFn: async () => {
+      const {
+        project,
+        name: projectName,
+        scenario: scenarioName,
+        childScenario,
+      } = useProjectStore.getState();
+      const childToken = childScenarioToken(childScenario);
+
+      const { tables, geojsons, crs } =
+        queryClient.getQueryData([
+          'inputs',
+          project,
+          scenarioName,
+          childToken,
+        ]) ?? {};
+
+      const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
+        (obj, key) => {
+          obj[key] = queryClient.getQueryData([
+            'inputs',
+            'building-schedule',
+            key,
+            projectName,
+            scenarioName,
+            childToken,
+          ]);
+          return obj;
+        },
+        {},
+      );
+
       const { data } = await apiClient.put(
         `${API_ENDPOINTS.INPUTS}/all-inputs`,
         { tables, geojsons, crs, schedules },

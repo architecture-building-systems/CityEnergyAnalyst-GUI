@@ -1,4 +1,5 @@
 import CeaLogoAnimate from 'assets/cea-logo-animate.svg';
+import CeaLogoStatic from 'assets/cea-logo.svg';
 
 const CeaBadge = () => (
   <div
@@ -17,7 +18,7 @@ const CeaBadge = () => (
   </div>
 );
 
-const Loading = ({ children }) => {
+const Loading = ({ children, animate = true }) => {
   const ceaText = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +63,7 @@ const Loading = ({ children }) => {
         }}
       >
         <div style={{ width: '10%', minWidth: 100 }}>
-          <CeaLogoAnimate />
+          {animate ? <CeaLogoAnimate /> : <CeaLogoStatic />}
         </div>
 
         <div

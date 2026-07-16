@@ -305,7 +305,7 @@ const FeatureCardKpi = ({
 // Inline action overlay — paints a white surface over the KPI
 // body and centres a shared icon-button container (matches the
 // `cea-card-icon-button-container` convention used by
-// `PlotSlotCard` / `featureCardCommon` so the outline reads as
+// `PlotSlotCard` / `FeatureCardShell` so the outline reads as
 // the same family across the app). Two borderless antd Buttons
 // inside; the container itself owns the 1 px grey outline.
 //

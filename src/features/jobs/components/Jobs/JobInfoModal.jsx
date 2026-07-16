@@ -1,7 +1,7 @@
 import { Alert, Button, Modal } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
-import socket, { waitForConnection } from 'lib/socket';
+import { getSocket, waitForConnection } from 'lib/socket';
 import { apiClient } from 'lib/api/axios';
 import {
   VIEW_TOOL_RESULTS,
@@ -11,6 +11,7 @@ import { useToolCardStore } from 'features/project/stores/tool-card';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
+  const socket = getSocket();
   const containerRef = useRef();
   const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
   const selectPlotTool = useToolCardStore((state) => state.selectPlotTool);
@@ -89,7 +90,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         console.log('Removed socket listener for job', job.id);
       }
     };
-  }, [visible, job.id]);
+  }, [visible, job.id, socket]);
 
   return (
     <Modal

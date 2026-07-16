@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
@@ -18,7 +18,7 @@ export function useColumnInputs(scenario, project) {
     queryKey: ['inputs', effectiveProject, scenario, null],
     queryFn: async () => {
       if (!effectiveProject || !scenario) return {};
-      const { data } = await apiClient.get(
+      const { data } = await getScenarioClient().get(
         `${API_ENDPOINTS.INPUTS}/all-inputs`,
         {
           headers: scenarioHeaders({

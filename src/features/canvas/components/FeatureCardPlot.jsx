@@ -7,11 +7,11 @@ import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 
 import PlotSlotCard from './PlotSlotCard';
 import { useCanvasStore } from '../stores/canvasStore';
+import { FeatureCardShell } from './FeatureCardShell';
 import {
-  FeatureCardShell,
   findFamilyForFeature,
   sectionDividerStyle,
-} from './featureCardCommon';
+} from '../utils/featureFamily';
 
 /**
  * Plot-only feature card: vertically-stacked plots + an "Add a plot"
@@ -139,7 +139,7 @@ const AddPlotSelect = ({ options, onPick, onFallback }) => {
     <Select
       key={resetKey}
       className={`cea-template-select ${
-        hasOptions ? '' : 'cea-template-select-empty'
+        hasOptions ? '' : 'cea-select-empty cea-select-glow'
       }`}
       style={{ width: 208 }}
       styles={{ popup: { root: { width: 270 } } }}

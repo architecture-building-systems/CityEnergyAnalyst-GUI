@@ -1,20 +1,26 @@
-import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import {
   activeScenarioHeaders,
   childScenarioToken,
   scenarioHeaders,
 } from 'lib/api/scenarioContext';
 import useFormReset from './useFormReset';
-import useInputValidation from './useInputValidation';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useIsNonLocalMode, useUserInfo } from 'stores/useUserQuery';
+import {
+  readStoredToolConfig,
+  overlayStoredValues,
+} from '../toolConfigStorage';
 
 const useFetchToolParams = (script, scenarioOverride = null) => {
   const project = useProjectStore((state) => state.project);
   const scenarioName = useProjectStore((state) => state.scenario);
   const childScenario = useProjectStore((state) => state.childScenario);
+
+  const isNonLocal = useIsNonLocalMode();
+  const userId = useUserInfo()?.id;
 
   const effectiveProject = scenarioOverride?.project || project;
   const effectiveScenarioName = scenarioOverride?.scenarioName || scenarioName;
@@ -40,10 +46,17 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
             }),
           }
         : { headers: activeScenarioHeaders() };
-      const response = await apiClient.get(
+      const response = await getScenarioClient().get(
         `/api/tools/${script}`,
         requestConfig,
       );
+
+      // Non-local backend config is stateless (save-config is a no-op), so
+      // saved values live client-side - overlay them onto the defaults the
+      // backend just returned. See toolConfigStorage.js.
+      if (isNonLocal) {
+        return overlayStoredValues(response.data, readStoredToolConfig(userId));
+      }
       return response.data;
     },
     enabled: !!script,
@@ -51,13 +64,7 @@ const useFetchToolParams = (script, scenarioOverride = null) => {
   });
 };
 
-const useToolParams = (
-  script,
-  form,
-  onError,
-  onParametersChange,
-  scenarioOverride = null,
-) => {
+const useToolParams = (script, form, scenarioOverride = null) => {
   const {
     data: params,
     isLoading,
@@ -66,38 +73,15 @@ const useToolParams = (
     dataUpdatedAt,
   } = useFetchToolParams(script, scenarioOverride);
 
-  const parameters = useMemo(() => params?.parameters, [params]);
-  const categoricalParameters = useMemo(
-    () => params?.categorical_parameters,
-    [params],
-  );
-
-  useEffect(() => {
-    if (onParametersChange) {
-      onParametersChange?.({ parameters, categoricalParameters });
-    }
-  }, [dataUpdatedAt, onParametersChange]);
-
   const resetForm = useFormReset(form, params, script, dataUpdatedAt);
-
-  const { inputError, recheckInputs } = useInputValidation(
-    script,
-    parameters,
-    categoricalParameters,
-    form,
-    onError,
-    dataUpdatedAt,
-    scenarioOverride,
-  );
 
   return {
     params,
     isLoading,
     isFetching,
     fetchError,
-    inputError,
+    dataUpdatedAt,
     resetForm,
-    recheckInputs,
   };
 };
 

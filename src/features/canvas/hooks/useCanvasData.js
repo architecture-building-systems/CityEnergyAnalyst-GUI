@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 import { VIEW_PLOT_RESULTS } from 'features/plots/constants';
-import { findFamilyForFeature } from 'features/canvas/components/featureCardCommon';
+import { findFamilyForFeature } from 'features/canvas/utils/featureFamily';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { listSavedCanvases } from '../api/canvas';
 
@@ -51,24 +52,23 @@ export const useFetchSavedCanvases = (project, scenario) =>
     staleTime: 10_000,
   });
 
-export const useFetchScenarios = (project) =>
-  useQuery({
-    queryKey: ['reports', 'scenarios', project],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/scenarios', {
-        params: { project },
-      });
-      return data.scenarios;
-    },
-    enabled: !!project,
-    staleTime: 30_000,
-  });
+// Reads the project store's `scenariosList` directly instead of an
+// independent `/api/project/` fetch - that route requires a session
+// and isn't mounted under the demo sub-app, but `scenariosList` is
+// already kept fresh there (seeded on demo entry, refetched on every
+// project load / scenario create-duplicate-delete), so no network
+// call is needed here at all.
+export const useSiblingScenarios = (project) => {
+  const activeProject = useProjectStore((s) => s.project);
+  const scenariosList = useProjectStore((s) => s.scenariosList);
+  return { data: project && project === activeProject ? scenariosList : [] };
+};
 
 export const useFetchWhatifs = (project, scenario) =>
   useQuery({
     queryKey: ['reports', 'whatifs', project, scenario],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/whatifs', {
+      const { data } = await getScenarioClient().get('/api/reports/whatifs', {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data.whatifs;
@@ -81,7 +81,7 @@ export const useFetchFeatures = () =>
   useQuery({
     queryKey: ['reports', 'features'],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/features');
+      const { data } = await getScenarioClient().get('/api/reports/features');
       return data.features;
     },
     staleTime: 5 * 60_000,
@@ -91,7 +91,7 @@ export const useFetchSummary = (project, scenario, feature, whatif) =>
   useQuery({
     queryKey: ['reports', 'summary', project, scenario, feature, whatif],
     queryFn: async () => {
-      const { data } = await apiClient.get('/api/reports/summary', {
+      const { data } = await getScenarioClient().get('/api/reports/summary', {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
         params: { feature, whatif: whatif || undefined },
       });
@@ -105,7 +105,7 @@ export const useFetchToolParams = (script, scenario, project) =>
   useQuery({
     queryKey: ['tools', script, project, scenario],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/api/tools/${script}`, {
+      const { data } = await getScenarioClient().get(`/api/tools/${script}`, {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data;
@@ -151,7 +151,7 @@ export const useFetchCustomPlot = (plotConfig, scenarioContext, project) => {
       // origin's data instead of its own. Top-level wins.
       // eslint-disable-next-line no-unused-vars
       const { scenario: _scenario, ...rest } = plotConfig.parameters || {};
-      const { data } = await apiClient.post(
+      const { data } = await getScenarioClient().post(
         '/api/reports/plot-custom',
         {
           script: plotConfig.script,

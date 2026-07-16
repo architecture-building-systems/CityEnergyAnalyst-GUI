@@ -6,7 +6,7 @@ import {
   useScopedSelectedCategoryInfo,
 } from 'features/canvas/components/mapInstance';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 import useDependsOn from './useDependsOn';
 
@@ -19,7 +19,7 @@ const getRange = async (
   parameters,
   childScenario = null,
 ) => {
-  const resp = await apiClient.post(
+  const resp = await getScenarioClient().post(
     `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/range`,
     { parameters },
     { headers: scenarioHeaders({ project, scenarioName, childScenario }) },

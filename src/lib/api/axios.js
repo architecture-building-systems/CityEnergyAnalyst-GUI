@@ -1,5 +1,12 @@
 import axios from 'axios';
 
+import useDemoStore from 'stores/demoStore';
+import {
+  PROJECT_HEADER,
+  SCENARIO_NAME_HEADER,
+  CHILD_SCENARIO_HEADER,
+} from 'lib/api/scenarioContextHeaders';
+
 export const COOKIE_NAME = import.meta.env.VITE_AUTH_COOKIE_NAME;
 
 export const getAccessTokenStringFromCookies = () => {
@@ -96,6 +103,47 @@ export const apiClient = axios.create({
 export const authClient = axios.create({
   baseURL: `${import.meta.env.VITE_AUTH_URL}`,
 });
+
+// For public, unauthenticated backend routes (e.g. /server/version) that
+// shouldn't go through the token-refresh interceptor at all.
+export const publicClient = axios.create({
+  baseURL: `${import.meta.env.VITE_CEA_URL}`,
+});
+
+// For anonymous, read-only demo scenario viewing (no valid session - see
+// UserCheckGate). Requests made with this client are rewritten below to hit
+// the public `/api/demo/scenarios/{demoId}/...` sub-app instead of the normal
+// `/api/...` routes, so existing hooks/queries can be pointed at demo data by
+// swapping their client, not their URLs.
+export const demoClient = axios.create({
+  baseURL: `${import.meta.env.VITE_CEA_URL}`,
+});
+
+demoClient.interceptors.request.use((config) => {
+  const { demoId } = useDemoStore.getState();
+
+  if (demoId && config.url?.startsWith('/api/')) {
+    config.url = `/api/demo/scenarios/${encodeURIComponent(demoId)}${config.url.slice('/api'.length)}`;
+  }
+
+  // The demo sub-app resolves scenario context from the URL path
+  // ({demoId} above), not from X-CEA-* headers - strip them so a stray
+  // header can't be misread as an attempt to reach outside the allowlist.
+  if (config.headers) {
+    delete config.headers[PROJECT_HEADER];
+    delete config.headers[SCENARIO_NAME_HEADER];
+    delete config.headers[CHILD_SCENARIO_HEADER];
+  }
+
+  return config;
+});
+
+// Returns the axios client that should be used for scenario-scoped reads
+// (inputs, map layers, canvas). Callers that already build their requests
+// against `apiClient`'s normal `/api/...` URLs can swap in this client to
+// transparently support demo mode - no other changes needed.
+export const getScenarioClient = () =>
+  useDemoStore.getState().demoMode ? demoClient : apiClient;
 
 // Helper function for request interceptor logic
 let refreshPromise = null; // single-flight

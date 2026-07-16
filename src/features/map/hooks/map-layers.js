@@ -17,7 +17,7 @@ import {
   FINAL_ENERGY,
 } from 'features/map/constants';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import { apiClient } from 'lib/api/axios';
+import { getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
 const hasAllParameters = (layer, parameters) => {
@@ -129,7 +129,14 @@ export const useGetMapLayers = (
       clearTimeout(handler); // Clear timeout if value changes before the delay ends
       ignore = true;
     };
-  }, [categoryName, parameters, selectedLayerInfo, project, scenarioName, childScenario]);
+  }, [
+    categoryName,
+    parameters,
+    selectedLayerInfo,
+    project,
+    scenarioName,
+    childScenario,
+  ]);
 
   return { fetching, error };
 };
@@ -187,7 +194,7 @@ export const useMapLegends = () => {
 };
 
 const fetchMapLayer = async (category, layer_name, body, headers = {}) => {
-  const resp = await apiClient.post(
+  const resp = await getScenarioClient().post(
     `/api/map_layers/${category}/${layer_name}/generate`,
     body,
     { headers },

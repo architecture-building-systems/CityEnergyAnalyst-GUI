@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import socket, {
+import { scenarioHeaders } from 'lib/api/scenarioContext';
+import {
+  getSocket,
   waitForConnection,
   removeConnectionCallback,
 } from 'lib/socket';
@@ -39,12 +41,15 @@ const useDownloadStore = create((set, get) => ({
   // Prepare a download (start the process)
   prepareDownload: async (project, scenarios, inputFiles, outputFiles) => {
     try {
-      const response = await apiClient.post('/api/downloads/prepare', {
-        project,
-        scenarios,
-        input_files: inputFiles,
-        output_files: outputFiles,
-      });
+      const response = await apiClient.post(
+        '/api/downloads/prepare',
+        {
+          scenarios,
+          input_files: inputFiles,
+          output_files: outputFiles,
+        },
+        { headers: scenarioHeaders({ project }) },
+      );
 
       const download = response.data;
       get().upsertDownload(download);
@@ -146,6 +151,7 @@ const useDownloadStore = create((set, get) => ({
 
   // Cleanup socket listeners (for unmount)
   cleanupSocketListeners: () => {
+    const socket = getSocket();
     socket.off('download-created');
     socket.off('download-progress');
     socket.off('download-ready');
@@ -163,6 +169,8 @@ const useDownloadStore = create((set, get) => ({
 
       // Remove any existing listeners first to prevent duplicates on reconnect
       get().cleanupSocketListeners();
+
+      const socket = getSocket();
 
       // Download created
       socket.on('download-created', (download) => {

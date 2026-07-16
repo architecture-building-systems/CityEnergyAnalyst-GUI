@@ -135,8 +135,6 @@ const UseTypePropertiesSchedulesDataset = ({
 };
 
 const useDeleteUseType = (types, selected, onSelected) => {
-  const data = useDatabaseEditorStore((state) => state.data);
-
   return useCallback(() => {
     if (types.length <= 1) {
       Modal.warning({
@@ -157,6 +155,8 @@ const useDeleteUseType = (types, selected, onSelected) => {
       okType: 'danger',
       cancelText: 'Cancel',
       onOk: () => {
+        const currentState = useDatabaseEditorStore.getState();
+        const data = currentState.data;
         const newData = structuredClone(data);
 
         // Remove from use_types
@@ -177,7 +177,6 @@ const useDeleteUseType = (types, selected, onSelected) => {
         }
 
         // Update the store with new data and add change entry
-        const currentState = useDatabaseEditorStore.getState();
         useDatabaseEditorStore.setState({
           data: newData,
           changes: [
@@ -208,13 +207,12 @@ const useDeleteUseType = (types, selected, onSelected) => {
         }
       },
     });
-  }, [types, selected, onSelected, data]);
+  }, [types, selected, onSelected]);
 };
 
 const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
-  const data = useDatabaseEditorStore((state) => state.data);
   const handleDeleteUseType = useDeleteUseType(types, selected, onSelected);
 
   const handleAddUseType = () => {
@@ -235,6 +233,9 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
       ]);
       return;
     }
+
+    const currentState = useDatabaseEditorStore.getState();
+    const data = currentState.data;
 
     // Copy data from the selected use type
     const sourceUseTypeData =
@@ -283,7 +284,6 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
       newScheduleLibrary;
 
     // Update the store with new data and add change entry
-    const currentState = useDatabaseEditorStore.getState();
     useDatabaseEditorStore.setState({
       data: newData,
       changes: [
