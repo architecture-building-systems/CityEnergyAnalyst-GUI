@@ -4,7 +4,7 @@ import { getScenarioClient } from 'lib/api/axios';
 export const TOOL_LIST_QUERY_KEY = ['toolList'];
 
 const fetchToolList = async () => {
-  const response = await getScenarioClient().get('/api/tools/');
+  const response = await getScenarioClient().get('/api/tools');
   return response.data;
 };
 

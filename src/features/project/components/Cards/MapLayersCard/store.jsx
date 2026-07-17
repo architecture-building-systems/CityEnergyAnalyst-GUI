@@ -12,7 +12,7 @@ export const MAP_LAYER_CATEGORIES_QUERY_KEY = ['map-layer-categories'];
 
 export const fetchMapLayerCategories = async () => {
   try {
-    const { data } = await getScenarioClient().get('/api/map_layers/');
+    const { data } = await getScenarioClient().get('/api/map_layers');
     return data;
   } catch (err) {
     console.error(err);
