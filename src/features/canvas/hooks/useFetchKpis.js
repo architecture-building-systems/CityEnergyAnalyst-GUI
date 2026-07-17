@@ -91,6 +91,7 @@ export const useFetchKpiValue = ({
     },
     enabled: !!project && !!scenario && !!kpiId,
     staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -196,6 +197,7 @@ export const useFetchKpiSparkline = ({
       },
       enabled,
       staleTime: 0,
+      refetchOnWindowFocus: false,
     })),
   });
 
