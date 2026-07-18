@@ -18,15 +18,15 @@ import {
 } from '@ant-design/icons';
 import { parseISO, formatDistanceToNow } from 'date-fns';
 import useDownloadStore from '../stores/downloadStore';
+import { useFetchDownloads } from '../hooks/useFetchDownloads';
 
 const DownloadManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [downloadingIds, setDownloadingIds] = useState(new Set());
   const timeoutRef = useRef(null);
-  const prevDownloadCountRef = useRef(null);
-  const isInitializedRef = useRef(false);
   const downloadsMap = useDownloadStore((state) => state.downloads);
-  const fetchDownloads = useDownloadStore((state) => state.fetchDownloads);
+  const lastCreatedId = useDownloadStore((state) => state.lastCreatedId);
+  useFetchDownloads();
   const downloadFile = useDownloadStore((state) => state.downloadFile);
   const deleteDownload = useDownloadStore((state) => state.deleteDownload);
   const initializeSocketListeners = useDownloadStore(
@@ -43,21 +43,9 @@ const DownloadManager = () => {
     return dateB - dateA;
   });
 
-  // Initialize socket listeners and fetch downloads on mount
+  // Initialize socket listeners on mount
   useEffect(() => {
-    const initializeDownloads = async () => {
-      try {
-        await fetchDownloads();
-      } catch (error) {
-        console.error('Failed to fetch downloads:', error);
-      } finally {
-        // Mark as initialized after initial fetch
-        isInitializedRef.current = true;
-      }
-    };
-
     initializeSocketListeners();
-    initializeDownloads();
 
     return () => {
       cleanupSocketListeners();
@@ -67,29 +55,12 @@ const DownloadManager = () => {
         timeoutRef.current = null;
       }
     };
-  }, [initializeSocketListeners, fetchDownloads, cleanupSocketListeners]);
+  }, [initializeSocketListeners, cleanupSocketListeners]);
 
   // Show popover when a new download is added
   useEffect(() => {
-    const currentDownloadCount = downloads.length;
-
-    // If not initialized yet, just set the initial count and return
-    if (!isInitializedRef.current) {
-      prevDownloadCountRef.current = currentDownloadCount;
-      return;
-    }
-
-    // Only open popover if the count has increased (new download added)
-    if (
-      prevDownloadCountRef.current !== null &&
-      currentDownloadCount > prevDownloadCountRef.current
-    ) {
-      setIsOpen(true);
-    }
-
-    // Update the previous count
-    prevDownloadCountRef.current = currentDownloadCount;
-  }, [downloads.length]);
+    if (lastCreatedId) setIsOpen(true);
+  }, [lastCreatedId]);
 
   // Count active downloads (not downloaded)
   const activeDownloads = downloads.filter((d) => d.state !== 'DOWNLOADED');

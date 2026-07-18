@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import { scenarioHeaders } from 'lib/api/scenarioContext';
+import {
+  scenarioHeaders,
+  activeScenarioHeaders,
+} from 'lib/api/scenarioContext';
 import {
   getSocket,
   waitForConnection,
@@ -11,14 +14,25 @@ const useDownloadStore = create((set, get) => ({
   // Downloads map: downloadId -> download object
   downloads: {},
 
+  // Id of the most recently *created* (not merely updated) download.
+  // Only changes when upsertDownload sees an id it hasn't seen before,
+  // so bulk replacements from fetchDownloads never touch it - consumers
+  // can watch it to react to genuinely new downloads (e.g. opening a
+  // notification) without confusing that with a list refresh.
+  lastCreatedId: null,
+
   // Add or update a download
   upsertDownload: (download) =>
-    set((state) => ({
-      downloads: {
-        ...state.downloads,
-        [download.id]: download,
-      },
-    })),
+    set((state) => {
+      const isNew = !(download.id in state.downloads);
+      return {
+        downloads: {
+          ...state.downloads,
+          [download.id]: download,
+        },
+        ...(isNew && { lastCreatedId: download.id }),
+      };
+    }),
 
   // Remove a download
   removeDownload: (downloadId) =>
@@ -63,7 +77,9 @@ const useDownloadStore = create((set, get) => ({
   // Fetch all downloads for current project/user
   fetchDownloads: async () => {
     try {
-      const response = await apiClient.get('/api/downloads/');
+      const response = await apiClient.get('/api/downloads/', {
+        headers: activeScenarioHeaders(),
+      });
       const downloads = response.data;
 
       // Convert array to map
