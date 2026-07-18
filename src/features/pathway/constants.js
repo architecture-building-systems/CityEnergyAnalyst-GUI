@@ -32,7 +32,13 @@ export const getTickStep = (pxPerYear) => {
  * @param {string} scenarioName
  * @returns {string|null}
  */
+const stripTrailingSlashes = (path) => {
+  let end = path.length;
+  while (end > 0 && (path[end - 1] === '/' || path[end - 1] === '\\')) end--;
+  return path.slice(0, end);
+};
+
 export const buildScenarioPath = (project, scenarioName) => {
   if (!project || !scenarioName) return null;
-  return `${String(project).replace(/[\\/]+$/, '')}/${scenarioName}`;
+  return `${stripTrailingSlashes(String(project))}/${scenarioName}`;
 };

@@ -137,6 +137,10 @@ const serializeParameters = (params) => {
 export const useFetchCustomPlot = (plotConfig, scenarioContext, project) => {
   const { scenarioName, pathwayName, year } = scenarioContext ?? {};
   const isPathwayChild = !!pathwayName && year != null;
+  // scenarioName/isPathwayChild/pathwayName/year are all derived from
+  // scenarioContext, which is already a queryKey element — react-query
+  // hashes keys structurally, so this already re-fetches on change.
+  // eslint-disable-next-line @tanstack/query/exhaustive-deps
   return useQuery({
     queryKey: ['reports', 'custom-plot', plotConfig, scenarioContext, project],
     queryFn: async () => {

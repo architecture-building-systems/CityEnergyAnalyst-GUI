@@ -32,6 +32,11 @@ const useFetchToolParams = (script, scenarioContext) => {
     [isNonLocal, userId],
   );
 
+  // childScenario itself isn't listed: childToken is its stable
+  // serialization (see childScenarioToken), used instead of the raw
+  // object so a new-but-equal childScenario reference doesn't
+  // fragment the cache.
+  // eslint-disable-next-line @tanstack/query/exhaustive-deps
   return useQuery({
     queryKey: [
       TOOLS_QUERY_KEYS.TOOL_PARAMS,

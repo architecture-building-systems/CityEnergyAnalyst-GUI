@@ -179,6 +179,10 @@ export const useFetchKpiSparkline = ({
   }, [enabled, stateYears, parentScenario, pathwayName]);
 
   const queries = useQueries({
+    // parentScenario/pathwayName aren't separately listed: `scenario`
+    // is `childStateScenarioPath(parentScenario, pathwayName, year)`,
+    // so it already changes whenever either does.
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queries: yearsAndPaths.map(({ year, scenario }) => ({
       queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
       queryFn: async () => {
@@ -201,18 +205,19 @@ export const useFetchKpiSparkline = ({
     })),
   });
 
+  const queriesData = queries.map((q) => q?.data);
+
   const points = useMemo(() => {
     if (!enabled) return null;
     return yearsAndPaths.map(({ year }, i) => {
-      const result = queries[i];
-      const kpi = (result?.data?.kpis ?? []).find((k) => k.id === kpiId);
+      const kpi = (queriesData[i]?.kpis ?? []).find((k) => k.id === kpiId);
       const isAvailable = kpi && kpi.available !== false;
       return {
         year,
         value: isAvailable ? kpi.value : null,
       };
     });
-  }, [enabled, yearsAndPaths, queries, kpiId]);
+  }, [enabled, yearsAndPaths, queriesData, kpiId]);
 
   return {
     points,

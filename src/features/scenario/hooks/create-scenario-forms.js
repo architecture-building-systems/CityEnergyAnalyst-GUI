@@ -13,7 +13,9 @@ export const useFetchDatabases = () => {
   };
 
   useEffect(() => {
-    fetchDatabases().then(({ regions }) => setDatabases(regions));
+    fetchDatabases()
+      .then(({ regions }) => setDatabases(regions))
+      .catch(console.error);
   }, []);
 
   return databases;
@@ -28,7 +30,9 @@ export const useFetchWeather = () => {
   };
 
   useEffect(() => {
-    fetchWeather().then(({ weather }) => setWeather(weather));
+    fetchWeather()
+      .then(({ weather }) => setWeather(weather))
+      .catch(console.error);
   }, []);
 
   return weather;
