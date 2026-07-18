@@ -105,6 +105,11 @@ const useDownloadStore = create((set, get) => ({
       );
       const downloadStatus = statusResponse.data;
 
+      // Sync local state in case it drifted from the server (e.g. a missed
+      // socket event left it showing "Ready" when it's actually no longer
+      // available)
+      get().upsertDownload(downloadStatus);
+
       // Validate download is ready
       if (downloadStatus.state !== 'READY') {
         throw new Error(
@@ -140,6 +145,23 @@ const useDownloadStore = create((set, get) => ({
 
       return true;
     } catch (error) {
+      // The download may have changed state on the server since our last
+      // known local state (e.g. already downloaded elsewhere, expired, or
+      // deleted) - resync so the UI doesn't keep offering a stale action.
+      if (error.response?.status === 404) {
+        get().removeDownload(downloadId);
+      } else if (error.response) {
+        try {
+          const statusResponse = await apiClient.get(
+            `/api/downloads/${downloadId}/status`,
+          );
+          get().upsertDownload(statusResponse.data);
+        } catch {
+          // Nothing more we can do to resync here; fall through to the
+          // original error below.
+        }
+      }
+
       console.error('Failed to download file:', error);
       throw error;
     }
