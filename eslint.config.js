@@ -6,6 +6,7 @@ const reactCompiler = require('eslint-plugin-react-compiler');
 const reactRefresh = require('eslint-plugin-react-refresh');
 const importPlugin = require('eslint-plugin-import');
 const jsxA11y = require('eslint-plugin-jsx-a11y');
+const tanstackQuery = require('@tanstack/eslint-plugin-query');
 const simpleImportSort = require('eslint-plugin-simple-import-sort');
 const prettierRecommended = require('eslint-plugin-prettier/recommended');
 
@@ -26,6 +27,7 @@ module.exports = [
   reactHooks.configs.flat['recommended-latest'],
   importPlugin.flatConfigs.recommended,
   jsxA11y.flatConfigs.recommended,
+  ...tanstackQuery.configs['flat/recommended'],
   prettierRecommended,
   {
     settings: {
