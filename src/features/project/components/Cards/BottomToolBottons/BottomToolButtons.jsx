@@ -33,10 +33,7 @@ const BottomToolButtons = ({
       icon: DatabaseEditorIcon,
       title: 'Database Editor',
       onClick: () => push(routes.DATABASE_EDITOR),
-      // Demo scenarios are read-only and the demo API doesn't mount
-      // database write routes - hide entirely rather than open an editor
-      // that can't save.
-      hidden: !showTools || demoMode,
+      hidden: !showTools,
     },
     {
       id: 'input-editor',

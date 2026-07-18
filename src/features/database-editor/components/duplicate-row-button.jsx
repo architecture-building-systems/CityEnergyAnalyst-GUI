@@ -5,6 +5,7 @@ import {
   useGetDatabaseColumnChoices,
   useAddDatabaseRow,
 } from 'features/database-editor/stores/databaseEditorStore';
+import { withHiddenInDemo } from 'components/HiddenInDemo';
 
 /**
  * Hook to handle duplicating rows by copying selected or last row's values
@@ -82,7 +83,7 @@ const useDuplicateRows = (data, dataKey, index, tabulatorRef) => {
   }, [data, dataKey, index, addDatabaseRow, tabulatorRef]);
 };
 
-export const DuplicateRowButton = ({
+const DuplicateRowButtonImpl = ({
   data,
   dataKey,
   index,
@@ -114,6 +115,8 @@ export const DuplicateRowButton = ({
     </Button>
   );
 };
+
+export const DuplicateRowButton = withHiddenInDemo(DuplicateRowButtonImpl);
 
 const MAX_ROWS_PER_COLUMN = 20;
 

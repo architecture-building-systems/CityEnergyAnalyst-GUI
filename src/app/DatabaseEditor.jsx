@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Spin } from 'antd';
+import { Alert, Button, Spin } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
@@ -27,6 +27,7 @@ import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import LoginModal from 'features/auth/components/Login/LoginModal';
 import { isElectron } from 'utils/electron';
 import ErrorModal from 'components/ErrorModal';
+import { useDemoMode } from 'stores/demoStore';
 
 const DatabaseEditorErrorMessage = ({ error }) => {
   return (
@@ -49,6 +50,7 @@ const DatabaseEditorErrorMessage = ({ error }) => {
 
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
+  const demoMode = useDemoMode();
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
   const databaseValidation = useDatabaseEditorStore(
     (state) => state.databaseValidation,
@@ -85,16 +87,23 @@ const DatabaseEditor = () => {
     <div className="cea-database-editor">
       <div className="cea-database-editor-header">
         <h2>Database Editor</h2>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {/* Only show import/export buttons in browser */}
-          {!isElectron() && !isEmpty && !isValidating && (
-            <>
-              <ImportDatabaseButton />
-              <ExportDatabaseButton />
-            </>
-          )}
-          <RefreshDatabaseButton isLoading={isValidating} />
-        </div>
+        {/* Demo scenarios are a fixed, read-only allowlist - there's
+        nothing to import, export, or refresh, so show a notice in place
+        of those actions instead of just leaving an empty gap. */}
+        {demoMode ? (
+          <Alert type="info" showIcon message="Read-only demo scenario" />
+        ) : (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Only show import/export buttons in browser. */}
+            {!isElectron() && !isEmpty && !isValidating && (
+              <>
+                <ImportDatabaseButton />
+                <ExportDatabaseButton />
+              </>
+            )}
+            <RefreshDatabaseButton isLoading={isValidating} />
+          </div>
+        )}
       </div>
       {isValidating ? (
         <CenterSpinner

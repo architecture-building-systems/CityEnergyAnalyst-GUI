@@ -3,6 +3,7 @@ import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useCallback } from 'react';
 import { useDeleteDatabaseRows } from 'features/database-editor/stores/databaseEditorStore';
 import { DeleteModalContent } from './delete-modal-content';
+import { withHiddenInDemo } from 'components/HiddenInDemo';
 
 /**
  * Hook to handle deleting selected rows
@@ -39,7 +40,7 @@ const useDeleteRows = (dataKey, index, tabulatorRef) => {
   }, [dataKey, index, deleteDatabaseRows, tabulatorRef]);
 };
 
-export const DeleteRowButton = ({
+const DeleteRowButtonImpl = ({
   dataKey,
   index,
   tabulatorRef,
@@ -84,3 +85,5 @@ export const DeleteRowButton = ({
     </Button>
   );
 };
+
+export const DeleteRowButton = withHiddenInDemo(DeleteRowButtonImpl);

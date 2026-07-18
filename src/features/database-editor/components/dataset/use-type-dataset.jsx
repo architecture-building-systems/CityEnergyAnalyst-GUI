@@ -13,6 +13,8 @@ import useDatabaseEditorStore, {
   useUpdateDatabaseData,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { DeleteModalContent } from '../delete-modal-content';
+import { useDemoMode } from 'stores/demoStore';
+import { HiddenInDemo } from 'components/HiddenInDemo';
 
 export const UseTypeDataset = ({ dataKey, dataset }) => {
   // Consist of two keys: use_types and schedules.
@@ -323,22 +325,24 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
             {useType.toUpperCase()}
           </Button>
         ))}
-        <Button
-          type="dashed"
-          icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Add
-        </Button>
-        <Divider size="small" />
-        <Button
-          danger
-          icon={<DeleteOutlined />}
-          onClick={handleDeleteUseType}
-          disabled={types.length <= 1}
-        >
-          Delete
-        </Button>
+        <HiddenInDemo>
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add
+          </Button>
+          <Divider size="small" />
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={handleDeleteUseType}
+            disabled={types.length <= 1}
+          >
+            Delete
+          </Button>
+        </HiddenInDemo>
       </div>
 
       <Modal
@@ -463,6 +467,7 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const updateDatabaseData = useUpdateDatabaseData();
+  const demoMode = useDemoMode();
 
   if (data == null) return <MissingDataPrompt dataKey={dataKey} />;
 
@@ -471,6 +476,10 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
 
   // Create handler to update schedule data when chart points are dragged
   const handleScheduleChange = (dayType, updatedData) => {
+    // Demo scenarios are read-only - dragging still moves the chart point
+    // visually, but the change is never persisted to the store.
+    if (demoMode) return;
+
     if (!selectedSchedule || !data) {
       console.error('handleScheduleChange: missing selectedSchedule or data');
       return;

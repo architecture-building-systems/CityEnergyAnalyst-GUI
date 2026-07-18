@@ -29,6 +29,8 @@ import { CreateComponentModal } from 'features/database-editor/components/create
 import { DuplicateRowButton } from 'features/database-editor/components/duplicate-row-button';
 import { DeleteRowButton } from 'features/database-editor/components/delete-row-button';
 import { AddRowButton } from 'features/database-editor/components/add-row-button';
+import { useDemoMode } from 'stores/demoStore';
+import { HiddenInDemo } from 'components/HiddenInDemo';
 
 export const TableGroupDataset = ({
   dataKey,
@@ -115,31 +117,35 @@ export const TableGroupDataset = ({
             showColumnSchema={showColumnSchema}
             enableRowSelection={enableRowSelection}
           />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginTop: 8,
-            }}
-          >
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(key)}
+          <HiddenInDemo>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginTop: 8,
+              }}
             >
-              Delete &quot;{key}&quot;
-            </Button>
-          </div>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(key)}
+              >
+                Delete &quot;{key}&quot;
+              </Button>
+            </div>
+          </HiddenInDemo>
           <Divider size="small" />
         </div>
       ))}
-      <Button
-        type="dashed"
-        icon={<PlusOutlined />}
-        onClick={() => setIsModalOpen(true)}
-      >
-        Add New Component
-      </Button>
+      <HiddenInDemo>
+        <Button
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalOpen(true)}
+        >
+          Add New Component
+        </Button>
+      </HiddenInDemo>
 
       <CreateComponentModal
         isOpen={isModalOpen}
@@ -168,6 +174,11 @@ export const TableDataset = ({
 }) => {
   const tabulatorRef = useRef();
   const [selectedCount, setSelectedCount] = useState(0);
+  const demoMode = useDemoMode();
+  // Row add/delete/duplicate are write actions the demo API doesn't
+  // support - suppress selection entirely rather than show buttons that
+  // would only fail.
+  const rowSelectionEnabled = enableRowSelection && !demoMode;
 
   const handleRowSelectionChanged = useCallback(
     (data, rows) => {
@@ -191,7 +202,7 @@ export const TableDataset = ({
         <MissingDataPrompt dataKey={dataKey} />
       ) : (
         <>
-          {enableRowSelection && (
+          {rowSelectionEnabled && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <div></div>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -226,7 +237,7 @@ export const TableDataset = ({
             schema={schema}
           />
           <EntityDataTable
-            ref={enableRowSelection ? tabulatorRef : ref}
+            ref={rowSelectionEnabled ? tabulatorRef : ref}
             dataKey={dataKey}
             data={data}
             indexColumn={indexColumn}
@@ -235,7 +246,7 @@ export const TableDataset = ({
             freezeIndex={freezeIndex}
             schema={schema}
             showColumnSchema={showColumnSchema}
-            enableRowSelection={enableRowSelection}
+            enableRowSelection={rowSelectionEnabled}
             onRowSelectionChanged={handleRowSelectionChanged}
           />
         </>
@@ -327,14 +338,16 @@ const EntityDetails = ({
               </div>
             ))}
           </div>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={handleEdit}
-            style={{ marginLeft: 8 }}
-          >
-            Edit
-          </Button>
+          <HiddenInDemo>
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={handleEdit}
+              style={{ marginLeft: 8 }}
+            >
+              Edit
+            </Button>
+          </HiddenInDemo>
         </div>
       </div>
 
@@ -408,6 +421,7 @@ const EntityDataTable = ({
 }) => {
   const divRef = useRef();
   const tabulatorRef = useRef();
+  const demoMode = useDemoMode();
 
   // Expose specific Tabulator methods to parent components
   useImperativeHandle(
@@ -461,6 +475,9 @@ const EntityDataTable = ({
           ? `${_colSchema.description}${_colSchema?.unit ? ` ${_colSchema.unit}` : ''}`
           : false,
         frozen: _frozenIndex,
+        // Demo scenarios are read-only. Tabulator 4.x has no table-wide
+        // editable option, so it must be set per-column here.
+        editable: !demoMode,
       };
 
       if (_frozenIndex) {
@@ -540,6 +557,7 @@ const EntityDataTable = ({
     showIndex,
     enableRowSelection,
     getColumnChoices,
+    demoMode,
   ]);
 
   useEffect(() => {
@@ -584,6 +602,7 @@ const EntityDataTable = ({
     updateDatabaseData,
     enableRowSelection,
     onRowSelectionChanged,
+    demoMode,
   ]);
 
   // Update table data when data changes (e.g., when a new row is added)

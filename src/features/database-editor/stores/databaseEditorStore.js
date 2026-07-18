@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
-import { apiClient } from 'lib/api/axios';
+import { apiClient, getScenarioClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
 import { arrayStartsWith } from 'utils';
 
@@ -49,7 +49,7 @@ const useDatabaseEditorStore = create((set, get) => ({
 
     set({ databaseValidation: { status: 'checking', message: null } });
     try {
-      await apiClient.get('/api/inputs/databases/check', {
+      await getScenarioClient().get('/api/inputs/databases/check', {
         headers: activeScenarioHeaders(),
       });
       set({ databaseValidation: { status: 'valid', message: null } });
@@ -77,7 +77,7 @@ const useDatabaseEditorStore = create((set, get) => ({
   initDatabaseState: async () => {
     set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
-      const { data } = await apiClient.get('/api/inputs/databases', {
+      const { data } = await getScenarioClient().get('/api/inputs/databases', {
         headers: activeScenarioHeaders(),
       });
       set({
@@ -150,7 +150,9 @@ const useDatabaseEditorStore = create((set, get) => ({
 
   fetchDatabaseSchema: async (params) => {
     try {
-      const response = await apiClient.get('/api/databases/schema', { params });
+      const response = await getScenarioClient().get('/api/databases/schema', {
+        params,
+      });
       set({ schema: response.data });
     } catch (error) {
       set({ status: { status: FAILED_STATUS, error } });

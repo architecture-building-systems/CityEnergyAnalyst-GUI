@@ -5,8 +5,9 @@ import { UploadOutlined } from '@ant-design/icons';
 import Dragger from 'antd/es/upload/Dragger';
 import { apiClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { withHiddenInDemo } from 'components/HiddenInDemo';
 
-export const ImportDatabaseButton = () => {
+const ImportDatabaseButtonImpl = () => {
   const { status } = useDatabaseEditorStore((state) => state.status);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -29,6 +30,8 @@ export const ImportDatabaseButton = () => {
     </>
   );
 };
+
+export const ImportDatabaseButton = withHiddenInDemo(ImportDatabaseButtonImpl);
 
 const ImportDatabaseModal = ({ visible, setVisible }) => {
   const databaseChanges = useDatabaseEditorStore((state) => state.changes);

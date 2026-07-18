@@ -5,6 +5,7 @@ import {
   useGetDatabaseColumnChoices,
   useAddDatabaseRow,
 } from 'features/database-editor/stores/databaseEditorStore';
+import { withHiddenInDemo } from 'components/HiddenInDemo';
 
 /**
  * Hook to create an empty row with a unique index
@@ -88,7 +89,7 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
   }, [data, dataKey, index, schema, addDatabaseRow]);
 };
 
-export const AddRowButton = ({ data, dataKey, index, schema, onAddRow }) => {
+const AddRowButtonImpl = ({ data, dataKey, index, schema, onAddRow }) => {
   const addEmptyRow = useAddEmptyRow(data, dataKey, index, schema);
 
   const handleClick = () => {
@@ -104,6 +105,8 @@ export const AddRowButton = ({ data, dataKey, index, schema, onAddRow }) => {
     </Button>
   );
 };
+
+export const AddRowButton = withHiddenInDemo(AddRowButtonImpl);
 
 // eslint-disable-next-line no-unused-vars
 const AddRowModalForm = ({
