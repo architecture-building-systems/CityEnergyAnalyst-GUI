@@ -1,5 +1,5 @@
 import { Button, Divider, Tooltip } from 'antd';
-import { useToolList } from 'features/tools/hooks';
+import { useToolList, useSkeletonDelay } from 'features/tools/hooks';
 import {
   TOOL_FALLBACK_ICON,
   TOOL_ICON_MAP,
@@ -9,9 +9,11 @@ import './tool-choices.css';
 
 export const ToolChoices = ({ onSelected }) => {
   const { data: tools, isLoading, isError } = useToolList();
+  const showLoading = useSkeletonDelay(isLoading);
 
-  if (isLoading) return <div style={{ padding: 12 }}>Loading tools...</div>;
+  if (showLoading) return <div style={{ padding: 12 }}>Loading tools...</div>;
   if (isError) return <div style={{ padding: 12 }}>Error loading tools.</div>;
+  if (!tools) return null;
 
   return (
     <div className="cea-tool-choices">

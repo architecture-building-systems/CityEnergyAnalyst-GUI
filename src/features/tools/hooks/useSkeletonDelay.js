@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
 
-const useSkeletonDelay = (delay = 350) => {
-  const [showSkeleton, setShowSkeleton] = useState(true);
+// Only report loading as true once it has lasted `delay` ms, to avoid
+// flashing a skeleton/spinner for requests that resolve quickly.
+const useSkeletonDelay = (loading, delay = 200) => {
+  const [showSkeleton, setShowSkeleton] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (!loading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional reset when loading ends
       setShowSkeleton(false);
-    }, delay);
+      return;
+    }
 
+    const timer = setTimeout(() => setShowSkeleton(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [loading, delay]);
 
   return showSkeleton;
 };

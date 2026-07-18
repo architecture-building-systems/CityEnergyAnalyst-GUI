@@ -11,7 +11,11 @@ import { ToolControls } from './ToolControls';
 import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { ToolSkeleton } from '../tool-skeleton';
-import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
+import {
+  useToolParams,
+  useDescriptionAutoHide,
+  useSkeletonDelay,
+} from 'features/tools/hooks';
 import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useActiveScenarioContext } from 'lib/api/scenarioContext';
@@ -93,6 +97,8 @@ const Tool = ({
     dataUpdatedAt,
   } = useToolParams(script, form, scenarioContext);
 
+  const showSkeleton = useSkeletonDelay(isLoading);
+
   const isSaving =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS] }) > 0;
   const isResetting =
@@ -140,7 +146,7 @@ const Tool = ({
 
   if (script == null) return <ToolChoices onSelected={onToolSelected} />;
 
-  if (isLoading)
+  if (showSkeleton)
     return (
       <div style={{ padding: 12 }}>
         <ToolSkeleton loadingText="Loading parameters..." />
