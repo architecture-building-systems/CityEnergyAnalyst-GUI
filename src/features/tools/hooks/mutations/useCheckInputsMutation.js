@@ -1,12 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { getScenarioClient } from 'lib/api/axios';
-import {
-  activeScenarioHeaders,
-  scenarioHeaders,
-} from 'lib/api/scenarioContext';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { TOOLS_MUTATION_KEYS } from '../../constants/queryKeys';
 
-export function useCheckInputsMutation(scenarioOverride = null) {
+export function useCheckInputsMutation(scenarioContext) {
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.CHECK_INPUTS],
     mutationFn: async ({ tool, parameters }) => {
@@ -17,20 +14,11 @@ export function useCheckInputsMutation(scenarioOverride = null) {
         throw new Error('Parameters not provided for checking missing inputs.');
       }
 
-      const requestConfig = scenarioOverride
-        ? {
-            headers: scenarioHeaders({
-              project: scenarioOverride.project,
-              scenarioName: scenarioOverride.scenarioName,
-            }),
-          }
-        : { headers: activeScenarioHeaders() };
-
       try {
         const response = await getScenarioClient().post(
           `/api/tools/${tool}/check`,
           parameters,
-          requestConfig,
+          { headers: scenarioHeaders(scenarioContext) },
         );
         return response.data;
       } catch (err) {

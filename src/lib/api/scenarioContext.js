@@ -65,3 +65,16 @@ export const activeScenarioHeaders = () => {
   } = useProjectStore.getState();
   return scenarioHeaders({ project, scenarioName, childScenario });
 };
+
+/**
+ * Reactive `{ project, scenarioName, childScenario }` for the currently
+ * active scenario, sourced from the project store. Callers that need a
+ * scenario context but don't have a more specific one (e.g. a Canvas
+ * comparison column) use this as their default.
+ */
+export const useActiveScenarioContext = () => {
+  const project = useProjectStore((state) => state.project);
+  const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
+  return { project, scenarioName, childScenario };
+};

@@ -14,6 +14,7 @@ import { ToolSkeleton } from '../tool-skeleton';
 import { useToolParams, useDescriptionAutoHide } from 'features/tools/hooks';
 import { ToolChoices } from 'features/project/components/Cards/tool-choices';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useActiveScenarioContext } from 'lib/api/scenarioContext';
 import { useDemoMode } from 'stores/demoStore';
 
 const SCRIPT_READONLY_PARAMS = {
@@ -56,6 +57,16 @@ const Tool = ({
 
   const childScenario = useProjectStore((state) => state.childScenario);
 
+  // Resolve the nullable `scenarioOverride` prop into a scenario context
+  // that's always fully specified, so downstream hooks (`useToolParams`,
+  // `useInputValidation`) never need to know about the active scenario or
+  // fall back to it themselves - they just take the context they're given.
+  // A column override never carries the active scenario's pathway state.
+  const activeScenarioContext = useActiveScenarioContext();
+  const scenarioContext = scenarioOverride
+    ? { ...scenarioOverride, childScenario: null }
+    : activeScenarioContext;
+
   const pathwayOverrides = useMemo(() => {
     if (scenarioOverride || !childScenario || childScenario.year == null)
       return {};
@@ -80,7 +91,7 @@ const Tool = ({
     isFetching,
     fetchError: error,
     dataUpdatedAt,
-  } = useToolParams(script, form, scenarioOverride);
+  } = useToolParams(script, form, scenarioContext);
 
   const isSaving =
     useIsMutating({ mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS] }) > 0;
@@ -216,7 +227,7 @@ const Tool = ({
                 script={script}
                 parameters={parameters}
                 categoricalParameters={categoricalParameters}
-                scenarioOverride={scenarioOverride}
+                scenarioContext={scenarioContext}
                 dataUpdatedAt={dataUpdatedAt}
                 onToolSelected={onToolSelected}
                 onRunOverride={onRunOverride}

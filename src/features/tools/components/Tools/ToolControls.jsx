@@ -14,7 +14,7 @@ export const ToolControls = ({
   script,
   parameters,
   categoricalParameters,
-  scenarioOverride,
+  scenarioContext,
   dataUpdatedAt,
   onToolSelected,
   onRunOverride,
@@ -68,7 +68,7 @@ export const ToolControls = ({
     form,
     onValidationError,
     dataUpdatedAt,
-    scenarioOverride,
+    scenarioContext,
   );
 
   const isChecking =

@@ -1,77 +1,66 @@
+import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getScenarioClient } from 'lib/api/axios';
-import {
-  activeScenarioHeaders,
-  childScenarioToken,
-  scenarioHeaders,
-} from 'lib/api/scenarioContext';
+import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import useFormReset from './useFormReset';
 import { TOOLS_QUERY_KEYS } from '../constants/queryKeys';
-import { useProjectStore } from 'features/project/stores/projectStore';
 import { useIsNonLocalMode, useUserInfo } from 'stores/useUserQuery';
 import {
   readStoredToolConfig,
   overlayStoredValues,
 } from '../toolConfigStorage';
 
-const useFetchToolParams = (script, scenarioOverride = null) => {
-  const project = useProjectStore((state) => state.project);
-  const scenarioName = useProjectStore((state) => state.scenario);
-  const childScenario = useProjectStore((state) => state.childScenario);
+const useFetchToolParams = (script, scenarioContext) => {
+  const { project, scenarioName, childScenario } = scenarioContext;
+  const childToken = childScenarioToken(childScenario);
 
   const isNonLocal = useIsNonLocalMode();
   const userId = useUserInfo()?.id;
 
-  const effectiveProject = scenarioOverride?.project || project;
-  const effectiveScenarioName = scenarioOverride?.scenarioName || scenarioName;
-  const childToken = scenarioOverride
-    ? null
-    : childScenarioToken(childScenario);
+  // Non-local backend config is stateless (save-config is a no-op), so saved
+  // values live client-side - overlay them onto the defaults the backend
+  // returned. See toolConfigStorage.js. Applied via `select` rather than
+  // baked into `queryFn`/`queryKey`: `isNonLocal`/`userId` decide how to
+  // decorate the fetched resource for the current viewer, they aren't part
+  // of the resource's identity, so they shouldn't fragment the cache or
+  // trigger a refetch when they change.
+  const selectParams = useCallback(
+    (data) =>
+      isNonLocal
+        ? overlayStoredValues(data, readStoredToolConfig(userId))
+        : data,
+    [isNonLocal, userId],
+  );
 
   return useQuery({
     queryKey: [
       TOOLS_QUERY_KEYS.TOOL_PARAMS,
       script,
-      effectiveProject,
-      effectiveScenarioName,
+      project,
+      scenarioName,
       childToken,
     ],
     queryFn: async () => {
       if (!script) return null;
-      const requestConfig = scenarioOverride
-        ? {
-            headers: scenarioHeaders({
-              project: effectiveProject,
-              scenarioName: effectiveScenarioName,
-            }),
-          }
-        : { headers: activeScenarioHeaders() };
-      const response = await getScenarioClient().get(
-        `/api/tools/${script}`,
-        requestConfig,
-      );
-
-      // Non-local backend config is stateless (save-config is a no-op), so
-      // saved values live client-side - overlay them onto the defaults the
-      // backend just returned. See toolConfigStorage.js.
-      if (isNonLocal) {
-        return overlayStoredValues(response.data, readStoredToolConfig(userId));
-      }
+      const response = await getScenarioClient().get(`/api/tools/${script}`, {
+        headers: scenarioHeaders({ project, scenarioName, childScenario }),
+      });
       return response.data;
     },
+    select: selectParams,
     enabled: !!script,
     staleTime: 5 * 60 * 1000,
   });
 };
 
-const useToolParams = (script, form, scenarioOverride = null) => {
+const useToolParams = (script, form, scenarioContext) => {
   const {
     data: params,
     isLoading,
     isFetching,
     error: fetchError,
     dataUpdatedAt,
-  } = useFetchToolParams(script, scenarioOverride);
+  } = useFetchToolParams(script, scenarioContext);
 
   const resetForm = useFormReset(form, params, script, dataUpdatedAt);
 
