@@ -26,6 +26,7 @@ const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow;
 let splashWindow;
+let lastUsedDialogPath;
 
 const log = initLog();
 
@@ -369,7 +370,15 @@ function createSplashWindow(url) {
 }
 
 ipcMain.handle('open-dialog', async (_, arg) => {
-  const { filePaths } = await dialog.showOpenDialog(mainWindow, arg);
+  const { filePaths } = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: lastUsedDialogPath,
+    ...arg,
+  });
+  if (filePaths?.length) {
+    lastUsedDialogPath = arg?.properties?.includes('openDirectory')
+      ? filePaths[0]
+      : path.dirname(filePaths[0]);
+  }
   return filePaths;
 });
 
