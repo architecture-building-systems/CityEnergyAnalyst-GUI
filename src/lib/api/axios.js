@@ -83,6 +83,13 @@ export const publicClient = axios.create({
 // the public `/api/demo/scenarios/{demoId}/...` sub-app instead of the normal
 // `/api/...` routes, so existing hooks/queries can be pointed at demo data by
 // swapping their client, not their URLs.
+//
+// One active `demoId` per session, not per request: X-CEA-* headers are
+// stripped below, so a hook that asks for a specific *sibling* scenario
+// (e.g. Canvas Builder comparison columns) still resolves to whichever
+// scenario is currently active in `useDemoStore`, not the one it named.
+// Nothing currently calls `setDemoId()` to switch it mid-comparison, so
+// every column renders the same scenario's data in demo mode.
 export const demoClient = axios.create({
   baseURL: `${import.meta.env.VITE_CEA_URL}`,
 });

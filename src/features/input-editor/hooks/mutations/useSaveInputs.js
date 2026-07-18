@@ -1,3 +1,8 @@
+// Deliberately stays on `apiClient`, not `getScenarioClient()` - unlike the
+// GET side of Input Editor, saves are never routed to the demo sub-app (no
+// PUT route exists there). A save attempted in demo mode fails against the
+// real backend with a synthetic project header; the existing onError toast
+// surfaces it rather than saving silently or crashing.
 import { apiClient } from 'lib/api/axios';
 import {
   activeScenarioHeaders,
