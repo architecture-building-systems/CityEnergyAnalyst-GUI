@@ -23,38 +23,6 @@ export const getAccessTokenStringFromCookies = () => {
   return null;
 };
 
-function decodeJWT(token) {
-  // A JWT consists of three parts: header.payload.signature
-  // We only need to decode the header and payload parts
-
-  try {
-    // Split the token into its three parts
-    const parts = token.split('.');
-
-    if (parts.length !== 3) {
-      throw new Error('Invalid JWT format');
-    }
-
-    // Decode the header and payload
-    const header = JSON.parse(
-      atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')),
-    );
-    const payload = JSON.parse(
-      atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')),
-    );
-
-    // Return both the header and payload
-    return {
-      header,
-      payload,
-      signature: parts[2], // We're returning this but not decoding it
-    };
-  } catch (error) {
-    console.error('Error decoding JWT:', error);
-    return null;
-  }
-}
-
 // TODO: Find a better way, e.g. using env var or store in localStorage/cookie
 const getCookieDomain = () => {
   const hostname = window.location.hostname;

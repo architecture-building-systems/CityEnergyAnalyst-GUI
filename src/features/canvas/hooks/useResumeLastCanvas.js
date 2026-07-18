@@ -131,7 +131,7 @@ export const writeLastCanvas = (project, scenario, name) => {
   if (!project || !scenario || !name) return;
   try {
     localStorage.setItem(lastCanvasStorageKey(project, scenario), name);
-  } catch (_err) {
+  } catch {
     // localStorage can throw in privacy modes; ignore.
   }
 };
@@ -146,7 +146,7 @@ export const clearLastCanvas = (project, scenario) => {
   if (!project || !scenario) return;
   try {
     localStorage.removeItem(lastCanvasStorageKey(project, scenario));
-  } catch (_err) {
+  } catch {
     // see `writeLastCanvas`.
   }
 };

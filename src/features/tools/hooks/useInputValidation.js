@@ -53,7 +53,7 @@ const useInputValidation = (
   // Check inputs whenever parameters change, i.e. save, reset, or refetch
   useEffect(() => {
     const cancelled = { value: false };
-    runCheck(cancelled);
+    queueMicrotask(() => runCheck(cancelled));
     return () => {
       cancelled.value = true;
     };
