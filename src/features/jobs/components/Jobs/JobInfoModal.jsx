@@ -11,6 +11,7 @@ import { useToolCardStore } from 'features/project/stores/tool-card';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
+  const [stderr, setStderr] = useState(job?.stderr ?? '');
   const socket = getSocket();
   const containerRef = useRef();
   const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
@@ -65,6 +66,20 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
     };
 
     getJobOutput();
+
+    // The job list/SocketIO events never include stderr (the dashboard only returns log
+    // text from GET /server/jobs/{id}, to avoid pulling large log text into paginated/event
+    // payloads) -- fetch it here, covering jobs that errored before this session started.
+    const getJobStderr = async () => {
+      try {
+        const resp = await apiClient.get(`/server/jobs/${job.id}`);
+        setStderr(resp?.data?.stderr ?? '');
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getJobStderr();
 
     // Message handler for this specific job
     const message_appender = (data) => {
@@ -158,7 +173,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
               {job?.end_time ? new Date(job.end_time).toLocaleString() : '-'}
             </div>
           </div>
-          {job?.stderr && (
+          {stderr && (
             <details>
               <summary>Show full error log</summary>
               <div
@@ -171,7 +186,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
                   paddingInline: 18,
                 }}
               >
-                <pre>{job.stderr}</pre>
+                <pre>{stderr}</pre>
               </div>
             </details>
           )}
