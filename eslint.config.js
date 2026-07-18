@@ -8,6 +8,9 @@ const importPlugin = require('eslint-plugin-import');
 const jsxA11y = require('eslint-plugin-jsx-a11y');
 const tanstackQuery = require('@tanstack/eslint-plugin-query');
 const simpleImportSort = require('eslint-plugin-simple-import-sort');
+const unusedImports = require('eslint-plugin-unused-imports');
+const sonarjs = require('eslint-plugin-sonarjs');
+const promise = require('eslint-plugin-promise');
 const prettierRecommended = require('eslint-plugin-prettier/recommended');
 
 module.exports = [
@@ -28,6 +31,8 @@ module.exports = [
   importPlugin.flatConfigs.recommended,
   jsxA11y.flatConfigs.recommended,
   ...tanstackQuery.configs['flat/recommended'],
+  sonarjs.configs.recommended,
+  promise.configs['flat/recommended'],
   prettierRecommended,
   {
     settings: {
@@ -54,6 +59,7 @@ module.exports = [
       'react-compiler': reactCompiler,
       'react-refresh': reactRefresh,
       'simple-import-sort': simpleImportSort,
+      'unused-imports': unusedImports,
     },
     rules: {
       'react/react-in-jsx-scope': 'off',
@@ -62,6 +68,17 @@ module.exports = [
       'react-compiler/react-compiler': 'error',
       // 'simple-import-sort/imports': 'error',
       // 'simple-import-sort/exports': 'error',
+      'no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
       'jsx-a11y/anchor-is-valid': [
         'error',
         {
@@ -71,6 +88,20 @@ module.exports = [
         },
       ],
       'react-refresh/only-export-components': 'warn',
+      // Refactor-shaped sonarjs rules: real signal, but not worth
+      // blocking lint:fix over pre-existing code. Bugs it can
+      // actually prove (redundant-assignments, super-linear-regex)
+      // stay at 'error'.
+      'sonarjs/cognitive-complexity': 'warn',
+      'sonarjs/no-nested-functions': 'warn',
+      'sonarjs/no-nested-conditional': 'warn',
+      'sonarjs/no-nested-template-literals': 'warn',
+      'sonarjs/todo-tag': 'warn',
+      'sonarjs/fixme-tag': 'warn',
+      // Duplicates unused-imports/no-unused-vars above, but without
+      // this codebase's `_prefix`-means-intentionally-unused
+      // convention — would fight with it instead of complementing it.
+      'sonarjs/no-unused-vars': 'off',
     },
   },
 ];
