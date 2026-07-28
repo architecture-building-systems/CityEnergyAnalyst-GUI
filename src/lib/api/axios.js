@@ -76,6 +76,7 @@ export const authClient = axios.create({
 // shouldn't go through the token-refresh interceptor at all.
 export const publicClient = axios.create({
   baseURL: `${import.meta.env.VITE_CEA_URL}`,
+  timeout: 5000,
 });
 
 // For anonymous, read-only demo scenario viewing (no valid session - see
