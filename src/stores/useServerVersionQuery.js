@@ -31,7 +31,7 @@ export const useServerVersionQuery = () => {
 // forever — once exhausted, the query settles into `isError` and stays put
 // until the caller's Retry button fires `refetch()` for another bounded
 // attempt.
-export const useWaitForServer = (maxBlockingAttempts = 5) => {
+export const useWaitForServer = (maxBlockingAttempts = 3) => {
   const query = useQuery({
     queryKey: SERVER_VERSION_QUERY_KEY,
     queryFn: fetchServerVersion,
