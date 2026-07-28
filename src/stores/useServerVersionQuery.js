@@ -19,30 +19,34 @@ const fetchServerVersion = async () => {
   throw new Error('No version found');
 };
 
-export const useServerVersionQuery = () => {
+// A refetch-on-focus/reconnect would otherwise fire on every window
+// refocus regardless of whether the last attempt succeeded or is still
+// mid-retry, so it's disabled here for every caller of this key.
+export const useServerVersionQuery = (options) => {
   return useQuery({
     queryKey: SERVER_VERSION_QUERY_KEY,
     queryFn: fetchServerVersion,
     staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    ...options,
   });
 };
 
 // Stops retrying after `maxBlockingAttempts` failures instead of polling
 // forever — once exhausted, the query settles into `isError` and stays put
-// until the caller's Retry button fires `refetch()` for another bounded
-// attempt.
+// until `refetch()` is called for another bounded attempt.
 export const useWaitForServer = (maxBlockingAttempts = 3) => {
-  const query = useQuery({
-    queryKey: SERVER_VERSION_QUERY_KEY,
-    queryFn: fetchServerVersion,
-    staleTime: Infinity,
-    retry: maxBlockingAttempts,
-    retryDelay: 1500,
-  });
+  const { isLoading, isPending, isError, isSuccess, refetch } =
+    useServerVersionQuery({
+      retry: maxBlockingAttempts,
+      retryDelay: 1500,
+    });
 
   return {
-    ...query,
-    isBlocking: query.isLoading || query.isPending,
-    isUnreachable: query.isError,
+    isSuccess,
+    refetch,
+    isBlocking: isLoading || isPending,
+    isUnreachable: isError,
   };
 };
