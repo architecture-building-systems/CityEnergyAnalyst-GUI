@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
+import { ScheduleBlockStrip } from 'features/database-editor/components/ScheduleBlockStrip';
 import { useEffect, useState, useCallback } from 'react';
 import { MissingDataPrompt } from './missing-data-prompt';
 import useDatabaseEditorStore, {
@@ -540,7 +541,24 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
 
       {selectedScheduleData != null &&
       ['heating', 'cooling'].includes(selectedSchedule) ? (
-        <div>TODO</div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {Object.keys(selectedScheduleData).map((dayType) => (
+            <ScheduleBlockStrip
+              key={dayType}
+              data={selectedScheduleData[dayType]}
+              title={dayType}
+              onDataChange={(updatedData) =>
+                handleScheduleChange(dayType, updatedData)
+              }
+            />
+          ))}
+        </div>
       ) : (
         <div>
           {Object.keys(selectedScheduleData).map((dayType) => {
