@@ -104,4 +104,23 @@ module.exports = [
       'sonarjs/no-unused-vars': 'off',
     },
   },
+  {
+    // Vitest's `globals: true` config injects describe/it/expect/vi/etc as
+    // real globals at runtime - declare them here too so lint doesn't flag
+    // every test file for using them.
+    files: ['**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        vi: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+      },
+    },
+  },
 ];

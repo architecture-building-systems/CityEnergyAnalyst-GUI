@@ -29,6 +29,21 @@ export default defineConfig(({ mode }) => {
       // Optimize chunk size
       chunkSizeWarningLimit: 1000,
     },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: ['./src/test/setup.js'],
+      css: false,
+      // .env defines VITE_CEA_URL="" and leaves VITE_AUTH_URL /
+      // VITE_AUTH_COOKIE_NAME unset - template-literal interpolation turns an
+      // unset var into the literal string "undefined", so pin real-looking
+      // values here for meaningful URL assertions in tests.
+      env: {
+        VITE_CEA_URL: 'http://backend.test',
+        VITE_AUTH_URL: 'http://auth.test',
+        VITE_AUTH_COOKIE_NAME: 'stack-access',
+      },
+    },
   };
 
   if (mode === 'electron') {
