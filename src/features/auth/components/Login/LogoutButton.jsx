@@ -3,7 +3,7 @@ import { apiClient } from 'lib/api/axios';
 
 const logout = async () => {
   try {
-    const resp = await apiClient.delete('/api/user/logout');
+    const resp = await apiClient.delete('/user/logout');
     console.log('Logout:', resp.data);
     return true;
   } catch (error) {

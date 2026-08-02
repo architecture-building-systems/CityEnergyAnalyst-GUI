@@ -34,7 +34,7 @@ const DeleteChoiceModal = ({
     setLoading(true);
     try {
       await apiClient.post(
-        `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choice/delete`,
+        `/map_layers/${layerCategory}/${layerName}/${parameterName}/choice/delete`,
         { value },
         { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
       );

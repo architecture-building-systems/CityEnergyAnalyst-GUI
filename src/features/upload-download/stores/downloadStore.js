@@ -56,7 +56,7 @@ const useDownloadStore = create((set, get) => ({
   prepareDownload: async (project, scenarios, inputFiles, outputFiles) => {
     try {
       const response = await apiClient.post(
-        '/api/downloads/prepare',
+        '/downloads/prepare',
         {
           scenarios,
           input_files: inputFiles,
@@ -77,7 +77,7 @@ const useDownloadStore = create((set, get) => ({
   // Fetch all downloads for current project/user
   fetchDownloads: async () => {
     try {
-      const response = await apiClient.get('/api/downloads/', {
+      const response = await apiClient.get('/downloads/', {
         headers: activeScenarioHeaders(),
       });
       const downloads = response.data;
@@ -101,7 +101,7 @@ const useDownloadStore = create((set, get) => ({
     try {
       // First check download status to ensure it's ready and handle errors
       const statusResponse = await apiClient.get(
-        `/api/downloads/${downloadId}/status`,
+        `/downloads/${downloadId}/status`,
       );
       const downloadStatus = statusResponse.data;
 
@@ -120,7 +120,7 @@ const useDownloadStore = create((set, get) => ({
 
       // Get pre-signed download URL (expires in 5 minutes by default)
       const urlResponse = await apiClient.get(
-        `/api/downloads/${downloadId}/url`,
+        `/downloads/${downloadId}/url`,
       );
       const { url } = urlResponse.data;
 
@@ -153,7 +153,7 @@ const useDownloadStore = create((set, get) => ({
       } else if (error.response) {
         try {
           const statusResponse = await apiClient.get(
-            `/api/downloads/${downloadId}/status`,
+            `/downloads/${downloadId}/status`,
           );
           get().upsertDownload(statusResponse.data);
         } catch {
@@ -170,7 +170,7 @@ const useDownloadStore = create((set, get) => ({
   // Delete a download
   deleteDownload: async (downloadId) => {
     try {
-      await apiClient.delete(`/api/downloads/${downloadId}`);
+      await apiClient.delete(`/downloads/${downloadId}`);
       get().removeDownload(downloadId);
       return true;
     } catch (error) {

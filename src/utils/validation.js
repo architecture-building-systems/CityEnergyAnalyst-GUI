@@ -60,7 +60,7 @@ export const validateNetworkNameCollision = async (
       'network-type': config.network_type,
     };
 
-    await apiClient.post(`/api/tools/${tool}/save-config`, params);
+    await apiClient.post(`/tools/${tool}/save-config`, params);
     return Promise.resolve();
   } catch (error) {
     // Backend validation failed - extract error message

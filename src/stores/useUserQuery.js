@@ -6,7 +6,7 @@ export const USER_QUERY_KEY = ['user'];
 
 const fetchUser = async () => {
   try {
-    const resp = await apiClient.get('/api/user');
+    const resp = await apiClient.get('/user');
     return resp.data;
   } catch (err) {
     if (err.response?.status === 401) return null; // no session or unauthorized

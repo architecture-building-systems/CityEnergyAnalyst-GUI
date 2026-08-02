@@ -81,8 +81,8 @@ export const publicClient = axios.create({
 
 // For anonymous, read-only demo scenario viewing (no valid session - see
 // UserCheckGate). Requests made with this client are rewritten below to hit
-// the public `/api/demo/scenarios/{demoId}/...` sub-app instead of the normal
-// `/api/...` routes, so existing hooks/queries can be pointed at demo data by
+// the public `/demo/scenarios/{demoId}/...` sub-app instead of the normal
+// flat-root routes, so existing hooks/queries can be pointed at demo data by
 // swapping their client, not their URLs.
 //
 // One active `demoId` per session, not per request: X-CEA-* headers are
@@ -96,10 +96,14 @@ export const demoClient = axios.create({
 });
 
 demoClient.interceptors.request.use((config) => {
-  const { demoId } = useDemoStore.getState();
+  const { demoId, routePrefixes } = useDemoStore.getState();
 
-  if (demoId && config.url?.startsWith('/api/')) {
-    config.url = `/api/demo/scenarios/${encodeURIComponent(demoId)}${config.url.slice('/api'.length)}`;
+  // routePrefixes is backend-derived (see UserCheckGate's bootstrap fetch),
+  // not a hardcoded list - it's the only signal left for "this is a
+  // scenario-scoped route eligible for demo redirection" now that api-router
+  // paths, /server/*, and /plots/* all share one flat root namespace.
+  if (demoId && routePrefixes.some((p) => config.url?.startsWith(p))) {
+    config.url = `/demo/scenarios/${encodeURIComponent(demoId)}${config.url}`;
   }
 
   // The demo sub-app resolves scenario context from the URL path
@@ -116,7 +120,7 @@ demoClient.interceptors.request.use((config) => {
 
 // Returns the axios client that should be used for scenario-scoped reads
 // (inputs, map layers, canvas). Callers that already build their requests
-// against `apiClient`'s normal `/api/...` URLs can swap in this client to
+// against `apiClient`'s normal `/...` URLs can swap in this client to
 // transparently support demo mode - no other changes needed.
 export const getScenarioClient = () =>
   useDemoStore.getState().demoMode ? demoClient : apiClient;
@@ -194,11 +198,11 @@ const addAuthInterceptor = (client, refreshUrl) => {
 // Apply interceptors to both clients
 addAuthInterceptor(
   apiClient,
-  `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
+  `${import.meta.env.VITE_CEA_URL}/user/session/refresh`,
 );
 addAuthInterceptor(
   authClient,
-  `${import.meta.env.VITE_CEA_URL}/api/user/session/refresh`,
+  `${import.meta.env.VITE_CEA_URL}/user/session/refresh`,
 );
 
 // JSON requests can't carry a browser File — JSON.stringify(File) yields

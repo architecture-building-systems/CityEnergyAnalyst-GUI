@@ -41,7 +41,7 @@ const getChoices = async (
   childScenario = null,
 ) => {
   const resp = await getScenarioClient().post(
-    `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
+    `/map_layers/${layerCategory}/${layerName}/${parameterName}/choices`,
     { parameters },
     { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
   );

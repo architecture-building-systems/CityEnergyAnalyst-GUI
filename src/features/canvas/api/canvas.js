@@ -1,7 +1,7 @@
 /**
  * Canvas Builder backend client.
  *
- * Thin axios wrappers around the `/api/canvas/*` endpoints (router
+ * Thin axios wrappers around the `/canvas/*` endpoints (router
  * lives in `cea/interfaces/dashboard/api/canvas.py`). Each call
  * carries the active scenario via `X-CEA-*` request headers
  * (preferred by the backend's `CEAScenario` dependency over query
@@ -16,7 +16,7 @@
 import { apiClient, getScenarioClient } from 'lib/api/axios';
 import { scenarioHeaders } from 'lib/api/scenarioContext';
 
-const BASE = '/api/canvas';
+const BASE = '/canvas';
 
 // ── Saved canvases ─────────────────────────────────────────────
 // Reads (list/read) go through getScenarioClient() so they also work

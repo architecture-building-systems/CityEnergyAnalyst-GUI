@@ -97,7 +97,7 @@ export const useFetchBuildingsFromPath = (onFetchedBuildings) => {
     }
 
     try {
-      const resp = await apiClient.get(`/api/geometry/buildings`, {
+      const resp = await apiClient.get(`/geometry/buildings`, {
         params: {
           path,
         },
@@ -127,7 +127,7 @@ export const useFetchBuildings = (onFetchedBuildings) => {
     setError(null);
     setFetching(true);
     try {
-      const resp = await apiClient.get(`/api/geometry/buildings`, {
+      const resp = await apiClient.get(`/geometry/buildings`, {
         params: {
           generate: true,
           polygon: JSON.stringify(polygon),

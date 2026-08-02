@@ -57,7 +57,7 @@ const ImportDatabaseModal = ({ visible, setVisible }) => {
     formData.append('file', fileList[0].originFileObj);
 
     try {
-      await apiClient.post(`/api/inputs/databases/upload`, formData, {
+      await apiClient.post(`/inputs/databases/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           ...activeScenarioHeaders(),

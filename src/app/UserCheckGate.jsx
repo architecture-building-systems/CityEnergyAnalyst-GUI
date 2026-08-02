@@ -14,7 +14,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 // and the project store, so anonymous visitors (no valid session) see the
 // project page rendered against a read-only demo scenario instead of an
 // empty state. See stores/demoStore.js and lib/api/axios.js's demoClient
-// for how requests get transparently routed to `/api/demo/...` from there.
+// for how requests get transparently routed to `/demo/...` from there.
 //
 // `userInfo` drives the transition both ways: `null` means "confirmed no
 // session" (enter demo mode); a real user object means a session appeared
@@ -44,11 +44,11 @@ const useInitDemoStore = (userInfo) => {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await publicClient.get('/api/demo/scenarios');
+        const { data } = await publicClient.get('/demo/scenarios');
         const scenarios = data?.scenarios ?? [];
         if (cancelled) return;
 
-        enterDemo(scenarios);
+        enterDemo(scenarios, data?.route_prefixes ?? []);
         if (scenarios.length) {
           seedDemoProject({
             scenario: scenarios[0].id,

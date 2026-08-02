@@ -21,7 +21,7 @@ const DeleteProjectModal = ({ visible, setVisible, project }) => {
   const onClick = async () => {
     setLoading(true);
     try {
-      await apiClient.delete(`/api/project/`, {
+      await apiClient.delete(`/project/`, {
         headers: scenarioHeaders({ project }),
       });
       setVisible(false);

@@ -18,7 +18,7 @@ export function useSaveToolParamsMutation() {
     mutationFn: async ({ tool, params }) => {
       try {
         const response = await apiClient.post(
-          `/api/tools/${tool}/save-config`,
+          `/tools/${tool}/save-config`,
           params,
           { headers: activeScenarioHeaders() },
         );

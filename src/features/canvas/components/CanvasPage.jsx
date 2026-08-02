@@ -342,7 +342,7 @@ const CanvasPage = () => {
         onCancel={closeKpiPicker}
         onConfirm={handleKpiPickerConfirm}
         project={project}
-        // Picker step-2 hits ``/api/kpis/<id>/parameters`` — option
+        // Picker step-2 hits ``/kpis/<id>/parameters`` — option
         // generators scan the active scenario's output folders, so
         // we forward whichever scenario the anchor's column reads
         // from. Compare-mode anchors (columnIndex >= 0) take the

@@ -26,7 +26,7 @@ const DuplicatePathwayModal = ({
     setLoading(true);
     try {
       await apiClient.post(
-        `/api/pathways/${encodeURIComponent(currentPathwayName)}/duplicate`,
+        `/pathways/${encodeURIComponent(currentPathwayName)}/duplicate`,
         { name: values.pathway_name.trim() },
       );
       setVisible(false);

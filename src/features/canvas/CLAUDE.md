@@ -590,7 +590,7 @@ source of truth for card config that the comparison views never read.
 ## Related Files
 - `stores/canvasStore.js` - View state machine, card CRUD, default
   card / map-anchor constants.
-- `hooks/useCanvasData.js` - React Query wrappers for `/api/reports/*`.
+- `hooks/useCanvasData.js` - React Query wrappers for `/reports/*`.
   `useFetchCustomPlot` takes `scenarioContext = { scenarioName, pathwayName?, year? }`;
   pathway-single uses `X-CEA-Child-Scenario` header, others use `X-CEA-Scenario-Name` only.
 - `hooks/useYAxisAlignment.js` - Debounced Plotly y-axis unifier.

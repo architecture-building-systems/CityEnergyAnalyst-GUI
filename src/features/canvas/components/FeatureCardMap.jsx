@@ -295,7 +295,7 @@ const FeatureCardMapBody = ({
         if (!isWhatifSync && out[key] !== undefined) continue;
         try {
           const resp = await getScenarioClient().post(
-            `/api/map_layers/${categoryInfo.name}/${layerInfo.name}/${key}/choices`,
+            `/map_layers/${categoryInfo.name}/${layerInfo.name}/${key}/choices`,
             { parameters: out },
             { headers: scenarioHeaders({ project, scenarioName: scenario }) },
           );

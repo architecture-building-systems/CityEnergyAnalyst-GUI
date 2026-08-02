@@ -53,7 +53,7 @@ export const useFetchSavedCanvases = (project, scenario) =>
   });
 
 // Reads the project store's `scenariosList` directly instead of an
-// independent `/api/project/` fetch - that route requires a session
+// independent `/project/` fetch - that route requires a session
 // and isn't mounted under the demo sub-app, but `scenariosList` is
 // already kept fresh there (seeded on demo entry, refetched on every
 // project load / scenario create-duplicate-delete), so no network
@@ -68,7 +68,7 @@ export const useFetchWhatifs = (project, scenario) =>
   useQuery({
     queryKey: ['reports', 'whatifs', project, scenario],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get('/api/reports/whatifs', {
+      const { data } = await getScenarioClient().get('/reports/whatifs', {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data.whatifs;
@@ -81,7 +81,7 @@ export const useFetchFeatures = () =>
   useQuery({
     queryKey: ['reports', 'features'],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get('/api/reports/features');
+      const { data } = await getScenarioClient().get('/reports/features');
       return data.features;
     },
     staleTime: 5 * 60_000,
@@ -91,7 +91,7 @@ export const useFetchSummary = (project, scenario, feature, whatif) =>
   useQuery({
     queryKey: ['reports', 'summary', project, scenario, feature, whatif],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get('/api/reports/summary', {
+      const { data } = await getScenarioClient().get('/reports/summary', {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
         params: { feature, whatif: whatif || undefined },
       });
@@ -105,7 +105,7 @@ export const useFetchToolParams = (script, scenario, project) =>
   useQuery({
     queryKey: ['tools', script, project, scenario],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get(`/api/tools/${script}`, {
+      const { data } = await getScenarioClient().get(`/tools/${script}`, {
         headers: scenarioHeaders({ project, scenarioName: scenario }),
       });
       return data;
@@ -156,7 +156,7 @@ export const useFetchCustomPlot = (plotConfig, scenarioContext, project) => {
       // eslint-disable-next-line no-unused-vars
       const { scenario: _scenario, ...rest } = plotConfig.parameters || {};
       const { data } = await getScenarioClient().post(
-        '/api/reports/plot-custom',
+        '/reports/plot-custom',
         {
           script: plotConfig.script,
           parameters: serializeParameters(rest),

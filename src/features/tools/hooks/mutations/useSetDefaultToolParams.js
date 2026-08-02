@@ -21,7 +21,7 @@ export function useSetDefaultToolParamsMutation() {
     mutationFn: async (tool) => {
       try {
         const response = await apiClient.post(
-          `/api/tools/${tool}/default`,
+          `/tools/${tool}/default`,
           undefined,
           { headers: activeScenarioHeaders() },
         );

@@ -29,7 +29,7 @@ export const SaveDatabaseButton = () => {
     setModalVisible(true);
     try {
       const { data: databasesData } = useDatabaseEditorStore.getState();
-      await apiClient.put(`/api/inputs/databases`, databasesData, {
+      await apiClient.put(`/inputs/databases`, databasesData, {
         headers: activeScenarioHeaders(),
       });
       setSuccess(true);

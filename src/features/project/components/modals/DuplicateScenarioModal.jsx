@@ -23,7 +23,7 @@ const DuplicateScenarioModal = ({
     setLoading(true);
     try {
       await apiClient.post(
-        `/api/project/scenario/${currentScenarioName}/duplicate`,
+        `/project/scenario/${currentScenarioName}/duplicate`,
         {
           name: values.scenario_name,
         },
