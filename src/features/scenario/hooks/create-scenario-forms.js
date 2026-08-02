@@ -59,7 +59,7 @@ export const useCreateScenario = (projectPath, { onSuccess }) => {
         }
       });
       const response = await apiClient.postForm(
-        `/api/project/scenario/v2`,
+        `/api/project/scenario`,
         formattedData,
         { headers: scenarioHeaders({ project: projectPath }) },
       );
