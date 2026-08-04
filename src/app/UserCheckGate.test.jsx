@@ -51,7 +51,7 @@ beforeEach(() => {
 });
 
 describe('anonymous visitor (userInfo === null)', () => {
-  it('fetches /demo/scenarios and enters demo mode with both the scenario list and route_prefixes', async () => {
+  it('fetches /demo/ and enters demo mode with both the scenario list and route_prefixes', async () => {
     const scenarios = [{ id: 'baseline', name: 'baseline' }];
     const routePrefixes = ['/inputs/', '/canvas/'];
     publicClient.get.mockResolvedValue({
@@ -62,7 +62,7 @@ describe('anonymous visitor (userInfo === null)', () => {
     render(<UserCheckGate>content</UserCheckGate>);
 
     await waitFor(() => {
-      expect(publicClient.get).toHaveBeenCalledWith('/demo/scenarios');
+      expect(publicClient.get).toHaveBeenCalledWith('/demo/');
     });
     await waitFor(() => {
       expect(useDemoStore.getState().demoMode).toBe(true);

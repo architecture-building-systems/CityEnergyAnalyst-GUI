@@ -126,7 +126,7 @@ export const useProjectStore = create((set) => ({
 
   // Demo mode (anonymous, no valid session): seed project/scenario state
   // directly from the public demo scenario allowlist (`GET
-  // /demo/scenarios`) instead of fetching from `/project/*`, which
+  // /demo/`) instead of fetching from `/project/*`, which
   // requires a session. See stores/demoStore.js and app/UserCheckGate.jsx.
   seedDemoProject: ({ scenario, scenariosList }) =>
     set({

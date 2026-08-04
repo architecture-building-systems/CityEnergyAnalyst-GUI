@@ -44,7 +44,7 @@ const useInitDemoStore = (userInfo) => {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await publicClient.get('/demo/scenarios');
+        const { data } = await publicClient.get('/demo/');
         const scenarios = data?.scenarios ?? [];
         if (cancelled) return;
 
