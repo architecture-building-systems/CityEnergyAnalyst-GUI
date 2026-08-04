@@ -25,7 +25,7 @@ export const useFetchWeather = () => {
   const [weather, setWeather] = useState([]);
 
   const fetchWeather = async () => {
-    const { data } = await apiClient.get(`/weather`);
+    const { data } = await apiClient.get(`/weather/`);
     return data;
   };
 
