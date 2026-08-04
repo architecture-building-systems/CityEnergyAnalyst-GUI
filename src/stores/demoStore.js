@@ -27,7 +27,12 @@ const useDemoStore = create((set) => ({
   setDemoId: (demoId) => set({ demoId }),
 
   exitDemo: () =>
-    set({ demoMode: false, demoId: null, demoScenarios: [], routePrefixes: [] }),
+    set({
+      demoMode: false,
+      demoId: null,
+      demoScenarios: [],
+      routePrefixes: [],
+    }),
 }));
 
 export const useDemoMode = () => useDemoStore((state) => state.demoMode);

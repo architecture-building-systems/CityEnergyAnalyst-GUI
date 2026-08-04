@@ -77,16 +77,13 @@ export const useFetchKpiValue = ({
       whatif ?? null,
     ],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get(
-        `/kpis/${kpiId}/value`,
-        {
-          headers: scenarioHeaders({ project, scenarioName: scenario }),
-          params: {
-            locator_args: argsKey || undefined,
-            whatif: whatif || undefined,
-          },
+      const { data } = await getScenarioClient().get(`/kpis/${kpiId}/value`, {
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
+        params: {
+          locator_args: argsKey || undefined,
+          whatif: whatif || undefined,
         },
-      );
+      });
       return data;
     },
     enabled: !!project && !!scenario && !!kpiId,

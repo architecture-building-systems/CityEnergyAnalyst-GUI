@@ -119,9 +119,7 @@ const useDownloadStore = create((set, get) => ({
       }
 
       // Get pre-signed download URL (expires in 5 minutes by default)
-      const urlResponse = await apiClient.get(
-        `/downloads/${downloadId}/url`,
-      );
+      const urlResponse = await apiClient.get(`/downloads/${downloadId}/url`);
       const { url } = urlResponse.data;
 
       // Trigger download using pre-signed URL
