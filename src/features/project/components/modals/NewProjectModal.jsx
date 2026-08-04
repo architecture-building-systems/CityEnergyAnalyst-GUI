@@ -58,7 +58,7 @@ const NewProjectModal = ({
         example_project: exampleProject,
         ...values,
       });
-      const resp = await apiClient.post(`/api/project/`, {
+      const resp = await apiClient.post(`/project/`, {
         example_project: exampleProject,
         ...values,
       });

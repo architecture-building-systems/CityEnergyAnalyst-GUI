@@ -8,7 +8,7 @@ export const useFetchDatabases = () => {
   const [databases, setDatabases] = useState([]);
 
   const fetchDatabases = async () => {
-    const { data } = await apiClient.get(`/api/databases/region`);
+    const { data } = await apiClient.get(`/databases/region`);
     return data;
   };
 
@@ -25,7 +25,7 @@ export const useFetchWeather = () => {
   const [weather, setWeather] = useState([]);
 
   const fetchWeather = async () => {
-    const { data } = await apiClient.get(`/api/weather`);
+    const { data } = await apiClient.get(`/weather`);
     return data;
   };
 
@@ -59,7 +59,7 @@ export const useCreateScenario = (projectPath, { onSuccess }) => {
         }
       });
       const response = await apiClient.postForm(
-        `/api/project/scenario`,
+        `/project/scenario`,
         formattedData,
         { headers: scenarioHeaders({ project: projectPath }) },
       );

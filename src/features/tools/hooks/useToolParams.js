@@ -47,12 +47,12 @@ const useFetchToolParams = (script, scenarioContext) => {
     ],
     queryFn: async () => {
       if (!script) return null;
-      // In demo mode, GET /api/tools/{script} deliberately returns empty
+      // In demo mode, GET /tools/{script} deliberately returns empty
       // `parameters`/`categorical_parameters` (backend never resolves real
       // values for anonymous callers) - the form renders with no fields
       // rather than real read-only values. Write routes (save-config,
       // validate-field, check) stay excluded entirely.
-      const response = await getScenarioClient().get(`/api/tools/${script}`, {
+      const response = await getScenarioClient().get(`/tools/${script}`, {
         headers: scenarioHeaders({ project, scenarioName, childScenario }),
       });
       return response.data;

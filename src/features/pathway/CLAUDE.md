@@ -160,12 +160,16 @@ const { data } = await apiClient.post(url, body, {
   headers: activeScenarioHeaders(),
 });
 ```
-Exception: `fetchStateFolderPath` targets a project endpoint that reads
-`project` + `scenario_name` as query params — documented in its comment.
+Exception: `fetchStateFolderPath` passes `project`/`scenarioName` via
+`scenarioHeaders()` instead of `activeScenarioHeaders()`, since it may be
+called before a scenario is active; only `pathway_name` and `year` go in
+the query params (the backend's `/project/state-folder` route resolves
+project/scenario from headers via the `CEAScenario` dependency, same as
+every other route).
 
 ## Related Files
 - `api.js` - Dedicated pathway API client helpers. Every call uses
-  `activeScenarioHeaders()` except `fetchStateFolderPath` (query params).
+  `activeScenarioHeaders()` except `fetchStateFolderPath` (`scenarioHeaders()`).
 - `hooks/usePathwayOverview.js` - React Query wrapper around `fetchPathwayOverview` plus the `useHasSimulatedPathway` boolean derivative.
 - `components/PathwayPanel.jsx` - Stacked-lane panel, shared ruler, inspector, and editor workflows.
 - `../project/components/ProjectOverlay.jsx` - Bottom-panel mounting point and transition sizing.

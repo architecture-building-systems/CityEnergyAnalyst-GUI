@@ -195,7 +195,7 @@ export const useMapLegends = () => {
 
 const fetchMapLayer = async (category, layer_name, body, headers = {}) => {
   const resp = await getScenarioClient().post(
-    `/api/map_layers/${category}/${layer_name}/generate`,
+    `/map_layers/${category}/${layer_name}/generate`,
     body,
     { headers },
   );

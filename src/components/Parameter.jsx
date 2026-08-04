@@ -92,7 +92,7 @@ const useParameterAsyncValidation = ({
           try {
             const formValues = form.getFieldsValue();
             const response = await getScenarioClient().post(
-              `/api/tools/${toolName}/validate-field`,
+              `/tools/${toolName}/validate-field`,
               {
                 parameter_name: name,
                 value: fieldValue,

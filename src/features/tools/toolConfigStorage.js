@@ -64,7 +64,7 @@ export const clearStoredToolConfig = (userID, paramNames) => {
   if (changed) writeStoredToolConfig(userID, next);
 };
 
-// Returns every parameter name known to a `/api/tools/{script}` response
+// Returns every parameter name known to a `/tools/{script}` response
 // (both flat `parameters` and grouped `categorical_parameters`).
 export const getToolParamNames = (data) => {
   if (!data) return [];
@@ -73,7 +73,7 @@ export const getToolParamNames = (data) => {
   return [...names, ...categorical.map((p) => p.name)];
 };
 
-// Pure: returns a shallow copy of a `/api/tools/{script}` response with each
+// Pure: returns a shallow copy of a `/tools/{script}` response with each
 // parameter's `.value` replaced by the stored value, when present.
 export const overlayStoredValues = (data, storedMap) => {
   if (!data || !storedMap || Object.keys(storedMap).length === 0) return data;

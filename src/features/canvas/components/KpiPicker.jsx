@@ -19,7 +19,7 @@
  *            parameters in its yml `source.parameters` block.
  *   Step 2 — only when the chosen KPI has parameters. Renders a
  *            form with one antd `Select` per parameter, populated
- *            from `GET /api/kpis/<id>/parameters` (which calls the
+ *            from `GET /kpis/<id>/parameters` (which calls the
  *            backend's option generators against the active
  *            scenario). Confirm fires
  *            `onConfirm(kpiId, locatorArgsObject)`.

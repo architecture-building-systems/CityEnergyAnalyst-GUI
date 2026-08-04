@@ -16,7 +16,7 @@ export function useCheckInputsMutation(scenarioContext) {
 
       try {
         const response = await getScenarioClient().post(
-          `/api/tools/${tool}/check`,
+          `/tools/${tool}/check`,
           parameters,
           { headers: scenarioHeaders(scenarioContext) },
         );

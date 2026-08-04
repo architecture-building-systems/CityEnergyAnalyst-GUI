@@ -361,7 +361,7 @@ export const useCanvasStore = create((set, get) => ({
   // Display name of the currently-open canvas — also the on-disk
   // folder under `<scenario>/outputs/canvas/<name>/`. Set when the
   // user opens a saved canvas (load), creates one via the
-  // navigator's "Create new canvas" modal (POST /api/canvas/), or
+  // navigator's "Create new canvas" modal (POST /canvas/), or
   // imports a zip. `null` only in the empty entry state (between
   // a Start Over and the next create / open). The persistence
   // hook keys every debounced PUT off this name.

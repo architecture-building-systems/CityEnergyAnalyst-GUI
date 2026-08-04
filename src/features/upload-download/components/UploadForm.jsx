@@ -557,7 +557,7 @@ const FormContent = ({ onSuccess }) => {
 
     xhr.open(
       'POST',
-      `${import.meta.env.VITE_CEA_URL}/api/contents/scenario/upload`,
+      `${import.meta.env.VITE_CEA_URL}/contents/scenario/upload`,
       true,
     );
     xhr.setRequestHeader(PROJECT_HEADER, values.project.project);

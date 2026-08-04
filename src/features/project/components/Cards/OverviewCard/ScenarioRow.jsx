@@ -106,7 +106,7 @@ const ScenarioOption = ({ scenarioName, onDelete }) => {
   );
 };
 
-// Demo mode's scenario switcher: no `/api/project/*` writes (that requires
+// Demo mode's scenario switcher: no `/project/*` writes (that requires
 // a session), so switching just repoints the demo id + project store's
 // scenario field directly. Every read hook keys its React Query cache off
 // `useProjectStore`'s `scenario` value, so this alone is enough to refetch

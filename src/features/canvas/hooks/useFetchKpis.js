@@ -1,5 +1,5 @@
 /**
- * React Query wrappers around `GET /api/kpis/...`.
+ * React Query wrappers around `GET /kpis/...`.
  *
  * Five hooks:
  *
@@ -16,7 +16,7 @@
  *
  * - `useFetchKpiSparkline({...})` fans out per-state-year fetches
  *   for pathway-state KPI cards. Currently uses the bulk
- *   ``/api/kpis/?feature=...`` endpoint; per-card ``locatorArgs``
+ *   ``/kpis/?feature=...`` endpoint; per-card ``locatorArgs``
  *   overrides aren't honoured here yet (TODO).
  *
  * - `useFetchKpiRegistry()` fetches the flat KPI catalogue
@@ -77,16 +77,13 @@ export const useFetchKpiValue = ({
       whatif ?? null,
     ],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get(
-        `/api/kpis/${kpiId}/value`,
-        {
-          headers: scenarioHeaders({ project, scenarioName: scenario }),
-          params: {
-            locator_args: argsKey || undefined,
-            whatif: whatif || undefined,
-          },
+      const { data } = await getScenarioClient().get(`/kpis/${kpiId}/value`, {
+        headers: scenarioHeaders({ project, scenarioName: scenario }),
+        params: {
+          locator_args: argsKey || undefined,
+          whatif: whatif || undefined,
         },
-      );
+      });
       return data;
     },
     enabled: !!project && !!scenario && !!kpiId,
@@ -119,7 +116,7 @@ export const useFetchKpiParameters = ({
     ],
     queryFn: async () => {
       const { data } = await getScenarioClient().get(
-        `/api/kpis/${kpiId}/parameters`,
+        `/kpis/${kpiId}/parameters`,
         {
           headers: scenarioHeaders({ project, scenarioName: scenario }),
           params: {
@@ -143,11 +140,11 @@ export const useFetchKpiParameters = ({
  * the polyline at gaps. ``null`` points means the inputs are not
  * yet sufficient to fetch (no project, no state-years, etc.).
  *
- * NOTE: still hits the bulk ``/api/kpis/?feature=...`` endpoint
+ * NOTE: still hits the bulk ``/kpis/?feature=...`` endpoint
  * and ignores per-card ``locatorArgs`` overrides — a sparkline on
  * a card with a non-default ``panel_type`` will currently show
  * the yml-default series. To fix, switch each year's query to the
- * single-KPI ``/api/kpis/<id>/value`` endpoint with the card's
+ * single-KPI ``/kpis/<id>/value`` endpoint with the card's
  * args forwarded.
  */
 export const useFetchKpiSparkline = ({
@@ -186,7 +183,7 @@ export const useFetchKpiSparkline = ({
     queries: yearsAndPaths.map(({ year, scenario }) => ({
       queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
       queryFn: async () => {
-        const { data } = await getScenarioClient().get('/api/kpis/', {
+        const { data } = await getScenarioClient().get('/kpis/', {
           headers: scenarioHeaders({
             project,
             scenarioName: parentScenario,
@@ -230,7 +227,7 @@ export const useFetchKpiRegistry = () =>
   useQuery({
     queryKey: ['kpi-registry'],
     queryFn: async () => {
-      const { data } = await getScenarioClient().get('/api/kpis/registry');
+      const { data } = await getScenarioClient().get('/kpis/registry');
       return data;
     },
     staleTime: 60 * 60_000, // 1h

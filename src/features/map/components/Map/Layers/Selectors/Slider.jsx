@@ -20,7 +20,7 @@ const getRange = async (
   childScenario = null,
 ) => {
   const resp = await getScenarioClient().post(
-    `/api/map_layers/${layerCategory}/${layerName}/${parameterName}/range`,
+    `/map_layers/${layerCategory}/${layerName}/${parameterName}/range`,
     { parameters },
     { headers: scenarioHeaders({ project, scenarioName, childScenario }) },
   );

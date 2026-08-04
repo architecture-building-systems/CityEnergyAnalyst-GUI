@@ -141,7 +141,7 @@ export const ToolFormButtons = ({
       if (value) {
         try {
           const resp = await getScenarioClient().post(
-            `/api/tools/${script}/validate-field`,
+            `/tools/${script}/validate-field`,
             {
               parameter_name: fieldName,
               value,

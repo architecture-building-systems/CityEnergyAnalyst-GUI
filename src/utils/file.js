@@ -20,7 +20,7 @@ export const getContentInfo = async (
   content_type = 'directory',
 ) => {
   try {
-    const { data } = await apiClient.get('/api/contents', {
+    const { data } = await apiClient.get('/contents', {
       params: { content_type, content_path },
     });
     return data;

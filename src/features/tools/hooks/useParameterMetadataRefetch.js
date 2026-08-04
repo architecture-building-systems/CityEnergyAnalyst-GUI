@@ -12,7 +12,7 @@ const useParameterMetadataRefetch = (script, form) => {
       let response;
       try {
         response = await getScenarioClient().post(
-          `/api/tools/${script}/parameter-metadata`,
+          `/tools/${script}/parameter-metadata`,
           {
             form_values: formValues,
             affected_parameters: affectedParams,

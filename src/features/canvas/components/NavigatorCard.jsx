@@ -58,7 +58,7 @@ import { CEA_PURPLE, PATHWAY_PRIMARY } from 'constants/theme';
  * Share / Import buttons.
  *
  * There is no Save button and no autosave toggle: every persistable
- * edit hits `PUT /api/canvas/{name}` directly via
+ * edit hits `PUT /canvas/{name}` directly via
  * `useCanvasPersistence`. The expensive plot-data capture pass runs
  * server-side inside `/export` when the user clicks Share.
  *

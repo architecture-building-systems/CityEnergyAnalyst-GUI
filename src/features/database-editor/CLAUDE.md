@@ -1,6 +1,6 @@
 # Database Editor - Claude Code Guide
 
-> **Backend Data Format:** See [DATA_FORMAT.md](./DATA_FORMAT.md) for detailed explanation of the JSON response structure from `/api/inputs/databases` endpoint.
+> **Backend Data Format:** See [DATA_FORMAT.md](./DATA_FORMAT.md) for detailed explanation of the JSON response structure from `/inputs/databases` endpoint.
 
 ## CRITICAL RULES - Read First
 

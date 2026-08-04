@@ -35,7 +35,7 @@ const validateDatabase = async (value, databases) => {
   if (databases.includes(value)) return Promise.resolve();
 
   try {
-    const response = await apiClient.post(`/api/databases/validate`, {
+    const response = await apiClient.post(`/databases/validate`, {
       type: 'path',
       path: value,
     });

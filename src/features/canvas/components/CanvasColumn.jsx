@@ -1258,7 +1258,7 @@ const primaryMapDragGripStyle = {
 };
 
 // TODO: drop once these layers exist as real map overlays in the
-// backend `/api/map_layers/` response. They show up in the response
+// backend `/map_layers/` response. They show up in the response
 // but have no overlay data, so picking them yields a card with an
 // empty map. Hidden from the Map picker for now.
 const HIDDEN_MAP_LAYERS = new Set([

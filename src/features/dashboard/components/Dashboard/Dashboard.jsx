@@ -174,7 +174,7 @@ const useDashboardData = () => {
 
   const fetchDashboards = async () => {
     try {
-      const resp = await apiClient.get(`/api/dashboards/`);
+      const resp = await apiClient.get(`/dashboards/`);
       setDashboards(resp.data);
     } catch (error) {
       console.error(error);
@@ -182,7 +182,7 @@ const useDashboardData = () => {
   };
   const fetchCategories = async () => {
     try {
-      const resp = await apiClient.get(`/api/dashboards/plot-categories`);
+      const resp = await apiClient.get(`/dashboards/plot-categories`);
       setCategories(resp.data);
     } catch (error) {
       console.error(error);

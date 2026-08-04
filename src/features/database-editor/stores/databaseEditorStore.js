@@ -49,7 +49,7 @@ const useDatabaseEditorStore = create((set, get) => ({
 
     set({ databaseValidation: { status: 'checking', message: null } });
     try {
-      await getScenarioClient().get('/api/inputs/databases/check', {
+      await getScenarioClient().get('/inputs/databases/check', {
         headers: activeScenarioHeaders(),
       });
       set({ databaseValidation: { status: 'valid', message: null } });
@@ -77,7 +77,7 @@ const useDatabaseEditorStore = create((set, get) => ({
   initDatabaseState: async () => {
     set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
-      const { data } = await getScenarioClient().get('/api/inputs/databases', {
+      const { data } = await getScenarioClient().get('/inputs/databases', {
         headers: activeScenarioHeaders(),
       });
       set({
@@ -125,7 +125,7 @@ const useDatabaseEditorStore = create((set, get) => ({
 
     try {
       set({ status: { status: SAVING_STATUS } });
-      await apiClient.put('/api/inputs/databases', data, {
+      await apiClient.put('/inputs/databases', data, {
         headers: activeScenarioHeaders(),
       });
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
@@ -150,7 +150,7 @@ const useDatabaseEditorStore = create((set, get) => ({
 
   fetchDatabaseSchema: async (params) => {
     try {
-      const response = await getScenarioClient().get('/api/databases/schema', {
+      const response = await getScenarioClient().get('/databases/schema', {
         params,
       });
       set({ schema: response.data });

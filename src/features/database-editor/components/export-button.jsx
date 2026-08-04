@@ -28,7 +28,7 @@ export const ExportDatabaseButton = () => {
         setLoading(true);
         try {
           const response = await apiClient.get(
-            '/api/inputs/databases/download',
+            '/inputs/databases/download',
             { responseType: 'blob', headers: activeScenarioHeaders() },
           );
 

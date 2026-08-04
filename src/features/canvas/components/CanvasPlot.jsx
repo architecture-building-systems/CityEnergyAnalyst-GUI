@@ -25,7 +25,7 @@ import { refitCharts } from '../utils/plotResize';
 
 /**
  * Renders a single Plotly plot. Every Canvas Builder plot has a
- * script, so we always fetch via POST /api/reports/plot-custom.
+ * script, so we always fetch via POST /reports/plot-custom.
  *
  * Single render path: parse the HTML, replay the embedded <script>
  * tags inline, post-process the resulting Plotly figures (lift main

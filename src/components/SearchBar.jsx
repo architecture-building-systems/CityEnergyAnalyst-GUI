@@ -12,7 +12,7 @@ const useGlossaryData = () => {
   useEffect(() => {
     const getSearchResults = async () => {
       try {
-        const result = await apiClient.get(`/api/glossary/`);
+        const result = await apiClient.get(`/glossary/`);
         setData(result.data);
       } catch (error) {
         console.error(error);

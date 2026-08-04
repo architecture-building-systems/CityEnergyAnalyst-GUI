@@ -25,7 +25,7 @@ export const ModalNewDashboard = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         apiClient
-          .post(`/api/dashboards/`, values)
+          .post(`/dashboards/`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -134,7 +134,7 @@ export const ModalDuplicateDashboard = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         apiClient
-          .post(`/api/dashboards/duplicate`, {
+          .post(`/dashboards/duplicate`, {
             ...values,
             dashboard_index: dashIndex,
           })
@@ -220,7 +220,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         apiClient
-          .patch(`/api/dashboards/${dashIndex}`, values)
+          .patch(`/dashboards/${dashIndex}`, values)
           .then((response) => {
             if (response) {
               console.log(response.data);
@@ -243,7 +243,7 @@ export const ModalSetScenario = ({ fetchDashboards, dashIndex }) => {
 
   useEffect(() => {
     if (visible.setScenario) {
-      apiClient.get(`/api/project/`).then((response) => {
+      apiClient.get(`/project/`).then((response) => {
         const { scenario, scenarios } = response.data;
         setScenarios({
           type: 'ScenarioNameParameter',
@@ -292,7 +292,7 @@ export const ModalDeleteDashboard = ({
   const handleOk = () => {
     setConfirmLoading(true);
     apiClient
-      .delete(`/api/dashboards/${dashIndex}`)
+      .delete(`/dashboards/${dashIndex}`)
       .then((response) => {
         if (response) {
           console.log(response.data);
@@ -350,7 +350,7 @@ const ModalAddPlotTemplate = ({
   const getParameters = async (scenario) => {
     try {
       const params = await apiClient.get(
-        `/api/dashboards/plot-categories/${
+        `/dashboards/plot-categories/${
           category.category
         }/plots/${category.plot_id}/parameters`,
         scenario ? { params: { scenario } } : {},
@@ -368,7 +368,7 @@ const ModalAddPlotTemplate = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         apiClient
-          .put(`/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`, {
+          .put(`/dashboards/${dashIndex}/plots/${activePlotRef.current}`, {
             ...category,
             parameters: values,
           })
@@ -547,7 +547,7 @@ export const ModalEditParameters = ({
   const getParameters = async (scenario) => {
     try {
       const params = await apiClient.get(
-        `/api/dashboards/${dashIndex}/plots/${
+        `/dashboards/${dashIndex}/plots/${
           activePlotRef.current
         }/parameters`,
         scenario ? { params: { scenario } } : {},
@@ -565,7 +565,7 @@ export const ModalEditParameters = ({
         setConfirmLoading(true);
         console.log('Received values of form: ', values);
         apiClient
-          .put(`/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`, {
+          .put(`/dashboards/${dashIndex}/plots/${activePlotRef.current}`, {
             parameters: values,
           })
           .then((response) => {
@@ -651,7 +651,7 @@ export const ModalDeletePlot = ({
   const handleOk = () => {
     setConfirmLoading(true);
     apiClient
-      .delete(`/api/dashboards/${dashIndex}/plots/${activePlotRef.current}`)
+      .delete(`/dashboards/${dashIndex}/plots/${activePlotRef.current}`)
       .then((response) => {
         if (response) {
           console.log(response.data);
@@ -755,7 +755,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
       try {
         setLoading(true);
         const { data } = await apiClient.get(
-          `/api/dashboards/${dashIndex}/plots/${
+          `/dashboards/${dashIndex}/plots/${
             activePlotRef.current
           }/input-files`,
         );

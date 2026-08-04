@@ -23,7 +23,7 @@ const validateGeometry = async (value, buildingType) => {
   else if (value === undefined) return Promise.reject();
 
   try {
-    const response = await apiClient.post(`/api/geometry/buildings/validate`, {
+    const response = await apiClient.post(`/geometry/buildings/validate`, {
       type: 'path',
       building: buildingType,
       path: value,
@@ -41,7 +41,7 @@ const validateTypology = async (value) => {
   if (value === undefined) return Promise.reject();
 
   try {
-    const response = await apiClient.post(`/api/geometry/typology/validate`, {
+    const response = await apiClient.post(`/geometry/typology/validate`, {
       type: 'path',
       path: value,
     });

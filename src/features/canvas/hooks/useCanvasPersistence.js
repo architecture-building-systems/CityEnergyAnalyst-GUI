@@ -2,7 +2,7 @@
  * Autosave hook for the Canvas Builder.
  *
  * Subscribes to the canvas store and flushes a serialised snapshot
- * to the backend's `/api/canvas/{name}` endpoint on a debounced
+ * to the backend's `/canvas/{name}` endpoint on a debounced
  * cadence. Every edit lands in the saved folder directly — there
  * is no temp / draft staging area.
  *
@@ -12,7 +12,7 @@
  * Activation rules:
  *   - No project / scenario selected → do nothing.
  *   - No canvas open (`canvasName == null`)  → do nothing. The
- *     navigator's New-canvas modal calls `POST /api/canvas/`
+ *     navigator's New-canvas modal calls `POST /canvas/`
  *     itself before populating `canvasName`, so the folder always
  *     exists by the time the autosave hook starts targeting it.
  *   - Otherwise: every persistable change fires a 300 ms debounce

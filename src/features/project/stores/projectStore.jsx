@@ -19,14 +19,14 @@ const DEFAULT_PROJECT_PROPS = {
 const DEMO_PROJECT_TOKEN = '__demo__';
 
 export const fetchConfig = async () => {
-  const response = await apiClient.get(`/api/project/config`);
+  const response = await apiClient.get(`/project/config`);
   return response.data;
 };
 
 export const fetchProjectInfo = async (project) => {
   if (!project) throw new Error('Project cannot be empty');
   try {
-    const { data } = await apiClient.get(`/api/project/`, {
+    const { data } = await apiClient.get(`/project/`, {
       headers: scenarioHeaders({ project }),
     });
 
@@ -42,7 +42,7 @@ export const deleteScenario = async (project, scenario) => {
   if (!scenario) throw new Error('Scenario cannot be empty');
 
   try {
-    const { data } = await apiClient.delete(`/api/project/scenario`, {
+    const { data } = await apiClient.delete(`/project/scenario`, {
       headers: scenarioHeaders({ project }),
       data: { scenario_name: scenario },
     });
@@ -56,7 +56,7 @@ export const deleteScenario = async (project, scenario) => {
 
 export const fetchProjectChoices = async () => {
   try {
-    const { data } = await apiClient.get(`/api/project/choices`);
+    const { data } = await apiClient.get(`/project/choices`);
 
     return data;
   } catch (error) {
@@ -126,7 +126,7 @@ export const useProjectStore = create((set) => ({
 
   // Demo mode (anonymous, no valid session): seed project/scenario state
   // directly from the public demo scenario allowlist (`GET
-  // /api/demo/scenarios`) instead of fetching from `/api/project/*`, which
+  // /demo/scenarios`) instead of fetching from `/project/*`, which
   // requires a session. See stores/demoStore.js and app/UserCheckGate.jsx.
   seedDemoProject: ({ scenario, scenariosList }) =>
     set({

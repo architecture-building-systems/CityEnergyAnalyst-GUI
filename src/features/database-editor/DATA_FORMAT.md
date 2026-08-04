@@ -1,6 +1,6 @@
 # Database Backend Response Format
 
-This document describes the JSON data structure returned by `/api/inputs/databases` endpoint.
+This document describes the JSON data structure returned by `/inputs/databases` endpoint.
 
 ## Top-Level Structure
 

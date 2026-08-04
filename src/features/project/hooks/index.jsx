@@ -11,7 +11,7 @@ import { scenarioHeaders } from 'lib/api/scenarioContext';
 const updateConfigProjectInfo = async (project, scenarioName) => {
   try {
     const resp = await apiClient.put(
-      `/api/project/`,
+      `/project/`,
       { scenario_name: scenarioName },
       { headers: scenarioHeaders({ project }) },
     );
