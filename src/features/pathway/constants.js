@@ -23,22 +23,3 @@ export const getTickStep = (pxPerYear) => {
   }
   return 1000;
 };
-
-/**
- * Builds the canonical `<project>/<scenario>` path used as the backend
- * `scenario_path` parameter, stripping any trailing slashes from `project`.
- * Returns null if either argument is falsy.
- * @param {string} project  Full project path
- * @param {string} scenarioName
- * @returns {string|null}
- */
-const stripTrailingSlashes = (path) => {
-  let end = path.length;
-  while (end > 0 && (path[end - 1] === '/' || path[end - 1] === '\\')) end--;
-  return path.slice(0, end);
-};
-
-export const buildScenarioPath = (project, scenarioName) => {
-  if (!project || !scenarioName) return null;
-  return `${stripTrailingSlashes(String(project))}/${scenarioName}`;
-};

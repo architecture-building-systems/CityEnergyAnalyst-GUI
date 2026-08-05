@@ -507,6 +507,24 @@ captures their local state, so the page doesn't need to know which
 view owns what. The slot is only inserted when `onSave` fires (i.e.
 the user clicks Run inside the drawer).
 
+### DON'T: Bake a column's scenario into a saved `plotConfig.parameters.scenario`
+```jsx
+// ComparisonView.handleEditPlot
+onOpenDrawer({
+  scenarioOverride: scenarioOverrideFor(columnIndex), // { project, scenarioName } — headers
+  plotConfig: existing, // not rewritten with a client-built scenario path
+  ...
+});
+```
+Scoping a column's edit form to its own scenario goes through
+`scenarioOverride` alone (see `features/jobs/CLAUDE.md`: the backend resolves
+`parameters.scenario` from headers at job-creation time regardless of what a
+saved `plotConfig` carries, so a client-side rewrite is redundant — and
+wrong outside local mode, since it would need the resolved absolute path
+that only the backend can compute). `useFetchCustomPlot` already strips any
+`parameters.scenario` before `POST /reports/plot-custom` for the same
+reason — see its `queryFn`.
+
 ### DO: Align y-axes only when columns share a slot id
 ```jsx
 const { handlePlotReady } = useYAxisAlignment(

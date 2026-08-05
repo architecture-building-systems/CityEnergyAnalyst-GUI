@@ -47,12 +47,19 @@ selectedYearByPathwayRef.current[pathwayName] = year;
 
 ### DO: Launch panel mutations through the native job store
 ```jsx
-await createJob('pathway-delete-state', {
-  scenario,
-  existing_pathway_name: selectedPathway,
-  year_of_state: selectedRow.year,
-});
+await createJob(
+  'pathway-delete-state',
+  { existing_pathway_name: selectedPathway, year_of_state: selectedRow.year },
+  { project, scenarioName, childScenario: null },
+);
 ```
+Never pass a `scenario` field in `parameters` — the backend resolves it from
+`X-CEA-*` headers (see `features/jobs/CLAUDE.md`). Pathway jobs always target
+the *parent* scenario's `outputs/pathways/...` tree regardless of which
+pathway child state is active in the map/canvas, so pass the explicit
+`{ project, scenarioName, childScenario: null }` context rather than relying
+on `createJob`'s default (`activeScenarioHeaders()`, which follows whatever
+child scenario is currently active).
 
 ### DO: Let native Job Info own success and failure feedback for pathway jobs
 ```jsx
@@ -69,10 +76,11 @@ setPanelError(null);
 
 ### DO: Launch bake/simulate through the job store, not bespoke API routes
 ```jsx
-await createJob('bake-pathway-states', {
-  scenario,
-  existing_pathway_name: selectedPathway,
-});
+await createJob(
+  'bake-pathway-states',
+  { existing_pathway_name: selectedPathway },
+  { project, scenarioName, childScenario: null },
+);
 ```
 
 ### DO: Keep header-level pathway workflow buttons together

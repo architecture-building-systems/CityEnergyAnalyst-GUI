@@ -12,7 +12,7 @@ import {
   fetchStateGeojson,
   fetchStateFolderPath,
 } from 'features/pathway/api';
-import { STATUS_FILL, buildScenarioPath } from 'features/pathway/constants';
+import { STATUS_FILL } from 'features/pathway/constants';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
 import { useMapStore } from 'features/map/stores/mapStore';
@@ -345,7 +345,6 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   };
 
   const handleDelete = (pathwayName) => {
-    const scenarioPath = buildScenarioPath(project, scenarioName);
     Modal.confirm({
       title: `Delete pathway '${pathwayName}'?`,
       content:
@@ -357,10 +356,17 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
           setChildScenario(null);
           setStateZoneOverride(null);
         }
-        await createJob('pathway-delete-pathway', {
-          scenario: scenarioPath,
-          existing_pathway_name: pathwayName,
-        });
+        // Always target the parent scenario's outputs/pathways/... tree,
+        // regardless of which pathway is selected/active: even when
+        // selectedPathway === pathwayName clears childScenario above, deleting
+        // a *different* pathway while a child state is active must not leave
+        // X-CEA-Child-Scenario pointing the job at that child's folder. The
+        // backend resolves parameters.scenario from these headers.
+        await createJob(
+          'pathway-delete-pathway',
+          { existing_pathway_name: pathwayName },
+          { project, scenarioName, childScenario: null },
+        );
       },
     });
   };

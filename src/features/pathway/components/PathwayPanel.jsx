@@ -34,7 +34,7 @@ import {
 
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import DuplicatePathwayModal from 'features/project/components/modals/DuplicatePathwayModal';
-import { STATUS_FILL, buildScenarioPath, getTickStep } from '../constants';
+import { STATUS_FILL, getTickStep } from '../constants';
 
 import {
   deleteInterventionTemplate,
@@ -629,11 +629,6 @@ const PathwayPanel = ({
 
   const [selectedHeaderTemplates, setSelectedHeaderTemplates] = useState([]);
 
-  const scenarioPath = useMemo(
-    () => buildScenarioPath(project, scenarioName),
-    [project, scenarioName],
-  );
-
   const overviewPathways = overview?.pathways ?? [];
   const visibleSet = useMemo(() => new Set(visiblePathways), [visiblePathways]);
   const visibleOverviewPathways = useMemo(
@@ -894,7 +889,17 @@ const PathwayPanel = ({
     }) => {
       setBusyAction(busyKey);
       try {
-        const job = await createJob(script, parameters);
+        // Every panel job operates on the parent scenario's outputs/pathways/...
+        // tree, regardless of which child pathway state is active in the map/canvas
+        // (X-CEA-Child-Scenario). Pin the headers explicitly rather than relying on
+        // activeScenarioHeaders()'s default, which would follow the active child
+        // scenario and point the job at the wrong folder. The backend resolves
+        // parameters.scenario from these headers -- the client no longer computes it.
+        const job = await createJob(script, parameters, {
+          project,
+          scenarioName,
+          childScenario: null,
+        });
         setPanelError(null);
         setPendingPanelJob({
           id: job.id,
@@ -916,7 +921,7 @@ const PathwayPanel = ({
         return null;
       }
     },
-    [createJob],
+    [createJob, project, scenarioName],
   );
 
   const handleSelectPathway = useCallback(
@@ -1114,7 +1119,7 @@ const PathwayPanel = ({
   const globalValidationIssues = timeline?.validation?.issues ?? [];
 
   const handleRunPathwayJob = async (scriptName) => {
-    if (!selectedPathway || !scenarioPath) {
+    if (!selectedPathway || !scenarioName) {
       setPanelError('Select a scenario and pathway first.');
       return;
     }
@@ -1174,7 +1179,6 @@ const PathwayPanel = ({
     await startPanelJob({
       script: 'pathway-events-apply-templates',
       parameters: {
-        scenario: scenarioPath,
         existing_pathway_names: visiblePathways,
         year_of_state: targetYear,
         intervention_templates: selectedHeaderTemplates,
@@ -1212,7 +1216,6 @@ const PathwayPanel = ({
       await startPanelJob({
         script: 'pathway-save-yaml',
         parameters: {
-          scenario: scenarioPath,
           existing_pathway_names: [selectedPathway],
           year_of_state: targetYear,
           raw_yaml: rawYaml,
@@ -1232,7 +1235,7 @@ const PathwayPanel = ({
   };
 
   const handleDeletePathwayByName = (pathwayName) => {
-    if (!pathwayName || !scenarioPath) {
+    if (!pathwayName || !scenarioName) {
       return;
     }
 
@@ -1248,7 +1251,6 @@ const PathwayPanel = ({
         await startPanelJob({
           script: 'pathway-delete-pathway',
           parameters: {
-            scenario: scenarioPath,
             existing_pathway_name: pathwayName,
           },
           busyKey: 'delete-pathway',
@@ -1308,10 +1310,13 @@ const PathwayPanel = ({
           setPanelError('Enter a pathway name first.');
           return Promise.reject();
         }
+        if (!scenarioName) {
+          setPanelError('Scenario is not ready yet. Please try again.');
+          return Promise.reject();
+        }
         await startPanelJob({
           script: 'create-new-pathway',
           parameters: {
-            scenario: scenarioPath,
             new_pathway_name: name,
           },
           busyKey: 'create-pathway',
@@ -1347,7 +1352,6 @@ const PathwayPanel = ({
         await startPanelJob({
           script: 'pathway-delete-state',
           parameters: {
-            scenario: scenarioPath,
             existing_pathway_names: [selectedPathway],
             year_of_state: selectedRow.year,
           },
@@ -1531,13 +1535,15 @@ const PathwayPanel = ({
   };
 
   const handleBakePathway = async (pathwayName) => {
-    if (!pathwayName || !scenarioPath) return;
+    if (!pathwayName || !scenarioName) return;
     setBusyAction(`bake-${pathwayName}`);
     try {
-      await createJob('bake-pathway-states', {
-        scenario: scenarioPath,
-        existing_pathway_name: pathwayName,
-      });
+      // Parent-only context -- see the comment in startPanelJob.
+      await createJob(
+        'bake-pathway-states',
+        { existing_pathway_name: pathwayName },
+        { project, scenarioName, childScenario: null },
+      );
       setPanelError(null);
     } catch (error) {
       setPanelError(getErrorMessage(error, 'Failed to start bake job.'));
@@ -1669,6 +1675,7 @@ const PathwayPanel = ({
                   icon={<CreateNewIcon />}
                   type="text"
                   loading={busyAction === 'create-pathway'}
+                  disabled={!scenarioName}
                   onClick={handleStartCreatePathway}
                 />
               </TooltipFromBackend>

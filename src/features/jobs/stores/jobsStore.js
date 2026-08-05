@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import {
+  activeScenarioHeaders,
+  scenarioHeaders,
+} from 'lib/api/scenarioContext';
 
 const JOBS_PAGE_SIZE = 10;
 
@@ -58,7 +61,14 @@ const useJobsStore = create((set, get) => ({
     }
   },
 
-  createJob: async (script, parameters) => {
+  // `scenarioContext`, when supplied, pins the request's X-CEA-* headers to an
+  // explicit `{ project, scenarioName, childScenario }` instead of the store's
+  // currently-active scenario (`activeScenarioHeaders()`). Needed for scripts that
+  // must always target the *parent* scenario regardless of which child pathway state
+  // is active in the UI — the backend resolves `parameters.scenario` from these same
+  // headers (see cea/interfaces/dashboard/server/AGENTS.md), so passing
+  // `childScenario: null` here is what keeps such a job on the parent scenario.
+  createJob: async (script, parameters, scenarioContext) => {
     const formattedData = {};
 
     Object.keys(parameters).forEach((key) => {
@@ -80,7 +90,11 @@ const useJobsStore = create((set, get) => ({
           script,
           parameters: formattedData,
         },
-        { headers: activeScenarioHeaders() },
+        {
+          headers: scenarioContext
+            ? scenarioHeaders(scenarioContext)
+            : activeScenarioHeaders(),
+        },
       );
 
       const jobData = response.data;
