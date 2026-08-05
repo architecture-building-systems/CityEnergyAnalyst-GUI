@@ -1,4 +1,4 @@
-import { Divider, Modal, Select, Spin, Tooltip } from 'antd';
+import { Divider, message, Modal, Select, Spin, Tooltip } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,13 +8,14 @@ import KpiRibbon from './KpiRibbon';
 import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
+  deletePathway,
   fetchPathwayOverview,
   fetchStateGeojson,
   fetchStateFolderPath,
 } from 'features/pathway/api';
 import { STATUS_FILL } from 'features/pathway/constants';
 import { BinAnimationIcon } from 'assets/icons';
-import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
+import useJobsStore from 'features/jobs/stores/jobsStore';
 import { useMapStore } from 'features/map/stores/mapStore';
 
 import CeaLogoSVG from 'assets/cea-logo.svg';
@@ -191,7 +192,6 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   const childScenario = useProjectStore((s) => s.childScenario);
   const setChildScenario = useProjectStore((s) => s.setChildScenario);
   const simulationProgress = useProjectStore((s) => s.simulationProgress);
-  const createJob = useCreateJob();
   const [switching, setSwitching] = useState(false);
   const [hoveredYear, setHoveredYear] = useState(null);
   const viewportRef = useRef(null);
@@ -218,18 +218,16 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     };
   }, [scenarioName]);
 
-  // Listen for completed delete/bake jobs to refresh
+  // Listen for completed bake/simulate jobs to refresh. pathway-delete-pathway
+  // is no longer one of these -- it's a direct REST call now (see
+  // handleDelete below), which refreshes itself on success.
   const jobs = useJobsStore((s) => s.jobs);
   useEffect(() => {
     if (!jobs) return;
     const hasCompleted = Object.values(jobs).some(
       (j) =>
         j.state === 2 &&
-        [
-          'pathway-delete-pathway',
-          'bake-pathway-states',
-          'pathway-simulations',
-        ].includes(j.script),
+        ['bake-pathway-states', 'pathway-simulations'].includes(j.script),
     );
     if (hasCompleted) refreshOverview();
   }, [jobs, refreshOverview]);
@@ -356,17 +354,23 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
           setChildScenario(null);
           setStateZoneOverride(null);
         }
-        // Always target the parent scenario's outputs/pathways/... tree,
-        // regardless of which pathway is selected/active: even when
-        // selectedPathway === pathwayName clears childScenario above, deleting
-        // a *different* pathway while a child state is active must not leave
-        // X-CEA-Child-Scenario pointing the job at that child's folder. The
-        // backend resolves parameters.scenario from these headers.
-        await createJob(
-          'pathway-delete-pathway',
-          { existing_pathway_name: pathwayName },
-          { project, scenarioName, childScenario: null },
-        );
+        try {
+          // Always target the parent scenario's outputs/pathways/... tree,
+          // regardless of which pathway is selected/active: even when
+          // selectedPathway === pathwayName clears childScenario above, deleting
+          // a *different* pathway while a child state is active must not leave
+          // X-CEA-Child-Scenario pointing the request at that child's folder.
+          await deletePathway(pathwayName, {
+            project,
+            scenarioName,
+            childScenario: null,
+          });
+          await refreshOverview();
+        } catch (error) {
+          message.error(
+            error?.response?.data?.detail || 'Failed to delete pathway.',
+          );
+        }
       },
     });
   };

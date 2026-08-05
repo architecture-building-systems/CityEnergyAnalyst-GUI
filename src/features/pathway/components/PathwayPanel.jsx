@@ -3,6 +3,7 @@ import {
   Button,
   Divider,
   InputNumber,
+  message,
   Modal,
   Select,
   Spin,
@@ -37,7 +38,11 @@ import DuplicatePathwayModal from 'features/project/components/modals/DuplicateP
 import { STATUS_FILL, getTickStep } from '../constants';
 
 import {
+  applyTemplatesToYear,
+  createPathway,
   deleteInterventionTemplate,
+  deletePathway,
+  deletePathwayYear,
   fetchBuildingLifecycle,
   fetchInterventionTemplate,
   fetchInterventionTemplates,
@@ -49,6 +54,7 @@ import {
   preSaveBuildingEventsConfig,
   preSaveDefineTemplateConfig,
   preSaveSimulatePathwayConfig,
+  saveYearYaml,
 } from '../api';
 
 const { Text, Title } = Typography;
@@ -885,7 +891,13 @@ const PathwayPanel = ({
       failureMessage,
       preferredPathway = null,
       preferredYear = null,
-      onSuccess,
+      // Fired via message.info() the moment the job is *created* (not
+      // completed) -- distinct from the button's `busyAction` spinner, which
+      // this helper keeps active for the job's full run via
+      // `pendingPanelJob`. Genuinely long-running panel jobs (bake) pass
+      // this so there's an explicit "this started a background job" signal
+      // beyond the spinner alone.
+      startingMessage,
     }) => {
       setBusyAction(busyKey);
       try {
@@ -900,6 +912,7 @@ const PathwayPanel = ({
           scenarioName,
           childScenario: null,
         });
+        if (startingMessage) message.info(startingMessage);
         setPanelError(null);
         setPendingPanelJob({
           id: job.id,
@@ -907,7 +920,6 @@ const PathwayPanel = ({
           preferredPathway,
           preferredYear,
           failureMessage,
-          onSuccess,
         });
         return job;
       } catch (error) {
@@ -922,6 +934,34 @@ const PathwayPanel = ({
       }
     },
     [createJob, project, scenarioName],
+  );
+
+  // Non-job pathway mutations (fast, synchronous REST calls) share this
+  // shape instead: drive the same `busyAction` spinner buttons already read,
+  // refresh on success, surface errors through the panel's persistent
+  // `panelError` alert. No toast on success -- the data refresh itself is
+  // the success signal, matching the panel's existing non-job action
+  // (handleDeleteTemplate) rather than introducing a new convention.
+  //
+  // Unlike startPanelJob, this helper does NOT pin the scenario context for
+  // you -- each `action` must pass `{ project, scenarioName, childScenario:
+  // null }` explicitly to the pathway/api.js call it wraps (see call sites
+  // below), or the request falls back to activeScenarioHeaders() and will
+  // silently follow whatever child pathway state happens to be active.
+  const runPathwayAction = useCallback(
+    async ({ busyKey, action, refresh, failureMessage }) => {
+      setBusyAction(busyKey);
+      try {
+        await action();
+        setPanelError(null);
+        await refresh?.();
+      } catch (error) {
+        setPanelError(getErrorMessage(error, failureMessage));
+      } finally {
+        setBusyAction(null);
+      }
+    },
+    [],
   );
 
   const handleSelectPathway = useCallback(
@@ -1043,10 +1083,10 @@ const PathwayPanel = ({
         (job) =>
           job.state === 2 &&
           job.scenario_name === scenarioName &&
+          // pathway-delete-pathway and pathway-events-apply-templates now run as
+          // direct REST calls (see runPathwayAction) and never appear as jobs.
           [
             'bake-pathway-states',
-            'pathway-delete-pathway',
-            'pathway-events-apply-templates',
             'pathway-intervention-templates-define',
             'pathway-simulations',
             'pathway-update-building-events',
@@ -1096,8 +1136,6 @@ const PathwayPanel = ({
         preferredPathway:
           pendingPanelJob.preferredPathway ?? selectedPathwayRef.current,
         preferredYear: pendingPanelJob.preferredYear,
-        // A freshly created pathway should start as the only visible lane.
-        exclusiveVisible: pendingPanelJob.onSuccess === 'created-pathway',
       });
       setPendingPanelJob(null);
       setBusyAction(null);
@@ -1175,21 +1213,27 @@ const PathwayPanel = ({
     }
 
     const targetYear = Number(newYearValue);
-    pendingPreferredYearRef.current = targetYear;
-    await startPanelJob({
-      script: 'pathway-events-apply-templates',
-      parameters: {
-        existing_pathway_names: visiblePathways,
-        year_of_state: targetYear,
-        intervention_templates: selectedHeaderTemplates,
-      },
+    await runPathwayAction({
       busyKey: 'apply-intervention',
-      failedToStartMessage: 'Failed to start the apply-intervention job.',
-      failureMessage:
-        'Applying intervention failed. Open Job Info in the status bar for details.',
-      preferredPathway: selectedPathway,
-      preferredYear: targetYear,
-      onSuccess: 'saved-templates',
+      // One fast REST call per visible pathway lane -- mirrors the job
+      // script's own server-side loop over existing_pathway_names.
+      action: () =>
+        Promise.all(
+          visiblePathways.map((pathwayName) =>
+            applyTemplatesToYear(
+              pathwayName,
+              targetYear,
+              selectedHeaderTemplates,
+              { project, scenarioName, childScenario: null },
+            ),
+          ),
+        ),
+      refresh: () =>
+        refreshPathwayData({
+          preferredPathway: selectedPathway,
+          preferredYear: targetYear,
+        }),
+      failureMessage: 'Failed to apply the intervention.',
     });
     setNewYearValue(null);
   };
@@ -1200,38 +1244,40 @@ const PathwayPanel = ({
     }
 
     const targetYear = Number(newYearValue);
+    // Reuse the year's expert-YAML round-trip: read the selected state's full entry, then
+    // write it under the target year (saving revalidates the resulting log).
+    let rawYaml;
     try {
-      // Reuse the year's expert-YAML round-trip: read the selected state's full entry, then
-      // write it under the target year (the save-yaml job revalidates the resulting log).
       const options = await fetchYearEditorOptions(
         selectedPathway,
         selectedRow.year,
       );
-      const rawYaml = options?.yaml_preview;
-      if (!rawYaml || !rawYaml.trim()) {
-        setPanelError('The selected state has no content to copy.');
-        return;
-      }
-      pendingPreferredYearRef.current = targetYear;
-      await startPanelJob({
-        script: 'pathway-save-yaml',
-        parameters: {
-          existing_pathway_names: [selectedPathway],
-          year_of_state: targetYear,
-          raw_yaml: rawYaml,
-        },
-        busyKey: 'copy-state',
-        failedToStartMessage: 'Failed to start the copy-state job.',
-        failureMessage:
-          'Copying state failed. Open Job Info in the status bar for details.',
-        preferredPathway: selectedPathway,
-        preferredYear: targetYear,
-        onSuccess: 'copied-state',
-      });
-      setNewYearValue(null);
+      rawYaml = options?.yaml_preview;
     } catch (error) {
       setPanelError(getErrorMessage(error, 'Failed to copy state.'));
+      return;
     }
+    if (!rawYaml || !rawYaml.trim()) {
+      setPanelError('The selected state has no content to copy.');
+      return;
+    }
+
+    await runPathwayAction({
+      busyKey: 'copy-state',
+      action: () =>
+        saveYearYaml(selectedPathway, targetYear, rawYaml, {
+          project,
+          scenarioName,
+          childScenario: null,
+        }),
+      refresh: () =>
+        refreshPathwayData({
+          preferredPathway: selectedPathway,
+          preferredYear: targetYear,
+        }),
+      failureMessage: 'Failed to copy state.',
+    });
+    setNewYearValue(null);
   };
 
   const handleDeletePathwayByName = (pathwayName) => {
@@ -1248,19 +1294,21 @@ const PathwayPanel = ({
         danger: true,
       },
       onOk: async () => {
-        await startPanelJob({
-          script: 'pathway-delete-pathway',
-          parameters: {
-            existing_pathway_name: pathwayName,
-          },
+        await runPathwayAction({
           busyKey: 'delete-pathway',
-          failedToStartMessage: 'Failed to start the delete-pathway job.',
-          failureMessage:
-            'Deleting the pathway failed. Open Job Info in the status bar for details.',
-          preferredPathway:
-            pathwayName === selectedPathway ? null : selectedPathway,
-          preferredYear: null,
-          onSuccess: 'deleted-pathway',
+          action: () =>
+            deletePathway(pathwayName, {
+              project,
+              scenarioName,
+              childScenario: null,
+            }),
+          refresh: () =>
+            refreshPathwayData({
+              preferredPathway:
+                pathwayName === selectedPathway ? null : selectedPathway,
+              preferredYear: null,
+            }),
+          failureMessage: 'Failed to delete the pathway.',
         });
       },
     });
@@ -1314,17 +1362,16 @@ const PathwayPanel = ({
           setPanelError('Scenario is not ready yet. Please try again.');
           return Promise.reject();
         }
-        await startPanelJob({
-          script: 'create-new-pathway',
-          parameters: {
-            new_pathway_name: name,
-          },
+        await runPathwayAction({
           busyKey: 'create-pathway',
-          failedToStartMessage: 'Failed to start the create-pathway job.',
-          failureMessage:
-            'Create pathway failed. Open Job Info in the status bar for details.',
-          preferredPathway: name,
-          onSuccess: 'created-pathway',
+          action: () =>
+            createPathway(name, { project, scenarioName, childScenario: null }),
+          refresh: () =>
+            refreshPathwayData({
+              preferredPathway: name,
+              exclusiveVisible: true,
+            }),
+          failureMessage: 'Failed to create the pathway.',
         });
       },
     });
@@ -1349,21 +1396,20 @@ const PathwayPanel = ({
         danger: true,
       },
       onOk: async () => {
-        await startPanelJob({
-          script: 'pathway-delete-state',
-          parameters: {
-            existing_pathway_names: [selectedPathway],
-            year_of_state: selectedRow.year,
-          },
+        await runPathwayAction({
           busyKey: 'delete-year',
-          startedMessage: `${destructiveLabel} job started. Open Job Info in the status bar for details.`,
-          failedToStartMessage: `Failed to start the ${destructiveLabel.toLowerCase()} job.`,
-          completionMessage: selectedRow.can_clear_manual_changes
-            ? `Cleared manual changes for ${selectedRow.year}.`
-            : `Deleted state ${selectedRow.year}.`,
-          failureMessage: `${destructiveLabel} failed. Open Job Info in the status bar for details.`,
-          preferredPathway: selectedPathway,
-          preferredYear: selectedRow.year,
+          action: () =>
+            deletePathwayYear(selectedPathway, selectedRow.year, {
+              project,
+              scenarioName,
+              childScenario: null,
+            }),
+          refresh: () =>
+            refreshPathwayData({
+              preferredPathway: selectedPathway,
+              preferredYear: selectedRow.year,
+            }),
+          failureMessage: `Failed to ${destructiveLabel.toLowerCase()}.`,
         });
       },
     });
@@ -1536,20 +1582,22 @@ const PathwayPanel = ({
 
   const handleBakePathway = async (pathwayName) => {
     if (!pathwayName || !scenarioName) return;
-    setBusyAction(`bake-${pathwayName}`);
-    try {
-      // Parent-only context -- see the comment in startPanelJob.
-      await createJob(
-        'bake-pathway-states',
-        { existing_pathway_name: pathwayName },
-        { project, scenarioName, childScenario: null },
-      );
-      setPanelError(null);
-    } catch (error) {
-      setPanelError(getErrorMessage(error, 'Failed to start bake job.'));
-    } finally {
-      setBusyAction(null);
-    }
+    // Bake is the one pathway action that stays on the job system -- it
+    // rebuilds a full scenario-inputs copy per state year, genuinely slow
+    // for a real scenario. Route through startPanelJob (not a raw
+    // createJob) so busyAction/pendingPanelJob track it through to actual
+    // completion, not just job creation, and so the starting toast fires.
+    await startPanelJob({
+      script: 'bake-pathway-states',
+      parameters: { existing_pathway_name: pathwayName },
+      busyKey: `bake-${pathwayName}`,
+      startingMessage:
+        'Baking pathway states — this can take a while. Track progress in Job Info.',
+      failedToStartMessage: 'Failed to start the bake job.',
+      failureMessage:
+        'Baking pathway states failed. Open Job Info in the status bar for details.',
+      preferredPathway: pathwayName,
+    });
   };
 
   const totalTimelineHeight =
