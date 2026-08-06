@@ -15,12 +15,6 @@
   user-select: none;
 }
 
-.cea-job-info-card:hover {
-  /* background-color: #fafafa; */
-  transition: transform 0.1s ease-out;
-  transform: scale(0.99);
-}
-
 .cea-job-info-content {
   min-width: 0;
   flex-grow: 1;

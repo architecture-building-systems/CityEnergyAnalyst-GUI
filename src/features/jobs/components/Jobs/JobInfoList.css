@@ -1,13 +1,18 @@
 .cea-job-info-list {
-  height: 100%;
-  width: 100%;
+  position: relative;
   pointer-events: auto;
+
+  display: flex;
+  gap: 8px;
+
+  height: 100%;
 }
 
-.cea-job-info-list .cea-job-info-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  border: 0.1px solid rgba(0, 0, 0, 0.12);
-  box-sizing: border-box;
-  height: 100%;
-  width: 100%;
+.cea-job-info-list > .cea-job-info-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.cea-job-status-badge {
+  user-select: none;
 }
