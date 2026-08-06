@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Badge } from 'antd';
 
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
+import RecentJobsModal from './RecentJobsModal';
 import useJobsStore, { useSortedJobs } from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useIsValidUser } from 'stores/useUserQuery';
-import { Button } from 'antd';
 
 const useFetchJobs = (project) => {
   const fetchJobs = useJobsStore((state) => state.fetchJobs);
@@ -21,91 +22,76 @@ export const JobInfoList = ({ style }) => {
   const project = useProjectStore((state) => state.project);
   useFetchJobs(project);
   const sortedJobs = useSortedJobs();
-  const hasMore = useJobsStore((state) => state.hasMore);
-  const fetchMoreJobs = useJobsStore((state) => state.fetchMoreJobs);
-
-  const [expanded, setExpanded] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const containerRef = useRef(null);
-
-  const jobInfos = useMemo(
-    () =>
-      sortedJobs.map((job) => {
-        return (
-          <JobInfoCard key={job.id} id={job.id} job={job} verbose={expanded} />
-        );
-      }),
-    [sortedJobs, expanded],
-  );
-
-  const goToBottom = () => {
-    if (containerRef.current) {
-      requestAnimationFrame(() => {
-        const container = containerRef.current;
-        container.scrollTop = container.scrollHeight;
-      });
-    }
-  };
-
-  const handleBlur = (event) => {
-    // Collapse only when focus fully leaves the job list container.
-    if (!event.currentTarget.contains(event.relatedTarget)) {
-      setExpanded(false);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    // Keep expanded while keyboard focus is inside the list.
-    if (containerRef.current?.contains(document.activeElement)) return;
-    setExpanded(false);
-  };
-
-  useEffect(() => {
-    goToBottom();
-  }, [expanded]);
+  const latestJob = sortedJobs[0];
+  const [recentJobsOpen, setRecentJobsOpen] = useState(false);
 
   // Don't render if no project is selected
-  if (!project || sortedJobs.length === 0) return null;
+  if (!project || !latestJob) return null;
 
-  const handleLoadMore = async () => {
-    setLoadingMore(true);
-    try {
-      await fetchMoreJobs();
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  // Other jobs, other than the one being shown
+  const activeCount = sortedJobs.filter((job) => job.state <= 1).length;
+  const completedCount = sortedJobs.filter((job) => job.state === 2).length;
+  const errorCount = sortedJobs.filter((job) => job.state === 3).length;
+
+  const openRecentJobs = () => setRecentJobsOpen(true);
 
   return (
-    <div
-      className={`cea-job-info-card-list ${expanded ? 'expanded' : 'collapsed'}`}
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={handleMouseLeave}
-      onFocus={() => setExpanded(true)}
-      onBlur={handleBlur}
-      onTouchStart={() => setExpanded(true)}
-      ref={containerRef}
-      aria-expanded={expanded}
-      style={{
-        overflow: expanded ? 'auto' : 'hidden',
-        ...style,
-      }}
-    >
-      {jobInfos}
-      {expanded && hasMore && (
-        <div className="cea-job-load-more">
-          <Button
-            type="link"
-            size="small"
-            loading={loadingMore}
-            disabled={loadingMore}
-            onClick={handleLoadMore}
-          >
-            Load more
-          </Button>
-        </div>
-      )}
+    <div className="cea-job-info-list" style={style}>
+      <JobInfoCard key={latestJob.id} id={latestJob.id} job={latestJob} />
+
+      <div
+        className="cea-overlay-card cea-job-info-list-summary"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1,
+
+          backgroundColor: '#fff',
+          padding: '4px 8px',
+        }}
+        role="button"
+        tabIndex={0}
+        title="View recent jobs"
+        aria-label="View recent jobs"
+        onClick={openRecentJobs}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            openRecentJobs();
+            e.preventDefault();
+          }
+        }}
+      >
+        <Badge
+          className="cea-job-status-badge"
+          count={completedCount}
+          color="green"
+          title={`${completedCount} job${completedCount === 1 ? '' : 's'} completed`}
+          size="small"
+          showZero
+        />
+        <Badge
+          className="cea-job-status-badge"
+          count={activeCount}
+          color="blue"
+          title={`${activeCount} job${activeCount === 1 ? '' : 's'} in progress`}
+          size="small"
+          showZero
+        />
+        <Badge
+          className="cea-job-status-badge"
+          count={errorCount}
+          color="red"
+          title={`${errorCount} job${errorCount === 1 ? '' : 's'} failed`}
+          size="small"
+          showZero
+        />
+      </div>
+
+      <RecentJobsModal
+        open={recentJobsOpen}
+        onCancel={() => setRecentJobsOpen(false)}
+      />
     </div>
   );
 };

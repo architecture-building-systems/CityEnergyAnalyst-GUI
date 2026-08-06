@@ -1,24 +1,78 @@
 .cea-job-info-card {
   background-color: rgba(255, 255, 255, 1);
-  padding: 8px;
+  padding: 4px;
+  padding-inline: 8px;
   border-radius: 12px;
   font-size: 14px;
 
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  border: 0.1px solid rgba(0, 0, 0, 0.12);
+
   display: flex;
+  align-items: center;
+
   user-select: none;
 }
 
-.cea-job-info-card:hover {
-  /* background-color: #fafafa; */
-  transition: transform 0.1s ease-out;
-  transform: scale(0.99);
+.cea-job-info-card-trigger {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+
+  cursor: pointer;
+}
+
+.cea-job-info-content {
+  min-width: 0;
+  flex-grow: 1;
+  padding: 4px;
+
+  display: flex;
+  flex-direction: column;
+
+  font-size: 12px;
+}
+
+.cea-job-info-content-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cea-job-info-content-title {
+  font-weight: bold;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cea-job-info-content-details {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cea-job-info-id {
+  font-family: monospace;
+  color: grey;
+}
+
+.cea-job-started-ago,
+.cea-job-duration {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cea-job-info-icon.danger {
-  color: rgb(240, 77, 91);
-}
-.cea-job-info-icon.info {
-  color: #1470af;
+  /* !important: antd's own Button reset (.ant-btn .ant-btn-icon > svg {
+     color: inherit }) has higher specificity than this class selector and
+     would otherwise force the icon back to the button's default text color. */
+  color: rgb(240, 77, 91) !important;
 }
 
 @keyframes shake {
@@ -51,8 +105,42 @@
   justify-content: center;
 }
 
-.cea-job-info-icon:hover {
+.cea-job-info-icon:hover,
+button.cea-job-info-action-button:focus-visible .cea-job-info-icon {
   transform: scale(1.2);
   cursor: pointer;
   background: rgba(129, 139, 152, 0.1);
+}
+
+/* antd's Button leaves border-color/outline-color unset, which resolves to
+   the button's own (near-black) text `color` via currentcolor -- without an
+   explicit color here that shows up as a dark ring/border the moment any
+   button or focus state kicks in. !important is needed to beat antd's own
+   generated rules for the same states. */
+button.cea-job-info-action-button {
+  color: rgb(240, 77, 91) !important;
+  /* antd's Button sets its own font-size directly (not just inherited), so
+     the icon's 1em sizing collapses to antd's default (14px) unless we
+     override it here too, on the button itself. */
+  font-size: 18px !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0;
+  height: auto;
+  width: auto;
+  min-width: 0;
+  display: inline-flex;
+}
+
+button.cea-job-info-action-button:hover,
+button.cea-job-info-action-button:focus,
+button.cea-job-info-action-button:focus-visible,
+button.cea-job-info-action-button:active {
+  color: rgb(240, 77, 91) !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }

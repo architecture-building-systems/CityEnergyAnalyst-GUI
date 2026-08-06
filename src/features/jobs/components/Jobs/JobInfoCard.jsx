@@ -1,20 +1,46 @@
 import {
-  CheckCircleOutlined,
+  CheckCircleFilled,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  ExclamationCircleOutlined,
+  ExclamationCircleFilled,
   LoadingOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 
-import { parseISO, formatDistanceToNow } from 'date-fns';
-import { BinAnimationIcon, InformationIcon, StopIcon } from 'assets/icons';
+import { parseISO, formatDistanceToNowStrict } from 'date-fns';
+import { Button } from 'antd';
+import { BinAnimationIcon, StopIcon } from 'assets/icons';
 import { useEffect, useState } from 'react';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 
 import './JobInfoCard.css';
-import { apiClient } from 'lib/api/axios';
 import JobInfoModal from './JobInfoModal';
+
+// Short unit suffixes for date-fns' own distance tokens, e.g. "5s ago", "12m ago", "3h ago"
+const SHORT_DISTANCE_UNITS = {
+  xSeconds: 's',
+  xMinutes: 'm',
+  xHours: 'h',
+  xDays: 'd',
+  xWeeks: 'w',
+  xMonths: 'mo',
+  xYears: 'y',
+};
+
+const shortDistanceLocale = {
+  formatDistance: (token, count, options) => {
+    const result = `${count}${SHORT_DISTANCE_UNITS[token] ?? ''}`;
+    return options?.addSuffix ? `${result} ago` : result;
+  },
+};
+
+const formatTimeAgo = (date, short = false) =>
+  date
+    ? formatDistanceToNowStrict(date, {
+        addSuffix: true,
+        ...(short && { locale: shortDistanceLocale }),
+      })
+    : '-';
 
 const useRefreshInterval = () => {
   const [refreshInterval, setRefreshInterval] = useState(30 * 1000); // Start with 30s
@@ -32,52 +58,10 @@ const useRefreshInterval = () => {
   }, [refreshInterval]); // Recreate the interval when refreshInterval changes
 };
 
-const JobInfoCard = ({ id, job, verbose }) => {
-  const [isHovered, setIsHovered] = useState(false);
+const JobActions = ({ id, job, showDelete }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const { deleteJob } = useJobsStore();
-  useRefreshInterval();
 
-  const duration = job?.duration
-    ? Math.round((job?.duration / 60) * 10) / 10
-    : '-';
-
-  // ASSUMPTION: start_time is in UTC
-  const start_time = job?.start_time
-    ? typeof job.start_time === 'string'
-      ? parseISO(
-          job.start_time.includes('Z') ? job.start_time : job.start_time + 'Z',
-        ) // Ensure UTC interpretation by adding Z
-      : new Date(job.start_time)
-    : null;
-  const started_ago = start_time
-    ? formatDistanceToNow(start_time, {
-        addSuffix: true,
-        includeSeconds: true,
-      })
-    : '-';
-
-  const StateIcon = ({ state }) => {
-    switch (state) {
-      case 0:
-        return <ClockCircleOutlined style={{ color: 'blue' }} />;
-      case 1:
-        return <LoadingOutlined style={{ color: 'blue' }} />;
-      case 2:
-        return <CheckCircleOutlined style={{ color: 'green' }} />;
-      case 3:
-        return <ExclamationCircleOutlined style={{ color: 'red' }} />;
-      case 4:
-        return <CloseCircleOutlined style={{ color: 'grey' }} />;
-      default:
-        return <QuestionCircleOutlined style={{ color: 'grey' }} />;
-    }
-  };
-
-  const handleClick = () => {
-    setModalVisible(true);
-  };
+  const { deleteJob, cancelJob } = useJobsStore();
 
   // Add this function to prevent event propagation
   const stopPropagation = (e) => {
@@ -99,10 +83,86 @@ const JobInfoCard = ({ id, job, verbose }) => {
     stopPropagation(e);
     setIsLoading(true);
     try {
-      await cancelCeaJob({ id, ...job });
+      await cancelJob(id);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  return (
+    <div className="cea-job-info-content-actions">
+      {isLoading ? (
+        <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
+      ) : job.state > 1 ? (
+        showDelete && (
+          <Button
+            type="text"
+            className="cea-job-info-action-button"
+            aria-label="Delete job"
+            onClick={handleDelete}
+            icon={
+              <BinAnimationIcon className="cea-job-info-icon danger shake" />
+            }
+          />
+        )
+      ) : (
+        job.state < 2 && (
+          <Button
+            type="text"
+            className="cea-job-info-action-button"
+            aria-label="Cancel job"
+            onClick={handleCancel}
+            icon={<StopIcon className="cea-job-info-icon danger" />}
+          />
+        )
+      )}
+    </div>
+  );
+};
+
+export const JobStartedAgo = ({ startTime, short = false }) => {
+  // ASSUMPTION: start_time is in UTC
+  const start_time = startTime
+    ? typeof startTime === 'string'
+      ? parseISO(startTime.includes('Z') ? startTime : startTime + 'Z')
+      : new Date(startTime)
+    : null;
+
+  return (
+    <span className="cea-job-started-ago" title={start_time?.toLocaleString()}>
+      {formatTimeAgo(start_time, short)}
+    </span>
+  );
+};
+
+const JobInfoCard = ({ id, job }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  useRefreshInterval();
+
+  const duration = job?.duration
+    ? Math.round((job?.duration / 60) * 10) / 10
+    : '-';
+
+  const StateIcon = ({ state }) => {
+    switch (state) {
+      case 0:
+        return <ClockCircleOutlined style={{ color: 'blue' }} />;
+      case 1:
+        return <LoadingOutlined style={{ color: 'blue' }} />;
+      case 2:
+        return <CheckCircleFilled style={{ color: 'green' }} />;
+      case 3:
+        return <ExclamationCircleFilled style={{ color: 'red' }} />;
+      case 4:
+        return <CloseCircleOutlined style={{ color: 'grey' }} />;
+      default:
+        return <QuestionCircleOutlined style={{ color: 'grey' }} />;
+    }
+  };
+
+  const handleClick = () => {
+    setModalVisible(true);
   };
 
   return (
@@ -111,130 +171,65 @@ const JobInfoCard = ({ id, job, verbose }) => {
         className="cea-job-info-card"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleClick();
-            e.preventDefault();
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={`Job: ${job?.script_label ?? job?.script}`}
       >
         <div
-          className="cea-status-bar-icon"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: 16,
-            margin: 6,
+          className="cea-job-info-card-trigger"
+          onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleClick();
+              e.preventDefault();
+            }
           }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Job: ${job?.script_label ?? job?.script}`}
         >
-          <StateIcon state={job.state} />
-        </div>
-
-        <div
-          className="cea-job-info-content"
-          style={{
-            flexGrow: 1,
-            padding: 4,
-
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-
-            fontSize: 12,
-          }}
-        >
-          <div className="cea-job-info-content-left">
-            <div>
-              <b>{job?.script_label ?? job?.script}</b>
-            </div>
-            <div>
-              scenario: <b>{job?.scenario_name} </b>
-              {!verbose && start_time && <span>[started {started_ago}]</span>}
-            </div>
-
-            {verbose && (
-              <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <div>
-                    started:{' '}
-                    <i title={start_time ? start_time.toLocaleString() : ''}>
-                      {started_ago}
-                    </i>
-                  </div>
-                  <div>
-                    duration:{' '}
-                    <i>
-                      {typeof duration == 'number'
-                        ? duration >= 1
-                          ? duration + ' minutes'
-                          : '< 1 minute'
-                        : duration}
-                    </i>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
           <div
-            className="cea-job-info-content-actions"
+            className="cea-status-bar-icon"
             style={{
-              fontSize: 18,
               display: 'flex',
-              gap: 2,
-              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: 16,
+              margin: 6,
             }}
           >
-            {verbose && isHovered && (
-              <InformationIcon
-                className="cea-job-info-icon info"
-                onClick={(e) => {
-                  stopPropagation(e);
-                  handleClick();
-                }}
-              />
-            )}
-            {job.state > 1 && isHovered && (
-              <>
-                {isLoading ? (
-                  <LoadingOutlined
-                    style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                    spin
-                  />
-                ) : (
-                  <BinAnimationIcon
-                    className="cea-job-info-icon danger shake"
-                    onClick={handleDelete}
-                  />
-                )}
-              </>
-            )}
-            {job.state < 2 && (
-              <>
-                {isLoading ? (
-                  <LoadingOutlined
-                    style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                    spin
-                  />
-                ) : (
-                  <StopIcon
-                    className="cea-job-info-icon danger"
-                    onClick={handleCancel}
-                  />
-                )}
-              </>
-            )}
+            <StateIcon state={job.state} />
+          </div>
+
+          <div className="cea-job-info-content">
+            <div
+              className="cea-job-info-content-header"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                gap: 12,
+              }}
+            >
+              <div className="cea-job-info-content-title-group">
+                <div className="cea-job-info-content-title">
+                  {job?.script_label ?? job?.script}
+                </div>
+                <div className="cea-job-info-id" title={job?.id}>
+                  {job?.id?.slice(0, 8)}
+                </div>
+              </div>
+              <JobStartedAgo startTime={job?.start_time} short />
+            </div>
+
+            <div className="cea-job-info-content-details">
+              scenario: <b>{job?.scenario_name}</b>{' '}
+              {typeof duration === 'number' && (
+                <span className="cea-job-duration">
+                  [{duration >= 1 ? `${duration} minutes` : '< 1 minute'}]
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        <JobActions id={id} job={job} showDelete={isHovered} />
       </div>
       <JobInfoModal
         job={{ id, ...job }}
@@ -243,10 +238,6 @@ const JobInfoCard = ({ id, job, verbose }) => {
       />
     </>
   );
-};
-
-const cancelCeaJob = async (job) => {
-  return apiClient.post(`/server/jobs/cancel/${job.id}`);
 };
 
 export default JobInfoCard;
