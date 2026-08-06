@@ -230,9 +230,13 @@ every other route).
 - `api.js` - Dedicated pathway API client helpers. Every call uses
   `activeScenarioHeaders()` by default; the mutation functions
   (`createPathway`, `deletePathway`, `duplicatePathway`, `deletePathwayYear`,
-  `saveYearYaml`, `applyTemplatesToYear`) accept an optional `scenarioContext`
-  override for parent-pinning (see the REST-mutation DO block above);
-  `fetchStateFolderPath` always uses `scenarioHeaders()` directly instead.
+  `saveYearYaml`, `applyTemplatesToYear`) plus the read-only
+  `fetchYearEditorOptions` accept an optional `scenarioContext` override for
+  parent-pinning (see the REST-mutation DO block above and `handleCopyState`,
+  which pins it so copying a state always reads the parent's own YAML for
+  that year rather than whatever child pathway state happens to be active
+  elsewhere); `fetchStateFolderPath` always uses `scenarioHeaders()` directly
+  instead.
 - `hooks/usePathwayOverview.js` - React Query wrapper around `fetchPathwayOverview` plus the `useHasSimulatedPathway` boolean derivative.
 - `components/PathwayPanel.jsx` - Stacked-lane panel, shared ruler, inspector, and editor workflows.
 - `../project/components/ProjectOverlay.jsx` - Bottom-panel mounting point and transition sizing.

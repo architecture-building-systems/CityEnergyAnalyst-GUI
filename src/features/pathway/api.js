@@ -93,10 +93,14 @@ export const validatePathwayLog = async (pathwayName) => {
   return data;
 };
 
-export const fetchYearEditorOptions = async (pathwayName, year) => {
+export const fetchYearEditorOptions = async (
+  pathwayName,
+  year,
+  scenarioContext,
+) => {
   const { data } = await getScenarioClient().get(
     `/pathways/${encodePathwayName(pathwayName)}/years/${year}/editor-options`,
-    { headers: activeScenarioHeaders() },
+    { headers: resolveHeaders(scenarioContext) },
   );
   return data;
 };

@@ -750,28 +750,39 @@ const PathwayPanel = ({
     }
 
     const targetYear = Number(newYearValue);
-    await runPathwayAction({
-      busyKey: 'apply-intervention',
+    setBusyAction('apply-intervention');
+    try {
       // One fast REST call per visible pathway lane -- mirrors the job
       // script's own server-side loop over existing_pathway_names.
-      action: () =>
-        Promise.all(
-          visiblePathways.map((pathwayName) =>
-            applyTemplatesToYear(
-              pathwayName,
-              targetYear,
-              selectedHeaderTemplates,
-              { project, scenarioName, childScenario: null },
-            ),
+      // `allSettled` (not `all`) so one pathway's failure doesn't stop the
+      // others from applying, or skip the refresh/data-reload afterwards --
+      // a retry on `all`'s all-or-nothing rejection could otherwise
+      // re-apply the same templates to pathways that already succeeded.
+      const results = await Promise.allSettled(
+        visiblePathways.map((pathwayName) =>
+          applyTemplatesToYear(
+            pathwayName,
+            targetYear,
+            selectedHeaderTemplates,
+            { project, scenarioName, childScenario: null },
           ),
         ),
-      refresh: () =>
-        refreshPathwayData({
-          preferredPathway: selectedPathway,
-          preferredYear: targetYear,
-        }),
-      failureMessage: 'Failed to apply the intervention.',
-    });
+      );
+      await refreshPathwayData({
+        preferredPathway: selectedPathway,
+        preferredYear: targetYear,
+      });
+      const failedPathways = results
+        .map((result, index) => ({ result, pathwayName: visiblePathways[index] }))
+        .filter(({ result }) => result.status === 'rejected');
+      setPanelError(
+        failedPathways.length
+          ? `Failed to apply the intervention to: ${failedPathways.map(({ pathwayName }) => pathwayName).join(', ')}.`
+          : null,
+      );
+    } finally {
+      setBusyAction(null);
+    }
     setNewYearValue(null);
   };
 
@@ -785,9 +796,14 @@ const PathwayPanel = ({
     // write it under the target year (saving revalidates the resulting log).
     let rawYaml;
     try {
+      // Pin to the parent scenario, matching the saveYearYaml write below --
+      // otherwise, if a pathway child state happens to be active elsewhere
+      // in the map/canvas, activeScenarioHeaders() would read that child's
+      // YAML instead of the parent pathway log's entry for this year.
       const options = await fetchYearEditorOptions(
         selectedPathway,
         selectedRow.year,
+        { project, scenarioName, childScenario: null },
       );
       rawYaml = options?.yaml_preview;
     } catch (error) {

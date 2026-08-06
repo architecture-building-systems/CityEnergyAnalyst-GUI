@@ -69,17 +69,23 @@ const useJobsStore = create((set, get) => ({
   // headers (see cea/interfaces/dashboard/server/AGENTS.md), so passing
   // `childScenario: null` here is what keeps such a job on the parent scenario.
   createJob: async (script, parameters, scenarioContext) => {
+    // The backend resolves `scenario` from the request's X-CEA-* headers and
+    // discards whatever the client sends here (see the DO block above) --
+    // drop a stray `parameters.scenario` from a stale caller so headers stay
+    // the only client-side scenario source, instead of forwarding a value
+    // that's misleading if it's ever read back off a saved job record.
+    const { scenario: _scenario, ...jobParameters } = parameters;
     const formattedData = {};
 
-    Object.keys(parameters).forEach((key) => {
+    Object.keys(jobParameters).forEach((key) => {
       // Convert objects to strings
       if (
-        typeof parameters[key] === 'object' &&
-        !(parameters[key] instanceof File)
+        typeof jobParameters[key] === 'object' &&
+        !(jobParameters[key] instanceof File)
       ) {
-        formattedData[key] = JSON.stringify(parameters[key]);
+        formattedData[key] = JSON.stringify(jobParameters[key]);
       } else {
-        formattedData[key] = parameters[key];
+        formattedData[key] = jobParameters[key];
       }
     });
 

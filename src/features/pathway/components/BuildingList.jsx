@@ -6,7 +6,10 @@ export const BuildingPill = ({ name, color, onClick }) => (
     onKeyDown={
       onClick
         ? (e) => {
-            if (e.key === 'Enter') onClick();
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onClick();
+            }
           }
         : undefined
     }

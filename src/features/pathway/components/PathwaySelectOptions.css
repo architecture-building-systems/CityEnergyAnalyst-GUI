@@ -1,0 +1,13 @@
+/* Shared hover/focus-reveal pattern for PathwaySelect and TemplateSelect
+ * option rows. Action controls stay in the DOM at all times (rather than
+ * being conditionally rendered on `isHovered`) so keyboard users can Tab to
+ * them; they're just visually hidden until the row is hovered or one of its
+ * controls has focus. */
+.cea-pathway-option-actions {
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.cea-pathway-option-row:hover .cea-pathway-option-actions,
+.cea-pathway-option-row:focus-within .cea-pathway-option-actions {
+  opacity: 1;
+}

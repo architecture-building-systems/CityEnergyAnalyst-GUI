@@ -24,6 +24,7 @@ const ComparisonView = ({
 }) => {
   const project = useProjectStore((s) => s.project);
   const columns = useCanvasStore((s) => s.columns);
+  const parentScenario = useCanvasStore((s) => s.parentScenario);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const columnCards = useCanvasStore((s) => s.columnCards);
   const view = useCanvasStore((s) => s.view);
@@ -122,12 +123,27 @@ const ComparisonView = ({
       });
     };
 
-  // Build the (project, scenarioName) pair the form needs to
-  // scope its choice generators to the column being edited.
+  // Build the scenario context the form needs to scope its choice
+  // generators to the column being edited. `pathway-state` columns carry
+  // a client-built child path in `column.scenario` (see
+  // `enterPathwaySingle` / `childStateScenarioPath`) -- that path is not
+  // a valid `X-CEA-Scenario-Name` value, so route those columns through
+  // the parent scenario name + an explicit `childScenario` token instead
+  // (mirrors the header contract `CanvasColumn` already uses for the
+  // rendered plot itself; see `features/canvas/CLAUDE.md`).
   const scenarioOverrideFor = (columnIndex) => {
-    const name = columns[columnIndex]?.scenario;
-    if (!project || !name) return null;
-    return { project, scenarioName: name };
+    const column = columns[columnIndex];
+    if (!project || !column) return null;
+    if (column.type === 'pathway-state') {
+      if (!parentScenario) return null;
+      return {
+        project,
+        scenarioName: parentScenario,
+        childScenario: { pathway_name: column.pathwayName, year: column.year },
+      };
+    }
+    if (!column.scenario) return null;
+    return { project, scenarioName: column.scenario };
   };
 
   const handleAddPlotToCard =

@@ -65,10 +65,13 @@ const Tool = ({
   // that's always fully specified, so downstream hooks (`useToolParams`,
   // `useInputValidation`) never need to know about the active scenario or
   // fall back to it themselves - they just take the context they're given.
-  // A column override never carries the active scenario's pathway state.
+  // Defaults `childScenario` to null (a column override normally doesn't
+  // carry the active scenario's pathway state) but lets the override
+  // supply its own -- e.g. a Canvas Builder `pathway-state` column, which
+  // must target its own child state rather than none.
   const activeScenarioContext = useActiveScenarioContext();
   const scenarioContext = scenarioOverride
-    ? { ...scenarioOverride, childScenario: null }
+    ? { childScenario: null, ...scenarioOverride }
     : activeScenarioContext;
 
   const pathwayOverrides = useMemo(() => {

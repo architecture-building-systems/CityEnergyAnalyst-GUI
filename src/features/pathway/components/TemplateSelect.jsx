@@ -1,10 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Select } from 'antd';
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
+import './PathwaySelectOptions.css';
+
+const activateOnKey = (handler) => (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    e.stopPropagation();
+    handler();
+  }
+};
 
 const TemplateOption = ({ templateName, description, onEdit, onDelete }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   const handleEditClick = (e) => {
     e.stopPropagation();
     onEdit?.(templateName);
@@ -17,13 +24,12 @@ const TemplateOption = ({ templateName, description, onEdit, onDelete }) => {
 
   return (
     <div
+      className="cea-pathway-option-row"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         style={{
@@ -40,22 +46,31 @@ const TemplateOption = ({ templateName, description, onEdit, onDelete }) => {
           <span style={{ color: 'rgba(0, 0, 0, 0.45)' }}>: {description}</span>
         ) : null}
       </div>
-      {isHovered && (
-        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <InputEditorIcon
-            style={{ padding: '2px 6px' }}
-            className="cea-job-info-icon"
-            title={`Edit '${templateName}'`}
-            onClick={handleEditClick}
-          />
-          <BinAnimationIcon
-            style={{ padding: '2px 8px' }}
-            className="cea-job-info-icon danger shake"
-            title={`Delete '${templateName}'`}
-            onClick={handleDeleteClick}
-          />
-        </div>
-      )}
+      <div
+        className="cea-pathway-option-actions"
+        style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
+      >
+        <InputEditorIcon
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit '${templateName}'`}
+          style={{ padding: '2px 6px' }}
+          className="cea-job-info-icon"
+          title={`Edit '${templateName}'`}
+          onClick={handleEditClick}
+          onKeyDown={activateOnKey(() => onEdit?.(templateName))}
+        />
+        <BinAnimationIcon
+          role="button"
+          tabIndex={0}
+          aria-label={`Delete '${templateName}'`}
+          style={{ padding: '2px 8px' }}
+          className="cea-job-info-icon danger shake"
+          title={`Delete '${templateName}'`}
+          onClick={handleDeleteClick}
+          onKeyDown={activateOnKey(() => onDelete?.(templateName))}
+        />
+      </div>
     </div>
   );
 };

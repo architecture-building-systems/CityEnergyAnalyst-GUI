@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Select } from 'antd';
 import { BinAnimationIcon, DuplicateIcon } from 'assets/icons';
+import './PathwaySelectOptions.css';
+
+const activateOnKey = (handler) => (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    e.stopPropagation();
+    handler();
+  }
+};
 
 const PathwayOptionWithCheckbox = ({
   pathwayName,
@@ -9,17 +18,14 @@ const PathwayOptionWithCheckbox = ({
   onDelete,
   onDuplicate,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <div
+      className="cea-pathway-option-row"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         style={{
@@ -33,6 +39,7 @@ const PathwayOptionWithCheckbox = ({
         <input
           type="checkbox"
           checked={checked}
+          aria-label={`Toggle ${pathwayName} visibility`}
           onChange={(e) => {
             e.stopPropagation();
             onToggle(pathwayName);
@@ -52,25 +59,34 @@ const PathwayOptionWithCheckbox = ({
           {pathwayName}
         </div>
       </div>
-      {isHovered && (
-        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <DuplicateIcon
-            style={{ padding: '2px 4px', cursor: 'pointer', opacity: 0.55 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate?.(pathwayName);
-            }}
-          />
-          <BinAnimationIcon
-            style={{ padding: '2px 4px' }}
-            className="cea-job-info-icon danger shake"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(pathwayName);
-            }}
-          />
-        </div>
-      )}
+      <div
+        className="cea-pathway-option-actions"
+        style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
+      >
+        <DuplicateIcon
+          role="button"
+          tabIndex={0}
+          aria-label={`Duplicate ${pathwayName}`}
+          style={{ padding: '2px 4px', cursor: 'pointer', opacity: 0.55 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicate?.(pathwayName);
+          }}
+          onKeyDown={activateOnKey(() => onDuplicate?.(pathwayName))}
+        />
+        <BinAnimationIcon
+          role="button"
+          tabIndex={0}
+          aria-label={`Delete ${pathwayName}`}
+          style={{ padding: '2px 4px' }}
+          className="cea-job-info-icon danger shake"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(pathwayName);
+          }}
+          onKeyDown={activateOnKey(() => onDelete?.(pathwayName))}
+        />
+      </div>
     </div>
   );
 };
