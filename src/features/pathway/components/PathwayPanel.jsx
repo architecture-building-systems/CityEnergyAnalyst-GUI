@@ -106,6 +106,9 @@ const PathwayPanel = ({
   const setStateZoneOverride = useMapStore(
     (state) => state.setStateZoneOverride,
   );
+  const beginStateZoneOverrideRequest = useMapStore(
+    (state) => state.beginStateZoneOverrideRequest,
+  );
 
   const buildingColorMap = useMemo(() => {
     const features = inputData?.geojsons?.zone?.features ?? [];
@@ -205,8 +208,11 @@ const PathwayPanel = ({
     return filtered;
   }, [activeRows, selectedRow]);
 
-  // Show state geometry on map when a baked/simulated node is selected
+  // Show state geometry on map when a baked/simulated node is selected.
+  // Guarded by a request id so a fetch that resolves after a newer
+  // selection (or an activation via OverviewCard) can't overwrite it.
   useEffect(() => {
+    const requestId = beginStateZoneOverrideRequest();
     const phase = selectedRow?.status?.primary_phase;
     if (
       selectedPathway &&
@@ -214,12 +220,17 @@ const PathwayPanel = ({
       (phase === 'baked' || phase === 'simulated')
     ) {
       fetchStateGeojson(selectedPathway, selectedRow.year)
-        .then((data) => setStateZoneOverride(data?.geojson ?? null))
-        .catch(() => setStateZoneOverride(null));
+        .then((data) => setStateZoneOverride(data?.geojson ?? null, requestId))
+        .catch(() => setStateZoneOverride(null, requestId));
     } else {
-      setStateZoneOverride(null);
+      setStateZoneOverride(null, requestId);
     }
-  }, [selectedPathway, selectedRow, setStateZoneOverride]);
+  }, [
+    selectedPathway,
+    selectedRow,
+    setStateZoneOverride,
+    beginStateZoneOverrideRequest,
+  ]);
 
   // Scale the shared ruler to the currently visible lanes rather than the global span the
   // backend reports (the union of every pathway). Otherwise a freshly created/launched pathway

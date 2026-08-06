@@ -8,7 +8,7 @@ export const COLOR_MODES = {
   USE_TYPE: 'use-type',
 };
 
-export const useMapStore = create((set) => ({
+export const useMapStore = create((set, get) => ({
   visibility: {},
   mapLabels: true,
   viewState: defaultViewState,
@@ -40,8 +40,13 @@ export const useMapStore = create((set) => ({
   constructionGfaTotals: {},
   useTypeGfaTotals: {},
 
-  // Pathway state geometry override
+  // Pathway state geometry override. Written from three independent places
+  // (PathwayPanel's preview effect, OverviewCard's activate/deactivate, and
+  // the panel-close handler), two of which resolve asynchronously. The
+  // request id lets a stale fetch tell it's been superseded instead of
+  // clobbering a newer write when it finally resolves.
   stateZoneOverride: null,
+  stateZoneOverrideRequestId: 0,
 
   setVisibility: (layer, value) =>
     set((state) => ({ visibility: { ...state.visibility, [layer]: value } })),
@@ -93,7 +98,23 @@ export const useMapStore = create((set) => ({
   setConstructionGfaTotals: (value) =>
     set({ constructionGfaTotals: value || {} }),
   setUseTypeGfaTotals: (value) => set({ useTypeGfaTotals: value || {} }),
-  setStateZoneOverride: (value) => set({ stateZoneOverride: value }),
+  // Call before starting a write to stateZoneOverride (sync or async) to
+  // claim ownership. Pass the returned id to setStateZoneOverride so a
+  // response that resolves after a newer request has started is ignored.
+  beginStateZoneOverrideRequest: () => {
+    const requestId = get().stateZoneOverrideRequestId + 1;
+    set({ stateZoneOverrideRequestId: requestId });
+    return requestId;
+  },
+  setStateZoneOverride: (value, requestId) => {
+    if (
+      requestId !== undefined &&
+      requestId !== get().stateZoneOverrideRequestId
+    ) {
+      return;
+    }
+    set({ stateZoneOverride: value });
+  },
 }));
 
 export const useCameraOptionsCalculated = () =>

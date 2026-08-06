@@ -271,6 +271,9 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   const setStateZoneOverride = useMapStore(
     (state) => state.setStateZoneOverride,
   );
+  const beginStateZoneOverrideRequest = useMapStore(
+    (state) => state.beginStateZoneOverrideRequest,
+  );
 
   const activateState = useCallback(
     async (pathwayName, year) => {
@@ -288,9 +291,13 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
           parent_scenario: result.parent_scenario,
           scenario_path: result.scenario_path,
         });
+        // Claim ownership before fetching so a stale PathwayPanel preview
+        // (or an earlier activateState call) can't overwrite this once it
+        // resolves.
+        const requestId = beginStateZoneOverrideRequest();
         fetchStateGeojson(pathwayName, year)
-          .then((data) => setStateZoneOverride(data?.geojson ?? null))
-          .catch(() => setStateZoneOverride(null));
+          .then((data) => setStateZoneOverride(data?.geojson ?? null, requestId))
+          .catch(() => setStateZoneOverride(null, requestId));
         queryClient.invalidateQueries({ queryKey: ['toolParams'] });
         queryClient.invalidateQueries({ queryKey: ['inputs'] });
       } finally {
@@ -302,16 +309,25 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
       scenarioName,
       setChildScenario,
       setStateZoneOverride,
+      beginStateZoneOverrideRequest,
       queryClient,
     ],
   );
 
   const deactivatePathway = useCallback(() => {
     setChildScenario(null);
+    // Bump ownership first so any in-flight preview/activation fetch is
+    // invalidated, then apply the clear immediately (no requestId needed).
+    beginStateZoneOverrideRequest();
     setStateZoneOverride(null);
     queryClient.invalidateQueries({ queryKey: ['toolParams'] });
     queryClient.invalidateQueries({ queryKey: ['inputs'] });
-  }, [setChildScenario, setStateZoneOverride, queryClient]);
+  }, [
+    setChildScenario,
+    setStateZoneOverride,
+    beginStateZoneOverrideRequest,
+    queryClient,
+  ]);
 
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';

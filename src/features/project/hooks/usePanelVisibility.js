@@ -70,7 +70,11 @@ export const usePanelVisibility = ({ scenarioName, toolType }) => {
       } else {
         setPathwayPanelExpanded(false);
         useToolCardStore.getState().clearBuildingLifecycleData();
-        useMapStore.getState().setStateZoneOverride(null);
+        const mapStore = useMapStore.getState();
+        // Bump ownership so any in-flight preview fetch from the panel
+        // can't clobber this clear once it resolves after close.
+        mapStore.beginStateZoneOverrideRequest();
+        mapStore.setStateZoneOverride(null);
       }
       return next;
     });
