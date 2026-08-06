@@ -13,7 +13,6 @@ import { useEffect, useState } from 'react';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 
 import './JobInfoCard.css';
-import { apiClient } from 'lib/api/axios';
 import JobInfoModal from './JobInfoModal';
 
 // Short unit suffixes for date-fns' own distance tokens, e.g. "5s ago", "12m ago", "3h ago"
@@ -34,11 +33,11 @@ const shortDistanceLocale = {
   },
 };
 
-const formatShortTimeAgo = (date) =>
+const formatTimeAgo = (date, short = false) =>
   date
     ? formatDistanceToNowStrict(date, {
         addSuffix: true,
-        locale: shortDistanceLocale,
+        ...(short && { locale: shortDistanceLocale }),
       })
     : '-';
 
@@ -58,47 +57,10 @@ const useRefreshInterval = () => {
   }, [refreshInterval]); // Recreate the interval when refreshInterval changes
 };
 
-const JobInfoCard = ({ id, job }) => {
-  const [isHovered, setIsHovered] = useState(false);
+const JobActions = ({ id, job, showDelete }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const { deleteJob } = useJobsStore();
-  useRefreshInterval();
 
-  const duration = job?.duration
-    ? Math.round((job?.duration / 60) * 10) / 10
-    : '-';
-
-  // ASSUMPTION: start_time is in UTC
-  const start_time = job?.start_time
-    ? typeof job.start_time === 'string'
-      ? parseISO(
-          job.start_time.includes('Z') ? job.start_time : job.start_time + 'Z',
-        ) // Ensure UTC interpretation by adding Z
-      : new Date(job.start_time)
-    : null;
-  const started_ago = formatShortTimeAgo(start_time);
-
-  const StateIcon = ({ state }) => {
-    switch (state) {
-      case 0:
-        return <ClockCircleOutlined style={{ color: 'blue' }} />;
-      case 1:
-        return <LoadingOutlined style={{ color: 'blue' }} />;
-      case 2:
-        return <CheckCircleOutlined style={{ color: 'green' }} />;
-      case 3:
-        return <ExclamationCircleOutlined style={{ color: 'red' }} />;
-      case 4:
-        return <CloseCircleOutlined style={{ color: 'grey' }} />;
-      default:
-        return <QuestionCircleOutlined style={{ color: 'grey' }} />;
-    }
-  };
-
-  const handleClick = () => {
-    setModalVisible(true);
-  };
+  const { deleteJob, cancelJob } = useJobsStore();
 
   // Add this function to prevent event propagation
   const stopPropagation = (e) => {
@@ -120,10 +82,83 @@ const JobInfoCard = ({ id, job }) => {
     stopPropagation(e);
     setIsLoading(true);
     try {
-      await cancelCeaJob({ id, ...job });
+      await cancelJob(id);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  return (
+    <div
+      className="cea-job-info-content-actions"
+      style={{
+        fontSize: 18,
+      }}
+    >
+      {isLoading ? (
+        <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
+      ) : job.state > 1 ? (
+        showDelete && (
+          <BinAnimationIcon
+            className="cea-job-info-icon danger shake"
+            onClick={handleDelete}
+          />
+        )
+      ) : (
+        job.state < 2 && (
+          <StopIcon
+            className="cea-job-info-icon danger"
+            onClick={handleCancel}
+          />
+        )
+      )}
+    </div>
+  );
+};
+
+export const JobStartedAgo = ({ startTime, short = false }) => {
+  // ASSUMPTION: start_time is in UTC
+  const start_time = startTime
+    ? typeof startTime === 'string'
+      ? parseISO(startTime.includes('Z') ? startTime : startTime + 'Z')
+      : new Date(startTime)
+    : null;
+
+  return (
+    <span className="cea-job-started-ago" title={start_time?.toLocaleString()}>
+      {formatTimeAgo(start_time, short)}
+    </span>
+  );
+};
+
+const JobInfoCard = ({ id, job }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  useRefreshInterval();
+
+  const duration = job?.duration
+    ? Math.round((job?.duration / 60) * 10) / 10
+    : '-';
+
+  const StateIcon = ({ state }) => {
+    switch (state) {
+      case 0:
+        return <ClockCircleOutlined style={{ color: 'blue' }} />;
+      case 1:
+        return <LoadingOutlined style={{ color: 'blue' }} />;
+      case 2:
+        return <CheckCircleOutlined style={{ color: 'green' }} />;
+      case 3:
+        return <ExclamationCircleOutlined style={{ color: 'red' }} />;
+      case 4:
+        return <CloseCircleOutlined style={{ color: 'grey' }} />;
+      default:
+        return <QuestionCircleOutlined style={{ color: 'grey' }} />;
+    }
+  };
+
+  const handleClick = () => {
+    setModalVisible(true);
   };
 
   return (
@@ -173,14 +208,7 @@ const JobInfoCard = ({ id, job }) => {
                 {job?.id?.slice(0, 8)}
               </div>
             </div>
-            {start_time && (
-              <span
-                className="cea-job-started-ago"
-                title={start_time.toLocaleString()}
-              >
-                {started_ago}
-              </span>
-            )}
+            <JobStartedAgo startTime={job?.start_time} short />
           </div>
 
           <div className="cea-job-info-content-details">
@@ -193,39 +221,7 @@ const JobInfoCard = ({ id, job }) => {
           </div>
         </div>
 
-        <div
-          className="cea-job-info-content-actions"
-          style={{
-            fontSize: 18,
-          }}
-        >
-          {job.state > 1 && (
-            <>
-              {isLoading ? (
-                <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
-              ) : (
-                isHovered && (
-                  <BinAnimationIcon
-                    className="cea-job-info-icon danger shake"
-                    onClick={handleDelete}
-                  />
-                )
-              )}
-            </>
-          )}
-          {job.state < 2 && (
-            <>
-              {isLoading ? (
-                <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
-              ) : (
-                <StopIcon
-                  className="cea-job-info-icon danger"
-                  onClick={handleCancel}
-                />
-              )}
-            </>
-          )}
-        </div>
+        <JobActions id={id} job={job} showDelete={isHovered} />
       </div>
       <JobInfoModal
         job={{ id, ...job }}
@@ -234,10 +230,6 @@ const JobInfoCard = ({ id, job }) => {
       />
     </>
   );
-};
-
-const cancelCeaJob = async (job) => {
-  return apiClient.post(`/server/jobs/cancel/${job.id}`);
 };
 
 export default JobInfoCard;

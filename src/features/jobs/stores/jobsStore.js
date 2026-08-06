@@ -162,6 +162,14 @@ const useJobsStore = create((set, get) => ({
       console.error('Failed to delete job:', error);
     }
   },
+
+  cancelJob: async (jobID) => {
+    try {
+      await apiClient.post(`/server/jobs/cancel/${jobID}`);
+    } catch (error) {
+      console.error('Failed to cancel job:', error);
+    }
+  },
 }));
 
 // Selector hook that returns jobs as a sorted array (newest first)
