@@ -94,6 +94,19 @@ const parseStringArray = (raw) => {
   }
 };
 
+const JobStatusMessage = ({ jobId, message }) => (
+  <>
+    job [
+    <span className="cea-status-bar-job-id" title={jobId}>
+      {jobId.slice(0, 8)}
+    </span>
+    ]
+    {message ? (
+      <span className="cea-status-bar-job-message"> - {message}</span>
+    ) : null}
+  </>
+);
+
 const DismissCountdown = ({ duration, onComplete }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
 
@@ -119,7 +132,7 @@ const DismissCountdown = ({ duration, onComplete }) => {
 };
 
 const JobStatusBar = () => {
-  const [output, setMessage] = useState('');
+  const [output, setMessage] = useState(null);
   const { updateJob, dismissJob } = useJobsStore();
   const setActiveMapCategory = useSetActiveMapCategory();
   const setMapLayerParameters = useMapStore(
@@ -191,7 +204,9 @@ const JobStatusBar = () => {
         },
         onWorkerSuccess: (job) => {
           depsRef.current.updateJob(job);
-          depsRef.current.setMessage(`jobID: ${job.id} - completed ✅`);
+          depsRef.current.setMessage(
+            <JobStatusMessage jobId={job.id} message="completed ✅" />,
+          );
 
           // When network-layout creates or modifies a network, any cached
           // metadata that lists existing networks goes stale: the tool forms'
@@ -364,11 +379,15 @@ const JobStatusBar = () => {
         },
         onWorkerCanceled: (job) => {
           depsRef.current.dismissJob(job);
-          depsRef.current.setMessage(`jobID: ${job.id} - canceled ✖️`);
+          depsRef.current.setMessage(
+            <JobStatusMessage jobId={job.id} message="canceled ✖️" />,
+          );
         },
         onWorkerError: (job) => {
           depsRef.current.updateJob(job);
-          depsRef.current.setMessage(`jobID: ${job.id} - error ❗`);
+          depsRef.current.setMessage(
+            <JobStatusMessage jobId={job.id} message="error ❗" />,
+          );
 
           const key = job.id;
           notification.error({
@@ -443,7 +462,10 @@ const JobStatusBar = () => {
           // Only call setMessage if both jobid and last_line exist
           if (data.jobid && last_line) {
             depsRef.current.setMessage(
-              `jobID: ${data.jobid} - ${last_line.slice(0, 80)}`,
+              <JobStatusMessage
+                jobId={data.jobid}
+                message={last_line.slice(0, 80)}
+              />,
             );
           }
         },
@@ -495,11 +517,11 @@ const JobStatusBar = () => {
     };
   }, [socket]);
 
-  if (output.length < 1 && !selectedJob) return null;
+  if (!output && !selectedJob) return null;
 
   return (
     <>
-      {output.length > 0 && (
+      {output && (
         <div className="cea-status-bar-button">
           <span>{output}</span>
         </div>

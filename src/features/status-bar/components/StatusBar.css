@@ -44,6 +44,11 @@
   font-size: 16px;
 }
 
+.cea-status-bar-job-id {
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 #cea-status-bar-left,
 #cea-status-bar-right {
   display: flex;
