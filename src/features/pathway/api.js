@@ -6,6 +6,15 @@ import {
 
 const encodePathwayName = (pathwayName) => encodeURIComponent(pathwayName);
 
+// Mirrors jobsStore.createJob's scenarioContext pattern: pass an explicit
+// { project, scenarioName, childScenario } to pin a request to the parent
+// scenario regardless of which pathway child state is currently active
+// (X-CEA-Child-Scenario) -- otherwise falls back to the store's active
+// scenario. Used by the pathway-mutation calls below, which must always
+// target the parent's outputs/pathways/... tree, never a child state.
+const resolveHeaders = (scenarioContext) =>
+  scenarioContext ? scenarioHeaders(scenarioContext) : activeScenarioHeaders();
+
 export const fetchPathways = async () => {
   const { data } = await getScenarioClient().get('/pathways/', {
     headers: activeScenarioHeaders(),
@@ -20,11 +29,32 @@ export const fetchPathwayOverview = async () => {
   return data;
 };
 
-export const createPathway = async (pathwayName) => {
+export const createPathway = async (pathwayName, scenarioContext) => {
   const { data } = await apiClient.post(
     '/pathways/',
     { pathway_name: pathwayName },
-    { headers: activeScenarioHeaders() },
+    { headers: resolveHeaders(scenarioContext) },
+  );
+  return data;
+};
+
+export const deletePathway = async (pathwayName, scenarioContext) => {
+  const { data } = await apiClient.delete(
+    `/pathways/${encodePathwayName(pathwayName)}`,
+    { headers: resolveHeaders(scenarioContext) },
+  );
+  return data;
+};
+
+export const duplicatePathway = async (
+  pathwayName,
+  newName,
+  scenarioContext,
+) => {
+  const { data } = await apiClient.post(
+    `/pathways/${encodePathwayName(pathwayName)}/duplicate`,
+    { name: newName },
+    { headers: resolveHeaders(scenarioContext) },
   );
   return data;
 };
@@ -46,10 +76,10 @@ export const addPathwayYear = async (pathwayName, year) => {
   return data;
 };
 
-export const deletePathwayYear = async (pathwayName, year) => {
+export const deletePathwayYear = async (pathwayName, year, scenarioContext) => {
   const { data } = await apiClient.delete(
     `/pathways/${encodePathwayName(pathwayName)}/years/${year}`,
-    { headers: activeScenarioHeaders() },
+    { headers: resolveHeaders(scenarioContext) },
   );
   return data;
 };
@@ -63,10 +93,14 @@ export const validatePathwayLog = async (pathwayName) => {
   return data;
 };
 
-export const fetchYearEditorOptions = async (pathwayName, year) => {
+export const fetchYearEditorOptions = async (
+  pathwayName,
+  year,
+  scenarioContext,
+) => {
   const { data } = await getScenarioClient().get(
     `/pathways/${encodePathwayName(pathwayName)}/years/${year}/editor-options`,
-    { headers: activeScenarioHeaders() },
+    { headers: resolveHeaders(scenarioContext) },
   );
   return data;
 };
@@ -89,20 +123,26 @@ export const applyTemplatesToYear = async (
   pathwayName,
   year,
   templateNames,
+  scenarioContext,
 ) => {
   const { data } = await apiClient.post(
     `/pathways/${encodePathwayName(pathwayName)}/years/${year}/apply-templates`,
     { template_names: templateNames },
-    { headers: activeScenarioHeaders() },
+    { headers: resolveHeaders(scenarioContext) },
   );
   return data;
 };
 
-export const saveYearYaml = async (pathwayName, year, rawYaml) => {
+export const saveYearYaml = async (
+  pathwayName,
+  year,
+  rawYaml,
+  scenarioContext,
+) => {
   const { data } = await apiClient.put(
     `/pathways/${encodePathwayName(pathwayName)}/years/${year}/yaml`,
     { raw_yaml: rawYaml },
-    { headers: activeScenarioHeaders() },
+    { headers: resolveHeaders(scenarioContext) },
   );
   return data;
 };

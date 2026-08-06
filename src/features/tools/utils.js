@@ -29,11 +29,6 @@ export const getFormValues = async (
   try {
     const values = await form.validateFields();
 
-    // Add scenario information to the form
-    const index = parameters.findIndex((x) => x.type === 'ScenarioParameter');
-    let scenario = {};
-    if (index >= 0) scenario = { scenario: parameters[index].value };
-
     // Convert undefined/null values to empty strings for nullable parameters
     // This ensures backend receives "" instead of undefined/null
     const cleanedValues = Object.fromEntries(
@@ -43,10 +38,9 @@ export const getFormValues = async (
       ]),
     );
 
-    out = {
-      ...scenario,
-      ...cleanedValues,
-    };
+    // No `scenario` key required here: the backend injects it automatically
+    // based on the current scenario context.
+    out = cleanedValues;
 
     return out;
   } catch (err) {

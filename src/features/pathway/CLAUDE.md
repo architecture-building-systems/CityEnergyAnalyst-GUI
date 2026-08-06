@@ -4,6 +4,7 @@
 - `fetchPathwayOverview() -> Promise<object>` - Shared span and year lanes for all pathways.
 - `fetchPathwayTimeline(pathwayName) -> Promise<object>` - Active-pathway detail rows with status and YAML preview.
 - `fetchYearEditorOptions(pathwayName, year) -> Promise<object>` - Choices for building/template editors.
+- `createPathway(pathwayName, scenarioContext?) -> Promise<object>`, `deletePathway(pathwayName, scenarioContext?)`, `duplicatePathway(pathwayName, newName, scenarioContext?)`, `deletePathwayYear(pathwayName, year, scenarioContext?)`, `saveYearYaml(pathwayName, year, rawYaml, scenarioContext?)`, `applyTemplatesToYear(pathwayName, year, templateNames, scenarioContext?)` - Direct REST mutations, no job involved. `scenarioContext` mirrors `jobsStore.createJob`'s — pass `{ project, scenarioName, childScenario: null }` explicitly when the caller must pin the parent scenario (see the DO block below); omitted, it falls back to `activeScenarioHeaders()`.
 - `usePathwayOverview({ enabled? })` - React Query hook keyed on the active scenario; cached, shared across consumers (currently the Canvas Builder's `NavigatorCard` toggle gating + `PathwayCompareSelect` options).
 - `useHasSimulatedPathway()` - Boolean derivative — `true` iff the active scenario has at least one pathway whose every state has been simulated. Stricter than the baked-only predicate `OverviewCard`'s viewer uses; gates the Canvas Builder's Pathway picker so it only appears in scenarios where every column will actually have data to render.
 - `PathwayPanel({ expanded, onExpandedChange, ... })` - Bottom-panel stacked timeline with shared ruler, inspector, editor modals, and full-screen toggle.
@@ -45,35 +46,77 @@ selectedYearByPathwayRef.current[pathwayName] = year;
 // Click to switch lanes directly. Avoid hidden wheel shortcuts for pathway changes.
 ```
 
-### DO: Launch panel mutations through the native job store
+### DO: Call the pathways REST API directly for fast mutations, not the job store
 ```jsx
-await createJob('pathway-delete-state', {
-  scenario,
-  existing_pathway_name: selectedPathway,
-  year_of_state: selectedRow.year,
+await runPathwayAction({
+  busyKey: 'delete-year',
+  action: () =>
+    deletePathwayYear(selectedPathway, selectedRow.year, {
+      project, scenarioName, childScenario: null,
+    }),
+  refresh: () => refreshPathwayData({ preferredPathway: selectedPathway, preferredYear: selectedRow.year }),
+  failureMessage: 'Failed to delete state.',
 });
 ```
+Decision rule: if the underlying `pathway_timeline.py` core function is just a
+filesystem/YAML write (create/delete a pathway, delete/save-yaml/apply-templates
+a year), call the REST route directly (`pathway/api.js`) via `runPathwayAction` —
+no job, no status-bar entry, no `scenario` parameter to compute (the backend
+resolves scenario from `X-CEA-*` headers on every route, not just job creation).
+Keep the job store only for work that's genuinely slow / proportional to
+scenario size (bake, simulate — see below).
 
-### DO: Let native Job Info own success and failure feedback for pathway jobs
+`runPathwayAction`, unlike `startPanelJob`, does **not** pin the scenario
+context for you — pass `{ project, scenarioName, childScenario: null }`
+explicitly to the `pathway/api.js` call inside `action`, every time. Pathway
+mutations always target the *parent* scenario's `outputs/pathways/...` tree
+regardless of which pathway child state is active in the map/canvas; omitting
+the context falls back to `activeScenarioHeaders()`, which follows whatever
+child scenario happens to be active and would point the request at the wrong
+folder.
+
+### DO: Surface REST pathway-action feedback through the panel's own alert, not a toast
 ```jsx
-await startPanelJob({ script: 'pathway-delete-pathway', ... });
-setPanelError(null);
-// Do not stack local toast popups on top of the status-bar job notifications.
+try {
+  await deletePathway(pathwayName, scenarioContext);
+  await refreshPathwayData(...);
+} catch (error) {
+  setPanelError(getErrorMessage(error, 'Failed to delete the pathway.'));
+}
 ```
+Direct REST pathway actions have no status-bar job entry to fall back on, but
+they also don't need a toast — the panel's persistent `panelError` `<Alert>`
+is the established error surface (see `handleDeleteTemplate`, the original
+non-job pathway action), and a successful data refresh is the success signal.
+Components with no such alert (e.g. `OverviewCard`) use `message.error` on
+failure instead, but stay silent on success — don't introduce a new toast
+convention piecemeal.
 
 ### DO: Treat backend job names as domain actions, not UI labels
 ```jsx
-'pathway-delete-state'
-'pathway-validate-all-states'
+'bake-pathway-states'
+'pathway-simulations'
 ```
 
-### DO: Launch bake/simulate through the job store, not bespoke API routes
+### DO: Keep bake/simulate on the job store — they're genuinely slow
 ```jsx
-await createJob('bake-pathway-states', {
-  scenario,
-  existing_pathway_name: selectedPathway,
+await startPanelJob({
+  script: 'bake-pathway-states',
+  parameters: { existing_pathway_name: pathwayName },
+  busyKey: `bake-${pathwayName}`,
+  startingMessage: 'Baking pathway states — this can take a while. Track progress in Job Info.',
+  ...
 });
 ```
+`bake-pathway-states` rebuilds a full scenario-inputs copy per state year
+(`shutil.copytree` + building-property regeneration) — cost proportional to
+`years × scenario size`. `pathway-simulations` is slower still. Both stay on
+the job system so the button spinner (`busyAction`, kept alive by
+`pendingPanelJob` until real completion) and the status-bar Job Info panel
+give real progress feedback instead of blocking an HTTP request. Pass
+`startingMessage` to fire an immediate `message.info` toast the moment the
+job is *created* — a clear "this started a background job" signal distinct
+from the spinner, for the one action left on this path.
 
 ### DO: Keep header-level pathway workflow buttons together
 ```jsx
@@ -87,10 +130,11 @@ Validate all states | Bake states | Simulate pathway
 </Link>
 ```
 
-### DO: Keep editors open until the started job finishes
+### DO: Track a started job through to real completion, not just creation
 ```jsx
-setPendingPanelJob({ id: job.id, onSuccess: 'saved-yaml' });
-// Close the drawer on success, keep the draft open on job failure.
+setPendingPanelJob({ id: job.id, preferredPathway, preferredYear, failureMessage });
+// busyAction stays set until the pendingPanelJob effect sees job.state
+// resolve (success or failure) -- not just until the job is created.
 ```
 
 ### DO: Cap the visible lane stack and let it scroll independently when many pathways exist
@@ -149,7 +193,7 @@ onKeyDown={(event) => handleYamlTextareaKeyDown(event, yamlDraft, setYamlDraft)}
 // State kind comes from `state_kind` and the row content itself.
 ```
 
-### DO: Always pass `activeScenarioHeaders()` in every `api.js` call
+### DO: Always send scenario headers in every `api.js` call
 The pathway router applies `_apply_parent_scenario` globally (a
 `CEAScenario` dependency on every route), so every request needs
 `X-CEA-Project` + `X-CEA-Scenario-Name` headers. Omitting them causes
@@ -160,6 +204,21 @@ const { data } = await apiClient.post(url, body, {
   headers: activeScenarioHeaders(),
 });
 ```
+The mutation functions (`createPathway`, `deletePathway`, `duplicatePathway`,
+`deletePathwayYear`, `saveYearYaml`, `applyTemplatesToYear`) route through
+`resolveHeaders(scenarioContext)` instead — `activeScenarioHeaders()` when no
+override is given, `scenarioHeaders(scenarioContext)` when a caller needs to
+pin the parent scenario explicitly (see the REST-mutation DO block above).
+Either way headers are always sent; never call these routes with none.
+
+### DON'T: Call a `/pathways/...` route with a raw `apiClient` call outside `api.js`
+`DuplicatePathwayModal` used to `apiClient.post` the duplicate route directly
+from the modal component, with no headers at all -- a 400 from the backend's
+`CEAScenario` dependency demanding `X-CEA-Project`/`X-CEA-Scenario-Name`.
+Every `/pathways/...` call must go through a function in `api.js` (add one if
+missing) so it always resolves headers via `resolveHeaders`/`activeScenarioHeaders`;
+never reach for `apiClient`/`getScenarioClient` directly from a component.
+
 Exception: `fetchStateFolderPath` passes `project`/`scenarioName` via
 `scenarioHeaders()` instead of `activeScenarioHeaders()`, since it may be
 called before a scenario is active; only `pathway_name` and `year` go in
@@ -169,7 +228,15 @@ every other route).
 
 ## Related Files
 - `api.js` - Dedicated pathway API client helpers. Every call uses
-  `activeScenarioHeaders()` except `fetchStateFolderPath` (`scenarioHeaders()`).
+  `activeScenarioHeaders()` by default; the mutation functions
+  (`createPathway`, `deletePathway`, `duplicatePathway`, `deletePathwayYear`,
+  `saveYearYaml`, `applyTemplatesToYear`) plus the read-only
+  `fetchYearEditorOptions` accept an optional `scenarioContext` override for
+  parent-pinning (see the REST-mutation DO block above and `handleCopyState`,
+  which pins it so copying a state always reads the parent's own YAML for
+  that year rather than whatever child pathway state happens to be active
+  elsewhere); `fetchStateFolderPath` always uses `scenarioHeaders()` directly
+  instead.
 - `hooks/usePathwayOverview.js` - React Query wrapper around `fetchPathwayOverview` plus the `useHasSimulatedPathway` boolean derivative.
 - `components/PathwayPanel.jsx` - Stacked-lane panel, shared ruler, inspector, and editor workflows.
 - `../project/components/ProjectOverlay.jsx` - Bottom-panel mounting point and transition sizing.

@@ -24,35 +24,13 @@ const ComparisonView = ({
 }) => {
   const project = useProjectStore((s) => s.project);
   const columns = useCanvasStore((s) => s.columns);
+  const parentScenario = useCanvasStore((s) => s.parentScenario);
   const enableEdit = useCanvasStore((s) => s.enableEdit);
   const columnCards = useCanvasStore((s) => s.columnCards);
   const view = useCanvasStore((s) => s.view);
   const hasSimulatedPathway = useHasSimulatedPathway();
   const isPathwayView = view === 'pathway-single' || view === 'pathway-multi';
 
-  // Build the full scenario path the plot-tool form expects in
-  // its `general:scenario` parameter (POSIX-style join — works on
-  // every platform since the dashboard server normalises paths
-  // server-side). When the user clicks Edit on a plot in column
-  // N, we rewrite `parameters.scenario` to N's path so the
-  // form's pickers (what-if names, building lists, etc.) load
-  // from N's scenario folder rather than whichever scenario the
-  // plot was originally created under.
-  const scenarioPathFor = (columnIndex) => {
-    const name = columns[columnIndex]?.scenario;
-    if (!project || !name) return null;
-    return `${project}/${name}`;
-  };
-
-  const withColumnScenario = (plotConfig, columnIndex) => {
-    if (!plotConfig) return plotConfig;
-    const path = scenarioPathFor(columnIndex);
-    if (!path) return plotConfig;
-    return {
-      ...plotConfig,
-      parameters: { ...(plotConfig.parameters || {}), scenario: path },
-    };
-  };
   const removeColumn = useCanvasStore((s) => s.removeColumn);
   const addCard = useCanvasStore((s) => s.addCard);
   const addPlot = useCanvasStore((s) => s.addPlot);
@@ -145,12 +123,27 @@ const ComparisonView = ({
       });
     };
 
-  // Build the (project, scenarioName) pair the form needs to
-  // scope its choice generators to the column being edited.
+  // Build the scenario context the form needs to scope its choice
+  // generators to the column being edited. `pathway-state` columns carry
+  // a client-built child path in `column.scenario` (see
+  // `enterPathwaySingle` / `childStateScenarioPath`) -- that path is not
+  // a valid `X-CEA-Scenario-Name` value, so route those columns through
+  // the parent scenario name + an explicit `childScenario` token instead
+  // (mirrors the header contract `CanvasColumn` already uses for the
+  // rendered plot itself; see `features/canvas/CLAUDE.md`).
   const scenarioOverrideFor = (columnIndex) => {
-    const name = columns[columnIndex]?.scenario;
-    if (!project || !name) return null;
-    return { project, scenarioName: name };
+    const column = columns[columnIndex];
+    if (!project || !column) return null;
+    if (column.type === 'pathway-state') {
+      if (!parentScenario) return null;
+      return {
+        project,
+        scenarioName: parentScenario,
+        childScenario: { pathway_name: column.pathwayName, year: column.year },
+      };
+    }
+    if (!column.scenario) return null;
+    return { project, scenarioName: column.scenario };
   };
 
   const handleAddPlotToCard =
@@ -179,13 +172,15 @@ const ComparisonView = ({
     onOpenDrawer({
       cardId,
       columnIndex,
+      // Scopes the form's parameter-schema fetch (and thus its scenario
+      // picker, what-if names, building lists, etc.) to this column's
+      // scenario via headers. The plot may have been created under a
+      // different column's scenario; scenarioOverride is what re-scopes
+      // it here, not the saved plotConfig's `parameters.scenario` (the
+      // backend resolves that from headers at job-creation time regardless
+      // of what a saved plotConfig happens to carry — see jobsStore.js).
       scenarioOverride: scenarioOverrideFor(columnIndex),
-      // Rewrite the saved plotConfig's `parameters.scenario` to
-      // this column's scenario before opening the form. The plot
-      // was originally created under origin's scenario; without
-      // this override the form's scenario picker would show
-      // origin's name even when editing in a mirror column.
-      plotConfig: withColumnScenario(existing, columnIndex),
+      plotConfig: existing,
       onSave: (plotConfig) =>
         updatePlot(columnIndex, cardId, plotId, plotConfig),
     });

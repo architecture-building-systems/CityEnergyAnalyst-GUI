@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Typography } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
-import { getTickStep } from '../constants';
+import { getTickStep } from '../utils';
 
 const { Title } = Typography;
 

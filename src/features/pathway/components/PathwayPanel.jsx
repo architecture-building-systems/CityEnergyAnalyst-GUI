@@ -3,15 +3,14 @@ import {
   Button,
   Divider,
   InputNumber,
+  message,
   Modal,
-  Select,
   Spin,
   Typography,
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InfoTooltip, { TooltipFromBackend } from 'components/InfoTooltip';
-import { ERROR_RED } from 'constants/theme';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import { getMainUseType } from 'features/map/utils/constructionColors';
@@ -19,7 +18,6 @@ import {
   BinAnimationIcon,
   CreateNewIcon,
   DuplicateIcon,
-  InputEditorIcon,
   RefreshIcon,
   RunIcon,
 } from 'assets/icons';
@@ -34,10 +32,29 @@ import {
 
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import DuplicatePathwayModal from 'features/project/components/modals/DuplicatePathwayModal';
-import { STATUS_FILL, buildScenarioPath, getTickStep } from '../constants';
+import BuildingList from './BuildingList';
+import LegendChip from './LegendChip';
+import ModificationSummary from './ModificationSummary';
+import PathwaySelect from './PathwaySelect';
+import SectionCard from './SectionCard';
+import TemplateSelect from './TemplateSelect';
+import { pathwayOverviewQueryKey } from '../hooks/usePathwayOverview';
+import { STATUS_ACCENT, STATUS_FILL } from '../constants';
+import {
+  formatCompactTimestamp,
+  getErrorMessage,
+  getNodeFill,
+  getNodeSize,
+  getTickStep,
+  resolveSelectedYear,
+} from '../utils';
 
 import {
+  applyTemplatesToYear,
+  createPathway,
   deleteInterventionTemplate,
+  deletePathway,
+  deletePathwayYear,
   fetchBuildingLifecycle,
   fetchInterventionTemplate,
   fetchInterventionTemplates,
@@ -49,6 +66,7 @@ import {
   preSaveBuildingEventsConfig,
   preSaveDefineTemplateConfig,
   preSaveSimulatePathwayConfig,
+  saveYearYaml,
 } from '../api';
 
 const { Text, Title } = Typography;
@@ -61,492 +79,6 @@ const MAX_VISIBLE_TIMELINE_LANES = 3;
 // Minimum horizon for the shared ruler so sparse, near-term pathways still render against a
 // long-term scale. Pathways that already run past this keep their own end year.
 const MIN_TIMELINE_END_YEAR = 2100;
-
-const STATUS_ACCENT = {
-  error: ERROR_RED,
-  changed: '#D97706',
-};
-
-const getErrorMessage = (error, fallbackMessage) => {
-  const detail = error?.response?.data?.detail;
-  if (typeof detail === 'string' && detail.trim()) {
-    return detail;
-  }
-  if (detail?.message) {
-    return detail.message;
-  }
-  if (error?.message) {
-    return error.message;
-  }
-  return fallbackMessage;
-};
-
-const formatCompactTimestamp = (value) => {
-  if (!value) {
-    return 'Not recorded';
-  }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return String(value);
-  }
-  return parsed.toLocaleString([], {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-};
-
-const pickClosestYear = (years, preferredYear) => {
-  if (!years?.length || preferredYear == null) {
-    return null;
-  }
-
-  return (
-    [...years].sort(
-      (left, right) =>
-        Math.abs(left - preferredYear) - Math.abs(right - preferredYear) ||
-        left - right,
-    )[0] ?? null
-  );
-};
-
-const resolveSelectedYear = ({
-  years,
-  preferredYear,
-  pendingYear,
-  currentYear,
-  rememberedYear,
-}) => {
-  const candidates = [preferredYear, pendingYear, currentYear, rememberedYear];
-
-  for (const candidate of candidates) {
-    if (candidate != null && years.includes(candidate)) {
-      return candidate;
-    }
-  }
-
-  const fallbackTarget =
-    preferredYear ?? pendingYear ?? currentYear ?? rememberedYear ?? null;
-  if (fallbackTarget != null) {
-    return pickClosestYear(years, fallbackTarget);
-  }
-
-  return years[0] ?? null;
-};
-
-const getNodeFill = (row) => {
-  const hasStale = row?.status?.has_stale_phase;
-  if (hasStale) return STATUS_ACCENT.error;
-  const primaryPhase = row?.status?.primary_phase ?? 'none';
-  return STATUS_FILL[primaryPhase] ?? STATUS_FILL.none;
-};
-
-const getNodeSize = () => 12;
-
-const LegendChip = ({ colour, label, outline, halo }) => (
-  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-    <span
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 999,
-        display: 'inline-block',
-        background: colour,
-        border: outline
-          ? `2px solid ${outline}`
-          : '1px solid rgba(15, 23, 42, 0.08)',
-        boxShadow: halo ? `0 0 0 4px ${halo}` : 'none',
-      }}
-    />
-    <Text style={{ fontSize: 12, color: '#475569' }}>{label}</Text>
-  </div>
-);
-
-const SectionCard = ({ title, content, tooltipKey }) => (
-  <div
-    style={{
-      borderRadius: 14,
-      border: '1px solid rgba(148, 163, 184, 0.18)',
-      background: '#FFFFFF',
-      padding: 12,
-      minHeight: 60,
-    }}
-  >
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        paddingBottom: 8,
-        marginBottom: 8,
-        borderBottom: '1px solid #e0e0e0',
-      }}
-    >
-      <Text strong>{title}</Text>
-      {tooltipKey ? <InfoTooltip tooltipKey={tooltipKey} /> : null}
-    </div>
-    {content}
-  </div>
-);
-
-const BuildingPill = ({ name, color, onClick }) => (
-  <span
-    role={onClick ? 'button' : undefined}
-    tabIndex={onClick ? 0 : undefined}
-    onClick={onClick}
-    onKeyDown={
-      onClick
-        ? (e) => {
-            if (e.key === 'Enter') onClick();
-          }
-        : undefined
-    }
-    style={{
-      display: 'inline-block',
-      padding: '2px 8px',
-      borderRadius: 999,
-      fontSize: 11,
-      fontWeight: 500,
-      background: color ?? '#e8e8e8',
-      color: color ? '#fff' : '#475569',
-      cursor: onClick ? 'pointer' : 'default',
-    }}
-  >
-    {name}
-  </span>
-);
-
-const BuildingList = ({
-  buildings,
-  buildingColorMap,
-  rebuildCounts,
-  onBuildingClick,
-}) => {
-  if (!buildings?.length) return null;
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-      {buildings.map((b) => {
-        const count = rebuildCounts?.[b] ?? 0;
-        const label = count > 0 ? `${b}(${count})` : b;
-        return (
-          <BuildingPill
-            key={b}
-            name={label}
-            color={buildingColorMap?.[b]}
-            onClick={onBuildingClick ? () => onBuildingClick(b) : undefined}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
-const ModificationSummary = ({ row, constructionColorMap: colorMap }) => {
-  const modifications = row?.modifications ?? {};
-  const archetypes = Object.keys(modifications);
-  if (!archetypes.length) return null;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {archetypes.map((archetype) => {
-        const components = modifications[archetype] ?? {};
-        const color = colorMap?.[archetype];
-        const changes = Object.entries(components).flatMap(
-          ([component, fields]) =>
-            Object.entries(fields).map(([field, value]) => ({
-              component,
-              field,
-              value,
-            })),
-        );
-        return (
-          <div key={archetype} style={{ fontSize: 12 }}>
-            <BuildingPill name={archetype} color={color} />
-            {changes.map((c) => (
-              <div
-                key={`${c.component}-${c.field}`}
-                style={{ color: '#475569', paddingLeft: 8 }}
-              >
-                {c.field}: {String(c.value)}
-              </div>
-            ))}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-const PathwayOptionWithCheckbox = ({
-  pathwayName,
-  checked,
-  onToggle,
-  onDelete,
-  onDuplicate,
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          minWidth: 0,
-          flex: 1,
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggle(pathwayName);
-          }}
-          onClick={(e) => e.stopPropagation()}
-          style={{ cursor: 'pointer', flexShrink: 0 }}
-        />
-        <div
-          style={{
-            minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-          title={pathwayName}
-        >
-          {pathwayName}
-        </div>
-      </div>
-      {isHovered && (
-        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <DuplicateIcon
-            style={{ padding: '2px 4px', cursor: 'pointer', opacity: 0.55 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate?.(pathwayName);
-            }}
-          />
-          <BinAnimationIcon
-            style={{ padding: '2px 4px' }}
-            className="cea-job-info-icon danger shake"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(pathwayName);
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
-
-const PathwaySelect = ({
-  selectedPathway,
-  visiblePathways,
-  overviewPathways,
-  onToggleVisible,
-  onDeletePathway,
-  onDuplicatePathway,
-  onCreatePathway,
-  loading,
-  allBaked,
-}) => {
-  const [open, setOpen] = useState(false);
-
-  const sortedPathways = useMemo(() => {
-    return [...overviewPathways]
-      .map((p) => p.pathway_name)
-      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-  }, [overviewPathways]);
-
-  const visibleSet = useMemo(() => new Set(visiblePathways), [visiblePathways]);
-
-  const options = useMemo(() => {
-    return sortedPathways.map((pathwayName) => ({
-      label: (
-        <PathwayOptionWithCheckbox
-          pathwayName={pathwayName}
-          checked={visibleSet.has(pathwayName)}
-          onToggle={onToggleVisible}
-          onDelete={onDeletePathway}
-          onDuplicate={onDuplicatePathway}
-        />
-      ),
-      value: pathwayName,
-    }));
-  }, [
-    sortedPathways,
-    visibleSet,
-    onToggleVisible,
-    onDeletePathway,
-    onDuplicatePathway,
-  ]);
-
-  const hasPathways = overviewPathways.length > 0;
-
-  const displayLabel =
-    visiblePathways.length > 0
-      ? visiblePathways.join('; ')
-      : (selectedPathway ?? '');
-
-  return (
-    <Select
-      className={`${visiblePathways.length === 1 && allBaked ? 'cea-scenario-select-blue' : 'cea-scenario-select'} ${!hasPathways || !selectedPathway || visiblePathways.length === 0 ? 'cea-select-empty cea-select-glow' : ''}`}
-      style={{ width: 208 }}
-      styles={{ popup: { root: { width: 270 } } }}
-      placeholder={hasPathways ? 'Select Pathway' : 'Create Pathway'}
-      options={hasPathways ? options : []}
-      value={visiblePathways.length > 0 ? selectedPathway : undefined}
-      onChange={() => {}}
-      onSelect={(pathwayName) => {
-        onToggleVisible(pathwayName);
-        setOpen(true);
-      }}
-      loading={loading}
-      open={hasPathways ? open : false}
-      onOpenChange={hasPathways ? setOpen : undefined}
-      onClick={!hasPathways ? onCreatePathway : undefined}
-      notFoundContent={<small>No pathways</small>}
-      labelRender={() =>
-        visiblePathways.length > 0 ? (
-          <span
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {displayLabel}
-          </span>
-        ) : null
-      }
-    />
-  );
-};
-
-const TemplateOption = ({ templateName, description, onEdit, onDelete }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleEditClick = (e) => {
-    e.stopPropagation();
-    onEdit?.(templateName);
-  };
-
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
-    onDelete?.(templateName);
-  };
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div
-        style={{
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          flexGrow: 1,
-        }}
-        title={description ? `${templateName}: ${description}` : templateName}
-      >
-        {templateName}
-        {description ? (
-          <span style={{ color: 'rgba(0, 0, 0, 0.45)' }}>: {description}</span>
-        ) : null}
-      </div>
-      {isHovered && (
-        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <InputEditorIcon
-            style={{ padding: '2px 6px' }}
-            className="cea-job-info-icon"
-            title={`Edit '${templateName}'`}
-            onClick={handleEditClick}
-          />
-          <BinAnimationIcon
-            style={{ padding: '2px 8px' }}
-            className="cea-job-info-icon danger shake"
-            title={`Delete '${templateName}'`}
-            onClick={handleDeleteClick}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
-
-const TemplateSelect = ({
-  templates,
-  descriptions,
-  selectedTemplates,
-  onSelectTemplates,
-  onEditTemplate,
-  onDeleteTemplate,
-  onCreateTemplate,
-  loading,
-}) => {
-  const [open, setOpen] = useState(false);
-
-  const sortedTemplates = useMemo(() => {
-    return [...(templates ?? [])].sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase()),
-    );
-  }, [templates]);
-
-  const options = useMemo(() => {
-    return sortedTemplates.map((name) => ({
-      label: (
-        <TemplateOption
-          templateName={name}
-          description={descriptions?.[name]}
-          onEdit={onEditTemplate}
-          onDelete={onDeleteTemplate}
-        />
-      ),
-      value: name,
-    }));
-  }, [sortedTemplates, descriptions, onEditTemplate, onDeleteTemplate]);
-
-  const hasTemplates = sortedTemplates.length > 0;
-
-  return (
-    <Select
-      mode="multiple"
-      optionLabelProp="value"
-      className={`cea-template-select ${!hasTemplates ? 'cea-select-empty cea-select-glow' : ''}`}
-      style={{ width: 416 }}
-      styles={{ popup: { root: { width: 416 } } }}
-      placeholder={
-        hasTemplates ? 'Intervention Templates' : 'Create Intervention Template'
-      }
-      options={hasTemplates ? options : []}
-      value={selectedTemplates}
-      onChange={onSelectTemplates}
-      maxTagCount="responsive"
-      allowClear={hasTemplates}
-      loading={loading}
-      open={hasTemplates ? open : false}
-      onOpenChange={hasTemplates ? setOpen : undefined}
-      onClick={!hasTemplates ? onCreateTemplate : undefined}
-      notFoundContent={<small>No intervention templates</small>}
-    />
-  );
-};
 
 const PathwayPanel = ({
   open,
@@ -628,11 +160,6 @@ const PathwayPanel = ({
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const [selectedHeaderTemplates, setSelectedHeaderTemplates] = useState([]);
-
-  const scenarioPath = useMemo(
-    () => buildScenarioPath(project, scenarioName),
-    [project, scenarioName],
-  );
 
   const overviewPathways = overview?.pathways ?? [];
   const visibleSet = useMemo(() => new Set(visiblePathways), [visiblePathways]);
@@ -798,7 +325,18 @@ const PathwayPanel = ({
       setLoadingOverview(true);
       setPanelError(null);
       try {
-        const data = await fetchPathwayOverview();
+        // Fetch through the same query cache `usePathwayOverview` uses
+        // (OverviewCard, Canvas Builder) instead of calling the raw API
+        // directly -- concurrent calls to this key collapse into a single
+        // network request instead of firing a duplicate. `staleTime: 0`
+        // still forces a fresh fetch here (rather than serving a
+        // pre-mutation cached value) whenever no fetch is already in
+        // flight, and the result populates that shared cache too.
+        const data = await queryClient.fetchQuery({
+          queryKey: pathwayOverviewQueryKey(scenarioName),
+          queryFn: fetchPathwayOverview,
+          staleTime: 0,
+        });
         setOverview(data);
         const pathwayNames = (data?.pathways ?? []).map(
           (item) => item.pathway_name,
@@ -840,7 +378,7 @@ const PathwayPanel = ({
         setLoadingOverview(false);
       }
     },
-    [],
+    [queryClient, scenarioName],
   );
 
   const loadTemplates = useCallback(async () => {
@@ -890,11 +428,28 @@ const PathwayPanel = ({
       failureMessage,
       preferredPathway = null,
       preferredYear = null,
-      onSuccess,
+      // Fired via message.info() the moment the job is *created* (not
+      // completed) -- distinct from the button's `busyAction` spinner, which
+      // this helper keeps active for the job's full run via
+      // `pendingPanelJob`. Genuinely long-running panel jobs (bake) pass
+      // this so there's an explicit "this started a background job" signal
+      // beyond the spinner alone.
+      startingMessage,
     }) => {
       setBusyAction(busyKey);
       try {
-        const job = await createJob(script, parameters);
+        // Every panel job operates on the parent scenario's outputs/pathways/...
+        // tree, regardless of which child pathway state is active in the map/canvas
+        // (X-CEA-Child-Scenario). Pin the headers explicitly rather than relying on
+        // activeScenarioHeaders()'s default, which would follow the active child
+        // scenario and point the job at the wrong folder. The backend resolves
+        // parameters.scenario from these headers -- the client no longer computes it.
+        const job = await createJob(script, parameters, {
+          project,
+          scenarioName,
+          childScenario: null,
+        });
+        if (startingMessage) message.info(startingMessage);
         setPanelError(null);
         setPendingPanelJob({
           id: job.id,
@@ -902,7 +457,6 @@ const PathwayPanel = ({
           preferredPathway,
           preferredYear,
           failureMessage,
-          onSuccess,
         });
         return job;
       } catch (error) {
@@ -916,7 +470,35 @@ const PathwayPanel = ({
         return null;
       }
     },
-    [createJob],
+    [createJob, project, scenarioName],
+  );
+
+  // Non-job pathway mutations (fast, synchronous REST calls) share this
+  // shape instead: drive the same `busyAction` spinner buttons already read,
+  // refresh on success, surface errors through the panel's persistent
+  // `panelError` alert. No toast on success -- the data refresh itself is
+  // the success signal, matching the panel's existing non-job action
+  // (handleDeleteTemplate) rather than introducing a new convention.
+  //
+  // Unlike startPanelJob, this helper does NOT pin the scenario context for
+  // you -- each `action` must pass `{ project, scenarioName, childScenario:
+  // null }` explicitly to the pathway/api.js call it wraps (see call sites
+  // below), or the request falls back to activeScenarioHeaders() and will
+  // silently follow whatever child pathway state happens to be active.
+  const runPathwayAction = useCallback(
+    async ({ busyKey, action, refresh, failureMessage }) => {
+      setBusyAction(busyKey);
+      try {
+        await action();
+        setPanelError(null);
+        await refresh?.();
+      } catch (error) {
+        setPanelError(getErrorMessage(error, failureMessage));
+      } finally {
+        setBusyAction(null);
+      }
+    },
+    [],
   );
 
   const handleSelectPathway = useCallback(
@@ -1038,10 +620,10 @@ const PathwayPanel = ({
         (job) =>
           job.state === 2 &&
           job.scenario_name === scenarioName &&
+          // pathway-delete-pathway and pathway-events-apply-templates now run as
+          // direct REST calls (see runPathwayAction) and never appear as jobs.
           [
             'bake-pathway-states',
-            'pathway-delete-pathway',
-            'pathway-events-apply-templates',
             'pathway-intervention-templates-define',
             'pathway-simulations',
             'pathway-update-building-events',
@@ -1091,8 +673,6 @@ const PathwayPanel = ({
         preferredPathway:
           pendingPanelJob.preferredPathway ?? selectedPathwayRef.current,
         preferredYear: pendingPanelJob.preferredYear,
-        // A freshly created pathway should start as the only visible lane.
-        exclusiveVisible: pendingPanelJob.onSuccess === 'created-pathway',
       });
       setPendingPanelJob(null);
       setBusyAction(null);
@@ -1114,7 +694,7 @@ const PathwayPanel = ({
   const globalValidationIssues = timeline?.validation?.issues ?? [];
 
   const handleRunPathwayJob = async (scriptName) => {
-    if (!selectedPathway || !scenarioPath) {
+    if (!selectedPathway || !scenarioName) {
       setPanelError('Select a scenario and pathway first.');
       return;
     }
@@ -1170,23 +750,39 @@ const PathwayPanel = ({
     }
 
     const targetYear = Number(newYearValue);
-    pendingPreferredYearRef.current = targetYear;
-    await startPanelJob({
-      script: 'pathway-events-apply-templates',
-      parameters: {
-        scenario: scenarioPath,
-        existing_pathway_names: visiblePathways,
-        year_of_state: targetYear,
-        intervention_templates: selectedHeaderTemplates,
-      },
-      busyKey: 'apply-intervention',
-      failedToStartMessage: 'Failed to start the apply-intervention job.',
-      failureMessage:
-        'Applying intervention failed. Open Job Info in the status bar for details.',
-      preferredPathway: selectedPathway,
-      preferredYear: targetYear,
-      onSuccess: 'saved-templates',
-    });
+    setBusyAction('apply-intervention');
+    try {
+      // One fast REST call per visible pathway lane -- mirrors the job
+      // script's own server-side loop over existing_pathway_names.
+      // `allSettled` (not `all`) so one pathway's failure doesn't stop the
+      // others from applying, or skip the refresh/data-reload afterwards --
+      // a retry on `all`'s all-or-nothing rejection could otherwise
+      // re-apply the same templates to pathways that already succeeded.
+      const results = await Promise.allSettled(
+        visiblePathways.map((pathwayName) =>
+          applyTemplatesToYear(
+            pathwayName,
+            targetYear,
+            selectedHeaderTemplates,
+            { project, scenarioName, childScenario: null },
+          ),
+        ),
+      );
+      await refreshPathwayData({
+        preferredPathway: selectedPathway,
+        preferredYear: targetYear,
+      });
+      const failedPathways = results
+        .map((result, index) => ({ result, pathwayName: visiblePathways[index] }))
+        .filter(({ result }) => result.status === 'rejected');
+      setPanelError(
+        failedPathways.length
+          ? `Failed to apply the intervention to: ${failedPathways.map(({ pathwayName }) => pathwayName).join(', ')}.`
+          : null,
+      );
+    } finally {
+      setBusyAction(null);
+    }
     setNewYearValue(null);
   };
 
@@ -1196,43 +792,49 @@ const PathwayPanel = ({
     }
 
     const targetYear = Number(newYearValue);
+    // Reuse the year's expert-YAML round-trip: read the selected state's full entry, then
+    // write it under the target year (saving revalidates the resulting log).
+    let rawYaml;
     try {
-      // Reuse the year's expert-YAML round-trip: read the selected state's full entry, then
-      // write it under the target year (the save-yaml job revalidates the resulting log).
+      // Pin to the parent scenario, matching the saveYearYaml write below --
+      // otherwise, if a pathway child state happens to be active elsewhere
+      // in the map/canvas, activeScenarioHeaders() would read that child's
+      // YAML instead of the parent pathway log's entry for this year.
       const options = await fetchYearEditorOptions(
         selectedPathway,
         selectedRow.year,
+        { project, scenarioName, childScenario: null },
       );
-      const rawYaml = options?.yaml_preview;
-      if (!rawYaml || !rawYaml.trim()) {
-        setPanelError('The selected state has no content to copy.');
-        return;
-      }
-      pendingPreferredYearRef.current = targetYear;
-      await startPanelJob({
-        script: 'pathway-save-yaml',
-        parameters: {
-          scenario: scenarioPath,
-          existing_pathway_names: [selectedPathway],
-          year_of_state: targetYear,
-          raw_yaml: rawYaml,
-        },
-        busyKey: 'copy-state',
-        failedToStartMessage: 'Failed to start the copy-state job.',
-        failureMessage:
-          'Copying state failed. Open Job Info in the status bar for details.',
-        preferredPathway: selectedPathway,
-        preferredYear: targetYear,
-        onSuccess: 'copied-state',
-      });
-      setNewYearValue(null);
+      rawYaml = options?.yaml_preview;
     } catch (error) {
       setPanelError(getErrorMessage(error, 'Failed to copy state.'));
+      return;
     }
+    if (!rawYaml || !rawYaml.trim()) {
+      setPanelError('The selected state has no content to copy.');
+      return;
+    }
+
+    await runPathwayAction({
+      busyKey: 'copy-state',
+      action: () =>
+        saveYearYaml(selectedPathway, targetYear, rawYaml, {
+          project,
+          scenarioName,
+          childScenario: null,
+        }),
+      refresh: () =>
+        refreshPathwayData({
+          preferredPathway: selectedPathway,
+          preferredYear: targetYear,
+        }),
+      failureMessage: 'Failed to copy state.',
+    });
+    setNewYearValue(null);
   };
 
   const handleDeletePathwayByName = (pathwayName) => {
-    if (!pathwayName || !scenarioPath) {
+    if (!pathwayName || !scenarioName) {
       return;
     }
 
@@ -1245,20 +847,21 @@ const PathwayPanel = ({
         danger: true,
       },
       onOk: async () => {
-        await startPanelJob({
-          script: 'pathway-delete-pathway',
-          parameters: {
-            scenario: scenarioPath,
-            existing_pathway_name: pathwayName,
-          },
+        await runPathwayAction({
           busyKey: 'delete-pathway',
-          failedToStartMessage: 'Failed to start the delete-pathway job.',
-          failureMessage:
-            'Deleting the pathway failed. Open Job Info in the status bar for details.',
-          preferredPathway:
-            pathwayName === selectedPathway ? null : selectedPathway,
-          preferredYear: null,
-          onSuccess: 'deleted-pathway',
+          action: () =>
+            deletePathway(pathwayName, {
+              project,
+              scenarioName,
+              childScenario: null,
+            }),
+          refresh: () =>
+            refreshPathwayData({
+              preferredPathway:
+                pathwayName === selectedPathway ? null : selectedPathway,
+              preferredYear: null,
+            }),
+          failureMessage: 'Failed to delete the pathway.',
         });
       },
     });
@@ -1308,18 +911,20 @@ const PathwayPanel = ({
           setPanelError('Enter a pathway name first.');
           return Promise.reject();
         }
-        await startPanelJob({
-          script: 'create-new-pathway',
-          parameters: {
-            scenario: scenarioPath,
-            new_pathway_name: name,
-          },
+        if (!scenarioName) {
+          setPanelError('Scenario is not ready yet. Please try again.');
+          return Promise.reject();
+        }
+        await runPathwayAction({
           busyKey: 'create-pathway',
-          failedToStartMessage: 'Failed to start the create-pathway job.',
-          failureMessage:
-            'Create pathway failed. Open Job Info in the status bar for details.',
-          preferredPathway: name,
-          onSuccess: 'created-pathway',
+          action: () =>
+            createPathway(name, { project, scenarioName, childScenario: null }),
+          refresh: () =>
+            refreshPathwayData({
+              preferredPathway: name,
+              exclusiveVisible: true,
+            }),
+          failureMessage: 'Failed to create the pathway.',
         });
       },
     });
@@ -1344,22 +949,20 @@ const PathwayPanel = ({
         danger: true,
       },
       onOk: async () => {
-        await startPanelJob({
-          script: 'pathway-delete-state',
-          parameters: {
-            scenario: scenarioPath,
-            existing_pathway_names: [selectedPathway],
-            year_of_state: selectedRow.year,
-          },
+        await runPathwayAction({
           busyKey: 'delete-year',
-          startedMessage: `${destructiveLabel} job started. Open Job Info in the status bar for details.`,
-          failedToStartMessage: `Failed to start the ${destructiveLabel.toLowerCase()} job.`,
-          completionMessage: selectedRow.can_clear_manual_changes
-            ? `Cleared manual changes for ${selectedRow.year}.`
-            : `Deleted state ${selectedRow.year}.`,
-          failureMessage: `${destructiveLabel} failed. Open Job Info in the status bar for details.`,
-          preferredPathway: selectedPathway,
-          preferredYear: selectedRow.year,
+          action: () =>
+            deletePathwayYear(selectedPathway, selectedRow.year, {
+              project,
+              scenarioName,
+              childScenario: null,
+            }),
+          refresh: () =>
+            refreshPathwayData({
+              preferredPathway: selectedPathway,
+              preferredYear: selectedRow.year,
+            }),
+          failureMessage: `Failed to ${destructiveLabel.toLowerCase()}.`,
         });
       },
     });
@@ -1531,19 +1134,23 @@ const PathwayPanel = ({
   };
 
   const handleBakePathway = async (pathwayName) => {
-    if (!pathwayName || !scenarioPath) return;
-    setBusyAction(`bake-${pathwayName}`);
-    try {
-      await createJob('bake-pathway-states', {
-        scenario: scenarioPath,
-        existing_pathway_name: pathwayName,
-      });
-      setPanelError(null);
-    } catch (error) {
-      setPanelError(getErrorMessage(error, 'Failed to start bake job.'));
-    } finally {
-      setBusyAction(null);
-    }
+    if (!pathwayName || !scenarioName) return;
+    // Bake is the one pathway action that stays on the job system -- it
+    // rebuilds a full scenario-inputs copy per state year, genuinely slow
+    // for a real scenario. Route through startPanelJob (not a raw
+    // createJob) so busyAction/pendingPanelJob track it through to actual
+    // completion, not just job creation, and so the starting toast fires.
+    await startPanelJob({
+      script: 'bake-pathway-states',
+      parameters: { existing_pathway_name: pathwayName },
+      busyKey: `bake-${pathwayName}`,
+      startingMessage:
+        'Baking pathway states — this can take a while. Track progress in Job Info.',
+      failedToStartMessage: 'Failed to start the bake job.',
+      failureMessage:
+        'Baking pathway states failed. Open Job Info in the status bar for details.',
+      preferredPathway: pathwayName,
+    });
   };
 
   const totalTimelineHeight =
@@ -1607,6 +1214,7 @@ const PathwayPanel = ({
         }}
         currentPathwayName={duplicateTarget ?? ''}
         existingPathwayNames={allPathwayNames}
+        scenarioContext={{ project, scenarioName, childScenario: null }}
         onDuplicated={handleDuplicated}
       />
       <div
@@ -1669,6 +1277,7 @@ const PathwayPanel = ({
                   icon={<CreateNewIcon />}
                   type="text"
                   loading={busyAction === 'create-pathway'}
+                  disabled={!scenarioName}
                   onClick={handleStartCreatePathway}
                 />
               </TooltipFromBackend>

@@ -23,15 +23,25 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { fetchPathwayOverview } from '../api';
 
-const STALE_MS = 30_000;
+export const PATHWAY_OVERVIEW_STALE_MS = 30_000;
+
+// Shared with `PathwayPanel`, which fetches the same data imperatively
+// (via `queryClient.fetchQuery`) instead of this hook -- using the same
+// key lets React Query dedupe a PathwayPanel refresh against an in-flight
+// or still-fresh fetch from this hook instead of firing a second request.
+export const pathwayOverviewQueryKey = (scenario) => [
+  'pathways',
+  'overview',
+  scenario,
+];
 
 export function usePathwayOverview({ enabled = true } = {}) {
   const scenario = useProjectStore((s) => s.scenario);
   return useQuery({
-    queryKey: ['pathways', 'overview', scenario],
+    queryKey: pathwayOverviewQueryKey(scenario),
     queryFn: fetchPathwayOverview,
     enabled: enabled && !!scenario,
-    staleTime: STALE_MS,
+    staleTime: PATHWAY_OVERVIEW_STALE_MS,
   });
 }
 

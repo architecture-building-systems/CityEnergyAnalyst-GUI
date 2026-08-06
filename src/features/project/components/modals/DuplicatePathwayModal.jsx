@@ -1,12 +1,13 @@
 import { Button, Form, Input, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
-import { apiClient } from 'lib/api/axios';
+import { duplicatePathway } from 'features/pathway/api';
 
 const DuplicatePathwayModal = ({
   visible,
   setVisible,
   currentPathwayName,
   existingPathwayNames,
+  scenarioContext,
   onDuplicated,
 }) => {
   const [form] = Form.useForm();
@@ -25,9 +26,10 @@ const DuplicatePathwayModal = ({
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      await apiClient.post(
-        `/pathways/${encodeURIComponent(currentPathwayName)}/duplicate`,
-        { name: values.pathway_name.trim() },
+      await duplicatePathway(
+        currentPathwayName,
+        values.pathway_name.trim(),
+        scenarioContext,
       );
       setVisible(false);
       message.success(
