@@ -23,7 +23,14 @@ const InputTable = ({ onClose }) => {
   return (
     <div
       className="cea-input-editor"
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      style={{
+        boxSizing: 'border-box',
+        padding: 12,
+
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
       <Tabs
         className="cea-input-editor-tabs"

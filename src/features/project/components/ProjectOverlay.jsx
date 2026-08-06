@@ -312,53 +312,75 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           </button>
         </>
       )}
-      <div id="cea-project-overlay-left-sidebar">
-        {hideAll && (
-          <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
-            <ShowHideCardsButton onToggle={handleHideAll} />
-          </div>
-        )}
+      <div
+        id="cea-project-overlay-left-sidebar"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div>
+          {hideAll && (
+            <div style={{ position: 'absolute', top: 0, left: 0, margin: 12 }}>
+              <ShowHideCardsButton onToggle={handleHideAll} />
+            </div>
+          )}
 
-        {transitionFromLeft((styles, item) =>
-          item ? (
-            <animated.div style={styles}>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  height: '100%',
-                  width: '100%',
-                }}
-              >
-                <div className="cea-overlay-card">
-                  <OverviewCard
-                    project={project}
-                    projectName={name}
-                    scenarioName={scenarioName}
-                    scenarioList={scenarioList}
-                    onToggleHideAll={handleHideAll}
-                  />
+          {transitionFromLeft((styles, item) =>
+            item ? (
+              <animated.div style={styles}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    height: '100%',
+                    width: '100%',
+                  }}
+                >
+                  <div
+                    className="cea-overlay-card"
+                    style={{ backgroundColor: 'rgb(255, 255, 255)' }}
+                  >
+                    <OverviewCard
+                      project={project}
+                      projectName={name}
+                      scenarioName={scenarioName}
+                      scenarioList={scenarioList}
+                      onToggleHideAll={handleHideAll}
+                    />
+                  </div>
+
+                  {demoMode && (
+                    <div
+                      className="cea-overlay-card"
+                      style={{ backgroundColor: 'rgb(255, 255, 255)' }}
+                    >
+                      <DemoBanner />
+                    </div>
+                  )}
+
+                  {`${import.meta.env.VITE_AUTH_URL}` && !isElectron() ? (
+                    // FIXME: Login disabled for electron
+                    <div
+                      className="cea-overlay-card"
+                      style={{ backgroundColor: 'rgb(255, 255, 255)' }}
+                    >
+                      <UserInfo />
+                    </div>
+                  ) : null}
+
+                  <InputChangesCard />
                 </div>
+              </animated.div>
+            ) : null,
+          )}
+        </div>
 
-                {demoMode && (
-                  <div className="cea-overlay-card">
-                    <DemoBanner />
-                  </div>
-                )}
-
-                {`${import.meta.env.VITE_AUTH_URL}` && !isElectron() ? (
-                  // FIXME: Login disabled for electron
-                  <div className="cea-overlay-card">
-                    <UserInfo />
-                  </div>
-                ) : null}
-
-                <InputChangesCard />
-              </div>
-            </animated.div>
-          ) : null,
-        )}
+        <div>
+          <ConstructionStandardLegend />
+        </div>
       </div>
 
       <div id="cea-project-overlay-header">
@@ -371,17 +393,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         )}
       </div>
 
-      <div
-        className="cea-overlay-card"
-        style={{
-          gridColumn: '1',
-          gridRow: '2',
-          alignSelf: 'end',
-        }}
-      >
-        <ConstructionStandardLegend />
-      </div>
-
       <div id="cea-project-overlay-content" className="overlay-flex-column">
         <MapLayerPropertiesCard onLayerSelect={handleLayerSelected} />
 
@@ -390,13 +401,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             <animated.div
               className="cea-overlay-card"
               style={{
+                backgroundColor: 'rgb(255, 255, 255)',
                 ...styles,
-                paddingInline: 12,
-                paddingBottom: 12,
-                borderRadius: 12,
-                boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-
-                background: '#fff',
                 // maxHeight: '40vh',
               }}
             >
@@ -412,9 +418,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               style={{
                 ...styles,
                 overflow: 'hidden',
-                borderRadius: 20,
-                boxShadow: '0 24px 54px rgba(15, 23, 42, 0.16)',
-                background: 'rgba(255, 255, 255, 0.94)',
+                backgroundColor: 'rgb(255, 255, 255)',
                 display: pathwayPanelHiddenForTool ? 'none' : 'flex',
                 flexDirection: 'column',
                 height: pathwayPanelExpanded ? 'auto' : pathwayPanelHeight,
@@ -483,7 +487,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           item ? (
             <animated.div
               className="cea-overlay-card cea-tool-card-container"
-              style={styles}
+              style={{ backgroundColor: 'rgb(255, 255, 255)', ...styles }}
             >
               <ToolCard onPlotToolSelected={handlePlotToolSelected} />
             </animated.div>
@@ -516,23 +520,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               demoMode={demoMode}
             />
           )}
-          <div
-            className="cea-overlay-card"
-            // FIXME: Move to CSS
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderRadius: 12,
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-              boxSizing: 'border-box',
-              height: '100%',
-
-              display: 'flex',
-              alignItems: 'center',
-
-              fontSize: 12,
-            }}
-          >
+          <div className="cea-overlay-card cea-map-controls-card">
             <MapControls />
           </div>
 

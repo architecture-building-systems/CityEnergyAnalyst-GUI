@@ -76,15 +76,12 @@ const ConstructionStandardLegend = ({
     <div
       className="cea-overlay-card construction-standard-legend"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 12,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
-        boxSizing: 'border-box',
+        backgroundColor: 'rgb(255, 255, 255)',
+
         display: 'flex',
         flexDirection: 'column',
         fontSize: 12,
         padding: 12,
-        width: 280,
         maxHeight: 200,
         ...style,
       }}

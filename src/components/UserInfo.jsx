@@ -56,9 +56,6 @@ const UserInfoCard = () => {
     <div
       style={{
         padding: 8,
-        background: '#fff',
-        borderRadius: 9,
-        boxShadow: '0 0 10px rgba(0,0,0,.1)',
       }}
     >
       <div
