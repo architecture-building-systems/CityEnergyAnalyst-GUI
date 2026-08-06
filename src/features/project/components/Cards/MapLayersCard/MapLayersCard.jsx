@@ -30,7 +30,7 @@ const MapLayerCategoriesCard = ({ mapLayerCategories, onCategorySelected }) => {
     handleCategorySelected(null);
   }, [scenarioName]);
 
-  if (!scenarioName) return null;
+  if (!scenarioName || !mapLayerCategories) return null;
 
   return (
     <div
