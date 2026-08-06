@@ -1,8 +1,8 @@
 import {
-  CheckCircleOutlined,
+  CheckCircleFilled,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  ExclamationCircleOutlined,
+  ExclamationCircleFilled,
   LoadingOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
@@ -147,9 +147,9 @@ const JobInfoCard = ({ id, job }) => {
       case 1:
         return <LoadingOutlined style={{ color: 'blue' }} />;
       case 2:
-        return <CheckCircleOutlined style={{ color: 'green' }} />;
+        return <CheckCircleFilled style={{ color: 'green' }} />;
       case 3:
-        return <ExclamationCircleOutlined style={{ color: 'red' }} />;
+        return <ExclamationCircleFilled style={{ color: 'red' }} />;
       case 4:
         return <CloseCircleOutlined style={{ color: 'grey' }} />;
       default:
