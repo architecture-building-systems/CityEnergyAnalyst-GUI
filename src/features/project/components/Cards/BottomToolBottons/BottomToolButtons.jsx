@@ -135,7 +135,7 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
           className="cea-card-toolbar-icon-container"
           onClick={onClick}
           style={{
-            background: active ? 'rgba(38, 89, 160, 0.12)' : undefined,
+            backgroundColor: active ? 'rgb(38, 89, 160)' : undefined,
           }}
         >
           <div className="cea-card-toolbar-icon no-hover-color">
