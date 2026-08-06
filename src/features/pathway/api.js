@@ -46,6 +46,19 @@ export const deletePathway = async (pathwayName, scenarioContext) => {
   return data;
 };
 
+export const duplicatePathway = async (
+  pathwayName,
+  newName,
+  scenarioContext,
+) => {
+  const { data } = await apiClient.post(
+    `/pathways/${encodePathwayName(pathwayName)}/duplicate`,
+    { name: newName },
+    { headers: resolveHeaders(scenarioContext) },
+  );
+  return data;
+};
+
 export const fetchPathwayTimeline = async (pathwayName) => {
   const { data } = await getScenarioClient().get(
     `/pathways/${encodePathwayName(pathwayName)}/timeline`,

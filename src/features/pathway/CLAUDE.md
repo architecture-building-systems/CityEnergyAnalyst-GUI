@@ -4,7 +4,7 @@
 - `fetchPathwayOverview() -> Promise<object>` - Shared span and year lanes for all pathways.
 - `fetchPathwayTimeline(pathwayName) -> Promise<object>` - Active-pathway detail rows with status and YAML preview.
 - `fetchYearEditorOptions(pathwayName, year) -> Promise<object>` - Choices for building/template editors.
-- `createPathway(pathwayName, scenarioContext?) -> Promise<object>`, `deletePathway(pathwayName, scenarioContext?)`, `deletePathwayYear(pathwayName, year, scenarioContext?)`, `saveYearYaml(pathwayName, year, rawYaml, scenarioContext?)`, `applyTemplatesToYear(pathwayName, year, templateNames, scenarioContext?)` - Direct REST mutations, no job involved. `scenarioContext` mirrors `jobsStore.createJob`'s — pass `{ project, scenarioName, childScenario: null }` explicitly when the caller must pin the parent scenario (see the DO block below); omitted, it falls back to `activeScenarioHeaders()`.
+- `createPathway(pathwayName, scenarioContext?) -> Promise<object>`, `deletePathway(pathwayName, scenarioContext?)`, `duplicatePathway(pathwayName, newName, scenarioContext?)`, `deletePathwayYear(pathwayName, year, scenarioContext?)`, `saveYearYaml(pathwayName, year, rawYaml, scenarioContext?)`, `applyTemplatesToYear(pathwayName, year, templateNames, scenarioContext?)` - Direct REST mutations, no job involved. `scenarioContext` mirrors `jobsStore.createJob`'s — pass `{ project, scenarioName, childScenario: null }` explicitly when the caller must pin the parent scenario (see the DO block below); omitted, it falls back to `activeScenarioHeaders()`.
 - `usePathwayOverview({ enabled? })` - React Query hook keyed on the active scenario; cached, shared across consumers (currently the Canvas Builder's `NavigatorCard` toggle gating + `PathwayCompareSelect` options).
 - `useHasSimulatedPathway()` - Boolean derivative — `true` iff the active scenario has at least one pathway whose every state has been simulated. Stricter than the baked-only predicate `OverviewCard`'s viewer uses; gates the Canvas Builder's Pathway picker so it only appears in scenarios where every column will actually have data to render.
 - `PathwayPanel({ expanded, onExpandedChange, ... })` - Bottom-panel stacked timeline with shared ruler, inspector, editor modals, and full-screen toggle.
@@ -204,12 +204,20 @@ const { data } = await apiClient.post(url, body, {
   headers: activeScenarioHeaders(),
 });
 ```
-The five mutation functions (`createPathway`, `deletePathway`,
+The mutation functions (`createPathway`, `deletePathway`, `duplicatePathway`,
 `deletePathwayYear`, `saveYearYaml`, `applyTemplatesToYear`) route through
 `resolveHeaders(scenarioContext)` instead — `activeScenarioHeaders()` when no
 override is given, `scenarioHeaders(scenarioContext)` when a caller needs to
 pin the parent scenario explicitly (see the REST-mutation DO block above).
 Either way headers are always sent; never call these routes with none.
+
+### DON'T: Call a `/pathways/...` route with a raw `apiClient` call outside `api.js`
+`DuplicatePathwayModal` used to `apiClient.post` the duplicate route directly
+from the modal component, with no headers at all -- a 400 from the backend's
+`CEAScenario` dependency demanding `X-CEA-Project`/`X-CEA-Scenario-Name`.
+Every `/pathways/...` call must go through a function in `api.js` (add one if
+missing) so it always resolves headers via `resolveHeaders`/`activeScenarioHeaders`;
+never reach for `apiClient`/`getScenarioClient` directly from a component.
 
 Exception: `fetchStateFolderPath` passes `project`/`scenarioName` via
 `scenarioHeaders()` instead of `activeScenarioHeaders()`, since it may be
@@ -221,10 +229,10 @@ every other route).
 ## Related Files
 - `api.js` - Dedicated pathway API client helpers. Every call uses
   `activeScenarioHeaders()` by default; the mutation functions
-  (`createPathway`, `deletePathway`, `deletePathwayYear`, `saveYearYaml`,
-  `applyTemplatesToYear`) accept an optional `scenarioContext` override for
-  parent-pinning (see the REST-mutation DO block above); `fetchStateFolderPath`
-  always uses `scenarioHeaders()` directly instead.
+  (`createPathway`, `deletePathway`, `duplicatePathway`, `deletePathwayYear`,
+  `saveYearYaml`, `applyTemplatesToYear`) accept an optional `scenarioContext`
+  override for parent-pinning (see the REST-mutation DO block above);
+  `fetchStateFolderPath` always uses `scenarioHeaders()` directly instead.
 - `hooks/usePathwayOverview.js` - React Query wrapper around `fetchPathwayOverview` plus the `useHasSimulatedPathway` boolean derivative.
 - `components/PathwayPanel.jsx` - Stacked-lane panel, shared ruler, inspector, and editor workflows.
 - `../project/components/ProjectOverlay.jsx` - Bottom-panel mounting point and transition sizing.

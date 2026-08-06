@@ -1198,6 +1198,7 @@ const PathwayPanel = ({
         }}
         currentPathwayName={duplicateTarget ?? ''}
         existingPathwayNames={allPathwayNames}
+        scenarioContext={{ project, scenarioName, childScenario: null }}
         onDuplicated={handleDuplicated}
       />
       <div
