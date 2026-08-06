@@ -155,18 +155,7 @@ const JobInfoCard = ({ id, job }) => {
           <StateIcon state={job.state} />
         </div>
 
-        <div
-          className="cea-job-info-content"
-          style={{
-            flexGrow: 1,
-            padding: 4,
-
-            display: 'flex',
-            flexDirection: 'column',
-
-            fontSize: 12,
-          }}
-        >
+        <div className="cea-job-info-content">
           <div
             className="cea-job-info-content-header"
             style={{
@@ -180,11 +169,9 @@ const JobInfoCard = ({ id, job }) => {
               <div className="cea-job-info-content-title">
                 {job?.script_label ?? job?.script}
               </div>
-              {typeof duration === 'number' && (
-                <span className="cea-job-duration">
-                  [{duration >= 1 ? `${duration} minutes` : '< 1 minute'}]
-                </span>
-              )}
+              <div className="cea-job-info-id" title={job?.id}>
+                {job?.id?.slice(0, 8)}
+              </div>
             </div>
             {start_time && (
               <span
@@ -197,7 +184,12 @@ const JobInfoCard = ({ id, job }) => {
           </div>
 
           <div className="cea-job-info-content-details">
-            scenario: <b>{job?.scenario_name}</b>
+            scenario: <b>{job?.scenario_name}</b>{' '}
+            {typeof duration === 'number' && (
+              <span className="cea-job-duration">
+                [{duration >= 1 ? `${duration} minutes` : '< 1 minute'}]
+              </span>
+            )}
           </div>
         </div>
 
@@ -210,10 +202,7 @@ const JobInfoCard = ({ id, job }) => {
           {job.state > 1 && (
             <>
               {isLoading ? (
-                <LoadingOutlined
-                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                  spin
-                />
+                <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
               ) : (
                 isHovered && (
                   <BinAnimationIcon
@@ -227,10 +216,7 @@ const JobInfoCard = ({ id, job }) => {
           {job.state < 2 && (
             <>
               {isLoading ? (
-                <LoadingOutlined
-                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                  spin
-                />
+                <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
               ) : (
                 <StopIcon
                   className="cea-job-info-icon danger"
