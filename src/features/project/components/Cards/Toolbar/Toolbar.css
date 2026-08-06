@@ -47,7 +47,7 @@ button.cea-card-toolbar-icon-container {
 
 .cea-card-toolbar-icon-container {
   display: flex;
-  background: #000;
+  background-color: #000;
   color: #fff;
 
   border-radius: 12px;

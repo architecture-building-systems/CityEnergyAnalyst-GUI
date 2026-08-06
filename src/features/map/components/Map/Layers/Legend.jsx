@@ -312,10 +312,7 @@ const Legend = ({ extras, style }) => {
     <div
       className="cea-overlay-card"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 12,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
+        backgroundColor: 'rgb(255, 255, 255)',
         boxSizing: 'border-box',
 
         display: 'flex',

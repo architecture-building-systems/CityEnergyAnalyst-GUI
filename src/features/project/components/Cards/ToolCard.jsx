@@ -81,11 +81,6 @@ const ToolCard = ({ onPlotToolSelected }) => {
       <div
         className="cea-tool-card"
         style={{
-          background: '#fff',
-
-          borderRadius: 12,
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-
           height: '100%',
           boxSizing: 'border-box',
           padding: 12,

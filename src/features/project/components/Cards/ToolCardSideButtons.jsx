@@ -24,6 +24,8 @@ export const ToolCardSideButtons = () => {
 
         display: 'flex',
         gap: 8,
+
+        boxShadow: 'none',
       }}
     >
       <Button
