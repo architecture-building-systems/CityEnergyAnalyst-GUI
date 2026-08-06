@@ -7,14 +7,40 @@ import {
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 
-import { parseISO, formatDistanceToNow } from 'date-fns';
-import { BinAnimationIcon, InformationIcon, StopIcon } from 'assets/icons';
+import { parseISO, formatDistanceToNowStrict } from 'date-fns';
+import { BinAnimationIcon, StopIcon } from 'assets/icons';
 import { useEffect, useState } from 'react';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 
 import './JobInfoCard.css';
 import { apiClient } from 'lib/api/axios';
 import JobInfoModal from './JobInfoModal';
+
+// Short unit suffixes for date-fns' own distance tokens, e.g. "5s ago", "12m ago", "3h ago"
+const SHORT_DISTANCE_UNITS = {
+  xSeconds: 's',
+  xMinutes: 'm',
+  xHours: 'h',
+  xDays: 'd',
+  xWeeks: 'w',
+  xMonths: 'mo',
+  xYears: 'y',
+};
+
+const shortDistanceLocale = {
+  formatDistance: (token, count, options) => {
+    const result = `${count}${SHORT_DISTANCE_UNITS[token] ?? ''}`;
+    return options?.addSuffix ? `${result} ago` : result;
+  },
+};
+
+const formatShortTimeAgo = (date) =>
+  date
+    ? formatDistanceToNowStrict(date, {
+        addSuffix: true,
+        locale: shortDistanceLocale,
+      })
+    : '-';
 
 const useRefreshInterval = () => {
   const [refreshInterval, setRefreshInterval] = useState(30 * 1000); // Start with 30s
@@ -32,7 +58,7 @@ const useRefreshInterval = () => {
   }, [refreshInterval]); // Recreate the interval when refreshInterval changes
 };
 
-const JobInfoCard = ({ id, job, verbose }) => {
+const JobInfoCard = ({ id, job }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,12 +77,7 @@ const JobInfoCard = ({ id, job, verbose }) => {
         ) // Ensure UTC interpretation by adding Z
       : new Date(job.start_time)
     : null;
-  const started_ago = start_time
-    ? formatDistanceToNow(start_time, {
-        addSuffix: true,
-        includeSeconds: true,
-      })
-    : '-';
+  const started_ago = formatShortTimeAgo(start_time);
 
   const StateIcon = ({ state }) => {
     switch (state) {
@@ -141,99 +162,83 @@ const JobInfoCard = ({ id, job, verbose }) => {
             padding: 4,
 
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
+            flexDirection: 'column',
 
             fontSize: 12,
           }}
         >
-          <div className="cea-job-info-content-left">
-            <div>
-              <b>{job?.script_label ?? job?.script}</b>
-            </div>
-            <div>
-              scenario: <b>{job?.scenario_name} </b>
-              {!verbose && start_time && <span>[started {started_ago}]</span>}
-            </div>
-
-            {verbose && (
-              <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <div>
-                    started:{' '}
-                    <i title={start_time ? start_time.toLocaleString() : ''}>
-                      {started_ago}
-                    </i>
-                  </div>
-                  <div>
-                    duration:{' '}
-                    <i>
-                      {typeof duration == 'number'
-                        ? duration >= 1
-                          ? duration + ' minutes'
-                          : '< 1 minute'
-                        : duration}
-                    </i>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
           <div
-            className="cea-job-info-content-actions"
+            className="cea-job-info-content-header"
             style={{
-              fontSize: 18,
               display: 'flex',
-              gap: 2,
-              justifyContent: 'center',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 12,
             }}
           >
-            {verbose && isHovered && (
-              <InformationIcon
-                className="cea-job-info-icon info"
-                onClick={(e) => {
-                  stopPropagation(e);
-                  handleClick();
-                }}
-              />
+            <div className="cea-job-info-content-title-group">
+              <div className="cea-job-info-content-title">
+                {job?.script_label ?? job?.script}
+              </div>
+              {typeof duration === 'number' && (
+                <span className="cea-job-duration">
+                  [{duration >= 1 ? `${duration} minutes` : '< 1 minute'}]
+                </span>
+              )}
+            </div>
+            {start_time && (
+              <span
+                className="cea-job-started-ago"
+                title={start_time.toLocaleString()}
+              >
+                {started_ago}
+              </span>
             )}
-            {job.state > 1 && isHovered && (
-              <>
-                {isLoading ? (
-                  <LoadingOutlined
-                    style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                    spin
-                  />
-                ) : (
+          </div>
+
+          <div className="cea-job-info-content-details">
+            scenario: <b>{job?.scenario_name}</b>
+          </div>
+        </div>
+
+        <div
+          className="cea-job-info-content-actions"
+          style={{
+            fontSize: 18,
+          }}
+        >
+          {job.state > 1 && (
+            <>
+              {isLoading ? (
+                <LoadingOutlined
+                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
+                  spin
+                />
+              ) : (
+                isHovered && (
                   <BinAnimationIcon
                     className="cea-job-info-icon danger shake"
                     onClick={handleDelete}
                   />
-                )}
-              </>
-            )}
-            {job.state < 2 && (
-              <>
-                {isLoading ? (
-                  <LoadingOutlined
-                    style={{ color: 'grey', fontSize: 18, padding: 8 }}
-                    spin
-                  />
-                ) : (
-                  <StopIcon
-                    className="cea-job-info-icon danger"
-                    onClick={handleCancel}
-                  />
-                )}
-              </>
-            )}
-          </div>
+                )
+              )}
+            </>
+          )}
+          {job.state < 2 && (
+            <>
+              {isLoading ? (
+                <LoadingOutlined
+                  style={{ color: 'grey', fontSize: 18, padding: 8 }}
+                  spin
+                />
+              ) : (
+                <StopIcon
+                  className="cea-job-info-icon danger"
+                  onClick={handleCancel}
+                />
+              )}
+            </>
+          )}
         </div>
       </div>
       <JobInfoModal
