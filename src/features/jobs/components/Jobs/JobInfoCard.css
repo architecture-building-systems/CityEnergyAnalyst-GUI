@@ -69,7 +69,10 @@
 }
 
 .cea-job-info-icon.danger {
-  color: rgb(240, 77, 91);
+  /* !important: antd's own Button reset (.ant-btn .ant-btn-icon > svg {
+     color: inherit }) has higher specificity than this class selector and
+     would otherwise force the icon back to the button's default text color. */
+  color: rgb(240, 77, 91) !important;
 }
 
 @keyframes shake {
@@ -102,15 +105,42 @@
   justify-content: center;
 }
 
-.cea-job-info-icon:hover {
+.cea-job-info-icon:hover,
+button.cea-job-info-action-button:focus-visible .cea-job-info-icon {
   transform: scale(1.2);
   cursor: pointer;
   background: rgba(129, 139, 152, 0.1);
 }
 
-.cea-job-info-action-button {
-  border: none;
-  background: none;
+/* antd's Button leaves border-color/outline-color unset, which resolves to
+   the button's own (near-black) text `color` via currentcolor -- without an
+   explicit color here that shows up as a dark ring/border the moment any
+   button or focus state kicks in. !important is needed to beat antd's own
+   generated rules for the same states. */
+button.cea-job-info-action-button {
+  color: rgb(240, 77, 91) !important;
+  /* antd's Button sets its own font-size directly (not just inherited), so
+     the icon's 1em sizing collapses to antd's default (14px) unless we
+     override it here too, on the button itself. */
+  font-size: 18px !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
   padding: 0;
+  height: auto;
+  width: auto;
+  min-width: 0;
   display: inline-flex;
+}
+
+button.cea-job-info-action-button:hover,
+button.cea-job-info-action-button:focus,
+button.cea-job-info-action-button:focus-visible,
+button.cea-job-info-action-button:active {
+  color: rgb(240, 77, 91) !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }

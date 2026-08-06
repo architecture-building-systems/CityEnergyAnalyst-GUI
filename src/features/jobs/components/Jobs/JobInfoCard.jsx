@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 
 import { parseISO, formatDistanceToNowStrict } from 'date-fns';
+import { Button } from 'antd';
 import { BinAnimationIcon, StopIcon } from 'assets/icons';
 import { useEffect, useState } from 'react';
 import useJobsStore from 'features/jobs/stores/jobsStore';
@@ -89,35 +90,30 @@ const JobActions = ({ id, job, showDelete }) => {
   };
 
   return (
-    <div
-      className="cea-job-info-content-actions"
-      style={{
-        fontSize: 18,
-      }}
-    >
+    <div className="cea-job-info-content-actions">
       {isLoading ? (
         <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
       ) : job.state > 1 ? (
         showDelete && (
-          <button
-            type="button"
+          <Button
+            type="text"
             className="cea-job-info-action-button"
             aria-label="Delete job"
             onClick={handleDelete}
-          >
-            <BinAnimationIcon className="cea-job-info-icon danger shake" />
-          </button>
+            icon={
+              <BinAnimationIcon className="cea-job-info-icon danger shake" />
+            }
+          />
         )
       ) : (
         job.state < 2 && (
-          <button
-            type="button"
+          <Button
+            type="text"
             className="cea-job-info-action-button"
             aria-label="Cancel job"
             onClick={handleCancel}
-          >
-            <StopIcon className="cea-job-info-icon danger" />
-          </button>
+            icon={<StopIcon className="cea-job-info-icon danger" />}
+          />
         )
       )}
     </div>
