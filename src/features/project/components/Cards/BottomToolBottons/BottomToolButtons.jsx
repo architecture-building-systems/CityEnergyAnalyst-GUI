@@ -68,7 +68,6 @@ const BottomToolButtons = ({
 
   return (
     <div
-      className="cea-overlay-card"
       style={{
         display: 'flex',
         gap: 5,
@@ -116,7 +115,7 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
         }
         styles={{ body: { fontSize: 12 } }}
       >
-        <button className="cea-card-toolbar-icon-container">
+        <button className="cea-overlay-card cea-card-toolbar-icon-container">
           <div className="cea-card-toolbar-icon no-hover-color">
             <_icon />
           </div>
@@ -132,7 +131,7 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
         style={styles}
       >
         <button
-          className="cea-card-toolbar-icon-container"
+          className="cea-overlay-card cea-card-toolbar-icon-container"
           onClick={onClick}
           style={{
             backgroundColor: active ? 'rgb(38, 89, 160)' : undefined,

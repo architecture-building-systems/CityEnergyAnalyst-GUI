@@ -499,7 +499,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         id="cea-project-overlay-bottom-bar"
         style={{
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'center',
         }}
       >
         <div
