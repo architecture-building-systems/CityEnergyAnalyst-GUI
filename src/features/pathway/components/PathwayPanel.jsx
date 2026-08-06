@@ -38,6 +38,7 @@ import ModificationSummary from './ModificationSummary';
 import PathwaySelect from './PathwaySelect';
 import SectionCard from './SectionCard';
 import TemplateSelect from './TemplateSelect';
+import { pathwayOverviewQueryKey } from '../hooks/usePathwayOverview';
 import { STATUS_ACCENT, STATUS_FILL } from '../constants';
 import {
   formatCompactTimestamp,
@@ -324,7 +325,18 @@ const PathwayPanel = ({
       setLoadingOverview(true);
       setPanelError(null);
       try {
-        const data = await fetchPathwayOverview();
+        // Fetch through the same query cache `usePathwayOverview` uses
+        // (OverviewCard, Canvas Builder) instead of calling the raw API
+        // directly -- concurrent calls to this key collapse into a single
+        // network request instead of firing a duplicate. `staleTime: 0`
+        // still forces a fresh fetch here (rather than serving a
+        // pre-mutation cached value) whenever no fetch is already in
+        // flight, and the result populates that shared cache too.
+        const data = await queryClient.fetchQuery({
+          queryKey: pathwayOverviewQueryKey(scenarioName),
+          queryFn: fetchPathwayOverview,
+          staleTime: 0,
+        });
         setOverview(data);
         const pathwayNames = (data?.pathways ?? []).map(
           (item) => item.pathway_name,
@@ -366,7 +378,7 @@ const PathwayPanel = ({
         setLoadingOverview(false);
       }
     },
-    [],
+    [queryClient, scenarioName],
   );
 
   const loadTemplates = useCallback(async () => {

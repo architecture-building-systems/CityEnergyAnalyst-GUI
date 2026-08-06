@@ -9,10 +9,10 @@ import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   deletePathway,
-  fetchPathwayOverview,
   fetchStateGeojson,
   fetchStateFolderPath,
 } from 'features/pathway/api';
+import { usePathwayOverview } from 'features/pathway/hooks/usePathwayOverview';
 import { STATUS_FILL } from 'features/pathway/constants';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore from 'features/jobs/stores/jobsStore';
@@ -188,7 +188,11 @@ const TIMELINE_HEIGHT = 36;
 
 const PathwayViewerRow = ({ scenarioName, project }) => {
   const queryClient = useQueryClient();
-  const [overview, setOverview] = useState(null);
+  // Shared with `PathwayPanel` and the Canvas Builder via the same
+  // ['pathways', 'overview', scenario] query key -- fetching independently
+  // here used to fire a second, duplicate /pathways/overview request every
+  // time this row and the pathway panel were mounted together.
+  const { data: overview, refetch: refreshOverview } = usePathwayOverview();
   const childScenario = useProjectStore((s) => s.childScenario);
   const setChildScenario = useProjectStore((s) => s.setChildScenario);
   const simulationProgress = useProjectStore((s) => s.simulationProgress);
@@ -196,27 +200,6 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
   const [hoveredYear, setHoveredYear] = useState(null);
   const viewportRef = useRef(null);
   const [viewportWidth, setViewportWidth] = useState(0);
-
-  const refreshOverview = useCallback(() => {
-    fetchPathwayOverview()
-      .then(setOverview)
-      .catch(() => setOverview(null));
-  }, []);
-
-  useEffect(() => {
-    if (!scenarioName) return;
-    let cancelled = false;
-    fetchPathwayOverview()
-      .then((data) => {
-        if (!cancelled) setOverview(data);
-      })
-      .catch(() => {
-        if (!cancelled) setOverview(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [scenarioName]);
 
   // Listen for completed bake/simulate jobs to refresh. pathway-delete-pathway
   // is no longer one of these -- it's a direct REST call now (see
