@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
 import {
@@ -153,7 +154,13 @@ const useJobsStore = create((set, get) => ({
       set((state) => {
         const newJobs = { ...state.jobs };
         delete newJobs[jobID];
-        return { jobs: newJobs };
+        return {
+          jobs: newJobs,
+          // The backend soft-deletes and `GET /server/jobs/` excludes deleted
+          // jobs by default, so its `created_time DESC` window shifts down by
+          // one -- keep our offset in sync or the next page skips a job.
+          nextOffset: Math.max(0, state.nextOffset - 1),
+        };
       });
       if (import.meta.env.DEV) {
         console.debug('Job deleted:', jobID);
@@ -176,15 +183,17 @@ const useJobsStore = create((set, get) => ({
 export const useSortedJobs = () => {
   const jobs = useJobsStore((state) => state.jobs);
 
-  if (!jobs) return [];
+  return useMemo(() => {
+    if (!jobs) return [];
 
-  return Object.entries(jobs)
-    .map(([id, job]) => ({ id, ...job }))
-    .sort((a, b) => {
-      const timeA = new Date(a.created_time);
-      const timeB = new Date(b.created_time);
-      return timeB - timeA; // Descending order (newest first)
-    });
+    return Object.entries(jobs)
+      .map(([id, job]) => ({ id, ...job }))
+      .sort((a, b) => {
+        const timeA = new Date(a.created_time);
+        const timeB = new Date(b.created_time);
+        return timeB - timeA; // Descending order (newest first)
+      });
+  }, [jobs]);
 };
 
 export const useCreateJob = () => useJobsStore((state) => state.createJob);

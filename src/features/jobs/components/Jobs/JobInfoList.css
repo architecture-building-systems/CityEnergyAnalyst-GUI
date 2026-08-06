@@ -16,3 +16,16 @@
 .cea-job-status-badge {
   user-select: none;
 }
+
+.cea-job-info-list-summary {
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+}
+
+.cea-job-info-list-summary:hover,
+.cea-job-info-list-summary:focus-visible {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+}
