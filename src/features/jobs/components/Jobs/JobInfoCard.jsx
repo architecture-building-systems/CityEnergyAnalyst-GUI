@@ -99,17 +99,25 @@ const JobActions = ({ id, job, showDelete }) => {
         <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
       ) : job.state > 1 ? (
         showDelete && (
-          <BinAnimationIcon
-            className="cea-job-info-icon danger shake"
+          <button
+            type="button"
+            className="cea-job-info-action-button"
+            aria-label="Delete job"
             onClick={handleDelete}
-          />
+          >
+            <BinAnimationIcon className="cea-job-info-icon danger shake" />
+          </button>
         )
       ) : (
         job.state < 2 && (
-          <StopIcon
-            className="cea-job-info-icon danger"
+          <button
+            type="button"
+            className="cea-job-info-action-button"
+            aria-label="Cancel job"
             onClick={handleCancel}
-          />
+          >
+            <StopIcon className="cea-job-info-icon danger" />
+          </button>
         )
       )}
     </div>
@@ -167,57 +175,61 @@ const JobInfoCard = ({ id, job }) => {
         className="cea-job-info-card"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleClick();
-            e.preventDefault();
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={`Job: ${job?.script_label ?? job?.script}`}
       >
         <div
-          className="cea-status-bar-icon"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: 16,
-            margin: 6,
+          className="cea-job-info-card-trigger"
+          onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleClick();
+              e.preventDefault();
+            }
           }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Job: ${job?.script_label ?? job?.script}`}
         >
-          <StateIcon state={job.state} />
-        </div>
-
-        <div className="cea-job-info-content">
           <div
-            className="cea-job-info-content-header"
+            className="cea-status-bar-icon"
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              gap: 12,
+              alignItems: 'center',
+              fontSize: 16,
+              margin: 6,
             }}
           >
-            <div className="cea-job-info-content-title-group">
-              <div className="cea-job-info-content-title">
-                {job?.script_label ?? job?.script}
-              </div>
-              <div className="cea-job-info-id" title={job?.id}>
-                {job?.id?.slice(0, 8)}
-              </div>
-            </div>
-            <JobStartedAgo startTime={job?.start_time} short />
+            <StateIcon state={job.state} />
           </div>
 
-          <div className="cea-job-info-content-details">
-            scenario: <b>{job?.scenario_name}</b>{' '}
-            {typeof duration === 'number' && (
-              <span className="cea-job-duration">
-                [{duration >= 1 ? `${duration} minutes` : '< 1 minute'}]
-              </span>
-            )}
+          <div className="cea-job-info-content">
+            <div
+              className="cea-job-info-content-header"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                gap: 12,
+              }}
+            >
+              <div className="cea-job-info-content-title-group">
+                <div className="cea-job-info-content-title">
+                  {job?.script_label ?? job?.script}
+                </div>
+                <div className="cea-job-info-id" title={job?.id}>
+                  {job?.id?.slice(0, 8)}
+                </div>
+              </div>
+              <JobStartedAgo startTime={job?.start_time} short />
+            </div>
+
+            <div className="cea-job-info-content-details">
+              scenario: <b>{job?.scenario_name}</b>{' '}
+              {typeof duration === 'number' && (
+                <span className="cea-job-duration">
+                  [{duration >= 1 ? `${duration} minutes` : '< 1 minute'}]
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

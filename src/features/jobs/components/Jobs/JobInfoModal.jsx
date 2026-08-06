@@ -126,7 +126,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
               gap: 12,
             }}
           >
-            <b>{job.script_label}</b>
+            <b>{job?.script_label ?? job?.script}</b>
             <div
               style={{
                 display: 'flex',
