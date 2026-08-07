@@ -69,7 +69,7 @@ const PlotButton = ({ plotKey, onSelected }) => {
 export const PlotChoices = ({ onSelected }) => {
   return (
     <div className="cea-tool-choices">
-      <h2>Select a Plot Tool</h2>
+      <div className="cea-tool-choices-header">Plots</div>
       <div className="cea-tool-choices-group-list">
         {PLOT_GROUPS.map((group) => (
           <div key={group.label}>
