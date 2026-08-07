@@ -5,7 +5,7 @@
 - `useCreateJob()` - Returns `createJob(script, parameters, scenarioContext?)`. POSTs to `/server/jobs/new`, then starts the job.
 - `useJobsStore` - `jobs`, `fetchJobs`, `fetchMoreJobs`, `startJob`, `hasMore`/`nextOffset` for pagination.
 - `JobInfoList` / `JobInfoCard` / `JobInfoModal` - Status-bar job list and detail views.
-- `RecentJobsModal` - Opened by clicking the status badge stack (`cea-job-info-list-summary`) in `JobInfoList`. Lists every job currently in the store with client-side status filter tabs (all/in progress/completed/failed), a client-side scenario-name filter (`Select`, options derived from `job.scenario_name` of jobs already loaded), and a "Load more" button (shown while `hasMore`) that calls `fetchMoreJobs()` on click only -- no auto-fetch on open or on scroll. Both filters are client-side and AND together; the scenario option list only reflects jobs already loaded, so a scenario whose jobs haven't been fetched yet won't appear until "Load more" is clicked. Clicking a row opens `JobInfoModal` on top via the unchanged `JobInfoCard`.
+- `RecentJobsModal` - Opened by clicking the status badge stack (`cea-job-info-list-summary`) in `JobInfoList`. Lists every job currently in the store with client-side status filter tabs (all/in progress/completed/failed), a client-side scenario-name filter (`Select`, options derived from `job.scenario_name` of jobs already loaded), and a "Load more" button (shown while `hasMore`) that calls `fetchMoreJobs()` on click only -- no auto-fetch on open or on scroll. Both filters are client-side and AND together; the scenario option list only reflects jobs already loaded, so a scenario whose jobs haven't been fetched yet won't appear until "Load more" is clicked. A "Select" toggle switches rows into multi-select mode (checkbox per row, disabled for non-deletable jobs, i.e. `state <= 1`) with "Select all", a `Popconfirm`-gated bulk "Delete", and "Cancel"; bulk delete calls `deleteJobs` (see below). Clicking a row opens `JobInfoModal` on top via the unchanged `JobInfoCard`.
 
 ## Key Patterns
 
@@ -56,8 +56,8 @@ scenario the job actually ran against. Use the request's scenario context
 
 ## Related Files
 
-- `stores/jobsStore.js` - `createJob`, `startJob`, `fetchJobs`/`fetchMoreJobs` pagination.
+- `stores/jobsStore.js` - `createJob`, `startJob`, `fetchJobs`/`fetchMoreJobs` pagination, `deleteJob`/`deleteJobs`. There's no bulk-delete endpoint on the backend (`DELETE /server/jobs/{job_id}` is per-job, row-locked); `deleteJobs(jobIDs)` fires the per-job `DELETE` concurrently via `Promise.allSettled` so one job being already-deleted/still-running doesn't block the rest, and returns `{ succeededIds, failed }` for partial-failure reporting.
 - `components/Jobs/JobInfoList.jsx` - Status-bar job list; badge stack opens `RecentJobsModal`.
-- `components/Jobs/RecentJobsModal.jsx` - "Recent jobs" list modal with status filter tabs and a manual "Load more" button (`fetchMoreJobs`/`hasMore`).
+- `components/Jobs/RecentJobsModal.jsx` - "Recent jobs" list modal with status filter tabs, a scenario filter, multi-select bulk delete, and a manual "Load more" button (`fetchMoreJobs`/`hasMore`).
 - `components/Jobs/JobInfoCard.jsx` / `LazyJobInfoCard.jsx` - Per-job detail card, lazily mounted.
 - `components/Jobs/JobInfoModal.jsx` - Full job detail (stdout/stderr) modal.

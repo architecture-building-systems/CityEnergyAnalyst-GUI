@@ -170,6 +170,42 @@ const useJobsStore = create((set, get) => ({
     }
   },
 
+  // No bulk-delete endpoint on the backend -- fire the per-job DELETE
+  // concurrently and let each settle independently, since one job being
+  // already-deleted/still-running shouldn't block the rest of the batch.
+  // Returns { succeededIds, failed: [{ id, error }] } so the caller can
+  // report partial failures instead of a single pass/fail result.
+  deleteJobs: async (jobIDs) => {
+    const results = await Promise.allSettled(
+      jobIDs.map((jobID) => apiClient.delete(`/server/jobs/${jobID}`)),
+    );
+
+    const succeededIds = [];
+    const failed = [];
+    results.forEach((result, index) => {
+      const jobID = jobIDs[index];
+      if (result.status === 'fulfilled') {
+        succeededIds.push(jobID);
+      } else {
+        failed.push({ id: jobID, error: result.reason });
+        console.error(`Failed to delete job ${jobID}:`, result.reason);
+      }
+    });
+
+    if (succeededIds.length > 0) {
+      set((state) => {
+        const newJobs = { ...state.jobs };
+        succeededIds.forEach((jobID) => delete newJobs[jobID]);
+        return {
+          jobs: newJobs,
+          nextOffset: Math.max(0, state.nextOffset - succeededIds.length),
+        };
+      });
+    }
+
+    return { succeededIds, failed };
+  },
+
   cancelJob: async (jobID) => {
     try {
       await apiClient.post(`/server/jobs/cancel/${jobID}`);
