@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import useJobsStore from 'features/jobs/stores/jobsStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -17,7 +17,6 @@ import { CEA_PURPLE } from 'constants/theme';
 import { useServerVersionQuery } from 'stores/useServerVersionQuery';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { helpMenuItems, helpMenuUrls } from 'features/status-bar/constants';
-import { HelpMenuItemsLabel } from 'features/status-bar/components/help-menu-items';
 import {
   PLOT_SCRIPTS,
   VIEW_MAP_RESULTS,
@@ -27,7 +26,7 @@ import {
 import { useSelectPlotTool } from 'features/project/stores/tool-card';
 import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
-import { isElectron } from 'utils/electron';
+import { isElectron, openExternal } from 'utils/electron';
 import { useIsValidUser } from 'stores/useUserQuery';
 
 const StatusBar = () => {
@@ -41,9 +40,7 @@ const StatusBar = () => {
       <div id="cea-status-bar-right">
         <JobStatusBar />
         {isValidUser && !isElectron() && <DownloadManager />}
-        <div className="cea-status-bar-button primary">
-          <DropdownMenu />
-        </div>
+        <DropdownMenu />
       </div>
     </div>
   );
@@ -538,30 +535,26 @@ const JobStatusBar = () => {
 };
 
 const DropdownMenu = () => {
-  const menuItems = useMemo(
-    () =>
-      helpMenuItems.map((item) => {
-        const { label, key } = item;
-        const url = helpMenuUrls[key];
-
-        return {
-          ...item,
-          label: <HelpMenuItemsLabel url={url} name={label} />,
-        };
-      }),
-    [],
-  );
+  const handleMenuClick = ({ key }) => {
+    const url = helpMenuUrls[key];
+    if (!url) return;
+    if (isElectron()) openExternal(url);
+    else window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <Dropdown
       menu={{
-        items: menuItems,
+        items: helpMenuItems,
+        onClick: handleMenuClick,
       }}
       trigger={['click']}
       placement="topLeft"
       arrow
     >
-      <QuestionCircleOutlined />
+      <div className="cea-status-bar-button primary">
+        <QuestionCircleOutlined />
+      </div>
     </Dropdown>
   );
 };
