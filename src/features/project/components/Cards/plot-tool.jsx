@@ -66,12 +66,23 @@ const PlotButton = ({ plotKey, onSelected }) => {
   );
 };
 
+// A key only renders a PlotButton when VIEW_PLOT_RESULTS maps it to an actual
+// script -- some keys (e.g. BUILDING_ARCHITECTURE) are KPI-only for now, and
+// some (e.g. THERMAL_NETWORK) are explicitly `null` pending a plot family.
+// Groups/subgroups make up of only such keys would otherwise render a header
+// with nothing underneath, so they're filtered out here instead.
+const hasVisiblePlot = (keys) => keys?.some((key) => VIEW_PLOT_RESULTS[key]);
+
+const groupHasVisiblePlots = (group) =>
+  hasVisiblePlot(group.keys) ||
+  (group.subgroups?.some((sub) => hasVisiblePlot(sub.keys)) ?? false);
+
 export const PlotChoices = ({ onSelected }) => {
   return (
     <div className="cea-tool-choices">
       <div className="cea-tool-choices-header">Plots</div>
       <div className="cea-tool-choices-group-list">
-        {PLOT_GROUPS.map((group) => (
+        {PLOT_GROUPS.filter(groupHasVisiblePlots).map((group) => (
           <div key={group.label}>
             <Divider orientation="left" orientationMargin={0}>
               <span className="cea-tool-choices-group-label">
@@ -81,22 +92,27 @@ export const PlotChoices = ({ onSelected }) => {
             </Divider>
             <div className="cea-tool-choices-group-content">
               {group.subgroups ? (
-                group.subgroups.map((sub) => (
-                  <div key={sub.label} className="cea-tool-choices-subgroup">
-                    <small className="cea-tool-choices-subgroup-label">
-                      {sub.label}
-                    </small>
-                    <div className="cea-tool-choices-button-list">
-                      {sub.keys.map((key) => (
-                        <PlotButton
-                          key={key}
-                          plotKey={key}
-                          onSelected={onSelected}
-                        />
-                      ))}
+                group.subgroups
+                  .filter((sub) => hasVisiblePlot(sub.keys))
+                  .map((sub) => (
+                    <div
+                      key={sub.label}
+                      className="cea-tool-choices-subgroup"
+                    >
+                      <small className="cea-tool-choices-subgroup-label">
+                        {sub.label}
+                      </small>
+                      <div className="cea-tool-choices-button-list">
+                        {sub.keys.map((key) => (
+                          <PlotButton
+                            key={key}
+                            plotKey={key}
+                            onSelected={onSelected}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="cea-tool-choices-button-list">
                   {group.keys.map((key) => (
