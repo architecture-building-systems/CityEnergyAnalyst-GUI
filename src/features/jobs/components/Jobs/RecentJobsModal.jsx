@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Modal, Segmented } from 'antd';
+import { Button, Modal, Segmented, Select } from 'antd';
 
 import './RecentJobsModal.css';
 import JobInfoCard from './JobInfoCard';
@@ -15,15 +15,26 @@ const FILTERS = {
 
 const RecentJobsModal = ({ open, onCancel }) => {
   const [filter, setFilter] = useState('all');
+  const [scenarioFilter, setScenarioFilter] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const sortedJobs = useSortedJobs();
   const hasMore = useJobsStore((state) => state.hasMore);
   const fetchMoreJobs = useJobsStore((state) => state.fetchMoreJobs);
 
+  const scenarioOptions = useMemo(() => {
+    const names = new Set(
+      sortedJobs.map((job) => job.scenario_name).filter(Boolean),
+    );
+    return [...names].sort().map((name) => ({ label: name, value: name }));
+  }, [sortedJobs]);
+
   const filteredJobs = useMemo(
-    () => sortedJobs.filter(FILTERS[filter]),
-    [sortedJobs, filter],
+    () =>
+      sortedJobs
+        .filter(FILTERS[filter])
+        .filter((job) => !scenarioFilter || job.scenario_name === scenarioFilter),
+    [sortedJobs, filter, scenarioFilter],
   );
 
   const options = useMemo(
@@ -49,7 +60,10 @@ const RecentJobsModal = ({ open, onCancel }) => {
   // unmounts everything on close, so this is mostly a no-op on the very next
   // open, but keeps behaviour correct if that ever changes.
   useEffect(() => {
-    if (open) setFilter('all');
+    if (open) {
+      setFilter('all');
+      setScenarioFilter(null);
+    }
   }, [open]);
 
   const handleLoadMore = () => {
@@ -71,7 +85,17 @@ const RecentJobsModal = ({ open, onCancel }) => {
         onChange={setFilter}
         options={options}
         block
-        style={{ marginBottom: 12 }}
+        style={{ marginBottom: 8 }}
+      />
+
+      <Select
+        value={scenarioFilter}
+        onChange={setScenarioFilter}
+        options={scenarioOptions}
+        placeholder="Filter by scenario"
+        allowClear
+        showSearch
+        style={{ width: '100%', marginBottom: 12 }}
       />
 
       <div className="cea-recent-jobs-scroll">
