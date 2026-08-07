@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 
 import { parseISO, formatDistanceToNowStrict } from 'date-fns';
-import { Button } from 'antd';
+import { Button, Popconfirm } from 'antd';
 import { BinAnimationIcon, StopIcon } from 'assets/icons';
 import { useEffect, useState } from 'react';
 import useJobsStore from 'features/jobs/stores/jobsStore';
@@ -60,6 +60,7 @@ const useRefreshInterval = () => {
 
 const JobActions = ({ id, job, showDelete }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { deleteJob, cancelJob } = useJobsStore();
 
@@ -71,12 +72,18 @@ const JobActions = ({ id, job, showDelete }) => {
 
   const handleDelete = async (e) => {
     stopPropagation(e);
+    setDeleteConfirmOpen(false);
     setIsLoading(true);
     try {
       await deleteJob(id);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteCancel = (e) => {
+    stopPropagation(e);
+    setDeleteConfirmOpen(false);
   };
 
   const handleCancel = async (e) => {
@@ -94,26 +101,49 @@ const JobActions = ({ id, job, showDelete }) => {
       {isLoading ? (
         <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
       ) : job.state > 1 ? (
-        showDelete && (
-          <Button
-            type="text"
-            className="cea-job-info-action-button"
-            aria-label="Delete job"
-            onClick={handleDelete}
-            icon={
-              <BinAnimationIcon className="cea-job-info-icon danger shake" />
-            }
-          />
+        // Keep the trigger (and its Popconfirm) mounted while the popup is open, even
+        // if the mouse leaves the card in transit to click "Delete" in the popup --
+        // otherwise showDelete flips false on mouseleave and the popover vanishes.
+        (showDelete || deleteConfirmOpen) && (
+          <Popconfirm
+            title="Delete this job?"
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            open={deleteConfirmOpen}
+            onOpenChange={setDeleteConfirmOpen}
+            onConfirm={handleDelete}
+            onCancel={handleDeleteCancel}
+          >
+            <Button
+              type="text"
+              className="cea-job-info-action-button"
+              aria-label="Delete job"
+              onClick={stopPropagation}
+              icon={
+                <BinAnimationIcon className="cea-job-info-icon danger shake" />
+              }
+            />
+          </Popconfirm>
         )
       ) : (
         job.state < 2 && (
-          <Button
-            type="text"
-            className="cea-job-info-action-button"
-            aria-label="Cancel job"
-            onClick={handleCancel}
-            icon={<StopIcon className="cea-job-info-icon danger" />}
-          />
+          <Popconfirm
+            title="Stop this job?"
+            okText="Stop"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={handleCancel}
+            onCancel={stopPropagation}
+          >
+            <Button
+              type="text"
+              className="cea-job-info-action-button"
+              aria-label="Cancel job"
+              onClick={stopPropagation}
+              icon={<StopIcon className="cea-job-info-icon danger" />}
+            />
+          </Popconfirm>
         )
       )}
     </div>
