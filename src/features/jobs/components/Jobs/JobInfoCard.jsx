@@ -58,7 +58,7 @@ const useRefreshInterval = () => {
   }, [refreshInterval]); // Recreate the interval when refreshInterval changes
 };
 
-const JobActions = ({ id, job, showDelete }) => {
+export const JobActions = ({ id, job, showDelete, onDeleted }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
@@ -76,6 +76,7 @@ const JobActions = ({ id, job, showDelete }) => {
     setIsLoading(true);
     try {
       await deleteJob(id);
+      onDeleted?.();
     } finally {
       setIsLoading(false);
     }

@@ -46,6 +46,18 @@ currently-active scenario, including whichever pathway child state
 rather than letting a stray active child state redirect the job to the
 wrong folder — see `features/pathway/CLAUDE.md`.
 
+### DO: Reuse `JobActions` for delete/cancel rather than re-implementing them
+
+`JobActions` (exported from `JobInfoCard.jsx`) is the single implementation of
+the delete/cancel actions -- `Popconfirm`-gated, loading-state handling, the
+`state > 1` (deletable) vs `state < 2` (cancelable) branch. `JobInfoCard`
+passes `showDelete={isHovered}` since the row only reveals delete on hover;
+`JobInfoModal` passes `showDelete` (always true, no hover concept in a modal)
+plus `onDeleted={() => setVisible(false)}` so the modal closes itself once its
+own job is gone, and doesn't otherwise auto-update if the job is deleted out
+from under it some other way. `JobInfoCard.jsx` and `JobInfoModal.jsx` already
+import from each other (`JobStartedAgo`), so this adds no new circularity.
+
 ### DON'T: Treat a job's `parameters.scenario` as authoritative for anything read back from the client
 
 The value the client puts in `parameters.scenario` before `POST
@@ -59,5 +71,5 @@ scenario the job actually ran against. Use the request's scenario context
 - `stores/jobsStore.js` - `createJob`, `startJob`, `fetchJobs`/`fetchMoreJobs` pagination, `deleteJob`/`deleteJobs`. There's no bulk-delete endpoint on the backend (`DELETE /server/jobs/{job_id}` is per-job, row-locked); `deleteJobs(jobIDs)` fires the per-job `DELETE` concurrently via `Promise.allSettled` so one job being already-deleted/still-running doesn't block the rest, and returns `{ succeededIds, failed }` for partial-failure reporting.
 - `components/Jobs/JobInfoList.jsx` - Status-bar job list; badge stack opens `RecentJobsModal`.
 - `components/Jobs/RecentJobsModal.jsx` - "Recent jobs" list modal with status filter tabs, a scenario filter, multi-select bulk delete, and a manual "Load more" button (`fetchMoreJobs`/`hasMore`).
-- `components/Jobs/JobInfoCard.jsx` / `LazyJobInfoCard.jsx` - Per-job detail card, lazily mounted.
-- `components/Jobs/JobInfoModal.jsx` - Full job detail (stdout/stderr) modal.
+- `components/Jobs/JobInfoCard.jsx` / `LazyJobInfoCard.jsx` - Per-job detail card, lazily mounted. Exports `JobActions` (delete/cancel, see above).
+- `components/Jobs/JobInfoModal.jsx` - Full job detail (stdout/stderr) modal; header row includes `JobActions` for delete/cancel.

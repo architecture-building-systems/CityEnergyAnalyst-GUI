@@ -29,3 +29,9 @@
 .cea-job-info-list-summary:focus-visible {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
 }
+
+.cea-job-info-content-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

@@ -8,7 +8,7 @@ import {
   buildPlotToolPrefillFromJob,
 } from 'features/plots/constants';
 import { useToolCardStore } from 'features/project/stores/tool-card';
-import { JobStartedAgo } from './JobInfoCard';
+import { JobActions, JobStartedAgo } from './JobInfoCard';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
@@ -122,26 +122,39 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
           <div
             style={{
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'space-between',
               gap: 12,
             }}
           >
-            <b>{job?.script_label ?? job?.script}</b>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
+            <div>
+              <b>{job?.script_label ?? job?.script}</b>
+            </div>
 
-                color: 'gray',
-                fontSize: 12,
-              }}
-            >
-              <span className="cea-job-info-id" title={job?.id}>
-                {job?.id?.slice(0, 8)}
-              </span>
-              <span>-</span>
-              <JobStartedAgo startTime={job?.start_time} short={false} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: 4,
+
+                  color: 'gray',
+                  fontSize: 12,
+                }}
+              >
+                <span className="cea-job-info-id" title={job?.id}>
+                  {job?.id?.slice(0, 8)}
+                </span>
+                <span>-</span>
+                <JobStartedAgo startTime={job?.start_time} short={false} />
+              </div>
+
+              <JobActions
+                id={job.id}
+                job={job}
+                showDelete
+                onDeleted={() => setVisible(false)}
+              />
             </div>
           </div>
 
