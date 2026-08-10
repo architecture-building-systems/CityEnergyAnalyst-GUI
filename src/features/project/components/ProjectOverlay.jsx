@@ -363,12 +363,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
 
                   {`${import.meta.env.VITE_AUTH_URL}` && !isElectron() ? (
                     // FIXME: Login disabled for electron
-                    <div
-                      className="cea-overlay-card"
-                      style={{ backgroundColor: 'rgb(255, 255, 255)' }}
-                    >
-                      <UserInfo />
-                    </div>
+                    <UserInfo />
                   ) : null}
 
                   <InputChangesCard />

@@ -54,9 +54,8 @@ const UserInfoCard = () => {
 
   return (
     <div
-      style={{
-        padding: 8,
-      }}
+      className="cea-overlay-card"
+      style={{ backgroundColor: 'rgb(255, 255, 255)', padding: 8 }}
     >
       <div
         style={{
@@ -121,7 +120,7 @@ const UserInfo = () => {
 
   if (!loggedIn) {
     return (
-      <div>
+      <div style={{ pointerEvents: 'auto', width: 'fit-content' }}>
         <LoginButton />
         <LoginModal />
       </div>
