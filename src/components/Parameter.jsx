@@ -129,6 +129,28 @@ const useParameterAsyncValidation = ({
   return validator;
 };
 
+// Why a choice-backed parameter can legitimately have nothing to offer.
+// Keyed by parameter `type`; falls back to the generic message below.
+// The dropdown is scoped to the selected scenario, so "empty" almost always
+// means "the feature that produces these hasn't been run here yet" — say so
+// rather than leaving the user to guess.
+const NO_CHOICES_MESSAGES = {
+  GenerationParameter: 'No generations found. Run Optimisation first.',
+  WhatIfNameChoiceParameter:
+    'No what-if scenarios with final-energy results found in this scenario. Run Final Energy first.',
+  WhatIfNameMultiChoiceParameter:
+    'No what-if scenarios with final-energy results found in this scenario. Run Final Energy first.',
+  NetworkLayoutChoiceParameter:
+    'No network layouts found in this scenario. Run Network Layout first.',
+  NetworkLayoutMultiChoiceParameter:
+    'No network layouts found in this scenario. Run Network Layout first.',
+  ComponentMultiChoiceParameter:
+    'No supply components found. Select a what-if scenario and scale first.',
+};
+
+const noChoicesMessage = (type) =>
+  NO_CHOICES_MESSAGES[type] ?? 'There are no valid choices for this input';
+
 const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
   const { name, type, value, choices, nullable, help, needs_validation } =
     parameter;
@@ -303,13 +325,12 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
 
       const optionsValidator = (_, value) => {
         if (choices == null || choices.length === 0) {
+          // Generations block the form even when nullable — running the tool
+          // without one is never meaningful.
           if (type === 'GenerationParameter')
-            return Promise.reject(
-              'No generations found. Run optimization first.',
-            );
+            return Promise.reject(NO_CHOICES_MESSAGES.GenerationParameter);
 
-          if (!nullable)
-            return Promise.reject('There are no valid choices for this input');
+          if (!nullable) return Promise.reject(noChoicesMessage(type));
           return Promise.resolve();
         }
 
@@ -406,10 +427,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
             {
               validator: (_, value) => {
                 if (choices == null || choices.length === 0) {
-                  if (!nullable)
-                    return Promise.reject(
-                      'There are no valid choices for this input',
-                    );
+                  if (!nullable) return Promise.reject(noChoicesMessage(type));
                   return Promise.resolve();
                 }
 
