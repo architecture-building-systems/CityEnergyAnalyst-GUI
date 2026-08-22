@@ -67,6 +67,13 @@ export function useSaveInputs() {
     onSuccess: () => {
       resetStore();
       resyncInputs();
+      // A save while a pathway state is the active scenario is the only way
+      // a state's phase can flip to `custom` outside of a bake/simulate job
+      // (see OverviewCard's PathwayViewerRow, which used to poll /pathways/overview
+      // every 5s to catch exactly this). Invalidating here instead means the
+      // mini timeline updates right when the edit happens, with no background
+      // polling and no backend changes needed.
+      queryClient.invalidateQueries({ queryKey: ['pathways', 'overview'] });
       console.log('success');
     },
     onError: () => {

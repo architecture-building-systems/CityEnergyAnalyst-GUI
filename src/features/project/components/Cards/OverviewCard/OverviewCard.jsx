@@ -210,13 +210,10 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     if (hasCompleted) refreshOverview();
   }, [jobs, refreshOverview]);
 
-  // In sub-scenario mode, poll for status changes (e.g. input edits
-  // turning a state purple) so the mini timeline stays in sync.
-  useEffect(() => {
-    if (!childScenario?.year) return;
-    const id = setInterval(refreshOverview, 5000);
-    return () => clearInterval(id);
-  }, [childScenario?.year, refreshOverview]);
+  // Status changes (e.g. input edits turning a state purple/`custom`) are
+  // caught event-driven instead of by polling: `useSaveInputs`' onSuccess
+  // invalidates the `['pathways', 'overview']` query directly, so this
+  // shared-cache `refreshOverview` picks it up as soon as the edit happens.
 
   // Measure viewport width
   useEffect(() => {
