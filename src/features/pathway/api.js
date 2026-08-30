@@ -76,10 +76,18 @@ export const addPathwayYear = async (pathwayName, year) => {
   return data;
 };
 
-export const deletePathwayYear = async (pathwayName, year, scenarioContext) => {
+export const clearPathwayYear = async (
+  pathwayName,
+  year,
+  scenarioContext,
+  { deleteInputs = true, deleteOutputs = true } = {},
+) => {
   const { data } = await apiClient.delete(
     `/pathways/${encodePathwayName(pathwayName)}/years/${year}`,
-    { headers: resolveHeaders(scenarioContext) },
+    {
+      headers: resolveHeaders(scenarioContext),
+      params: { delete_inputs: deleteInputs, delete_outputs: deleteOutputs },
+    },
   );
   return data;
 };

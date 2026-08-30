@@ -4,7 +4,7 @@
 - `fetchPathwayOverview() -> Promise<object>` - Shared span and year lanes for all pathways.
 - `fetchPathwayTimeline(pathwayName) -> Promise<object>` - Active-pathway detail rows with status and YAML preview.
 - `fetchYearEditorOptions(pathwayName, year) -> Promise<object>` - Choices for building/template editors.
-- `createPathway(pathwayName, scenarioContext?) -> Promise<object>`, `deletePathway(pathwayName, scenarioContext?)`, `duplicatePathway(pathwayName, newName, scenarioContext?)`, `deletePathwayYear(pathwayName, year, scenarioContext?)`, `saveYearYaml(pathwayName, year, rawYaml, scenarioContext?)`, `applyTemplatesToYear(pathwayName, year, templateNames, scenarioContext?)` - Direct REST mutations, no job involved. `scenarioContext` mirrors `jobsStore.createJob`'s — pass `{ project, scenarioName, childScenario: null }` explicitly when the caller must pin the parent scenario (see the DO block below); omitted, it falls back to `activeScenarioHeaders()`.
+- `createPathway(pathwayName, scenarioContext?) -> Promise<object>`, `deletePathway(pathwayName, scenarioContext?)`, `duplicatePathway(pathwayName, newName, scenarioContext?)`, `clearPathwayYear(pathwayName, year, scenarioContext?, { deleteInputs, deleteOutputs }?)`, `saveYearYaml(pathwayName, year, rawYaml, scenarioContext?)`, `applyTemplatesToYear(pathwayName, year, templateNames, scenarioContext?)` - Direct REST mutations, no job involved. `scenarioContext` mirrors `jobsStore.createJob`'s — pass `{ project, scenarioName, childScenario: null }` explicitly when the caller must pin the parent scenario (see the DO block below); omitted, it falls back to `activeScenarioHeaders()`.
 - `usePathwayOverview({ enabled? })` - React Query hook keyed on the active scenario; cached, shared across consumers (currently the Canvas Builder's `NavigatorCard` toggle gating + `PathwayCompareSelect` options).
 - `useHasSimulatedPathway()` - Boolean derivative — `true` iff the active scenario has at least one pathway whose every state has been simulated. Stricter than the baked-only predicate `OverviewCard`'s viewer uses; gates the Canvas Builder's Pathway picker so it only appears in scenarios where every column will actually have data to render.
 - `PathwayPanel({ expanded, onExpandedChange, ... })` - Bottom-panel stacked timeline with shared ruler, inspector, editor modals, and full-screen toggle.
@@ -51,7 +51,7 @@ selectedYearByPathwayRef.current[pathwayName] = year;
 await runPathwayAction({
   busyKey: 'delete-year',
   action: () =>
-    deletePathwayYear(selectedPathway, selectedRow.year, {
+    clearPathwayYear(selectedPathway, selectedRow.year, {
       project, scenarioName, childScenario: null,
     }),
   refresh: () => refreshPathwayData({ preferredPathway: selectedPathway, preferredYear: selectedRow.year }),
@@ -154,7 +154,7 @@ const timelineViewportHeight = Math.min(totalTimelineHeight, ...);
 ```jsx
 <Title level={4}>{selectedRow.year}</Title>
 <Text>{selectedRow.summary?.text}</Text>
-<div>Building events | Apply templates | Validate state | Delete state</div>
+<div>Building events | Apply templates | Validate state | Clear state</div>
 ```
 
 ### DO: Let the main YAML preview grow with the panel and use outer-panel scrolling
@@ -205,7 +205,7 @@ const { data } = await apiClient.post(url, body, {
 });
 ```
 The mutation functions (`createPathway`, `deletePathway`, `duplicatePathway`,
-`deletePathwayYear`, `saveYearYaml`, `applyTemplatesToYear`) route through
+`clearPathwayYear`, `saveYearYaml`, `applyTemplatesToYear`) route through
 `resolveHeaders(scenarioContext)` instead — `activeScenarioHeaders()` when no
 override is given, `scenarioHeaders(scenarioContext)` when a caller needs to
 pin the parent scenario explicitly (see the REST-mutation DO block above).
@@ -229,7 +229,7 @@ every other route).
 ## Related Files
 - `api.js` - Dedicated pathway API client helpers. Every call uses
   `activeScenarioHeaders()` by default; the mutation functions
-  (`createPathway`, `deletePathway`, `duplicatePathway`, `deletePathwayYear`,
+  (`createPathway`, `deletePathway`, `duplicatePathway`, `clearPathwayYear`,
   `saveYearYaml`, `applyTemplatesToYear`) plus the read-only
   `fetchYearEditorOptions` accept an optional `scenarioContext` override for
   parent-pinning (see the REST-mutation DO block above and `handleCopyState`,
