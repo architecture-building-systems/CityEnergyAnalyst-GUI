@@ -18,7 +18,13 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
       return null;
     }
 
-    if (!data || (Array.isArray(data) && data.length === 0)) {
+    // An empty table is workable as long as the schema supplies the columns — which is the
+    // normal state for a database started from a template. Only bail when there is neither
+    // a schema nor an existing row to infer the shape from.
+    const hasRows = Array.isArray(data)
+      ? data.length > 0
+      : Object.keys(data ?? {}).length > 0;
+    if (!schema?.columns && !hasRows) {
       return null;
     }
 

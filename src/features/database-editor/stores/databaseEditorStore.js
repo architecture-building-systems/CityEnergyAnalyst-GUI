@@ -77,20 +77,8 @@ const useDatabaseEditorStore = create((set, get) => ({
   initDatabaseState: async () => {
     set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
     try {
-      const { data } = await getScenarioClient().get('/inputs/databases', {
-        headers: activeScenarioHeaders(),
-      });
-      set({
-        data,
-        status: { status: SUCCESS_STATUS },
-        validation: {},
-        changes: [],
-        isEmpty: false,
-        databaseValidation: { status: null, message: null },
-      });
-
-      // Run validation after successful database load
-      await useDatabaseEditorStore.getState().validateDatabase();
+      await useDatabaseEditorStore.getState().refreshDatabaseData();
+      set({ status: { status: SUCCESS_STATUS } });
 
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
@@ -118,6 +106,28 @@ const useDatabaseEditorStore = create((set, get) => ({
         set({ status: { status: FAILED_STATUS, error: err }, isEmpty: false });
       }
     }
+  },
+
+  /**
+   * Reload the database without tearing the page down.
+   *
+   * `initDatabaseState` flips status to FETCHING, which makes DatabaseEditor render a
+   * spinner instead of DatabaseContainer — unmounting it and losing the selected
+   * domain/category/dataset, which live in its component state. Use this after an action
+   * that changes one table (e.g. seeding MATERIALS.csv) so the user stays where they were.
+   */
+  refreshDatabaseData: async () => {
+    const { data } = await getScenarioClient().get('/inputs/databases', {
+      headers: activeScenarioHeaders(),
+    });
+    set({
+      data,
+      validation: {},
+      changes: [],
+      isEmpty: false,
+      databaseValidation: { status: null, message: null },
+    });
+    await useDatabaseEditorStore.getState().validateDatabase();
   },
 
   saveDatabaseState: async () => {
