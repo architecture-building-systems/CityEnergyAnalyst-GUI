@@ -550,6 +550,8 @@ const PathwayPanel = ({
 
   useEffect(() => {
     selectedYearRef.current = selectedYear;
+    // Remember the year per pathway so switching lanes and back restores it --
+    // only explicit selection (click) updates this, never a passive re-render.
     if (selectedPathway && selectedYear != null) {
       selectedYearByPathwayRef.current[selectedPathway] = selectedYear;
     }
@@ -1689,6 +1691,9 @@ const PathwayPanel = ({
                           {visibleOverviewPathways.map((pathway) => {
                             const isActive =
                               pathway.pathway_name === selectedPathway;
+                            // Active lane reads full timeline rows (status,
+                            // detail); inactive lanes render years only --
+                            // keep them lightweight, no per-year fetch.
                             const laneYears = isActive
                               ? activeRows.map((row) => row.year)
                               : (pathway.years ?? []);
@@ -1894,6 +1899,8 @@ const PathwayPanel = ({
                           flex: 1,
                         }}
                       >
+                        {/* State kind comes from `state_kind` + row content -- there is
+                            no separate `manual_state` flag in the API payload. */}
                         {[
                           {
                             key: 'auto-stock',
