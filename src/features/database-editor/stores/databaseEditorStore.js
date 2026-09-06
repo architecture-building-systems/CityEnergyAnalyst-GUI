@@ -65,7 +65,7 @@ const useDatabaseEditorStore = create((set, get) => ({
   setSelectedDataset: (dataset) =>
     set((state) => ({ selection: { ...state.selection, dataset } })),
 
-  validateDatabase: async () => {
+  validateDatabase: async ({ background = false } = {}) => {
     const { isEmpty } = useDatabaseEditorStore.getState();
 
     // Skip validation if database is empty
@@ -74,7 +74,11 @@ const useDatabaseEditorStore = create((set, get) => ({
       return;
     }
 
-    set({ databaseValidation: { status: 'checking', message: null } });
+    // `checking` swaps the whole editor for a spinner. That is right on first load, but after
+    // a save it would tear down the table the user is working in. In the background the
+    // previous status stands until the result replaces it, so only the message area changes.
+    if (!background)
+      set({ databaseValidation: { status: 'checking', message: null } });
     try {
       await getScenarioClient().get('/inputs/databases/check', {
         headers: activeScenarioHeaders(),
@@ -172,6 +176,12 @@ const useDatabaseEditorStore = create((set, get) => ({
         headers: activeScenarioHeaders(),
       });
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
+      // Saving writes the CSVs without checking them, and the browser can only validate one
+      // cell at a time. Run the verifier now so a cross-row or cross-file rule is reported
+      // while the user still knows what they changed, rather than at the next load.
+      await useDatabaseEditorStore.getState().validateDatabase({
+        background: true,
+      });
     } finally {
       set({ status: { status: null } });
     }
