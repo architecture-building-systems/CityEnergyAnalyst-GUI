@@ -61,7 +61,10 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
 
           // Set default values based on type
           if (type === 'float' || type === 'int') {
-            newRow[col] = 0;
+            // A nullable number starts empty, not at zero. Zero is a claim -- a U-value of 0
+            // or zero embodied carbon -- and seeding it makes a new row contradict whatever
+            // the user then fills in, which the envelope cross-check rejects outright.
+            newRow[col] = colSchema?.nullable ? null : 0;
           } else if (colSchema?.choice) {
             // Use first available choice or empty string
             const values = colSchema.choice?.values || [];

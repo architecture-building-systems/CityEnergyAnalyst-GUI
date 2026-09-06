@@ -9,19 +9,28 @@ export const getColumnPropsFromDataType = (
     return {};
   }
 
+  // A nullable number may be cleared. `Number('')` is 0, so an empty cell has to be mapped to
+  // null explicitly or clearing one silently writes a zero -- which then reads as a real
+  // measurement (a U-value of 0, or zero embodied carbon).
+  const numberMutator = (value) =>
+    columnSchema?.nullable && (value === '' || value == null)
+      ? null
+      : Number(value);
+  const requiredIfNotNullable = columnSchema?.nullable ? [] : ['required'];
+
   switch (columnSchema.type) {
     case 'int':
     case 'year':
       return {
         editor: 'input',
-        validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
-        mutatorEdit: (value) => Number(value),
+        validator: [...requiredIfNotNullable, 'regex:^([1-9][0-9]*|0)$'],
+        mutatorEdit: numberMutator,
       };
     case 'float':
       return {
         editor: 'input',
         validator: [
-          'required',
+          ...requiredIfNotNullable,
           'regex:^-?([1-9][0-9]*|0)?(\\.\\d+)?$',
           ...(columnSchema?.constraints
             ? Object.keys(columnSchema.constraints).map(
@@ -30,7 +39,7 @@ export const getColumnPropsFromDataType = (
               )
             : []),
         ],
-        mutatorEdit: (value) => Number(value),
+        mutatorEdit: numberMutator,
       };
     case 'date':
       return {
@@ -44,7 +53,7 @@ export const getColumnPropsFromDataType = (
     case 'string':
       return {
         editor: 'input',
-        validator: [...(columnSchema?.nullable ? [] : ['required'])],
+        validator: [...requiredIfNotNullable],
       };
     case 'boolean':
       return {
