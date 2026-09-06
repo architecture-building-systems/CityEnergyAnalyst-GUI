@@ -63,9 +63,13 @@ export function useSaveInputs() {
         { tables, geojsons, crs, schedules },
         { headers: activeScenarioHeaders() },
       );
-      return data;
+      // Carry the scenario this request was actually made for through to
+      // onSuccess -- the project store may have moved on to a different
+      // scenario by the time the PUT resolves, and re-reading it there
+      // would invalidate the wrong (or no) pathway overview query.
+      return { data, scenario: scenarioName, childScenario };
     },
-    onSuccess: async () => {
+    onSuccess: async ({ scenario, childScenario }) => {
       resetStore();
       resyncInputs();
       // A save while a pathway state is the active scenario is the only way
@@ -77,7 +81,6 @@ export function useSaveInputs() {
       // catch exactly this). Invalidating here instead means the mini
       // timeline updates right when the edit happens, with no background
       // polling and no backend changes needed.
-      const { scenario, childScenario } = useProjectStore.getState();
       if (childScenario?.year) {
         await queryClient.invalidateQueries({
           queryKey: pathwayOverviewQueryKey(scenario),
