@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Alert, Button, Spin } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
@@ -6,6 +6,7 @@ import useDatabaseEditorStore, {
   FETCHING_STATUS,
   FAILED_STATUS,
   SAVING_STATUS,
+  useDatabaseSelection,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
@@ -213,16 +214,11 @@ const DatabaseContainer = () => {
   const data = useDatabaseEditorStore((state) => state.data);
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
   // TODO: Move state to url query params
-  const [selectedDomain, setSelectedDomain] = useState({
-    domain: null,
-    category: null,
-  });
-  const [selectedDataset, setSelectedDataset] = useState(null);
-
-  const onDomainSelect = useCallback((domain) => {
-    setSelectedDomain(domain);
-    setSelectedDataset(null);
-  }, []);
+  const selection = useDatabaseSelection();
+  const onDomainSelect = useDatabaseEditorStore((state) => state.setSelection);
+  const setSelectedDataset = useDatabaseEditorStore(
+    (state) => state.setSelectedDataset,
+  );
 
   // FIXME: Backend does not return schema for database
   // if (!schema?.[name])
@@ -237,17 +233,14 @@ const DatabaseContainer = () => {
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;
 
   const domainCategory =
-    selectedDomain.domain && selectedDomain.category
-      ? [
-          selectedDomain.domain.toUpperCase(),
-          selectedDomain.category.toUpperCase(),
-        ]
+    selection.domain && selection.category
+      ? [selection.domain.toUpperCase(), selection.category.toUpperCase()]
       : null;
-  const categoryData = data?.[selectedDomain.domain]?.[selectedDomain.category];
+  const categoryData = data?.[selection.domain]?.[selection.category];
   const categoryDatasets = Object.keys(categoryData ?? {});
 
   // Set first dataset if none is selected
-  const activeDataset = selectedDataset ?? categoryDatasets?.[0];
+  const activeDataset = selection.dataset ?? categoryDatasets?.[0];
   const dataset = categoryData?.[activeDataset];
 
   return (
@@ -259,7 +252,7 @@ const DatabaseContainer = () => {
               key={name}
               name={name}
               categories={Object.keys(data[name])}
-              active={selectedDomain}
+              active={selection}
               onSelect={onDomainSelect}
             />
           ))}
