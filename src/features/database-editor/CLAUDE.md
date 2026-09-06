@@ -58,43 +58,6 @@ const newData = produce(state.data, (draft) => {
 - `getNestedValue()` lowercases keys, so we must extract and use `_index` separately
 - Nested arrays need explicit access via `draftTable[_index]`
 
-### DO / DON'T Examples
-
-#### Deep Cloning
-
-```javascript
-// ❌ DON'T - Shallow copy
-const newData = { ...data };
-
-// ✅ DO - Deep clone
-const newData = structuredClone(data);
-```
-
-#### Accessing Nested Arrays
-
-```javascript
-// ❌ DON'T - Missing nested array access
-const targetArray = getNestedValue(draft, _dataKey);
-targetArray.push(rowData); // Fails! targetArray is object with component keys
-
-// ✅ DO - Extract and access component array
-const draftTable = getNestedValue(draft, _dataKey);
-const targetArray = draftTable[_index]; // Now it's the actual array
-targetArray.push(rowData);
-```
-
-#### Change Tracking DataKey
-
-```javascript
-// ❌ DON'T - Missing component name
-dataKey: ['COMPONENTS', 'CONVERSION', 'absorption_chillers'];
-
-// ✅ DO - Include component name
-dataKey: ['COMPONENTS', 'CONVERSION', 'absorption_chillers', 'ACH1'];
-```
-
----
-
 ## When Adding Row Operations
 
 ### Position-Based vs Index-Based Deletion
@@ -351,44 +314,6 @@ cellEdited: (cell) => {
 
 ---
 
-## Quick Checklist: Before Committing Changes
-
-When modifying database editor operations:
-
-**Nested Structure Handling:**
-
-- [ ] Detects nested structure using `arrayStartsWith`
-- [ ] Slices dataKey: `_dataKey = dataKey.slice(0, -1)`
-- [ ] Extracts component name: `_index = dataKey[dataKey.length - 1]`
-- [ ] Accesses nested array: `targetArray = draftTable[_index]`
-
-**Position-Based Operations:**
-
-- [ ] Checks if operation is on nested structure
-- [ ] Uses `row.getPosition()` for nested, `row.getData()[index]` for regular
-- [ ] Store detects using `typeof idx === 'number'`
-- [ ] Sorts positions descending before deletion
-
-**Change Tracking:**
-
-- [ ] Includes `action` property
-- [ ] Uses FULL dataKey (including component name)
-- [ ] Properly handles position-based index (`position_${num}`)
-
-**State Updates:**
-
-- [ ] Uses `structuredClone()` for mutable copies
-- [ ] Uses `produce()` from Immer for state updates
-- [ ] Doesn't mutate state directly
-
-**Schema Handling:**
-
-- [ ] Checks if schema exists before using
-- [ ] Has fallback to infer from data when schema unavailable
-- [ ] Handles both schema-based and inferred columns
-
----
-
 ## File Locations
 
 **Documentation:**
@@ -397,16 +322,16 @@ When modifying database editor operations:
 
 **Store:** `src/features/database-editor/stores/databaseEditorStore.js`
 
-- `updateDatabaseData` (line 214)
-- `addDatabaseRow` (line 378)
-- `deleteDatabaseRows` (line 448)
+- `updateDatabaseData`
+- `addDatabaseRow`
+- `deleteDatabaseRows`
 
 **Main Component:** `src/features/database-editor/components/dataset/table-dataset.jsx`
 
-- `TableGroupDataset` (line 32)
-- `TableDataset` (line 155)
-- `EntityDetails` (line 247)
-- `EntityDataTable` (line 384)
+- `TableGroupDataset`
+- `TableDataset`
+- `EntityDetails`
+- `EntityDataTable`
 
 **Row Actions:**
 
