@@ -15,32 +15,6 @@ export const SUCCESS_STATUS = 'success';
 export const FAILED_STATUS = 'failed';
 export const SAVING_STATUS = 'saving';
 
-/**
- * Index values must be letters, numbers, underscores and hyphens: several become filenames
- * (ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY/{use_type}.csv, FEEDSTOCKS_LIBRARY/{code}.csv),
- * so anything filesystem-hostile has to go. Hyphens are kept because the DE database uses
- * them in const_type (MFH-EAST_D); with them, every one of the ~2000 index values shipped
- * across CH/DE/SG already satisfies this rule, so a new row can match its neighbours.
- */
-
-/** Append _1, _2, ... until the name is free — same scheme as the Add Row button. */
-export const uniqueIndexName = (
-  base,
-  taken,
-  maxLength = MAX_INDEX_NAME_LENGTH,
-) => {
-  if (!taken.has(base)) return base;
-  let suffix = 1;
-  for (;;) {
-    const tail = `_${suffix}`;
-    // Trim the base so the suffix always fits: a de-duplicated name must respect the cap too.
-    const candidate =
-      base.slice(0, Math.max(1, maxLength - tail.length)) + tail;
-    if (!taken.has(candidate)) return candidate;
-    suffix += 1;
-  }
-};
-
 const useDatabaseEditorStore = create((set, get) => ({
   // State
   status: { status: null },
@@ -456,9 +430,10 @@ const useDatabaseEditorStore = create((set, get) => ({
           targetArray = draftTable[_index];
         }
 
-        // Add the new row to the table
+        // Add the new row at the top, so it is visible without scrolling a long table
+        // (this is also the order written to the CSV on save).
         if (Array.isArray(targetArray)) {
-          targetArray.push(rowData);
+          targetArray.unshift(rowData);
         } else if (typeof targetArray === 'object' && indexCol) {
           if (rowData?.[indexCol] === undefined) {
             console.error(
@@ -479,7 +454,12 @@ const useDatabaseEditorStore = create((set, get) => ({
           const rowDataCopy = { ...rowData };
           // Remove index from the copy to avoid duplication
           delete rowDataCopy[indexCol];
+          // Object key order is the row order, so rebuild with the new key first rather
+          // than assigning, which would append.
+          const existing = { ...targetArray };
+          for (const key of Object.keys(targetArray)) delete targetArray[key];
           targetArray[rowIndex] = rowDataCopy;
+          Object.assign(targetArray, existing);
         } else {
           console.error('Unable to determine table structure:', targetArray);
         }
