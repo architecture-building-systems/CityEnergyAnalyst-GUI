@@ -1,10 +1,13 @@
-import { useDatabaseSchema } from 'features/database-editor/stores/databaseEditorStore';
+import {
+  useDatabaseSchema,
+  MATERIALS_DATA_KEY,
+} from 'features/database-editor/stores/databaseEditorStore';
 import { MissingDataPrompt } from './missing-data-prompt';
 import { MissingMaterialsPrompt } from './missing-materials-prompt';
 import { TableDataset } from './table-dataset';
 import { useRef, useMemo } from 'react';
 
-const MATERIALS_KEY = 'COMPONENTS-MATERIALS-materials';
+const MATERIALS_KEY = MATERIALS_DATA_KEY.join('-');
 
 // Row key per dataset; everything else is keyed by `code`. Materials use `name` because that
 // is what ENVELOPE_WALL/ROOF/FLOOR reference through material_name_1..3.
