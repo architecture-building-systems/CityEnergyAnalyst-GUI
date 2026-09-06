@@ -6,6 +6,7 @@ import {
   useAddDatabaseRow,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { withHiddenInDemo } from 'components/HiddenInDemo';
+import { uniqueIndexName } from 'utils/validation';
 
 /**
  * Hook to create an empty row with a unique index
@@ -33,13 +34,8 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
       ? data.map((row) => row?.[index])
       : Object.keys(data || {});
 
-    // Generate a unique index name
-    let newIndex = 'NEW_ROW';
-    let counter = 1;
-    while (existingIndices.includes(newIndex)) {
-      newIndex = `NEW_ROW_${counter}`;
-      counter++;
-    }
+    // Generate a unique index name (same _N scheme as renaming)
+    const newIndex = uniqueIndexName('NEW_ROW', new Set(existingIndices));
 
     // Create empty row with all required fields
     const newRow = { [index]: newIndex };
