@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Alert, Button, message } from 'antd';
 import { apiClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
-import useDatabaseEditorStore from 'features/database-editor/stores/databaseEditorStore';
+import useDatabaseEditorStore, {
+  MATERIALS_DATA_KEY,
+} from 'features/database-editor/stores/databaseEditorStore';
 import { withHiddenInDemo } from 'components/HiddenInDemo';
 
 /**
@@ -17,6 +19,7 @@ const MissingMaterialsPromptImpl = () => {
   const refreshDatabaseData = useDatabaseEditorStore(
     (state) => state.refreshDatabaseData,
   );
+  const setSelection = useDatabaseEditorStore((state) => state.setSelection);
   const [busy, setBusy] = useState(false);
 
   const importSwissMaterials = async () => {
@@ -28,6 +31,14 @@ const MissingMaterialsPromptImpl = () => {
         { headers: activeScenarioHeaders() },
       );
       await refreshDatabaseData();
+      // Open the table that now exists, so the import ends on the data rather than on
+      // whatever the editor happened to be showing.
+      const [domain, category, dataset] = MATERIALS_DATA_KEY;
+      setSelection({
+        domain: domain.toLowerCase(),
+        category: category.toLowerCase(),
+        dataset,
+      });
       message.success('Swiss (CH) materials imported.');
     } catch (error) {
       message.error(

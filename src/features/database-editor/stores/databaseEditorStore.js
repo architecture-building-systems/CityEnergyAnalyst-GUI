@@ -28,6 +28,11 @@ const useDatabaseEditorStore = create((set, get) => ({
   changes: [],
   isEmpty: false,
   databaseValidation: { status: null, message: null },
+  // Which domain/category/dataset the editor is showing. Kept here rather than in
+  // DatabaseContainer because that component unmounts whenever `data` is briefly blanked,
+  // which would discard a local useState — and because actions need to navigate the editor
+  // (seeding MATERIALS has to land the user on the table it just created).
+  selection: { domain: null, category: null, dataset: null },
 
   // Getters
   getColumnChoices: (dataKey, column) => {
@@ -54,6 +59,12 @@ const useDatabaseEditorStore = create((set, get) => ({
   },
 
   // Actions
+  setSelection: ({ domain, category, dataset = null }) =>
+    set({ selection: { domain, category, dataset } }),
+
+  setSelectedDataset: (dataset) =>
+    set((state) => ({ selection: { ...state.selection, dataset } })),
+
   validateDatabase: async () => {
     const { isEmpty } = useDatabaseEditorStore.getState();
 
@@ -91,7 +102,13 @@ const useDatabaseEditorStore = create((set, get) => ({
   },
 
   initDatabaseState: async () => {
-    set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
+    // A different scenario's database may not have the selected category at all.
+    set({
+      data: {},
+      status: { status: FETCHING_STATUS },
+      isEmpty: false,
+      selection: { domain: null, category: null, dataset: null },
+    });
     try {
       await useDatabaseEditorStore.getState().refreshDatabaseData();
       set({ status: { status: SUCCESS_STATUS } });
@@ -726,6 +743,9 @@ const getNestedValue = (obj, datakey) => {
   }
   return current;
 };
+
+export const useDatabaseSelection = () =>
+  useDatabaseEditorStore((state) => state.selection);
 
 export const useMaterialsAvailable = () =>
   useDatabaseEditorStore(
