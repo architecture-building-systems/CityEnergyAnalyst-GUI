@@ -16,6 +16,7 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
+import { pathwayOverviewQueryKey } from 'features/pathway/hooks/usePathwayOverview';
 
 export function useSaveInputs() {
   const queryClient = useQueryClient();
@@ -64,16 +65,24 @@ export function useSaveInputs() {
       );
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       resetStore();
       resyncInputs();
       // A save while a pathway state is the active scenario is the only way
       // a state's phase can flip to `custom` outside of a bake/simulate job
-      // (see OverviewCard's PathwayViewerRow, which used to poll /pathways/overview
-      // every 5s to catch exactly this). Invalidating here instead means the
-      // mini timeline updates right when the edit happens, with no background
+      // -- mirrors the `PathwayChildScenario.parse(scenario)` gate in the
+      // backend's PUT /all-inputs (inputs.py), which only calls
+      // `record_custom_state` in that same case (see OverviewCard's
+      // PathwayViewerRow, which used to poll /pathways/overview every 5s to
+      // catch exactly this). Invalidating here instead means the mini
+      // timeline updates right when the edit happens, with no background
       // polling and no backend changes needed.
-      queryClient.invalidateQueries({ queryKey: ['pathways', 'overview'] });
+      const { scenario, childScenario } = useProjectStore.getState();
+      if (childScenario?.year) {
+        await queryClient.invalidateQueries({
+          queryKey: pathwayOverviewQueryKey(scenario),
+        });
+      }
       console.log('success');
     },
     onError: () => {
