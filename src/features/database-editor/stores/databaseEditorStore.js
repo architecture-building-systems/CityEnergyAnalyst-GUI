@@ -15,6 +15,10 @@ export const SUCCESS_STATUS = 'success';
 export const FAILED_STATUS = 'failed';
 export const SAVING_STATUS = 'saving';
 
+// Where MATERIALS.csv lives in the database payload. Only some regional databases ship it,
+// so this node is `null` for most scenarios.
+export const MATERIALS_DATA_KEY = ['COMPONENTS', 'MATERIALS', 'materials'];
+
 const useDatabaseEditorStore = create((set, get) => ({
   // State
   status: { status: null },
@@ -27,17 +31,23 @@ const useDatabaseEditorStore = create((set, get) => ({
 
   // Getters
   getColumnChoices: (dataKey, column) => {
-    const data = get().data;
-    const _data = getNestedValue(data, dataKey);
+    const state = get();
+    const _data = getNestedValue(state.data, dataKey);
+    const _columns = getNestedValue(state.schema, dataKey)?.schema?.columns;
 
-    // FIXME: This is not reliable as not every index is "code"
-    // Get keys if column is 'code'
-    if (column == 'code') {
-      const choices = {};
-      Object.keys(_data || {}).forEach((key) => {
-        choices[key] = _data[key]?.description ?? '-';
-      });
-      return choices;
+    // A lookup that targets the referenced table's primary column is asking for its row keys,
+    // because that column is the key the table is stored under. Read the primary from the
+    // schema rather than assuming 'code' — MATERIALS is keyed by `name`.
+    const primary =
+      Object.keys(_columns ?? {}).find((c) => _columns[c]?.primary) ?? 'code';
+    if (column == primary) {
+      const keys = Object.keys(_data ?? {});
+      // Annotate with descriptions where the table has them; otherwise the bare keys are
+      // the whole choice (MATERIALS has no description column).
+      if (_columns?.description == undefined) return keys;
+      return Object.fromEntries(
+        keys.map((key) => [key, _data[key]?.description ?? '-']),
+      );
     }
 
     return _data?.[column];
@@ -716,6 +726,11 @@ const getNestedValue = (obj, datakey) => {
   }
   return current;
 };
+
+export const useMaterialsAvailable = () =>
+  useDatabaseEditorStore(
+    (state) => getNestedValue(state.data, MATERIALS_DATA_KEY) != null,
+  );
 
 export const useDatabaseSchema = (dataKey) => {
   // Get column schema for using specific data key which is a list of property names

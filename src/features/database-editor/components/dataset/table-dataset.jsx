@@ -15,6 +15,7 @@ import useDatabaseEditorStore, {
   useGetDatabaseColumnChoices,
   useUpdateDatabaseData,
   useRenameDatabaseRowIndex,
+  useMaterialsAvailable,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { arraysEqual } from 'utils';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
@@ -42,6 +43,17 @@ import { DeleteRowButton } from 'features/database-editor/components/delete-row-
 import { AddRowButton } from 'features/database-editor/components/add-row-button';
 import { useDemoMode } from 'stores/demoStore';
 import { HiddenInDemo } from 'components/HiddenInDemo';
+
+// The envelope material layer set (ENVELOPE_WALL/ROOF/FLOOR). These reference MATERIALS.csv,
+// which only some regional databases ship, so they are hidden when it is absent.
+const MATERIAL_LAYER_COLUMNS = [
+  'material_name_1',
+  'thickness_1_m',
+  'material_name_2',
+  'thickness_2_m',
+  'material_name_3',
+  'thickness_3_m',
+];
 
 export const TableGroupDataset = ({
   dataKey,
@@ -457,18 +469,33 @@ const EntityDataTable = ({
     return data?.[0] ?? null;
   }, [columnSchema, data]);
 
+  const materialsAvailable = useMaterialsAvailable();
+
+  const hiddenColumns = useMemo(() => {
+    if (materialsAvailable) return commonColumns;
+    // Without MATERIALS.csv the layer columns have nothing to reference, so they are noise —
+    // unless this table already holds layer values, which the user needs to see to fix.
+    const layersUsed = (data ?? []).some((row) =>
+      MATERIAL_LAYER_COLUMNS.some(
+        (c) => row?.[c] != null && row[c] !== '' && row[c] !== 0,
+      ),
+    );
+    if (layersUsed) return commonColumns;
+    return [...(commonColumns ?? []), ...MATERIAL_LAYER_COLUMNS];
+  }, [commonColumns, materialsAvailable, data]);
+
   const columns = useMemo(() => {
     const columnKeys = Object.keys(columnSchema ?? firstRowKeys ?? {});
 
     // Filter columns to either show only the index column or hide the common columns based on props
     const filtered = columnKeys.filter((c) =>
-      c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
+      c === indexColumn ? showIndex : !(hiddenColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
     }
     return filtered;
-  }, [columnSchema, indexColumn, commonColumns, showIndex, firstRowKeys]);
+  }, [columnSchema, indexColumn, hiddenColumns, showIndex, firstRowKeys]);
 
   const getColumnChoices = useGetDatabaseColumnChoices();
   const updateDatabaseData = useUpdateDatabaseData();
@@ -525,10 +552,17 @@ const EntityDataTable = ({
       if (_colSchema?.choice != undefined) {
         const values = _colSchema?.choice?.values || [];
         const lookup = _colSchema.choice?.lookup;
-        const columnChoices = lookup
+        const nullable = _colSchema?.nullable ?? false;
+        let columnChoices = lookup
           ? getColumnChoices(lookup?.path, lookup?.column)
           : values;
-        const nullable = _colSchema?.nullable ?? false;
+        // A select editor can only offer what it lists, so a nullable column needs an explicit
+        // blank — otherwise the dropdown can set a value but never clear one.
+        if (nullable) {
+          columnChoices = Array.isArray(columnChoices)
+            ? ['', ...columnChoices]
+            : { '': '(none)', ...(columnChoices ?? {}) };
+        }
 
         return {
           ...colDef,
