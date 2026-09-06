@@ -14,10 +14,21 @@ import useDatabaseEditorStore, {
   useDatabaseSchema,
   useGetDatabaseColumnChoices,
   useUpdateDatabaseData,
+  useRenameDatabaseRowIndex,
 } from 'features/database-editor/stores/databaseEditorStore';
+import { arraysEqual } from 'utils';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
-import { Button, Divider, Modal, Form, Input, Select, Alert } from 'antd';
+import {
+  Button,
+  Divider,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Alert,
+  message,
+} from 'antd';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -461,6 +472,7 @@ const EntityDataTable = ({
 
   const getColumnChoices = useGetDatabaseColumnChoices();
   const updateDatabaseData = useUpdateDatabaseData();
+  const renameDatabaseRowIndex = useRenameDatabaseRowIndex();
 
   // Convert columns to tabulator format
   const tabulatorColumns = useMemo(() => {
@@ -485,8 +497,27 @@ const EntityDataTable = ({
         colDef.hozAlign = 'left';
       }
 
-      // FIXME: Prevent edits for index column until we can implement better validation of foreign key references
+      // Saved keys stay read-only: other tables reference them and we have no foreign-key
+      // validation yet. A row added since the last save has no referents, so it can be named.
+      // Read `changes` at edit time rather than closing over it — Tabulator applies these
+      // definitions once at construction, so a captured value would never see a row added
+      // afterwards, nor the clearing of `changes` on save that must lock the row again.
       if (column == indexColumn) {
+        colDef.editor = 'input';
+        colDef.editable = demoMode
+          ? false
+          : (cell) => {
+              const rowIndex = cell.getRow().getIndex();
+              return useDatabaseEditorStore
+                .getState()
+                .changes.some(
+                  (change) =>
+                    (change.action === 'create' ||
+                      change.action === 'duplicate') &&
+                    change.index === rowIndex &&
+                    arraysEqual(change.dataKey, dataKey),
+                );
+            };
         return colDef;
       }
 
@@ -575,6 +606,26 @@ const EntityDataTable = ({
           const position = cell.getRow().getPosition();
           const oldValue = cell.getOldValue();
 
+          if (field === indexColumn) {
+            // The index is the row's identity, not one of its fields — renaming moves it.
+            const result = renameDatabaseRowIndex(
+              dataKey,
+              indexColumn,
+              oldValue,
+              value,
+            );
+            if (!result.ok) {
+              message.error(result.reason);
+              cell.restoreOldValue();
+            } else if (result.name !== value) {
+              message.info(`Saved as ${result.name}.`);
+              // No store change means no setData refresh, so the cell would keep the raw
+              // text the user typed and the row's index would no longer match the store.
+              if (result.name === oldValue) cell.restoreOldValue();
+            }
+            return;
+          }
+
           // Pass both index and position - let the store decide which to use
           updateDatabaseData(
             dataKey,
@@ -600,6 +651,7 @@ const EntityDataTable = ({
     indexColumn,
     tabulatorColumns,
     updateDatabaseData,
+    renameDatabaseRowIndex,
     enableRowSelection,
     onRowSelectionChanged,
     demoMode,

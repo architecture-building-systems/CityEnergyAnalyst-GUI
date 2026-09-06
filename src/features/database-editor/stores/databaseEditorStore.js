@@ -2,12 +2,44 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { apiClient, getScenarioClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
-import { arrayStartsWith } from 'utils';
+import { arrayStartsWith, arraysEqual } from 'utils';
+import {
+  MAX_INDEX_NAME_LENGTH,
+  droppedCharacters,
+  normaliseIndexName,
+  uniqueIndexName,
+} from 'utils/validation';
 
 export const FETCHING_STATUS = 'fetching';
 export const SUCCESS_STATUS = 'success';
 export const FAILED_STATUS = 'failed';
 export const SAVING_STATUS = 'saving';
+
+/**
+ * Index values must be letters, numbers, underscores and hyphens: several become filenames
+ * (ARCHETYPES/USE/SCHEDULES/SCHEDULES_LIBRARY/{use_type}.csv, FEEDSTOCKS_LIBRARY/{code}.csv),
+ * so anything filesystem-hostile has to go. Hyphens are kept because the DE database uses
+ * them in const_type (MFH-EAST_D); with them, every one of the ~2000 index values shipped
+ * across CH/DE/SG already satisfies this rule, so a new row can match its neighbours.
+ */
+
+/** Append _1, _2, ... until the name is free — same scheme as the Add Row button. */
+export const uniqueIndexName = (
+  base,
+  taken,
+  maxLength = MAX_INDEX_NAME_LENGTH,
+) => {
+  if (!taken.has(base)) return base;
+  let suffix = 1;
+  for (;;) {
+    const tail = `_${suffix}`;
+    // Trim the base so the suffix always fits: a de-duplicated name must respect the cap too.
+    const candidate =
+      base.slice(0, Math.max(1, maxLength - tail.length)) + tail;
+    if (!taken.has(candidate)) return candidate;
+    suffix += 1;
+  }
+};
 
 const useDatabaseEditorStore = create((set, get) => ({
   // State
@@ -470,6 +502,111 @@ const useDatabaseEditorStore = create((set, get) => ({
     });
   },
 
+  /**
+   * Rename a row's index value (its `code` / `name` / `const_type`).
+   *
+   * For object-keyed tables the index IS the object key, so this moves the key rather than
+   * setting a field — setting the field would be dropped on save, since `BaseDatabase.save`
+   * excludes the column matching the index name. Array-shaped tables keep the index as an
+   * ordinary field, so there it is a plain assignment.
+   *
+   * Returns `{ ok, name, reason }`; `name` is what was actually used, which the caller
+   * compares against what the user typed in order to report the change.
+   */
+  renameDatabaseRowIndex: (dataKey, indexCol, oldIndex, newIndex) => {
+    const typed = String(newIndex ?? '').trim();
+    // Before the emptiness check: a wholly non-Latin name normalises to "" and would
+    // otherwise be reported as empty, which is not what the user typed.
+    const dropped = droppedCharacters(typed);
+    if (dropped)
+      return {
+        ok: false,
+        reason: `${indexCol} must use Latin letters, numbers, underscores or hyphens - "${dropped}" cannot be converted.`,
+      };
+    const requested = normaliseIndexName(typed);
+    if (!requested)
+      return { ok: false, reason: `${indexCol} cannot be empty.` };
+    if (requested.length > MAX_INDEX_NAME_LENGTH)
+      return {
+        ok: false,
+        reason: `${indexCol} must be ${MAX_INDEX_NAME_LENGTH} characters or fewer (this is ${requested.length}).`,
+      };
+
+    let result = { ok: true, name: requested };
+    set((state) => {
+      let _dataKey = dataKey;
+      let _nested;
+      if (
+        arrayStartsWith(dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
+        _dataKey = dataKey.slice(0, -1);
+        _nested = dataKey[dataKey.length - 1];
+      }
+
+      const table = getNestedValue(state.data, _dataKey);
+      if (table === undefined) {
+        result = { ok: false, reason: 'Table not found.' };
+        return state;
+      }
+
+      const rows =
+        _nested !== undefined && table?.[_nested] ? table[_nested] : table;
+      const taken = new Set(
+        Array.isArray(rows)
+          ? rows.map((row) => row?.[indexCol]).filter((v) => v !== oldIndex)
+          : Object.keys(rows).filter((key) => key !== oldIndex),
+      );
+      const name = uniqueIndexName(requested, taken);
+      result = { ok: true, name };
+      if (name === oldIndex) return state;
+
+      const newData = produce(state.data, (draft) => {
+        const draftTable = getNestedValue(draft, _dataKey);
+        const target =
+          _nested !== undefined && draftTable?.[_nested]
+            ? draftTable[_nested]
+            : draftTable;
+
+        if (Array.isArray(target)) {
+          const row = target.find((r) => r?.[indexCol] === oldIndex);
+          if (!row) {
+            result = { ok: false, reason: `Could not find row "${oldIndex}".` };
+            return;
+          }
+          row[indexCol] = name;
+          return;
+        }
+
+        if (!(oldIndex in target)) {
+          result = { ok: false, reason: `Could not find row "${oldIndex}".` };
+          return;
+        }
+        // Rebuild to keep the row in place rather than moving it to the end.
+        const renamed = Object.fromEntries(
+          Object.entries(target).map(([key, value]) => [
+            key === oldIndex ? name : key,
+            value,
+          ]),
+        );
+        for (const key of Object.keys(target)) delete target[key];
+        Object.assign(target, renamed);
+      });
+
+      if (!result.ok) return state;
+
+      return {
+        data: newData,
+        changes: state.changes.map((change) =>
+          change.index === oldIndex && arraysEqual(change.dataKey, dataKey)
+            ? { ...change, index: name }
+            : change,
+        ),
+      };
+    });
+    return result;
+  },
+
   deleteDatabaseRows: (dataKey, indexCol, rowIndices) => {
     set((state) => {
       let _dataKey = dataKey;
@@ -616,6 +753,9 @@ export const useUpdateDatabaseData = () =>
 
 export const useAddDatabaseRow = () =>
   useDatabaseEditorStore((state) => state.addDatabaseRow);
+
+export const useRenameDatabaseRowIndex = () =>
+  useDatabaseEditorStore((state) => state.renameDatabaseRowIndex);
 
 export const useDeleteDatabaseRows = () =>
   useDatabaseEditorStore((state) => state.deleteDatabaseRows);
