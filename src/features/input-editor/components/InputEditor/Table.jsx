@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { setDataPreservingScroll } from 'utils/tabulator';
 import { message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -62,6 +63,8 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
   const [data, columnDef] = useTableData(tab, columns, tables);
   const divRef = useRef(null);
   const tableRef = useRef(tab);
+  // Marks the store update this table is about to cause, so the sync effect can skip it.
+  const editedHereRef = useRef(false);
   const columnDescriptionRef = useRef();
 
   useEffect(() => {
@@ -91,6 +94,7 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
         cell.cancelEdit();
       },
       cellEdited: (cell) => {
+        editedHereRef.current = true;
         updateInputData(
           tableRef.current,
           [cell.getData()[INDEX_COLUMN]],
@@ -149,9 +153,15 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
     }
   }, [columnDef]);
 
+  // Skip the rebuild for an edit made here: the cell already shows the new value, and
+  // re-rendering would cost the user their scroll position.
   useEffect(() => {
+    if (editedHereRef.current) {
+      editedHereRef.current = false;
+      return;
+    }
     if (tabulator.current && data !== null) {
-      tabulator.current.setData(data);
+      setDataPreservingScroll(tabulator.current, data);
       tabulator.current.selectRow(selected);
     }
   }, [data]);
