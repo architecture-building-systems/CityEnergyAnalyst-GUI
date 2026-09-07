@@ -21,7 +21,10 @@ import useDatabaseEditorStore, {
   rowHasMaterialLayer,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { arraysEqual } from 'utils';
-import { getColumnPropsFromDataType } from 'utils/tabulator';
+import {
+  getColumnPropsFromDataType,
+  setDataPreservingScroll,
+} from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
 import {
   Button,
@@ -437,6 +440,8 @@ const EntityDataTable = ({
   const divRef = useRef();
   const tabulatorRef = useRef();
   const demoMode = useDemoMode();
+  // Marks the store update this table is about to cause, so the sync effect can skip it.
+  const editedHereRef = useRef(false);
 
   // Expose specific Tabulator methods to parent components
   useImperativeHandle(
@@ -444,7 +449,7 @@ const EntityDataTable = ({
     () => ({
       getSelectedRows: () => tabulatorRef.current?.getSelectedRows() || [],
       getSelectedData: () => tabulatorRef.current?.getSelectedData() || [],
-      setData: (data) => tabulatorRef.current?.setData(data),
+      setData: (data) => setDataPreservingScroll(tabulatorRef.current, data),
       selectRow: (row) => tabulatorRef.current?.selectRow(row),
       deselectRow: (row) => tabulatorRef.current?.deselectRow(row),
       getRows: () => tabulatorRef.current?.getRows() || [],
@@ -674,6 +679,7 @@ const EntityDataTable = ({
             return;
           }
 
+          editedHereRef.current = true;
           // Pass both index and position - let the store decide which to use
           updateDatabaseData(
             dataKey,
@@ -705,11 +711,17 @@ const EntityDataTable = ({
     demoMode,
   ]);
 
-  // Update table data when data changes (e.g., when a new row is added)
+  // Re-render when the data changes elsewhere: a row added or deleted, a save that derived new
+  // values, a scenario switch. An edit made in this table is skipped -- the cell already shows
+  // the new value, and rebuilding the rows would cost the user their scroll position.
   useEffect(() => {
+    if (editedHereRef.current) {
+      editedHereRef.current = false;
+      return;
+    }
     if (tabulatorRef.current && data) {
       // Deep clone to ensure Tabulator receives mutable data
-      tabulatorRef.current.setData(structuredClone(data));
+      setDataPreservingScroll(tabulatorRef.current, structuredClone(data));
     }
   }, [data]);
 

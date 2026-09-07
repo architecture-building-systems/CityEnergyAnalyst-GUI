@@ -1,3 +1,16 @@
+/**
+ * Replace a Tabulator's data, re-rendering around the row already on screen.
+ *
+ * `setData` resets the row manager's scroll and renders from the top; `replaceData` is the
+ * same operation with `renderInPosition` set, which keeps the view where it was. Only matters
+ * for a table given a `height` (the input editor) -- without one the holder grows to fit and
+ * an ancestor does the scrolling instead.
+ */
+export const setDataPreservingScroll = (table, data) => {
+  if (table == null) return undefined;
+  return table.replaceData ? table.replaceData(data) : table.setData(data);
+};
+
 export const getColumnPropsFromDataType = (
   columnSchema,
   column = undefined,
