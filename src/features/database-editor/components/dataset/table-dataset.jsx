@@ -16,6 +16,9 @@ import useDatabaseEditorStore, {
   useUpdateDatabaseData,
   useRenameDatabaseRowIndex,
   useMaterialsAvailable,
+  MATERIAL_LAYER_COLUMNS,
+  DERIVED_ENVELOPE_COLUMNS,
+  rowHasMaterialLayer,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { arraysEqual } from 'utils';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
@@ -43,17 +46,6 @@ import { DeleteRowButton } from 'features/database-editor/components/delete-row-
 import { AddRowButton } from 'features/database-editor/components/add-row-button';
 import { useDemoMode } from 'stores/demoStore';
 import { HiddenInDemo } from 'components/HiddenInDemo';
-
-// The envelope material layer set (ENVELOPE_WALL/ROOF/FLOOR). These reference MATERIALS.csv,
-// which only some regional databases ship, so they are hidden when it is absent.
-const MATERIAL_LAYER_COLUMNS = [
-  'material_name_1',
-  'thickness_1_m',
-  'material_name_2',
-  'thickness_2_m',
-  'material_name_3',
-  'thickness_3_m',
-];
 
 export const TableGroupDataset = ({
   dataKey,
@@ -546,6 +538,28 @@ const EntityDataTable = ({
                 );
             };
         return colDef;
+      }
+
+      // A row with material layers derives its U/GHG on save, so typing one here would be
+      // silently replaced. Lock the cell instead, and say why. Clearing the layers makes the
+      // row direct-property-based and the cell editable again.
+      if (DERIVED_ENVELOPE_COLUMNS.includes(column)) {
+        colDef.editable = demoMode
+          ? false
+          : (cell) => !rowHasMaterialLayer(cell.getRow().getData());
+        colDef.formatter = (cell) => {
+          // Style the cell element rather than returning markup: the value comes from the
+          // database, and both branches must run so that clearing a row's layers also clears
+          // the styling a previous render applied.
+          const derived = rowHasMaterialLayer(cell.getRow().getData());
+          const element = cell.getElement();
+          element.title = derived
+            ? 'Derived from the material layers of this row'
+            : '';
+          element.style.color = derived ? '#888' : '';
+          element.style.fontStyle = derived ? 'italic' : '';
+          return cell.getValue() ?? '';
+        };
       }
 
       // Handle columns with choices

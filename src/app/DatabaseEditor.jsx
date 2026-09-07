@@ -7,7 +7,9 @@ import useDatabaseEditorStore, {
   FAILED_STATUS,
   SAVING_STATUS,
   useDatabaseSelection,
+  DerivedConflictError,
 } from 'features/database-editor/stores/databaseEditorStore';
+import { DerivedConflictModal } from 'features/database-editor/components/derived-conflict-modal';
 import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
@@ -128,12 +130,17 @@ const DatabaseContent = ({ message }) => {
   const [saveError, setSaveError] = useState(null);
 
   const changes = useDatabaseEditorStore((state) => state.changes);
-  const handleSave = async () => {
+  const [derivedConflicts, setDerivedConflicts] = useState(null);
+
+  const handleSave = async (options) => {
     if (status === SAVING_STATUS) return;
     try {
-      await saveDatabaseState();
+      await saveDatabaseState(options);
+      setDerivedConflicts(null);
     } catch (error) {
-      if (error?.response?.status === 401) setShowLoginModal(true);
+      if (error instanceof DerivedConflictError)
+        setDerivedConflicts(error.conflicts);
+      else if (error?.response?.status === 401) setShowLoginModal(true);
       else setSaveError(error);
     }
   };
@@ -156,10 +163,15 @@ const DatabaseContent = ({ message }) => {
       <div className="cea-database-editor-content">
         {/* <DatabaseTopMenu /> */}
         {message && <DatabaseEditorErrorMessage error={message} />}
-        <DatabaseChangesList changes={changes} onSave={handleSave} />
+        <DatabaseChangesList changes={changes} onSave={() => handleSave()} />
         <DatabaseContainer />
       </div>
       <LoginModal />
+      <DerivedConflictModal
+        conflicts={derivedConflicts}
+        onConfirm={() => handleSave({ overwriteDerived: true })}
+        onCancel={() => setDerivedConflicts(null)}
+      />
       <ErrorModal
         open={saveError != null}
         title="Error Saving Database"
