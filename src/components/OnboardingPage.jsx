@@ -92,7 +92,7 @@ const OnboardingPage = ({ onComplete }) => {
     });
 
     try {
-      await authClient.post('/user/onboarding', {
+      await authClient.post('/api/user/onboarding', {
         primaryReason: formData.primaryReason,
         role: formData.role,
         currentTools: formData.currentTools,
