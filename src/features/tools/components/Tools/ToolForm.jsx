@@ -18,6 +18,7 @@ const ToolForm = ({
   categoricalParameters,
   script,
   readonlyFields = [],
+  scenarioContext,
 }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
@@ -31,6 +32,7 @@ const ToolForm = ({
   const { mutateAsync: handleRefetch } = useParameterMetadataRefetch(
     script,
     form,
+    scenarioContext,
   );
 
   useEffect(() => {

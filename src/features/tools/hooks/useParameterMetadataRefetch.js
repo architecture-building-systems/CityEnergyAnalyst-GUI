@@ -1,25 +1,22 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getScenarioClient } from 'lib/api/axios';
 import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
-import { useProjectStore } from 'features/project/stores/projectStore';
 import { TOOLS_QUERY_KEYS, TOOLS_MUTATION_KEYS } from '../constants/queryKeys';
 
-const useParameterMetadataRefetch = (script, form) => {
+// `scenarioContext` must be the same `{ project, scenarioName, childScenario }` the
+// caller's useToolParams was fetched with (Tool.jsx resolves it from either
+// scenarioOverride or the active scenario) -- it picks both the request headers AND the
+// cache entry the response is written back into. Reading the active scenario from the
+// store here instead would send the wrong headers and write into the wrong cache entry
+// whenever the caller is a scenarioOverride column (e.g. a Canvas Builder pathway-state
+// column), which does not track the active scenario.
+const useParameterMetadataRefetch = (script, form, scenarioContext) => {
   const queryClient = useQueryClient();
+  const { project, scenarioName, childScenario } = scenarioContext;
 
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
     mutationFn: async ({ formValues, affectedParams }) => {
-      // Read the active scenario once, up front: the same context has to
-      // pick the request headers AND the cache entry the response is written
-      // back into. Re-reading the store after the round trip could land the
-      // metadata on a scenario the user has since switched to.
-      const {
-        project,
-        scenario: scenarioName,
-        childScenario,
-      } = useProjectStore.getState();
-
       let response;
       try {
         response = await getScenarioClient().post(
