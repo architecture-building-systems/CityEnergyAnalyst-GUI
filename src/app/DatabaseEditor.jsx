@@ -4,13 +4,12 @@ import { Alert, Button, Spin } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
-  FAILED_STATUS,
   SAVING_STATUS,
   useDatabaseSelection,
+  useDatabaseLoadError,
   DerivedConflictError,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { DerivedConflictModal } from 'features/database-editor/components/derived-conflict-modal';
-import { AsyncError } from 'components/AsyncError';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 
@@ -122,7 +121,7 @@ const DatabaseEditor = () => {
 };
 
 const DatabaseContent = ({ message }) => {
-  const { status, error } = useDatabaseEditorStore((state) => state.status);
+  const { status } = useDatabaseEditorStore((state) => state.status);
   const saveDatabaseState = useDatabaseEditorStore(
     (state) => state.saveDatabaseState,
   );
@@ -152,7 +151,6 @@ const DatabaseContent = ({ message }) => {
         tip="Loading Databases..."
       />
     );
-  if (status === FAILED_STATUS) return <AsyncError error={error} />;
 
   return (
     <Spin
@@ -193,27 +191,43 @@ const USE_TYPES_DATABASE = ['ARCHETYPES', 'USE'];
 const CONVERSION_DATABASE = ['COMPONENTS', 'CONVERSION'];
 const LIBRARY_DATABASE = '_LIBRARY';
 
-const EmptyDatabaseState = () => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '400px',
-        padding: '48px',
-        textAlign: 'center',
-      }}
-    >
-      <h2 style={{ marginBottom: '8px' }}>No Database Found</h2>
-      <p style={{ color: '#666', marginBottom: '24px', maxWidth: '500px' }}>
-        Upload a database file to get started.
-      </p>
-      {!isElectron() && <ImportDatabaseButton />}
-    </div>
-  );
-};
+const NoTablesPanel = ({ title, children }) => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '400px',
+      padding: '48px',
+      textAlign: 'center',
+    }}
+  >
+    <h2 style={{ marginBottom: '8px' }}>{title}</h2>
+    {children}
+  </div>
+);
+
+/** Shown when the database exists but could not be read. The reason is in the message area
+ * above; this only explains why there are no tables, and offers a retry. */
+const UnreadableDatabaseState = () => (
+  <NoTablesPanel title="Database could not be read">
+    <p style={{ color: '#666', marginBottom: '24px', maxWidth: '600px' }}>
+      See the message above for the problem. Correct it in the database files,
+      then refresh.
+    </p>
+    <RefreshDatabaseButton />
+  </NoTablesPanel>
+);
+
+const EmptyDatabaseState = () => (
+  <NoTablesPanel title="No Database Found">
+    <p style={{ color: '#666', marginBottom: '24px', maxWidth: '500px' }}>
+      Upload a database file to get started.
+    </p>
+    {!isElectron() && <ImportDatabaseButton />}
+  </NoTablesPanel>
+);
 
 const DatabaseContainer = () => {
   // Database structure:
@@ -225,6 +239,7 @@ const DatabaseContainer = () => {
 
   const data = useDatabaseEditorStore((state) => state.data);
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
+  const loadError = useDatabaseLoadError();
   // TODO: Move state to url query params
   const selection = useDatabaseSelection();
   const onDomainSelect = useDatabaseEditorStore((state) => state.setSelection);
@@ -238,8 +253,14 @@ const DatabaseContainer = () => {
 
   const domains = Object.keys(data ?? {}).map((name) => name.toUpperCase());
 
-  // Show empty state if database is empty
-  if (isEmpty || domains.length === 0) return <EmptyDatabaseState />;
+  // Only stand in for the tables when there are none: a partial failure (the schema, say)
+  // still leaves an editable database, and the message area already carries the reason.
+  if (domains.length === 0)
+    // A failed read is not an empty database -- "upload one to get started" would send the
+    // user off to fix the wrong thing.
+    return loadError ? <UnreadableDatabaseState /> : <EmptyDatabaseState />;
+
+  if (isEmpty) return <EmptyDatabaseState />;
 
   // Ensure first level keys of data are DOMAINS
   if (!arraysEqual(domains, DOMAINS)) return <div>Invalid data</div>;

@@ -12,7 +12,6 @@ import {
 
 export const FETCHING_STATUS = 'fetching';
 export const SUCCESS_STATUS = 'success';
-export const FAILED_STATUS = 'failed';
 export const SAVING_STATUS = 'saving';
 
 // Where MATERIALS.csv lives in the database payload. Only some regional databases ship it,
@@ -53,6 +52,18 @@ export const MATERIAL_LAYER_COLUMNS = [
   'thickness_3_m',
 ];
 
+/**
+ * The human-readable reason out of an axios error.
+ *
+ * FastAPI's `detail` is a plain string on some routes and `{status, message}` on others;
+ * rendering the object would print "[object Object]" into the message area.
+ */
+const readErrorMessage = (error, fallback) => {
+  const detail = error?.response?.data?.detail;
+  const fromDetail = typeof detail === 'string' ? detail : detail?.message;
+  return fromDetail ?? error?.message ?? fallback;
+};
+
 const useDatabaseEditorStore = create((set, get) => ({
   // State
   status: { status: null },
@@ -62,6 +73,9 @@ const useDatabaseEditorStore = create((set, get) => ({
   changes: [],
   isEmpty: false,
   databaseValidation: { status: null, message: null },
+  // Set when the database could not be read. Reported in the message area like any other
+  // problem -- never by replacing the editor, which would hide the tool needed to fix it.
+  loadError: null,
   // Which domain/category/dataset the editor is showing. Kept here rather than in
   // DatabaseContainer because that component unmounts whenever `data` is briefly blanked,
   // which would discard a local useState — and because actions need to navigate the editor
@@ -162,7 +176,6 @@ const useDatabaseEditorStore = create((set, get) => ({
       //   set({ tableNames });
       // }
     } catch (error) {
-      const err = error.response || error;
       // Check if it's a 404 (empty database)
       if (error.response?.status === 404) {
         set({
@@ -171,11 +184,27 @@ const useDatabaseEditorStore = create((set, get) => ({
           validation: {},
           changes: [],
           isEmpty: true,
+          loadError: null,
           databaseValidation: { status: null, message: null },
         });
-      } else {
-        set({ status: { status: FAILED_STATUS, error: err }, isEmpty: false });
+        return;
       }
+      // Anything else is a problem with the database itself. Report it in the message area
+      // and leave the editor mounted: a read failure is usually a bad row that the user has
+      // to open the editor to correct.
+      const message = readErrorMessage(
+        error,
+        'The database could not be read.',
+      );
+      set({
+        data: {},
+        status: { status: SUCCESS_STATUS },
+        validation: {},
+        changes: [],
+        isEmpty: false,
+        loadError: message,
+        databaseValidation: { status: 'invalid', message },
+      });
     }
   },
 
@@ -196,6 +225,7 @@ const useDatabaseEditorStore = create((set, get) => ({
       validation: {},
       changes: [],
       isEmpty: false,
+      loadError: null,
       databaseValidation: { status: null, message: null },
     });
     await useDatabaseEditorStore.getState().validateDatabase({ background });
@@ -247,6 +277,7 @@ const useDatabaseEditorStore = create((set, get) => ({
   resetDatabaseState: () => {
     set({
       status: { status: null },
+      loadError: null,
       validation: {},
       data: {},
       schema: {},
@@ -265,7 +296,14 @@ const useDatabaseEditorStore = create((set, get) => ({
       });
       set({ schema: response.data });
     } catch (error) {
-      set({ status: { status: FAILED_STATUS, error } });
+      // Without a schema the table falls back to the keys in the data, so the editor is
+      // degraded but still usable. Report it rather than replacing the page.
+      set({
+        loadError: readErrorMessage(
+          error,
+          'Could not load the database schema.',
+        ),
+      });
     }
   },
 
@@ -860,6 +898,9 @@ const getNestedValue = (obj, datakey) => {
   }
   return current;
 };
+
+export const useDatabaseLoadError = () =>
+  useDatabaseEditorStore((state) => state.loadError);
 
 export const useDatabaseSelection = () =>
   useDatabaseEditorStore((state) => state.selection);
