@@ -136,10 +136,6 @@ const useParameterAsyncValidation = ({
 // rather than leaving the user to guess.
 const NO_CHOICES_MESSAGES = {
   GenerationParameter: 'No generations found. Run Optimisation first.',
-  WhatIfNameChoiceParameter:
-    'No what-if scenarios with final-energy results found in this scenario. Run Final Energy first.',
-  WhatIfNameMultiChoiceParameter:
-    'No what-if scenarios with final-energy results found in this scenario. Run Final Energy first.',
   NetworkLayoutChoiceParameter:
     'No network layouts found in this scenario. Run Network Layout first.',
   NetworkLayoutMultiChoiceParameter:
@@ -148,11 +144,36 @@ const NO_CHOICES_MESSAGES = {
     'No supply components found. Select a what-if scenario and scale first.',
 };
 
-const noChoicesMessage = (type) =>
-  NO_CHOICES_MESSAGES[type] ?? 'There are no valid choices for this input';
+// WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter carry a `mode` (see
+// WhatIfNameChoicesMixin, backend config.py) naming which what-if output the dropdown
+// requires -- final-energy, emissions, costs, or heat-rejection -- so the "run this
+// first" hint names the right tool instead of always pointing at Final Energy.
+const WHATIF_MODE_LABELS = {
+  final_energy: 'Final Energy',
+  emissions: 'Emissions',
+  costs: 'Costs',
+  heat_rejection: 'Heat Rejection',
+};
+
+const whatIfNoChoicesMessage = (mode) => {
+  const label = WHATIF_MODE_LABELS[mode] ?? WHATIF_MODE_LABELS.final_energy;
+  return `No what-if scenarios with ${label.toLowerCase()} results found in this scenario. Run ${label} first.`;
+};
+
+const noChoicesMessage = (type, mode) => {
+  if (
+    type === 'WhatIfNameChoiceParameter' ||
+    type === 'WhatIfNameMultiChoiceParameter'
+  ) {
+    return whatIfNoChoicesMessage(mode);
+  }
+  return (
+    NO_CHOICES_MESSAGES[type] ?? 'There are no valid choices for this input'
+  );
+};
 
 const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
-  const { name, type, value, choices, nullable, help, needs_validation } =
+  const { name, type, value, choices, nullable, help, needs_validation, mode } =
     parameter;
   const { setFieldsValue } = form;
   const constructionColorMap = useMapStore(
@@ -330,7 +351,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
           if (type === 'GenerationParameter')
             return Promise.reject(NO_CHOICES_MESSAGES.GenerationParameter);
 
-          if (!nullable) return Promise.reject(noChoicesMessage(type));
+          if (!nullable) return Promise.reject(noChoicesMessage(type, mode));
           return Promise.resolve();
         }
 
@@ -427,7 +448,8 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
             {
               validator: (_, value) => {
                 if (choices == null || choices.length === 0) {
-                  if (!nullable) return Promise.reject(noChoicesMessage(type));
+                  if (!nullable)
+                    return Promise.reject(noChoicesMessage(type, mode));
                   return Promise.resolve();
                 }
 
