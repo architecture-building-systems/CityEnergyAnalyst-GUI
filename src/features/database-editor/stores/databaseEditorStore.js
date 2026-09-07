@@ -19,6 +19,40 @@ export const SAVING_STATUS = 'saving';
 // so this node is `null` for most scenarios.
 export const MATERIALS_DATA_KEY = ['COMPONENTS', 'MATERIALS', 'materials'];
 
+// The envelope columns derived from material layers, mirroring DERIVED_COLS_BY_KIND in
+// cea/datamanagement/database/assemblies.py. Used only to lock cells in the table -- the
+// backend derives the values, so drifting from that list degrades the hint, not the data.
+export const DERIVED_ENVELOPE_COLUMNS = [
+  'U_wall',
+  'U_roof',
+  'U_base',
+  'GHG_wall_kgCO2m2',
+  'GHG_roof_kgCO2m2',
+  'GHG_floor_kgCO2m2',
+  'GHG_biogenic_wall_kgCO2m2',
+  'GHG_biogenic_roof_kgCO2m2',
+  'GHG_biogenic_floor_kgCO2m2',
+];
+
+/** Does this row define its construction with material layers? Mirrors _row_has_usable_material_layer. */
+export const rowHasMaterialLayer = (row) =>
+  [1, 2, 3].some(
+    (slot) =>
+      Number(row?.[`thickness_${slot}_m`]) > 0 &&
+      String(row?.[`material_name_${slot}`] ?? '').trim() !== '',
+  );
+
+// The envelope material layer set (ENVELOPE_WALL/ROOF/FLOOR). These reference MATERIALS.csv,
+// which only some regional databases ship, so they are hidden when it is absent.
+export const MATERIAL_LAYER_COLUMNS = [
+  'material_name_1',
+  'thickness_1_m',
+  'material_name_2',
+  'thickness_2_m',
+  'material_name_3',
+  'thickness_3_m',
+];
+
 const useDatabaseEditorStore = create((set, get) => ({
   // State
   status: { status: null },
@@ -153,7 +187,7 @@ const useDatabaseEditorStore = create((set, get) => ({
    * domain/category/dataset, which live in its component state. Use this after an action
    * that changes one table (e.g. seeding MATERIALS.csv) so the user stays where they were.
    */
-  refreshDatabaseData: async () => {
+  refreshDatabaseData: async ({ background = false } = {}) => {
     const { data } = await getScenarioClient().get('/inputs/databases', {
       headers: activeScenarioHeaders(),
     });
@@ -164,24 +198,47 @@ const useDatabaseEditorStore = create((set, get) => ({
       isEmpty: false,
       databaseValidation: { status: null, message: null },
     });
-    await useDatabaseEditorStore.getState().validateDatabase();
+    await useDatabaseEditorStore.getState().validateDatabase({ background });
   },
 
-  saveDatabaseState: async () => {
-    const data = useDatabaseEditorStore.getState().data;
+  saveDatabaseState: async ({ overwriteDerived = false } = {}) => {
+    const { data, changes } = useDatabaseEditorStore.getState();
 
     try {
       set({ status: { status: SAVING_STATUS } });
       await apiClient.put('/inputs/databases', data, {
         headers: activeScenarioHeaders(),
+        params: overwriteDerived ? { overwrite_derived: true } : undefined,
       });
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
-      // Saving writes the CSVs without checking them, and the browser can only validate one
-      // cell at a time. Run the verifier now so a cross-row or cross-file rule is reported
-      // while the user still knows what they changed, rather than at the next load.
-      await useDatabaseEditorStore.getState().validateDatabase({
+      // Re-read rather than keep what the browser sent: the server derives envelope U/GHG
+      // from the material layers as it writes, so the values in the table are no longer the
+      // ones on disk. This also runs the verifier, reporting any cross-row or cross-file rule
+      // the browser cannot check on its own while the user still knows what they changed.
+      await useDatabaseEditorStore.getState().refreshDatabaseData({
         background: true,
       });
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      if (
+        error?.response?.status !== 409 ||
+        detail?.status !== 'derived_conflict'
+      ) {
+        throw error;
+      }
+      // The server reports every stored value that disagrees with its layers. Re-editing an
+      // existing layer set is *expected* to disagree -- the stored value describes the
+      // previous composition -- so confirming it would mean a dialog on every material edit.
+      // Anything else is about to destroy a value someone entered deliberately.
+      const unexplained = (detail.conflicts ?? []).filter(
+        (conflict) => !conflictIsStaleCache(data, changes, conflict),
+      );
+      if (unexplained.length === 0) {
+        return useDatabaseEditorStore
+          .getState()
+          .saveDatabaseState({ overwriteDerived: true });
+      }
+      throw new DerivedConflictError(detail.message, unexplained);
     } finally {
       set({ status: { status: null } });
     }
@@ -741,6 +798,56 @@ const useDatabaseEditorStore = create((set, get) => ({
     });
   },
 }));
+
+/** Raised when a save is refused because stored values contradict their material layers. */
+export class DerivedConflictError extends Error {
+  constructor(message, conflicts) {
+    super(message);
+    this.name = 'DerivedConflictError';
+    this.conflicts = conflicts;
+  }
+}
+
+const changeTouchesRow = (change, conflict) =>
+  change.action === 'update' &&
+  String(change.index) === String(conflict.code) &&
+  String(change.dataKey?.[change.dataKey.length - 1]).toLowerCase() ===
+    conflict.table;
+
+/**
+ * Is this conflict just a cache left over from the row's previous composition?
+ *
+ * True only when the user edited a layer on a row that *already had* layers: the stored value
+ * was derived from the old composition and means nothing now. If the row had no layers before,
+ * its U/GHG were typed by hand -- adding layers is about to destroy them, which is a decision
+ * for the user, not something to do silently.
+ */
+const conflictIsStaleCache = (data, changes, conflict) => {
+  const table = getNestedValue(data, [
+    'ASSEMBLIES',
+    'ENVELOPE',
+    conflict.table,
+  ]);
+  const current = table?.[conflict.code];
+  if (current == null) return false;
+
+  // Rebuild the row as it was before this session's layer edits.
+  const before = { ...current };
+  const reverted = new Set();
+  for (const change of changes ?? []) {
+    if (!changeTouchesRow(change, conflict)) continue;
+    if (!MATERIAL_LAYER_COLUMNS.includes(change.field)) continue;
+    // The earliest change to a field carries the value it held before this session.
+    if (reverted.has(change.field)) continue;
+    before[change.field] = change.oldValue;
+    reverted.add(change.field);
+  }
+
+  // Untouched layers mean the composition did not change, so any disagreement predates this
+  // session rather than being left over from an edit.
+  if (reverted.size === 0) return false;
+  return rowHasMaterialLayer(before);
+};
 
 const getNestedValue = (obj, datakey) => {
   let current = obj;
