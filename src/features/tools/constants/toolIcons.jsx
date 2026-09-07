@@ -19,7 +19,7 @@ export const TOOL_ICON_MAP = {
   'Solar Radiation Analysis': <SolarRadiationIcon />,
   'Energy Demand Forecasting': <PlugInIcon />,
   'Renewable Energy Potential Assessment': <EnergyPotentialsIcon />,
-  'Life Cycle Analysis': <LifeCycleAnalysisIcon />,
+  'Life Cycle Analysis (LCA)': <LifeCycleAnalysisIcon />,
   'Thermal Network Design': <NetworksIcon />,
   'Energy Supply System Optimisation': <OptimisationIcon />,
   Utilities: <UtilitiesIcon />,
