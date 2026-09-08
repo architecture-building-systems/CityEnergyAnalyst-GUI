@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import {
   TOOLS_MUTATION_KEYS,
   TOOLS_QUERY_KEYS,
@@ -8,10 +8,17 @@ import {
 import { useIsNonLocalMode, useUserInfo } from 'stores/useUserQuery';
 import { mergeStoredToolConfig } from '../../toolConfigStorage';
 
-export function useSaveToolParamsMutation() {
+// `scenarioContext` must be the same `{ project, scenarioName, childScenario }` the
+// caller's useToolParams was fetched with -- it picks both the request headers AND the
+// cache entry that gets refetched. Reading the active scenario from the store here
+// instead would send the wrong headers and refetch every scenario's cache entry (via a
+// bare [TOOL_PARAMS, tool] prefix) whenever the caller is a scenarioOverride column,
+// which does not track the active scenario. See useParameterMetadataRefetch.js.
+export function useSaveToolParamsMutation(scenarioContext) {
   const queryClient = useQueryClient();
   const isNonLocal = useIsNonLocalMode();
   const userId = useUserInfo()?.id;
+  const { project, scenarioName, childScenario } = scenarioContext;
 
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS],
@@ -20,7 +27,9 @@ export function useSaveToolParamsMutation() {
         const response = await apiClient.post(
           `/tools/${tool}/save-config`,
           params,
-          { headers: activeScenarioHeaders() },
+          {
+            headers: scenarioHeaders({ project, scenarioName, childScenario }),
+          },
         );
 
         // Non-local backend save-config is a no-op (stateless config) -
@@ -32,7 +41,13 @@ export function useSaveToolParamsMutation() {
         }
 
         await queryClient.refetchQueries({
-          queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
+          queryKey: [
+            TOOLS_QUERY_KEYS.TOOL_PARAMS,
+            tool,
+            project,
+            scenarioName,
+            childScenarioToken(childScenario),
+          ],
         });
         return response.data;
       } catch (err) {

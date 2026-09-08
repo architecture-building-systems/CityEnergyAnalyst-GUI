@@ -22,7 +22,7 @@ import { forwardRef, useCallback, useRef } from 'react';
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { getScenarioClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useMapStore } from 'features/map/stores/mapStore';
 import BuildingsParameter from 'components/BuildingsParameter';
 
@@ -66,6 +66,7 @@ const useParameterAsyncValidation = ({
   name,
   form,
   nullable,
+  scenarioContext,
 }) => {
   const timerRef = useRef(null);
   const cancelRef = useRef(null);
@@ -98,7 +99,7 @@ const useParameterAsyncValidation = ({
                 value: fieldValue,
                 form_values: formValues,
               },
-              { headers: activeScenarioHeaders() },
+              { headers: scenarioHeaders(scenarioContext) },
             );
 
             if (response.data.valid) {
@@ -123,7 +124,7 @@ const useParameterAsyncValidation = ({
         }, 400);
       });
     },
-    [needs_validation, toolName, name, form, nullable],
+    [needs_validation, toolName, name, form, nullable, scenarioContext],
   );
 
   return validator;
@@ -172,7 +173,13 @@ const noChoicesMessage = (type, mode) => {
   );
 };
 
-const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
+const Parameter = ({
+  parameter,
+  form,
+  toolName,
+  disabled: paramDisabled,
+  scenarioContext,
+}) => {
   const { name, type, value, choices, nullable, help, needs_validation, mode } =
     parameter;
   const { setFieldsValue } = form;
@@ -186,6 +193,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
     name,
     form,
     nullable,
+    scenarioContext,
   });
 
   switch (type) {

@@ -143,6 +143,7 @@ const ToolForm = ({
             allParameters={parameters}
             toolName={script}
             disabled={isReadOnly}
+            scenarioContext={scenarioContext}
           />
         );
       });
@@ -169,6 +170,7 @@ const ToolForm = ({
               // under Input data on LCA plots) stay editable even
               // when the caller asked to lock them.
               disabled={readonlySet.has(param.name)}
+              scenarioContext={scenarioContext}
             />
           )),
       }))
