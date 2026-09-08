@@ -147,8 +147,10 @@ const NO_CHOICES_MESSAGES = {
 
 // WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter carry a `mode` (see
 // WhatIfNameChoicesMixin, backend config.py) naming which what-if output the dropdown
-// requires -- final-energy, emissions, costs, or heat-rejection -- so the "run this
-// first" hint names the right tool instead of always pointing at Final Energy.
+// requires, so the "run this first" hint names the right tool instead of always
+// pointing at Final Energy. `mode` is the literal underscored value from each
+// parameter's `.mode` config key (final_energy, emissions, costs, heat_rejection) --
+// match WHATIF_MODE_LABELS' keys to that, not a hyphenated/display form.
 const WHATIF_MODE_LABELS = {
   final_energy: 'Final Energy',
   emissions: 'Emissions',
