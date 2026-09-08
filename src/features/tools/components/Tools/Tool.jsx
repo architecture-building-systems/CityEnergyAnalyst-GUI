@@ -257,6 +257,7 @@ const Tool = ({
             script={script}
             readonlyFields={readonlyFields}
             scenarioContext={scenarioContext}
+            dataUpdatedAt={dataUpdatedAt}
           />
         </div>
       </Spin>
