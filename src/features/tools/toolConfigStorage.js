@@ -73,22 +73,65 @@ export const getToolParamNames = (data) => {
   return [...names, ...categorical.map((p) => p.name)];
 };
 
+// Choice-backed parameters (backend's ChoiceParameterBase) publish `choices` as an array;
+// WeatherPathParameter/DatabasePathParameter publish a dict instead and have nothing here
+// to validate against, so their stored value is overlaid as-is, unchanged.
+//
+// For array-choice parameters, a stored override is only applied when it's still among the
+// CURRENT `choices` -- these are scenario-relative (e.g. WhatIfNameMultiChoiceParameter
+// scans the active scenario's outputs/data/analysis/), while the stored override is not
+// scoped by scenario at all (this module is shared across every scenario for the user, see
+// the module comment above). Applying it blindly on a scenario switch would silently
+// resurrect a selection the new scenario has no data for -- the exact "not a valid choice"
+// bug the backend's own value/choices normalisation (deconstruct_parameters,
+// normalize_choice_value in the backend's api/utils.py) fixes server-side. This mirrors
+// that fix for the one thing the backend can't see: a client-persisted override arriving
+// after its own response was already computed and normalised.
+//
+// Multi-choice values are filtered to the valid subset (matching the backend's own
+// behaviour); a single-choice value that's gone stale is dropped in favour of the server's
+// already-normalised `param.value`, rather than re-deriving a fallback here.
+const overlayParam = (storedMap) => (param) => {
+  if (!(param.name in storedMap)) return param;
+  const storedValue = storedMap[param.name];
+
+  if (Array.isArray(param.choices)) {
+    if (Array.isArray(param.value)) {
+      const values = Array.isArray(storedValue)
+        ? storedValue
+        : typeof storedValue === 'string'
+          ? storedValue
+              .split(',')
+              .map((v) => v.trim())
+              .filter(Boolean)
+          : storedValue == null
+            ? []
+            : [storedValue];
+      return {
+        ...param,
+        value: values.filter((v) => param.choices.includes(v)),
+      };
+    }
+
+    if (!param.choices.includes(storedValue)) return param;
+  }
+
+  return { ...param, value: storedValue };
+};
+
 // Pure: returns a shallow copy of a `/tools/{script}` response with each
-// parameter's `.value` replaced by the stored value, when present.
+// parameter's `.value` replaced by the stored value, when present and still valid.
 export const overlayStoredValues = (data, storedMap) => {
   if (!data || !storedMap || Object.keys(storedMap).length === 0) return data;
 
-  const overlayParam = (param) =>
-    param.name in storedMap
-      ? { ...param, value: storedMap[param.name] }
-      : param;
+  const overlay = overlayParam(storedMap);
 
-  const parameters = data.parameters?.map(overlayParam);
+  const parameters = data.parameters?.map(overlay);
 
   const categorical_parameters = data.categorical_parameters
     ? Object.fromEntries(
         Object.entries(data.categorical_parameters).map(
-          ([category, params]) => [category, params.map(overlayParam)],
+          ([category, params]) => [category, params.map(overlay)],
         ),
       )
     : data.categorical_parameters;
