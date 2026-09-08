@@ -15,6 +15,8 @@ import useNavigationStore from 'stores/navigationStore';
 import { useInvalidateUser } from 'stores/useUserQuery';
 import './OnboardingPage.css';
 
+const PRIVACY_POLICY_URL = 'https://uuen.cloud/terms-of-use/';
+
 const { Title, Text } = Typography;
 
 const OnboardingPage = ({ onComplete }) => {
@@ -92,7 +94,7 @@ const OnboardingPage = ({ onComplete }) => {
     });
 
     try {
-      await authClient.post('/user/onboarding', {
+      await authClient.post('/api/user/onboarding', {
         primaryReason: formData.primaryReason,
         role: formData.role,
         currentTools: formData.currentTools,
@@ -232,7 +234,7 @@ const OnboardingPage = ({ onComplete }) => {
               We use survey responses to provide you with relevant content and
               improve our tools and services. See our{' '}
               <a
-                href="https://cityenergyanalyst.com/privacy"
+                href={PRIVACY_POLICY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
               >

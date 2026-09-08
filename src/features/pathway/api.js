@@ -6,6 +6,12 @@ import {
 
 const encodePathwayName = (pathwayName) => encodeURIComponent(pathwayName);
 
+// Every /pathways/... call must go through a function in this file, never a
+// raw apiClient/getScenarioClient call from a component -- the backend's
+// CEAScenario dependency 400s without X-CEA-Project/X-CEA-Scenario-Name, and
+// a component-level call has previously shipped without them (duplicate
+// pathway modal).
+
 // Mirrors jobsStore.createJob's scenarioContext pattern: pass an explicit
 // { project, scenarioName, childScenario } to pin a request to the parent
 // scenario regardless of which pathway child state is currently active
@@ -237,6 +243,9 @@ export const fetchBuildingLifecycle = async (buildingName, pathwayNames) => {
   return data;
 };
 
+// Takes project/scenarioName directly (via scenarioHeaders) rather than
+// activeScenarioHeaders(), since this may be called before a scenario is
+// active in the store.
 export const fetchStateFolderPath = async (
   pathwayName,
   year,
