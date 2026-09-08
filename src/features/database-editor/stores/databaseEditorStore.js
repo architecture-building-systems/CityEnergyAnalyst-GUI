@@ -31,6 +31,12 @@ export const DERIVED_ENVELOPE_COLUMNS = [
   'GHG_biogenic_wall_kgCO2m2',
   'GHG_biogenic_roof_kgCO2m2',
   'GHG_biogenic_floor_kgCO2m2',
+  'GHG_production_wall_kgCO2m2',
+  'GHG_production_roof_kgCO2m2',
+  'GHG_production_floor_kgCO2m2',
+  'GHG_demolition_wall_kgCO2m2',
+  'GHG_demolition_roof_kgCO2m2',
+  'GHG_demolition_floor_kgCO2m2',
 ];
 
 /** Does this row define its construction with material layers? Mirrors _row_has_usable_material_layer. */
