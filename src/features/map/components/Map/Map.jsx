@@ -1062,9 +1062,9 @@ const generateFloorLines = (features) => {
     const baseHeight = voidDeckHeight(feature?.properties);
     const buildingHeight = calcPolygonElevation(feature);
 
-    // Use floors_ag from properties if available, otherwise calculate from height
-    // floors_ag includes void deck floors, so we need to subtract them
-    // `enclosedFloorsAg` already excludes the void deck under either column form.
+    // Use floors_ag from properties if available, otherwise calculate from height.
+    // `enclosedFloorsAg` excludes the void deck under either column form -- `floors_ag`
+    // includes the void storeys alongside `void_deck`, but not alongside `height_vd`.
     const floorsAg = feature?.properties?.floors_ag;
     const numFloors = floorsAg
       ? Math.max(Math.round(enclosedFloorsAg(feature?.properties)), 0)
