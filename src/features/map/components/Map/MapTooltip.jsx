@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
+import { enclosedFloorsAg } from 'features/map/utils/voidDeck';
 import * as turf from '@turf/turf';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {
@@ -232,10 +233,9 @@ const MapTooltip = ({ info }) => {
       const heightBg = Number(properties?.height_bg ?? 0);
       const floorsAg = Number(properties?.floors_ag ?? 0);
       const floorsBg = Number(properties?.floors_bg ?? 0);
-      const voidDeck = Number(properties?.void_deck ?? 0);
       const gfaArea =
         Math.round(
-          Math.max(0, (floorsAg + floorsBg - voidDeck) * area) * 1000,
+          Math.max(0, (enclosedFloorsAg(properties) + floorsBg) * area) * 1000,
         ) / 1000;
 
       return (
