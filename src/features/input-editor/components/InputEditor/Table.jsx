@@ -17,7 +17,7 @@ import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 
-const Table = ({ tab, tables, columns }) => {
+const Table = ({ tab, tables, columns, readOnly = false, driftedColumns = [] }) => {
   const tabulator = useRef(null);
 
   const selected = useSelected();
@@ -41,6 +41,7 @@ const Table = ({ tab, tables, columns }) => {
           tables={tables}
           columns={columns}
           setSelected={setSelected}
+          readOnly={readOnly}
         />
       </div>
       <div style={{ minHeight: 0, flex: 1 }}>
@@ -51,6 +52,8 @@ const Table = ({ tab, tables, columns }) => {
             selected={selected}
             tables={tables}
             columns={columns}
+            readOnly={readOnly}
+            driftedColumns={driftedColumns}
           />
         </ErrorBoundary>
       </div>
@@ -58,9 +61,23 @@ const Table = ({ tab, tables, columns }) => {
   );
 };
 
-const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
+const TableEditor = ({
+  tab,
+  selected,
+  tabulator,
+  tables,
+  columns,
+  readOnly = false,
+  driftedColumns = [],
+}) => {
   const updateInputData = useUpdateInputs();
-  const [data, columnDef] = useTableData(tab, columns, tables);
+  const [data, columnDef] = useTableData(
+    tab,
+    columns,
+    tables,
+    readOnly,
+    driftedColumns,
+  );
   const divRef = useRef(null);
   const tableRef = useRef(tab);
   // Marks the store update this table is about to cause, so the sync effect can skip it.
@@ -109,7 +126,7 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
   // Keep reference of current table name
   useEffect(() => {
     tableRef.current = tab;
-  }, [tab]);
+  }, [tab, readOnly, driftedColumns.join(',')]);
 
   useEffect(() => {
     if (tabulator.current && columnDef !== null) {
@@ -228,7 +245,7 @@ const ScriptSuggestion = ({ tab }) => {
   );
 };
 
-const useTableData = (tab, columns, tables) => {
+const useTableData = (tab, columns, tables, readOnly, driftedColumns) => {
   const [data, setData] = useState(null);
   const [columnDef, setColumnDef] = useState(null);
 
@@ -309,6 +326,36 @@ const useTableData = (tab, columns, tables) => {
             ...dataTypeProps,
           };
         });
+
+        if (readOnly) {
+          // Drop the editor rather than hiding the tab: the values still need reading. This
+          // is only the affordance -- `save_all_inputs` refuses these tables while locked, so
+          // a stale client cannot write them either.
+          _columns = _columns.map(({ editor, editorParams, cellDblClick, ...rest }) => ({
+            ...rest,
+            cssClass: [rest.cssClass, 'cea-input-readonly'].filter(Boolean).join(' '),
+          }));
+        }
+
+        if (driftedColumns.length) {
+          // The archetype no longer describes the building it labels. Style the cell and say
+          // why on hover -- colour alone carries no meaning for a colour-blind user.
+          const drifted = new Set(driftedColumns);
+          _columns = _columns.map((definition) =>
+            drifted.has(definition.field)
+              ? {
+                  ...definition,
+                  cssClass: [definition.cssClass, 'cea-input-archetype-drifted']
+                    .filter(Boolean)
+                    .join(' '),
+                  tooltip:
+                    'The derived tables no longer match this archetype. ' +
+                    'Re-lock to regenerate them from it.',
+                }
+              : definition,
+          );
+        }
+
         return { columns: _columns, description: columns[tab] };
       };
 

@@ -85,5 +85,9 @@
   "canvas-import": {
     "title": "Import canvas",
     "body": "Unpacks a canvas .zip into the current scenario.\n\nThe canvas keeps the .zip's config (layout, card picks, plot scripts) but renders against the current scenario's data - donor's structure, your numbers.\n\nIf the .zip's column references match a scenario / what-if name in your project they resolve normally; otherwise those columns stay as a template placeholder."
+  },
+  "archetype-lock": {
+    "title": "Archetype-Lock",
+    "body": "Only the zone table is authored by you. Envelope, HVAC, indoor comfort, internal loads, supply and the building schedules are derived from each building's archetype - its construction type, use types and year.\n\nLocked: CEA owns those tables. They are read-only, and changing a building's archetype in the zone table regenerates them on save.\n\nUnlocked: you own them and may edit them freely. CEA marks the archetype cells in the zone table once the derived tables no longer match, because the construction type no longer describes the building it labels.\n\nRe-locking regenerates all of them from the archetypes, discarding those edits."
   }
 }

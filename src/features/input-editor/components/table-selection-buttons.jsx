@@ -14,6 +14,7 @@ export const TableButtons = ({
   tab,
   columns,
   setSelected,
+  readOnly = false,
 }) => {
   const deleteBuildings = useDeleteBuildings();
 
@@ -94,6 +95,10 @@ export const TableButtons = ({
         key: 'edit-selection',
         label: 'Edit Selection',
         onClick: editSelected,
+        // Bulk edit writes into the same change set as cell editing, so it has to respect the
+        // lock too -- otherwise a locked tab looks editable through this route, and the edit
+        // is silently dropped by the server on save.
+        disabled: readOnly,
       },
     selectedInTable && {
       key: 'clear-selection',
@@ -105,6 +110,9 @@ export const TableButtons = ({
       label: 'Delete Selection',
       onClick: deleteSelected,
       danger: true,
+      // Rows in a derived table are regenerated from zone.shp, so deleting one there is
+      // meaningless while locked. Delete the building from the zone tab instead.
+      disabled: readOnly,
     },
   ].filter(Boolean);
 
