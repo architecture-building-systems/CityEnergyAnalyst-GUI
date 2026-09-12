@@ -1,11 +1,13 @@
 import {
   Alert,
   Button,
+  Checkbox,
   Divider,
   InputNumber,
   message,
   Modal,
   Spin,
+  Tooltip,
   Typography,
 } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -54,7 +56,7 @@ import {
   createPathway,
   deleteInterventionTemplate,
   deletePathway,
-  deletePathwayYear,
+  clearPathwayYear,
   fetchBuildingLifecycle,
   fetchInterventionTemplate,
   fetchInterventionTemplates,
@@ -79,6 +81,68 @@ const MAX_VISIBLE_TIMELINE_LANES = 3;
 // Minimum horizon for the shared ruler so sparse, near-term pathways still render against a
 // long-term scale. Pathways that already run past this keep their own end year.
 const MIN_TIMELINE_END_YEAR = 2100;
+
+/**
+ * Body of the Clear State confirm dialog: pick which halves of the state to remove.
+ *
+ * Modal.confirm renders its content once and cannot re-render on state change, so this owns
+ * the checkbox state locally and writes it through to a mutable object the caller reads on OK.
+ *
+ * Clearing inputs implies clearing outputs: the state folder is itself a scenario, so results
+ * without inputs can neither be regenerated nor interpreted, and the backend removes the whole
+ * folder in that case.
+ */
+const ClearStateOptions = ({
+  defaults,
+  hasInputs,
+  hasOutputs,
+  removesLogEntry,
+  onChange,
+}) => {
+  const [inputs, setInputs] = useState(defaults.inputs);
+  const [outputs, setOutputs] = useState(defaults.outputs);
+
+  const apply = (nextInputs, nextOutputs) => {
+    const outputsFollowInputs = nextInputs || nextOutputs;
+    setInputs(nextInputs);
+    setOutputs(outputsFollowInputs);
+    onChange({ inputs: nextInputs, outputs: outputsFollowInputs });
+  };
+
+  return (
+    <div style={{ paddingTop: 8 }}>
+      <div style={{ marginBottom: 12 }}>
+        Select what to remove for this state year.
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Checkbox
+          checked={inputs}
+          disabled={!hasInputs && !removesLogEntry}
+          onChange={(e) => apply(e.target.checked, outputs)}
+        >
+          Inputs
+          <div style={{ fontSize: 12, color: '#888', marginLeft: 24 }}>
+            {removesLogEntry
+              ? 'The baked state folder, this year\u2019s manual content in the pathway log, and the outputs.'
+              : 'The baked state folder, and the outputs.'}
+            {!hasInputs ? ' (nothing on disk)' : ''}
+          </div>
+        </Checkbox>
+        <Checkbox
+          checked={outputs}
+          disabled={!hasOutputs || inputs}
+          onChange={(e) => apply(inputs, e.target.checked)}
+        >
+          Outputs
+          <div style={{ fontSize: 12, color: '#888', marginLeft: 24 }}>
+            Simulation results. The state stays baked and can be re-simulated.
+            {!hasOutputs ? ' (nothing on disk)' : ''}
+          </div>
+        </Checkbox>
+      </div>
+    </div>
+  );
+};
 
 const PathwayPanel = ({
   open,
@@ -207,6 +271,34 @@ const PathwayPanel = ({
     }
     return filtered;
   }, [activeRows, selectedRow]);
+
+  // What the destructive button should offer for the selected year. Keyed on what is on
+  // disk rather than on `primary_phase`: a stale row also reports phase "none" (see
+  // collect_state_phase_status), so testing the phase would treat a fully baked and
+  // simulated red node as an empty draft and offer to delete its results as a "log entry".
+  const destructiveMode = useMemo(() => {
+    if (!selectedRow) return null;
+    const hasFiles =
+      !!selectedRow.has_state_inputs || !!selectedRow.has_state_outputs;
+    // Stock-derived years have no manual content of their own in the pathway log.
+    const hasLogEntry =
+      !!selectedRow.can_delete || !!selectedRow.can_clear_manual_changes;
+    if (hasFiles) return 'clear';
+    if (hasLogEntry) return 'delete-log';
+    return 'stock-locked';
+  }, [selectedRow]);
+
+  // Why a year with nothing to delete still cannot be removed: the building stock puts it
+  // on the timeline, so dropping a log entry it does not have would change nothing.
+  const stockRequiredReason = selectedRow
+    ? `Year ${selectedRow.year} is required by the building stock${
+        selectedRow.stock_new_buildings?.length
+          ? ` (${selectedRow.stock_new_buildings.join(', ')} ${
+              selectedRow.stock_new_buildings.length > 1 ? 'are' : 'is'
+            } constructed then)`
+          : ''
+      }, so it cannot be removed from the pathway. Change the construction year in the zone inputs to move it.`
+    : null;
 
   // Show state geometry on map when a baked/simulated node is selected.
   // Guarded by a request id so a fetch that resolves after a newer
@@ -786,7 +878,10 @@ const PathwayPanel = ({
         preferredYear: targetYear,
       });
       const failedPathways = results
-        .map((result, index) => ({ result, pathwayName: visiblePathways[index] }))
+        .map((result, index) => ({
+          result,
+          pathwayName: visiblePathways[index],
+        }))
         .filter(({ result }) => result.status === 'rejected');
       setPanelError(
         failedPathways.length
@@ -943,41 +1038,96 @@ const PathwayPanel = ({
     });
   };
 
-  const handleDeleteSelectedYear = () => {
-    if (!selectedRow || !selectedPathway) {
-      return;
-    }
-
-    const destructiveLabel = selectedRow.can_clear_manual_changes
-      ? 'Clear manual changes'
-      : 'Delete state';
-
+  // Both destructive actions hit the same endpoint with the same busy key; they differ only
+  // in the dialog and in how the inputs/outputs selection is decided.
+  const confirmDestructiveAction = ({
+    title,
+    content,
+    okText,
+    getSelection,
+    failureMessage,
+  }) => {
     Modal.confirm({
-      title: `${destructiveLabel} for ${selectedRow.year}?`,
-      content: selectedRow.can_clear_manual_changes
-        ? 'Stock-driven content will stay visible, but the manual edits for this year will be removed.'
-        : 'This removes the explicit pathway entry and any stored state status for the selected year.',
-      okText: destructiveLabel,
-      okButtonProps: {
-        danger: true,
-      },
+      title,
+      width: 460,
+      content,
+      okText,
+      okButtonProps: { danger: true },
       onOk: async () => {
+        const selection = getSelection();
+        if (!selection.inputs && !selection.outputs) {
+          setPanelError('Select inputs, outputs, or both to clear.');
+          return Promise.reject(new Error('nothing selected'));
+        }
         await runPathwayAction({
           busyKey: 'delete-year',
           action: () =>
-            deletePathwayYear(selectedPathway, selectedRow.year, {
-              project,
-              scenarioName,
-              childScenario: null,
-            }),
+            clearPathwayYear(
+              selectedPathway,
+              selectedRow.year,
+              { project, scenarioName, childScenario: null },
+              {
+                deleteInputs: selection.inputs,
+                deleteOutputs: selection.outputs,
+              },
+            ),
           refresh: () =>
             refreshPathwayData({
               preferredPathway: selectedPathway,
               preferredYear: selectedRow.year,
             }),
-          failureMessage: `Failed to ${destructiveLabel.toLowerCase()}.`,
+          failureMessage,
         });
       },
+    });
+  };
+
+  const handleDeleteLogEntry = () => {
+    if (!selectedRow || !selectedPathway) {
+      return;
+    }
+
+    // Nothing is on disk for this year, so there is no selection to offer: the pathway log
+    // entry is the only thing that exists.
+    confirmDestructiveAction({
+      title: `Delete log entry for ${selectedRow.year}?`,
+      content: selectedRow.can_clear_manual_changes
+        ? 'Removes the manual edits for this year. The stock-driven state stays in the timeline.'
+        : 'Removes this year from the pathway log. It disappears from the timeline.',
+      okText: 'Delete Log',
+      getSelection: () => ({ inputs: true, outputs: true }),
+      failureMessage: 'Failed to delete the log entry.',
+    });
+  };
+
+  const handleClearSelectedYear = () => {
+    if (!selectedRow || !selectedPathway) {
+      return;
+    }
+
+    const hasInputs = !!selectedRow.has_state_inputs;
+    const hasOutputs = !!selectedRow.has_state_outputs;
+    const removesLogEntry =
+      !!selectedRow.can_delete || !!selectedRow.can_clear_manual_changes;
+    const selection = { inputs: hasInputs || !hasOutputs, outputs: hasOutputs };
+
+    confirmDestructiveAction({
+      title: `Clear state ${selectedRow.year}?`,
+      content: (
+        <ClearStateOptions
+          defaults={selection}
+          hasInputs={hasInputs}
+          hasOutputs={hasOutputs}
+          removesLogEntry={removesLogEntry}
+          onChange={(next) => {
+            selection.inputs = next.inputs;
+            selection.outputs = next.outputs;
+          }}
+        />
+      ),
+      okText: 'Clear State',
+      getSelection: () => selection,
+      failureMessage: 'Failed to clear the state.',
     });
   };
 
@@ -1481,19 +1631,39 @@ const PathwayPanel = ({
                     Copy State
                   </Button>
                 ) : null}
-                {selectedRow &&
-                (selectedRow.can_delete ||
-                  selectedRow.can_clear_manual_changes) ? (
+                {destructiveMode === 'stock-locked' ? (
+                  // Shown disabled with the reason rather than hidden: a missing button
+                  // reads as a bug. The span is required because a disabled button emits no
+                  // mouse events for Tooltip to hook.
+                  <Tooltip title={stockRequiredReason}>
+                    <span
+                      style={{ display: 'inline-block', cursor: 'not-allowed' }}
+                    >
+                      <Button
+                        danger
+                        icon={<BinAnimationIcon />}
+                        disabled
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        Delete Log
+                      </Button>
+                    </span>
+                  </Tooltip>
+                ) : destructiveMode ? (
                   <Button
                     danger
                     icon={<BinAnimationIcon />}
                     disabled={!selectedPathway}
                     loading={busyAction === 'delete-year'}
-                    onClick={handleDeleteSelectedYear}
+                    onClick={
+                      destructiveMode === 'delete-log'
+                        ? handleDeleteLogEntry
+                        : handleClearSelectedYear
+                    }
                   >
-                    {selectedRow.can_clear_manual_changes
-                      ? 'Clear Manual Changes'
-                      : 'Delete State'}
+                    {destructiveMode === 'delete-log'
+                      ? 'Delete Log'
+                      : 'Clear State'}
                   </Button>
                 ) : null}
                 <InfoTooltip tooltipKey="add-building-event-or-intervention" />

@@ -113,6 +113,7 @@ export const ToolControls = ({
             setError={setToolError}
             onValidationError={onValidationError}
             onRunOverride={onRunOverride}
+            scenarioContext={scenarioContext}
           />
         </div>
         <Button

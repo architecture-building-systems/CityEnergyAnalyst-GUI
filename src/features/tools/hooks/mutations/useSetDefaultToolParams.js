@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import {
   TOOLS_MUTATION_KEYS,
   TOOLS_QUERY_KEYS,
@@ -10,11 +10,15 @@ import {
   clearStoredToolConfig,
   getToolParamNames,
 } from '../../toolConfigStorage';
+import { isToolProperties } from '../../utils';
 
-export function useSetDefaultToolParamsMutation() {
+// See useSaveToolParams.js for why scenarioContext must be threaded through
+// rather than read from the active-scenario store.
+export function useSetDefaultToolParamsMutation(scenarioContext) {
   const queryClient = useQueryClient();
   const isNonLocal = useIsNonLocalMode();
   const userId = useUserInfo()?.id;
+  const { project, scenarioName, childScenario } = scenarioContext;
 
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.SET_DEFAULT_TOOL_PARAMS],
@@ -23,27 +27,43 @@ export function useSetDefaultToolParamsMutation() {
         const response = await apiClient.post(
           `/tools/${tool}/default`,
           undefined,
-          { headers: activeScenarioHeaders() },
+          {
+            headers: scenarioHeaders({ project, scenarioName, childScenario }),
+          },
         );
+
+        const scopedKey = [
+          TOOLS_QUERY_KEYS.TOOL_PARAMS,
+          tool,
+          project,
+          scenarioName,
+          childScenarioToken(childScenario),
+        ];
+
+        const hasFreshState = isToolProperties(response.data);
 
         // Non-local backend has nothing to reset server-side (stateless
         // config) - drop this tool's client-persisted overrides so the
-        // refetch below shows the backend's actual defaults instead of the
-        // stored values being overlaid straight back on top of them.
+        // cache write below shows the backend's actual defaults instead of the
+        // stored values being overlaid straight back on top of them. Must run
+        // before the cache write, for the same overlay-ordering reason as
+        // useSaveToolParams.js.
         if (isNonLocal) {
-          const cachedEntries = queryClient.getQueriesData({
-            queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
-          });
-          const paramNames = new Set();
-          for (const [, data] of cachedEntries) {
-            getToolParamNames(data).forEach((name) => paramNames.add(name));
-          }
-          clearStoredToolConfig(userId, [...paramNames]);
+          const state = hasFreshState
+            ? response.data
+            : queryClient.getQueryData(scopedKey);
+          clearStoredToolConfig(userId, getToolParamNames(state));
         }
 
-        await queryClient.refetchQueries({
-          queryKey: [TOOLS_QUERY_KEYS.TOOL_PARAMS, tool],
-        });
+        // See useSaveToolParams.js: adopt the backend's returned state directly
+        // instead of a separate refetch, falling back to a refetch against an
+        // older backend that doesn't return it yet.
+        if (hasFreshState) {
+          queryClient.setQueryData(scopedKey, response.data);
+        } else {
+          await queryClient.refetchQueries({ queryKey: scopedKey });
+        }
+
         return response.data;
       } catch (err) {
         const error = new Error(err.message);

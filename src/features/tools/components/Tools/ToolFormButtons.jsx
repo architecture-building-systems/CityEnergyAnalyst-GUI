@@ -6,7 +6,7 @@ import { useHoverGrow } from 'features/project/hooks/hover-grow';
 
 import { RunIcon } from 'assets/icons';
 import { getScenarioClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { getFormValues } from 'features/tools/utils';
 import {
   useSetDefaultToolParamsMutation,
@@ -33,14 +33,15 @@ export const ToolFormButtons = ({
   // hidden because they wire to the tool-params backend, not the
   // embedding flow. Used by the canvas to commit a plot config to a slot.
   onRunOverride,
+  scenarioContext,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
   const [loading, setLoading] = useState(false);
 
   const { mutateAsync: setDefaultToolParams, isPending: isResetting } =
-    useSetDefaultToolParamsMutation();
+    useSetDefaultToolParamsMutation(scenarioContext);
   const { mutateAsync: saveToolParams, isPending: isSaving } =
-    useSaveToolParamsMutation();
+    useSaveToolParamsMutation(scenarioContext);
   const createJob = useCreateJob();
 
   const setShowLoginModal = useSetShowLoginModal();
@@ -147,7 +148,7 @@ export const ToolFormButtons = ({
               value,
               form_values: formValues,
             },
-            { headers: activeScenarioHeaders() },
+            { headers: scenarioHeaders(scenarioContext) },
           );
           const warnings = resp.data?.warnings ?? [];
           if (warnings.length > 0) {

@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo } from 'react';
 import Parameter from 'components/Parameter';
-import { Collapse, Form } from 'antd';
+import { Alert, Collapse, Form } from 'antd';
 import { isElectron } from 'utils/electron';
 import useParameterMetadataRefetch from 'features/tools/hooks/useParameterMetadataRefetch';
 import { useToolFormStore } from 'features/tools/stores/tool-form-store';
@@ -18,6 +18,8 @@ const ToolForm = ({
   categoricalParameters,
   script,
   readonlyFields = [],
+  scenarioContext,
+  dataUpdatedAt,
 }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
@@ -31,11 +33,18 @@ const ToolForm = ({
   const { mutateAsync: handleRefetch } = useParameterMetadataRefetch(
     script,
     form,
+    scenarioContext,
   );
 
+  // Reset on script change AND on any fresh param fetch (save, reset-to-default,
+  // scenario switch, ...) -- not just script. Without dataUpdatedAt here, switching the
+  // active scenario while a tool stays mounted leaves pre-switch values in this ref;
+  // useFormReset's subsequent form.resetFields() then reports every changed field as
+  // "changed from its stale pre-switch value", spuriously re-triggering a
+  // parameter-metadata refetch for that field's dependents.
   useEffect(() => {
     watchedValuesRef.current = {};
-  }, [script]);
+  }, [script, dataUpdatedAt]);
 
   const dependencyMap = useMemo(() => {
     const allParams = [
@@ -103,9 +112,27 @@ const ToolForm = ({
     [dependencyMap, form, handleRefetch],
   );
 
+  // `unavailable` marks an input whose source database this scenario does not have (see
+  // api/utils.deconstruct_parameters). Hiding it beats rendering an empty dropdown, and
+  // categories left with no children are dropped below.
   const shouldHideParam = (param) =>
     param.type === 'ScenarioParameter' ||
+    !!param.unavailable ||
     (!isElectron() && ELECTRON_ONLY.includes(param.name));
+
+  // ...but say so once, so a short form reads as a limitation of the scenario rather than
+  // as fields that failed to load.
+  const unavailableReasons = useMemo(() => {
+    const all = [
+      ...(parameters ?? []),
+      ...Object.values(categoricalParameters ?? {}).flat(),
+    ];
+    return [
+      ...new Set(
+        all.filter((p) => p.unavailable).map((p) => p.unavailable.reason),
+      ),
+    ];
+  }, [parameters, categoricalParameters]);
 
   const readonlySet = new Set(readonlyFields);
 
@@ -123,6 +150,7 @@ const ToolForm = ({
             allParameters={parameters}
             toolName={script}
             disabled={isReadOnly}
+            scenarioContext={scenarioContext}
           />
         );
       });
@@ -149,6 +177,7 @@ const ToolForm = ({
               // under Input data on LCA plots) stay editable even
               // when the caller asked to lock them.
               disabled={readonlySet.has(param.name)}
+              scenarioContext={scenarioContext}
             />
           )),
       }))
@@ -179,6 +208,21 @@ const ToolForm = ({
         className="cea-tool-form"
         onFieldsChange={handleFieldChange}
       >
+        {unavailableReasons.length > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message="Some inputs are unavailable for this scenario"
+            description={
+              <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                {unavailableReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            }
+          />
+        )}
         {toolParams}
         {categoricalParams}
       </Form>

@@ -17,12 +17,12 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { getScenarioClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useMapStore } from 'features/map/stores/mapStore';
 import BuildingsParameter from 'components/BuildingsParameter';
 
@@ -66,9 +66,26 @@ const useParameterAsyncValidation = ({
   name,
   form,
   nullable,
+  scenarioContext,
 }) => {
   const timerRef = useRef(null);
   const cancelRef = useRef(null);
+  const cancelledRef = useRef({ value: false });
+
+  // scenarioContext can be a fresh object literal every render (see Tool.jsx's
+  // scenarioOverride), so key invalidation on its primitives, not its identity.
+  const { project, scenarioName, childScenario } = scenarioContext ?? {};
+
+  // A validation scheduled under the previous scenario must never land against the
+  // newly-active one: mark it cancelled so its timeout/response is a no-op instead
+  // of calling form.setFields or settling the validator promise late.
+  useEffect(() => {
+    return () => {
+      cancelledRef.current.value = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (cancelRef.current) cancelRef.current();
+    };
+  }, [project, scenarioName, childScenario]);
 
   const validator = useCallback(
     (_, fieldValue) => {
@@ -85,6 +102,9 @@ const useParameterAsyncValidation = ({
       if (timerRef.current) clearTimeout(timerRef.current);
       if (cancelRef.current) cancelRef.current();
 
+      const cancelled = { value: false };
+      cancelledRef.current = cancelled;
+
       return new Promise((resolve, reject) => {
         cancelRef.current = resolve;
         timerRef.current = setTimeout(async () => {
@@ -98,8 +118,10 @@ const useParameterAsyncValidation = ({
                 value: fieldValue,
                 form_values: formValues,
               },
-              { headers: activeScenarioHeaders() },
+              { headers: scenarioHeaders(scenarioContext) },
             );
+
+            if (cancelled.value) return;
 
             if (response.data.valid) {
               const rawWarnings = response.data.warnings ?? [];
@@ -107,13 +129,15 @@ const useParameterAsyncValidation = ({
                 .filter((w) => w.field === name)
                 .map((w) => w.message);
               requestAnimationFrame(() => {
-                form.setFields([{ name, warnings: messages }]);
+                if (!cancelled.value)
+                  form.setFields([{ name, warnings: messages }]);
               });
               resolve();
             } else {
               reject(new Error(response.data.error));
             }
           } catch (error) {
+            if (cancelled.value) return;
             const errorMessage =
               error?.response?.data?.error ||
               error?.message ||
@@ -123,14 +147,65 @@ const useParameterAsyncValidation = ({
         }, 400);
       });
     },
-    [needs_validation, toolName, name, form, nullable],
+    [needs_validation, toolName, name, form, nullable, scenarioContext],
   );
 
   return validator;
 };
 
-const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
-  const { name, type, value, choices, nullable, help, needs_validation } =
+// Why a choice-backed parameter can legitimately have nothing to offer.
+// Keyed by parameter `type`; falls back to the generic message below.
+// The dropdown is scoped to the selected scenario, so "empty" almost always
+// means "the feature that produces these hasn't been run here yet" — say so
+// rather than leaving the user to guess.
+const NO_CHOICES_MESSAGES = {
+  GenerationParameter: 'No generations found. Run Optimisation first.',
+  NetworkLayoutChoiceParameter:
+    'No network layouts found in this scenario. Run Network Layout first.',
+  NetworkLayoutMultiChoiceParameter:
+    'No network layouts found in this scenario. Run Network Layout first.',
+  ComponentMultiChoiceParameter:
+    'No supply components found. Select a what-if scenario and scale first.',
+};
+
+// WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter carry a `mode` (see
+// WhatIfNameChoicesMixin, backend config.py) naming which what-if output the dropdown
+// requires, so the "run this first" hint names the right tool instead of always
+// pointing at Final Energy. `mode` is the literal underscored value from each
+// parameter's `.mode` config key (final_energy, emissions, costs, heat_rejection) --
+// match WHATIF_MODE_LABELS' keys to that, not a hyphenated/display form.
+const WHATIF_MODE_LABELS = {
+  final_energy: 'Final Energy',
+  emissions: 'Emissions',
+  costs: 'Costs',
+  heat_rejection: 'Heat Rejection',
+};
+
+const whatIfNoChoicesMessage = (mode) => {
+  const label = WHATIF_MODE_LABELS[mode] ?? WHATIF_MODE_LABELS.final_energy;
+  return `No what-if scenarios with ${label.toLowerCase()} results found in this scenario. Run ${label} first.`;
+};
+
+const noChoicesMessage = (type, mode) => {
+  if (
+    type === 'WhatIfNameChoiceParameter' ||
+    type === 'WhatIfNameMultiChoiceParameter'
+  ) {
+    return whatIfNoChoicesMessage(mode);
+  }
+  return (
+    NO_CHOICES_MESSAGES[type] ?? 'There are no valid choices for this input'
+  );
+};
+
+const Parameter = ({
+  parameter,
+  form,
+  toolName,
+  disabled: paramDisabled,
+  scenarioContext,
+}) => {
+  const { name, type, value, choices, nullable, help, needs_validation, mode } =
     parameter;
   const { setFieldsValue } = form;
   const constructionColorMap = useMapStore(
@@ -143,6 +218,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
     name,
     form,
     nullable,
+    scenarioContext,
   });
 
   switch (type) {
@@ -303,13 +379,12 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
 
       const optionsValidator = (_, value) => {
         if (choices == null || choices.length === 0) {
+          // Generations block the form even when nullable — running the tool
+          // without one is never meaningful.
           if (type === 'GenerationParameter')
-            return Promise.reject(
-              'No generations found. Run optimization first.',
-            );
+            return Promise.reject(NO_CHOICES_MESSAGES.GenerationParameter);
 
-          if (!nullable)
-            return Promise.reject('There are no valid choices for this input');
+          if (!nullable) return Promise.reject(noChoicesMessage(type, mode));
           return Promise.resolve();
         }
 
@@ -407,9 +482,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
               validator: (_, value) => {
                 if (choices == null || choices.length === 0) {
                   if (!nullable)
-                    return Promise.reject(
-                      'There are no valid choices for this input',
-                    );
+                    return Promise.reject(noChoicesMessage(type, mode));
                   return Promise.resolve();
                 }
 

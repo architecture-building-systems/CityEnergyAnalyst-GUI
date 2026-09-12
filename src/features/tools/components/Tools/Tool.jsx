@@ -256,6 +256,8 @@ const Tool = ({
             categoricalParameters={categoricalParameters}
             script={script}
             readonlyFields={readonlyFields}
+            scenarioContext={scenarioContext}
+            dataUpdatedAt={dataUpdatedAt}
           />
         </div>
       </Spin>
