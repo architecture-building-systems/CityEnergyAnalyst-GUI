@@ -11,8 +11,7 @@ import { Button, ConfigProvider } from 'antd';
 import {
   ERROR_RED,
   ERROR_RED_LIGHTEST,
-  WARNING_YELLOW,
-  WARNING_YELLOW_LIGHTEST,
+  ICON_BLACK,
   publishPaletteCssVariables,
 } from 'constants/theme';
 import { LeftOutlined } from '@ant-design/icons';
@@ -197,8 +196,10 @@ const CEA_THEME = {
   token: {
     colorPrimary: '#1470AF',
     colorInfo: '#1470AF',
-    colorWarningBg: WARNING_YELLOW_LIGHTEST,
-    colorWarningBorder: WARNING_YELLOW,
+    colorWarningBg: ERROR_RED_LIGHTEST,
+    colorWarningBorder: ERROR_RED,
+    // Drives the filled circle behind the `!` on every warning icon.
+    colorWarning: ICON_BLACK,
     colorErrorBg: ERROR_RED_LIGHTEST,
     colorErrorBorder: ERROR_RED,
   },
@@ -219,9 +220,7 @@ publishPaletteCssVariables();
 
 const HomePage = () => {
   return (
-    <ConfigProvider
-      theme={CEA_THEME}
-    >
+    <ConfigProvider theme={CEA_THEME}>
       <QueryClientProvider client={queryClient}>
         <ServerCheckGate>
           <UserCheckGate>

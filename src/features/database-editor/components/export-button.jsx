@@ -27,10 +27,10 @@ export const ExportDatabaseButton = () => {
       onOk: async () => {
         setLoading(true);
         try {
-          const response = await apiClient.get(
-            '/inputs/databases/download',
-            { responseType: 'blob', headers: activeScenarioHeaders() },
-          );
+          const response = await apiClient.get('/inputs/databases/download', {
+            responseType: 'blob',
+            headers: activeScenarioHeaders(),
+          });
 
           // Create download link
           const blob = new Blob([response.data]);

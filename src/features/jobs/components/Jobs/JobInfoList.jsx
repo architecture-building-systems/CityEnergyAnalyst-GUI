@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Badge } from 'antd';
 
+import { CEA_GREEN, ERROR_RED, UUEN_BLUE } from 'constants/theme';
+
 import './JobInfoList.css';
 import JobInfoCard from './JobInfoCard';
 import RecentJobsModal from './RecentJobsModal';
@@ -62,10 +64,12 @@ export const JobInfoList = ({ style }) => {
           }
         }}
       >
+        {/* CEA palette rather than antd's `green`/`blue`/`red` presets, so the stack matches
+            the status icons on the job card above it. */}
         <Badge
           className="cea-job-status-badge"
           count={completedCount}
-          color="green"
+          color={CEA_GREEN}
           title={`${completedCount} job${completedCount === 1 ? '' : 's'} completed`}
           size="small"
           showZero
@@ -73,7 +77,7 @@ export const JobInfoList = ({ style }) => {
         <Badge
           className="cea-job-status-badge"
           count={activeCount}
-          color="blue"
+          color={UUEN_BLUE}
           title={`${activeCount} job${activeCount === 1 ? '' : 's'} in progress`}
           size="small"
           showZero
@@ -81,7 +85,7 @@ export const JobInfoList = ({ style }) => {
         <Badge
           className="cea-job-status-badge"
           count={errorCount}
-          color="red"
+          color={ERROR_RED}
           title={`${errorCount} job${errorCount === 1 ? '' : 's'} failed`}
           size="small"
           showZero

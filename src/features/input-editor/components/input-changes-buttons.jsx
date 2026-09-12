@@ -1,11 +1,15 @@
-import { Button, Modal, message } from 'antd';
+import { Button, Modal, Tooltip, message } from 'antd';
+import { BinAnimationIcon, SaveIcon } from 'assets/icons';
+import { ERROR_RED } from 'constants/theme';
 
 import { AsyncError } from 'components/AsyncError';
 import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
 import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
-import { useDiscardChanges } from 'features/input-editor/stores/inputEditorStore';
+import {
+  hasChanges,
+  useDiscardChanges,
+} from 'features/input-editor/stores/inputEditorStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
-import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { ChangesSummary } from 'features/input-editor/components/changes-summary';
 
 export const InputChangesButtons = ({ changes }) => {
@@ -21,9 +25,9 @@ export const InputChangesButtons = ({ changes }) => {
     discardChangesFunc();
   };
 
-  const noChanges =
-    !Object.keys(changes?.update ?? {}).length &&
-    !Object.keys(changes?.delete ?? {}).length;
+  // Shared with the card that renders these buttons, so the two can never disagree about
+  // whether there is anything to save.
+  const noChanges = !hasChanges(changes);
 
   const _saveChanges = () => {
     Modal.confirm({
@@ -48,7 +52,9 @@ export const InputChangesButtons = ({ changes }) => {
             message.success('Changes Saved!');
           })
           .catch((error) => {
-            if (error.response.status === 401) setShowLoginModal(true);
+            // Optional: a network failure has no `response`, and reading `.status` off it
+            // would throw inside the catch, replacing the error modal with a blank screen.
+            if (error?.response?.status === 401) setShowLoginModal(true);
             else {
               Modal.error({
                 title: 'Could not save changes',
@@ -93,26 +99,34 @@ export const InputChangesButtons = ({ changes }) => {
   if (noChanges) return <div></div>;
 
   return (
+    // `cea-card-icon-button-container` is the shared icon-button chrome (see HomePage.css).
+    // Colour carries the hierarchy the labels used to: red for the destructive action, a filled
+    // UUEN blue for the one to take. Without it two identical grey icons sit side by side.
     <div style={{ display: 'flex', gap: 8 }}>
-      <Button
-        disabled={noChanges}
-        onClick={_discardChanges}
-        danger
-        size="small"
-        variant="outlined"
-        icon={<DeleteOutlined />}
-      >
-        Discard
-      </Button>
-      <Button
-        type="primary"
-        disabled={noChanges}
-        onClick={_saveChanges}
-        size="small"
-        icon={<SaveOutlined />}
-      >
-        Save
-      </Button>
+      <div className="cea-card-icon-button-container">
+        <Tooltip title="Discard changes" placement="bottom">
+          <Button
+            type="text"
+            onClick={_discardChanges}
+            icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
+            aria-label="Discard changes"
+          />
+        </Tooltip>
+      </div>
+      {/* `active` is the existing blue breathing glow (HomePage.css `@keyframes glow`), the
+          same one the empty-state CTAs use to say "this is the thing to do next". Unsaved
+          changes are exactly that. `cea-icon-button-primary` fills it UUEN blue; the icon
+          paints white from the CSS, so no inline colour here. */}
+      <div className="cea-card-icon-button-container cea-icon-button-primary active">
+        <Tooltip title="Save changes" placement="bottom">
+          <Button
+            type="text"
+            onClick={_saveChanges}
+            icon={<SaveIcon />}
+            aria-label="Save changes"
+          />
+        </Tooltip>
+      </div>
     </div>
   );
 };

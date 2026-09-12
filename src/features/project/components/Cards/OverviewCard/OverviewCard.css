@@ -34,7 +34,7 @@
 }
 
 .cea-scenario-select-blue.ant-select {
-  background-color: #1470AF !important;
+  background-color: #1470af !important;
   border-radius: 12px !important;
   border: none !important;
   font-weight: bold;
@@ -92,4 +92,3 @@
 .cea-timeline-tooltip .ant-tooltip-inner {
   box-shadow: none !important;
 }
-

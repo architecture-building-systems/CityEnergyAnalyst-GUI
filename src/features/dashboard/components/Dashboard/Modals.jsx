@@ -547,9 +547,7 @@ export const ModalEditParameters = ({
   const getParameters = async (scenario) => {
     try {
       const params = await apiClient.get(
-        `/dashboards/${dashIndex}/plots/${
-          activePlotRef.current
-        }/parameters`,
+        `/dashboards/${dashIndex}/plots/${activePlotRef.current}/parameters`,
         scenario ? { params: { scenario } } : {},
       );
       console.log(params.data);
@@ -755,9 +753,7 @@ export const ModalPlotFiles = ({ dashIndex, activePlotRef }) => {
       try {
         setLoading(true);
         const { data } = await apiClient.get(
-          `/dashboards/${dashIndex}/plots/${
-            activePlotRef.current
-          }/input-files`,
+          `/dashboards/${dashIndex}/plots/${activePlotRef.current}/input-files`,
         );
         setFileLocations({
           inputs: await groupFilesOnParent(data.inputs),
