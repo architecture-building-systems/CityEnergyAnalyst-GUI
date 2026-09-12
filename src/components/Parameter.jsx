@@ -17,7 +17,7 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
@@ -70,6 +70,22 @@ const useParameterAsyncValidation = ({
 }) => {
   const timerRef = useRef(null);
   const cancelRef = useRef(null);
+  const cancelledRef = useRef({ value: false });
+
+  // scenarioContext can be a fresh object literal every render (see Tool.jsx's
+  // scenarioOverride), so key invalidation on its primitives, not its identity.
+  const { project, scenarioName, childScenario } = scenarioContext ?? {};
+
+  // A validation scheduled under the previous scenario must never land against the
+  // newly-active one: mark it cancelled so its timeout/response is a no-op instead
+  // of calling form.setFields or settling the validator promise late.
+  useEffect(() => {
+    return () => {
+      cancelledRef.current.value = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (cancelRef.current) cancelRef.current();
+    };
+  }, [project, scenarioName, childScenario]);
 
   const validator = useCallback(
     (_, fieldValue) => {
@@ -85,6 +101,9 @@ const useParameterAsyncValidation = ({
       // form.validateFields() never hangs on an orphaned promise.
       if (timerRef.current) clearTimeout(timerRef.current);
       if (cancelRef.current) cancelRef.current();
+
+      const cancelled = { value: false };
+      cancelledRef.current = cancelled;
 
       return new Promise((resolve, reject) => {
         cancelRef.current = resolve;
@@ -102,19 +121,23 @@ const useParameterAsyncValidation = ({
               { headers: scenarioHeaders(scenarioContext) },
             );
 
+            if (cancelled.value) return;
+
             if (response.data.valid) {
               const rawWarnings = response.data.warnings ?? [];
               const messages = rawWarnings
                 .filter((w) => w.field === name)
                 .map((w) => w.message);
               requestAnimationFrame(() => {
-                form.setFields([{ name, warnings: messages }]);
+                if (!cancelled.value)
+                  form.setFields([{ name, warnings: messages }]);
               });
               resolve();
             } else {
               reject(new Error(response.data.error));
             }
           } catch (error) {
+            if (cancelled.value) return;
             const errorMessage =
               error?.response?.data?.error ||
               error?.message ||
