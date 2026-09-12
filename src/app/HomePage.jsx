@@ -11,8 +11,6 @@ import { Button, ConfigProvider } from 'antd';
 import {
   ERROR_RED,
   ERROR_RED_LIGHTEST,
-  WARNING_YELLOW,
-  WARNING_YELLOW_LIGHTEST,
   publishPaletteCssVariables,
 } from 'constants/theme';
 import { LeftOutlined } from '@ant-design/icons';
@@ -197,8 +195,8 @@ const CEA_THEME = {
   token: {
     colorPrimary: '#1470AF',
     colorInfo: '#1470AF',
-    colorWarningBg: WARNING_YELLOW_LIGHTEST,
-    colorWarningBorder: WARNING_YELLOW,
+    colorWarningBg: ERROR_RED_LIGHTEST,
+    colorWarningBorder: ERROR_RED,
     colorErrorBg: ERROR_RED_LIGHTEST,
     colorErrorBorder: ERROR_RED,
   },
