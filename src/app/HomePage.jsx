@@ -8,6 +8,13 @@ import StatusBar from 'features/status-bar/components/StatusBar';
 import './HomePage.css';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { Button, ConfigProvider } from 'antd';
+import {
+  ERROR_RED,
+  ERROR_RED_LIGHTEST,
+  WARNING_YELLOW,
+  WARNING_YELLOW_LIGHTEST,
+  publishPaletteCssVariables,
+} from 'constants/theme';
 import { LeftOutlined } from '@ant-design/icons';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -179,20 +186,41 @@ if (import.meta.env.DEV) {
   window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 }
 
+/**
+ * The antd theme, from the CEA palette in `cea/visualisation/format/plot_colours.py`, so that
+ * warnings and errors in the GUI match the colours used in the plots.
+ *
+ * Set as tokens rather than on each component: anything added later inherits it, and nobody
+ * has to remember a hex.
+ */
+const CEA_THEME = {
+  token: {
+    colorPrimary: '#1470AF',
+    colorInfo: '#1470AF',
+    colorWarningBg: WARNING_YELLOW_LIGHTEST,
+    colorWarningBorder: WARNING_YELLOW,
+    colorErrorBg: ERROR_RED_LIGHTEST,
+    colorErrorBorder: ERROR_RED,
+  },
+  components: {
+    Tooltip: {
+      fontSize: 12,
+    },
+  },
+};
+
+// `message.*`, `notification.*` and `Modal.confirm` render outside the React tree, so they do
+// not see the ConfigProvider above and would keep antd's default yellow and red. This is the
+// only way to reach them without rewriting all ~50 call sites to the `App.useApp()` hook.
+ConfigProvider.config({ theme: CEA_THEME });
+
+// The same palette, for stylesheets that cannot read a theme token.
+publishPaletteCssVariables();
+
 const HomePage = () => {
   return (
     <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: '#1470AF',
-          colorInfo: '#1470AF',
-        },
-        components: {
-          Tooltip: {
-            fontSize: 12,
-          },
-        },
-      }}
+      theme={CEA_THEME}
     >
       <QueryClientProvider client={queryClient}>
         <ServerCheckGate>

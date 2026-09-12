@@ -69,3 +69,12 @@ button:hover {
   );
   box-shadow: inset 2px 0 0 #1471b0;
 }
+
+/* A row the Input Editor cannot draw on the map: no footprint in the geometry file.
+   Colours come from `src/constants/theme.js` via `publishPaletteCssVariables`; the literals
+   are only a fallback for the first paint. The left rule carries the meaning where the tint
+   alone would not, and the row's `title` explains. */
+.cea-input-editor-table .tabulator .cea-input-row-no-geometry {
+  background-color: var(--cea-error-red-lightest, #fdece9) !important;
+  box-shadow: inset 3px 0 0 var(--cea-error-red, #f04d5b);
+}
