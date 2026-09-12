@@ -49,7 +49,7 @@ button:hover {
   overscroll-behavior-x: none;
 }
 
-/* Archetype-Lock ---------------------------------------------------------- */
+/* Archetype Lock ---------------------------------------------------------- */
 
 /* A derived table CEA owns while locked. Readable, not editable. */
 .cea-input-editor-table .tabulator .cea-input-readonly {

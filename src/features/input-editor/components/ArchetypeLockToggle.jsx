@@ -13,10 +13,11 @@ const wrapperStyle = {
   whiteSpace: 'nowrap',
 };
 
-const labelStyle = { fontSize: 12 };
+// Matches the canvas-builder toggles (`NavigatorCard.jsx` :: syncToggleLabelStyle).
+const labelStyle = { fontSize: 14, color: '#222' };
 
 /**
- * Archetype-Lock.
+ * Archetype Lock.
  *
  * Locked, CEA owns the archetype-derived property tables and keeps them consistent with each
  * building's archetype. Unlocked, the user owns them.
@@ -85,10 +86,10 @@ const ArchetypeLockToggle = ({ locked, buildingCount, onChanged, disabled = fals
           loading={busy}
           disabled={disabled || busy}
           onChange={(next) => (next ? confirmLock() : confirmUnlock())}
-          aria-label="Archetype-Lock"
+          aria-label="Archetype Lock"
         />
       </ConfigProvider>
-      <span style={labelStyle}>Archetype-Lock</span>
+      <span style={labelStyle}>Archetype Lock</span>
       <InfoTooltip tooltipKey="archetype-lock" />
     </div>
   );

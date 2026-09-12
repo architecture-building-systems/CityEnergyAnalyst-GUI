@@ -17,7 +17,7 @@ const EMPTY = {
 };
 
 /**
- * Archetype-Lock state for the active scenario.
+ * Archetype Lock state for the active scenario.
  *
  * `derived_tabs` and `archetype_key_columns` come from the server rather than being duplicated
  * here: they are defined by what `archetypes_mapper` writes, and a second copy in the frontend
