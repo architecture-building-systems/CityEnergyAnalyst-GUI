@@ -323,7 +323,8 @@ cellEdited: (cell) => {
 **Store:** `src/features/database-editor/stores/databaseEditorStore.js`
 
 - `updateDatabaseData`
-- `addDatabaseRow`
+- `addDatabaseRow` - inserts at the **top** (unshift / object-key rebuild), so new and
+  duplicated rows are visible without scrolling. Row order is also the CSV write order.
 - `deleteDatabaseRows`
 
 **Main Component:** `src/features/database-editor/components/dataset/table-dataset.jsx`

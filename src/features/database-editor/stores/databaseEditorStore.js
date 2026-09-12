@@ -2,12 +2,73 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { apiClient, getScenarioClient } from 'lib/api/axios';
 import { activeScenarioHeaders } from 'lib/api/scenarioContext';
-import { arrayStartsWith } from 'utils';
+import { arrayStartsWith, arraysEqual } from 'utils';
+import {
+  MAX_INDEX_NAME_LENGTH,
+  droppedCharacters,
+  normaliseIndexName,
+  uniqueIndexName,
+} from 'utils/validation';
 
 export const FETCHING_STATUS = 'fetching';
 export const SUCCESS_STATUS = 'success';
-export const FAILED_STATUS = 'failed';
 export const SAVING_STATUS = 'saving';
+
+// Where MATERIALS.csv lives in the database payload. Only some regional databases ship it,
+// so this node is `null` for most scenarios.
+export const MATERIALS_DATA_KEY = ['COMPONENTS', 'MATERIALS', 'materials'];
+
+// The envelope columns derived from material layers, mirroring DERIVED_COLS_BY_KIND in
+// cea/datamanagement/database/assemblies.py. Used only to lock cells in the table -- the
+// backend derives the values, so drifting from that list degrades the hint, not the data.
+export const DERIVED_ENVELOPE_COLUMNS = [
+  'U_wall',
+  'U_roof',
+  'U_base',
+  'GHG_wall_kgCO2m2',
+  'GHG_roof_kgCO2m2',
+  'GHG_floor_kgCO2m2',
+  'GHG_biogenic_wall_kgCO2m2',
+  'GHG_biogenic_roof_kgCO2m2',
+  'GHG_biogenic_floor_kgCO2m2',
+  'GHG_production_wall_kgCO2m2',
+  'GHG_production_roof_kgCO2m2',
+  'GHG_production_floor_kgCO2m2',
+  'GHG_demolition_wall_kgCO2m2',
+  'GHG_demolition_roof_kgCO2m2',
+  'GHG_demolition_floor_kgCO2m2',
+];
+
+/** Does this row define its construction with material layers? Mirrors _row_has_usable_material_layer. */
+export const rowHasMaterialLayer = (row) =>
+  [1, 2, 3].some(
+    (slot) =>
+      Number(row?.[`thickness_${slot}_m`]) > 0 &&
+      String(row?.[`material_name_${slot}`] ?? '').trim() !== '',
+  );
+
+// The envelope material layer set (ENVELOPE_WALL/ROOF/FLOOR). These reference MATERIALS.csv,
+// which only some regional databases ship, so they are hidden when it is absent.
+export const MATERIAL_LAYER_COLUMNS = [
+  'material_name_1',
+  'thickness_1_m',
+  'material_name_2',
+  'thickness_2_m',
+  'material_name_3',
+  'thickness_3_m',
+];
+
+/**
+ * The human-readable reason out of an axios error.
+ *
+ * FastAPI's `detail` is a plain string on some routes and `{status, message}` on others;
+ * rendering the object would print "[object Object]" into the message area.
+ */
+const readErrorMessage = (error, fallback) => {
+  const detail = error?.response?.data?.detail;
+  const fromDetail = typeof detail === 'string' ? detail : detail?.message;
+  return fromDetail ?? error?.message ?? fallback;
+};
 
 const useDatabaseEditorStore = create((set, get) => ({
   // State
@@ -18,27 +79,47 @@ const useDatabaseEditorStore = create((set, get) => ({
   changes: [],
   isEmpty: false,
   databaseValidation: { status: null, message: null },
+  // Set when the database could not be read. Reported in the message area like any other
+  // problem -- never by replacing the editor, which would hide the tool needed to fix it.
+  loadError: null,
+  // Which domain/category/dataset the editor is showing. Kept here rather than in
+  // DatabaseContainer because that component unmounts whenever `data` is briefly blanked,
+  // which would discard a local useState — and because actions need to navigate the editor
+  // (seeding MATERIALS has to land the user on the table it just created).
+  selection: { domain: null, category: null, dataset: null },
 
   // Getters
   getColumnChoices: (dataKey, column) => {
-    const data = get().data;
-    const _data = getNestedValue(data, dataKey);
+    const state = get();
+    const _data = getNestedValue(state.data, dataKey);
+    const _columns = getNestedValue(state.schema, dataKey)?.schema?.columns;
 
-    // FIXME: This is not reliable as not every index is "code"
-    // Get keys if column is 'code'
-    if (column == 'code') {
-      const choices = {};
-      Object.keys(_data || {}).forEach((key) => {
-        choices[key] = _data[key]?.description ?? '-';
-      });
-      return choices;
+    // A lookup that targets the referenced table's primary column is asking for its row keys,
+    // because that column is the key the table is stored under. Read the primary from the
+    // schema rather than assuming 'code' — MATERIALS is keyed by `name`.
+    const primary =
+      Object.keys(_columns ?? {}).find((c) => _columns[c]?.primary) ?? 'code';
+    if (column == primary) {
+      const keys = Object.keys(_data ?? {});
+      // Annotate with descriptions where the table has them; otherwise the bare keys are
+      // the whole choice (MATERIALS has no description column).
+      if (_columns?.description == undefined) return keys;
+      return Object.fromEntries(
+        keys.map((key) => [key, _data[key]?.description ?? '-']),
+      );
     }
 
     return _data?.[column];
   },
 
   // Actions
-  validateDatabase: async () => {
+  setSelection: ({ domain, category, dataset = null }) =>
+    set({ selection: { domain, category, dataset } }),
+
+  setSelectedDataset: (dataset) =>
+    set((state) => ({ selection: { ...state.selection, dataset } })),
+
+  validateDatabase: async ({ background = false } = {}) => {
     const { isEmpty } = useDatabaseEditorStore.getState();
 
     // Skip validation if database is empty
@@ -47,7 +128,11 @@ const useDatabaseEditorStore = create((set, get) => ({
       return;
     }
 
-    set({ databaseValidation: { status: 'checking', message: null } });
+    // `checking` swaps the whole editor for a spinner. That is right on first load, but after
+    // a save it would tear down the table the user is working in. In the background the
+    // previous status stands until the result replaces it, so only the message area changes.
+    if (!background)
+      set({ databaseValidation: { status: 'checking', message: null } });
     try {
       await getScenarioClient().get('/inputs/databases/check', {
         headers: activeScenarioHeaders(),
@@ -75,22 +160,16 @@ const useDatabaseEditorStore = create((set, get) => ({
   },
 
   initDatabaseState: async () => {
-    set({ data: {}, status: { status: FETCHING_STATUS }, isEmpty: false });
+    // A different scenario's database may not have the selected category at all.
+    set({
+      data: {},
+      status: { status: FETCHING_STATUS },
+      isEmpty: false,
+      selection: { domain: null, category: null, dataset: null },
+    });
     try {
-      const { data } = await getScenarioClient().get('/inputs/databases', {
-        headers: activeScenarioHeaders(),
-      });
-      set({
-        data,
-        status: { status: SUCCESS_STATUS },
-        validation: {},
-        changes: [],
-        isEmpty: false,
-        databaseValidation: { status: null, message: null },
-      });
-
-      // Run validation after successful database load
-      await useDatabaseEditorStore.getState().validateDatabase();
+      await useDatabaseEditorStore.getState().refreshDatabaseData();
+      set({ status: { status: SUCCESS_STATUS } });
 
       // if (Object.keys(data).length > 0) {
       //   const tableNames = [];
@@ -103,7 +182,6 @@ const useDatabaseEditorStore = create((set, get) => ({
       //   set({ tableNames });
       // }
     } catch (error) {
-      const err = error.response || error;
       // Check if it's a 404 (empty database)
       if (error.response?.status === 404) {
         set({
@@ -112,23 +190,91 @@ const useDatabaseEditorStore = create((set, get) => ({
           validation: {},
           changes: [],
           isEmpty: true,
+          loadError: null,
           databaseValidation: { status: null, message: null },
         });
-      } else {
-        set({ status: { status: FAILED_STATUS, error: err }, isEmpty: false });
+        return;
       }
+      // Anything else is a problem with the database itself. Report it in the message area
+      // and leave the editor mounted: a read failure is usually a bad row that the user has
+      // to open the editor to correct.
+      const message = readErrorMessage(
+        error,
+        'The database could not be read.',
+      );
+      set({
+        data: {},
+        status: { status: SUCCESS_STATUS },
+        validation: {},
+        changes: [],
+        isEmpty: false,
+        loadError: message,
+        databaseValidation: { status: 'invalid', message },
+      });
     }
   },
 
-  saveDatabaseState: async () => {
-    const data = useDatabaseEditorStore.getState().data;
+  /**
+   * Reload the database without tearing the page down.
+   *
+   * `initDatabaseState` flips status to FETCHING, which makes DatabaseEditor render a
+   * spinner instead of DatabaseContainer — unmounting it and losing the selected
+   * domain/category/dataset, which live in its component state. Use this after an action
+   * that changes one table (e.g. seeding MATERIALS.csv) so the user stays where they were.
+   */
+  refreshDatabaseData: async ({ background = false } = {}) => {
+    const { data } = await getScenarioClient().get('/inputs/databases', {
+      headers: activeScenarioHeaders(),
+    });
+    set({
+      data,
+      validation: {},
+      changes: [],
+      isEmpty: false,
+      loadError: null,
+      databaseValidation: { status: null, message: null },
+    });
+    await useDatabaseEditorStore.getState().validateDatabase({ background });
+  },
+
+  saveDatabaseState: async ({ overwriteDerived = false } = {}) => {
+    const { data, changes } = useDatabaseEditorStore.getState();
 
     try {
       set({ status: { status: SAVING_STATUS } });
       await apiClient.put('/inputs/databases', data, {
         headers: activeScenarioHeaders(),
+        params: overwriteDerived ? { overwrite_derived: true } : undefined,
       });
       set({ status: { status: SUCCESS_STATUS }, changes: [] });
+      // Re-read rather than keep what the browser sent: the server derives envelope U/GHG
+      // from the material layers as it writes, so the values in the table are no longer the
+      // ones on disk. This also runs the verifier, reporting any cross-row or cross-file rule
+      // the browser cannot check on its own while the user still knows what they changed.
+      await useDatabaseEditorStore.getState().refreshDatabaseData({
+        background: true,
+      });
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      if (
+        error?.response?.status !== 409 ||
+        detail?.status !== 'derived_conflict'
+      ) {
+        throw error;
+      }
+      // The server reports every stored value that disagrees with its layers. Re-editing an
+      // existing layer set is *expected* to disagree -- the stored value describes the
+      // previous composition -- so confirming it would mean a dialog on every material edit.
+      // Anything else is about to destroy a value someone entered deliberately.
+      const unexplained = (detail.conflicts ?? []).filter(
+        (conflict) => !conflictIsStaleCache(data, changes, conflict),
+      );
+      if (unexplained.length === 0) {
+        return useDatabaseEditorStore
+          .getState()
+          .saveDatabaseState({ overwriteDerived: true });
+      }
+      throw new DerivedConflictError(detail.message, unexplained);
     } finally {
       set({ status: { status: null } });
     }
@@ -137,6 +283,7 @@ const useDatabaseEditorStore = create((set, get) => ({
   resetDatabaseState: () => {
     set({
       status: { status: null },
+      loadError: null,
       validation: {},
       data: {},
       schema: {},
@@ -155,7 +302,14 @@ const useDatabaseEditorStore = create((set, get) => ({
       });
       set({ schema: response.data });
     } catch (error) {
-      set({ status: { status: FAILED_STATUS, error } });
+      // Without a schema the table falls back to the keys in the data, so the editor is
+      // degraded but still usable. Report it rather than replacing the page.
+      set({
+        loadError: readErrorMessage(
+          error,
+          'Could not load the database schema.',
+        ),
+      });
     }
   },
 
@@ -414,9 +568,10 @@ const useDatabaseEditorStore = create((set, get) => ({
           targetArray = draftTable[_index];
         }
 
-        // Add the new row to the table
+        // Add the new row at the top, so it is visible without scrolling a long table
+        // (this is also the order written to the CSV on save).
         if (Array.isArray(targetArray)) {
-          targetArray.push(rowData);
+          targetArray.unshift(rowData);
         } else if (typeof targetArray === 'object' && indexCol) {
           if (rowData?.[indexCol] === undefined) {
             console.error(
@@ -437,7 +592,12 @@ const useDatabaseEditorStore = create((set, get) => ({
           const rowDataCopy = { ...rowData };
           // Remove index from the copy to avoid duplication
           delete rowDataCopy[indexCol];
+          // Object key order is the row order, so rebuild with the new key first rather
+          // than assigning, which would append.
+          const existing = { ...targetArray };
+          for (const key of Object.keys(targetArray)) delete targetArray[key];
           targetArray[rowIndex] = rowDataCopy;
+          Object.assign(targetArray, existing);
         } else {
           console.error('Unable to determine table structure:', targetArray);
         }
@@ -458,6 +618,111 @@ const useDatabaseEditorStore = create((set, get) => ({
         ],
       };
     });
+  },
+
+  /**
+   * Rename a row's index value (its `code` / `name` / `const_type`).
+   *
+   * For object-keyed tables the index IS the object key, so this moves the key rather than
+   * setting a field — setting the field would be dropped on save, since `BaseDatabase.save`
+   * excludes the column matching the index name. Array-shaped tables keep the index as an
+   * ordinary field, so there it is a plain assignment.
+   *
+   * Returns `{ ok, name, reason }`; `name` is what was actually used, which the caller
+   * compares against what the user typed in order to report the change.
+   */
+  renameDatabaseRowIndex: (dataKey, indexCol, oldIndex, newIndex) => {
+    const typed = String(newIndex ?? '').trim();
+    // Before the emptiness check: a wholly non-Latin name normalises to "" and would
+    // otherwise be reported as empty, which is not what the user typed.
+    const dropped = droppedCharacters(typed);
+    if (dropped)
+      return {
+        ok: false,
+        reason: `${indexCol} must use Latin letters, numbers, underscores or hyphens - "${dropped}" cannot be converted.`,
+      };
+    const requested = normaliseIndexName(typed);
+    if (!requested)
+      return { ok: false, reason: `${indexCol} cannot be empty.` };
+    if (requested.length > MAX_INDEX_NAME_LENGTH)
+      return {
+        ok: false,
+        reason: `${indexCol} must be ${MAX_INDEX_NAME_LENGTH} characters or fewer (this is ${requested.length}).`,
+      };
+
+    let result = { ok: true, name: requested };
+    set((state) => {
+      let _dataKey = dataKey;
+      let _nested;
+      if (
+        arrayStartsWith(dataKey, ['ARCHETYPES', 'USE']) ||
+        arrayStartsWith(dataKey, ['COMPONENTS', 'CONVERSION'])
+      ) {
+        _dataKey = dataKey.slice(0, -1);
+        _nested = dataKey[dataKey.length - 1];
+      }
+
+      const table = getNestedValue(state.data, _dataKey);
+      if (table === undefined) {
+        result = { ok: false, reason: 'Table not found.' };
+        return state;
+      }
+
+      const rows =
+        _nested !== undefined && table?.[_nested] ? table[_nested] : table;
+      const taken = new Set(
+        Array.isArray(rows)
+          ? rows.map((row) => row?.[indexCol]).filter((v) => v !== oldIndex)
+          : Object.keys(rows).filter((key) => key !== oldIndex),
+      );
+      const name = uniqueIndexName(requested, taken);
+      result = { ok: true, name };
+      if (name === oldIndex) return state;
+
+      const newData = produce(state.data, (draft) => {
+        const draftTable = getNestedValue(draft, _dataKey);
+        const target =
+          _nested !== undefined && draftTable?.[_nested]
+            ? draftTable[_nested]
+            : draftTable;
+
+        if (Array.isArray(target)) {
+          const row = target.find((r) => r?.[indexCol] === oldIndex);
+          if (!row) {
+            result = { ok: false, reason: `Could not find row "${oldIndex}".` };
+            return;
+          }
+          row[indexCol] = name;
+          return;
+        }
+
+        if (!(oldIndex in target)) {
+          result = { ok: false, reason: `Could not find row "${oldIndex}".` };
+          return;
+        }
+        // Rebuild to keep the row in place rather than moving it to the end.
+        const renamed = Object.fromEntries(
+          Object.entries(target).map(([key, value]) => [
+            key === oldIndex ? name : key,
+            value,
+          ]),
+        );
+        for (const key of Object.keys(target)) delete target[key];
+        Object.assign(target, renamed);
+      });
+
+      if (!result.ok) return state;
+
+      return {
+        data: newData,
+        changes: state.changes.map((change) =>
+          change.index === oldIndex && arraysEqual(change.dataKey, dataKey)
+            ? { ...change, index: name }
+            : change,
+        ),
+      };
+    });
+    return result;
   },
 
   deleteDatabaseRows: (dataKey, indexCol, rowIndices) => {
@@ -578,6 +843,56 @@ const useDatabaseEditorStore = create((set, get) => ({
   },
 }));
 
+/** Raised when a save is refused because stored values contradict their material layers. */
+export class DerivedConflictError extends Error {
+  constructor(message, conflicts) {
+    super(message);
+    this.name = 'DerivedConflictError';
+    this.conflicts = conflicts;
+  }
+}
+
+const changeTouchesRow = (change, conflict) =>
+  change.action === 'update' &&
+  String(change.index) === String(conflict.code) &&
+  String(change.dataKey?.[change.dataKey.length - 1]).toLowerCase() ===
+    conflict.table;
+
+/**
+ * Is this conflict just a cache left over from the row's previous composition?
+ *
+ * True only when the user edited a layer on a row that *already had* layers: the stored value
+ * was derived from the old composition and means nothing now. If the row had no layers before,
+ * its U/GHG were typed by hand -- adding layers is about to destroy them, which is a decision
+ * for the user, not something to do silently.
+ */
+const conflictIsStaleCache = (data, changes, conflict) => {
+  const table = getNestedValue(data, [
+    'ASSEMBLIES',
+    'ENVELOPE',
+    conflict.table,
+  ]);
+  const current = table?.[conflict.code];
+  if (current == null) return false;
+
+  // Rebuild the row as it was before this session's layer edits.
+  const before = { ...current };
+  const reverted = new Set();
+  for (const change of changes ?? []) {
+    if (!changeTouchesRow(change, conflict)) continue;
+    if (!MATERIAL_LAYER_COLUMNS.includes(change.field)) continue;
+    // The earliest change to a field carries the value it held before this session.
+    if (reverted.has(change.field)) continue;
+    before[change.field] = change.oldValue;
+    reverted.add(change.field);
+  }
+
+  // Untouched layers mean the composition did not change, so any disagreement predates this
+  // session rather than being left over from an edit.
+  if (reverted.size === 0) return false;
+  return rowHasMaterialLayer(before);
+};
+
 const getNestedValue = (obj, datakey) => {
   let current = obj;
 
@@ -589,6 +904,17 @@ const getNestedValue = (obj, datakey) => {
   }
   return current;
 };
+
+export const useDatabaseLoadError = () =>
+  useDatabaseEditorStore((state) => state.loadError);
+
+export const useDatabaseSelection = () =>
+  useDatabaseEditorStore((state) => state.selection);
+
+export const useMaterialsAvailable = () =>
+  useDatabaseEditorStore(
+    (state) => getNestedValue(state.data, MATERIALS_DATA_KEY) != null,
+  );
 
 export const useDatabaseSchema = (dataKey) => {
   // Get column schema for using specific data key which is a list of property names
@@ -606,6 +932,9 @@ export const useUpdateDatabaseData = () =>
 
 export const useAddDatabaseRow = () =>
   useDatabaseEditorStore((state) => state.addDatabaseRow);
+
+export const useRenameDatabaseRowIndex = () =>
+  useDatabaseEditorStore((state) => state.renameDatabaseRowIndex);
 
 export const useDeleteDatabaseRows = () =>
   useDatabaseEditorStore((state) => state.deleteDatabaseRows);

@@ -205,11 +205,22 @@ const JobStatusBar = () => {
             <JobStatusMessage jobId={job.id} message="completed ✅" />,
           );
 
-          // When network-layout creates or modifies a network, any cached
-          // metadata that lists existing networks goes stale: the tool forms'
-          // network-name / existing-network dropdowns, the thermal-network map
+          // Any completed job can write under outputs/ and change what a
+          // dynamic choice list resolves to — what-if-name (final-energy),
+          // existing-pathway-names, network layouts, component lists. Tool
+          // params are cached with a 5 minute staleTime (useToolParams.js),
+          // so without this a card that was already open keeps offering the
+          // pre-run choices while a card opened for the first time shows the
+          // new ones. Invalidating unconditionally is cheaper than keeping a
+          // script-to-parameter map in sync: React Query only refetches
+          // queries that are currently mounted.
+          depsRef.current.queryClient.invalidateQueries({
+            queryKey: ['toolParams'],
+          });
+
+          // network-layout additionally changes the thermal-network map
           // layer's network selector (fetched directly in Choice.jsx, not via
-          // React Query — bumpChoicesRevision forces those to refetch), and
+          // React Query — bumpChoicesRevision forces those to refetch) and
           // the input-editor map data.
           //
           // Note: for thermal-network / thermal-network-multiple-phase we do
@@ -218,9 +229,6 @@ const JobStatusBar = () => {
           // "View Results" notification button, so a running simulation can't
           // swap the map out from under them while they're looking at it.
           if (job.script === 'network-layout') {
-            depsRef.current.queryClient.invalidateQueries({
-              queryKey: ['toolParams'],
-            });
             depsRef.current.queryClient.invalidateQueries({
               queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
             });

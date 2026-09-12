@@ -3,6 +3,7 @@
  */
 
 import * as turf from '@turf/turf';
+import { enclosedFloorsAg } from 'features/map/utils/voidDeck';
 
 import { hexToRgb } from './index';
 
@@ -210,7 +211,7 @@ export const getBuildingColorByUseType = (properties, colorMap) => {
  * Mirrors CEA's authoritative formula in
  * ``cea/demand/building_properties/useful_areas.py``::
  *
- *     GFA_ag = footprint × (floors_ag − void_deck)
+ *     GFA_ag = footprint × (floors_ag − void_deck_height / floor_to_floor_height)
  *     GFA_bg = footprint × floors_bg
  *     GFA    = GFA_ag + GFA_bg
  *
@@ -232,15 +233,14 @@ const buildingGfa = (feature) => {
   }
   const props = feature.properties || {};
   const floorsAg = parseInt(props.floors_ag, 10);
-  const voidDeck = parseInt(props.void_deck, 10) || 0;
   const floorsBg = parseInt(props.floors_bg, 10) || 0;
   if (!Number.isFinite(floorsAg) || floorsAg <= 0) return 0;
-  // floors_ag − void_deck: void-deck floors have an open
-  // envelope and don't count toward conditioned GFA in CEA's
-  // model. floors_bg: basements DO count. Clamp to ≥ 0 in case
-  // of a misconfigured zone (void_deck > floors_ag would
-  // otherwise produce a negative above-ground term).
-  const aboveGround = Math.max(floorsAg - voidDeck, 0);
+  // The void deck has an open envelope and doesn't count toward
+  // conditioned GFA in CEA's model. Its height is in metres, so the
+  // storeys it removes can be fractional. floors_bg: basements DO
+  // count. Already clamped to ≥ 0 by enclosedFloorsAg, in case of a
+  // misconfigured zone.
+  const aboveGround = enclosedFloorsAg(props);
   const belowGround = Math.max(floorsBg, 0);
   const totalFloors = aboveGround + belowGround;
   if (totalFloors <= 0) return 0;

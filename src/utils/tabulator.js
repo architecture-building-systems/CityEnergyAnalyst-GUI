@@ -1,3 +1,16 @@
+/**
+ * Replace a Tabulator's data, re-rendering around the row already on screen.
+ *
+ * `setData` resets the row manager's scroll and renders from the top; `replaceData` is the
+ * same operation with `renderInPosition` set, which keeps the view where it was. Only matters
+ * for a table given a `height` (the input editor) -- without one the holder grows to fit and
+ * an ancestor does the scrolling instead.
+ */
+export const setDataPreservingScroll = (table, data) => {
+  if (table == null) return undefined;
+  return table.replaceData ? table.replaceData(data) : table.setData(data);
+};
+
 export const getColumnPropsFromDataType = (
   columnSchema,
   column = undefined,
@@ -9,28 +22,55 @@ export const getColumnPropsFromDataType = (
     return {};
   }
 
+  // A nullable number may be cleared. `Number('')` is 0, so an empty cell has to be mapped to
+  // null explicitly or clearing one silently writes a zero -- which then reads as a real
+  // measurement (a U-value of 0, or zero embodied carbon).
+  const numberMutator = (value) =>
+    columnSchema?.nullable && (value === '' || value == null)
+      ? null
+      : Number(value);
+  const requiredIfNotNullable = columnSchema?.nullable ? [] : ['required'];
+
+  // Numeric bounds are declared directly on the column in schemas.yml (`min`, `max`,
+  // `exclusive_min`). The previous lookup read `columnSchema.constraints`, a key that only
+  // exists at table level for cross-column rules, so no bound was ever enforced here -- which
+  // is how a U-value of 0 or a service life of 0 reached the file. An empty cell is left to
+  // `required`, so a nullable column can still be cleared.
+  const withinBound = (predicate) => ({
+    type: (cell, value) =>
+      value === '' || value == null || predicate(Number(value)),
+  });
+  const boundValidators = [];
+  if (columnSchema?.min != undefined)
+    boundValidators.push(withinBound((value) => value >= columnSchema.min));
+  if (columnSchema?.max != undefined)
+    boundValidators.push(withinBound((value) => value <= columnSchema.max));
+  if (columnSchema?.exclusive_min != undefined)
+    boundValidators.push(
+      withinBound((value) => value > columnSchema.exclusive_min),
+    );
+
   switch (columnSchema.type) {
     case 'int':
     case 'year':
       return {
         editor: 'input',
-        validator: ['required', 'regex:^([1-9][0-9]*|0)$'],
-        mutatorEdit: (value) => Number(value),
+        validator: [
+          ...requiredIfNotNullable,
+          'regex:^([1-9][0-9]*|0)$',
+          ...boundValidators,
+        ],
+        mutatorEdit: numberMutator,
       };
     case 'float':
       return {
         editor: 'input',
         validator: [
-          'required',
+          ...requiredIfNotNullable,
           'regex:^-?([1-9][0-9]*|0)?(\\.\\d+)?$',
-          ...(columnSchema?.constraints
-            ? Object.keys(columnSchema.constraints).map(
-                (constraint) =>
-                  `${constraint}:${columnSchema.constraints[constraint]}`,
-              )
-            : []),
+          ...boundValidators,
         ],
-        mutatorEdit: (value) => Number(value),
+        mutatorEdit: numberMutator,
       };
     case 'date':
       return {
@@ -44,7 +84,7 @@ export const getColumnPropsFromDataType = (
     case 'string':
       return {
         editor: 'input',
-        validator: [...(columnSchema?.nullable ? [] : ['required'])],
+        validator: [...requiredIfNotNullable],
       };
     case 'boolean':
       return {

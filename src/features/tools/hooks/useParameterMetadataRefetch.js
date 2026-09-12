@@ -1,10 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getScenarioClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import { TOOLS_QUERY_KEYS, TOOLS_MUTATION_KEYS } from '../constants/queryKeys';
 
-const useParameterMetadataRefetch = (script, form) => {
+// `scenarioContext` must be the same `{ project, scenarioName, childScenario }` the
+// caller's useToolParams was fetched with (Tool.jsx resolves it from either
+// scenarioOverride or the active scenario) -- it picks both the request headers AND the
+// cache entry the response is written back into. Reading the active scenario from the
+// store here instead would send the wrong headers and write into the wrong cache entry
+// whenever the caller is a scenarioOverride column (e.g. a Canvas Builder pathway-state
+// column), which does not track the active scenario.
+const useParameterMetadataRefetch = (script, form, scenarioContext) => {
   const queryClient = useQueryClient();
+  const { project, scenarioName, childScenario } = scenarioContext;
 
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.REFETCH_PARAMETER_METADATA],
@@ -17,7 +25,9 @@ const useParameterMetadataRefetch = (script, form) => {
             form_values: formValues,
             affected_parameters: affectedParams,
           },
-          { headers: activeScenarioHeaders() },
+          {
+            headers: scenarioHeaders({ project, scenarioName, childScenario }),
+          },
         );
       } catch (err) {
         const error = new Error(err.message);
@@ -31,9 +41,23 @@ const useParameterMetadataRefetch = (script, form) => {
 
       const { parameters: updatedMetadata } = response.data;
 
-      // Update cache
+      // Update cache.
+      //
+      // The key must mirror useToolParams' key exactly — it is scoped by
+      // scenario context, so a bare [TOOL_PARAMS, script] matches nothing
+      // and the refreshed `choices` get silently discarded while the new
+      // values still land on the form, leaving a dropdown whose value its
+      // own stale choices reject. Scoping it (rather than prefix-matching
+      // every scenario) keeps this scenario's metadata out of the others'
+      // cache entries.
       queryClient.setQueryData(
-        [TOOLS_QUERY_KEYS.TOOL_PARAMS, script],
+        [
+          TOOLS_QUERY_KEYS.TOOL_PARAMS,
+          script,
+          project,
+          scenarioName,
+          childScenarioToken(childScenario),
+        ],
         (oldData) => {
           if (!oldData) return oldData;
 

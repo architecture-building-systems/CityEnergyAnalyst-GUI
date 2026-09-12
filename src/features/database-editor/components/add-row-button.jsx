@@ -6,6 +6,7 @@ import {
   useAddDatabaseRow,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { withHiddenInDemo } from 'components/HiddenInDemo';
+import { uniqueIndexName } from 'utils/validation';
 
 /**
  * Hook to create an empty row with a unique index
@@ -18,7 +19,13 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
       return null;
     }
 
-    if (!data || (Array.isArray(data) && data.length === 0)) {
+    // An empty table is workable as long as the schema supplies the columns — which is the
+    // normal state for a database started from a template. Only bail when there is neither
+    // a schema nor an existing row to infer the shape from.
+    const hasRows = Array.isArray(data)
+      ? data.length > 0
+      : Object.keys(data ?? {}).length > 0;
+    if (!schema?.columns && !hasRows) {
       return null;
     }
 
@@ -27,13 +34,8 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
       ? data.map((row) => row?.[index])
       : Object.keys(data || {});
 
-    // Generate a unique index name
-    let newIndex = 'NEW_ROW';
-    let counter = 1;
-    while (existingIndices.includes(newIndex)) {
-      newIndex = `NEW_ROW_${counter}`;
-      counter++;
-    }
+    // Generate a unique index name (same _N scheme as renaming)
+    const newIndex = uniqueIndexName('NEW_ROW', new Set(existingIndices));
 
     // Create empty row with all required fields
     const newRow = { [index]: newIndex };
@@ -59,7 +61,10 @@ const useAddEmptyRow = (data, dataKey, index, schema) => {
 
           // Set default values based on type
           if (type === 'float' || type === 'int') {
-            newRow[col] = 0;
+            // A nullable number starts empty, not at zero. Zero is a claim -- a U-value of 0
+            // or zero embodied carbon -- and seeding it makes a new row contradict whatever
+            // the user then fills in, which the envelope cross-check rejects outright.
+            newRow[col] = colSchema?.nullable ? null : 0;
           } else if (colSchema?.choice) {
             // Use first available choice or empty string
             const values = colSchema.choice?.values || [];

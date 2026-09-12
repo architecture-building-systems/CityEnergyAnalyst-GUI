@@ -75,6 +75,10 @@ import {
 import useBuildingSelectionStore from 'stores/buildingSelectionStore';
 import { AttributionControl } from 'maplibre-gl';
 import MapTooltip from './MapTooltip';
+import {
+  voidDeckHeight,
+  enclosedFloorsAg,
+} from 'features/map/utils/voidDeck';
 
 const useMapAttribution = (mapRef) => {
   // Effect to handle map attribution
@@ -794,7 +798,7 @@ const DeckGLMap = ({
             const height = extruded
               ? Number(f.properties?.height_ag ?? 0)
               : // Lift label above void deck if exists when not extruded
-                Number(f.properties?.void_deck ?? 0) * VOID_DECK_FLOOR_HEIGHT;
+                voidDeckHeight(f.properties);
             return [...centroid.geometry.coordinates, height + 3];
           },
           sizeUnits: 'meters',
@@ -1023,7 +1027,6 @@ const buildingColorFunction =
     return colors.disconnected;
   };
 
-const VOID_DECK_FLOOR_HEIGHT = 3;
 const FLOOR_HEIGHT = 3; // Standard floor height in meters
 
 const calcPolygonWithZ = (feature) => {
@@ -1032,9 +1035,9 @@ const calcPolygonWithZ = (feature) => {
 
   if (name === null) return coords;
 
-  const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
+  const voidHeight = voidDeckHeight(feature?.properties);
   return coords.map((coord) =>
-    coord.map((c) => [c[0], c[1], voidDeckFloors * VOID_DECK_FLOOR_HEIGHT]),
+    coord.map((c) => [c[0], c[1], voidHeight]),
   );
 };
 
@@ -1044,10 +1047,8 @@ const calcPolygonElevation = (feature) => {
 
   if (name === null) return height_ag;
 
-  const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
-
   // Prevent negative elevation, which causes buildings to appear higher than height_ag
-  return Math.max(height_ag - voidDeckFloors * VOID_DECK_FLOOR_HEIGHT, 0);
+  return Math.max(height_ag - voidDeckHeight(feature?.properties), 0);
 };
 
 // Generate floor lines for a building polygon
@@ -1058,15 +1059,15 @@ const generateFloorLines = (features) => {
     const coords = feature?.geometry?.coordinates?.[0]; // Get outer ring
     if (!coords || coords.length < 3) return;
 
-    const voidDeckFloors = Number(feature?.properties?.void_deck ?? 0);
-    const baseHeight = voidDeckFloors * VOID_DECK_FLOOR_HEIGHT;
+    const baseHeight = voidDeckHeight(feature?.properties);
     const buildingHeight = calcPolygonElevation(feature);
 
-    // Use floors_ag from properties if available, otherwise calculate from height
-    // floors_ag includes void deck floors, so we need to subtract them
+    // Use floors_ag from properties if available, otherwise calculate from height.
+    // `enclosedFloorsAg` excludes the void deck under either column form -- `floors_ag`
+    // includes the void storeys alongside `void_deck`, but not alongside `height_vd`.
     const floorsAg = feature?.properties?.floors_ag;
     const numFloors = floorsAg
-      ? Math.max(Number(floorsAg) - voidDeckFloors, 0)
+      ? Math.max(Math.round(enclosedFloorsAg(feature?.properties)), 0)
       : Math.floor(buildingHeight / FLOOR_HEIGHT);
 
     if (numFloors <= 0) return;

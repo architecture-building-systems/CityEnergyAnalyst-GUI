@@ -14,10 +14,28 @@ import useDatabaseEditorStore, {
   useDatabaseSchema,
   useGetDatabaseColumnChoices,
   useUpdateDatabaseData,
+  useRenameDatabaseRowIndex,
+  useMaterialsAvailable,
+  MATERIAL_LAYER_COLUMNS,
+  DERIVED_ENVELOPE_COLUMNS,
+  rowHasMaterialLayer,
 } from 'features/database-editor/stores/databaseEditorStore';
-import { getColumnPropsFromDataType } from 'utils/tabulator';
+import { arraysEqual } from 'utils';
+import {
+  getColumnPropsFromDataType,
+  setDataPreservingScroll,
+} from 'utils/tabulator';
 import { TableColumnSchema } from './column-schema';
-import { Button, Divider, Modal, Form, Input, Select, Alert } from 'antd';
+import {
+  Button,
+  Divider,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Alert,
+  message,
+} from 'antd';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -422,6 +440,8 @@ const EntityDataTable = ({
   const divRef = useRef();
   const tabulatorRef = useRef();
   const demoMode = useDemoMode();
+  // Marks the store update this table is about to cause, so the sync effect can skip it.
+  const editedHereRef = useRef(false);
 
   // Expose specific Tabulator methods to parent components
   useImperativeHandle(
@@ -429,7 +449,7 @@ const EntityDataTable = ({
     () => ({
       getSelectedRows: () => tabulatorRef.current?.getSelectedRows() || [],
       getSelectedData: () => tabulatorRef.current?.getSelectedData() || [],
-      setData: (data) => tabulatorRef.current?.setData(data),
+      setData: (data) => setDataPreservingScroll(tabulatorRef.current, data),
       selectRow: (row) => tabulatorRef.current?.selectRow(row),
       deselectRow: (row) => tabulatorRef.current?.deselectRow(row),
       getRows: () => tabulatorRef.current?.getRows() || [],
@@ -446,21 +466,37 @@ const EntityDataTable = ({
     return data?.[0] ?? null;
   }, [columnSchema, data]);
 
+  const materialsAvailable = useMaterialsAvailable();
+
+  const hiddenColumns = useMemo(() => {
+    if (materialsAvailable) return commonColumns;
+    // Without MATERIALS.csv the layer columns have nothing to reference, so they are noise —
+    // unless this table already holds layer values, which the user needs to see to fix.
+    const layersUsed = (data ?? []).some((row) =>
+      MATERIAL_LAYER_COLUMNS.some(
+        (c) => row?.[c] != null && row[c] !== '' && row[c] !== 0,
+      ),
+    );
+    if (layersUsed) return commonColumns;
+    return [...(commonColumns ?? []), ...MATERIAL_LAYER_COLUMNS];
+  }, [commonColumns, materialsAvailable, data]);
+
   const columns = useMemo(() => {
     const columnKeys = Object.keys(columnSchema ?? firstRowKeys ?? {});
 
     // Filter columns to either show only the index column or hide the common columns based on props
     const filtered = columnKeys.filter((c) =>
-      c === indexColumn ? showIndex : !(commonColumns || []).includes(c),
+      c === indexColumn ? showIndex : !(hiddenColumns || []).includes(c),
     );
     if (showIndex && filtered.includes(indexColumn)) {
       return [indexColumn, ...filtered.filter((c) => c !== indexColumn)];
     }
     return filtered;
-  }, [columnSchema, indexColumn, commonColumns, showIndex, firstRowKeys]);
+  }, [columnSchema, indexColumn, hiddenColumns, showIndex, firstRowKeys]);
 
   const getColumnChoices = useGetDatabaseColumnChoices();
   const updateDatabaseData = useUpdateDatabaseData();
+  const renameDatabaseRowIndex = useRenameDatabaseRowIndex();
 
   // Convert columns to tabulator format
   const tabulatorColumns = useMemo(() => {
@@ -485,19 +521,67 @@ const EntityDataTable = ({
         colDef.hozAlign = 'left';
       }
 
-      // FIXME: Prevent edits for index column until we can implement better validation of foreign key references
+      // Saved keys stay read-only: other tables reference them and we have no foreign-key
+      // validation yet. A row added since the last save has no referents, so it can be named.
+      // Read `changes` at edit time rather than closing over it — Tabulator applies these
+      // definitions once at construction, so a captured value would never see a row added
+      // afterwards, nor the clearing of `changes` on save that must lock the row again.
       if (column == indexColumn) {
+        colDef.editor = 'input';
+        colDef.editable = demoMode
+          ? false
+          : (cell) => {
+              const rowIndex = cell.getRow().getIndex();
+              return useDatabaseEditorStore
+                .getState()
+                .changes.some(
+                  (change) =>
+                    (change.action === 'create' ||
+                      change.action === 'duplicate') &&
+                    change.index === rowIndex &&
+                    arraysEqual(change.dataKey, dataKey),
+                );
+            };
         return colDef;
+      }
+
+      // A row with material layers derives its U/GHG on save, so typing one here would be
+      // silently replaced. Lock the cell instead, and say why. Clearing the layers makes the
+      // row direct-property-based and the cell editable again.
+      if (DERIVED_ENVELOPE_COLUMNS.includes(column)) {
+        colDef.editable = demoMode
+          ? false
+          : (cell) => !rowHasMaterialLayer(cell.getRow().getData());
+        colDef.formatter = (cell) => {
+          // Style the cell element rather than returning markup: the value comes from the
+          // database, and both branches must run so that clearing a row's layers also clears
+          // the styling a previous render applied.
+          const derived = rowHasMaterialLayer(cell.getRow().getData());
+          const element = cell.getElement();
+          element.title = derived
+            ? 'Derived from the material layers of this row'
+            : '';
+          element.style.color = derived ? '#888' : '';
+          element.style.fontStyle = derived ? 'italic' : '';
+          return cell.getValue() ?? '';
+        };
       }
 
       // Handle columns with choices
       if (_colSchema?.choice != undefined) {
         const values = _colSchema?.choice?.values || [];
         const lookup = _colSchema.choice?.lookup;
-        const columnChoices = lookup
+        const nullable = _colSchema?.nullable ?? false;
+        let columnChoices = lookup
           ? getColumnChoices(lookup?.path, lookup?.column)
           : values;
-        const nullable = _colSchema?.nullable ?? false;
+        // A select editor can only offer what it lists, so a nullable column needs an explicit
+        // blank — otherwise the dropdown can set a value but never clear one.
+        if (nullable) {
+          columnChoices = Array.isArray(columnChoices)
+            ? ['', ...columnChoices]
+            : { '': '(none)', ...(columnChoices ?? {}) };
+        }
 
         return {
           ...colDef,
@@ -575,6 +659,27 @@ const EntityDataTable = ({
           const position = cell.getRow().getPosition();
           const oldValue = cell.getOldValue();
 
+          if (field === indexColumn) {
+            // The index is the row's identity, not one of its fields — renaming moves it.
+            const result = renameDatabaseRowIndex(
+              dataKey,
+              indexColumn,
+              oldValue,
+              value,
+            );
+            if (!result.ok) {
+              message.error(result.reason);
+              cell.restoreOldValue();
+            } else if (result.name !== value) {
+              message.info(`Saved as ${result.name}.`);
+              // No store change means no setData refresh, so the cell would keep the raw
+              // text the user typed and the row's index would no longer match the store.
+              if (result.name === oldValue) cell.restoreOldValue();
+            }
+            return;
+          }
+
+          editedHereRef.current = true;
           // Pass both index and position - let the store decide which to use
           updateDatabaseData(
             dataKey,
@@ -600,16 +705,23 @@ const EntityDataTable = ({
     indexColumn,
     tabulatorColumns,
     updateDatabaseData,
+    renameDatabaseRowIndex,
     enableRowSelection,
     onRowSelectionChanged,
     demoMode,
   ]);
 
-  // Update table data when data changes (e.g., when a new row is added)
+  // Re-render when the data changes elsewhere: a row added or deleted, a save that derived new
+  // values, a scenario switch. An edit made in this table is skipped -- the cell already shows
+  // the new value, and rebuilding the rows would cost the user their scroll position.
   useEffect(() => {
+    if (editedHereRef.current) {
+      editedHereRef.current = false;
+      return;
+    }
     if (tabulatorRef.current && data) {
       // Deep clone to ensure Tabulator receives mutable data
-      tabulatorRef.current.setData(structuredClone(data));
+      setDataPreservingScroll(tabulatorRef.current, structuredClone(data));
     }
   }, [data]);
 

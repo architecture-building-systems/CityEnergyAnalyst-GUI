@@ -129,8 +129,51 @@ const useParameterAsyncValidation = ({
   return validator;
 };
 
+// Why a choice-backed parameter can legitimately have nothing to offer.
+// Keyed by parameter `type`; falls back to the generic message below.
+// The dropdown is scoped to the selected scenario, so "empty" almost always
+// means "the feature that produces these hasn't been run here yet" — say so
+// rather than leaving the user to guess.
+const NO_CHOICES_MESSAGES = {
+  GenerationParameter: 'No generations found. Run Optimisation first.',
+  NetworkLayoutChoiceParameter:
+    'No network layouts found in this scenario. Run Network Layout first.',
+  NetworkLayoutMultiChoiceParameter:
+    'No network layouts found in this scenario. Run Network Layout first.',
+  ComponentMultiChoiceParameter:
+    'No supply components found. Select a what-if scenario and scale first.',
+};
+
+// WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter carry a `mode` (see
+// WhatIfNameChoicesMixin, backend config.py) naming which what-if output the dropdown
+// requires -- final-energy, emissions, costs, or heat-rejection -- so the "run this
+// first" hint names the right tool instead of always pointing at Final Energy.
+const WHATIF_MODE_LABELS = {
+  final_energy: 'Final Energy',
+  emissions: 'Emissions',
+  costs: 'Costs',
+  heat_rejection: 'Heat Rejection',
+};
+
+const whatIfNoChoicesMessage = (mode) => {
+  const label = WHATIF_MODE_LABELS[mode] ?? WHATIF_MODE_LABELS.final_energy;
+  return `No what-if scenarios with ${label.toLowerCase()} results found in this scenario. Run ${label} first.`;
+};
+
+const noChoicesMessage = (type, mode) => {
+  if (
+    type === 'WhatIfNameChoiceParameter' ||
+    type === 'WhatIfNameMultiChoiceParameter'
+  ) {
+    return whatIfNoChoicesMessage(mode);
+  }
+  return (
+    NO_CHOICES_MESSAGES[type] ?? 'There are no valid choices for this input'
+  );
+};
+
 const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
-  const { name, type, value, choices, nullable, help, needs_validation } =
+  const { name, type, value, choices, nullable, help, needs_validation, mode } =
     parameter;
   const { setFieldsValue } = form;
   const constructionColorMap = useMapStore(
@@ -303,13 +346,12 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
 
       const optionsValidator = (_, value) => {
         if (choices == null || choices.length === 0) {
+          // Generations block the form even when nullable — running the tool
+          // without one is never meaningful.
           if (type === 'GenerationParameter')
-            return Promise.reject(
-              'No generations found. Run optimization first.',
-            );
+            return Promise.reject(NO_CHOICES_MESSAGES.GenerationParameter);
 
-          if (!nullable)
-            return Promise.reject('There are no valid choices for this input');
+          if (!nullable) return Promise.reject(noChoicesMessage(type, mode));
           return Promise.resolve();
         }
 
@@ -407,9 +449,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
               validator: (_, value) => {
                 if (choices == null || choices.length === 0) {
                   if (!nullable)
-                    return Promise.reject(
-                      'There are no valid choices for this input',
-                    );
+                    return Promise.reject(noChoicesMessage(type, mode));
                   return Promise.resolve();
                 }
 
