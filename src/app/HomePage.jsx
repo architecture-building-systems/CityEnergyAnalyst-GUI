@@ -11,7 +11,7 @@ import { Button, ConfigProvider } from 'antd';
 import {
   ERROR_RED,
   ERROR_RED_LIGHTEST,
-  WARNING_ICON_BLACK,
+  ICON_BLACK,
   publishPaletteCssVariables,
 } from 'constants/theme';
 import { LeftOutlined } from '@ant-design/icons';
@@ -199,7 +199,7 @@ const CEA_THEME = {
     colorWarningBg: ERROR_RED_LIGHTEST,
     colorWarningBorder: ERROR_RED,
     // Drives the filled circle behind the `!` on every warning icon.
-    colorWarning: WARNING_ICON_BLACK,
+    colorWarning: ICON_BLACK,
     colorErrorBg: ERROR_RED_LIGHTEST,
     colorErrorBorder: ERROR_RED,
   },

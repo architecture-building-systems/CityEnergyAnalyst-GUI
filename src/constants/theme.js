@@ -6,7 +6,11 @@ export const PATHWAY_PRIMARY = '#1470AF';
 // *not* the `#1470AF` used for `colorPrimary` and PATHWAY_PRIMARY -- they differ by one step
 // per channel. Use this one wherever the UUEN brand blue is meant.
 export const UUEN_BLUE = '#1471B0';
+// `red`, `green` and `grey` from `cea/visualisation/format/plot_colours.py` -- rgb(240,77,91),
+// rgb(126,199,143) and rgb(127,128,134) -- so the GUI reads the same as the plots.
 export const ERROR_RED = '#f04d5b';
+export const CEA_GREEN = '#7ec78f';
+export const CEA_GREY = '#7f8086';
 
 // The tint behind warning *and* error surfaces alike -- they deliberately share one background,
 // with the icon carrying the severity. From the CEA palette in
@@ -16,10 +20,9 @@ export const ERROR_RED = '#f04d5b';
 // `publishPaletteCssVariables` bridges the second case.
 export const ERROR_RED_LIGHTEST = '#fdece9'; // red_lightest rgb(253,236,233)
 
-// Warning icons. Now that warning and error share a background, the icon is the only thing
-// separating them at a glance -- black against the red tint reads as "look" without competing
-// with the red of a real error.
-export const WARNING_ICON_BLACK = '#000000';
+// The warning glyph. Now that warning and error share a background, black separates them at a
+// glance without competing with the red of a real error.
+export const ICON_BLACK = '#000000';
 
 /**
  * Palette colours that stylesheets need, as CSS custom properties.
