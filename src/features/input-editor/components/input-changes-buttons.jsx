@@ -48,7 +48,9 @@ export const InputChangesButtons = ({ changes }) => {
             message.success('Changes Saved!');
           })
           .catch((error) => {
-            if (error.response.status === 401) setShowLoginModal(true);
+            // Optional: a network failure has no `response`, and reading `.status` off it
+            // would throw inside the catch, replacing the error modal with a blank screen.
+            if (error?.response?.status === 401) setShowLoginModal(true);
             else {
               Modal.error({
                 title: 'Could not save changes',
