@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { setDataPreservingScroll } from 'utils/tabulator';
-import { message, Tooltip } from 'antd';
+import { Alert, message, Tooltip } from 'antd';
 import Tabulator from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { createRoot } from 'react-dom/client';
@@ -9,6 +9,7 @@ import { useSelectTool } from 'features/project/stores/tool-card';
 
 import {
   INDEX_COLUMN,
+  NO_GEOMETRY_FIX_MANY,
   NO_GEOMETRY_FIX_ONE,
   NO_GEOMETRY_REASON,
 } from 'features/input-editor/constants';
@@ -28,6 +29,7 @@ const Table = ({
   readOnly = false,
   driftedColumns = [],
   rowsWithoutGeometry = [],
+  onFitHeightChange,
 }) => {
   const tabulator = useRef(null);
 
@@ -36,6 +38,11 @@ const Table = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* The missing-geometry banner shares this row with the buttons rather than taking one of
+          its own -- the
+          table is the point of this panel, and two stacked full-width rows above it cost real
+          height on a short window. `minWidth: 0` lets the alert wrap instead of pushing the
+          buttons off the edge. */}
       <div
         style={{
           display: 'flex',
@@ -45,6 +52,34 @@ const Table = ({
           marginBottom: 12,
         }}
       >
+        {rowsWithoutGeometry.length > 0 ? (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Visible without having to suspect anything is wrong. The row tint and its hover
+                text explain the individual row; this says the map is incomplete at all, which is
+                the part a user cannot otherwise tell -- a building missing from the map looks
+                the same as a building that was never there. */}
+            <Alert
+              type="warning"
+              showIcon
+              banner
+              message={
+                rowsWithoutGeometry.length === 1 ? (
+                  <>
+                    <b>{rowsWithoutGeometry[0]}</b> {NO_GEOMETRY_REASON}{' '}
+                    {NO_GEOMETRY_FIX_ONE}
+                  </>
+                ) : (
+                  <>
+                    {rowsWithoutGeometry.length} rows have no footprint, so they
+                    are not drawn on the map:{' '}
+                    <b>{rowsWithoutGeometry.join(', ')}</b>.{' '}
+                    {NO_GEOMETRY_FIX_MANY}
+                  </>
+                )
+              }
+            />
+          </div>
+        ) : null}
         <TableButtons
           selected={selected}
           tabulator={tabulator}
@@ -66,6 +101,7 @@ const Table = ({
             readOnly={readOnly}
             driftedColumns={driftedColumns}
             rowsWithoutGeometry={rowsWithoutGeometry}
+            onFitHeightChange={onFitHeightChange}
           />
         </ErrorBoundary>
       </div>
@@ -82,6 +118,7 @@ const TableEditor = ({
   readOnly = false,
   driftedColumns = [],
   rowsWithoutGeometry = [],
+  onFitHeightChange,
 }) => {
   const updateInputData = useUpdateInputs();
   const [data, columnDef] = useTableData(
@@ -99,6 +136,68 @@ const TableEditor = ({
   // A ref means the highlight tracks the current data without tearing the table down.
   const rowsWithoutGeometryRef = useRef(rowsWithoutGeometry);
   const columnDescriptionRef = useRef();
+  // Latest reported measurement, so an unchanged render doesn't push state to the parent.
+  const fitHeightRef = useRef(null);
+  const onFitHeightChangeRef = useRef(onFitHeightChange);
+  onFitHeightChangeRef.current = onFitHeightChange;
+
+  // Raw measurements for the parent to size its card from -- how many rows to actually show is
+  // its policy, not the table's. Rows are uniform, so one measured row scales; virtual scrolling
+  // means the DOM holds only the visible ones, which is why row count comes from the data rather
+  // than from `querySelectorAll`.
+  //
+  // `container` is reported alongside so the parent can derive its own chrome height
+  // (card - container) without measuring anything inside the table. That difference does not
+  // change when the card resizes, which is what keeps the fit from oscillating.
+  const reportFitHeight = () => {
+    const el = divRef.current;
+    const table = tabulator.current;
+    if (!el || !table) return;
+
+    const header = el.querySelector('.tabulator-header');
+    const row = el.querySelector('.tabulator-row');
+    const rowCount = table.getDataCount('active');
+    if (!row || !rowCount) return;
+
+    const headerHeight = header?.offsetHeight ?? 0;
+    const rowHeight = row.offsetHeight;
+    const container = el.offsetHeight;
+    // Mid-animation the card has barely any height, so the parent would derive a chrome of ~0
+    // and collapse the card. The ResizeObserver below re-reports once it has grown.
+    if (container <= 0 || rowHeight <= 0) return;
+
+    const next = { headerHeight, rowHeight, rowCount, container };
+    const previous = fitHeightRef.current;
+    if (
+      previous &&
+      Object.keys(next).every((key) => previous[key] === next[key])
+    ) {
+      return;
+    }
+    fitHeightRef.current = next;
+    onFitHeightChangeRef.current?.(next);
+  };
+
+  useEffect(() => {
+    const el = divRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+
+    let frame = null;
+    const observer = new ResizeObserver(() => {
+      // rAF-coalesced: the observer fires for the resize our own report causes, and reporting
+      // again synchronously inside the callback trips "ResizeObserver loop" warnings.
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        reportFitHeight();
+      });
+    });
+    observer.observe(el);
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const filtered = tabulator.current && tabulator.current.getFilters().length;
@@ -109,6 +208,9 @@ const TableEditor = ({
       layout: 'fitDataFill',
       layoutColumnsOnNewData: true,
       height: '100%',
+      // Fires after data, filter and redraw renders alike -- one hook covers every path that
+      // changes how many rows are on screen.
+      renderComplete: () => reportFitHeight(),
       validationFailed: (cell) => {
         const field = cell.getField();
         const { type, constraints } = columnDescriptionRef.current[field];
@@ -367,10 +469,14 @@ const useTableData = (tab, columns, tables, readOnly, driftedColumns) => {
           // Drop the editor rather than hiding the tab: the values still need reading. This
           // is only the affordance -- `save_all_inputs` refuses these tables while locked, so
           // a stale client cannot write them either.
-          _columns = _columns.map(({ editor, editorParams, cellDblClick, ...rest }) => ({
-            ...rest,
-            cssClass: [rest.cssClass, 'cea-input-readonly'].filter(Boolean).join(' '),
-          }));
+          _columns = _columns.map(
+            ({ editor, editorParams, cellDblClick, ...rest }) => ({
+              ...rest,
+              cssClass: [rest.cssClass, 'cea-input-readonly']
+                .filter(Boolean)
+                .join(' '),
+            }),
+          );
         }
 
         if (driftedColumns.length) {

@@ -3,14 +3,18 @@ export const CEA_PURPLE = '#AC6080';
 export const PATHWAY_PRIMARY = '#1470AF';
 export const ERROR_RED = '#f04d5b';
 
-// Warning / error surfaces, from the CEA palette in
+// The tint behind warning *and* error surfaces alike -- they deliberately share one background,
+// with the icon carrying the severity. From the CEA palette in
 // `cea/visualisation/format/plot_colours.py`, so the GUI matches the plots. Exported rather
-// than written inline because they are needed in two places that cannot share a value
-// otherwise: antd's theme tokens, and plain CSS (Tabulator rows are not antd components).
+// than written inline because it is needed in two places that cannot share a value otherwise:
+// antd's theme tokens, and plain CSS (Tabulator rows are not antd components).
 // `publishPaletteCssVariables` bridges the second case.
-export const WARNING_YELLOW = '#ffd11d'; // yellow
-export const WARNING_YELLOW_LIGHTEST = '#fff9e9'; // yellow_lightest rgb(255,249,233)
-export const ERROR_RED_LIGHTEST = '#fdece9'; // red_lightest    rgb(253,236,233)
+export const ERROR_RED_LIGHTEST = '#fdece9'; // red_lightest rgb(253,236,233)
+
+// Warning icons. Now that warning and error share a background, the icon is the only thing
+// separating them at a glance -- black against the red tint reads as "look" without competing
+// with the red of a real error.
+export const WARNING_ICON_BLACK = '#000000';
 
 /**
  * Palette colours that stylesheets need, as CSS custom properties.

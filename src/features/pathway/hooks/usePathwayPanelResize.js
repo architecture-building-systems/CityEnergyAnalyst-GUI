@@ -1,69 +1,19 @@
-import { useRef, useState, useEffect } from 'react';
 import { useTransition } from '@react-spring/web';
+import { usePanelResize } from 'hooks/usePanelResize';
 
 export const usePathwayPanelResize = ({ open, expanded }) => {
-  const [pathwayPanelHeight, setPathwayPanelHeight] = useState(425);
-  const pathwayResizeStateRef = useRef(null);
-  const pathwayPanelContentRef = useRef(null);
-
-  useEffect(() => {
-    const clampHeight = (height) =>
-      Math.max(290, Math.min(height, window.innerHeight - 220));
-
-    const handleResize = () => {
-      setPathwayPanelHeight((current) => clampHeight(current));
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handlePointerMove = (event) => {
-      const resizeState = pathwayResizeStateRef.current;
-      if (!resizeState) return;
-
-      const contentHeight =
-        pathwayPanelContentRef.current?.scrollHeight ?? Infinity;
-      const nextHeight = Math.max(
-        360,
-        Math.min(
-          resizeState.startHeight - (event.clientY - resizeState.startY),
-          window.innerHeight - 220,
-          contentHeight + 18,
-        ),
-      );
-      setPathwayPanelHeight(nextHeight);
-    };
-
-    const handlePointerUp = () => {
-      pathwayResizeStateRef.current = null;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseup', handlePointerUp);
-    return () => {
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('mouseup', handlePointerUp);
-    };
-  }, []);
-
-  /* eslint-disable react-compiler/react-compiler */
-  const handlePathwayResizeStart = (event) => {
-    if (expanded || event.button !== 0) return;
-
-    pathwayResizeStateRef.current = {
-      startY: event.clientY,
-      startHeight: pathwayPanelHeight,
-    };
-    document.body.style.cursor = 'ns-resize';
-    document.body.style.userSelect = 'none';
-    event.preventDefault();
-  };
-  /* eslint-enable react-compiler/react-compiler */
+  const {
+    height: pathwayPanelHeight,
+    contentRef: pathwayPanelContentRef,
+    handleResizeStart: handlePathwayResizeStart,
+  } = usePanelResize({
+    initialHeight: 425,
+    minDragHeight: 360,
+    minClampHeight: 290,
+    bottomInset: 220,
+    // Fullscreen sizes itself from the viewport, so dragging is meaningless there.
+    disabled: expanded,
+  });
 
   const pathwayPanelTransition = useTransition(open, {
     from: { transform: 'translateY(100%)', opacity: 0, maxHeight: '0vh' },

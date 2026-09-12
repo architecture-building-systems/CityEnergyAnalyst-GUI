@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
@@ -39,8 +39,41 @@ import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 import { usePanelVisibility } from 'features/project/hooks/usePanelVisibility';
 import { usePathwayPanelResize } from 'features/pathway/hooks/usePathwayPanelResize';
+import { usePanelResize } from 'hooks/usePanelResize';
+import { PanelResizeHandle } from 'components/PanelResizeHandle';
 import { useDemoMode } from 'stores/demoStore';
 import DemoBanner from 'components/DemoBanner';
+
+// How much of the table the input editor shows when it opens. Enough to read at a glance
+// without the card swallowing the map; dragging the handle lifts the cap for good.
+const INPUT_TABLE_LAUNCH_ROWS = 7;
+// Room for a horizontal scrollbar under the last row, so fitting never clips one.
+const INPUT_TABLE_FIT_SLACK_PX = 18;
+
+/**
+ * Height for the input-editor card: the table's own height when that is shorter than
+ * `maxHeight`, so a two-row table doesn't leave a slab of empty Tabulator holder below it and a
+ * thousand-row table doesn't open as a wall.
+ *
+ * `chrome` -- everything in the card that isn't the table (handle, tabs, toolbar, padding) -- is
+ * derived by difference so none of it has to be hardcoded. It does not change with the card's
+ * own height, which is what stops the fit from feeding back into itself.
+ *
+ * `maxRows` caps the opening size only. Callers drop it once the user has dragged, because past
+ * that point their chosen height wins and the whole table has to stay reachable.
+ */
+const fitInputTableHeight = ({ fit, cardHeight, maxHeight, maxRows }) => {
+  if (!fit || cardHeight <= 0) return maxHeight;
+
+  const { headerHeight, rowHeight, rowCount, container } = fit;
+  const chrome = cardHeight - container;
+  if (!Number.isFinite(chrome) || chrome < 0) return maxHeight;
+
+  const visibleRows = Math.min(rowCount, maxRows);
+  const natural =
+    headerHeight + rowHeight * visibleRows + INPUT_TABLE_FIT_SLACK_PX;
+  return Math.min(maxHeight, chrome + natural);
+};
 
 const ProjectOverlay = ({ project, scenarioName }) => {
   const queryClient = useQueryClient();
@@ -71,7 +104,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     showToolBar,
     showToolCardSideButtons,
     showToolCard,
-    closeInputEditor,
     toggleInputEditor,
     togglePathwayPanel,
     handleHideAll,
@@ -87,6 +119,36 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     open: !hideAll && showPathwayPanel,
     expanded: pathwayPanelExpanded,
   });
+
+  const inputTableCardRef = useRef(null);
+  const [inputTableFit, setInputTableFit] = useState(null);
+  // Last rendered card height. Read by the resize hook so a drag starts from what is on screen
+  // rather than from the unfitted ceiling; holding it in a ref keeps it one render behind, which
+  // is exactly the value the user is grabbing.
+  const renderedInputTableHeightRef = useRef(null);
+
+  const {
+    height: inputTableHeight,
+    hasResized: inputTableResized,
+    handleResizeStart: handleInputTableResizeStart,
+  } = usePanelResize({
+    // Headroom over the launch row cap below, so that cap is what governs on open.
+    initialHeight: 460,
+    // No `contentRef`: the table scrolls internally, so its `scrollHeight` is unbounded and the
+    // hook's content cap would never bind. `fitInputTableHeight` does the fitting instead.
+    minDragHeight: 240,
+    minClampHeight: 240,
+    bottomInset: 220,
+    renderedHeight: renderedInputTableHeightRef.current,
+  });
+
+  const fittedInputTableHeight = fitInputTableHeight({
+    fit: inputTableFit,
+    cardHeight: inputTableCardRef.current?.offsetHeight ?? 0,
+    maxHeight: inputTableHeight,
+    maxRows: inputTableResized ? Infinity : INPUT_TABLE_LAUNCH_ROWS,
+  });
+  renderedInputTableHeightRef.current = fittedInputTableHeight;
 
   const handlePlotToolSelected = (tool) => {
     const layer = Object.keys(VIEW_PLOT_RESULTS).find(
@@ -191,7 +253,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     enter: {
       transform: 'translateY(0%)',
       opacity: 1,
-      maxHeight: '40vh',
+      // Tracks the fitted height rather than a fixed 40vh: react-spring writes animated styles
+      // straight onto the DOM node, so a value here overrides the one set via `style` below.
+      // The pathway card keeps the two in sync the same way.
+      maxHeight: `${fittedInputTableHeight}px`,
       marginBlock: '0px',
     }, // Slide in to the screen and become visible
     leave: {
@@ -394,14 +459,24 @@ const ProjectOverlay = ({ project, scenarioName }) => {
         {inputTableTransition((styles, item) =>
           item ? (
             <animated.div
+              ref={inputTableCardRef}
               className="cea-overlay-card"
               style={{
-                backgroundColor: 'rgb(255, 255, 255)',
                 ...styles,
-                // maxHeight: '40vh',
+                overflow: 'hidden',
+                backgroundColor: 'rgb(255, 255, 255)',
+                display: 'flex',
+                flexDirection: 'column',
+                // After `...styles` so the fitted height wins over the spring's `enter` value.
+                height: fittedInputTableHeight,
+                maxHeight: fittedInputTableHeight,
               }}
             >
-              <InputTable onClose={closeInputEditor} />
+              <PanelResizeHandle
+                onMouseDown={handleInputTableResizeStart}
+                label="Resize input editor"
+              />
+              <InputTable onFitHeightChange={setInputTableFit} />
             </animated.div>
           ) : null,
         )}
@@ -435,31 +510,10 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               }}
             >
               {!pathwayPanelExpanded ? (
-                <button
-                  type="button"
-                  aria-label="Resize pathway panel"
+                <PanelResizeHandle
                   onMouseDown={handlePathwayResizeStart}
-                  style={{
-                    height: 18,
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'ns-resize',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 0,
-                    flex: '0 0 auto',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 56,
-                      height: 5,
-                      borderRadius: 999,
-                      background: 'rgba(148, 163, 184, 0.7)',
-                    }}
-                  />
-                </button>
+                  label="Resize pathway panel"
+                />
               ) : null}
               <div ref={pathwayPanelContentRef}>
                 <PathwayPanel
