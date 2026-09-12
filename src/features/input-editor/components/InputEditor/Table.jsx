@@ -27,6 +27,7 @@ const Table = ({
   tables,
   columns,
   readOnly = false,
+  locked = false,
   driftedColumns = [],
   rowsWithoutGeometry = [],
   onFitHeightChange,
@@ -88,6 +89,8 @@ const Table = ({
           columns={columns}
           setSelected={setSelected}
           readOnly={readOnly}
+          locked={locked}
+          rowsWithoutGeometry={rowsWithoutGeometry}
         />
       </div>
       <div style={{ minHeight: 0, flex: 1 }}>

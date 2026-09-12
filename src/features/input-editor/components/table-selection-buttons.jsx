@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button, Modal, Tooltip } from 'antd';
-import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
+import { BinAnimationIcon, DuplicateIcon, InputEditorIcon } from 'assets/icons';
 import { ERROR_RED } from 'constants/theme';
 import EditSelectedModal from 'features/input-editor/components/InputEditor/EditSelectedModal';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -19,7 +19,11 @@ const outlineButtonStyle = {
   // alongside; they are centred, and matching the other text buttons in the app won out over
   // matching the icons in this one row.
 };
-import { useDeleteBuildings } from 'features/input-editor/hooks/updates/useUpdateInputs';
+import {
+  useDeleteBuildings,
+  useDuplicateBuilding,
+} from 'features/input-editor/hooks/updates/useUpdateInputs';
+import DuplicateBuildingModal from 'features/input-editor/components/DuplicateBuildingModal';
 
 export const TableButtons = ({
   selected,
@@ -29,11 +33,15 @@ export const TableButtons = ({
   columns,
   setSelected,
   readOnly = false,
+  locked = false,
+  rowsWithoutGeometry = [],
 }) => {
   const deleteBuildings = useDeleteBuildings();
+  const duplicateBuilding = useDuplicateBuilding();
 
   const [filterToggle, setFilterToggle] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [duplicateVisible, setDuplicateVisible] = useState(false);
 
   const currentTableIndexes = useMemo(
     () => Object.keys(tables?.[tab] || {}),
@@ -92,6 +100,31 @@ export const TableButtons = ({
     setModalVisible(true);
   };
 
+  const duplicateSelected = (newName) => {
+    const created = duplicateBuilding(selected[0], newName);
+    // Leave the user on the copy rather than the original -- it is the row they just made and
+    // the one they are most likely to edit next.
+    if (created) setSelected([created]);
+  };
+
+  // Duplicating only makes sense on `zone` -- every other tab is derived from it. One at a
+  // time, like the overview card's Duplicate Scenario, because the dialog names the copy.
+  const canDuplicate =
+    tab === 'zone' && selectedInTable && selected.length === 1;
+
+  // Copying a building with no footprint would only produce a second footprint-less building,
+  // and the editor cannot draw one for either of them.
+  const selectionHasNoGeometry = rowsWithoutGeometry.includes(selected[0]);
+
+  // A new building's envelope, HVAC, comfort, loads and supply rows come from the server's
+  // re-map of `buildings_added`, which only runs while locked. Unlocked, the copy would have no
+  // derived rows at all. Disabled rather than hidden, so the tooltip can say why.
+  const duplicateBlockedBecause = selectionHasNoGeometry
+    ? 'This building has no footprint, so there is nothing to copy. Give it a geometry or delete the row.'
+    : !locked
+      ? "Turn on Archetype Lock to duplicate: CEA generates the new building's archetype tables on save."
+      : null;
+
   return (
     <>
       <Button style={outlineButtonStyle} onClick={selectAll}>
@@ -108,6 +141,29 @@ export const TableButtons = ({
         <Button style={outlineButtonStyle} onClick={clearSelected}>
           Clear Selection
         </Button>
+      )}
+      {canDuplicate && (
+        // Matches the overview card's Duplicate Scenario button
+        // (`ScenarioRow.jsx :: DuplicateScenarioIcon`): same icon, same `type="text"` button in
+        // the same container, same name-it-first dialog.
+        <div className="cea-card-icon-button-container">
+          <Tooltip
+            title={duplicateBlockedBecause ?? 'Duplicate Building'}
+            placement="bottom"
+          >
+            {/* `span` wrapper: antd tooltips do not fire on a disabled button, which is the one
+                state where this tooltip has something to say. */}
+            <span>
+              <Button
+                type="text"
+                icon={<DuplicateIcon />}
+                onClick={() => setDuplicateVisible(true)}
+                disabled={duplicateBlockedBecause !== null}
+                aria-label="Duplicate Building"
+              />
+            </span>
+          </Tooltip>
+        </div>
       )}
       {/* `cea-card-icon-button-container` (HomePage.css) is the shared icon-button chrome used
           by the overview card, the pathway panel and the canvas cards: 12px fillet, 1px #ddd
@@ -151,6 +207,13 @@ export const TableButtons = ({
         </div>
       )}
 
+      <DuplicateBuildingModal
+        visible={duplicateVisible}
+        setVisible={setDuplicateVisible}
+        building={selected[0]}
+        existingNames={currentTableIndexes}
+        onDuplicate={duplicateSelected}
+      />
       <EditSelectedModal
         visible={modalVisible}
         setVisible={setModalVisible}

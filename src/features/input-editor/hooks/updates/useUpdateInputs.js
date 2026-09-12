@@ -156,15 +156,31 @@ function deleteGeoJsonFeature(geojsons, table, building) {
   };
 }
 
-function deleteBuildings(state, buildings, changes, onChange) {
+export function deleteBuildings(state, buildings, changes, onChange) {
   let { geojsons, tables } = state;
   const isZoneBuilding = !!tables?.zone?.[buildings[0]];
   const isTree = !!tables?.trees?.[buildings[0]];
 
-  // Track delete changes
   const layer = isZoneBuilding ? 'zone' : isTree ? 'trees' : 'surroundings';
-  changes.delete[layer] = changes.delete[layer] || [];
-  changes.delete[layer].push(...buildings);
+
+  // Deleting a building that was duplicated but never saved cancels the duplicate rather than
+  // recording a deletion -- there is nothing on disk to delete, and listing it under both ADD
+  // and DELETE in the summary would be nonsense.
+  const pendingAdds = new Set(changes.add?.[layer] ?? []);
+  const cancelled = buildings.filter((building) => pendingAdds.has(building));
+  if (cancelled.length) {
+    changes.add[layer] = (changes.add[layer] ?? []).filter(
+      (building) => !cancelled.includes(building),
+    );
+    if (!changes.add[layer].length) delete changes.add[layer];
+  }
+
+  // Track delete changes
+  const removed = buildings.filter((building) => !pendingAdds.has(building));
+  if (removed.length) {
+    changes.delete[layer] = changes.delete[layer] || [];
+    changes.delete[layer].push(...removed);
+  }
 
   for (const building of buildings) {
     // Remove deleted buildings from update changes
@@ -195,6 +211,65 @@ function deleteBuildings(state, buildings, changes, onChange) {
   }
   onChange?.(changes);
   return { geojsons, tables };
+}
+
+/**
+ * A free name for a copy of `name`, as `name_`.
+ *
+ * If that is taken the suffix carries a counter (`name_2`, `name_3`) rather than piling up
+ * underscores -- duplicating the same building five times should not produce `B1000_____`.
+ * Exported so the duplicate dialog can pre-fill the same suggestion it would otherwise get.
+ */
+export function suggestDuplicateName(name, taken) {
+  if (!taken.has(`${name}_`)) return `${name}_`;
+  let counter = 2;
+  while (taken.has(`${name}_${counter}`)) counter += 1;
+  return `${name}_${counter}`;
+}
+
+function duplicateGeoJsonFeature(geojsons, table, building, newName) {
+  const tableData = geojsons?.[table];
+  const source = tableData?.features?.find(
+    (feature) => feature.properties[INDEX_COLUMN] === building,
+  );
+  // No feature to copy: the caller has already refused the duplicate, so this is only a guard.
+  if (!source) return geojsons;
+
+  return {
+    ...geojsons,
+    [table]: {
+      ...tableData,
+      features: [
+        ...tableData.features,
+        {
+          ...source,
+          properties: { ...source.properties, [INDEX_COLUMN]: newName },
+        },
+      ],
+    },
+  };
+}
+
+/**
+ * Copy one zone building, footprint and all.
+ *
+ * Only the `zone` row and its geometry are copied. The archetype-derived tables are left alone
+ * on purpose: the server regenerates them for any building it sees as new
+ * (`archetype_lock.buildings_added`), which is why the UI only offers this while the scenario
+ * is locked. Writing them here would be overwritten by that re-map anyway.
+ */
+export function duplicateBuilding(state, building, newName, changes, onChange) {
+  let { geojsons, tables } = state;
+  const source = tables?.zone?.[building];
+  if (!source || !geojsons?.zone) return { geojsons, tables, created: null };
+
+  tables = { ...tables, zone: { ...tables.zone, [newName]: { ...source } } };
+  geojsons = duplicateGeoJsonFeature(geojsons, 'zone', building, newName);
+
+  changes.add.zone = [...(changes.add.zone ?? []), newName];
+  onChange?.({ ...changes });
+
+  return { geojsons, tables, created: newName };
 }
 
 export const useUpdateInputs = () => {
@@ -296,6 +371,45 @@ export const useDeleteBuildings = () => {
         };
       },
     );
+  };
+};
+
+export const useDuplicateBuilding = () => {
+  const queryClient = useQueryClient();
+
+  const changes = useChanges();
+  const setChanges = useSetChanges();
+
+  return (building, newName) => {
+    const {
+      project,
+      scenario: scenarioName,
+      childScenario,
+    } = useProjectStore.getState();
+    const childToken = childScenarioToken(childScenario);
+
+    // Captured from the updater so the caller can select the new row. `created` describes this
+    // one call, so it is not spread into the query data.
+    let created = null;
+    queryClient.setQueryData(
+      ['inputs', project, scenarioName, childToken],
+      (oldData) => {
+        const result = duplicateBuilding(
+          oldData,
+          building,
+          newName,
+          changes,
+          setChanges,
+        );
+        created = result.created;
+        return {
+          ...oldData,
+          geojsons: result.geojsons,
+          tables: result.tables,
+        };
+      },
+    );
+    return created;
   };
 };
 

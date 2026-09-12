@@ -113,6 +113,7 @@ const InputTable = ({ onFitHeightChange }) => {
           tables={tables}
           columns={columns}
           readOnly={readOnly}
+          locked={lock.locked}
           driftedColumns={driftedColumns}
           rowsWithoutGeometry={rowsWithoutGeometry}
           onFitHeightChange={onFitHeightChange}

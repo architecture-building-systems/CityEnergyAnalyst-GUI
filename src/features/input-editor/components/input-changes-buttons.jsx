@@ -3,7 +3,10 @@ import { Button, Modal, message } from 'antd';
 import { AsyncError } from 'components/AsyncError';
 import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
 import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
-import { useDiscardChanges } from 'features/input-editor/stores/inputEditorStore';
+import {
+  hasChanges,
+  useDiscardChanges,
+} from 'features/input-editor/stores/inputEditorStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
 import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { ChangesSummary } from 'features/input-editor/components/changes-summary';
@@ -21,9 +24,9 @@ export const InputChangesButtons = ({ changes }) => {
     discardChangesFunc();
   };
 
-  const noChanges =
-    !Object.keys(changes?.update ?? {}).length &&
-    !Object.keys(changes?.delete ?? {}).length;
+  // Shared with the card that renders these buttons, so the two can never disagree about
+  // whether there is anything to save.
+  const noChanges = !hasChanges(changes);
 
   const _saveChanges = () => {
     Modal.confirm({

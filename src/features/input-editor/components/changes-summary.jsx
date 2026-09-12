@@ -15,6 +15,20 @@ export const ChangesSummary = ({ changes }) => {
           ))}
         </div>
       ) : null}
+      {Object.keys(changes.add ?? {}).length ? (
+        <div>
+          <b>ADD:</b>
+          {Object.keys(changes.add).map((table) => (
+            <div key={table}>
+              <u>
+                <b>{table}</b>
+              </u>
+              <div>{changes.add[table].join(', ')}</div>
+              <br />
+            </div>
+          ))}
+        </div>
+      ) : null}
       {Object.keys(changes.update).length ? (
         <div>
           <b>UPDATE:</b>
