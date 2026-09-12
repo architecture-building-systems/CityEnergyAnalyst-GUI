@@ -144,8 +144,8 @@ export const TableButtons = ({
       )}
       {canDuplicate && (
         // Matches the overview card's Duplicate Scenario button
-        // (`ScenarioRow.jsx :: DuplicateScenarioIcon`): same icon, same `type="text"` button in
-        // the same container, same name-it-first dialog.
+        // (`ScenarioRow.jsx :: DuplicateScenarioIcon`): same icon, same chrome, same
+        // name-it-first dialog.
         <div className="cea-card-icon-button-container">
           <Tooltip
             title={duplicateBlockedBecause ?? 'Duplicate Building'}
@@ -165,11 +165,8 @@ export const TableButtons = ({
           </Tooltip>
         </div>
       )}
-      {/* `cea-card-icon-button-container` (HomePage.css) is the shared icon-button chrome used
-          by the overview card, the pathway panel and the canvas cards: 12px fillet, 1px #ddd
-          outline, 30x30 `type="text"` button inside. One container per button, so each reads as
-          its own action. The container draws the outline, so the buttons stay borderless. Both
-          are absent rather than disabled without a selection, so the row actions only appear
+      {/* `cea-card-icon-button-container` is the shared icon-button chrome (see HomePage.css).
+          Both actions are absent rather than disabled without a selection, so they only appear
           once they mean something.
 
           Bulk edit writes into the same change set as cell editing, so it has to respect the

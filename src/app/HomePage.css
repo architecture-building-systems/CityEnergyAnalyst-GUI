@@ -25,6 +25,12 @@
   overflow: hidden;
 }
 
+/* Shared chrome for icon-only actions, used by the overview card, the pathway panel, the
+   canvas cards and the input editor. Wrap each action in its own container and put a
+   borderless `type="text"` antd Button inside -- the container draws the outline, so a
+   bordered button in here would render two rings. Colour the icon inline when it needs to
+   carry meaning (destructive, primary); antd's own button reset otherwise wins over the SVG.
+   Renders at 38px: 30px icon + 3px padding + 1px border each side. */
 .cea-card-icon-button-container {
   border-radius: 12px;
   outline: 1px solid #dddddd;
@@ -60,14 +66,20 @@
    specificity with the rules above so the purple wins by source
    order without `!important`. */
 @keyframes glow-purple {
-  0% { box-shadow: 0 0 2px 1px #AC6080; }
-  50% { box-shadow: 0 0 8px 2px #AC6080; }
-  100% { box-shadow: 0 0 2px 1px #AC6080; }
+  0% {
+    box-shadow: 0 0 2px 1px #ac6080;
+  }
+  50% {
+    box-shadow: 0 0 8px 2px #ac6080;
+  }
+  100% {
+    box-shadow: 0 0 2px 1px #ac6080;
+  }
 }
 
 .cea-canvas-blink.ant-select,
 .cea-card-icon-button-container.cea-canvas-blink {
-  outline: 1px solid #AC6080;
+  outline: 1px solid #ac6080;
   animation: glow-purple 2s infinite;
 }
 
@@ -79,6 +91,23 @@
 
 .cea-card-icon-button-container button:hover {
   background: #eee !important;
+}
+
+/* Filled variant, for the one action in a group that should be taken (Save). Only the
+   background is set here: pair it with `.active` and the glow above supplies the outline, so
+   the two rules do not fight over `outline-color` at equal specificity.
+   `!important` on the button matches the reset rules above, which use it to beat antd. */
+.cea-card-icon-button-container.cea-icon-button-primary {
+  background: var(--cea-uuen-blue, #1471b0);
+}
+
+.cea-card-icon-button-container.cea-icon-button-primary button {
+  color: #fff !important;
+}
+
+/* A translucent white wash rather than the grey above, which would be invisible on blue. */
+.cea-card-icon-button-container.cea-icon-button-primary button:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
 }
 
 .cea-card-icon-button-container svg {

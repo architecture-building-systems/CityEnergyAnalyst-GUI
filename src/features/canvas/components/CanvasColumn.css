@@ -56,9 +56,15 @@
  * matching card after the scroll. Removed via setTimeout after
  * the animation finishes so the stroke goes back to default. */
 @keyframes cea-card-flash-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(126, 85, 154, 0.6); }
-  50%  { box-shadow: 0 0 0 6px rgba(126, 85, 154, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(126, 85, 154, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(126, 85, 154, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(126, 85, 154, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(126, 85, 154, 0);
+  }
 }
 .cea-card-flash {
   animation: cea-card-flash-pulse 0.9s ease-out 2;

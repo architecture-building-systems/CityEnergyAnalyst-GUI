@@ -562,6 +562,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           {!hideAll && (
             <BottomToolButtons
               onOpenInputEditor={toggleInputEditor}
+              inputEditorOpen={showInputEditor}
               onTogglePathwayPanel={togglePathwayPanel}
               pathwayPanelOpen={showPathwayPanel}
               showTools={!!scenarioName}

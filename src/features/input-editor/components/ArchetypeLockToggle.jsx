@@ -2,9 +2,7 @@ import { ConfigProvider, Modal, Switch, message } from 'antd';
 import { useState } from 'react';
 
 import InfoTooltip from 'components/InfoTooltip';
-
-// cea/visualisation/format/plot_colours.py :: uuen_blue = rgb(20,113,176)
-const UUEN_BLUE = '#1471B0';
+import { UUEN_BLUE } from 'constants/theme';
 
 const wrapperStyle = {
   display: 'flex',
@@ -26,7 +24,12 @@ const labelStyle = { fontSize: 14, color: '#222' };
  * disk, while re-locking regenerates every derived table from the archetypes and discards
  * whatever was edited. The copy reflects that asymmetry rather than warning identically twice.
  */
-const ArchetypeLockToggle = ({ locked, buildingCount, onChanged, disabled = false }) => {
+const ArchetypeLockToggle = ({
+  locked,
+  buildingCount,
+  onChanged,
+  disabled = false,
+}) => {
   const [busy, setBusy] = useState(false);
 
   const apply = async (nextLocked) => {
@@ -63,12 +66,15 @@ const ArchetypeLockToggle = ({ locked, buildingCount, onChanged, disabled = fals
       content: (
         <>
           <p style={{ marginTop: 0 }}>
-            CEA will regenerate <b>envelope</b>, <b>HVAC</b>, <b>indoor comfort</b>,{' '}
-            <b>internal loads</b>, <b>supply</b> and the <b>building schedules</b>
-            {buildingCount ? ` for all ${buildingCount} buildings` : ''} from their archetypes.
+            CEA will regenerate <b>envelope</b>, <b>HVAC</b>,{' '}
+            <b>indoor comfort</b>, <b>internal loads</b>, <b>supply</b> and the{' '}
+            <b>building schedules</b>
+            {buildingCount ? ` for all ${buildingCount} buildings` : ''} from
+            their archetypes.
           </p>
           <p style={{ marginBottom: 0 }}>
-            Any edits you made to those tables will be lost. This cannot be undone.
+            Any edits you made to those tables will be lost. This cannot be
+            undone.
           </p>
         </>
       ),

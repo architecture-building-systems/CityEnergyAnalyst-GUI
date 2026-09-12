@@ -95,10 +95,7 @@ export const PlotChoices = ({ onSelected }) => {
                 group.subgroups
                   .filter((sub) => hasVisiblePlot(sub.keys))
                   .map((sub) => (
-                    <div
-                      key={sub.label}
-                      className="cea-tool-choices-subgroup"
-                    >
+                    <div key={sub.label} className="cea-tool-choices-subgroup">
                       <small className="cea-tool-choices-subgroup-label">
                         {sub.label}
                       </small>

@@ -1,6 +1,11 @@
 // CEA palette — see src/features/canvas/CLAUDE.md for usage notes.
 export const CEA_PURPLE = '#AC6080';
 export const PATHWAY_PRIMARY = '#1470AF';
+
+// `uuen_blue` from `cea/visualisation/format/plot_colours.py` (rgb(20,113,176)). Note this is
+// *not* the `#1470AF` used for `colorPrimary` and PATHWAY_PRIMARY -- they differ by one step
+// per channel. Use this one wherever the UUEN brand blue is meant.
+export const UUEN_BLUE = '#1471B0';
 export const ERROR_RED = '#f04d5b';
 
 // The tint behind warning *and* error surfaces alike -- they deliberately share one background,
@@ -27,6 +32,7 @@ export const WARNING_ICON_BLACK = '#000000';
  * the whole palette ahead of demand just moves the guesswork.
  */
 const CSS_VARIABLES = {
+  '--cea-uuen-blue': UUEN_BLUE,
   '--cea-error-red': ERROR_RED,
   '--cea-error-red-lightest': ERROR_RED_LIGHTEST,
 };

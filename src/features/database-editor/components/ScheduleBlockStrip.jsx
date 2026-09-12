@@ -41,7 +41,10 @@ const ScheduleBlockCell = ({ hour, state, onSelect }) => (
 const ScheduleStateLegend = () => (
   <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
     {SCHEDULE_STATES.map((state) => (
-      <div key={state} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div
+        key={state}
+        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+      >
         <div
           style={{
             width: 12,

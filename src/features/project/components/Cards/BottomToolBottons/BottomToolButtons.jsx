@@ -20,6 +20,7 @@ const TEMP_DISABLED = ['reports'];
 const BottomToolButtons = ({
   showTools,
   onOpenInputEditor,
+  inputEditorOpen,
   onTogglePathwayPanel,
   pathwayPanelOpen,
   hidePathwayBuilder,
@@ -41,6 +42,7 @@ const BottomToolButtons = ({
       title: 'Input Editor',
       onClick: () => onOpenInputEditor?.(),
       hidden: !showTools,
+      active: inputEditorOpen,
     },
     {
       id: 'pathway',

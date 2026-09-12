@@ -1,5 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Button, Modal, Tooltip } from 'antd';
 import { ChangesSummary } from 'features/input-editor/components/changes-summary';
 import { InputChangesButtons } from 'features/input-editor/components/input-changes-buttons';
 import {
@@ -21,6 +21,7 @@ export const InputChangesCard = () => {
 
   return (
     <>
+      {/* One row: the label on the left, every action clustered on the right. */}
       <div
         className="cea-overlay-card"
         style={{
@@ -28,28 +29,29 @@ export const InputChangesCard = () => {
           padding: 12,
 
           display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
 
           fontSize: 12,
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <b>Changes detected</b>
-          <Button
-            size="small"
-            icon={<SearchOutlined />}
-            title="View changes"
-            onClick={onOpen}
-          />
+        <b>Changes detected</b>
+        {/* `gap: 8` matches the spacing `InputChangesButtons` uses between its own two
+            buttons, so the three read as one evenly-spaced group. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="cea-card-icon-button-container">
+            <Tooltip title="View changes" placement="bottom">
+              <Button
+                type="text"
+                icon={<SearchOutlined />}
+                onClick={onOpen}
+                aria-label="View changes"
+              />
+            </Tooltip>
+          </div>
+          <InputChangesButtons changes={changes} />
         </div>
-        <InputChangesButtons changes={changes} />
       </div>
       <Modal title="Changes" open={visible} onCancel={onClose} footer={null}>
         <ChangesSummary changes={changes} />

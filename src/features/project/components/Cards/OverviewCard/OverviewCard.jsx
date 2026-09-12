@@ -293,7 +293,9 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         // resolves.
         const requestId = beginStateZoneOverrideRequest();
         fetchStateGeojson(pathwayName, year)
-          .then((data) => setStateZoneOverride(data?.geojson ?? null, requestId))
+          .then((data) =>
+            setStateZoneOverride(data?.geojson ?? null, requestId),
+          )
           .catch(() => setStateZoneOverride(null, requestId));
         queryClient.invalidateQueries({ queryKey: ['toolParams'] });
         queryClient.invalidateQueries({ queryKey: ['inputs'] });

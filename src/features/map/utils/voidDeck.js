@@ -21,7 +21,8 @@ export const voidDeckHeight = (properties) => {
 
   const heightAg = Number(props.height_ag);
   const floorsAg = Number(props.floors_ag);
-  if (!Number.isFinite(heightAg) || !Number.isFinite(floorsAg) || floorsAg <= 0) return 0;
+  if (!Number.isFinite(heightAg) || !Number.isFinite(floorsAg) || floorsAg <= 0)
+    return 0;
 
   return Math.max(voidDeckFloors * (heightAg / floorsAg), 0);
 };
