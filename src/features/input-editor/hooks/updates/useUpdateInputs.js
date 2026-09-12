@@ -144,12 +144,33 @@ function updateDaySchedule(
   return schedule;
 }
 
+/**
+ * The table's rows without one building.
+ *
+ * Copied out rather than `delete`-d in place: these mutators are handed React Query's cached
+ * object, and mutating it defeats structural sharing -- the "new" data compares equal to the
+ * mutated old one, so the cache hands back the *same* reference and nothing re-renders. The
+ * row left the store but stayed on screen until a refresh.
+ */
+function withoutBuilding(rows, building) {
+  const { [building]: _removed, ...rest } = rows;
+  return rest;
+}
+
 function deleteGeoJsonFeature(geojsons, table, building) {
+  const tableData = geojsons?.[table];
+  // `df_to_json` returns null when it cannot read the geometry file, so a scenario whose map
+  // does not draw has `geojsons.zone === null` while the table still lists every row from
+  // `get_building_properties`. Reading `.features` off that threw inside `Modal.confirm`'s
+  // `onOk`, where antd swallows it -- the confirm dialog simply did nothing. The row still
+  // has to leave the tables, so skip the geojson rather than fail the delete.
+  if (!tableData?.features) return geojsons;
+
   return {
     ...geojsons,
     [table]: {
-      ...geojsons[table],
-      features: geojsons[table].features.filter(
+      ...tableData,
+      features: tableData.features.filter(
         (feature) => feature.properties[INDEX_COLUMN] != building,
       ),
     },
@@ -194,8 +215,10 @@ export function deleteBuildings(state, buildings, changes, onChange) {
       // Delete building from every table that is not surroundings
       for (const table in tables) {
         if (table != 'surroundings' && tables?.[table]?.[building]) {
-          delete tables[table][building];
-          tables = { ...tables, [table]: { ...tables[table] } };
+          tables = {
+            ...tables,
+            [table]: withoutBuilding(tables[table], building),
+          };
         }
       }
       // Delete building from zone geojson
@@ -203,13 +226,14 @@ export function deleteBuildings(state, buildings, changes, onChange) {
     } else {
       const type = isTree ? 'trees' : 'surroundings';
 
-      delete tables[type][building];
-      tables = { ...tables, [type]: { ...tables[type] } };
+      tables = { ...tables, [type]: withoutBuilding(tables[type], building) };
 
       geojsons = deleteGeoJsonFeature(geojsons, type, building);
     }
   }
-  onChange?.(changes);
+  // A new object: zustand compares by reference, so passing the same one back would leave
+  // anything selecting `state.changes` (the changes summary) showing the previous set.
+  onChange?.({ ...changes });
   return { geojsons, tables };
 }
 
