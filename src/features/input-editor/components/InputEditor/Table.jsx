@@ -7,7 +7,11 @@ import { createRoot } from 'react-dom/client';
 import { isElectron } from 'utils/electron';
 import { useSelectTool } from 'features/project/stores/tool-card';
 
-import { INDEX_COLUMN } from 'features/input-editor/constants';
+import {
+  INDEX_COLUMN,
+  NO_GEOMETRY_FIX_ONE,
+  NO_GEOMETRY_REASON,
+} from 'features/input-editor/constants';
 import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 import {
   useSelected,
@@ -17,7 +21,7 @@ import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 
-const Table = ({ tab, tables, columns }) => {
+const Table = ({ tab, tables, columns, rowsWithoutGeometry = [] }) => {
   const tabulator = useRef(null);
 
   const selected = useSelected();
@@ -51,6 +55,7 @@ const Table = ({ tab, tables, columns }) => {
             selected={selected}
             tables={tables}
             columns={columns}
+            rowsWithoutGeometry={rowsWithoutGeometry}
           />
         </ErrorBoundary>
       </div>
@@ -58,13 +63,23 @@ const Table = ({ tab, tables, columns }) => {
   );
 };
 
-const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
+const TableEditor = ({
+  tab,
+  selected,
+  tabulator,
+  tables,
+  columns,
+  rowsWithoutGeometry = [],
+}) => {
   const updateInputData = useUpdateInputs();
   const [data, columnDef] = useTableData(tab, columns, tables);
   const divRef = useRef(null);
   const tableRef = useRef(tab);
   // Marks the store update this table is about to cause, so the sync effect can skip it.
   const editedHereRef = useRef(false);
+  // Read by `rowFormatter`, which Tabulator keeps from the options it was constructed with.
+  // A ref means the highlight tracks the current data without tearing the table down.
+  const rowsWithoutGeometryRef = useRef(rowsWithoutGeometry);
   const columnDescriptionRef = useRef();
 
   useEffect(() => {
@@ -102,6 +117,17 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
         );
       },
       placeholder: '<div>No matching records found.</div>',
+      // A row the map cannot draw. Not a validation failure -- the attributes are fine and the
+      // row saves normally -- so it is tinted rather than flagged as an error. The banner above
+      // the table says the map is incomplete; this marks which row.
+      rowFormatter: (row) => {
+        const name = row.getData()?.[INDEX_COLUMN];
+        const missing = rowsWithoutGeometryRef.current.includes(name);
+        row.getElement().classList.toggle('cea-input-row-no-geometry', missing);
+        row.getElement().title = missing
+          ? `This row ${NO_GEOMETRY_REASON} ${NO_GEOMETRY_FIX_ONE}`
+          : '';
+      },
     });
     filtered && tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
   }, []);
@@ -110,6 +136,15 @@ const TableEditor = ({ tab, selected, tabulator, tables, columns }) => {
   useEffect(() => {
     tableRef.current = tab;
   }, [tab]);
+
+  useEffect(() => {
+    rowsWithoutGeometryRef.current = rowsWithoutGeometry;
+    // Re-run the formatter against the new set; without this the tint survives a fix until
+    // the table is rebuilt for some other reason.
+    if (tabulator.current) tabulator.current.redraw(true);
+    // Keyed on the contents, not the array: a new array is built on every render, and
+    // `tabulator` is a ref, so neither belongs in the dependency list.
+  }, [rowsWithoutGeometry.join(',')]);
 
   useEffect(() => {
     if (tabulator.current && columnDef !== null) {
