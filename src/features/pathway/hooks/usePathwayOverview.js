@@ -42,6 +42,11 @@ export function usePathwayOverview({ enabled = true } = {}) {
     queryFn: fetchPathwayOverview,
     enabled: enabled && !!scenario,
     staleTime: PATHWAY_OVERVIEW_STALE_MS,
+    // A save in another tab/window invalidates this query there but has no
+    // way to push that here (no socket event backs phase changes like
+    // `custom`) -- forcing a refetch on focus, ignoring `staleTime`, is what
+    // catches it as soon as this tab/window is looked at again.
+    refetchOnWindowFocus: 'always',
   });
 }
 

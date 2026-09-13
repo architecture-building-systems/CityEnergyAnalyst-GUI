@@ -131,11 +131,26 @@ describe('writes via apiClient (always the real backend, never demo)', () => {
     );
   });
 
-  it('deletePathwayYear -> DELETE /pathways/{name}/years/{year}', async () => {
-    await pathwayApi.deletePathwayYear('demo', 2030);
+  it('clearPathwayYear -> DELETE /pathways/{name}/years/{year}', async () => {
+    await pathwayApi.clearPathwayYear('demo', 2030);
     expect(apiClient.delete).toHaveBeenCalledWith(
       '/pathways/demo/years/2030',
-      expect.any(Object),
+      expect.objectContaining({
+        params: { delete_inputs: true, delete_outputs: true },
+      }),
+    );
+  });
+
+  it('clearPathwayYear -> forwards the inputs/outputs selection', async () => {
+    await pathwayApi.clearPathwayYear('demo', 2030, undefined, {
+      deleteInputs: false,
+      deleteOutputs: true,
+    });
+    expect(apiClient.delete).toHaveBeenCalledWith(
+      '/pathways/demo/years/2030',
+      expect.objectContaining({
+        params: { delete_inputs: false, delete_outputs: true },
+      }),
     );
   });
 
