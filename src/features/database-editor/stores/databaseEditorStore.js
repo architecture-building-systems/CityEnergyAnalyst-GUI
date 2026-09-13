@@ -393,6 +393,10 @@ const useDatabaseEditorStore = create((set, get) => ({
     displayInfo,
     position,
   ) => {
+    // The nested table reference this update produced (or left unchanged, if the table
+    // couldn't be found) -- the caller compares this against the `data` prop it was passed,
+    // to tell whether a later store change is its own edit reflected back or an outside one.
+    let updatedTable;
     set((state) => {
       let _dataKey = dataKey;
       let _index;
@@ -541,11 +545,15 @@ const useDatabaseEditorStore = create((set, get) => ({
         ...(displayInfo && { displayInfo }),
       };
 
+      const newTable = getNestedValue(newData, _dataKey);
+      updatedTable = _index !== undefined ? newTable?.[_index] : newTable;
+
       return {
         data: newData,
         changes: [...state.changes, change],
       };
     });
+    return updatedTable;
   },
 
   addDatabaseRow: (dataKey, indexCol, rowData, action = 'create') => {

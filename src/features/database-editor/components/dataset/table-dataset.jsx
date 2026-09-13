@@ -679,9 +679,11 @@ const EntityDataTable = ({
             return;
           }
 
-          editedHereRef.current = true;
-          // Pass both index and position - let the store decide which to use
-          updateDatabaseData(
+          // Pass both index and position - let the store decide which to use. Store the
+          // resulting nested table reference (not a boolean) -- the sync effect below compares
+          // it against its `data` prop, so a no-op update (which returns the same reference the
+          // effect already reflects) doesn't wrongly suppress the next outside change.
+          editedHereRef.current = updateDatabaseData(
             dataKey,
             index,
             field,
@@ -715,10 +717,9 @@ const EntityDataTable = ({
   // values, a scenario switch. An edit made in this table is skipped -- the cell already shows
   // the new value, and rebuilding the rows would cost the user their scroll position.
   useEffect(() => {
-    if (editedHereRef.current) {
-      editedHereRef.current = false;
-      return;
-    }
+    const editedHere = editedHereRef.current === data;
+    editedHereRef.current = null;
+    if (editedHere) return;
     if (tabulatorRef.current && data) {
       // Deep clone to ensure Tabulator receives mutable data
       setDataPreservingScroll(tabulatorRef.current, structuredClone(data));
