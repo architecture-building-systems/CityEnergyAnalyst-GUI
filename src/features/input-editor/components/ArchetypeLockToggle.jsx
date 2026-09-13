@@ -60,7 +60,7 @@ const ArchetypeLockToggle = ({
 
   const confirmLock = () =>
     Modal.confirm({
-      title: 'Lock to the archetypes?',
+      title: 'Lock to the Archetypes?',
       // Name the tabs, the schedules and the building count: "your changes will be lost" is
       // not actionable unless the user knows what is about to be rewritten.
       content: (
@@ -70,15 +70,15 @@ const ArchetypeLockToggle = ({
             <b>indoor comfort</b>, <b>internal loads</b>, <b>supply</b> and the{' '}
             <b>building schedules</b>
             {buildingCount ? ` for all ${buildingCount} buildings` : ''} from
-            their archetypes.
+            their archetypes (i.e. const_type, use_type and ratios) using Archetype Mapper.
           </p>
           <p style={{ marginBottom: 0 }}>
-            Any edits you made to those tables will be lost. This cannot be
+            Any custom edits you made to those tables will be lost. This cannot be
             undone.
           </p>
         </>
       ),
-      okText: 'Lock and regenerate',
+      okText: 'LOCK & REGENERATE',
       okButtonProps: { danger: true },
       cancelText: 'Cancel',
       onOk: () => apply(true),
