@@ -251,9 +251,24 @@ const useDatabaseEditorStore = create((set, get) => ({
       // from the material layers as it writes, so the values in the table are no longer the
       // ones on disk. This also runs the verifier, reporting any cross-row or cross-file rule
       // the browser cannot check on its own while the user still knows what they changed.
-      await useDatabaseEditorStore.getState().refreshDatabaseData({
-        background: true,
-      });
+      try {
+        await useDatabaseEditorStore.getState().refreshDatabaseData({
+          background: true,
+        });
+      } catch (refreshError) {
+        // The save already succeeded and `changes` is already cleared -- only the re-read
+        // failed. Report it through databaseValidation, not the save catch below, or a 401
+        // here gets misread as a login failure and a successful save gets reported as one.
+        set({
+          databaseValidation: {
+            status: 'invalid',
+            message: readErrorMessage(
+              refreshError,
+              'The database was saved, but could not be read back.',
+            ),
+          },
+        });
+      }
     } catch (error) {
       const detail = error?.response?.data?.detail;
       if (
