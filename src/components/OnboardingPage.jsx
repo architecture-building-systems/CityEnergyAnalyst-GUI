@@ -15,7 +15,10 @@ import useNavigationStore from 'stores/navigationStore';
 import { useInvalidateUser } from 'stores/useUserQuery';
 import './OnboardingPage.css';
 
-const PRIVACY_POLICY_URL = 'https://uuen.cloud/terms-of-use/';
+// No separate privacy notice is published yet -- this is the CEA-4 Master SaaS Terms page,
+// so the disclosure below links to it as "Terms of Use" rather than mislabelling it "Privacy
+// Policy".
+const TERMS_OF_USE_URL = 'https://uuen.cloud/terms-of-use/';
 
 const { Title, Text } = Typography;
 
@@ -234,11 +237,11 @@ const OnboardingPage = ({ onComplete }) => {
               We use survey responses to provide you with relevant content and
               improve our tools and services. See our{' '}
               <a
-                href={PRIVACY_POLICY_URL}
+                href={TERMS_OF_USE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Privacy Policy
+                Terms of Use
               </a>{' '}
               for more information.
             </Text>
