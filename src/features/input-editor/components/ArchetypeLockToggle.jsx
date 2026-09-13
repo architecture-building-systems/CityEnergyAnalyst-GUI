@@ -53,7 +53,7 @@ const ArchetypeLockToggle = ({
         'the building schedules consistent with each building’s archetype. You become ' +
         'responsible for the values you change, and CEA will mark the archetype cells in the ' +
         'zone table once they no longer match.',
-      okText: 'Unlock',
+      okText: 'UNLOCK', okButtonProps: { danger: true },
       cancelText: 'Cancel',
       onOk: () => apply(false),
     });
