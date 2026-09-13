@@ -728,8 +728,23 @@ const useDatabaseEditorStore = create((set, get) => ({
 
       if (!result.ok) return state;
 
+      // Validation entries are keyed by row index (see updateDatabaseValidation below). Left
+      // under `oldIndex`, a later correction -- keyed by the new name -- could never clear
+      // them, leaving ExportDatabaseButton permanently disabled by a row that no longer exists.
+      const newValidation = produce(state.validation, (draft) => {
+        for (const database of Object.values(draft)) {
+          for (const sheet of Object.values(database)) {
+            if (oldIndex in sheet) {
+              sheet[name] = sheet[oldIndex];
+              delete sheet[oldIndex];
+            }
+          }
+        }
+      });
+
       return {
         data: newData,
+        validation: newValidation,
         changes: state.changes.map((change) =>
           change.index === oldIndex && arraysEqual(change.dataKey, dataKey)
             ? { ...change, index: name }
