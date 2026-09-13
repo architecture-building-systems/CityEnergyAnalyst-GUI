@@ -19,6 +19,7 @@ const ToolForm = ({
   script,
   readonlyFields = [],
   scenarioContext,
+  dataUpdatedAt,
 }) => {
   const { ref: scrollRef, maskStyle, recheck } = useScrollFade();
   const activeKey = useToolFormStore((state) => state.activeKey);
@@ -35,9 +36,15 @@ const ToolForm = ({
     scenarioContext,
   );
 
+  // Reset on script change AND on any fresh param fetch (save, reset-to-default,
+  // scenario switch, ...) -- not just script. Without dataUpdatedAt here, switching the
+  // active scenario while a tool stays mounted leaves pre-switch values in this ref;
+  // useFormReset's subsequent form.resetFields() then reports every changed field as
+  // "changed from its stale pre-switch value", spuriously re-triggering a
+  // parameter-metadata refetch for that field's dependents.
   useEffect(() => {
     watchedValuesRef.current = {};
-  }, [script]);
+  }, [script, dataUpdatedAt]);
 
   const dependencyMap = useMemo(() => {
     const allParams = [
@@ -143,6 +150,7 @@ const ToolForm = ({
             allParameters={parameters}
             toolName={script}
             disabled={isReadOnly}
+            scenarioContext={scenarioContext}
           />
         );
       });
@@ -169,6 +177,7 @@ const ToolForm = ({
               // under Input data on LCA plots) stay editable even
               // when the caller asked to lock them.
               disabled={readonlySet.has(param.name)}
+              scenarioContext={scenarioContext}
             />
           )),
       }))

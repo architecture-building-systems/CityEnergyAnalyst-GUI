@@ -1,5 +1,8 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
-import { enclosedFloorsAg, voidDeckHeight } from 'features/map/utils/voidDeck';
+import {
+  enclosedFloorsAg,
+  voidDeckHeight,
+} from 'features/map/utils/voidDeck';
 import * as turf from '@turf/turf';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import {

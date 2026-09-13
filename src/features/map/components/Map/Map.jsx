@@ -75,7 +75,10 @@ import {
 import useBuildingSelectionStore from 'stores/buildingSelectionStore';
 import { AttributionControl } from 'maplibre-gl';
 import MapTooltip from './MapTooltip';
-import { voidDeckHeight, enclosedFloorsAg } from 'features/map/utils/voidDeck';
+import {
+  voidDeckHeight,
+  enclosedFloorsAg,
+} from 'features/map/utils/voidDeck';
 
 const useMapAttribution = (mapRef) => {
   // Effect to handle map attribution
@@ -1033,7 +1036,9 @@ const calcPolygonWithZ = (feature) => {
   if (name === null) return coords;
 
   const voidHeight = voidDeckHeight(feature?.properties);
-  return coords.map((coord) => coord.map((c) => [c[0], c[1], voidHeight]));
+  return coords.map((coord) =>
+    coord.map((c) => [c[0], c[1], voidHeight]),
+  );
 };
 
 const calcPolygonElevation = (feature) => {

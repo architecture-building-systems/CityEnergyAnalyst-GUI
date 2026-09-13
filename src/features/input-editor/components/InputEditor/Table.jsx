@@ -270,6 +270,15 @@ const TableEditor = ({
   }, [rowsWithoutGeometry.join(',')]);
 
   useEffect(() => {
+    rowsWithoutGeometryRef.current = rowsWithoutGeometry;
+    // Re-run the formatter against the new set; without this the tint survives a fix until
+    // the table is rebuilt for some other reason.
+    if (tabulator.current) tabulator.current.redraw(true);
+    // Keyed on the contents, not the array: a new array is built on every render, and
+    // `tabulator` is a ref, so neither belongs in the dependency list.
+  }, [rowsWithoutGeometry.join(',')]);
+
+  useEffect(() => {
     if (tabulator.current && columnDef !== null) {
       tabulator.current.setColumns(columnDef.columns);
       columnDescriptionRef.current = columnDef.description;

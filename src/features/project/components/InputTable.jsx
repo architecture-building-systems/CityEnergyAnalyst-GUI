@@ -35,6 +35,7 @@ const InputTable = ({ onFitHeightChange }) => {
     const drawn = new Set(features.map((feature) => feature?.properties?.name));
     return Object.keys(tables[tab]).filter((name) => !drawn.has(name));
   }, [data?.geojsons, tables, tab]);
+
   const tabItems = useMemo(() => {
     if (typeof tables == 'undefined') return null;
 

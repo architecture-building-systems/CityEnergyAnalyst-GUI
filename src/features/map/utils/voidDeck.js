@@ -13,8 +13,7 @@
 export const voidDeckHeight = (properties) => {
   const props = properties || {};
 
-  const heightVd = Number(props.height_vd);
-  if (Number.isFinite(heightVd)) return Math.max(heightVd, 0);
+  if (hasHeightVd(props)) return Math.max(Number(props.height_vd), 0);
 
   const voidDeckFloors = Number(props.void_deck);
   if (!Number.isFinite(voidDeckFloors) || voidDeckFloors <= 0) return 0;
@@ -26,6 +25,12 @@ export const voidDeckHeight = (properties) => {
 
   return Math.max(voidDeckFloors * (heightAg / floorsAg), 0);
 };
+
+// `Number(null)` is 0 and `Number('')` is 0 -- both finite -- so a missing or blank
+// `height_vd` must be checked for presence before numeric conversion, or it reads as an
+// explicit zero-height void deck instead of falling back to `void_deck`.
+const hasHeightVd = (props) =>
+  props.height_vd != null && String(props.height_vd).trim() !== '';
 
 /**
  * Storeys of enclosed (non-void) building above ground.
@@ -44,7 +49,7 @@ export const enclosedFloorsAg = (properties) => {
   const floorsAg = Number(props.floors_ag);
   if (!Number.isFinite(floorsAg) || floorsAg <= 0) return 0;
 
-  if (Number.isFinite(Number(props.height_vd))) return floorsAg;
+  if (hasHeightVd(props)) return floorsAg;
 
   const voidDeckFloors = Number(props.void_deck);
   if (!Number.isFinite(voidDeckFloors) || voidDeckFloors <= 0) return floorsAg;

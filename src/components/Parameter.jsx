@@ -17,12 +17,12 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
 import { getScenarioClient } from 'lib/api/axios';
-import { activeScenarioHeaders } from 'lib/api/scenarioContext';
+import { scenarioHeaders } from 'lib/api/scenarioContext';
 import { useMapStore } from 'features/map/stores/mapStore';
 import BuildingsParameter from 'components/BuildingsParameter';
 
@@ -66,9 +66,26 @@ const useParameterAsyncValidation = ({
   name,
   form,
   nullable,
+  scenarioContext,
 }) => {
   const timerRef = useRef(null);
   const cancelRef = useRef(null);
+  const cancelledRef = useRef({ value: false });
+
+  // scenarioContext can be a fresh object literal every render (see Tool.jsx's
+  // scenarioOverride), so key invalidation on its primitives, not its identity.
+  const { project, scenarioName, childScenario } = scenarioContext ?? {};
+
+  // A validation scheduled under the previous scenario must never land against the
+  // newly-active one: mark it cancelled so its timeout/response is a no-op instead
+  // of calling form.setFields or settling the validator promise late.
+  useEffect(() => {
+    return () => {
+      cancelledRef.current.value = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (cancelRef.current) cancelRef.current();
+    };
+  }, [project, scenarioName, childScenario]);
 
   const validator = useCallback(
     (_, fieldValue) => {
@@ -85,6 +102,9 @@ const useParameterAsyncValidation = ({
       if (timerRef.current) clearTimeout(timerRef.current);
       if (cancelRef.current) cancelRef.current();
 
+      const cancelled = { value: false };
+      cancelledRef.current = cancelled;
+
       return new Promise((resolve, reject) => {
         cancelRef.current = resolve;
         timerRef.current = setTimeout(async () => {
@@ -98,8 +118,10 @@ const useParameterAsyncValidation = ({
                 value: fieldValue,
                 form_values: formValues,
               },
-              { headers: activeScenarioHeaders() },
+              { headers: scenarioHeaders(scenarioContext) },
             );
+
+            if (cancelled.value) return;
 
             if (response.data.valid) {
               const rawWarnings = response.data.warnings ?? [];
@@ -107,13 +129,15 @@ const useParameterAsyncValidation = ({
                 .filter((w) => w.field === name)
                 .map((w) => w.message);
               requestAnimationFrame(() => {
-                form.setFields([{ name, warnings: messages }]);
+                if (!cancelled.value)
+                  form.setFields([{ name, warnings: messages }]);
               });
               resolve();
             } else {
               reject(new Error(response.data.error));
             }
           } catch (error) {
+            if (cancelled.value) return;
             const errorMessage =
               error?.response?.data?.error ||
               error?.message ||
@@ -123,7 +147,7 @@ const useParameterAsyncValidation = ({
         }, 400);
       });
     },
-    [needs_validation, toolName, name, form, nullable],
+    [needs_validation, toolName, name, form, nullable, scenarioContext],
   );
 
   return validator;
@@ -146,8 +170,10 @@ const NO_CHOICES_MESSAGES = {
 
 // WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter carry a `mode` (see
 // WhatIfNameChoicesMixin, backend config.py) naming which what-if output the dropdown
-// requires -- final-energy, emissions, costs, or heat-rejection -- so the "run this
-// first" hint names the right tool instead of always pointing at Final Energy.
+// requires, so the "run this first" hint names the right tool instead of always
+// pointing at Final Energy. `mode` is the literal underscored value from each
+// parameter's `.mode` config key (final_energy, emissions, costs, heat_rejection) --
+// match WHATIF_MODE_LABELS' keys to that, not a hyphenated/display form.
 const WHATIF_MODE_LABELS = {
   final_energy: 'Final Energy',
   emissions: 'Emissions',
@@ -172,7 +198,13 @@ const noChoicesMessage = (type, mode) => {
   );
 };
 
-const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
+const Parameter = ({
+  parameter,
+  form,
+  toolName,
+  disabled: paramDisabled,
+  scenarioContext,
+}) => {
   const { name, type, value, choices, nullable, help, needs_validation, mode } =
     parameter;
   const { setFieldsValue } = form;
@@ -186,6 +218,7 @@ const Parameter = ({ parameter, form, toolName, disabled: paramDisabled }) => {
     name,
     form,
     nullable,
+    scenarioContext,
   });
 
   switch (type) {

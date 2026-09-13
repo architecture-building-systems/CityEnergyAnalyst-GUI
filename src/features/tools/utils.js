@@ -1,3 +1,12 @@
+// Discriminates a ToolProperties response (returned by GET /tools/{tool}, POST
+// .../save-config, and POST .../default) from the legacy plain-string save-config
+// response an older backend may still send. `parameters` is always present as an
+// array on ToolProperties and is never an array on the legacy body, so callers can
+// safely `setQueryData` the response when this is true and fall back to a refetch
+// otherwise -- see useSaveToolParams.js / useSetDefaultToolParams.js.
+export const isToolProperties = (data) =>
+  !!data && typeof data === 'object' && Array.isArray(data.parameters);
+
 // Helper to find categories containing fields with errors
 export const getCategoriesWithErrors = (errorFields, categoricalParameters) => {
   if (!errorFields || !categoricalParameters) return [];

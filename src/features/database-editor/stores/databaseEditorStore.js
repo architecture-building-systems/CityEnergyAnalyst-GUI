@@ -251,9 +251,24 @@ const useDatabaseEditorStore = create((set, get) => ({
       // from the material layers as it writes, so the values in the table are no longer the
       // ones on disk. This also runs the verifier, reporting any cross-row or cross-file rule
       // the browser cannot check on its own while the user still knows what they changed.
-      await useDatabaseEditorStore.getState().refreshDatabaseData({
-        background: true,
-      });
+      try {
+        await useDatabaseEditorStore.getState().refreshDatabaseData({
+          background: true,
+        });
+      } catch (refreshError) {
+        // The save already succeeded and `changes` is already cleared -- only the re-read
+        // failed. Report it through databaseValidation, not the save catch below, or a 401
+        // here gets misread as a login failure and a successful save gets reported as one.
+        set({
+          databaseValidation: {
+            status: 'invalid',
+            message: readErrorMessage(
+              refreshError,
+              'The database was saved, but could not be read back.',
+            ),
+          },
+        });
+      }
     } catch (error) {
       const detail = error?.response?.data?.detail;
       if (
@@ -378,6 +393,10 @@ const useDatabaseEditorStore = create((set, get) => ({
     displayInfo,
     position,
   ) => {
+    // The nested table reference this update produced (or left unchanged, if the table
+    // couldn't be found) -- the caller compares this against the `data` prop it was passed,
+    // to tell whether a later store change is its own edit reflected back or an outside one.
+    let updatedTable;
     set((state) => {
       let _dataKey = dataKey;
       let _index;
@@ -526,11 +545,15 @@ const useDatabaseEditorStore = create((set, get) => ({
         ...(displayInfo && { displayInfo }),
       };
 
+      const newTable = getNestedValue(newData, _dataKey);
+      updatedTable = _index !== undefined ? newTable?.[_index] : newTable;
+
       return {
         data: newData,
         changes: [...state.changes, change],
       };
     });
+    return updatedTable;
   },
 
   addDatabaseRow: (dataKey, indexCol, rowData, action = 'create') => {
@@ -713,8 +736,23 @@ const useDatabaseEditorStore = create((set, get) => ({
 
       if (!result.ok) return state;
 
+      // Validation entries are keyed by row index (see updateDatabaseValidation below). Left
+      // under `oldIndex`, a later correction -- keyed by the new name -- could never clear
+      // them, leaving ExportDatabaseButton permanently disabled by a row that no longer exists.
+      const newValidation = produce(state.validation, (draft) => {
+        for (const database of Object.values(draft)) {
+          for (const sheet of Object.values(database)) {
+            if (oldIndex in sheet) {
+              sheet[name] = sheet[oldIndex];
+              delete sheet[oldIndex];
+            }
+          }
+        }
+      });
+
       return {
         data: newData,
+        validation: newValidation,
         changes: state.changes.map((change) =>
           change.index === oldIndex && arraysEqual(change.dataKey, dataKey)
             ? { ...change, index: name }

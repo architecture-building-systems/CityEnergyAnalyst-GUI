@@ -57,7 +57,9 @@ export const getColumnPropsFromDataType = (
         editor: 'input',
         validator: [
           ...requiredIfNotNullable,
-          'regex:^([1-9][0-9]*|0)$',
+          columnSchema?.nullable
+            ? 'regex:^([1-9][0-9]*|0)?$'
+            : 'regex:^([1-9][0-9]*|0)$',
           ...boundValidators,
         ],
         mutatorEdit: numberMutator,
