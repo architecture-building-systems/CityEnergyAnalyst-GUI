@@ -45,11 +45,22 @@ export const InputChangesButtons = ({ changes }) => {
       async onOk() {
         await saveChanges
           .mutateAsync()
-          .then(() => {
+          .then(({ data }) => {
             message.config({
               top: 120,
             });
-            message.success('Changes Saved!');
+            // `remapped_buildings` is only present when an archetype-key edit (or a new
+            // building) made the server re-derive envelope/HVAC/comfort/loads/supply/schedules
+            // for those buildings automatically -- worth calling out since it is not something
+            // this save directly asked for. `skipped_tables` is not: while locked, every save
+            // skips the same derived tables every time, and the editor already shows them as
+            // read-only, so repeating that on each save would just be noise.
+            const remapped = data?.remapped_buildings ?? [];
+            message.success(
+              remapped.length
+                ? `Changes saved. Re-derived ${remapped.length} building${remapped.length === 1 ? '' : 's'} from their archetype.`
+                : 'Changes Saved!',
+            );
           })
           .catch((error) => {
             // Optional: a network failure has no `response`, and reading `.status` off it

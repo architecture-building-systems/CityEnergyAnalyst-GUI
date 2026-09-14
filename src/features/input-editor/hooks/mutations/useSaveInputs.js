@@ -15,7 +15,6 @@ import {
   useResetStore,
 } from 'features/input-editor/stores/inputEditorStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 import { pathwayOverviewQueryKey } from 'features/pathway/hooks/usePathwayOverview';
 
 export function useSaveInputs() {
@@ -23,7 +22,6 @@ export function useSaveInputs() {
 
   const changes = useChanges();
   const resetStore = useResetStore();
-  const resyncInputs = useResyncInputs();
 
   return useMutation({
     mutationFn: async () => {
@@ -34,14 +32,10 @@ export function useSaveInputs() {
         childScenario,
       } = useProjectStore.getState();
       const childToken = childScenarioToken(childScenario);
+      const inputsQueryKey = ['inputs', project, scenarioName, childToken];
 
       const { tables, geojsons, crs } =
-        queryClient.getQueryData([
-          'inputs',
-          project,
-          scenarioName,
-          childToken,
-        ]) ?? {};
+        queryClient.getQueryData(inputsQueryKey) ?? {};
 
       const schedules = Object.keys(changes.update?.schedules ?? {}).reduce(
         (obj, key) => {
@@ -63,15 +57,26 @@ export function useSaveInputs() {
         { tables, geojsons, crs, schedules },
         { headers: activeScenarioHeaders() },
       );
-      // Carry the scenario this request was actually made for through to
-      // onSuccess -- the project store may have moved on to a different
-      // scenario by the time the PUT resolves, and re-reading it there
-      // would invalidate the wrong (or no) pathway overview query.
-      return { data, scenario: scenarioName, childScenario };
+      // Carry the scenario (and its query key) this request was actually
+      // made for through to onSuccess -- the project store may have moved
+      // on to a different scenario by the time the PUT resolves, and
+      // re-reading it there would merge the response into the wrong (or no)
+      // cache entry, or invalidate the wrong (or no) pathway overview query.
+      return { data, inputsQueryKey, scenario: scenarioName, childScenario };
     },
-    onSuccess: async ({ scenario, childScenario }) => {
+    onSuccess: async ({ data, inputsQueryKey, scenario, childScenario }) => {
       resetStore();
-      resyncInputs();
+      // Merge the save's own response into the cache instead of refetching
+      // it: `save_all_inputs` already re-reads whatever it wrote (including
+      // any archetype re-map) specifically so the client does not have to
+      // ask again (see `inputs.py`'s "Hand back what the mapper wrote"
+      // comment). `crs`/`columns`/`colors`/`connected_buildings` are left as
+      // they were -- a save cannot change any of those.
+      queryClient.setQueryData(inputsQueryKey, (old) => ({
+        ...old,
+        tables: { ...old?.tables, ...data.tables },
+        geojsons: { ...old?.geojsons, ...data.geojsons },
+      }));
       // A save while a pathway state is the active scenario is the only way
       // a state's phase can flip to `custom` outside of a bake/simulate job
       // -- mirrors the `PathwayChildScenario.parse(scenario)` gate in the
