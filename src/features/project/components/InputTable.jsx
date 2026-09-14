@@ -89,6 +89,7 @@ const InputTable = ({ onFitHeightChange }) => {
           >
             <ArchetypeLockToggle
               locked={lock.locked}
+              derivedTabs={lock.derived_tabs}
               buildingCount={Object.keys(tables?.zone ?? {}).length}
               onChanged={(next) => setLock.mutateAsync(next)}
             />
