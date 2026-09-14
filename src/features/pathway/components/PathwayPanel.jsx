@@ -303,6 +303,19 @@ const PathwayPanel = ({
   // Show state geometry on map when a baked/simulated node is selected.
   // Guarded by a request id so a fetch that resolves after a newer
   // selection (or an activation via OverviewCard) can't overwrite it.
+  //
+  // Cleanup clears the override whenever this effect's deps change away
+  // (or the panel unmounts, e.g. switching scenario/project or "hide all"
+  // in usePanelVisibility.js) — without it, hiding the panel by any path
+  // other than its own toggle button leaves the last previewed state's
+  // geometry stuck on the map (missing buildings) until a full reload
+  // resets the store.
+  //
+  // Reuses this run's own requestId rather than claiming a new one: if
+  // OverviewCard's activateState has taken ownership since (e.g. the panel
+  // is being unmounted *because* childScenario.pathway_name just got set),
+  // the store's requestId guard makes this a no-op instead of clobbering
+  // that newer, independent override.
   useEffect(() => {
     const requestId = beginStateZoneOverrideRequest();
     const phase = selectedRow?.status?.primary_phase;
@@ -317,6 +330,9 @@ const PathwayPanel = ({
     } else {
       setStateZoneOverride(null, requestId);
     }
+    return () => {
+      setStateZoneOverride(null, requestId);
+    };
   }, [
     selectedPathway,
     selectedRow,
