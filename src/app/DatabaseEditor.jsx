@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Alert, Button, Spin } from 'antd';
+import { Alert, Button, Spin, message as antdMessage } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
@@ -127,6 +128,7 @@ const DatabaseContent = ({ message }) => {
   );
   const setShowLoginModal = useSetShowLoginModal();
   const [saveError, setSaveError] = useState(null);
+  const queryClient = useQueryClient();
 
   const changes = useDatabaseEditorStore((state) => state.changes);
   const [derivedConflicts, setDerivedConflicts] = useState(null);
@@ -136,6 +138,27 @@ const DatabaseContent = ({ message }) => {
     try {
       await saveDatabaseState(options);
       setDerivedConflicts(null);
+
+      // While the scenario is locked, a save that touched an archetype the mapper reads
+      // re-runs it for the buildings that reference it (see `saveDatabaseState`). Read the
+      // fresh value directly rather than through the hook's selector, which will not have
+      // re-rendered yet at this point in the same tick.
+      const { lastRemap } = useDatabaseEditorStore.getState();
+      if (lastRemap?.buildings?.length) {
+        const count = lastRemap.buildings.length;
+        antdMessage.info(
+          `Re-mapped ${count} building${count === 1 ? '' : 's'} to the updated archetypes.`,
+        );
+        // The derived tables on disk just changed, and the lock's `mapped_at` advanced --
+        // both cached by the input editor under these keys (see `useArchetypeLock.js`, which
+        // invalidates the same two on a re-lock for the same reason).
+        queryClient.invalidateQueries({ queryKey: ['inputs'] });
+        queryClient.invalidateQueries({ queryKey: ['archetype-lock'] });
+      } else if (lastRemap?.error) {
+        antdMessage.warning(
+          `The database was saved, but re-mapping the affected buildings failed: ${lastRemap.error}`,
+        );
+      }
     } catch (error) {
       if (error instanceof DerivedConflictError)
         setDerivedConflicts(error.conflicts);

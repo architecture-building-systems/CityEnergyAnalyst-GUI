@@ -82,6 +82,11 @@ const useDatabaseEditorStore = create((set, get) => ({
   // Set when the database could not be read. Reported in the message area like any other
   // problem -- never by replacing the editor, which would hide the tool needed to fix it.
   loadError: null,
+  // Result of the archetype re-map the last save triggered (locked scenarios only -- see
+  // `saveDatabaseState`). `null` when the last save touched no archetype the mapper reads, or
+  // the scenario is unlocked. `error` means the database saved but the re-map itself failed
+  // (e.g. a building still references a code that was just deleted).
+  lastRemap: null,
   // Which domain/category/dataset the editor is showing. Kept here rather than in
   // DatabaseContainer because that component unmounts whenever `data` is briefly blanked,
   // which would discard a local useState — and because actions need to navigate the editor
@@ -166,6 +171,7 @@ const useDatabaseEditorStore = create((set, get) => ({
       status: { status: FETCHING_STATUS },
       isEmpty: false,
       selection: { domain: null, category: null, dataset: null },
+      lastRemap: null,
     });
     try {
       await useDatabaseEditorStore.getState().refreshDatabaseData();
@@ -242,11 +248,24 @@ const useDatabaseEditorStore = create((set, get) => ({
 
     try {
       set({ status: { status: SAVING_STATUS } });
-      await apiClient.put('/inputs/databases', data, {
-        headers: activeScenarioHeaders(),
-        params: overwriteDerived ? { overwrite_derived: true } : undefined,
-      });
-      set({ status: { status: SUCCESS_STATUS }, changes: [] });
+      const { data: response } = await apiClient.put(
+        '/inputs/databases',
+        data,
+        {
+          headers: activeScenarioHeaders(),
+          params: overwriteDerived ? { overwrite_derived: true } : undefined,
+        },
+      );
+      // While the scenario is locked, the server re-ran the archetypes mapper for any
+      // building whose `const_type`/`use_type` archetype just changed. Surface that (or a
+      // re-map failure, which does not mean the database itself failed to save) so the UI
+      // can point the user at the input editor.
+      const lastRemap = response?.remapped_buildings
+        ? { buildings: response.remapped_buildings, error: null }
+        : response?.remap_error
+          ? { buildings: [], error: response.remap_error }
+          : null;
+      set({ status: { status: SUCCESS_STATUS }, changes: [], lastRemap });
       // Re-read rather than keep what the browser sent: the server derives envelope U/GHG
       // from the material layers as it writes, so the values in the table are no longer the
       // ones on disk. This also runs the verifier, reporting any cross-row or cross-file rule
@@ -307,6 +326,7 @@ const useDatabaseEditorStore = create((set, get) => ({
       changes: [],
       isEmpty: false,
       databaseValidation: { status: null, message: null },
+      lastRemap: null,
     });
   },
 
