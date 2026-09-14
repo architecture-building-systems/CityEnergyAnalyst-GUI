@@ -51,8 +51,12 @@ button:hover {
 
 /* Archetype Lock ---------------------------------------------------------- */
 
-/* A derived table CEA owns while locked. Readable, not editable. */
-.cea-input-editor-table .tabulator .cea-input-readonly {
+/* A cell that cannot be edited here: a derived table CEA owns while Archetype Lock is on
+   (Input Editor), or any cell in a public demo scenario (Input Editor, Database Editor).
+   Readable, not editable -- shared across both editors so the cue means the same thing
+   wherever it appears. */
+.cea-input-editor-table .tabulator .cea-input-readonly,
+.cea-database-editor-database-dataset .tabulator .cea-input-readonly {
   background-color: #f5f6f8;
   color: #64748b;
 }

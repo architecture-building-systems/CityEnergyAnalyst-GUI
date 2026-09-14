@@ -3,6 +3,7 @@ import { useBuildingData } from '../hooks/building-data';
 import { Divider, Input, Form, Select, Collapse } from 'antd';
 import { FormField } from 'components/Parameter';
 import { useEffect } from 'react';
+import { useDemoMode } from 'stores/demoStore';
 
 const InputItem = ({ property, initialValue, description, required }) => {
   return (
@@ -113,6 +114,10 @@ export const BuildingEditor = () => {
   const [form] = Form.useForm();
   const buildings = useSelected();
   const building = buildings?.[0];
+  // Demo visitors have no write path (no PUT route on the demo sub-app); disable the whole
+  // form rather than let edits silently fail on save. `Form`'s `disabled` cascades to every
+  // Ant Design control it contains (Input, Select).
+  const demoMode = useDemoMode();
 
   const category = 'zone';
 
@@ -173,6 +178,7 @@ export const BuildingEditor = () => {
             size="small"
             onValuesChange={onValuesChange}
             labelWrap
+            disabled={demoMode}
           >
             <CategoryForm category={category} data={data} columns={columns} />
           </Form>

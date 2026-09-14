@@ -29,6 +29,7 @@ export const ScheduleAreaChart = ({
   data,
   onDataChange,
   title = 'Schedule',
+  readOnly = false,
 }) => {
   const chartRef = useRef();
   const [chartData, setChartData] = useState(null);
@@ -51,14 +52,16 @@ export const ScheduleAreaChart = ({
       pointRadius: 4,
       pointHoverRadius: 6,
       tension: 0.1,
-      dragData: true,
+      // Per-dataset dragdata config, belt-and-suspenders with `plugins.dragData` below (chart
+      // level) being disabled entirely in read-only mode.
+      dragData: !readOnly,
     };
 
     setChartData({
       labels: hours,
       datasets: [dataset],
     });
-  }, [data, title]);
+  }, [data, title, readOnly]);
 
   const options = {
     responsive: true,
@@ -69,26 +72,31 @@ export const ScheduleAreaChart = ({
         display: true,
         text: title,
       },
-      dragData: {
-        round: 2,
-        showTooltip: true,
-        onDragStart: function (e) {
-          // Optional: Add visual feedback when drag starts
-        },
-        onDrag: function (e, datasetIndex, index, value) {
-          // Clamp value between 0 and 1 and return it
-          // The plugin will handle updating the chart
-          return Math.max(0, Math.min(1, value));
-        },
-        onDragEnd: function (e, datasetIndex, index, value) {
-          // Call the onChange callback when drag ends
-          if (onDataChange && Array.isArray(data)) {
-            const updatedData = [...data];
-            updatedData[index] = Math.max(0, Math.min(1, value));
-            onDataChange(updatedData);
-          }
-        },
-      },
+      // `false` disables the plugin for this chart entirely (see chartjs-plugin-dragdata's
+      // README) - a demo/read-only chart shouldn't even show the drag tooltip for a change
+      // that can never be saved.
+      dragData: readOnly
+        ? false
+        : {
+            round: 2,
+            showTooltip: true,
+            onDragStart: function (e) {
+              // Optional: Add visual feedback when drag starts
+            },
+            onDrag: function (e, datasetIndex, index, value) {
+              // Clamp value between 0 and 1 and return it
+              // The plugin will handle updating the chart
+              return Math.max(0, Math.min(1, value));
+            },
+            onDragEnd: function (e, datasetIndex, index, value) {
+              // Call the onChange callback when drag ends
+              if (onDataChange && Array.isArray(data)) {
+                const updatedData = [...data];
+                updatedData[index] = Math.max(0, Math.min(1, value));
+                onDataChange(updatedData);
+              }
+            },
+          },
     },
     interaction: {
       intersect: false,

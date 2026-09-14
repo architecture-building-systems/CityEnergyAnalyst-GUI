@@ -477,8 +477,9 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
 
   // Create handler to update schedule data when chart points are dragged
   const handleScheduleChange = (dayType, updatedData) => {
-    // Demo scenarios are read-only - dragging still moves the chart point
-    // visually, but the change is never persisted to the store.
+    // Demo scenarios are read-only - `readOnly` passed to ScheduleAreaChart/BlockStrip below
+    // already stops the drag/click from starting, so this is a backstop rather than the only
+    // guard: it must never persist a change even if one somehow reaches here.
     if (demoMode) return;
 
     if (!selectedSchedule || !data) {
@@ -556,6 +557,7 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
               onDataChange={(updatedData) =>
                 handleScheduleChange(dayType, updatedData)
               }
+              readOnly={demoMode}
             />
           ))}
         </div>
@@ -570,6 +572,7 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
                 onDataChange={(updatedData) =>
                   handleScheduleChange(dayType, updatedData)
                 }
+                readOnly={demoMode}
               />
             );
           })}

@@ -6,6 +6,7 @@ import EditSelectedModal from 'features/input-editor/components/InputEditor/Edit
 import 'tabulator-tables/dist/css/tabulator.min.css';
 
 import { INDEX_COLUMN } from 'features/input-editor/constants';
+import HiddenInDemo from 'components/HiddenInDemo';
 
 // Grey fillet outline for the text actions. Wider horizontal padding than antd's default so
 // they read as a toolbar group rather than as cramped buttons. Corner radius is left to antd's
@@ -142,82 +143,92 @@ export const TableButtons = ({
           Clear Selection
         </Button>
       )}
-      {canDuplicate && (
-        // Matches the overview card's Duplicate Scenario button
-        // (`ScenarioRow.jsx :: DuplicateScenarioIcon`): same icon, same chrome, same
-        // name-it-first dialog.
-        <div className="cea-card-icon-button-container">
-          <Tooltip
-            title={duplicateBlockedBecause ?? 'Duplicate Building'}
-            placement="bottom"
-          >
-            {/* `span` wrapper: antd tooltips do not fire on a disabled button, which is the one
-                state where this tooltip has something to say. */}
-            <span>
-              <Button
-                type="text"
-                icon={<DuplicateIcon />}
-                onClick={() => setDuplicateVisible(true)}
-                disabled={duplicateBlockedBecause !== null}
-                aria-label="Duplicate Building"
-              />
-            </span>
-          </Tooltip>
-        </div>
-      )}
-      {/* `cea-card-icon-button-container` is the shared icon-button chrome (see HomePage.css).
-          Both actions are absent rather than disabled without a selection, so they only appear
-          once they mean something.
+      {/* Everything below is a write action (or a modal one opens): duplicate, bulk edit,
+          delete, and their dialogs. One wrap rather than one per button/modal -- the demo API
+          has no write route at all, so there's nothing selective about which of these apply. */}
+      <HiddenInDemo>
+        <>
+          {canDuplicate && (
+            // Matches the overview card's Duplicate Scenario button
+            // (`ScenarioRow.jsx :: DuplicateScenarioIcon`): same icon, same chrome, same
+            // name-it-first dialog. Hidden rather than disabled in demo -- `duplicateBlockedBecause`
+            // is keyed off `locked`, which is `false` in demo's EMPTY lock fallback, so a
+            // `disabled` route here would render enabled-looking with the wrong ("turn on
+            // Archetype Lock") tooltip instead of "not available in the demo".
+            <div className="cea-card-icon-button-container">
+              <Tooltip
+                title={duplicateBlockedBecause ?? 'Duplicate Building'}
+                placement="bottom"
+              >
+                {/* `span` wrapper: antd tooltips do not fire on a disabled button, which is the
+                    one state where this tooltip has something to say. */}
+                <span>
+                  <Button
+                    type="text"
+                    icon={<DuplicateIcon />}
+                    onClick={() => setDuplicateVisible(true)}
+                    disabled={duplicateBlockedBecause !== null}
+                    aria-label="Duplicate Building"
+                  />
+                </span>
+              </Tooltip>
+            </div>
+          )}
+          {/* `cea-card-icon-button-container` is the shared icon-button chrome (see HomePage.css).
+              Both actions are absent rather than disabled without a selection, so they only appear
+              once they mean something.
 
-          Bulk edit writes into the same change set as cell editing, so it has to respect the
-          lock too -- otherwise a locked tab looks editable through this route, and the edit is
-          silently dropped by the server on save. `schedules` has no bulk editor. */}
-      {selectedInTable && tab != 'schedules' && (
-        <div className="cea-card-icon-button-container">
-          <Tooltip title="Edit Selection" placement="bottom">
-            <Button
-              type="text"
-              icon={<InputEditorIcon />}
-              onClick={editSelected}
-              disabled={readOnly}
-              aria-label="Edit Selection"
-            />
-          </Tooltip>
-        </div>
-      )}
-      {selectedInTable && (
-        <div className="cea-card-icon-button-container">
-          <Tooltip title="Delete Selection" placement="bottom">
-            <Button
-              type="text"
-              // Explicit colour because antd's `.ant-btn .ant-btn-icon > svg { color: inherit }`
-              // outranks the SVG's own fill and would grey the bin out. Same reason every other
-              // `BinAnimationIcon` call site sets it inline.
-              icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
-              onClick={deleteSelected}
-              // Rows in a derived table are regenerated from zone.shp, so deleting one there is
-              // meaningless while locked. Delete the building from the zone tab instead.
-              disabled={readOnly}
-              aria-label="Delete Selection"
-            />
-          </Tooltip>
-        </div>
-      )}
+              Bulk edit writes into the same change set as cell editing, so it has to respect the
+              lock too -- otherwise a locked tab looks editable through this route, and the edit is
+              silently dropped by the server on save. `schedules` has no bulk editor. */}
+          {selectedInTable && tab != 'schedules' && (
+            <div className="cea-card-icon-button-container">
+              <Tooltip title="Edit Selection" placement="bottom">
+                <Button
+                  type="text"
+                  icon={<InputEditorIcon />}
+                  onClick={editSelected}
+                  disabled={readOnly}
+                  aria-label="Edit Selection"
+                />
+              </Tooltip>
+            </div>
+          )}
+          {selectedInTable && (
+            <div className="cea-card-icon-button-container">
+              <Tooltip title="Delete Selection" placement="bottom">
+                <Button
+                  type="text"
+                  // Explicit colour because antd's `.ant-btn .ant-btn-icon > svg { color: inherit }`
+                  // outranks the SVG's own fill and would grey the bin out. Same reason every other
+                  // `BinAnimationIcon` call site sets it inline.
+                  icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
+                  onClick={deleteSelected}
+                  // Rows in a derived table are regenerated from zone.shp, so deleting one there is
+                  // meaningless while locked. Delete the building from the zone tab instead.
+                  disabled={readOnly}
+                  aria-label="Delete Selection"
+                />
+              </Tooltip>
+            </div>
+          )}
 
-      <DuplicateBuildingModal
-        visible={duplicateVisible}
-        setVisible={setDuplicateVisible}
-        building={selected[0]}
-        existingNames={currentTableIndexes}
-        onDuplicate={duplicateSelected}
-      />
-      <EditSelectedModal
-        visible={modalVisible}
-        setVisible={setModalVisible}
-        inputTable={tabulator.current}
-        table={tab}
-        columns={columns}
-      />
+          <DuplicateBuildingModal
+            visible={duplicateVisible}
+            setVisible={setDuplicateVisible}
+            building={selected[0]}
+            existingNames={currentTableIndexes}
+            onDuplicate={duplicateSelected}
+          />
+          <EditSelectedModal
+            visible={modalVisible}
+            setVisible={setModalVisible}
+            inputTable={tabulator.current}
+            table={tab}
+            columns={columns}
+          />
+        </>
+      </HiddenInDemo>
     </>
   );
 };

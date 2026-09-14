@@ -1,24 +1,29 @@
 import { useMemo, useState } from 'react';
-import { Tabs } from 'antd';
+import { Alert, Tabs } from 'antd';
 import Table from 'features/input-editor/components/InputEditor/Table';
 import ArchetypeLockToggle from 'features/input-editor/components/ArchetypeLockToggle';
+import HiddenInDemo from 'components/HiddenInDemo';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import {
   useArchetypeLock,
   useSetArchetypeLock,
 } from 'features/input-editor/hooks/queries/useArchetypeLock';
+import { useDemoMode } from 'stores/demoStore';
 
 const InputTable = ({ onFitHeightChange }) => {
   const { data } = useInputs();
   const { tables, columns } = data;
   const { data: lock } = useArchetypeLock();
   const setLock = useSetArchetypeLock();
+  const demoMode = useDemoMode();
 
   const [tab, setTab] = useState('zone');
 
   // While locked, CEA owns the archetype-derived tables. Rendering them read-only is only the
   // affordance; `save_all_inputs` refuses to write them regardless of what the client sends.
-  const readOnly = lock.locked && lock.derived_tabs.includes(tab);
+  // Demo visitors have no write path at all (the demo sub-app defines no PUT route), so the
+  // whole editor is read-only there, not just the archetype-derived tabs.
+  const readOnly = demoMode || (lock.locked && lock.derived_tabs.includes(tab));
   // Once the derived tables no longer match, the archetype columns no longer describe the
   // building they label -- so mark them where the user chose them.
   const driftedColumns =
@@ -87,12 +92,17 @@ const InputTable = ({ onFitHeightChange }) => {
               gap: 12,
             }}
           >
-            <ArchetypeLockToggle
-              locked={lock.locked}
-              derivedTabs={lock.derived_tabs}
-              buildingCount={Object.keys(tables?.zone ?? {}).length}
-              onChanged={(next) => setLock.mutateAsync(next)}
-            />
+            <HiddenInDemo>
+              <ArchetypeLockToggle
+                locked={lock.locked}
+                derivedTabs={lock.derived_tabs}
+                buildingCount={Object.keys(tables?.zone ?? {}).length}
+                onChanged={(next) => setLock.mutateAsync(next)}
+              />
+            </HiddenInDemo>
+            {demoMode && (
+              <Alert type="info" showIcon message="Read-only demo scenario" />
+            )}
           </div>
         }
       />

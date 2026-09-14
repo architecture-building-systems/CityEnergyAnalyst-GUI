@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getScenarioClient } from 'lib/api/axios';
 import { API_ENDPOINTS } from 'lib/api/endpoints';
 import { useProjectStore } from 'features/project/stores/projectStore';
+import { useDemoMode } from 'stores/demoStore';
 import {
   activeScenarioHeaders,
   childScenarioToken,
@@ -28,6 +29,10 @@ export function useArchetypeLock() {
   const scenarioName = useProjectStore((state) => state.scenario);
   const childScenario = useProjectStore((state) => state.childScenario);
   const childToken = childScenarioToken(childScenario);
+  // Not exposed on the demo API (archetype-lock is editor state for a control demo
+  // visitors can't operate) - skip the request rather than let it 404, and stay on
+  // the EMPTY default.
+  const demoMode = useDemoMode();
 
   return useQuery({
     queryKey: ['archetype-lock', project, scenarioName, childToken],
@@ -39,6 +44,7 @@ export function useArchetypeLock() {
       return data;
     },
     initialData: EMPTY,
+    enabled: !demoMode,
     refetchOnWindowFocus: false,
   });
 }

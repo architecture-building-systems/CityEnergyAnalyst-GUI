@@ -521,6 +521,15 @@ const EntityDataTable = ({
         colDef.hozAlign = 'left';
       }
 
+      // Same visual cue as a read-only cell in the Input Editor (`Table.jsx`'s
+      // `cea-input-readonly`) -- `editable: !demoMode` above already stops the edit, this
+      // just stops it from looking editable in the first place.
+      if (demoMode) {
+        colDef.cssClass = [colDef.cssClass, 'cea-input-readonly']
+          .filter(Boolean)
+          .join(' ');
+      }
+
       // Saved keys stay read-only: other tables reference them and we have no foreign-key
       // validation yet. A row added since the last save has no referents, so it can be named.
       // Read `changes` at edit time rather than closing over it — Tabulator applies these
