@@ -21,6 +21,23 @@ import {
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
+import { ZONE_DRIFT_COMPUTED } from 'features/input-editor/hooks/useArchetypeDrift';
+
+/** A stable string key for a `useArchetypeDrift` result slice (`{ [building]: true | Map }`),
+ * for use as a `useEffect` dependency -- the object (and the `Map`s inside it) is rebuilt on
+ * every render, so comparing it by reference would re-run the effect every time regardless of
+ * whether the actual drifted set changed. */
+function driftedCellsKey(driftedCells) {
+  return Object.keys(driftedCells)
+    .sort()
+    .map((building) => {
+      const entry = driftedCells[building];
+      return entry === true
+        ? `${building}:*`
+        : `${building}:${[...entry].sort().join('|')}`;
+    })
+    .join(';');
+}
 
 const Table = ({
   tab,
@@ -29,6 +46,7 @@ const Table = ({
   readOnly = false,
   locked = false,
   driftedColumns = [],
+  driftedCells = {},
   rowsWithoutGeometry = [],
   onFitHeightChange,
 }) => {
@@ -103,6 +121,7 @@ const Table = ({
             columns={columns}
             readOnly={readOnly}
             driftedColumns={driftedColumns}
+            driftedCells={driftedCells}
             rowsWithoutGeometry={rowsWithoutGeometry}
             onFitHeightChange={onFitHeightChange}
           />
@@ -120,6 +139,7 @@ const TableEditor = ({
   columns,
   readOnly = false,
   driftedColumns = [],
+  driftedCells = {},
   rowsWithoutGeometry = [],
   onFitHeightChange,
 }) => {
@@ -138,6 +158,7 @@ const TableEditor = ({
   // Read by `rowFormatter`, which Tabulator keeps from the options it was constructed with.
   // A ref means the highlight tracks the current data without tearing the table down.
   const rowsWithoutGeometryRef = useRef(rowsWithoutGeometry);
+  const driftedCellsRef = useRef(driftedCells);
   const columnDescriptionRef = useRef();
   // Latest reported measurement, so an unchanged render doesn't push state to the parent.
   const fitHeightRef = useRef(null);
@@ -247,9 +268,78 @@ const TableEditor = ({
         const name = row.getData()?.[INDEX_COLUMN];
         const missing = rowsWithoutGeometryRef.current.includes(name);
         row.getElement().classList.toggle('cea-input-row-no-geometry', missing);
+
+        // This building's data in *this* tab no longer matches its current archetype. Two
+        // granularities -- see `useArchetypeDrift`'s docstring for why they can't be one:
+        // `true` (the two computed tabs) tints the whole row; a `Map` tints per cell -- column ->
+        // the archetype's own value (the three lookup tabs) or column -> which colour it should
+        // take (the `zone` tab's `const_type`/`use_type*` rollup, tagged `ZONE_DRIFT_DERIVED`/
+        // `ZONE_DRIFT_COMPUTED` -- there's no single "expected value" for a key column itself).
+        const entry = driftedCellsRef.current[name];
+        const rowDrifted = entry === true;
+        const driftedColumnsForRow = entry instanceof Map ? entry : null;
+        row
+          .getElement()
+          .classList.toggle('cea-input-row-archetype-drifted', rowDrifted);
+        const isZone = tableRef.current === 'zone';
+        row.getCells().forEach((cell) => {
+          const field = cell.getField();
+          const cellValue = driftedColumnsForRow?.get(field);
+          const cellDrifted = driftedColumnsForRow?.has(field) ?? false;
+          // On the zone tab, `cellValue` is the rollup's colour category, not an expected value
+          // -- pick the matching CSS class instead of always the `derived` (blue) one.
+          const computedCell = isZone && cellValue === ZONE_DRIFT_COMPUTED;
+          const element = cell.getElement();
+          element.classList.toggle(
+            'cea-input-archetype-drifted',
+            cellDrifted && !computedCell,
+          );
+          element.classList.toggle(
+            'cea-input-archetype-drifted-computed',
+            cellDrifted && computedCell,
+          );
+          // `removeAttribute`, not `title = ''`: an empty-but-present `title` still suppresses
+          // the *row's* tooltip fallback when hovering this cell (browsers treat "has a title
+          // attribute" as "don't consult an ancestor's", even if it is empty). That matters here
+          // specifically for a `rowDrifted` row (the two computed tabs): every cell must fall
+          // through to the row's own title, not silently swallow it.
+          if (cellDrifted) {
+            // The stripe alone carries no meaning for a colour-blind user, same reasoning as
+            // the row-level tooltip below.
+            if (isZone) {
+              // `derived` is a fact (a live lookup mismatch); `computed` is only ever an
+              // indication (a moved key or a changed hash, not a confirmed bad value -- see
+              // `useArchetypeDrift`'s docstring), so the wording says "may" rather than "no
+              // longer does", matching the caution colour rather than the certain-drift one.
+              element.title = computedCell
+                ? 'One or more downstream tables (indoor-comfort/internal-loads) may no ' +
+                  'longer match this archetype. ' +
+                  'Re-lock to regenerate them and confirm.'
+                : 'One or more downstream tables (envelope/hvac/supply) no longer match this ' +
+                  'archetype. Re-lock to regenerate them.';
+            } else {
+              const expected = cellValue;
+              element.title =
+                expected === undefined
+                  ? 'This value no longer matches the archetype. Re-lock to regenerate it.'
+                  : `This value no longer matches the archetype. ` +
+                    `Archetype Value: ${expected === null || expected === '' ? '(empty)' : expected}. ` +
+                    `Re-lock to regenerate it.`;
+            }
+          } else {
+            element.removeAttribute('title');
+          }
+        });
+
         row.getElement().title = missing
           ? `This row ${NO_GEOMETRY_REASON} ${NO_GEOMETRY_FIX_ONE}`
-          : '';
+          : rowDrifted
+            ? // Row-level only ever fires for the computed tabs (indoor-comfort/internal-loads)
+              // -- an indication (moved key or changed hash), not a confirmed mismatch, so this
+              // stays "may" rather than the lookup tabs' certain "no longer matches".
+              'The computed values for this building may no longer match its archetype. ' +
+              'Re-lock to regenerate them and confirm.'
+            : '';
       },
     });
     filtered && tabulator.current.setFilter(INDEX_COLUMN, 'in', selected);
@@ -259,6 +349,15 @@ const TableEditor = ({
   useEffect(() => {
     tableRef.current = tab;
   }, [tab, readOnly, driftedColumns.join(',')]);
+
+  useEffect(() => {
+    driftedCellsRef.current = driftedCells;
+    // Re-run the formatter against the new set; without this the tint survives a re-lock (or a
+    // key edit that clears the drift) until the table is rebuilt for some other reason.
+    if (tabulator.current) tabulator.current.redraw(true);
+    // Keyed on a stable serialisation, not the object: a new object (and new Sets inside it) is
+    // built on every render, and `tabulator` is a ref, so neither belongs in the dependency list.
+  }, [driftedCellsKey(driftedCells)]);
 
   useEffect(() => {
     rowsWithoutGeometryRef.current = rowsWithoutGeometry;

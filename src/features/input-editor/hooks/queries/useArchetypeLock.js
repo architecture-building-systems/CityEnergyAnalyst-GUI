@@ -15,6 +15,8 @@ const EMPTY = {
   drifted: false,
   derived_tabs: [],
   archetype_key_columns: [],
+  mapped_use_types: null,
+  mapped_computed_values: null,
 };
 
 /**
@@ -23,6 +25,12 @@ const EMPTY = {
  * `derived_tabs` and `archetype_key_columns` come from the server rather than being duplicated
  * here: they are defined by what `archetypes_mapper` writes, and a second copy in the frontend
  * would drift the moment the mapper gains an output.
+ *
+ * `mapped_use_types` and `mapped_computed_values` are the baselines the real, per-building,
+ * per-tab drift check compares against -- see `useArchetypeDrift`, which does that comparison
+ * client-side (a plain value-equality check, no hashing) against the tables this hook's caller
+ * already has loaded. `drifted` here is only the coarse, `use_type`-only server-side fallback
+ * (see `archetype_lock.is_drifted`'s docstring).
  */
 export function useArchetypeLock() {
   const project = useProjectStore((state) => state.project);

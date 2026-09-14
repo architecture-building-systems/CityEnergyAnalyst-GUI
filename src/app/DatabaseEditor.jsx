@@ -139,6 +139,15 @@ const DatabaseContent = ({ message }) => {
       await saveDatabaseState(options);
       setDerivedConflicts(null);
 
+      // The archetype-lock drift check (`useArchetypeDrift`) compares the live construction-type
+      // database against every building's current envelope/hvac/supply row -- stale data here
+      // would show a building as drifted (or not) against a database that no longer exists.
+      // Unconditional, not gated on `lastRemap`: an edit to a `const_type` no building currently
+      // uses still changes what a *future* selection of it would mean, and this table has no
+      // other invalidation path (it is its own query key, separate from the Database Editor's
+      // Zustand store).
+      queryClient.invalidateQueries({ queryKey: ['inputs-databases'] });
+
       // While the scenario is locked, a save that touched an archetype the mapper reads
       // re-runs it for the buildings that reference it (see `saveDatabaseState`). Read the
       // fresh value directly rather than through the hook's selector, which will not have

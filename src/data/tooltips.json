@@ -88,6 +88,6 @@
   },
   "archetype-lock": {
     "title": "Archetype Lock",
-    "body": "Only the zone table is authored by you, i.e. its geometry, construction type, use types and year. Envelope, HVAC, indoor comfort, internal loads, supply and the building schedules are derived from each building's archetype.\n\nLocked: CEA owns those tables. They are read-only, and changing a building's archetype in the zone table regenerates them on save.\n\nUnlocked: you own them and may edit them freely. CEA marks the archetype cells in the zone table once the derived tables no longer match, because the construction type no longer describes the building it labels.\n\nRe-locking regenerates all of them from the archetypes, discarding those edits."
+    "body": "Only the zone table is authored by you, i.e. its geometry, construction type, use types and year. Envelope, HVAC, indoor comfort, internal loads, supply and the building schedules are derived from each building's archetype.\n\nLocked: CEA owns those tables. They are read-only, and changing a building's archetype in the zone table regenerates them on save.\n\nUnlocked: you own them and may edit them freely. CEA marks mismatched cells blue when it's a confirmed mismatch, orange when it's only an indication.\n\nRe-locking regenerates all of them from the archetypes, discarding those edits."
   }
 }

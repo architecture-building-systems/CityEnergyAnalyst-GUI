@@ -1,4 +1,4 @@
-import { ConfigProvider, Modal, Switch, message } from 'antd';
+import { ConfigProvider, Modal, Switch, Tooltip, message } from 'antd';
 import { Fragment, useState } from 'react';
 
 import InfoTooltip from 'components/InfoTooltip';
@@ -122,13 +122,24 @@ const ArchetypeLockToggle = ({
   return (
     <div style={wrapperStyle}>
       <ConfigProvider theme={{ token: { colorPrimary: UUEN_BLUE } }}>
-        <Switch
-          checked={locked}
-          loading={busy}
-          disabled={disabled || busy}
-          onChange={(next) => (next ? confirmLock() : confirmUnlock())}
-          aria-label="Archetype Lock"
-        />
+        {/* `disabled` currently only ever means "unsaved changes are pending" (see
+            `InputTable.jsx`) -- the tooltip names that reason rather than staying generic, since
+            there is nowhere else on the switch itself to say why it won't respond. */}
+        <Tooltip
+          title={
+            disabled
+              ? 'Save or discard your pending changes before toggling the lock.'
+              : undefined
+          }
+        >
+          <Switch
+            checked={locked}
+            loading={busy}
+            disabled={disabled || busy}
+            onChange={(next) => (next ? confirmLock() : confirmUnlock())}
+            aria-label="Archetype Lock"
+          />
+        </Tooltip>
       </ConfigProvider>
       <span style={labelStyle}>Archetype Lock</span>
       <InfoTooltip tooltipKey="archetype-lock" />

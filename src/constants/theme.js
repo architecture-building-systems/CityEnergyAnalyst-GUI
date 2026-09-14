@@ -11,6 +11,11 @@ export const UUEN_BLUE = '#1471B0';
 export const ERROR_RED = '#f04d5b';
 export const CEA_GREEN = '#7ec78f';
 export const CEA_GREY = '#7f8086';
+// `orange` from the same file (rgb(245,131,69)). Used where a signal is a heuristic/indication
+// rather than a verified fact -- e.g. Archetype Lock's computed-tab drift check, which can only
+// say "the key moved or the content hash changed", not confirm the ratio math actually disagrees
+// (see `useArchetypeDrift`'s docstring) -- so it gets a caution tone, not the certain-drift blue.
+export const CEA_ORANGE = '#f58345';
 
 // The tint behind warning *and* error surfaces alike -- they deliberately share one background,
 // with the icon carrying the severity. From the CEA palette in
@@ -38,6 +43,7 @@ const CSS_VARIABLES = {
   '--cea-uuen-blue': UUEN_BLUE,
   '--cea-error-red': ERROR_RED,
   '--cea-error-red-lightest': ERROR_RED_LIGHTEST,
+  '--cea-orange': CEA_ORANGE,
 };
 
 export const publishPaletteCssVariables = () => {

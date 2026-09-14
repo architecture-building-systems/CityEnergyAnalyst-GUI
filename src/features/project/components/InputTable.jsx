@@ -8,6 +8,9 @@ import {
   useArchetypeLock,
   useSetArchetypeLock,
 } from 'features/input-editor/hooks/queries/useArchetypeLock';
+import { useConstructionTypes } from 'features/input-editor/hooks/queries/useConstructionTypes';
+import { useArchetypeDrift } from 'features/input-editor/hooks/useArchetypeDrift';
+import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
 import { useDemoMode } from 'stores/demoStore';
 
 const InputTable = ({ onFitHeightChange }) => {
@@ -15,7 +18,14 @@ const InputTable = ({ onFitHeightChange }) => {
   const { tables, columns } = data;
   const { data: lock } = useArchetypeLock();
   const setLock = useSetArchetypeLock();
+  const { data: constructionTypes } = useConstructionTypes();
   const demoMode = useDemoMode();
+  // Toggling the lock either regenerates every derived table (locking) or hands them to the
+  // user as-is (unlocking) -- both read straight from the saved scenario on disk, not from any
+  // unsaved edit sitting in the store. Doing that with unsaved edits in flight would either
+  // discard them silently (locking) or leave the client showing values the next fetch won't
+  // agree with (unlocking), so the toggle stays disabled until the user saves or discards first.
+  const hasPendingChanges = useChangesExist();
 
   const [tab, setTab] = useState('zone');
 
@@ -24,12 +34,17 @@ const InputTable = ({ onFitHeightChange }) => {
   // Demo visitors have no write path at all (the demo sub-app defines no PUT route), so the
   // whole editor is read-only there, not just the archetype-derived tabs.
   const readOnly = demoMode || (lock.locked && lock.derived_tabs.includes(tab));
-  // Once the derived tables no longer match, the archetype columns no longer describe the
-  // building they label -- so mark them where the user chose them.
-  const driftedColumns =
-    !lock.locked && lock.drifted && tab === 'zone'
-      ? lock.archetype_key_columns
-      : [];
+  // The real, per-building, per-tab check: does this building's data in *this* tab still match
+  // what its current archetype implies? Computed entirely from data already loaded above -- no
+  // extra request beyond `useConstructionTypes`, which the input editor did not previously fetch.
+  // Each entry is `true` (highlight the whole row -- the two computed tabs) or a `Set` of the
+  // specific columns that disagree (the three lookup tabs) -- see `useArchetypeDrift`'s docstring
+  // for why the two kinds of tab can't share one granularity.
+  const drift = useArchetypeDrift({ tables, lock, constructionTypes });
+  const driftedCells = useMemo(
+    () => (!lock.locked ? (drift[tab] ?? {}) : {}),
+    [drift, tab, lock.locked],
+  );
   // Rows the map cannot draw: present in the table, absent from the geometry. The server skips
   // rows with a null footprint when it builds the geojson -- one such row used to blank the
   // whole map -- so the difference between the two is exactly the set with no geometry. No
@@ -98,6 +113,7 @@ const InputTable = ({ onFitHeightChange }) => {
                 derivedTabs={lock.derived_tabs}
                 buildingCount={Object.keys(tables?.zone ?? {}).length}
                 onChanged={(next) => setLock.mutateAsync(next)}
+                disabled={hasPendingChanges}
               />
             </HiddenInDemo>
             {demoMode && (
@@ -126,7 +142,7 @@ const InputTable = ({ onFitHeightChange }) => {
           columns={columns}
           readOnly={readOnly}
           locked={lock.locked}
-          driftedColumns={driftedColumns}
+          driftedCells={driftedCells}
           rowsWithoutGeometry={rowsWithoutGeometry}
           onFitHeightChange={onFitHeightChange}
         />
