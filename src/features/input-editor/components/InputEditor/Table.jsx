@@ -516,7 +516,9 @@ const useTableData = (tab, columns, tables, readOnly, driftedColumns) => {
       setColumnDef(getColumnDef());
       setData(getData());
     }
-  }, [tab]);
+    // Keyed on drifted columns' contents, not the array: a new array is built on every
+    // render, and it would otherwise force a rebuild each time.
+  }, [tab, readOnly, driftedColumns.join(',')]);
 
   useEffect(() => {
     if (tables[tab] !== null) {
