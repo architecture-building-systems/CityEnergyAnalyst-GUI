@@ -303,7 +303,25 @@ const PathwayPanel = ({
   // Show state geometry on map when a baked/simulated node is selected.
   // Guarded by a request id so a fetch that resolves after a newer
   // selection (or an activation via OverviewCard) can't overwrite it.
+  //
+  // Cleanup clears the override whenever this effect's deps change away
+  // (or the panel unmounts, e.g. switching scenario/project or "hide all"
+  // in usePanelVisibility.js) — without it, hiding the panel by any path
+  // other than its own toggle button leaves the last previewed state's
+  // geometry stuck on the map (missing buildings) until a full reload
+  // resets the store.
+  //
+  // Reuses this run's own requestId rather than claiming a new one: if
+  // OverviewCard's activateState has taken ownership since (e.g. the panel
+  // is being unmounted *because* childScenario.pathway_name just got set),
+  // the store's requestId guard makes this a no-op instead of clobbering
+  // that newer, independent override.
   useEffect(() => {
+    // The `requestId` guard alone only stops a *newer* effect run (or OverviewCard) from being
+    // clobbered by a stale one -- it does nothing about this same run's own fetch resolving
+    // after its own cleanup already cleared the override, since cleanup doesn't bump the id.
+    // `cancelled` closes that gap.
+    let cancelled = false;
     const requestId = beginStateZoneOverrideRequest();
     const phase = selectedRow?.status?.primary_phase;
     if (
@@ -312,11 +330,21 @@ const PathwayPanel = ({
       (phase === 'baked' || phase === 'simulated')
     ) {
       fetchStateGeojson(selectedPathway, selectedRow.year)
-        .then((data) => setStateZoneOverride(data?.geojson ?? null, requestId))
-        .catch(() => setStateZoneOverride(null, requestId));
+        .then((data) => {
+          if (cancelled) return;
+          setStateZoneOverride(data?.geojson ?? null, requestId);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setStateZoneOverride(null, requestId);
+        });
     } else {
       setStateZoneOverride(null, requestId);
     }
+    return () => {
+      cancelled = true;
+      setStateZoneOverride(null, requestId);
+    };
   }, [
     selectedPathway,
     selectedRow,

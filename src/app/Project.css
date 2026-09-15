@@ -54,6 +54,15 @@
   font-size: 12px;
 }
 
+/* A tool card's own title line -- "Tools", "Plots", the selected building's name. One class for
+   all of them so the cards do not each drift to their own size and indent, which is how it used
+   to be. */
+.cea-tool-card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 12px;
+}
+
 .cea-tool-card-container {
   position: absolute;
   top: 0;

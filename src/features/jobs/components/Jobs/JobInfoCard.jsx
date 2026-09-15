@@ -10,6 +10,7 @@ import {
 import { parseISO, formatDistanceToNowStrict } from 'date-fns';
 import { Button, Popconfirm } from 'antd';
 import { BinAnimationIcon, StopIcon } from 'assets/icons';
+import { CEA_GREEN, CEA_GREY, ERROR_RED, UUEN_BLUE } from 'constants/theme';
 import { useEffect, useState } from 'react';
 import useJobsStore from 'features/jobs/stores/jobsStore';
 
@@ -100,7 +101,7 @@ export const JobActions = ({ id, job, showDelete, onDeleted }) => {
   return (
     <div className="cea-job-info-content-actions">
       {isLoading ? (
-        <LoadingOutlined style={{ color: 'grey', padding: 8 }} spin />
+        <LoadingOutlined style={{ color: CEA_GREY, padding: 8 }} spin />
       ) : job.state > 1 ? (
         // Keep the trigger (and its Popconfirm) mounted while the popup is open, even
         // if the mouse leaves the card in transit to click "Delete" in the popup --
@@ -175,20 +176,26 @@ const JobInfoCard = ({ id, job }) => {
     ? Math.round((job?.duration / 60) * 10) / 10
     : '-';
 
+  // `JobState` in cea/interfaces/dashboard/lib/database/models.py: 0 PENDING, 1 STARTED,
+  // 2 SUCCESS, 3 ERROR, 4 CANCELED, 5 KILLED.
+  //
+  // CEA palette throughout rather than the browser's colour keywords. Both unfinished states
+  // share one colour with the in-progress badge in `JobInfoList`, which counts exactly these
+  // two states; cancelled and unknown are grey because neither is a failure.
   const StateIcon = ({ state }) => {
     switch (state) {
       case 0:
-        return <ClockCircleOutlined style={{ color: 'blue' }} />;
+        return <ClockCircleOutlined style={{ color: UUEN_BLUE }} />;
       case 1:
-        return <LoadingOutlined style={{ color: 'blue' }} />;
+        return <LoadingOutlined style={{ color: UUEN_BLUE }} />;
       case 2:
-        return <CheckCircleFilled style={{ color: 'green' }} />;
+        return <CheckCircleFilled style={{ color: CEA_GREEN }} />;
       case 3:
-        return <ExclamationCircleFilled style={{ color: 'red' }} />;
+        return <ExclamationCircleFilled style={{ color: ERROR_RED }} />;
       case 4:
-        return <CloseCircleOutlined style={{ color: 'grey' }} />;
+        return <CloseCircleOutlined style={{ color: CEA_GREY }} />;
       default:
-        return <QuestionCircleOutlined style={{ color: 'grey' }} />;
+        return <QuestionCircleOutlined style={{ color: CEA_GREY }} />;
     }
   };
 

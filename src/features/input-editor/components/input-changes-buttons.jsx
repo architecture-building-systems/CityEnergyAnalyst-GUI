@@ -1,11 +1,14 @@
-import { Button, Modal, message } from 'antd';
+import { Modal, message } from 'antd';
 
 import { AsyncError } from 'components/AsyncError';
+import { SaveDiscardButtons } from 'components/SaveDiscardButtons';
 import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
 import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
-import { useDiscardChanges } from 'features/input-editor/stores/inputEditorStore';
+import {
+  hasChanges,
+  useDiscardChanges,
+} from 'features/input-editor/stores/inputEditorStore';
 import { useSetShowLoginModal } from 'features/auth/stores/login-modal';
-import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { ChangesSummary } from 'features/input-editor/components/changes-summary';
 
 export const InputChangesButtons = ({ changes }) => {
@@ -21,9 +24,9 @@ export const InputChangesButtons = ({ changes }) => {
     discardChangesFunc();
   };
 
-  const noChanges =
-    !Object.keys(changes?.update ?? {}).length &&
-    !Object.keys(changes?.delete ?? {}).length;
+  // Shared with the card that renders these buttons, so the two can never disagree about
+  // whether there is anything to save.
+  const noChanges = !hasChanges(changes);
 
   const _saveChanges = () => {
     Modal.confirm({
@@ -41,14 +44,27 @@ export const InputChangesButtons = ({ changes }) => {
       async onOk() {
         await saveChanges
           .mutateAsync()
-          .then(() => {
+          .then(({ data }) => {
             message.config({
               top: 120,
             });
-            message.success('Changes Saved!');
+            // `remapped_buildings` is only present when an archetype-key edit (or a new
+            // building) made the server re-derive envelope/HVAC/comfort/loads/supply/schedules
+            // for those buildings automatically -- worth calling out since it is not something
+            // this save directly asked for. `skipped_tables` is not: while locked, every save
+            // skips the same derived tables every time, and the editor already shows them as
+            // read-only, so repeating that on each save would just be noise.
+            const remapped = data?.remapped_buildings ?? [];
+            message.success(
+              remapped.length
+                ? `Changes saved. Re-derived ${remapped.length} building${remapped.length === 1 ? '' : 's'} from their archetype.`
+                : 'Changes Saved!',
+            );
           })
           .catch((error) => {
-            if (error.response.status === 401) setShowLoginModal(true);
+            // Optional: a network failure has no `response`, and reading `.status` off it
+            // would throw inside the catch, replacing the error modal with a blank screen.
+            if (error?.response?.status === 401) setShowLoginModal(true);
             else {
               Modal.error({
                 title: 'Could not save changes',
@@ -93,26 +109,6 @@ export const InputChangesButtons = ({ changes }) => {
   if (noChanges) return <div></div>;
 
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <Button
-        disabled={noChanges}
-        onClick={_discardChanges}
-        danger
-        size="small"
-        variant="outlined"
-        icon={<DeleteOutlined />}
-      >
-        Discard
-      </Button>
-      <Button
-        type="primary"
-        disabled={noChanges}
-        onClick={_saveChanges}
-        size="small"
-        icon={<SaveOutlined />}
-      >
-        Save
-      </Button>
-    </div>
+    <SaveDiscardButtons onSave={_saveChanges} onDiscard={_discardChanges} />
   );
 };

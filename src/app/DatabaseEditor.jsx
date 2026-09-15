@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Alert, Button, Spin } from 'antd';
+import { Alert, Button, Spin, message as antdMessage } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
@@ -127,8 +128,14 @@ const DatabaseContent = ({ message }) => {
   );
   const setShowLoginModal = useSetShowLoginModal();
   const [saveError, setSaveError] = useState(null);
+  const queryClient = useQueryClient();
 
   const changes = useDatabaseEditorStore((state) => state.changes);
+  // Discard = reload from disk. It clears `changes` as part of the fetch, and unlike
+  // `initDatabaseState` it keeps the user on the dataset they were editing.
+  const refreshDatabaseData = useDatabaseEditorStore(
+    (state) => state.refreshDatabaseData,
+  );
   const [derivedConflicts, setDerivedConflicts] = useState(null);
 
   const handleSave = async (options) => {
@@ -136,6 +143,36 @@ const DatabaseContent = ({ message }) => {
     try {
       await saveDatabaseState(options);
       setDerivedConflicts(null);
+
+      // The archetype-lock drift check (`useArchetypeDrift`) compares the live construction-type
+      // database against every building's current envelope/hvac/supply row -- stale data here
+      // would show a building as drifted (or not) against a database that no longer exists.
+      // Unconditional, not gated on `lastRemap`: an edit to a `const_type` no building currently
+      // uses still changes what a *future* selection of it would mean, and this table has no
+      // other invalidation path (it is its own query key, separate from the Database Editor's
+      // Zustand store).
+      queryClient.invalidateQueries({ queryKey: ['inputs-databases'] });
+
+      // While the scenario is locked, a save that touched an archetype the mapper reads
+      // re-runs it for the buildings that reference it (see `saveDatabaseState`). Read the
+      // fresh value directly rather than through the hook's selector, which will not have
+      // re-rendered yet at this point in the same tick.
+      const { lastRemap } = useDatabaseEditorStore.getState();
+      if (lastRemap?.buildings?.length) {
+        const count = lastRemap.buildings.length;
+        antdMessage.info(
+          `Re-mapped ${count} building${count === 1 ? '' : 's'} to the updated archetypes.`,
+        );
+        // The derived tables on disk just changed, and the lock's `mapped_at` advanced --
+        // both cached by the input editor under these keys (see `useArchetypeLock.js`, which
+        // invalidates the same two on a re-lock for the same reason).
+        queryClient.invalidateQueries({ queryKey: ['inputs'] });
+        queryClient.invalidateQueries({ queryKey: ['archetype-lock'] });
+      } else if (lastRemap?.error) {
+        antdMessage.warning(
+          `The database was saved, but re-mapping the affected buildings failed: ${lastRemap.error}`,
+        );
+      }
     } catch (error) {
       if (error instanceof DerivedConflictError)
         setDerivedConflicts(error.conflicts);
@@ -161,7 +198,11 @@ const DatabaseContent = ({ message }) => {
       <div className="cea-database-editor-content">
         {/* <DatabaseTopMenu /> */}
         {message && <DatabaseEditorErrorMessage error={message} />}
-        <DatabaseChangesList changes={changes} onSave={() => handleSave()} />
+        <DatabaseChangesList
+          changes={changes}
+          onSave={() => handleSave()}
+          onDiscard={() => refreshDatabaseData()}
+        />
         <DatabaseContainer />
       </div>
       <LoginModal />

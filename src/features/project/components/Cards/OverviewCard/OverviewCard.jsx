@@ -1,11 +1,11 @@
-import { Divider, message, Modal, Select, Spin, Tooltip } from 'antd';
+import { Button, Divider, message, Modal, Select, Spin, Tooltip } from 'antd';
 import InfoTooltip from 'components/InfoTooltip';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ProjectRow from './ProjectRow';
 import ScenarioRow from './ScenarioRow';
 import KpiRibbon from './KpiRibbon';
-import { ShowHideCardsButton } from 'components/ShowHideCardsButton';
+import { ShowHideCardsIcon } from 'assets/icons';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   deletePathway,
@@ -69,16 +69,20 @@ const OverviewCard = ({
           <Logo height={48} />
         </div>
 
-        <ShowHideCardsButton
-          hideAll={true}
-          onToggle={onToggleHideAll}
-          style={{
-            background: '#fff',
-            color: '#000',
-            padding: 0,
-            borderRadius: 0,
-          }}
-        />
+        {/* The shared `ShowHideCardsButton` carries the floating map-toolbar chrome
+            (`cea-card-toolbar-icon-container`), which this card had to undo with background /
+            colour / padding / radius overrides. Here it sits among the card's other icon
+            buttons, so it uses their container instead -- see `ProjectRow` / `ScenarioRow`. */}
+        <Tooltip title="Hide Overlays" placement="bottom">
+          <div className="cea-card-icon-button-container">
+            <Button
+              type="text"
+              icon={<ShowHideCardsIcon />}
+              onClick={() => onToggleHideAll?.()}
+              aria-label="Hide Overlays"
+            />
+          </div>
+        </Tooltip>
       </div>
       <OverviewCardProjectInfo
         project={project}
@@ -293,7 +297,9 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
         // resolves.
         const requestId = beginStateZoneOverrideRequest();
         fetchStateGeojson(pathwayName, year)
-          .then((data) => setStateZoneOverride(data?.geojson ?? null, requestId))
+          .then((data) =>
+            setStateZoneOverride(data?.geojson ?? null, requestId),
+          )
           .catch(() => setStateZoneOverride(null, requestId));
         queryClient.invalidateQueries({ queryKey: ['toolParams'] });
         queryClient.invalidateQueries({ queryKey: ['inputs'] });

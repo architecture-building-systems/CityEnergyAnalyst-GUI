@@ -2,10 +2,17 @@ import { create } from 'zustand';
 import { createNestedProp, deleteNestedProp } from 'utils';
 import { useCallback } from 'react';
 
+// Every kind of pending change. Adding one here is enough for the card, the buttons and the
+// discard/reset paths to pick it up.
+export const CHANGE_KINDS = ['update', 'delete', 'add'];
+
+const emptyChanges = () =>
+  Object.fromEntries(CHANGE_KINDS.map((kind) => [kind, {}]));
+
 export const useTableStore = create((set) => ({
   selected: [],
   selectionSource: null, // 'map' | 'table' | null
-  changes: { update: {}, delete: {} },
+  changes: emptyChanges(),
   fetchedSchedules: new Set(),
 
   setSelected: (selected, source = null) =>
@@ -24,14 +31,14 @@ export const useTableStore = create((set) => ({
         ),
       },
     })),
-  discardChanges: () => set({ changes: { update: {}, delete: {} } }),
+  discardChanges: () => set({ changes: { update: {}, delete: {}, add: {} } }),
   addFetchedSchedule: (building) =>
     set((state) => ({
       fetchedSchedules: state.fetchedSchedules.add(building),
     })),
 
   resetStore: () =>
-    set({ changes: { update: {}, delete: {} }, fetchedSchedules: new Set() }),
+    set({ changes: emptyChanges(), fetchedSchedules: new Set() }),
 }));
 
 function updateChanges(
@@ -65,12 +72,18 @@ export const useSelected = () => useTableStore((state) => state.selected);
 export const useSelectionSource = () =>
   useTableStore((state) => state.selectionSource);
 export const useChanges = () => useTableStore((state) => state.changes);
+/**
+ * Whether there is anything to save.
+ *
+ * One definition, used by both the card that announces changes and the Save/Discard buttons
+ * inside it. They were computed separately once, and adding a third kind of change (`add`) to
+ * only one of them left the card showing with no buttons in it.
+ */
+export const hasChanges = (changes) =>
+  CHANGE_KINDS.some((kind) => Object.keys(changes?.[kind] ?? {}).length > 0);
+
 export const useChangesExist = () =>
-  useTableStore(
-    (state) =>
-      Object.keys(state?.changes?.delete).length > 0 ||
-      Object.keys(state?.changes?.update).length > 0,
-  );
+  useTableStore((state) => hasChanges(state?.changes));
 export const useSetSelectedFromMap = () => {
   const setSelected = useTableStore((state) => state.setSelected);
   return useCallback((selected) => setSelected(selected, 'map'), [setSelected]);

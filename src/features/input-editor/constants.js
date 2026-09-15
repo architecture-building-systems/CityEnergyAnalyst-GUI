@@ -10,4 +10,3 @@ export const NO_GEOMETRY_REASON =
   'has no footprint, so it is not drawn on the map.';
 export const NO_GEOMETRY_FIX_ONE = 'Give it a geometry or delete the row.';
 export const NO_GEOMETRY_FIX_MANY = 'Give them a geometry or delete them.';
-

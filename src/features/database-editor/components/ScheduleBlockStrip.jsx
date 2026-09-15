@@ -1,9 +1,10 @@
 import { Dropdown } from 'antd';
 import { SCHEDULE_STATES, STATE_COLORS } from './scheduleStates';
 
-const ScheduleBlockCell = ({ hour, state, onSelect }) => (
+const ScheduleBlockCell = ({ hour, state, onSelect, readOnly = false }) => (
   <Dropdown
     trigger={['click']}
+    disabled={readOnly}
     menu={{
       selectedKeys: [state],
       items: SCHEDULE_STATES.map((option) => ({
@@ -20,7 +21,7 @@ const ScheduleBlockCell = ({ hour, state, onSelect }) => (
         flexDirection: 'column',
         alignItems: 'center',
         gap: 2,
-        cursor: 'pointer',
+        cursor: readOnly ? 'default' : 'pointer',
         userSelect: 'none',
       }}
     >
@@ -41,7 +42,10 @@ const ScheduleBlockCell = ({ hour, state, onSelect }) => (
 const ScheduleStateLegend = () => (
   <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
     {SCHEDULE_STATES.map((state) => (
-      <div key={state} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div
+        key={state}
+        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+      >
         <div
           style={{
             width: 12,
@@ -63,10 +67,14 @@ export const ScheduleBlockStrip = ({
   data,
   onDataChange,
   title = 'Schedule',
+  readOnly = false,
 }) => {
   if (!data || !Array.isArray(data)) return null;
 
   const handleSelect = (index, state) => {
+    // Belt-and-suspenders with the disabled Dropdown below: the trigger shouldn't fire in
+    // read-only mode, but a change should never be applied even if it does.
+    if (readOnly) return;
     if (!onDataChange) return;
     if (data[index] === state) return;
     const updatedData = [...data];
@@ -84,6 +92,7 @@ export const ScheduleBlockStrip = ({
             hour={hour}
             state={state}
             onSelect={handleSelect}
+            readOnly={readOnly}
           />
         ))}
       </div>

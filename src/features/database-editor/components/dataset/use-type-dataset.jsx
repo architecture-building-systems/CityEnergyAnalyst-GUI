@@ -1,9 +1,7 @@
 import { Button, Modal, Form, Input, Select, Divider } from 'antd';
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { BinAnimationIcon, CreateNewIcon } from 'assets/icons';
+import { ERROR_RED } from 'constants/theme';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { ScheduleBlockStrip } from 'features/database-editor/components/ScheduleBlockStrip';
@@ -329,7 +327,7 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
         <HiddenInDemo>
           <Button
             type="dashed"
-            icon={<PlusOutlined />}
+            icon={<CreateNewIcon />}
             onClick={() => setIsModalOpen(true)}
           >
             Add
@@ -337,7 +335,7 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
           <Divider size="small" />
           <Button
             danger
-            icon={<DeleteOutlined />}
+            icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
             onClick={handleDeleteUseType}
             disabled={types.length <= 1}
           >
@@ -477,8 +475,9 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
 
   // Create handler to update schedule data when chart points are dragged
   const handleScheduleChange = (dayType, updatedData) => {
-    // Demo scenarios are read-only - dragging still moves the chart point
-    // visually, but the change is never persisted to the store.
+    // Demo scenarios are read-only - `readOnly` passed to ScheduleAreaChart/BlockStrip below
+    // already stops the drag/click from starting, so this is a backstop rather than the only
+    // guard: it must never persist a change even if one somehow reaches here.
     if (demoMode) return;
 
     if (!selectedSchedule || !data) {
@@ -556,6 +555,7 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
               onDataChange={(updatedData) =>
                 handleScheduleChange(dayType, updatedData)
               }
+              readOnly={demoMode}
             />
           ))}
         </div>
@@ -570,6 +570,7 @@ const UseTypeSchedules = ({ dataKey, useType, data }) => {
                 onDataChange={(updatedData) =>
                   handleScheduleChange(dayType, updatedData)
                 }
+                readOnly={demoMode}
               />
             );
           })}

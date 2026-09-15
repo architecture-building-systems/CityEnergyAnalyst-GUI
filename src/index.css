@@ -49,6 +49,89 @@ button:hover {
   overscroll-behavior-x: none;
 }
 
+/* Archetype Lock ---------------------------------------------------------- */
+
+/* The two colours a drift indicator can take, named for the *kind* of derivation that drifted,
+   not the raw hue -- so every rule below draws from one definition instead of repeating its own
+   copy of the tint/border pair.
+   - `derived` (blue): `envelope`/`hvac`/`supply` are a pure database lookup, so a mismatch is a
+     fact -- the current value provably disagrees with what the current `const_type` says it
+     should be (also used for the zone tab's `const_type` rollup).
+   - `computed` (orange, a caution tone, not blue): `indoor-comfort`/`internal-loads` are a
+     ratio-weighted average `useArchetypeDrift` cannot cheaply re-derive, so this can only say
+     "the use_type key moved, or the content hash no longer matches" -- an indication something
+     may be off, not a confirmed mismatch (also used for the zone tab's `use_type*` rollup).
+   See `useArchetypeDrift`'s docstring for the full reasoning. The border variables reference the
+   published palette (`src/constants/theme.js`'s `--cea-uuen-blue`/`--cea-orange`); the tints
+   can't (no CSS `color-mix` dependency here), so they're spelled out as the same colour's rgb
+   channels at low alpha -- keep them in sync with `UUEN_BLUE`/`CEA_ORANGE` if either changes. */
+:root {
+  --cea-drift-derived-tint: rgba(20, 113, 176, 0.12);
+  --cea-drift-derived-border: var(--cea-uuen-blue, #1471b0);
+  --cea-drift-computed-tint: rgba(245, 131, 69, 0.14);
+  --cea-drift-computed-border: var(--cea-orange, #f58345);
+}
+
+/* A cell that cannot be edited here: a derived table CEA owns while Archetype Lock is on
+   (Input Editor), or any cell in a public demo scenario (Input Editor, Database Editor).
+   Readable, not editable -- shared across both editors so the cue means the same thing
+   wherever it appears. */
+.cea-input-editor-table .tabulator .cea-input-readonly,
+.cea-database-editor-database-dataset .tabulator .cea-input-readonly {
+  background-color: #f5f6f8;
+  color: #64748b;
+}
+
+/* Tabulator paints selection, hover and the row-level status tints on the *row*; the
+   read-only tint above is on the *cell*, which sits on top of them. Without this, selecting a
+   row on a locked tab looks like nothing happened, and in a public demo scenario -- where
+   `readOnly` is true for *every* tab, not just the archetype-derived ones -- a row with no
+   footprint loses the red tint that is the only cue saying why it is missing from the map.
+
+   Read-only means "you may not edit these values", not "you may not work with these rows":
+   selection, Filter on Selection and Clear Selection all stay live, and the row actions that
+   would write are disabled individually.
+
+   `.tabulator` alone is scope enough -- `.cea-input-readonly` is only ever applied by the
+   input editor and the database editor -- and the row-state class already outweighs the base
+   rule, so neither container needs naming twice. */
+.tabulator .tabulator-row.tabulator-selected .cea-input-readonly,
+.tabulator .tabulator-row.tabulator-selectable:hover .cea-input-readonly,
+.tabulator .tabulator-row.cea-input-row-no-geometry .cea-input-readonly,
+.tabulator .tabulator-row.cea-input-row-archetype-drifted .cea-input-readonly {
+  background-color: transparent;
+}
+
+/* A cell whose value disagrees with a pure database lookup: `envelope`/`hvac`/`supply` against
+   the construction-type database, or the zone tab's `const_type` (rolled up from those three).
+   The stripe carries the meaning for anyone who cannot distinguish the colour; the tooltip says
+   why. */
+.cea-input-editor-table .tabulator .cea-input-archetype-drifted {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--cea-drift-derived-tint) 0,
+    var(--cea-drift-derived-tint) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  box-shadow: inset 2px 0 0 var(--cea-drift-derived-border);
+}
+
+/* The `computed`-tab counterpart to `.cea-input-archetype-drifted` above, at the same cell
+   granularity -- only ever applied to the zone tab's `use_type*` rollup (`indoor-comfort`/
+   `internal-loads` themselves are flagged row-level, below, since a moved ratio or a content-hash
+   mismatch can't be pinned to one cell there). */
+.cea-input-editor-table .tabulator .cea-input-archetype-drifted-computed {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--cea-drift-computed-tint) 0,
+    var(--cea-drift-computed-tint) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  box-shadow: inset 2px 0 0 var(--cea-drift-computed-border);
+}
+
 /* A row the Input Editor cannot draw on the map: no footprint in the geometry file.
    Colours come from `src/constants/theme.js` via `publishPaletteCssVariables`; the literals
    are only a fallback for the first paint. The left rule carries the meaning where the tint
@@ -56,4 +139,21 @@ button:hover {
 .cea-input-editor-table .tabulator .cea-input-row-no-geometry {
   background-color: var(--cea-error-red-lightest, #fdece9) !important;
   box-shadow: inset 3px 0 0 var(--cea-error-red, #f04d5b);
+}
+
+/* A building whose data in *this* derived tab (`indoor-comfort`/`internal-loads`) may no longer
+   match its current archetype -- the row-level counterpart to `.cea-input-archetype-drifted-
+   computed` above, same `computed` (caution, not certain-drift) colour. Row-level, not
+   cell-level: unlike a lookup-tab mismatch, this one can't be pinned to a specific cell (see
+   `useArchetypeDrift`'s docstring for why), so it reads as a distinct, coarser kind of flag
+   rather than the same claim at a bigger size. */
+.cea-input-editor-table .tabulator .cea-input-row-archetype-drifted {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--cea-drift-computed-tint) 0,
+    var(--cea-drift-computed-tint) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  box-shadow: inset 3px 0 0 var(--cea-drift-computed-border);
 }

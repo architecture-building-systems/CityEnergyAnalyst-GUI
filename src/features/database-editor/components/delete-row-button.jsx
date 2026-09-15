@@ -1,5 +1,7 @@
 import { Button, Modal } from 'antd';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { BinAnimationIcon } from 'assets/icons';
+import { ERROR_RED } from 'constants/theme';
 import { useCallback } from 'react';
 import { useDeleteDatabaseRows } from 'features/database-editor/stores/databaseEditorStore';
 import { DeleteModalContent } from './delete-modal-content';
@@ -44,7 +46,6 @@ const DeleteRowButtonImpl = ({
   dataKey,
   index,
   tabulatorRef,
-  onDeleteRow,
   selectedCount = 0,
 }) => {
   const deleteRows = useDeleteRows(dataKey, index, tabulatorRef);
@@ -61,12 +62,7 @@ const DeleteRowButtonImpl = ({
       okText: 'Delete',
       okType: 'danger',
       cancelText: 'Cancel',
-      onOk: () => {
-        const deletedIndices = deleteRows();
-        if (deletedIndices.length > 0 && onDeleteRow) {
-          onDeleteRow(deletedIndices);
-        }
-      },
+      onOk: deleteRows,
     });
   };
 
@@ -79,8 +75,15 @@ const DeleteRowButtonImpl = ({
   const buttonText =
     selectedCount > 1 ? `Delete Row (${selectedCount})` : 'Delete Row';
 
+  // The bin's colour is set inline because antd's `.ant-btn .ant-btn-icon > svg { color: inherit }`
+  // outranks the SVG's own fill: `danger` alone would tint it antd's red, not CEA's. Same reason
+  // every other `BinAnimationIcon` call site in the app sets it explicitly.
   return (
-    <Button danger icon={<DeleteOutlined />} onClick={handleClick}>
+    <Button
+      danger
+      icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
+      onClick={handleClick}
+    >
       {buttonText}
     </Button>
   );

@@ -7,12 +7,11 @@ import StatusBar from 'features/status-bar/components/StatusBar';
 
 import './HomePage.css';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { Button, ConfigProvider } from 'antd';
+import { Button, ConfigProvider, Tooltip } from 'antd';
 import {
   ERROR_RED,
   ERROR_RED_LIGHTEST,
-  WARNING_YELLOW,
-  WARNING_YELLOW_LIGHTEST,
+  ICON_BLACK,
   publishPaletteCssVariables,
 } from 'constants/theme';
 import { LeftOutlined } from '@ant-design/icons';
@@ -157,12 +156,29 @@ const Cardwrapper = ({ children, style }) => {
         ...style,
       }}
     >
-      <Button
-        style={{ marginRight: 'auto', position: 'sticky', top: 0, zIndex: 1 }}
-        onClick={() => push(routes.PROJECT)}
-      >
-        <LeftOutlined /> Return
-      </Button>
+      {/* Matches the Canvas Builder's back button (`NavigatorCard.jsx`): the shared
+          `cea-card-icon-button-container` chrome on a solid white background, icon only with
+          the label in a tooltip. The sticky positioning moves to the container, which is now
+          the element in the flow. */}
+      <Tooltip title="Return to project" placement="bottom">
+        <div
+          className="cea-card-icon-button-container"
+          style={{
+            background: '#fff',
+            marginRight: 'auto',
+            position: 'sticky',
+            top: 0,
+            zIndex: 1,
+          }}
+        >
+          <Button
+            type="text"
+            icon={<LeftOutlined />}
+            onClick={() => push(routes.PROJECT)}
+            aria-label="Return to project"
+          />
+        </div>
+      </Tooltip>
       <div style={{ flexGrow: 1 }}>{children}</div>
     </div>
   );
@@ -197,8 +213,10 @@ const CEA_THEME = {
   token: {
     colorPrimary: '#1470AF',
     colorInfo: '#1470AF',
-    colorWarningBg: WARNING_YELLOW_LIGHTEST,
-    colorWarningBorder: WARNING_YELLOW,
+    colorWarningBg: ERROR_RED_LIGHTEST,
+    colorWarningBorder: ERROR_RED,
+    // Drives the filled circle behind the `!` on every warning icon.
+    colorWarning: ICON_BLACK,
     colorErrorBg: ERROR_RED_LIGHTEST,
     colorErrorBorder: ERROR_RED,
   },
@@ -219,9 +237,7 @@ publishPaletteCssVariables();
 
 const HomePage = () => {
   return (
-    <ConfigProvider
-      theme={CEA_THEME}
-    >
+    <ConfigProvider theme={CEA_THEME}>
       <QueryClientProvider client={queryClient}>
         <ServerCheckGate>
           <UserCheckGate>

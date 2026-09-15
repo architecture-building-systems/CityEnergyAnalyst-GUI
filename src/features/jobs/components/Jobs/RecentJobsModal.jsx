@@ -49,7 +49,9 @@ const RecentJobsModal = ({ open, onCancel }) => {
     () =>
       sortedJobs
         .filter(FILTERS[filter])
-        .filter((job) => !scenarioFilter || job.scenario_name === scenarioFilter),
+        .filter(
+          (job) => !scenarioFilter || job.scenario_name === scenarioFilter,
+        ),
     [sortedJobs, filter, scenarioFilter],
   );
 
