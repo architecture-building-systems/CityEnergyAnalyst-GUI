@@ -82,6 +82,26 @@ button:hover {
   color: #64748b;
 }
 
+/* Tabulator paints selection, hover and the row-level status tints on the *row*; the
+   read-only tint above is on the *cell*, which sits on top of them. Without this, selecting a
+   row on a locked tab looks like nothing happened, and in a public demo scenario -- where
+   `readOnly` is true for *every* tab, not just the archetype-derived ones -- a row with no
+   footprint loses the red tint that is the only cue saying why it is missing from the map.
+
+   Read-only means "you may not edit these values", not "you may not work with these rows":
+   selection, Filter on Selection and Clear Selection all stay live, and the row actions that
+   would write are disabled individually.
+
+   `.tabulator` alone is scope enough -- `.cea-input-readonly` is only ever applied by the
+   input editor and the database editor -- and the row-state class already outweighs the base
+   rule, so neither container needs naming twice. */
+.tabulator .tabulator-row.tabulator-selected .cea-input-readonly,
+.tabulator .tabulator-row.tabulator-selectable:hover .cea-input-readonly,
+.tabulator .tabulator-row.cea-input-row-no-geometry .cea-input-readonly,
+.tabulator .tabulator-row.cea-input-row-archetype-drifted .cea-input-readonly {
+  background-color: transparent;
+}
+
 /* A cell whose value disagrees with a pure database lookup: `envelope`/`hvac`/`supply` against
    the construction-type database, or the zone tab's `const_type` (rolled up from those three).
    The stripe carries the meaning for anyone who cannot distinguish the colour; the tooltip says
