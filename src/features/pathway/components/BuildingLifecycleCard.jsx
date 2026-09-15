@@ -118,7 +118,7 @@ const BuildingLifecycleCard = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        padding: '16px 24px',
+        padding: '12px 24px',
         boxSizing: 'border-box',
       }}
     >

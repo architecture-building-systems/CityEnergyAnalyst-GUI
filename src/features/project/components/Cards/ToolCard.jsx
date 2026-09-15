@@ -21,9 +21,10 @@ const CARD_PADDING = 12;
 const CARD_PADDING_TOP = 36;
 
 // Where the collapse arrow sits, derived rather than eyeballed so it tracks the padding above.
-// The content's title starts at `CARD_PADDING_TOP` plus its own `--outer-margin` (12px) and
-// runs ~24px, putting its centre 12px lower; the button container is ~38px tall, so half of
-// that centres it on the same line.
+// The content's title starts at `CARD_PADDING_TOP` plus its own 12px margin and runs ~24px,
+// putting its centre 12px lower; the button container is ~38px tall, so half of that centres it
+// on the same line. This only holds while every card content titles itself with the shared
+// `.cea-tool-card-title` (Project.css).
 const TITLE_OUTER_MARGIN = 12;
 const TITLE_HALF_LINE = 12;
 const COLLAPSE_BUTTON_HALF_HEIGHT = 19;

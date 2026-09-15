@@ -17,7 +17,7 @@ export const ToolChoices = ({ onSelected }) => {
 
   return (
     <div className="cea-tool-choices">
-      <div className="cea-tool-choices-header">Tools</div>
+      <div className="cea-tool-card-title">Tools</div>
       <div className="cea-tool-choices-group-list">
         {Object.keys(tools || {})
           .filter((category) => !IGNORED_TOOL_SECTIONS.includes(category))

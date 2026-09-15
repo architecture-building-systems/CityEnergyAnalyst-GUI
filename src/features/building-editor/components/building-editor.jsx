@@ -164,9 +164,7 @@ export const BuildingEditor = () => {
         boxSizing: 'border-box',
       }}
     >
-      <div>
-        <b>{building}</b>
-      </div>
+      <div className="cea-tool-card-title">{building}</div>
 
       <Divider />
 
