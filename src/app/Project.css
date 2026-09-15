@@ -54,12 +54,9 @@
   font-size: 12px;
 }
 
-/* A tool card's own title line -- "Tools", "Plots", the selected building's name. The collapse
-   arrow in `ToolCard.jsx` is positioned against these exact values (`TITLE_OUTER_MARGIN`,
-   `TITLE_HALF_LINE`), so every card content that shows a title uses this one class: roll another
-   and the arrow lines up with some contents and not others, which is how it used to be. The
-   margin is deliberately literal rather than a token -- it is pinned to the arrow, not free to
-   follow a card's own spacing scale. */
+/* A tool card's own title line -- "Tools", "Plots", the selected building's name. One class for
+   all of them so the cards do not each drift to their own size and indent, which is how it used
+   to be. */
 .cea-tool-card-title {
   font-size: 16px;
   font-weight: bold;
