@@ -1,10 +1,27 @@
 import { create } from 'zustand';
 import useBuildingSelectionStore from 'stores/buildingSelectionStore';
+import { useTableStore } from 'features/input-editor/stores/inputEditorStore';
 
 export const toolTypes = {
   TOOLS: 'tools',
   MAP_LAYERS: 'visualization',
   BUILDING_INFO: 'building-info',
+};
+
+// The building-info card exists *because* a building is selected on the map (see the effect
+// in `ProjectOverlay`). Leaving that card -- by collapsing it or by switching to Tools/Plots --
+// clears the selection, so the map never shows a highlighted building with no card explaining
+// it. Scoped to leaving *that* card: the selection store is shared with the input editor's
+// table, so closing Tools or Plots must not touch it.
+const clearSelectionWhenLeavingBuildingInfo = (
+  currentToolType,
+  nextToolType,
+) => {
+  if (currentToolType !== toolTypes.BUILDING_INFO) return;
+  // Not merely a short-circuit: selecting a different building re-asserts the same card, and
+  // clearing the selection there would wipe the very selection that just opened it.
+  if (currentToolType === nextToolType) return;
+  useTableStore.getState().setSelected([], null);
 };
 
 export const useToolCardStore = create((set, get) => ({
@@ -28,6 +45,7 @@ export const useToolCardStore = create((set, get) => ({
       const { active } = useBuildingSelectionStore.getState();
       if (active) return;
     }
+    clearSelectionWhenLeavingBuildingInfo(get().toolType, toolType);
     set({ toolType });
   },
   setSelectedTool: (selectedTool) => set({ selectedTool }),
@@ -37,13 +55,15 @@ export const useToolCardStore = create((set, get) => ({
   setBuildingLifecycleData: (data) => set({ buildingLifecycleData: data }),
   setVisiblePathways: (pathways) => set({ visiblePathways: pathways }),
   clearBuildingLifecycleData: () => set({ buildingLifecycleData: null }),
-  closeToolCard: () =>
+  closeToolCard: () => {
+    clearSelectionWhenLeavingBuildingInfo(get().toolType, null);
     set({
       toolType: null,
       buildingLifecycleData: null,
       plotToolPrefill: null,
       plotToolSeed: null,
-    }),
+    });
+  },
   toggleToolType: (type) => {
     const { toolType, setToolType } = get();
     toolType !== type ? setToolType(type) : setToolType(null);

@@ -275,7 +275,25 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     config: { tension, friction }, // Control the speed of the animation
   });
 
+  // What this effect has already acted on. `toolType` has to stay in the dependency list
+  // below (the deselect branch reads it), but it must not *trigger* the effect: closing the
+  // card or switching to Plots/Tools changes `toolType`, the effect re-ran, saw the building
+  // still selected and re-opened building-info -- so the collapse arrow and the tool buttons
+  // looked broken. Keyed on every other input, so a real change (a new selection, the pathway
+  // panel opening) still re-runs the body.
+  const handledSelectionRef = useRef(null);
+
   useEffect(() => {
+    // NUL joins the names because a building name may legitimately contain a comma, and two
+    // different selections must never produce the same key.
+    const selectionKey = [
+      selectionSource === 'map' ? selectedBuildings.join('\u0000') : '',
+      showPathwayPanel,
+      showInputEditor,
+    ].join('|');
+    if (handledSelectionRef.current === selectionKey) return;
+    handledSelectionRef.current = selectionKey;
+
     // Show building info tool card when buildings are selected on map and input editor is not open
     if (
       selectedBuildings.length > 0 &&
