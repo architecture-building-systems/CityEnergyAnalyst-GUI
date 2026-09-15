@@ -1,8 +1,7 @@
-import { Button, Modal, Tooltip, message } from 'antd';
-import { BinAnimationIcon, SaveIcon } from 'assets/icons';
-import { ERROR_RED } from 'constants/theme';
+import { Modal, message } from 'antd';
 
 import { AsyncError } from 'components/AsyncError';
+import { SaveDiscardButtons } from 'components/SaveDiscardButtons';
 import { useSaveInputs } from 'features/input-editor/hooks/mutations/useSaveInputs';
 import { useResyncInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
 import {
@@ -110,34 +109,6 @@ export const InputChangesButtons = ({ changes }) => {
   if (noChanges) return <div></div>;
 
   return (
-    // `cea-card-icon-button-container` is the shared icon-button chrome (see HomePage.css).
-    // Colour carries the hierarchy the labels used to: red for the destructive action, a filled
-    // UUEN blue for the one to take. Without it two identical grey icons sit side by side.
-    <div style={{ display: 'flex', gap: 8 }}>
-      <div className="cea-card-icon-button-container">
-        <Tooltip title="Discard changes" placement="bottom">
-          <Button
-            type="text"
-            onClick={_discardChanges}
-            icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
-            aria-label="Discard changes"
-          />
-        </Tooltip>
-      </div>
-      {/* `active` is the existing blue breathing glow (HomePage.css `@keyframes glow`), the
-          same one the empty-state CTAs use to say "this is the thing to do next". Unsaved
-          changes are exactly that. `cea-icon-button-primary` fills it UUEN blue; the icon
-          paints white from the CSS, so no inline colour here. */}
-      <div className="cea-card-icon-button-container cea-icon-button-primary active">
-        <Tooltip title="Save changes" placement="bottom">
-          <Button
-            type="text"
-            onClick={_saveChanges}
-            icon={<SaveIcon />}
-            aria-label="Save changes"
-          />
-        </Tooltip>
-      </div>
-    </div>
+    <SaveDiscardButtons onSave={_saveChanges} onDiscard={_discardChanges} />
   );
 };

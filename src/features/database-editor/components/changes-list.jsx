@@ -1,13 +1,15 @@
 import { arrayStartsWith } from 'utils';
 import { useEffect, useRef } from 'react';
 import useNavigationStore from 'stores/navigationStore';
-import { Button } from 'antd';
+import { Modal, message } from 'antd';
 import {
   EditOutlined,
   PlusOutlined,
   DeleteOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
+
+import { SaveDiscardButtons } from 'components/SaveDiscardButtons';
 
 const ACTION_CONFIG = {
   update: {
@@ -112,7 +114,7 @@ const useUnsavedChangesWarning = (hasUnsavedChanges) => {
   }, [hasUnsavedChanges]);
 };
 
-export const DatabaseChangesList = ({ changes, onSave }) => {
+export const DatabaseChangesList = ({ changes, onSave, onDiscard }) => {
   const listRef = useRef(null);
   useUnsavedChangesWarning(changes.length > 0);
 
@@ -122,6 +124,27 @@ export const DatabaseChangesList = ({ changes, onSave }) => {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [changes.length]);
+
+  const discardChanges = () => {
+    Modal.confirm({
+      title: 'This will discard all unsaved changes.',
+      content: `${changes.length} change${changes.length === 1 ? '' : 's'} will be lost.`,
+      centered: true,
+      okText: 'DISCARD',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      async onOk() {
+        try {
+          await onDiscard();
+          message.config({ top: 120 });
+          message.success('Changes discarded.');
+        } catch (error) {
+          console.error(error);
+          message.error('Could not discard the changes.');
+        }
+      },
+    });
+  };
 
   if (changes.length === 0) return null;
 
@@ -143,9 +166,7 @@ export const DatabaseChangesList = ({ changes, onSave }) => {
         }}
       >
         <div>Changes</div>
-        <Button type="primary" onClick={onSave}>
-          Save
-        </Button>
+        <SaveDiscardButtons onSave={onSave} onDiscard={discardChanges} />
       </div>
 
       <ul ref={listRef} style={{ maxHeight: 120, overflowY: 'auto' }}>

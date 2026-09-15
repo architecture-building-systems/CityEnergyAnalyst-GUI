@@ -131,6 +131,11 @@ const DatabaseContent = ({ message }) => {
   const queryClient = useQueryClient();
 
   const changes = useDatabaseEditorStore((state) => state.changes);
+  // Discard = reload from disk. It clears `changes` as part of the fetch, and unlike
+  // `initDatabaseState` it keeps the user on the dataset they were editing.
+  const refreshDatabaseData = useDatabaseEditorStore(
+    (state) => state.refreshDatabaseData,
+  );
   const [derivedConflicts, setDerivedConflicts] = useState(null);
 
   const handleSave = async (options) => {
@@ -193,7 +198,11 @@ const DatabaseContent = ({ message }) => {
       <div className="cea-database-editor-content">
         {/* <DatabaseTopMenu /> */}
         {message && <DatabaseEditorErrorMessage error={message} />}
-        <DatabaseChangesList changes={changes} onSave={() => handleSave()} />
+        <DatabaseChangesList
+          changes={changes}
+          onSave={() => handleSave()}
+          onDiscard={() => refreshDatabaseData()}
+        />
         <DatabaseContainer />
       </div>
       <LoginModal />
