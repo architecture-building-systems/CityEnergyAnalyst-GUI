@@ -7,7 +7,7 @@ import StatusBar from 'features/status-bar/components/StatusBar';
 
 import './HomePage.css';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
-import { Button, ConfigProvider } from 'antd';
+import { Button, ConfigProvider, Tooltip } from 'antd';
 import {
   ERROR_RED,
   ERROR_RED_LIGHTEST,
@@ -156,12 +156,29 @@ const Cardwrapper = ({ children, style }) => {
         ...style,
       }}
     >
-      <Button
-        style={{ marginRight: 'auto', position: 'sticky', top: 0, zIndex: 1 }}
-        onClick={() => push(routes.PROJECT)}
-      >
-        <LeftOutlined /> Return
-      </Button>
+      {/* Matches the Canvas Builder's back button (`NavigatorCard.jsx`): the shared
+          `cea-card-icon-button-container` chrome on a solid white background, icon only with
+          the label in a tooltip. The sticky positioning moves to the container, which is now
+          the element in the flow. */}
+      <Tooltip title="Return to project" placement="bottom">
+        <div
+          className="cea-card-icon-button-container"
+          style={{
+            background: '#fff',
+            marginRight: 'auto',
+            position: 'sticky',
+            top: 0,
+            zIndex: 1,
+          }}
+        >
+          <Button
+            type="text"
+            icon={<LeftOutlined />}
+            onClick={() => push(routes.PROJECT)}
+            aria-label="Return to project"
+          />
+        </div>
+      </Tooltip>
       <div style={{ flexGrow: 1 }}>{children}</div>
     </div>
   );

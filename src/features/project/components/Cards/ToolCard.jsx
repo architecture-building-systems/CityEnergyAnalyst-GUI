@@ -1,6 +1,6 @@
-import { VerticalLeftOutlined } from '@ant-design/icons';
+import { RightOutlined } from '@ant-design/icons';
 import Tool from 'features/tools/components/Tools/Tool';
-import { Button, Form } from 'antd';
+import { Button, Form, Tooltip } from 'antd';
 
 import {
   useCloseToolCard,
@@ -15,6 +15,23 @@ import { BuildingEditor } from 'features/building-editor/components/building-edi
 import BuildingLifecycleCard from 'features/pathway/components/BuildingLifecycleCard';
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { PlotTool } from './plot-tool';
+
+// Card padding. The top is deeper than the other sides so the title has room to breathe.
+const CARD_PADDING = 12;
+const CARD_PADDING_TOP = 36;
+
+// Where the collapse arrow sits, derived rather than eyeballed so it tracks the padding above.
+// The content's title starts at `CARD_PADDING_TOP` plus its own `--outer-margin` (12px) and
+// runs ~24px, putting its centre 12px lower; the button container is ~38px tall, so half of
+// that centres it on the same line.
+const TITLE_OUTER_MARGIN = 12;
+const TITLE_HALF_LINE = 12;
+const COLLAPSE_BUTTON_HALF_HEIGHT = 19;
+const COLLAPSE_BUTTON_TOP =
+  CARD_PADDING_TOP +
+  TITLE_OUTER_MARGIN +
+  TITLE_HALF_LINE -
+  COLLAPSE_BUTTON_HALF_HEIGHT;
 
 const ToolCard = ({ onPlotToolSelected }) => {
   const toolType = useToolType();
@@ -83,29 +100,59 @@ const ToolCard = ({ onPlotToolSelected }) => {
         style={{
           height: '100%',
           boxSizing: 'border-box',
-          padding: 12,
+          padding: CARD_PADDING,
+          paddingTop: CARD_PADDING_TOP,
 
           display: 'flex',
           flexDirection: 'column',
+
+          // Anchors the collapse arrow below, which is taken out of flow so it can sit on the
+          // content's title line rather than on a row of its own.
+          position: 'relative',
         }}
       >
-        <div
-          className="cea-tool-card-header"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: 14,
-          }}
-        >
-          {toolType === toolTypes.MAP_LAYERS && selectedPlotTool != null && (
+        {/* Only the Back button lives here now -- the collapse arrow is positioned against
+            the card below. Rendered conditionally so the common case has no empty row: the
+            content (and its title) must start at the card's top padding for the arrow's
+            offset to line up. */}
+        {toolType === toolTypes.MAP_LAYERS && selectedPlotTool != null && (
+          <div
+            className="cea-tool-card-header"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: 14,
+            }}
+          >
             <Button onClick={handleResetTool}>Back</Button>
-          )}
-          <Button
-            icon={<VerticalLeftOutlined />}
-            onClick={closeToolCard}
-            style={{ marginLeft: 'auto', padding: 12 }}
-          />
-        </div>
+          </div>
+        )}
+
+        {/* Shared icon-button chrome (`cea-card-icon-button-container`, HomePage.css), the
+            same as the Canvas Builder's back button and the editors' Save/Discard. The card
+            is already white, so the container needs no background of its own.
+
+            Positioned rather than placed in the header row so it lines up with the content's
+            own title ("Tools" / "Plots") instead of sitting on a row above it. See
+            `COLLAPSE_BUTTON_TOP` for how the offset follows the card's top padding. */}
+        <Tooltip title="Collapse" placement="bottom">
+          <div
+            className="cea-card-icon-button-container"
+            style={{
+              position: 'absolute',
+              top: COLLAPSE_BUTTON_TOP,
+              right: CARD_PADDING,
+              zIndex: 1,
+            }}
+          >
+            <Button
+              type="text"
+              icon={<RightOutlined />}
+              onClick={closeToolCard}
+              aria-label="Collapse"
+            />
+          </div>
+        </Tooltip>
 
         <ErrorBoundary>
           <div

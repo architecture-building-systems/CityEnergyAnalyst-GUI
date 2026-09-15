@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ConfigProvider, Button } from 'antd';
-import { VerticalLeftOutlined } from '@ant-design/icons';
+import { ConfigProvider, Button, Tooltip } from 'antd';
+import { RightOutlined } from '@ant-design/icons';
 
 import {
   PlotChoices,
@@ -153,12 +153,20 @@ const PlotEditModal = ({
         {selectedScript && allowBack && (
           <Button onClick={handleBack}>Back</Button>
         )}
-        <Button
-          icon={<VerticalLeftOutlined />}
-          onClick={onCancel}
-          style={{ marginLeft: 'auto', padding: 12 }}
-          aria-label="Close"
-        />
+        {/* Shared icon-button chrome, matching the Tool card's collapse button. */}
+        <Tooltip title="Collapse" placement="bottom">
+          <div
+            className="cea-card-icon-button-container"
+            style={{ marginLeft: 'auto' }}
+          >
+            <Button
+              type="text"
+              icon={<RightOutlined />}
+              onClick={onCancel}
+              aria-label="Collapse"
+            />
+          </div>
+        </Tooltip>
       </div>
 
       <div className="cea-tool-card-content" style={contentStyle}>
