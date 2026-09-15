@@ -50,6 +50,19 @@ import { AddRowButton } from 'features/database-editor/components/add-row-button
 import { useDemoMode } from 'stores/demoStore';
 import { HiddenInDemo } from 'components/HiddenInDemo';
 
+// Tabulator formatters return raw HTML strings, so any value interpolated into one has to be
+// escaped -- these come from user-editable CSV databases.
+const HTML_ESCAPES = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+const escapeHtml = (value) =>
+  String(value).replace(/[&<>"']/g, (character) => HTML_ESCAPES[character]);
+
 export const TableGroupDataset = ({
   dataKey,
   data,
@@ -603,7 +616,16 @@ const EntityDataTable = ({
             } else {
               element.style.border = '';
             }
-            return `${value} <span style="float: right; color: #777; margin-left: 4px;">▼</span>`;
+            // `inline-flex` rather than a floated arrow: a float is out of normal flow, so
+            // the width `layout: 'fitDataFill'` measures for the column would exclude the
+            // arrow the rendered cell shows. This is not what caused the header/body
+            // misalignment -- that was the frozen columns, see `cellEdited` -- but a column
+            // sized without its own arrow is a hazard worth not carrying.
+            //
+            // Escaped because the value comes from a user-editable CSV, where a stray `<`
+            // would otherwise be parsed as markup.
+            const safeValue = escapeHtml(value);
+            return `<span style="display: inline-flex; align-items: center; gap: 4px;"><span>${safeValue}</span><span style="color: #777;">▼</span></span>`;
           },
           editorParams: {
             values: columnChoices,
@@ -701,6 +723,21 @@ const EntityDataTable = ({
             undefined,
             position,
           );
+
+          // A committed edit can change the rendered width of a cell, so `fitDataFill`
+          // re-measures the column -- but the frozen index/selection columns are absolutely
+          // positioned, and their offsets are only recomputed for the body. The header then
+          // sits a frozen-region's width to the left of the data under it, and stays there: a
+          // window resize runs `redraw()`, which does not re-run the frozen layout. Only
+          // `redraw(true)` does.
+          //
+          // Deferred a frame so it lands after Tabulator has torn the editor down; redrawing
+          // inside the edit lifecycle re-enters the cell that is still finishing. The
+          // `isConnected` guard is because nothing here destroys the table or clears the ref,
+          // so the frame can still fire after the dataset has been switched away.
+          requestAnimationFrame(() => {
+            if (divRef.current?.isConnected) tabulatorRef.current?.redraw(true);
+          });
         },
       };
 
