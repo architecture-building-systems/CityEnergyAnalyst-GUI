@@ -36,12 +36,9 @@ import {
   Alert,
   message,
 } from 'antd';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  ExclamationCircleOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { BinAnimationIcon, CreateNewIcon } from 'assets/icons';
+import { ERROR_RED } from 'constants/theme';
 import { DeleteModalContent } from 'features/database-editor/components/delete-modal-content';
 import { CreateComponentModal } from 'features/database-editor/components/create-component-modal';
 import { DuplicateRowButton } from 'features/database-editor/components/duplicate-row-button';
@@ -145,7 +142,7 @@ export const TableGroupDataset = ({
             >
               <Button
                 danger
-                icon={<DeleteOutlined />}
+                icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
                 onClick={() => handleDelete(key)}
               >
                 Delete &quot;{key}&quot;
@@ -158,7 +155,7 @@ export const TableGroupDataset = ({
       <HiddenInDemo>
         <Button
           type="dashed"
-          icon={<PlusOutlined />}
+          icon={<CreateNewIcon />}
           onClick={() => setIsModalOpen(true)}
         >
           Add New Component
@@ -228,7 +225,6 @@ export const TableDataset = ({
                   data={data}
                   dataKey={dataKey}
                   index={indexColumn}
-                  schema={schema}
                   tabulatorRef={tabulatorRef}
                   selectedCount={selectedCount}
                 />

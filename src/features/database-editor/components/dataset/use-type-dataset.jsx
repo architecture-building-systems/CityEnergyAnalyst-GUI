@@ -1,9 +1,7 @@
 import { Button, Modal, Form, Input, Select, Divider } from 'antd';
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { BinAnimationIcon, CreateNewIcon } from 'assets/icons';
+import { ERROR_RED } from 'constants/theme';
 import { TableDataset } from './table-dataset';
 import { ScheduleAreaChart } from 'features/database-editor/components/ScheduleAreaChart';
 import { ScheduleBlockStrip } from 'features/database-editor/components/ScheduleBlockStrip';
@@ -329,7 +327,7 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
         <HiddenInDemo>
           <Button
             type="dashed"
-            icon={<PlusOutlined />}
+            icon={<CreateNewIcon />}
             onClick={() => setIsModalOpen(true)}
           >
             Add
@@ -337,7 +335,7 @@ const UseTypeButtons = ({ types, selected, onSelected, existingTypes }) => {
           <Divider size="small" />
           <Button
             danger
-            icon={<DeleteOutlined />}
+            icon={<BinAnimationIcon style={{ color: ERROR_RED }} />}
             onClick={handleDeleteUseType}
             disabled={types.length <= 1}
           >
