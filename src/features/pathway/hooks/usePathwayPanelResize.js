@@ -6,6 +6,7 @@ export const usePathwayPanelResize = ({ open, expanded }) => {
     height: pathwayPanelHeight,
     contentRef: pathwayPanelContentRef,
     handleResizeStart: handlePathwayResizeStart,
+    handleResizeKeyDown: handlePathwayResizeKeyDown,
   } = usePanelResize({
     initialHeight: 425,
     minDragHeight: 360,
@@ -36,6 +37,7 @@ export const usePathwayPanelResize = ({ open, expanded }) => {
     pathwayPanelHeight,
     pathwayPanelContentRef,
     handlePathwayResizeStart,
+    handlePathwayResizeKeyDown,
     pathwayPanelTransition,
   };
 };

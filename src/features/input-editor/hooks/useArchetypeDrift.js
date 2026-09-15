@@ -72,7 +72,13 @@ function valuesEqual(a, b) {
  */
 export function useArchetypeDrift({ tables, lock, constructionTypes }) {
   return useMemo(() => {
-    const result = {};
+    // Initialized for every tab this hook can ever write to, not just `lock.derived_tabs` --
+    // `lock` still holds `useArchetypeLock`'s EMPTY default (derived_tabs: []) while its query
+    // is in flight, but `tables` can already have data from `useInputs` resolving first. Without
+    // this, a mismatch found before `lock` loads would assign into an undefined `result[tab]`.
+    const result = Object.fromEntries(
+      [...LOOKUP_TABS, ...COMPUTED_TABS].map((tab) => [tab, {}]),
+    );
     for (const tab of lock?.derived_tabs ?? []) result[tab] = {};
     // Not one of `derived_tabs` -- `zone` is the archetype key, not a derived output -- but a
     // building whose `const_type` drives at least one drifted lookup-tab cell gets its own

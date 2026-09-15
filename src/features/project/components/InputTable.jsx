@@ -16,7 +16,7 @@ import { useDemoMode } from 'stores/demoStore';
 const InputTable = ({ onFitHeightChange }) => {
   const { data } = useInputs();
   const { tables, columns } = data;
-  const { data: lock } = useArchetypeLock();
+  const { data: lock, isFetching: lockIsFetching } = useArchetypeLock();
   const setLock = useSetArchetypeLock();
   const { data: constructionTypes } = useConstructionTypes();
   const demoMode = useDemoMode();
@@ -33,7 +33,16 @@ const InputTable = ({ onFitHeightChange }) => {
   // affordance; `save_all_inputs` refuses to write them regardless of what the client sends.
   // Demo visitors have no write path at all (the demo sub-app defines no PUT route), so the
   // whole editor is read-only there, not just the archetype-derived tabs.
-  const readOnly = demoMode || (lock.locked && lock.derived_tabs.includes(tab));
+  // `lockIsFetching`/`setLock.isPending` cover the window where `lock` (and the `inputs` cache
+  // `useUpdateInputs` writes edits straight into) is about to change under the editor: an edit
+  // made mid-toggle would otherwise get silently replaced once the lock/inputs refetch lands --
+  // see `useSetArchetypeLock`'s `onSuccess`, which now awaits both invalidations rather than
+  // letting `mutateAsync` resolve (and this gate lift) before they land.
+  const readOnly =
+    demoMode ||
+    lockIsFetching ||
+    setLock.isPending ||
+    (lock.locked && lock.derived_tabs.includes(tab));
   // The real, per-building, per-tab check: does this building's data in *this* tab still match
   // what its current archetype implies? Computed entirely from data already loaded above -- no
   // extra request beyond `useConstructionTypes`, which the input editor did not previously fetch.
@@ -113,7 +122,9 @@ const InputTable = ({ onFitHeightChange }) => {
                 derivedTabs={lock.derived_tabs}
                 buildingCount={Object.keys(tables?.zone ?? {}).length}
                 onChanged={(next) => setLock.mutateAsync(next)}
-                disabled={hasPendingChanges}
+                disabled={
+                  hasPendingChanges || lockIsFetching || setLock.isPending
+                }
               />
             </HiddenInDemo>
             {demoMode && (

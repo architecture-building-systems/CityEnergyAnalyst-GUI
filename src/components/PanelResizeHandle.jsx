@@ -23,11 +23,20 @@ const pillStyle = {
   background: 'rgba(148, 163, 184, 0.7)',
 };
 
-export const PanelResizeHandle = ({ onMouseDown, label }) => (
+export const PanelResizeHandle = ({
+  onMouseDown,
+  onKeyDown,
+  height,
+  label,
+}) => (
   <button
     type="button"
+    role="slider"
     aria-label={label}
+    aria-orientation="vertical"
+    aria-valuenow={height}
     onMouseDown={onMouseDown}
+    onKeyDown={onKeyDown}
     style={handleStyle}
   >
     <span style={pillStyle} />

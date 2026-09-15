@@ -57,8 +57,18 @@ const DuplicateBuildingModal = ({
           label="Name of the new building"
           name="building_name"
           rules={[
-            { required: true, message: 'Give the new building a name.' },
-            { validator: getValidateBuildingNameFunc(existingNames) },
+            {
+              required: true,
+              whitespace: true,
+              message: 'Give the new building a name.',
+            },
+            {
+              // Validate the same trimmed value `onFinish` actually duplicates with --
+              // otherwise a name like "B1 " passes uniqueness against "B1" here and then
+              // collides with it once trimmed.
+              validator: (_, value) =>
+                getValidateBuildingNameFunc(existingNames)(_, value?.trim()),
+            },
           ]}
         >
           <Input onPressEnter={() => form.submit()} />

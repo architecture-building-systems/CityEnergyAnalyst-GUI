@@ -69,10 +69,16 @@ export function useSetArchetypeLock() {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archetype-lock'] });
-      // Re-locking rewrites every derived table, so the loaded tables are stale.
-      queryClient.invalidateQueries({ queryKey: ['inputs'] });
+    // Awaited, not fire-and-forget: `mutateAsync` resolving (and `isPending` going false) is
+    // what re-enables the input editor (see `InputTable.jsx`'s `readOnly`/toggle gating) -- if
+    // it resolved before these landed, an edit made in that gap could get silently overwritten
+    // once the refetch actually completes.
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['archetype-lock'] }),
+        // Re-locking rewrites every derived table, so the loaded tables are stale.
+        queryClient.invalidateQueries({ queryKey: ['inputs'] }),
+      ]);
     },
   });
 }

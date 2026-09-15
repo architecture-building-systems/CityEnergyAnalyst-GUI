@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
@@ -114,6 +114,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     pathwayPanelHeight,
     pathwayPanelContentRef,
     handlePathwayResizeStart,
+    handlePathwayResizeKeyDown,
     pathwayPanelTransition,
   } = usePathwayPanelResize({
     open: !hideAll && showPathwayPanel,
@@ -131,6 +132,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     height: inputTableHeight,
     hasResized: inputTableResized,
     handleResizeStart: handleInputTableResizeStart,
+    handleResizeKeyDown: handleInputTableResizeKeyDown,
   } = usePanelResize({
     // Headroom over the launch row cap below, so that cap is what governs on open.
     initialHeight: 460,
@@ -139,7 +141,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     minDragHeight: 240,
     minClampHeight: 240,
     bottomInset: 220,
-    renderedHeight: renderedInputTableHeightRef.current,
+    renderedHeightRef: renderedInputTableHeightRef,
   });
 
   const fittedInputTableHeight = fitInputTableHeight({
@@ -148,7 +150,11 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     maxHeight: inputTableHeight,
     maxRows: inputTableResized ? Infinity : INPUT_TABLE_LAUNCH_ROWS,
   });
-  renderedInputTableHeightRef.current = fittedInputTableHeight;
+  // Published after commit, not during render: React can replay or discard a render pass, and
+  // a discarded pass mutating this ref could leak a value into a later, unrelated commit.
+  useLayoutEffect(() => {
+    renderedInputTableHeightRef.current = fittedInputTableHeight;
+  }, [fittedInputTableHeight]);
 
   const handlePlotToolSelected = (tool) => {
     const layer = Object.keys(VIEW_PLOT_RESULTS).find(
@@ -492,6 +498,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
             >
               <PanelResizeHandle
                 onMouseDown={handleInputTableResizeStart}
+                onKeyDown={handleInputTableResizeKeyDown}
+                height={fittedInputTableHeight}
                 label="Resize input editor"
               />
               <InputTable onFitHeightChange={setInputTableFit} />
@@ -530,6 +538,8 @@ const ProjectOverlay = ({ project, scenarioName }) => {
               {!pathwayPanelExpanded ? (
                 <PanelResizeHandle
                   onMouseDown={handlePathwayResizeStart}
+                  onKeyDown={handlePathwayResizeKeyDown}
+                  height={pathwayPanelHeight}
                   label="Resize pathway panel"
                 />
               ) : null}

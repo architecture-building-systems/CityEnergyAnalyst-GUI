@@ -1,5 +1,13 @@
 import { useRef, useState, useEffect } from 'react';
 
+// How far an Arrow Up/Down keypress on the handle moves the height.
+const KEY_STEP = 20;
+
+// Clamps to `maximum` first so a viewport too small to fit `minimum` (a short window, a large
+// `bottomInset`) yields the smaller value instead of overflowing past what's available.
+const clampToAvailableHeight = (value, minimum, maximum) =>
+  maximum < minimum ? maximum : Math.min(Math.max(value, minimum), maximum);
+
 /**
  * Drag-to-resize height for a bottom-anchored overlay card.
  *
@@ -29,7 +37,15 @@ export const usePanelResize = ({
   // What the card is actually rendered at, when the caller shrinks it below `height` to fit its
   // content. Drags start from this so grabbing the handle on a fitted card doesn't snap it up to
   // the unfitted height first. Defaults to `height` when the caller does no fitting.
-  renderedHeight,
+  //
+  // A ref, not a plain value: it needs to reflect the *committed* fitted height at the moment a
+  // drag starts, not whatever a render passed down. A caller that recomputes this from layout
+  // (`fitInputTableHeight`, `offsetHeight`) can only safely publish it via an effect, one render
+  // after commit -- reading a plain prop here would capture that same one-render-behind value
+  // regardless, so the ref buys nothing there. It matters when a drag starts between renders,
+  // where the ref (read live, at event time) reflects the latest commit and a captured prop would
+  // still be the render before it.
+  renderedHeightRef,
 }) => {
   const [height, setHeight] = useState(initialHeight);
   // Latches on the first drag. Callers use it to drop launch-time sizing policy once the user
@@ -40,9 +56,10 @@ export const usePanelResize = ({
 
   useEffect(() => {
     const clampHeight = (value) =>
-      Math.max(
+      clampToAvailableHeight(
+        value,
         minClampHeight,
-        Math.min(value, window.innerHeight - bottomInset),
+        window.innerHeight - bottomInset,
       );
 
     const handleResize = () => {
@@ -60,13 +77,14 @@ export const usePanelResize = ({
       if (!resizeState) return;
 
       const contentHeight = contentRef.current?.scrollHeight ?? Infinity;
-      const nextHeight = Math.max(
+      const maxHeight = Math.min(
+        window.innerHeight - bottomInset,
+        contentHeight + contentSlack,
+      );
+      const nextHeight = clampToAvailableHeight(
+        resizeState.startHeight - (event.clientY - resizeState.startY),
         minDragHeight,
-        Math.min(
-          resizeState.startHeight - (event.clientY - resizeState.startY),
-          window.innerHeight - bottomInset,
-          contentHeight + contentSlack,
-        ),
+        maxHeight,
       );
       setHeight(nextHeight);
     };
@@ -82,6 +100,12 @@ export const usePanelResize = ({
     return () => {
       window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('mouseup', handlePointerUp);
+      // A drag in progress at unmount would otherwise leave the page stuck with a resize
+      // cursor and no text selection forever -- `handlePointerUp` never fires because its
+      // only trigger, the `mouseup` listener above, was just removed.
+      resizeStateRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
   }, [minDragHeight, bottomInset, contentSlack]);
 
@@ -92,14 +116,42 @@ export const usePanelResize = ({
 
     resizeStateRef.current = {
       startY: event.clientY,
-      startHeight: renderedHeight ?? height,
+      startHeight: renderedHeightRef?.current ?? height,
     };
     setHasResized(true);
     document.body.style.cursor = 'ns-resize';
     document.body.style.userSelect = 'none';
     event.preventDefault();
   };
+
+  // Arrow Up/Down step the height while the handle has keyboard focus -- the mouse drag above
+  // is the only way to resize otherwise, which a keyboard-only user can't perform at all.
+  const handleResizeKeyDown = (event) => {
+    if (disabled) return;
+    let delta = 0;
+    if (event.key === 'ArrowUp') delta = KEY_STEP;
+    else if (event.key === 'ArrowDown') delta = -KEY_STEP;
+    if (!delta) return;
+
+    event.preventDefault();
+    const contentHeight = contentRef.current?.scrollHeight ?? Infinity;
+    const maxHeight = Math.min(
+      window.innerHeight - bottomInset,
+      contentHeight + contentSlack,
+    );
+    const startHeight = renderedHeightRef?.current ?? height;
+    setHeight(
+      clampToAvailableHeight(startHeight + delta, minDragHeight, maxHeight),
+    );
+    setHasResized(true);
+  };
   /* eslint-enable react-compiler/react-compiler */
 
-  return { height, hasResized, contentRef, handleResizeStart };
+  return {
+    height,
+    hasResized,
+    contentRef,
+    handleResizeStart,
+    handleResizeKeyDown,
+  };
 };

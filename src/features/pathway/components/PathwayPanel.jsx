@@ -317,6 +317,11 @@ const PathwayPanel = ({
   // the store's requestId guard makes this a no-op instead of clobbering
   // that newer, independent override.
   useEffect(() => {
+    // The `requestId` guard alone only stops a *newer* effect run (or OverviewCard) from being
+    // clobbered by a stale one -- it does nothing about this same run's own fetch resolving
+    // after its own cleanup already cleared the override, since cleanup doesn't bump the id.
+    // `cancelled` closes that gap.
+    let cancelled = false;
     const requestId = beginStateZoneOverrideRequest();
     const phase = selectedRow?.status?.primary_phase;
     if (
@@ -325,12 +330,19 @@ const PathwayPanel = ({
       (phase === 'baked' || phase === 'simulated')
     ) {
       fetchStateGeojson(selectedPathway, selectedRow.year)
-        .then((data) => setStateZoneOverride(data?.geojson ?? null, requestId))
-        .catch(() => setStateZoneOverride(null, requestId));
+        .then((data) => {
+          if (cancelled) return;
+          setStateZoneOverride(data?.geojson ?? null, requestId);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setStateZoneOverride(null, requestId);
+        });
     } else {
       setStateZoneOverride(null, requestId);
     }
     return () => {
+      cancelled = true;
       setStateZoneOverride(null, requestId);
     };
   }, [
