@@ -64,7 +64,7 @@
     ${If} $CeaInstallSource != "cea_installer"
     ${OrIf} "${EventName}" == "gui_install_failed"
       ${If} ${FileExists} "$TEMP\cea-gui-telemetry.ps1"
-        Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$TEMP\cea-gui-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -GuiVersion "${VERSION}" -InstallSource "$CeaInstallSource" -Stage "${Stage}" -ErrorCode "${ErrorCode}"'
+        Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$TEMP\cea-gui-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -GuiVersion "${VERSION}" -InstallSource "$CeaInstallSource" -Stage "${Stage}" -ErrorCode "${ErrorCode}"'
       ${EndIf}
     ${EndIf}
   !endif
