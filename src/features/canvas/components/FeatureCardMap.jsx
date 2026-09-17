@@ -354,7 +354,7 @@ const FeatureCardMapBody = ({
     setMapLayerParameters,
   ]);
 
-  const { error: layerError } = useGetMapLayers(
+  const { error: layerError, upstreamTools } = useGetMapLayers(
     categoryInfo,
     project,
     scenario,
@@ -427,7 +427,7 @@ const FeatureCardMapBody = ({
                   <span style={{ color: CEA_PURPLE }}>{scenario}</span>
                 </div>
                 <div style={errorBodyStyle}>
-                  Run the upstream tool for this scenario first.
+                  {`Run ${upstreamTools.length ? upstreamTools.join(' and ') : 'the upstream tool'} for this scenario first.`}
                 </div>
               </div>
             </div>

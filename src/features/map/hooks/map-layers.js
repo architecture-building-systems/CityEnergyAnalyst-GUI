@@ -51,6 +51,8 @@ export const useGetMapLayers = (
   childScenario = null,
 ) => {
   const [error, setError] = useState(null);
+  // Labels of the tools that create the missing files, when the backend knows them.
+  const [upstreamTools, setUpstreamTools] = useState([]);
   const [fetching, setFetching] = useState(false);
 
   const setMapLayers = useScopedSetMapLayers();
@@ -66,6 +68,7 @@ export const useGetMapLayers = (
   // Reset error when category changes
   useEffect(() => {
     setError(null);
+    setUpstreamTools([]);
   }, [categoryName, parameters]);
 
   useEffect(() => {
@@ -89,6 +92,7 @@ export const useGetMapLayers = (
       try {
         setFetching(true);
         setError(null);
+        setUpstreamTools([]);
         const data = await fetchMapLayer(
           categoryName,
           selectedLayerInfo.name,
@@ -113,7 +117,9 @@ export const useGetMapLayers = (
       } catch (error) {
         console.error(error.response?.data);
         console.log(parameters);
-        setError(error.response?.data?.detail || 'Unknown error');
+        const detail = error.response?.data?.detail;
+        setError(detail?.message || detail || 'Unknown error');
+        setUpstreamTools(detail?.upstream_tools ?? []);
         setMapLayers(null);
       } finally {
         setFetching(false);
@@ -138,7 +144,7 @@ export const useGetMapLayers = (
     childScenario,
   ]);
 
-  return { fetching, error };
+  return { fetching, error, upstreamTools };
 };
 
 export const useMapLegends = () => {
