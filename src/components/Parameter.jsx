@@ -161,9 +161,9 @@ const useParameterAsyncValidation = ({
 const NO_CHOICES_MESSAGES = {
   GenerationParameter: 'No generations found. Run Optimisation first.',
   NetworkLayoutChoiceParameter:
-    'No network layouts found in this scenario. Run Network Layout first.',
+    'No network layouts found in this scenario. Run Thermal Network Part 1: Layout first.',
   NetworkLayoutMultiChoiceParameter:
-    'No network layouts found in this scenario. Run Network Layout first.',
+    'No network layouts found in this scenario. Run Thermal Network Part 1: Layout first.',
   ComponentMultiChoiceParameter:
     'No supply components found. Select a what-if scenario and scale first.',
 };
@@ -174,16 +174,24 @@ const NO_CHOICES_MESSAGES = {
 // pointing at Final Energy. `mode` is the literal underscored value from each
 // parameter's `.mode` config key (final_energy, emissions, costs, heat_rejection) --
 // match WHATIF_MODE_LABELS' keys to that, not a hyphenated/display form.
+// `tool` must match the tool's `label` in the backend's scripts.yml.
 const WHATIF_MODE_LABELS = {
-  final_energy: 'Final Energy',
-  emissions: 'Emissions',
-  costs: 'Costs',
-  heat_rejection: 'Heat Rejection',
+  final_energy: {
+    results: 'energy by carrier',
+    tool: 'LCA Part 1: Energy by Carrier',
+  },
+  emissions: { results: 'GHG emissions', tool: 'LCA Part 2a: GHG Emissions' },
+  costs: { results: 'costs', tool: 'LCA Part 2b: Costs' },
+  heat_rejection: {
+    results: 'heat rejection',
+    tool: 'LCA Part 2c: Heat Rejection',
+  },
 };
 
 const whatIfNoChoicesMessage = (mode) => {
-  const label = WHATIF_MODE_LABELS[mode] ?? WHATIF_MODE_LABELS.final_energy;
-  return `No what-if scenarios with ${label.toLowerCase()} results found in this scenario. Run ${label} first.`;
+  const { results, tool } =
+    WHATIF_MODE_LABELS[mode] ?? WHATIF_MODE_LABELS.final_energy;
+  return `No what-if scenarios with ${results} results found in this scenario. Run ${tool} first.`;
 };
 
 const noChoicesMessage = (type, mode) => {
