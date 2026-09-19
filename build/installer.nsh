@@ -30,7 +30,6 @@
   Var CeaLog             ; path to installer.log
   Var CeaLogMsg           ; message ceaLogWrite appends next
   Var CeaInstallSource     ; cea_installer | auto_update | standalone
-  Var CeaOldUninstallCode   ; exit code from uninstalling a previous version, if any
 
   ; Appends one timestamped line ($CeaLogMsg) to $CeaLog. Does nothing if the
   ; log can't be opened (locked, no permissions, directory missing) - logging
@@ -148,19 +147,29 @@
 ; report it - reproducing that default's behavior (MessageBox + SetErrorLevel
 ; 2 + Quit) exactly, since simply not doing so would silently install over a
 ; broken previous version.
+;
+; Uses $R9 rather than a dedicated Var to survive the Call ceaLogWrite below
+; (which clobbers $R0-$R7): electron-builder compiles this script twice, once
+; normally and once with BUILD_UNINSTALLER defined for the small embedded
+; uninstaller stub, and in that second pass installSection.nsh (the only
+; caller of this macro) is never included - a dedicated Var would then be
+; declared (via customHeader, inserted in both passes) but never referenced
+; in that pass, and electron-builder builds NSIS with warnings-as-errors, so
+; that "unreferenced variable" warning fails the whole build. $R0-$R9 are
+; NSIS's built-in registers, not user Vars, so they're exempt from that check.
 !macro ceaHandleOldUninstallCheck
     ${If} ${Errors}
         StrCpy $CeaLogMsg "stage=old_uninstall_check launch_failed"
         Call ceaLogWrite
         DetailPrint `Uninstall was not successful. Not able to launch uninstaller!`
     ${Else}
-        StrCpy $CeaOldUninstallCode "$R0"
-        StrCpy $CeaLogMsg "stage=old_uninstall_check code=$CeaOldUninstallCode"
+        StrCpy $R9 $R0
+        StrCpy $CeaLogMsg "stage=old_uninstall_check code=$R9"
         Call ceaLogWrite
-        ${If} $CeaOldUninstallCode != 0
-            MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstallFailed): $CeaOldUninstallCode"
-            DetailPrint `Uninstall was not successful. Uninstaller error code: $CeaOldUninstallCode.`
-            !insertmacro ceaSendTelemetry "gui_install_failed" "old_uninstall_check" "$CeaOldUninstallCode"
+        ${If} $R9 != 0
+            MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstallFailed): $R9"
+            DetailPrint `Uninstall was not successful. Uninstaller error code: $R9.`
+            !insertmacro ceaSendTelemetry "gui_install_failed" "old_uninstall_check" "$R9"
             SetErrorLevel 2
             Quit
         ${EndIf}
