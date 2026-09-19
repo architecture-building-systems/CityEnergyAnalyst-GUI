@@ -118,7 +118,11 @@
 !macroend
 
 !macro customInit
-    StrCpy $CeaLogMsg "stage=init_done mode=$MultiUser.InstallMode silent=${Silent}"
+    ; $installMode ("CurrentUser" or "all") is electron-builder's own
+    ; multiUser.nsh variable - not to be confused with the outer
+    ; CityEnergyAnalyst installer's $MultiUser.InstallMode, which comes from
+    ; stock NSIS's unrelated MultiUser.nsh header.
+    StrCpy $CeaLogMsg "stage=init_done mode=$installMode silent=${Silent}"
     Call ceaLogWrite
 
     ; stage the telemetry script now, before extraction (the step most likely
