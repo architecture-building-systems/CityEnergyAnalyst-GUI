@@ -27,6 +27,9 @@ out
 
 dependencies
 
+# generated at build time from the POSTHOG_API_KEY secret, see build/installer.nsh
+build/telemetry-key.nsh
+
 # yarn
 .pnp.*
 .yarn/*
