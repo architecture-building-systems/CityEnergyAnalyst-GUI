@@ -186,15 +186,15 @@ export const PLOT_GROUPS = [
     keys: [THERMAL_NETWORK],
   },
   {
-    label: 'Life Cycle Analysis',
+    label: 'Life Cycle Analysis (LCA)',
     icon: iconMap[FINAL_ENERGY],
     subgroups: [
       {
-        label: 'Energy by Carrier',
+        label: 'LCA Part 1: Energy by Carrier',
         keys: [FINAL_ENERGY, ENERGY_SANKEY, LDC_COMPONENT],
       },
       {
-        label: 'GHG Emissions',
+        label: 'LCA Part 2a: GHG Emissions',
         keys: [
           EMISSIONS_EMBODIED,
           EMISSIONS_OPERATIONAL,
@@ -202,8 +202,8 @@ export const PLOT_GROUPS = [
           PATHWAY_EMISSION_TIMELINE,
         ],
       },
-      { label: 'Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
-      { label: 'Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },
+      { label: 'LCA Part 2b: Costs', keys: [COST_BREAKDOWN, COST_SANKEY] },
+      { label: 'LCA Part 2c: Heat Rejection', keys: [ANTHROPOGENIC_HEAT] },
     ],
   },
   {

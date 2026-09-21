@@ -521,6 +521,7 @@ const PlotError = ({ error, scenario }) => {
   const detail = error?.response?.data?.detail;
   const serverMessage =
     (typeof detail === 'string' && detail.trim()) || detail?.message || null;
+  const upstreamTools = detail?.upstream_tools ?? [];
   const status = error?.response?.status;
   const fallback = error?.message;
 
@@ -537,7 +538,7 @@ const PlotError = ({ error, scenario }) => {
               <span style={{ color: CEA_PURPLE }}>{scenario}</span>
             </div>
             <div style={errorBodyStyle}>
-              Run the upstream tool for this scenario first.
+              {`Run ${upstreamTools.length ? upstreamTools.join(' and ') : 'the upstream tool'} for this scenario first.`}
             </div>
           </>
         ) : (
