@@ -17,7 +17,8 @@ import {
   Form,
 } from 'antd';
 import { checkExist } from 'utils/file';
-import { forwardRef, useCallback, useEffect, useRef } from 'react';
+import { readCsvHeaderColumns } from 'utils/csv';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { isElectron, openDialog } from 'utils/electron';
 import { SelectWithFileDialog } from 'features/scenario/components/CreateScenarioForms/FormInput';
@@ -213,8 +214,17 @@ const Parameter = ({
   disabled: paramDisabled,
   scenarioContext,
 }) => {
-  const { name, type, value, choices, nullable, help, needs_validation, mode } =
-    parameter;
+  const {
+    name,
+    type,
+    value,
+    choices,
+    nullable,
+    help,
+    needs_validation,
+    mode,
+    source_parameter,
+  } = parameter;
   const { setFieldsValue } = form;
   const constructionColorMap = useMapStore(
     (state) => state.constructionColorMap,
@@ -366,6 +376,27 @@ const Parameter = ({
           initialValue={value}
         >
           {inputComponent}
+        </FormField>
+      );
+    }
+    case 'CsvColumnNameParameter': {
+      return (
+        <FormField
+          name={name}
+          help={help}
+          rules={[
+            {
+              required: !nullable,
+              message: 'Please select a column',
+            },
+          ]}
+          initialValue={value}
+        >
+          <CsvColumnSelect
+            form={form}
+            sourceParameter={source_parameter}
+            nullable={nullable}
+          />
         </FormField>
       );
     }
@@ -969,6 +1000,69 @@ export const UploadDialogInput = ({
   );
 };
 UploadDialogInput.displayName = 'UploadDialogInput';
+
+// Column-name picker paired with a sibling InputFileParameter CSV upload
+// (`sourceParameter`, from CsvColumnNameParameter.source-parameter in default.config -- see
+// cea/analysis/lca/CLAUDE.md's "Grid Emission Intensity Override"). Reads the header row
+// client-side from the sibling field's selected File (web upload mode only -- see
+// utils/csv.js) so the user picks a real column name instead of typing one blind. Falls back
+// to a free-text input when there's nothing to parse yet: no file chosen, an Electron file
+// path rather than a browser File object, or a parse failure. The backend still validates the
+// final choice against the actual file when the job runs.
+export const CsvColumnSelect = ({
+  form,
+  sourceParameter,
+  value,
+  onChange,
+  nullable,
+}) => {
+  const sourceValue = Form.useWatch(sourceParameter ?? '__no_source_parameter__', form);
+  const [columns, setColumns] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!(sourceValue instanceof File)) {
+      setColumns([]);
+      return undefined;
+    }
+
+    readCsvHeaderColumns(sourceValue)
+      .then((cols) => {
+        if (!cancelled) setColumns(cols);
+      })
+      .catch((e) => {
+        console.error('Could not read CSV header for column preview:', e);
+        if (!cancelled) setColumns([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceValue]);
+
+  if (columns.length === 0) {
+    return (
+      <Input
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder="Upload the CSV above to see column names"
+      />
+    );
+  }
+
+  return (
+    <Select
+      value={value || undefined}
+      onChange={onChange}
+      options={columns.map((column) => ({ label: column, value: column }))}
+      placeholder={nullable ? 'Nothing Selected' : 'Select a column'}
+      allowClear={nullable}
+      showSearch
+    />
+  );
+};
+CsvColumnSelect.displayName = 'CsvColumnSelect';
 
 export const OpenDialogButton = ({
   form,
