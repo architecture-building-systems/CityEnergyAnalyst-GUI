@@ -254,6 +254,7 @@ const Tool = ({
           <ToolFormErrorBoundary
             script={script}
             parameters={parameters}
+            categoricalParameters={categoricalParameters}
             form={form}
           >
             <ToolForm

@@ -17,6 +17,7 @@ export const initPostHog = () => {
     api_host: host,
     persistence: 'memory',
     autocapture: false,
+    capture_exceptions: false,
     capture_pageview: false,
     capture_pageleave: false,
     disable_session_recording: true,

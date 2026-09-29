@@ -38,10 +38,16 @@ export default class ToolFormErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    const { script, parameters, form } = this.props;
+    const { script, parameters, categoricalParameters, form } = this.props;
     let fields = [];
     try {
-      fields = summariseFields(parameters, form?.getFieldsValue(true));
+      fields = summariseFields(
+        [
+          ...(parameters || []),
+          ...Object.values(categoricalParameters || {}).flat(),
+        ],
+        form?.getFieldsValue(true),
+      );
     } catch {
       // Diagnostics are best-effort.
     }
