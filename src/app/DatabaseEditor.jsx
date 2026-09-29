@@ -12,7 +12,7 @@ import useDatabaseEditorStore, {
 } from 'features/database-editor/stores/databaseEditorStore';
 import { DerivedConflictModal } from 'features/database-editor/components/derived-conflict-modal';
 import { useProjectStore } from 'features/project/stores/projectStore';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 
 import './DatabaseEditor.css';
 import {

@@ -1,6 +1,7 @@
 import { Component } from 'react';
 
 import { DefaultErrorComponent } from './ErrorBoundary';
+import { reportError } from './errorReporting';
 
 export const withErrorBoundary = (
   WrappedComponent,
@@ -17,6 +18,10 @@ export const withErrorBoundary = (
       this.setState({
         error: error,
         errorInfo: errorInfo,
+      });
+      reportError(error, {
+        area: 'error-boundary',
+        componentStack: errorInfo?.componentStack,
       });
       onError(error, errorInfo);
     }

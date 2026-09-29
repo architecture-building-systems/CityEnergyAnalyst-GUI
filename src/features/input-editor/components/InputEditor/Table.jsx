@@ -18,7 +18,7 @@ import {
   useSelected,
   useSetSelectedFromTable,
 } from 'features/input-editor/stores/inputEditorStore';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
 import { getColumnPropsFromDataType } from 'utils/tabulator';
 import { ZONE_DRIFT_COMPUTED } from 'features/input-editor/hooks/useArchetypeDrift';

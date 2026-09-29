@@ -6,7 +6,7 @@ import useNavigationStore from 'stores/navigationStore';
 import StatusBar from 'features/status-bar/components/StatusBar';
 
 import './HomePage.css';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 import { Button, ConfigProvider, Tooltip } from 'antd';
 import {
   ERROR_RED,

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
+import { reportJobFailure } from 'utils/errorReporting';
 import {
   activeScenarioHeaders,
   scenarioHeaders,
@@ -133,6 +134,12 @@ const useJobsStore = create((set, get) => ({
   updateJob: (job) => {
     if (import.meta.env.DEV) {
       console.debug('Updating job:', job);
+    }
+    // Only a live transition into the error state (state 3) counts -- jobs loaded already
+    // errored (fetchJobs) and repeat updates for an errored job must not report again.
+    const previousState = get().jobs?.[job.id]?.state;
+    if (job.state === 3 && previousState !== undefined && previousState !== 3) {
+      reportJobFailure(job);
     }
     set((state) => ({
       jobs: { ...state.jobs, ...transformJobPayload(job) },
