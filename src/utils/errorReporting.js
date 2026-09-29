@@ -17,9 +17,44 @@ const isDuplicate = (error) => {
   const fingerprint = `${error?.message}|${topFrame}`;
   const last = recentlyReported.get(fingerprint);
   if (last !== undefined && now - last < DEDUPE_WINDOW_MS) return true;
+  // Evict expired fingerprints so a stream of distinct errors can't grow the map unbounded.
+  if (recentlyReported.size > 200) {
+    for (const [key, timestamp] of recentlyReported) {
+      if (now - timestamp >= DEDUPE_WINDOW_MS) recentlyReported.delete(key);
+    }
+  }
   recentlyReported.set(fingerprint, now);
   return false;
 };
+
+// Paths can carry usernames, project and scenario names.
+export const redactPaths = (text) =>
+  text
+    .split(' ')
+    .map((token) => (/[\\/]/.test(token) ? '<path>' : token))
+    .join(' ');
+
+const PATH_SEPARATORS = /[\\/]/;
+
+/**
+ * Stack traces need their file and line numbers to be useful, but the directory part can carry
+ * usernames (Electron `file://` install paths). Keeps only the last path segment of every
+ * path-like token, e.g. `(https://host/assets/App-1a2b.js:1:2)` -> `(App-1a2b.js:1:2)`.
+ */
+export const redactStack = (text) =>
+  text
+    .split(' ')
+    .map((token) => {
+      if (!PATH_SEPARATORS.test(token)) return token;
+      const open = token.startsWith('(') ? '(' : '';
+      const close = token.endsWith(')') ? ')' : '';
+      const inner = token.slice(open.length, token.length - close.length);
+      return `${open}${inner.split(PATH_SEPARATORS).pop()}${close}`;
+    })
+    .join(' ');
+
+const redactIfString = (value, redact) =>
+  typeof value === 'string' ? redact(value) : value;
 
 /**
  * @param {Error} error
@@ -30,9 +65,10 @@ export const reportError = (error, context = {}) => {
   try {
     if (isDuplicate(error)) return;
     window.posthog?.capture?.('ui_error', {
-      message: error?.message,
-      stack: error?.stack,
       ...context,
+      componentStack: redactIfString(context.componentStack, redactStack),
+      message: redactIfString(error?.message, redactPaths),
+      stack: redactIfString(error?.stack, redactStack),
     });
   } catch {
     // Reporting must never throw from inside an error handler.
@@ -56,10 +92,3 @@ export const installGlobalErrorHandlers = () => {
     reportError(toError(event.reason), { area: 'unhandled-rejection' });
   });
 };
-
-// Paths can carry usernames, project and scenario names.
-export const redactPaths = (text) =>
-  text
-    .split(' ')
-    .map((token) => (/[\\/]/.test(token) ? '<path>' : token))
-    .join(' ');

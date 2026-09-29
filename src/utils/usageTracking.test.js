@@ -45,16 +45,27 @@ describe('usageTracking', () => {
     });
   });
 
-  it('includes a path-redacted first error line for failed jobs', () => {
+  it('reports only the exception class for failed jobs, never the message', () => {
     trackJobFinished({
       script: 'emissions',
       state: 3,
-      error: 'Column X not found in C:\\Users\\bob\\grid.csv\nTraceback...',
+      error: "KeyError: column 'Bob Tower' not in C:\\Users\\bob\\grid.csv",
     });
-    expect(capture.mock.calls[0][1]).toMatchObject({
+    const properties = capture.mock.calls[0][1];
+    expect(properties).toMatchObject({
       outcome: 'failed',
-      error: 'Column X not found in <path>',
+      error_type: 'KeyError',
     });
+    expect(JSON.stringify(properties)).not.toContain('Bob Tower');
+  });
+
+  it('falls back to unknown when the error has no exception class', () => {
+    trackJobFinished({
+      script: 'emissions',
+      state: 3,
+      error: 'Column Bob Tower not found',
+    });
+    expect(capture.mock.calls[0][1].error_type).toBe('unknown');
   });
 
   it('ignores non-final states and survives a missing PostHog', () => {
