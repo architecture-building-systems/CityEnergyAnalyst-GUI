@@ -7,6 +7,7 @@ import { TOOLS_MUTATION_KEYS } from 'features/tools/constants/queryKeys';
 import './Tool.css';
 
 import ToolForm from './ToolForm';
+import ToolFormErrorBoundary from './ToolFormErrorBoundary';
 import { ToolControls } from './ToolControls';
 import { ToolDescription } from 'features/tools/components/tool-description';
 import { useChangesExist } from 'features/input-editor/stores/inputEditorStore';
@@ -250,15 +251,21 @@ const Tool = ({
 
           <Divider />
 
-          <ToolForm
-            form={form}
-            parameters={parameters}
-            categoricalParameters={categoricalParameters}
+          <ToolFormErrorBoundary
             script={script}
-            readonlyFields={readonlyFields}
-            scenarioContext={scenarioContext}
-            dataUpdatedAt={dataUpdatedAt}
-          />
+            parameters={parameters}
+            form={form}
+          >
+            <ToolForm
+              form={form}
+              parameters={parameters}
+              categoricalParameters={categoricalParameters}
+              script={script}
+              readonlyFields={readonlyFields}
+              scenarioContext={scenarioContext}
+              dataUpdatedAt={dataUpdatedAt}
+            />
+          </ToolFormErrorBoundary>
         </div>
       </Spin>
     </div>
