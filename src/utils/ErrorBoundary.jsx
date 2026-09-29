@@ -1,5 +1,7 @@
 import { Component } from 'react';
 
+import { reportError } from './errorReporting';
+
 export default class DefaultErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -10,6 +12,10 @@ export default class DefaultErrorBoundary extends Component {
     this.setState({
       error: error,
       errorInfo: errorInfo,
+    });
+    reportError(error, {
+      area: 'error-boundary',
+      componentStack: errorInfo?.componentStack,
     });
   }
 

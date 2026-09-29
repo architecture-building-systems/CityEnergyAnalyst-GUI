@@ -1,4 +1,5 @@
-import { Alert, Col, Row } from 'antd';
+import { Col, Row } from 'antd';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 import UploadForm from 'features/upload-download/components/UploadForm';
 import DownloadForm from 'features/upload-download/components/DownloadForm';
 
@@ -12,7 +13,7 @@ const style = {
 
 const UploadDownload = () => {
   return (
-    <Alert.ErrorBoundary>
+    <ErrorBoundary>
       <Row style={{ height: '100%' }} gutter={24}>
         <Col span={12}>
           <div style={style}>
@@ -25,7 +26,7 @@ const UploadDownload = () => {
           </div>
         </Col>
       </Row>
-    </Alert.ErrorBoundary>
+    </ErrorBoundary>
   );
 };
 

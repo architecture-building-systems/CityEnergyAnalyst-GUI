@@ -1,6 +1,6 @@
 import { Button, Modal, Result, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 
 export const CreateScenarioProgressModal = ({
   showModal,

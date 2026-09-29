@@ -1,5 +1,7 @@
 import posthog from 'posthog-js';
 
+import { installGlobalErrorHandlers } from 'utils/errorReporting';
+
 const key = import.meta.env.VITE_POSTHOG_KEY;
 const host = import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com';
 
@@ -25,4 +27,5 @@ export const initPostHog = () => {
     advanced_disable_flags: true,
   });
   window.posthog = posthog;
+  installGlobalErrorHandlers();
 };

@@ -13,7 +13,7 @@ import {
 } from 'features/project/stores/tool-card';
 import { BuildingEditor } from 'features/building-editor/components/building-editor';
 import BuildingLifecycleCard from 'features/pathway/components/BuildingLifecycleCard';
-import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 import { PlotTool } from './plot-tool';
 
 // Card padding. The top is deeper than the other sides to clear the corner arrows below and
