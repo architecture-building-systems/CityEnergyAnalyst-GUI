@@ -6,6 +6,10 @@ import 'index.css';
 
 import '@fontsource/space-grotesk';
 
+import { initPostHog } from 'lib/posthog';
+
+initPostHog();
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
