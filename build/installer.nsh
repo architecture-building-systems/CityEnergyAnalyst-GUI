@@ -13,10 +13,11 @@
 ;  2. Anonymous PostHog telemetry (build/telemetry.ps1), covering standalone
 ;     installs and auto-updates that the outer CityEnergyAnalyst installer
 ;     never sees. An install launched from that outer installer is marked
-;     with /CEABUNDLE on the command line; for those, only failures are
-;     reported here, since the outer installer's own telemetry already
-;     counts the successful/bundled case. See setup/cityenergyanalyst.nsi and
-;     setup/telemetry.ps1 in the CityEnergyAnalyst repo for the consumer.
+;     with /CEABUNDLE on the command line; for those, nothing is sent from
+;     here, since the outer installer's own telemetry already reports the
+;     outcome (including the last stage this log reached). See
+;     setup/cityenergyanalyst.nsi and setup/telemetry.ps1 in the
+;     CityEnergyAnalyst repo for the consumer.
 ;
 ; Both are best-effort: a failure to open the log or send telemetry is always
 ; swallowed and never blocks or fails the install.
@@ -54,14 +55,13 @@
 ; wrapped in try/catch with a short timeout inside telemetry.ps1.
 ;
 ; Skipped when this run was launched from the outer CEA installer (source
-; cea_installer) AND is reporting success - that installer already counts
-; the bundled, successful case via its own telemetry. Every other
-; combination (a bundled failure, or any outcome for a standalone install or
-; an auto-update, neither of which the outer installer ever sees) is sent.
+; cea_installer) - that installer reports both its successes and its failures
+; (with the last stage from installer.log), so sending here too would double-count.
+; Standalone installs and auto-updates, which the outer installer never sees,
+; are always sent.
 !macro ceaSendTelemetry EventName Stage ErrorCode
   !ifdef POSTHOG_API_KEY
     ${If} $CeaInstallSource != "cea_installer"
-    ${OrIf} "${EventName}" == "gui_install_failed"
       ${If} ${FileExists} "$TEMP\cea-gui-telemetry.ps1"
         Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$TEMP\cea-gui-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -GuiVersion "${VERSION}" -InstallSource "$CeaInstallSource" -Stage "${Stage}" -ErrorCode "${ErrorCode}"'
       ${EndIf}
@@ -166,6 +166,7 @@
         StrCpy $CeaLogMsg "stage=old_uninstall_check launch_failed"
         Call ceaLogWrite
         DetailPrint `Uninstall was not successful. Not able to launch uninstaller!`
+        !insertmacro ceaSendTelemetry "gui_install_failed" "old_uninstall_check" "launch_failed"
     ${Else}
         StrCpy $R9 $R0
         StrCpy $CeaLogMsg "stage=old_uninstall_check code=$R9"
