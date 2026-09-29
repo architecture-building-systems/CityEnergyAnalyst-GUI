@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { overlayStoredValues } from './toolConfigStorage';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import {
+  mergeStoredToolConfig,
+  overlayStoredValues,
+  readStoredToolConfig,
+} from './toolConfigStorage';
 
 describe('overlayStoredValues', () => {
   it('applies a stored value for a plain (non-choice) parameter', () => {
@@ -120,5 +124,48 @@ describe('overlayStoredValues', () => {
     const data = { parameters: [{ name: 'year', value: 2020 }] };
     expect(overlayStoredValues(data, {})).toBe(data);
     expect(overlayStoredValues(data, null)).toBe(data);
+  });
+});
+
+// Regression: a File form value used to be persisted as `{"uid":"rc-upload-..."}` and then
+// overlaid back onto the upload field on the next load, crashing the form (React error #31).
+describe('File values in stored tool config', () => {
+  beforeEach(() => {
+    // Node's experimental global localStorage has no backing file under vitest.
+    const store = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => store.set(key, String(value)),
+    });
+  });
+
+  it('does not persist a File value, and drops a previously stored one', () => {
+    mergeStoredToolConfig('u1', { csv: 'old.csv', year: 2030 });
+    const file = new File(['a,b'], 'grid.csv', { type: 'text/csv' });
+    file.uid = 'rc-upload-123';
+    mergeStoredToolConfig('u1', { csv: file, year: 2040 });
+
+    expect(readStoredToolConfig('u1')).toEqual({ year: 2040 });
+  });
+
+  it('ignores {uid} objects already stored by an earlier version', () => {
+    localStorage.setItem(
+      'cea-tool-config-u1',
+      JSON.stringify({ csv: { uid: 'rc-upload-123' }, year: 2030 }),
+    );
+    expect(readStoredToolConfig('u1')).toEqual({ year: 2030 });
+  });
+
+  it('keeps ordinary values, including arrays and other objects', () => {
+    mergeStoredToolConfig('u1', {
+      names: ['a', 'b'],
+      flag: false,
+      nested: { a: 1, b: 2 },
+    });
+    expect(readStoredToolConfig('u1')).toEqual({
+      names: ['a', 'b'],
+      flag: false,
+      nested: { a: 1, b: 2 },
+    });
   });
 });

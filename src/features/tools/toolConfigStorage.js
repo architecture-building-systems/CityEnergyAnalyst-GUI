@@ -14,6 +14,18 @@
 const STORAGE_KEY_PREFIX = 'cea-tool-config';
 const EXCLUDED_PARAM_NAMES = new Set(['scenario']);
 
+// A browser `File` (web-mode upload fields hold one) can't be persisted: JSON.stringify turns
+// it into `{"uid":"rc-upload-..."}` (only antd's added `uid` is enumerable), and overlaying
+// that object back onto the field crashes the form (React error #31). Such values are never
+// stored, and any already stored by an earlier version are ignored on read.
+const isFileLikeValue = (value) =>
+  value instanceof File ||
+  (value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 1 &&
+    'uid' in value);
+
 const getStorageKey = (userID) =>
   userID ? `${STORAGE_KEY_PREFIX}-${userID}` : STORAGE_KEY_PREFIX;
 
@@ -22,7 +34,10 @@ export const readStoredToolConfig = (userID) => {
     const raw = localStorage.getItem(getStorageKey(userID));
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    if (!parsed || typeof parsed !== 'object') return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) => !isFileLikeValue(value)),
+    );
   } catch (err) {
     console.error('Error reading stored tool config:', err);
     return {};
@@ -44,6 +59,10 @@ export const mergeStoredToolConfig = (userID, paramValues) => {
   const next = { ...current };
   for (const [name, value] of Object.entries(paramValues)) {
     if (EXCLUDED_PARAM_NAMES.has(name)) continue;
+    if (isFileLikeValue(value)) {
+      delete next[name];
+      continue;
+    }
     next[name] = value;
   }
   writeStoredToolConfig(userID, next);
