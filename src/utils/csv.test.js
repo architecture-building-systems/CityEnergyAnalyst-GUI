@@ -1,5 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { splitCsvLine, readCsvHeaderColumns } from './csv';
+import { splitCsvLine, readCsvHeaderColumns, sniffCsvDelimiter } from './csv';
+
+describe('sniffCsvDelimiter', () => {
+  it('detects a semicolon-delimited header', () => {
+    expect(sniffCsvDelimiter('Datetime (UTC);Carbon intensity')).toBe(';');
+  });
+
+  it('detects a tab-delimited header', () => {
+    expect(sniffCsvDelimiter('a\tb\tc')).toBe('\t');
+  });
+
+  it('defaults to comma for a plain comma-delimited header', () => {
+    expect(sniffCsvDelimiter('a,b,c')).toBe(',');
+  });
+
+  it('defaults to comma for a single-column header with no delimiter', () => {
+    expect(sniffCsvDelimiter('only')).toBe(',');
+  });
+
+  it('ignores a delimiter candidate found only inside quotes', () => {
+    expect(sniffCsvDelimiter('a,"b; still one field",c')).toBe(',');
+  });
+});
 
 describe('splitCsvLine', () => {
   it('splits a plain comma-separated line', () => {
@@ -55,5 +77,13 @@ describe('readCsvHeaderColumns', () => {
     const hugeBody = 'a,b\n' + '1,2\n'.repeat(100000);
     const file = makeFile(hugeBody);
     await expect(readCsvHeaderColumns(file)).resolves.toEqual(['a', 'b']);
+  });
+
+  it('resolves a semicolon-delimited file instead of one garbled column', async () => {
+    const file = makeFile('Datetime (UTC);Carbon intensity\n2026-01-01T00:00Z;123\n');
+    await expect(readCsvHeaderColumns(file)).resolves.toEqual([
+      'Datetime (UTC)',
+      'Carbon intensity',
+    ]);
   });
 });
