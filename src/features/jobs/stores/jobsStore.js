@@ -23,6 +23,19 @@ const transformJobPayload = (payload) => {
   return { [id]: { ...props } };
 };
 
+// Only a live transition into a final state counts -- jobs loaded already finished
+// (fetchJobs) and repeat updates for a finished job must not be tracked again.
+const trackIfJustFinished = (jobs, job) => {
+  const previousState = jobs?.[job.id]?.state;
+  if (
+    isJobFinishedState(job.state) &&
+    previousState !== undefined &&
+    !isJobFinishedState(previousState)
+  ) {
+    trackJobFinished(job);
+  }
+};
+
 const useJobsStore = create((set, get) => ({
   jobs: null,
   hasMore: true,
@@ -135,16 +148,7 @@ const useJobsStore = create((set, get) => ({
     if (import.meta.env.DEV) {
       console.debug('Updating job:', job);
     }
-    // Only a live transition into a final state counts -- jobs loaded already finished
-    // (fetchJobs) and repeat updates for a finished job must not be tracked again.
-    const previousState = get().jobs?.[job.id]?.state;
-    if (
-      isJobFinishedState(job.state) &&
-      previousState !== undefined &&
-      !isJobFinishedState(previousState)
-    ) {
-      trackJobFinished(job);
-    }
+    trackIfJustFinished(get().jobs, job);
     set((state) => ({
       jobs: { ...state.jobs, ...transformJobPayload(job) },
     }));
@@ -154,6 +158,7 @@ const useJobsStore = create((set, get) => ({
     if (import.meta.env.DEV) {
       console.debug(`Cancelling job ${job.id}`);
     }
+    trackIfJustFinished(get().jobs, job);
     set((state) => ({
       jobs: { ...state.jobs, ...transformJobPayload(job) },
     }));
