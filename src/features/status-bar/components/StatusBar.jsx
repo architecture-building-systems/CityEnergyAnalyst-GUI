@@ -417,6 +417,14 @@ const JobStatusBar = () => {
             ),
           });
         },
+        // Emitted when the server terminates a running job (e.g. server shutdown). Without
+        // this the job stays "running" in the UI until the next reload.
+        onWorkerKilled: (job) => {
+          depsRef.current.updateJob(job);
+          depsRef.current.setMessage(
+            <JobStatusMessage jobId={job.id} message="killed ✖️" />,
+          );
+        },
         onWorkerMessage: (data) => {
           // Validate data and message before processing
           if (!data || typeof data.message !== 'string' || !data.message) {
@@ -486,6 +494,7 @@ const JobStatusBar = () => {
       socket.off('cea-worker-success', H.onWorkerSuccess);
       socket.off('cea-worker-canceled', H.onWorkerCanceled);
       socket.off('cea-worker-error', H.onWorkerError);
+      socket.off('cea-worker-killed', H.onWorkerKilled);
       socket.off('cea-worker-message', H.onWorkerMessage);
     };
 
@@ -499,6 +508,7 @@ const JobStatusBar = () => {
       socket.on('cea-worker-success', H.onWorkerSuccess);
       socket.on('cea-worker-canceled', H.onWorkerCanceled);
       socket.on('cea-worker-error', H.onWorkerError);
+      socket.on('cea-worker-killed', H.onWorkerKilled);
       socket.on('cea-worker-message', H.onWorkerMessage);
     };
 
