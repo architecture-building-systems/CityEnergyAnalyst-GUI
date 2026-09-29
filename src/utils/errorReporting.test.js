@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { reportError, reportJobFailure } from './errorReporting';
+import { reportError } from './errorReporting';
 
 describe('errorReporting', () => {
   const capture = vi.fn();
@@ -30,17 +30,5 @@ describe('errorReporting', () => {
   it('does not throw when PostHog is absent', () => {
     delete window.posthog;
     expect(() => reportError(new Error('boom-3'))).not.toThrow();
-  });
-
-  it('reports job failures with script name and path-redacted message', () => {
-    reportJobFailure({
-      id: 1,
-      script: 'emissions',
-      error: 'Column X not found in C:\\Users\\bob\\grid.csv\nTraceback...',
-    });
-    expect(capture).toHaveBeenCalledWith('job_failed', {
-      script: 'emissions',
-      message: 'Column X not found in <path>',
-    });
   });
 });

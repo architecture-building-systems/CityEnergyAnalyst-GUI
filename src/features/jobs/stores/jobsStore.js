@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
 import { apiClient } from 'lib/api/axios';
-import { reportJobFailure } from 'utils/errorReporting';
+import { isJobFinishedState, trackJobFinished } from 'utils/usageTracking';
 import {
   activeScenarioHeaders,
   scenarioHeaders,
@@ -135,11 +135,15 @@ const useJobsStore = create((set, get) => ({
     if (import.meta.env.DEV) {
       console.debug('Updating job:', job);
     }
-    // Only a live transition into the error state (state 3) counts -- jobs loaded already
-    // errored (fetchJobs) and repeat updates for an errored job must not report again.
+    // Only a live transition into a final state counts -- jobs loaded already finished
+    // (fetchJobs) and repeat updates for a finished job must not be tracked again.
     const previousState = get().jobs?.[job.id]?.state;
-    if (job.state === 3 && previousState !== undefined && previousState !== 3) {
-      reportJobFailure(job);
+    if (
+      isJobFinishedState(job.state) &&
+      previousState !== undefined &&
+      !isJobFinishedState(previousState)
+    ) {
+      trackJobFinished(job);
     }
     set((state) => ({
       jobs: { ...state.jobs, ...transformJobPayload(job) },

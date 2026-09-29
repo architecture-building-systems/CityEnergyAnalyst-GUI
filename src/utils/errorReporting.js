@@ -58,30 +58,8 @@ export const installGlobalErrorHandlers = () => {
 };
 
 // Paths can carry usernames, project and scenario names.
-const redactPaths = (text) =>
+export const redactPaths = (text) =>
   text
     .split(' ')
     .map((token) => (/[\\/]/.test(token) ? '<path>' : token))
     .join(' ');
-
-/**
- * Reports a CEA tool job that ended in an error. Only the script name and a path-redacted
- * first line of the error are sent -- no parameters, scenario or project names.
- * @param {{ id?: string|number, script?: string, error?: string }} job
- */
-export const reportJobFailure = (job) => {
-  const firstLine = redactPaths(String(job?.error ?? '').split('\n')[0]).slice(
-    0,
-    300,
-  );
-  const error = new Error(firstLine || 'Job failed without an error message');
-  console.error('[reportJobFailure]', job?.script, firstLine);
-  try {
-    window.posthog?.capture?.('job_failed', {
-      script: job?.script,
-      message: error.message,
-    });
-  } catch {
-    // Reporting must never throw.
-  }
-};
