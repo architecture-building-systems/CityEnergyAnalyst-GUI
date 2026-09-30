@@ -6,7 +6,10 @@ import {
   TOOLS_QUERY_KEYS,
 } from '../../constants/queryKeys';
 import { useIsNonLocalMode, useUserInfo } from 'stores/useUserQuery';
-import { mergeStoredToolConfig } from '../../toolConfigStorage';
+import {
+  mergeStoredToolConfig,
+  overlayStoredValues,
+} from '../../toolConfigStorage';
 import { isToolProperties } from '../../utils';
 
 // `scenarioContext` must be the same `{ project, scenarioName, childScenario }` the
@@ -24,10 +27,22 @@ export function useSaveToolParamsMutation(scenarioContext) {
   return useMutation({
     mutationKey: [TOOLS_MUTATION_KEYS.SAVE_TOOL_PARAMS],
     mutationFn: async ({ tool, params }) => {
+      // A browser File can't be saved: the JSON request interceptor would reduce it to its
+      // bare filename, which the backend stores and echoes back as if it were a server path,
+      // replacing the File in the form (a later Run then fails with "could not find the
+      // provided file"). Leave File values out of the save and re-apply them to the returned
+      // state below so the chosen upload stays in the form.
+      const fileParams = {};
+      const savedParams = {};
+      for (const [name, value] of Object.entries(params)) {
+        if (value instanceof File) fileParams[name] = value;
+        else savedParams[name] = value;
+      }
+
       try {
         const response = await apiClient.post(
           `/tools/${tool}/save-config`,
-          params,
+          savedParams,
           {
             headers: scenarioHeaders({ project, scenarioName, childScenario }),
           },
@@ -41,7 +56,7 @@ export function useSaveToolParamsMutation(scenarioContext) {
         // cache first would let that read see stale stored values.
         // See toolConfigStorage.js / useToolParams.js.
         if (isNonLocal) {
-          mergeStoredToolConfig(userId, params);
+          mergeStoredToolConfig(userId, savedParams);
         }
 
         const scopedKey = [
@@ -58,7 +73,10 @@ export function useSaveToolParamsMutation(scenarioContext) {
         // doesn't know about this yet still returns the legacy 'Success' string;
         // fall back to a refetch in that case rather than caching a bare string.
         if (isToolProperties(response.data)) {
-          queryClient.setQueryData(scopedKey, response.data);
+          queryClient.setQueryData(
+            scopedKey,
+            overlayStoredValues(response.data, fileParams),
+          );
         } else {
           await queryClient.refetchQueries({ queryKey: scopedKey });
         }
