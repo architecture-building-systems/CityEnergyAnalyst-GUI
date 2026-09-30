@@ -55,8 +55,11 @@ export function useSaveToolParamsMutation(scenarioContext) {
         // `select` overlays this stored config on every read, so writing the
         // cache first would let that read see stale stored values.
         // See toolConfigStorage.js / useToolParams.js.
+        // Pass the full params, not savedParams: mergeStoredToolConfig drops a File field's
+        // stored entry, so an older stored value (e.g. '' from a save before the upload)
+        // can't be overlaid back over the File on the next read.
         if (isNonLocal) {
-          mergeStoredToolConfig(userId, savedParams);
+          mergeStoredToolConfig(userId, params);
         }
 
         const scopedKey = [
@@ -79,6 +82,9 @@ export function useSaveToolParamsMutation(scenarioContext) {
           );
         } else {
           await queryClient.refetchQueries({ queryKey: scopedKey });
+          queryClient.setQueryData(scopedKey, (data) =>
+            overlayStoredValues(data, fileParams),
+          );
         }
 
         return response.data;
