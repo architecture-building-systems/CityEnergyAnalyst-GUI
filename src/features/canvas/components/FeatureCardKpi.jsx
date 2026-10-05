@@ -42,6 +42,7 @@ import { Button, Tooltip } from 'antd';
 import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
+import { PLOT_GROUPS } from 'features/plots/constants';
 import { useCanvasStore } from '../stores/canvasStore';
 import { useFetchKpiSparkline, useFetchKpiValue } from '../hooks/useFetchKpis';
 import { formatKpiNumber } from '../utils/formatKpiValue';
@@ -75,6 +76,20 @@ const titleCase = (s) =>
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ')
     : s;
+
+// The card's grey prefix names the plot group the KPI was picked from
+// (`KpiPicker` groups by `category` against `PLOT_GROUPS`), so a card
+// reads "Energy by Carrier" rather than its id prefix "Final Energy".
+// "LCA Part 1: Energy by Carrier" drops its numbering prefix to fit.
+const categoryLabel = (category) => {
+  if (!category) return null;
+  for (const group of PLOT_GROUPS) {
+    if (group.keys?.includes(category)) return group.label;
+    const sub = group.subgroups?.find((s) => s.keys.includes(category));
+    if (sub) return sub.label.split(': ').pop();
+  }
+  return null;
+};
 
 const FeatureCardKpi = ({
   card,
@@ -278,7 +293,9 @@ const FeatureCardKpi = ({
         error={error}
         baseline={baseline}
         showDeltas={showDeltas && !readOnly}
-        sparklinePoints={wantSparkline ? sparklinePoints : null}
+        sparklinePoints={
+          wantSparkline ? scalePoints(sparklinePoints, kpi?.unit_scale) : null
+        }
         cardYear={cardYear}
       />
 
@@ -384,6 +401,8 @@ const KpiBody = ({
   cardYear,
 }) => {
   const available = !!kpi && kpi.available !== false;
+  const featureLabel = categoryLabel(kpi?.category) ?? titleCase(feature);
+  const annotations = available ? (kpi.annotations ?? []) : [];
   const label = kpi?.label ?? fallbackLabel(kpiId);
   const infoNote = kpi?.info_note;
   const valueText = available ? formatKpiNumber(kpi.value, kpi.unit) : '—';
@@ -392,9 +411,7 @@ const KpiBody = ({
   return (
     <>
       {/* Row 1 — feature */}
-      <div style={featureRowStyle}>
-        {feature ? titleCase(feature) : '\u00A0'}
-      </div>
+      <div style={featureRowStyle}>{featureLabel || '\u00A0'}</div>
 
       {/* Rows 2–3 — KPI name (2-line clamp) */}
       <div style={nameRowStyle} title={label}>
@@ -437,6 +454,24 @@ const KpiBody = ({
       <div style={unitStyle}>{showSkeleton ? '\u00A0' : (kpi?.unit ?? '')}</div>
 
       {/* Optional add-ons below the fixed six rows */}
+      {!showSkeleton && annotations.length > 0 && (
+        <Tooltip
+          title={
+            <span style={tooltipBodyStyle}>
+              {annotations.map((a) => `${a.label}: ${a.value}`).join('\n')}
+            </span>
+          }
+          placement="bottom"
+        >
+          <div style={annotationsStyle}>
+            {annotations.map((a) => (
+              <div key={a.label} style={annotationRowStyle}>
+                {a.label}: {a.value}
+              </div>
+            ))}
+          </div>
+        </Tooltip>
+      )}
       {isError && (
         <div style={hintStyle}>{error?.message ?? 'Failed to load KPI'}</div>
       )}
@@ -463,6 +498,15 @@ const KpiBody = ({
 // (`demand.eui_kwh_m2` → `eui_kwh_m2`) so the card never goes
 // completely blank during loading.
 const fallbackLabel = (kpiId) => splitKpiId(kpiId)[1] ?? '';
+
+// The sparkline reads the bulk endpoint, which reports the base unit;
+// `unit_scale` converts it to the unit this card was configured to show.
+const scalePoints = (points, unitScale) =>
+  points && unitScale && unitScale !== 1
+    ? points.map((p) =>
+        p.value == null ? p : { ...p, value: p.value * unitScale },
+      )
+    : points;
 
 // ── Styles ──────────────────────────────────────────────────────────
 
@@ -586,6 +630,22 @@ const unitStyle = {
   fontSize: 11,
   color: '#666',
   lineHeight: 1.2,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+
+// Notes on what the value was measured for (e.g. PV panel type). One
+// line per row, clipped; the tooltip carries the full text.
+const annotationsStyle = {
+  marginTop: 4,
+  fontSize: 11,
+  color: '#888',
+  lineHeight: 1.3,
+  minWidth: 0,
+};
+
+const annotationRowStyle = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
