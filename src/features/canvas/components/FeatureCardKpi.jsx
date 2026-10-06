@@ -43,7 +43,12 @@ import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchKpiSparkline, useFetchKpiValue } from '../hooks/useFetchKpis';
+import {
+  useFetchKpiRegistry,
+  useFetchKpiSparkline,
+  useFetchKpiValue,
+} from '../hooks/useFetchKpis';
+import { findFamilyForFeature } from '../utils/featureFamily';
 import { formatKpiNumber } from '../utils/formatKpiValue';
 import DeltaChip from './DeltaChip';
 import KpiSparkline from './KpiSparkline';
@@ -75,6 +80,13 @@ const titleCase = (s) =>
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ')
     : s;
+
+// The card's grey prefix names the plot group the KPI was picked from
+// (`KpiPicker` groups by `category` against `PLOT_GROUPS`), so a card
+// reads "Energy by Carrier" rather than its id prefix "Final Energy".
+// "LCA Part 1: Energy by Carrier" drops its numbering prefix to fit.
+const categoryLabel = (category) =>
+  findFamilyForFeature(category)?.label.split(': ').pop() ?? null;
 
 const FeatureCardKpi = ({
   card,
@@ -193,6 +205,26 @@ const FeatureCardKpi = ({
     return m ? parseInt(m[1], 10) : null;
   }, [scenario]);
 
+  // The sparkline reads the bulk endpoint, which reports the base
+  // unit; `unit_scale` converts it to the unit this card shows.
+  const unitScale = kpi?.unit_scale;
+  const scaledSparklinePoints = useMemo(
+    () => scalePoints(sparklinePoints, unitScale),
+    [sparklinePoints, unitScale],
+  );
+
+  // Row 1 names the KPI's category. The registry (cached, shared
+  // with `KpiPicker`) knows it before this card's value arrives, so
+  // the label doesn't change once the fetch lands.
+  const { data: registry } = useFetchKpiRegistry();
+  const category = useMemo(
+    () =>
+      registry?.kpis?.find((k) => k.id === kpiId)?.category ??
+      kpi?.category ??
+      null,
+    [registry, kpiId, kpi?.category],
+  );
+
   const showCardActions = enableEdit && !readOnly;
 
   // No id → render an empty card. Should not happen in practice
@@ -272,13 +304,14 @@ const FeatureCardKpi = ({
       <KpiBody
         kpi={kpi}
         feature={feature}
+        category={category}
         kpiId={kpiId}
         isLoading={isLoading}
         isError={isError}
         error={error}
         baseline={baseline}
         showDeltas={showDeltas && !readOnly}
-        sparklinePoints={wantSparkline ? sparklinePoints : null}
+        sparklinePoints={wantSparkline ? scaledSparklinePoints : null}
         cardYear={cardYear}
       />
 
@@ -374,6 +407,7 @@ const CardActions = ({ onReplace, onDelete }) => (
 const KpiBody = ({
   kpi,
   feature,
+  category,
   kpiId,
   isLoading,
   isError,
@@ -384,6 +418,8 @@ const KpiBody = ({
   cardYear,
 }) => {
   const available = !!kpi && kpi.available !== false;
+  const featureLabel = categoryLabel(category) ?? titleCase(feature);
+  const annotations = available ? (kpi.annotations ?? []) : [];
   const label = kpi?.label ?? fallbackLabel(kpiId);
   const infoNote = kpi?.info_note;
   const valueText = available ? formatKpiNumber(kpi.value, kpi.unit) : '—';
@@ -392,9 +428,7 @@ const KpiBody = ({
   return (
     <>
       {/* Row 1 — feature */}
-      <div style={featureRowStyle}>
-        {feature ? titleCase(feature) : '\u00A0'}
-      </div>
+      <div style={featureRowStyle}>{featureLabel || '\u00A0'}</div>
 
       {/* Rows 2–3 — KPI name (2-line clamp) */}
       <div style={nameRowStyle} title={label}>
@@ -437,6 +471,23 @@ const KpiBody = ({
       <div style={unitStyle}>{showSkeleton ? '\u00A0' : (kpi?.unit ?? '')}</div>
 
       {/* Optional add-ons below the fixed six rows */}
+      {!showSkeleton && annotations.length > 0 && (
+        <Tooltip
+          title={
+            <span style={tooltipBodyStyle}>
+              {annotations.map((a) => `${a.label}: ${a.value}`).join('\n')}
+            </span>
+          }
+          placement="bottom"
+        >
+          <div style={annotationsStyle}>
+            <span style={annotationTextStyle}>
+              {annotations[0].label}: {annotations[0].value}
+            </span>
+            {annotations.length > 1 && <span>+{annotations.length - 1}</span>}
+          </div>
+        </Tooltip>
+      )}
       {isError && (
         <div style={hintStyle}>{error?.message ?? 'Failed to load KPI'}</div>
       )}
@@ -463,6 +514,13 @@ const KpiBody = ({
 // (`demand.eui_kwh_m2` → `eui_kwh_m2`) so the card never goes
 // completely blank during loading.
 const fallbackLabel = (kpiId) => splitKpiId(kpiId)[1] ?? '';
+
+const scalePoints = (points, unitScale) =>
+  points && unitScale && unitScale !== 1
+    ? points.map((p) =>
+        p.value == null ? p : { ...p, value: p.value * unitScale },
+      )
+    : points;
 
 // ── Styles ──────────────────────────────────────────────────────────
 
@@ -586,6 +644,27 @@ const unitStyle = {
   fontSize: 11,
   color: '#666',
   lineHeight: 1.2,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+
+// Notes on what the value was measured for (e.g. PV panel type).
+// Held to one clipped line -- the first note, plus a "+N" count of
+// the rest -- so the add-ons below keep their place at the default
+// card size; the tooltip carries every note in full.
+const annotationsStyle = {
+  display: 'flex',
+  gap: 4,
+  marginTop: 4,
+  fontSize: 11,
+  color: '#888',
+  lineHeight: 1.3,
+  minWidth: 0,
+};
+
+const annotationTextStyle = {
+  minWidth: 0,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
