@@ -33,6 +33,11 @@ export const ToolFormButtons = ({
   // hidden because they wire to the tool-params backend, not the
   // embedding flow. Used by the canvas to commit a plot config to a slot.
   onRunOverride,
+  // Optional. Called on Run; returns values that replace the form's for this
+  // submission, for parameters the caller derives from its own state rather
+  // than from anything the user edits in the form (a plot's `context`). May
+  // throw an Error whose message explains why the tool can't run yet.
+  getSubmitOverrides,
   scenarioContext,
 }) => {
   const { styles, onMouseEnter, onMouseLeave } = useHoverGrow();
@@ -51,16 +56,26 @@ export const ToolFormButtons = ({
 
   const runScript = async () => {
     setError?.(null);
-    const params = await getFormValues(
+    const formValues = await getFormValues(
       form,
       parameters,
       categoricalParameters,
       onValidationError,
     );
 
-    if (!params) {
+    if (!formValues) {
       console.error('Cannot run - form validation failed');
       return;
+    }
+
+    let params = formValues;
+    if (getSubmitOverrides) {
+      try {
+        params = { ...formValues, ...getSubmitOverrides() };
+      } catch (err) {
+        setError?.(err?.message || 'This tool cannot be run yet.');
+        return;
+      }
     }
 
     // Embedding flow (e.g. Canvas Builder): caller owns the Run behaviour.

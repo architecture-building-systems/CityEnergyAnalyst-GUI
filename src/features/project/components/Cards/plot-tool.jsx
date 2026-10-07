@@ -51,6 +51,82 @@ const PLOT_SOLAR_SURFACES = new Set([
 // `_PVT_PANEL_TYPE_SEP` in the backend layer class.
 const PVT_PANEL_TYPE_SEP = ' + ';
 
+// The `context` a plot script runs with: which feature it plots and the period /
+// panel types currently shown on the map. Derived from the script and the map
+// state only -- never from the form -- so it can be rebuilt at any moment.
+export const buildPlotContext = ({
+  script,
+  panelTech,
+  panelType,
+  period,
+  timeline,
+}) => {
+  const solar_panel_types = {};
+
+  // Get feature from script name after 'plot-'
+  let feature = script?.split('plot-')?.[1];
+
+  // Special case for solar plots
+  if (script == 'plot-solar') {
+    if (panelTech === 'PV') {
+      feature = 'pv';
+      if (panelType) solar_panel_types.pv = panelType;
+    } else if (panelTech === 'SC') {
+      feature = 'sc';
+      if (panelType) solar_panel_types.sc = panelType;
+    } else if (panelTech === 'PVT') {
+      // PVT encodes the PV + SC pair as a compound "<PV> + <SC>"
+      // dropdown value (see SolarPotentialsLayer._PVT_PANEL_TYPE_SEP).
+      // Split it so the plot form receives the two halves separately.
+      feature = 'pvt';
+      if (
+        typeof panelType === 'string' &&
+        panelType.includes(PVT_PANEL_TYPE_SEP)
+      ) {
+        const [pvCode, scCode] = panelType
+          .split(PVT_PANEL_TYPE_SEP)
+          .map((s) => s.trim());
+        if (pvCode) solar_panel_types.pv = pvCode;
+        if (scCode) solar_panel_types.sc = scCode;
+      }
+    }
+  }
+
+  let period_start = ((period?.[0] ?? 1) - 1) * 24;
+  let period_end = (period?.[1] ?? 365) * 24;
+  if (
+    [
+      'plot-lifecycle-emissions',
+      'plot-emission-timeline',
+      'plot-pathway-emission-timeline',
+    ].includes(script)
+  ) {
+    period_start = timeline?.[0] ?? 0;
+    period_end = timeline?.[1] ?? 0;
+  }
+
+  return { feature, period_start, period_end, solar_panel_types };
+};
+
+// Panel types each solar feature needs before the backend can find its results.
+const SOLAR_PANEL_TYPES_REQUIRED = {
+  pv: ['pv'],
+  sc: ['sc'],
+  pvt: ['pv', 'sc'],
+};
+
+// Why a plot context can't be plotted yet, or null when it can. Only plot-solar
+// has a context the user must complete: its technology and panel type come from
+// the Renewable Energy Potentials map layer, which may not be the active layer.
+export const plotContextProblem = (script, context) => {
+  if (script !== 'plot-solar') return null;
+  const required = SOLAR_PANEL_TYPES_REQUIRED[context.feature];
+  if (!required || required.some((key) => !context.solar_panel_types?.[key])) {
+    return 'Select a solar technology and panel type in the Renewable Energy Potentials map layer before plotting.';
+  }
+  return null;
+};
+
 const PlotButton = ({ plotKey, onSelected }) => {
   const script = VIEW_PLOT_RESULTS[plotKey];
   if (!script) return null;
@@ -187,53 +263,14 @@ export const PlotTool = ({
       // a "select all" default). The two `useEffect`s below also call
       // `setContext()` with no argument; in those branches we just skip
       // the parameter-aware seeding paths.
-      const solar_panel_types = {};
-
-      let feature;
-      // Get feature from script name after 'plot-'
-      feature = script?.split('plot-')?.[1];
-
-      // Special case for solar plots
-      if (script == 'plot-solar') {
-        if (panelTech === 'PV') {
-          feature = 'pv';
-          solar_panel_types.pv = panelType;
-        } else if (panelTech === 'SC') {
-          feature = 'sc';
-          solar_panel_types.sc = panelType;
-        } else if (panelTech === 'PVT') {
-          // PVT encodes the PV + SC pair as a compound "<PV> + <SC>"
-          // dropdown value (see SolarPotentialsLayer._PVT_PANEL_TYPE_SEP).
-          // Split it so the plot form receives the two halves separately.
-          feature = 'pvt';
-          if (
-            typeof panelType === 'string' &&
-            panelType.includes(PVT_PANEL_TYPE_SEP)
-          ) {
-            const [pvCode, scCode] = panelType
-              .split(PVT_PANEL_TYPE_SEP)
-              .map((s) => s.trim());
-            if (pvCode) solar_panel_types.pv = pvCode;
-            if (scCode) solar_panel_types.sc = scCode;
-          }
-        }
-      }
-
-      let period_start = ((period?.[0] ?? 1) - 1) * 24;
-      let period_end = (period?.[1] ?? 365) * 24;
-      if (
-        [
-          'plot-lifecycle-emissions',
-          'plot-emission-timeline',
-          'plot-pathway-emission-timeline',
-        ].includes(script)
-      ) {
-        period_start = timeline?.[0] ?? 0;
-        period_end = timeline?.[1] ?? 0;
-      }
-
       const nextValues = {
-        context: { feature, period_start, period_end, solar_panel_types },
+        context: buildPlotContext({
+          script,
+          panelTech,
+          panelType,
+          period,
+          timeline,
+        }),
       };
 
       // Seed plot-lifecycle-emissions' y-category-to-plot from the map layer
@@ -378,6 +415,33 @@ export const PlotTool = ({
     ],
   );
 
+  // The context sent with the job is rebuilt here, at submit, rather than read
+  // back from the form. The form field is only a display of it, kept in step by
+  // the effects below, and a hidden field that effects keep in step is exactly
+  // what goes stale (form resets, values restored from saved settings): jobs
+  // were being submitted with another plot's feature.
+  const getSubmitOverrides = useCallback(() => {
+    const context = buildPlotContext({
+      script,
+      panelTech,
+      panelType,
+      period,
+      timeline,
+    });
+    const problem = plotContextProblem(script, context);
+    if (problem) {
+      // The map can't say which technology to plot, but a caller may have
+      // prefilled a complete context for this script (Canvas Builder
+      // reopening a saved solar card): that one is still good.
+      const prefilled = form.getFieldValue('context');
+      if (prefilled && !plotContextProblem(script, prefilled)) {
+        return { context: prefilled };
+      }
+      throw new Error(problem);
+    }
+    return { context };
+  }, [form, script, panelTech, panelType, period, timeline]);
+
   // One-shot prefill from the caller that opened this plot tool (e.g.
   // "View Results" on a just-completed pathway-simulations job seeds the
   // pathway name). Must be applied AFTER `useFormReset` has reset the
@@ -447,6 +511,7 @@ export const PlotTool = ({
         // Forwarded to ToolFormButtons so Canvas Builder can intercept Run
         // (commit plot config to a card) without creating a job.
         onRunOverride={onRunOverride}
+        getSubmitOverrides={getSubmitOverrides}
         extraReadonlyFields={extraReadonlyFields}
         scenarioOverride={scenarioOverride}
       />

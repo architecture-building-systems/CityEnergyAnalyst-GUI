@@ -52,7 +52,7 @@ export function useSetDefaultToolParamsMutation(scenarioContext) {
           const state = hasFreshState
             ? response.data
             : queryClient.getQueryData(scopedKey);
-          clearStoredToolConfig(userId, getToolParamNames(state));
+          clearStoredToolConfig(userId, tool, getToolParamNames(state));
         }
 
         // See useSaveToolParams.js: adopt the backend's returned state directly

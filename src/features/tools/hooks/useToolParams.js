@@ -27,9 +27,9 @@ const useFetchToolParams = (script, scenarioContext) => {
   const selectParams = useCallback(
     (data) =>
       isNonLocal
-        ? overlayStoredValues(data, readStoredToolConfig(userId))
+        ? overlayStoredValues(data, readStoredToolConfig(userId, script))
         : data,
-    [isNonLocal, userId],
+    [isNonLocal, userId, script],
   );
 
   // childScenario itself isn't listed: childToken is its stable
@@ -60,6 +60,9 @@ const useFetchToolParams = (script, scenarioContext) => {
     select: selectParams,
     enabled: !!script,
     staleTime: 5 * 60 * 1000,
+    // Every fresh fetch resets the form (useFormReset), so a refetch nobody asked for --
+    // coming back to the tab after reading something else -- would discard unsaved edits.
+    refetchOnWindowFocus: false,
   });
 };
 

@@ -43,6 +43,41 @@ export const FormField = ({ name, help, children, ...props }) => {
   );
 };
 
+// Parameters of a tool that only mean something together: either all are set or
+// none is. The backend enforces this too, but only once the job is running.
+const ALL_OR_NONE_GROUPS = {
+  emissions: [
+    [
+      'grid-decarbonise-reference-year',
+      'grid-decarbonise-target-year',
+      'grid-decarbonise-target-emission-factor',
+    ],
+  ],
+};
+
+const isBlank = (value) =>
+  value === undefined || value === null || value === '';
+
+const allOrNoneGroup = (toolName, name) =>
+  ALL_OR_NONE_GROUPS[toolName]?.find((group) => group.includes(name));
+
+// antd rule for a member of an all-or-none group: blank is only an error while
+// another member of the group has a value.
+const allOrNoneRule =
+  (group, name) =>
+  ({ getFieldValue }) => ({
+    validator: (_, value) => {
+      if (!isBlank(value)) return Promise.resolve();
+      const filled = group.filter(
+        (other) => other !== name && !isBlank(getFieldValue(other)),
+      );
+      if (filled.length === 0) return Promise.resolve();
+      return Promise.reject(
+        `Required because ${filled.join(', ')} is set. Fill this in, or clear ${filled.length > 1 ? 'them' : 'it'}.`,
+      );
+    },
+  });
+
 const getContrastTextColour = (hexColour) => {
   if (typeof hexColour !== 'string') return '#000000';
 
@@ -243,6 +278,7 @@ const Parameter = ({
     case 'IntegerParameter':
     case 'RealParameter': {
       const stringValue = value !== null ? value.toString() : '';
+      const group = allOrNoneGroup(toolName, name);
       const regex =
         type === 'IntegerParameter'
           ? /^-?([1-9][0-9]*|0)$/
@@ -266,7 +302,9 @@ const Parameter = ({
                 return regex.test(num) ? Number(num) : NaN;
               },
             },
+            ...(group ? [allOrNoneRule(group, name)] : []),
           ]}
+          dependencies={group?.filter((other) => other !== name)}
           initialValue={stringValue}
         >
           <Input
@@ -389,7 +427,21 @@ const Parameter = ({
               required: !nullable,
               message: 'Please select a column',
             },
+            // A file without a column can't be read: the backend rejects it,
+            // but only after the job has started.
+            ({ getFieldValue }) => ({
+              validator: (_, column) => {
+                if (!source_parameter || !isBlank(column))
+                  return Promise.resolve();
+                if (isBlank(getFieldValue(source_parameter)))
+                  return Promise.resolve();
+                return Promise.reject(
+                  `Select the column of the ${source_parameter} file to use`,
+                );
+              },
+            }),
           ]}
+          dependencies={source_parameter ? [source_parameter] : undefined}
           initialValue={value}
         >
           <CsvColumnSelect

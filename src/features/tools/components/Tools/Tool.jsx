@@ -44,6 +44,7 @@ const Tool = ({
   form,
   onParametersLoaded,
   onRunOverride,
+  getSubmitOverrides,
   extraReadonlyFields: externalReadonlyFields,
   // When set, parameter fetches and input validation target this
   // specific scenario instead of the active project scenario.
@@ -134,12 +135,16 @@ const Tool = ({
 
   const changes = useChangesExist();
 
-  // Fires after useFormReset — lets parents re-seed form values.
+  // Fires after useFormReset — lets parents re-seed form values. Keyed on
+  // dataUpdatedAt as well as params because that is what useFormReset resets on:
+  // a refetch returning identical data keeps the same `params` object (react-query
+  // structural sharing) yet still resets the form, and would otherwise leave the
+  // parent's seeded values (e.g. a plot's context) wiped.
   useEffect(() => {
     if (params && onParametersLoaded) {
       onParametersLoaded(params, { recheck: () => recheckRef.current() });
     }
-  }, [params, onParametersLoaded]);
+  }, [params, dataUpdatedAt, onParametersLoaded]);
 
   // Apply pathway viewer overrides after every form reset.
   useEffect(() => {
@@ -241,6 +246,7 @@ const Tool = ({
                 dataUpdatedAt={dataUpdatedAt}
                 onToolSelected={onToolSelected}
                 onRunOverride={onRunOverride}
+                getSubmitOverrides={getSubmitOverrides}
                 changes={changes}
                 headerCollapsed={headerCollapsed}
                 setHeaderCollapsed={setHeaderCollapsed}

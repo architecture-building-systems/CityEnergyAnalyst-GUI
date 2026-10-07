@@ -4,15 +4,27 @@
 // request and its `save-config` endpoint is a no-op (see
 // CEAStatelessConfig in the backend's dependencies.py) - nothing is ever
 // persisted server-side. To keep saved parameter values across
-// fetches/reloads, we persist them here as a flat `paramName -> value` map,
-// scoped per user and shared across all tools/scenarios (mirroring how
-// local mode's single `~/cea.config` file behaves).
+// fetches/reloads, we persist them here as `script -> paramName -> value`,
+// scoped per user and shared across all scenarios.
+//
+// Values are kept per tool because a parameter name alone does not identify a
+// parameter: the backend's config is keyed by `section:name`, and different
+// tools reuse a name for unrelated parameters of different types (e.g.
+// `what-if-name` is a multi-select on the plots but free text on LCA Part 1,
+// `network-name` likewise between Thermal Network Part 1 and Part 2). A single
+// flat map let one tool's saved value land on another tool's field, where the
+// form displayed it plausibly and then submitted the wrong type.
 //
 // `scenario` is intentionally never stored: it's contextual, injected per
-// active scenario by the backend/form, not a real saved setting.
+// active scenario by the backend/form, not a real saved setting. `context`
+// (PlotContextParameter) is the same kind of value: it describes which plot is
+// open and what the map shows right now, and is rebuilt every time a plot form
+// loads (see plot-tool.jsx) -- a saved one is by definition stale.
 
-const STORAGE_KEY_PREFIX = 'cea-tool-config';
-const EXCLUDED_PARAM_NAMES = new Set(['scenario']);
+// v2: per-tool maps. The unversioned key held the earlier flat map, whose
+// entries can't be attributed to a tool, so it is left unread.
+const STORAGE_KEY_PREFIX = 'cea-tool-config-v2';
+const EXCLUDED_PARAM_NAMES = new Set(['scenario', 'context']);
 
 // A browser `File` (web-mode upload fields hold one) can't be persisted: JSON.stringify turns
 // it into `{"uid":"rc-upload-..."}` (only antd's added `uid` is enumerable), and overlaying
@@ -29,33 +41,50 @@ const isFileLikeValue = (value) =>
 const getStorageKey = (userID) =>
   userID ? `${STORAGE_KEY_PREFIX}-${userID}` : STORAGE_KEY_PREFIX;
 
-export const readStoredToolConfig = (userID) => {
+const isPlainObject = (value) =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+// Every tool's stored map for this user: `{ [script]: { [paramName]: value } }`.
+const readAllStoredToolConfigs = (userID) => {
   try {
     const raw = localStorage.getItem(getStorageKey(userID));
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return {};
-    return Object.fromEntries(
-      Object.entries(parsed).filter(([, value]) => !isFileLikeValue(value)),
-    );
+    return isPlainObject(parsed) ? parsed : {};
   } catch (err) {
     console.error('Error reading stored tool config:', err);
     return {};
   }
 };
 
-const writeStoredToolConfig = (userID, config) => {
+// The stored `paramName -> value` map for one tool.
+export const readStoredToolConfig = (userID, script) => {
+  const stored = readAllStoredToolConfigs(userID)[script];
+  if (!isPlainObject(stored)) return {};
+  return Object.fromEntries(
+    Object.entries(stored).filter(
+      ([name, value]) =>
+        !EXCLUDED_PARAM_NAMES.has(name) && !isFileLikeValue(value),
+    ),
+  );
+};
+
+const writeStoredToolConfig = (userID, script, config) => {
   try {
-    localStorage.setItem(getStorageKey(userID), JSON.stringify(config));
+    const all = readAllStoredToolConfigs(userID);
+    localStorage.setItem(
+      getStorageKey(userID),
+      JSON.stringify({ ...all, [script]: config }),
+    );
   } catch (err) {
     console.error('Error writing stored tool config:', err);
   }
 };
 
-// Shallow-merges `paramValues` into the stored map for this user.
-export const mergeStoredToolConfig = (userID, paramValues) => {
-  if (!paramValues) return;
-  const current = readStoredToolConfig(userID);
+// Shallow-merges `paramValues` into this tool's stored map for this user.
+export const mergeStoredToolConfig = (userID, script, paramValues) => {
+  if (!script || !paramValues) return;
+  const current = readStoredToolConfig(userID, script);
   const next = { ...current };
   for (const [name, value] of Object.entries(paramValues)) {
     if (EXCLUDED_PARAM_NAMES.has(name)) continue;
@@ -65,13 +94,13 @@ export const mergeStoredToolConfig = (userID, paramValues) => {
     }
     next[name] = value;
   }
-  writeStoredToolConfig(userID, next);
+  writeStoredToolConfig(userID, script, next);
 };
 
-// Removes the given parameter names from the stored map (used on Reset).
-export const clearStoredToolConfig = (userID, paramNames) => {
-  if (!paramNames?.length) return;
-  const current = readStoredToolConfig(userID);
+// Removes the given parameter names from this tool's stored map (used on Reset).
+export const clearStoredToolConfig = (userID, script, paramNames) => {
+  if (!script || !paramNames?.length) return;
+  const current = readStoredToolConfig(userID, script);
   const next = { ...current };
   let changed = false;
   for (const name of paramNames) {
@@ -80,7 +109,7 @@ export const clearStoredToolConfig = (userID, paramNames) => {
       changed = true;
     }
   }
-  if (changed) writeStoredToolConfig(userID, next);
+  if (changed) writeStoredToolConfig(userID, script, next);
 };
 
 // Returns every parameter name known to a `/tools/{script}` response
@@ -110,9 +139,16 @@ export const getToolParamNames = (data) => {
 // Multi-choice values are filtered to the valid subset (matching the backend's own
 // behaviour); a single-choice value that's gone stale is dropped in favour of the server's
 // already-normalised `param.value`, rather than re-deriving a fallback here.
+//
+// Two kinds of stored value are never applied, whatever put them in the map:
+// - a plot context (see EXCLUDED_PARAM_NAMES), which must come from the open plot, and
+// - a list for a parameter that isn't list-valued. A text input shows `['baseline']` as
+//   "baseline", so the form looks right while the job is sent a list.
 const overlayParam = (storedMap) => (param) => {
   if (!(param.name in storedMap)) return param;
+  if (param.type === 'PlotContextParameter') return param;
   const storedValue = storedMap[param.name];
+  if (Array.isArray(storedValue) && !Array.isArray(param.value)) return param;
 
   if (Array.isArray(param.choices)) {
     if (Array.isArray(param.value)) {
