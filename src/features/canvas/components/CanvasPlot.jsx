@@ -22,6 +22,12 @@ import {
 
 import { useFetchCustomPlot } from '../hooks/useCanvasData';
 import { refitCharts } from '../utils/plotResize';
+import {
+  PLOT_RESIZE_EVENT,
+  SANKEY_ALIGNED_ATTR,
+  readSankeyStack,
+  scaleSankeyStacks,
+} from '../utils/sankeyStack';
 
 /**
  * Renders a single Plotly plot. Every Canvas Builder plot has a
@@ -230,7 +236,7 @@ const CanvasPlot = ({
       // the post-grow wrapper size regardless of RO timing.
       settleTimer = setTimeout(() => {
         if (cancelled || !chartAreaRef.current) return;
-        refitCharts(chartAreaRef.current);
+        fitChartArea(chartAreaRef.current);
       }, AUTO_GROW_SETTLE_MS);
 
       onPlotReadyRef.current?.(plotDivs[0]);
@@ -262,7 +268,7 @@ const CanvasPlot = ({
     }, AUTO_GROW_SETTLE_MS);
     const ro = new ResizeObserver(() => {
       if (!active) return;
-      refitCharts(area);
+      fitChartArea(area);
     });
     ro.observe(area);
     return () => {
@@ -322,7 +328,7 @@ const CanvasPlot = ({
 
   return (
     <div style={containerStyle}>
-      <div ref={chartAreaRef} style={chartAreaStyle}>
+      <div ref={chartAreaRef} style={chartAreaStyle} data-chart-area="">
         {filtered}
       </div>
       {legendItems.length > 0 && <PlotLegend items={legendItems} />}
@@ -331,6 +337,18 @@ const CanvasPlot = ({
 };
 
 // ── Helpers ──────────────────────────────────────────────────────
+
+// Fit the chart area's figures to the card. A card of Sankeys keeps one
+// scale across its figures (so equal flows draw at equal width) rather
+// than stretching each to an equal share; while `usePlotAlignment` owns
+// the scale across compare columns, the resize is handed to it instead.
+function fitChartArea(area) {
+  const stack = readSankeyStack(area);
+  if (!stack) refitCharts(area);
+  else if (area.dataset[SANKEY_ALIGNED_ATTR])
+    area.dispatchEvent(new CustomEvent(PLOT_RESIZE_EVENT));
+  else scaleSankeyStacks([stack]);
+}
 
 // Rewrite every `<div id="UUID" class="plotly-graph-div">` (and the
 // matching `Plotly.newPlot("UUID", …)` call inside the inline
