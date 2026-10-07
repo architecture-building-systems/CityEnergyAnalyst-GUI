@@ -59,7 +59,7 @@ export function useSaveToolParamsMutation(scenarioContext) {
         // stored entry, so an older stored value (e.g. '' from a save before the upload)
         // can't be overlaid back over the File on the next read.
         if (isNonLocal) {
-          mergeStoredToolConfig(userId, params);
+          mergeStoredToolConfig(userId, tool, params);
         }
 
         const scopedKey = [

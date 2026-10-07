@@ -1,5 +1,6 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import {
+  clearStoredToolConfig,
   mergeStoredToolConfig,
   overlayStoredValues,
   readStoredToolConfig,
@@ -120,6 +121,31 @@ describe('overlayStoredValues', () => {
     ).toBe(90);
   });
 
+  // Regression: a multi-select's saved list reached a same-named free-text field of another
+  // tool, which displayed "baseline" but submitted ['baseline'] (the backend then created a
+  // what-if folder literally named "['baseline']").
+  it('does not apply a stored list to a parameter that is not list-valued', () => {
+    const data = {
+      parameters: [
+        { name: 'what-if-name', type: 'WhatIfNameParameter', value: '' },
+      ],
+    };
+    const result = overlayStoredValues(data, { 'what-if-name': ['baseline'] });
+    expect(result.parameters[0].value).toBe('');
+  });
+
+  // Regression: a plot's saved context was applied to every other plot, so e.g.
+  // plot-final-energy ran with `feature: 'lifecycle-emissions'`.
+  it('never applies a stored plot context', () => {
+    const data = {
+      parameters: [
+        { name: 'context', type: 'PlotContextParameter', value: {} },
+      ],
+    };
+    const result = overlayStoredValues(data, { context: { feature: 'pv' } });
+    expect(result.parameters[0].value).toEqual({});
+  });
+
   it('returns data unchanged when storedMap is empty or absent', () => {
     const data = { parameters: [{ name: 'year', value: 2020 }] };
     expect(overlayStoredValues(data, {})).toBe(data);
@@ -140,32 +166,95 @@ describe('File values in stored tool config', () => {
   });
 
   it('does not persist a File value, and drops a previously stored one', () => {
-    mergeStoredToolConfig('u1', { csv: 'old.csv', year: 2030 });
+    mergeStoredToolConfig('u1', 'emissions', { csv: 'old.csv', year: 2030 });
     const file = new File(['a,b'], 'grid.csv', { type: 'text/csv' });
     file.uid = 'rc-upload-123';
-    mergeStoredToolConfig('u1', { csv: file, year: 2040 });
+    mergeStoredToolConfig('u1', 'emissions', { csv: file, year: 2040 });
 
-    expect(readStoredToolConfig('u1')).toEqual({ year: 2040 });
+    expect(readStoredToolConfig('u1', 'emissions')).toEqual({ year: 2040 });
   });
 
   it('ignores {uid} objects already stored by an earlier version', () => {
     localStorage.setItem(
-      'cea-tool-config-u1',
-      JSON.stringify({ csv: { uid: 'rc-upload-123' }, year: 2030 }),
+      'cea-tool-config-v2-u1',
+      JSON.stringify({
+        emissions: { csv: { uid: 'rc-upload-123' }, year: 2030 },
+      }),
     );
-    expect(readStoredToolConfig('u1')).toEqual({ year: 2030 });
+    expect(readStoredToolConfig('u1', 'emissions')).toEqual({ year: 2030 });
   });
 
   it('keeps ordinary values, including arrays and other objects', () => {
-    mergeStoredToolConfig('u1', {
+    mergeStoredToolConfig('u1', 'demand', {
       names: ['a', 'b'],
       flag: false,
       nested: { a: 1, b: 2 },
     });
-    expect(readStoredToolConfig('u1')).toEqual({
+    expect(readStoredToolConfig('u1', 'demand')).toEqual({
       names: ['a', 'b'],
       flag: false,
       nested: { a: 1, b: 2 },
     });
+  });
+});
+
+describe('stored tool config is kept per tool', () => {
+  beforeEach(() => {
+    const store = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => store.set(key, String(value)),
+    });
+  });
+
+  // The same parameter name means different things in different tools: a multi-select on
+  // the plots, free text on LCA Part 1.
+  it('does not share a same-named value between tools', () => {
+    mergeStoredToolConfig('u1', 'plot-final-energy', {
+      'what-if-name': ['baseline'],
+    });
+    mergeStoredToolConfig('u1', 'final-energy', { 'what-if-name': 'retrofit' });
+
+    expect(readStoredToolConfig('u1', 'plot-final-energy')).toEqual({
+      'what-if-name': ['baseline'],
+    });
+    expect(readStoredToolConfig('u1', 'final-energy')).toEqual({
+      'what-if-name': 'retrofit',
+    });
+    expect(readStoredToolConfig('u1', 'emissions')).toEqual({});
+  });
+
+  it('clears only the named parameters of the given tool', () => {
+    mergeStoredToolConfig('u1', 'plot-demand', {
+      'x-to-plot': 'a',
+      title: 't',
+    });
+    mergeStoredToolConfig('u1', 'plot-solar', { 'x-to-plot': 'b' });
+
+    clearStoredToolConfig('u1', 'plot-demand', ['x-to-plot']);
+
+    expect(readStoredToolConfig('u1', 'plot-demand')).toEqual({ title: 't' });
+    expect(readStoredToolConfig('u1', 'plot-solar')).toEqual({
+      'x-to-plot': 'b',
+    });
+  });
+
+  it('never stores the plot context or the scenario', () => {
+    mergeStoredToolConfig('u1', 'plot-solar', {
+      context: { feature: 'pv' },
+      scenario: '/some/scenario',
+      'plot-title': 'PV',
+    });
+    expect(readStoredToolConfig('u1', 'plot-solar')).toEqual({
+      'plot-title': 'PV',
+    });
+  });
+
+  it('does not read the flat map written by an earlier version', () => {
+    localStorage.setItem(
+      'cea-tool-config-u1',
+      JSON.stringify({ context: { feature: 'pv' }, 'what-if-name': ['a'] }),
+    );
+    expect(readStoredToolConfig('u1', 'plot-final-energy')).toEqual({});
   });
 });

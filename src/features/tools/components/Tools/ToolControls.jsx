@@ -18,6 +18,7 @@ export const ToolControls = ({
   dataUpdatedAt,
   onToolSelected,
   onRunOverride,
+  getSubmitOverrides,
   changes,
   headerCollapsed,
   setHeaderCollapsed,
@@ -113,6 +114,7 @@ export const ToolControls = ({
             setError={setToolError}
             onValidationError={onValidationError}
             onRunOverride={onRunOverride}
+            getSubmitOverrides={getSubmitOverrides}
             scenarioContext={scenarioContext}
           />
         </div>
