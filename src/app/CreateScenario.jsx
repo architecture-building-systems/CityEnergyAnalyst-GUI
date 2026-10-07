@@ -1,4 +1,5 @@
-import { Alert, Col, Row } from 'antd';
+import { Col, Row } from 'antd';
+import ErrorBoundary from 'utils/ReportingErrorBoundary';
 import {
   lazy,
   Suspense,
@@ -106,7 +107,7 @@ const CreateScenario = () => {
   );
 
   return (
-    <Alert.ErrorBoundary>
+    <ErrorBoundary>
       <Row style={{ height: '100%' }}>
         <Col span={12}>
           <div
@@ -130,7 +131,7 @@ const CreateScenario = () => {
           </MapFormContext.Provider>
         </Col>
       </Row>
-    </Alert.ErrorBoundary>
+    </ErrorBoundary>
   );
 };
 

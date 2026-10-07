@@ -42,9 +42,13 @@ import { Button, Tooltip } from 'antd';
 import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
-import { PLOT_GROUPS } from 'features/plots/constants';
 import { useCanvasStore } from '../stores/canvasStore';
-import { useFetchKpiSparkline, useFetchKpiValue } from '../hooks/useFetchKpis';
+import {
+  useFetchKpiRegistry,
+  useFetchKpiSparkline,
+  useFetchKpiValue,
+} from '../hooks/useFetchKpis';
+import { findFamilyForFeature } from '../utils/featureFamily';
 import { formatKpiNumber } from '../utils/formatKpiValue';
 import DeltaChip from './DeltaChip';
 import KpiSparkline from './KpiSparkline';
@@ -81,15 +85,8 @@ const titleCase = (s) =>
 // (`KpiPicker` groups by `category` against `PLOT_GROUPS`), so a card
 // reads "Energy by Carrier" rather than its id prefix "Final Energy".
 // "LCA Part 1: Energy by Carrier" drops its numbering prefix to fit.
-const categoryLabel = (category) => {
-  if (!category) return null;
-  for (const group of PLOT_GROUPS) {
-    if (group.keys?.includes(category)) return group.label;
-    const sub = group.subgroups?.find((s) => s.keys.includes(category));
-    if (sub) return sub.label.split(': ').pop();
-  }
-  return null;
-};
+const categoryLabel = (category) =>
+  findFamilyForFeature(category)?.label.split(': ').pop() ?? null;
 
 const FeatureCardKpi = ({
   card,
@@ -208,6 +205,26 @@ const FeatureCardKpi = ({
     return m ? parseInt(m[1], 10) : null;
   }, [scenario]);
 
+  // The sparkline reads the bulk endpoint, which reports the base
+  // unit; `unit_scale` converts it to the unit this card shows.
+  const unitScale = kpi?.unit_scale;
+  const scaledSparklinePoints = useMemo(
+    () => scalePoints(sparklinePoints, unitScale),
+    [sparklinePoints, unitScale],
+  );
+
+  // Row 1 names the KPI's category. The registry (cached, shared
+  // with `KpiPicker`) knows it before this card's value arrives, so
+  // the label doesn't change once the fetch lands.
+  const { data: registry } = useFetchKpiRegistry();
+  const category = useMemo(
+    () =>
+      registry?.kpis?.find((k) => k.id === kpiId)?.category ??
+      kpi?.category ??
+      null,
+    [registry, kpiId, kpi?.category],
+  );
+
   const showCardActions = enableEdit && !readOnly;
 
   // No id → render an empty card. Should not happen in practice
@@ -287,15 +304,14 @@ const FeatureCardKpi = ({
       <KpiBody
         kpi={kpi}
         feature={feature}
+        category={category}
         kpiId={kpiId}
         isLoading={isLoading}
         isError={isError}
         error={error}
         baseline={baseline}
         showDeltas={showDeltas && !readOnly}
-        sparklinePoints={
-          wantSparkline ? scalePoints(sparklinePoints, kpi?.unit_scale) : null
-        }
+        sparklinePoints={wantSparkline ? scaledSparklinePoints : null}
         cardYear={cardYear}
       />
 
@@ -391,6 +407,7 @@ const CardActions = ({ onReplace, onDelete }) => (
 const KpiBody = ({
   kpi,
   feature,
+  category,
   kpiId,
   isLoading,
   isError,
@@ -401,7 +418,7 @@ const KpiBody = ({
   cardYear,
 }) => {
   const available = !!kpi && kpi.available !== false;
-  const featureLabel = categoryLabel(kpi?.category) ?? titleCase(feature);
+  const featureLabel = categoryLabel(category) ?? titleCase(feature);
   const annotations = available ? (kpi.annotations ?? []) : [];
   const label = kpi?.label ?? fallbackLabel(kpiId);
   const infoNote = kpi?.info_note;
@@ -464,11 +481,10 @@ const KpiBody = ({
           placement="bottom"
         >
           <div style={annotationsStyle}>
-            {annotations.map((a) => (
-              <div key={a.label} style={annotationRowStyle}>
-                {a.label}: {a.value}
-              </div>
-            ))}
+            <span style={annotationTextStyle}>
+              {annotations[0].label}: {annotations[0].value}
+            </span>
+            {annotations.length > 1 && <span>+{annotations.length - 1}</span>}
           </div>
         </Tooltip>
       )}
@@ -499,8 +515,6 @@ const KpiBody = ({
 // completely blank during loading.
 const fallbackLabel = (kpiId) => splitKpiId(kpiId)[1] ?? '';
 
-// The sparkline reads the bulk endpoint, which reports the base unit;
-// `unit_scale` converts it to the unit this card was configured to show.
 const scalePoints = (points, unitScale) =>
   points && unitScale && unitScale !== 1
     ? points.map((p) =>
@@ -635,9 +649,13 @@ const unitStyle = {
   textOverflow: 'ellipsis',
 };
 
-// Notes on what the value was measured for (e.g. PV panel type). One
-// line per row, clipped; the tooltip carries the full text.
+// Notes on what the value was measured for (e.g. PV panel type).
+// Held to one clipped line -- the first note, plus a "+N" count of
+// the rest -- so the add-ons below keep their place at the default
+// card size; the tooltip carries every note in full.
 const annotationsStyle = {
+  display: 'flex',
+  gap: 4,
   marginTop: 4,
   fontSize: 11,
   color: '#888',
@@ -645,7 +663,8 @@ const annotationsStyle = {
   minWidth: 0,
 };
 
-const annotationRowStyle = {
+const annotationTextStyle = {
+  minWidth: 0,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',

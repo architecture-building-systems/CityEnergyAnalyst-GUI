@@ -953,12 +953,15 @@ export const UploadDialogInput = ({
   value,
   ...rest
 }) => {
+  // Anything other than a File or a path string (e.g. a stale serialised File object) counts
+  // as "no file chosen" rather than being rendered as a React child.
   const _value = value instanceof File ? value.name : value;
+  const hasFile = value instanceof File || (typeof value === 'string' && value);
   const extensions = convertFiltersToExtensions(filters);
 
   if (isElectron()) return <div>Upload not supported</div>;
 
-  if (!value)
+  if (!hasFile)
     return (
       <UploadInput
         form={form}
@@ -1016,7 +1019,10 @@ export const CsvColumnSelect = ({
   onChange,
   nullable,
 }) => {
-  const sourceValue = Form.useWatch(sourceParameter ?? '__no_source_parameter__', form);
+  const sourceValue = Form.useWatch(
+    sourceParameter ?? '__no_source_parameter__',
+    form,
+  );
   const [columns, setColumns] = useState([]);
 
   useEffect(() => {

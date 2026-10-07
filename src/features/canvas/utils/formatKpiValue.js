@@ -6,6 +6,8 @@
  *     60_000 → "60k", 1_200_000 → "1.2M", 7e9 → "7G".
  * - Below 1k: 1–2 decimals depending on magnitude
  *     (12.34 → "12.3", 0.45 → "0.45").
+ * - Below 0.01: two significant figures (0.0015 → "0.0015") so a
+ *   small value in a large display unit doesn't round to "0.00".
  * - Pure-percentage units (`%`) keep one decimal: 30.303 → "30.3 %".
  * - `years` keeps integer: 2030.0 → "2030 years".
  * - Null / undefined / NaN renders as the em-dash placeholder
@@ -31,6 +33,15 @@ const isMissing = (value) =>
   (typeof value === 'number' && Number.isNaN(value));
 
 const stripPrefixSign = (n) => (n < 0 ? -n : n);
+
+const formatBelowThousand = (num, magnitude) => {
+  // Too small for two decimals: keep two significant figures.
+  if (magnitude > 0 && magnitude < 0.01) {
+    return String(Number(num.toPrecision(2)));
+  }
+  // 1 decimal once we're past 10, 2 below.
+  return magnitude >= 10 ? num.toFixed(1) : num.toFixed(2);
+};
 
 const formatNumber = (value, unit) => {
   if (isMissing(value)) return PLACEHOLDER;
@@ -62,8 +73,7 @@ const formatNumber = (value, unit) => {
       return `${trimmed}${suffix}`;
     }
   }
-  // Sub-1k: 1 decimal once we're past 10, 2 below.
-  return magnitude >= 10 ? num.toFixed(1) : num.toFixed(2);
+  return formatBelowThousand(num, magnitude);
 };
 
 /**
