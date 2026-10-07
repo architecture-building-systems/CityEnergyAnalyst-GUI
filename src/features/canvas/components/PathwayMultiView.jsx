@@ -13,7 +13,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { usePathwayOverview } from 'features/pathway/hooks/usePathwayOverview';
 
 import { useCanvasStore } from '../stores/canvasStore';
-import useYAxisAlignment from '../hooks/useYAxisAlignment';
+import usePlotAlignment from '../hooks/usePlotAlignment';
 import CanvasScenarioHeader from './CanvasScenarioHeader';
 import CanvasMap from './CanvasMap';
 import CanvasPlot from './CanvasPlot';
@@ -311,7 +311,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
     (s) => s.replacePathwayMultiPlotConfigs,
   );
   // Counter bumped on every override save. Passed to
-  // `useYAxisAlignment` as its `generation` so the alignment hook
+  // `usePlotAlignment` as its `generation` so the alignment hook
   // forgets the previous render's plot divs — otherwise stale divs
   // (from e.g. an absolute-value run) would mix with the new
   // percentage charts and Plotly would re-apply the old `[0, ~70M]`
@@ -338,7 +338,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   // drop previously tracked divs so a fresh round of `onPlotReady`
   // calls populates a clean set with the new plot type's ranges.
   const pathwayCount = setup?.pathwayNames?.length ?? 0;
-  const { handlePlotReady: handleAlignPlot } = useYAxisAlignment(
+  const { handlePlotReady: handleAlignPlot } = usePlotAlignment(
     pathwayCount > 1 && mirrorsLocked,
     pathwayCount,
     plotConfigGeneration,
