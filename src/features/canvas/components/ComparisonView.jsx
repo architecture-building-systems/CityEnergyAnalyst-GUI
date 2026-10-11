@@ -5,7 +5,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useHasSimulatedPathway } from 'features/pathway/hooks/usePathwayOverview';
 
 import { useCanvasStore } from '../stores/canvasStore';
-import useYAxisAlignment from '../hooks/useYAxisAlignment';
+import usePlotAlignment from '../hooks/usePlotAlignment';
 import CanvasColumn from './CanvasColumn';
 import CanvasScenarioHeader from './CanvasScenarioHeader';
 import CompareModal from './CompareModal';
@@ -48,7 +48,7 @@ const ComparisonView = ({
   // (add card, delete card, drag/resize) fan out internally —
   // the column index they're called with is just the originating
   // column.
-  const { handlePlotReady } = useYAxisAlignment(
+  const { handlePlotReady } = usePlotAlignment(
     columns.length > 1,
     columns.length,
   );

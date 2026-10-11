@@ -3,8 +3,8 @@
 Side-by-side comparison dashboard. Four comparison modes
 (inter-scenario, inter-whatif, pathway-single, pathway-multi), a
 Zustand store for view + card state, a `react-grid-layout` canvas for
-free-form tile placement, and Plotly-based charts with optional y-axis
-alignment across columns sharing a slot id.
+free-form tile placement, and Plotly-based charts aligned across columns
+sharing a slot id (shared y-axis range, or a shared Sankey scale).
 
 ## Main API
 
@@ -20,8 +20,9 @@ alignment across columns sharing a slot id.
   columns supply `pathwayName` + `year`; the backend resolves the child
   state via `X-CEA-Child-Scenario` header rather than a body `scenario` field.
 - `useFetchToolParams(script, scenario)` - Plot-tool parameter schema.
-- `useYAxisAlignment(enabled, numColumns)` - Post-render Plotly hook
-  that unifies y-axis range across columns sharing a slot id.
+- `usePlotAlignment(enabled, numColumns)` - Post-render Plotly hook
+  that makes figures sharing a slot id comparable: one y-axis range for
+  cartesian charts, one vertical scale for Sankeys.
 - `CanvasPage` - Top-level page; routes between `LaunchView` and
   `ComparisonView` based on `useCanvasStore.view`.
 
@@ -589,10 +590,10 @@ that only the backend can compute). `useFetchCustomPlot` already strips any
 `parameters.scenario` before `POST /reports/plot-custom` for the same
 reason — see its `queryFn`.
 
-### DO: Align y-axes only when columns share a slot id
+### DO: Align plots only when columns share a slot id
 
 ```jsx
-const { handlePlotReady } = useYAxisAlignment(
+const { handlePlotReady } = usePlotAlignment(
   columns.length > 1,
   columns.length,
 );
@@ -651,13 +652,40 @@ useQuery({
 });
 ```
 
-### DO: Treat y-axis alignment as a side effect, not a data transform
+### DO: Treat plot alignment as a side effect, not a data transform
 
 Walk the DOM for `.js-plotly-plot` nodes after render, read their
 rendered y-range, compute a shared range, write it back via
 `Plotly.relayout`. Pre-computing aligned ranges in the data layer
 won't work — the layout only converges after Plotly has sized the
 axes.
+
+### DO: Compare Sankeys by scale, not by card height
+
+A Sankey's height must encode its total, so Sankeys are never stretched to
+an equal share of their card. The backend records each figure's scale
+inputs in `layout.meta.sankey_scale` (`columns: [[total, nodeCount]]`,
+`pad`, `unit`); `utils/sankeyScale.js` mirrors the backend's
+`sankey_scale.py` model (keep them in step) and `utils/sankeyStack.js`
+applies it to the DOM:
+
+- The Sankeys of one card (one per what-if) form a stack that fills the
+  card at one scale — `CanvasPlot`'s `fitChartArea` scales it on settle
+  and on every resize. A single Sankey therefore just fits its card.
+- In compare mode `usePlotAlignment` scales every column's stack together
+  (per unit) and marks their chart areas `data-sankey-aligned`; a marked
+  card dispatches `PLOT_RESIZE_EVENT` on resize instead of rescaling
+  itself, and the aligner recomputes the shared scale. The mark is
+  recomputed on every run (per slot): a card left without a partner (the
+  other column shows an error or another unit) is unmarked and scales
+  itself again — a stale mark freezes the card at its old height.
+- Sizing a figure clears its inline `width`/`height` before
+  `Plotly.update` + `Plots.resize` (as `fitPlotToParent` does); otherwise
+  the backend's fixed height keeps the figure's box at its old size.
+- There is no minimum figure height on the canvas (the plot tool keeps its
+  250 px one): the card is the space, so Sankeys always fit inside it and
+  the canvas never grows a card for them. Heights round down, so a filled
+  stack cannot overshoot its card by a pixel.
 
 ### DO: Follow the pathway colour palette
 
@@ -688,7 +716,9 @@ source of truth for card config that the comparison views never read.
 - `hooks/useCanvasData.js` - React Query wrappers for `/reports/*`.
   `useFetchCustomPlot` takes `scenarioContext = { scenarioName, pathwayName?, year? }`;
   pathway-single uses `X-CEA-Child-Scenario` header, others use `X-CEA-Scenario-Name` only.
-- `hooks/useYAxisAlignment.js` - Debounced Plotly y-axis unifier.
+- `hooks/usePlotAlignment.js` - Cross-column Plotly aligner (y-range or Sankey scale).
+- `utils/sankeyScale.js` - Shared Sankey scale model (mirrors the backend's `sankey_scale.py`).
+- `utils/sankeyStack.js` - Reads a card's Sankeys and sizes them at a shared scale.
 - `components/CanvasPage.jsx` - Top-level grid (nav + canvas + bottom
   - plot tool); owns drawer + map-bottom state.
 - `components/NavigatorCard.jsx` - Top-bar navigator (Return, Start
