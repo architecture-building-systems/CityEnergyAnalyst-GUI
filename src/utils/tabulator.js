@@ -11,6 +11,32 @@ export const setDataPreservingScroll = (table, data) => {
   return table.replaceData ? table.replaceData(data) : table.setData(data);
 };
 
+/**
+ * The numeric bounds a column declares in schemas.yml (`min`, `max`, `exclusive_min`).
+ *
+ * One definition for every editor, so the table cells and the bulk-edit form cannot disagree
+ * about what a column accepts. An empty value has no bound to break: whether it is allowed at
+ * all is the column's `nullable`, decided by the caller.
+ *
+ * @returns {string|null} what is wrong with `value`, or null when it is within bounds.
+ */
+export const getBoundError = (columnSchema, value) => {
+  if (value === '' || value == null) return null;
+  const number = Number(value);
+  if (Number.isNaN(number)) return null;
+
+  if (columnSchema?.min != undefined && number < columnSchema.min)
+    return `Min value: ${columnSchema.min}`;
+  if (columnSchema?.max != undefined && number > columnSchema.max)
+    return `Max value: ${columnSchema.max}`;
+  if (
+    columnSchema?.exclusive_min != undefined &&
+    number <= columnSchema.exclusive_min
+  )
+    return `Must be greater than ${columnSchema.exclusive_min}`;
+  return null;
+};
+
 export const getColumnPropsFromDataType = (
   columnSchema,
   column = undefined,
@@ -36,19 +62,9 @@ export const getColumnPropsFromDataType = (
   // exists at table level for cross-column rules, so no bound was ever enforced here -- which
   // is how a U-value of 0 or a service life of 0 reached the file. An empty cell is left to
   // `required`, so a nullable column can still be cleared.
-  const withinBound = (predicate) => ({
-    type: (cell, value) =>
-      value === '' || value == null || predicate(Number(value)),
-  });
-  const boundValidators = [];
-  if (columnSchema?.min != undefined)
-    boundValidators.push(withinBound((value) => value >= columnSchema.min));
-  if (columnSchema?.max != undefined)
-    boundValidators.push(withinBound((value) => value <= columnSchema.max));
-  if (columnSchema?.exclusive_min != undefined)
-    boundValidators.push(
-      withinBound((value) => value > columnSchema.exclusive_min),
-    );
+  const boundValidators = [
+    { type: (cell, value) => getBoundError(columnSchema, value) === null },
+  ];
 
   switch (columnSchema.type) {
     case 'int':

@@ -20,7 +20,7 @@ import {
 } from 'features/input-editor/stores/inputEditorStore';
 import ErrorBoundary from 'utils/ReportingErrorBoundary';
 import { TableButtons } from 'features/input-editor/components/table-selection-buttons';
-import { getColumnPropsFromDataType } from 'utils/tabulator';
+import { getBoundError, getColumnPropsFromDataType } from 'utils/tabulator';
 import { ZONE_DRIFT_COMPUTED } from 'features/input-editor/hooks/useArchetypeDrift';
 
 /** A stable string key for a `useArchetypeDrift` result slice (`{ [building]: true | Map }`),
@@ -235,10 +235,17 @@ const TableEditor = ({
       // Fires after data, filter and redraw renders alike -- one hook covers every path that
       // changes how many rows are on screen.
       renderComplete: () => reportFitHeight(),
-      validationFailed: (cell) => {
+      validationFailed: (cell, value) => {
         const field = cell.getField();
-        const { type, constraints } = columnDescriptionRef.current[field];
-        const content = (
+        const columnSchema = columnDescriptionRef.current[field];
+        const { type, constraints } = columnSchema;
+        // A value of the right type can still be out of bounds; say so rather than blaming the type.
+        const boundError = getBoundError(columnSchema, value);
+        const content = boundError ? (
+          <span>
+            <b>{field}</b>: {boundError}
+          </span>
+        ) : (
           <span>
             <b>{field}</b> must be of type <i>{type}</i>.
             {constraints ? (

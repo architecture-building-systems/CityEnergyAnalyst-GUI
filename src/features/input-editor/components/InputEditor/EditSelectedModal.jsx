@@ -2,6 +2,7 @@ import { Modal, Input, Select, Form } from 'antd';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import { INDEX_COLUMN } from 'features/input-editor/constants';
 import { useUpdateInputs } from 'features/input-editor/hooks/updates/useUpdateInputs';
+import { getBoundError } from 'utils/tabulator';
 
 const EditSelectedModal = ({
   visible,
@@ -174,14 +175,11 @@ const createFormItemConfig = (title, columnInfo) => {
       {
         validator: async (_, value) => {
           if (typeof value != 'undefined') {
-            // Check constraints
-            const constraints = columnInfo?.constraints;
-            if (columnInfo?.constraints) {
-              if (constraints?.max) {
-                if (type != 'string' && value > constraints.max) {
-                  throw new Error(`Max value: ${constraints.max}`);
-                }
-              }
+            // Check the bounds declared in the schema (min, max, exclusive_min), the same
+            // check the table cells use. A blank field means "unchanged" and has none.
+            if (type != 'string') {
+              const boundError = getBoundError(columnInfo, value);
+              if (boundError) throw new Error(boundError);
             }
 
             // Check regex
