@@ -81,7 +81,12 @@ const DrawModeInterface = ({
         {fetching ? (
           <b>Fetching buildings...</b>
         ) : error ? (
-          <b>Error fetching buildings</b>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <b>Error fetching buildings</b>
+            <small>
+              {error?.response?.data?.detail ?? 'Something went wrong.'}
+            </small>
+          </div>
         ) : buildings?.features?.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div>
