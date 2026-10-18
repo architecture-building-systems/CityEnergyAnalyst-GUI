@@ -1225,15 +1225,17 @@ const mapFillStyle = (mapPosH) => ({
 });
 
 // Strip the floating-card chrome so the legend reads as part of the
-// tile rather than a popover. Horizontal padding (16px) matches
-// `FeatureCardShell.cardStyle` so the legend's swatches + labels
-// align with content in neighbouring FeatureCards.
+// tile rather than a popover. The 16px left indent matches
+// `FeatureCardShell.cardStyle`, so swatches line up with content in
+// neighbouring cards; the list ends flush with the map's right edge
+// (border-box keeps the indent inside the map's width).
 const overviewLegendStyle = {
   width: '100%',
+  boxSizing: 'border-box',
   marginTop: 8,
   boxShadow: 'none',
   backgroundColor: 'transparent',
-  padding: '0 16px 2px',
+  padding: '0 0 2px 16px',
   maxHeight: 'none',
 };
 
