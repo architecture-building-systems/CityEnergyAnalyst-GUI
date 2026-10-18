@@ -11,6 +11,8 @@ export const UUEN_BLUE = '#1471B0';
 export const ERROR_RED = '#f04d5b';
 export const CEA_GREEN = '#7ec78f';
 export const CEA_GREY = '#7f8086';
+// `grey_light` from the same file -- rgb(162,161,166). Used for unavailable controls.
+export const CEA_GREY_LIGHT = '#a2a1a6';
 // `orange` from the same file (rgb(245,131,69)). Used where a signal is a heuristic/indication
 // rather than a verified fact -- e.g. Archetype Lock's computed-tab drift check, which can only
 // say "the key moved or the content hash changed", not confirm the ratio math actually disagrees
