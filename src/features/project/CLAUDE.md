@@ -52,6 +52,15 @@ setInputEditor(false);
 setShowPathwayPanel(true);
 ```
 
+### DO: Leave an inspected pathway state only when the project or scenario changes
+
+`childScenario` (`{ pathway_name, year }`) is cleared by the project store's setters
+(`leaveStateOnMove`) and by `hooks/useLeaveState` -- the one way out (exit button,
+deselecting the pathway, clearing the inspected state's inputs), which also resets the
+map's state geometry. Never by a mount effect: other routes (Database Editor, Canvas)
+unmount the overlay, and coming back must keep the state.
+Requests address a state by parent scenario name plus `childScenario`, never by its folder path.
+
 ### DON'T: Replace the map for pathway editing
 
 ```jsx

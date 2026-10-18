@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTransition, animated } from '@react-spring/web';
 import OverviewCard from 'features/project/components/Cards/OverviewCard/OverviewCard';
 import Toolbar from 'features/project/components/Cards/Toolbar/Toolbar';
@@ -38,6 +37,7 @@ import {
 import { useSetSelectedMapLayer } from 'features/map/stores/mapStore';
 import ConstructionStandardLegend from 'features/map/components/Map/Layers/ConstructionStandardLegend';
 import { usePanelVisibility } from 'features/project/hooks/usePanelVisibility';
+import { useLeaveState } from 'features/project/hooks/useLeaveState';
 import { usePathwayPanelResize } from 'features/pathway/hooks/usePathwayPanelResize';
 import { usePanelResize } from 'hooks/usePanelResize';
 import { PanelResizeHandle } from 'components/PanelResizeHandle';
@@ -76,12 +76,11 @@ const fitInputTableHeight = ({ fit, cardHeight, maxHeight, maxRows }) => {
 };
 
 const ProjectOverlay = ({ project, scenarioName }) => {
-  const queryClient = useQueryClient();
   const demoMode = useDemoMode();
   const name = useProjectStore((state) => state.name);
   const scenarioList = useProjectStore((state) => state.scenariosList);
   const childScenario = useProjectStore((s) => s.childScenario);
-  const clearChildScenario = useProjectStore((s) => s.clearChildScenario);
+  const leaveState = useLeaveState();
 
   const toolType = useToolType();
   const setToolType = useSetToolType();
@@ -233,11 +232,6 @@ const ProjectOverlay = ({ project, scenarioName }) => {
     }
   }, [jobs, setToolType]);
 
-  // On mount / scenario change: clear any active child-scenario state
-  useEffect(() => {
-    clearChildScenario();
-  }, [scenarioName, clearChildScenario]);
-
   const tension = 150;
   const friction = 20;
   const transitionToolsFromRight = useTransition(showToolCard, {
@@ -369,10 +363,7 @@ const ProjectOverlay = ({ project, scenarioName }) => {
           />
           <button
             type="button"
-            onClick={() => {
-              clearChildScenario();
-              queryClient.invalidateQueries();
-            }}
+            onClick={leaveState}
             style={{
               position: 'fixed',
               top: 80,

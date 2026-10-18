@@ -24,6 +24,7 @@ import {
 } from 'assets/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
+import { useLeaveState } from 'features/project/hooks/useLeaveState';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   toolTypes,
@@ -95,6 +96,8 @@ const PathwayPanel = ({
   const setToolType = useSetToolType();
   const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
   const simulationProgress = useProjectStore((s) => s.simulationProgress);
+  const childScenario = useProjectStore((s) => s.childScenario);
+  const leaveState = useLeaveState();
   const clearSimulationProgress = useProjectStore(
     (s) => s.clearSimulationProgress,
   );
@@ -1059,6 +1062,14 @@ const PathwayPanel = ({
                 );
               }
               cleared.push(year);
+              // Clearing inputs deletes the state's folder: stop inspecting it.
+              if (
+                selection.inputs &&
+                childScenario?.pathway_name === selectedPathway &&
+                childScenario?.year === year
+              ) {
+                leaveState();
+              }
             }
           },
           refresh,
