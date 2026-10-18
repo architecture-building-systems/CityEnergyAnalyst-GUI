@@ -435,9 +435,13 @@ Each `pathway-state` column passes `scenarioContext` (not a raw `scenario`
 string) to `FeatureCardPlot` → `PlotSlotCard` → `CanvasPlot` →
 `useFetchCustomPlot`. The hook sends `X-CEA-Scenario-Name` (parent) +
 `X-CEA-Child-Scenario` (`pathwayName/year` token) in headers; the backend
-resolves the child state via InputLocator. KPI / Map cards still use the
-`columnDef.scenario` subpath directly. Only the column header label swaps
-from the scenario name to `Y_<year>`.
+resolves the child state via InputLocator. KPI cards, the KPI picker, map cards,
+the bottom card and column maps keep `columnDef.scenario` as the column's identity
+(origin comparison, card year, cache keys) and translate it only when requesting:
+`useScenarioRequestContext(scenario)` returns `{ scenario, childScenario }` -- parent
+plus state for a pathway-state column -- and map-layer overrides
+(`MapLayerScenarioOverrideContext`) carry that `childScenario` through
+`useScopedProjectScenario`. The backend accepts only bare scenario names. Only the column header label swaps from the scenario name to `Y_<year>`.
 
 ### DO: Render pathway chrome through `ComparisonView`, not new pages
 

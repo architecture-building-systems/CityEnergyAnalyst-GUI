@@ -10,7 +10,7 @@
  *   ``locatorArgs`` so two cards with different overrides cache
  *   separately.
  *
- * - `useFetchKpiParameters({ project, scenario, kpiId })` returns
+ * - `useFetchKpiParameters({ project, scenario, childScenario?, kpiId })` returns
  *   the choice lists for a KPI's user-configurable parameters
  *   (drives the canvas picker's step-2 form).
  *
@@ -109,6 +109,7 @@ export const useFetchKpiValue = ({
 export const useFetchKpiParameters = ({
   project,
   scenario,
+  childScenario = null,
   kpiId,
   args = null,
 }) => {
@@ -119,6 +120,7 @@ export const useFetchKpiParameters = ({
       'parameters',
       project,
       scenario,
+      childScenarioToken(childScenario),
       kpiId,
       argsKey,
     ],
@@ -126,7 +128,11 @@ export const useFetchKpiParameters = ({
       const { data } = await getScenarioClient().get(
         `/kpis/${kpiId}/parameters`,
         {
-          headers: scenarioHeaders({ project, scenarioName: scenario }),
+          headers: scenarioHeaders({
+            project,
+            scenarioName: scenario,
+            childScenario,
+          }),
           params: {
             args: argsKey || undefined,
           },

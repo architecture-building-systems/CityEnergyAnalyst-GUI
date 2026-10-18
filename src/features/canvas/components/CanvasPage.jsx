@@ -5,6 +5,7 @@ import { useCanvasStore } from '../stores/canvasStore';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import { useResumeLastCanvas } from '../hooks/useResumeLastCanvas';
 import { useFocusFeature } from '../hooks/useFocusFeature';
+import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
@@ -229,15 +230,41 @@ const CanvasPage = () => {
   // and closing the drawer already collapses the bottom row.
   const showBottomClose = mapBottomOpen && !plotToolOpen;
 
-  // `(project, scenarioName)` for the column whose card opened the
-  // bottom form. Forwarded into BottomCard so its choice/range
-  // fetches scope to that column instead of the project store.
-  const mapBottomScenarioOverride = useMemo(() => {
-    if (activeMapColumnIndex == null) return null;
-    const col = columns?.[activeMapColumnIndex];
-    if (!project || !col?.scenario) return null;
-    return { project, scenarioName: col.scenario };
-  }, [activeMapColumnIndex, columns, project]);
+  // `(project, scenarioName, childScenario)` for the column whose card
+  // opened the bottom form -- parent plus state for a pathway-state
+  // column (see `useScenarioRequestContext`). Forwarded into BottomCard
+  // so its choice/range fetches scope to that column instead of the
+  // project store.
+  const mapBottomRequest = useScenarioRequestContext(
+    activeMapColumnIndex == null
+      ? null
+      : (columns?.[activeMapColumnIndex]?.scenario ?? null),
+  );
+  const mapBottomScenarioOverride = useMemo(
+    () =>
+      project && mapBottomRequest.scenario
+        ? {
+            project,
+            scenarioName: mapBottomRequest.scenario,
+            childScenario: mapBottomRequest.childScenario,
+          }
+        : null,
+    [project, mapBottomRequest],
+  );
+
+  // Picker step-2 hits ``/kpis/<id>/parameters`` — option generators scan
+  // the active scenario's output folders, so forward whichever scenario the
+  // anchor's column reads from: compare-mode anchors take the column's
+  // scenario (a pathway-state column's as parent plus state), launch-mode
+  // anchors the project store's.
+  const anchorColumn =
+    kpiPickerAnchor?.columnIndex != null &&
+    kpiPickerAnchor.columnIndex !== 'launch'
+      ? columns?.[kpiPickerAnchor.columnIndex]
+      : null;
+  const kpiPickerScenario = useScenarioRequestContext(
+    anchorColumn?.scenario || projectScenario,
+  );
 
   return (
     <div
@@ -342,19 +369,7 @@ const CanvasPage = () => {
         onCancel={closeKpiPicker}
         onConfirm={handleKpiPickerConfirm}
         project={project}
-        // Picker step-2 hits ``/kpis/<id>/parameters`` — option
-        // generators scan the active scenario's output folders, so
-        // we forward whichever scenario the anchor's column reads
-        // from. Compare-mode anchors (columnIndex >= 0) take the
-        // column's scenario; launch-mode anchors fall back to the
-        // project store's scenario.
-        scenario={
-          kpiPickerAnchor?.columnIndex != null &&
-          kpiPickerAnchor.columnIndex !== 'launch' &&
-          columns?.[kpiPickerAnchor.columnIndex]?.scenario
-            ? columns[kpiPickerAnchor.columnIndex].scenario
-            : projectScenario
-        }
+        {...kpiPickerScenario}
         initialFeature={kpiPickerAnchor?.initialFeature ?? null}
         initialKpiId={kpiPickerAnchor?.initialKpiId ?? null}
       />

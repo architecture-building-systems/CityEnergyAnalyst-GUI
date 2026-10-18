@@ -134,6 +134,29 @@ export const childStateScenarioPath = (parentScenario, pathwayName, year) => {
   ].join(sep);
 };
 
+/**
+ * What to send for a column's `scenario` in a request. A `pathway-state` column's `scenario`
+ * is a client-built state path (`childStateScenarioPath`) -- the column's identity on the
+ * canvas, not a valid `X-CEA-Scenario-Name` -- so it is addressed as the parent scenario
+ * plus the state. Any other value (a bare scenario name, or null) goes as it is.
+ *
+ * @returns {{ scenario: string|null, childScenario: {pathway_name: string, year: number}|null }}
+ *   Shaped as the KPI hooks' `scenario` / `childScenario` props.
+ */
+export const scenarioRequestContext = (columns, parentScenario, scenario) => {
+  const column = scenario
+    ? columns?.find(
+        (c) => c.type === 'pathway-state' && c.scenario === scenario,
+      )
+    : null;
+  return column
+    ? {
+        scenario: parentScenario,
+        childScenario: { pathway_name: column.pathwayName, year: column.year },
+      }
+    : { scenario: scenario ?? null, childScenario: null };
+};
+
 const makeCard = ({
   row,
   col,

@@ -58,6 +58,7 @@ const KpiPicker = ({
   onConfirm,
   project,
   scenario,
+  childScenario = null,
   initialFeature = null,
   initialKpiId = null,
 }) => {
@@ -130,6 +131,7 @@ const KpiPicker = ({
   } = useFetchKpiParameters({
     project,
     scenario,
+    childScenario,
     kpiId: step === 2 ? selectedId : null,
     args: argsDraft,
   });

@@ -19,6 +19,7 @@ import {
 } from 'constants/theme';
 
 import { useCanvasStore } from '../stores/canvasStore';
+import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
 import CanvasMap from './CanvasMap';
 import { FeatureCardShell } from './FeatureCardShell';
 import {
@@ -186,10 +187,19 @@ const FeatureCardMap = ({
   const Icon = iconMap[category];
 
   // Compare-mode mirrors share `card.id`; this override scopes
-  // descendant choice/range fetchers to *this column's* scenario.
+  // descendant choice/range fetchers to *this column's* scenario
+  // (parent plus state for a pathway-state column).
+  const request = useScenarioRequestContext(scenario);
   const scenarioOverride = useMemo(
-    () => (project && scenario ? { project, scenarioName: scenario } : null),
-    [project, scenario],
+    () =>
+      project && request.scenario
+        ? {
+            project,
+            scenarioName: request.scenario,
+            childScenario: request.childScenario,
+          }
+        : null,
+    [project, request],
   );
 
   return (
@@ -244,6 +254,7 @@ const FeatureCardMapBody = ({
   isMirror = false,
   originWhatifName = null,
 }) => {
+  const request = useScenarioRequestContext(scenario);
   // Resolve a complete, scenario-valid parameter set before the
   // first layer fetch. Static defaults (`default != null`) come
   // straight from the schema; dynamic params (`selector === 'choice'`
@@ -264,7 +275,7 @@ const FeatureCardMapBody = ({
   // re-resolves whatif_name against the new value.
   const initKey = `${project}::${scenario}::${categoryInfo?.name}::${layerInfo?.name}::${originWhatifName ?? ''}`;
   useEffect(() => {
-    if (!project || !scenario) return;
+    if (!project || !request.scenario) return;
     if (!categoryInfo?.name || !layerInfo?.parameters) return;
     if (initialisedKeyRef.current === initKey) return;
 
@@ -297,7 +308,13 @@ const FeatureCardMapBody = ({
           const resp = await getScenarioClient().post(
             `/map_layers/${categoryInfo.name}/${layerInfo.name}/${key}/choices`,
             { parameters: out },
-            { headers: scenarioHeaders({ project, scenarioName: scenario }) },
+            {
+              headers: scenarioHeaders({
+                project,
+                scenarioName: request.scenario,
+                childScenario: request.childScenario,
+              }),
+            },
           );
           const data = resp.data;
           const choices = Array.isArray(data) ? data : data?.choices;
@@ -345,7 +362,7 @@ const FeatureCardMapBody = ({
   }, [
     initKey,
     project,
-    scenario,
+    request,
     categoryInfo,
     layerInfo,
     isMirror,
@@ -357,8 +374,9 @@ const FeatureCardMapBody = ({
   const { error: layerError } = useGetMapLayers(
     categoryInfo,
     project,
-    scenario,
+    request.scenario,
     mapLayerParameters,
+    request.childScenario,
   );
 
   // Surface the active what-if name (if the layer has one) so

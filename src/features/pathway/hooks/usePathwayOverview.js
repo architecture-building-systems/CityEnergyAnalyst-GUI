@@ -9,7 +9,8 @@
  *     usable phase, ready to explore).
  *   - `PathwayCompareSelect` in the Canvas Builder (gates on
  *     ``all_simulated`` — pathways whose every state has run
- *     simulations, so per-column data is available).
+ *     simulations, custom states included when they have outputs,
+ *     so per-column data is available).
  *
  * Keyed by the active scenario so a scenario switch refetches; gated
  * by `enabled` so we don't hit the endpoint before a scenario is

@@ -5,7 +5,9 @@
  * Shape:
  *   <FeatureCardKpi
  *     card={{ id, type: 'kpi', kpiId, locatorArgs }}
- *     project, scenario, whatif        // fetch context
+ *     project, scenario, whatif        // scenario: the column's (identity on the
+ *                                      // canvas; useScenarioRequestContext() turns a
+ *                                      // pathway-state path into parent + state)
  *     originScenario={originPath}      // compare-mode origin's scenario
  *     readOnly={false}                 // suppress editing chrome
  *     onDeleteCard={() => removeCard(...)}
@@ -43,6 +45,7 @@ import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 import { useCanvasStore } from '../stores/canvasStore';
+import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
 import {
   useFetchKpiRegistry,
   useFetchKpiSparkline,
@@ -128,6 +131,10 @@ const FeatureCardKpi = ({
   const locatorArgs = card?.locatorArgs ?? null;
   const [feature] = splitKpiId(kpiId);
 
+  // `scenario` / `originScenario` identify columns on the canvas; requests send
+  // a pathway-state column's as parent scenario plus state.
+  const request = useScenarioRequestContext(scenario);
+
   // Per-card single-KPI fetch. The query key includes
   // ``locatorArgs`` so two cards with the same KPI but different
   // overrides (e.g. monocrystalline vs amorphous solar) cache
@@ -139,7 +146,7 @@ const FeatureCardKpi = ({
     error,
   } = useFetchKpiValue({
     project,
-    scenario,
+    ...request,
     kpiId,
     locatorArgs,
     whatif,
@@ -157,9 +164,12 @@ const FeatureCardKpi = ({
   // the same configuration as this card.
   const wantBaseline =
     showDeltas && !readOnly && !!originScenario && originScenario !== scenario;
+  const baselineRequest = useScenarioRequestContext(
+    wantBaseline ? originScenario : null,
+  );
   const { data: baselineKpi } = useFetchKpiValue({
     project,
-    scenario: wantBaseline ? originScenario : null,
+    ...baselineRequest,
     kpiId: wantBaseline ? kpiId : null,
     locatorArgs,
     whatif,
