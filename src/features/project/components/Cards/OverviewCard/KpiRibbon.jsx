@@ -1,7 +1,7 @@
 /**
  * `KpiRibbon` — read-only KPI strip under the OverviewCard.
  *
- *   <KpiRibbon project="..." scenario="..." dataScenario="..." />
+ *   <KpiRibbon project="..." scenario="..." childScenario={...} />
  *
  * Behaviour:
  *  - The displayed KPIs are driven by the active map layer + its
@@ -19,8 +19,9 @@
  *    Total-GFA card so the user always has at least the district
  *    footprint visible.
  *  - Pathway-state aware: when the OverviewCard timeline activates
- *    a state year, `dataScenario` overrides the parent path for
- *    fetches; KPI selection still tracks the active map layer.
+ *    a state year, `childScenario` (`{ pathway_name, year }`) points
+ *    fetches at that state; KPI selection still tracks the active
+ *    map layer.
  *  - Active map-layer parameters that match a KPI's
  *    `locator_args` keys (panel_type, whatif_name, network_type,
  *    network_name, district_energy_system_id) flow through as
@@ -231,7 +232,7 @@ const getRibbonKpis = (layerName, parameters) => {
   }
 };
 
-const KpiRibbon = ({ project, scenario, dataScenario = null, whatif }) => {
+const KpiRibbon = ({ project, scenario, childScenario = null, whatif }) => {
   // Track the active map layer + its parameters from the singleton
   // mapStore. The ribbon re-derives its KPI list whenever the user
   // picks a different layer or tweaks a parameter (data-column,
@@ -244,10 +245,6 @@ const KpiRibbon = ({ project, scenario, dataScenario = null, whatif }) => {
     () => getRibbonKpis(selectedMapLayer, mapLayerParameters),
     [selectedMapLayer, mapLayerParameters],
   );
-
-  // Effective scenario for KPI fetches — child state path when
-  // active, parent name otherwise. Mirrors the previous behaviour.
-  const effectiveScenario = dataScenario ?? scenario;
 
   const cards = useMemo(
     () =>
@@ -289,7 +286,8 @@ const KpiRibbon = ({ project, scenario, dataScenario = null, whatif }) => {
             key={card.id}
             card={card}
             project={project}
-            scenario={effectiveScenario}
+            scenario={scenario}
+            childScenario={childScenario}
             whatif={whatif}
           />
         ))}

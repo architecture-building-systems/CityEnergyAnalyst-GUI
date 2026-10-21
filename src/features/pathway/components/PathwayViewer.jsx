@@ -100,18 +100,9 @@ const PathwayViewer = ({ hidden }) => {
 
     setSwitching(true);
     try {
-      const result = await fetchStateFolderPath(
-        pathwayName,
-        year,
-        project,
-        scenarioName,
-      );
-      setChildScenario({
-        pathway_name: pathwayName,
-        year,
-        parent_scenario: result.parent_scenario,
-        scenario_path: result.scenario_path,
-      });
+      // Confirms the state folder exists (404 otherwise) before entering it.
+      await fetchStateFolderPath(pathwayName, year, project, scenarioName);
+      setChildScenario({ pathway_name: pathwayName, year });
       queryClient.invalidateQueries();
     } catch {
       // silently fail

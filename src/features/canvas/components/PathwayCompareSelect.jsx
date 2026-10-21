@@ -29,8 +29,9 @@ import { useCanvasStore } from '../stores/canvasStore';
  *   - empty selection    → fall back to launch view (`startOver`)
  *
  * Options come from the same `usePathwayOverview` hook as the
- * `OverviewCard` viewer in the main viewport, filtered to fully-baked
- * pathways only.
+ * `OverviewCard` viewer in the main viewport, filtered to `all_simulated`
+ * pathways: every state simulated -- custom (purple) states included when
+ * they have outputs (the user may have run the tools inside the state).
  */
 const PathwayCompareSelect = () => {
   const scenario = useProjectStore((s) => s.scenario);

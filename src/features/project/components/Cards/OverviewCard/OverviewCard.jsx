@@ -13,6 +13,7 @@ import {
   fetchStateFolderPath,
 } from 'features/pathway/api';
 import { usePathwayOverview } from 'features/pathway/hooks/usePathwayOverview';
+import { useLeaveState } from 'features/project/hooks/useLeaveState';
 import { STATUS_FILL } from 'features/pathway/constants';
 import { BinAnimationIcon } from 'assets/icons';
 import useJobsStore from 'features/jobs/stores/jobsStore';
@@ -29,19 +30,11 @@ const OverviewCard = ({
   onToggleHideAll,
 }) => {
   // When the user activates a pathway state via the timeline below,
-  // `childScenario` carries `{ pathway_name, year, parent_scenario }`.
-  // The KPI ribbon then fetches from the child state's folder
-  // (`<parent>/outputs/pathways/<name>/state_<year>`) instead of the
-  // parent — so the values walk the timeline as the user clicks
-  // year nodes. Pinned-KPI persistence stays keyed by the parent
-  // scenario (passed separately via `scenario` to KpiRibbon) so
-  // the user's selection of which KPIs to track survives across
-  // state-year switches.
+  // `childScenario` carries `{ pathway_name, year }`. The KPI
+  // ribbon then fetches from that state (parent scenario name plus the
+  // child-scenario header) instead of the parent -- so the values walk
+  // the timeline as the user clicks year nodes.
   const childScenario = useProjectStore((s) => s.childScenario);
-  const childDataScenario = useMemo(() => {
-    if (!childScenario?.scenario_path) return null;
-    return childScenario.scenario_path;
-  }, [childScenario]);
 
   return (
     <div
@@ -105,7 +98,7 @@ const OverviewCard = ({
         <KpiRibbon
           project={project}
           scenario={scenarioName}
-          dataScenario={childDataScenario}
+          childScenario={childScenario}
         />
       )}
     </div>
@@ -183,6 +176,10 @@ const PathwayOption = ({ pathwayName, onDelete }) => {
 };
 
 const LANE_PADDING = 18;
+const ARROW_WIDTH = 7;
+// Room past the last state for the arrowhead: the active node's ring (10 px from its
+// centre), a gap, and the arrow -- so the last state never sits on the arrow.
+const ARROW_TAIL = 24;
 const TIMELINE_HEIGHT = 36;
 
 const PathwayViewerRow = ({ scenarioName, project }) => {
@@ -256,9 +253,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     return Math.max(endYear - startYear, 1);
   }, [startYear, endYear]);
 
-  const fitWidth = Math.max((viewportWidth || 200) - LANE_PADDING * 2, 60);
+  const fitWidth = Math.max(
+    (viewportWidth || 200) - LANE_PADDING * 2 - ARROW_TAIL,
+    60,
+  );
   const pxPerYear = fitWidth / yearRange;
-  const contentWidth = LANE_PADDING * 2 + yearRange * pxPerYear;
+  const contentWidth = LANE_PADDING * 2 + ARROW_TAIL + yearRange * pxPerYear;
 
   // Nodes use LANE_PADDING so first/last nodes inset by the dropdown fillet
   const getYearOffset = useCallback(
@@ -280,18 +280,9 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     async (pathwayName, year) => {
       setSwitching(true);
       try {
-        const result = await fetchStateFolderPath(
-          pathwayName,
-          year,
-          project,
-          scenarioName,
-        );
-        setChildScenario({
-          pathway_name: pathwayName,
-          year,
-          parent_scenario: result.parent_scenario,
-          scenario_path: result.scenario_path,
-        });
+        // Confirms the state folder exists (404 otherwise) before entering it.
+        await fetchStateFolderPath(pathwayName, year, project, scenarioName);
+        setChildScenario({ pathway_name: pathwayName, year });
         // Claim ownership before fetching so a stale PathwayPanel preview
         // (or an earlier activateState call) can't overwrite this once it
         // resolves.
@@ -317,20 +308,7 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
     ],
   );
 
-  const deactivatePathway = useCallback(() => {
-    setChildScenario(null);
-    // Bump ownership first so any in-flight preview/activation fetch is
-    // invalidated, then apply the clear immediately (no requestId needed).
-    beginStateZoneOverrideRequest();
-    setStateZoneOverride(null);
-    queryClient.invalidateQueries({ queryKey: ['toolParams'] });
-    queryClient.invalidateQueries({ queryKey: ['inputs'] });
-  }, [
-    setChildScenario,
-    setStateZoneOverride,
-    beginStateZoneOverrideRequest,
-    queryClient,
-  ]);
+  const deactivatePathway = useLeaveState();
 
   const handleNodeClick = async (pathwayName, year) => {
     const phase = yearPhases[String(year)] ?? 'none';
@@ -414,18 +392,10 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
               try {
                 await activateState(value, firstYear);
               } catch {
-                setChildScenario({
-                  pathway_name: value,
-                  year: null,
-                  parent_scenario: null,
-                });
+                setChildScenario({ pathway_name: value, year: null });
               }
             } else {
-              setChildScenario({
-                pathway_name: value,
-                year: null,
-                parent_scenario: null,
-              });
+              setChildScenario({ pathway_name: value, year: null });
             }
           }}
           onSelect={(value) => {
@@ -472,12 +442,12 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
                 position: 'relative',
               }}
             >
-              {/* Lane line — inset by fillet on both ends */}
+              {/* Lane line — inset by fillet on both ends, up to the arrow */}
               <div
                 style={{
                   position: 'absolute',
                   left: LANE_PADDING,
-                  right: LANE_PADDING + 14,
+                  right: LANE_PADDING + ARROW_WIDTH,
                   top: '35%',
                   height: 1.5,
                   background: '#8eb6dc',
@@ -488,14 +458,14 @@ const PathwayViewerRow = ({ scenarioName, project }) => {
               <div
                 style={{
                   position: 'absolute',
-                  right: LANE_PADDING + 7,
+                  right: LANE_PADDING,
                   top: '35%',
                   transform: 'translateY(-50%)',
                   width: 0,
                   height: 0,
                   borderTop: '5px solid transparent',
                   borderBottom: '5px solid transparent',
-                  borderLeft: '7px solid #8eb6dc',
+                  borderLeft: `${ARROW_WIDTH}px solid #8eb6dc`,
                 }}
               />
 

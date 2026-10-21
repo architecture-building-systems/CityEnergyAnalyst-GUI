@@ -1,7 +1,6 @@
 import {
   Alert,
   Button,
-  Checkbox,
   Divider,
   InputNumber,
   message,
@@ -25,6 +24,7 @@ import {
 } from 'assets/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import useJobsStore, { useCreateJob } from 'features/jobs/stores/jobsStore';
+import { useLeaveState } from 'features/project/hooks/useLeaveState';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import {
   toolTypes,
@@ -35,6 +35,7 @@ import {
 import 'features/project/components/Cards/OverviewCard/OverviewCard.css';
 import DuplicatePathwayModal from 'features/project/components/modals/DuplicatePathwayModal';
 import BuildingList from './BuildingList';
+import ClearStateOptions from './ClearStateOptions';
 import LegendChip from './LegendChip';
 import ModificationSummary from './ModificationSummary';
 import PathwaySelect from './PathwaySelect';
@@ -82,68 +83,6 @@ const MAX_VISIBLE_TIMELINE_LANES = 3;
 // long-term scale. Pathways that already run past this keep their own end year.
 const MIN_TIMELINE_END_YEAR = 2100;
 
-/**
- * Body of the Clear State confirm dialog: pick which halves of the state to remove.
- *
- * Modal.confirm renders its content once and cannot re-render on state change, so this owns
- * the checkbox state locally and writes it through to a mutable object the caller reads on OK.
- *
- * Clearing inputs implies clearing outputs: the state folder is itself a scenario, so results
- * without inputs can neither be regenerated nor interpreted, and the backend removes the whole
- * folder in that case.
- */
-const ClearStateOptions = ({
-  defaults,
-  hasInputs,
-  hasOutputs,
-  removesLogEntry,
-  onChange,
-}) => {
-  const [inputs, setInputs] = useState(defaults.inputs);
-  const [outputs, setOutputs] = useState(defaults.outputs);
-
-  const apply = (nextInputs, nextOutputs) => {
-    const outputsFollowInputs = nextInputs || nextOutputs;
-    setInputs(nextInputs);
-    setOutputs(outputsFollowInputs);
-    onChange({ inputs: nextInputs, outputs: outputsFollowInputs });
-  };
-
-  return (
-    <div style={{ paddingTop: 8 }}>
-      <div style={{ marginBottom: 12 }}>
-        Select what to remove for this state year.
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Checkbox
-          checked={inputs}
-          disabled={!hasInputs && !removesLogEntry}
-          onChange={(e) => apply(e.target.checked, outputs)}
-        >
-          Inputs
-          <div style={{ fontSize: 12, color: '#888', marginLeft: 24 }}>
-            {removesLogEntry
-              ? 'The baked state folder, this year\u2019s manual content in the pathway log, and the outputs.'
-              : 'The baked state folder, and the outputs.'}
-            {!hasInputs ? ' (nothing on disk)' : ''}
-          </div>
-        </Checkbox>
-        <Checkbox
-          checked={outputs}
-          disabled={!hasOutputs || inputs}
-          onChange={(e) => apply(inputs, e.target.checked)}
-        >
-          Outputs
-          <div style={{ fontSize: 12, color: '#888', marginLeft: 24 }}>
-            Simulation results. The state stays baked and can be re-simulated.
-            {!hasOutputs ? ' (nothing on disk)' : ''}
-          </div>
-        </Checkbox>
-      </div>
-    </div>
-  );
-};
-
 const PathwayPanel = ({
   open,
   project,
@@ -157,6 +96,8 @@ const PathwayPanel = ({
   const setToolType = useSetToolType();
   const setSelectedTool = useToolCardStore((state) => state.setSelectedTool);
   const simulationProgress = useProjectStore((s) => s.simulationProgress);
+  const childScenario = useProjectStore((s) => s.childScenario);
+  const leaveState = useLeaveState();
   const clearSimulationProgress = useProjectStore(
     (s) => s.clearSimulationProgress,
   );
@@ -1067,7 +1008,8 @@ const PathwayPanel = ({
   };
 
   // Both destructive actions hit the same endpoint with the same busy key; they differ only
-  // in the dialog and in how the inputs/outputs selection is decided.
+  // in the dialog and in how the years and inputs/outputs selection are decided. Years are
+  // cleared one request at a time: each rewrites the pathway log.
   const confirmDestructiveAction = ({
     title,
     content,
@@ -1083,27 +1025,54 @@ const PathwayPanel = ({
       okButtonProps: { danger: true },
       onOk: async () => {
         const selection = getSelection();
+        if (!selection.years.length) {
+          setPanelError('Select at least one state year to clear.');
+          return Promise.reject(new Error('nothing selected'));
+        }
         if (!selection.inputs && !selection.outputs) {
           setPanelError('Select inputs, outputs, or both to clear.');
           return Promise.reject(new Error('nothing selected'));
         }
+        const refresh = () =>
+          refreshPathwayData({
+            preferredPathway: selectedPathway,
+            preferredYear: selectedRow.year,
+          });
         await runPathwayAction({
           busyKey: 'delete-year',
-          action: () =>
-            clearPathwayYear(
-              selectedPathway,
-              selectedRow.year,
-              { project, scenarioName, childScenario: null },
-              {
-                deleteInputs: selection.inputs,
-                deleteOutputs: selection.outputs,
-              },
-            ),
-          refresh: () =>
-            refreshPathwayData({
-              preferredPathway: selectedPathway,
-              preferredYear: selectedRow.year,
-            }),
+          action: async () => {
+            const cleared = [];
+            for (const year of selection.years) {
+              try {
+                await clearPathwayYear(
+                  selectedPathway,
+                  year,
+                  { project, scenarioName, childScenario: null },
+                  {
+                    deleteInputs: selection.inputs,
+                    deleteOutputs: selection.outputs,
+                  },
+                );
+              } catch (error) {
+                if (!cleared.length) throw error;
+                // The years already cleared are gone: show that before the failure.
+                await refresh();
+                throw new Error(
+                  `Cleared ${cleared.join(', ')}, but failed on ${year}: ${getErrorMessage(error, failureMessage)}`,
+                );
+              }
+              cleared.push(year);
+              // Clearing inputs deletes the state's folder: stop inspecting it.
+              if (
+                selection.inputs &&
+                childScenario?.pathway_name === selectedPathway &&
+                childScenario?.year === year
+              ) {
+                leaveState();
+              }
+            }
+          },
+          refresh,
           failureMessage,
         });
       },
@@ -1123,7 +1092,11 @@ const PathwayPanel = ({
         ? 'Removes the manual edits for this year. The stock-driven state stays in the timeline.'
         : 'Removes this year from the pathway log. It disappears from the timeline.',
       okText: 'Delete Log',
-      getSelection: () => ({ inputs: true, outputs: true }),
+      getSelection: () => ({
+        years: [selectedRow.year],
+        inputs: true,
+        outputs: true,
+      }),
       failureMessage: 'Failed to delete the log entry.',
     });
   };
@@ -1133,27 +1106,34 @@ const PathwayPanel = ({
       return;
     }
 
+    // Every year with something on disk can be cleared alongside the selected one; years
+    // with only a log entry go through Delete Log instead.
+    const states = activeRows
+      .filter((row) => row.has_state_inputs || row.has_state_outputs)
+      .map((row) => ({
+        year: row.year,
+        hasInputs: !!row.has_state_inputs,
+        hasOutputs: !!row.has_state_outputs,
+        removesLogEntry: !!row.can_delete || !!row.can_clear_manual_changes,
+      }));
     const hasInputs = !!selectedRow.has_state_inputs;
     const hasOutputs = !!selectedRow.has_state_outputs;
-    const removesLogEntry =
-      !!selectedRow.can_delete || !!selectedRow.can_clear_manual_changes;
-    const selection = { inputs: hasInputs || !hasOutputs, outputs: hasOutputs };
+    const selection = {
+      years: [selectedRow.year],
+      inputs: hasInputs || !hasOutputs,
+      outputs: hasOutputs,
+    };
 
     confirmDestructiveAction({
-      title: `Clear state ${selectedRow.year}?`,
+      title: `Clear states of ${selectedPathway}?`,
       content: (
         <ClearStateOptions
+          states={states}
           defaults={selection}
-          hasInputs={hasInputs}
-          hasOutputs={hasOutputs}
-          removesLogEntry={removesLogEntry}
-          onChange={(next) => {
-            selection.inputs = next.inputs;
-            selection.outputs = next.outputs;
-          }}
+          onChange={(next) => Object.assign(selection, next)}
         />
       ),
-      okText: 'Clear State',
+      okText: 'Clear',
       getSelection: () => selection,
       failureMessage: 'Failed to clear the state.',
     });

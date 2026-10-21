@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Alert, Button, Spin, message as antdMessage } from 'antd';
+import { Alert, Button, Spin, Tag, message as antdMessage } from 'antd';
 import CenterSpinner from 'components/CenterSpinner';
+import { UUEN_BLUE } from 'constants/theme';
 import useDatabaseEditorStore, {
   FETCHING_STATUS,
   SAVING_STATUS,
@@ -11,6 +12,7 @@ import useDatabaseEditorStore, {
   DerivedConflictError,
 } from 'features/database-editor/stores/databaseEditorStore';
 import { DerivedConflictModal } from 'features/database-editor/components/derived-conflict-modal';
+import { pathwayOverviewQueryKey } from 'features/pathway/hooks/usePathwayOverview';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import ErrorBoundary from 'utils/ReportingErrorBoundary';
 
@@ -53,6 +55,7 @@ const DatabaseEditorErrorMessage = ({ error }) => {
 
 const DatabaseEditor = () => {
   const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
   const demoMode = useDemoMode();
   const isEmpty = useDatabaseEditorStore((state) => state.isEmpty);
   const databaseValidation = useDatabaseEditorStore(
@@ -89,7 +92,21 @@ const DatabaseEditor = () => {
   return (
     <div className="cea-database-editor">
       <div className="cea-database-editor-header">
-        <h2>Database Editor</h2>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <h2>Database Editor</h2>
+          {/* Every request carries the inspected state, so this edits that
+          state's own database -- nothing else on this page shows it. */}
+          {childScenario?.year != null && (
+            <Tag
+              color={UUEN_BLUE}
+              variant="solid"
+              style={{ borderRadius: 999, marginInlineEnd: 0 }}
+            >
+              Editing State {childScenario.year} &middot;{' '}
+              {childScenario.pathway_name}
+            </Tag>
+          )}
+        </div>
         {/* Demo scenarios are a fixed, read-only allowlist - there's
         nothing to import, export, or refresh, so show a notice in place
         of those actions instead of just leaving an empty gap. */}
@@ -129,6 +146,8 @@ const DatabaseContent = ({ message }) => {
   const setShowLoginModal = useSetShowLoginModal();
   const [saveError, setSaveError] = useState(null);
   const queryClient = useQueryClient();
+  const scenarioName = useProjectStore((state) => state.scenario);
+  const childScenario = useProjectStore((state) => state.childScenario);
 
   const changes = useDatabaseEditorStore((state) => state.changes);
   // Discard = reload from disk. It clears `changes` as part of the fetch, and unlike
@@ -152,6 +171,14 @@ const DatabaseContent = ({ message }) => {
       // other invalidation path (it is its own query key, separate from the Database Editor's
       // Zustand store).
       queryClient.invalidateQueries({ queryKey: ['inputs-databases'] });
+
+      // A save inside a pathway state marks it custom on the server: refresh the pathway
+      // overview so the timeline shows it (as an input save does in `useSaveInputs`).
+      if (childScenario?.year != null) {
+        queryClient.invalidateQueries({
+          queryKey: pathwayOverviewQueryKey(scenarioName),
+        });
+      }
 
       // While the scenario is locked, a save that touched an archetype the mapper reads
       // re-runs it for the buildings that reference it (see `saveDatabaseState`). Read the

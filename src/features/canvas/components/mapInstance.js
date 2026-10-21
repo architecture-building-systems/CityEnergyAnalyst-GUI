@@ -12,7 +12,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 
 /**
- * Per-column override for the `(project, scenarioName)` pair that
+ * Per-column override for the `(project, scenarioName, childScenario)` that
  * map-layer choice/range/generate fetches use. Compare-mode mirrors
  * publish their column's scenario through this context so dependent
  * dropdowns (what-if-name, network-name, …) source options from
@@ -28,10 +28,9 @@ export const MapLayerScenarioOverrideContext = createContext(null);
  * Drop-in replacement for direct `useProjectStore` reads in components that
  * may be mounted under a per-column canvas scope.
  *
- * `childScenario` is only populated from the store when no per-column override
- * is present (main-viewport path). Canvas column overrides pin a specific
- * scenario and have no child-scenario concept, so `childScenario` is `null`
- * there — callers building X-CEA-Child-Scenario tokens should check this.
+ * With an override, `childScenario` is the override's own (a pathway-state
+ * column's state, see `useScenarioRequestContext`), never the main viewport's
+ * inspected state.
  */
 export const useScopedProjectScenario = () => {
   const override = useContext(MapLayerScenarioOverrideContext);
@@ -42,8 +41,9 @@ export const useScopedProjectScenario = () => {
   return {
     project: override?.project ?? projectFallback,
     scenarioName: override?.scenarioName ?? scenarioFallback,
-    // Child scenario only applies when using the active (non-override) scenario.
-    childScenario: isOverride ? null : childScenarioFallback,
+    childScenario: isOverride
+      ? (override.childScenario ?? null)
+      : childScenarioFallback,
   };
 };
 

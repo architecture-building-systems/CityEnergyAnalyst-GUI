@@ -76,6 +76,16 @@ export const fetchProjectChoices = async () => {
   }
 };
 
+// A pathway state belongs to its project and scenario: moving to another one leaves it.
+// Only an actual change does -- remounting a page (e.g. back from the Database Editor) must not.
+const leaveStateOnMove = (
+  state,
+  { project = state.project, scenario = state.scenario },
+) =>
+  project !== state.project || scenario !== state.scenario
+    ? { childScenario: null }
+    : {};
+
 // TODO: Handle errors when fetching project info e.g. path not found
 export const useProjectStore = create((set) => ({
   name: null,
@@ -88,7 +98,8 @@ export const useProjectStore = create((set) => ({
 
   recentProjects: [],
 
-  setProject: (project) => set({ project }),
+  setProject: (project) =>
+    set((state) => ({ project, ...leaveStateOnMove(state, { project }) })),
 
   fetchInfo: async (project) => {
     set({ isFetching: true, error: null });
@@ -102,7 +113,7 @@ export const useProjectStore = create((set) => ({
         scenariosList,
         isFetching: false,
       };
-      set(out);
+      set((state) => ({ ...out, ...leaveStateOnMove(state, { project }) }));
       return out;
     } catch (error) {
       set({ isFetching: false, error });
@@ -121,7 +132,8 @@ export const useProjectStore = create((set) => ({
       throw error;
     }
   },
-  updateScenario: (scenario) => set({ scenario }),
+  updateScenario: (scenario) =>
+    set((state) => ({ scenario, ...leaveStateOnMove(state, { scenario }) })),
   setRecentProjects: (projects) => set({ recentProjects: projects }),
 
   // Demo mode (anonymous, no valid session): seed project/scenario state
@@ -134,16 +146,23 @@ export const useProjectStore = create((set) => ({
       project: DEMO_PROJECT_TOKEN,
       scenario,
       scenariosList,
+      childScenario: null,
     }),
 
   // Reverts seedDemoProject - called when a real session appears (e.g. the
   // visitor logs in) so useInitProjectStore's normal localStorage-driven
   // flow starts from a clean slate instead of the stale demo project.
   clearDemoProject: () =>
-    set({ name: null, project: null, scenario: null, scenariosList: [] }),
+    set({
+      name: null,
+      project: null,
+      scenario: null,
+      scenariosList: [],
+      childScenario: null,
+    }),
 
   // Pathway Viewer: child scenario state
-  childScenario: null, // { pathway_name, year, parent_scenario, scenario_path }
+  childScenario: null, // { pathway_name, year } -- the pathway state being inspected
   setChildScenario: (data) => set({ childScenario: data }),
   clearChildScenario: () => set({ childScenario: null }),
 

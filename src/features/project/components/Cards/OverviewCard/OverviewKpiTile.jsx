@@ -30,7 +30,13 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { useFetchKpiValue } from 'features/canvas/hooks/useFetchKpis';
 import { formatKpiNumber } from 'features/canvas/utils/formatKpiValue';
 
-const OverviewKpiTile = ({ card, project, scenario, whatif }) => {
+const OverviewKpiTile = ({
+  card,
+  project,
+  scenario,
+  childScenario,
+  whatif,
+}) => {
   const kpiId = card?.kpiId ?? null;
   const locatorArgs = card?.locatorArgs ?? null;
 
@@ -42,6 +48,7 @@ const OverviewKpiTile = ({ card, project, scenario, whatif }) => {
   } = useFetchKpiValue({
     project,
     scenario,
+    childScenario,
     kpiId,
     locatorArgs,
     whatif,

@@ -3,14 +3,14 @@
  *
  * Five hooks:
  *
- * - `useFetchKpiValue({ project, scenario, kpiId, locatorArgs?, whatif? })`
+ * - `useFetchKpiValue({ project, scenario, childScenario?, kpiId, locatorArgs?, whatif? })`
  *   fetches a single KPI value with optional per-card
  *   ``locatorArgs`` override. Used by canvas KPI cards and the
  *   OverviewCard ribbon's compact tiles. The query key includes
  *   ``locatorArgs`` so two cards with different overrides cache
  *   separately.
  *
- * - `useFetchKpiParameters({ project, scenario, kpiId })` returns
+ * - `useFetchKpiParameters({ project, scenario, childScenario?, kpiId })` returns
  *   the choice lists for a KPI's user-configurable parameters
  *   (drives the canvas picker's step-2 form).
  *
@@ -37,7 +37,7 @@ import { useEffect, useMemo } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getScenarioClient } from 'lib/api/axios';
-import { scenarioHeaders } from 'lib/api/scenarioContext';
+import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import { getSocket, waitForConnection } from 'lib/socket';
 
 import { childStateScenarioPath } from '../stores/canvasStore';
@@ -58,9 +58,12 @@ const _argsKey = (locatorArgs) => {
   return JSON.stringify(sorted);
 };
 
+// `scenario` is a bare scenario name; a pathway state is addressed by its parent's name plus
+// `childScenario` (`{ pathway_name, year }`), never by the state's folder path.
 export const useFetchKpiValue = ({
   project,
   scenario,
+  childScenario = null,
   kpiId,
   locatorArgs = null,
   whatif,
@@ -72,13 +75,18 @@ export const useFetchKpiValue = ({
       'value',
       project,
       scenario,
+      childScenarioToken(childScenario),
       kpiId,
       argsKey,
       whatif ?? null,
     ],
     queryFn: async () => {
       const { data } = await getScenarioClient().get(`/kpis/${kpiId}/value`, {
-        headers: scenarioHeaders({ project, scenarioName: scenario }),
+        headers: scenarioHeaders({
+          project,
+          scenarioName: scenario,
+          childScenario,
+        }),
         params: {
           locator_args: argsKey || undefined,
           whatif: whatif || undefined,
@@ -101,6 +109,7 @@ export const useFetchKpiValue = ({
 export const useFetchKpiParameters = ({
   project,
   scenario,
+  childScenario = null,
   kpiId,
   args = null,
 }) => {
@@ -111,6 +120,7 @@ export const useFetchKpiParameters = ({
       'parameters',
       project,
       scenario,
+      childScenarioToken(childScenario),
       kpiId,
       argsKey,
     ],
@@ -118,7 +128,11 @@ export const useFetchKpiParameters = ({
       const { data } = await getScenarioClient().get(
         `/kpis/${kpiId}/parameters`,
         {
-          headers: scenarioHeaders({ project, scenarioName: scenario }),
+          headers: scenarioHeaders({
+            project,
+            scenarioName: scenario,
+            childScenario,
+          }),
           params: {
             args: argsKey || undefined,
           },

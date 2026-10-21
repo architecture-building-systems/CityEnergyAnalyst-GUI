@@ -23,9 +23,9 @@ at the `startPanelJob`/`runPathwayAction` definitions in `PathwayPanel.jsx`.
 for you — every `action` must pass `{ project, scenarioName, childScenario:
 null }` explicitly to the `api.js` call it wraps. Pathway mutations always
 target the _parent_ scenario's `outputs/pathways/...` tree regardless of which
-child pathway state is active in the map/canvas; omitting the context falls
-back to `activeScenarioHeaders()`, which follows the active child scenario
-and points the request at the wrong folder.
+child pathway state is active in the map/canvas. The backend's `/pathways`
+router resolves a stray `X-CEA-Child-Scenario` back to the parent, so a call on
+`activeScenarioHeaders()` still lands right -- but say what you mean.
 
 ### Scenario headers are mandatory on every `/pathways/...` call
 

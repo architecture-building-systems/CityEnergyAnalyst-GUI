@@ -9,13 +9,11 @@ import {
 import useNavigationStore from 'stores/navigationStore';
 
 import routes from 'constants/routes.json';
+import { CEA_GREY_LIGHT } from 'constants/theme';
 import { useHoverGrow } from 'features/project/hooks/hover-grow';
+import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { animated } from '@react-spring/web';
-
-// Mark the entry as not yet wired; renders the button with a
-// "[Coming soon]" tooltip and no click handler.
-const TEMP_DISABLED = ['reports'];
 
 const BottomToolButtons = ({
   showTools,
@@ -27,6 +25,8 @@ const BottomToolButtons = ({
   demoMode,
 }) => {
   const { push } = useNavigationStore();
+  // The canvas works on the scenario, not on an inspected pathway state.
+  const inspectingState = useProjectStore((s) => s.childScenario?.year != null);
 
   const items = [
     {
@@ -58,12 +58,17 @@ const BottomToolButtons = ({
       icon: InsightIcon,
       title: 'Canvas Builder [BETA]',
       onClick: () => push(routes?.CANVAS),
+      disabledReason: inspectingState
+        ? 'Not available when inspecting State'
+        : null,
       hidden: !showTools,
     },
     {
       id: 'reports',
       icon: ReportsIcon,
       title: 'Report Builder',
+      // Not yet wired.
+      disabledReason: '[Coming soon]',
       hidden: !showTools,
     },
   ];
@@ -77,11 +82,11 @@ const BottomToolButtons = ({
     >
       {items.map((item) => (
         <ToolHoverButton
-          key={item.title}
-          id={item.id}
+          key={item.id}
           icon={item.icon}
           title={item.title}
           onClick={item.onClick}
+          disabledReason={item.disabledReason}
           hidden={item.hidden}
           active={item.active}
         />
@@ -90,7 +95,15 @@ const BottomToolButtons = ({
   );
 };
 
-const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
+// `disabledReason` greys the button out, with the reason under the title in its tooltip.
+const ToolHoverButton = ({
+  title,
+  icon,
+  onClick,
+  disabledReason,
+  hidden,
+  active,
+}) => {
   // Half the default hover-enlarge (1.2 → 1.1) so the five bottom-
   // left buttons read as a tighter row — the default 20 % grow felt
   // too prominent at this scale. Other call sites of `useHoverGrow`
@@ -100,7 +113,7 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
 
   if (hidden) return null;
 
-  if (TEMP_DISABLED.includes(id))
+  if (disabledReason)
     return (
       <Tooltip
         title={
@@ -111,13 +124,17 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
               alignItems: 'center',
             }}
           >
-            <div>{`${title}`}</div>
-            <div>[Coming soon]</div>
+            <div>{title}</div>
+            <div>{disabledReason}</div>
           </div>
         }
         styles={{ body: { fontSize: 12 } }}
       >
-        <button className="cea-overlay-card cea-card-toolbar-icon-container">
+        <button
+          className="cea-overlay-card cea-card-toolbar-icon-container"
+          aria-disabled="true"
+          style={disabledButtonStyle}
+        >
           <div className="cea-card-toolbar-icon no-hover-color">
             <_icon />
           </div>
@@ -146,6 +163,13 @@ const ToolHoverButton = ({ id, title, icon, onClick, hidden, active }) => {
       </animated.div>
     </Tooltip>
   );
+};
+
+// Not the `disabled` attribute: a disabled button fires no mouse events in some browsers,
+// so its tooltip would never show.
+const disabledButtonStyle = {
+  backgroundColor: CEA_GREY_LIGHT,
+  cursor: 'not-allowed',
 };
 
 export default BottomToolButtons;
