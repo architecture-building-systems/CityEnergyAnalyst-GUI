@@ -131,7 +131,7 @@
     ; as soon as this process exits - the detached PowerShell process launched
     ; by ceaSendTelemetry must be able to outlive it.
     !ifdef POSTHOG_API_KEY
-        File "/oname=$TEMP\cea-gui-telemetry.ps1" "telemetry.ps1"
+        File "/oname=$TEMP\cea-gui-telemetry.ps1" "${BUILD_RESOURCES_DIR}\telemetry.ps1"
     !endif
 !macroend
 
