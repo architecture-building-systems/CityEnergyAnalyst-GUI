@@ -144,6 +144,9 @@ const installCEA = async (ceaVersion) => {
         'run',
         'pip',
         'install',
+        // Avoid the shared per-user pip cache, which can be locked or
+        // permission-denied on Windows (Errno 13)
+        '--no-cache-dir',
         `git+${ceaGitUrl}`,
       ]);
 
