@@ -3,12 +3,17 @@ import { spawn, execSync } from 'child_process';
 import { app, dialog } from 'electron';
 
 import { getMicromambaPath, getCEARootPath } from './env.mjs';
+import { reportStartupFailure } from '../telemetry.mjs';
 
 let cea;
 let ceaDetached = false;
 let timeout;
 let interval;
 let startupError = '';
+
+function logCEAError(error) {
+  console.error('CEA process error:', error);
+}
 
 export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
@@ -34,6 +39,26 @@ export function createCEAProcess(url, BrowserWindow, callback) {
       spawnOptions,
     );
   }
+
+  // Shared by the error and exit handlers so only the first failure shows a dialog
+  let startupFailureHandled = false;
+
+  const handleCEAExit = async (exitCode, signal) => {
+    cea = null;
+    if (startupFailureHandled) return;
+    startupFailureHandled = true;
+    await reportStartupFailure('backend_exit', { exitCode, signal });
+    showStartupError();
+  };
+
+  const handleCEAError = async (error) => {
+    if (startupFailureHandled) return;
+    startupFailureHandled = true;
+    console.error('CEA process error:', error);
+    saveStartupError(error?.message ?? String(error));
+    await reportStartupFailure('backend_error', { error });
+    showStartupError();
+  };
 
   if (cea) {
     console.debug('CEA process started with PID:', cea.pid);
@@ -61,10 +86,8 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
     // Show Error message box when CEA encounters any error on startup
     cea.stderr.on('data', saveStartupError);
-    cea.on('exit', () => {
-      cea = null;
-      showStartupError();
-    });
+    cea.on('exit', handleCEAExit);
+    cea.on('error', handleCEAError);
   }
 
   function saveStartupError(message) {
@@ -86,7 +109,10 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     // Remove Error message box listener after successful startup
     if (cea) {
       cea.stderr.removeListener('data', saveStartupError);
-      cea.removeListener('exit', showStartupError);
+      cea.removeListener('exit', handleCEAExit);
+      // Keep an error listener so a later child error is logged, not thrown
+      cea.removeListener('error', handleCEAError);
+      cea.on('error', logCEAError);
     }
     callback();
   });
@@ -106,6 +132,8 @@ export function killCEAProcess(killTimeout = 10000) {
 
       // Remove exit listeners that show startup error
       cea.removeAllListeners('exit');
+      cea.removeAllListeners('error');
+      cea.on('error', logCEAError);
       const ceaPid = cea.pid;
 
       if (process.platform === 'win32') {
@@ -296,6 +324,7 @@ function checkCEAStarted(url, callback) {
 
   // Stop checking after 5 min
   timeout = setTimeout(() => {
+    reportStartupFailure('backend_timeout');
     clearInterval(interval);
   }, 300000);
 }
