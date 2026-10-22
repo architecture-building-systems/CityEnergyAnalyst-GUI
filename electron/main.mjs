@@ -1,5 +1,15 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  shell,
+  screen,
+  protocol,
+  net,
+} from 'electron';
 import path from 'path';
+import { pathToFileURL } from 'url';
 
 import {
   isCEAAlive,
@@ -24,6 +34,40 @@ const CEA_HOST = '127.0.0.1';
 const CEA_PORT = '5050';
 const CEA_URL = `http://${CEA_HOST}:${CEA_PORT}`;
 
+const APP_SCHEME = 'app';
+const APP_URL = `${APP_SCHEME}://cea-desktop`;
+
+// Must run before app is ready
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: APP_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+    },
+  },
+]);
+
+const registerAppProtocol = () => {
+  const root = path.join(app.getAppPath(), 'dist');
+  protocol.handle(APP_SCHEME, (request) => {
+    const { pathname } = new URL(request.url);
+    const filePath = path.join(
+      root,
+      pathname === '/' ? 'index.html' : decodeURIComponent(pathname),
+    );
+    const relative = path.relative(root, filePath);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      return new Response('Forbidden', { status: 403 });
+    }
+    return net.fetch(pathToFileURL(filePath).toString(), {
+      bypassCustomProtocolHandlers: true,
+    });
+  });
+};
+
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow;
 let splashWindow;
@@ -40,6 +84,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('ready', () => {
+    if (app.isPackaged) registerAppProtocol();
     createSplashWindow(CEA_URL);
   });
 
@@ -92,7 +137,7 @@ const createMainWindow = () => {
     primaryDisplay ||
     displays.reduce((a, b) =>
       a.workArea.width * a.workArea.height >
-      b.workArea.width * b.workArea.height
+        b.workArea.width * b.workArea.height
         ? a
         : b,
     );
@@ -113,7 +158,7 @@ const createMainWindow = () => {
   });
 
   if (app.isPackaged) {
-    mainWindow.loadFile(path.join(app.getAppPath(), 'dist/index.html'));
+    mainWindow.loadURL(`${APP_URL}/index.html`);
   } else {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.openDevTools();
@@ -157,9 +202,7 @@ function createSplashWindow(url) {
     splashWindow.setWindowButtonVisibility(false);
 
   if (app.isPackaged) {
-    splashWindow.loadURL(
-      `file://${path.join(app.getAppPath(), 'dist/index.html#splash')}`,
-    );
+    splashWindow.loadURL(`${APP_URL}/index.html#splash`);
   } else {
     splashWindow.loadURL('http://localhost:5173/splash');
     splashWindow.openDevTools();
