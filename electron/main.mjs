@@ -17,6 +17,7 @@ import { CEAError } from './cea/errors.mjs';
 import { initLog, openLog } from './log.mjs';
 import { readConfig, writeConfig } from './config.mjs';
 import { checkInternet } from './utils.mjs';
+import { reportStartupFailure } from './telemetry.mjs';
 
 const appVersion = app.getVersion();
 const CEA_HOST = '127.0.0.1';
@@ -168,6 +169,9 @@ function createSplashWindow(url) {
     splashWindow.show();
     console.log(`CEA GUI version: ${appVersion}`);
 
+    // Last preflight step entered, reported if preflight throws (see reportStartupFailure)
+    let preflightStage = 'update_check';
+
     const preflightChecks = async () => {
       const sendPreflightEvent = (message) => {
         console.log(message);
@@ -270,6 +274,7 @@ function createSplashWindow(url) {
 
       // Check for CEA environment (only in production)
       if (app.isPackaged) {
+        preflightStage = 'env_check';
         sendPreflightEvent('Checking for CEA environment...');
         var ceaEnvExists = true;
         let ceaEnvIsEditable = false;
@@ -293,6 +298,7 @@ function createSplashWindow(url) {
             );
           }
 
+          preflightStage = 'env_create';
           sendPreflightEvent(
             `Creating CEA environment (${appVersion})...\n(this might take a few minutes)`,
           );
@@ -308,6 +314,7 @@ function createSplashWindow(url) {
 
           // Update CEA if outdated
           if (ceaVersion != appVersion) {
+            preflightStage = 'env_update';
             sendPreflightEvent(
               `Updating CEA environment (${ceaVersion} -> ${appVersion})...`,
             );
@@ -317,6 +324,7 @@ function createSplashWindow(url) {
       }
 
       // Check if CEA server is already running, only start if not
+      preflightStage = 'backend_start';
       sendPreflightEvent('Starting CEA Desktop...');
       const alive = await isCEAAlive(url);
       if (alive) {
@@ -337,6 +345,7 @@ function createSplashWindow(url) {
       await preflightChecks();
     } catch (error) {
       console.error(error);
+      reportStartupFailure(preflightStage, { error });
 
       const errorMessage = error?.message
         ? `Details:\n${error.message}\n\n`

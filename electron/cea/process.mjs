@@ -3,6 +3,7 @@ import { spawn, execSync } from 'child_process';
 import { app, dialog } from 'electron';
 
 import { getMicromambaPath, getCEARootPath } from './env.mjs';
+import { reportStartupFailure } from '../telemetry.mjs';
 
 let cea;
 let ceaDetached = false;
@@ -61,8 +62,9 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
     // Show Error message box when CEA encounters any error on startup
     cea.stderr.on('data', saveStartupError);
-    cea.on('exit', () => {
+    cea.on('exit', (exitCode, signal) => {
       cea = null;
+      reportStartupFailure('backend_exit', { exitCode, signal });
       showStartupError();
     });
   }
@@ -296,6 +298,7 @@ function checkCEAStarted(url, callback) {
 
   // Stop checking after 5 min
   timeout = setTimeout(() => {
+    reportStartupFailure('backend_timeout');
     clearInterval(interval);
   }, 300000);
 }
