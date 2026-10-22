@@ -1,7 +1,9 @@
 import { app } from 'electron';
 
-const key = import.meta.env.VITE_POSTHOG_KEY;
-const host = import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com';
+// `electron .` (dev) loads this file without Vite, where import.meta.env is undefined.
+const env = import.meta.env ?? {};
+const key = env.VITE_POSTHOG_KEY;
+const host = env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com';
 
 // A startup failure is reported at most once per run, so a timeout followed by an exit is one event.
 let startupFailureReported = false;
@@ -15,12 +17,15 @@ let startupFailureReported = false;
  * error messages, stderr or paths. The distinct_id is random per event and never stored.
  * @param {string} stage fixed token, e.g. `env_check`, `env_create`, `backend_exit`
  * @param {{ exitCode?: number | null, signal?: string | null, error?: unknown }} [details]
+ * @returns {Promise<void>} settles within the request timeout and never rejects, so callers about
+ *   to `app.exit()` can await it and not cut the request off
  */
 export const reportStartupFailure = (
   stage,
   { exitCode, signal, error } = {},
 ) => {
-  if (!key || !app.isPackaged || startupFailureReported) return;
+  if (!key || !app.isPackaged || startupFailureReported)
+    return Promise.resolve();
   startupFailureReported = true;
 
   const properties = {
@@ -34,7 +39,7 @@ export const reportStartupFailure = (
   if (signal) properties.signal = signal;
   if (error instanceof Error) properties.error_type = error.constructor.name;
 
-  fetch(`${host}/capture/`, {
+  return fetch(`${host}/capture/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

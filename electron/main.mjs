@@ -345,7 +345,7 @@ function createSplashWindow(url) {
       await preflightChecks();
     } catch (error) {
       console.error(error);
-      reportStartupFailure(preflightStage, { error });
+      await reportStartupFailure(preflightStage, { error });
 
       const errorMessage = error?.message
         ? `Details:\n${error.message}\n\n`

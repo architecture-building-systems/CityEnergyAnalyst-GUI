@@ -36,6 +36,12 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     );
   }
 
+  const handleCEAExit = async (exitCode, signal) => {
+    cea = null;
+    await reportStartupFailure('backend_exit', { exitCode, signal });
+    showStartupError();
+  };
+
   if (cea) {
     console.debug('CEA process started with PID:', cea.pid);
     const prefix = `[cea-process]`;
@@ -62,11 +68,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
 
     // Show Error message box when CEA encounters any error on startup
     cea.stderr.on('data', saveStartupError);
-    cea.on('exit', (exitCode, signal) => {
-      cea = null;
-      reportStartupFailure('backend_exit', { exitCode, signal });
-      showStartupError();
-    });
+    cea.on('exit', handleCEAExit);
   }
 
   function saveStartupError(message) {
@@ -88,7 +90,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     // Remove Error message box listener after successful startup
     if (cea) {
       cea.stderr.removeListener('data', saveStartupError);
-      cea.removeListener('exit', showStartupError);
+      cea.removeListener('exit', handleCEAExit);
     }
     callback();
   });
