@@ -11,6 +11,10 @@ let timeout;
 let interval;
 let startupError = '';
 
+function logCEAError(error) {
+  console.error('CEA process error:', error);
+}
+
 export function createCEAProcess(url, BrowserWindow, callback) {
   console.log(`createCEAProcess(${url})`);
 
@@ -36,9 +40,23 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     );
   }
 
+  // Shared by the error and exit handlers so only the first failure shows a dialog
+  let startupFailureHandled = false;
+
   const handleCEAExit = async (exitCode, signal) => {
     cea = null;
+    if (startupFailureHandled) return;
+    startupFailureHandled = true;
     await reportStartupFailure('backend_exit', { exitCode, signal });
+    showStartupError();
+  };
+
+  const handleCEAError = async (error) => {
+    if (startupFailureHandled) return;
+    startupFailureHandled = true;
+    console.error('CEA process error:', error);
+    saveStartupError(error?.message ?? String(error));
+    await reportStartupFailure('backend_error', { error });
     showStartupError();
   };
 
@@ -69,6 +87,7 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     // Show Error message box when CEA encounters any error on startup
     cea.stderr.on('data', saveStartupError);
     cea.on('exit', handleCEAExit);
+    cea.on('error', handleCEAError);
   }
 
   function saveStartupError(message) {
@@ -91,6 +110,9 @@ export function createCEAProcess(url, BrowserWindow, callback) {
     if (cea) {
       cea.stderr.removeListener('data', saveStartupError);
       cea.removeListener('exit', handleCEAExit);
+      // Keep an error listener so a later child error is logged, not thrown
+      cea.removeListener('error', handleCEAError);
+      cea.on('error', logCEAError);
     }
     callback();
   });
@@ -110,6 +132,8 @@ export function killCEAProcess(killTimeout = 10000) {
 
       // Remove exit listeners that show startup error
       cea.removeAllListeners('exit');
+      cea.removeAllListeners('error');
+      cea.on('error', logCEAError);
       const ceaPid = cea.pid;
 
       if (process.platform === 'win32') {
