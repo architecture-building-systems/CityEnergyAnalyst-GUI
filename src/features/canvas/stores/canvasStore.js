@@ -60,8 +60,8 @@ export const MAP_ANCHOR_H = 5;
 // compact tile with the six fixed rows (feature → name → info →
 // value → unit). Compare-mode delta chip rides inline on row 4
 // (right of the info icon) so no extra height is needed.
-// Sparklines still require dragging taller. `CanvasColumn` keeps
-// the per-type rgl minimum at 2×2 so users can resize tighter.
+// `CanvasColumn` keeps the per-type rgl minimum at 2×2 so users
+// can resize tighter.
 export const KPI_CARD_DEFAULT_W = 2;
 export const KPI_CARD_DEFAULT_H = 3;
 

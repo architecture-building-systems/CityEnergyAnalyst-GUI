@@ -1,7 +1,7 @@
 /**
  * React Query wrappers around `GET /kpis/...`.
  *
- * Five hooks:
+ * Four hooks:
  *
  * - `useFetchKpiValue({ project, scenario, childScenario?, kpiId, locatorArgs?, whatif? })`
  *   fetches a single KPI value with optional per-card
@@ -13,11 +13,6 @@
  * - `useFetchKpiParameters({ project, scenario, childScenario?, kpiId })` returns
  *   the choice lists for a KPI's user-configurable parameters
  *   (drives the canvas picker's step-2 form).
- *
- * - `useFetchKpiSparkline({...})` fans out per-state-year fetches
- *   for pathway-state KPI cards. Currently uses the bulk
- *   ``/kpis/?feature=...`` endpoint; per-card ``locatorArgs``
- *   overrides aren't honoured here yet (TODO).
  *
  * - `useFetchKpiRegistry()` fetches the flat KPI catalogue
  *   (metadata only). Long stale time — registry contents are
@@ -33,14 +28,12 @@
  * from "override not yet known".
  */
 
-import { useEffect, useMemo } from 'react';
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getScenarioClient } from 'lib/api/axios';
 import { childScenarioToken, scenarioHeaders } from 'lib/api/scenarioContext';
 import { getSocket, waitForConnection } from 'lib/socket';
-
-import { childStateScenarioPath } from '../stores/canvasStore';
 
 const KPIS_QUERY_ROOT = 'kpis';
 
@@ -143,98 +136,6 @@ export const useFetchKpiParameters = ({
     enabled: !!project && !!scenario && !!kpiId,
     staleTime: 30_000,
   });
-};
-
-/**
- * Per-state-year fan-out for a pathway sparkline. Issues one
- * ``useQuery`` per state year and returns the combined
- * ``[{ year, value }]`` series in chronological order.
- *
- * Years missing data carry ``value: null`` so consumers can break
- * the polyline at gaps. ``null`` points means the inputs are not
- * yet sufficient to fetch (no project, no state-years, etc.).
- *
- * NOTE: still hits the bulk ``/kpis/?feature=...`` endpoint
- * and ignores per-card ``locatorArgs`` overrides — a sparkline on
- * a card with a non-default ``panel_type`` will currently show
- * the yml-default series. To fix, switch each year's query to the
- * single-KPI ``/kpis/<id>/value`` endpoint with the card's
- * args forwarded.
- */
-export const useFetchKpiSparkline = ({
-  project,
-  pathwayName,
-  parentScenario,
-  stateYears,
-  feature,
-  kpiId,
-  whatif,
-}) => {
-  const enabled =
-    !!project &&
-    !!parentScenario &&
-    !!pathwayName &&
-    !!feature &&
-    !!kpiId &&
-    Array.isArray(stateYears) &&
-    stateYears.length > 1;
-
-  const yearsAndPaths = useMemo(() => {
-    if (!enabled) return [];
-    return stateYears
-      .map((year) => ({
-        year,
-        scenario: childStateScenarioPath(parentScenario, pathwayName, year),
-      }))
-      .filter((e) => !!e.scenario);
-  }, [enabled, stateYears, parentScenario, pathwayName]);
-
-  const queries = useQueries({
-    // parentScenario/pathwayName aren't separately listed: `scenario`
-    // is `childStateScenarioPath(parentScenario, pathwayName, year)`,
-    // so it already changes whenever either does.
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queries: yearsAndPaths.map(({ year, scenario }) => ({
-      queryKey: [KPIS_QUERY_ROOT, project, scenario, feature, whatif ?? null],
-      queryFn: async () => {
-        const { data } = await getScenarioClient().get('/kpis/', {
-          headers: scenarioHeaders({
-            project,
-            scenarioName: parentScenario,
-            childScenario: { pathway_name: pathwayName, year },
-          }),
-          params: {
-            feature,
-            whatif: whatif || undefined,
-          },
-        });
-        return data;
-      },
-      enabled,
-      staleTime: 0,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  const queriesData = queries.map((q) => q?.data);
-
-  const points = useMemo(() => {
-    if (!enabled) return null;
-    return yearsAndPaths.map(({ year }, i) => {
-      const kpi = (queriesData[i]?.kpis ?? []).find((k) => k.id === kpiId);
-      const isAvailable = kpi && kpi.available !== false;
-      return {
-        year,
-        value: isAvailable ? kpi.value : null,
-      };
-    });
-  }, [enabled, yearsAndPaths, queriesData, kpiId]);
-
-  return {
-    points,
-    isLoading: queries.some((q) => q?.isLoading),
-    isError: queries.some((q) => q?.isError),
-  };
 };
 
 export const useFetchKpiRegistry = () =>

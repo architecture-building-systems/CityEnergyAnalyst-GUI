@@ -514,8 +514,7 @@ const CanvasColumn = ({
       //    hug the rendered text and dividers can be a single unit
       //    thick on whichever axis is the line.
       //  - kpi is a number tile, not a chart canvas: 2×2 is enough
-      //    for label + value + unit. Sparklines crop above this
-      //    minimum — users drag the card taller when they want one.
+      //    for label + value + unit.
       const isText = card.type === 'text';
       const isDivider = card.type === 'divider';
       const isKpi = card.type === 'kpi';
