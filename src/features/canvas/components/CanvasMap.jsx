@@ -5,6 +5,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import DeckGLMap from 'features/map/components/Map/Map';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useColumnInputs } from 'features/canvas/hooks/useColumnInputs';
+import { useCanvasStore } from 'features/canvas/stores/canvasStore';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
   generateConstructionColorMap,
@@ -57,6 +58,9 @@ const CanvasMap = ({
   showBasemap = true,
 }) => {
   const resetCameraOptions = useScopedResetCameraOptions();
+  // Snapshot mode (Enable Edit off) freezes the camera too, so a stray
+  // scroll or drag can't move a map the user has set up.
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   const activeInputs = useInputs();
   const columnInputs = useColumnInputs(scenario, project, childScenario);
@@ -87,6 +91,7 @@ const CanvasMap = ({
         colors={data?.colors}
         interactive={false}
         showBasemap={showBasemap}
+        cameraLocked={!enableEdit}
       />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>

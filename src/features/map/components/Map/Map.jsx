@@ -530,6 +530,8 @@ const useMapLayers = (onHover = () => {}) => {
   return layers();
 };
 
+const CAMERA_CONTROLLER = { inertia: true };
+
 /**
  * DeckGL map.
  *
@@ -539,12 +541,17 @@ const useMapLayers = (onHover = () => {}) => {
  * `buildingSelectionStore`, and tooltip info-panels still work
  * (hover is non-destructive). Everything else — camera controls,
  * map style, colour modes — still responds normally.
+ *
+ * `cameraLocked` (default: false) — the user can't pan, zoom or rotate
+ * the map (e.g. a canvas in snapshot mode). The camera can still be
+ * set programmatically, and hover tooltips still work.
  */
 const DeckGLMap = ({
   data,
   colors,
   interactive = true,
   showBasemap = true,
+  cameraLocked = false,
 }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
@@ -958,10 +965,11 @@ const DeckGLMap = ({
     >
       <DeckGL
         viewState={viewState}
-        controller={{ inertia: true }}
+        controller={cameraLocked ? false : CAMERA_CONTROLLER}
         layers={layers}
         onViewStateChange={_onViewStateChange}
-        onDragStart={onDragStart}
+        // A first right-drag tilts the map into 3D: camera control too.
+        onDragStart={cameraLocked ? undefined : onDragStart}
         onContextMenu={onContextMenu}
       >
         {/* Omitting maplibre halves the tile's WebGL context count
