@@ -31,7 +31,7 @@ import useNavigationStore from 'stores/navigationStore';
 import routes from 'constants/routes.json';
 import { useProjectStore } from 'features/project/stores/projectStore';
 
-import { useCanvasStore } from '../stores/canvasStore';
+import { DEFAULT_CANVAS_TOGGLES, useCanvasStore } from '../stores/canvasStore';
 import {
   savedCanvasesQueryKey,
   useFetchSavedCanvases,
@@ -232,8 +232,7 @@ const NavigatorCard = () => {
               parentScenario: null,
               launchCards: [],
               columnCards: {},
-              mapsLinked: true,
-              fixLayout: false,
+              ...DEFAULT_CANVAS_TOGGLES,
               canvasName: null,
             });
             // Clear the localStorage resume target too — the
@@ -279,8 +278,7 @@ const NavigatorCard = () => {
         parentScenario: null,
         launchCards: [],
         columnCards: {},
-        mapsLinked: true,
-        fixLayout: false,
+        ...DEFAULT_CANVAS_TOGGLES,
         canvasName: result.name,
       });
       writeLastCanvas(project, scenario, result.name);

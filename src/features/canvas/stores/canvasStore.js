@@ -107,6 +107,7 @@ export const canvasPersistableSelector = (state) => ({
   columnCards: state.columnCards,
   mapsLinked: state.mapsLinked,
   fixLayout: state.fixLayout,
+  enableEdit: state.enableEdit,
   mapPos: state.mapPos,
   comparisonSetup: state.comparisonSetup,
   pathwayTimelinePlotConfig: state.pathwayTimelinePlotConfig,
@@ -116,6 +117,15 @@ export const canvasPersistableSelector = (state) => ({
   showKpiDeltas: state.showKpiDeltas,
   mapView: state.mapView,
 });
+
+// The navigator toggles a fresh canvas starts with. Each canvas saves its own
+// (`canvasSerialize`), so every flow that starts a canvas resets them.
+export const DEFAULT_CANVAS_TOGGLES = {
+  mapsLinked: true,
+  fixLayout: false,
+  enableEdit: true,
+  showKpiDeltas: false,
+};
 
 // Initial primary-map tile position. Used both by the store's
 // `mapPos` field at boot and by `startOver` to reset.
@@ -351,7 +361,7 @@ export const useCanvasStore = create((set, get) => ({
   // When `false`, each card is free to set its own view state and
   // shows its own toolbar. Defaults to `true` to match the behaviour
   // before this toggle existed.
-  mapsLinked: true,
+  mapsLinked: DEFAULT_CANVAS_TOGGLES.mapsLinked,
   setMapsLinked: (value) => set({ mapsLinked: !!value }),
 
   // The overview map's view toggles (see `utils/mapView`), which linked map cards follow.
@@ -369,7 +379,7 @@ export const useCanvasStore = create((set, get) => ({
   // wants to read absolute values; opt-in via the navigator's
   // "Show deltas" button (wired in Phase 2e). Ignored entirely
   // outside compare modes — origin-vs-self has no meaning.
-  showKpiDeltas: false,
+  showKpiDeltas: DEFAULT_CANVAS_TOGGLES.showKpiDeltas,
   setShowKpiDeltas: (value) => set({ showKpiDeltas: !!value }),
 
   // Transient: which perimeter `+` panel is currently expanded
@@ -402,7 +412,7 @@ export const useCanvasStore = create((set, get) => ({
   // a clean snapshot. Layout drag/resize is *not* affected by
   // this flag — that lives under `fixLayout` so users can lock
   // positions without giving up editing controls.
-  enableEdit: true,
+  enableEdit: DEFAULT_CANVAS_TOGGLES.enableEdit,
   setEnableEdit: (value) => set({ enableEdit: !!value }),
 
   // Layout lock. When `true`, every tile's drag handle + resize
@@ -411,7 +421,7 @@ export const useCanvasStore = create((set, get) => ({
   // editing controls (Edit / Delete buttons, perimeter `+`,
   // Add-a-plot pill, map toolbars, legends) all stay visible
   // unless `enableEdit` is also off.
-  fixLayout: false,
+  fixLayout: DEFAULT_CANVAS_TOGGLES.fixLayout,
   setFixLayout: (value) => set({ fixLayout: !!value }),
 
   // ── Persistence ──────────────────────────────────────────────

@@ -18,7 +18,11 @@
  * shape to emit / read.
  */
 
-import { MAP_ANCHOR_W, MAP_ANCHOR_H } from '../stores/canvasStore';
+import {
+  DEFAULT_CANVAS_TOGGLES,
+  MAP_ANCHOR_W,
+  MAP_ANCHOR_H,
+} from '../stores/canvasStore';
 import { deserializeMapView, serializeMapView } from './mapView';
 
 const SCHEMA_VERSION = 1;
@@ -112,6 +116,8 @@ export function serializeCanvas(state) {
     // The overview map's view toggles, which linked map cards follow.
     map_view: serializeMapView(state.mapView),
     fix_layout: !!state.fixLayout,
+    enable_edit: !!state.enableEdit,
+    show_kpi_deltas: !!state.showKpiDeltas,
     pathway_timeline_plot_config: state.pathwayTimelinePlotConfig ?? null,
     // Pathway-multi state — row dimensions and per-row plot-config
     // overrides. Persisted so resize / Edit-drawer changes survive
@@ -209,6 +215,10 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     mapsLinked: !!canvas.maps_linked,
     mapView: deserializeMapView(canvas.map_view),
     fixLayout: !!canvas.fix_layout,
+    // Canvases saved before these were saved get the fresh-canvas values.
+    enableEdit: canvas.enable_edit ?? DEFAULT_CANVAS_TOGGLES.enableEdit,
+    showKpiDeltas:
+      canvas.show_kpi_deltas ?? DEFAULT_CANVAS_TOGGLES.showKpiDeltas,
     pathwayTimelinePlotConfig: canvas.pathway_timeline_plot_config ?? null,
     pathwayMultiRowSize: canvas.pathway_multi_row_size ?? {
       width: null,
