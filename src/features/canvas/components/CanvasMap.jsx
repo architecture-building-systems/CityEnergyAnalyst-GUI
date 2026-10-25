@@ -47,6 +47,8 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
 const CanvasMap = ({
   project,
   scenario,
+  // `{ pathway_name, year }`: show that state of `scenario` (see `useColumnInputs`).
+  childScenario = null,
   showToolbar = true,
   // `false` skips the maplibre child to save a WebGL context per
   // tile (see DeckGLMap). Primary column tiles keep the basemap.
@@ -55,7 +57,7 @@ const CanvasMap = ({
   const resetCameraOptions = useScopedResetCameraOptions();
 
   const activeInputs = useInputs();
-  const columnInputs = useColumnInputs(scenario, project);
+  const columnInputs = useColumnInputs(scenario, project, childScenario);
   const { data, isFetching, isError, refetch } = scenario
     ? columnInputs
     : activeInputs;
@@ -64,7 +66,7 @@ const CanvasMap = ({
   useEffect(() => {
     refetch();
     resetCameraOptions();
-  }, [project, scenario, refetch, resetCameraOptions]);
+  }, [project, scenario, childScenario, refetch, resetCameraOptions]);
 
   return (
     <div style={wrapperStyle} onContextMenu={(e) => e.preventDefault()}>
@@ -86,7 +88,11 @@ const CanvasMap = ({
       />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
-          <InlineLayerToggle scenario={scenario} project={project} />
+          <InlineLayerToggle
+            scenario={scenario}
+            project={project}
+            childScenario={childScenario}
+          />
           <InlineExtrudeButton />
           <InlineResetCameraButton />
           <InlineResetCompassButton />
@@ -186,9 +192,9 @@ const InlineResetCompassButton = () => {
   );
 };
 
-const InlineLayerToggle = ({ scenario, project }) => {
+const InlineLayerToggle = ({ scenario, project, childScenario }) => {
   const active = useInputs();
-  const column = useColumnInputs(scenario, project);
+  const column = useColumnInputs(scenario, project, childScenario);
   const { data: inputData } = scenario ? column : active;
   const { geojsons: data } = inputData ?? {};
 

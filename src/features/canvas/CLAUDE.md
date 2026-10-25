@@ -442,6 +442,9 @@ the bottom card and column maps keep `columnDef.scenario` as the column's identi
 plus state for a pathway-state column -- and map-layer overrides
 (`MapLayerScenarioOverrideContext`) carry that `childScenario` through
 `useScopedProjectScenario`. The backend accepts only bare scenario names. Only the column header label swaps from the scenario name to `Y_<year>`.
+A built state path resolves only for a `pathway-state` column. A map that is not a column (a
+pathway-multi row's final-state map) names its state instead:
+`<CanvasMap scenario={parent} childScenario={{ pathway_name, year }} />` (→ `useColumnInputs`).
 
 ### DO: Render pathway chrome through `ComparisonView`, not new pages
 

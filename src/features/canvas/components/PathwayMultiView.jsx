@@ -603,12 +603,15 @@ const PathwayRow = ({
   }, [pathwayName, sharedRange, plotConfigOverride]);
 
   // Map shows the pathway's most-recent state — the natural
-  // "outcome snapshot" for a pathway-multi summary. Falls back to
-  // the parent scenario if the overview hasn't loaded yet.
-  const mapScenario =
-    lastYear != null
-      ? `${scenario}/outputs/pathways/${pathwayName}/state_${lastYear}`
-      : scenario;
+  // "outcome snapshot" for a pathway-multi summary — addressed as the
+  // parent scenario plus that state (the backend takes bare scenario
+  // names only). Falls back to the parent scenario if the overview
+  // hasn't loaded yet.
+  const mapState = useMemo(
+    () =>
+      lastYear != null ? { pathway_name: pathwayName, year: lastYear } : null,
+    [pathwayName, lastYear],
+  );
 
   // Per-row mapInstance store so each row's toolbar (Layers /
   // Extrude / Reset Camera / Reset Compass) and camera act on its
@@ -786,7 +789,8 @@ const PathwayRow = ({
             <div style={mapBodyStyle}>
               <CanvasMap
                 project={project}
-                scenario={mapScenario}
+                scenario={scenario}
+                childScenario={mapState}
                 showToolbar={showMapToolbar}
               />
             </div>

@@ -11,18 +11,24 @@ import { useScenarioRequestContext } from './useScenarioRequestContext';
  * Unlike `useInputs`, this targets an explicit scenario rather than
  * the active project scenario, so each comparison column can load
  * its own data independently.
+ *
+ * `childScenario` (`{ pathway_name, year }`) targets a state of `columnScenario` for callers
+ * that are not a canvas column (e.g. a pathway-multi row); a pathway-state column's state is
+ * otherwise resolved from the canvas columns.
  */
-export function useColumnInputs(columnScenario, project) {
+export function useColumnInputs(columnScenario, project, childScenario = null) {
   const activeProject = useProjectStore((state) => state.project);
   const effectiveProject = project ?? activeProject;
-  const { scenario, childScenario } = useScenarioRequestContext(columnScenario);
+  const { scenario, childScenario: columnState } =
+    useScenarioRequestContext(columnScenario);
+  const stateScenario = childScenario ?? columnState;
 
   return useQuery({
     queryKey: [
       'inputs',
       effectiveProject,
       scenario,
-      childScenarioToken(childScenario),
+      childScenarioToken(stateScenario),
     ],
     queryFn: async () => {
       if (!effectiveProject || !scenario) return {};
@@ -32,7 +38,7 @@ export function useColumnInputs(columnScenario, project) {
           headers: scenarioHeaders({
             project: effectiveProject,
             scenarioName: scenario,
-            childScenario,
+            childScenario: stateScenario,
           }),
         },
       );
