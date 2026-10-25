@@ -97,11 +97,10 @@ const NavigatorCard = () => {
   const showKpiDeltas = useCanvasStore((s) => s.showKpiDeltas);
   const setShowKpiDeltas = useCanvasStore((s) => s.setShowKpiDeltas);
   const view = useCanvasStore((s) => s.view);
-  // "Show Deltas" is only meaningful in compare modes — in launch
-  // there's no origin column to diff against. Pathway-multi
-  // qualifies because each row is a different pathway whose KPIs
-  // can be compared against the first row.
-  const isCompareMode = view !== 'launch';
+  // "Show Deltas" diffs KPI cards against the first column, so it is
+  // only meaningful in compare modes — launch has no origin column —
+  // and not in pathway-multi, whose rows carry no KPI cards.
+  const canShowDeltas = view !== 'launch' && view !== 'pathway-multi';
   const canvasName = useCanvasStore((s) => s.canvasName);
   const applyLoadedCanvas = useCanvasStore((s) => s.applyLoadedCanvas);
   const autosaveStatus = useCanvasStore((s) => s.autosaveStatus);
@@ -493,13 +492,13 @@ const NavigatorCard = () => {
               label="Enable Edit"
               ariaLabel="Show editing controls"
             />
-            {/* Show Deltas — only renders in compare modes
-                (inter-scenario / inter-whatif / pathway-single /
-                pathway-multi). Off by default so the chips don't
-                visually crowd canvases used purely for absolute
-                values; one click flips every non-origin KPI card
-                into delta-vs-origin mode. */}
-            {isCompareMode && (
+            {/* Show Deltas — only renders in compare modes with KPI
+                cards (inter-scenario / inter-whatif / pathway-single).
+                Off by default so the chips don't visually crowd
+                canvases used purely for absolute values; one click
+                flips every non-origin KPI card into delta-vs-origin
+                mode. */}
+            {canShowDeltas && (
               <NavigatorToggle
                 checked={showKpiDeltas}
                 onChange={setShowKpiDeltas}
