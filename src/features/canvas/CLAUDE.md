@@ -258,6 +258,24 @@ View-state hooks honour the `Sync Maps` toggle on `canvasStore`:
 (main viewport, primary overview tile) every scoped hook falls back
 to the singleton.
 
+### DO: Save view toggles with the canvas, and only default what is unset
+
+The view toggles (`colorMode`, `mapLabels`, `visibility`, `extruded`; `utils/mapView`) save
+per card as `card.mapView` (set while unlinked) and for the overview map as
+`canvasStore.mapView`, which `CanvasPage` copies from the shared `mapStore`.
+`applyLoadedCanvas` applies a saved overview view back to `mapStore` -- after the canvas swap,
+or the copy lands in the previous canvas -- so loading a canvas also sets the main map's
+toggles. `CanvasMap`'s toolbar fills in only layers with no visibility yet, and sets archetype
+colours only when `visibility.zone` is unset (a map's first sight of its zone); a forced
+default on mount would overwrite the restored view. Its checkboxes are controlled by the store.
+
+Pathway-multi rows own their stores (`ForceScopedMapContext`), so neither the singleton link
+nor `card.mapView` reaches them: each row saves to `pathwayMultiMapViews[pathwayName]` and
+re-applies it on every `loadVersion` bump (rows are keyed by pathway name, so opening another
+canvas with the same pathways keeps them mounted), and
+with Sync Maps on, `PathwayMultiView` copies row 1's camera and toggles to rows 2+ live
+(only row 1 then shows a map toolbar; with Sync Maps off every row does, whatever the rows lock).
+
 ### DO: Hide FeatureCardMap toolbars when `mapsLinked` is on
 
 `CanvasMap` accepts `showToolbar` (default `true`). The primary

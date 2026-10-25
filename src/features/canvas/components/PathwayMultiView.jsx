@@ -18,6 +18,12 @@ import CanvasScenarioHeader from './CanvasScenarioHeader';
 import CanvasMap from './CanvasMap';
 import CanvasPlot from './CanvasPlot';
 import { fitPlotToParent } from '../utils/plotResize';
+import {
+  MAP_VIEW_KEYS,
+  linkMapStores,
+  mapViewChanged,
+  pickMapView,
+} from '../utils/mapView';
 import PathwayCompareSelect from './PathwayCompareSelect';
 import { FeatureCardShell } from './FeatureCardShell';
 import {
@@ -51,6 +57,11 @@ const VIEW_STATE_KEYS = [
   'filters',
 ];
 const MAP_SYNC_KEYS = ['cameraOptions', ...VIEW_STATE_KEYS];
+
+// What rows 2+ copy from row 1, live, while Sync Maps is on: the camera
+// and the view toggles -- as map cards follow the overview map in the
+// other views.
+const ROW_FOLLOW_KEYS = ['viewState', ...MAP_VIEW_KEYS];
 
 const snapshotMapView = () => {
   const singleton = useMapStore.getState();
@@ -280,6 +291,8 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
   // to shared, so toggling lock never silently drops a per-row edit.
   const mirrorsLocked = useCanvasStore((s) => s.mirrorsLocked);
   const setMirrorsLocked = useCanvasStore((s) => s.setMirrorsLocked);
+  // Sync Maps: rows 2+ follow row 1's map (see the effect below).
+  const mapsLinked = useCanvasStore((s) => s.mapsLinked);
   const enterPathwayMulti = useCanvasStore((s) => s.enterPathwayMulti);
   const stopCompareMode = useCanvasStore((s) => s.stopCompareMode);
   const { data: overview } = usePathwayOverview();
@@ -418,6 +431,21 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
     }, 1500);
   }, [pathwayNames, mirrorsLocked, replacePathwayMultiPlotConfigs]);
 
+  // Sync Maps on: rows 2+ follow row 1's camera and view toggles live.
+  // The rows' own stores (`ForceScopedMapContext`) bypass the singleton
+  // the other views link through, so link them here. Runs after the rows'
+  // effects, so every row store is registered.
+  const pathwayKey = pathwayNames.join('\n');
+  useEffect(() => {
+    const [first, ...rest] = pathwayKey ? pathwayKey.split('\n') : [];
+    const leader = mapStoresRef.current.get(first);
+    const followers = rest
+      .map((name) => mapStoresRef.current.get(name))
+      .filter(Boolean);
+    if (!mapsLinked || !leader || followers.length === 0) return undefined;
+    return linkMapStores(leader, followers, ROW_FOLLOW_KEYS);
+  }, [mapsLinked, pathwayKey]);
+
   // Map of pathway -> { years, lastYear }. `years` drives the
   // dashed reference lines drawn at every state year on the
   // chart; `lastYear` selects the title-map's scenario folder
@@ -500,6 +528,7 @@ const PathwayMultiView = ({ onOpenDrawer } = {}) => {
                     enableEdit={enableEdit}
                     layoutLocked={fixLayout}
                     locked={mirrorsLocked}
+                    mapsLinked={mapsLinked}
                     onToggleLock={() => setMirrorsLocked(!mirrorsLocked)}
                     onRefresh={handleRefreshAll}
                     refreshTick={refreshTick}
@@ -556,6 +585,7 @@ const PathwayRow = ({
   enableEdit,
   layoutLocked,
   locked,
+  mapsLinked,
   onToggleLock,
   onRefresh,
   refreshTick,
@@ -622,11 +652,38 @@ const PathwayRow = ({
   // with the singleton snapshot (chrome only — no `cameraOptions`)
   // so the map opens at the singleton's current view before
   // `useCameraFitBounds` settles it onto the row's zone.
+  // A saved view for this row (colours, labels, layer visibility, 3D)
+  // goes over the snapshot.
   const [mapStore] = useState(() => {
     const s = createMapInstanceStore();
     s.setState(snapshotMapView());
+    const saved = useCanvasStore.getState().pathwayMultiMapViews[pathwayName];
+    if (saved) s.setState(saved);
     return s;
   });
+
+  // A canvas loaded while this row stays mounted (same pathway, e.g.
+  // opened from the switcher) brings its own saved view: apply it, as the
+  // initializer above does on mount.
+  const loadVersion = useCanvasStore((s) => s.loadVersion);
+  useEffect(() => {
+    const saved = useCanvasStore.getState().pathwayMultiMapViews[pathwayName];
+    if (saved) mapStore.setState(saved);
+  }, [loadVersion, mapStore, pathwayName]);
+
+  // Save this row's view toggles with the canvas.
+  const setPathwayMultiMapView = useCanvasStore(
+    (s) => s.setPathwayMultiMapView,
+  );
+  useEffect(
+    () =>
+      mapStore.subscribe((state, prev) => {
+        if (mapViewChanged(state, prev)) {
+          setPathwayMultiMapView(pathwayName, pickMapView(state));
+        }
+      }),
+    [mapStore, pathwayName, setPathwayMultiMapView],
+  );
 
   // Register this row's map store with the parent so the Refresh
   // handler can reach in and mirror row 1's view across the others
@@ -666,20 +723,21 @@ const PathwayRow = ({
     'Pathway Emission Timeline'
   );
 
-  // Toolbar gating mirrors compare-mode editing: when rows are
-  // locked, only the FIRST row exposes the four-button map toolbar
-  // (origin-only); when unlocked, every row's toolbar shows so each
-  // map can be panned / styled independently. Always gated on
-  // `enableEdit` so Export View hides the chrome everywhere. The
-  // chart card's three-button row (Edit / Refit / Delete) follows
-  // the same `(!locked || isFirst)` rule.
+  // Editing chrome, always gated on `enableEdit` so Export View hides
+  // it everywhere:
+  //  - map toolbar follows Sync Maps, as map cards' toolbars do in the
+  //    other views: on → rows 2+ follow row 1's map, so only row 1 has
+  //    one; off → every row's map is its own, so every row has one.
+  //  - the chart card's three-button row (Edit / Refit / Delete)
+  //    follows the rows lock: locked → first row only; unlocked → every
+  //    row.
   //
   // `layoutLocked` (= store.fixLayout, the navigator's Freeze Layout
   // toggle) is intentionally NOT factored in here — it freezes
   // *layout* (resize handles), not editing chrome. Mirrors how
   // `CanvasColumn` keeps Edit / Delete / toolbars visible when the
   // grid is frozen.
-  const showMapToolbar = enableEdit && (!locked || isFirst);
+  const showMapToolbar = enableEdit && (isFirst || !mapsLinked);
   const showCardActions = enableEdit && (!locked || isFirst);
   // Resize affordances follow `fixLayout` only — Export View
   // (`enableEdit === false`) doesn't freeze the layout, mirroring

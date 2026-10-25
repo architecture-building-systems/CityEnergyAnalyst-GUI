@@ -19,8 +19,12 @@
  */
 
 import { MAP_ANCHOR_W, MAP_ANCHOR_H } from '../stores/canvasStore';
+import { deserializeMapView, serializeMapView } from './mapView';
 
 const SCHEMA_VERSION = 1;
+
+const mapValues = (obj, fn) =>
+  Object.fromEntries(Object.entries(obj ?? {}).map(([k, v]) => [k, fn(v)]));
 const DEFAULT_MAP_POS = { x: 0, y: 0, w: MAP_ANCHOR_W, h: MAP_ANCHOR_H };
 
 const cardLayoutFromStore = (card) => ({
@@ -51,6 +55,9 @@ const cardConfigFromStore = (card) => ({
   // fetch. Persisted alongside parameters so the slider knobs
   // come back where the user left them.
   map_filters: card.filters ?? null,
+  // Map-card view toggles (colours, labels, layer visibility, 3D) the
+  // card set for itself while maps were unlinked.
+  map_view: serializeMapView(card.mapView),
   // Persisted high-water mark of the plot's reported pixel height
   // (`onPreferredHeight`). Carried so reload doesn't re-fire the
   // initial auto-grow against a user who has manually shrunk the
@@ -102,6 +109,8 @@ export function serializeCanvas(state) {
       year: c.year ?? null,
     })),
     maps_linked: !!state.mapsLinked,
+    // The overview map's view toggles, which linked map cards follow.
+    map_view: serializeMapView(state.mapView),
     fix_layout: !!state.fixLayout,
     pathway_timeline_plot_config: state.pathwayTimelinePlotConfig ?? null,
     // Pathway-multi state — row dimensions and per-row plot-config
@@ -110,6 +119,10 @@ export function serializeCanvas(state) {
     // store's initial values when absent (fresh canvases).
     pathway_multi_row_size: state.pathwayMultiRowSize ?? null,
     pathway_multi_plot_configs: state.pathwayMultiPlotConfigs ?? null,
+    pathway_multi_map_views: mapValues(
+      state.pathwayMultiMapViews,
+      serializeMapView,
+    ),
     comparison_setup: state.comparisonSetup
       ? {
           kind: state.comparisonSetup.kind,
@@ -194,6 +207,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     })),
     parentScenario: canvas.parent_scenario ?? null,
     mapsLinked: !!canvas.maps_linked,
+    mapView: deserializeMapView(canvas.map_view),
     fixLayout: !!canvas.fix_layout,
     pathwayTimelinePlotConfig: canvas.pathway_timeline_plot_config ?? null,
     pathwayMultiRowSize: canvas.pathway_multi_row_size ?? {
@@ -202,6 +216,10 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
       mapWidth: 320,
     },
     pathwayMultiPlotConfigs: canvas.pathway_multi_plot_configs ?? {},
+    pathwayMultiMapViews: mapValues(
+      canvas.pathway_multi_map_views,
+      deserializeMapView,
+    ),
     canvasName: canvas.name ?? null,
     comparisonSetup: canvas.comparison_setup
       ? {
@@ -242,6 +260,7 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     layer: configEntry.layer ?? undefined,
     mapLayerParameters: configEntry.map_layer_parameters ?? undefined,
     filters: configEntry.map_filters ?? undefined,
+    mapView: deserializeMapView(configEntry.map_view) ?? undefined,
     maxReportedHeightPx: configEntry.max_reported_height_px ?? undefined,
     html: configEntry.html ?? undefined,
     divider: configEntry.divider ?? undefined,

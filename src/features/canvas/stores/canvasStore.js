@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 
+import { useMapStore } from 'features/map/stores/mapStore';
+
+import { sameMapView } from '../utils/mapView';
+
 /**
  * Canvas Builder store.
  *
@@ -46,6 +50,26 @@ const shallowEqual = (a, b) => {
   return ka.every((k) => Object.is(a[k], b[k]));
 };
 
+// Write `value` to one field of one card, skipping a no-op (`same`) so store-sync effects
+// that re-emit an unchanged value don't trigger an autosave.
+const setCardField = (
+  get,
+  columnIndex,
+  cardId,
+  key,
+  value,
+  same = shallowEqual,
+) => {
+  const { getCards, setCards } = get();
+  const cards = getCards(columnIndex);
+  const target = cards.find((c) => c.id === cardId);
+  if (!target || same(target[key], value)) return;
+  setCards(
+    columnIndex,
+    cards.map((c) => (c.id === cardId ? { ...c, [key]: value } : c)),
+  );
+};
+
 // Default card size in grid units. See CanvasColumn's <GridLayout>
 // config for the pixel mapping. Map's default footprint
 // (MAP_DEFAULT_W/H) lives in CanvasColumn and is mirrored below as
@@ -88,7 +112,9 @@ export const canvasPersistableSelector = (state) => ({
   pathwayTimelinePlotConfig: state.pathwayTimelinePlotConfig,
   pathwayMultiRowSize: state.pathwayMultiRowSize,
   pathwayMultiPlotConfigs: state.pathwayMultiPlotConfigs,
+  pathwayMultiMapViews: state.pathwayMultiMapViews,
   showKpiDeltas: state.showKpiDeltas,
+  mapView: state.mapView,
 });
 
 // Initial primary-map tile position. Used both by the store's
@@ -327,6 +353,14 @@ export const useCanvasStore = create((set, get) => ({
   // before this toggle existed.
   mapsLinked: true,
   setMapsLinked: (value) => set({ mapsLinked: !!value }),
+
+  // The overview map's view toggles (see `utils/mapView`), which linked map cards follow.
+  // The overview map draws from the shared `mapStore` -- the main dashboard map's store too
+  // -- so `CanvasPage` copies its toggles here for autosave, and loading a canvas applies
+  // them back (`applyLoadedCanvas`), changing the main map's toggles as well.
+  mapView: null,
+  setMapView: (mapView) =>
+    set((state) => (sameMapView(state.mapView, mapView) ? {} : { mapView })),
 
   // Compare-mode toggle: when `true`, every non-origin KPI card
   // renders a `DeltaChip` next to its value showing the % change
@@ -641,20 +675,39 @@ export const useCanvasStore = create((set, get) => ({
   replacePathwayMultiPlotConfigs: (next) =>
     set({ pathwayMultiPlotConfigs: next || {} }),
 
+  // Each pathway-multi row's map view toggles (`utils/mapView`), keyed by
+  // pathway name.
+  pathwayMultiMapViews: {},
+  setPathwayMultiMapView: (pathwayName, mapView) =>
+    set((state) =>
+      sameMapView(state.pathwayMultiMapViews[pathwayName], mapView)
+        ? {}
+        : {
+            pathwayMultiMapViews: {
+              ...state.pathwayMultiMapViews,
+              [pathwayName]: mapView,
+            },
+          },
+    ),
+
   /**
    * Replace the editable slice of state with a deserialised canvas
    * read from the backend. Pass the partial returned by
    * `deserializeCanvas`; this layer handles the load-version bump
    * so the persistence hook resyncs its snapshot baseline silently.
    */
-  applyLoadedCanvas: (partial) =>
+  applyLoadedCanvas: (partial) => {
     set((state) => ({
       ...partial,
       // Drop history — undo across a canvas swap would jump
       // between unrelated documents.
       undoStack: [],
       loadVersion: state.loadVersion + 1,
-    })),
+    }));
+    // After the swap: `CanvasPage` copies `mapStore` changes into the
+    // current canvas, which must already be this one.
+    if (partial.mapView) useMapStore.setState(partial.mapView);
+  },
 
   // ── View transitions ────────────────────────────────────────
 
@@ -844,6 +897,7 @@ export const useCanvasStore = create((set, get) => ({
       pathwayTimelinePlotConfig: null,
       pathwayMultiRowSize: { width: null, height: 320, mapWidth: 320 },
       pathwayMultiPlotConfigs: {},
+      pathwayMultiMapViews: {},
     }),
 
   // ── Column management ───────────────────────────────────────
@@ -1165,17 +1219,14 @@ export const useCanvasStore = create((set, get) => ({
    * by design — mirrors keep their own selections. Driven by
    * `FeatureCardMap`'s store-sync effect.
    */
-  setCardMapLayerParameters: (columnIndex, cardId, mapLayerParameters) => {
-    const { getCards, setCards } = get();
-    const cards = getCards(columnIndex);
-    const target = cards.find((c) => c.id === cardId);
-    if (!target) return;
-    if (shallowEqual(target.mapLayerParameters, mapLayerParameters)) return;
-    const next = cards.map((c) =>
-      c.id === cardId ? { ...c, mapLayerParameters } : c,
-    );
-    setCards(columnIndex, next);
-  },
+  setCardMapLayerParameters: (columnIndex, cardId, mapLayerParameters) =>
+    setCardField(
+      get,
+      columnIndex,
+      cardId,
+      'mapLayerParameters',
+      mapLayerParameters,
+    ),
 
   /**
    * Persist a map-card's `filters` slice (radius / scale / range
@@ -1183,15 +1234,16 @@ export const useCanvasStore = create((set, get) => ({
    * fetch payload). Same per-column lifecycle as
    * `setCardMapLayerParameters`.
    */
-  setCardFilters: (columnIndex, cardId, filters) => {
-    const { getCards, setCards } = get();
-    const cards = getCards(columnIndex);
-    const target = cards.find((c) => c.id === cardId);
-    if (!target) return;
-    if (shallowEqual(target.filters, filters)) return;
-    const next = cards.map((c) => (c.id === cardId ? { ...c, filters } : c));
-    setCards(columnIndex, next);
-  },
+  setCardFilters: (columnIndex, cardId, filters) =>
+    setCardField(get, columnIndex, cardId, 'filters', filters),
+
+  /**
+   * Persist a map card's own view toggles (`utils/mapView`) -- set while
+   * maps are unlinked. Same per-column lifecycle as
+   * `setCardMapLayerParameters`.
+   */
+  setCardMapView: (columnIndex, cardId, mapView) =>
+    setCardField(get, columnIndex, cardId, 'mapView', mapView, sameMapView),
 
   /**
    * Persist a text card's HTML payload onto the card itself —
