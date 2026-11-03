@@ -118,12 +118,14 @@ const BuildingsSelectInput = ({
   value,
   onChange,
   choices,
+  placeholder,
   selectionActive,
   onStart,
   onConfirm,
   onCancel,
   constTypeMap,
   useTypeMap,
+  showTypeFilters,
 }) => {
   const [constKeys, setConstKeys] = useState([]);
   const [useKeys, setUseKeys] = useState([]);
@@ -182,7 +184,7 @@ const BuildingsSelectInput = ({
           width: '100%',
           ...(selectionActive && { boxShadow: '0 0 0 2px #1677ff' }),
         }}
-        placeholder="All Buildings"
+        placeholder={placeholder}
         maxTagCount={10}
         popupRender={(menu) => (
           <div>
@@ -218,7 +220,7 @@ const BuildingsSelectInput = ({
           onConfirm={onConfirm}
           onCancel={onCancel}
         />
-        {!selectionActive && (
+        {!selectionActive && showTypeFilters && (
           <>
             <TypeFilterDropdown
               label="By Const. Type"
@@ -265,7 +267,14 @@ const BuildingsParameter = ({
   nullable,
   setFieldsValue,
   form,
+  type = 'BuildingsParameter',
 }) => {
+  const layer =
+    type === 'SurroundingsBuildingsParameter' ? 'surroundings' : 'zone';
+  // Only `BuildingsParameter` reads blank as every building; the others read it as none.
+  const placeholder =
+    type === 'BuildingsParameter' ? 'All Buildings' : 'No Buildings';
+
   const idRef = useRef(Symbol());
   const globalSelectionActive = useBuildingSelectionActive();
   const sessionOwner = useBuildingSelectionOwner();
@@ -306,7 +315,7 @@ const BuildingsParameter = ({
   const handleStartSelection = () => {
     const currentValue = form.getFieldValue(name) ?? [];
     previousValueRef.current = currentValue;
-    startSelection(choices, idRef.current);
+    startSelection(choices, idRef.current, layer);
     // Pre-populate with current selection
     useBuildingSelectionStore.getState().setBuildings(currentValue);
   };
@@ -383,12 +392,15 @@ const BuildingsParameter = ({
     >
       <BuildingsSelectInput
         choices={choices}
+        placeholder={placeholder}
         selectionActive={selectionActive}
         onStart={handleStartSelection}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
         constTypeMap={constTypeMap}
         useTypeMap={useTypeMap}
+        // Surroundings carry no construction or use type, so there is nothing to filter by.
+        showTypeFilters={layer === 'zone'}
       />
     </FormField>
   );

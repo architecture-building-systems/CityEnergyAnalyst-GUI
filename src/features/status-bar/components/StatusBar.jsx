@@ -238,6 +238,18 @@ const JobStatusBar = () => {
             depsRef.current.bumpChoicesRevision();
           }
 
+          // zone-surrounding-exchanger rewrites zone.shp and surroundings.shp
+          // and deletes results, so the map, the input editor and every
+          // results-backed map layer must reload.
+          if (job.script === 'zone-surrounding-exchanger') {
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: MAP_LAYER_CATEGORIES_QUERY_KEY,
+            });
+            depsRef.current.queryClient.invalidateQueries({
+              queryKey: ['inputs'],
+            });
+          }
+
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
           const hasToolResult = !!VIEW_TOOL_RESULTS[job.script];
 

@@ -561,6 +561,9 @@ const DeckGLMap = ({
   const buildingSelectionBuildings = useBuildingSelectionStore(
     (state) => state.selectedBuildings,
   );
+  const buildingSelectionLayer = useBuildingSelectionStore(
+    (state) => state.layer,
+  );
 
   const baseViewState = useScopedViewState();
   const setBaseViewState = useScopedSetViewState();
@@ -650,6 +653,7 @@ const DeckGLMap = ({
         useTypeColorMap,
         buildingSelectionActive,
         buildingSelectionBuildings,
+        buildingSelectionLayer,
       ),
     [
       colors,
@@ -659,6 +663,7 @@ const DeckGLMap = ({
       useTypeColorMap,
       buildingSelectionActive,
       buildingSelectionBuildings,
+      buildingSelectionLayer,
     ],
   );
 
@@ -686,11 +691,12 @@ const DeckGLMap = ({
       : ({ object, layer }, event) => {
           const name = object.properties[INDEX_COLUMN];
 
-          // When building selection mode is active, route clicks to the store
-          // Only zone buildings can be selected, not surroundings
-          if (useBuildingSelectionStore.getState().active) {
-            if (layer.id === 'zone') {
-              useBuildingSelectionStore.getState().toggleBuilding(name);
+          // When building selection mode is active, route clicks to the store.
+          // Only buildings on the layer being picked from can be selected.
+          const buildingSelection = useBuildingSelectionStore.getState();
+          if (buildingSelection.active) {
+            if (layer.id === buildingSelection.layer) {
+              buildingSelection.toggleBuilding(name);
             }
             return;
           }
@@ -758,6 +764,7 @@ const DeckGLMap = ({
               useTypeColorMap,
               buildingSelectionActive,
               buildingSelectionBuildings,
+              buildingSelectionLayer,
               stateZoneOverride,
             ],
           },
@@ -830,7 +837,12 @@ const DeckGLMap = ({
           getElevation: (f) => f.properties['height_ag'],
           getFillColor: (f) => buildingColor(f, 'surroundings'),
           updateTriggers: {
-            getFillColor: [selected],
+            getFillColor: [
+              selected,
+              buildingSelectionActive,
+              buildingSelectionBuildings,
+              buildingSelectionLayer,
+            ],
           },
 
           pickable: true,
@@ -906,6 +918,7 @@ const DeckGLMap = ({
     buildingColor,
     buildingSelectionActive,
     buildingSelectionBuildings,
+    buildingSelectionLayer,
     setSelected,
     updateTooltip,
     stateZoneOverride,
@@ -991,12 +1004,17 @@ const buildingColorFunction =
     useTypeColorMap,
     buildingSelectionActive,
     buildingSelectionBuildings,
+    buildingSelectionLayer,
   ) =>
   (feature, layer) => {
     const buildingName = feature?.properties?.[INDEX_COLUMN];
 
     if (buildingSelectionActive) {
-      if (buildingSelectionBuildings.includes(buildingName)) {
+      // Layer-aware: a zone building and a surrounding building can share a name.
+      if (
+        layer === buildingSelectionLayer &&
+        buildingSelectionBuildings.includes(buildingName)
+      ) {
         return [46, 134, 193, 220];
       }
 

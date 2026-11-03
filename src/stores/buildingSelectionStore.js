@@ -5,8 +5,10 @@ const useBuildingSelectionStore = create((set, get) => ({
   selectedBuildings: [],
   availableChoices: [],
   sessionOwner: null,
+  // Map layer whose buildings can be picked: 'zone' or 'surroundings'.
+  layer: 'zone',
 
-  startSelection: (choices, ownerId) => {
+  startSelection: (choices, ownerId, layer = 'zone') => {
     // Cancel any existing selection first
     const { active, cancelSelection } = get();
     if (active) cancelSelection();
@@ -16,6 +18,7 @@ const useBuildingSelectionStore = create((set, get) => ({
       selectedBuildings: [],
       availableChoices: choices ?? [],
       sessionOwner: ownerId,
+      layer,
     });
   },
 
@@ -46,6 +49,7 @@ const useBuildingSelectionStore = create((set, get) => ({
       selectedBuildings: [],
       availableChoices: [],
       sessionOwner: null,
+      layer: 'zone',
     });
   },
 
@@ -55,6 +59,7 @@ const useBuildingSelectionStore = create((set, get) => ({
       selectedBuildings: [],
       availableChoices: [],
       sessionOwner: null,
+      layer: 'zone',
     });
   },
 }));

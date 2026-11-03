@@ -512,6 +512,7 @@ const Parameter = ({
     }
     case 'BuildingsParameter':
     case 'OptionalBuildingsParameter':
+    case 'SurroundingsBuildingsParameter':
     case 'PathwayConstructBuildingsParameter':
     case 'PathwayDemolishBuildingsParameter': {
       return (
@@ -523,6 +524,7 @@ const Parameter = ({
           nullable={nullable}
           setFieldsValue={setFieldsValue}
           form={form}
+          type={type}
         />
       );
     }
