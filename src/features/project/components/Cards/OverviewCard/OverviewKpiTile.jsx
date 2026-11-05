@@ -27,8 +27,12 @@
 import { Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
-import { useFetchKpiValue } from 'features/canvas/hooks/useFetchKpis';
+import {
+  useFetchKpiRegistry,
+  useFetchKpiValue,
+} from 'features/canvas/hooks/useFetchKpis';
 import { formatKpiNumber } from 'features/canvas/utils/formatKpiValue';
+import { convertKpiValue } from 'features/canvas/utils/kpiDisplayUnit';
 
 const OverviewKpiTile = ({
   card,
@@ -54,10 +58,21 @@ const OverviewKpiTile = ({
     whatif,
   });
 
+  // The value is in the KPI's base unit; apply the card's display
+  // unit (none for ribbon cards today, so they show the base unit).
+  const { data: registry } = useFetchKpiRegistry();
+
   if (!kpiId) return null;
 
+  const registryEntry = registry?.kpis?.find((k) => k.id === kpiId) ?? null;
+  const shown = convertKpiValue(
+    kpi?.value,
+    registryEntry,
+    card?.displayUnit ?? null,
+    kpi?.unit,
+  );
   const available = !!kpi && kpi.available !== false;
-  const valueText = available ? formatKpiNumber(kpi.value, kpi.unit) : '—';
+  const valueText = available ? formatKpiNumber(shown.value, shown.unit) : '—';
   const showSkeleton = isLoading || !kpi;
 
   // Bottom-line hint string for unavailable / error states. Same
@@ -98,7 +113,7 @@ const OverviewKpiTile = ({
           {showSkeleton ? '\u00A0' : valueText}
         </span>
         <span style={unitStyle}>
-          {showSkeleton ? '\u00A0' : (kpi?.unit ?? '')}
+          {showSkeleton ? '\u00A0' : shown.unit}
         </span>
       </div>
     </div>

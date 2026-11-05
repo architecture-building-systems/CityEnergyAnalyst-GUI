@@ -205,6 +205,7 @@ const makeCard = ({
   layer,
   kpiId,
   locatorArgs,
+  displayUnit,
 }) => {
   const cardType = type ?? 'plot';
   const isText = cardType === 'text';
@@ -249,6 +250,11 @@ const makeCard = ({
     // vs `panel_type=amorphous`). Null/empty for KPIs whose yml
     // `locator_args` are fully fixed.
     locatorArgs: isKpi ? (locatorArgs ?? null) : undefined,
+    // Unit the value is shown in. Presentation only: the backend
+    // always returns the KPI's base unit and the GUI converts, so
+    // this stays out of `locatorArgs` (the query key + request).
+    // `null` follows the base unit.
+    displayUnit: isKpi ? (displayUnit ?? null) : undefined,
   };
 };
 
@@ -283,6 +289,7 @@ const insertCardInto = (
     layer,
     kpiId,
     locatorArgs,
+    displayUnit,
   },
   // Optional override for compare-mode fan-out: every column
   // gets the SAME card id and plot identities at insert time so
@@ -326,6 +333,7 @@ const insertCardInto = (
     layer,
     kpiId,
     locatorArgs,
+    displayUnit,
   });
   // Apply override AFTER `makeCard` so the override's id / plots
   // win over the freshly-generated ones.
@@ -1002,6 +1010,7 @@ export const useCanvasStore = create((set, get) => ({
       layer,
       kpiId,
       locatorArgs,
+      displayUnit,
     },
   ) => {
     const state = get();
@@ -1018,6 +1027,7 @@ export const useCanvasStore = create((set, get) => ({
         layer,
         kpiId,
         locatorArgs,
+        displayUnit,
       });
       set({ launchCards: next });
       return next[next.length - 1].id;
@@ -1043,6 +1053,7 @@ export const useCanvasStore = create((set, get) => ({
           layer,
           kpiId,
           locatorArgs,
+          displayUnit,
         },
         // Force a stable id + pre-built plots across columns so
         // the per-column dispatch can find the card by id later.
@@ -1063,12 +1074,21 @@ export const useCanvasStore = create((set, get) => ({
    * pattern as ``addCard``) so every mirror agrees on which KPI
    * each shared row binds to.
    */
-  replaceKpiCard: (columnIndex, cardId, { kpiId, locatorArgs }) => {
+  replaceKpiCard: (
+    columnIndex,
+    cardId,
+    { kpiId, locatorArgs, displayUnit },
+  ) => {
     const state = get();
     const apply = (cards) =>
       cards.map((c) =>
         c.id === cardId && c.type === 'kpi'
-          ? { ...c, kpiId: kpiId ?? null, locatorArgs: locatorArgs ?? null }
+          ? {
+              ...c,
+              kpiId: kpiId ?? null,
+              locatorArgs: locatorArgs ?? null,
+              displayUnit: displayUnit ?? null,
+            }
           : c,
       );
     if (columnIndex === 'launch') {

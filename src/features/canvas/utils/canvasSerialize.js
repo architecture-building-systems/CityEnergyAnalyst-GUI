@@ -86,6 +86,9 @@ const cardConfigFromStore = (card) => ({
   // same KPI but different overrides cache + display distinct
   // values. ``null`` when the card uses yml defaults.
   locator_args: card.locatorArgs ?? null,
+  // KPI cards' display unit. Presentation only (the GUI converts from
+  // the base unit), so it is saved apart from ``locator_args``.
+  display_unit: card.displayUnit ?? null,
 });
 
 /**
@@ -254,6 +257,17 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
       : { ...DEFAULT_MAP_POS },
   };
 
+  const splitLegacyUnit = (configEntry) => {
+    const saved = configEntry.locator_args;
+    const { unit: legacyUnit, ...rest } = saved ?? {};
+    let locatorArgs; // no saved args -> undefined, as before
+    if (saved) locatorArgs = Object.keys(rest).length > 0 ? rest : null;
+    return {
+      locatorArgs,
+      displayUnit: configEntry.display_unit ?? legacyUnit ?? undefined,
+    };
+  };
+
   const buildCard = (id, layoutEntry, configEntry) => ({
     id,
     type: configEntry.type,
@@ -278,8 +292,10 @@ export function deserializeCanvas({ canvas, layout, feature_card }) {
     // ``null``) for non-KPI cards so the in-memory shape matches
     // the rest of the camelCase fields on this object.
     kpiId: configEntry.kpi_id ?? undefined,
-    // Round-trip the per-card locator-args override.
-    locatorArgs: configEntry.locator_args ?? undefined,
+    // Round-trip the per-card locator-args override. Older saves kept the
+    // display unit inside it as ``unit``; the backend now rejects that key,
+    // so move it to ``displayUnit`` and strip it.
+    ...splitLegacyUnit(configEntry),
   });
 
   const isCompare = next.view !== 'launch';

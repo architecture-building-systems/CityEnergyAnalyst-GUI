@@ -49,6 +49,7 @@ import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
 import { useFetchKpiRegistry, useFetchKpiValue } from '../hooks/useFetchKpis';
 import { findFamilyForFeature } from '../utils/featureFamily';
 import { formatKpiNumber } from '../utils/formatKpiValue';
+import { convertKpiValue } from '../utils/kpiDisplayUnit';
 import DeltaChip from './DeltaChip';
 
 // `kpiId` shape is `<feature>.<short_name>` — split once so we
@@ -181,6 +182,9 @@ const FeatureCardKpi = ({
       null,
     [registry, kpiId, kpi?.category],
   );
+  // The value always arrives in the KPI's base unit; the card's own
+  // `displayUnit` (never part of the request) is applied in the body.
+  const registryEntry = registry?.kpis?.find((k) => k.id === kpiId) ?? null;
 
   const showCardActions = enableEdit && !readOnly;
 
@@ -267,6 +271,8 @@ const FeatureCardKpi = ({
         isError={isError}
         error={error}
         baseline={baseline}
+        registryEntry={registryEntry}
+        displayUnit={card?.displayUnit ?? null}
         showDeltas={showDeltas && !readOnly}
       />
 
@@ -368,14 +374,29 @@ const KpiBody = ({
   isError,
   error,
   baseline,
+  registryEntry,
+  displayUnit,
   showDeltas,
 }) => {
   const available = !!kpi && kpi.available !== false;
+  // Card value and compare baseline share one unit.
+  const shown = convertKpiValue(
+    kpi?.value,
+    registryEntry,
+    displayUnit,
+    kpi?.unit,
+  );
+  const shownBaseline = convertKpiValue(
+    baseline,
+    registryEntry,
+    displayUnit,
+    kpi?.unit,
+  ).value;
   const featureLabel = categoryLabel(category) ?? titleCase(feature);
   const annotations = available ? (kpi.annotations ?? []) : [];
   const label = kpi?.label ?? fallbackLabel(kpiId);
   const infoNote = kpi?.info_note;
-  const valueText = available ? formatKpiNumber(kpi.value, kpi.unit) : '—';
+  const valueText = available ? formatKpiNumber(shown.value, shown.unit) : '—';
   const showSkeleton = isLoading || !kpi;
 
   return (
@@ -407,8 +428,8 @@ const KpiBody = ({
         {!showSkeleton && available && showDeltas && baseline != null && (
           <div style={infoRowDeltaStyle}>
             <DeltaChip
-              value={kpi.value}
-              baseline={baseline}
+              value={shown.value}
+              baseline={shownBaseline}
               betterDirection={kpi.better_direction}
             />
           </div>
@@ -421,7 +442,7 @@ const KpiBody = ({
       </div>
 
       {/* Row 6 — unit */}
-      <div style={unitStyle}>{showSkeleton ? '\u00A0' : (kpi?.unit ?? '')}</div>
+      <div style={unitStyle}>{showSkeleton ? '\u00A0' : shown.unit}</div>
 
       {/* Optional add-ons below the fixed six rows */}
       {!showSkeleton && annotations.length > 0 && (
