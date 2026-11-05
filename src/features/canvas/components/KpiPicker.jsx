@@ -73,13 +73,23 @@ const KpiPicker = ({
   // `parameters` map; values are whatever the user picked. Null /
   // empty seeds the resolver's yml defaults.
   const [argsDraft, setArgsDraft] = useState({});
+  // Display unit picked in step 2. Card state, not a locator arg: it is
+  // never sent to the backend (which always returns the base unit).
+  // `null` means the KPI's base unit.
+  const [displayUnitDraft, setDisplayUnitDraft] = useState(null);
 
   useEffect(() => {
     if (!open) return;
     setSelectedId(initialKpiId ?? null);
     setStep(1);
     setArgsDraft({});
+    setDisplayUnitDraft(null);
   }, [open, initialKpiId]);
+
+  // Picking another KPI starts from its base unit.
+  useEffect(() => {
+    setDisplayUnitDraft(null);
+  }, [selectedId]);
 
   // Pull the picked KPI's metadata out of the flat registry for
   // step-1 button label decisions ("Next" if it has params,
@@ -217,6 +227,9 @@ const KpiPicker = ({
   // has resolved its choices.
   const selectedHasYmlParams = !!selectedKpi?.has_parameters;
   const hasParams = paramKeys.length > 0;
+  // Units the value can be shown in, from the registry entry (empty
+  // when the KPI offers no choice) — not from the parameters spec.
+  const displayUnits = selectedKpi?.display_units ?? [];
 
   const handleNext = () => {
     if (!selectedId) return;
@@ -225,6 +238,15 @@ const KpiPicker = ({
 
   const handleConfirm = () => {
     if (!selectedId) return;
+    // The base unit is stored as `null` so a card on the default keeps
+    // following the KPI if its base unit ever changes.
+    const displayUnit =
+      step === 2 &&
+      displayUnitDraft &&
+      displayUnitDraft !== selectedKpi?.unit &&
+      displayUnits.some((u) => u.unit === displayUnitDraft)
+        ? displayUnitDraft
+        : null;
     if (step === 2 && hasParams) {
       // Strip empty / null entries — resolver's merge_locator_args
       // already drops nulls but keeping the wire payload tight is
@@ -236,9 +258,13 @@ const KpiPicker = ({
           args[key] = val;
         }
       }
-      onConfirm(selectedId, Object.keys(args).length ? args : null);
+      onConfirm(
+        selectedId,
+        Object.keys(args).length ? args : null,
+        displayUnit,
+      );
     } else {
-      onConfirm(selectedId, null);
+      onConfirm(selectedId, null, displayUnit);
     }
   };
 
@@ -317,6 +343,9 @@ const KpiPicker = ({
             paramsError={paramsError}
             value={argsDraft}
             onChange={setArgsDraft}
+            displayUnits={displayUnits}
+            displayUnit={displayUnitDraft ?? selectedKpi?.unit ?? null}
+            onDisplayUnitChange={setDisplayUnitDraft}
           />
         )}
       </Modal>
@@ -353,8 +382,12 @@ const ParameterForm = ({
   paramsError,
   value,
   onChange,
+  displayUnits,
+  displayUnit,
+  onDisplayUnitChange,
 }) => {
   const keys = Object.keys(paramSpec);
+  const hasUnitChoice = displayUnits.length > 0;
   if (paramsLoading) {
     return (
       <div style={loadingStyle}>
@@ -367,7 +400,7 @@ const ParameterForm = ({
       <Alert type="error" message="Could not load KPI parameters" showIcon />
     );
   }
-  if (keys.length === 0) {
+  if (keys.length === 0 && !hasUnitChoice) {
     return (
       <Alert
         type="info"
@@ -410,6 +443,22 @@ const ParameterForm = ({
           </div>
         );
       })}
+      {hasUnitChoice && (
+        <div style={formRowStyle}>
+          <div style={formLabelStyle}>
+            <span style={formLabelTextStyle}>Unit</span>
+          </div>
+          <Select
+            value={displayUnit}
+            onChange={onDisplayUnitChange}
+            options={displayUnits.map((u) => ({
+              value: u.unit,
+              label: u.unit,
+            }))}
+            style={{ width: '100%' }}
+          />
+        </div>
+      )}
     </div>
   );
 };

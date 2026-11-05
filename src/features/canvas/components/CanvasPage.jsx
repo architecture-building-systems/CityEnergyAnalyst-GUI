@@ -157,12 +157,16 @@ const CanvasPage = () => {
   //     existing-card click flow in FeatureCardKpi) → swap the
   //     binding in place via ``replaceKpiCard``.
   const handleKpiPickerConfirm = useCallback(
-    (kpiId, locatorArgs) => {
+    (kpiId, locatorArgs, displayUnit) => {
       if (kpiPickerAnchor && kpiId) {
         const { columnIndex, targetCardId, direction, replaceCardId } =
           kpiPickerAnchor;
         if (replaceCardId) {
-          replaceKpiCard(columnIndex, replaceCardId, { kpiId, locatorArgs });
+          replaceKpiCard(columnIndex, replaceCardId, {
+            kpiId,
+            locatorArgs,
+            displayUnit,
+          });
         } else {
           addCard(columnIndex, {
             targetCardId,
@@ -170,6 +174,7 @@ const CanvasPage = () => {
             type: 'kpi',
             kpiId,
             locatorArgs,
+            displayUnit,
           });
         }
       }
