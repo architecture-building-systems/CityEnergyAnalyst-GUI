@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useMapStore } from 'features/map/stores/mapStore';
 import { useProjectStore } from 'features/project/stores/projectStore';
 import { useCanvasStore } from '../stores/canvasStore';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import { useResumeLastCanvas } from '../hooks/useResumeLastCanvas';
 import { useFocusFeature } from '../hooks/useFocusFeature';
 import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
+import { mapViewChanged, pickMapView } from '../utils/mapView';
 import NavigatorCard from './NavigatorCard';
 import BottomCard from './BottomCard';
 import LaunchView from './LaunchView';
@@ -213,6 +215,18 @@ const CanvasPage = () => {
       else if (state.loadVersion !== prev.loadVersion) closeAll();
     });
   }, []);
+
+  // The overview map's toggles live in the shared `mapStore`; copy them into the canvas
+  // so autosave keeps them (see `canvasStore.mapView`).
+  useEffect(
+    () =>
+      useMapStore.subscribe((state, prev) => {
+        if (mapViewChanged(state, prev)) {
+          useCanvasStore.getState().setMapView(pickMapView(state));
+        }
+      }),
+    [],
+  );
 
   const handleDrawerSave = useCallback(
     (plotConfig) => {

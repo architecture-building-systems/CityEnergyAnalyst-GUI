@@ -20,7 +20,7 @@
  * Why a separate component instead of a "compact" prop on
  * `FeatureCardKpi`: the layouts are structurally different and
  * the canvas card carries a lot of chrome (drag handle, action
- * overlay, sparkline, delta chip) that the ribbon explicitly
+ * overlay, delta chip) that the ribbon explicitly
  * doesn't want. Cleanest to keep them as siblings.
  */
 

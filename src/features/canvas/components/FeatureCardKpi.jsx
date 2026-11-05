@@ -46,15 +46,10 @@ import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { BinAnimationIcon, InputEditorIcon } from 'assets/icons';
 import { useCanvasStore } from '../stores/canvasStore';
 import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
-import {
-  useFetchKpiRegistry,
-  useFetchKpiSparkline,
-  useFetchKpiValue,
-} from '../hooks/useFetchKpis';
+import { useFetchKpiRegistry, useFetchKpiValue } from '../hooks/useFetchKpis';
 import { findFamilyForFeature } from '../utils/featureFamily';
 import { formatKpiNumber } from '../utils/formatKpiValue';
 import DeltaChip from './DeltaChip';
-import KpiSparkline from './KpiSparkline';
 
 // `kpiId` shape is `<feature>.<short_name>` — split once so we
 // can fetch the right feature endpoint and render the feature
@@ -114,7 +109,6 @@ const FeatureCardKpi = ({
   // ability to rearrange.
   const layoutLocked = useCanvasStore((s) => s.fixLayout);
   const showDeltas = useCanvasStore((s) => s.showKpiDeltas);
-  const comparisonSetup = useCanvasStore((s) => s.comparisonSetup);
   // Coordinated through the store so only one KPI card's overlay
   // is open at a time, and so PerimeterPlusButtons can hide every
   // card-add affordance while ANY KPI card is in action mode.
@@ -175,53 +169,6 @@ const FeatureCardKpi = ({
     whatif,
   });
   const baseline = baselineKpi?.available !== false ? baselineKpi?.value : null;
-
-  // Pathway sparkline: only for headline KPIs in pathway-single
-  // mode. The hook fans out per-state-year fetches and React
-  // Query dedupes against this card's column-level fetch.
-  // Pathway-multi has its own row layout (no FeatureCardKpi
-  // instances), so only `pathway-single` is in scope here.
-  const isPathwaySingle = comparisonSetup?.kind === 'pathway-single';
-  const pathwayName = isPathwaySingle ? comparisonSetup?.pathwayName : null;
-  const stateYears = isPathwaySingle ? comparisonSetup?.stateYears : null;
-  const parentScenario = isPathwaySingle
-    ? (comparisonSetup?.parentScenario ?? null)
-    : null;
-  const wantSparkline =
-    isPathwaySingle &&
-    !!kpi &&
-    kpi.headline === true &&
-    kpi.available !== false &&
-    Array.isArray(stateYears) &&
-    stateYears.length > 1;
-  const { points: sparklinePoints } = useFetchKpiSparkline({
-    project,
-    pathwayName: wantSparkline ? pathwayName : null,
-    parentScenario: wantSparkline ? parentScenario : null,
-    stateYears: wantSparkline ? stateYears : null,
-    feature,
-    kpiId,
-    whatif,
-  });
-
-  // Highlight the data point for THIS card's own state-year so
-  // the user can see "this card = this point on the trend".
-  // Parses the year out of the card's scenario path (state_2030
-  // → 2030); falls back to the last point's year if the path
-  // doesn't match the expected shape.
-  const cardYear = useMemo(() => {
-    if (!scenario) return null;
-    const m = String(scenario).match(/state_(\d+)/);
-    return m ? parseInt(m[1], 10) : null;
-  }, [scenario]);
-
-  // The sparkline reads the bulk endpoint, which reports the base
-  // unit; `unit_scale` converts it to the unit this card shows.
-  const unitScale = kpi?.unit_scale;
-  const scaledSparklinePoints = useMemo(
-    () => scalePoints(sparklinePoints, unitScale),
-    [sparklinePoints, unitScale],
-  );
 
   // Row 1 names the KPI's category. The registry (cached, shared
   // with `KpiPicker`) knows it before this card's value arrives, so
@@ -321,8 +268,6 @@ const FeatureCardKpi = ({
         error={error}
         baseline={baseline}
         showDeltas={showDeltas && !readOnly}
-        sparklinePoints={wantSparkline ? scaledSparklinePoints : null}
-        cardYear={cardYear}
       />
 
       {showOverlay && (
@@ -409,7 +354,7 @@ const CardActions = ({ onReplace, onDelete }) => (
 //   row 5 — value (the metric)
 //   row 6 — unit
 //
-// Compare-mode delta chip / sparkline / unavailable hint render
+// Compare-mode delta chip / unavailable hint render
 // BELOW row 6 — so they're optional add-ons, not replacements
 // for any of the fixed rows. At cramped sizes (2×3 launch
 // default) the bottom rows clip via the card's `overflow: hidden`,
@@ -424,8 +369,6 @@ const KpiBody = ({
   error,
   baseline,
   showDeltas,
-  sparklinePoints,
-  cardYear,
 }) => {
   const available = !!kpi && kpi.available !== false;
   const featureLabel = categoryLabel(category) ?? titleCase(feature);
@@ -508,13 +451,6 @@ const KpiBody = ({
             : (kpi.reason ?? 'Not available')}
         </div>
       )}
-      {!showSkeleton && available && sparklinePoints && (
-        <KpiSparkline
-          points={sparklinePoints}
-          highlightYear={cardYear}
-          betterDirection={kpi.better_direction}
-        />
-      )}
     </>
   );
 };
@@ -524,13 +460,6 @@ const KpiBody = ({
 // (`demand.eui_kwh_m2` → `eui_kwh_m2`) so the card never goes
 // completely blank during loading.
 const fallbackLabel = (kpiId) => splitKpiId(kpiId)[1] ?? '';
-
-const scalePoints = (points, unitScale) =>
-  points && unitScale && unitScale !== 1
-    ? points.map((p) =>
-        p.value == null ? p : { ...p, value: p.value * unitScale },
-      )
-    : points;
 
 // ── Styles ──────────────────────────────────────────────────────────
 

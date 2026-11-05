@@ -5,6 +5,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import DeckGLMap from 'features/map/components/Map/Map';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useColumnInputs } from 'features/canvas/hooks/useColumnInputs';
+import { useCanvasStore } from 'features/canvas/stores/canvasStore';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
   generateConstructionColorMap,
@@ -16,6 +17,7 @@ import {
   useScopedCameraOptions,
   useScopedColorMode,
   useScopedExtruded,
+  useScopedMapLabels,
   useScopedResetCameraOptions,
   useScopedSetColorMode,
   useScopedSetExtruded,
@@ -23,6 +25,7 @@ import {
   useScopedSetVisibility,
   useScopedUpdateViewState,
   useScopedViewState,
+  useScopedVisibility,
 } from './mapInstance';
 import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
 
@@ -47,15 +50,20 @@ import { CameraView, Compass, ExtrudeIcon, LayersIcon } from 'assets/icons';
 const CanvasMap = ({
   project,
   scenario,
+  // `{ pathway_name, year }`: show that state of `scenario` (see `useColumnInputs`).
+  childScenario = null,
   showToolbar = true,
   // `false` skips the maplibre child to save a WebGL context per
   // tile (see DeckGLMap). Primary column tiles keep the basemap.
   showBasemap = true,
 }) => {
   const resetCameraOptions = useScopedResetCameraOptions();
+  // Snapshot mode (Enable Edit off) freezes the camera too, so a stray
+  // scroll or drag can't move a map the user has set up.
+  const enableEdit = useCanvasStore((s) => s.enableEdit);
 
   const activeInputs = useInputs();
-  const columnInputs = useColumnInputs(scenario, project);
+  const columnInputs = useColumnInputs(scenario, project, childScenario);
   const { data, isFetching, isError, refetch } = scenario
     ? columnInputs
     : activeInputs;
@@ -64,7 +72,7 @@ const CanvasMap = ({
   useEffect(() => {
     refetch();
     resetCameraOptions();
-  }, [project, scenario, refetch, resetCameraOptions]);
+  }, [project, scenario, childScenario, refetch, resetCameraOptions]);
 
   return (
     <div style={wrapperStyle} onContextMenu={(e) => e.preventDefault()}>
@@ -83,10 +91,15 @@ const CanvasMap = ({
         colors={data?.colors}
         interactive={false}
         showBasemap={showBasemap}
+        cameraLocked={!enableEdit}
       />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
-          <InlineLayerToggle scenario={scenario} project={project} />
+          <InlineLayerToggle
+            scenario={scenario}
+            project={project}
+            childScenario={childScenario}
+          />
           <InlineExtrudeButton />
           <InlineResetCameraButton />
           <InlineResetCompassButton />
@@ -186,13 +199,15 @@ const InlineResetCompassButton = () => {
   );
 };
 
-const InlineLayerToggle = ({ scenario, project }) => {
+const InlineLayerToggle = ({ scenario, project, childScenario }) => {
   const active = useInputs();
-  const column = useColumnInputs(scenario, project);
+  const column = useColumnInputs(scenario, project, childScenario);
   const { data: inputData } = scenario ? column : active;
   const { geojsons: data } = inputData ?? {};
 
+  const visibility = useScopedVisibility();
   const setVisibility = useScopedSetVisibility();
+  const mapLabels = useScopedMapLabels();
   const setMapLabels = useScopedSetMapLabels();
   const colorMode = useScopedColorMode();
   const setColorMode = useScopedSetColorMode();
@@ -207,23 +222,28 @@ const InlineLayerToggle = ({ scenario, project }) => {
   );
   const setUseTypeGfaTotals = useMapStore((state) => state.setUseTypeGfaTotals);
 
-  // When zone data lands, flip every layer visible. Otherwise the
-  // singleton mapStore's visibility map stays empty and deck.gl
-  // renders nothing — toolbar would show but map would be blank.
-  const visibilityInitDone = useRef(false);
+  // When zone data lands, show every layer that has no visibility yet
+  // (an empty visibility map renders nothing), and colour buildings by
+  // archetype so they paint instead of staying grey. Only a map seeing
+  // its zone for the first time gets the colours: one whose view was
+  // saved with the canvas or inherited (`visibility.zone` set) keeps it.
+  const viewInitDone = useRef(false);
   useEffect(() => {
-    if (data?.zone && !visibilityInitDone.current) {
-      Object.keys(data).forEach((name) => setVisibility(name, true));
-      visibilityInitDone.current = true;
-    }
     if (!data?.zone) {
-      visibilityInitDone.current = false;
+      viewInitDone.current = false;
+      return;
     }
-  }, [data, setVisibility]);
+    if (viewInitDone.current) return;
+    viewInitDone.current = true;
+    if (visibility.zone === undefined) {
+      setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
+    }
+    Object.keys(data)
+      .filter((name) => visibility[name] === undefined)
+      .forEach((name) => setVisibility(name, true));
+  }, [data, visibility, setVisibility, setColorMode]);
 
-  // Build colour maps from zone features and turn on archetype
-  // colouring on first load so buildings paint instead of staying grey.
-  const colorInitDone = useRef(false);
+  // Build colour maps from zone features (the legend's swatches and GFA totals).
   useEffect(() => {
     if (data?.zone?.features) {
       setConstructionColorMap(generateConstructionColorMap(data.zone.features));
@@ -235,12 +255,6 @@ const InlineLayerToggle = ({ scenario, project }) => {
         generateConstructionGfaTotals(data.zone.features),
       );
       setUseTypeGfaTotals(generateUseTypeGfaTotals(data.zone.features));
-      if (!colorInitDone.current) {
-        setColorMode(COLOR_MODES.CONSTRUCTION_STANDARD);
-        colorInitDone.current = true;
-      }
-    } else {
-      colorInitDone.current = false;
     }
   }, [
     data?.zone?.features,
@@ -248,48 +262,38 @@ const InlineLayerToggle = ({ scenario, project }) => {
     setUseTypeColorMap,
     setConstructionGfaTotals,
     setUseTypeGfaTotals,
-    setColorMode,
   ]);
 
   const isConstructionColor = colorMode === COLOR_MODES.CONSTRUCTION_STANDARD;
   const isUseTypeColor = colorMode === COLOR_MODES.USE_TYPE;
 
+  // Every checkbox reads the store, so a restored view shows as it is.
+  // Building names show unless turned off (as `Map.jsx` draws them).
+  const layerItem = (name, label) =>
+    controlledItem(name, label, !!visibility[name], (on) =>
+      setVisibility(name, on),
+    );
+
   const items = [];
   if (data?.zone || data?.surroundings || data?.trees || data?.streets) {
     items.push({ type: 'group', label: 'Geometry' });
-    if (data?.zone)
-      items.push(
-        menuItem('zone', 'Zone', (e) =>
-          setVisibility('zone', e.target.checked),
-        ),
-      );
+    if (data?.zone) items.push(layerItem('zone', 'Zone'));
     if (data?.surroundings)
-      items.push(
-        menuItem('surroundings', 'Surroundings', (e) =>
-          setVisibility('surroundings', e.target.checked),
-        ),
-      );
-    if (data?.trees)
-      items.push(
-        menuItem('trees', 'Trees', (e) =>
-          setVisibility('trees', e.target.checked),
-        ),
-      );
-    if (data?.streets)
-      items.push(
-        menuItem('streets', 'Streets', (e) =>
-          setVisibility('streets', e.target.checked),
-        ),
-      );
+      items.push(layerItem('surroundings', 'Surroundings'));
+    if (data?.trees) items.push(layerItem('trees', 'Trees'));
+    if (data?.streets) items.push(layerItem('streets', 'Streets'));
   }
   items.push({ type: 'group', label: 'Map Style' });
   items.push(
-    menuItem('map_labels', 'Map Labels', (e) => setMapLabels(e.target.checked)),
+    controlledItem('map_labels', 'Map Labels', mapLabels, setMapLabels),
   );
   if (data?.zone) {
     items.push(
-      menuItem('zone_labels', 'Building Names', (e) =>
-        setVisibility('zone_labels', e.target.checked),
+      controlledItem(
+        'zone_labels',
+        'Building Names',
+        visibility.zone_labels ?? true,
+        (on) => setVisibility('zone_labels', on),
       ),
     );
     items.push({ type: 'group', label: 'Building Colours' });
@@ -335,28 +339,6 @@ const InlineLayerToggle = ({ scenario, project }) => {
 // padding (otherwise it stacks on top of the row's own padding,
 // widening the spacing). Wrapping input + text in a `<label>` makes
 // clicking the text toggle the checkbox — same as main viewport.
-const menuItem = (value, label, onChange) => ({
-  key: value,
-  label: (
-    <div
-      className="layer-toggle"
-      role="presentation"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-    >
-      <label className="layer-toggle-label">
-        <input
-          type="checkbox"
-          value={value}
-          defaultChecked
-          onChange={onChange}
-        />
-        {label}
-      </label>
-    </div>
-  ),
-});
-
 const controlledItem = (key, label, checked, onChange) => ({
   key,
   label: (

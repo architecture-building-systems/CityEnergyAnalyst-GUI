@@ -33,6 +33,7 @@ import { useProjectStore } from 'features/project/stores/projectStore';
 
 import { readSavedCanvas } from '../api/canvas';
 import {
+  DEFAULT_CANVAS_TOGGLES,
   useCanvasStore,
   MAP_ANCHOR_W,
   MAP_ANCHOR_H,
@@ -46,11 +47,10 @@ export const lastCanvasStorageKey = (project, scenario) =>
 
 // Empty-canvas slice. Reused on every scenario switch so the
 // editor lands clean before the resume fetch runs. Mirrors the
-// fields canvasStore writes when starting fresh — anything not
-// listed (navigator toggles like `mapsLinked`, `fixLayout`,
-// `enableEdit`) is treated as a user pref that survives the
-// scenario switch.
+// fields canvasStore writes when starting fresh, navigator toggles
+// included: each canvas saves its own.
 const EMPTY_CANVAS_STATE = {
+  ...DEFAULT_CANVAS_TOGGLES,
   view: 'launch',
   columns: [],
   parentScenario: null,

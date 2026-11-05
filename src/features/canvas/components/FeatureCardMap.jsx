@@ -20,6 +20,7 @@ import {
 
 import { useCanvasStore } from '../stores/canvasStore';
 import { useScenarioRequestContext } from '../hooks/useScenarioRequestContext';
+import { mapViewChanged, pickMapView } from '../utils/mapView';
 import CanvasMap from './CanvasMap';
 import { FeatureCardShell } from './FeatureCardShell';
 import {
@@ -89,15 +90,18 @@ const FeatureCardMap = ({
     (s) => s.setCardMapLayerParameters,
   );
   const setCardFilters = useCanvasStore((s) => s.setCardFilters);
+  const setCardMapView = useCanvasStore((s) => s.setCardMapView);
 
-  // Lazy initializer keeps the store stable across renders. Three
+  // Lazy initializer keeps the store stable across renders. Four
   // seeds matter: (a) the singleton's view-state, so a card mounted
   // while `mapsLinked === false` opens at the overview map's
   // current camera/zoom; (b) any saved `mapLayerParameters`, so
   // reload restores the user's selections before
   // `FeatureCardMapBody`'s autonomous init can refetch first-choice
   // defaults over them; (c) any saved `filters` (radius / scale /
-  // range), so the slider knobs come back where the user left them.
+  // range), so the slider knobs come back where the user left them;
+  // (d) any saved `mapView` (colours, labels, layer visibility, 3D),
+  // over the singleton's.
   const [store] = useState(() => {
     const s = createMapInstanceStore({ category, layer });
     s.setState(snapshotViewState());
@@ -106,6 +110,9 @@ const FeatureCardMap = ({
     }
     if (card.filters != null) {
       s.setState({ filters: card.filters });
+    }
+    if (card.mapView != null) {
+      s.setState(card.mapView);
     }
     return s;
   });
@@ -129,8 +136,18 @@ const FeatureCardMap = ({
           setCardFilters(columnIndex, id, state.filters);
         }
       }
+      if (mapViewChanged(state, prev)) {
+        setCardMapView(columnIndex, id, pickMapView(state));
+      }
     });
-  }, [store, columnIndex, id, setCardMapLayerParameters, setCardFilters]);
+  }, [
+    store,
+    columnIndex,
+    id,
+    setCardMapLayerParameters,
+    setCardFilters,
+    setCardMapView,
+  ]);
   useEffect(() => {
     const { setCategory, setSelectedMapLayer: setLayer } = store.getState();
     setCategory(category);

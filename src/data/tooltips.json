@@ -74,6 +74,10 @@
     "title": "Enable Edit",
     "body": "On - editing controls are visible; the canvas is interactive.\nOff - editing controls are hidden for a clean snapshot."
   },
+  "canvas-show-deltas": {
+    "title": "Show Deltas",
+    "body": "On - each KPI card shows its % change from the same KPI in the leftmost column, coloured by whether the change is better or worse.\nOff - KPI cards show values only."
+  },
   "canvas-compare": {
     "title": "Add Scenario to compare",
     "body": "Side-by-side comparison across scenarios.\n\nThe leftmost column is your \"origin\" — the only column where you can edit cards. Every other column mirrors the origin's structure but renders against its own scenario's data. Add or remove a card on the origin and every column reflects the change.\n\nUp to 4 columns total (origin + 3 picks).\n\nClick the `+` next to the scenario title to open the picker. Pre-fills with your last picks if you've compared before. Remove a column with the `×` in its title; removing the last comparison column folds back to the single-column view."
