@@ -28,6 +28,10 @@ import JobInfoModal from 'features/jobs/components/Jobs/JobInfoModal';
 import DownloadManager from 'features/upload-download/components/DownloadManager';
 import { isElectron, openExternal } from 'utils/electron';
 import { useIsValidUser } from 'stores/useUserQuery';
+import OpenReportButton, {
+  isReportJob,
+} from 'features/report-builder/components/OpenReportButton';
+import { REPORT_BUILDERS_QUERY_KEY } from 'features/report-builder/hooks/useReportBuilders';
 
 const StatusBar = () => {
   const isValidUser = useIsValidUser();
@@ -240,9 +244,13 @@ const JobStatusBar = () => {
 
           const isPlotJob = PLOT_SCRIPTS.includes(job.script) && job?.output;
           const hasToolResult = !!VIEW_TOOL_RESULTS[job.script];
+          const hasReport = isReportJob(
+            depsRef.current.queryClient.getQueryData(REPORT_BUILDERS_QUERY_KEY),
+            job,
+          );
 
           const key = job.id;
-          const duration = isPlotJob || hasToolResult ? 0 : 5;
+          const duration = isPlotJob || hasToolResult || hasReport ? 0 : 5;
 
           notification.success({
             key,
@@ -278,6 +286,13 @@ const JobStatusBar = () => {
                   >
                     View Results
                   </Button>
+                )}
+
+                {hasReport && (
+                  <OpenReportButton
+                    job={job}
+                    onOpen={() => notification.destroy(key)}
+                  />
                 )}
 
                 {job.script in VIEW_MAP_RESULTS && (

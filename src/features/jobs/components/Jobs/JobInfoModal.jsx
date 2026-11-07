@@ -9,6 +9,10 @@ import {
 } from 'features/plots/constants';
 import { useToolCardStore } from 'features/project/stores/tool-card';
 import { JobActions, JobStartedAgo } from './JobInfoCard';
+import OpenReportButton, {
+  isReportJob,
+} from 'features/report-builder/components/OpenReportButton';
+import { useReportBuilders } from 'features/report-builder/hooks/useReportBuilders';
 
 const JobOutputModal = ({ job, visible, setVisible }) => {
   const [message, setMessage] = useState('');
@@ -17,6 +21,7 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
   const containerRef = useRef();
   const shouldScrollRef = useRef(true); // Control auto-scrolling behavior
   const selectPlotTool = useToolCardStore((state) => state.selectPlotTool);
+  const { data: reportBuilders } = useReportBuilders();
 
   // Scroll to bottom if shouldScroll is true
   const scrollToBottom = () => {
@@ -167,6 +172,10 @@ const JobOutputModal = ({ job, visible, setVisible }) => {
         {job.state === 1 && <Alert title="Job running..." type="info" />}
         {job.state === 2 && <Alert title="Job completed" type="success" />}
         {job?.error && <Alert title={job.error} type="error" />}
+
+        {job.state === 2 && isReportJob(reportBuilders, job) && (
+          <OpenReportButton job={job} size="middle" />
+        )}
 
         {job.state === 2 && VIEW_TOOL_RESULTS[job.script] && (
           <Button

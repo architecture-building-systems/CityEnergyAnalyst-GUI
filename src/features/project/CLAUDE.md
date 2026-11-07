@@ -3,7 +3,7 @@
 ## Main API
 
 - `ProjectOverlay` - Coordinates the map overlay, right-side tool card, and bottom panels.
-- `BottomToolButtons` - Launch secondary panels such as the input editor and pathway timeline.
+- `BottomToolButtons` - Launch secondary panels such as the input editor and pathway timeline, and the Report Builder's report tools (see `features/report-builder/CLAUDE.md`).
 
 ## Key Patterns
 
