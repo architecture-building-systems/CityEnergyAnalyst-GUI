@@ -972,6 +972,8 @@ const CanvasColumn = ({
                   // (misleading clutter). Per-column title-map
                   // independence is a separate follow-up.
                   showToolbar={enableEdit && !lockedReadOnly}
+                  // A pathway state's map shows its thermal networks.
+                  showNetworks={columnDef.type === 'pathway-state'}
                 />
               </div>
               <ConstructionStandardLegend

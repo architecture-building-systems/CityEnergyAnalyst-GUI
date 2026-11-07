@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Spin, Tooltip, Dropdown } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 
@@ -6,6 +6,15 @@ import DeckGLMap from 'features/map/components/Map/Map';
 import { useInputs } from 'features/input-editor/hooks/queries/useInputs';
 import { useColumnInputs } from 'features/canvas/hooks/useColumnInputs';
 import { useCanvasStore } from 'features/canvas/stores/canvasStore';
+import { useStateNetworks } from 'features/canvas/hooks/useStateNetworks';
+import {
+  NETWORK_LABELS,
+  availableNetworkTypes,
+  networkColour,
+  networkOverlayLayers,
+  networkVisibilityKey,
+  visibleNetworkTypes,
+} from 'features/canvas/utils/networkOverlay';
 import { useMapStore, COLOR_MODES } from 'features/map/stores/mapStore';
 import {
   generateConstructionColorMap,
@@ -56,6 +65,9 @@ const CanvasMap = ({
   // `false` skips the maplibre child to save a WebGL context per
   // tile (see DeckGLMap). Primary column tiles keep the basemap.
   showBasemap = true,
+  // Overlay the scenario's (or state's) thermal networks, DH and DC
+  // together (see `utils/networkOverlay`). Pathway state maps use it.
+  showNetworks = false,
 }) => {
   const resetCameraOptions = useScopedResetCameraOptions();
   // Snapshot mode (Enable Edit off) freezes the camera too, so a stray
@@ -73,6 +85,19 @@ const CanvasMap = ({
     refetch();
     resetCameraOptions();
   }, [project, scenario, childScenario, refetch, resetCameraOptions]);
+
+  const { data: loadedNetworks } = useStateNetworks(
+    scenario,
+    project,
+    childScenario,
+    { enabled: showNetworks },
+  );
+  const networks = showNetworks ? loadedNetworks : null;
+  const visibility = useScopedVisibility();
+  const networkLayers = useMemo(
+    () => networkOverlayLayers(networks, visibility),
+    [networks, visibility],
+  );
 
   return (
     <div style={wrapperStyle} onContextMenu={(e) => e.preventDefault()}>
@@ -92,19 +117,46 @@ const CanvasMap = ({
         interactive={false}
         showBasemap={showBasemap}
         cameraLocked={!enableEdit}
+        extraLayers={networkLayers}
       />
+      <NetworkLegend networks={networks} visibility={visibility} />
       {showToolbar && geojsons?.zone && (
         <div style={controlsFrameStyle}>
           <InlineLayerToggle
             scenario={scenario}
             project={project}
             childScenario={childScenario}
+            networks={networks}
           />
           <InlineExtrudeButton />
           <InlineResetCameraButton />
           <InlineResetCompassButton />
         </div>
       )}
+    </div>
+  );
+};
+
+// Key to the network overlay: the shown types in their colours.
+const NetworkLegend = ({ networks, visibility }) => {
+  const types = visibleNetworkTypes(networks, visibility);
+  if (types.length === 0) return null;
+  return (
+    <div style={networkLegendStyle}>
+      {types.map((type) => {
+        const [r, g, b] = networkColour(networks[type], type);
+        return (
+          <span key={type} style={networkLegendItemStyle}>
+            <span
+              style={{
+                ...networkLegendSwatchStyle,
+                background: `rgb(${r}, ${g}, ${b})`,
+              }}
+            />
+            {type}
+          </span>
+        );
+      })}
     </div>
   );
 };
@@ -199,7 +251,7 @@ const InlineResetCompassButton = () => {
   );
 };
 
-const InlineLayerToggle = ({ scenario, project, childScenario }) => {
+const InlineLayerToggle = ({ scenario, project, childScenario, networks }) => {
   const active = useInputs();
   const column = useColumnInputs(scenario, project, childScenario);
   const { data: inputData } = scenario ? column : active;
@@ -282,6 +334,21 @@ const InlineLayerToggle = ({ scenario, project, childScenario }) => {
       items.push(layerItem('surroundings', 'Surroundings'));
     if (data?.trees) items.push(layerItem('trees', 'Trees'));
     if (data?.streets) items.push(layerItem('streets', 'Streets'));
+  }
+  const networkTypes = availableNetworkTypes(networks);
+  if (networkTypes.length > 0) {
+    items.push({ type: 'group', label: 'Thermal Network' });
+    networkTypes.forEach((type) => {
+      const key = networkVisibilityKey(type);
+      items.push(
+        controlledItem(
+          key,
+          NETWORK_LABELS[type],
+          visibility[key] !== false,
+          (on) => setVisibility(key, on),
+        ),
+      );
+    });
   }
   items.push({ type: 'group', label: 'Map Style' });
   items.push(
@@ -382,6 +449,33 @@ const overlayStyle = {
 const spinFillStyle = {
   width: 80,
   height: 80,
+};
+
+const networkLegendStyle = {
+  position: 'absolute',
+  bottom: 12,
+  left: 12,
+  zIndex: 2,
+  display: 'flex',
+  gap: 10,
+  padding: '4px 8px',
+  borderRadius: 8,
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  border: '1px solid #dddddd',
+  fontSize: 11,
+};
+
+const networkLegendItemStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+};
+
+const networkLegendSwatchStyle = {
+  display: 'inline-block',
+  width: 14,
+  height: 4,
+  borderRadius: 2,
 };
 
 const controlsFrameStyle = {

@@ -531,6 +531,7 @@ const useMapLayers = (onHover = () => {}) => {
 };
 
 const CAMERA_CONTROLLER = { inertia: true };
+const NO_EXTRA_LAYERS = [];
 
 /**
  * DeckGL map.
@@ -545,6 +546,9 @@ const CAMERA_CONTROLLER = { inertia: true };
  * `cameraLocked` (default: false) — the user can't pan, zoom or rotate
  * the map (e.g. a canvas in snapshot mode). The camera can still be
  * set programmatically, and hover tooltips still work.
+ *
+ * `extraLayers` (default: none) — deck.gl layers the caller draws on top of
+ * the buildings and map layers (e.g. the canvas thermal network overlay).
  */
 const DeckGLMap = ({
   data,
@@ -552,6 +556,7 @@ const DeckGLMap = ({
   interactive = true,
   showBasemap = true,
   cameraLocked = false,
+  extraLayers = NO_EXTRA_LAYERS,
 }) => {
   const mapRef = useRef();
   const firstPitch = useRef(false);
@@ -927,6 +932,7 @@ const DeckGLMap = ({
     ...dataLayers.streetLayers,
     ...dataLayers.zoneLayers,
     ...mapLayers,
+    ...extraLayers,
     ...dataLayers.surroundingLayers,
     ...dataLayers.treeLayers,
     ...dataLayers.textLayers,

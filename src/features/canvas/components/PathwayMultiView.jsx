@@ -850,6 +850,9 @@ const PathwayRow = ({
                 scenario={scenario}
                 childScenario={mapState}
                 showToolbar={showMapToolbar}
+                // Only the state's own networks -- never the parent
+                // scenario's, which the map falls back to meanwhile.
+                showNetworks={mapState != null}
               />
             </div>
             <ConstructionStandardLegend style={legendStyle} />

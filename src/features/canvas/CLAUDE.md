@@ -276,6 +276,14 @@ canvas with the same pathways keeps them mounted), and
 with Sync Maps on, `PathwayMultiView` copies row 1's camera and toggles to rows 2+ live
 (only row 1 then shows a map toolbar; with Sync Maps off every row does, whatever the rows lock).
 
+### DO: Overlay a pathway state's thermal networks with `showNetworks`
+
+State maps (pathway-single columns, pathway-multi rows) pass `<CanvasMap showNetworks />`:
+`hooks/useStateNetworks` loads each type's most recent network through the `thermal-network`
+map layer, and `utils/networkOverlay` draws them via `DeckGLMap`'s `extraLayers` -- DH wide
+underneath, DC thin on top, since both share one pipe trench. Toggles are `visibility`
+keys `network_DH` / `network_DC` (unset = shown), so they save with the map view.
+
 ### DO: Hide FeatureCardMap toolbars when `mapsLinked` is on
 
 `CanvasMap` accepts `showToolbar` (default `true`). The primary
